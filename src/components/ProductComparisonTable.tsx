@@ -12,6 +12,14 @@ import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 import { Badge } from "@/components/ui/badge";
 import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+// 统一金额格式化函数
+function formatMoney(value: number | null | undefined): string {
+  const num = Number(value) || 0;
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(num);
+}
 
 interface PackageInfo {
   key: string;
@@ -95,6 +103,21 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   
   // 检查限购套餐是否已购买
   const { data: basicPurchased, isLoading: isCheckingBasic } = usePackagePurchased('basic', category === 'youjin-member');
+  
+  // 训练营数据查询 - 用于动态渲染有劲训练营和绽放训练营
+  const { data: campTemplates, isLoading: isCampsLoading } = useQuery({
+    queryKey: ['camp-templates-for-packages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('camp_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      if (error) throw error;
+      return data;
+    },
+    enabled: category === 'youjin-camp' || category === 'bloom-camp',
+  });
   
   // 从数据库获取价格，提供默认值作为回退
   const basicPrice = getPackagePrice(packages, 'basic', 9.9);
@@ -347,54 +370,97 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // 有劲训练营 - 财富觉醒训练营 ¥299
+  // 有劲训练营 - 动态从数据库获取
   if (category === 'youjin-camp') {
+    const youjinCamps = campTemplates?.filter(c => (c.category || 'youjin') === 'youjin') || [];
+    
+    if (isCampsLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+    
+    if (youjinCamps.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          暂无训练营
+        </div>
+      );
+    }
+    
     return (
       <div className="space-y-3">
-        <MobileCard className="bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200/50">
-          <div className="text-center space-y-3">
-            <span className="text-4xl">🔥</span>
-            <h3 className="text-xl font-bold">财富觉醒训练营</h3>
-            <p className="text-sm text-muted-foreground">7天突破财富卡点，重塑金钱关系</p>
-            
-            <div className="flex flex-wrap justify-center gap-1.5 text-xs">
-              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">📊 卡点测评</span>
-              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🧘 7天冥想</span>
-              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🤖 AI陪伴</span>
-            </div>
-            
-            <div className="text-2xl font-bold text-amber-600">¥{wealthCampPrice}</div>
-            
-            <div className="flex gap-2 justify-center">
-              <Button 
-                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex-1"
-                onClick={() => handlePurchase({ key: 'wealth_camp_7day', name: '财富觉醒训练营', price: wealthCampPrice })}
-              >
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                立即报名
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/wealth-camp-intro')}>
-                了解更多
-              </Button>
-            </div>
-          </div>
-        </MobileCard>
-
-        <MobileCard>
-          <MobileCardHeader>
-            <MobileCardTitle>训练营包含</MobileCardTitle>
-          </MobileCardHeader>
-          <MobileCardContent>
-            <ul className="space-y-1.5 text-sm">
-              {['财富卡点深度测评（¥9.9）', '7天专属冥想音频', 'AI财富教练1对1陪伴', '财富日记与成长追踪'].map((item, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </MobileCardContent>
-        </MobileCard>
+        {youjinCamps.map((camp, index) => {
+          const benefits = Array.isArray(camp.benefits) ? camp.benefits as string[] : [];
+          const isPaid = camp.price && camp.price > 0;
+          
+          return (
+            <MobileCard 
+              key={camp.id}
+              className={`bg-gradient-to-br ${camp.gradient || 'from-teal-50/80 to-cyan-50/80 dark:from-teal-950/30 dark:to-cyan-950/30'} border-teal-200/50`}
+            >
+              <div className="text-center space-y-3">
+                <span className="text-4xl">{camp.icon || '🎯'}</span>
+                <h3 className="text-xl font-bold">{camp.camp_name}</h3>
+                <p className="text-sm text-muted-foreground">{camp.camp_subtitle || camp.description}</p>
+                
+                {benefits.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+                    {benefits.slice(0, 3).map((benefit, i) => (
+                      <span key={i} className="px-2 py-1 bg-white/60 dark:bg-white/10 rounded-full">
+                        {benefit}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {isPaid && (
+                  <div className="flex items-center justify-center gap-2">
+                    {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
+                      <span className="text-muted-foreground line-through text-sm">¥{formatMoney(camp.original_price)}</span>
+                    )}
+                    <span className="text-2xl font-bold text-primary">¥{formatMoney(camp.price)}</span>
+                    {camp.price_note && (
+                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs">
+                        {camp.price_note}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex gap-2 justify-center">
+                  {isPaid ? (
+                    <>
+                      <Button 
+                        className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white flex-1"
+                        onClick={() => handlePurchase({ 
+                          key: `camp-${camp.camp_type}`, 
+                          name: camp.camp_name, 
+                          price: camp.price || 0 
+                        })}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-1" />
+                        立即报名
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/camp-template/${camp.id}`)}>
+                        了解更多
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white flex-1"
+                      onClick={() => navigate(`/camp-template/${camp.id}`)}
+                    >
+                      免费参加 →
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </MobileCard>
+          );
+        })}
       </div>
     );
   }
@@ -632,122 +698,90 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // 绽放训练营 - 身份绽放 + 情感绽放
+  // 绽放训练营 - 动态从数据库获取
   if (category === 'bloom-camp') {
-    const features = bloomFeatures;
-    const categories = Array.from(new Set(features.map(f => f.category)));
-
-    // 移动端：卡片堆叠
-    if (isMobile) {
+    const bloomCamps = campTemplates?.filter(c => c.category === 'bloom') || [];
+    
+    if (isCampsLoading) {
       return (
-        <div className="space-y-3">
-          <PackageCard
-            emoji="🦋"
-            name="身份绽放训练营"
-            price={identityCampPrice}
-            priceLabel="认识真实自我"
-            features={['21天深度身份探索', '专业教练1对1指导', '社群共修支持', '个性化成长方案']}
-            onPurchase={() => handlePurchase({ key: 'bloom_identity_camp', name: '身份绽放训练营', price: identityCampPrice })}
-          />
-
-          <PackageCard
-            emoji="💗"
-            name="情感绽放训练营"
-            price={emotionCampPrice}
-            priceLabel="体验内在情绪"
-            features={['21天情感疗愈之旅', '深度情绪释放技术', '专属情感教练', '亲密关系修复']}
-            recommended
-            gradient="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-950/30 dark:to-purple-950/30"
-            onPurchase={() => handlePurchase({ key: 'bloom_emotion_camp', name: '情感绽放训练营', price: emotionCampPrice })}
-          />
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       );
     }
-
-    // 桌面端：保持表格
-    return (
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[440px]">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">权益项目</th>
-                <th className="text-center p-4 min-w-[160px]">
-                  <div className="space-y-1">
-                    <div className="font-bold text-base">身份绽放训练营</div>
-                    <div className="text-xs text-muted-foreground">认识真实自我</div>
-                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥{identityCampPrice.toLocaleString()}</div>
-                  </div>
-                </th>
-                <th className="text-center p-4 min-w-[160px] bg-primary/5">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="font-bold text-base text-primary">情感绽放训练营</div>
-                      <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">推荐</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">体验内在情绪</div>
-                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥{emotionCampPrice.toLocaleString()}</div>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((cat) => {
-                const categoryFeatures = (features as BloomFeature[]).filter(f => f.category === cat);
-                return (
-                  <TooltipProvider key={cat}>
-                    <tr className="border-b bg-muted/30">
-                      <td colSpan={3} className="p-3">
-                        <div className="font-semibold text-sm text-primary">{cat}</div>
-                      </td>
-                    </tr>
-                    {categoryFeatures.map((feature, idx) => (
-                      <tr key={`${cat}-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
-                        <td className="p-3 text-sm text-muted-foreground sticky left-0 bg-background z-10">
-                          <div className="flex items-center gap-2">
-                            {feature.name}
-                            {feature.tooltip && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="max-w-xs text-xs">{feature.tooltip}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3 text-center">{renderValue(feature.identityCamp)}</td>
-                        <td className="p-3 text-center bg-primary/5">{renderValue(feature.emotionCamp)}</td>
-                      </tr>
-                    ))}
-                  </TooltipProvider>
-                );
-              })}
-                <tr>
-                  <td className="p-4 sticky left-0 bg-background z-10"></td>
-                  <td className="p-4 text-center">
-                    <div className="space-y-2">
-                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'bloom_identity_camp', name: '身份绽放训练营', price: identityCampPrice })}>
-                        <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥{identityCampPrice.toLocaleString()}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}>了解更多 →</Button>
-                    </div>
-                  </td>
-                  <td className="p-4 text-center bg-primary/5">
-                    <div className="space-y-2">
-                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'bloom_emotion_camp', name: '情感绽放训练营', price: emotionCampPrice })}>
-                        <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥{emotionCampPrice.toLocaleString()}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}>了解更多 →</Button>
-                    </div>
-                  </td>
-                </tr>
-            </tbody>
-          </table>
+    
+    if (bloomCamps.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          暂无训练营
         </div>
-      </Card>
+      );
+    }
+    
+    return (
+      <div className="space-y-3">
+        {bloomCamps.map((camp, index) => {
+          const benefits = Array.isArray(camp.benefits) ? camp.benefits as string[] : [];
+          const isRecommended = index === bloomCamps.length - 1; // 最后一个为推荐
+          
+          return (
+            <MobileCard 
+              key={camp.id}
+              className={`bg-gradient-to-br ${camp.gradient || 'from-purple-50/80 to-pink-50/80 dark:from-purple-950/30 dark:to-pink-950/30'} ${isRecommended ? 'ring-2 ring-primary/50' : ''} border-purple-200/50`}
+            >
+              {isRecommended && (
+                <div className="absolute -top-2 right-3 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded-full">
+                  推荐
+                </div>
+              )}
+              <div className="text-center space-y-3">
+                <span className="text-4xl">{camp.icon || '✨'}</span>
+                <h3 className="text-xl font-bold">{camp.camp_name}</h3>
+                <p className="text-sm text-muted-foreground">{camp.camp_subtitle || camp.description}</p>
+                
+                {benefits.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+                    {benefits.slice(0, 3).map((benefit, i) => (
+                      <span key={i} className="px-2 py-1 bg-white/60 dark:bg-white/10 rounded-full">
+                        {benefit}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-center gap-2">
+                  {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
+                    <span className="text-muted-foreground line-through text-sm">¥{formatMoney(camp.original_price)}</span>
+                  )}
+                  <span className="text-2xl font-bold text-primary">¥{formatMoney(camp.price)}</span>
+                  {camp.price_note && (
+                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-xs">
+                      {camp.price_note}
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white flex-1"
+                    onClick={() => handlePurchase({ 
+                      key: `bloom_${camp.camp_type}_camp`, 
+                      name: camp.camp_name, 
+                      price: camp.price || 0 
+                    })}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    立即购买 ¥{formatMoney(camp.price)}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/camp-template/${camp.id}`)}>
+                    了解更多
+                  </Button>
+                </div>
+              </div>
+            </MobileCard>
+          );
+        })}
+      </div>
     );
   }
 
