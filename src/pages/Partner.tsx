@@ -141,8 +141,8 @@ export default function Partner() {
                     <span className="text-sm">直推30% + 二级10%</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">绽放产品专属分成</span>
+                    <Sparkles className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm">含有劲初级合伙人权益</span>
                   </div>
                   <Button className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
                     <Users className="w-4 h-4" />
@@ -167,7 +167,7 @@ export default function Partner() {
                   rows={[
                     { label: "加入方式", values: ["预购体验包", "购买合伙人套餐"] },
                     { label: "佣金比例", values: ["18%-50%", "30%+10%"] },
-                    { label: "可分成产品", values: ["所有有劲产品", "绽放产品"] },
+                    { label: "可分成产品", values: ["所有有劲产品", "绽放+有劲产品"] },
                     { label: "推广方式", values: ["兑换码/二维码", "推广码/链接"] },
                     { label: "适合人群", values: ["长期经营", "快速变现"] },
                   ]}
