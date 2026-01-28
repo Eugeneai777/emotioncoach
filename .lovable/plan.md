@@ -1,171 +1,131 @@
 
+## 绽放合伙人权益介绍完善方案
 
-## 让绽放合伙人拥有有劲合伙人初级身份和权益
+### 问题分析
 
-### 当前系统架构分析
+当前绽放合伙人的权益介绍页面（`PartnerIntro.tsx`、`PartnerBenefits.tsx`）和服务条款（`BloomPartnerTerms.tsx`）均未包含有劲初级合伙人权益的说明。需要在以下位置补充：
 
-#### 合伙人数据结构（partners 表）
-| 字段 | 说明 |
-|:-----|:-----|
-| `partner_type` | 合伙人类型：`youjin` 或 `bloom` |
-| `partner_level` | 等级：绽放是 `L0`，有劲是 `L1/L2/L3` |
-| `commission_rate_l1` | 一级佣金率 |
-| `commission_rate_l2` | 二级佣金率 |
-| `prepurchase_count` | 体验包配额（仅有劲合伙人使用） |
-
-#### 当前佣金计算逻辑（`calculate-commission/index.ts`）
-```javascript
-// 产品线匹配检查
-if (partner.partner_type === productLine) {
-  // 只有产品线匹配才计算佣金
-}
-```
-**问题**：绽放合伙人（`bloom`）无法获得有劲产品（`youjin`）的佣金。
-
-#### 当前 UI 展示逻辑（`Partner.tsx`）
-```javascript
-{partner.partner_type === 'youjin' ? (
-  <YoujinPartnerDashboard partner={partner} />  // 有劲面板
-) : (
-  <BloomPartnerDashboard ... />  // 绽放面板
-)}
-```
-**问题**：绽放合伙人看不到有劲合伙人的推广工具和入口类型设置。
+| 位置 | 需更新内容 |
+|:-----|:----------|
+| 绽放合伙人介绍页 | 新增"有劲产品推广权益"说明区块 |
+| 绽放合伙人权益列表 | 数据库新增有劲推广权益记录 |
+| 绽放合伙人条款 | 第三节补充有劲产品佣金条款 |
+| 合伙人对比卡片 | 绽放卡片补充有劲产品分成说明 |
 
 ---
 
-### 方案选择
+### 实施方案
 
-#### 方案 A：数据库层面 - 给绽放合伙人额外创建有劲身份（推荐）
-- 绽放合伙人购买后，自动为其创建一条 `partner_type = 'youjin', partner_level = 'L1'` 的记录
-- **优点**：权限完全隔离，佣金计算逻辑无需修改
-- **缺点**：一个用户有两条合伙人记录，需要修改 `usePartner` hook 支持多身份
+#### 1. 数据库：新增有劲推广权益
 
-#### 方案 B：业务逻辑层面 - 扩展绽放合伙人权益（推荐）
-- 在佣金计算和 UI 展示时，检测绽放合伙人并赋予有劲 L1 权益
-- **优点**：不改变数据结构，逻辑集中
-- **缺点**：需要修改多处代码
+向 `partner_benefits` 表插入新记录：
 
-#### 方案 C：配置层面 - 绽放合伙人改为"复合型"
-- 将绽放合伙人的 `partner_type` 改为支持多产品线
-- **优点**：最灵活
-- **缺点**：影响范围大，改动复杂
-
-**推荐：方案 B** - 最小改动原则，在关键节点检测绽放身份并授予有劲 L1 权益。
-
----
-
-### 实施方案（方案 B）
-
-#### 1. 佣金计算扩展（后端）
-
-**文件**：`supabase/functions/calculate-commission/index.ts`
-
-**改动**：当合伙人是绽放类型时，额外检查是否应获得有劲产品佣金
-
-```typescript
-// 新增：检查绽放合伙人是否应获得有劲产品佣金
-function shouldBloomGetYoujinCommission(partner: any, productLine: string): boolean {
-  // 绽放合伙人可以获得有劲产品的 L1 佣金
-  return partner.partner_type === 'bloom' && productLine === 'youjin';
-}
-
-// 在 L1 佣金计算部分
-if (partner.partner_type === productLine || shouldBloomGetYoujinCommission(partner, productLine)) {
-  // 绽放合伙人使用有劲 L1 的佣金率
-  const effectiveL1Rate = partner.partner_type === 'bloom' ? 0.18 : rates.l1;
-  const effectiveL2Rate = partner.partner_type === 'bloom' ? 0 : rates.l2;
-  // ... 计算佣金
-}
+```sql
+INSERT INTO partner_benefits (benefit_name, benefit_description, benefit_value, benefit_icon, display_order, is_active)
+VALUES (
+  '有劲产品推广权益',
+  '自动获得有劲初级合伙人身份，有劲全产品18%一级佣金',
+  0.00,
+  '💪',
+  10,
+  true
+);
 ```
 
-#### 2. UI 展示扩展（前端）
+#### 2. 绽放合伙人介绍页 (`PartnerIntro.tsx`)
 
-**文件**：`src/pages/Partner.tsx`
-
-**改动**：绽放合伙人同时显示有劲推广工具
+在"收益机制"区块后新增"有劲产品权益"说明：
 
 ```tsx
-{isPartner && partner && (
-  <>
-    {partner.partner_type === 'youjin' ? (
-      <YoujinPartnerDashboard partner={partner} />
-    ) : (
-      <>
-        {/* 绽放合伙人原有面板 */}
-        <PartnerStats partner={partner} />
-        {/* ... */}
-        
-        {/* 新增：有劲推广权益区块 */}
-        <BloomYoujinBenefitsCard partner={partner} />
-      </>
-    )}
-  </>
-)}
+{/* 有劲产品权益 */}
+<Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+  <CardHeader className="pb-2 pt-4 px-4">
+    <CardTitle className="flex items-center gap-2 text-base">
+      <Sparkles className="w-5 h-5 text-orange-500" />
+      额外权益：有劲产品推广
+    </CardTitle>
+    <Badge className="w-fit bg-orange-100 text-orange-700 border-orange-200">
+      💪 自动获得初级合伙人身份
+    </Badge>
+  </CardHeader>
+  <CardContent className="px-4 pb-4 space-y-3">
+    <p className="text-sm text-muted-foreground">
+      成为绽放合伙人后，您将自动拥有有劲初级合伙人身份，可以推广有劲全系列产品：
+    </p>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="p-3 bg-white/80 rounded-lg border border-orange-100">
+        <div className="text-lg font-bold text-orange-600">18%</div>
+        <div className="text-xs text-muted-foreground">有劲产品一级佣金</div>
+      </div>
+      <div className="p-3 bg-white/80 rounded-lg border border-orange-100">
+        <div className="text-lg font-bold text-orange-600">11款</div>
+        <div className="text-xs text-muted-foreground">可推广产品</div>
+      </div>
+    </div>
+    <Button 
+      variant="outline" 
+      className="w-full gap-2 border-orange-200 text-orange-700"
+      onClick={() => navigate("/partner/youjin-plan")}
+    >
+      了解有劲产品详情
+    </Button>
+  </CardContent>
+</Card>
 ```
 
-#### 3. 新增：绽放合伙人的有劲权益卡片
+#### 3. 合伙人对比卡片 (`Partner.tsx`)
 
-**新文件**：`src/components/partner/BloomYoujinBenefitsCard.tsx`
+更新非合伙人视图中的绽放合伙人卡片说明：
 
-展示内容：
-- 有劲初级合伙人身份标识（💪 初级合伙人）
-- 有劲产品 18% 佣金说明
-- 有劲推广二维码生成入口
-- 100 份体验包配额（如果绽放合伙人也给配额）
+```tsx
+{/* 绽放合伙人卡片 - 新增有劲权益说明 */}
+<div className="flex items-center gap-2">
+  <TrendingUp className="w-4 h-4 text-purple-500" />
+  <span className="text-sm">直推30% + 二级10%</span>
+</div>
+<div className="flex items-center gap-2">
+  <Sparkles className="w-4 h-4 text-orange-500" />
+  <span className="text-sm">含有劲初级合伙人权益</span>
+</div>
+```
 
-#### 4. 体验包配额处理
+同时更新对比表格：
 
-**选项 A**：绽放合伙人自动获得 100 份有劲体验包配额
-- 在购买绽放合伙人时，设置 `prepurchase_count = 100`
+| 对比项 | 💪 有劲合伙人 | 🦋 绽放合伙人 |
+|:-------|:-------------|:-------------|
+| 可分成产品 | 所有有劲产品 | 绽放产品 + **有劲产品** |
 
-**选项 B**：绽放合伙人不获得体验包，只有推广佣金
-- 只需修改佣金计算，不设置 `prepurchase_count`
+#### 4. 绽放合伙人条款 (`BloomPartnerTerms.tsx`)
 
-#### 5. 入口类型设置共享
+在第三节"绽放合伙人专属权益"后新增有劲产品权益条款：
 
-**文件**：`src/components/partner/EntryTypeSelector.tsx`
-
-**改动**：允许绽放合伙人设置有劲产品入口类型
+```tsx
+<p>3.5 <strong>有劲产品推广权益</strong></p>
+<p>成为绽放合伙人后，您将自动获得有劲初级合伙人身份，享有以下额外权益：</p>
+<ul className="list-disc pl-6 space-y-1">
+  <li>有劲全系列产品（11款）推广资格</li>
+  <li>有劲产品一级佣金：<strong>18%</strong></li>
+  <li>有劲体验包分发权限</li>
+</ul>
+<p>注：有劲产品佣金独立于绽放产品佣金计算，两者可同时获得。</p>
+```
 
 ---
 
 ### 涉及文件清单
 
-| 文件 | 修改内容 |
-|:-----|:---------|
-| `supabase/functions/calculate-commission/index.ts` | 绽放合伙人获得有劲 L1 佣金 |
-| `src/pages/Partner.tsx` | 绽放合伙人显示有劲推广区块 |
-| `src/components/partner/BloomYoujinBenefitsCard.tsx` | 新建：有劲权益展示卡片 |
-| `supabase/functions/wechat-pay-callback/index.ts` | 可选：购买绽放时设置体验包配额 |
-| `src/components/partner/EntryTypeSelector.tsx` | 可选：允许绽放合伙人设置入口 |
-
----
-
-### 关键业务规则确认
-
-在实施前，请确认以下业务规则：
-
-1. **佣金比例**：绽放合伙人推广有劲产品时，使用 18%（L1）佣金率还是其他比例？
-2. **二级佣金**：绽放合伙人推广有劲产品是否享有二级佣金？（L1 默认无二级佣金）
-3. **体验包配额**：绽放合伙人是否获得 100 份有劲体验包分发权？
-4. **入口类型**：绽放合伙人是否可以设置有劲产品的入口类型（免费/付费）？
-5. **升级路径**：绽放合伙人是否可以升级到有劲 L2/L3？如果可以，价格如何计算？
+| 操作 | 文件 | 修改内容 |
+|:-----|:-----|:---------|
+| 新增 | 数据库 `partner_benefits` | 插入有劲推广权益记录 |
+| 修改 | `src/pages/PartnerIntro.tsx` | 新增有劲产品权益区块 |
+| 修改 | `src/pages/Partner.tsx` | 更新对比卡片和对比表格 |
+| 修改 | `src/pages/BloomPartnerTerms.tsx` | 新增第3.5条有劲权益条款 |
 
 ---
 
 ### 预期效果
 
-1. **绽放合伙人购买后**：
-   - 保留绽放产品 30%+10% 佣金
-   - 额外获得有劲产品 18% 佣金（L1 权益）
-   - 可选获得 100 份体验包配额
-
-2. **合伙人中心展示**：
-   - 显示绽放合伙人原有面板
-   - 新增"有劲推广"区块，提供有劲产品推广工具
-
-3. **佣金结算**：
-   - 绽放产品订单 → 使用绽放佣金率
-   - 有劲产品订单 → 使用有劲 L1 佣金率
-
+1. **介绍页**：用户在考虑购买绽放合伙人时，能清楚看到还包含有劲产品推广权益
+2. **权益页**：权益列表中展示有劲推广权益
+3. **对比表**：非合伙人用户能对比看到绽放合伙人同时覆盖两条产品线
+4. **条款页**：正式法律条款中明确有劲产品佣金规则
