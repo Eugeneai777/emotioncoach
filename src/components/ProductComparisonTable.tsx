@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown, Loader2 } from "lucide-react";
+import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown, Loader2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { youjinFeatures, bloomFeatures, youjinPartnerFeatures, type YoujinFeature, type BloomFeature, type YoujinPartnerFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -10,6 +10,8 @@ import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent } from
 import { usePackages, getPackagePrice, getPackageQuota } from "@/hooks/usePackages";
 import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 import { Badge } from "@/components/ui/badge";
+import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PackageInfo {
   key: string;
@@ -19,7 +21,7 @@ interface PackageInfo {
 }
 
 interface ProductComparisonTableProps {
-  category: 'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner';
+  category: 'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach';
   onPurchase?: (packageInfo: PackageInfo) => void;
 }
 
@@ -89,6 +91,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: packages } = usePackages();
+  const { user } = useAuth();
   
   // 检查限购套餐是否已购买
   const { data: basicPurchased, isLoading: isCheckingBasic } = usePackagePurchased('basic', category === 'youjin-member');
@@ -125,6 +128,64 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
       onPurchase(packageInfo);
     }
   };
+
+  // 绽放教练 - 预付卡充值
+  if (category === 'bloom-coach') {
+    return (
+      <div className="space-y-3">
+        {/* 预付卡余额卡片 - 仅登录用户显示 */}
+        {user && <PrepaidBalanceCard />}
+
+        {/* 服务介绍 */}
+        <MobileCard className="bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50">
+          <div className="text-center space-y-3">
+            <span className="text-4xl">🌟</span>
+            <h3 className="text-xl font-bold">真人教练1对1咨询</h3>
+            <p className="text-sm text-muted-foreground">预充值享优惠，余额可用于预约所有教练服务</p>
+            
+            <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+              <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">💬 1对1咨询</span>
+              <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">🎯 专业指导</span>
+              <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">💝 余额通用</span>
+            </div>
+          </div>
+        </MobileCard>
+
+        {/* 充值优惠说明 */}
+        <MobileCard>
+          <MobileCardHeader>
+            <span className="text-lg">💰</span>
+            <MobileCardTitle>充值送礼</MobileCardTitle>
+          </MobileCardHeader>
+          <MobileCardContent>
+            <ul className="space-y-1.5 text-sm">
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>充值 ¥500 送 ¥50</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>充值 ¥1000 送 ¥150</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>余额永久有效，可预约所有教练</span>
+              </li>
+            </ul>
+          </MobileCardContent>
+        </MobileCard>
+
+        {/* 浏览教练按钮 */}
+        <Button 
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
+          onClick={() => navigate('/human-coaches')}
+        >
+          <Users className="w-4 h-4 mr-2" />
+          浏览教练 →
+        </Button>
+      </div>
+    );
+  }
 
   // 有劲会员 - 尝鲜会员 + 365会员对比表
   if (category === 'youjin-member') {
