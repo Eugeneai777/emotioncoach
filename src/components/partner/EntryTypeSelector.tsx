@@ -2,16 +2,27 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Gift, CreditCard, Check, Loader2, AlertCircle, Sparkles, BarChart3 } from "lucide-react";
+import { Gift, CreditCard, Check, Loader2, AlertCircle, Sparkles, BarChart3, Package } from "lucide-react";
 import type { PartnerProductType } from "@/utils/partnerQRUtils";
+
+// 体验包选项定义
+const EXPERIENCE_PACKAGES = [
+  { key: 'basic', label: 'AI对话点数', description: '50点' },
+  { key: 'emotion_health_assessment', label: '情绪健康测评', description: '专业测评' },
+  { key: 'scl90_report', label: 'SCL-90心理测评', description: '心理健康筛查' },
+] as const;
+
+const DEFAULT_PACKAGES = ['basic', 'emotion_health_assessment', 'scl90_report'];
 
 interface EntryTypeSelectorProps {
   partnerId: string;
   currentEntryType?: string;
   currentProductType?: PartnerProductType;
   prepurchaseCount?: number;
+  currentSelectedPackages?: string[] | null;
   onUpdate?: () => void;
 }
 
@@ -20,30 +31,70 @@ export function EntryTypeSelector({
   currentEntryType = 'free',
   currentProductType = 'trial_member',
   prepurchaseCount = 0,
+  currentSelectedPackages,
   onUpdate 
 }: EntryTypeSelectorProps) {
   const [entryType, setEntryType] = useState<'free' | 'paid'>(currentEntryType as 'free' | 'paid');
   const [productType, setProductType] = useState<PartnerProductType>(currentProductType);
+  const [selectedPackages, setSelectedPackages] = useState<string[]>(
+    currentSelectedPackages || DEFAULT_PACKAGES
+  );
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setEntryType(currentEntryType as 'free' | 'paid');
     setProductType(currentProductType);
+    setSelectedPackages(currentSelectedPackages || DEFAULT_PACKAGES);
     setHasChanges(false);
-  }, [currentEntryType, currentProductType]);
+  }, [currentEntryType, currentProductType, currentSelectedPackages]);
+
+  const checkHasChanges = (
+    newEntryType: string, 
+    newProductType: string, 
+    newSelectedPackages: string[]
+  ) => {
+    const currentPkgs = currentSelectedPackages || DEFAULT_PACKAGES;
+    const pkgsChanged = 
+      newSelectedPackages.length !== currentPkgs.length ||
+      !newSelectedPackages.every(p => currentPkgs.includes(p));
+    return newEntryType !== currentEntryType || 
+           newProductType !== currentProductType || 
+           pkgsChanged;
+  };
 
   const handleSelectEntryType = (type: 'free' | 'paid') => {
     setEntryType(type);
-    setHasChanges(type !== currentEntryType || productType !== currentProductType);
+    setHasChanges(checkHasChanges(type, productType, selectedPackages));
   };
 
   const handleSelectProductType = (type: PartnerProductType) => {
     setProductType(type);
-    setHasChanges(entryType !== currentEntryType || type !== currentProductType);
+    setHasChanges(checkHasChanges(entryType, type, selectedPackages));
   };
 
+  const handleTogglePackage = (packageKey: string) => {
+    const newPackages = selectedPackages.includes(packageKey)
+      ? selectedPackages.filter(p => p !== packageKey)
+      : [...selectedPackages, packageKey];
+    setSelectedPackages(newPackages);
+    setHasChanges(checkHasChanges(entryType, productType, newPackages));
+  };
+
+  const handleSelectAllPackages = (selectAll: boolean) => {
+    const newPackages = selectAll ? [...DEFAULT_PACKAGES] : [];
+    setSelectedPackages(newPackages);
+    setHasChanges(checkHasChanges(entryType, productType, newPackages));
+  };
+
+  const isAllSelected = selectedPackages.length === EXPERIENCE_PACKAGES.length;
+
   const handleSave = async () => {
+    if (productType === 'trial_member' && selectedPackages.length === 0) {
+      toast.error("请至少选择一项体验包内容");
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase
@@ -53,8 +104,9 @@ export function EntryTypeSelector({
           default_product_type: productType,
           default_entry_price: productType === 'wealth_assessment' ? 9.9 : (entryType === 'paid' ? 9.9 : 0),
           default_quota_amount: productType === 'trial_member' ? 50 : 0,
+          selected_experience_packages: productType === 'trial_member' ? selectedPackages : null,
           updated_at: new Date().toISOString()
-        })
+        } as Record<string, unknown>)
         .eq('id', partnerId);
 
       if (error) throw error;
@@ -225,6 +277,48 @@ export function EntryTypeSelector({
           </div>
         )}
 
+        {/* Step 3: 体验包内容（仅尝鲜会员有此选项） */}
+        {productType === 'trial_member' && (
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">3</span>
+              体验包内容
+            </div>
+            <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-3">
+              {/* 全选复选框 */}
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <Checkbox
+                  id="select-all"
+                  checked={isAllSelected}
+                  onCheckedChange={(checked) => handleSelectAllPackages(checked === true)}
+                />
+                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                  全选
+                </label>
+              </div>
+              
+              {/* 体验包列表 */}
+              {EXPERIENCE_PACKAGES.map((pkg) => (
+                <div key={pkg.key} className="flex items-center gap-2">
+                  <Checkbox
+                    id={pkg.key}
+                    checked={selectedPackages.includes(pkg.key)}
+                    onCheckedChange={() => handleTogglePackage(pkg.key)}
+                  />
+                  <label htmlFor={pkg.key} className="flex-1 cursor-pointer">
+                    <span className="text-sm font-medium">{pkg.label}</span>
+                    <span className="text-xs text-muted-foreground ml-1">({pkg.description})</span>
+                  </label>
+                </div>
+              ))}
+
+              {selectedPackages.length === 0 && (
+                <p className="text-xs text-red-500 mt-2">⚠️ 请至少选择一项体验包内容</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 财富测评说明 */}
         {productType === 'wealth_assessment' && (
           <div className="text-xs text-purple-600 bg-purple-50 p-3 rounded-lg">
@@ -234,7 +328,7 @@ export function EntryTypeSelector({
         )}
 
         {/* Save button */}
-        {hasChanges && (
+        {hasChanges && selectedPackages.length > 0 && (
           <Button
             onClick={handleSave}
             disabled={saving}
