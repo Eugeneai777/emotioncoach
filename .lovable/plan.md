@@ -1,198 +1,90 @@
 
-# 有劲合伙人分成产品配置方案
+# 将有劲合伙人产品加入分成系统
 
-## 核心问题
+## 现状分析
 
-当前「有劲合伙人」对所有有劲产品线使用统一佣金率，无法：
-- 明确指定哪些产品可参与分成
-- 为不同产品设置不同佣金率
-- 排除某些产品（如测评报告）不参与分成
+当前有劲合伙人产品（`youjin_partner_l1`、`youjin_partner_l2`、`youjin_partner_l3`）：
 
----
-
-## 解决方案：产品级佣金配置
-
-新增「合伙人产品佣金配置表」，实现按产品精细化分成控制。
-
----
-
-## 数据库变更
-
-### 新建 partner_product_commissions 表
-
-```sql
-CREATE TABLE partner_product_commissions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  partner_level_rule_id UUID REFERENCES partner_level_rules(id) ON DELETE CASCADE,
-  package_key TEXT NOT NULL,
-  commission_rate_l1 DECIMAL(5,4) NOT NULL DEFAULT 0.20,
-  commission_rate_l2 DECIMAL(5,4) NOT NULL DEFAULT 0,
-  is_enabled BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(partner_level_rule_id, package_key)
-);
-```
-
-### 数据结构示例
-
-| partner_level_rule_id | package_key | commission_rate_l1 | commission_rate_l2 | is_enabled |
-|:----------------------|:------------|:-------------------|:-------------------|:-----------|
-| L1的UUID | basic | 0.20 | 0 | true |
-| L1的UUID | member365 | 0.20 | 0 | true |
-| L1的UUID | scl90_report | 0 | 0 | false |
-| L2的UUID | basic | 0.35 | 0 | true |
-| L3的UUID | basic | 0.50 | 0.10 | true |
-
----
-
-## 业务逻辑变更
-
-### calculate-commission 边缘函数
-
-```
-原逻辑：
-  order_type → getProductLine() → 匹配合伙人类型 → 使用统一佣金率
-
-新逻辑：
-  order_type (package_key) 
-    → 查询 partner_product_commissions 表
-    → 获取该产品的专属佣金率
-    → 如果 is_enabled = false，跳过分成
-    → 如果未配置，使用 partner_level_rules 的默认佣金率
-```
-
-### 兼容性策略
-
-- **默认回退**：如果产品未在 `partner_product_commissions` 中配置，使用 `partner_level_rules` 的默认佣金率
-- **老数据兼容**：不需要立即为所有产品配置，系统自动回退
-
----
-
-## 管理后台变更
-
-### 增强 PartnerLevelManagement.tsx
-
-在编辑对话框中新增「产品佣金配置」Tab：
-
-```
-┌──────────────────────────────────────────────────────┐
-│  编辑 L1 等级配置                                      │
-├──────────────────────────────────────────────────────┤
-│  [基础信息] [权益配置] [产品佣金]                        │
-├──────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────┐ │
-│  │ 默认佣金率: 一级 20% / 二级 0%                    │ │
-│  └─────────────────────────────────────────────────┘ │
-│                                                      │
-│  产品专属配置：                                        │
-│  ┌──────────────────────────────────────────────────┐│
-│  │ [✓] 尝鲜会员 (basic)      一级 20%  二级 0%       ││
-│  │ [✓] 365会员 (member365)   一级 20%  二级 0%       ││
-│  │ [✓] 财富训练营 (wealth)   一级 25%  二级 5%       ││
-│  │ [ ] SCL-90报告 (scl90)    — 不参与分成 —          ││
-│  └──────────────────────────────────────────────────┘│
-│                                                      │
-│  + 添加产品配置                                        │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-## 计算示例
-
-**场景**：L3 钻石合伙人推荐用户购买
-
-| 产品 | 价格 | 配置佣金率 | 一级佣金 | 二级佣金 |
-|:-----|:-----|:----------|:--------|:--------|
-| 尝鲜会员 | ¥9.9 | 50%/10% | ¥4.95 | ¥0.99 |
-| 365会员 | ¥365 | 50%/10% | ¥182.50 | ¥36.50 |
-| 财富训练营 | ¥1999 | 40%/8% (特殊) | ¥799.60 | ¥159.92 |
-| SCL-90报告 | ¥29.9 | 不参与 | ¥0 | ¥0 |
-
----
-
-## 修改文件清单
-
-| 文件 | 操作 | 说明 |
+| 产品 | 状态 | 问题 |
 |:-----|:-----|:-----|
-| 数据库迁移 | 新增 | 创建 partner_product_commissions 表 |
-| `calculate-commission/index.ts` | 修改 | 查询产品专属佣金配置 |
-| `PartnerLevelManagement.tsx` | 修改 | 添加产品佣金配置 Tab |
-| `usePartnerLevels.ts` | 修改 | 扩展返回产品佣金数据 |
+| 在 packages 表中 | 已存在 | product_line = 'youjin' |
+| 在 partner_product_commissions 表中 | 已存在 | 迁移脚本已自动初始化 |
+| 在 calculate-commission 函数中 | 未明确识别 | 依赖 fallback 逻辑 |
 
 ---
 
-## 技术细节
+## 解决方案
 
-### 修改后的佣金计算逻辑
+只需修改 `calculate-commission` 边缘函数的 `getProductLine()` 函数，将有劲合伙人产品明确加入有劲产品列表。
 
+---
+
+## 修改内容
+
+### 文件：supabase/functions/calculate-commission/index.ts
+
+**修改前（第 5-14 行）**：
 ```typescript
-// calculate-commission/index.ts
-async function getCommissionRates(
-  supabase: any,
-  partnerLevelRuleId: string,
-  packageKey: string
-) {
-  // 1. 先查产品专属配置
-  const { data: productConfig } = await supabase
-    .from('partner_product_commissions')
-    .select('*')
-    .eq('partner_level_rule_id', partnerLevelRuleId)
-    .eq('package_key', packageKey)
-    .single();
+function getProductLine(orderType: string): 'youjin' | 'bloom' {
+  // 有劲产品线：基础会员、365会员、尝鲜会员
+  const youjinProducts = ['basic', 'member365', 'trial', 'package_trial', 'package_365', 'ai_coach_upgrade'];
+  // 绽放产品线：合伙人套餐
+  const bloomProducts = ['partner', 'partner_package'];
+  
+  if (youjinProducts.includes(orderType)) return 'youjin';
+  if (bloomProducts.includes(orderType)) return 'bloom';
+  return 'youjin';
+}
+```
 
-  if (productConfig) {
-    if (!productConfig.is_enabled) {
-      return null; // 产品不参与分成
-    }
-    return {
-      l1: productConfig.commission_rate_l1,
-      l2: productConfig.commission_rate_l2
-    };
-  }
-
-  // 2. 回退到等级默认佣金率
-  const { data: levelRule } = await supabase
-    .from('partner_level_rules')
-    .select('commission_rate_l1, commission_rate_l2')
-    .eq('id', partnerLevelRuleId)
-    .single();
-
-  return levelRule ? {
-    l1: levelRule.commission_rate_l1,
-    l2: levelRule.commission_rate_l2
-  } : null;
+**修改后**：
+```typescript
+function getProductLine(orderType: string): 'youjin' | 'bloom' {
+  // 有劲产品线：会员、测评、训练营、有劲合伙人
+  const youjinProducts = [
+    'basic', 'member365', 'trial', 'package_trial', 'package_365',
+    'ai_coach_upgrade',
+    'wealth_block_assessment', 'scl90_report', 'emotion_health_assessment',
+    'camp-emotion_journal_21', 'wealth_camp_7day',
+    'youjin_partner_l1', 'youjin_partner_l2', 'youjin_partner_l3'
+  ];
+  // 绽放产品线：绽放合伙人
+  const bloomProducts = ['partner', 'partner_package', 'bloom_partner'];
+  
+  if (youjinProducts.includes(orderType)) return 'youjin';
+  if (bloomProducts.includes(orderType)) return 'bloom';
+  return 'youjin';
 }
 ```
 
 ---
 
-## 初始化数据
+## 关键变更说明
 
-为保持兼容，可选择性初始化当前有劲产品的默认配置：
-
-```sql
--- 为每个有劲等级插入默认产品配置
-INSERT INTO partner_product_commissions (partner_level_rule_id, package_key, commission_rate_l1, commission_rate_l2, is_enabled)
-SELECT 
-  plr.id,
-  p.package_key,
-  plr.commission_rate_l1,
-  plr.commission_rate_l2,
-  true
-FROM partner_level_rules plr
-CROSS JOIN packages p
-WHERE plr.partner_type = 'youjin' 
-  AND p.product_line = 'youjin'
-  AND p.is_active = true;
-```
+1. **新增有劲合伙人产品**：`youjin_partner_l1`、`youjin_partner_l2`、`youjin_partner_l3`
+2. **补充其他有劲产品**：测评类（`wealth_block_assessment`、`scl90_report`、`emotion_health_assessment`）和训练营类（`camp-emotion_journal_21`、`wealth_camp_7day`）
+3. **补充绽放产品**：`bloom_partner`
 
 ---
 
-## 优势
+## 佣金配置效果
 
-1. **灵活配置**：可按产品、按等级设置不同佣金率
-2. **排除产品**：可禁用某些产品不参与分成
-3. **向后兼容**：未配置的产品使用默认佣金率
-4. **可视化管理**：在后台直观配置每个产品的分成规则
+修改后，管理后台（/admin/partner-levels）的「产品佣金配置」Tab 将显示这些产品：
+
+| 产品 | 价格 | 默认佣金（L1） | 可单独配置 |
+|:-----|:-----|:--------------|:----------|
+| 初级合伙人 (youjin_partner_l1) | ¥792 | 20% | 是 |
+| 高级合伙人 (youjin_partner_l2) | ¥3,217 | 20% | 是 |
+| 钻石合伙人 (youjin_partner_l3) | ¥4,950 | 20% | 是 |
+
+你可以在后台为这些产品设置不同的佣金率，或禁用某个等级的分成。
+
+---
+
+## 修改范围
+
+| 文件 | 操作 |
+|:-----|:-----|
+| supabase/functions/calculate-commission/index.ts | 修改 getProductLine() 函数 |
+
+**无需数据库变更**：产品佣金配置已在之前的迁移中自动初始化。
