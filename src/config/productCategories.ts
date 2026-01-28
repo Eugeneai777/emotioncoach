@@ -11,7 +11,7 @@ export interface ProductCategory {
 export const productCategories: ProductCategory[] = [
   {
     id: 'youjin-member',
-    name: '有劲会员',
+    name: '有劲合伙人',
     emoji: '💎',
     gradient: 'from-orange-500 to-amber-500',
     description: '日常成长必备，性价比之选',
