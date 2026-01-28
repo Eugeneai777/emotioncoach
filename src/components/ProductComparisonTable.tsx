@@ -593,10 +593,10 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {/* AI对话点数 */}
+              {/* 尝鲜会员 */}
               <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800 text-center">
-                <span className="text-2xl">🤖</span>
-                <p className="font-medium text-sm mt-1">AI对话点数</p>
+                <span className="text-2xl">🎫</span>
+                <p className="font-medium text-sm mt-1">尝鲜会员</p>
                 <p className="text-xs text-blue-600 dark:text-blue-400">50点</p>
               </div>
               

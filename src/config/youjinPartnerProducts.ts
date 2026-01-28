@@ -2,7 +2,7 @@
 
 // 体验包包含的 4 项内容
 export const experiencePackageItems = [
-  { key: 'ai_points', name: 'AI对话点数', value: '50点', icon: '🤖' },
+  { key: 'ai_points', name: '尝鲜会员', value: '50点', icon: '🎫' },
   { key: 'emotion_health', name: '情绪健康测评', value: '1次', icon: '💚' },
   { key: 'scl90', name: 'SCL-90心理测评', value: '1次', icon: '📋' },
   { key: 'wealth_block', name: '财富卡点测评', value: '1次', icon: '💰' },
