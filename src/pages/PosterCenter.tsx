@@ -287,7 +287,10 @@ export default function PosterCenter() {
   // Quick mode - Scene selection step
   if (mode === 'quick' && quickStep === 'scene' && currentTemplate) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
           <div className="flex items-center justify-between max-w-lg mx-auto">
             <Button variant="ghost" size="icon" onClick={() => setQuickStep('template')}>
@@ -330,7 +333,10 @@ export default function PosterCenter() {
   // Expert mode - Layout selection step
   if (mode === 'expert' && expertStep === 'layout' && customCopy) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
           <div className="flex items-center justify-between max-w-lg mx-auto">
             <Button variant="ghost" size="icon" onClick={() => {
@@ -381,7 +387,10 @@ export default function PosterCenter() {
   // Expert mode - Background selection step
   if (mode === 'expert' && expertStep === 'background' && customCopy) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
           <div className="flex items-center justify-between max-w-lg mx-auto">
             <Button variant="ghost" size="icon" onClick={() => setExpertStep('layout')}>
@@ -476,7 +485,10 @@ export default function PosterCenter() {
   // Expert mode with custom copy - preview step
   if (mode === 'expert' && expertStep === 'preview' && customCopy) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
           <div className="flex items-center justify-between max-w-lg mx-auto">
@@ -578,7 +590,10 @@ export default function PosterCenter() {
 
   // Main selection view
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="posterCenter" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
