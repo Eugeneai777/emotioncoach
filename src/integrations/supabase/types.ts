@@ -8127,9 +8127,10 @@ export type Database = {
       }
       add_coaching_balance: {
         Args: {
-          p_amount: number
+          p_bonus_amount?: number
           p_description?: string
           p_order_no?: string
+          p_paid_amount: number
           p_user_id: string
         }
         Returns: {
@@ -8167,8 +8168,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: {
+          bonus_deducted: number
           message: string
           new_balance: number
+          paid_deducted: number
           success: boolean
         }[]
       }
@@ -8198,9 +8201,10 @@ export type Database = {
       }
       refund_coaching_balance: {
         Args: {
-          p_amount: number
           p_appointment_id?: string
+          p_bonus_amount?: number
           p_description?: string
+          p_paid_amount: number
           p_user_id: string
         }
         Returns: {

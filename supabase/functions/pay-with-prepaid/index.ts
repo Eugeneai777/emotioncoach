@@ -116,7 +116,7 @@ serve(async (req) => {
       throw new Error('Failed to create appointment');
     }
 
-    // Deduct balance using atomic function
+    // Deduct balance using atomic function (prioritizes bonus, returns paid/bonus breakdown)
     const { data: deductResult, error: deductError } = await supabase
       .rpc('deduct_coaching_balance', {
         p_user_id: user.id,
@@ -138,6 +138,21 @@ serve(async (req) => {
       await supabase.from('coaching_appointments').delete().eq('id', appointment.id);
       throw new Error(deductResultRow?.message || '扣款失败');
     }
+
+    // Extract paid/bonus portions from deduction result
+    const paidPortion = deductResultRow.paid_deducted || 0;
+    const bonusPortion = deductResultRow.bonus_deducted || 0;
+
+    // Update appointment with paid/bonus breakdown (for settlement calculation)
+    await supabase
+      .from('coaching_appointments')
+      .update({
+        paid_portion: paidPortion,
+        bonus_portion: bonusPortion,
+      })
+      .eq('id', appointment.id);
+
+    console.log(`Balance deducted: paid=${paidPortion}, bonus=${bonusPortion}`);
 
     // Update slot status to booked
     await supabase

@@ -341,22 +341,26 @@ serve(async (req) => {
       }
     }
 
-    // 如果是预付卡充值订单，增加用户教练预付卡余额
+    // 如果是预付卡充值订单，增加用户教练预付卡余额（区分实付和赠送）
     if (order.order_type === 'prepaid_recharge') {
       // 获取预付卡套餐信息
       const { data: prepaidPkg } = await supabase
         .from('coaching_prepaid_packages')
-        .select('total_value, package_name')
+        .select('price, bonus_amount, total_value, package_name')
         .eq('package_key', order.package_key)
         .single();
 
-      const rechargeAmount = prepaidPkg?.total_value || order.amount;
+      // 实付金额 = 套餐价格（用户实际支付的）
+      const paidAmount = prepaidPkg?.price || order.amount;
+      // 赠送金额 = 套餐赠送
+      const bonusAmount = prepaidPkg?.bonus_amount || 0;
 
-      // 调用原子性充值函数
+      // 调用新版原子性充值函数（分别记录 paid 和 bonus）
       const { data: addResult, error: addError } = await supabase
         .rpc('add_coaching_balance', {
           p_user_id: order.user_id,
-          p_amount: rechargeAmount,
+          p_paid_amount: paidAmount,
+          p_bonus_amount: bonusAmount,
           p_order_no: orderNo,
           p_description: `充值: ${prepaidPkg?.package_name || order.package_key}`,
         });
@@ -366,7 +370,7 @@ serve(async (req) => {
       } else {
         const resultRow = addResult?.[0];
         if (resultRow?.success) {
-          console.log('Coaching prepaid balance added:', order.user_id, '+', rechargeAmount);
+          console.log('Coaching prepaid balance added:', order.user_id, 'paid:', paidAmount, 'bonus:', bonusAmount);
         } else {
           console.error('Add coaching balance failed:', resultRow?.message);
         }
