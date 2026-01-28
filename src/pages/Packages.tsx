@@ -26,7 +26,7 @@ export default function Packages() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showTour, completeTour } = usePageTour('packages');
-  const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
+  const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach'>('youjin-member');
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
   
   // 支付弹窗状态
@@ -100,8 +100,6 @@ export default function Packages() {
         <PageHeader title="产品中心" />
 
         <div className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
-          {/* 教练预付卡入口 */}
-          {user && <PrepaidBalanceCard />}
           {/* 产品分类 Tabs - 简化版 + 横滑提示 */}
           <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
             <HorizontalScrollHint className="w-full">

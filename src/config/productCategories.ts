@@ -1,5 +1,5 @@
 export interface ProductCategory {
-  id: 'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner';
+  id: 'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach';
   name: string;
   emoji: string;
   gradient: string;
@@ -53,5 +53,14 @@ export const productCategories: ProductCategory[] = [
     description: '事业合伙人，共创财富未来',
     tagline: '共创财富未来',
     buttonGradient: 'from-pink-500/20 to-purple-500/20'
+  },
+  {
+    id: 'bloom-coach',
+    name: '绽放教练',
+    emoji: '🌟',
+    gradient: 'from-emerald-500 to-teal-500',
+    description: '真人教练1对1咨询',
+    tagline: '预付卡充值',
+    buttonGradient: 'from-emerald-500/20 to-teal-500/20'
   }
 ];
