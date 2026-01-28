@@ -1,146 +1,60 @@
 
 
-# 产品中心 - 绽放教练 Tab 实现计划
+# 产品中心页面滚动问题修复计划
 
-## 概述
+## 问题分析
 
-将教练咨询预付卡入口从页面顶部卡片移至 Tab 导航中，与现有的"有劲会员"、"训练营"、"合伙人"等选项并列，作为"绽放教练"分类。
+经过排查，发现产品中心 (`Packages.tsx`) 页面无法上下滚动的原因是：
 
----
+| 当前状态 | 问题 |
+|:---------|:-----|
+| 使用 `min-h-screen` 容器 | 没有显式启用垂直滚动 |
+| 没有 `overflow-y-auto` | 内容溢出时无法滚动 |
+| 缺少 `overscroll-contain` | 移动端滚动行为不一致 |
 
-## 当前状态
+## 项目滚动标准
 
-| 现状 | 问题 |
-|:-----|:-----|
-| `PrepaidBalanceCard` 直接显示在页面顶部 | 占据空间，破坏 Tab 导航的统一性 |
-| Tab 选项仅有 5 个分类 | 缺少教练咨询预付卡的专属入口 |
+根据项目的移动端优化规范（memory: `unified-scrolling-container-standard`），所有主要页面应使用统一的滚动容器：
 
----
-
-## 改动方案
-
-### 1. 修改产品分类配置
-
-**文件**: `src/config/productCategories.ts`
-
-添加新的分类 `bloom-coach`：
-
-```typescript
-{
-  id: 'bloom-coach',
-  name: '绽放教练',
-  emoji: '🌟',
-  gradient: 'from-emerald-500 to-teal-500',
-  description: '真人教练1对1咨询',
-  tagline: '预付卡充值',
-  buttonGradient: 'from-emerald-500/20 to-teal-500/20'
-}
+```tsx
+<div 
+  className="h-screen overflow-y-auto overscroll-contain bg-background"
+  style={{ WebkitOverflowScrolling: 'touch' }}
+>
 ```
 
-Tab 顺序：有劲会员 → 有劲训练营 → 有劲合伙人 → 绽放训练营 → 绽放合伙人 → **绽放教练**
+正常工作的页面示例：
+- `CoachSpace.tsx`: 使用此模式
+- `Courses.tsx`: 使用此模式  
+- `CampList.tsx`: 使用此模式
 
 ---
 
-### 2. 更新 ProductComparisonTable 组件
+## 修复方案
 
-**文件**: `src/components/ProductComparisonTable.tsx`
+### 修改文件: `src/pages/Packages.tsx`
 
-- 更新 `ProductComparisonTableProps` 接口，添加 `bloom-coach` 分类支持
-- 添加 `bloom-coach` 分类的渲染逻辑，展示：
-  - 预付卡余额卡片（`PrepaidBalanceCard`）
-  - 充值套餐列表
-  - 消费记录入口
-
----
-
-### 3. 更新 Packages 页面
-
-**文件**: `src/pages/Packages.tsx`
-
-- **移除**顶部的 `{user && <PrepaidBalanceCard />}`
-- **更新** `activeTab` 类型定义，添加 `bloom-coach`
-
----
-
-## UI 设计
-
-### 绽放教练 Tab 内容
-
+**当前代码（第99行）:**
+```tsx
+<div className="min-h-screen bg-background">
 ```
-┌─────────────────────────────────────────┐
-│  🌟 绽放教练                            │
-│  预付卡充值                              │
-├─────────────────────────────────────────┤
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │  💳 教练咨询预付卡               │   │
-│  │  余额: ¥ 550.00                  │   │
-│  │  累计充值 ¥500  累计消费 ¥0       │   │
-│  │  [充值]  [记录]                   │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  充值套餐                                │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐│
-│  │ ¥100     │ │ ¥500     │ │ ¥1000    ││
-│  │ 入门卡   │ │ 送¥50    │ │ 送¥150   ││
-│  └──────────┘ └──────────┘ └──────────┘│
-│                                         │
-│  [立即充值 ¥100]                         │
-└─────────────────────────────────────────┘
+
+**修改为:**
+```tsx
+<div 
+  className="h-screen overflow-y-auto overscroll-contain bg-background"
+  style={{ WebkitOverflowScrolling: 'touch' }}
+>
 ```
 
 ---
 
-## 技术细节
+## 修复原理
 
-### 类型更新
-
-```typescript
-// productCategories.ts - 更新接口
-export interface ProductCategory {
-  id: 'youjin-member' | 'youjin-camp' | 'youjin-partner' 
-    | 'bloom-camp' | 'bloom-partner' | 'bloom-coach'; // 新增
-  // ...
-}
-
-// ProductComparisonTable.tsx - 更新 Props
-interface ProductComparisonTableProps {
-  category: 'youjin-member' | 'youjin-camp' | 'youjin-partner' 
-    | 'bloom-camp' | 'bloom-partner' | 'bloom-coach'; // 新增
-  onPurchase?: (packageInfo: PackageInfo) => void;
-}
-```
-
-### 绽放教练内容组件
-
-在 `ProductComparisonTable` 中添加新的条件分支：
-
-```typescript
-if (category === 'bloom-coach') {
-  return (
-    <div className="space-y-3">
-      {/* 预付卡余额卡片 */}
-      <PrepaidBalanceCard />
-      
-      {/* 充值说明 */}
-      <MobileCard className="bg-gradient-to-r from-emerald-50 to-teal-50">
-        <div className="text-center">
-          <span className="text-4xl">🌟</span>
-          <h3 className="font-bold mt-2">真人教练1对1咨询</h3>
-          <p className="text-sm text-muted-foreground">
-            预充值享优惠，余额可用于预约所有教练服务
-          </p>
-        </div>
-      </MobileCard>
-      
-      {/* 导航到教练列表 */}
-      <Button onClick={() => navigate('/human-coaches')}>
-        浏览教练 →
-      </Button>
-    </div>
-  );
-}
-```
+1. **`h-screen`**: 固定容器高度为视口高度，与 `overflow-y-auto` 配合使滚动生效
+2. **`overflow-y-auto`**: 内容超出时显示垂直滚动条
+3. **`overscroll-contain`**: 防止滚动到边界时触发浏览器默认行为（如下拉刷新）
+4. **`WebkitOverflowScrolling: touch`**: iOS Safari 平滑滚动优化
 
 ---
 
@@ -148,15 +62,14 @@ if (category === 'bloom-coach') {
 
 | 文件 | 操作 | 说明 |
 |:-----|:-----|:-----|
-| `src/config/productCategories.ts` | 修改 | 添加 `bloom-coach` 分类 |
-| `src/components/ProductComparisonTable.tsx` | 修改 | 添加 `bloom-coach` 渲染逻辑 |
-| `src/pages/Packages.tsx` | 修改 | 移除顶部卡片，更新 Tab 类型 |
+| `src/pages/Packages.tsx` | 修改 | 更新根容器为统一滚动标准 |
 
 ---
 
-## 实现顺序
+## 验证步骤
 
-1. 更新 `productCategories.ts` - 添加新分类
-2. 更新 `ProductComparisonTable.tsx` - 添加渲染逻辑
-3. 更新 `Packages.tsx` - 移除顶部卡片，支持新 Tab
+修复后验证：
+1. 在所有 Tab 页（有劲会员、有劲训练营、绽放教练等）都可以上下滚动
+2. 移动端滚动流畅无卡顿
+3. 滚动到边界时不会触发浏览器下拉刷新
 
