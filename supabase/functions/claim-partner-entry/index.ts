@@ -184,14 +184,58 @@ Deno.serve(async (req) => {
       })
       .eq('id', partner_id);
 
-    console.log(`Successfully claimed experience package (${quotaAmount} quota, ${durationDays} days) for user ${user.id}, deducted 1 from partner ${partner_id}`);
+    // Grant free assessments (Emotion Health + SCL-90)
+    const assessmentPackages = [
+      { package_key: 'emotion_health_assessment', package_name: '情绪健康测评' },
+      { package_key: 'scl90_report', package_name: 'SCL-90心理测评报告' }
+    ];
+
+    const grantedAssessments: string[] = [];
+
+    for (const pkg of assessmentPackages) {
+      // Check if user already has this assessment
+      const { data: existingOrder } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('package_key', pkg.package_key)
+        .eq('status', 'paid')
+        .maybeSingle();
+
+      if (!existingOrder) {
+        // Create gift order
+        const orderNo = `YJ${Date.now()}GIFT${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+        
+        const { error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            package_key: pkg.package_key,
+            package_name: pkg.package_name,
+            amount: 0,
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            order_no: orderNo
+          });
+
+        if (!orderError) {
+          grantedAssessments.push(pkg.package_key);
+          console.log(`Granted ${pkg.package_key} to user ${user.id}`);
+        } else {
+          console.error(`Failed to grant ${pkg.package_key}:`, orderError);
+        }
+      }
+    }
+
+    console.log(`Successfully claimed experience package (${quotaAmount} quota, ${durationDays} days, assessments: ${grantedAssessments.join(', ')}) for user ${user.id}, deducted 1 from partner ${partner_id}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `成功领取体验套餐！`,
         quota_amount: quotaAmount,
-        duration_days: durationDays
+        duration_days: durationDays,
+        included_assessments: grantedAssessments
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
