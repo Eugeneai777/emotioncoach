@@ -82,37 +82,37 @@ const YoujinPartnerPlan = () => {
     }
   };
 
-  // 净利润对比数据
+  // 净利润对比数据（基于新佣金：L1=18%, L2=30%+5%, L3=50%+12%）
   const profitData = [{
     name: '初级合伙人',
-    净利润: 2388,
+    净利润: 1959,  // 990 + 30*(365*0.18) - 792 = 990 + 1971 - 792
     fill: '#f97316'
   }, {
     name: '高级合伙人',
-    净利润: 20895,
+    净利润: 18158,  // 4950 + 150*(365*0.30) + 二级收益 - 3217
     fill: '#ea580c'
   }, {
     name: '钻石合伙人',
-    净利润: 66544,
+    净利润: 68394,  // 9900 + 300*(365*0.50) + 二级12% - 4950
     fill: '#c2410c'
   }];
 
-  // 收益构成数据
+  // 收益构成数据（基于新佣金）
   const incomeBreakdownData = [{
     name: '初级',
     体验包收入: 990,
-    '365佣金': 2190,
+    '365佣金': 1971,  // 30 × (365 × 18%)
     二级佣金: 0
   }, {
     name: '高级',
     体验包收入: 4950,
-    '365佣金': 19162,
-    二级佣金: 0
+    '365佣金': 16425,  // 150 × (365 × 30%)
+    二级佣金: 0  // 实际有5%二级，简化展示
   }, {
     name: '钻石',
     体验包收入: 9900,
-    '365佣金': 54750,
-    二级佣金: 6844
+    '365佣金': 54750,  // 300 × (365 × 50%)
+    二级佣金: 8213  // 二级12%
   }];
   const handleJoin = (levelId: string) => {
     const level = youjinPartnerLevels.find(l => l.level === levelId);
@@ -578,7 +578,7 @@ const YoujinPartnerPlan = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
-                    20%全产品佣金
+                    18%全产品佣金
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
@@ -607,11 +607,11 @@ const YoujinPartnerPlan = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
-                    35%全产品佣金
+                    30%全产品佣金
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
-                    专属二维码
+                    5%二级佣金
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
@@ -643,7 +643,7 @@ const YoujinPartnerPlan = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
-                    <span className="font-bold">10%二级佣金</span>
+                    <span className="font-bold">12%二级佣金</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4" />
@@ -776,16 +776,16 @@ const YoujinPartnerPlan = () => {
                         <td className="py-2 text-right font-medium">¥990</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">30 ×（365 × 20%）</td>
-                        <td className="py-2 text-right font-medium">¥2,190</td>
+                        <td className="py-2">30 ×（365 × 18%）</td>
+                        <td className="py-2 text-right font-medium">¥1,971</td>
                       </tr>
                       <tr className="border-b bg-orange-50">
                         <td className="py-2 font-bold">总收入</td>
-                        <td className="py-2 text-right font-bold text-orange-600">¥3,180</td>
+                        <td className="py-2 text-right font-bold text-orange-600">¥2,961</td>
                       </tr>
                       <tr className="bg-green-50">
                         <td className="py-2 font-bold">净利润</td>
-                        <td className="py-2 text-right font-bold text-green-600">¥2,388</td>
+                        <td className="py-2 text-right font-bold text-green-600">¥2,169</td>
                       </tr>
                     </tbody>
                   </table>
@@ -808,16 +808,16 @@ const YoujinPartnerPlan = () => {
                         <td className="py-2 text-right font-medium">¥4,950</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">150 ×（365 × 35%）</td>
-                        <td className="py-2 text-right font-medium">¥19,162.5</td>
+                        <td className="py-2">150 ×（365 × 30%）</td>
+                        <td className="py-2 text-right font-medium">¥16,425</td>
                       </tr>
                       <tr className="border-b bg-orange-50">
                         <td className="py-2 font-bold">总收入</td>
-                        <td className="py-2 text-right font-bold text-orange-600">¥24,112.5</td>
+                        <td className="py-2 text-right font-bold text-orange-600">¥21,375</td>
                       </tr>
                       <tr className="bg-green-50">
                         <td className="py-2 font-bold">净利润</td>
-                        <td className="py-2 text-right font-bold text-green-600">¥20,895.5</td>
+                        <td className="py-2 text-right font-bold text-green-600">¥18,158</td>
                       </tr>
                     </tbody>
                   </table>

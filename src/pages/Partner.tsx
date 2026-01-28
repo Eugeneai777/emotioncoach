@@ -109,7 +109,7 @@ export default function Partner() {
                   </div>
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm">全产品20%-50%佣金</span>
+                    <span className="text-sm">全产品18%-50%佣金</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-orange-500" />
@@ -165,7 +165,7 @@ export default function Partner() {
                   ]}
                   rows={[
                     { label: "加入方式", values: ["预购体验包", "购买合伙人套餐"] },
-                    { label: "佣金比例", values: ["20%-50%", "30%+10%"] },
+                    { label: "佣金比例", values: ["18%-50%", "30%+10%"] },
                     { label: "可分成产品", values: ["所有有劲产品", "绽放产品"] },
                     { label: "推广方式", values: ["兑换码/二维码", "推广码/链接"] },
                     { label: "适合人群", values: ["长期经营", "快速变现"] },

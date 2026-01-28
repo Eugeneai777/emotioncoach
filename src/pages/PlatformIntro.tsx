@@ -143,8 +143,8 @@ const partnerTypes = [
     emoji: '💪', 
     name: '有劲合伙人', 
     desc: '体验包分发模式',
-    price: '¥999起',
-    features: ['预购体验包', '分发建立关系', '持续佣金20%-50%'],
+    price: '¥792起',
+    features: ['预购体验包', '分发建立关系', '持续佣金18%-50%'],
     route: '/partner/youjin-intro',
     gradient: 'from-orange-400 to-amber-500'
   },
