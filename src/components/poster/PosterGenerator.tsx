@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Share2 } from "lucide-react";
 import { posterTemplates, type SceneType } from "./PosterTemplateGrid";
 import { PosterPreview } from "./PosterPreview";
 import { BackgroundSourceSelector } from "./BackgroundSourceSelector";
@@ -9,6 +9,8 @@ import { UnsplashImagePicker } from "./UnsplashImagePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
+import { executeOneClickShare } from '@/utils/oneClickShare';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from "html2canvas";
 
 interface PosterGeneratorProps {
@@ -42,6 +44,9 @@ export function PosterGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('');
   const [unsplashAuthor, setUnsplashAuthor] = useState<{ name: string; link: string } | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
   const template = posterTemplates.find(t => t.key === templateKey);
@@ -102,6 +107,50 @@ export function PosterGenerator({
     setBackgroundImageUrl(imageUrl);
     setUnsplashAuthor(author || null);
     toast.success("已选择背景图片");
+  };
+
+  // One-click share handler
+  const handleOneClickShare = async () => {
+    if (!posterRef.current || isSharing) return;
+    
+    setIsSharing(true);
+    const toastId = toast.loading('正在生成海报...');
+
+    await executeOneClickShare({
+      cardRef: posterRef,
+      cardName: `${template.name}-推广海报`,
+      onProgress: (status) => {
+        if (status === 'sharing') {
+          toast.dismiss(toastId);
+          toast.loading('正在分享...');
+        } else if (status === 'done') {
+          toast.dismiss(toastId);
+          toast.success('分享成功');
+        } else if (status === 'error') {
+          toast.dismiss(toastId);
+        }
+      },
+      onShowPreview: (blobUrl) => {
+        toast.dismiss(toastId);
+        setPreviewImageUrl(blobUrl);
+        setShowImagePreview(true);
+      },
+      onError: (error) => {
+        toast.dismiss(toastId);
+        toast.error(error);
+      }
+    });
+
+    setIsSharing(false);
+  };
+
+  // Close image preview and cleanup
+  const closeImagePreview = () => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
   };
 
   const handleDownload = async () => {
@@ -258,14 +307,39 @@ export function PosterGenerator({
         </CardContent>
       </Card>
 
-      {/* Download Button */}
-      <Button 
-        className="w-full bg-gradient-to-r from-orange-500 to-amber-500"
-        onClick={handleDownload}
-      >
-        <Download className="w-4 h-4 mr-2" />
-        下载海报
-      </Button>
+      {/* Action Buttons */}
+      <div className="space-y-3">
+        {/* One-Click Share - Primary */}
+        <Button 
+          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+          onClick={handleOneClickShare}
+          disabled={isSharing}
+        >
+          {isSharing ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Share2 className="w-4 h-4 mr-2" />
+          )}
+          一键分享
+        </Button>
+
+        {/* Download - Secondary */}
+        <Button 
+          variant="outline"
+          className="w-full"
+          onClick={handleDownload}
+        >
+          <Download className="w-4 h-4 mr-2" />
+          下载海报
+        </Button>
+      </div>
+
+      {/* Share Image Preview */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={closeImagePreview}
+        imageUrl={previewImageUrl}
+      />
 
       {/* Attribution */}
       {unsplashAuthor && (
@@ -276,7 +350,7 @@ export function PosterGenerator({
 
       {/* Tips */}
       <div className="text-xs text-center text-muted-foreground">
-        <p>📱 长按保存图片到相册，分享到朋友圈或微信群</p>
+        <p>📱 点击一键分享或长按保存图片到相册</p>
       </div>
     </div>
   );

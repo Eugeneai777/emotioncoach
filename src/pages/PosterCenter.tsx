@@ -4,7 +4,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useAuth } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/usePartner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap, Sparkles, Download, Loader2, Copy, Check, ImageIcon, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Zap, Sparkles, Download, Loader2, Copy, Check, ImageIcon, ChevronRight, Share2 } from 'lucide-react';
 import { PosterTemplateGrid, posterTemplates, type SceneType } from '@/components/poster/PosterTemplateGrid';
 import { SceneSelector } from '@/components/poster/SceneSelector';
 import { PosterGenerator } from '@/components/poster/PosterGenerator';
@@ -18,6 +18,8 @@ import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
+import { executeOneClickShare } from '@/utils/oneClickShare';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from 'html2canvas';
 
 type Mode = 'quick' | 'expert';
@@ -44,12 +46,62 @@ export default function PosterCenter() {
   const [savedPosterId, setSavedPosterId] = useState<string | null>(null);
   const [isGeneratingAiBackground, setIsGeneratingAiBackground] = useState(false);
   const [selectedPosterSize, setSelectedPosterSize] = useState<PosterSize>(POSTER_SIZES[0]);
+  const [showPosterPreview, setShowPosterPreview] = useState(false);
+  const [posterPreviewUrl, setPosterPreviewUrl] = useState<string | null>(null);
+  const [isPosterSharing, setIsPosterSharing] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
+
+  // One-click share handler for expert mode poster
+  const handlePosterShare = async () => {
+    if (!posterRef.current || isPosterSharing) return;
+    
+    setIsPosterSharing(true);
+    const toastId = toast.loading('正在生成海报...');
+
+    await executeOneClickShare({
+      cardRef: posterRef,
+      cardName: `AI定制海报-${selectedPosterSize.name}`,
+      onProgress: (status) => {
+        if (status === 'sharing') {
+          toast.dismiss(toastId);
+          toast.loading('正在分享...');
+        } else if (status === 'done') {
+          toast.dismiss(toastId);
+          toast.success('分享成功');
+        } else if (status === 'error') {
+          toast.dismiss(toastId);
+        }
+      },
+      onShowPreview: (blobUrl) => {
+        toast.dismiss(toastId);
+        setPosterPreviewUrl(blobUrl);
+        setShowPosterPreview(true);
+      },
+      onError: (error) => {
+        toast.dismiss(toastId);
+        toast.error(error);
+      }
+    });
+
+    setIsPosterSharing(false);
+  };
+
+  // Close poster preview and cleanup
+  const closePosterPreview = () => {
+    setShowPosterPreview(false);
+    if (posterPreviewUrl) {
+      URL.revokeObjectURL(posterPreviewUrl);
+      setPosterPreviewUrl(null);
+    }
+  };
 
   // Auth check
   if (!user && !authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="text-center">
           <p className="text-muted-foreground mb-4">请先登录后使用海报中心</p>
           <Button onClick={() => navigate('/auth')}>去登录</Button>
@@ -61,7 +113,10 @@ export default function PosterCenter() {
   // Loading state
   if (authLoading || partnerLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
       </div>
     );
@@ -70,7 +125,10 @@ export default function PosterCenter() {
   // Partner check
   if (!partner) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="text-center">
           <p className="text-muted-foreground mb-4">成为合伙人后即可使用海报中心</p>
           <Button onClick={() => navigate('/partner/type')}>了解合伙人计划</Button>
@@ -528,18 +586,33 @@ export default function PosterCenter() {
 
           {/* Action Buttons */}
           <div className="w-full max-w-[300px] space-y-3">
-            {/* Save to Album */}
+            {/* One-Click Share - Primary */}
             <Button
               className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              onClick={handlePosterShare}
+              disabled={isPosterSharing}
+            >
+              {isPosterSharing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Share2 className="w-4 h-4 mr-2" />
+              )}
+              一键分享
+            </Button>
+
+            {/* Download - Secondary */}
+            <Button
+              variant="outline"
+              className="w-full"
               onClick={handleDownload}
               disabled={isDownloading}
             >
               {isDownloading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <ImageIcon className="w-4 h-4 mr-2" />
+                <Download className="w-4 h-4 mr-2" />
               )}
-              保存到相册
+              下载海报
             </Button>
 
             {/* Copy Share Text */}
@@ -584,6 +657,13 @@ export default function PosterCenter() {
             )}
           </div>
         </div>
+
+        {/* Share Image Preview */}
+        <ShareImagePreview
+          open={showPosterPreview}
+          onClose={closePosterPreview}
+          imageUrl={posterPreviewUrl}
+        />
       </div>
     );
   }
