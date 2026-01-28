@@ -589,7 +589,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-xl">🎁</span>
-              <h4 className="font-bold text-base">体验包内容（共4项）</h4>
+              <h4 className="font-bold text-base">可分发的体验包（共4种）</h4>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -625,7 +625,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
               <p className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                <span>用户扫码即可获得以上全部4项权益，并<strong className="text-foreground">永久绑定</strong>为您的学员。</span>
+                <span>合伙人可使用以上4种体验包来转化用户，用户扫码兑换后<strong className="text-foreground">永久绑定</strong>为您的学员。</span>
               </p>
             </div>
           </CardContent>
