@@ -29,8 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Pencil, Plus, X, GripVertical } from "lucide-react";
+import { Pencil, Plus, X, GripVertical, Package } from "lucide-react";
+import { PartnerProductCommissionConfig } from "./PartnerProductCommissionConfig";
 
 interface PartnerLevelRule {
   id: string;
@@ -316,7 +318,7 @@ export function PartnerLevelManagement() {
 
       {/* 编辑对话框 */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-2xl">{editingLevel?.icon}</span>
@@ -325,188 +327,218 @@ export function PartnerLevelManagement() {
           </DialogHeader>
 
           {editingLevel && (
-            <div className="space-y-6 py-4">
-              {/* 基础信息 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>等级价格 (¥)</Label>
-                  <Input
-                    type="number"
-                    value={editingLevel.price}
-                    onChange={(e) =>
-                      setEditingLevel({
-                        ...editingLevel,
-                        price: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>预购门槛 (份)</Label>
-                  <Input
-                    type="number"
-                    value={editingLevel.min_prepurchase}
-                    onChange={(e) =>
-                      setEditingLevel({
-                        ...editingLevel,
-                        min_prepurchase: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-              </div>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="basic">基础信息</TabsTrigger>
+                <TabsTrigger value="benefits">权益配置</TabsTrigger>
+                {editingLevel.partner_type === 'youjin' && (
+                  <TabsTrigger value="products" className="flex items-center gap-1">
+                    <Package className="h-4 w-4" />
+                    产品佣金
+                  </TabsTrigger>
+                )}
+              </TabsList>
 
-              {/* 佣金比例 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>一级佣金 (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={(editingLevel.commission_rate_l1 * 100).toFixed(0)}
-                    onChange={(e) =>
-                      setEditingLevel({
-                        ...editingLevel,
-                        commission_rate_l1: Number(e.target.value) / 100,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>二级佣金 (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={(editingLevel.commission_rate_l2 * 100).toFixed(0)}
-                    onChange={(e) =>
-                      setEditingLevel({
-                        ...editingLevel,
-                        commission_rate_l2: Number(e.target.value) / 100,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* 图标和渐变色 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>等级图标</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {ICON_OPTIONS.map((icon) => (
-                      <Button
-                        key={icon}
-                        variant={editingLevel.icon === icon ? "default" : "outline"}
-                        size="icon"
-                        className="text-xl"
-                        onClick={() =>
-                          setEditingLevel({ ...editingLevel, icon })
-                        }
-                      >
-                        {icon}
-                      </Button>
-                    ))}
+              {/* 基础信息 Tab */}
+              <TabsContent value="basic" className="space-y-6 py-4">
+                {/* 价格和门槛 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>等级价格 (¥)</Label>
+                    <Input
+                      type="number"
+                      value={editingLevel.price}
+                      onChange={(e) =>
+                        setEditingLevel({
+                          ...editingLevel,
+                          price: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>预购门槛 (份)</Label>
+                    <Input
+                      type="number"
+                      value={editingLevel.min_prepurchase}
+                      onChange={(e) =>
+                        setEditingLevel({
+                          ...editingLevel,
+                          min_prepurchase: Number(e.target.value),
+                        })
+                      }
+                    />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>渐变色</Label>
-                  <Select
-                    value={editingLevel.gradient}
-                    onValueChange={(value) =>
-                      setEditingLevel({ ...editingLevel, gradient: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GRADIENT_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-4 h-4 rounded bg-gradient-to-r ${opt.value}`}
-                            />
-                            {opt.label}
-                          </div>
-                        </SelectItem>
+
+                {/* 默认佣金比例 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>默认一级佣金 (%)</Label>
+                    <Input
+                      type="number"
+                      step="1"
+                      value={(editingLevel.commission_rate_l1 * 100).toFixed(0)}
+                      onChange={(e) =>
+                        setEditingLevel({
+                          ...editingLevel,
+                          commission_rate_l1: Number(e.target.value) / 100,
+                        })
+                      }
+                    />
+                    {editingLevel.partner_type === 'youjin' && (
+                      <p className="text-xs text-muted-foreground">未配置产品专属佣金时的默认值</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>默认二级佣金 (%)</Label>
+                    <Input
+                      type="number"
+                      step="1"
+                      value={(editingLevel.commission_rate_l2 * 100).toFixed(0)}
+                      onChange={(e) =>
+                        setEditingLevel({
+                          ...editingLevel,
+                          commission_rate_l2: Number(e.target.value) / 100,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* 图标和渐变色 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>等级图标</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {ICON_OPTIONS.map((icon) => (
+                        <Button
+                          key={icon}
+                          variant={editingLevel.icon === icon ? "default" : "outline"}
+                          size="icon"
+                          className="text-xl"
+                          onClick={() =>
+                            setEditingLevel({ ...editingLevel, icon })
+                          }
+                        >
+                          {icon}
+                        </Button>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* 描述 */}
-              <div className="space-y-2">
-                <Label>等级描述</Label>
-                <Textarea
-                  value={editingLevel.description}
-                  onChange={(e) =>
-                    setEditingLevel({
-                      ...editingLevel,
-                      description: e.target.value,
-                    })
-                  }
-                  rows={2}
-                />
-              </div>
-
-              {/* 权益列表 */}
-              <div className="space-y-2">
-                <Label>权益列表</Label>
-                <div className="space-y-2">
-                  {editingLevel.benefits.map((benefit, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 bg-muted/50 rounded-lg p-2"
-                    >
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                      <span className="flex-1">{benefit}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => removeBenefit(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
-                  ))}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>渐变色</Label>
+                    <Select
+                      value={editingLevel.gradient}
+                      onValueChange={(value) =>
+                        setEditingLevel({ ...editingLevel, gradient: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GRADIENT_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-4 h-4 rounded bg-gradient-to-r ${opt.value}`}
+                              />
+                              {opt.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    placeholder="添加新权益..."
-                    value={newBenefit}
-                    onChange={(e) => setNewBenefit(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addBenefit()}
-                  />
-                  <Button onClick={addBenefit} size="icon">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
 
-              {/* 显示顺序 */}
-              <div className="space-y-2">
-                <Label>显示顺序</Label>
-                <Input
-                  type="number"
-                  value={editingLevel.display_order}
-                  onChange={(e) =>
-                    setEditingLevel({
-                      ...editingLevel,
-                      display_order: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
-            </div>
+                {/* 描述 */}
+                <div className="space-y-2">
+                  <Label>等级描述</Label>
+                  <Textarea
+                    value={editingLevel.description}
+                    onChange={(e) =>
+                      setEditingLevel({
+                        ...editingLevel,
+                        description: e.target.value,
+                      })
+                    }
+                    rows={2}
+                  />
+                </div>
+
+                {/* 显示顺序 */}
+                <div className="space-y-2">
+                  <Label>显示顺序</Label>
+                  <Input
+                    type="number"
+                    value={editingLevel.display_order}
+                    onChange={(e) =>
+                      setEditingLevel({
+                        ...editingLevel,
+                        display_order: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+              </TabsContent>
+
+              {/* 权益配置 Tab */}
+              <TabsContent value="benefits" className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>权益列表</Label>
+                  <div className="space-y-2">
+                    {editingLevel.benefits.map((benefit, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 bg-muted/50 rounded-lg p-2"
+                      >
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                        <span className="flex-1">{benefit}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeBenefit(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="添加新权益..."
+                      value={newBenefit}
+                      onChange={(e) => setNewBenefit(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addBenefit()}
+                    />
+                    <Button onClick={addBenefit} size="icon">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* 产品佣金 Tab (仅有劲合伙人) */}
+              {editingLevel.partner_type === 'youjin' && (
+                <TabsContent value="products" className="py-4">
+                  <PartnerProductCommissionConfig
+                    levelRuleId={editingLevel.id}
+                    defaultL1={editingLevel.commission_rate_l1}
+                    defaultL2={editingLevel.commission_rate_l2}
+                  />
+                </TabsContent>
+              )}
+            </Tabs>
           )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
               取消
             </Button>
-            <Button onClick={handleSave}>保存</Button>
+            <Button onClick={handleSave}>保存基础信息</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
