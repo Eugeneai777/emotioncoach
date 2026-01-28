@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, X, TrendingUp, Users, Zap, Target, Heart, Brain, Sparkles, Crown, Star, Diamond, Share2, AlertTriangle, Copy, Download, ChevronDown } from "lucide-react";
+import { ArrowLeft, Check, X, TrendingUp, Users, Zap, Target, Heart, Brain, Sparkles, Crown, Star, Diamond, Share2, AlertTriangle, Copy, Download, ChevronDown, Wallet, GraduationCap, Baby } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
+import { commissionableProducts } from "@/config/youjinPartnerProducts";
 import { toast } from "sonner";
 import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
 import html2canvas from "html2canvas";
@@ -353,61 +354,67 @@ const YoujinPartnerPlan = () => {
           </div>
           
           <Accordion type="single" collapsible className="space-y-3">
-            {/* Section 04: 为什么AI情绪教练会成为刚需 */}
+            {/* Section 04: 为什么有劲AI产品是刚需 */}
             <AccordionItem value="section-04" className="border rounded-xl bg-white/80 overflow-hidden">
               <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-orange-50/50 transition-colors">
                 <div className="flex items-center gap-3 text-left">
                   <span className="text-2xl">🌍</span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold">04｜为什么"AI 情绪教练"是刚需？</h3>
-                    <p className="text-sm text-muted-foreground font-normal mt-1">WHO/哈佛数据支撑，全球情绪市场规模</p>
+                    <h3 className="text-base sm:text-lg font-bold">04｜为什么"有劲AI产品"是刚需？</h3>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">情绪健康 × 财富成长 × 亲子关系 三大刚需赛道</p>
                   </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-6">
                 <div className="space-y-4 pt-2">
-                  <p className="text-base">因为情绪问题，不是小众，是全民。</p>
-                  <p className="text-muted-foreground">国际机构的结论非常一致：</p>
+                  <p className="text-base">有劲AI覆盖三大刚需场景，每个都是全民痛点：</p>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {/* 情绪健康 */}
                     <Card className="border-l-4 border-l-blue-500">
                       <CardContent className="p-5">
-                        <p className="text-sm text-blue-600 font-medium mb-2">📌 世界卫生组织（WHO）2023</p>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Heart className="h-5 w-5 text-blue-500" />
+                          <p className="text-sm text-blue-600 font-bold">情绪健康赛道</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">📌 WHO 2023</p>
                         <ul className="space-y-1 text-sm">
-                          <li>• 42% 成年人长期处于心理压力</li>
-                          <li>• 70% 没获得情绪支持</li>
-                          <li>• 情绪是"效率下降第一原因"</li>
+                          <li>• 42% 成年人长期心理压力</li>
+                          <li>• 70% 未获得情绪支持</li>
+                          <li>• 情绪是效率下降第一原因</li>
                         </ul>
                       </CardContent>
                     </Card>
 
-                    <Card className="border-l-4 border-l-purple-500">
+                    {/* 财富成长 */}
+                    <Card className="border-l-4 border-l-amber-500">
                       <CardContent className="p-5">
-                        <p className="text-sm text-purple-600 font-medium mb-2">📌 哈佛大学心理健康中心</p>
-                        <p className="text-sm mb-2">每天 5 分钟情绪记录 →</p>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Wallet className="h-5 w-5 text-amber-500" />
+                          <p className="text-sm text-amber-600 font-bold">财富成长赛道</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">📌 麦肯锡 2024</p>
                         <ul className="space-y-1 text-sm">
-                          <li>• 焦虑下降 <span className="font-bold">27%</span></li>
-                          <li>• 行动力提升 <span className="font-bold">34%</span></li>
-                          <li>• 负面循环减少 <span className="font-bold">40%</span></li>
+                          <li>• 68% 中产阶层有财富焦虑</li>
+                          <li>• 多数人卡在"认知卡点"</li>
+                          <li>• AI财富教练需求激增</li>
                         </ul>
                       </CardContent>
                     </Card>
 
+                    {/* 亲子关系 */}
                     <Card className="border-l-4 border-l-green-500">
                       <CardContent className="p-5">
-                        <p className="text-sm text-green-600 font-medium mb-2">📌 APA：73% 情绪困扰可用四部曲改善</p>
-                        <p className="text-sm">
-                          Feel → Name → Recognize → Transform<br />
-                          <span className="text-muted-foreground">（这正是有劲AI情绪教练的方法论）</span>
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-l-4 border-l-orange-500">
-                      <CardContent className="p-5">
-                        <p className="text-sm text-orange-600 font-medium mb-2">📌 全球科技公司年度报告</p>
-                        <p className="text-sm">AI 使用最高频的功能不是生产力，而是：</p>
-                        <p className="font-medium mt-2">情绪陪伴、心理复盘、自我成长。</p>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Baby className="h-5 w-5 text-green-500" />
+                          <p className="text-sm text-green-600 font-bold">亲子关系赛道</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">📌 教育部 2024</p>
+                        <ul className="space-y-1 text-sm">
+                          <li>• 青少年心理问题检出率 20%+</li>
+                          <li>• 85% 家长感到"教育焦虑"</li>
+                          <li>• 亲子沟通成为核心痛点</li>
+                        </ul>
                       </CardContent>
                     </Card>
                   </div>
@@ -415,7 +422,7 @@ const YoujinPartnerPlan = () => {
                   <Card className="bg-gradient-to-r from-orange-100 to-amber-100 border-orange-300">
                     <CardContent className="p-5 text-center">
                       <p className="text-base font-bold text-orange-800">
-                        AI × 情绪支持 = 最大刚需 × 最高频 × 最大留存 × 最容易产生付费意愿的赛道。
+                        有劲AI覆盖情绪 × 财富 × 亲子三大场景 = 最大刚需 × 最高复购 × 最强变现
                       </p>
                     </CardContent>
                   </Card>
@@ -423,64 +430,96 @@ const YoujinPartnerPlan = () => {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Section 05: 为什么每个人都需要 AI 情绪教练 */}
+            {/* Section 05: 有劲产品生态 */}
             <AccordionItem value="section-05" className="border rounded-xl bg-white/80 overflow-hidden">
               <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-orange-50/50 transition-colors">
                 <div className="flex items-center gap-3 text-left">
                   <span className="text-2xl">🧠</span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold">05｜为什么每个人都需要 AI 情绪教练？</h3>
-                    <p className="text-sm text-muted-foreground font-normal mt-1">产品功能与用户留存机制</p>
+                    <h3 className="text-base sm:text-lg font-bold">05｜有劲产品生态：11款可分成产品</h3>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">覆盖情绪、财富、亲子三大场景</p>
                   </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-6">
                 <div className="space-y-4 pt-2">
-                  <p className="text-base">因为你、我、所有人都在经历：</p>
+                  <p className="text-base">有劲提供完整的产品矩阵，每款都可获得佣金：</p>
 
-                  <div className="flex flex-wrap gap-2">
-                    {['情绪波动', '内耗', '不安全感', '关系困扰', '压力过载', '睡眠问题', '想改变又无从下手'].map((item, i) => (
-                      <Badge key={i} variant="secondary" className="text-sm py-1.5 px-3">
-                        {item}
-                      </Badge>
-                    ))}
-                  </div>
+                  {/* 产品分类展示 */}
+                  <div className="space-y-3">
+                    {/* 基础产品 */}
+                    <Card className="border-l-4 border-l-blue-400">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">🎫</span>
+                          <p className="font-bold text-sm">基础产品（4款 × ¥9.9）</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">尝鲜会员</Badge>
+                          <Badge variant="secondary">情绪健康测评</Badge>
+                          <Badge variant="secondary">SCL-90心理测评</Badge>
+                          <Badge variant="secondary">财富卡点测评</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  <p className="text-base">AI 情绪教练提供：</p>
+                    {/* 年度会员 */}
+                    <Card className="border-l-4 border-l-amber-500 bg-amber-50/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">📅</span>
+                          <p className="font-bold text-sm">年度会员（1款）</p>
+                          <Badge className="bg-amber-100 text-amber-700 text-xs">核心分成来源</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className="bg-amber-500 text-white">365会员 ¥365</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { icon: Heart, label: '科学四部曲' },
-                      { icon: Target, label: '21 天训练营' },
-                      { icon: Sparkles, label: '宣言卡' },
-                      { icon: Zap, label: '能量测评' },
-                      { icon: Brain, label: '情绪词云' },
-                      { icon: TrendingUp, label: '每日情绪日记' },
-                      { icon: Users, label: '自动成长报告' }
-                    ].map((item, i) => (
-                      <Card key={i} className="bg-white/80">
-                        <CardContent className="p-4 flex items-center gap-3">
-                          <item.icon className="h-5 w-5 text-orange-500" />
-                          <span className="text-sm font-medium">{item.label}</span>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {/* 训练营 */}
+                    <Card className="border-l-4 border-l-orange-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">🔥</span>
+                          <p className="font-bold text-sm">训练营（3款 × ¥299）</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">21天情绪日记训练营</Badge>
+                          <Badge variant="secondary">财富觉醒训练营</Badge>
+                          <Badge variant="secondary">青少年困境突破营</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 合伙人套餐 */}
+                    <Card className="border-l-4 border-l-purple-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">💎</span>
+                          <p className="font-bold text-sm">合伙人套餐（3款）</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">初级 ¥792</Badge>
+                          <Badge variant="secondary">高级 ¥3217</Badge>
+                          <Badge variant="secondary">钻石 ¥4950</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
 
                   <Card className="border-l-4 border-l-orange-500 bg-orange-50/50">
                     <CardContent className="p-5">
-                      <p className="text-base">而且最关键的是：</p>
+                      <p className="text-base">产品覆盖用户全生命周期：</p>
                       <blockquote className="text-lg font-bold text-orange-700 mt-2">
-                        用户一旦连续使用 50 次，就会感受到明显改善，而无法离开。
+                        体验包引流 → 测评破冰 → 训练营深度服务 → 年度会员持续变现
                       </blockquote>
                     </CardContent>
                   </Card>
 
-                  <p className="text-center text-base">这正是一个最适合合伙人参与的商业模式：</p>
-                  
                   <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
                     <CardContent className="p-5 text-center">
-                      <p className="text-xl font-bold">高频 → 高留存 → 高复购 → 高收益</p>
+                      <p className="text-xl font-bold">11款产品 × 三大场景 = 多元收益来源</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -586,9 +625,9 @@ const YoujinPartnerPlan = () => {
                     <div className="space-y-4">
                       {[
                         { num: '1️⃣', title: '故事吸引', desc: '分享你的真实成长故事' },
-                        { num: '2️⃣', title: '体验包产生惊艳', desc: '用户低门槛体验：AI对话50点 + 3项专业测评（共4项权益）' },
-                        { num: '3️⃣', title: 'AI 陪伴形成依赖', desc: '持续使用产生习惯与信任' },
-                        { num: '4️⃣', title: '自然升级形成收益', desc: '用户主动升级为年度会员' },
+                        { num: '2️⃣', title: '体验包产生惊艳', desc: '4项体验权益（50点对话 + 3项测评）低门槛体验' },
+                        { num: '3️⃣', title: 'AI 陪伴形成依赖', desc: 'AI情绪教练/财富教练/亲子教练持续陪伴' },
+                        { num: '4️⃣', title: '自然升级形成收益', desc: '用户升级365会员 或 购买训练营（情绪/财富/亲子）' },
                         { num: '5️⃣', title: '团队裂变形成复利', desc: '用户成为新合伙人继续传播' }
                       ].map((item, i) => (
                         <div key={i} className="relative pl-14">
@@ -618,6 +657,27 @@ const YoujinPartnerPlan = () => {
             </AccordionItem>
           </Accordion>
         </div>
+
+        {/* ========== 可分成产品一览 ========== */}
+        <section className="mb-12 space-y-4">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-orange-500" />
+            可分成产品一览（11款）
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-2">
+            {commissionableProducts.map((product) => (
+              <Card key={product.name} className={`transition-all duration-200 hover:shadow-md ${product.highlight ? 'border-orange-300 bg-orange-50 ring-1 ring-orange-200' : ''}`}>
+                <CardContent className="p-3">
+                  <p className="font-medium text-sm">{product.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {product.category} · ¥{product.price}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
 
         {/* ========== 第四区块：行动区（08-10） ========== */}
         <div className="space-y-12">
@@ -1108,7 +1168,7 @@ const YoujinPartnerPlan = () => {
                   你只需要：<span style={{ fontWeight: '600', color: '#ea580c' }}>分享真实成长故事</span>
                 </p>
                 <p style={{ fontSize: '14px', color: '#57534e' }}>
-                  AI 替你：陪伴用户、分析情绪、生成报告、推动转化
+                  可推广：<span style={{ fontWeight: '600' }}>11款产品</span>覆盖情绪、财富、亲子三大场景
                 </p>
               </div>
 
