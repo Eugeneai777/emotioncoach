@@ -14,6 +14,7 @@ import { EnergyStudioToolsManagement } from "@/components/admin/EnergyStudioTool
 import { PartnerManagement } from "@/components/admin/PartnerManagement";
 import { PackagesManagement } from "@/components/admin/PackagesManagement";
 import { CoachTemplatesManagement } from "@/components/admin/CoachTemplatesManagement";
+import { CampTemplatesManagement } from "@/components/admin/CampTemplatesManagement";
 import KnowledgeBaseManagement from "@/components/admin/KnowledgeBaseManagement";
 import CustomerServiceManagement from "@/components/admin/CustomerServiceManagement";
 import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
@@ -29,6 +30,7 @@ function AdminRoutes() {
       <Route path="orders" element={<OrdersTable />} />
       <Route path="partners" element={<PartnerManagement />} />
       <Route path="coaches" element={<CoachTemplatesManagement />} />
+      <Route path="camps" element={<CampTemplatesManagement />} />
       <Route path="videos" element={<VideoCoursesManagement />} />
       <Route path="knowledge" element={<KnowledgeBaseManagement />} />
       <Route path="tools" element={<EnergyStudioToolsManagement />} />

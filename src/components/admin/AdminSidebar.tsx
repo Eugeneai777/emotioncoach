@@ -22,7 +22,8 @@ import {
   UserCheck,
   Flower2,
   Wallet,
-  Share2
+  Share2,
+  Tent
 } from "lucide-react";
 import {
   Sidebar,
@@ -72,6 +73,7 @@ const NAV_GROUPS = [
     items: [
       { key: "coaches", label: "教练模板", path: "/admin/coaches", icon: GraduationCap },
       { key: "human-coaches", label: "真人教练", path: "/admin/human-coaches", icon: UserCheck },
+      { key: "camps", label: "训练营管理", path: "/admin/camps", icon: Tent },
       { key: "videos", label: "视频课程", path: "/admin/videos", icon: Video },
       { key: "knowledge", label: "知识库", path: "/admin/knowledge", icon: BookOpen },
       { key: "tools", label: "生活馆工具", path: "/admin/tools", icon: Wrench }
