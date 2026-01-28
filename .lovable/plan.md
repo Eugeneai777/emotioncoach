@@ -1,206 +1,199 @@
 
 
-## 分享按钮与统一分享模块审计方案
+## 全站分享按钮完整审计与统一管理方案
 
-### 当前项目分享体系概览
+### 当前状态总览
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    统一分享模块架构                              │
-├─────────────────────────────────────────────────────────────────┤
-│  配置层                                                          │
-│  ├── shareCardsRegistry.ts      → 26+ 卡片统一注册表            │
-│  ├── introShareConfig.ts        → 17 个介绍页分享配置            │
-│  └── partnerShareCardStyles.ts  → 合伙人卡片多模板配置           │
-├─────────────────────────────────────────────────────────────────┤
-│  组件层                                                          │
-│  ├── ShareCardBase.tsx          → 卡片基础组件 (QR/品牌/Footer)  │
-│  ├── IntroShareCard.tsx         → 介绍页分享卡                   │
-│  ├── IntroShareDialog.tsx       → 介绍页分享弹窗                 │
-│  └── ShareDialogBase.tsx        → 结果类分享弹窗                 │
-├─────────────────────────────────────────────────────────────────┤
-│  工具层                                                          │
-│  ├── executeOneClickShare()     → 一键分享核心函数               │
-│  ├── useOneClickShare()         → 一键分享 Hook                  │
-│  ├── useQRCode()                → 统一 QR 码生成                 │
-│  └── getPromotionDomain()       → 统一域名获取                   │
-├─────────────────────────────────────────────────────────────────┤
-│  管理层                                                          │
-│  └── /admin/share-cards         → 分享卡片管理后台               │
-│      ├── ShareCardPreviewItem   → 卡片预览+生成测试              │
-│      └── ShareCardConsistencyPanel → 一致性检查面板              │
-└─────────────────────────────────────────────────────────────────┘
-```
+通过全面搜索发现项目中有 **25+ 个分享功能**，分布在以下几个场景：
+
+| 场景 | 分享组件/功能 | 当前状态 |
+|:-----|:-------------|:---------|
+| 🏕️ 训练营打卡 | `CampShareDialog` | ⚠️ 未注册 |
+| 📋 简报分享 | `BriefingShareDialog` | ⚠️ 未注册 |
+| 📔 感恩日记 | `GratitudeJournalShareDialog` | ⚠️ 未注册，使用旧版 QR |
+| 💬 社区帖子 | `ShareButton` / `PostDetailSheet` | ✅ 部分合规 |
+| 🆘 情绪急救 | `EmotionButtonShareDialog` | ⚠️ 未注册 |
+| 💗 安全打卡 | `AliveCheckShareDialog` | ⚠️ 未注册 |
+| 🎨 海报中心 | `PosterCenter` / `PosterGenerator` | ✅ 已注册，旧版实现 |
+| ⚡ 能量宣言 | `EnergyDeclaration` | ✅ 已注册，旧版实现 |
+| 📊 周报导出 | `WeeklyTagReport` | ✅ 已注册，旧版实现 |
+| 👨‍👩‍👧 青少年邀请 | `TeenInviteShareDialog` | ✅ 已注册，部分合规 |
+| 🚀 合伙人 | `PartnerPlanShareCard` | ✅ 已注册，部分合规 |
+| 🧠 SCL-90 | `SCL90ShareDialog` | ✅ 完全合规 |
+| ❤️‍🩹 情绪健康 | `EmotionHealthShareDialog` | ✅ 完全合规 |
+| 📖 介绍页(17个) | `IntroShareDialog` | ✅ 完全合规 |
+| 💰 财富日记 | `WealthJournalShareDialog` | ⚠️ 需验证 |
+| 🏆 成就墙 | `AchievementShareCard` | ⚠️ 需验证 |
+| 🎓 毕业证 | `GraduationShareCard` | ⚠️ 需验证 |
 
 ---
 
-### 问题：哪些分享功能未纳入统一管理？
+### 发现的核心问题
 
-经过代码搜索，发现以下情况：
+#### 1. 未注册到 `shareCardsRegistry.ts` 的分享功能
 
-| 状态 | 组件/页面 | 是否在注册表 | 是否使用统一模块 |
-|:-----|:----------|:------------|:----------------|
-| ✅ | IntroShareDialog (17个介绍页) | ✅ 已注册 | ✅ 使用 |
-| ✅ | SCL90ShareDialog | ✅ 已注册 | ✅ 使用 |
-| ✅ | EmotionHealthShareDialog | ✅ 已注册 | ✅ 使用 |
-| ✅ | WealthCampInviteCard | ✅ 已注册 | ✅ useOneClickShare |
-| ⚠️ | **PartnerPlanShareCard** | ❌ 未注册 | ⚠️ 部分使用 |
-| ⚠️ | PostDetailSheet (社区分享) | ✅ 已注册 | ⚠️ 直接 html2canvas |
-| ⚠️ | TeenInviteShareDialog | ❌ 未注册 | 需检查 |
-| ⚠️ | PosterCenter / PosterGenerator | ❌ 未注册 | ⚠️ 直接 html2canvas |
-| ⚠️ | WeeklyTagReport (PDF导出) | ❌ 未注册 | ⚠️ 直接 html2canvas |
-| ⚠️ | EnergyDeclaration | ❌ 未注册 | ⚠️ 直接 html2canvas |
+以下 **6 个分享组件** 未在统一管理后台显示：
+
+| 组件 | 文件位置 | 问题描述 |
+|:-----|:---------|:---------|
+| `CampShareDialog` | `src/components/camp/CampShareDialog.tsx` | 训练营打卡分享，分享到社区而非生成图片 |
+| `BriefingShareDialog` | `src/components/briefing/BriefingShareDialog.tsx` | 教练简报分享，分享到社区 |
+| `GratitudeJournalShareDialog` | `src/components/gratitude/GratitudeJournalShareDialog.tsx` | 感恩日记分享，使用旧版 `QRCode` 库 |
+| `EmotionButtonShareDialog` | `src/components/tools/EmotionButtonShareDialog.tsx` | 情绪急救分享 |
+| `AliveCheckShareDialog` | `src/components/tools/AliveCheckShareDialog.tsx` | 安全打卡分享 |
+| `WealthJournalShareDialog` | `src/components/wealth-camp/WealthJournalShareDialog.tsx` | 财富日记分享 |
+
+#### 2. 未更新到 `ShareButtonAuditPanel.tsx` 审计面板
+
+当前审计面板只追踪 **9 个分享功能**，遗漏了上述 6 个及其他组件。
+
+#### 3. QR 码库使用不统一
+
+发现 `GratitudeJournalShareDialog` 直接使用 `QRCode.toDataURL()` 而非统一的 `useQRCode` hook。
 
 ---
 
-### 解决方案：创建全站分享审计工具
+### 修复方案
 
-#### 1. 扩展 `shareCardsRegistry.ts` 添加缺失卡片
-
-将未注册的分享卡片添加到注册表：
+#### 步骤 1：扩展 `shareCardsRegistry.ts` 添加缺失卡片
 
 ```typescript
-// 新增到 resultCards 数组
+// 新增分享功能注册
 {
-  id: 'partner-plan',
-  title: '有劲合伙人计划',
-  category: 'partner',
-  emoji: '🚀',
+  id: 'camp-checkin',
+  title: '训练营打卡分享',
+  category: 'result',
+  emoji: '🏕️',
   type: 'result',
-  componentName: 'PartnerPlanShareCard',
-  description: '合伙人计划分享海报',
+  componentName: 'CampShareDialog',
+  description: '训练营每日打卡分享到社区',
 },
 {
-  id: 'teen-invite',
-  title: '青少年邀请卡',
-  category: 'tool',
-  emoji: '👨‍👩‍👧',
+  id: 'briefing-share',
+  title: '教练简报分享',
+  category: 'result',
+  emoji: '📋',
   type: 'result',
-  componentName: 'TeenInviteShareDialog',
-  description: '亲子双轨模式邀请分享',
+  componentName: 'BriefingShareDialog',
+  description: '教练对话简报分享到社区',
 },
 {
-  id: 'poster-center',
-  title: 'AI海报生成器',
+  id: 'gratitude-journal',
+  title: '感恩日记分享',
   category: 'tool',
-  emoji: '🎨',
+  emoji: '📔',
   type: 'result',
-  componentName: 'PosterGenerator',
-  description: '自定义推广海报',
+  componentName: 'GratitudeJournalShareDialog',
+  description: '感恩日记推广海报',
 },
 {
-  id: 'energy-declaration',
-  title: '能量宣言卡',
+  id: 'emotion-button-share',
+  title: '情绪急救分享',
   category: 'tool',
-  emoji: '⚡',
+  emoji: '🆘',
   type: 'result',
-  componentName: 'EnergyDeclaration',
-  description: '每日能量宣言分享',
+  componentName: 'EmotionButtonShareDialog',
+  description: '情绪急救工具分享',
+},
+{
+  id: 'alive-check-share',
+  title: '安全打卡分享',
+  category: 'tool',
+  emoji: '💗',
+  type: 'result',
+  componentName: 'AliveCheckShareDialog',
+  description: '安全打卡功能分享',
+},
+{
+  id: 'wealth-journal-share',
+  title: '财富日记分享',
+  category: 'result',
+  emoji: '💰',
+  type: 'result',
+  componentName: 'WealthJournalShareDialog',
+  description: '财富觉察日记分享',
 },
 ```
 
-#### 2. 扩展一致性检查工具
+#### 步骤 2：扩展 `ShareButtonAuditPanel.tsx` 审计列表
 
-更新 `shareCardConsistencyCheck.ts` 的 `COMPLIANT_CARDS` 列表：
+将上述 6 个组件添加到 `KNOWN_SHARE_FEATURES` 数组，并标注各自的合规状态。
+
+#### 步骤 3：修复 `GratitudeJournalShareDialog` 使用统一 QR 库
 
 ```typescript
-const COMPLIANT_CARDS = [
-  // 现有合规卡片...
-  'SCL90ShareCard',
-  'EmotionHealthShareCard',
-  // ...
-  
-  // 新增检查
-  'PartnerPlanShareCard',  // 需验证
-  'PosterGenerator',       // 需验证
-];
+// 当前（不合规）
+import QRCode from "qrcode";
+const url = await QRCode.toDataURL(shareUrl, {...});
+
+// 修复后（合规）
+import { useQRCode } from '@/utils/qrCodeUtils';
+const { qrCodeUrl } = useQRCode(shareUrl, 'SHARE_CARD');
 ```
 
-#### 3. 创建分享按钮审计面板
+#### 步骤 4：更新一致性检查列表
 
-在 `/admin/share-cards` 页面新增审计功能：
+在 `shareCardConsistencyCheck.ts` 的 `COMPLIANT_CARDS` 添加新卡片。
 
-```typescript
-// 新建 src/components/admin/ShareButtonAuditPanel.tsx
-export function ShareButtonAuditPanel() {
-  // 扫描项目中所有使用 html2canvas 的文件
-  // 对比 shareCardsRegistry 检查是否遗漏
-  // 显示：
-  // - 已注册并合规的卡片
-  // - 已注册但未使用统一模块的卡片
-  // - 未注册的分享功能
-}
-```
+#### 步骤 5：更新组件路径映射
+
+在 `ShareCardConsistencyPanel.tsx` 的 `COMPONENT_PATHS` 添加新组件路径。
 
 ---
 
-### 实施步骤
+### 涉及文件汇总
 
-| 步骤 | 操作 | 文件 |
-|:-----|:-----|:-----|
-| 1 | 将 PartnerPlanShareCard 添加到注册表 | `shareCardsRegistry.ts` |
-| 2 | 添加其他缺失的分享卡片到注册表 | `shareCardsRegistry.ts` |
-| 3 | 更新一致性检查的合规列表 | `shareCardConsistencyCheck.ts` |
-| 4 | 创建分享按钮审计面板（可选） | `ShareButtonAuditPanel.tsx` |
-| 5 | 在管理后台集成审计功能 | `ShareCardsAdmin.tsx` |
-
----
-
-### 快速检查清单
-
-#### 如何验证某个分享功能是否合规？
-
-1. **检查是否在注册表中**
-   ```bash
-   # 搜索组件名是否在 shareCardsRegistry.ts
-   grep "PartnerPlanShareCard" src/config/shareCardsRegistry.ts
-   ```
-
-2. **检查是否使用统一工具**
-   ```typescript
-   // 合规：使用这些函数
-   import { executeOneClickShare } from '@/utils/oneClickShare';
-   import { useOneClickShare } from '@/hooks/useOneClickShare';
-   import { useQRCode } from '@/utils/qrCodeUtils';
-   import { getPromotionDomain } from '@/utils/partnerQRUtils';
-   
-   // 不合规：直接使用
-   import html2canvas from 'html2canvas';
-   import QRCode from 'qrcode';
-   window.location.origin  // 应使用 getPromotionDomain()
-   ```
-
-3. **检查品牌标识**
-   ```typescript
-   // 合规
-   "Powered by 有劲AI"
-   
-   // 不合规
-   "有劲生活"
-   "有劲AI · 财富教练"
-   ```
-
-4. **检查宽度规范**
-   - 结果类卡片：340px
-   - 工具类卡片：420px
+| 操作 | 文件 | 修改内容 |
+|:-----|:-----|:---------|
+| 修改 | `src/config/shareCardsRegistry.ts` | 添加 6 个缺失的分享组件注册 |
+| 修改 | `src/components/admin/ShareButtonAuditPanel.tsx` | 扩展审计列表，新增 6+ 审计项 |
+| 修改 | `src/utils/shareCardConsistencyCheck.ts` | 添加新卡片到合规检查列表 |
+| 修改 | `src/components/admin/ShareCardConsistencyPanel.tsx` | 添加新组件路径映射 |
+| 修改 | `src/components/gratitude/GratitudeJournalShareDialog.tsx` | 替换为统一 `useQRCode` hook |
 
 ---
 
-### 当前需要修复的优先项
+### 分享功能分类说明
 
-| 优先级 | 任务 | 原因 |
-|:------|:-----|:-----|
-| 🔴 高 | 将 PartnerPlanShareCard 加入注册表 | 刚完成开发但未注册 |
-| 🟡 中 | 确保 PosterCenter 使用统一 QR/域名 | 直接使用 html2canvas |
-| 🟡 中 | 确保 EnergyDeclaration 使用统一模块 | 直接使用 html2canvas |
-| 🟢 低 | 创建自动化审计面板 | 提升长期可维护性 |
+项目中的分享功能分为两类：
+
+#### A. 社区分享型（发布到有劲社区）
+- `CampShareDialog` - 训练营打卡
+- `BriefingShareDialog` - 教练简报
+- `PostComposer` - 社区发帖
+
+这类组件主要功能是**发布内容到社区**，而非生成分享图片。
+
+#### B. 图片分享型（生成海报/卡片）
+- `SCL90ShareDialog` - 测评结果
+- `EmotionHealthShareDialog` - 情绪健康结果
+- `WealthJournalShareDialog` - 财富日记
+- `PartnerPlanShareCard` - 合伙人海报
+- 等等...
+
+这类组件使用 `executeOneClickShare` 或 `generateCardBlob` 生成图片。
+
+---
+
+### 统一规范核对清单
+
+每个分享功能应满足：
+
+| 检查项 | 标准 | 检查方法 |
+|:-------|:-----|:---------|
+| 已注册 | 在 `shareCardsRegistry.ts` 中有记录 | 搜索组件名 |
+| 统一模块 | 使用 `executeOneClickShare` 或 `useOneClickShare` | 检查 import |
+| 统一 QR | 使用 `useQRCode` hook | 检查是否直接使用 `qrcode` 库 |
+| 统一域名 | 使用 `getPromotionDomain()` | 检查 URL 生成方式 |
+| 品牌标识 | "Powered by 有劲AI" | 检查 footer 文案 |
+| 宽度规范 | 结果类 340px，工具类 420px | 检查卡片容器宽度 |
 
 ---
 
 ### 预期效果
 
-1. **所有分享卡片可在 `/admin/share-cards` 查看**
-2. **一致性检查面板覆盖全部卡片**
-3. **新开发的分享功能有明确的注册流程**
-4. **统一的 QR 码、域名、品牌标识**
+1. **管理后台** `/admin/share-cards` 可查看全部 30+ 分享卡片
+2. **审计面板** 显示所有分享功能的合规状态
+3. **一致性检查** 覆盖全部卡片组件
+4. **新开发规范** 明确的注册流程和合规标准
 
