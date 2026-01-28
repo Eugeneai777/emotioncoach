@@ -19,6 +19,14 @@ function getProductLine(orderType: string): 'youjin' | 'bloom' {
   return 'youjin';
 }
 
+// 检查绽放合伙人是否应获得有劲产品佣金（绽放合伙人自动拥有有劲 L1 权益）
+function shouldBloomGetYoujinCommission(partnerType: string, productLine: string): boolean {
+  return partnerType === 'bloom' && productLine === 'youjin';
+}
+
+// 获取绽放合伙人推广有劲产品时的佣金率（固定 L1 级别：18%）
+const BLOOM_YOUJIN_L1_RATE = 0.18;
+
 // 获取产品专属佣金率，如果未配置则回退到等级默认值
 async function getCommissionRates(
   supabase: any,
@@ -95,87 +103,127 @@ Deno.serve(async (req) => {
     if (l1Referral && l1Referral.partners) {
       const partner = l1Referral.partners as any;
       
-      if (partner.partner_type === productLine) {
-        // 获取合伙人等级规则ID
-        const { data: levelRule } = await supabase
-          .from('partner_level_rules')
-          .select('id, commission_rate_l1, commission_rate_l2')
-          .eq('partner_type', partner.partner_type)
-          .eq('level_name', partner.partner_level)
-          .maybeSingle();
+      // 检查是否应计算佣金：产品线匹配 或 绽放合伙人推广有劲产品
+      const isMatchingProductLine = partner.partner_type === productLine;
+      const isBloomPromotingYoujin = shouldBloomGetYoujinCommission(partner.partner_type, productLine);
+      
+      if (isMatchingProductLine || isBloomPromotingYoujin) {
+        // 绽放合伙人推广有劲产品时使用固定 L1 佣金率
+        if (isBloomPromotingYoujin) {
+          const commissionRate = BLOOM_YOUJIN_L1_RATE;
+          const commissionAmount = amount * commissionRate;
 
-        if (levelRule) {
-          const defaultL1 = parseFloat(levelRule.commission_rate_l1);
-          const defaultL2 = parseFloat(levelRule.commission_rate_l2);
+          console.log(`Bloom partner ${partner.id} promoting youjin product, using L1 rate: ${commissionRate}`);
 
-          // 获取产品专属佣金率（仅有劲合伙人支持产品级配置）
-          let rates: { l1: number; l2: number } | null = null;
-          if (partner.partner_type === 'youjin') {
-            rates = await getCommissionRates(supabase, levelRule.id, order_type, defaultL1, defaultL2);
-          } else {
-            rates = { l1: defaultL1, l2: defaultL2 };
-          }
+          const { data: commission, error: commError } = await supabase
+            .from('partner_commissions')
+            .insert({
+              partner_id: partner.id,
+              order_id,
+              order_type,
+              source_user_id: user_id,
+              commission_level: 1,
+              order_amount: amount,
+              commission_rate: commissionRate,
+              commission_amount: commissionAmount,
+              status: 'pending',
+              confirm_at: confirmDate.toISOString(),
+              product_line: productLine
+            })
+            .select()
+            .single();
 
-          if (rates && rates.l1 > 0) {
-            const commissionAmount = amount * rates.l1;
-
-            const { data: commission, error: commError } = await supabase
-              .from('partner_commissions')
-              .insert({
-                partner_id: partner.id,
-                order_id,
-                order_type,
-                source_user_id: user_id,
-                commission_level: 1,
-                order_amount: amount,
-                commission_rate: rates.l1,
-                commission_amount: commissionAmount,
-                status: 'pending',
-                confirm_at: confirmDate.toISOString(),
-                product_line: productLine
-              })
-              .select()
-              .single();
-
-            if (!commError && commission) {
-              await supabase.rpc('add_partner_pending_balance', {
-                p_partner_id: partner.id,
-                p_amount: commissionAmount
-              });
-              commissions.push(commission);
-              console.log(`L1 commission created: ¥${commissionAmount.toFixed(2)} (${(rates.l1 * 100).toFixed(0)}%)`);
-            }
+          if (!commError && commission) {
+            await supabase.rpc('add_partner_pending_balance', {
+              p_partner_id: partner.id,
+              p_amount: commissionAmount
+            });
+            commissions.push(commission);
+            console.log(`L1 commission (bloom->youjin) created: ¥${commissionAmount.toFixed(2)} (${(commissionRate * 100).toFixed(0)}%)`);
           }
         } else {
-          // 无等级规则，使用合伙人自身的佣金率
-          const commissionRate = parseFloat(partner.commission_rate_l1);
-          if (commissionRate > 0) {
-            const commissionAmount = amount * commissionRate;
+          // 原有逻辑：产品线匹配时的佣金计算
+          // 获取合伙人等级规则ID
+          const { data: levelRule } = await supabase
+            .from('partner_level_rules')
+            .select('id, commission_rate_l1, commission_rate_l2')
+            .eq('partner_type', partner.partner_type)
+            .eq('level_name', partner.partner_level)
+            .maybeSingle();
 
-            const { data: commission, error: commError } = await supabase
-              .from('partner_commissions')
-              .insert({
-                partner_id: partner.id,
-                order_id,
-                order_type,
-                source_user_id: user_id,
-                commission_level: 1,
-                order_amount: amount,
-                commission_rate: commissionRate,
-                commission_amount: commissionAmount,
-                status: 'pending',
-                confirm_at: confirmDate.toISOString(),
-                product_line: productLine
-              })
-              .select()
-              .single();
+          if (levelRule) {
+            const defaultL1 = parseFloat(levelRule.commission_rate_l1);
+            const defaultL2 = parseFloat(levelRule.commission_rate_l2);
 
-            if (!commError && commission) {
-              await supabase.rpc('add_partner_pending_balance', {
-                p_partner_id: partner.id,
-                p_amount: commissionAmount
-              });
-              commissions.push(commission);
+            // 获取产品专属佣金率（仅有劲合伙人支持产品级配置）
+            let rates: { l1: number; l2: number } | null = null;
+            if (partner.partner_type === 'youjin') {
+              rates = await getCommissionRates(supabase, levelRule.id, order_type, defaultL1, defaultL2);
+            } else {
+              rates = { l1: defaultL1, l2: defaultL2 };
+            }
+
+            if (rates && rates.l1 > 0) {
+              const commissionAmount = amount * rates.l1;
+
+              const { data: commission, error: commError } = await supabase
+                .from('partner_commissions')
+                .insert({
+                  partner_id: partner.id,
+                  order_id,
+                  order_type,
+                  source_user_id: user_id,
+                  commission_level: 1,
+                  order_amount: amount,
+                  commission_rate: rates.l1,
+                  commission_amount: commissionAmount,
+                  status: 'pending',
+                  confirm_at: confirmDate.toISOString(),
+                  product_line: productLine
+                })
+                .select()
+                .single();
+
+              if (!commError && commission) {
+                await supabase.rpc('add_partner_pending_balance', {
+                  p_partner_id: partner.id,
+                  p_amount: commissionAmount
+                });
+                commissions.push(commission);
+                console.log(`L1 commission created: ¥${commissionAmount.toFixed(2)} (${(rates.l1 * 100).toFixed(0)}%)`);
+              }
+            }
+          } else {
+            // 无等级规则，使用合伙人自身的佣金率
+            const commissionRate = parseFloat(partner.commission_rate_l1);
+            if (commissionRate > 0) {
+              const commissionAmount = amount * commissionRate;
+
+              const { data: commission, error: commError } = await supabase
+                .from('partner_commissions')
+                .insert({
+                  partner_id: partner.id,
+                  order_id,
+                  order_type,
+                  source_user_id: user_id,
+                  commission_level: 1,
+                  order_amount: amount,
+                  commission_rate: commissionRate,
+                  commission_amount: commissionAmount,
+                  status: 'pending',
+                  confirm_at: confirmDate.toISOString(),
+                  product_line: productLine
+                })
+                .select()
+                .single();
+
+              if (!commError && commission) {
+                await supabase.rpc('add_partner_pending_balance', {
+                  p_partner_id: partner.id,
+                  p_amount: commissionAmount
+                });
+                commissions.push(commission);
+              }
             }
           }
         }
