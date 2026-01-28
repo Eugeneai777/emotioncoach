@@ -93,8 +93,8 @@ export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
   { name: "财富卡点测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
   
   // 佣金权益
-  { name: "一级佣金", category: "佣金权益", l1: "20%", l2: "35%", l3: "50%" },
-  { name: "二级佣金", category: "佣金权益", l1: false, l2: false, l3: "10%" },
+  { name: "一级佣金", category: "佣金权益", l1: "18%", l2: "30%", l3: "50%" },
+  { name: "二级佣金", category: "佣金权益", l1: false, l2: "5%", l3: "12%" },
   
   // 可分成产品（新类别）
   { name: "尝鲜会员 ¥9.9", category: "可分成产品", l1: true, l2: true, l3: true },
