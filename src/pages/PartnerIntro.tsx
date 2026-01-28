@@ -215,42 +215,7 @@ const PartnerIntro = () => {
           </CardContent>
         </Card>
 
-        {/* 有劲产品推广权益 */}
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
-          <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="w-5 h-5 text-orange-500" />
-              额外权益：有劲产品推广
-            </CardTitle>
-            <div className="w-fit px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200 text-xs font-medium">
-              💪 自动获得初级合伙人身份
-            </div>
-          </CardHeader>
-          <CardContent className="px-4 pb-4 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              成为绽放合伙人后，您将自动拥有有劲初级合伙人身份，可以推广有劲全系列产品：
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-white/80 rounded-lg border border-orange-100">
-                <div className="text-lg font-bold text-orange-600">18%</div>
-                <div className="text-xs text-muted-foreground">有劲产品一级佣金</div>
-              </div>
-              <div className="p-3 bg-white/80 rounded-lg border border-orange-100">
-                <div className="text-lg font-bold text-orange-600">11款</div>
-                <div className="text-xs text-muted-foreground">可推广产品</div>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              className="w-full gap-2 border-orange-200 text-orange-700 hover:bg-orange-50"
-              onClick={() => navigate("/partner/youjin-plan")}
-            >
-              了解有劲产品详情
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Benefits */}
+        {/* Benefits - 优化为双列网格布局 */}
         {benefits.length > 0 && <Card>
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -260,19 +225,52 @@ const PartnerIntro = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {benefits.map(benefit => <Card key={benefit.id} className="border bg-gradient-to-br from-background to-accent/5">
-                    <CardContent className="p-3 flex items-start gap-2">
-                      <div className="text-2xl">{benefit.benefit_icon}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <div className="font-semibold text-sm">{benefit.benefit_name}</div>
-                          {Number(benefit.benefit_value) > 0 && <Badge variant="outline" className="text-xs">¥{Number(benefit.benefit_value).toLocaleString()}</Badge>}
+              <div className="grid grid-cols-2 gap-3">
+                {benefits.map(benefit => {
+                  const isYoujinBenefit = benefit.benefit_name === '有劲产品推广权益';
+                  return (
+                    <Card 
+                      key={benefit.id} 
+                      className={`border border-accent/20 bg-gradient-to-br from-background to-accent/5 rounded-xl overflow-hidden ${
+                        isYoujinBenefit 
+                          ? "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 cursor-pointer hover:shadow-md transition-shadow" 
+                          : ""
+                      }`}
+                      onClick={isYoujinBenefit ? () => navigate("/partner/youjin-plan") : undefined}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          {/* 大图标 */}
+                          <div className="text-3xl flex-shrink-0">{benefit.benefit_icon}</div>
+                          <div className="flex-1 min-w-0">
+                            {/* 名称 + 价格徽章 */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <div className="font-semibold text-sm leading-tight">{benefit.benefit_name}</div>
+                              {Number(benefit.benefit_value) > 0 && (
+                                <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                  ¥{Number(benefit.benefit_value).toLocaleString()}
+                                </Badge>
+                              )}
+                            </div>
+                            {/* 描述 */}
+                            {benefit.benefit_description && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {benefit.benefit_description}
+                              </p>
+                            )}
+                            {/* 有劲权益额外提示 */}
+                            {isYoujinBenefit && (
+                              <div className="mt-2 text-xs text-orange-600 font-medium flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                点击了解详情
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {benefit.benefit_description && <p className="text-xs text-muted-foreground">{benefit.benefit_description}</p>}
-                      </div>
-                    </CardContent>
-                  </Card>)}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>}
