@@ -1,66 +1,98 @@
 
-# 实现有劲合伙人体验包选择功能
 
-## 实现内容
+# 修复汉堡菜单页面无法滚动问题
 
-### 1. 数据库迁移
-在 `partners` 表添加 `selected_experience_packages` 字段：
-- 类型：`text[]`（PostgreSQL 数组）
-- 默认值：全选 `['basic', 'emotion_health_assessment', 'scl90_report']`
+## 问题诊断
 
-### 2. 前端组件修改
-更新 `EntryTypeSelector.tsx`：
-- 添加体验包选择 UI（复选框列表）
-- 支持"全选"快捷操作
-- 至少选中一项才能保存
-- 仅在"尝鲜会员"模式下显示
+经过代码分析，发现多个从汉堡菜单进入的页面使用了 `min-h-screen` 布局，但没有设置正确的滚动属性。这会导致在移动端（特别是微信内嵌浏览器或某些 Android 设备）无法正常上下滚动。
 
-### 3. Edge Function 修改
-更新 `claim-partner-entry/index.ts`：
-- 查询合伙人的 `selected_experience_packages` 配置
-- 根据配置条件性发放 AI 点数和测评权限
+根据项目的统一滚动标准，需要使用：
+- `h-screen overflow-y-auto overscroll-contain`
+- `WebkitOverflowScrolling: 'touch'`
 
-### 4. TypeScript 类型更新
-更新 `usePartner.ts` 中的 Partner 接口
+## 需要修复的页面
 
-## 技术细节
+| 页面 | 文件路径 | 当前状态 |
+|:----|:--------|:--------|
+| 设置 | `src/pages/Settings.tsx` | 使用 `min-h-screen`，无 overflow |
+| 合伙人中心 | `src/pages/Partner.tsx` | 使用 `min-h-screen`，无 overflow |
+| 联系客服 | `src/pages/CustomerSupport.tsx` | 使用 `min-h-screen`，内部高度固定 |
 
-### 数据库 SQL
-```sql
-ALTER TABLE partners 
-ADD COLUMN IF NOT EXISTS selected_experience_packages text[] 
-DEFAULT ARRAY['basic', 'emotion_health_assessment', 'scl90_report'];
+## 修复方案
+
+### 1. Settings.tsx
+**修改前**：
+```tsx
+<div className="min-h-screen bg-gradient-to-br from-healing-cream...">
 ```
 
-### 体验包选项
-| key | 显示名称 |
+**修改后**：
+```tsx
+<div 
+  className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-healing-cream..."
+  style={{ WebkitOverflowScrolling: 'touch' }}
+>
+```
+
+### 2. Partner.tsx
+**修改前**：
+```tsx
+<div className="min-h-screen bg-gradient-to-br from-orange-50...">
+```
+
+**修改后**：
+```tsx
+<div 
+  className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50..."
+  style={{ WebkitOverflowScrolling: 'touch' }}
+>
+```
+
+### 3. CustomerSupport.tsx
+**修改前**：
+```tsx
+<div className="min-h-screen bg-gradient-to-b from-teal-50...">
+  ...
+  <div className="...h-[calc(100vh-60px)]">
+```
+
+**修改后**：
+```tsx
+<div 
+  className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50..."
+  style={{ WebkitOverflowScrolling: 'touch' }}
+>
+  ...
+  <div className="...h-[calc(100dvh-60px)]">
+```
+
+## 技术说明
+
+### 为什么 min-h-screen 在移动端会失效？
+
+1. **全局 100dvh 锁定**：项目可能有全局样式或 Radix UI 组件设置了 `overflow: hidden`，阻止默认滚动
+2. **WebKit 触摸滚动**：iOS Safari 需要显式设置 `-webkit-overflow-scrolling: touch` 才能启用惯性滚动
+3. **overscroll-contain**：防止滚动穿透到父容器，避免意外关闭页面
+
+### 统一标准
+根据项目 Memory 记录，正确的滚动容器模式为：
+```tsx
+<div 
+  className="h-screen overflow-y-auto overscroll-contain"
+  style={{ WebkitOverflowScrolling: 'touch' }}
+>
+  <PageHeader title="..." />
+  <div className="container ...">
+    {/* 页面内容 */}
+  </div>
+</div>
+```
+
+## 文件修改清单
+
+| 文件 | 修改类型 |
 |:----|:--------|
-| `basic` | AI对话点数 (50点) |
-| `emotion_health_assessment` | 情绪健康测评 |
-| `scl90_report` | SCL-90心理测评 |
+| `src/pages/Settings.tsx` | 更新外层容器样式 |
+| `src/pages/Partner.tsx` | 更新外层容器样式 |
+| `src/pages/CustomerSupport.tsx` | 更新外层容器样式 + 内部高度计算 |
 
-### 条件发放逻辑
-```typescript
-const selectedPackages = partner.selected_experience_packages 
-  || ['basic', 'emotion_health_assessment', 'scl90_report'];
-
-if (selectedPackages.includes('basic')) {
-  // 发放 AI 点数
-}
-
-if (selectedPackages.includes('emotion_health_assessment')) {
-  // 创建情绪健康测评订单
-}
-
-if (selectedPackages.includes('scl90_report')) {
-  // 创建 SCL-90 订单
-}
-```
-
-## 文件清单
-| 文件 | 操作 |
-|:----|:-----|
-| 数据库迁移 | 新增字段 |
-| `src/components/partner/EntryTypeSelector.tsx` | 添加多选 UI |
-| `src/hooks/usePartner.ts` | 更新类型定义 |
-| `supabase/functions/claim-partner-entry/index.ts` | 条件发放逻辑 |
