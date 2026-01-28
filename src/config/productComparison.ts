@@ -15,6 +15,7 @@ export interface BloomFeature extends ComparisonFeature {
 }
 
 export interface YoujinPartnerFeature extends ComparisonFeature {
+  category: '基础信息' | '佣金权益' | '可分成产品' | '专属权益';
   l1: boolean | string;   // 初级合伙人
   l2: boolean | string;   // 高级合伙人
   l3: boolean | string;   // 钻石合伙人
@@ -85,12 +86,6 @@ export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
   // 基础信息
   { name: "价格", category: "基础信息", l1: "¥792", l2: "¥3,217", l3: "¥4,950" },
   { name: "体验包分发权", category: "基础信息", l1: "100份", l2: "500份", l3: "1000份" },
-  
-  // 体验包内容（新类别）
-  { name: "尝鲜会员", category: "体验包内容", l1: "50点", l2: "50点", l3: "50点" },
-  { name: "情绪健康测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
-  { name: "SCL-90心理测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
-  { name: "财富卡点测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
   
   // 佣金权益
   { name: "一级佣金", category: "佣金权益", l1: "18%", l2: "30%", l3: "50%" },
