@@ -127,7 +127,7 @@ export const CoachHeader = ({
                   <Menu className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
+              <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50 max-h-[70vh] overflow-y-auto overscroll-contain">
                 {filteredMenuItems.map((item) => {
                   const Icon = item.icon;
                   return (
