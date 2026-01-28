@@ -512,14 +512,14 @@ const YoujinPartnerPlan = () => {
             <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-orange-300 via-amber-400 to-yellow-500" />
             
             <div className="space-y-4">
-              {[{
+            {[{
               num: '1️⃣',
               title: '故事吸引',
               desc: '分享你的真实成长故事'
             }, {
               num: '2️⃣',
-              title: '9.9 体验产生惊艳',
-              desc: '用户低门槛体验 AI 情绪教练'
+              title: '体验包产生惊艳',
+              desc: '用户低门槛体验：AI对话50点 + 3项专业测评（共4项权益）'
             }, {
               num: '3️⃣',
               title: 'AI 陪伴形成依赖',

@@ -585,55 +585,47 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </div>
         </div>
 
-        <Card className="border-purple-200 dark:border-purple-800">
+        <Card className="border-teal-200 dark:border-teal-800">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-xl">🎁</span>
-              <h4 className="font-bold text-base">可分发的体验包（二选一）</h4>
+              <h4 className="font-bold text-base">体验包内容（共4项）</h4>
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 rounded-lg p-4 border border-teal-200 dark:border-teal-800">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">💎</span>
-                    <span className="font-bold">尝鲜会员</span>
-                  </div>
-                  <span className="text-teal-600 font-bold text-sm">¥9.9</span>
-                </div>
-                <ul className="text-xs text-muted-foreground space-y-1.5">
-                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-teal-500" /><span>50点AI对话额度</span></li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-teal-500" /><span>5位AI教练体验</span></li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-teal-500" /><span>情绪按钮 + 社区</span></li>
-                </ul>
-                <Button variant="outline" size="sm" className="w-full mt-3 border-teal-300 text-teal-700 hover:bg-teal-100" onClick={() => navigate('/packages')}>
-                  体验会员 →
-                </Button>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* AI对话点数 */}
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800 text-center">
+                <span className="text-2xl">🤖</span>
+                <p className="font-medium text-sm mt-1">AI对话点数</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">50点</p>
               </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">📊</span>
-                    <span className="font-bold">财富卡点测评</span>
-                  </div>
-                  <span className="text-purple-600 font-bold text-sm">¥9.9</span>
-                </div>
-                <ul className="text-xs text-muted-foreground space-y-1.5">
-                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-purple-500" /><span>30道财富场景诊断</span></li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-purple-500" /><span>三层深度分析</span></li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-purple-500" /><span>AI个性化突破路径</span></li>
-                </ul>
-                <Button variant="outline" size="sm" className="w-full mt-3 border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => navigate('/wealth-block')}>
-                  体验测评 →
-                </Button>
+              
+              {/* 情绪健康测评 */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800 text-center">
+                <span className="text-2xl">💚</span>
+                <p className="font-medium text-sm mt-1">情绪健康测评</p>
+                <p className="text-xs text-green-600 dark:text-green-400">1次</p>
+              </div>
+              
+              {/* SCL-90测评 */}
+              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 rounded-lg p-3 border border-amber-200 dark:border-amber-800 text-center">
+                <span className="text-2xl">📋</span>
+                <p className="font-medium text-sm mt-1">SCL-90测评</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400">1次</p>
+              </div>
+              
+              {/* 财富卡点测评 */}
+              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg p-3 border border-purple-200 dark:border-purple-800 text-center">
+                <span className="text-2xl">💰</span>
+                <p className="font-medium text-sm mt-1">财富卡点测评</p>
+                <p className="text-xs text-purple-600 dark:text-purple-400">1次</p>
               </div>
             </div>
             
             <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
               <p className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                <span>购买合伙人套餐后，你可选择推广任一体验包。用户将<strong className="text-foreground">永久绑定</strong>为你的学员，后续所有消费都能获得佣金分成。</span>
+                <span>用户扫码即可获得以上全部4项权益，并<strong className="text-foreground">永久绑定</strong>为您的学员。</span>
               </p>
             </div>
           </CardContent>

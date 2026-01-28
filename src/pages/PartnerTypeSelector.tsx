@@ -149,9 +149,9 @@ export default function PartnerTypeSelector() {
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg">{youjinCategory.emoji} 有劲合伙人</h3>
                 <ul className="space-y-1 text-sm text-muted-foreground">
-                  <li>• 需要预购100-1000份体验包（¥9.9/份）</li>
+                  <li>• 预购100-1000份体验包（含4项权益）</li>
                   <li>• 通过分发体验包建立用户关系</li>
-                  <li>• 用户未来购买任何有劲产品都能分成</li>
+                  <li>• 用户购买11款有劲产品都能分成</li>
                   <li>• 佣金比例20%-50%，取决于预购数量</li>
                   <li>• 适合长期经营，建立私域流量</li>
                 </ul>

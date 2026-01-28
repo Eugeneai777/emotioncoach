@@ -10,6 +10,12 @@ import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
+import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
+import { 
+  experiencePackageItems, 
+  commissionableProducts, 
+  totalCommissionableCount 
+} from "@/config/youjinPartnerProducts";
 
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
@@ -141,7 +147,55 @@ export default function YoujinPartnerIntro() {
           </CardContent>
         </Card>
 
-        {/* 等级选择 */}
+        {/* 体验包内容 - Matrix 展示 */}
+        <Card className="border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50/50 to-cyan-50/50 dark:from-teal-950/20 dark:to-cyan-950/20">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Gift className="w-5 h-5 text-teal-500" />
+              体验包内容（共4项）
+            </CardTitle>
+            <CardDescription>用户扫码后将获得以下全部权益</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveComparison
+              columns={[
+                { header: "权益项目" },
+                { header: "内容", highlight: true },
+              ]}
+              rows={experiencePackageItems.map(item => ({
+                label: `${item.icon} ${item.name}`,
+                values: [item.value]
+              }))}
+            />
+          </CardContent>
+        </Card>
+
+        {/* 可分成产品 - Matrix 展示 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-orange-500" />
+              可分成产品一览（{totalCommissionableCount}款）
+            </CardTitle>
+            <CardDescription>用户购买以下任意产品，您都能获得佣金</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveComparison
+              columns={[
+                { header: "产品类别" },
+                { header: "产品名称" },
+                { header: "价格", highlight: true },
+              ]}
+              rows={commissionableProducts.map((product, idx, arr) => {
+                const isFirstInCategory = idx === 0 || arr[idx - 1].category !== product.category;
+                return {
+                  label: isFirstInCategory ? product.category : '',
+                  values: [product.name, `¥${product.price}`]
+                };
+              })}
+            />
+          </CardContent>
+        </Card>
         <div className="space-y-4">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">选择您的合伙人等级</h2>
@@ -229,7 +283,7 @@ export default function YoujinPartnerIntro() {
             <div className="space-y-2">
               <p className="font-medium">Q: 可以分成哪些产品？</p>
               <p className="text-sm text-muted-foreground">
-                A: 9.9元体验包、365会员、有劲训练营、AI教练升级包等所有有劲产品。不包括绽放训练营。
+                A: 所有有劲产品线共11款付费产品（不含绽放训练营）。详见上方"可分成产品一览"。
               </p>
             </div>
 
