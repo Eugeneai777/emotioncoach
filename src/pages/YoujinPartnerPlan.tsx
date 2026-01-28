@@ -15,6 +15,8 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { executeOneClickShare, generateCanvas, canvasToBlob } from "@/utils/oneClickShare";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import PartnerPlanShareCard from "@/components/partner/PartnerPlanShareCard";
+import { PartnerCardTemplateSelector } from "@/components/partner/PartnerCardTemplateSelector";
+import { PartnerCardTemplate } from "@/config/partnerShareCardStyles";
 
 const YoujinPartnerPlan = () => {
   const navigate = useNavigate();
@@ -26,6 +28,9 @@ const YoujinPartnerPlan = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  
+  // Template selection state
+  const [selectedTemplate, setSelectedTemplate] = useState<PartnerCardTemplate>('classic');
   
   const posterRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1164,7 +1169,7 @@ const YoujinPartnerPlan = () => {
         }}
         aria-hidden="true"
       >
-        <PartnerPlanShareCard ref={posterRef} />
+        <PartnerPlanShareCard ref={posterRef} template={selectedTemplate} />
       </div>
 
       {/* Share Image Preview (for WeChat/iOS long-press save) */}
@@ -1183,32 +1188,38 @@ const YoujinPartnerPlan = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Share Options */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="h-20 flex-col gap-2"
-                onClick={handleCopyLink}
-              >
-                <Copy className="h-6 w-6 text-orange-500" />
-                <span className="text-sm">复制链接</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-20 flex-col gap-2"
-                onClick={handleGeneratePoster}
-                disabled={isGeneratingPoster}
-              >
-                <Download className="h-6 w-6 text-orange-500" />
-                <span className="text-sm">{isGeneratingPoster ? '生成中...' : '保存海报'}</span>
-              </Button>
-            </div>
+            {/* Template Selector */}
+            <PartnerCardTemplateSelector
+              selectedTemplate={selectedTemplate}
+              onTemplateChange={setSelectedTemplate}
+            />
 
             {/* Preview */}
             <div className="flex justify-center">
-              <div className="transform scale-[0.6] origin-top">
-                <PartnerPlanShareCard />
+              <div className="transform scale-[0.55] origin-top -my-16">
+                <PartnerPlanShareCard template={selectedTemplate} />
               </div>
+            </div>
+
+            {/* Share Options */}
+            <div className="grid grid-cols-2 gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="h-14 flex-col gap-1"
+                onClick={handleCopyLink}
+              >
+                <Copy className="h-5 w-5 text-orange-500" />
+                <span className="text-xs">复制链接</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-14 flex-col gap-1"
+                onClick={handleGeneratePoster}
+                disabled={isGeneratingPoster}
+              >
+                <Download className="h-5 w-5 text-orange-500" />
+                <span className="text-xs">{isGeneratingPoster ? '生成中...' : '保存海报'}</span>
+              </Button>
             </div>
           </div>
         </DialogContent>
