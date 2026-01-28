@@ -39,7 +39,7 @@ export const PARTNER_CARD_STYLES: Record<PartnerCardTemplate, PartnerCardStyleCo
   classic: {
     id: 'classic',
     label: '经典橙',
-    previewGradient: 'from-orange-400 to-amber-400',
+    previewGradient: 'linear-gradient(to bottom right, #fb923c, #fbbf24)',
     styles: {
       background: '#fff8f0',
       tagBg: '#fed7aa',
@@ -63,7 +63,7 @@ export const PARTNER_CARD_STYLES: Record<PartnerCardTemplate, PartnerCardStyleCo
   professional: {
     id: 'professional',
     label: '专业蓝',
-    previewGradient: 'from-slate-500 to-blue-600',
+    previewGradient: 'linear-gradient(to bottom right, #64748b, #2563eb)',
     styles: {
       background: '#f8fafc',
       tagBg: '#dbeafe',
@@ -87,7 +87,7 @@ export const PARTNER_CARD_STYLES: Record<PartnerCardTemplate, PartnerCardStyleCo
   minimal: {
     id: 'minimal',
     label: '极简白',
-    previewGradient: 'from-gray-100 to-white',
+    previewGradient: 'linear-gradient(to bottom right, #f3f4f6, #ffffff)',
     styles: {
       background: '#ffffff',
       tagBg: '#f4f4f5',
@@ -111,7 +111,7 @@ export const PARTNER_CARD_STYLES: Record<PartnerCardTemplate, PartnerCardStyleCo
   energetic: {
     id: 'energetic',
     label: '活力紫',
-    previewGradient: 'from-purple-500 to-pink-500',
+    previewGradient: 'linear-gradient(to bottom right, #a855f7, #ec4899)',
     styles: {
       background: '#fdf4ff',
       tagBg: '#f3e8ff',

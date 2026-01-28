@@ -1202,24 +1202,41 @@ const YoujinPartnerPlan = () => {
             </div>
 
             {/* Share Options */}
-            <div className="grid grid-cols-2 gap-3 pt-4">
+            <div className="space-y-3 pt-4">
+              {/* Primary: One-Click Share */}
               <Button
-                variant="outline"
-                className="h-14 flex-col gap-1"
-                onClick={handleCopyLink}
+                className="w-full h-12 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                onClick={handleOneClickShare}
+                disabled={isSharing}
               >
-                <Copy className="h-5 w-5 text-orange-500" />
-                <span className="text-xs">复制链接</span>
+                {isSharing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4 mr-2" />
+                )}
+                {isSharing ? '生成中...' : '一键分享'}
               </Button>
-              <Button
-                variant="outline"
-                className="h-14 flex-col gap-1"
-                onClick={handleGeneratePoster}
-                disabled={isGeneratingPoster}
-              >
-                <Download className="h-5 w-5 text-orange-500" />
-                <span className="text-xs">{isGeneratingPoster ? '生成中...' : '保存海报'}</span>
-              </Button>
+              
+              {/* Secondary buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  className="h-12"
+                  onClick={handleCopyLink}
+                >
+                  <Copy className="h-4 w-4 mr-2 text-orange-500" />
+                  复制链接
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-12"
+                  onClick={handleGeneratePoster}
+                  disabled={isGeneratingPoster}
+                >
+                  <Download className="h-4 w-4 mr-2 text-orange-500" />
+                  {isGeneratingPoster ? '生成中...' : '保存海报'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
