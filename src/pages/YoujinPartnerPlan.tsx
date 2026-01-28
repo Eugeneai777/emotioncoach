@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, X, TrendingUp, Users, Zap, Target, Heart, Brain, Sparkles, Crown, Star, Diamond, Share2, AlertTriangle, Copy, Download, ChevronDown, Wallet, GraduationCap, Baby } from "lucide-react";
+import { ArrowLeft, Check, X, TrendingUp, Users, Zap, Target, Heart, Brain, Sparkles, Crown, Star, Diamond, Share2, AlertTriangle, Copy, Download, ChevronDown, Wallet, GraduationCap, Baby, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,15 +11,22 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { commissionableProducts } from "@/config/youjinPartnerProducts";
 import { toast } from "sonner";
-import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
-import html2canvas from "html2canvas";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { executeOneClickShare, generateCanvas, canvasToBlob } from "@/utils/oneClickShare";
+import ShareImagePreview from "@/components/ui/share-image-preview";
+import PartnerPlanShareCard from "@/components/partner/PartnerPlanShareCard";
 
 const YoujinPartnerPlan = () => {
   const navigate = useNavigate();
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
   const [showFloatingCTA, setShowFloatingCTA] = useState(false);
+  
+  // One-click share state
+  const [isSharing, setIsSharing] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  
   const posterRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -42,8 +49,66 @@ const YoujinPartnerPlan = () => {
     }
   }, []);
 
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) {
+        URL.revokeObjectURL(previewImageUrl);
+      }
+    };
+  }, [previewImageUrl]);
+
   const handleShare = () => {
     setShowShareDialog(true);
+  };
+
+  // One-click share handler
+  const handleOneClickShare = async () => {
+    if (isSharing || !posterRef.current) return;
+    
+    setIsSharing(true);
+    const toastId = toast.loading('正在生成海报...');
+
+    try {
+      await executeOneClickShare({
+        cardRef: posterRef,
+        cardName: '有劲合伙人计划',
+        onProgress: (status) => {
+          if (status === 'sharing') {
+            toast.dismiss(toastId);
+            toast.loading('正在分享...');
+          } else if (status === 'done') {
+            toast.dismiss(toastId);
+            toast.success('分享成功');
+          } else if (status === 'error') {
+            toast.dismiss(toastId);
+          }
+        },
+        onShowPreview: (blobUrl) => {
+          toast.dismiss(toastId);
+          setPreviewImageUrl(blobUrl);
+          setShowImagePreview(true);
+        },
+        onSuccess: () => {},
+        onError: (error) => {
+          toast.dismiss(toastId);
+          toast.error(error);
+        },
+      });
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error('生成失败，请重试');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const closePreview = () => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
   };
 
   const handleCopyLink = async () => {
@@ -57,17 +122,16 @@ const YoujinPartnerPlan = () => {
     
     setIsGeneratingPoster(true);
     try {
-      const canvas = await html2canvas(posterRef.current, {
-        ...SHARE_CARD_CONFIG,
-      });
+      const canvas = await generateCanvas(posterRef);
+      if (!canvas) {
+        throw new Error("生成失败");
+      }
       
       // 转换为 Blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((b) => {
-          if (b) resolve(b);
-          else reject(new Error("生成失败"));
-        }, "image/png", 1.0);
-      });
+      const blob = await canvasToBlob(canvas);
+      if (!blob) {
+        throw new Error("生成失败");
+      }
       
       const file = new File([blob], "有劲合伙人计划.png", { type: "image/png" });
       
@@ -1074,17 +1138,43 @@ const YoujinPartnerPlan = () => {
               <Button 
                 variant="outline" 
                 className="flex-1 h-12 border-orange-300 text-orange-600 hover:bg-orange-50 text-base"
-                onClick={handleShare}
+                onClick={handleOneClickShare}
+                disabled={isSharing}
               >
-                <Share2 className="h-4 w-4 mr-2" />
-                分享
+                {isSharing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4 mr-2" />
+                )}
+                {isSharing ? '生成中...' : '一键分享'}
               </Button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Share Dialog */}
+      {/* Hidden Share Card for Screenshot */}
+      <div 
+        style={{ 
+          position: 'fixed', 
+          left: '-9999px', 
+          top: 0, 
+          pointerEvents: 'none',
+          opacity: 0.01,
+        }}
+        aria-hidden="true"
+      >
+        <PartnerPlanShareCard ref={posterRef} />
+      </div>
+
+      {/* Share Image Preview (for WeChat/iOS long-press save) */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={closePreview}
+        imageUrl={previewImageUrl}
+      />
+
+      {/* Share Dialog (fallback with copy link) */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1114,118 +1204,10 @@ const YoujinPartnerPlan = () => {
               </Button>
             </div>
 
-            {/* Poster Preview - Hidden for export */}
-            <div 
-              ref={posterRef}
-              style={{
-                width: '360px',
-                padding: '24px',
-                backgroundColor: '#fff8f0',
-                borderRadius: '12px',
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-              }}
-            >
-              {/* Poster Header */}
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ 
-                  fontSize: '14px', 
-                  color: '#ea580c', 
-                  backgroundColor: '#fed7aa',
-                  padding: '4px 12px',
-                  borderRadius: '9999px',
-                  display: 'inline-block',
-                  marginBottom: '12px',
-                }}>
-                  🌟 AI 时代最佳副业机会
-                </div>
-                <h2 style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold',
-                  background: 'linear-gradient(to right, #ea580c, #d97706)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  marginBottom: '8px',
-                }}>
-                  有劲合伙人 · 让 AI 为你赚钱
-                </h2>
-                <p style={{ fontSize: '14px', color: '#78716c' }}>
-                  在 AI 大浪潮中，靠 AI 赚到第一桶金
-                </p>
-              </div>
-
-              {/* Key Points */}
-              <div style={{ 
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                padding: '16px',
-                marginBottom: '16px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              }}>
-                <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#1c1917' }}>
-                  ✔ 不需要技术、不需要流量、不需要拍视频
-                </p>
-                <p style={{ fontSize: '14px', color: '#57534e', marginBottom: '8px' }}>
-                  你只需要：<span style={{ fontWeight: '600', color: '#ea580c' }}>分享真实成长故事</span>
-                </p>
-                <p style={{ fontSize: '14px', color: '#57534e' }}>
-                  可推广：<span style={{ fontWeight: '600' }}>11款产品</span>覆盖情绪、财富、亲子三大场景
-                </p>
-              </div>
-
-              {/* Income Preview */}
-              <div style={{ 
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                padding: '16px',
-                marginBottom: '16px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              }}>
-                <p style={{ fontSize: '12px', color: '#78716c', marginBottom: '12px' }}>
-                  收益预测（30%转化率假设）
-                </p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#57534e' }}>💪 初级合伙人</span>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥2,169</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#57534e' }}>🔥 高级合伙人</span>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥18,158</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '13px', color: '#57534e' }}>💎 钻石合伙人</span>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥66,544</span>
-                </div>
-              </div>
-
-              {/* Disclaimer */}
-              <div style={{
-                backgroundColor: '#fef3c7',
-                borderRadius: '6px',
-                padding: '10px 12px',
-                marginBottom: '16px',
-              }}>
-                <p style={{ fontSize: '11px', color: '#92400e', lineHeight: '1.4' }}>
-                  ⚠️ 收入预测仅供参考，实际收益因个人能力和市场变化而异，不构成收益承诺。
-                </p>
-              </div>
-
-              {/* CTA */}
-              <div style={{ 
-                background: 'linear-gradient(to right, #f97316, #f59e0b)',
-                borderRadius: '8px',
-                padding: '12px',
-                textAlign: 'center',
-              }}>
-                <p style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff' }}>
-                  扫码了解详情 或 访问有劲App
-                </p>
-              </div>
-
-              {/* Footer */}
-              <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                <p style={{ fontSize: '11px', color: '#a8a29e' }}>
-                  有劲 · 让情绪成为力量
-                </p>
+            {/* Preview */}
+            <div className="flex justify-center">
+              <div className="transform scale-[0.6] origin-top">
+                <PartnerPlanShareCard />
               </div>
             </div>
           </div>
