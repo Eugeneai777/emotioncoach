@@ -16,13 +16,16 @@ export function PricingTab({ formData, updateFormData }: PricingTabProps) {
           <Label htmlFor="price">现价 (¥)</Label>
           <Input
             id="price"
-            type="number"
-            value={formData.price}
-            onChange={(e) =>
-              updateFormData({ price: parseFloat(e.target.value) || 0 })
-            }
-            min={0}
-            step={0.01}
+            type="text"
+            inputMode="decimal"
+            value={formData.price === 0 ? '' : formData.price.toString()}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                updateFormData({ price: val === '' ? 0 : parseFloat(val) || 0 });
+              }
+            }}
+            placeholder="0"
           />
           <p className="text-xs text-muted-foreground">用户实际支付的价格</p>
         </div>
@@ -48,15 +51,16 @@ export function PricingTab({ formData, updateFormData }: PricingTabProps) {
           {formData.original_price > 0 && (
             <Input
               id="original_price"
-              type="number"
-              value={formData.original_price}
-              onChange={(e) =>
-                updateFormData({
-                  original_price: parseFloat(e.target.value) || 0,
-                })
-              }
-              min={0}
-              step={0.01}
+              type="text"
+              inputMode="decimal"
+              value={formData.original_price === 0 ? '' : formData.original_price.toString()}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                  updateFormData({ original_price: val === '' ? 0 : parseFloat(val) || 0 });
+                }
+              }}
+              placeholder="0"
             />
           )}
           
