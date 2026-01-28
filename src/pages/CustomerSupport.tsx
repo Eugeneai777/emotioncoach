@@ -129,11 +129,14 @@ const CustomerSupport = () => {
   return (
     <>
       <DynamicOGMeta pageKey="customerSupport" />
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       {/* Header - 使用统一的PageHeader */}
       <PageHeader title="有劲AI客服" />
 
-      <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100vh-60px)]">
+      <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100dvh-60px)]">
         {/* Quick Options */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-2">🎯 快速选项</p>

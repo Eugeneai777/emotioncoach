@@ -162,7 +162,10 @@ export default function Settings() {
   return (
     <>
       <DynamicOGMeta pageKey="settings" />
-    <div className="min-h-screen bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <PageHeader title="设置" />
       
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
