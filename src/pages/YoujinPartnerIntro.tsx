@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock, Share2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock, Share2, Sparkles } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
@@ -11,14 +12,19 @@ import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
+import { usePartner } from "@/hooks/usePartner";
 import { 
   experiencePackageItems, 
   commissionableProducts, 
   totalCommissionableCount 
 } from "@/config/youjinPartnerProducts";
 
+// 等级顺序映射
+const levelOrder: Record<string, number> = { 'L1': 1, 'L2': 2, 'L3': 3 };
+
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
+  const { partner } = usePartner();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<{
     key: string;
@@ -26,11 +32,15 @@ export default function YoujinPartnerIntro() {
     price: number;
   } | null>(null);
 
+  // 判断是否已是有劲合伙人
+  const isYoujinPartner = partner?.partner_type === 'youjin' && partner?.status === 'active';
+  const currentLevel = isYoujinPartner ? partner.partner_level : null;
+
   // 处理小程序支付成功回调
   const { isPaymentCallback } = usePaymentCallback({
     onSuccess: () => {
       console.log('[YoujinPartnerIntro] Payment callback success');
-      toast.success('恭喜您成为有劲合伙人！');
+      toast.success(isYoujinPartner ? '升级成功！' : '恭喜您成为有劲合伙人！');
       setPayDialogOpen(false);
       navigate('/partner');
     },
@@ -46,7 +56,24 @@ export default function YoujinPartnerIntro() {
     }
   }, [isPaymentCallback]);
 
+  // 判断按钮状态
+  const getButtonState = (levelId: string) => {
+    if (!currentLevel) return 'purchase'; // 未购买
+    
+    const currentOrder = levelOrder[currentLevel] || 0;
+    const targetOrder = levelOrder[levelId] || 0;
+    
+    if (targetOrder === currentOrder) return 'current';
+    if (targetOrder < currentOrder) return 'downgrade';
+    return 'upgrade';
+  };
+
   const handlePurchase = (levelId: string) => {
+    const buttonState = getButtonState(levelId);
+    if (buttonState === 'current' || buttonState === 'downgrade') {
+      return; // 不可操作
+    }
+
     const level = youjinPartnerLevels.find(l => l.level === levelId);
     if (!level) return;
 
@@ -59,7 +86,7 @@ export default function YoujinPartnerIntro() {
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('恭喜您成为有劲合伙人！');
+    toast.success(isYoujinPartner ? '升级成功！' : '恭喜您成为有劲合伙人！');
     navigate('/partner');
   };
 
@@ -199,64 +226,134 @@ export default function YoujinPartnerIntro() {
         <div className="space-y-4">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">选择您的合伙人等级</h2>
-            <p className="text-muted-foreground">点击任意等级直接购买</p>
+            <p className="text-muted-foreground">
+              {isYoujinPartner ? '升级到更高等级，享受更高佣金' : '点击任意等级直接购买'}
+            </p>
           </div>
+
+          {/* 已是合伙人提示 */}
+          {isYoujinPartner && (
+            <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-amber-500" />
+                    <div>
+                      <p className="font-medium text-amber-800">
+                        您当前是 <strong>{currentLevel}</strong> 合伙人
+                      </p>
+                      {currentLevel !== 'L3' && (
+                        <p className="text-sm text-amber-600 mt-0.5">
+                          升级到更高等级需支付等级全价
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-amber-300 text-amber-700">
+                    {partner?.prepurchase_count || 0} 份剩余
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 省钱提示 */}
+          {!isYoujinPartner && (
+            <Card className="border-teal-200 bg-gradient-to-r from-teal-50 to-cyan-50">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">💎</span>
+                  <div>
+                    <p className="font-medium text-teal-800">一步到位更划算！</p>
+                    <p className="text-sm text-teal-600">
+                      直接购买钻石：¥4,950 | 先买初级再升级：¥792 + ¥4,950 = ¥5,742
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           <div className="grid gap-6">
-            {youjinPartnerLevels.map((level) => (
-              <Card 
-                key={level.level}
-                className="cursor-pointer hover:border-orange-500 hover:shadow-lg transition-all"
-                onClick={() => handlePurchase(level.level)}
-              >
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl">{level.icon}</span>
-                      <div>
-                        <p className="text-xl font-bold">{level.name}</p>
-                        <p className="text-muted-foreground">{level.description}</p>
+            {youjinPartnerLevels.map((level) => {
+              const buttonState = getButtonState(level.level);
+              const isDisabled = buttonState === 'current' || buttonState === 'downgrade';
+              
+              return (
+                <Card 
+                  key={level.level}
+                  className={`transition-all ${
+                    isDisabled 
+                      ? 'opacity-60 cursor-not-allowed' 
+                      : 'cursor-pointer hover:border-orange-500 hover:shadow-lg'
+                  } ${buttonState === 'current' ? 'border-green-300 bg-green-50/30' : ''}`}
+                  onClick={() => !isDisabled && handlePurchase(level.level)}
+                >
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-4xl">{level.icon}</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xl font-bold">{level.name}</p>
+                            {buttonState === 'current' && (
+                              <Badge className="bg-green-100 text-green-700 border-green-200">当前等级</Badge>
+                            )}
+                          </div>
+                          <p className="text-muted-foreground">{level.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-orange-600">¥{level.price}</p>
+                        <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包分发权</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-bold text-orange-600">¥{level.price}</p>
-                      <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包分发权</p>
-                    </div>
-                  </div>
 
-                  <div className="flex gap-3">
-                    <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium">
-                      全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
-                    </span>
-                    {level.commissionRateL2 > 0 && (
-                      <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
-                        二级 {(level.commissionRateL2 * 100).toFixed(0)}% 佣金
+                    <div className="flex gap-3">
+                      <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium">
+                        全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
                       </span>
-                    )}
-                  </div>
+                      {level.commissionRateL2 > 0 && (
+                        <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
+                          二级 {(level.commissionRateL2 * 100).toFixed(0)}% 佣金
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    {level.benefits.map((benefit, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-orange-500" />
-                        <span>{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {level.benefits.map((benefit, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-orange-500" />
+                          <span>{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
 
-                  <Button 
-                    className={`w-full gap-2 bg-gradient-to-r ${level.gradient} hover:opacity-90 text-white`}
-                    size="lg"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePurchase(level.level);
-                    }}
-                  >
-                    立即购买 {level.name}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <Button 
+                      className={`w-full gap-2 ${
+                        isDisabled 
+                          ? 'bg-gray-300 cursor-not-allowed' 
+                          : `bg-gradient-to-r ${level.gradient} hover:opacity-90`
+                      } text-white`}
+                      size="lg"
+                      disabled={isDisabled}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDisabled) handlePurchase(level.level);
+                      }}
+                    >
+                      {buttonState === 'current' 
+                        ? '当前等级' 
+                        : buttonState === 'downgrade' 
+                          ? '不可降级' 
+                          : buttonState === 'upgrade' 
+                            ? `升级购买 ¥${level.price}` 
+                            : `立即购买 ${level.name}`}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
@@ -290,7 +387,7 @@ export default function YoujinPartnerIntro() {
             <div className="space-y-2">
               <p className="font-medium">Q: 能否升级到更高等级？</p>
               <p className="text-sm text-muted-foreground">
-                A: 可以！随时可以补差价升级到更高等级，享受更高佣金比例。
+                A: 可以！升级需支付目标等级全价，体验包配额将直接设为新等级额度。建议一步到位选择钻石等级更划算！
               </p>
             </div>
           </CardContent>

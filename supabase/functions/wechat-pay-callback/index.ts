@@ -216,6 +216,86 @@ serve(async (req) => {
       }
     }
 
+    // 处理有劲合伙人套餐购买/升级 (youjin_partner_l1, youjin_partner_l2, youjin_partner_l3)
+    if (order.package_key.startsWith('youjin_partner_')) {
+      const levelName = order.package_key.replace('youjin_partner_', '').toUpperCase(); // l1 -> L1
+      console.log('Processing youjin partner package:', levelName);
+      
+      // 获取等级规则
+      const { data: levelRule, error: levelError } = await supabase
+        .from('partner_level_rules')
+        .select('*')
+        .eq('partner_type', 'youjin')
+        .eq('level_name', levelName)
+        .single();
+      
+      if (levelError) {
+        console.error('Get level rule error:', levelError);
+      } else if (levelRule) {
+        // 查询是否已是合伙人
+        const { data: existingPartner } = await supabase
+          .from('partners')
+          .select('*')
+          .eq('user_id', order.user_id)
+          .maybeSingle();
+        
+        // 生成合伙人邀请码
+        const generatePartnerCode = () => {
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let code = '';
+          for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          return code;
+        };
+        
+        if (existingPartner && existingPartner.partner_type === 'youjin') {
+          // 升级：直接覆盖为新等级（全价购买模式）
+          const { error: updateError } = await supabase
+            .from('partners')
+            .update({
+              partner_level: levelName,
+              prepurchase_count: levelRule.min_prepurchase,  // 直接设为新等级配额
+              commission_rate_l1: levelRule.commission_rate_l1,
+              commission_rate_l2: levelRule.commission_rate_l2,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingPartner.id);
+          
+          if (updateError) {
+            console.error('Upgrade partner error:', updateError);
+          } else {
+            console.log('Partner upgraded:', order.user_id, existingPartner.partner_level, '->', levelName);
+          }
+        } else {
+          // 新建合伙人记录
+          const partnerCode = generatePartnerCode();
+          const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1年有效期
+          
+          const { error: insertError } = await supabase
+            .from('partners')
+            .insert({
+              user_id: order.user_id,
+              partner_type: 'youjin',
+              partner_level: levelName,
+              partner_code: partnerCode,
+              prepurchase_count: levelRule.min_prepurchase,
+              prepurchase_expires_at: expiresAt.toISOString(),
+              commission_rate_l1: levelRule.commission_rate_l1,
+              commission_rate_l2: levelRule.commission_rate_l2,
+              status: 'active',
+              source: 'purchase',
+            });
+          
+          if (insertError) {
+            console.error('Create youjin partner error:', insertError);
+          } else {
+            console.log('Youjin partner created:', order.user_id, levelName, 'code:', partnerCode);
+          }
+        }
+      }
+    }
+
     // 更新 partner_referrals 的 conversion_status
     const newConversionStatus = order.package_key === 'partner' ? 'became_partner' : 'purchased_365';
     const { data: referral, error: referralQueryError } = await supabase

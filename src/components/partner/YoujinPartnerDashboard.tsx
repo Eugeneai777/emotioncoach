@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Partner } from "@/hooks/usePartner";
-import { Upload, ImageIcon, Palette, Users, TrendingUp, Wallet, ChevronDown, ChevronUp, Bell } from "lucide-react";
+import { Upload, ImageIcon, Palette, Users, TrendingUp, Wallet, ChevronDown, ChevronUp, Bell, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { EntryTypeSelector } from "./EntryTypeSelector";
@@ -21,6 +21,7 @@ import { WithdrawalForm } from "./WithdrawalForm";
 import { PartnerOverviewCard } from "./PartnerOverviewCard";
 import { PartnerQuickActions } from "./PartnerQuickActions";
 import { CompactConversionFunnel } from "./CompactConversionFunnel";
+import { PartnerUpgradeCard } from "./PartnerUpgradeCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -106,6 +107,11 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         partnerId={partner.id} 
         onClick={() => setActiveTab('students')}
       />
+
+      {/* 升级提示 - 仅L1/L2显示 */}
+      {partner.partner_level !== 'L3' && (
+        <PartnerUpgradeCard currentLevel={partner.partner_level} />
+      )}
 
       {/* 快捷操作 */}
       <PartnerQuickActions onTabChange={handleTabChange} />
