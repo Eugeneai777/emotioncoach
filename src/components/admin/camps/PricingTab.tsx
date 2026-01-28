@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { CampFormData } from "./CampEditDialog";
 
 interface PricingTabProps {
@@ -27,20 +28,43 @@ export function PricingTab({ formData, updateFormData }: PricingTabProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="original_price">原价 (¥)</Label>
-          <Input
-            id="original_price"
-            type="number"
-            value={formData.original_price}
-            onChange={(e) =>
-              updateFormData({
-                original_price: parseFloat(e.target.value) || 0,
-              })
-            }
-            min={0}
-            step={0.01}
-          />
-          <p className="text-xs text-muted-foreground">用于划线价显示</p>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="original_price">原价 (¥)</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">显示划线价</span>
+              <Switch
+                checked={formData.original_price > 0}
+                onCheckedChange={(checked) => {
+                  if (!checked) {
+                    updateFormData({ original_price: 0 });
+                  } else {
+                    updateFormData({ original_price: Math.round(formData.price * 1.2) });
+                  }
+                }}
+              />
+            </div>
+          </div>
+          
+          {formData.original_price > 0 && (
+            <Input
+              id="original_price"
+              type="number"
+              value={formData.original_price}
+              onChange={(e) =>
+                updateFormData({
+                  original_price: parseFloat(e.target.value) || 0,
+                })
+              }
+              min={0}
+              step={0.01}
+            />
+          )}
+          
+          <p className="text-xs text-muted-foreground">
+            {formData.original_price > 0 
+              ? "用于划线价显示" 
+              : "关闭后不显示划线价"}
+          </p>
         </div>
       </div>
 
