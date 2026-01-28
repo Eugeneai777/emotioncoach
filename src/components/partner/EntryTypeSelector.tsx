@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Gift, CreditCard, Check, Loader2, AlertCircle, Sparkles, BarChart3, Copy, Save } from "lucide-react";
-import { getPartnerShareUrl, type PartnerProductType } from "@/utils/partnerQRUtils";
+import { Gift, CreditCard, Check, Loader2, AlertCircle, Copy, Save } from "lucide-react";
+import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
 
 // 体验包选项定义 - 包含全部4个体验包
 const EXPERIENCE_PACKAGES = [
@@ -22,7 +21,6 @@ const DEFAULT_PACKAGES = ['basic', 'emotion_health_assessment', 'scl90_report', 
 interface EntryTypeSelectorProps {
   partnerId: string;
   currentEntryType?: string;
-  currentProductType?: PartnerProductType;
   prepurchaseCount?: number;
   currentSelectedPackages?: string[] | null;
   onUpdate?: () => void;
@@ -31,13 +29,11 @@ interface EntryTypeSelectorProps {
 export function EntryTypeSelector({ 
   partnerId, 
   currentEntryType = 'free',
-  currentProductType = 'trial_member',
   prepurchaseCount = 0,
   currentSelectedPackages,
   onUpdate 
 }: EntryTypeSelectorProps) {
   const [entryType, setEntryType] = useState<'free' | 'paid'>(currentEntryType as 'free' | 'paid');
-  const [productType, setProductType] = useState<PartnerProductType>(currentProductType);
   const [selectedPackages, setSelectedPackages] = useState<string[]>(
     currentSelectedPackages || DEFAULT_PACKAGES
   );
@@ -46,33 +42,24 @@ export function EntryTypeSelector({
 
   useEffect(() => {
     setEntryType(currentEntryType as 'free' | 'paid');
-    setProductType(currentProductType);
     setSelectedPackages(currentSelectedPackages || DEFAULT_PACKAGES);
     setHasChanges(false);
-  }, [currentEntryType, currentProductType, currentSelectedPackages]);
+  }, [currentEntryType, currentSelectedPackages]);
 
   const checkHasChanges = (
     newEntryType: string, 
-    newProductType: string, 
     newSelectedPackages: string[]
   ) => {
     const currentPkgs = currentSelectedPackages || DEFAULT_PACKAGES;
     const pkgsChanged = 
       newSelectedPackages.length !== currentPkgs.length ||
       !newSelectedPackages.every(p => currentPkgs.includes(p));
-    return newEntryType !== currentEntryType || 
-           newProductType !== currentProductType || 
-           pkgsChanged;
+    return newEntryType !== currentEntryType || pkgsChanged;
   };
 
   const handleSelectEntryType = (type: 'free' | 'paid') => {
     setEntryType(type);
-    setHasChanges(checkHasChanges(type, productType, selectedPackages));
-  };
-
-  const handleSelectProductType = (type: PartnerProductType) => {
-    setProductType(type);
-    setHasChanges(checkHasChanges(entryType, type, selectedPackages));
+    setHasChanges(checkHasChanges(type, selectedPackages));
   };
 
   const handleTogglePackage = (packageKey: string) => {
@@ -80,19 +67,19 @@ export function EntryTypeSelector({
       ? selectedPackages.filter(p => p !== packageKey)
       : [...selectedPackages, packageKey];
     setSelectedPackages(newPackages);
-    setHasChanges(checkHasChanges(entryType, productType, newPackages));
+    setHasChanges(checkHasChanges(entryType, newPackages));
   };
 
   const handleSelectAllPackages = (selectAll: boolean) => {
     const newPackages = selectAll ? [...DEFAULT_PACKAGES] : [];
     setSelectedPackages(newPackages);
-    setHasChanges(checkHasChanges(entryType, productType, newPackages));
+    setHasChanges(checkHasChanges(entryType, newPackages));
   };
 
   const isAllSelected = selectedPackages.length === EXPERIENCE_PACKAGES.length;
 
-  // 实时预览链接
-  const previewUrl = getPartnerShareUrl(partnerId, entryType, productType);
+  // 实时预览链接 - 固定使用 trial_member 产品类型
+  const previewUrl = getPartnerShareUrl(partnerId, entryType, 'trial_member');
 
   const copyPreviewUrl = async () => {
     try {
@@ -104,7 +91,7 @@ export function EntryTypeSelector({
   };
 
   const handleSave = async () => {
-    if (productType === 'trial_member' && selectedPackages.length === 0) {
+    if (selectedPackages.length === 0) {
       toast.error("请至少选择一项体验包内容");
       return;
     }
@@ -115,10 +102,10 @@ export function EntryTypeSelector({
         .from('partners')
         .update({
           default_entry_type: entryType,
-          default_product_type: productType,
-          default_entry_price: productType === 'wealth_assessment' ? 9.9 : (entryType === 'paid' ? 9.9 : 0),
-          default_quota_amount: productType === 'trial_member' ? 50 : 0,
-          selected_experience_packages: productType === 'trial_member' ? selectedPackages : null,
+          default_product_type: 'trial_member',
+          default_entry_price: entryType === 'paid' ? 9.9 : 0,
+          default_quota_amount: 50,
+          selected_experience_packages: selectedPackages,
           updated_at: new Date().toISOString()
         } as Record<string, unknown>)
         .eq('id', partnerId);
@@ -144,7 +131,7 @@ export function EntryTypeSelector({
             <Gift className="w-5 h-5 text-orange-500" />
             推广入口设置
           </CardTitle>
-          {/* 预购额度提示 - 移到标题右侧 */}
+          {/* 预购额度提示 */}
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${
             prepurchaseCount > 0 
               ? 'bg-teal-100 text-teal-700' 
@@ -165,140 +152,93 @@ export function EntryTypeSelector({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 产品选择 Tabs */}
-        <Tabs value={productType} onValueChange={(v) => handleSelectProductType(v as PartnerProductType)}>
-          <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-            <TabsTrigger 
-              value="trial_member" 
-              className="data-[state=active]:bg-teal-500 data-[state=active]:text-white py-2"
+        {/* 入口方式选择 */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground">入口方式</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {/* 免费领取 */}
+            <div
+              onClick={() => handleSelectEntryType('free')}
+              className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                entryType === 'free'
+                  ? 'border-teal-500 bg-teal-50'
+                  : 'border-gray-200 hover:border-teal-300'
+              }`}
             >
-              <Sparkles className="w-4 h-4 mr-1.5" />
-              尝鲜会员
-            </TabsTrigger>
-            <TabsTrigger 
-              value="wealth_assessment"
-              className="data-[state=active]:bg-purple-500 data-[state=active]:text-white py-2"
-            >
-              <BarChart3 className="w-4 h-4 mr-1.5" />
-              财富测评
-            </TabsTrigger>
-          </TabsList>
-
-          {/* 尝鲜会员配置 */}
-          <TabsContent value="trial_member" className="mt-3 space-y-4">
-            {/* 入口方式选择 */}
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">入口方式</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {/* 免费领取 */}
-                <div
-                  onClick={() => handleSelectEntryType('free')}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    entryType === 'free'
-                      ? 'border-teal-500 bg-teal-50'
-                      : 'border-gray-200 hover:border-teal-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Gift className={`w-4 h-4 ${entryType === 'free' ? 'text-teal-600' : 'text-gray-400'}`} />
-                    <span className={`font-medium text-sm ${entryType === 'free' ? 'text-teal-700' : 'text-gray-600'}`}>
-                      免费领取
-                    </span>
-                    {entryType === 'free' && (
-                      <Check className="w-3 h-3 text-teal-600 ml-auto" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    扫码直接获得体验套餐
-                  </p>
-                </div>
-
-                {/* 付费入口 */}
-                <div
-                  onClick={() => handleSelectEntryType('paid')}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    entryType === 'paid'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <CreditCard className={`w-4 h-4 ${entryType === 'paid' ? 'text-orange-600' : 'text-gray-400'}`} />
-                    <span className={`font-medium text-sm ${entryType === 'paid' ? 'text-orange-700' : 'text-gray-600'}`}>
-                      付费 ¥9.9
-                    </span>
-                    {entryType === 'paid' && (
-                      <Check className="w-3 h-3 text-orange-600 ml-auto" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    支付后获得体验套餐
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 体验包内容选择 - 4个选项 */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm text-muted-foreground">包含内容</Label>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="select-all"
-                    checked={isAllSelected}
-                    onCheckedChange={(checked) => handleSelectAllPackages(checked === true)}
-                  />
-                  <label htmlFor="select-all" className="text-xs text-muted-foreground cursor-pointer">
-                    全选
-                  </label>
-                </div>
-              </div>
-              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-2">
-                {EXPERIENCE_PACKAGES.map((pkg) => (
-                  <div key={pkg.key} className="flex items-center gap-2">
-                    <Checkbox
-                      id={pkg.key}
-                      checked={selectedPackages.includes(pkg.key)}
-                      onCheckedChange={() => handleTogglePackage(pkg.key)}
-                    />
-                    <label htmlFor={pkg.key} className="flex-1 cursor-pointer flex items-center gap-1.5">
-                      <span className="text-sm">{pkg.icon}</span>
-                      <span className="text-sm font-medium">{pkg.label}</span>
-                      <span className="text-xs text-muted-foreground">({pkg.description})</span>
-                    </label>
-                  </div>
-                ))}
-                {selectedPackages.length === 0 && (
-                  <p className="text-xs text-red-500 mt-1">⚠️ 请至少选择一项</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Gift className={`w-4 h-4 ${entryType === 'free' ? 'text-teal-600' : 'text-gray-400'}`} />
+                <span className={`font-medium text-sm ${entryType === 'free' ? 'text-teal-700' : 'text-gray-600'}`}>
+                  免费领取
+                </span>
+                {entryType === 'free' && (
+                  <Check className="w-3 h-3 text-teal-600 ml-auto" />
                 )}
               </div>
-            </div>
-          </TabsContent>
-
-          {/* 财富测评说明 */}
-          <TabsContent value="wealth_assessment" className="mt-3">
-            <div className="p-4 rounded-lg bg-purple-50 border border-purple-100 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-purple-800">📊 财富卡点测评</span>
-                <span className="text-sm text-purple-600 font-medium">固定 ¥9.9</span>
-              </div>
-              <ul className="text-xs text-purple-700 space-y-1">
-                <li className="flex items-center gap-1.5">
-                  <Check className="w-3 h-3" /> 30道财富场景诊断
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Check className="w-3 h-3" /> 三层深度分析
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Check className="w-3 h-3" /> AI个性化突破路径
-                </li>
-              </ul>
-              <p className="text-xs text-purple-600 pt-2 border-t border-purple-200">
-                💡 用户扫码付费后完成测评，进入财富觉醒训练营转化漏斗
+              <p className="text-xs text-muted-foreground">
+                扫码直接获得体验套餐
               </p>
             </div>
-          </TabsContent>
-        </Tabs>
+
+            {/* 付费入口 */}
+            <div
+              onClick={() => handleSelectEntryType('paid')}
+              className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                entryType === 'paid'
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-gray-200 hover:border-orange-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <CreditCard className={`w-4 h-4 ${entryType === 'paid' ? 'text-orange-600' : 'text-gray-400'}`} />
+                <span className={`font-medium text-sm ${entryType === 'paid' ? 'text-orange-700' : 'text-gray-600'}`}>
+                  付费 ¥9.9
+                </span>
+                {entryType === 'paid' && (
+                  <Check className="w-3 h-3 text-orange-600 ml-auto" />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                支付后获得体验套餐
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 体验包内容选择 - 4个选项 */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm text-muted-foreground">包含内容</Label>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="select-all"
+                checked={isAllSelected}
+                onCheckedChange={(checked) => handleSelectAllPackages(checked === true)}
+              />
+              <label htmlFor="select-all" className="text-xs text-muted-foreground cursor-pointer">
+                全选
+              </label>
+            </div>
+          </div>
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-2">
+            {EXPERIENCE_PACKAGES.map((pkg) => (
+              <div key={pkg.key} className="flex items-center gap-2">
+                <Checkbox
+                  id={pkg.key}
+                  checked={selectedPackages.includes(pkg.key)}
+                  onCheckedChange={() => handleTogglePackage(pkg.key)}
+                />
+                <label htmlFor={pkg.key} className="flex-1 cursor-pointer flex items-center gap-1.5">
+                  <span className="text-sm">{pkg.icon}</span>
+                  <span className="text-sm font-medium">{pkg.label}</span>
+                  <span className="text-xs text-muted-foreground">({pkg.description})</span>
+                </label>
+              </div>
+            ))}
+            {selectedPackages.length === 0 && (
+              <p className="text-xs text-red-500 mt-1">⚠️ 请至少选择一项</p>
+            )}
+          </div>
+        </div>
 
         {/* 实时链接预览 */}
         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -317,10 +257,10 @@ export function EntryTypeSelector({
           <p className="font-mono text-xs text-gray-700 break-all">{previewUrl}</p>
         </div>
 
-        {/* 保存按钮 - 始终显示 */}
+        {/* 保存按钮 */}
         <Button
           onClick={handleSave}
-          disabled={saving || !hasChanges || (productType === 'trial_member' && selectedPackages.length === 0)}
+          disabled={saving || !hasChanges || selectedPackages.length === 0}
           className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50"
         >
           {saving ? (
