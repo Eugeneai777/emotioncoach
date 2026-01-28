@@ -58,7 +58,7 @@ export default function YoujinPartnerIntro() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-orange-50/30">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-orange-50/30" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="youjinPartnerIntro" />
       <div className="container max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
