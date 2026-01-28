@@ -1,199 +1,170 @@
 
 
-## 全站分享按钮完整审计与统一管理方案
+## 有劲合伙人计划分享卡片 - 多内容模板方案
 
-### 当前状态总览
+### 问题分析
 
-通过全面搜索发现项目中有 **25+ 个分享功能**，分布在以下几个场景：
+当前 `PartnerPlanShareCard` 只有 4 种**颜色风格**（经典橙、专业蓝、极简白、活力紫），但所有模板的**内容完全相同**。用户需要的是类似 `IntroShareCard` 的**不同内容布局**模板，针对不同场景吸引不同用户群体。
 
-| 场景 | 分享组件/功能 | 当前状态 |
-|:-----|:-------------|:---------|
-| 🏕️ 训练营打卡 | `CampShareDialog` | ⚠️ 未注册 |
-| 📋 简报分享 | `BriefingShareDialog` | ⚠️ 未注册 |
-| 📔 感恩日记 | `GratitudeJournalShareDialog` | ⚠️ 未注册，使用旧版 QR |
-| 💬 社区帖子 | `ShareButton` / `PostDetailSheet` | ✅ 部分合规 |
-| 🆘 情绪急救 | `EmotionButtonShareDialog` | ⚠️ 未注册 |
-| 💗 安全打卡 | `AliveCheckShareDialog` | ⚠️ 未注册 |
-| 🎨 海报中心 | `PosterCenter` / `PosterGenerator` | ✅ 已注册，旧版实现 |
-| ⚡ 能量宣言 | `EnergyDeclaration` | ✅ 已注册，旧版实现 |
-| 📊 周报导出 | `WeeklyTagReport` | ✅ 已注册，旧版实现 |
-| 👨‍👩‍👧 青少年邀请 | `TeenInviteShareDialog` | ✅ 已注册，部分合规 |
-| 🚀 合伙人 | `PartnerPlanShareCard` | ✅ 已注册，部分合规 |
-| 🧠 SCL-90 | `SCL90ShareDialog` | ✅ 完全合规 |
-| ❤️‍🩹 情绪健康 | `EmotionHealthShareDialog` | ✅ 完全合规 |
-| 📖 介绍页(17个) | `IntroShareDialog` | ✅ 完全合规 |
-| 💰 财富日记 | `WealthJournalShareDialog` | ⚠️ 需验证 |
-| 🏆 成就墙 | `AchievementShareCard` | ⚠️ 需验证 |
-| 🎓 毕业证 | `GraduationShareCard` | ⚠️ 需验证 |
+### 新模板设计（4种内容模板）
+
+| 模板ID | 名称 | 适用场景 | 核心内容 |
+|:-------|:-----|:---------|:---------|
+| `income` | 收益展示版 | 吸引关注赚钱机会 | 突出三级合伙人净利润数据（¥2,169 → ¥66,544） |
+| `products` | 产品矩阵版 | 强调产品覆盖面 | 展示11款可分成产品，情绪/财富/亲子三大场景 |
+| `easystart` | 轻松入门版 | 降低参与顾虑 | 强调零门槛、分享故事即可、不需要技术/流量 |
+| `testimonial` | 用户证言版 | 增强信任感 | 真实案例/成功故事风格，带引语 |
 
 ---
 
-### 发现的核心问题
+### 实现方案
 
-#### 1. 未注册到 `shareCardsRegistry.ts` 的分享功能
-
-以下 **6 个分享组件** 未在统一管理后台显示：
-
-| 组件 | 文件位置 | 问题描述 |
-|:-----|:---------|:---------|
-| `CampShareDialog` | `src/components/camp/CampShareDialog.tsx` | 训练营打卡分享，分享到社区而非生成图片 |
-| `BriefingShareDialog` | `src/components/briefing/BriefingShareDialog.tsx` | 教练简报分享，分享到社区 |
-| `GratitudeJournalShareDialog` | `src/components/gratitude/GratitudeJournalShareDialog.tsx` | 感恩日记分享，使用旧版 `QRCode` 库 |
-| `EmotionButtonShareDialog` | `src/components/tools/EmotionButtonShareDialog.tsx` | 情绪急救分享 |
-| `AliveCheckShareDialog` | `src/components/tools/AliveCheckShareDialog.tsx` | 安全打卡分享 |
-| `WealthJournalShareDialog` | `src/components/wealth-camp/WealthJournalShareDialog.tsx` | 财富日记分享 |
-
-#### 2. 未更新到 `ShareButtonAuditPanel.tsx` 审计面板
-
-当前审计面板只追踪 **9 个分享功能**，遗漏了上述 6 个及其他组件。
-
-#### 3. QR 码库使用不统一
-
-发现 `GratitudeJournalShareDialog` 直接使用 `QRCode.toDataURL()` 而非统一的 `useQRCode` hook。
-
----
-
-### 修复方案
-
-#### 步骤 1：扩展 `shareCardsRegistry.ts` 添加缺失卡片
+#### 1. 更新类型定义
 
 ```typescript
-// 新增分享功能注册
-{
-  id: 'camp-checkin',
-  title: '训练营打卡分享',
-  category: 'result',
-  emoji: '🏕️',
-  type: 'result',
-  componentName: 'CampShareDialog',
-  description: '训练营每日打卡分享到社区',
-},
-{
-  id: 'briefing-share',
-  title: '教练简报分享',
-  category: 'result',
-  emoji: '📋',
-  type: 'result',
-  componentName: 'BriefingShareDialog',
-  description: '教练对话简报分享到社区',
-},
-{
-  id: 'gratitude-journal',
-  title: '感恩日记分享',
-  category: 'tool',
-  emoji: '📔',
-  type: 'result',
-  componentName: 'GratitudeJournalShareDialog',
-  description: '感恩日记推广海报',
-},
-{
-  id: 'emotion-button-share',
-  title: '情绪急救分享',
-  category: 'tool',
-  emoji: '🆘',
-  type: 'result',
-  componentName: 'EmotionButtonShareDialog',
-  description: '情绪急救工具分享',
-},
-{
-  id: 'alive-check-share',
-  title: '安全打卡分享',
-  category: 'tool',
-  emoji: '💗',
-  type: 'result',
-  componentName: 'AliveCheckShareDialog',
-  description: '安全打卡功能分享',
-},
-{
-  id: 'wealth-journal-share',
-  title: '财富日记分享',
-  category: 'result',
-  emoji: '💰',
-  type: 'result',
-  componentName: 'WealthJournalShareDialog',
-  description: '财富觉察日记分享',
-},
+// src/config/partnerShareCardStyles.ts
+export type PartnerCardContentTemplate = 'income' | 'products' | 'easystart' | 'testimonial';
+
+export interface PartnerCardContentConfig {
+  id: PartnerCardContentTemplate;
+  label: string;
+  description: string;
+}
+
+export const PARTNER_CARD_CONTENT_TEMPLATES: Record<PartnerCardContentTemplate, PartnerCardContentConfig> = {
+  income: {
+    id: 'income',
+    label: '收益版',
+    description: '突出收益预测数据'
+  },
+  products: {
+    id: 'products', 
+    label: '产品版',
+    description: '展示11款可分成产品'
+  },
+  easystart: {
+    id: 'easystart',
+    label: '入门版',
+    description: '强调零门槛轻松开始'
+  },
+  testimonial: {
+    id: 'testimonial',
+    label: '证言版',
+    description: '真实案例增强信任'
+  }
+};
 ```
 
-#### 步骤 2：扩展 `ShareButtonAuditPanel.tsx` 审计列表
+#### 2. 卡片内容设计
 
-将上述 6 个组件添加到 `KNOWN_SHARE_FEATURES` 数组，并标注各自的合规状态。
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│  收益展示版 (income)                                                                 │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  🌟 AI 时代最佳副业机会                                                              │
+│  有劲合伙人 · 让 AI 为你赚钱                                                         │
+│                                                                                      │
+│  ┌──────────────────────────────────────────────────────────────────┐                │
+│  │ 💪 初级合伙人    ────────────────────    净利润 ¥2,169          │                │
+│  │ 🔥 高级合伙人    ────────────────────    净利润 ¥18,158         │                │
+│  │ 💎 钻石合伙人    ────────────────────    净利润 ¥66,544         │                │
+│  └──────────────────────────────────────────────────────────────────┘                │
+│  ⚠️ 收益预测基于30%转化率假设                                                        │
+│  扫码了解详情                                                                        │
+└─────────────────────────────────────────────────────────────────────────────────────┘
 
-#### 步骤 3：修复 `GratitudeJournalShareDialog` 使用统一 QR 库
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│  产品矩阵版 (products)                                                               │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  🚀 有劲合伙人 · 11款产品可分成                                                      │
+│                                                                                      │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐                                       │
+│  │ 💚 情绪场景 │ │ 💰 财富场景 │ │ 💜 亲子场景 │                                       │
+│  │ 测评+教练  │ │ 测评+训练营│ │ 双轨+训练营│                                        │
+│  └────────────┘ └────────────┘ └────────────┘                                       │
+│                                                                                      │
+│  ✔ 9.9元测评 → 365会员 → 299训练营                                                  │
+│  ✔ 最高50%佣金，二级12%分成                                                         │
+│  扫码了解完整产品矩阵                                                                │
+└─────────────────────────────────────────────────────────────────────────────────────┘
 
-```typescript
-// 当前（不合规）
-import QRCode from "qrcode";
-const url = await QRCode.toDataURL(shareUrl, {...});
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│  轻松入门版 (easystart)                                                              │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  ✨ 普通人的 AI 赚钱机会                                                             │
+│  有劲合伙人 · 分享即收益                                                             │
+│                                                                                      │
+│  ┌────────────────────────────────────────────┐                                     │
+│  │ ❌ 不需要技术背景                          │                                     │
+│  │ ❌ 不需要大量流量                          │                                     │
+│  │ ❌ 不需要拍视频、做内容                     │                                     │
+│  └────────────────────────────────────────────┘                                     │
+│                                                                                      │
+│  ┌────────────────────────────────────────────┐                                     │
+│  │ ✅ 只需分享你的真实成长故事                 │                                     │
+│  │ ✅ 792元起步，100份体验包                  │                                     │
+│  │ ✅ 全产品18%-50%佣金                       │                                     │
+│  └────────────────────────────────────────────┘                                     │
+│  扫码开启你的 AI 副业                                                                │
+└─────────────────────────────────────────────────────────────────────────────────────┘
 
-// 修复后（合规）
-import { useQRCode } from '@/utils/qrCodeUtils';
-const { qrCodeUrl } = useQRCode(shareUrl, 'SHARE_CARD');
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│  用户证言版 (testimonial)                                                            │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  💬 真实用户说                                                                       │
+│                                                                                      │
+│  ┌────────────────────────────────────────────────────────┐                         │
+│  │ "第一个月只是把有劲推荐给了5个朋友，                    │                         │
+│  │  没想到3个月后他们都成了付费用户..."                   │                         │
+│  │                         ── 王女士，钻石合伙人          │                         │
+│  └────────────────────────────────────────────────────────┘                         │
+│                                                                                      │
+│  ✔ 分享真实体验，自然吸引同频用户                                                    │
+│  ✔ AI产品复购率高，持续产生佣金                                                     │
+│                                                                                      │
+│  有劲合伙人 · 让好产品自己说话                                                       │
+│  扫码了解真实案例                                                                    │
+└─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 步骤 4：更新一致性检查列表
+#### 3. 更新组件结构
 
-在 `shareCardConsistencyCheck.ts` 的 `COMPLIANT_CARDS` 添加新卡片。
+**PartnerPlanShareCard.tsx**：
+- 新增 `contentTemplate` 属性（`income` | `products` | `easystart` | `testimonial`）
+- 根据 `contentTemplate` 渲染不同内容布局
+- 保留 `template`（颜色风格）属性用于色彩主题
 
-#### 步骤 5：更新组件路径映射
+**PartnerCardTemplateSelector.tsx**：
+- 更新为内容模板选择器（而非颜色选择器）
+- 每个选项显示模板名称和简短描述
+- 可选：保留颜色选择作为第二层配置
 
-在 `ShareCardConsistencyPanel.tsx` 的 `COMPONENT_PATHS` 添加新组件路径。
+#### 4. 页面集成
+
+**YoujinPartnerPlan.tsx**：
+- 将 `selectedTemplate` 更新为内容模板类型
+- 选择器改为显示 4 种内容模板
+- 卡片根据选中模板渲染不同内容
 
 ---
 
-### 涉及文件汇总
+### 涉及文件
 
 | 操作 | 文件 | 修改内容 |
 |:-----|:-----|:---------|
-| 修改 | `src/config/shareCardsRegistry.ts` | 添加 6 个缺失的分享组件注册 |
-| 修改 | `src/components/admin/ShareButtonAuditPanel.tsx` | 扩展审计列表，新增 6+ 审计项 |
-| 修改 | `src/utils/shareCardConsistencyCheck.ts` | 添加新卡片到合规检查列表 |
-| 修改 | `src/components/admin/ShareCardConsistencyPanel.tsx` | 添加新组件路径映射 |
-| 修改 | `src/components/gratitude/GratitudeJournalShareDialog.tsx` | 替换为统一 `useQRCode` hook |
-
----
-
-### 分享功能分类说明
-
-项目中的分享功能分为两类：
-
-#### A. 社区分享型（发布到有劲社区）
-- `CampShareDialog` - 训练营打卡
-- `BriefingShareDialog` - 教练简报
-- `PostComposer` - 社区发帖
-
-这类组件主要功能是**发布内容到社区**，而非生成分享图片。
-
-#### B. 图片分享型（生成海报/卡片）
-- `SCL90ShareDialog` - 测评结果
-- `EmotionHealthShareDialog` - 情绪健康结果
-- `WealthJournalShareDialog` - 财富日记
-- `PartnerPlanShareCard` - 合伙人海报
-- 等等...
-
-这类组件使用 `executeOneClickShare` 或 `generateCardBlob` 生成图片。
-
----
-
-### 统一规范核对清单
-
-每个分享功能应满足：
-
-| 检查项 | 标准 | 检查方法 |
-|:-------|:-----|:---------|
-| 已注册 | 在 `shareCardsRegistry.ts` 中有记录 | 搜索组件名 |
-| 统一模块 | 使用 `executeOneClickShare` 或 `useOneClickShare` | 检查 import |
-| 统一 QR | 使用 `useQRCode` hook | 检查是否直接使用 `qrcode` 库 |
-| 统一域名 | 使用 `getPromotionDomain()` | 检查 URL 生成方式 |
-| 品牌标识 | "Powered by 有劲AI" | 检查 footer 文案 |
-| 宽度规范 | 结果类 340px，工具类 420px | 检查卡片容器宽度 |
+| 修改 | `src/config/partnerShareCardStyles.ts` | 添加内容模板类型和配置 |
+| 修改 | `src/components/partner/PartnerPlanShareCard.tsx` | 实现4种内容模板渲染逻辑 |
+| 修改 | `src/components/partner/PartnerCardTemplateSelector.tsx` | 改为内容模板选择器 |
+| 修改 | `src/pages/YoujinPartnerPlan.tsx` | 适配新的模板选择逻辑 |
 
 ---
 
 ### 预期效果
 
-1. **管理后台** `/admin/share-cards` 可查看全部 30+ 分享卡片
-2. **审计面板** 显示所有分享功能的合规状态
-3. **一致性检查** 覆盖全部卡片组件
-4. **新开发规范** 明确的注册流程和合规标准
+1. **收益版**：吸引关注赚钱机会的用户，突出净利润数据
+2. **产品版**：展示产品覆盖面，适合对AI产品感兴趣的用户
+3. **入门版**：降低门槛顾虑，适合犹豫是否参与的用户
+4. **证言版**：真实案例增强信任，适合需要社会证明的用户
+
+用户可以根据分享对象选择最合适的模板内容，提高转化率。
 
