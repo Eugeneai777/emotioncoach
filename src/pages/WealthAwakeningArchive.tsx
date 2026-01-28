@@ -219,7 +219,7 @@ export default function WealthAwakeningArchive() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
       </div>
     );
@@ -227,7 +227,10 @@ export default function WealthAwakeningArchive() {
 
   if (!entries || entries.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20 pb-[env(safe-area-inset-bottom)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
           <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -249,7 +252,10 @@ export default function WealthAwakeningArchive() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20 pb-[env(safe-area-inset-bottom)]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="wealthAwakeningArchive" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">

@@ -152,7 +152,10 @@ const VibrantLifeHistory = () => {
         open={showTour}
         onComplete={completeTour}
       />
-      <div className="min-h-screen bg-gradient-to-b from-rose-50 via-red-50 to-background">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-rose-50 via-red-50 to-background pb-[env(safe-area-inset-bottom)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center gap-3 p-4">

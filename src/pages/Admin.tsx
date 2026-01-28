@@ -82,7 +82,7 @@ export default function Admin() {
   }, [user, loading, navigate]);
 
   if (loading || checking) {
-    return <div className="flex items-center justify-center min-h-screen">加载中...</div>;
+    return <div className="flex items-center justify-center h-screen">加载中...</div>;
   }
 
   if (!isAdmin) {
