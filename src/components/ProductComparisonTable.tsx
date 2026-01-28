@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { experiencePackageItems } from "@/config/youjinPartnerProducts";
+import { PartnerEarningsComparison } from "./partner/PartnerEarningsComparison";
 
 // 统一金额格式化函数
 function formatMoney(value: number | null | undefined): string {
@@ -537,12 +538,15 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </MobileCard>
 
           {/* 合伙人套餐 */}
+          {/* 收益对比模块 */}
+          <PartnerEarningsComparison />
+
           <PackageCard
             emoji="💪"
             name="初级合伙人"
             price={partnerL1Price}
             priceLabel="100份体验包"
-            features={['直推20%佣金', '100份体验包', '基础推广工具']}
+            features={['直推18%佣金', '100份体验包', '基础推广工具']}
             onPurchase={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: partnerL1Price })}
           />
 
@@ -551,7 +555,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             name="高级合伙人"
             price={partnerL2Price}
             priceLabel="500份体验包"
-            features={['直推25%佣金', '500份体验包', '二级10%佣金', '高级推广工具']}
+            features={['直推30%佣金', '500份体验包', '二级5%佣金', '高级推广工具']}
             onPurchase={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: partnerL2Price })}
           />
 
@@ -560,7 +564,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             name="钻石合伙人"
             price={partnerL3Price}
             priceLabel="1000份体验包"
-            features={['直推30%佣金', '1000份体验包', '二级15%佣金', '专属1对1培训']}
+            features={['直推50%佣金', '1000份体验包', '二级12%佣金', '专属1对1培训']}
             recommended
             gradient="bg-gradient-to-br from-orange-50/80 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/30"
             onPurchase={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: partnerL3Price })}
@@ -586,6 +590,9 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             </div>
           </div>
         </div>
+
+        {/* 收益对比模块 */}
+        <PartnerEarningsComparison />
 
         <Card className="border-teal-200 dark:border-teal-800">
           <CardContent className="p-4 space-y-4">
