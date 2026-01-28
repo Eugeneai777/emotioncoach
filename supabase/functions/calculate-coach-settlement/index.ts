@@ -90,10 +90,10 @@ serve(async (req) => {
       });
     }
 
-    // 3. 获取预约信息
+    // 3. 获取预约信息（包含实付/赠送明细）
     const { data: appointment, error: appointmentError } = await supabase
       .from('coaching_appointments')
-      .select('id, coach_id, amount_paid')
+      .select('id, coach_id, amount_paid, paid_portion, bonus_portion')
       .eq('id', review.appointment_id)
       .single();
 
@@ -125,14 +125,21 @@ serve(async (req) => {
       confirm_days: Number(rules.confirm_days),
     };
 
-    // 5. 计算结算金额
+    // 5. 计算结算金额（仅按实付金额结算，赠送部分不参与）
+    // 如果有 paid_portion 字段，使用它；否则回退到 amount_paid（兼容旧数据）
+    const paidPortion = Number(appointment.paid_portion || 0);
+    const bonusPortion = Number(appointment.bonus_portion || 0);
     const orderAmount = Number(appointment.amount_paid || 0);
+    
+    // 用于结算的基数：优先使用 paid_portion，回退到 amount_paid（旧预约兼容）
+    const settlementBase = paidPortion > 0 || bonusPortion > 0 ? paidPortion : orderAmount;
+    
     const rating = review.rating_overall;
     const ratingMultiplier = getRatingMultiplier(rating, settlementRules);
     const finalRate = settlementRules.base_commission_rate * ratingMultiplier;
-    const settlementAmount = orderAmount * finalRate;
+    const settlementAmount = settlementBase * finalRate;
 
-    console.log(`Settlement calculation: order=${orderAmount}, rating=${rating}, multiplier=${ratingMultiplier}, rate=${finalRate}, amount=${settlementAmount}`);
+    console.log(`Settlement calculation: order=${orderAmount}, paid_portion=${paidPortion}, bonus_portion=${bonusPortion}, base=${settlementBase}, rating=${rating}, multiplier=${ratingMultiplier}, rate=${finalRate}, amount=${settlementAmount}`);
 
     // 6. 计算确认时间
     const confirmAt = new Date();

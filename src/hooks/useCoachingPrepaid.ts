@@ -19,6 +19,8 @@ export interface PrepaidBalance {
   id: string;
   user_id: string;
   balance: number;
+  paid_balance: number;
+  bonus_balance: number;
   total_recharged: number;
   total_spent: number;
   created_at: string;
@@ -31,6 +33,8 @@ export interface PrepaidTransaction {
   type: 'recharge' | 'consume' | 'refund' | 'admin_adjust';
   amount: number;
   balance_after: number;
+  paid_amount: number;
+  bonus_amount: number;
   related_order_no: string | null;
   related_appointment_id: string | null;
   description: string | null;
@@ -60,7 +64,23 @@ export function useCoachingPrepaid() {
         .maybeSingle();
 
       if (error) throw error;
-      setBalance(data);
+      // Map database fields with defaults for new columns (types not yet updated in generated types)
+      if (data) {
+        const rawData = data as Record<string, unknown>;
+        setBalance({
+          id: String(rawData.id),
+          user_id: String(rawData.user_id),
+          balance: Number(rawData.balance ?? 0),
+          paid_balance: Number(rawData.paid_balance ?? rawData.balance ?? 0),
+          bonus_balance: Number(rawData.bonus_balance ?? 0),
+          total_recharged: Number(rawData.total_recharged ?? 0),
+          total_spent: Number(rawData.total_spent ?? 0),
+          created_at: String(rawData.created_at ?? ''),
+          updated_at: String(rawData.updated_at ?? ''),
+        });
+      } else {
+        setBalance(null);
+      }
     } catch (error) {
       console.error('Error fetching prepaid balance:', error);
     }
@@ -100,11 +120,23 @@ export function useCoachingPrepaid() {
 
       if (error) throw error;
       
-      // Type assertion for the type field
-      const typedData = (data || []).map(tx => ({
-        ...tx,
-        type: tx.type as PrepaidTransaction['type'],
-      }));
+      // Type assertion for the type field, with defaults for new columns (types not yet updated)
+      const typedData = (data || []).map(tx => {
+        const rawTx = tx as Record<string, unknown>;
+        return {
+          id: String(rawTx.id),
+          user_id: String(rawTx.user_id),
+          type: rawTx.type as PrepaidTransaction['type'],
+          amount: Number(rawTx.amount ?? 0),
+          balance_after: Number(rawTx.balance_after ?? 0),
+          paid_amount: Number(rawTx.paid_amount ?? 0),
+          bonus_amount: Number(rawTx.bonus_amount ?? 0),
+          related_order_no: rawTx.related_order_no as string | null,
+          related_appointment_id: rawTx.related_appointment_id as string | null,
+          description: rawTx.description as string | null,
+          created_at: String(rawTx.created_at ?? ''),
+        };
+      });
       setTransactions(typedData);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -185,6 +217,8 @@ export function useCoachingPrepaid() {
   return {
     balance,
     currentBalance: balance?.balance || 0,
+    paidBalance: balance?.paid_balance || 0,
+    bonusBalance: balance?.bonus_balance || 0,
     totalRecharged: balance?.total_recharged || 0,
     totalSpent: balance?.total_spent || 0,
     transactions,
