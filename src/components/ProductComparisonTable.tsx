@@ -397,11 +397,15 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           const isPaid = camp.price && camp.price > 0;
           const hasOriginalPrice = Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0;
           
-          // 根据训练营类型选择渐变色 - 使用色相差距大的颜色确保区分度
+          // 根据训练营类型选择渐变色 - 使用数据库实际的 camp_type 值
           const gradientMap: Record<string, string> = {
-            'emotion_journal_21': 'from-purple-500 via-pink-500 to-rose-500',      // 紫粉色 - 情绪/内心
-            'teen_breakthrough_14': 'from-blue-500 via-sky-500 to-cyan-500',       // 蓝色 - 成长/教育
-            'wealth_awakening_7': 'from-amber-500 via-orange-500 to-yellow-400',   // 金橙色 - 财富/能量
+            // 有劲训练营
+            'emotion_journal_21': 'from-purple-500 via-pink-500 to-rose-500',      // 紫粉色 - 情绪日记
+            'parent_emotion_21': 'from-blue-500 via-sky-500 to-cyan-500',          // 蓝色 - 青少年困境突破
+            'wealth_block_7': 'from-amber-500 via-orange-500 to-yellow-400',       // 金橙色 - 财富觉醒
+            // 绽放训练营
+            'identity_bloom': 'from-indigo-500 via-violet-500 to-purple-500',      // 靛紫色 - 身份绽放
+            'emotion_bloom': 'from-rose-500 via-pink-500 to-fuchsia-500',          // 玫红色 - 情感绽放
           };
           const gradient = gradientMap[camp.camp_type] || 'from-slate-500 via-gray-500 to-slate-600';
           
