@@ -96,7 +96,10 @@ export default function Packages() {
         open={showTour}
         onComplete={completeTour}
       />
-      <div className="min-h-screen bg-background">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-background"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <PageHeader title="产品中心" />
 
         <div className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
