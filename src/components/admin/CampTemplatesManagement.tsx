@@ -13,6 +13,12 @@ import type { Database } from "@/integrations/supabase/types";
 
 type CampTemplateRow = Database["public"]["Tables"]["camp_templates"]["Row"];
 
+// 统一金额格式化函数
+function formatMoney(value: number | null | undefined): string {
+  const num = Number(value) || 0;
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(num);
+}
+
 export function CampTemplatesManagement() {
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("youjin");
@@ -104,13 +110,17 @@ export function CampTemplatesManagement() {
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="outline">
-                              ¥{camp.price || 0}
-                              {camp.original_price && (
+                              ¥{formatMoney(camp.price)}
+                              {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
                                 <span className="ml-1 line-through text-muted-foreground">
-                                  ¥{camp.original_price}
+                                  ¥{formatMoney(camp.original_price)}
                                 </span>
                               )}
                             </Badge>
+                            {/* 临时调试信息 - 确认后删除 */}
+                            <span className="text-[10px] text-muted-foreground/50">
+                              debug: price={String(camp.price)} ({typeof camp.price})
+                            </span>
                             <Badge variant="secondary">
                               {camp.duration_days}天
                             </Badge>

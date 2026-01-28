@@ -6,6 +6,12 @@ import type { CampTemplate } from "@/types/trainingCamp";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// 统一金额格式化函数
+function formatMoney(value: number | null | undefined): string {
+  const num = Number(value) || 0;
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(num);
+}
+
 interface CampTemplateCardProps {
   camp: CampTemplate;
   index: number;
@@ -139,13 +145,13 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
         {/* 价格信息 */}
         {camp.price !== undefined && camp.price !== null && (
           <div className="flex items-end gap-2">
-            {camp.original_price && camp.original_price > camp.price && (
+            {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
               <span className="text-muted-foreground line-through text-sm">
-                ¥{camp.original_price.toLocaleString()}
+                ¥{formatMoney(camp.original_price)}
               </span>
             )}
             <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
-              ¥{camp.price.toLocaleString()}
+              ¥{formatMoney(camp.price)}
             </span>
             {camp.price_note && (
               <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs">
@@ -181,7 +187,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
               className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
             >
               <ShoppingCart className="w-4 h-4" />
-              立即购买 ¥{camp.price?.toLocaleString()}
+              立即购买 ¥{formatMoney(camp.price)}
             </Button>
             <Button
               variant="ghost"
