@@ -39,10 +39,8 @@ export function PartnerCardTemplateSelector({
               )}
             >
               <div
-                className={cn(
-                  "w-full h-6 rounded-md bg-gradient-to-br border border-black/5",
-                  style.previewGradient
-                )}
+                className="w-full h-6 rounded-md border border-black/5"
+                style={{ background: style.previewGradient }}
               />
               <span className="text-[10px] text-muted-foreground">
                 {style.label}
