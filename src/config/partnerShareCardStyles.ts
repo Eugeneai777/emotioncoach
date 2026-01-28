@@ -1,13 +1,52 @@
 /**
  * Partner Share Card Styles Configuration
  * 
- * Defines 4 visual templates for the partner plan share card:
- * - classic: Warm orange gradient (default)
- * - professional: Business blue-grey tones
- * - minimal: Clean white/black minimalist
- * - energetic: Vibrant purple-pink gradient
+ * Defines 4 content-based templates for the partner plan share card:
+ * - income: Revenue focused (default)
+ * - products: Product matrix showcase
+ * - easystart: Low barrier entry
+ * - testimonial: Social proof with user stories
  */
 
+export type PartnerCardContentTemplate = 'income' | 'products' | 'easystart' | 'testimonial';
+
+export interface PartnerCardContentConfig {
+  id: PartnerCardContentTemplate;
+  label: string;
+  description: string;
+  emoji: string;
+}
+
+export const PARTNER_CARD_CONTENT_TEMPLATES: Record<PartnerCardContentTemplate, PartnerCardContentConfig> = {
+  income: {
+    id: 'income',
+    label: '收益版',
+    description: '突出净利润预测',
+    emoji: '💰',
+  },
+  products: {
+    id: 'products',
+    label: '产品版',
+    description: '11款产品矩阵',
+    emoji: '📦',
+  },
+  easystart: {
+    id: 'easystart',
+    label: '入门版',
+    description: '零门槛轻松开始',
+    emoji: '🚀',
+  },
+  testimonial: {
+    id: 'testimonial',
+    label: '证言版',
+    description: '真实案例故事',
+    emoji: '💬',
+  },
+};
+
+export const PARTNER_CARD_CONTENT_TEMPLATE_LIST = Object.values(PARTNER_CARD_CONTENT_TEMPLATES);
+
+// Legacy color template type (kept for backward compatibility)
 export type PartnerCardTemplate = 'classic' | 'professional' | 'minimal' | 'energetic';
 
 export interface PartnerCardStyleConfig {
