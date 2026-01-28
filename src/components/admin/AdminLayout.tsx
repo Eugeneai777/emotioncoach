@@ -12,6 +12,7 @@ import { EnergyStudioToolsManagement } from "./EnergyStudioToolsManagement";
 import { PartnerManagement } from "./PartnerManagement";
 import { PackagesManagement } from "./PackagesManagement";
 import { CoachTemplatesManagement } from "./CoachTemplatesManagement";
+import { CampTemplatesManagement } from "./CampTemplatesManagement";
 import KnowledgeBaseManagement from "./KnowledgeBaseManagement";
 import CustomerServiceManagement from "./CustomerServiceManagement";
 import CostMonitorDashboard from "./CostMonitorDashboard";
@@ -50,6 +51,7 @@ export function AdminLayout() {
               <Route path="bloom-monthly" element={<AdminBloomMonthlyProfit />} />
               <Route path="bloom-cashflow" element={<AdminBloomMonthlyCashflow />} />
               <Route path="coaches" element={<CoachTemplatesManagement />} />
+              <Route path="camps" element={<CampTemplatesManagement />} />
               <Route path="human-coaches" element={<HumanCoachesManagement />} />
               <Route path="videos" element={<VideoCoursesManagement />} />
               <Route path="knowledge" element={<KnowledgeBaseManagement />} />
