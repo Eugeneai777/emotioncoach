@@ -1,151 +1,120 @@
 
 
-## 有劲合伙人计划内容更新方案
+## 有劲合伙人计划页面一键分享优化方案
 
 ### 问题分析
 
-当前页面内容过度聚焦于"AI情绪教练"单一产品，与实际可推广的**11款可分成产品**不匹配：
+当前页面的分享实现与项目标准的**一键分享**模式不一致：
 
-| 位置 | 当前内容 | 需更新为 |
-|:-----|:---------|:---------|
-| 第04节标题 | "AI 情绪教练"是刚需 | AI 赋能产品矩阵 |
-| 第05节标题 | 每个人都需要 AI 情绪教练 | 有劲产品生态 |
-| 功能列表（第451-467行） | 仅情绪相关功能 | 全产品覆盖 |
-| 飞轮描述（第589行） | AI对话50点 + 3项测评 | 4项体验权益 + 11款分成产品 |
-| 海报预览（第1111行） | AI陪伴、分析情绪 | 多元产品矩阵 |
-
----
-
-### 更新内容
-
-#### 1. 更新第04节：从"AI情绪教练"到"AI赋能产品矩阵"
-
-**新标题**：04｜为什么"有劲AI产品"是刚需？
-
-**新副标题**：情绪健康 × 财富成长 × 亲子关系 三大刚需赛道
-
-**新内容结构**：
-- 保留WHO/哈佛情绪数据
-- 新增财富焦虑数据（麦肯锡）
-- 新增亲子教育数据
-- 结论改为：有劲AI覆盖情绪、财富、亲子三大刚需场景
-
-#### 2. 更新第05节：展示完整产品生态
-
-**新标题**：05｜有劲产品生态：11款可分成产品
-
-**新内容**：
-
-```text
-┌────────────────────────────────────────────────┐
-│ 🎫 基础产品（4款 × ¥9.9）                        │
-│   尝鲜会员 / 情绪健康测评 / SCL-90 / 财富卡点      │
-├────────────────────────────────────────────────┤
-│ 📅 年度会员（1款）                               │
-│   365会员 ¥365（核心分成来源）                   │
-├────────────────────────────────────────────────┤
-│ 🔥 训练营（3款 × ¥299）                          │
-│   21天情绪日记 / 财富觉醒 / 青少年困境突破          │
-├────────────────────────────────────────────────┤
-│ 💎 合伙人套餐（3款）                             │
-│   初级 ¥792 / 高级 ¥3217 / 钻石 ¥4950           │
-└────────────────────────────────────────────────┘
-```
-
-#### 3. 更新功能展示（第451-467行）
-
-从情绪功能改为产品矩阵：
-
-| 原内容 | 新内容 |
-|:-------|:-------|
-| 科学四部曲 | 💚 情绪健康测评 |
-| 21天训练营 | 📋 SCL-90心理测评 |
-| 宣言卡 | 💰 财富卡点测评 |
-| 能量测评 | 🔥 21天情绪日记训练营 |
-| 情绪词云 | 💎 财富觉醒训练营 |
-| 每日情绪日记 | 👨‍👩‍👧 青少年困境突破营 |
-| 自动成长报告 | 📅 365会员年度服务 |
-
-#### 4. 更新飞轮机制（第587-605行）
-
-```text
-第2层描述更新：
-原：用户低门槛体验：AI对话50点 + 3项专业测评（共4项权益）
-新：用户低门槛体验：4项体验权益（50点对话 + 3项测评）
-
-第3层描述更新：
-原：持续使用产生习惯与信任
-新：AI 情绪教练/财富教练/亲子教练持续陪伴
-
-第4层描述更新：
-原：用户主动升级为年度会员
-新：用户升级365会员 或 购买训练营（情绪/财富/亲子）
-```
-
-#### 5. 新增"可分成产品一览"卡片
-
-在第08节（合伙人等级）前新增产品展示卡片：
-
-```tsx
-{/* 可分成产品一览 */}
-<section className="space-y-4">
-  <h3 className="font-bold text-lg flex items-center gap-2">
-    <Sparkles className="h-5 w-5 text-orange-500" />
-    可分成产品一览（11款）
-  </h3>
-  
-  <div className="grid grid-cols-2 gap-2">
-    {commissionableProducts.map((product) => (
-      <Card key={product.name} className={product.highlight ? 'border-orange-300 bg-orange-50' : ''}>
-        <CardContent className="p-3">
-          <p className="font-medium text-sm">{product.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {product.category} · ¥{product.price}
-          </p>
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-</section>
-```
-
-#### 6. 更新海报预览（第1103-1113行）
-
-```text
-原：你只需要：分享真实成长故事
-    AI 替你：陪伴用户、分析情绪、生成报告、推动转化
-
-新：你只需要：分享真实成长故事
-    可推广：11款产品覆盖情绪、财富、亲子三大场景
-```
+| 对比项 | 当前实现（手动） | 标准模式（一键分享） |
+|:-------|:----------------|:-------------------|
+| 技术方案 | 直接调用 `html2canvas` | 使用 `useOneClickShare` hook |
+| 用户操作 | 打开Dialog → 点击保存海报 → 下载 | 点击按钮 → 自动分享/预览 |
+| 环境适配 | 仅下载功能 | iOS/Android/微信/桌面多环境适配 |
+| 预览组件 | 无 | `ShareImagePreview` 长按保存引导 |
 
 ---
 
-### 涉及文件
+### 优化目标
 
-| 文件 | 修改内容 |
-|:-----|:---------|
-| `src/pages/YoujinPartnerPlan.tsx` | 更新章节内容、新增产品展示 |
+1. **将浮动CTA的"分享"按钮升级为一键分享**
+2. **保留Dialog作为备选分享方式**（复制链接等）
+3. **复用现有海报设计**，仅调整技术实现
 
-### 技术细节
+---
 
-**新增导入**：
+### 技术方案
+
+#### 1. 引入 `useOneClickShare` hook
+
 ```tsx
-import { commissionableProducts } from "@/config/youjinPartnerProducts";
+import { useOneClickShare } from '@/hooks/useOneClickShare';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 ```
 
-**修改位置汇总**：
+#### 2. 创建合伙人计划专用分享卡片组件
 
-1. **第356-424行**：第04节 - 更新标题和内容
-2. **第426-488行**：第05节 - 更新为产品生态展示
-3. **第570-618行**：第07节飞轮 - 更新描述文案
-4. **第622-623行**：新增"可分成产品一览"卡片
-5. **第1103-1113行**：更新海报文案
+需要将当前的 `posterRef` 海报抽离为独立组件 `PartnerPlanShareCard`，以便 `useOneClickShare` hook 正确引用：
+
+```tsx
+// src/components/partner/PartnerPlanShareCard.tsx
+const PartnerPlanShareCard = forwardRef<HTMLDivElement>((_, ref) => {
+  return (
+    <div ref={ref} className="w-[360px] p-6 bg-[#fff8f0] rounded-xl">
+      {/* 现有海报内容 */}
+    </div>
+  );
+});
+```
+
+#### 3. 修改浮动CTA按钮
+
+将"分享"按钮直接触发 `triggerShare`：
+
+```tsx
+<Button 
+  variant="outline" 
+  className="flex-1 h-12"
+  onClick={triggerShare}
+  disabled={isSharing}
+>
+  {isSharing ? (
+    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+  ) : (
+    <Share2 className="h-4 w-4 mr-2" />
+  )}
+  {isSharing ? '生成中...' : '一键分享'}
+</Button>
+```
+
+#### 4. 添加 ShareImagePreview 组件
+
+用于微信/iOS环境的长按保存引导：
+
+```tsx
+<ShareImagePreview
+  open={showImagePreview}
+  onClose={closePreview}
+  imageUrl={previewImageUrl}
+/>
+```
+
+#### 5. 保留 Dialog 备选
+
+页面底部的"分享此页"区域仍可打开 Dialog，提供复制链接、下载海报等选项。
+
+---
+
+### 修改内容汇总
+
+| 操作 | 文件 | 说明 |
+|:-----|:-----|:-----|
+| 新建 | `src/components/partner/PartnerPlanShareCard.tsx` | 抽离海报为独立组件 |
+| 修改 | `src/pages/YoujinPartnerPlan.tsx` | 集成 `useOneClickShare` |
+
+### 代码变更细节
+
+**新建 PartnerPlanShareCard.tsx：**
+- 将当前 `posterRef` 内容移入
+- 使用 `forwardRef` 以便传递 ref 给 hook
+- 保持现有样式和内容不变
+
+**修改 YoujinPartnerPlan.tsx：**
+1. 添加导入：`useOneClickShare`、`ShareImagePreview`、`PartnerPlanShareCard`
+2. 初始化 hook 并预加载数据
+3. 替换浮动CTA按钮的 `handleShare` 为 `triggerShare`
+4. 添加隐藏的 `PartnerPlanShareCard`（用于截图）
+5. 添加 `ShareImagePreview` 组件
+
+---
 
 ### 预期效果
 
-1. **产品覆盖完整**：展示全部11款可分成产品
-2. **场景多元化**：情绪 + 财富 + 亲子三大场景
-3. **收益来源清晰**：用户明白可以从哪些产品获得佣金
-4. **内容一致性**：与`youjinPartnerProducts.ts`配置保持同步
+1. **一步操作**：点击"分享"按钮即刻生成图片并触发分享
+2. **多环境适配**：
+   - iOS：调用系统分享面板
+   - Android：调用系统分享面板
+   - 微信H5：显示图片预览+长按保存引导
+   - 桌面：下载图片
+3. **与项目其他分享组件保持一致**
 
