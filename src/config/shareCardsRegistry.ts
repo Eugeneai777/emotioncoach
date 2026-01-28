@@ -102,6 +102,52 @@ const resultCards: ShareCardRegistryItem[] = [
     componentName: 'EmotionHealthShareCard',
     description: '三层诊断情绪卡点分享',
   },
+  // === 新增：审计发现的未注册卡片 ===
+  {
+    id: 'partner-plan',
+    title: '有劲合伙人计划',
+    category: 'partner',
+    emoji: '🚀',
+    type: 'result',
+    componentName: 'PartnerPlanShareCard',
+    description: '合伙人计划分享海报',
+  },
+  {
+    id: 'teen-invite',
+    title: '青少年邀请卡',
+    category: 'tool',
+    emoji: '👨‍👩‍👧',
+    type: 'result',
+    componentName: 'TeenInviteShareDialog',
+    description: '亲子双轨模式邀请分享',
+  },
+  {
+    id: 'poster-center',
+    title: 'AI海报生成器',
+    category: 'tool',
+    emoji: '🎨',
+    type: 'result',
+    componentName: 'PosterGenerator',
+    description: '自定义推广海报',
+  },
+  {
+    id: 'energy-declaration',
+    title: '能量宣言卡',
+    category: 'tool',
+    emoji: '⚡',
+    type: 'result',
+    componentName: 'EnergyDeclaration',
+    description: '每日能量宣言分享',
+  },
+  {
+    id: 'weekly-tag-report',
+    title: '周报统计导出',
+    category: 'tool',
+    emoji: '📊',
+    type: 'result',
+    componentName: 'WeeklyTagReport',
+    description: '情绪标签周报PDF导出',
+  },
 ];
 
 // 合并 introShareConfigs + 结果卡片为统一注册表

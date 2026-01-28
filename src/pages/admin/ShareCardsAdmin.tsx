@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import { ShareCardPreviewItem } from '@/components/admin/ShareCardPreviewItem';
 import { ShareCardPreviewDialog } from '@/components/admin/ShareCardPreviewDialog';
 import { ShareCardConsistencyPanel } from '@/components/admin/ShareCardConsistencyPanel';
+import { ShareButtonAuditPanel } from '@/components/admin/ShareButtonAuditPanel';
 import {
   shareCardsRegistry,
   getCategoryStats,
@@ -55,9 +56,10 @@ export default function ShareCardsAdmin() {
           </p>
         </div>
         
-        {/* Consistency Panel - 右侧 */}
-        <div className="lg:w-[360px] flex-shrink-0">
+        {/* Panels - 右侧 */}
+        <div className="lg:w-[360px] flex-shrink-0 space-y-4">
           <ShareCardConsistencyPanel />
+          <ShareButtonAuditPanel />
         </div>
       </div>
 
