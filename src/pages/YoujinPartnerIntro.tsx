@@ -157,7 +157,7 @@ export default function YoujinPartnerIntro() {
               <div>
                 <p className="font-medium">等级越高佣金越高</p>
                 <p className="text-sm text-muted-foreground">
-                  L1享20%，L2享35%，L3享50%+二级10%
+                  L1享18%，L2享30%+二级5%，L3享50%+二级12%
                 </p>
               </div>
             </div>
