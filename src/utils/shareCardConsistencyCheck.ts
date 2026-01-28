@@ -34,6 +34,16 @@ const COMPLIANT_CARDS = [
   'AliveCheckShareCard',      // 已修复
   'EmotionButtonShareCard',   // 已修复
   'ShareCard',                // 社区卡片，已修复
+  'BlockRevealShareCard',
+  'AchievementShareCard',
+  'GraduationShareCard',
+  'WealthJournalShareCard',
+  // 新增审计卡片（需验证合规性）
+  'PartnerPlanShareCard',     // 合伙人计划
+  'TeenInviteShareDialog',    // 青少年邀请
+  'PosterGenerator',          // 海报生成器
+  'EnergyDeclaration',        // 能量宣言
+  'WeeklyTagReport',          // 周报导出
 ];
 
 // 使用旧版 QRCode 直接调用的卡片 (需要关注)
