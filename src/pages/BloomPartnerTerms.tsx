@@ -72,6 +72,14 @@ export default function BloomPartnerTerms() {
               <li>使用"绽放合伙人"官方认证标识</li>
               <li>获得官方推广素材和话术支持</li>
             </ul>
+            <p>3.5 <strong>有劲产品推广权益</strong></p>
+            <p>成为绽放合伙人后，您将自动获得有劲初级合伙人身份，享有以下额外权益：</p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>有劲全系列产品（11款）推广资格</li>
+              <li>有劲产品一级佣金：<strong>18%</strong></li>
+              <li>有劲体验包分发权限</li>
+            </ul>
+            <p className="text-muted-foreground">注：有劲产品佣金独立于绽放产品佣金计算，两者可同时获得。</p>
           </section>
 
           <section className="mb-8">
