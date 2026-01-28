@@ -59,7 +59,10 @@ export default function Partner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="partner" />
       <PageHeader 
         title="合伙人中心"
