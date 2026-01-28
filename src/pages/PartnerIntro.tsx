@@ -85,7 +85,7 @@ const PartnerIntro = () => {
   const handleGoToPartnerCenter = () => {
     navigate("/partner");
   };
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+  return <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-accent/5" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="partnerIntro" />
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
