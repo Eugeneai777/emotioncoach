@@ -391,72 +391,100 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     }
     
     return (
-      <div className="space-y-3">
-        {youjinCamps.map((camp, index) => {
+      <div className="space-y-4">
+        {youjinCamps.map((camp) => {
           const benefits = Array.isArray(camp.benefits) ? camp.benefits as string[] : [];
           const isPaid = camp.price && camp.price > 0;
+          const hasOriginalPrice = Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0;
+          
+          // 根据训练营类型选择渐变色
+          const gradientMap: Record<string, string> = {
+            'emotion_journal_21': 'from-purple-500 via-pink-500 to-purple-600',
+            'teen_breakthrough_14': 'from-indigo-500 via-purple-500 to-violet-600',
+            'wealth_awakening_7': 'from-amber-500 via-orange-500 to-yellow-500',
+          };
+          const gradient = gradientMap[camp.camp_type] || 'from-teal-500 via-cyan-500 to-teal-600';
           
           return (
             <MobileCard 
               key={camp.id}
-              className={`bg-gradient-to-br ${camp.gradient || 'from-teal-50/80 to-cyan-50/80 dark:from-teal-950/30 dark:to-cyan-950/30'} border-teal-200/50`}
+              noPadding
+              className="overflow-hidden"
             >
-              <div className="text-center space-y-3">
-                <span className="text-4xl">{camp.icon || '🎯'}</span>
-                <h3 className="text-xl font-bold">{camp.camp_name}</h3>
-                <p className="text-sm text-muted-foreground">{camp.camp_subtitle || camp.description}</p>
+              {/* 渐变背景区 */}
+              <div className={`relative bg-gradient-to-br ${gradient} p-5 text-white`}>
+                {/* 半透明覆盖层增强可读性 */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10" />
                 
-                {benefits.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1.5 text-xs">
-                    {benefits.slice(0, 3).map((benefit, i) => (
-                      <span key={i} className="px-2 py-1 bg-white/60 dark:bg-white/10 rounded-full">
-                        {benefit}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                
-                {isPaid && (
-                  <div className="flex items-center justify-center gap-2">
-                    {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
-                      <span className="text-muted-foreground line-through text-sm">¥{formatMoney(camp.original_price)}</span>
-                    )}
-                    <span className="text-2xl font-bold text-primary">¥{formatMoney(camp.price)}</span>
-                    {camp.price_note && (
-                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs">
-                        {camp.price_note}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                
-                <div className="flex gap-2 justify-center">
-                  {isPaid ? (
-                    <>
-                      <Button 
-                        className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white flex-1"
-                        onClick={() => handlePurchase({ 
-                          key: `camp-${camp.camp_type}`, 
-                          name: camp.camp_name, 
-                          price: camp.price || 0 
-                        })}
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-1" />
-                        立即报名
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate(`/camp-template/${camp.id}`)}>
-                        了解更多
-                      </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white flex-1"
-                      onClick={() => navigate(`/camp-template/${camp.id}`)}
-                    >
-                      免费参加 →
-                    </Button>
+                <div className="relative text-center space-y-3">
+                  {/* 图标 */}
+                  <span className="text-5xl filter drop-shadow-lg block">{camp.icon || '🎯'}</span>
+                  
+                  {/* 标题 */}
+                  <h3 className="text-xl font-bold text-white drop-shadow-sm">{camp.camp_name}</h3>
+                  <p className="text-sm text-white/85">{camp.camp_subtitle || camp.description}</p>
+                  
+                  {/* Benefits 标签 - 最多3个 */}
+                  {benefits.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-1.5 text-xs pt-1">
+                      {benefits.slice(0, 3).map((benefit, i) => (
+                        <span key={i} className="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/95">
+                          {benefit}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* 价格区 */}
+                  {isPaid && (
+                    <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
+                      {hasOriginalPrice && (
+                        <span className="text-white/60 line-through text-sm">¥{formatMoney(camp.original_price)}</span>
+                      )}
+                      <span className="text-3xl font-bold text-white drop-shadow">¥{formatMoney(camp.price)}</span>
+                      {camp.price_note && (
+                        <span className="px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full shadow-sm">
+                          {camp.price_note}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
+              </div>
+              
+              {/* 按钮区 - 白色背景 */}
+              <div className="flex gap-2 p-4 bg-card">
+                {isPaid ? (
+                  <>
+                    <Button 
+                      className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                      size="lg"
+                      onClick={() => handlePurchase({ 
+                        key: `camp-${camp.camp_type}`, 
+                        name: camp.camp_name, 
+                        price: camp.price || 0 
+                      })}
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-1.5" />
+                      立即报名
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="bg-white/90 hover:bg-white border-border"
+                      onClick={() => navigate(`/camp-template/${camp.id}`)}
+                    >
+                      了解更多
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                    size="lg"
+                    onClick={() => navigate(`/camp-template/${camp.id}`)}
+                  >
+                    免费参加 →
+                  </Button>
+                )}
               </div>
             </MobileCard>
           );
@@ -719,64 +747,91 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     }
     
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {bloomCamps.map((camp, index) => {
           const benefits = Array.isArray(camp.benefits) ? camp.benefits as string[] : [];
-          const isRecommended = index === bloomCamps.length - 1; // 最后一个为推荐
+          const isRecommended = index === bloomCamps.length - 1;
+          const hasOriginalPrice = Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0;
+          
+          // 绽放训练营渐变色
+          const gradientMap: Record<string, string> = {
+            'identity_bloom': 'from-purple-600 via-pink-500 to-rose-500',
+            'emotion_bloom': 'from-pink-500 via-rose-500 to-purple-500',
+          };
+          const gradient = gradientMap[camp.camp_type] || 'from-purple-500 via-pink-500 to-rose-500';
           
           return (
             <MobileCard 
               key={camp.id}
-              className={`bg-gradient-to-br ${camp.gradient || 'from-purple-50/80 to-pink-50/80 dark:from-purple-950/30 dark:to-pink-950/30'} ${isRecommended ? 'ring-2 ring-primary/50' : ''} border-purple-200/50`}
+              noPadding
+              className={`overflow-hidden ${isRecommended ? 'ring-2 ring-pink-400/50' : ''}`}
             >
-              {isRecommended && (
-                <div className="absolute -top-2 right-3 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                  推荐
-                </div>
-              )}
-              <div className="text-center space-y-3">
-                <span className="text-4xl">{camp.icon || '✨'}</span>
-                <h3 className="text-xl font-bold">{camp.camp_name}</h3>
-                <p className="text-sm text-muted-foreground">{camp.camp_subtitle || camp.description}</p>
+              {/* 渐变背景区 */}
+              <div className={`relative bg-gradient-to-br ${gradient} p-5 text-white`}>
+                {/* 半透明覆盖层 */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10" />
                 
-                {benefits.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1.5 text-xs">
-                    {benefits.slice(0, 3).map((benefit, i) => (
-                      <span key={i} className="px-2 py-1 bg-white/60 dark:bg-white/10 rounded-full">
-                        {benefit}
-                      </span>
-                    ))}
+                {isRecommended && (
+                  <div className="absolute top-3 right-3 px-2.5 py-1 bg-white/25 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+                    ✨ 推荐
                   </div>
                 )}
                 
-                <div className="flex items-center justify-center gap-2">
-                  {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
-                    <span className="text-muted-foreground line-through text-sm">¥{formatMoney(camp.original_price)}</span>
+                <div className="relative text-center space-y-3">
+                  {/* 图标 */}
+                  <span className="text-5xl filter drop-shadow-lg block">{camp.icon || '✨'}</span>
+                  
+                  {/* 标题 */}
+                  <h3 className="text-xl font-bold text-white drop-shadow-sm">{camp.camp_name}</h3>
+                  <p className="text-sm text-white/85">{camp.camp_subtitle || camp.description}</p>
+                  
+                  {/* Benefits 标签 */}
+                  {benefits.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-1.5 text-xs pt-1">
+                      {benefits.slice(0, 3).map((benefit, i) => (
+                        <span key={i} className="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/95">
+                          {benefit}
+                        </span>
+                      ))}
+                    </div>
                   )}
-                  <span className="text-2xl font-bold text-primary">¥{formatMoney(camp.price)}</span>
-                  {camp.price_note && (
-                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-xs">
-                      {camp.price_note}
-                    </Badge>
-                  )}
+                  
+                  {/* 价格区 */}
+                  <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
+                    {hasOriginalPrice && (
+                      <span className="text-white/60 line-through text-sm">¥{formatMoney(camp.original_price)}</span>
+                    )}
+                    <span className="text-3xl font-bold text-white drop-shadow">¥{formatMoney(camp.price)}</span>
+                    {camp.price_note && (
+                      <span className="px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full shadow-sm">
+                        {camp.price_note}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="flex gap-2 justify-center">
-                  <Button 
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white flex-1"
-                    onClick={() => handlePurchase({ 
-                      key: `bloom_${camp.camp_type}_camp`, 
-                      name: camp.camp_name, 
-                      price: camp.price || 0 
-                    })}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-1" />
-                    立即购买 ¥{formatMoney(camp.price)}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/camp-template/${camp.id}`)}>
-                    了解更多
-                  </Button>
-                </div>
+              </div>
+              
+              {/* 按钮区 */}
+              <div className="flex gap-2 p-4 bg-card">
+                <Button 
+                  className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                  size="lg"
+                  onClick={() => handlePurchase({ 
+                    key: `bloom_${camp.camp_type}_camp`, 
+                    name: camp.camp_name, 
+                    price: camp.price || 0 
+                  })}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-1.5" />
+                  立即报名
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="bg-white/90 hover:bg-white border-border"
+                  onClick={() => navigate(`/camp-template/${camp.id}`)}
+                >
+                  了解更多
+                </Button>
               </div>
             </MobileCard>
           );
