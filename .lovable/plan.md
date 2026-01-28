@@ -1,122 +1,114 @@
 
-
-# 赠送金额与教练结算方案
+# 有劲合伙人分成产品配置方案
 
 ## 核心问题
 
-当前系统将用户充值时的赠送金额直接合并到余额中，导致：
-- 无法区分「实付金额」和「赠送金额」的来源
-- 教练结算时按服务全价计算，平台需要承担赠送部分的成本
-
-**示例**：
-用户充 ¥1000 → 获得 ¥1100 余额（含 ¥100 赠送）
-预约 ¥200 服务 → 结算给教练 ¥60（30%佣金）
-问题：¥200 中有多少是实付？多少是赠送？
+当前「有劲合伙人」对所有有劲产品线使用统一佣金率，无法：
+- 明确指定哪些产品可参与分成
+- 为不同产品设置不同佣金率
+- 排除某些产品（如测评报告）不参与分成
 
 ---
 
-## 解决方案：双余额追踪
+## 解决方案：产品级佣金配置
 
-将用户余额拆分为两个独立账户：
-
-| 账户类型 | 说明 | 结算参与 |
-|:---------|:-----|:---------|
-| 实付余额 (paid_balance) | 用户实际支付的金额 | 参与教练结算 |
-| 赠送余额 (bonus_balance) | 平台赠送的金额 | 不参与教练结算 |
-
-**消费逻辑**：
-- 优先扣减「赠送余额」（降低平台成本）
-- 赠送余额不足时，再扣减「实付余额」
-
-**结算逻辑**：
-- 仅按「实付金额扣减部分」计算教练佣金
+新增「合伙人产品佣金配置表」，实现按产品精细化分成控制。
 
 ---
 
 ## 数据库变更
 
-### 1. 修改 coaching_prepaid_balance 表
+### 新建 partner_product_commissions 表
 
 ```sql
-ALTER TABLE coaching_prepaid_balance
-ADD COLUMN paid_balance DECIMAL(12,2) NOT NULL DEFAULT 0,
-ADD COLUMN bonus_balance DECIMAL(12,2) NOT NULL DEFAULT 0;
-
--- 迁移现有数据（假设历史充值无赠送）
-UPDATE coaching_prepaid_balance
-SET paid_balance = balance,
-    bonus_balance = 0;
+CREATE TABLE partner_product_commissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_level_rule_id UUID REFERENCES partner_level_rules(id) ON DELETE CASCADE,
+  package_key TEXT NOT NULL,
+  commission_rate_l1 DECIMAL(5,4) NOT NULL DEFAULT 0.20,
+  commission_rate_l2 DECIMAL(5,4) NOT NULL DEFAULT 0,
+  is_enabled BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(partner_level_rule_id, package_key)
+);
 ```
 
-### 2. 修改 coaching_prepaid_transactions 表
+### 数据结构示例
 
-```sql
-ALTER TABLE coaching_prepaid_transactions
-ADD COLUMN paid_amount DECIMAL(12,2) DEFAULT 0,
-ADD COLUMN bonus_amount DECIMAL(12,2) DEFAULT 0;
-```
-
-### 3. 修改 coaching_appointments 表
-
-```sql
-ALTER TABLE coaching_appointments
-ADD COLUMN paid_portion DECIMAL(12,2) DEFAULT 0,
-ADD COLUMN bonus_portion DECIMAL(12,2) DEFAULT 0;
-```
+| partner_level_rule_id | package_key | commission_rate_l1 | commission_rate_l2 | is_enabled |
+|:----------------------|:------------|:-------------------|:-------------------|:-----------|
+| L1的UUID | basic | 0.20 | 0 | true |
+| L1的UUID | member365 | 0.20 | 0 | true |
+| L1的UUID | scl90_report | 0 | 0 | false |
+| L2的UUID | basic | 0.35 | 0 | true |
+| L3的UUID | basic | 0.50 | 0.10 | true |
 
 ---
 
 ## 业务逻辑变更
 
-### 充值流程
-
-**文件**: `supabase/functions/wechat-pay-callback/index.ts`
+### calculate-commission 边缘函数
 
 ```
-用户充值 ¥1000 (套餐 total_value = ¥1100, bonus_amount = ¥100)
-  ↓
-paid_balance += 1000  (实付)
-bonus_balance += 100  (赠送)
+原逻辑：
+  order_type → getProductLine() → 匹配合伙人类型 → 使用统一佣金率
+
+新逻辑：
+  order_type (package_key) 
+    → 查询 partner_product_commissions 表
+    → 获取该产品的专属佣金率
+    → 如果 is_enabled = false，跳过分成
+    → 如果未配置，使用 partner_level_rules 的默认佣金率
 ```
 
-### 消费流程
+### 兼容性策略
 
-**文件**: `supabase/functions/pay-with-prepaid/index.ts`
+- **默认回退**：如果产品未在 `partner_product_commissions` 中配置，使用 `partner_level_rules` 的默认佣金率
+- **老数据兼容**：不需要立即为所有产品配置，系统自动回退
 
-```
-预约服务 ¥200
-  ↓
-Step 1: 检查总余额 (paid_balance + bonus_balance >= 200)
-Step 2: 优先扣减赠送余额
-  - 如果 bonus_balance >= 200 → bonus_portion = 200, paid_portion = 0
-  - 如果 bonus_balance = 50  → bonus_portion = 50, paid_portion = 150
-Step 3: 记录到预约 (paid_portion, bonus_portion)
-```
+---
 
-### 结算流程
+## 管理后台变更
 
-**文件**: `supabase/functions/calculate-coach-settlement/index.ts`
+### 增强 PartnerLevelManagement.tsx
+
+在编辑对话框中新增「产品佣金配置」Tab：
 
 ```
-结算计算 (评价后触发)
-  ↓
-读取预约的 paid_portion (仅实付部分)
-settlement_amount = paid_portion × base_rate × rating_multiplier
+┌──────────────────────────────────────────────────────┐
+│  编辑 L1 等级配置                                      │
+├──────────────────────────────────────────────────────┤
+│  [基础信息] [权益配置] [产品佣金]                        │
+├──────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────┐ │
+│  │ 默认佣金率: 一级 20% / 二级 0%                    │ │
+│  └─────────────────────────────────────────────────┘ │
+│                                                      │
+│  产品专属配置：                                        │
+│  ┌──────────────────────────────────────────────────┐│
+│  │ [✓] 尝鲜会员 (basic)      一级 20%  二级 0%       ││
+│  │ [✓] 365会员 (member365)   一级 20%  二级 0%       ││
+│  │ [✓] 财富训练营 (wealth)   一级 25%  二级 5%       ││
+│  │ [ ] SCL-90报告 (scl90)    — 不参与分成 —          ││
+│  └──────────────────────────────────────────────────┘│
+│                                                      │
+│  + 添加产品配置                                        │
+└──────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 计算示例
 
-**用户操作**：
-1. 充值 ¥1000 → paid: ¥1000, bonus: ¥100
-2. 预约 ¥200 服务 → bonus 扣 ¥100, paid 扣 ¥100
-3. 5 星评价结算 → ¥100 × 30% × 1.0 = ¥30 给教练
+**场景**：L3 钻石合伙人推荐用户购买
 
-**对比原方案**：
-- 原方案：¥200 × 30% = ¥60 给教练
-- 新方案：¥100 × 30% = ¥30 给教练
-- 平台节省：¥30
+| 产品 | 价格 | 配置佣金率 | 一级佣金 | 二级佣金 |
+|:-----|:-----|:----------|:--------|:--------|
+| 尝鲜会员 | ¥9.9 | 50%/10% | ¥4.95 | ¥0.99 |
+| 365会员 | ¥365 | 50%/10% | ¥182.50 | ¥36.50 |
+| 财富训练营 | ¥1999 | 40%/8% (特殊) | ¥799.60 | ¥159.92 |
+| SCL-90报告 | ¥29.9 | 不参与 | ¥0 | ¥0 |
 
 ---
 
@@ -124,70 +116,83 @@ settlement_amount = paid_portion × base_rate × rating_multiplier
 
 | 文件 | 操作 | 说明 |
 |:-----|:-----|:-----|
-| 数据库迁移 | 新增 | 添加双余额字段 |
-| `add_coaching_balance` 函数 | 修改 | 分别增加 paid 和 bonus |
-| `deduct_coaching_balance` 函数 | 修改 | 优先扣 bonus，返回扣减明细 |
-| `pay-with-prepaid/index.ts` | 修改 | 记录 paid_portion 和 bonus_portion |
-| `calculate-coach-settlement/index.ts` | 修改 | 仅按 paid_portion 结算 |
-| `useCoachSettlements.ts` | 可选 | 展示实付/赠送明细 |
+| 数据库迁移 | 新增 | 创建 partner_product_commissions 表 |
+| `calculate-commission/index.ts` | 修改 | 查询产品专属佣金配置 |
+| `PartnerLevelManagement.tsx` | 修改 | 添加产品佣金配置 Tab |
+| `usePartnerLevels.ts` | 修改 | 扩展返回产品佣金数据 |
 
 ---
 
 ## 技术细节
 
-### 新版 deduct_coaching_balance 函数
+### 修改后的佣金计算逻辑
 
-```sql
-CREATE OR REPLACE FUNCTION deduct_coaching_balance(
-  p_user_id UUID,
-  p_amount DECIMAL,
-  ...
-)
-RETURNS TABLE(
-  success BOOLEAN,
-  new_balance DECIMAL,
-  paid_deducted DECIMAL,  -- 新增：实付扣减金额
-  bonus_deducted DECIMAL, -- 新增：赠送扣减金额
-  message TEXT
-)
-AS $$
-DECLARE
-  v_bonus DECIMAL;
-  v_paid DECIMAL;
-  v_bonus_deduct DECIMAL;
-  v_paid_deduct DECIMAL;
-BEGIN
-  -- 获取两种余额
-  SELECT bonus_balance, paid_balance INTO v_bonus, v_paid
-  FROM coaching_prepaid_balance WHERE user_id = p_user_id FOR UPDATE;
-  
-  -- 优先扣赠送
-  IF v_bonus >= p_amount THEN
-    v_bonus_deduct := p_amount;
-    v_paid_deduct := 0;
-  ELSE
-    v_bonus_deduct := v_bonus;
-    v_paid_deduct := p_amount - v_bonus;
-  END IF;
-  
-  -- 更新余额
-  UPDATE coaching_prepaid_balance
-  SET bonus_balance = bonus_balance - v_bonus_deduct,
-      paid_balance = paid_balance - v_paid_deduct,
-      balance = balance - p_amount
-  WHERE user_id = p_user_id;
-  
-  RETURN QUERY SELECT TRUE, (v_paid + v_bonus - p_amount), 
-                       v_paid_deduct, v_bonus_deduct, '扣款成功'::TEXT;
-END;
-$$
+```typescript
+// calculate-commission/index.ts
+async function getCommissionRates(
+  supabase: any,
+  partnerLevelRuleId: string,
+  packageKey: string
+) {
+  // 1. 先查产品专属配置
+  const { data: productConfig } = await supabase
+    .from('partner_product_commissions')
+    .select('*')
+    .eq('partner_level_rule_id', partnerLevelRuleId)
+    .eq('package_key', packageKey)
+    .single();
+
+  if (productConfig) {
+    if (!productConfig.is_enabled) {
+      return null; // 产品不参与分成
+    }
+    return {
+      l1: productConfig.commission_rate_l1,
+      l2: productConfig.commission_rate_l2
+    };
+  }
+
+  // 2. 回退到等级默认佣金率
+  const { data: levelRule } = await supabase
+    .from('partner_level_rules')
+    .select('commission_rate_l1, commission_rate_l2')
+    .eq('id', partnerLevelRuleId)
+    .single();
+
+  return levelRule ? {
+    l1: levelRule.commission_rate_l1,
+    l2: levelRule.commission_rate_l2
+  } : null;
+}
 ```
 
 ---
 
-## 迁移策略
+## 初始化数据
 
-1. **历史数据**：将现有 `balance` 全部视为 `paid_balance`（保守处理）
-2. **新充值**：按套餐的 `price` 和 `bonus_amount` 分别记账
-3. **结算兼容**：对于没有 `paid_portion` 的旧预约，按 `amount_paid` 全额结算
+为保持兼容，可选择性初始化当前有劲产品的默认配置：
 
+```sql
+-- 为每个有劲等级插入默认产品配置
+INSERT INTO partner_product_commissions (partner_level_rule_id, package_key, commission_rate_l1, commission_rate_l2, is_enabled)
+SELECT 
+  plr.id,
+  p.package_key,
+  plr.commission_rate_l1,
+  plr.commission_rate_l2,
+  true
+FROM partner_level_rules plr
+CROSS JOIN packages p
+WHERE plr.partner_type = 'youjin' 
+  AND p.product_line = 'youjin'
+  AND p.is_active = true;
+```
+
+---
+
+## 优势
+
+1. **灵活配置**：可按产品、按等级设置不同佣金率
+2. **排除产品**：可禁用某些产品不参与分成
+3. **向后兼容**：未配置的产品使用默认佣金率
+4. **可视化管理**：在后台直观配置每个产品的分成规则
