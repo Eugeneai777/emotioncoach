@@ -1,132 +1,125 @@
 
 
-## 将"生命绽放特训营"和"绽放教练认证"做成独立产品
+## 重新设计绽放训练营产品卡片颜色
 
-### 问题分析
+### 参考分析
 
-用户需要将两个高价产品从"权益展示"升级为"可购买产品"：
+根据提供的参考图，需要调整两个绽放训练营产品的视觉风格：
 
-| 产品名称 | 价格 | 描述 | 当前状态 |
-|:---------|:-----|:-----|:---------|
-| 生命绽放特训营 | ¥12,800 | 4周线上特训营，重塑生命能量 | 仅作为权益展示在 partner_benefits |
-| 绽放教练认证 | ¥16,800 | 国际认证绽放教练资质 | 仅作为权益展示在 partner_benefits |
+| 产品 | 当前渐变 | 参考图效果 | 新设计 |
+|:-----|:---------|:-----------|:-------|
+| 身份绽放训练营 🦋 | `from-purple-600 via-pink-500 to-rose-500` | 深紫到品红的渐变，边缘发光效果 | `from-purple-700 via-fuchsia-600 to-rose-500` |
+| 情感绽放训练营 💚 | `from-pink-500 via-rose-500 to-purple-500` | 暖色调米黄/杏色渐变 | `from-amber-100 via-orange-100 to-yellow-50` |
 
-**需求：**
-1. 作为独立产品添加到 `packages` 表
-2. 归属"绽放系列"（product_line = 'bloom'）
-3. 享受绽放合伙人分成（30% 一级 + 10% 二级）
+---
+
+### 设计要点
+
+#### 1. 身份绽放训练营 - 紫粉色调优化
+- **保持紫色调**，增强对比度和饱和度
+- 更深的紫色起点 → 品红过渡 → 玫红结尾
+- 文字保持白色确保可读性
+
+#### 2. 情感绽放训练营 - 暖色调重设计
+- **完全改变配色方案**：从粉紫色改为暖米黄色调
+- 使用柔和的暖色：米白/杏色/淡黄
+- **关键改变**：文字颜色从白色改为深色（棕色/深灰）确保可读性
+- 按钮渐变也需要相应调整
 
 ---
 
 ### 实施方案
 
-#### 第一步：数据库 - 添加产品到 packages 表
+#### 文件修改：`src/components/ProductComparisonTable.tsx`
 
-```sql
-INSERT INTO packages (package_key, package_name, product_line, price, description, is_active, display_order)
-VALUES 
-  ('bloom_life_camp', '生命绽放特训营', 'bloom', 12800.00, '4周线上特训营，重塑生命能量', true, 32),
-  ('bloom_coach_cert', '绽放教练认证', 'bloom', 16800.00, '国际认证绽放教练资质', true, 35);
-```
-
-添加后的绽放产品列表：
-
-| display_order | package_key | package_name | 价格 |
-|:--------------|:------------|:-------------|:-----|
-| 30 | bloom_identity_camp | 身份绽放训练营 | ¥2,980 |
-| 31 | bloom_emotion_camp | 情感绽放训练营 | ¥3,980 |
-| 32 | bloom_life_camp | 生命绽放特训营 | ¥12,800 |
-| 35 | bloom_coach_cert | 绽放教练认证 | ¥16,800 |
-| 40 | bloom_partner | 绽放合伙人 | ¥19,800 |
-
-#### 第二步：前端 - 更新产品分类配置
-
-更新 `productCategories.ts`，新增"绽放进阶"分类以展示高阶产品：
-
-```typescript
-// 方案A：新增独立分类
-{
-  id: 'bloom-advanced',
-  name: '绽放进阶',
-  emoji: '🌟',
-  gradient: 'from-purple-600 to-pink-600',
-  description: '深度转化，专业认证',
-  tagline: '进阶成长之路',
-  buttonGradient: 'from-purple-600/20 to-pink-600/20'
-}
-
-// 方案B：整合到现有"绽放训练营"分类
-// 无需新增分类，在 bloom-camp 中展示所有训练营
-```
-
-#### 第三步：前端 - 更新产品展示组件
-
-**文件**: `src/components/ProductComparisonTable.tsx`
-
-在"绽放训练营"分类中添加两个新产品卡片：
+**第一处修改 - 渐变色映射表（约第817-821行）**
 
 ```tsx
-// bloom-camp 分类中添加
-const bloomAdvancedProducts = [
-  {
-    key: 'bloom_life_camp',
-    name: '生命绽放特训营',
-    price: 12800,
-    icon: '🔥',
-    description: '4周线上特训营，重塑生命能量',
-    gradient: 'from-amber-500 via-orange-500 to-red-500',
-    features: ['4周深度转化', '真人教练陪伴', '重塑生命能量']
-  },
-  {
-    key: 'bloom_coach_cert',
-    name: '绽放教练认证',
-    price: 16800,
-    icon: '📜',
-    description: '国际认证绽放教练资质',
-    gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
-    features: ['国际认证资质', '专业教练培训', '终身学习支持']
-  }
-];
+// 改动前
+const gradientMap: Record<string, string> = {
+  'identity_bloom': 'from-purple-600 via-pink-500 to-rose-500',
+  'emotion_bloom': 'from-pink-500 via-rose-500 to-purple-500',
+};
+
+// 改动后
+const gradientMap: Record<string, string> = {
+  'identity_bloom': 'from-purple-700 via-fuchsia-600 to-rose-500',
+  'emotion_bloom': 'from-amber-100 via-orange-100 to-yellow-50',
+};
 ```
 
-#### 第四步：佣金配置
+**第二处修改 - 文字颜色适配**
 
-绽放合伙人（L0）的默认佣金率已配置：
-- 一级佣金：30%
-- 二级佣金：10%
+针对暖色背景（情感绽放），需要动态调整文字颜色：
 
-新产品将自动继承这些默认佣金率。无需额外配置 `partner_product_commissions` 表（除非需要自定义费率）。
+```tsx
+// 判断是否为浅色背景
+const isLightBg = camp.camp_type === 'emotion_bloom';
+const textColorClass = isLightBg ? 'text-amber-900' : 'text-white';
+const subTextColorClass = isLightBg ? 'text-amber-800/85' : 'text-white/85';
+const tagBgClass = isLightBg ? 'bg-amber-900/15' : 'bg-white/20';
+const tagTextClass = isLightBg ? 'text-amber-900/90' : 'text-white/95';
+```
+
+应用到各元素：
+- 标题：`text-white` → `textColorClass`
+- 副标题：`text-white/85` → `subTextColorClass`
+- 标签背景：`bg-white/20` → `tagBgClass`
+- 标签文字：`text-white/95` → `tagTextClass`
+- 价格：动态适配
+
+**第三处修改 - 按钮渐变适配**
+
+暖色背景的按钮使用暖色渐变确保视觉一致性：
+
+```tsx
+const buttonGradient = isLightBg 
+  ? 'from-amber-500 via-orange-500 to-amber-600' 
+  : gradient;
+```
 
 ---
 
-### 涉及的文件/表
+### 技术细节
 
-| 操作 | 文件/表 | 修改内容 |
-|:-----|:--------|:---------|
-| INSERT | 数据库 `packages` | 添加 bloom_life_camp、bloom_coach_cert |
-| 修改 | `src/config/productCategories.ts` | 新增 bloom-advanced 分类（可选） |
-| 修改 | `src/components/ProductComparisonTable.tsx` | 添加两个高阶产品的展示和购买逻辑 |
+#### 颜色对比分析
+
+| 元素 | 身份绽放（深色背景） | 情感绽放（浅色背景） |
+|:-----|:---------------------|:---------------------|
+| 背景 | `from-purple-700 via-fuchsia-600 to-rose-500` | `from-amber-100 via-orange-100 to-yellow-50` |
+| 标题 | `text-white` | `text-amber-900` |
+| 副标题 | `text-white/85` | `text-amber-800/85` |
+| 标签背景 | `bg-white/20` | `bg-amber-900/15` |
+| 标签文字 | `text-white/95` | `text-amber-900/90` |
+| 价格 | `text-white` | `text-amber-900` |
+| 原价 | `text-white/60` | `text-amber-700/60` |
+| 价格标签 | `bg-amber-400 text-amber-900` | `bg-amber-500 text-white` |
+| 按钮 | `from-purple-700 via-fuchsia-600 to-rose-500` | `from-amber-500 via-orange-500 to-amber-600` |
+
+---
+
+### 涉及文件
+
+| 文件 | 修改内容 |
+|:-----|:---------|
+| `src/components/ProductComparisonTable.tsx` | 更新渐变色映射表、动态文字颜色、按钮适配 |
 
 ---
 
 ### 预期效果
 
-1. **产品中心展示**：
-   - 绽放训练营标签页展示 4 个产品（2个基础 + 2个进阶）
-   - 或新增"绽放进阶"标签页单独展示高阶产品
+1. **身份绽放训练营**：
+   - 保持紫粉色调，但更加鲜艳饱和
+   - 蝴蝶图标 🦋 在紫色背景上更加醒目
 
-2. **购买流程**：
-   - 用户可直接微信支付购买这两个产品
-   - 支付成功后记录订单
+2. **情感绽放训练营**：
+   - 温暖的米黄/杏色渐变背景
+   - 绿色爱心 💚 在暖色背景上形成互补色对比
+   - 深色文字确保可读性
+   - 整体传达温暖、情感支持的氛围
 
-3. **合伙人分成**：
-   - 绽放合伙人推广这两个产品可获得 30% 一级佣金
-   - 二级推广可获得 10% 间接佣金
-
-4. **收益计算示例**：
-
-| 产品 | 价格 | 一级佣金(30%) | 二级佣金(10%) |
-|:-----|:-----|:--------------|:--------------|
-| 生命绽放特训营 | ¥12,800 | ¥3,840 | ¥1,280 |
-| 绽放教练认证 | ¥16,800 | ¥5,040 | ¥1,680 |
+3. **视觉区分**：
+   - 两个产品视觉风格明显不同
+   - 身份绽放 = 活力、蜕变、华丽
+   - 情感绽放 = 温暖、治愈、柔和
 
