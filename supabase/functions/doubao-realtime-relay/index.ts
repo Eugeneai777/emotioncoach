@@ -236,6 +236,15 @@ function parsePacket(data: Uint8Array): {
     return (((buf[off] << 24) >>> 0) + (buf[off + 1] << 16) + (buf[off + 2] << 8) + buf[off + 3]) >>> 0;
   };
 
+  // 服务端响应里“可能”会在 event 后带 sessionIdLen + sessionId。
+  // 但对音频帧来说，这并不总是成立：如果把音频的前 4 字节误读成 sessionIdLen，
+  // 会导致后续 payload 整体错位，产生明显“呲呲呲”噪声。
+  // 因此：仅当长度为 36 且内容符合 UUID 格式时，才认定为 sessionId；否则回退。
+  const isUuidLike = (s: string): boolean => {
+    // 8-4-4-4-12
+    return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s);
+  };
+
   // Validate protocol/version/header_size early
   const protocolVersion = (data[0] >> 4) & 0x0F;
   const headerSize = data[0] & 0x0F;
@@ -295,19 +304,28 @@ function parsePacket(data: Uint8Array): {
     if (data.length < offset + 4) return null;
     const sessionIdLen = readUint32BE(data, offset);
     offset += 4;
-    
-    // 验证 sessionIdLen 是否合理 (UUID 是 36 字节)
-    if (sessionIdLen > 0 && sessionIdLen <= 128) {
+
+    // sessionIdLen === 0：跳过，继续读 payloadSize
+    if (sessionIdLen === 0) {
+      // no-op
+    } else if (sessionIdLen === 36) {
       if (data.length < offset + sessionIdLen) return null;
-      sessionId = new TextDecoder().decode(data.slice(offset, offset + sessionIdLen));
-      offset += sessionIdLen;
-    } else if (sessionIdLen > 128) {
-      // sessionIdLen 异常大，说明前 4 字节可能不是 sessionIdLen 而是 payloadSize
-      // 回退 offset，让后续代码把它当作 payloadSize 处理
-      console.warn(`[Protocol] sessionIdLen=${sessionIdLen} looks like payloadSize, rolling back`);
+      const candidate = new TextDecoder().decode(data.slice(offset, offset + sessionIdLen));
+      if (isUuidLike(candidate)) {
+        sessionId = candidate;
+        offset += sessionIdLen;
+      } else {
+        // 不是 UUID，回退：把这 4 字节当作 payloadSize 解析
+        console.warn('[Protocol] sessionIdLen=36 but payload is not UUID; rolling back', {
+          preview: candidate.slice(0, 16),
+        });
+        offset -= 4;
+      }
+    } else {
+      // 非 0/36：高度怀疑其实是 payloadSize（或协议变体），回退
+      console.warn(`[Protocol] sessionIdLen=${sessionIdLen} is not 0/36; rolling back`);
       offset -= 4;
     }
-    // sessionIdLen === 0 的情况：跳过，继续读 payloadSize
   }
 
   // Special-case: MESSAGE_TYPE_ERROR format is:
