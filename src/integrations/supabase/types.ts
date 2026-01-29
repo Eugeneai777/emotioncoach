@@ -3891,6 +3891,47 @@ export type Database = {
         }
         Relationships: []
       }
+      gratitude_call_records: {
+        Row: {
+          call_date: string | null
+          call_id: string | null
+          call_time_slot: string
+          created_at: string | null
+          gratitude_content: string | null
+          id: string
+          recorded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          call_date?: string | null
+          call_id?: string | null
+          call_time_slot: string
+          created_at?: string | null
+          gratitude_content?: string | null
+          id?: string
+          recorded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          call_date?: string | null
+          call_id?: string | null
+          call_time_slot?: string
+          created_at?: string | null
+          gratitude_content?: string | null
+          id?: string
+          recorded_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gratitude_call_records_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "ai_coach_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gratitude_coach_briefings: {
         Row: {
           conversation_id: string | null

@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface InitiateCallRequest {
   user_id: string;
-  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion';
+  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder';
   coach_type?: string;
   context?: Record<string, any>;
 }
@@ -20,6 +20,7 @@ const SCENARIO_PROMPTS: Record<string, string> = {
   camp_followup: '生成一句温柔鼓励的开场白，提醒用户训练营任务还没完成。',
   emotion_check: '生成一句体贴的开场白，表达对用户近期情绪波动的关心。',
   late_night_companion: '生成一句温柔体贴的深夜问候开场白，像老朋友一样关心用户这么晚还没睡，语气要轻柔不打扰，带着陪伴和理解。',
+  gratitude_reminder: '生成一句温暖的感恩提醒开场白，邀请用户一起发现生活中值得感恩的事物，语气亲切温暖。',
 };
 
 async function generateOpeningMessage(
@@ -31,11 +32,22 @@ async function generateOpeningMessage(
   
   if (!LOVABLE_API_KEY) {
     console.warn('LOVABLE_API_KEY not configured, using default message');
-    return getDefaultMessage(scenario, userName);
+    return getDefaultMessage(scenario, context, userName);
   }
 
   try {
-    const prompt = `你是有劲AI生命教练。${SCENARIO_PROMPTS[scenario] || SCENARIO_PROMPTS.care}
+    // 感恩提醒场景需要根据时段调整提示词
+    let scenarioPrompt = SCENARIO_PROMPTS[scenario] || SCENARIO_PROMPTS.care;
+    if (scenario === 'gratitude_reminder' && context?.time_slot) {
+      const slotHints: Record<string, string> = {
+        morning: '鼓励用户开启充满感恩的一天，问候时提到"新的一天"或"早安"',
+        noon: '邀请用户暂停片刻，回顾上午的小确幸，语气轻松愉快',
+        evening: '温柔地引导用户回顾今天值得感恩的时刻，帮助用户带着感恩的心入眠',
+      };
+      scenarioPrompt = `生成一句温暖的感恩提醒开场白。${slotHints[context.time_slot] || slotHints.morning}`;
+    }
+
+    const prompt = `你是有劲AI生命教练。${scenarioPrompt}
 用户名称：${userName || '朋友'}
 ${context?.recent_emotion ? `用户最近情绪：${context.recent_emotion}` : ''}
 ${context?.days_inactive ? `用户已${context.days_inactive}天未活跃` : ''}
@@ -64,21 +76,33 @@ ${context?.days_inactive ? `用户已${context.days_inactive}天未活跃` : ''}
 
     if (!response.ok) {
       console.error('AI generation failed:', response.status);
-      return getDefaultMessage(scenario, userName);
+      return getDefaultMessage(scenario, context, userName);
     }
 
     const data = await response.json();
     const message = data.choices?.[0]?.message?.content?.trim();
     
-    return message || getDefaultMessage(scenario, userName);
+    return message || getDefaultMessage(scenario, context, userName);
   } catch (error) {
     console.error('Generate opening message error:', error);
-    return getDefaultMessage(scenario, userName);
+    return getDefaultMessage(scenario, context, userName);
   }
 }
 
-function getDefaultMessage(scenario: string, userName?: string): string {
+function getDefaultMessage(scenario: string, context?: Record<string, any>, userName?: string): string {
   const name = userName || '朋友';
+  
+  // 感恩提醒场景根据时段返回不同消息
+  if (scenario === 'gratitude_reminder') {
+    const timeSlot = context?.time_slot || 'morning';
+    const gratitudeDefaults: Record<string, string> = {
+      morning: `早安${name}！新的一天，想和你一起发现值得感恩的事～`,
+      noon: `${name}，午间小憩，来记录一下上午的小确幸？`,
+      evening: `${name}，睡前想和你聊聊今天值得感恩的时刻～`,
+    };
+    return gratitudeDefaults[timeSlot] || gratitudeDefaults.morning;
+  }
+  
   const defaults: Record<string, string> = {
     care: `嗨${name}，最近怎么样？想和你聊聊～`,
     reminder: `${name}，有件事想提醒你一下～`,
@@ -152,6 +176,9 @@ serve(async (req) => {
 
     // 生成AI开场白
     const openingMessage = await generateOpeningMessage(scenario, context, userName || undefined);
+    
+    // 确定教练类型（感恩提醒场景使用 gratitude 教练）
+    const finalCoachType = scenario === 'gratitude_reminder' ? 'gratitude' : coach_type;
 
     // 创建来电记录
     const { data: call, error: insertError } = await supabase
@@ -159,7 +186,7 @@ serve(async (req) => {
       .insert({
         user_id,
         scenario,
-        coach_type,
+        coach_type: finalCoachType,
         opening_message: openingMessage,
         context,
         call_status: 'ringing',
