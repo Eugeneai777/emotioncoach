@@ -1,167 +1,73 @@
 
 
-## 绽放合伙人权益矩阵完整设计
+## 修正教练预付卡充值送礼显示内容
 
-### 需求分析
+### 问题分析
 
-根据 `partner_benefits` 数据库表和用户上传的参考图，需要：
-1. **展示完整的10项包含权益**（替代简化的"身份绽放+情感绽放"）
-2. **凸显有劲产品推广权益**：成为绽放合伙人自动获得有劲初级合伙人身份，可推广11款有劲产品并享18%一级佣金
+当前 `ProductComparisonTable.tsx` 中的"充值送礼"区块使用了硬编码的旧数据：
 
----
-
-### 完整权益列表（来自数据库）
-
-| 序号 | 图标 | 权益名称 | 价值 |
-|:-----|:-----|:---------|:-----|
-| 1 | 🌟 | 身份绽放特训营 | ¥2,980 |
-| 2 | 💝 | 情感绽放特训营 | ¥3,980 |
-| 3 | 🔥 | 生命绽放特训营 | ¥12,800 |
-| 4 | 🏆 | 英雄之旅线下课 | ¥10,000 |
-| 5 | 📜 | 绽放教练认证 | ¥16,800 |
-| 6 | 💰 | 专属推广分成 | 30%/10% |
-| 7 | 🎨 | 推广物料支持 | - |
-| 8 | 👥 | 合伙人专属社群 | - |
-| 9 | ⭐ | 优先参与权 | - |
-| 10 | 💪 | 有劲产品推广权益 | ¥792 |
-
-**总价值**：¥47,352
+| 当前显示（错误） | 数据库实际值（正确） |
+|:-----------------|:---------------------|
+| 充值 ¥500 送 ¥50 | 充值 ¥1000 送 ¥100 |
+| 充值 ¥1000 送 ¥150 | 充值 ¥5000 送 ¥750 |
+| - | 充值 ¥10000 送 ¥2000 |
 
 ---
 
-### 有劲产品推广权益详情
+### 数据库当前套餐
 
-绽放合伙人**自动获得有劲初级合伙人（L1）**身份，可推广以下11款有劲产品：
-
-| 产品名称 | 价格 | 一级佣金(18%) |
-|:---------|:-----|:--------------|
-| 尝鲜会员 | ¥9.9 | ¥1.78 |
-| 情绪健康测评 | ¥9.9 | ¥1.78 |
-| SCL-90测评 | ¥9.9 | ¥1.78 |
-| 财富卡点测评 | ¥9.9 | ¥1.78 |
-| 365会员 | ¥365 | ¥65.7 |
-| 21天情绪日记训练营 | ¥299 | ¥53.82 |
-| 财富觉醒训练营 | ¥299 | ¥53.82 |
-| 21天青少年困境突破营 | ¥299 | ¥53.82 |
-| 初级合伙人 | ¥792 | ¥142.56 |
-| 高级合伙人 | ¥3,217 | ¥579.06 |
-| 钻石合伙人 | ¥4,950 | ¥891 |
+| 套餐名称 | 充值金额 | 赠送金额 | 到账金额 | 赠送比例 |
+|:---------|:---------|:---------|:---------|:---------|
+| 标准充值卡 | ¥1,000 | ¥100 | ¥1,100 | 10% |
+| 畅享充值卡 | ¥5,000 | ¥750 | ¥5,750 | 15% |
+| 尊享充值卡 | ¥10,000 | ¥2,000 | ¥12,000 | 20% |
 
 ---
 
 ### 实施方案
 
-#### 文件修改：`src/config/productComparison.ts`
+**文件**：`src/components/ProductComparisonTable.tsx`
 
-**更新 `BloomPartnerFeature` 接口和数据**：
+**修改位置**：第189-202行
 
-```typescript
-export interface BloomPartnerFeature extends ComparisonFeature {
-  category: '基础信息' | '佣金权益' | '包含权益' | '绽放可分成产品' | '有劲可分成产品';
-  value: boolean | string;
-}
-
-export const bloomPartnerFeatures: BloomPartnerFeature[] = [
-  // 基础信息
-  { name: "价格", category: "基础信息", value: "¥19,800" },
-  { name: "权益总价值", category: "基础信息", value: "¥47,352" },
-  
-  // 佣金权益
-  { name: "绽放产品一级佣金", category: "佣金权益", value: "30%" },
-  { name: "绽放产品二级佣金", category: "佣金权益", value: "10%" },
-  { name: "有劲产品一级佣金", category: "佣金权益", value: "18%", tooltip: "自动获得有劲初级合伙人身份" },
-  
-  // 包含权益（10项完整列表）
-  { name: "🌟 身份绽放特训营", category: "包含权益", value: "¥2,980" },
-  { name: "💝 情感绽放特训营", category: "包含权益", value: "¥3,980" },
-  { name: "🔥 生命绽放特训营", category: "包含权益", value: "¥12,800" },
-  { name: "🏆 英雄之旅线下课", category: "包含权益", value: "¥10,000" },
-  { name: "📜 绽放教练认证", category: "包含权益", value: "¥16,800" },
-  { name: "💰 专属推广分成", category: "包含权益", value: "30%/10%" },
-  { name: "🎨 推广物料支持", category: "包含权益", value: true },
-  { name: "👥 合伙人专属社群", category: "包含权益", value: true },
-  { name: "⭐ 优先参与权", category: "包含权益", value: true },
-  { name: "💪 有劲产品推广权益", category: "包含权益", value: "¥792", tooltip: "自动获得有劲初级合伙人身份" },
-  
-  // 绽放可分成产品
-  { name: "身份绽放训练营 ¥2,980", category: "绽放可分成产品", value: true },
-  { name: "情感绽放训练营 ¥3,980", category: "绽放可分成产品", value: true },
-  { name: "生命绽放特训营 ¥12,800", category: "绽放可分成产品", value: true },
-  { name: "绽放教练认证 ¥16,800", category: "绽放可分成产品", value: true },
-  { name: "绽放合伙人 ¥19,800", category: "绽放可分成产品", value: true },
-  
-  // 有劲可分成产品（新增类别）
-  { name: "尝鲜会员 ¥9.9", category: "有劲可分成产品", value: true },
-  { name: "情绪健康测评 ¥9.9", category: "有劲可分成产品", value: true },
-  { name: "SCL-90测评 ¥9.9", category: "有劲可分成产品", value: true },
-  { name: "财富卡点测评 ¥9.9", category: "有劲可分成产品", value: true },
-  { name: "365会员 ¥365", category: "有劲可分成产品", value: true },
-  { name: "情绪日记训练营 ¥299", category: "有劲可分成产品", value: true },
-  { name: "财富觉醒训练营 ¥299", category: "有劲可分成产品", value: true },
-  { name: "青少年困境突破营 ¥299", category: "有劲可分成产品", value: true },
-  { name: "初级合伙人 ¥792", category: "有劲可分成产品", value: true },
-  { name: "高级合伙人 ¥3,217", category: "有劲可分成产品", value: true },
-  { name: "钻石合伙人 ¥4,950", category: "有劲可分成产品", value: true },
-];
-```
-
----
-
-#### 文件修改：`src/components/ProductComparisonTable.tsx`
-
-**更新 `bloom-partner` 分支的渲染逻辑**：
-
-1. **更新类别顺序**：
-```typescript
-const bloomPartnerCategories = [
-  '基础信息', 
-  '佣金权益', 
-  '包含权益',           // 新增：完整10项权益
-  '绽放可分成产品',     // 原"可分成产品"改名
-  '有劲可分成产品'      // 新增：有劲产品线
-] as const;
-```
-
-2. **包含权益区块**：渲染完整10项权益，带图标和价值
-
-3. **有劲可分成产品区块**：
-   - 添加醒目的"bonus"标签提示
-   - 橙色主题（区别于绽放的紫色）
-   - 显示18%佣金比例
-
-4. **价值主张区更新**：
-   - 新增标签：`🎁 含有劲L1合伙人权益`
-   - 显示总价值 ¥47,352
-
----
-
-### 视觉设计
-
-#### 表格分类区块配色
-
-| 类别 | 背景色 | 文字色 |
-|:-----|:-------|:-------|
-| 基础信息 | `bg-muted/30` | `text-pink-600` |
-| 佣金权益 | `bg-muted/30` | `text-pink-600` |
-| 包含权益 | `bg-gradient-to-r from-pink-50 to-purple-50` | `text-purple-600` |
-| 绽放可分成产品 | `bg-muted/30` | `text-pink-600` |
-| 有劲可分成产品 | `bg-gradient-to-r from-orange-50 to-amber-50` | `text-orange-600` |
-
-#### 有劲产品区块特殊样式
-
+**修改前**：
 ```tsx
-{/* 有劲可分成产品区块标题 */}
-<tr className="border-b bg-gradient-to-r from-orange-50 to-amber-50">
-  <td colSpan={2} className="p-3">
-    <div className="flex items-center gap-2">
-      <span className="font-semibold text-sm text-orange-600">有劲可分成产品</span>
-      <Badge className="bg-orange-500 text-white text-[10px]">
-        💪 含L1合伙人权益
-      </Badge>
-      <span className="text-xs text-orange-500">18%佣金</span>
-    </div>
-  </td>
-</tr>
+<ul className="space-y-1.5 text-sm">
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>充值 ¥500 送 ¥50</span>
+  </li>
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>充值 ¥1000 送 ¥150</span>
+  </li>
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>余额永久有效，可预约所有教练</span>
+  </li>
+</ul>
+```
+
+**修改后**：
+```tsx
+<ul className="space-y-1.5 text-sm">
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>充值 ¥1,000 送 ¥100</span>
+  </li>
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>充值 ¥5,000 送 ¥750</span>
+  </li>
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>充值 ¥10,000 送 ¥2,000</span>
+  </li>
+  <li className="flex items-center gap-2">
+    <Check className="w-4 h-4 text-green-500" />
+    <span>余额永久有效，可预约所有教练</span>
+  </li>
+</ul>
 ```
 
 ---
@@ -170,49 +76,17 @@ const bloomPartnerCategories = [
 
 | 文件 | 修改内容 |
 |:-----|:---------|
-| `src/config/productComparison.ts` | 更新接口定义，新增"包含权益"和"有劲可分成产品"类别 |
-| `src/components/ProductComparisonTable.tsx` | 重写 `bloom-partner` 分支，渲染完整权益矩阵 |
+| `src/components/ProductComparisonTable.tsx` | 更新充值送礼列表，使用正确的套餐数据 |
 
 ---
 
 ### 预期效果
 
-**表格结构**：
+**修改后显示**：
+- 充值 ¥1,000 送 ¥100
+- 充值 ¥5,000 送 ¥750
+- 充值 ¥10,000 送 ¥2,000
+- 余额永久有效，可预约所有教练
 
-```text
-┌─────────────────────────────────────────┐
-│ 权益项目                    │ 绽放合伙人 │
-├─────────────────────────────────────────┤
-│ 基础信息                                │
-│ ├ 价格                      │ ¥19,800   │
-│ └ 权益总价值                │ ¥47,352   │
-├─────────────────────────────────────────┤
-│ 佣金权益                                │
-│ ├ 绽放产品一级佣金          │ 30%       │
-│ ├ 绽放产品二级佣金          │ 10%       │
-│ └ 有劲产品一级佣金 ⓘ        │ 18%       │
-├─────────────────────────────────────────┤
-│ 包含权益 (总价值 ¥47,352)               │
-│ ├ 🌟 身份绽放特训营         │ ¥2,980    │
-│ ├ 💝 情感绽放特训营         │ ¥3,980    │
-│ ├ ...（共10项）             │           │
-│ └ 💪 有劲产品推广权益 ⓘ     │ ¥792      │
-├─────────────────────────────────────────┤
-│ 绽放可分成产品 (30%/10%)                │
-│ ├ 身份绽放训练营 ¥2,980     │ ✓ ¥894    │
-│ └ ...（共5项）              │           │
-├─────────────────────────────────────────┤
-│ 有劲可分成产品 💪 L1权益 (18%)  [橙色]  │
-│ ├ 尝鲜会员 ¥9.9             │ ✓ ¥1.78   │
-│ └ ...（共11项）             │           │
-├─────────────────────────────────────────┤
-│ [购买按钮]                              │
-└─────────────────────────────────────────┘
-```
-
-**关键卖点呈现**：
-1. 完整10项权益列表，总价值 ¥47,352 一目了然
-2. 有劲产品推广权益独立类别，橙色主题突出
-3. 双产品线分成权益：绽放5款 + 有劲11款 = 16款可推广产品
-4. 佣金结构清晰：绽放30%/10% + 有劲18%
+与数据库 `coaching_prepaid_packages` 表中的实际套餐信息一致。
 
