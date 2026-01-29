@@ -924,9 +924,22 @@ export const CoachVoiceChat = ({
       console.log('[VoiceChat] Platform info:', platformInfo);
 
       // 🎯 豆包语音：情绪教练使用豆包 Realtime（静老师）
+      // 注意：豆包走的是 WebSocket Relay，不依赖 WebRTC。
+      // 之前用 supportsWebRTC 会在“有麦克风但无 RTCPeerConnection”的环境里误判为不可用，
+      // 进而跳过豆包，导致用户看起来“没有任何文本/语音回复”。
       const useDoubaoVoice = mode === 'emotion';
+      const canUseDoubaoVoice = useDoubaoVoice && platformInfo.recommendedVoiceMethod !== 'none';
+
+      console.log('[VoiceChat] Voice routing decision:', {
+        mode,
+        useDoubaoVoice,
+        canUseDoubaoVoice,
+        recommendedVoiceMethod: platformInfo.recommendedVoiceMethod,
+        supportsWebRTC: platformInfo.supportsWebRTC,
+        platform: platformInfo.platform,
+      });
       
-      if (useDoubaoVoice && platformInfo.supportsWebRTC) {
+      if (canUseDoubaoVoice) {
         console.log('[VoiceChat] Using Doubao Realtime for emotion coach');
         updateConnectionPhase('establishing');
         setUseMiniProgramMode(false);
