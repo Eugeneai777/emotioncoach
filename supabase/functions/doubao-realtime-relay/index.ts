@@ -892,13 +892,21 @@ Deno.serve(async (req) => {
                       
                        // ASR 识别结果（用户说话的转写）
                        // 前端 DoubaoRealtimeAudio.ts 期望使用 OpenAI 风格事件：conversation.item.input_audio_transcription.completed
-                       // 否则用户会出现“能听到但说不了/没反应”的感知。
-                       if (parsed.event === EVENT_ASR_RESPONSE && payload.result?.text) {
-                         const transcript = String(payload.result.text);
-                         clientSocket.send(JSON.stringify({
-                           type: 'conversation.item.input_audio_transcription.completed',
-                           transcript,
-                         }));
+                       // 否则用户会出现"能听到但说不了/没反应"的感知。
+                       // 豆包 ASR payload 结构：
+                       // - { extra: { origin_text: "你好", endpoint: true, ... } } - 常见格式
+                       // - { result: { text: "你好" } } - 备选格式
+                       if (parsed.event === EVENT_ASR_RESPONSE) {
+                         const transcript = payload.extra?.origin_text ?? payload.result?.text;
+                         // 只在有 endpoint=true（用户说完）且有文本时转发，避免重复发送中间结果
+                         const isEndpoint = payload.extra?.endpoint === true;
+                         if (transcript && isEndpoint) {
+                           console.log(`[DoubaoRelay] ASR final transcript: "${transcript}"`);
+                           clientSocket.send(JSON.stringify({
+                             type: 'conversation.item.input_audio_transcription.completed',
+                             transcript: String(transcript),
+                           }));
+                         }
                        }
                       
                        // Chat 回复文本（模型文本）
