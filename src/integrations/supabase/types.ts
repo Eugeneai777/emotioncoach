@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_coach_calls: {
+        Row: {
+          call_status: string
+          coach_type: string
+          connected_at: string | null
+          context: Json | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          opening_message: string | null
+          ring_started_at: string | null
+          scenario: string
+          scheduled_at: string | null
+          user_id: string
+        }
+        Insert: {
+          call_status?: string
+          coach_type?: string
+          connected_at?: string | null
+          context?: Json | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          opening_message?: string | null
+          ring_started_at?: string | null
+          scenario: string
+          scheduled_at?: string | null
+          user_id: string
+        }
+        Update: {
+          call_status?: string
+          coach_type?: string
+          connected_at?: string | null
+          context?: Json | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          opening_message?: string | null
+          ring_started_at?: string | null
+          scenario?: string
+          scheduled_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       alive_check_contacts: {
         Row: {
           contact_email: string
