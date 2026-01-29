@@ -1,20 +1,17 @@
 
 
-## 为AI主动来电添加"感恩提醒"场景
+## 为AI主动来电添加"通话中询问续拨"和"设置页配置"功能
 
 ### 需求分析
 
-**目标**：通过AI来电提醒用户记录感恩日记，每天3次来电，帮助用户建立感恩习惯。
+**核心需求**：
+1. **对话中询问**：AI在通话结束前询问用户"是否继续接收来电"
+2. **设置中配置**：用户可以在设置页开关各类AI来电提醒
 
-**触发时机建议**：
-- 早晨 8:00 - "开启美好的一天，记录今天的期待"
-- 中午 12:30 - "午间小憩，回顾上午的小确幸"  
-- 晚上 21:00 - "睡前回顾，记录今天的感恩时刻"
-
-**核心价值**：
-- 建立每日感恩的习惯节奏
-- 在来电中直接引导用户口述感恩内容
-- 通话结束后自动保存到 `gratitude_entries` 表
+**价值**：
+- 让用户主动选择是否需要AI关怀
+- 避免用户感到被打扰
+- 提升用户对产品的掌控感
 
 ---
 
@@ -22,173 +19,275 @@
 
 #### 第一步：数据库扩展
 
-**1.1 扩展 scenario 约束**
+**1.1 在 profiles 表添加AI来电偏好字段**
 
 ```sql
--- 更新 ai_coach_calls 表的 scenario 约束
-ALTER TABLE public.ai_coach_calls 
-DROP CONSTRAINT IF EXISTS ai_coach_calls_scenario_check;
+-- AI来电全局开关
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS ai_call_enabled BOOLEAN DEFAULT true;
 
-ALTER TABLE public.ai_coach_calls 
-ADD CONSTRAINT ai_coach_calls_scenario_check 
-CHECK (scenario IN (
-  'care', 'reminder', 'reactivation', 'camp_followup', 
-  'emotion_check', 'late_night_companion', 'gratitude_reminder'
-));
-```
+-- 各场景独立开关（JSONB 存储）
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS ai_call_preferences JSONB DEFAULT '{
+  "late_night_companion": true,
+  "gratitude_reminder": true,
+  "emotion_check": true,
+  "reactivation": true,
+  "camp_followup": true,
+  "care": true
+}'::jsonb;
 
-**1.2 创建感恩来电记录表（可选，用于追踪用户参与度）**
-
-```sql
--- 追踪每日感恩来电情况
-CREATE TABLE IF NOT EXISTS public.gratitude_call_records (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  call_id UUID REFERENCES ai_coach_calls(id),
-  call_time_slot TEXT NOT NULL, -- 'morning' | 'noon' | 'evening'
-  gratitude_content TEXT,
-  recorded_at TIMESTAMPTZ DEFAULT now(),
-  date DATE DEFAULT CURRENT_DATE
-);
-
--- RLS
-ALTER TABLE public.gratitude_call_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own gratitude records" ON public.gratitude_call_records
-  FOR ALL USING (auth.uid() = user_id);
+-- 感恩提醒时段配置
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS gratitude_reminder_slots JSONB DEFAULT '{
+  "morning": true,
+  "noon": true,
+  "evening": true
+}'::jsonb;
 ```
 
 ---
 
 #### 第二步：更新 Edge Functions
 
-**2.1 更新 `initiate-ai-call/index.ts`**
+**2.1 修改 `batch-trigger-ai-coach-calls/index.ts`**
 
-| 修改项 | 内容 |
-|:-------|:-----|
-| 类型定义 | 添加 `'gratitude_reminder'` 到 scenario 类型 |
-| SCENARIO_PROMPTS | 添加三个时段专属提示词 |
-| getDefaultMessage | 添加感恩提醒默认消息 |
+在触发来电前检查用户偏好：
 
 ```typescript
-// 新增场景提示词（根据 context.time_slot 区分）
-gratitude_reminder: '生成一句温暖的感恩提醒开场白，根据时间段调整语气：
-  - morning: 鼓励用户开启充满感恩的一天，问候时提到"新的一天"
-  - noon: 邀请用户暂停片刻，回顾上午的小确幸
-  - evening: 温柔地引导用户回顾今天值得感恩的时刻，准备安眠',
+// 检查用户是否启用了该场景的来电
+const checkUserCallPreference = async (userId: string, scenario: string): Promise<boolean> => {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('ai_call_enabled, ai_call_preferences, gratitude_reminder_slots')
+    .eq('id', userId)
+    .single();
 
-// 新增默认消息（分时段）
-gratitude_reminder: {
-  morning: `早安${name}！新的一天，想和你一起发现值得感恩的事～`,
-  noon: `${name}，午间小憩，来记录一下上午的小确幸？`,
-  evening: `${name}，睡前想和你聊聊今天值得感恩的时刻～`
+  if (!profile) return false;
+  
+  // 全局开关
+  if (profile.ai_call_enabled === false) return false;
+  
+  // 场景开关
+  const preferences = profile.ai_call_preferences || {};
+  if (preferences[scenario] === false) return false;
+  
+  return true;
+};
+
+// 在每个场景触发前调用
+for (const userId of usersToProcess) {
+  // 新增：检查用户偏好
+  const isEnabled = await checkUserCallPreference(userId, 'gratitude_reminder');
+  if (!isEnabled) {
+    console.log(`User ${userId} has disabled ${scenario} calls`);
+    continue;
+  }
+  
+  // ...原有触发逻辑
 }
 ```
 
-**2.2 更新 `batch-trigger-ai-coach-calls/index.ts`**
-
-添加感恩提醒场景触发逻辑：
+**2.2 感恩提醒时段检查**
 
 ```typescript
-// 感恩提醒场景（每天3次：8:00, 12:30, 21:00）
-const gratitudeTimeSlots = [
-  { hour: 8, slot: 'morning' },
-  { hour: 12, minute: 30, slot: 'noon' },
-  { hour: 21, slot: 'evening' }
-];
+// 检查感恩提醒的时段偏好
+const checkGratitudeSlotPreference = async (userId: string, slot: 'morning' | 'noon' | 'evening'): Promise<boolean> => {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('gratitude_reminder_slots')
+    .eq('id', userId)
+    .single();
 
-if (scenario === 'gratitude_reminder' || (!scenario && isGratitudeTime(hour, minute))) {
-  const currentSlot = getTimeSlot(hour, minute); // 'morning' | 'noon' | 'evening'
+  if (!profile) return true; // 默认开启
   
-  // 1. 获取活跃用户（最近1小时有活动 或 最近7天使用过感恩日记）
-  const { data: gratitudeUsers } = await supabase
-    .from('gratitude_entries')
-    .select('user_id')
-    .gte('created_at', sevenDaysAgo)
-    .limit(limit);
+  const slots = profile.gratitude_reminder_slots || { morning: true, noon: true, evening: true };
+  return slots[slot] !== false;
+};
+```
+
+---
+
+#### 第三步：通话中询问续拨意愿
+
+**3.1 更新 `CoachVoiceChat.tsx` - 在通话结束前询问**
+
+在 `endCall` 函数中，如果是AI主动来电（`isIncomingCall === true`），弹出询问弹窗：
+
+```typescript
+// 新增状态
+const [showContinueCallDialog, setShowContinueCallDialog] = useState(false);
+
+// 修改 endCall 逻辑
+const endCall = async (e?: React.MouseEvent) => {
+  // ...原有逻辑...
   
-  // 去重并获取用户ID列表
-  const uniqueUserIds = [...new Set(gratitudeUsers?.map(e => e.user_id))];
-  
-  for (const userId of uniqueUserIds) {
-    // 2. 检查今天该时段是否已经来电过
-    const { data: existingCall } = await supabase
-      .from('ai_coach_calls')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('scenario', 'gratitude_reminder')
-      .gte('created_at', todayStart)
-      .contains('context', { time_slot: currentSlot })
-      .limit(1);
-    
-    if (existingCall && existingCall.length > 0) {
-      continue; // 已来电过，跳过
-    }
-    
-    // 3. 触发感恩提醒来电
-    await supabase.functions.invoke('initiate-ai-call', {
-      body: {
-        user_id: userId,
-        scenario: 'gratitude_reminder',
-        coach_type: 'gratitude',
-        context: {
-          time_slot: currentSlot,
-          time_of_day: currentSlot,
-        },
-      },
-    });
+  // 如果是AI主动来电，在结束前询问是否继续接收
+  if (isIncomingCall && aiCallId && durationValueRef.current > 30) { // 通话超过30秒才询问
+    setShowContinueCallDialog(true);
+    return; // 暂停结束流程，等待用户选择
   }
+  
+  // ...原有结束逻辑...
+};
+
+// 用户选择后的处理
+const handleContinueChoice = async (wantMore: boolean) => {
+  if (!wantMore) {
+    // 用户选择不再接收该场景来电
+    await updateCallPreference(false);
+  }
+  setShowContinueCallDialog(false);
+  // 继续结束通话
+  await performEndCall();
+};
+```
+
+**3.2 新建 `ContinueCallDialog.tsx` 组件**
+
+```tsx
+interface ContinueCallDialogProps {
+  isOpen: boolean;
+  scenario: string;
+  onChoice: (wantMore: boolean) => void;
+}
+
+export function ContinueCallDialog({ isOpen, scenario, onChoice }: ContinueCallDialogProps) {
+  const scenarioLabels = {
+    late_night_companion: '深夜陪伴',
+    gratitude_reminder: '感恩提醒',
+    emotion_check: '情绪关怀',
+    // ...
+  };
+  
+  return (
+    <Dialog open={isOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>这次通话有帮助吗？</DialogTitle>
+          <DialogDescription>
+            你希望继续接收「{scenarioLabels[scenario]}」来电吗？
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-3 pt-4">
+          <Button variant="outline" onClick={() => onChoice(false)}>
+            暂时不需要了
+          </Button>
+          <Button onClick={() => onChoice(true)}>
+            继续提醒我 💚
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 ```
 
 ---
 
-#### 第三步：更新前端组件
+#### 第四步：设置页添加AI来电偏好配置
 
-**3.1 更新 `useAICoachIncomingCall.ts`**
+**4.1 新建 `AICallPreferences.tsx` 组件**
 
-```typescript
-// 类型定义
-scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 
-          'emotion_check' | 'late_night_companion' | 'gratitude_reminder';
+在 `SmartNotificationPreferences.tsx` 同级目录新建：
 
-// 场景标签（分时段）
-const SCENARIO_LABELS = {
-  // ...existing
-  gratitude_reminder: '想和你一起发现值得感恩的事',
-};
-```
+```tsx
+export function AICallPreferences() {
+  const [loading, setLoading] = useState(true);
+  const [aiCallEnabled, setAiCallEnabled] = useState(true);
+  const [preferences, setPreferences] = useState<Record<string, boolean>>({});
+  const [gratitudeSlots, setGratitudeSlots] = useState<Record<string, boolean>>({});
 
-**3.2 更新 `AIIncomingCallDialog.tsx`**
+  // 场景配置
+  const scenarios = [
+    { key: 'gratitude_reminder', label: '感恩提醒', description: '每天3次提醒记录感恩事项', icon: '🌸' },
+    { key: 'late_night_companion', label: '深夜陪伴', description: '深夜检测到活跃时关心你', icon: '🌙' },
+    { key: 'emotion_check', label: '情绪关怀', description: '检测到情绪波动时主动联系', icon: '💚' },
+    { key: 'reactivation', label: '久未联系', description: '7天未使用时温柔提醒', icon: '👋' },
+    { key: 'camp_followup', label: '训练营提醒', description: '训练营任务未完成时提醒', icon: '🏕️' },
+  ];
 
-```typescript
-const COACH_INFO = {
-  // ...existing
-  gratitude_reminder: { 
-    name: '感恩小助手', 
-    emoji: '🌸', 
-    color: 'from-rose-400 to-pink-500' 
-  },
-};
+  const gratitudeTimeSlots = [
+    { key: 'morning', label: '早晨 8:00', description: '开启新的一天' },
+    { key: 'noon', label: '中午 12:30', description: '回顾上午的小确幸' },
+    { key: 'evening', label: '晚上 21:00', description: '睡前感恩回顾' },
+  ];
 
-// 感恩提醒场景使用温暖配色
-const isGratitudeReminder = scenario === 'gratitude_reminder';
-const coachInfo = isGratitudeReminder 
-  ? COACH_INFO.gratitude_reminder
-  : isLateNight 
-    ? COACH_INFO.late_night 
-    : COACH_INFO[coachType] || COACH_INFO.vibrant_life;
-```
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Phone className="w-5 h-5" />
+          AI教练来电设置
+        </CardTitle>
+        <CardDescription>
+          AI教练会在合适的时机主动来电关心你
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* 全局开关 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>启用AI主动来电</Label>
+            <p className="text-sm text-muted-foreground">关闭后不再接收任何AI来电</p>
+          </div>
+          <Switch checked={aiCallEnabled} onCheckedChange={handleGlobalToggle} />
+        </div>
 
-**3.3 来电接听后跳转到感恩教练**
+        {aiCallEnabled && (
+          <>
+            <Separator />
+            
+            {/* 各场景开关 */}
+            {scenarios.map(scenario => (
+              <div key={scenario.key} className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{scenario.icon}</span>
+                  <div>
+                    <Label>{scenario.label}</Label>
+                    <p className="text-xs text-muted-foreground">{scenario.description}</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={preferences[scenario.key] !== false} 
+                  onCheckedChange={(v) => handleScenarioToggle(scenario.key, v)} 
+                />
+              </div>
+            ))}
 
-在接听 `gratitude_reminder` 来电后，可以直接跳转到感恩教练页面或打开感恩快速添加组件：
-
-```typescript
-// 在 App.tsx 或来电处理逻辑中
-if (call.scenario === 'gratitude_reminder') {
-  navigate('/coach/gratitude_coach');
-  // 或者直接打开快速添加对话框
+            {/* 感恩提醒时段配置 */}
+            {preferences.gratitude_reminder !== false && (
+              <div className="pl-8 space-y-3 border-l-2 border-rose-200">
+                <p className="text-sm font-medium text-rose-600">感恩提醒时段</p>
+                {gratitudeTimeSlots.map(slot => (
+                  <div key={slot.key} className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm">{slot.label}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{slot.description}</span>
+                    </div>
+                    <Switch 
+                      checked={gratitudeSlots[slot.key] !== false} 
+                      onCheckedChange={(v) => handleSlotToggle(slot.key, v)} 
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
+```
+
+**4.2 在 `SmartNotificationPreferences.tsx` 中集成**
+
+在现有的通知偏好卡片后添加 AI 来电偏好组件：
+
+```tsx
+// 在微信公众号模板消息卡片后添加
+<AICallPreferences />
 ```
 
 ---
@@ -197,55 +296,57 @@ if (call.scenario === 'gratitude_reminder') {
 
 | 文件 | 操作 | 说明 |
 |:-----|:-----|:-----|
-| 数据库迁移 | 新建 | 扩展 scenario 约束，可选添加记录表 |
-| `supabase/functions/initiate-ai-call/index.ts` | 修改 | 添加 gratitude_reminder 场景 |
-| `supabase/functions/batch-trigger-ai-coach-calls/index.ts` | 修改 | 添加3次/天触发逻辑 |
-| `src/hooks/useAICoachIncomingCall.ts` | 修改 | 扩展类型和标签 |
-| `src/components/coach-call/AIIncomingCallDialog.tsx` | 修改 | 添加感恩提醒UI样式 |
-
----
-
-### 触发条件总结
-
-| 时段 | 时间 | 目标用户 | 开场语风格 |
-|:-----|:-----|:---------|:-----------|
-| 早晨 | 08:00 | 7天内使用过感恩日记 | 鼓励开启新一天 |
-| 中午 | 12:30 | 7天内使用过感恩日记 | 回顾上午小确幸 |
-| 晚上 | 21:00 | 7天内使用过感恩日记 | 睡前感恩回顾 |
-
-**防重复机制**：同一用户同一时段当天只来电一次
+| 数据库迁移 | 新建 | 添加 ai_call_enabled, ai_call_preferences, gratitude_reminder_slots 字段 |
+| `src/components/AICallPreferences.tsx` | 新建 | AI来电偏好设置组件 |
+| `src/components/coach/ContinueCallDialog.tsx` | 新建 | 通话结束询问续拨弹窗 |
+| `src/components/coach/CoachVoiceChat.tsx` | 修改 | 在AI来电结束时弹出询问 |
+| `src/components/SmartNotificationPreferences.tsx` | 修改 | 集成 AICallPreferences 组件 |
+| `supabase/functions/batch-trigger-ai-coach-calls/index.ts` | 修改 | 触发前检查用户偏好 |
 
 ---
 
 ### 用户体验流程
 
+**场景A：通话中询问**
 ```text
-用户早上8点收到来电 🌸
+用户接听深夜陪伴来电
      ↓
-看到「感恩小助手」+ "想和你一起发现值得感恩的事"
+与AI对话 2-3 分钟
      ↓
-接听后 AI："早安！新的一天开始了，有什么让你期待或感恩的吗？"
+用户点击挂断
      ↓
-用户口述感恩内容
+弹出询问弹窗：
+"这次通话有帮助吗？是否继续接收深夜陪伴来电？"
      ↓
-AI 引导记录 + 自动保存到 gratitude_entries
+用户选择「继续提醒我」或「暂时不需要了」
      ↓
-中午12:30 再次来电，回顾上午
+保存偏好，结束通话
+```
+
+**场景B：设置页配置**
+```text
+用户进入 设置 → 通知偏好
      ↓
-晚上21:00 最后一次，睡前感恩
+看到「AI教练来电设置」卡片
+     ↓
+可开关全局来电
+     ↓
+可单独开关各场景（感恩提醒、深夜陪伴等）
+     ↓
+感恩提醒下可细化选择时段（早/中/晚）
 ```
 
 ---
 
 ### 预期效果
 
-**习惯养成**：
-- 固定时间点的"感恩仪式感"
-- 3次/天的温柔提醒，不打扰但持续陪伴
-- 语音交互降低记录门槛
+**用户体验**：
+- 不再"被动接受"，而是"主动选择"
+- 设置简洁直观，一目了然
+- 通话中自然询问，不打断体验
 
-**情感连接**：
-- AI主动关心，建立"被惦记"的感觉
-- 分时段差异化开场白，体现理解用户的一天
-- 感恩内容自动保存，减少用户操作
+**系统行为**：
+- 触发来电前先检查用户偏好
+- 用户关闭后不再触发对应场景
+- 偏好数据实时生效
 
