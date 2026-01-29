@@ -13,6 +13,69 @@ interface TriggerResult {
   error?: string;
 }
 
+interface AICallPreferences {
+  late_night_companion?: boolean;
+  gratitude_reminder?: boolean;
+  emotion_check?: boolean;
+  reactivation?: boolean;
+  camp_followup?: boolean;
+  care?: boolean;
+}
+
+interface GratitudeSlots {
+  morning?: boolean;
+  noon?: boolean;
+  evening?: boolean;
+}
+
+// 🔧 检查用户是否启用了该场景的AI来电
+const checkUserCallPreference = async (
+  supabase: any, 
+  userId: string, 
+  scenario: string,
+  timeSlot?: 'morning' | 'noon' | 'evening'
+): Promise<boolean> => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('ai_call_enabled, ai_call_preferences, gratitude_reminder_slots')
+      .eq('id', userId)
+      .single();
+
+    if (error || !profile) {
+      console.log(`[checkPreference] User ${userId}: no profile found, defaulting to enabled`);
+      return true; // 默认开启
+    }
+
+    // 全局开关
+    if (profile.ai_call_enabled === false) {
+      console.log(`[checkPreference] User ${userId}: global AI call disabled`);
+      return false;
+    }
+
+    // 场景开关
+    const preferences = (profile.ai_call_preferences as AICallPreferences) || {};
+    if (preferences[scenario as keyof AICallPreferences] === false) {
+      console.log(`[checkPreference] User ${userId}: scenario ${scenario} disabled`);
+      return false;
+    }
+
+    // 感恩提醒时段检查
+    if (scenario === 'gratitude_reminder' && timeSlot) {
+      const slots = (profile.gratitude_reminder_slots as GratitudeSlots) || {};
+      if (slots[timeSlot] === false) {
+        console.log(`[checkPreference] User ${userId}: gratitude slot ${timeSlot} disabled`);
+        return false;
+      }
+    }
+
+    return true;
+  } catch (e) {
+    console.error(`[checkPreference] Error checking preference for ${userId}:`, e);
+    return true; // 出错时默认开启
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -65,6 +128,13 @@ serve(async (req) => {
 
       for (const target of targetUsers) {
         try {
+          // 🔧 检查用户偏好
+          const isEnabled = await checkUserCallPreference(supabase, target.user_id, 'reactivation');
+          if (!isEnabled) {
+            console.log(`User ${target.user_id} has disabled reactivation calls`);
+            continue;
+          }
+
           const { error } = await supabase.functions.invoke('initiate-ai-call', {
             body: {
               user_id: target.user_id,

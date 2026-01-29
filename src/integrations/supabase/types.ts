@@ -5649,6 +5649,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_call_enabled: boolean | null
+          ai_call_preferences: Json | null
           auth_provider: string | null
           avatar_url: string | null
           bio: string | null
@@ -5669,6 +5671,7 @@ export type Database = {
           disabled_at: string | null
           disabled_reason: string | null
           display_name: string | null
+          gratitude_reminder_slots: Json | null
           has_seen_onboarding: boolean | null
           id: string
           intensity_reminder_enabled: boolean | null
@@ -5716,6 +5719,8 @@ export type Database = {
           wecom_webhook_url: string | null
         }
         Insert: {
+          ai_call_enabled?: boolean | null
+          ai_call_preferences?: Json | null
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -5736,6 +5741,7 @@ export type Database = {
           disabled_at?: string | null
           disabled_reason?: string | null
           display_name?: string | null
+          gratitude_reminder_slots?: Json | null
           has_seen_onboarding?: boolean | null
           id: string
           intensity_reminder_enabled?: boolean | null
@@ -5783,6 +5789,8 @@ export type Database = {
           wecom_webhook_url?: string | null
         }
         Update: {
+          ai_call_enabled?: boolean | null
+          ai_call_preferences?: Json | null
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -5803,6 +5811,7 @@ export type Database = {
           disabled_at?: string | null
           disabled_reason?: string | null
           display_name?: string | null
+          gratitude_reminder_slots?: Json | null
           has_seen_onboarding?: boolean | null
           id?: string
           intensity_reminder_enabled?: boolean | null

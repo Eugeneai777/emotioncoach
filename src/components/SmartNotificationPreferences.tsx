@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone, CheckCircle, Gift, RefreshCw } from "lucide-react";
 import { generateQRCode } from "@/utils/qrCodeUtils";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { AICallPreferences } from "@/components/AICallPreferences";
 
 // 检测是否在微信内置浏览器中
 const isWeChatBrowser = () => {
@@ -843,6 +844,10 @@ export function SmartNotificationPreferences() {
           </Card>
         </>
       )}
+
+      {/* AI教练来电设置 */}
+      <AICallPreferences />
+
       {/* 关注公众号引导弹窗 */}
       <Dialog open={showFollowGuide} onOpenChange={setShowFollowGuide}>
         <DialogContent className="sm:max-w-md">

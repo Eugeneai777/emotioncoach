@@ -14,6 +14,7 @@ import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSe
 import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type NetworkQuality } from './ConnectionProgress';
 import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
 import { useNetworkQuality } from '@/hooks/useNetworkQuality';
+import { ContinueCallDialog } from './ContinueCallDialog';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
@@ -123,7 +124,10 @@ export const CoachVoiceChat = ({
   const { quality: networkQuality, rtt: networkRtt, checkNetwork, startMonitoring, stopMonitoring } = useNetworkQuality();
   const [networkWarningLevel, setNetworkWarningLevel] = useState<NetworkWarningLevel>('none');
   const [showNetworkHint, setShowNetworkHint] = useState(false);
-
+  // 🔧 AI来电续拨询问
+  const [showContinueCallDialog, setShowContinueCallDialog] = useState(false);
+  const [pendingEndCall, setPendingEndCall] = useState(false);  // 标记正在等待用户选择
+  const callScenarioRef = useRef<string | undefined>(undefined);  // 保存来电场景
   // 🔧 全局语音会话锁 - 防止多个组件同时发起语音
   const { acquire: acquireLock, release: releaseLock, isLocked, activeComponent } = useVoiceSessionLock('CoachVoiceChat');
 
@@ -1273,22 +1277,52 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 结束通话 - 🔧 添加防重复点击、短通话退款、0时长退款和更可靠的清理
-  const endCall = async (e?: React.MouseEvent) => {
-    // 阻止事件冒泡
-    e?.stopPropagation();
-    e?.preventDefault();
-    
-    // 防止重复点击
-    if (isEnding || isEndingRef.current) {
-      console.log('EndCall: already ending, ignoring');
-      return;
+  // 🔧 更新AI来电偏好（用户选择不再接收时调用）
+  const updateCallPreference = async (scenario: string, enabled: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 获取当前偏好
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('ai_call_preferences')
+        .eq('id', user.id)
+        .single();
+
+      const currentPreferences = (profile?.ai_call_preferences as Record<string, boolean>) || {};
+      const newPreferences = { ...currentPreferences, [scenario]: enabled };
+
+      await supabase
+        .from('profiles')
+        .update({ ai_call_preferences: newPreferences })
+        .eq('id', user.id);
+
+      console.log(`[VoiceChat] Updated call preference for ${scenario}: ${enabled}`);
+    } catch (error) {
+      console.error('[VoiceChat] Failed to update call preference:', error);
     }
-    // 🔧 立即同步设置 ref（避免 disconnect 回调误判为意外中断）
-    isEndingRef.current = true;
-    setIsEnding(true);
-    console.log('EndCall: starting (isEndingRef set to true)...');
+  };
+
+  // 🔧 用户选择续拨意愿后的处理
+  const handleContinueCallChoice = async (wantMore: boolean) => {
+    setShowContinueCallDialog(false);
     
+    if (!wantMore && callScenarioRef.current) {
+      // 用户选择不再接收该场景来电
+      await updateCallPreference(callScenarioRef.current, false);
+      toast({
+        title: '已更新偏好',
+        description: '你可以随时在「设置 → 通知」中重新开启',
+      });
+    }
+    
+    // 继续执行真正的结束通话流程
+    await performEndCall();
+  };
+
+  // 🔧 真正的结束通话逻辑（内部函数）
+  const performEndCall = async () => {
     try {
       // 断开 WebRTC 连接
       chatRef.current?.disconnect();
@@ -1308,11 +1342,9 @@ export const CoachVoiceChat = ({
       let refundApplied = false;
       if (finalBilledMinutes > 0) {
         if (finalDuration === 0) {
-          // 🔧 修复：预扣了点数但通话从未真正开始（duration=0），全额退款
           console.log('[VoiceChat] 🔄 Call never started (duration=0), attempting full refund');
           refundApplied = await refundPreDeductedQuota('call_never_started');
         } else if (finalDuration > 0 && finalBilledMinutes === 1) {
-          // 🔧 短通话退款检查：只有扣了第一分钟时才检查
           console.log('[VoiceChat] 🔄 Checking short call refund eligibility');
           refundApplied = await refundShortCall(finalDuration);
         }
@@ -1333,8 +1365,7 @@ export const CoachVoiceChat = ({
         console.error('Error saving session to localStorage:', e);
       }
       
-      // 记录会话 - 🔧 传入最终值，确保使用正确的 duration 和 billedMinutes
-      // 如果已退款，使用退款后的值（0）；否则使用最终值
+      // 记录会话
       const sessionDuration = refundApplied ? 0 : finalDuration;
       const sessionBilledMinutes = refundApplied ? 0 : finalBilledMinutes;
       await recordSession(sessionDuration, sessionBilledMinutes);
@@ -1346,10 +1377,40 @@ export const CoachVoiceChat = ({
       onClose();
     } catch (error) {
       console.error('EndCall error:', error);
-      // 即使出错也要释放锁和关闭
       releaseLock();
       onClose();
     }
+  };
+
+  // 结束通话 - 🔧 添加AI来电续拨询问、防重复点击、短通话退款
+  const endCall = async (e?: React.MouseEvent) => {
+    // 阻止事件冒泡
+    e?.stopPropagation();
+    e?.preventDefault();
+    
+    // 防止重复点击
+    if (isEnding || isEndingRef.current || pendingEndCall) {
+      console.log('EndCall: already ending, ignoring');
+      return;
+    }
+    // 🔧 立即同步设置 ref（避免 disconnect 回调误判为意外中断）
+    isEndingRef.current = true;
+    setIsEnding(true);
+    console.log('EndCall: starting (isEndingRef set to true)...');
+    
+    // 🔧 AI来电续拨询问：通话超过30秒时询问用户是否继续接收
+    const finalDuration = durationValueRef.current;
+    if (isIncomingCall && aiCallId && finalDuration > 30) {
+      // 保存场景信息用于后续更新偏好
+      callScenarioRef.current = scenario;
+      setPendingEndCall(true);
+      setShowContinueCallDialog(true);
+      console.log('[VoiceChat] 📞 Showing continue call dialog for incoming call');
+      return; // 暂停结束流程，等待用户选择
+    }
+    
+    // 非AI来电或短通话，直接结束
+    await performEndCall();
   };
 
   // 初始化时获取时长限制
@@ -2093,6 +2154,13 @@ export const CoachVoiceChat = ({
           💡 直接说话即可 · {POINTS_PER_MINUTE}点/分钟 · {maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}
         </p>
       </div>
+
+      {/* 🔧 AI来电续拨询问弹窗 */}
+      <ContinueCallDialog
+        isOpen={showContinueCallDialog}
+        scenario={callScenarioRef.current || scenario || 'care'}
+        onChoice={handleContinueCallChoice}
+      />
     </div>
   );
 };
