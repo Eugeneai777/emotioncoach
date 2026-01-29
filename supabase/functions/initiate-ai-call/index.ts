@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface InitiateCallRequest {
   user_id: string;
-  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder' | 'todo_morning' | 'todo_noon' | 'todo_evening' | 'course_recommendation';
+  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder' | 'todo_morning' | 'todo_noon' | 'todo_evening' | 'course_recommendation' | 'smart_companion';
   coach_type?: string;
   context?: Record<string, any>;
 }
@@ -25,6 +25,7 @@ const SCENARIO_PROMPTS: Record<string, string> = {
   todo_noon: '生成一句轻松的午间问候，询问用户上午的待办进展如何，鼓励继续加油。',
   todo_evening: '生成一句温柔的晚间问候，帮助用户回顾今日待办完成情况，关心未完成项目的原因。',
   course_recommendation: '生成一句热情的开场白，告诉用户根据他的学习情况，发现了特别适合他的成长课程想推荐给他，语气积极期待。',
+  smart_companion: '生成一句温暖亲切的开场白，像老朋友一样询问用户现在在做什么，表达想陪伴聊聊的意愿，语气自然轻松。',
 };
 
 async function generateOpeningMessage(
@@ -118,6 +119,7 @@ function getDefaultMessage(scenario: string, context?: Record<string, any>, user
     todo_noon: `${name}，午间小憩时间，上午的事情进展如何？`,
     todo_evening: `${name}，今天辛苦了！我们一起回顾下今天的待办吧～`,
     course_recommendation: `${name}，根据你的学习进度，我发现了几门很适合你的课程～`,
+    smart_companion: `${name}，看到你在线呢，想过来陪你聊聊～`,
   };
   return defaults[scenario] || defaults.care;
 }
