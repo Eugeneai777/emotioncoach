@@ -5,7 +5,7 @@ import { useAuth } from './useAuth';
 export interface AICoachCall {
   id: string;
   user_id: string;
-  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder' | 'todo_morning' | 'todo_noon' | 'todo_evening';
+  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder' | 'todo_morning' | 'todo_noon' | 'todo_evening' | 'course_recommendation';
   call_status: 'pending' | 'ringing' | 'connected' | 'missed' | 'rejected' | 'completed';
   coach_type: string;
   opening_message: string | null;
@@ -32,6 +32,7 @@ const SCENARIO_LABELS: Record<string, string> = {
   todo_morning: '帮你规划今天的待办事项',
   todo_noon: '看看上午进展如何',
   todo_evening: '一起回顾今天的待办',
+  course_recommendation: '发现了适合你的成长课程',
 };
 
 export function useAICoachIncomingCall(): UseAICoachIncomingCallReturn {
