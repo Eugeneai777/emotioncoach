@@ -495,10 +495,16 @@ export class DoubaoRealtimeChat {
   }
 
   private createWavFromPCM(pcmData: Uint8Array): Uint8Array {
-    // ✅ 关键修复：豆包返回的 PCM 已经是 little-endian 格式（低字节在前）
-    // 我们无需重新排列字节序，直接将 Uint8Array 视图转换为 Int16Array 即可
-    // 之前的代码错误地按 big-endian 解析，导致波形错乱出现"呲呲呲"杂音
-    const int16Data = new Int16Array(pcmData.buffer, pcmData.byteOffset, pcmData.length / 2);
+    // ✅ Doubao 返回的 PCM 是 little-endian PCM16。
+    // 这里不要把 byteOffset 之外的“整段 buffer”一起拷贝进去，否则会把无关内存拼到 WAV 里，直接变成噪音。
+    // 只应写入本次 chunk 对应的那段 bytes。
+    const pcmBytes = (pcmData.length % 2 === 0)
+      ? pcmData
+      : pcmData.subarray(0, pcmData.length - 1);
+
+    if (pcmBytes.length !== pcmData.length) {
+      console.warn('[DoubaoChat] PCM chunk length is odd, trimmed 1 byte:', pcmData.length, '->', pcmBytes.length);
+    }
 
     const wavHeader = new ArrayBuffer(44);
     const view = new DataView(wavHeader);
@@ -514,7 +520,7 @@ export class DoubaoRealtimeChat {
     const bitsPerSample = 16;
     const blockAlign = (numChannels * bitsPerSample) / 8;
     const byteRate = sampleRate * blockAlign;
-    const dataSize = int16Data.byteLength;
+    const dataSize = pcmBytes.byteLength;
 
     writeString(0, 'RIFF');
     view.setUint32(4, 36 + dataSize, true);
@@ -530,9 +536,9 @@ export class DoubaoRealtimeChat {
     writeString(36, 'data');
     view.setUint32(40, dataSize, true);
 
-    const wavArray = new Uint8Array(wavHeader.byteLength + int16Data.byteLength);
+    const wavArray = new Uint8Array(wavHeader.byteLength + pcmBytes.byteLength);
     wavArray.set(new Uint8Array(wavHeader), 0);
-    wavArray.set(new Uint8Array(int16Data.buffer.slice(0)), wavHeader.byteLength);
+    wavArray.set(pcmBytes, wavHeader.byteLength);
 
     return wavArray;
   }
