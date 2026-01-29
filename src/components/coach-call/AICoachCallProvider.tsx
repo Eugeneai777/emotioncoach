@@ -39,6 +39,7 @@ const COACH_ROUTES: Record<string, string> = {
   gratitude: '/coach/gratitude',
   story: '/story-coach',
   wealth: '/coach/wealth_coach_4_questions',
+  course_recommendation: '/coach/vibrant_life_sage',
 };
 
 export function AICoachCallProvider({ children }: AICoachCallProviderProps) {

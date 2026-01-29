@@ -29,6 +29,7 @@ const COACH_INFO: Record<string, { name: string; emoji: string; color: string }>
   late_night: { name: '深夜陪伴', emoji: '🌙', color: 'from-indigo-600 to-purple-800' },
   gratitude_reminder: { name: '感恩小助手', emoji: '🌸', color: 'from-rose-400 to-pink-500' },
   todo_reminder: { name: '待办助手', emoji: '✅', color: 'from-blue-400 to-cyan-500' },
+  course_recommendation: { name: '课程推荐', emoji: '📚', color: 'from-violet-500 to-purple-600' },
 };
 
 export function AIIncomingCallDialog({

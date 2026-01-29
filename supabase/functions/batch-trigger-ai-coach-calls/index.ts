@@ -21,6 +21,7 @@ interface AICallPreferences {
   camp_followup?: boolean;
   care?: boolean;
   todo_reminder?: boolean;
+  course_recommendation?: boolean;
 }
 
 interface GratitudeSlots {
@@ -537,6 +538,115 @@ serve(async (req) => {
                 error: e instanceof Error ? e.message : 'Unknown error',
               });
             }
+          }
+        }
+      }
+    }
+
+    // 课程推荐场景（每周三 10:00 触发）
+    const isCourseRecommendationTime = (h: number, dayOfWeek: number) => {
+      return dayOfWeek === 3 && h === 10; // 周三上午10点
+    };
+
+    if (scenario === 'course_recommendation' || (!scenario && isCourseRecommendationTime(hour, now.getDay()))) {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      // 获取最近7天活跃的用户
+      const { data: activeUsers } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .gte('last_seen_at', sevenDaysAgo)
+        .limit(limit);
+
+      if (activeUsers) {
+        for (const user of activeUsers) {
+          try {
+            // 检查用户偏好
+            const isEnabled = await checkUserCallPreference(supabase, user.id, 'course_recommendation');
+            if (!isEnabled) {
+              console.log(`User ${user.id} has disabled course_recommendation calls`);
+              continue;
+            }
+
+            // 获取用户学习进度
+            const { data: watchHistory } = await supabase
+              .from('video_watch_history')
+              .select('video_id, completed, watched_at')
+              .eq('user_id', user.id)
+              .gte('watched_at', thirtyDaysAgo)
+              .order('watched_at', { ascending: false })
+              .limit(20);
+
+            const watchedVideoIds = watchHistory?.map(w => w.video_id) || [];
+            const completedCount = watchHistory?.filter(w => w.completed)?.length || 0;
+
+            // 获取用户收藏但未观看的课程
+            const { data: favorites } = await supabase
+              .from('video_favorites')
+              .select('video_id')
+              .eq('user_id', user.id);
+
+            const favoriteVideoIds = favorites?.map(f => f.video_id) || [];
+            const unwatchedFavorites = favoriteVideoIds.filter(id => !watchedVideoIds.includes(id));
+
+            // 获取用户最近情绪主题（用于智能推荐）
+            const { data: recentBriefings } = await supabase
+              .from('briefings')
+              .select('emotion_theme, conversation:conversations!inner(user_id)')
+              .eq('conversations.user_id', user.id)
+              .gte('created_at', sevenDaysAgo)
+              .order('created_at', { ascending: false })
+              .limit(3);
+
+            const emotionThemes = recentBriefings?.map(b => b.emotion_theme).filter(Boolean) || [];
+
+            // 检查本周是否已经发送过课程推荐来电
+            const weekStart = new Date(now);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            weekStart.setHours(0, 0, 0, 0);
+
+            const { data: existingCalls } = await supabase
+              .from('ai_coach_calls')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('scenario', 'course_recommendation')
+              .gte('created_at', weekStart.toISOString())
+              .limit(1);
+
+            if (existingCalls && existingCalls.length > 0) {
+              console.log(`User ${user.id} already received course_recommendation call this week`);
+              continue;
+            }
+
+            // 触发课程推荐来电
+            const { error } = await supabase.functions.invoke('initiate-ai-call', {
+              body: {
+                user_id: user.id,
+                scenario: 'course_recommendation',
+                coach_type: 'vibrant_life',
+                context: {
+                  watched_count: watchedVideoIds.length,
+                  completed_count: completedCount,
+                  unwatched_favorites_count: unwatchedFavorites.length,
+                  recent_emotion_themes: emotionThemes,
+                },
+              },
+            });
+
+            results.push({
+              user_id: user.id,
+              scenario: 'course_recommendation',
+              success: !error,
+              error: error?.message,
+            });
+          } catch (e) {
+            results.push({
+              user_id: user.id,
+              scenario: 'course_recommendation',
+              success: false,
+              error: e instanceof Error ? e.message : 'Unknown error',
+            });
           }
         }
       }
