@@ -526,12 +526,58 @@ export class DoubaoRealtimeChat {
     // 这里不要把 byteOffset 之外的“整段 buffer”一起拷贝进去，否则会把无关内存拼到 WAV 里，直接变成噪音。
     // 只应写入本次 chunk 对应的那段 bytes。
     // 理论上 handleAudioDelta 已保证是偶数长度（PCM16 对齐）。这里仅做兜底。
-    const pcmBytes = (pcmData.length % 2 === 0)
+    let pcmBytes = (pcmData.length % 2 === 0)
       ? pcmData
       : pcmData.subarray(0, pcmData.length - 1);
 
     if (pcmBytes.length !== pcmData.length) {
       console.warn('[DoubaoChat] PCM chunk length still odd in createWavFromPCM; trimmed 1 byte as fallback:', pcmData.length, '->', pcmBytes.length);
+    }
+
+    // ✅ 兜底：自动判断字节序（极少数情况下服务端返回的 PCM 可能与预期字节序不一致，
+    // 会表现为持续“呲呲呲”噪声）。
+    // 我们用一个轻量启发式：比较 LE/BE 两种解读下的“削波比例”和平均幅度，
+    // 选择更像语音的那一种。
+    const analyzePcm16 = (bytes: Uint8Array, littleEndian: boolean) => {
+      const maxSamples = Math.min(2000, Math.floor(bytes.length / 2));
+      let sumAbs = 0;
+      let clipped = 0;
+      for (let i = 0; i < maxSamples; i++) {
+        const b0 = bytes[i * 2];
+        const b1 = bytes[i * 2 + 1];
+        const u16 = littleEndian
+          ? (b0 | (b1 << 8))
+          : (b1 | (b0 << 8));
+        const s16 = u16 & 0x8000 ? u16 - 0x10000 : u16;
+        const a = Math.abs(s16);
+        sumAbs += a;
+        if (a > 30000) clipped++;
+      }
+      const meanAbs = maxSamples ? sumAbs / maxSamples : 0;
+      const clipFrac = maxSamples ? clipped / maxSamples : 0;
+      return { meanAbs, clipFrac, samples: maxSamples };
+    };
+
+    // 仅对足够长的 chunk 做判断（太短不稳定）
+    if (pcmBytes.length >= 200) {
+      const le = analyzePcm16(pcmBytes, true);
+      const be = analyzePcm16(pcmBytes, false);
+      // 经验阈值：LE 削波明显更高，且 BE 更“温和”
+      const shouldSwap = (le.clipFrac > 0.25 && be.clipFrac < le.clipFrac * 0.7)
+        || (le.meanAbs > 18000 && be.meanAbs < le.meanAbs * 0.7);
+
+      if (shouldSwap) {
+        const swapped = new Uint8Array(pcmBytes.length);
+        for (let i = 0; i < pcmBytes.length; i += 2) {
+          swapped[i] = pcmBytes[i + 1];
+          swapped[i + 1] = pcmBytes[i];
+        }
+        pcmBytes = swapped;
+        console.warn('[DoubaoChat] PCM endianness heuristic: swapped bytes (BE fallback).', {
+          le,
+          be,
+        });
+      }
     }
 
     const wavHeader = new ArrayBuffer(44);
