@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface InitiateCallRequest {
   user_id: string;
-  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder';
+  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion' | 'gratitude_reminder' | 'todo_morning' | 'todo_noon' | 'todo_evening';
   coach_type?: string;
   context?: Record<string, any>;
 }
@@ -21,6 +21,9 @@ const SCENARIO_PROMPTS: Record<string, string> = {
   emotion_check: '生成一句体贴的开场白，表达对用户近期情绪波动的关心。',
   late_night_companion: '生成一句温柔体贴的深夜问候开场白，像老朋友一样关心用户这么晚还没睡，语气要轻柔不打扰，带着陪伴和理解。',
   gratitude_reminder: '生成一句温暖的感恩提醒开场白，邀请用户一起发现生活中值得感恩的事物，语气亲切温暖。',
+  todo_morning: '生成一句温暖的早晨开场白，邀请用户规划今天的待办事项，语气积极向上，充满活力。',
+  todo_noon: '生成一句轻松的午间问候，询问用户上午的待办进展如何，鼓励继续加油。',
+  todo_evening: '生成一句温柔的晚间问候，帮助用户回顾今日待办完成情况，关心未完成项目的原因。',
 };
 
 async function generateOpeningMessage(
@@ -110,6 +113,9 @@ function getDefaultMessage(scenario: string, context?: Record<string, any>, user
     camp_followup: `${name}，今天的训练营任务还没完成呢，一起加油？`,
     emotion_check: `${name}，感觉你最近心情有些起伏，想关心一下你～`,
     late_night_companion: `${name}，这么晚还没睡呀？想陪你聊聊～`,
+    todo_morning: `早安${name}！新的一天，想帮你规划一下今天要做的事～`,
+    todo_noon: `${name}，午间小憩时间，上午的事情进展如何？`,
+    todo_evening: `${name}，今天辛苦了！我们一起回顾下今天的待办吧～`,
   };
   return defaults[scenario] || defaults.care;
 }

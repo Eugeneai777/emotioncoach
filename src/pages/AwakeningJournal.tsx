@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { toast } from "sonner";
+import { DailyTodoCard } from "@/components/todo/DailyTodoCard";
+import { useDailyTodos } from "@/hooks/useDailyTodos";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +61,9 @@ const AwakeningJournal: React.FC = () => {
   const queryClient = useQueryClient();
   const [filterType, setFilterType] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // 获取今日待办
+  const { todos, summary, isLoading: todosLoading, toggleTodo, addTodo, deleteTodo } = useDailyTodos();
 
   // 获取觉察记录
   const { data: entries = [], isLoading } = useQuery({
@@ -159,6 +164,17 @@ const AwakeningJournal: React.FC = () => {
 
         {/* Content */}
         <main className="max-w-lg mx-auto px-4 pb-8 space-y-4">
+          {/* 今日待办卡片 */}
+          {user && (
+            <DailyTodoCard
+              todos={todos}
+              summary={summary}
+              onToggle={(id, completed) => toggleTodo.mutate({ id, completed })}
+              onAdd={(title) => addTodo.mutate({ title })}
+              onDelete={(id) => deleteTodo.mutate(id)}
+              isLoading={todosLoading}
+            />
+          )}
           {isLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
