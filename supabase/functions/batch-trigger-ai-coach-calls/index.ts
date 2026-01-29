@@ -22,7 +22,19 @@ interface AICallPreferences {
   care?: boolean;
   todo_reminder?: boolean;
   course_recommendation?: boolean;
+  smart_companion?: boolean;
 }
+
+// 随机触发概率（避免同一时间大量来电）
+const shouldTriggerNow = (probability: number = 0.15): boolean => {
+  return Math.random() < probability;
+};
+
+// 扩展时间窗口检查（替代固定时间点）
+const isInTimeWindow = (h: number, m: number, windows: { start: number; end: number }[]): boolean => {
+  const currentTime = h * 60 + m;
+  return windows.some(w => currentTime >= w.start * 60 && currentTime < w.end * 60);
+};
 
 interface GratitudeSlots {
   morning?: boolean;
@@ -124,7 +136,83 @@ serve(async (req) => {
     // 根据场景和时间选择目标用户
     let targetUsers: { user_id: string; context: Record<string, any> }[] = [];
 
-    if (scenario === 'reactivation' || (!scenario && hour === 14)) {
+    // ============ 智能伴随场景（每15分钟检查活跃用户）============
+    if (scenario === 'smart_companion' || !scenario) {
+      // 查找1-10分钟内活跃的用户（正在使用但还没有对话）
+      const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000).toISOString();
+      const oneMinuteAgo = new Date(now.getTime() - 60 * 1000).toISOString();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+      const { data: activeUsers } = await supabase
+        .from('profiles')
+        .select('id, display_name, last_seen_at')
+        .gte('last_seen_at', tenMinutesAgo)
+        .lt('last_seen_at', oneMinuteAgo)
+        .limit(limit);
+
+      if (activeUsers && activeUsers.length > 0) {
+        console.log(`[smart_companion] Found ${activeUsers.length} recently active users`);
+        
+        for (const user of activeUsers) {
+          try {
+            // 检查今天是否已经收到过智能伴随来电（每天最多1次）
+            const { data: existingCalls } = await supabase
+              .from('ai_coach_calls')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('scenario', 'smart_companion')
+              .gte('created_at', todayStart)
+              .limit(1);
+
+            if (existingCalls && existingCalls.length > 0) {
+              console.log(`[smart_companion] User ${user.id} already received call today`);
+              continue;
+            }
+
+            // 检查用户偏好
+            const isEnabled = await checkUserCallPreference(supabase, user.id, 'smart_companion');
+            if (!isEnabled) {
+              console.log(`[smart_companion] User ${user.id} has disabled smart_companion`);
+              continue;
+            }
+
+            // 25%概率触发（避免过于频繁）
+            if (!shouldTriggerNow(0.25)) {
+              console.log(`[smart_companion] Skipping user ${user.id} - random probability`);
+              continue;
+            }
+
+            // 触发智能伴随来电
+            const { error } = await supabase.functions.invoke('initiate-ai-call', {
+              body: {
+                user_id: user.id,
+                scenario: 'smart_companion',
+                coach_type: 'vibrant_life',
+                context: { trigger_reason: 'active_without_interaction' },
+              },
+            });
+
+            results.push({
+              user_id: user.id,
+              scenario: 'smart_companion',
+              success: !error,
+              error: error?.message,
+            });
+          } catch (e) {
+            results.push({
+              user_id: user.id,
+              scenario: 'smart_companion',
+              success: false,
+              error: e instanceof Error ? e.message : 'Unknown error',
+            });
+          }
+        }
+      }
+    }
+
+    // ============ 久未活跃唤回场景（扩展时间窗口：13:00-15:00）============
+    const isReactivationTime = isInTimeWindow(hour, minute, [{ start: 13, end: 15 }]);
+    if (scenario === 'reactivation' || (!scenario && isReactivationTime && shouldTriggerNow(0.2))) {
       // 7天未活跃用户唤回（下午2点）
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -178,7 +266,9 @@ serve(async (req) => {
       }
     }
 
-    if (scenario === 'emotion_check' || (!scenario && hour === 10)) {
+    // ============ 情绪关怀场景（扩展时间窗口：9:00-11:00）============
+    const isEmotionCheckTime = isInTimeWindow(hour, minute, [{ start: 9, end: 11 }]);
+    if (scenario === 'emotion_check' || (!scenario && isEmotionCheckTime && shouldTriggerNow(0.15))) {
       // 情绪低落用户关怀（上午10点）
       const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -353,19 +443,18 @@ serve(async (req) => {
       }
     }
 
-    // 感恩提醒场景（每天3次：8:00, 12:30, 21:00）
-    const isGratitudeTime = (h: number, m: number) => {
-      return (h === 8 && m < 30) || (h === 12 && m >= 30 && m < 60) || (h === 21 && m < 30);
-    };
-    
+    // ============ 感恩提醒场景（扩展时间窗口）============
+    // 早晨：7:00-9:00，中午：11:30-13:30，晚上：20:30-22:00
     const getGratitudeTimeSlot = (h: number, m: number): 'morning' | 'noon' | 'evening' | null => {
-      if (h === 8 && m < 30) return 'morning';
-      if (h === 12 && m >= 30 && m < 60) return 'noon';
-      if (h === 21 && m < 30) return 'evening';
+      if (h >= 7 && h < 9) return 'morning';
+      if ((h === 11 && m >= 30) || (h === 12) || (h === 13 && m < 30)) return 'noon';
+      if ((h === 20 && m >= 30) || h === 21 || (h === 22 && m < 30)) return 'evening';
       return null;
     };
+    
+    const isGratitudeTime = (h: number, m: number) => getGratitudeTimeSlot(h, m) !== null;
 
-    if (scenario === 'gratitude_reminder' || (!scenario && isGratitudeTime(hour, minute))) {
+    if (scenario === 'gratitude_reminder' || (!scenario && isGratitudeTime(hour, minute) && shouldTriggerNow(0.15))) {
       const currentSlot = getGratitudeTimeSlot(hour, minute);
       
       if (currentSlot) {
@@ -439,23 +528,22 @@ serve(async (req) => {
       }
     }
 
-    // 待办提醒场景（每天3次：8:00, 12:30, 21:00）
-    const isTodoTime = (h: number, m: number) => {
-      return (h === 8 && m < 30) || (h === 12 && m >= 30 && m < 60) || (h === 21 && m < 30);
-    };
-    
+    // ============ 待办提醒场景（扩展时间窗口）============
+    // 早晨：7:00-9:00，中午：11:30-13:30，晚上：20:00-22:00
     const getTodoTimeSlot = (h: number, m: number): 'morning' | 'noon' | 'evening' | null => {
-      if (h === 8 && m < 30) return 'morning';
-      if (h === 12 && m >= 30 && m < 60) return 'noon';
-      if (h === 21 && m < 30) return 'evening';
+      if (h >= 7 && h < 9) return 'morning';
+      if ((h === 11 && m >= 30) || (h === 12) || (h === 13 && m < 30)) return 'noon';
+      if (h >= 20 && h < 22) return 'evening';
       return null;
     };
+    
+    const isTodoTime = (h: number, m: number) => getTodoTimeSlot(h, m) !== null;
 
     const getTodoScenario = (slot: 'morning' | 'noon' | 'evening'): 'todo_morning' | 'todo_noon' | 'todo_evening' => {
       return `todo_${slot}` as 'todo_morning' | 'todo_noon' | 'todo_evening';
     };
 
-    if (scenario?.startsWith('todo_') || (!scenario && isTodoTime(hour, minute))) {
+    if (scenario?.startsWith('todo_') || (!scenario && isTodoTime(hour, minute) && shouldTriggerNow(0.15))) {
       const currentSlot = getTodoTimeSlot(hour, minute);
       
       if (currentSlot) {
