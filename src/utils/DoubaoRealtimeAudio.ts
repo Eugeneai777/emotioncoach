@@ -128,7 +128,12 @@ export class DoubaoRealtimeChat {
 
       // ✅ 为播放创建独立的 AudioContext（24kHz 输出采样率）
       this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
-      console.log('[DoubaoChat] Playback AudioContext initialized at 24kHz');
+      // ✅ 关键：在用户交互上下文中立即 resume，避免后续播放被浏览器阻塞
+      if (this.playbackAudioContext.state === 'suspended') {
+        await this.playbackAudioContext.resume();
+        console.log('[DoubaoChat] Playback AudioContext resumed in user gesture context');
+      }
+      console.log('[DoubaoChat] Playback AudioContext initialized at 24kHz, state:', this.playbackAudioContext.state);
 
       // 4. 建立 WebSocket 连接到 Relay
       const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
@@ -411,6 +416,8 @@ export class DoubaoRealtimeChat {
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
+      // ✅ 日志：确认收到的音频数据大小
+      console.log('[DoubaoChat] Audio delta received:', bytes.length, 'bytes, queue size:', this.audioQueue.length + 1);
       this.audioQueue.push(bytes);
       this.playNextAudio();
     } catch (e) {
@@ -439,12 +446,15 @@ export class DoubaoRealtimeChat {
     
     this.isPlaying = true;
     const audioData = this.audioQueue.shift()!;
+    console.log('[DoubaoChat] Playing audio chunk:', audioData.length, 'bytes, remaining in queue:', this.audioQueue.length);
 
     try {
       const wavData = this.createWavFromPCM(audioData);
       // ✅ 复用 playbackAudioContext
       const arrayBuffer = wavData.buffer.slice(wavData.byteOffset, wavData.byteOffset + wavData.byteLength) as ArrayBuffer;
       const audioBuffer = await this.playbackAudioContext.decodeAudioData(arrayBuffer);
+      
+      console.log('[DoubaoChat] Audio decoded successfully, duration:', audioBuffer.duration.toFixed(2), 's');
       
       const source = this.playbackAudioContext.createBufferSource();
       source.buffer = audioBuffer;
