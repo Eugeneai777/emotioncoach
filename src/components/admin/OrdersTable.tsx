@@ -186,7 +186,7 @@ export function OrdersTable() {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={order.user_avatar_url || undefined} />
                     <AvatarFallback className="text-xs">
-                      {(order.user_display_name || order.user_id).slice(0, 2)}
+                      {(order.user_display_name || order.user_id || "??").slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
@@ -194,7 +194,7 @@ export function OrdersTable() {
                       {order.user_display_name || '未设置昵称'}
                     </span>
                     <span className="text-xs text-muted-foreground font-mono">
-                      {order.user_id.slice(0, 8)}...
+                      {(order.user_id || '').slice(0, 8)}...
                     </span>
                   </div>
                 </div>
