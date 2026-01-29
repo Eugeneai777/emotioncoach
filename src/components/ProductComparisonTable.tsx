@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown, Loader2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { youjinFeatures, bloomFeatures, youjinPartnerFeatures, type YoujinFeature, type BloomFeature, type YoujinPartnerFeature } from "@/config/productComparison";
+import { youjinFeatures, bloomFeatures, youjinPartnerFeatures, bloomPartnerFeatures, type YoujinFeature, type BloomFeature, type YoujinPartnerFeature, type BloomPartnerFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PointsRulesDialog } from "./PointsRulesDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -966,60 +966,161 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // 绽放合伙人
+  // 绽放合伙人 - 权益矩阵展示（参考有劲合伙人）
   if (category === 'bloom-partner') {
+    // 绽放产品列表（用于可分成产品矩阵）
+    const bloomProducts = [
+      { name: '身份绽放训练营', price: identityCampPrice, icon: '🦋' },
+      { name: '情感绽放训练营', price: emotionCampPrice, icon: '💚' },
+      { name: '生命绽放特训营', price: bloomLifeCampPrice, icon: '🔥' },
+      { name: '绽放教练认证', price: bloomCoachCertPrice, icon: '📜' },
+      { name: '绽放合伙人', price: bloomPartnerPrice, icon: '👑' },
+    ];
+
+    // 权益分类
+    const bloomPartnerCategories = ['基础信息', '佣金权益', '可分成产品', '专属权益'] as const;
+
     return (
-      <div className="space-y-3">
-        <MobileCard className="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-950/30 dark:to-purple-950/30 border-pink-200/50">
+      <div className="space-y-4">
+        {/* 价值主张区 */}
+        <MobileCard className="bg-gradient-to-br from-pink-500 via-purple-500 to-fuchsia-500 text-white border-0">
           <div className="text-center space-y-3">
             <span className="text-4xl">👑</span>
             <h3 className="text-xl font-bold">绽放合伙人</h3>
-            <p className="text-sm text-muted-foreground">成为绽放产品推广合伙人</p>
+            <p className="text-sm text-white/85">成为绽放产品推广合伙人，共创财富未来</p>
             
             <div className="flex flex-wrap justify-center gap-1.5 text-xs">
-              <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">💰 直推30%</span>
-              <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🔗 二级10%</span>
-              <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🎓 专属培训</span>
+              <span className="px-2 py-1 bg-white/20 rounded-full text-white/95">💰 直推30%</span>
+              <span className="px-2 py-1 bg-white/20 rounded-full text-white/95">🔗 二级10%</span>
+              <span className="px-2 py-1 bg-white/20 rounded-full text-white/95">🎓 专属培训</span>
             </div>
             
-            <div className="text-2xl font-bold text-pink-600">¥{bloomPartnerPrice.toLocaleString()}</div>
-            
-            <div className="flex gap-2 justify-center">
-              <Button 
-                className="bg-gradient-to-r from-pink-500 to-purple-500 text-white flex-1"
-                onClick={() => handlePurchase({ key: 'bloom_partner', name: '绽放合伙人', price: bloomPartnerPrice })}
-              >
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                立即购买
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/partner/type')}>
-                了解详情
-              </Button>
+            <div className="flex items-baseline justify-center gap-2">
+              <span className="text-3xl font-bold">¥{formatMoney(bloomPartnerPrice)}</span>
             </div>
           </div>
         </MobileCard>
 
-        <MobileCard>
-          <MobileCardHeader>
-            <MobileCardTitle>合伙人权益</MobileCardTitle>
-          </MobileCardHeader>
-          <MobileCardContent>
-            <ul className="space-y-1.5 text-sm">
-              {['推广绽放产品享30%直推佣金', '二级推广享10%间接佣金', '专属推广码与推广物料', '身份+情感训练营全部权益'].map((item, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </MobileCardContent>
-        </MobileCard>
+        {/* 权益矩阵表格 */}
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30">
+                  <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[160px]">权益项目</th>
+                  <th className="text-center p-4 min-w-[160px]">
+                    <div className="space-y-1">
+                      <span className="text-2xl">👑</span>
+                      <div className="font-bold text-sm text-pink-600 dark:text-pink-400">绽放合伙人</div>
+                      <div className="text-xs text-muted-foreground">¥{formatMoney(bloomPartnerPrice)}</div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {bloomPartnerCategories.map((cat) => {
+                  // 对于可分成产品，显示详细佣金
+                  if (cat === '可分成产品') {
+                    return (
+                      <TooltipProvider key={cat}>
+                        <tr className="border-b bg-muted/30">
+                          <td colSpan={2} className="p-3">
+                            <div className="font-semibold text-sm text-pink-600 dark:text-pink-400">{cat}</div>
+                          </td>
+                        </tr>
+                        {bloomProducts.map((product, idx) => {
+                          const l1Commission = Math.floor(product.price * 0.3);
+                          const l2Commission = Math.floor(product.price * 0.1);
+                          return (
+                            <tr key={`product-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
+                              <td className="p-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  <span>{product.icon}</span>
+                                  <span>{product.name}</span>
+                                  <span className="text-xs text-pink-500">¥{formatMoney(product.price)}</span>
+                                </div>
+                              </td>
+                              <td className="p-3 text-center">
+                                <div className="flex flex-col items-center gap-1">
+                                  <div className="flex items-center gap-1">
+                                    <Check className="w-4 h-4 text-green-600 dark:text-green-500" />
+                                    <span className="text-sm font-medium text-green-600 dark:text-green-500">¥{formatMoney(l1Commission)}</span>
+                                    <span className="text-xs text-muted-foreground">(30%)</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-muted-foreground">二级 ¥{formatMoney(l2Commission)}</span>
+                                    <span className="text-xs text-muted-foreground/60">(10%)</span>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </TooltipProvider>
+                    );
+                  }
 
+                  // 其他分类正常渲染
+                  const categoryFeatures = bloomPartnerFeatures.filter(f => f.category === cat);
+                  return (
+                    <TooltipProvider key={cat}>
+                      <tr className="border-b bg-muted/30">
+                        <td colSpan={2} className="p-3">
+                          <div className="font-semibold text-sm text-pink-600 dark:text-pink-400">{cat}</div>
+                        </td>
+                      </tr>
+                      {categoryFeatures.map((feature, idx) => (
+                        <tr key={`${cat}-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
+                          <td className="p-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <span>{feature.name}</span>
+                              {feature.tooltip && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="max-w-xs text-xs">{feature.tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3 text-center">{renderValue(feature.value)}</td>
+                        </tr>
+                      ))}
+                    </TooltipProvider>
+                  );
+                })}
+                {/* 购买按钮行 */}
+                <tr>
+                  <td className="p-4"></td>
+                  <td className="p-3 text-center">
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90" 
+                      onClick={() => handlePurchase({ key: 'bloom_partner', name: '绽放合伙人', price: bloomPartnerPrice })}
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-1" />
+                      立即购买
+                    </Button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Card>
+        
+        {/* 底部说明 */}
         <MobileCard className="border-dashed">
           <p className="text-xs text-muted-foreground text-center">
-            💡 包含：身份绽放（¥2,980）+ 情感绽放（¥3,980）+ 合伙人资格
+            💡 包含：身份绽放训练营（¥{formatMoney(identityCampPrice)}）+ 情感绽放训练营（¥{formatMoney(emotionCampPrice)}）+ 合伙人资格
           </p>
         </MobileCard>
+        
+        <div className="text-center">
+          <Button variant="outline" onClick={() => navigate('/partner/type')}>了解绽放合伙人详情 →</Button>
+        </div>
       </div>
     );
   }

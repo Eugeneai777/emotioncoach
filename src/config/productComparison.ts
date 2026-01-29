@@ -113,3 +113,32 @@ export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
   { name: "专属客户经理", category: "专属权益", l1: false, l2: false, l3: true },
   { name: "定制化营销物料", category: "专属权益", l1: false, l2: false, l3: true },
 ];
+
+// 绽放合伙人权益配置（单等级L0）
+export interface BloomPartnerFeature extends ComparisonFeature {
+  category: '基础信息' | '佣金权益' | '可分成产品' | '专属权益';
+  value: boolean | string;
+}
+
+export const bloomPartnerFeatures: BloomPartnerFeature[] = [
+  // 基础信息
+  { name: "价格", category: "基础信息", value: "¥19,800" },
+  { name: "包含产品", category: "基础信息", value: "身份绽放 + 情感绽放" },
+  
+  // 佣金权益
+  { name: "一级佣金", category: "佣金权益", value: "30%" },
+  { name: "二级佣金", category: "佣金权益", value: "10%" },
+  
+  // 可分成产品
+  { name: "身份绽放训练营 ¥2,980", category: "可分成产品", value: true },
+  { name: "情感绽放训练营 ¥3,980", category: "可分成产品", value: true },
+  { name: "生命绽放特训营 ¥12,800", category: "可分成产品", value: true },
+  { name: "绽放教练认证 ¥16,800", category: "可分成产品", value: true },
+  { name: "绽放合伙人 ¥19,800", category: "可分成产品", value: true },
+  
+  // 专属权益
+  { name: "专属推广二维码", category: "专属权益", value: true },
+  { name: "合伙人专属社群", category: "专属权益", value: true },
+  { name: "定期培训课程", category: "专属权益", value: true },
+  { name: "VIP客服支持", category: "专属权益", value: true },
+];
