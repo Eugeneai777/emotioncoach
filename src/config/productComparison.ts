@@ -1,6 +1,6 @@
 export interface ComparisonFeature {
   name: string;
-  category: '基础信息' | '教练空间' | '成长工具' | '学习课程' | '训练营' | '佣金权益' | '专属权益' | '体验包内容' | '可分成产品';
+  category: '基础信息' | '教练空间' | '成长工具' | '学习课程' | '训练营' | '佣金权益' | '专属权益' | '体验包内容' | '可分成产品' | '包含权益' | '绽放可分成产品' | '有劲可分成产品';
   tooltip?: string;
 }
 
@@ -116,29 +116,49 @@ export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
 
 // 绽放合伙人权益配置（单等级L0）
 export interface BloomPartnerFeature extends ComparisonFeature {
-  category: '基础信息' | '佣金权益' | '可分成产品' | '专属权益';
+  category: '基础信息' | '佣金权益' | '包含权益' | '绽放可分成产品' | '有劲可分成产品';
   value: boolean | string;
 }
 
 export const bloomPartnerFeatures: BloomPartnerFeature[] = [
   // 基础信息
   { name: "价格", category: "基础信息", value: "¥19,800" },
-  { name: "包含产品", category: "基础信息", value: "身份绽放 + 情感绽放" },
+  { name: "权益总价值", category: "基础信息", value: "¥47,352" },
   
   // 佣金权益
-  { name: "一级佣金", category: "佣金权益", value: "30%" },
-  { name: "二级佣金", category: "佣金权益", value: "10%" },
+  { name: "绽放产品一级佣金", category: "佣金权益", value: "30%" },
+  { name: "绽放产品二级佣金", category: "佣金权益", value: "10%" },
+  { name: "有劲产品一级佣金", category: "佣金权益", value: "18%", tooltip: "自动获得有劲初级合伙人身份" },
   
-  // 可分成产品
-  { name: "身份绽放训练营 ¥2,980", category: "可分成产品", value: true },
-  { name: "情感绽放训练营 ¥3,980", category: "可分成产品", value: true },
-  { name: "生命绽放特训营 ¥12,800", category: "可分成产品", value: true },
-  { name: "绽放教练认证 ¥16,800", category: "可分成产品", value: true },
-  { name: "绽放合伙人 ¥19,800", category: "可分成产品", value: true },
+  // 包含权益（10项完整列表）
+  { name: "🌟 身份绽放特训营", category: "包含权益", value: "¥2,980" },
+  { name: "💝 情感绽放特训营", category: "包含权益", value: "¥3,980" },
+  { name: "🔥 生命绽放特训营", category: "包含权益", value: "¥12,800" },
+  { name: "🏆 英雄之旅线下课", category: "包含权益", value: "¥10,000" },
+  { name: "📜 绽放教练认证", category: "包含权益", value: "¥16,800" },
+  { name: "💰 专属推广分成", category: "包含权益", value: "30%/10%" },
+  { name: "🎨 推广物料支持", category: "包含权益", value: true },
+  { name: "👥 合伙人专属社群", category: "包含权益", value: true },
+  { name: "⭐ 优先参与权", category: "包含权益", value: true },
+  { name: "💪 有劲产品推广权益", category: "包含权益", value: "¥792", tooltip: "自动获得有劲初级合伙人身份" },
   
-  // 专属权益
-  { name: "专属推广二维码", category: "专属权益", value: true },
-  { name: "合伙人专属社群", category: "专属权益", value: true },
-  { name: "定期培训课程", category: "专属权益", value: true },
-  { name: "VIP客服支持", category: "专属权益", value: true },
+  // 绽放可分成产品
+  { name: "身份绽放训练营 ¥2,980", category: "绽放可分成产品", value: true },
+  { name: "情感绽放训练营 ¥3,980", category: "绽放可分成产品", value: true },
+  { name: "生命绽放特训营 ¥12,800", category: "绽放可分成产品", value: true },
+  { name: "绽放教练认证 ¥16,800", category: "绽放可分成产品", value: true },
+  { name: "绽放合伙人 ¥19,800", category: "绽放可分成产品", value: true },
+  
+  // 有劲可分成产品（新增类别）
+  { name: "尝鲜会员 ¥9.9", category: "有劲可分成产品", value: true },
+  { name: "情绪健康测评 ¥9.9", category: "有劲可分成产品", value: true },
+  { name: "SCL-90测评 ¥9.9", category: "有劲可分成产品", value: true },
+  { name: "财富卡点测评 ¥9.9", category: "有劲可分成产品", value: true },
+  { name: "365会员 ¥365", category: "有劲可分成产品", value: true },
+  { name: "情绪日记训练营 ¥299", category: "有劲可分成产品", value: true },
+  { name: "财富觉醒训练营 ¥299", category: "有劲可分成产品", value: true },
+  { name: "青少年困境突破营 ¥299", category: "有劲可分成产品", value: true },
+  { name: "初级合伙人 ¥792", category: "有劲可分成产品", value: true },
+  { name: "高级合伙人 ¥3,217", category: "有劲可分成产品", value: true },
+  { name: "钻石合伙人 ¥4,950", category: "有劲可分成产品", value: true },
 ];
