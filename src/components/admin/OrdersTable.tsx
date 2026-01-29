@@ -94,9 +94,9 @@ export function OrdersTable() {
 
   const filteredOrders = orders?.filter(order => {
     const matchesSearch = 
-      order.user_id.toLowerCase().includes(search.toLowerCase()) ||
+      (order.user_id || '').toLowerCase().includes(search.toLowerCase()) ||
       order.user_display_name?.toLowerCase().includes(search.toLowerCase()) ||
-      order.order_id?.toLowerCase().includes(search.toLowerCase()) ||
+      (order.order_id || '').toLowerCase().includes(search.toLowerCase()) ||
       order.package_name?.toLowerCase().includes(search.toLowerCase());
     
     const matchesSource = sourceFilter === 'all' || order.source === sourceFilter;
