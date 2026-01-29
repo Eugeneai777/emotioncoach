@@ -460,7 +460,10 @@ export const CoachVoiceChat = ({
             minute,
             session_id: sessionIdRef.current,  // 使用固定 session ID
             coach_key: coachTitle,
-            cost_per_minute: POINTS_PER_MINUTE
+            cost_per_minute: POINTS_PER_MINUTE,
+            // 🆕 AI来电标记 - 便于后台区分主动/被动来电的计费统计
+            is_incoming_call: isIncomingCall,
+            ai_call_id: aiCallId || null,
           }
         }
       });
@@ -1369,6 +1372,25 @@ export const CoachVoiceChat = ({
       const sessionDuration = refundApplied ? 0 : finalDuration;
       const sessionBilledMinutes = refundApplied ? 0 : finalBilledMinutes;
       await recordSession(sessionDuration, sessionBilledMinutes);
+      
+      // 🆕 AI来电：记录消耗点数和通话时长到 ai_coach_calls 表
+      if (aiCallId) {
+        const pointsConsumed = sessionBilledMinutes * POINTS_PER_MINUTE;
+        console.log(`[VoiceChat] 📊 Updating AI call record: ${aiCallId}, points: ${pointsConsumed}, duration: ${sessionDuration}s`);
+        try {
+          await supabase
+            .from('ai_coach_calls')
+            .update({
+              call_status: 'completed',
+              ended_at: new Date().toISOString(),
+              points_consumed: pointsConsumed,
+              duration_seconds: sessionDuration,
+            })
+            .eq('id', aiCallId);
+        } catch (updateError) {
+          console.error('[VoiceChat] Failed to update AI call record:', updateError);
+        }
+      }
       
       // 🔧 释放全局语音会话锁
       releaseLock();

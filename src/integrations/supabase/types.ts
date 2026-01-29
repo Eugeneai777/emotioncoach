@@ -25,6 +25,7 @@ export type Database = {
           ended_at: string | null
           id: string
           opening_message: string | null
+          points_consumed: number | null
           ring_started_at: string | null
           scenario: string
           scheduled_at: string | null
@@ -40,6 +41,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           opening_message?: string | null
+          points_consumed?: number | null
           ring_started_at?: string | null
           scenario: string
           scheduled_at?: string | null
@@ -55,6 +57,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           opening_message?: string | null
+          points_consumed?: number | null
           ring_started_at?: string | null
           scenario?: string
           scheduled_at?: string | null
