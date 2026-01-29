@@ -26,6 +26,7 @@ import AdminBloomMonthlyCashflow from "./AdminBloomMonthlyCashflow";
 import { ConversionFunnelDashboard } from "@/components/analytics/ConversionFunnelDashboard";
 import OGPreviewManagement from "./OGPreviewManagement";
 import ShareCardsAdmin from "@/pages/admin/ShareCardsAdmin";
+import { BloomPartnerInvitations } from "./BloomPartnerInvitations";
 
 export function AdminLayout() {
   return (
@@ -45,6 +46,7 @@ export function AdminLayout() {
               <Route path="users" element={<UserAccountsTable />} />
               <Route path="orders" element={<OrdersTable />} />
               <Route path="partners" element={<PartnerManagement />} />
+              <Route path="bloom-invitations" element={<BloomPartnerInvitations />} />
               <Route path="bloom-delivery" element={<AdminBloomPartnerDelivery />} />
               <Route path="bloom-single" element={<AdminBloomSingleDelivery />} />
               <Route path="bloom-profit" element={<AdminBloomPartnerProfit />} />

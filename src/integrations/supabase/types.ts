@@ -5238,6 +5238,57 @@ export type Database = {
           },
         ]
       }
+      partner_invitations: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          invite_code: string
+          invitee_name: string | null
+          invitee_phone: string | null
+          notes: string | null
+          order_amount: number
+          partner_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_code: string
+          invitee_name?: string | null
+          invitee_phone?: string | null
+          notes?: string | null
+          order_amount?: number
+          partner_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          invitee_name?: string | null
+          invitee_phone?: string | null
+          notes?: string | null
+          order_amount?: number
+          partner_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_level_rules: {
         Row: {
           benefits: Json | null
