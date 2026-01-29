@@ -1,202 +1,258 @@
 
 
-## 让用户随时能收到AI来电的完整方案
+# 绽放合伙人批量导入与注册流程方案
 
-### 问题诊断
+## 一、当前现状分析
 
-当前AI来电系统有两个核心问题：
+### 已有能力
+| 功能 | 有劲合伙人 | 绽放合伙人 |
+|:-----|:----------|:----------|
+| 单个添加 | ✅ `AddPartnerDialog.tsx` | ❌ 无 |
+| 批量导入 | ❌ 无 | ❌ 无 |
+| 付款自动创建 | ✅ `wechat-pay-callback` | ❌ 未实现 |
+| 管理界面 | ✅ `PartnerManagement.tsx` | ✅ `AdminBloomPartnerDelivery.tsx`（仅交付管理）|
 
-1. **没有定时任务触发**：`batch-trigger-ai-coach-calls` 函数虽然写好了，但没有在 `cron.job` 中配置定时任务来调用它
-2. **固定时间窗口限制**：所有场景都绑定到特定时间点（如8:00、12:30、21:00），用户必须在这些时间点才可能收到来电
+### 数据结构
+绽放合伙人需要同时创建两条记录：
 
-### 解决方案
+1. **`partners` 表** - 合伙人身份记录
+   - `partner_type = 'bloom'`
+   - `partner_level = 'L0'`
+   - `commission_rate_l1 = 0.30`
+   - `commission_rate_l2 = 0.10`
 
-#### 第一步：添加Cron定时任务
+2. **`bloom_partner_orders` 表** - 订单/交付记录
+   - 默认金额 ¥19,800
+   - 三个训练营交付状态跟踪
 
-在数据库中创建定时任务，每15分钟触发一次批量检查：
+---
 
-```sql
-SELECT cron.schedule(
-  'batch-trigger-ai-coach-calls',
-  '*/15 * * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/batch-trigger-ai-coach-calls',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer <anon_key>"}'::jsonb,
-    body := '{}'::jsonb
-  );
-  $$
-);
-```
+## 二、核心问题
 
-这会让系统每15分钟检查一次是否有符合条件的用户需要收到来电。
+### 批量导入场景分类
 
-#### 第二步：创建「智能伴随」场景
+| 场景 | 说明 | 导入方式 |
+|:-----|:-----|:---------|
+| **已注册用户** | 用户已有系统账号（已微信注册/邮箱注册） | 直接用 User ID 导入 |
+| **未注册用户** | 用户尚未在系统注册 | 需要邀请链接注册后关联 |
 
-添加一个新的AI来电场景，基于**用户行为实时触发**，而不是固定时间点：
+---
 
-**触发条件（满足任一即可）**：
-- 用户在应用内活跃超过5分钟且未开始对话
-- 用户浏览了某个功能页面但没有使用
-- 用户情绪波动（记录后15分钟关怀）
-- 用户完成了一个任务（即时鼓励）
+## 三、推荐流程
 
-**技术实现**：
-
-| 组件 | 作用 |
-|:-----|:-----|
-| 新建 `smart_companion` 场景 | 智能伴随来电 |
-| 扩展 `batch-trigger-ai-coach-calls` | 添加活跃用户检测逻辑 |
-| 前端活跃度追踪 | 上报用户行为数据 |
-
-#### 第三步：扩展时间窗口
-
-将固定时间点改为**时间范围**，增加触发概率：
+### 方案：「邀请码 + 自动关联」模式
 
 ```text
-原来：8:00 精确触发
-改为：7:30-9:00 随机触发（30分钟内随机选择时间）
-
-原来：12:30 精确触发  
-改为：11:30-13:30 随机触发
-
-原来：21:00 精确触发
-改为：20:30-22:00 随机触发
+管理员批量上传 CSV（姓名、手机号）
+         ↓
+系统生成唯一邀请码 (partner_invitations 表)
+         ↓
+管理员分发邀请链接给合伙人
+         ↓
+合伙人扫码/点击链接进入注册页
+         ↓
+注册成功后自动关联为绽放合伙人
+         ↓
+同时创建 partners + bloom_partner_orders 记录
 ```
 
-这样用户不会每天在完全相同的时间收到来电，体验更自然。
+### 核心流程图
 
-#### 第四步：添加「空闲时段」检测
-
-**用户活跃度计算**：
-```typescript
-// 判断用户当前是否处于"可接听"状态
-const isUserAvailable = (lastSeenAt: Date) => {
-  const now = new Date();
-  const minutesSinceLastSeen = (now.getTime() - lastSeenAt.getTime()) / 60000;
-  
-  // 1-5分钟内活跃 = 正在使用，适合来电
-  // 5-30分钟内活跃 = 可能还在附近
-  // 超过30分钟 = 可能离开了
-  return minutesSinceLastSeen >= 1 && minutesSinceLastSeen <= 30;
-};
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                   绽放合伙人批量导入流程                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   [管理员]                                                       │
+│      │                                                          │
+│      ▼                                                          │
+│   ┌──────────────┐                                              │
+│   │ 上传 CSV 文件 │                                              │
+│   │ (姓名,手机号) │                                              │
+│   └──────┬───────┘                                              │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌──────────────────────────────────────┐                      │
+│   │ 生成邀请记录 (partner_invitations)    │                      │
+│   │ - 唯一邀请码                         │                      │
+│   │ - 手机号                             │                      │
+│   │ - 合伙人类型 = bloom                 │                      │
+│   │ - 状态 = pending                     │                      │
+│   └──────┬───────────────────────────────┘                      │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌──────────────────┐                                          │
+│   │ 导出邀请链接列表  │                                          │
+│   │ /invite/BLOOM123 │                                          │
+│   └──────┬───────────┘                                          │
+│          │                                                      │
+│   ───────┼─────────────────── 分发给合伙人 ──────────────────    │
+│          │                                                      │
+│   [合伙人]                                                       │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌──────────────────┐                                          │
+│   │ 点击邀请链接      │                                          │
+│   └──────┬───────────┘                                          │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌─────────────────────────────────────┐                       │
+│   │ /invite/[code] 页面                  │                       │
+│   │ - 显示"您已被邀请成为绽放合伙人"     │                       │
+│   │ - 引导微信扫码注册                   │                       │
+│   └──────┬──────────────────────────────┘                       │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌─────────────────────────────────────┐                       │
+│   │ 微信注册/登录成功                    │                       │
+│   │ - 读取 invite_code 参数             │                       │
+│   │ - 调用 claim-partner-invitation     │                       │
+│   └──────┬──────────────────────────────┘                       │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌─────────────────────────────────────┐                       │
+│   │ 自动创建合伙人身份                   │                       │
+│   │ - partners 记录                     │                       │
+│   │ - bloom_partner_orders 记录         │                       │
+│   │ - 更新 invitation 状态 = claimed    │                       │
+│   └─────────────────────────────────────┘                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 实施方案
+## 四、技术实现计划
 
-#### 涉及文件
+### 1. 数据库变更
 
-| 文件 | 操作 | 说明 |
+**新建 `partner_invitations` 表**
+
+| 字段 | 类型 | 说明 |
 |:-----|:-----|:-----|
-| 数据库 Cron 任务 | 新建 | 添加每15分钟触发的定时任务 |
-| `supabase/functions/batch-trigger-ai-coach-calls/index.ts` | 修改 | 扩展时间窗口、添加智能伴随场景 |
-| `supabase/functions/initiate-ai-call/index.ts` | 修改 | 添加 `smart_companion` 场景提示词 |
-| `src/hooks/useAICoachIncomingCall.ts` | 修改 | 添加新场景映射 |
-| `src/components/coach-call/AIIncomingCallDialog.tsx` | 修改 | 添加新场景UI |
-| `src/components/AICallPreferences.tsx` | 修改 | 添加智能伴随开关 |
+| `id` | UUID | 主键 |
+| `invite_code` | TEXT | 唯一邀请码（如 BLOOM7X3K9M）|
+| `partner_type` | TEXT | 合伙人类型（bloom/youjin）|
+| `invitee_name` | TEXT | 被邀请人姓名（可选）|
+| `invitee_phone` | TEXT | 被邀请人手机号（可选）|
+| `order_amount` | NUMERIC | 订单金额（默认 19800）|
+| `status` | TEXT | 状态：pending / claimed / expired |
+| `claimed_by` | UUID | 领取用户 ID |
+| `claimed_at` | TIMESTAMPTZ | 领取时间 |
+| `expires_at` | TIMESTAMPTZ | 过期时间（可选）|
+| `created_by` | UUID | 创建管理员 ID |
+| `created_at` | TIMESTAMPTZ | 创建时间 |
 
-#### 数据库变更
+### 2. Edge Function
 
-**1. 添加 Cron 定时任务**
-```sql
-SELECT cron.schedule(
-  'batch-trigger-ai-coach-calls',
-  '*/15 * * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/batch-trigger-ai-coach-calls',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsc3V6c2t2eWtkZHdyeGJtY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4Mzg2NjQsImV4cCI6MjA3ODQxNDY2NH0.pYilMaNu2_EQvn4HrfIpAGxomkQCQCdPPLMq5NPv3pk"}'::jsonb,
-    body := '{}'::jsonb
-  );
-  $$
-);
-```
+**新建 `claim-partner-invitation` 函数**
 
-#### Edge Function 变更
+功能：
+- 验证邀请码有效性
+- 创建 `partners` 记录（type=bloom）
+- 创建 `bloom_partner_orders` 记录
+- 更新邀请状态为 claimed
 
-**2. 扩展 `batch-trigger-ai-coach-calls` 添加智能伴随场景**
+### 3. 前端组件
 
-```typescript
-// 智能伴随场景（每15分钟检查一次活跃用户）
-if (scenario === 'smart_companion' || !scenario) {
-  // 查找1-10分钟内活跃的用户
-  const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000).toISOString();
-  const oneMinuteAgo = new Date(now.getTime() - 60 * 1000).toISOString();
-  
-  const { data: activeUsers } = await supabase
-    .from('profiles')
-    .select('id, display_name, last_seen_at')
-    .gte('last_seen_at', tenMinutesAgo)
-    .lt('last_seen_at', oneMinuteAgo)
-    .limit(limit);
-  
-  if (activeUsers) {
-    for (const user of activeUsers) {
-      // 检查今天是否已经收到过智能伴随来电（每天最多1次）
-      const { data: existingCalls } = await supabase
-        .from('ai_coach_calls')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('scenario', 'smart_companion')
-        .gte('created_at', todayStart)
-        .limit(1);
-      
-      if (existingCalls?.length > 0) continue;
-      
-      // 检查用户偏好
-      const isEnabled = await checkUserCallPreference(supabase, user.id, 'smart_companion');
-      if (!isEnabled) continue;
-      
-      // 触发智能伴随来电
-      await supabase.functions.invoke('initiate-ai-call', {
-        body: {
-          user_id: user.id,
-          scenario: 'smart_companion',
-          coach_type: 'vibrant_life',
-          context: { trigger_reason: 'active_without_interaction' },
-        },
-      });
-    }
-  }
-}
-```
+**新建管理界面**
 
-**3. 扩展时间窗口逻辑**
+| 组件 | 功能 |
+|:-----|:-----|
+| `BloomPartnerBatchImport.tsx` | 批量导入对话框，支持 CSV 上传 |
+| `BloomPartnerInvitationList.tsx` | 邀请记录列表，显示状态和链接 |
 
-将精确时间点改为时间范围：
+**新建用户端页面**
 
-```typescript
-// 待办提醒：扩展时间窗口
-const isTodoTime = (h: number, m: number) => {
-  return (h >= 7 && h < 9) ||           // 早晨 7:00-9:00
-         (h >= 11 && h < 14) ||          // 中午 11:00-14:00  
-         (h >= 20 && h < 22);            // 晚上 20:00-22:00
-};
+| 页面 | 路由 | 功能 |
+|:-----|:-----|:-----|
+| `PartnerInvitePage.tsx` | `/invite/:code` | 邀请落地页，引导注册 |
 
-// 添加随机延迟避免同一时间大量来电
-const shouldTriggerNow = () => {
-  // 15%概率触发（每15分钟检查一次，时间窗口2小时=8次机会）
-  return Math.random() < 0.15;
-};
-```
+**修改注册流程**
+
+| 文件 | 修改 |
+|:-----|:-----|
+| `WeChatOAuthCallback.tsx` | 注册成功后检查并处理 invite_code |
+| `Auth.tsx` | 保存 invite_code 到 localStorage |
 
 ---
 
-### 预期效果
+## 五、详细实现步骤
 
-| 改进点 | 效果 |
-|:-------|:-----|
-| 添加 Cron 任务 | 系统每15分钟自动检查，无需人工触发 |
-| 智能伴随场景 | 用户活跃时主动关怀，每天最多1次 |
-| 扩展时间窗口 | 2小时范围内随机来电，体验更自然 |
-| 随机触发概率 | 避免所有用户同时收到来电 |
+### 步骤 1：数据库迁移
+创建 `partner_invitations` 表，包含 RLS 策略
 
-### 用户可控性
+### 步骤 2：批量导入功能
+- 管理端 CSV 上传组件
+- 批量生成邀请码
+- 导出邀请链接列表
 
-在设置页面添加「智能伴随」开关，用户可以：
-- 开启/关闭智能伴随来电
-- 设置「勿扰时段」（如工作时间）
-- 调整每日来电频率上限
+### 步骤 3：邀请落地页
+- `/invite/:code` 页面
+- 显示合伙人权益介绍
+- 引导微信注册
+
+### 步骤 4：注册后自动关联
+- Edge Function 处理邀请码验证和关联
+- 注册回调中调用关联逻辑
+
+### 步骤 5：管理界面
+- 查看所有邀请记录
+- 筛选状态（待领取/已领取/已过期）
+- 支持重新发送邀请链接
+
+---
+
+## 六、涉及文件清单
+
+### 新建文件
+| 文件路径 | 说明 |
+|:---------|:-----|
+| `src/components/admin/BloomPartnerBatchImport.tsx` | 批量导入对话框 |
+| `src/components/admin/BloomPartnerInvitations.tsx` | 邀请管理列表 |
+| `src/pages/PartnerInvitePage.tsx` | 邀请落地页 |
+| `supabase/functions/claim-partner-invitation/index.ts` | 邀请领取处理 |
+
+### 修改文件
+| 文件路径 | 修改内容 |
+|:---------|:---------|
+| `src/components/admin/AdminLayout.tsx` | 添加绽放合伙人管理路由 |
+| `src/components/admin/AdminSidebar.tsx` | 添加侧边栏入口 |
+| `src/pages/WeChatOAuthCallback.tsx` | 注册后检查邀请码 |
+| `src/App.tsx` | 添加 `/invite/:code` 路由 |
+
+### 数据库迁移
+- 创建 `partner_invitations` 表
+- 添加 RLS 策略
+- 创建唯一索引（invite_code）
+
+---
+
+## 七、CSV 导入格式示例
+
+```csv
+姓名,手机号,备注
+张三,13800138001,首批合伙人
+李四,13800138002,线下招募
+王五,13800138003,
+```
+
+导入后生成：
+
+| 邀请码 | 链接 | 状态 |
+|:-------|:-----|:-----|
+| BLOOM7X3K9M | https://xxx.app/invite/BLOOM7X3K9M | 待领取 |
+| BLOOMH2P5RN | https://xxx.app/invite/BLOOMH2P5RN | 待领取 |
+| BLOOM9K4TYQ | https://xxx.app/invite/BLOOM9K4TYQ | 待领取 |
+
+---
+
+## 八、预期效果
+
+| 指标 | 效果 |
+|:-----|:-----|
+| 批量效率 | 一次上传可导入数百位合伙人 |
+| 自动化 | 注册即激活，无需二次手动操作 |
+| 可追踪 | 每个邀请链接状态可追踪 |
+| 数据完整 | 自动同步创建双表记录 |
 
