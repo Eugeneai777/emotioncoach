@@ -839,11 +839,18 @@ Deno.serve(async (req) => {
                 if (parsed.event === EVENT_TTS_RESPONSE) {
                   if (parsed.payload.length > 0) {
                     // 🔍 详细日志：确认音频大小 (正常应该是几 KB，不是 36 字节)
-                    console.log(`[DoubaoRelay] TTS audio forwarding: ${parsed.payload.length} bytes (expected: several KB, NOT 36)`);
-                    clientSocket.send(JSON.stringify({
-                      type: 'response.audio.delta',
-                      delta: uint8ArrayToBase64(parsed.payload)
-                    }));
+                    const base64Audio = uint8ArrayToBase64(parsed.payload);
+                    console.log(`[DoubaoRelay] ✅ TTS audio forwarding: ${parsed.payload.length} PCM bytes -> ${base64Audio.length} base64 chars`);
+                    
+                    try {
+                      clientSocket.send(JSON.stringify({
+                        type: 'response.audio.delta',
+                        delta: base64Audio
+                      }));
+                      console.log(`[DoubaoRelay] ✅ Audio delta sent to client successfully`);
+                    } catch (sendErr) {
+                      console.error(`[DoubaoRelay] ❌ Failed to send audio to client:`, sendErr);
+                    }
                   } else {
                     console.warn(`[DoubaoRelay] TTS audio payload is empty!`);
                   }
