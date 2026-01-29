@@ -381,11 +381,16 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
       bits: 16,
       channel: 1
     },
+    // ✅ 关键修复：豆包文档中 `format: "pcm"` 代表 32bit PCM（常见为 F32LE/PCM32），
+    // 若前端按 PCM16 写 WAV 头会产生持续“呲呲噪声”。
+    // 因此这里强制请求 16bit 小端 PCM：pcm_s16le。
+    // 参考：官方说明 tts.audio_config.format = "pcm_s16le"。
     tts: {
-      format: 'pcm',
-      sample_rate: 24000,
-      bits: 16,
-      channel: 1
+      audio_config: {
+        channel: 1,
+        format: 'pcm_s16le',
+        sample_rate: 24000,
+      },
     },
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
