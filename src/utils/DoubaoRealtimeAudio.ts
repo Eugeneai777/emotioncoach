@@ -56,6 +56,8 @@ export class DoubaoRealtimeChat {
   private heartbeatInterval: number | null = null;
   private hasSessionClosed = false;
   private inputSampleRate: number = 16000;
+  // 有些 realtime 服务需要显式 response.create 才会开始生成（尤其是文本触发或 VAD 轮次结束）
+  private awaitingResponse = false;
   
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -330,33 +332,46 @@ export class DoubaoRealtimeChat {
 
         case 'input_audio_buffer.speech_stopped':
           this.onSpeakingChange('idle');
+          // ✅ 关键：用户说完后显式触发一次生成，避免“能连上但不回应/不出声”
+          this.requestResponseCreate('speech_stopped');
           break;
 
         case 'response.audio.delta':
           this.handleAudioDelta(message.delta);
+          this.awaitingResponse = false;
           this.onSpeakingChange('assistant-speaking');
           break;
 
         case 'response.audio.done':
+          this.awaitingResponse = false;
           this.onSpeakingChange('idle');
           break;
 
         case 'response.audio_transcript.delta':
           if (message.delta) {
+            this.awaitingResponse = false;
             this.onTranscript(message.delta, false, 'assistant');
           }
           break;
 
         case 'response.audio_transcript.done':
           if (message.transcript) {
+            this.awaitingResponse = false;
             this.onTranscript(message.transcript, true, 'assistant');
           }
           break;
 
         case 'response.text':
           // 处理豆包返回的文本消息
-          if (message.payload?.result?.text) {
-            this.onTranscript(message.payload.result.text, true, 'assistant');
+          this.awaitingResponse = false;
+          // 兼容多种可能的字段：payload.result.text / payload.content / text / delta
+          {
+            const text =
+              message.payload?.result?.text ??
+              message.payload?.content ??
+              message.text ??
+              message.delta;
+            if (text) this.onTranscript(String(text), true, 'assistant');
           }
           break;
 
@@ -508,7 +523,7 @@ export class DoubaoRealtimeChat {
       }
     }));
 
-    this.ws.send(JSON.stringify({ type: 'response.create' }));
+    this.requestResponseCreate('sendTextMessage');
   }
 
   /**
@@ -536,6 +551,22 @@ export class DoubaoRealtimeChat {
         }]
       }
     }));
+
+    // ✅ 关键：显式触发生成，避免某些情况下仅发送 item.create 不会出音频
+    this.requestResponseCreate('greeting');
+  }
+
+  private requestResponseCreate(reason: string): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    if (this.awaitingResponse) return;
+    this.awaitingResponse = true;
+    try {
+      this.ws.send(JSON.stringify({ type: 'response.create' }));
+      console.log('[DoubaoChat] response.create sent:', reason);
+    } catch (e) {
+      console.warn('[DoubaoChat] Failed to send response.create:', e);
+      this.awaitingResponse = false;
+    }
   }
 
   // 停止录音方法（用于符合 AudioClient 接口）
