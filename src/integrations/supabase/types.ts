@@ -3192,6 +3192,101 @@ export type Database = {
           },
         ]
       }
+      daily_todo_summaries: {
+        Row: {
+          ai_summary: string | null
+          completed_count: number | null
+          completion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          insights: string | null
+          overdue_items: Json | null
+          total_count: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          completed_count?: number | null
+          completion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          insights?: string | null
+          overdue_items?: Json | null
+          total_count?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          completed_count?: number | null
+          completion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          insights?: string | null
+          overdue_items?: Json | null
+          total_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_todos: {
+        Row: {
+          call_id: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          date: string
+          description: string | null
+          estimated_time: number | null
+          id: string
+          priority: string | null
+          source: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          call_id?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          estimated_time?: number | null
+          id?: string
+          priority?: string | null
+          source?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          call_id?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          estimated_time?: number | null
+          id?: string
+          priority?: string | null
+          source?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_todos_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "ai_coach_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decision_logs: {
         Row: {
           ai_analysis: Json | null
@@ -5693,6 +5788,7 @@ export type Database = {
           reminder_time: string | null
           smart_notification_enabled: boolean | null
           timezone: string | null
+          todo_reminder_slots: Json | null
           updated_at: string
           voice_clone_status: string | null
           voice_gender: string | null
@@ -5763,6 +5859,7 @@ export type Database = {
           reminder_time?: string | null
           smart_notification_enabled?: boolean | null
           timezone?: string | null
+          todo_reminder_slots?: Json | null
           updated_at?: string
           voice_clone_status?: string | null
           voice_gender?: string | null
@@ -5833,6 +5930,7 @@ export type Database = {
           reminder_time?: string | null
           smart_notification_enabled?: boolean | null
           timezone?: string | null
+          todo_reminder_slots?: Json | null
           updated_at?: string
           voice_clone_status?: string | null
           voice_gender?: string | null

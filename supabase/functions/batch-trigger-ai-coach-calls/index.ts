@@ -20,9 +20,16 @@ interface AICallPreferences {
   reactivation?: boolean;
   camp_followup?: boolean;
   care?: boolean;
+  todo_reminder?: boolean;
 }
 
 interface GratitudeSlots {
+  morning?: boolean;
+  noon?: boolean;
+  evening?: boolean;
+}
+
+interface TodoSlots {
   morning?: boolean;
   noon?: boolean;
   evening?: boolean;
@@ -38,7 +45,7 @@ const checkUserCallPreference = async (
   try {
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('ai_call_enabled, ai_call_preferences, gratitude_reminder_slots')
+      .select('ai_call_enabled, ai_call_preferences, gratitude_reminder_slots, todo_reminder_slots')
       .eq('id', userId)
       .single();
 
@@ -65,6 +72,15 @@ const checkUserCallPreference = async (
       const slots = (profile.gratitude_reminder_slots as GratitudeSlots) || {};
       if (slots[timeSlot] === false) {
         console.log(`[checkPreference] User ${userId}: gratitude slot ${timeSlot} disabled`);
+        return false;
+      }
+    }
+
+    // 待办提醒时段检查
+    if (scenario === 'todo_reminder' && timeSlot) {
+      const slots = (profile.todo_reminder_slots as TodoSlots) || {};
+      if (slots[timeSlot] === false) {
+        console.log(`[checkPreference] User ${userId}: todo slot ${timeSlot} disabled`);
         return false;
       }
     }
@@ -413,6 +429,110 @@ serve(async (req) => {
               results.push({
                 user_id: userId,
                 scenario: 'gratitude_reminder',
+                success: false,
+                error: e instanceof Error ? e.message : 'Unknown error',
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // 待办提醒场景（每天3次：8:00, 12:30, 21:00）
+    const isTodoTime = (h: number, m: number) => {
+      return (h === 8 && m < 30) || (h === 12 && m >= 30 && m < 60) || (h === 21 && m < 30);
+    };
+    
+    const getTodoTimeSlot = (h: number, m: number): 'morning' | 'noon' | 'evening' | null => {
+      if (h === 8 && m < 30) return 'morning';
+      if (h === 12 && m >= 30 && m < 60) return 'noon';
+      if (h === 21 && m < 30) return 'evening';
+      return null;
+    };
+
+    const getTodoScenario = (slot: 'morning' | 'noon' | 'evening'): 'todo_morning' | 'todo_noon' | 'todo_evening' => {
+      return `todo_${slot}` as 'todo_morning' | 'todo_noon' | 'todo_evening';
+    };
+
+    if (scenario?.startsWith('todo_') || (!scenario && isTodoTime(hour, minute))) {
+      const currentSlot = getTodoTimeSlot(hour, minute);
+      
+      if (currentSlot) {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const currentTodoScenario = getTodoScenario(currentSlot);
+
+        // 获取最近7天有活动的用户
+        const { data: activeUsers } = await supabase
+          .from('profiles')
+          .select('id')
+          .gte('last_seen_at', sevenDaysAgo)
+          .limit(limit);
+
+        if (activeUsers) {
+          for (const user of activeUsers) {
+            try {
+              // 检查用户偏好
+              const isEnabled = await checkUserCallPreference(supabase, user.id, 'todo_reminder', currentSlot);
+              if (!isEnabled) {
+                console.log(`User ${user.id} has disabled todo_reminder for slot ${currentSlot}`);
+                continue;
+              }
+
+              // 检查今天该时段是否已经来电过
+              const { data: existingCalls } = await supabase
+                .from('ai_coach_calls')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('scenario', currentTodoScenario)
+                .gte('created_at', todayStart)
+                .limit(1);
+
+              if (existingCalls && existingCalls.length > 0) {
+                console.log(`User ${user.id} already received ${currentTodoScenario} call today`);
+                continue;
+              }
+
+              // 获取今日待办（中午和晚上需要）
+              let pendingTodos: { id: string; title: string; priority: string }[] = [];
+              if (currentSlot !== 'morning') {
+                const today = now.toISOString().split('T')[0];
+                const { data: todos } = await supabase
+                  .from('daily_todos')
+                  .select('id, title, priority, completed')
+                  .eq('user_id', user.id)
+                  .eq('date', today);
+                
+                pendingTodos = (todos || []).filter((t: any) => !t.completed).map((t: any) => ({
+                  id: t.id,
+                  title: t.title,
+                  priority: t.priority,
+                }));
+              }
+
+              // 触发待办提醒来电
+              const { error } = await supabase.functions.invoke('initiate-ai-call', {
+                body: {
+                  user_id: user.id,
+                  scenario: currentTodoScenario,
+                  coach_type: 'vibrant_life',
+                  context: {
+                    time_slot: currentSlot,
+                    ...(pendingTodos.length > 0 && { pending_todos: pendingTodos }),
+                  },
+                },
+              });
+
+              results.push({
+                user_id: user.id,
+                scenario: currentTodoScenario,
+                success: !error,
+                error: error?.message,
+              });
+            } catch (e) {
+              results.push({
+                user_id: user.id,
+                scenario: currentTodoScenario,
                 success: false,
                 error: e instanceof Error ? e.message : 'Unknown error',
               });
