@@ -202,6 +202,69 @@ serve(async (req) => {
       }
     }
 
+    // 深夜陪伴场景（22:00-01:00触发）
+    if (scenario === 'late_night_companion' || (!scenario && (hour >= 22 || hour <= 1))) {
+      // 查找15分钟内活跃的用户
+      const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: activeUsers } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .gte('last_seen_at', fifteenMinutesAgo)
+        .limit(limit);
+
+      if (activeUsers) {
+        for (const user of activeUsers) {
+          try {
+            // 检查这些用户近期是否有情绪波动（3天内 emotion_intensity >= 6）
+            const { data: recentEmotions } = await supabase
+              .from('briefings')
+              .select(`
+                emotion_intensity, 
+                emotion_theme,
+                conversation:conversations!inner(user_id)
+              `)
+              .eq('conversations.user_id', user.id)
+              .gte('created_at', threeDaysAgo)
+              .gte('emotion_intensity', 6)
+              .order('created_at', { ascending: false })
+              .limit(3);
+
+            // 至少有1次情绪波动才触发
+            if (recentEmotions && recentEmotions.length >= 1) {
+              const { error } = await supabase.functions.invoke('initiate-ai-call', {
+                body: {
+                  user_id: user.id,
+                  scenario: 'late_night_companion',
+                  coach_type: 'emotion',
+                  context: {
+                    time_of_day: 'late_night',
+                    recent_emotion: recentEmotions[0]?.emotion_theme,
+                    emotion_intensity: recentEmotions[0]?.emotion_intensity,
+                  },
+                },
+              });
+
+              results.push({
+                user_id: user.id,
+                scenario: 'late_night_companion',
+                success: !error,
+                error: error?.message,
+              });
+            }
+          } catch (e) {
+            results.push({
+              user_id: user.id,
+              scenario: 'late_night_companion',
+              success: false,
+              error: e instanceof Error ? e.message : 'Unknown error',
+            });
+          }
+        }
+      }
+    }
+
     const successCount = results.filter((r) => r.success).length;
     console.log(`Batch trigger completed: ${successCount}/${results.length} calls initiated`);
 
