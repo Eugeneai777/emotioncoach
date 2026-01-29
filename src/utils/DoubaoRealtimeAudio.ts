@@ -50,6 +50,10 @@ export class DoubaoRealtimeChat {
   private processor: ScriptProcessorNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private audioQueue: Uint8Array[] = [];
+  // ✅ PCM16 可能会被服务端拆包到“半个采样”边界（奇数 byte）。
+  // 不能直接丢 1 byte，否则会导致后续采样对齐错位，出现“呲呲呲”噪声。
+  // 正确做法：缓存最后 1 byte，拼到下一段 PCM 前面。
+  private playbackPcmRemainder: Uint8Array | null = null;
   private isPlaying = false;
   private isDisconnected = false;
   private config: DoubaoConfig | null = null;
@@ -105,6 +109,9 @@ export class DoubaoRealtimeChat {
     this.onStatusChange('connecting');
 
     try {
+      // 重置播放拆包缓存，避免跨会话残留导致对齐错误
+      this.playbackPcmRemainder = null;
+
       // ✅ 0. 关键：在任何 await 之前就创建并 resume 播放 AudioContext（保证在用户点击手势上下文）
       // 否则某些环境（iOS Safari / 小程序 WebView）会“收到音频但无法播放”。
       await this.ensurePlaybackAudioContext('init:pre-await');
@@ -437,9 +444,29 @@ export class DoubaoRealtimeChat {
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
+
+       // ✅ 修复：处理 PCM16 奇数长度拆包（半个采样）
+       let pcm = bytes;
+       if (this.playbackPcmRemainder && this.playbackPcmRemainder.length > 0) {
+         const merged = new Uint8Array(this.playbackPcmRemainder.length + bytes.length);
+         merged.set(this.playbackPcmRemainder, 0);
+         merged.set(bytes, this.playbackPcmRemainder.length);
+         pcm = merged;
+         this.playbackPcmRemainder = null;
+       }
+
+       if (pcm.length % 2 !== 0) {
+         // 缓存最后 1 byte，等待下一包补齐
+         this.playbackPcmRemainder = pcm.subarray(pcm.length - 1);
+         pcm = pcm.subarray(0, pcm.length - 1);
+         console.warn('[DoubaoChat] PCM chunk length is odd; buffered 1 byte for next chunk. current=', bytes.length, 'merged=', pcm.length);
+       }
+
       // ✅ 日志：确认收到的音频数据大小
-      console.log('[DoubaoChat] Audio delta received:', bytes.length, 'bytes, queue size:', this.audioQueue.length + 1);
-      this.audioQueue.push(bytes);
+       console.log('[DoubaoChat] Audio delta received:', pcm.length, 'bytes, queue size:', this.audioQueue.length + 1);
+       if (pcm.length > 0) {
+         this.audioQueue.push(pcm);
+       }
       this.playNextAudio();
     } catch (e) {
       console.error('[DoubaoChat] Failed to decode audio:', e);
@@ -498,12 +525,13 @@ export class DoubaoRealtimeChat {
     // ✅ Doubao 返回的 PCM 是 little-endian PCM16。
     // 这里不要把 byteOffset 之外的“整段 buffer”一起拷贝进去，否则会把无关内存拼到 WAV 里，直接变成噪音。
     // 只应写入本次 chunk 对应的那段 bytes。
+    // 理论上 handleAudioDelta 已保证是偶数长度（PCM16 对齐）。这里仅做兜底。
     const pcmBytes = (pcmData.length % 2 === 0)
       ? pcmData
       : pcmData.subarray(0, pcmData.length - 1);
 
     if (pcmBytes.length !== pcmData.length) {
-      console.warn('[DoubaoChat] PCM chunk length is odd, trimmed 1 byte:', pcmData.length, '->', pcmBytes.length);
+      console.warn('[DoubaoChat] PCM chunk length still odd in createWavFromPCM; trimmed 1 byte as fallback:', pcmData.length, '->', pcmBytes.length);
     }
 
     const wavHeader = new ArrayBuffer(44);
@@ -665,6 +693,7 @@ export class DoubaoRealtimeChat {
 
     this.audioQueue = [];
     this.isPlaying = false;
+    this.playbackPcmRemainder = null;
     this.config = null;
 
     this.onStatusChange('disconnected');
