@@ -77,11 +77,38 @@ export class DoubaoRealtimeChat {
     this.mode = options.mode || 'emotion';
   }
 
+  /**
+   * 确保播放 AudioContext 在“用户手势”上下文中被创建并 resume。
+   * 注意：在某些浏览器/小程序 WebView 中，只要 init() 中发生了 await（如弹出麦克风授权），
+   * 后续再 resume 会被视为非手势触发，从而导致“收到音频但完全无声”。
+   */
+  private async ensurePlaybackAudioContext(tag: string): Promise<void> {
+    try {
+      if (!this.playbackAudioContext) {
+        this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+        console.log('[DoubaoChat] Playback AudioContext created (24kHz), tag:', tag);
+      }
+
+      if (this.playbackAudioContext.state === 'suspended') {
+        await this.playbackAudioContext.resume();
+        console.log('[DoubaoChat] Playback AudioContext resumed, tag:', tag);
+      }
+
+      console.log('[DoubaoChat] Playback AudioContext state:', this.playbackAudioContext.state, 'tag:', tag);
+    } catch (e) {
+      console.warn('[DoubaoChat] Failed to ensure playback AudioContext:', e);
+    }
+  }
+
   async init(): Promise<void> {
     console.log('[DoubaoChat] Initializing with Relay architecture...');
     this.onStatusChange('connecting');
 
     try {
+      // ✅ 0. 关键：在任何 await 之前就创建并 resume 播放 AudioContext（保证在用户点击手势上下文）
+      // 否则某些环境（iOS Safari / 小程序 WebView）会“收到音频但无法播放”。
+      await this.ensurePlaybackAudioContext('init:pre-await');
+
       // 1. 获取 Relay 连接配置
       const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
         body: { mode: this.mode }
@@ -126,14 +153,8 @@ export class DoubaoRealtimeChat {
       });
       console.log('[DoubaoChat] AudioContext sampleRate:', this.audioContext.sampleRate, 'target:', this.inputSampleRate);
 
-      // ✅ 为播放创建独立的 AudioContext（24kHz 输出采样率）
-      this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
-      // ✅ 关键：在用户交互上下文中立即 resume，避免后续播放被浏览器阻塞
-      if (this.playbackAudioContext.state === 'suspended') {
-        await this.playbackAudioContext.resume();
-        console.log('[DoubaoChat] Playback AudioContext resumed in user gesture context');
-      }
-      console.log('[DoubaoChat] Playback AudioContext initialized at 24kHz, state:', this.playbackAudioContext.state);
+      // ✅ 二次兜底：如果上面 pre-await 没成功，这里再确保一次（但这里可能已不在手势上下文）
+      await this.ensurePlaybackAudioContext('init:post-mic');
 
       // 4. 建立 WebSocket 连接到 Relay
       const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
