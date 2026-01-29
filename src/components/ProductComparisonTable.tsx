@@ -189,11 +189,15 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             <ul className="space-y-1.5 text-sm">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
-                <span>充值 ¥500 送 ¥50</span>
+                <span>充值 ¥1,000 送 ¥100</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
-                <span>充值 ¥1000 送 ¥150</span>
+                <span>充值 ¥5,000 送 ¥750</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span>充值 ¥10,000 送 ¥2,000</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
