@@ -753,6 +753,16 @@ Deno.serve(async (req) => {
         const frame = buildWebSocketFrame(startSessionPacket);
         await doubaoConn.write(frame);
         console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes)`);
+        
+        // ✅ 关键修复：豆包新版端到端对话 API 可能不发送 event=101/150，
+        // 而是直接开始处理音频。所以在发送 StartSession 后立即通知前端连接成功，
+        // 让前端可以开始录音和等待响应。
+        sessionStarted = true;
+        console.log('[DoubaoRelay] ✅ Session started (after StartSession request sent)');
+        clientSocket.send(JSON.stringify({
+          type: 'session.connected',
+          message: 'Connected to Doubao API - StartSession sent'
+        }));
       }
       
       // 开始读取响应
