@@ -902,9 +902,12 @@ Deno.serve(async (req) => {
                        }
                       
                        // Chat 回复文本（模型文本）
-                       // 有些 payload 结构为 { text: "..." }，有些为 { result: { text: "..." } }
+                       // 豆包 API 返回的 payload 结构可能为:
+                       // - { content: "..." } - 最常见的流式文本格式
+                       // - { text: "..." }
+                       // - { result: { text: "..." } }
                        if (parsed.event === EVENT_CHAT_RESPONSE) {
-                         const text = payload.text ?? payload.result?.text;
+                         const text = payload.content ?? payload.text ?? payload.result?.text;
                          if (text) {
                            clientSocket.send(JSON.stringify({
                              type: 'response.audio_transcript.delta',
