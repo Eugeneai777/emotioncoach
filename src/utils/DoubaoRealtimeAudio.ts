@@ -199,18 +199,18 @@ export class DoubaoRealtimeChat {
 
       this.ws.onopen = () => {
         clearTimeout(timeout);
-        console.log('[DoubaoChat] WebSocket opened');
+        console.log('[DoubaoChat] ✅ WebSocket opened successfully');
         resolve();
       };
 
       this.ws.onerror = (error) => {
         clearTimeout(timeout);
-        console.error('[DoubaoChat] WebSocket error:', error);
+        console.error('[DoubaoChat] ❌ WebSocket error:', error);
         reject(error);
       };
 
       this.ws.onclose = (event) => {
-        console.log('[DoubaoChat] WebSocket closed:', event.code, event.reason);
+        console.log('[DoubaoChat] WebSocket closed:', event.code, event.reason, 'wasClean:', event.wasClean);
         this.stopHeartbeat();
         if (!this.isDisconnected) {
           this.onStatusChange('disconnected');
@@ -218,6 +218,9 @@ export class DoubaoRealtimeChat {
       };
 
       this.ws.onmessage = (event) => {
+        // ✅ 增强日志：显示原始数据大小
+        const rawLen = typeof event.data === 'string' ? event.data.length : 'binary';
+        console.log(`[DoubaoChat] 📨 Raw WS message received, size: ${rawLen}`);
         this.handleMessage(event.data);
       };
     });
@@ -328,7 +331,16 @@ export class DoubaoRealtimeChat {
   private handleMessage(data: string): void {
     try {
       const message = JSON.parse(data);
-      console.log('[DoubaoChat] Received:', message.type);
+      
+      // ✅ 详细日志：显示收到的消息类型和关键数据
+      if (message.type === 'response.audio.delta') {
+        const deltaLen = message.delta?.length || 0;
+        console.log(`[DoubaoChat] ✅ Received: ${message.type}, delta length: ${deltaLen} chars (base64)`);
+      } else if (message.type === 'response.audio_transcript.delta') {
+        console.log(`[DoubaoChat] ✅ Received: ${message.type}, text: "${message.delta?.substring(0, 50)}..."`);
+      } else {
+        console.log('[DoubaoChat] Received:', message.type, JSON.stringify(message).substring(0, 200));
+      }
 
       this.onMessage?.(message);
 
