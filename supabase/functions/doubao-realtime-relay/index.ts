@@ -73,7 +73,11 @@ const EVENT_SESSION_STARTED = 101;
 const EVENT_SESSION_ACK = 150;
 const EVENT_AUDIO_UPLOAD = 200;
 const EVENT_AUDIO_STREAM = 201;
-const EVENT_TEXT_OUTPUT = 300;
+// ✅ 文本触发事件（用于让模型“开口/回复”）
+// - 300: SayHello（常用于开场触发）
+// - 501: ChatTextQuery（常用于普通文本提问触发）
+const EVENT_SAY_HELLO = 300;
+const EVENT_CHAT_TEXT_QUERY = 501;
 const EVENT_END_SESSION = 900;
 
 // 豆包端到端对话事件码（官方文档 - 用于接收服务端响应）
@@ -675,6 +679,8 @@ Deno.serve(async (req) => {
   let audioSequence = 0;  // 音频包序号
   let sessionStarted = false;  // 标记 session 是否已成功启动
   let doubaoSessionId: string | null = null; // StartSession 生成的 sessionId，后续 Audio Upload 必须复用
+  let hasGreeted = false;
+  let clientAudioAppendCount = 0;
 
   const connectToDoubao = async () => {
     try {
@@ -845,6 +851,12 @@ Deno.serve(async (req) => {
                   continue;
                 }
 
+                // ✅ 将豆包 ASR 开始事件映射为“用户开始说话”（前端用来更新 speaking 状态）
+                if (parsed.event === EVENT_ASR_START) {
+                  clientSocket.send(JSON.stringify({ type: 'input_audio_buffer.speech_started' }));
+                  continue;
+                }
+
                 // 兼容：豆包 API 的 event=150 (SESSION_ACK) 可能有两种 payload 格式：
                 // 1. 新格式：JSON 对象 {"dialog_id":"..."}
                 // 2. 旧格式：裸 UUID 字符串（与 doubaoSessionId 匹配）
@@ -916,6 +928,8 @@ Deno.serve(async (req) => {
                              type: 'conversation.item.input_audio_transcription.completed',
                              transcript: String(transcript),
                            }));
+                            // ✅ 兼容前端逻辑：在“最终转写”出现时，认为用户说话结束
+                            clientSocket.send(JSON.stringify({ type: 'input_audio_buffer.speech_stopped' }));
                          }
                        }
                       
@@ -1084,7 +1098,15 @@ Deno.serve(async (req) => {
   clientSocket.onmessage = async (event: MessageEvent) => {
     try {
       const message = JSON.parse(event.data);
-      console.log(`[DoubaoRelay] Received from client: type=${message.type}`);
+      if (message.type === 'input_audio_buffer.append') {
+        clientAudioAppendCount++;
+        // 避免日志刷屏：每 50 条记录一次
+        if (clientAudioAppendCount % 50 === 0) {
+          console.log(`[DoubaoRelay] Received from client: type=input_audio_buffer.append (#${clientAudioAppendCount})`);
+        }
+      } else {
+        console.log(`[DoubaoRelay] Received from client: type=${message.type}`);
+      }
 
       switch (message.type) {
         case 'session.init':
@@ -1128,6 +1150,13 @@ Deno.serve(async (req) => {
 
         case 'input_audio_buffer.commit':
           console.log('[DoubaoRelay] Audio buffer committed');
+          break;
+
+        // ✅ 兼容前端 OpenAI 风格的“显式触发生成”事件。
+        // 豆包端到端对话主要依赖 server-side VAD + 输入事件（音频/文本）自动触发生成，
+        // 因此这里做 noop 处理，避免前端一直看到“unknown message type”。
+        case 'response.create':
+          // noop
           break;
 
         case 'response.cancel':
@@ -1183,64 +1212,31 @@ Deno.serve(async (req) => {
               const currentSequence = audioSequence++;
               console.log(`[DoubaoRelay] Text message sequence: ${currentSequence}`);
 
-              // 构建文本消息的 payload（豆包对话协议要求特定格式）
-              const textPayload = JSON.stringify({
-                text: userText
+              // ✅ 选择正确的“文本触发”事件码
+              // - 首次开场（你好/hello）用 SayHello(300) 更稳
+              // - 其他文本用 ChatTextQuery(501)
+              const normalized = userText.trim().toLowerCase();
+              const isGreeting = !hasGreeted && (normalized === '你好' || normalized === 'hello' || normalized === 'hi');
+              const eventId = isGreeting ? EVENT_SAY_HELLO : EVENT_CHAT_TEXT_QUERY;
+              if (isGreeting) hasGreeted = true;
+
+              // 构建文本 payload（官方常用字段为 content）
+              const payloadBytes = new TextEncoder().encode(JSON.stringify({ content: userText }));
+
+              const packet = buildPacket({
+                messageType: MESSAGE_TYPE_FULL_CLIENT,
+                flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
+                sequence: currentSequence,
+                event: eventId,
+                sessionId: doubaoSessionId,
+                payload: payloadBytes,
+                serialization: SERIALIZATION_JSON,
               });
-              
-              const payloadBytes = new TextEncoder().encode(textPayload);
-              const sessionIdBytes = new TextEncoder().encode(doubaoSessionId);
-              
-              // 构建完整数据包
-              // ✅ Header(4) + Sequence(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
-              const EVENT_TEXT_INPUT = 200; // 使用音频事件码（豆包对话模式下文本和音频共用）
-              const flags = FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID;  // ✅ 修复：添加 FLAG_HAS_SESSION_ID 确保会话关联
-              const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
-              
-              const totalSize = 4 + 4 + 4 + 4 + sessionIdBytes.length + 4 + payloadBytes.length;
-              const packet = new Uint8Array(totalSize);
-              let offset = 0;
-              
-              // Header
-              packet.set(header, offset);
-              offset += 4;
-              
-              // ✅ Sequence (4 bytes, big-endian)
-              packet[offset] = (currentSequence >> 24) & 0xff;
-              packet[offset + 1] = (currentSequence >> 16) & 0xff;
-              packet[offset + 2] = (currentSequence >> 8) & 0xff;
-              packet[offset + 3] = currentSequence & 0xff;
-              offset += 4;
-              
-              // Event
-              packet[offset] = (EVENT_TEXT_INPUT >> 24) & 0xff;
-              packet[offset + 1] = (EVENT_TEXT_INPUT >> 16) & 0xff;
-              packet[offset + 2] = (EVENT_TEXT_INPUT >> 8) & 0xff;
-              packet[offset + 3] = EVENT_TEXT_INPUT & 0xff;
-              offset += 4;
-              
-              // SessionIdLen + SessionId
-              const sidLen = sessionIdBytes.length;
-              packet[offset] = (sidLen >> 24) & 0xff;
-              packet[offset + 1] = (sidLen >> 16) & 0xff;
-              packet[offset + 2] = (sidLen >> 8) & 0xff;
-              packet[offset + 3] = sidLen & 0xff;
-              offset += 4;
-              packet.set(sessionIdBytes, offset);
-              offset += sidLen;
-              
-              // PayloadSize + Payload
-              packet[offset] = (payloadBytes.length >> 24) & 0xff;
-              packet[offset + 1] = (payloadBytes.length >> 16) & 0xff;
-              packet[offset + 2] = (payloadBytes.length >> 8) & 0xff;
-              packet[offset + 3] = payloadBytes.length & 0xff;
-              offset += 4;
-              packet.set(payloadBytes, offset);
               
               const frame = buildWebSocketFrame(packet);
               await doubaoConn.write(frame);
-              
-              console.log(`[DoubaoRelay] ✅ Sent text message with seq=${currentSequence} (${payloadBytes.length} bytes)`);
+
+              console.log(`[DoubaoRelay] ✅ Sent text trigger event=${eventId} seq=${currentSequence} (${payloadBytes.length} bytes)`);
             } catch (err) {
               console.error('[DoubaoRelay] Error sending text message:', err);
             }
