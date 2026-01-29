@@ -27,6 +27,7 @@ const COACH_INFO: Record<string, { name: string; emoji: string; color: string }>
   story: { name: '故事教练', emoji: '📖', color: 'from-blue-400 to-indigo-500' },
   wealth: { name: '财富教练', emoji: '💎', color: 'from-yellow-400 to-amber-500' },
   late_night: { name: '深夜陪伴', emoji: '🌙', color: 'from-indigo-600 to-purple-800' },
+  gratitude_reminder: { name: '感恩小助手', emoji: '🌸', color: 'from-rose-400 to-pink-500' },
 };
 
 export function AIIncomingCallDialog({
@@ -41,11 +42,14 @@ export function AIIncomingCallDialog({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const vibrationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 深夜陪伴场景使用特殊样式
+  // 特殊场景使用专属样式
   const isLateNight = scenario === 'late_night_companion';
-  const coachInfo = isLateNight 
-    ? COACH_INFO.late_night 
-    : COACH_INFO[coachType] || COACH_INFO.vibrant_life;
+  const isGratitudeReminder = scenario === 'gratitude_reminder';
+  const coachInfo = isGratitudeReminder
+    ? COACH_INFO.gratitude_reminder
+    : isLateNight 
+      ? COACH_INFO.late_night 
+      : COACH_INFO[coachType] || COACH_INFO.vibrant_life;
   const scenarioLabel = SCENARIO_LABELS[scenario] || '想和你聊聊';
 
   // 停止铃声和振动

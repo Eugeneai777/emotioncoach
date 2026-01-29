@@ -39,6 +39,7 @@ serve(async (req) => {
     const results: TriggerResult[] = [];
     const now = new Date();
     const hour = now.getHours();
+    const minute = now.getMinutes();
 
     // 根据场景和时间选择目标用户
     let targetUsers: { user_id: string; context: Record<string, any> }[] = [];
@@ -260,6 +261,92 @@ serve(async (req) => {
               success: false,
               error: e instanceof Error ? e.message : 'Unknown error',
             });
+          }
+        }
+      }
+    }
+
+    // 感恩提醒场景（每天3次：8:00, 12:30, 21:00）
+    const isGratitudeTime = (h: number, m: number) => {
+      return (h === 8 && m < 30) || (h === 12 && m >= 30 && m < 60) || (h === 21 && m < 30);
+    };
+    
+    const getGratitudeTimeSlot = (h: number, m: number): 'morning' | 'noon' | 'evening' | null => {
+      if (h === 8 && m < 30) return 'morning';
+      if (h === 12 && m >= 30 && m < 60) return 'noon';
+      if (h === 21 && m < 30) return 'evening';
+      return null;
+    };
+
+    if (scenario === 'gratitude_reminder' || (!scenario && isGratitudeTime(hour, minute))) {
+      const currentSlot = getGratitudeTimeSlot(hour, minute);
+      
+      if (currentSlot) {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+        // 获取最近7天使用过感恩日记的用户
+        const { data: gratitudeUsers } = await supabase
+          .from('gratitude_entries')
+          .select('user_id')
+          .gte('created_at', sevenDaysAgo)
+          .limit(500);
+
+        if (gratitudeUsers) {
+          // 去重获取唯一用户ID列表
+          const uniqueUserIds = [...new Set(gratitudeUsers.map(e => e.user_id))];
+          
+          // 限制处理数量
+          const usersToProcess = uniqueUserIds.slice(0, limit);
+
+          for (const userId of usersToProcess) {
+            try {
+              // 检查今天该时段是否已经来电过
+              const { data: existingCalls } = await supabase
+                .from('ai_coach_calls')
+                .select('id, context')
+                .eq('user_id', userId)
+                .eq('scenario', 'gratitude_reminder')
+                .gte('created_at', todayStart)
+                .limit(10);
+
+              // 检查是否有相同时段的来电
+              const hasCalledThisSlot = existingCalls?.some((call: any) => 
+                call.context?.time_slot === currentSlot
+              );
+
+              if (hasCalledThisSlot) {
+                console.log(`User ${userId} already received gratitude call for slot ${currentSlot} today`);
+                continue;
+              }
+
+              // 触发感恩提醒来电
+              const { error } = await supabase.functions.invoke('initiate-ai-call', {
+                body: {
+                  user_id: userId,
+                  scenario: 'gratitude_reminder',
+                  coach_type: 'gratitude',
+                  context: {
+                    time_slot: currentSlot,
+                    time_of_day: currentSlot,
+                  },
+                },
+              });
+
+              results.push({
+                user_id: userId,
+                scenario: 'gratitude_reminder',
+                success: !error,
+                error: error?.message,
+              });
+            } catch (e) {
+              results.push({
+                user_id: userId,
+                scenario: 'gratitude_reminder',
+                success: false,
+                error: e instanceof Error ? e.message : 'Unknown error',
+              });
+            }
           }
         }
       }
