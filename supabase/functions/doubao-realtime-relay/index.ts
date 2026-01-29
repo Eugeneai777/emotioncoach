@@ -952,8 +952,9 @@ Deno.serve(async (req) => {
                          const transcript = payload.extra?.origin_text ?? payload.result?.text;
                          // 只在有 endpoint=true（用户说完）且有文本时转发，避免重复发送中间结果
                          const isEndpoint = payload.extra?.endpoint === true;
+                         console.log(`[DoubaoRelay] 🎤 ASR识别: "${transcript || '(empty)'}", endpoint=${isEndpoint}`);
                          if (transcript && isEndpoint) {
-                           console.log(`[DoubaoRelay] ASR final transcript: "${transcript}"`);
+                           console.log(`[DoubaoRelay] 🗣️ 用户说话(最终): "${transcript}"`);
                            clientSocket.send(JSON.stringify({
                              type: 'conversation.item.input_audio_transcription.completed',
                              transcript: String(transcript),
@@ -970,11 +971,13 @@ Deno.serve(async (req) => {
                        // - { result: { text: "..." } }
                        if (parsed.event === EVENT_CHAT_RESPONSE) {
                          const text = payload.content ?? payload.text ?? payload.result?.text;
+                         console.log(`[DoubaoRelay] 💬 豆包回复文本: "${text || '(empty)'}"`);
                          if (text) {
                            clientSocket.send(JSON.stringify({
                              type: 'response.audio_transcript.delta',
                              delta: String(text),
                            }));
+                           console.log(`[DoubaoRelay] ✅ 已转发回复文本到前端: "${String(text).substring(0, 100)}"`);
                          }
                        }
                     }
