@@ -133,6 +133,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   const partnerL3Price = getPackagePrice(packages, 'youjin_partner_l3', 4950);
   const identityCampPrice = getPackagePrice(packages, 'bloom_identity_camp', 2980);
   const emotionCampPrice = getPackagePrice(packages, 'bloom_emotion_camp', 3980);
+  const bloomLifeCampPrice = getPackagePrice(packages, 'bloom_life_camp', 12800);
+  const bloomCoachCertPrice = getPackagePrice(packages, 'bloom_coach_cert', 16800);
   const bloomPartnerPrice = getPackagePrice(packages, 'bloom_partner', 19800);
   
   const renderValue = (value: boolean | string) => {
@@ -770,9 +772,31 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // 绽放训练营 - 动态从数据库获取
+  // 绽放训练营 - 动态从数据库获取 + 进阶产品
   if (category === 'bloom-camp') {
     const bloomCamps = campTemplates?.filter(c => c.category === 'bloom') || [];
+    
+    // 进阶产品（独立产品，不在 camp_templates 中）
+    const advancedProducts = [
+      {
+        key: 'bloom_life_camp',
+        name: '生命绽放特训营',
+        price: bloomLifeCampPrice,
+        icon: '🔥',
+        description: '4周线上特训营，重塑生命能量',
+        gradient: 'from-amber-500 via-orange-500 to-red-500',
+        features: ['4周深度转化', '真人教练陪伴', '重塑生命能量'],
+      },
+      {
+        key: 'bloom_coach_cert',
+        name: '绽放教练认证',
+        price: bloomCoachCertPrice,
+        icon: '📜',
+        description: '国际认证绽放教练资质',
+        gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
+        features: ['国际认证资质', '专业教练培训', '终身学习支持'],
+      },
+    ];
     
     if (isCampsLoading) {
       return (
@@ -782,19 +806,11 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
       );
     }
     
-    if (bloomCamps.length === 0) {
-      return (
-        <div className="text-center py-8 text-muted-foreground">
-          暂无训练营
-        </div>
-      );
-    }
-    
     return (
       <div className="space-y-4">
+        {/* 绽放训练营 */}
         {bloomCamps.map((camp, index) => {
           const benefits = Array.isArray(camp.benefits) ? camp.benefits as string[] : [];
-          const isRecommended = index === bloomCamps.length - 1;
           const hasOriginalPrice = Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0;
           
           // 绽放训练营渐变色
@@ -808,18 +824,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             <MobileCard 
               key={camp.id}
               noPadding
-              className={`overflow-hidden ${isRecommended ? 'ring-2 ring-pink-400/50' : ''}`}
+              className="overflow-hidden"
             >
               {/* 渐变背景区 */}
               <div className={`relative bg-gradient-to-br ${gradient} p-5 text-white`}>
                 {/* 半透明覆盖层 */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10" />
-                
-                {isRecommended && (
-                  <div className="absolute top-3 right-3 px-2.5 py-1 bg-white/25 backdrop-blur-sm text-white text-xs font-medium rounded-full">
-                    ✨ 推荐
-                  </div>
-                )}
                 
                 <div className="relative text-center space-y-3">
                   {/* 图标 */}
@@ -880,6 +890,69 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             </MobileCard>
           );
         })}
+        
+        {/* 分隔标题 - 进阶产品 */}
+        {advancedProducts.length > 0 && (
+          <div className="flex items-center gap-3 py-2">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs font-medium text-muted-foreground px-2">🌟 进阶成长</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+        )}
+        
+        {/* 进阶产品卡片 */}
+        {advancedProducts.map((product) => (
+          <MobileCard 
+            key={product.key}
+            noPadding
+            className="overflow-hidden"
+          >
+            {/* 渐变背景区 */}
+            <div className={`relative bg-gradient-to-br ${product.gradient} p-5 text-white`}>
+              {/* 半透明覆盖层 */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10" />
+              
+              <div className="relative text-center space-y-3">
+                {/* 图标 */}
+                <span className="text-5xl filter drop-shadow-lg block">{product.icon}</span>
+                
+                {/* 标题 */}
+                <h3 className="text-xl font-bold text-white drop-shadow-sm">{product.name}</h3>
+                <p className="text-sm text-white/85">{product.description}</p>
+                
+                {/* Features 标签 */}
+                <div className="flex flex-wrap justify-center gap-1.5 text-xs pt-1">
+                  {product.features.map((feature, i) => (
+                    <span key={i} className="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/95">
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+                
+                {/* 价格区 */}
+                <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
+                  <span className="text-3xl font-bold text-white drop-shadow">¥{formatMoney(product.price)}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* 按钮区 */}
+            <div className="flex gap-2 p-4 bg-card">
+              <Button 
+                className={`flex-1 bg-gradient-to-r ${product.gradient} text-white shadow-lg hover:opacity-90`}
+                size="lg"
+                onClick={() => handlePurchase({ 
+                  key: product.key, 
+                  name: product.name, 
+                  price: product.price 
+                })}
+              >
+                <ShoppingCart className="w-4 h-4 mr-1.5" />
+                立即购买
+              </Button>
+            </div>
+          </MobileCard>
+        ))}
       </div>
     );
   }
