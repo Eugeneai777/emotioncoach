@@ -977,8 +977,23 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
       { name: '绽放合伙人', price: bloomPartnerPrice, icon: '👑' },
     ];
 
+    // 有劲产品列表（L1合伙人可分成）
+    const youjinProducts = [
+      { name: '尝鲜会员', price: 9.9, icon: '🎫' },
+      { name: '情绪健康测评', price: 9.9, icon: '📊' },
+      { name: 'SCL-90测评', price: 9.9, icon: '📋' },
+      { name: '财富卡点测评', price: 9.9, icon: '💎' },
+      { name: '365会员', price: 365, icon: '👑' },
+      { name: '情绪日记训练营', price: 299, icon: '📝' },
+      { name: '财富觉醒训练营', price: 299, icon: '💰' },
+      { name: '青少年困境突破营', price: 299, icon: '🌱' },
+      { name: '初级合伙人', price: partnerL1Price, icon: '🥉' },
+      { name: '高级合伙人', price: partnerL2Price, icon: '🥈' },
+      { name: '钻石合伙人', price: partnerL3Price, icon: '🥇' },
+    ];
+
     // 权益分类
-    const bloomPartnerCategories = ['基础信息', '佣金权益', '可分成产品', '专属权益'] as const;
+    const bloomPartnerCategories = ['基础信息', '佣金权益', '包含权益', '绽放可分成产品', '有劲可分成产品'] as const;
 
     return (
       <div className="space-y-4">
@@ -993,10 +1008,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <span className="px-2 py-1 bg-white/20 rounded-full text-white/95">💰 直推30%</span>
               <span className="px-2 py-1 bg-white/20 rounded-full text-white/95">🔗 二级10%</span>
               <span className="px-2 py-1 bg-white/20 rounded-full text-white/95">🎓 专属培训</span>
+              <span className="px-2 py-1 bg-orange-400/80 rounded-full text-white/95">💪 含有劲L1权益</span>
             </div>
             
             <div className="flex items-baseline justify-center gap-2">
               <span className="text-3xl font-bold">¥{formatMoney(bloomPartnerPrice)}</span>
+              <span className="text-sm text-white/70 line-through">¥47,352</span>
             </div>
           </div>
         </MobileCard>
@@ -1019,20 +1036,23 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               </thead>
               <tbody>
                 {bloomPartnerCategories.map((cat) => {
-                  // 对于可分成产品，显示详细佣金
-                  if (cat === '可分成产品') {
+                  // 绽放可分成产品，显示详细佣金
+                  if (cat === '绽放可分成产品') {
                     return (
                       <TooltipProvider key={cat}>
-                        <tr className="border-b bg-muted/30">
+                        <tr className="border-b bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30">
                           <td colSpan={2} className="p-3">
-                            <div className="font-semibold text-sm text-pink-600 dark:text-pink-400">{cat}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm text-pink-600 dark:text-pink-400">绽放可分成产品</span>
+                              <Badge className="bg-pink-500 text-white text-[10px]">30%/10%</Badge>
+                            </div>
                           </td>
                         </tr>
                         {bloomProducts.map((product, idx) => {
                           const l1Commission = Math.floor(product.price * 0.3);
                           const l2Commission = Math.floor(product.price * 0.1);
                           return (
-                            <tr key={`product-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
+                            <tr key={`bloom-product-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
                               <td className="p-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <span>{product.icon}</span>
@@ -1060,7 +1080,88 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     );
                   }
 
-                  // 其他分类正常渲染
+                  // 有劲可分成产品，显示18%佣金
+                  if (cat === '有劲可分成产品') {
+                    return (
+                      <TooltipProvider key={cat}>
+                        <tr className="border-b bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30">
+                          <td colSpan={2} className="p-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm text-orange-600 dark:text-orange-400">有劲可分成产品</span>
+                              <Badge className="bg-orange-500 text-white text-[10px]">💪 含L1权益</Badge>
+                              <span className="text-xs text-orange-500">18%佣金</span>
+                            </div>
+                          </td>
+                        </tr>
+                        {youjinProducts.map((product, idx) => {
+                          const l1Commission = product.price * 0.18;
+                          return (
+                            <tr key={`youjin-product-${idx}`} className="border-b hover:bg-orange-50/30 dark:hover:bg-orange-950/20 transition-colors">
+                              <td className="p-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  <span>{product.icon}</span>
+                                  <span>{product.name}</span>
+                                  <span className="text-xs text-orange-500">¥{formatMoney(product.price)}</span>
+                                </div>
+                              </td>
+                              <td className="p-3 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <Check className="w-4 h-4 text-orange-600 dark:text-orange-500" />
+                                  <span className="text-sm font-medium text-orange-600 dark:text-orange-500">¥{formatMoney(l1Commission)}</span>
+                                  <span className="text-xs text-muted-foreground">(18%)</span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </TooltipProvider>
+                    );
+                  }
+
+                  // 包含权益，显示10项完整列表
+                  if (cat === '包含权益') {
+                    const categoryFeatures = bloomPartnerFeatures.filter(f => f.category === '包含权益');
+                    return (
+                      <TooltipProvider key={cat}>
+                        <tr className="border-b bg-gradient-to-r from-pink-50/70 to-purple-50/70 dark:from-pink-950/20 dark:to-purple-950/20">
+                          <td colSpan={2} className="p-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm text-purple-600 dark:text-purple-400">包含权益</span>
+                              <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600">总价值 ¥47,352</Badge>
+                            </div>
+                          </td>
+                        </tr>
+                        {categoryFeatures.map((feature, idx) => (
+                          <tr key={`benefit-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
+                            <td className="p-3 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2">
+                                <span>{feature.name}</span>
+                                {feature.tooltip && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-xs text-xs">{feature.tooltip}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-center">
+                              {typeof feature.value === 'boolean' ? (
+                                <Check className="w-4 h-4 text-green-600 dark:text-green-500 mx-auto" />
+                              ) : (
+                                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">{feature.value}</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </TooltipProvider>
+                    );
+                  }
+
+                  // 其他分类正常渲染（基础信息、佣金权益）
                   const categoryFeatures = bloomPartnerFeatures.filter(f => f.category === cat);
                   return (
                     <TooltipProvider key={cat}>
@@ -1112,10 +1213,15 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
         </Card>
         
         {/* 底部说明 */}
-        <MobileCard className="border-dashed">
-          <p className="text-xs text-muted-foreground text-center">
-            💡 包含：身份绽放训练营（¥{formatMoney(identityCampPrice)}）+ 情感绽放训练营（¥{formatMoney(emotionCampPrice)}）+ 合伙人资格
-          </p>
+        <MobileCard className="border-dashed bg-gradient-to-r from-pink-50/50 to-orange-50/50 dark:from-pink-950/20 dark:to-orange-950/20">
+          <div className="text-center space-y-2">
+            <p className="text-xs text-muted-foreground">
+              🎁 <span className="font-medium text-pink-600">绽放权益：</span>5款产品推广（30%/10%）+ 全套训练营 + 教练认证
+            </p>
+            <p className="text-xs text-muted-foreground">
+              💪 <span className="font-medium text-orange-600">有劲权益：</span>自动获得L1合伙人，11款产品推广（18%佣金）
+            </p>
+          </div>
         </MobileCard>
         
         <div className="text-center">
