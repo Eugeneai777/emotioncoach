@@ -94,6 +94,7 @@ const YoujinPartnerIntro = lazy(() => import("./pages/YoujinPartnerIntro"));
 const YoujinPartnerPlan = lazy(() => import("./pages/YoujinPartnerPlan"));
 const PromoGuide = lazy(() => import("./pages/partner/PromoGuide"));
 const CampGraduate = lazy(() => import("./pages/partner/CampGraduate"));
+const PartnerInvitePage = lazy(() => import("./pages/PartnerInvitePage"));
 
 // 故事教练
 const StoryCoach = lazy(() => import("./pages/StoryCoach"));
@@ -304,6 +305,7 @@ const App = () => (
               <Route path="/terms/bloom-partner" element={<BloomPartnerTerms />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/growth-path" element={<GrowthSupportPath />} />
+              <Route path="/invite/:code" element={<PartnerInvitePage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

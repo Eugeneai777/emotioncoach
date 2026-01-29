@@ -395,3 +395,6 @@ verify_jwt = false
 
 [functions.batch-trigger-ai-coach-calls]
 verify_jwt = false
+
+[functions.claim-partner-invitation]
+verify_jwt = false

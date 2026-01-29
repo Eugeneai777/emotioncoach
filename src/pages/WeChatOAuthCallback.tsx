@@ -71,6 +71,25 @@ export default function WeChatOAuthCallback() {
           
           // 登录通知已在后端 wechat-oauth-process 中发送，前端无需重复发送
           
+          // 检查是否有待领取的合伙人邀请
+          const pendingInvite = localStorage.getItem('pending_partner_invite');
+          if (pendingInvite) {
+            localStorage.removeItem('pending_partner_invite');
+            // 调用领取接口
+            try {
+              const { data: claimData } = await supabase.functions.invoke('claim-partner-invitation', {
+                body: { invite_code: pendingInvite }
+              });
+              if (claimData?.success) {
+                toast.success(claimData.message || "恭喜您成为绽放合伙人！");
+                navigate("/partner");
+                return;
+              }
+            } catch (err) {
+              console.error('Auto claim invitation failed:', err);
+            }
+          }
+          
           // 新用户跳转到关注页，老用户直接进入首页
           if (data.isNewUser) {
             navigate("/wechat-auth?mode=follow");
