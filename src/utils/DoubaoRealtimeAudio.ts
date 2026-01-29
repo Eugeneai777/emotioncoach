@@ -495,10 +495,10 @@ export class DoubaoRealtimeChat {
   }
 
   private createWavFromPCM(pcmData: Uint8Array): Uint8Array {
-    const int16Data = new Int16Array(pcmData.length / 2);
-    for (let i = 0; i < pcmData.length; i += 2) {
-      int16Data[i / 2] = (pcmData[i + 1] << 8) | pcmData[i];
-    }
+    // ✅ 关键修复：豆包返回的 PCM 已经是 little-endian 格式（低字节在前）
+    // 我们无需重新排列字节序，直接将 Uint8Array 视图转换为 Int16Array 即可
+    // 之前的代码错误地按 big-endian 解析，导致波形错乱出现"呲呲呲"杂音
+    const int16Data = new Int16Array(pcmData.buffer, pcmData.byteOffset, pcmData.length / 2);
 
     const wavHeader = new ArrayBuffer(44);
     const view = new DataView(wavHeader);
