@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface InitiateCallRequest {
   user_id: string;
-  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check';
+  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion';
   coach_type?: string;
   context?: Record<string, any>;
 }
@@ -19,6 +19,7 @@ const SCENARIO_PROMPTS: Record<string, string> = {
   reactivation: '生成一句亲切的问候开场白，表达对好久不见的用户的想念。',
   camp_followup: '生成一句温柔鼓励的开场白，提醒用户训练营任务还没完成。',
   emotion_check: '生成一句体贴的开场白，表达对用户近期情绪波动的关心。',
+  late_night_companion: '生成一句温柔体贴的深夜问候开场白，像老朋友一样关心用户这么晚还没睡，语气要轻柔不打扰，带着陪伴和理解。',
 };
 
 async function generateOpeningMessage(
@@ -84,6 +85,7 @@ function getDefaultMessage(scenario: string, userName?: string): string {
     reactivation: `好久不见${name}！想你了，过来聊聊？`,
     camp_followup: `${name}，今天的训练营任务还没完成呢，一起加油？`,
     emotion_check: `${name}，感觉你最近心情有些起伏，想关心一下你～`,
+    late_night_companion: `${name}，这么晚还没睡呀？想陪你聊聊～`,
   };
   return defaults[scenario] || defaults.care;
 }

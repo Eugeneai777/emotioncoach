@@ -8,7 +8,7 @@ import { CoachCallProvider } from "@/components/coach-call";
 import { AICoachCallProvider } from "@/components/coach-call/AICoachCallProvider";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
-
+import { UserPresenceTracker } from "./hooks/useUserPresence";
 // 页面加载状态组件
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -196,6 +196,7 @@ const App = () => (
             <GlobalRefTracker />
             <GlobalPaymentCallback />
             <ScrollUnlocker />
+            <UserPresenceTracker />
           {/* 全局浮动组件延迟加载 */}
           <Suspense fallback={null}>
             <FloatingVoiceButton />

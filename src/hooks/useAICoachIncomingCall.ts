@@ -5,7 +5,7 @@ import { useAuth } from './useAuth';
 export interface AICoachCall {
   id: string;
   user_id: string;
-  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check';
+  scenario: 'care' | 'reminder' | 'reactivation' | 'camp_followup' | 'emotion_check' | 'late_night_companion';
   call_status: 'pending' | 'ringing' | 'connected' | 'missed' | 'rejected' | 'completed';
   coach_type: string;
   opening_message: string | null;
@@ -27,6 +27,7 @@ const SCENARIO_LABELS: Record<string, string> = {
   reactivation: '好久没见，想跟你聊聊',
   camp_followup: '训练营今日任务还没完成哦',
   emotion_check: '感觉你最近情绪有些波动',
+  late_night_companion: '深夜了，想陪你聊聊',
 };
 
 export function useAICoachIncomingCall(): UseAICoachIncomingCallReturn {

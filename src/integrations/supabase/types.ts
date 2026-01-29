@@ -5635,6 +5635,7 @@ export type Database = {
           is_disabled: boolean | null
           last_intensity_reminder_shown: string | null
           last_reminder_shown: string | null
+          last_seen_at: string | null
           mood_status: string | null
           notification_frequency: string | null
           phone: string | null
@@ -5701,6 +5702,7 @@ export type Database = {
           is_disabled?: boolean | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
+          last_seen_at?: string | null
           mood_status?: string | null
           notification_frequency?: string | null
           phone?: string | null
@@ -5767,6 +5769,7 @@ export type Database = {
           is_disabled?: boolean | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
+          last_seen_at?: string | null
           mood_status?: string | null
           notification_frequency?: string | null
           phone?: string | null
