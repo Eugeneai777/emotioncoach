@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { CoachCallProvider } from "@/components/coach-call";
+import { AICoachCallProvider } from "@/components/coach-call/AICoachCallProvider";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 
@@ -187,13 +188,14 @@ const ScrollUnlocker = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CoachCallProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <GlobalRefTracker />
-          <GlobalPaymentCallback />
-          <ScrollUnlocker />
+      <BrowserRouter>
+        <CoachCallProvider>
+          <AICoachCallProvider>
+            <Toaster />
+            <Sonner />
+            <GlobalRefTracker />
+            <GlobalPaymentCallback />
+            <ScrollUnlocker />
           {/* 全局浮动组件延迟加载 */}
           <Suspense fallback={null}>
             <FloatingVoiceButton />
@@ -305,8 +307,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-        </BrowserRouter>
-      </CoachCallProvider>
+          </AICoachCallProvider>
+        </CoachCallProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

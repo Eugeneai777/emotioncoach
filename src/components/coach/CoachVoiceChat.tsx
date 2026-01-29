@@ -47,6 +47,10 @@ interface CoachVoiceChatProps {
   featureKey?: string; // 教练专属计费 feature_key，默认 'realtime_voice'
   scenario?: string; // 场景名称，如 "睡不着觉"，用于场景专属语音对话
   onBriefingSaved?: (briefingId: string, briefingData: BriefingData) => void;
+  // AI主动来电相关
+  isIncomingCall?: boolean;        // 是否是AI来电（被动接入）
+  aiCallId?: string;               // ai_coach_calls 记录ID
+  openingMessage?: string;         // AI预设开场白
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -65,7 +69,10 @@ export const CoachVoiceChat = ({
   mode = 'general',
   featureKey = 'realtime_voice',
   scenario,
-  onBriefingSaved
+  onBriefingSaved,
+  isIncomingCall = false,
+  aiCallId,
+  openingMessage
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -1005,6 +1012,14 @@ export const CoachVoiceChat = ({
         stopConnectionTimer();
         startMonitoring(); // 开始持续网络监控
         miniProgramClient.startRecording();
+        
+        // 🔧 AI来电模式：让AI先说开场白
+        if (isIncomingCall && openingMessage && miniProgramClient.sendTextMessage) {
+          console.log('[VoiceChat] AI incoming call (MiniProgram) - sending opening message');
+          setTimeout(() => {
+            miniProgramClient.sendTextMessage?.(openingMessage);
+          }, 500);
+        }
       } else if (platformInfo.recommendedVoiceMethod === 'webrtc') {
         console.log('[VoiceChat] Using WebRTC direct connection mode');
         setUseMiniProgramMode(false);
@@ -1064,6 +1079,15 @@ export const CoachVoiceChat = ({
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring(); // 开始持续网络监控
+          
+          // 🔧 AI来电模式：让AI先说开场白
+          if (isIncomingCall && openingMessage && chat.sendTextMessage) {
+            console.log('[VoiceChat] AI incoming call - sending opening message:', openingMessage);
+            // 稍微延迟以确保连接稳定
+            setTimeout(() => {
+              chat.sendTextMessage?.(openingMessage);
+            }, 500);
+          }
         } catch (webrtcError: any) {
           console.error('[VoiceChat] WebRTC connection failed:', webrtcError);
           
