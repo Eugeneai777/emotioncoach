@@ -815,10 +815,19 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           
           // 绽放训练营渐变色
           const gradientMap: Record<string, string> = {
-            'identity_bloom': 'from-purple-600 via-pink-500 to-rose-500',
-            'emotion_bloom': 'from-pink-500 via-rose-500 to-purple-500',
+            'identity_bloom': 'from-purple-700 via-fuchsia-600 to-rose-500',
+            'emotion_bloom': 'from-amber-100 via-orange-100 to-yellow-50',
           };
           const gradient = gradientMap[camp.camp_type] || 'from-purple-500 via-pink-500 to-rose-500';
+          
+          // 判断是否为浅色背景（情感绽放使用暖色调）
+          const isLightBg = camp.camp_type === 'emotion_bloom';
+          const textColorClass = isLightBg ? 'text-amber-900' : 'text-white';
+          const subTextColorClass = isLightBg ? 'text-amber-800/85' : 'text-white/85';
+          const tagBgClass = isLightBg ? 'bg-amber-900/15' : 'bg-white/20';
+          const tagTextClass = isLightBg ? 'text-amber-900/90' : 'text-white/95';
+          const priceNoteClass = isLightBg ? 'bg-amber-500 text-white' : 'bg-amber-400 text-amber-900';
+          const buttonGradient = isLightBg ? 'from-amber-500 via-orange-500 to-amber-600' : gradient;
           
           return (
             <MobileCard 
@@ -827,23 +836,23 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               className="overflow-hidden"
             >
               {/* 渐变背景区 */}
-              <div className={`relative bg-gradient-to-br ${gradient} p-5 text-white`}>
+              <div className={`relative bg-gradient-to-br ${gradient} p-5`}>
                 {/* 半透明覆盖层 */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/10" />
+                <div className={`absolute inset-0 ${isLightBg ? 'bg-gradient-to-t from-orange-200/30 to-white/40' : 'bg-gradient-to-t from-black/20 to-white/10'}`} />
                 
                 <div className="relative text-center space-y-3">
                   {/* 图标 */}
                   <span className="text-5xl filter drop-shadow-lg block">{camp.icon || '✨'}</span>
                   
                   {/* 标题 */}
-                  <h3 className="text-xl font-bold text-white drop-shadow-sm">{camp.camp_name}</h3>
-                  <p className="text-sm text-white/85">{camp.camp_subtitle || camp.description}</p>
+                  <h3 className={`text-xl font-bold ${textColorClass} drop-shadow-sm`}>{camp.camp_name}</h3>
+                  <p className={`text-sm ${subTextColorClass}`}>{camp.camp_subtitle || camp.description}</p>
                   
                   {/* Benefits 标签 */}
                   {benefits.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-1.5 text-xs pt-1">
                       {benefits.slice(0, 3).map((benefit, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/95">
+                        <span key={i} className={`px-2.5 py-1 ${tagBgClass} backdrop-blur-sm rounded-full ${tagTextClass}`}>
                           {benefit}
                         </span>
                       ))}
@@ -853,11 +862,11 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   {/* 价格区 */}
                   <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
                     {hasOriginalPrice && (
-                      <span className="text-white/60 line-through text-sm">¥{formatMoney(camp.original_price)}</span>
+                      <span className={`${isLightBg ? 'text-amber-700/60' : 'text-white/60'} line-through text-sm`}>¥{formatMoney(camp.original_price)}</span>
                     )}
-                    <span className="text-3xl font-bold text-white drop-shadow">¥{formatMoney(camp.price)}</span>
+                    <span className={`text-3xl font-bold ${textColorClass} drop-shadow`}>¥{formatMoney(camp.price)}</span>
                     {camp.price_note && (
-                      <span className="px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full shadow-sm">
+                      <span className={`px-2 py-0.5 ${priceNoteClass} text-xs font-semibold rounded-full shadow-sm`}>
                         {camp.price_note}
                       </span>
                     )}
@@ -868,7 +877,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               {/* 按钮区 */}
               <div className="flex gap-2 p-4 bg-card">
                 <Button 
-                  className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                  className={`flex-1 bg-gradient-to-r ${buttonGradient} text-white shadow-lg hover:opacity-90`}
                   size="lg"
                   onClick={() => handlePurchase({ 
                     key: `bloom_${camp.camp_type}_camp`, 
