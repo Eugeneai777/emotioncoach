@@ -36,7 +36,7 @@ import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 // WeChatBindOnboarding removed - now only triggers at key moments
-
+// Build refresh marker: 2026-01-30
 
 const Index = () => {
   const [searchParams] = useSearchParams();
