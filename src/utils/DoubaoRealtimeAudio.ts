@@ -279,15 +279,20 @@ export class DoubaoRealtimeChat {
 
       this.hasSessionClosed = false;
 
-      // 5. 发送 session 初始化请求（让 relay 连接豆包）
+      // 🔧 5. 关键修复：在发送 session.init 之前就设置 waitForSessionConnected 的 resolver
+      // 因为 relay 会在收到 session.init 后立即发送 session.connected，
+      // 如果我们先发送再设置 resolver，可能会错过这个消息
+      const sessionConnectedPromise = this.waitForSessionConnected();
+
+      // 6. 发送 session 初始化请求（让 relay 连接豆包）
       this.sendSessionInit();
 
-      // 6. 启动心跳
+      // 7. 启动心跳
       this.startHeartbeat();
 
-      // 🔧 7. 等待 session.connected 消息（带超时）
+      // 8. 等待 session.connected 消息（带超时）
       // 这是微信环境下解决"一直连接中"问题的关键
-      await this.waitForSessionConnected();
+      await sessionConnectedPromise;
       console.log('[DoubaoChat] ✅ Session connected successfully');
 
     } catch (error) {
