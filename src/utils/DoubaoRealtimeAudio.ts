@@ -213,19 +213,37 @@ export class DoubaoRealtimeChat {
     console.log('[DoubaoChat] Initializing with Relay architecture...');
     this.onStatusChange('connecting');
 
+    // ✅ 关键 iOS 微信修复：在任何 await（包括 getUserMedia）之前，
+    // 同步创建 AudioContext 并调用 resume()（不等待 Promise resolve），
+    // 确保浏览器将其视为 "用户手势触发"。
+    // 如果延迟到 await 之后再创建，AudioContext 会一直 suspended。
+    if (!this.playbackAudioContext) {
+      try {
+        this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+        console.log('[DoubaoChat] Playback AudioContext created (sync, 24kHz)');
+      } catch (e) {
+        console.warn('[DoubaoChat] Failed to create playback AudioContext:', e);
+      }
+    }
+    // 立即 resume（即使失败也继续）
+    this.playbackAudioContext?.resume().catch(() => {});
+
+    if (!this.audioContext || this.audioContext.state === 'closed') {
+      try {
+        this.audioContext = new AudioContext();
+        console.log('[DoubaoChat] Recording AudioContext created (sync), sampleRate:', this.audioContext.sampleRate);
+      } catch (e) {
+        console.warn('[DoubaoChat] Failed to create recording AudioContext:', e);
+      }
+    }
+    this.audioContext?.resume().catch(() => {});
+
+    // 监听页面可见性切换（iOS 微信切后台/前台恢复）
+    this.setupLifecycleListeners();
+
     try {
       // 重置播放拆包缓存，避免跨会话残留导致对齐错误
       this.playbackPcmRemainder = null;
-
-      // ✅ 0. 关键：在任何 await 之前就创建并 resume 播放 AudioContext（保证在用户点击手势上下文）
-      // 否则某些环境（iOS Safari / 小程序 WebView）会"收到音频但无法播放"。
-      await this.ensurePlaybackAudioContext('init:pre-await');
-
-      // ✅ 0.1 同样在任何 await 之前确保录音 AudioContext 已创建并 resume（避免微信里"完全没检测到说话"）
-      await this.ensureRecordingAudioContext('init:pre-await');
-
-      // ✅ 0.2 监听可见性/焦点变化，iOS 微信切后台后恢复录音/播放
-      this.setupLifecycleListeners();
 
       // 1. 获取 Relay 连接配置
       const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
