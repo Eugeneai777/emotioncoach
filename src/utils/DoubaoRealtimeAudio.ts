@@ -281,7 +281,8 @@ export class DoubaoRealtimeChat {
         audio: audioBase64
       }));
 
-      this.onSpeakingChange('user-speaking');
+      // ⚠️ 不在这里更新 speaking 状态，改为由 relay 的 ASR 事件驱动
+      // 避免与 assistant-speaking 状态冲突导致抖动
     };
 
     this.source.connect(this.processor);
