@@ -50,8 +50,8 @@ export class DoubaoRealtimeChat {
   private processor: ScriptProcessorNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private audioQueue: Uint8Array[] = [];
-  // ✅ PCM16 可能会被服务端拆包到“半个采样”边界（奇数 byte）。
-  // 不能直接丢 1 byte，否则会导致后续采样对齐错位，出现“呲呲呲”噪声。
+  // ✅ PCM16 可能会被服务端拆包到"半个采样"边界（奇数 byte）。
+  // 不能直接丢 1 byte，否则会导致后续采样对齐错位，出现"呲呲呲"噪声。
   // 正确做法：缓存最后 1 byte，拼到下一段 PCM 前面。
   private playbackPcmRemainder: Uint8Array | null = null;
   private isPlaying = false;
@@ -62,8 +62,12 @@ export class DoubaoRealtimeChat {
   private inputSampleRate: number = 16000;
   // 有些 realtime 服务需要显式 response.create 才会开始生成（尤其是文本触发或 VAD 轮次结束）
   private awaitingResponse = false;
+  // 🔧 WeChat 连接超时修复：等待 session.connected 的超时计时器和回调
+  private sessionConnectedTimeout: number | null = null;
+  private sessionConnectedResolver: (() => void) | null = null;
+  private sessionConnectedRejecter: ((err: Error) => void) | null = null;
 
-  // 🔧 iOS 微信浏览器：页面切后台/前台后 AudioContext 可能被挂起，导致“完全没检测到说话”
+  // 🔧 iOS 微信浏览器：页面切后台/前台后 AudioContext 可能被挂起，导致"完全没检测到说话"
   private visibilityHandler: (() => void) | null = null;
   private focusHandler: (() => void) | null = null;
   
@@ -86,9 +90,9 @@ export class DoubaoRealtimeChat {
   }
 
   /**
-   * 确保播放 AudioContext 在“用户手势”上下文中被创建并 resume。
+   * 确保播放 AudioContext 在"用户手势"上下文中被创建并 resume。
    * 注意：在某些浏览器/小程序 WebView 中，只要 init() 中发生了 await（如弹出麦克风授权），
-   * 后续再 resume 会被视为非手势触发，从而导致“收到音频但完全无声”。
+   * 后续再 resume 会被视为非手势触发，从而导致"收到音频但完全无声"。
    */
   private async ensurePlaybackAudioContext(tag: string): Promise<void> {
     try {
@@ -171,6 +175,40 @@ export class DoubaoRealtimeChat {
     }
   }
 
+  /**
+   * 🔧 清理 session.connected 等待状态
+   */
+  private clearSessionConnectedWait(): void {
+    if (this.sessionConnectedTimeout) {
+      clearTimeout(this.sessionConnectedTimeout);
+      this.sessionConnectedTimeout = null;
+    }
+    this.sessionConnectedResolver = null;
+    this.sessionConnectedRejecter = null;
+  }
+
+  /**
+   * 🔧 等待 session.connected 消息，带超时
+   * 解决微信浏览器/小程序中连接一直卡在"连接中"的问题
+   */
+  private waitForSessionConnected(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // 保存 resolver/rejecter 供 handleMessage 调用
+      this.sessionConnectedResolver = resolve;
+      this.sessionConnectedRejecter = reject;
+
+      // 45秒超时（微信网络可能较慢）
+      const SESSION_TIMEOUT_MS = 45000;
+      this.sessionConnectedTimeout = window.setTimeout(() => {
+        console.error('[DoubaoChat] ❌ Session connection timeout after', SESSION_TIMEOUT_MS / 1000, 's');
+        this.clearSessionConnectedWait();
+        reject(new Error('语音服务连接超时，请检查网络后重试'));
+      }, SESSION_TIMEOUT_MS);
+
+      console.log('[DoubaoChat] Waiting for session.connected (timeout:', SESSION_TIMEOUT_MS / 1000, 's)');
+    });
+  }
+
   async init(): Promise<void> {
     console.log('[DoubaoChat] Initializing with Relay architecture...');
     this.onStatusChange('connecting');
@@ -180,10 +218,10 @@ export class DoubaoRealtimeChat {
       this.playbackPcmRemainder = null;
 
       // ✅ 0. 关键：在任何 await 之前就创建并 resume 播放 AudioContext（保证在用户点击手势上下文）
-      // 否则某些环境（iOS Safari / 小程序 WebView）会“收到音频但无法播放”。
+      // 否则某些环境（iOS Safari / 小程序 WebView）会"收到音频但无法播放"。
       await this.ensurePlaybackAudioContext('init:pre-await');
 
-      // ✅ 0.1 同样在任何 await 之前确保录音 AudioContext 已创建并 resume（避免微信里“完全没检测到说话”）
+      // ✅ 0.1 同样在任何 await 之前确保录音 AudioContext 已创建并 resume（避免微信里"完全没检测到说话"）
       await this.ensureRecordingAudioContext('init:pre-await');
 
       // ✅ 0.2 监听可见性/焦点变化，iOS 微信切后台后恢复录音/播放
@@ -247,8 +285,14 @@ export class DoubaoRealtimeChat {
       // 6. 启动心跳
       this.startHeartbeat();
 
+      // 🔧 7. 等待 session.connected 消息（带超时）
+      // 这是微信环境下解决"一直连接中"问题的关键
+      await this.waitForSessionConnected();
+      console.log('[DoubaoChat] ✅ Session connected successfully');
+
     } catch (error) {
       console.error('[DoubaoChat] Init error:', error);
+      this.clearSessionConnectedWait();
       this.onStatusChange('error');
       throw error;
     }
@@ -274,12 +318,22 @@ export class DoubaoRealtimeChat {
       this.ws.onerror = (error) => {
         clearTimeout(timeout);
         console.error('[DoubaoChat] ❌ WebSocket error:', error);
+        // 🔧 如果正在等待 session.connected，也要拒绝那个 Promise
+        if (this.sessionConnectedRejecter) {
+          this.sessionConnectedRejecter(new Error('WebSocket error during session init'));
+          this.clearSessionConnectedWait();
+        }
         reject(error);
       };
 
       this.ws.onclose = (event) => {
         console.log('[DoubaoChat] WebSocket closed:', event.code, event.reason, 'wasClean:', event.wasClean);
         this.stopHeartbeat();
+        // 🔧 如果正在等待 session.connected，也要拒绝那个 Promise
+        if (this.sessionConnectedRejecter) {
+          this.sessionConnectedRejecter(new Error('WebSocket closed during session init'));
+          this.clearSessionConnectedWait();
+        }
         if (!this.isDisconnected) {
           this.onStatusChange('disconnected');
         }
@@ -429,6 +483,11 @@ export class DoubaoRealtimeChat {
             return;
           }
           console.log('[DoubaoChat] Relay connected to Doubao');
+          // 🔧 解决 waitForSessionConnected 的 Promise
+          if (this.sessionConnectedResolver) {
+            this.sessionConnectedResolver();
+            this.clearSessionConnectedWait();
+          }
           // 1. 启动录音
           this.startRecording();
           // 2. 触发 AI 开场白
@@ -439,6 +498,11 @@ export class DoubaoRealtimeChat {
         case 'session.closed':
           console.log('[DoubaoChat] Session closed by relay');
           this.hasSessionClosed = true;
+          // 🔧 如果正在等待连接，拒绝 Promise
+          if (this.sessionConnectedRejecter) {
+            this.sessionConnectedRejecter(new Error('Session closed by relay before connected'));
+            this.clearSessionConnectedWait();
+          }
           // 立刻停止录音，避免继续发送音频导致 relay 端 BrokenPipe 刷屏
           this.stopRecording();
           this.onStatusChange('disconnected');
@@ -455,46 +519,43 @@ export class DoubaoRealtimeChat {
 
         case 'input_audio_buffer.speech_stopped':
           this.onSpeakingChange('idle');
-          // ✅ 关键：用户说完后显式触发一次生成，避免“能连上但不回应/不出声”
-          this.requestResponseCreate('speech_stopped');
           break;
 
         case 'response.audio.delta':
-          this.handleAudioDelta(message.delta);
-          this.awaitingResponse = false;
-          this.onSpeakingChange('assistant-speaking');
+          if (message.delta) {
+            this.handleAudioDelta(message.delta);
+            this.onSpeakingChange('assistant-speaking');
+          }
           break;
 
         case 'response.audio.done':
+          // 音频响应完成，延迟一小段时间后设置为 idle
+          // 避免在音频播放过程中就切换状态
+          setTimeout(() => {
+            this.onSpeakingChange('idle');
+          }, 500);
+          break;
+
+        case 'response.done':
           this.awaitingResponse = false;
-          this.onSpeakingChange('idle');
           break;
 
         case 'response.audio_transcript.delta':
           if (message.delta) {
-            this.awaitingResponse = false;
             this.onTranscript(message.delta, false, 'assistant');
           }
           break;
 
         case 'response.audio_transcript.done':
           if (message.transcript) {
-            this.awaitingResponse = false;
             this.onTranscript(message.transcript, true, 'assistant');
           }
           break;
 
         case 'response.text':
-          // 处理豆包返回的文本消息
-          this.awaitingResponse = false;
-          // 兼容多种可能的字段：payload.result.text / payload.content / text / delta
-          {
-            const text =
-              message.payload?.result?.text ??
-              message.payload?.content ??
-              message.text ??
-              message.delta;
-            if (text) this.onTranscript(String(text), true, 'assistant');
+          // 豆包端到端对话的文本回复（event 550）
+          if (message.text) {
+            this.onTranscript(message.text, true, 'assistant');
           }
           break;
 
@@ -518,8 +579,14 @@ export class DoubaoRealtimeChat {
 
         case 'error':
           console.error('[DoubaoChat] Relay error:', message.error, message.details);
-          // 如果 relay 已经明确返回错误，标记为 closed，避免后续“假 connected”触发录音
+          // 如果 relay 已经明确返回错误，标记为 closed，避免后续"假 connected"触发录音
           this.hasSessionClosed = true;
+          // 🔧 如果正在等待连接，拒绝 Promise
+          if (this.sessionConnectedRejecter) {
+            const errMsg = message.error || message.details || 'Relay error';
+            this.sessionConnectedRejecter(new Error(errMsg));
+            this.clearSessionConnectedWait();
+          }
           break;
       }
     } catch (e) {
@@ -613,7 +680,7 @@ export class DoubaoRealtimeChat {
 
   private createWavFromPCM(pcmData: Uint8Array): Uint8Array {
     // ✅ Doubao 返回的 PCM 是 little-endian PCM16。
-    // 这里不要把 byteOffset 之外的“整段 buffer”一起拷贝进去，否则会把无关内存拼到 WAV 里，直接变成噪音。
+    // 这里不要把 byteOffset 之外的"整段 buffer"一起拷贝进去，否则会把无关内存拼到 WAV 里，直接变成噪音。
     // 只应写入本次 chunk 对应的那段 bytes。
     // 理论上 handleAudioDelta 已保证是偶数长度（PCM16 对齐）。这里仅做兜底。
     let pcmBytes = (pcmData.length % 2 === 0)
@@ -625,8 +692,8 @@ export class DoubaoRealtimeChat {
     }
 
     // ✅ 兜底：自动判断字节序（极少数情况下服务端返回的 PCM 可能与预期字节序不一致，
-    // 会表现为持续“呲呲呲”噪声）。
-    // 我们用一个轻量启发式：比较 LE/BE 两种解读下的“削波比例”和平均幅度，
+    // 会表现为持续"呲呲呲"噪声）。
+    // 我们用一个轻量启发式：比较 LE/BE 两种解读下的"削波比例"和平均幅度，
     // 选择更像语音的那一种。
     const analyzePcm16 = (bytes: Uint8Array, littleEndian: boolean) => {
       const maxSamples = Math.min(2000, Math.floor(bytes.length / 2));
@@ -652,7 +719,7 @@ export class DoubaoRealtimeChat {
     if (pcmBytes.length >= 200) {
       const le = analyzePcm16(pcmBytes, true);
       const be = analyzePcm16(pcmBytes, false);
-      // 经验阈值：LE 削波明显更高，且 BE 更“温和”
+      // 经验阈值：LE 削波明显更高，且 BE 更"温和"
       const shouldSwap = (le.clipFrac > 0.25 && be.clipFrac < le.clipFrac * 0.7)
         || (le.meanAbs > 18000 && be.meanAbs < le.meanAbs * 0.7);
 
@@ -788,6 +855,7 @@ export class DoubaoRealtimeChat {
     this.isDisconnected = true;
     this.stopHeartbeat();
     this.removeLifecycleListeners();
+    this.clearSessionConnectedWait();
 
     if (this.processor) {
       this.processor.disconnect();
