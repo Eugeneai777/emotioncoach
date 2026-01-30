@@ -62,6 +62,10 @@ export class DoubaoRealtimeChat {
   private inputSampleRate: number = 16000;
   // 有些 realtime 服务需要显式 response.create 才会开始生成（尤其是文本触发或 VAD 轮次结束）
   private awaitingResponse = false;
+
+  // 🔧 iOS 微信浏览器：页面切后台/前台后 AudioContext 可能被挂起，导致“完全没检测到说话”
+  private visibilityHandler: (() => void) | null = null;
+  private focusHandler: (() => void) | null = null;
   
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -104,6 +108,69 @@ export class DoubaoRealtimeChat {
     }
   }
 
+  /**
+   * 🔧 确保录音 AudioContext 可用且为 running。
+   * iOS 微信 WKWebView 中，AudioContext 很容易在非手势阶段创建后处于 suspended，
+   * 这会导致 ScriptProcessor 的 onaudioprocess 不触发，进而完全没有音频上行。
+   */
+  private async ensureRecordingAudioContext(tag: string): Promise<void> {
+    try {
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        // 注意：不强依赖 sampleRate；实际采样率以 audioContext.sampleRate 为准，后续会重采样到 inputSampleRate。
+        this.audioContext = new AudioContext();
+        console.log('[DoubaoChat] Recording AudioContext created, sampleRate:', this.audioContext.sampleRate, 'tag:', tag);
+      }
+
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+        console.log('[DoubaoChat] Recording AudioContext resumed, tag:', tag);
+      }
+
+      console.log('[DoubaoChat] Recording AudioContext state:', this.audioContext.state, 'tag:', tag);
+    } catch (e) {
+      console.warn('[DoubaoChat] Failed to ensure recording AudioContext:', e);
+    }
+  }
+
+  private async resumeAudioContexts(tag: string): Promise<void> {
+    await this.ensurePlaybackAudioContext(tag);
+    await this.ensureRecordingAudioContext(tag);
+  }
+
+  private setupLifecycleListeners(): void {
+    // 避免重复绑定
+    this.removeLifecycleListeners();
+
+    this.visibilityHandler = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[DoubaoChat] Page became visible, resuming audio contexts');
+        void this.resumeAudioContexts('visibilitychange');
+      }
+    };
+
+    this.focusHandler = () => {
+      // iOS 微信里有时不会触发 visibilitychange，但会触发 focus/pageshow
+      console.log('[DoubaoChat] Window focus/pageshow, resuming audio contexts');
+      void this.resumeAudioContexts('focus');
+    };
+
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+    window.addEventListener('focus', this.focusHandler);
+    window.addEventListener('pageshow', this.focusHandler);
+  }
+
+  private removeLifecycleListeners(): void {
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
+    if (this.focusHandler) {
+      window.removeEventListener('focus', this.focusHandler);
+      window.removeEventListener('pageshow', this.focusHandler);
+      this.focusHandler = null;
+    }
+  }
+
   async init(): Promise<void> {
     console.log('[DoubaoChat] Initializing with Relay architecture...');
     this.onStatusChange('connecting');
@@ -115,6 +182,12 @@ export class DoubaoRealtimeChat {
       // ✅ 0. 关键：在任何 await 之前就创建并 resume 播放 AudioContext（保证在用户点击手势上下文）
       // 否则某些环境（iOS Safari / 小程序 WebView）会“收到音频但无法播放”。
       await this.ensurePlaybackAudioContext('init:pre-await');
+
+      // ✅ 0.1 同样在任何 await 之前确保录音 AudioContext 已创建并 resume（避免微信里“完全没检测到说话”）
+      await this.ensureRecordingAudioContext('init:pre-await');
+
+      // ✅ 0.2 监听可见性/焦点变化，iOS 微信切后台后恢复录音/播放
+      this.setupLifecycleListeners();
 
       // 1. 获取 Relay 连接配置
       const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
@@ -153,15 +226,10 @@ export class DoubaoRealtimeChat {
       });
       console.log('[DoubaoChat] Microphone access granted');
 
-      // 3. 初始化音频上下文
-      this.audioContext = new AudioContext({
-        // 注意：浏览器不一定会严格按该值创建；需要在采集时做重采样兜底
-        sampleRate: this.inputSampleRate
-      });
-      console.log('[DoubaoChat] AudioContext sampleRate:', this.audioContext.sampleRate, 'target:', this.inputSampleRate);
-
-      // ✅ 二次兜底：如果上面 pre-await 没成功，这里再确保一次（但这里可能已不在手势上下文）
+      // 3. ✅ 二次兜底：如果上面 pre-await 没成功，这里再确保一次（但这里可能已不在手势上下文）
       await this.ensurePlaybackAudioContext('init:post-mic');
+      await this.ensureRecordingAudioContext('init:post-mic');
+      console.log('[DoubaoChat] Recording context sampleRate:', this.audioContext?.sampleRate, 'target inputSampleRate:', this.inputSampleRate);
 
       // 4. 建立 WebSocket 连接到 Relay
       const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
@@ -258,6 +326,15 @@ export class DoubaoRealtimeChat {
   // 公开的启动录音方法（用于符合 AudioClient 接口）
   startRecording(): void {
     if (!this.audioContext || !this.mediaStream) return;
+
+    // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume().then(() => {
+        console.log('[DoubaoChat] Recording AudioContext resumed in startRecording');
+      }).catch((e) => {
+        console.warn('[DoubaoChat] Failed to resume recording AudioContext in startRecording:', e);
+      });
+    }
 
     this.source = this.audioContext.createMediaStreamSource(this.mediaStream);
     this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
@@ -710,6 +787,7 @@ export class DoubaoRealtimeChat {
     console.log('[DoubaoChat] Disconnecting...');
     this.isDisconnected = true;
     this.stopHeartbeat();
+    this.removeLifecycleListeners();
 
     if (this.processor) {
       this.processor.disconnect();
