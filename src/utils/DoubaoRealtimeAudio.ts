@@ -414,6 +414,20 @@ export class DoubaoRealtimeChat {
     }
 
     this.source = this.audioContext.createMediaStreamSource(this.mediaStream);
+    
+    // ✅ 移动端麦克风增益优化：使用 GainNode 提升采集音量
+    // iOS 微信等环境下麦克风默认增益较低，导致 ASR 识别不准
+    let gainNode: GainNode | null = null;
+    try {
+      gainNode = this.audioContext.createGain();
+      // 增益系数 2.5 左右，提升低音量语音的识别率
+      // 不宜过高，否则会导致削波失真
+      gainNode.gain.value = 2.5;
+      console.log('[DoubaoChat] Audio gain set to 2.5x for mobile optimization');
+    } catch (e) {
+      console.warn('[DoubaoChat] Failed to create GainNode:', e);
+    }
+    
     this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
     this.processor.onaudioprocess = (e) => {
@@ -439,9 +453,15 @@ export class DoubaoRealtimeChat {
       // 避免与 assistant-speaking 状态冲突导致抖动
     };
 
-    this.source.connect(this.processor);
+    // 连接音频处理链：source -> gainNode -> processor -> destination
+    if (gainNode) {
+      this.source.connect(gainNode);
+      gainNode.connect(this.processor);
+    } else {
+      this.source.connect(this.processor);
+    }
     this.processor.connect(this.audioContext.destination);
-    console.log('[DoubaoChat] Recording started');
+    console.log('[DoubaoChat] Recording started with mobile audio optimization');
   }
 
   /**
