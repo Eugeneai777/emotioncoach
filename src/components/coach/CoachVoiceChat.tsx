@@ -831,6 +831,11 @@ export const CoachVoiceChat = ({
     if (isInitializingRef.current) return;
     if (chatRef.current || status === 'connecting' || status === 'connected') return;
     isInitializingRef.current = true;
+
+    // ✅ 关键：平台信息同步获取（不要放在后面 await 之后，否则微信里会错过“用户手势上下文”）
+    // 用于决定是否需要在最早阶段抢先触发麦克风授权弹窗。
+    const platformInfo = getPlatformInfo();
+    console.log('[VoiceChat] Platform info (early):', platformInfo);
     
     const lockId = acquireLock();
     if (!lockId) {
@@ -852,6 +857,46 @@ export const CoachVoiceChat = ({
       setIsEnding(false);
       setTranscript('');
       setUserTranscript('');
+
+      // 🔧 微信/小程序：在任何 await 之前先触发一次麦克风权限请求
+      // iOS 微信 WKWebView 经常要求 getUserMedia 必须发生在“用户点击”同步上下文中，
+      // 否则会出现：不弹授权框 + 一直连接中。
+      if (platformInfo.platform === 'wechat-browser' || platformInfo.platform === 'miniprogram') {
+        updateConnectionPhase('requesting_mic');
+        try {
+          // 小程序优先用 authorize 预热（若可用）
+          if (platformInfo.platform === 'miniprogram' && typeof window.wx?.authorize === 'function') {
+            await new Promise<void>((resolve, reject) => {
+              window.wx?.authorize?.({
+                scope: 'scope.record',
+                success: () => resolve(),
+                fail: (err: any) => reject(err),
+              });
+            });
+          }
+
+          // H5/WebView 走 getUserMedia 预热
+          if (navigator.mediaDevices?.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach((t) => t.stop());
+          }
+
+          console.log('[VoiceChat] ✅ Mic permission preflight done');
+        } catch (permError: any) {
+          console.error('[VoiceChat] ❌ Mic permission preflight failed:', permError);
+          toast({
+            title: '无法使用麦克风',
+            description: '请在微信设置中允许访问麦克风后再试',
+            variant: 'destructive',
+          });
+          setStatus('error');
+          isInitializingRef.current = false;
+          stopConnectionTimer();
+          releaseLock();
+          setTimeout(onClose, 800);
+          return;
+        }
+      }
 
       // 🔐 确保登录态可用：没有 session 或 refresh 失败时，直接引导重新登录
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -920,7 +965,6 @@ export const CoachVoiceChat = ({
 
       // 🔧 双轨切换：检测平台并选择合适的音频客户端
       updateConnectionPhase('getting_token');
-      const platformInfo = getPlatformInfo();
       console.log('[VoiceChat] Platform info:', platformInfo);
 
       // 🎯 豆包语音：情绪教练使用豆包 Realtime（静老师）
