@@ -1012,6 +1012,8 @@ export const CoachVoiceChat = ({
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring();
+          // ✅ 豆包语音：init 成功后手动启动录音采集
+          doubaoClient.startRecording();
         } catch (doubaoError: any) {
           console.error('[VoiceChat] ❌ Doubao connection failed:', doubaoError);
           
