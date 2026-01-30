@@ -64,10 +64,14 @@ export class MiniProgramAudioClient {
   
   // 🔧 心跳延迟追踪
   private lastPingTime: number = 0;
-  private latency: number = 0;
+  private lastPongTime: number = 0; // 🔧 修复：新增 pong 时间戳
+  private latency: number = 0; // 保留 latency 用于 getLatency()
   
   // 🔧 心跳超时检测
   private missedPongs: number = 0;
+  
+  // 🔧 iOS 可见性监听
+  private visibilityHandler: (() => void) | null = null;
 
   constructor(config: MiniProgramAudioConfig) {
     this.config = config;
@@ -100,6 +104,9 @@ export class MiniProgramAudioClient {
 
       // 6. 启动心跳
       this.startHeartbeat();
+      
+      // 7. 🔧 监听页面可见性变化（iOS 小程序后台恢复时 resume AudioContext）
+      this.setupVisibilityListener();
 
       this.updateStatus('connected');
       this.reconnectAttempts = 0;
@@ -117,6 +124,7 @@ export class MiniProgramAudioClient {
     this.stopHeartbeat();
     this.stopRecording();
     this.stopAudioPlayback();
+    this.removeVisibilityListener();
 
     if (this.ws) {
       this.ws.close();
@@ -471,8 +479,9 @@ export class MiniProgramAudioClient {
 
         case 'pong':
           // 🔧 心跳响应 - 计算延迟并重置 missedPongs
+          this.lastPongTime = Date.now();
           if (this.lastPingTime > 0) {
-            this.latency = Date.now() - this.lastPingTime;
+            this.latency = this.lastPongTime - this.lastPingTime;
             console.log(`[MiniProgramAudio] Latency: ${this.latency}ms`);
           }
           this.missedPongs = 0; // 收到 pong，重置计数
@@ -707,16 +716,16 @@ export class MiniProgramAudioClient {
   }
 
   private startHeartbeat(): void {
-    // 🔧 缩短心跳间隔到 15 秒，更快检测连接问题
+    // 🔧 缩短心跳间隔到 20 秒（iOS 小程序后台限制较严）
     this.heartbeatInterval = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        // 🔧 检查上次 ping 是否收到 pong
-        if (this.lastPingTime > 0 && this.latency === 0) {
+        // 🔧 修复：正确检测未收到 pong（上次发送 ping 后没有收到新的 pong）
+        if (this.lastPingTime > 0 && this.lastPongTime < this.lastPingTime) {
           this.missedPongs++;
-          console.warn(`[MiniProgramAudio] Missed pong #${this.missedPongs}`);
+          console.warn(`[MiniProgramAudio] Missed pong #${this.missedPongs} (lastPing=${this.lastPingTime}, lastPong=${this.lastPongTime})`);
           
-          // 连续 3 次未收到 pong，断开重连
-          if (this.missedPongs >= 3) {
+          // 🔧 放宽到 5 次未收到 pong 才断开（iOS 后台切换容忍度更高）
+          if (this.missedPongs >= 5) {
             console.error('[MiniProgramAudio] Too many missed pongs, reconnecting...');
             this.ws?.close();
             return;
@@ -724,10 +733,10 @@ export class MiniProgramAudioClient {
         }
         
         this.lastPingTime = Date.now();
-        this.latency = 0; // 重置延迟，等待 pong 更新
         this.ws.send(JSON.stringify({ type: 'ping' }));
+        console.log('[MiniProgramAudio] Sent ping');
       }
-    }, 15000);
+    }, 20000);
   }
   
   /**
@@ -741,6 +750,48 @@ export class MiniProgramAudioClient {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
+    }
+  }
+  
+  /**
+   * 🔧 iOS 小程序后台切换恢复：监听 visibilitychange 并 resume AudioContext
+   */
+  private setupVisibilityListener(): void {
+    this.visibilityHandler = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[MiniProgramAudio] Page became visible, resuming audio contexts');
+        
+        // 恢复录音 AudioContext
+        if (this.webAudioContext && this.webAudioContext.state === 'suspended') {
+          this.webAudioContext.resume().then(() => {
+            console.log('[MiniProgramAudio] Recording AudioContext resumed');
+          }).catch(e => {
+            console.error('[MiniProgramAudio] Failed to resume recording context:', e);
+          });
+        }
+        
+        // 恢复播放 AudioContext
+        if (this.playbackContext && this.playbackContext.state === 'suspended') {
+          this.playbackContext.resume().then(() => {
+            console.log('[MiniProgramAudio] Playback AudioContext resumed');
+          }).catch(e => {
+            console.error('[MiniProgramAudio] Failed to resume playback context:', e);
+          });
+        }
+        
+        // 🔧 重置心跳计数（后台期间可能丢失了 pong）
+        this.missedPongs = 0;
+        this.lastPongTime = Date.now();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+  }
+  
+  private removeVisibilityListener(): void {
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
     }
   }
 
