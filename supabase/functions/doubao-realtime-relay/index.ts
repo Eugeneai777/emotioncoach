@@ -395,7 +395,9 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
       enable_vad: true,
-      vad_stop_time: 800,
+      vad_stop_time: 600,        // 缩短静音判定时间，更快响应
+      vad_max_speech_time: 60,   // 最长语音时间60秒
+      vad_silence_time: 300,     // 语音开始前的静音容忍时间
       enable_tts: true,
       bot_name: '情绪教练',
       system_role: instructions
@@ -883,6 +885,7 @@ Deno.serve(async (req) => {
 
                 // ✅ 将豆包 ASR 开始事件映射为“用户开始说话”（前端用来更新 speaking 状态）
                 if (parsed.event === EVENT_ASR_START) {
+                  console.log(`[DoubaoRelay] 🎙️ ASR开始: 检测到用户语音输入`);
                   clientSocket.send(JSON.stringify({ type: 'input_audio_buffer.speech_started' }));
                   continue;
                 }
