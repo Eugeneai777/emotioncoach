@@ -875,6 +875,14 @@ ${reflection}`;
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => navigate('/meditation-library')}
+                      className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                    >
+                      🧘 冥想库
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => navigate('/wealth-block')}
                       className="text-amber-600 border-amber-200 hover:bg-amber-50"
                     >

@@ -140,6 +140,7 @@ const TransformationFlow = lazy(() => import("./pages/TransformationFlow"));
 // 财富教练
 const WealthBlockAssessment = lazy(() => import("./pages/WealthBlockAssessment"));
 const WealthCampCheckIn = lazy(() => import("./pages/WealthCampCheckIn"));
+const MeditationLibrary = lazy(() => import("./pages/MeditationLibrary"));
 const WealthJournal = lazy(() => import("./pages/WealthJournal"));
 const WealthJournalDetail = lazy(() => import("./pages/WealthJournalDetail"));
 const WealthCoachIntro = lazy(() => import("./pages/WealthCoachIntro"));
@@ -308,6 +309,7 @@ const App = () => (
               <Route path="/wealth-camp-intro" element={<WealthCampIntro />} />
               <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
               <Route path="/wealth-awakening-archive" element={<WealthAwakeningArchive />} />
+              <Route path="/meditation-library" element={<MeditationLibrary />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/terms/youjin-partner" element={<YoujinPartnerTerms />} />
               <Route path="/terms/bloom-partner" element={<BloomPartnerTerms />} />
