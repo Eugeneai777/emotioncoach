@@ -1,11 +1,11 @@
 import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -14,6 +14,9 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
+
+// 静默授权恢复支付的 sessionStorage key
+const PENDING_PAYMENT_PACKAGE_KEY = 'pending_payment_package';
 
 interface PackageInfo {
   key: string;
@@ -24,6 +27,7 @@ interface PackageInfo {
 
 export default function Packages() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { showTour, completeTour } = usePageTour('packages');
   const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach'>('youjin-member');
@@ -31,6 +35,12 @@ export default function Packages() {
   
   // 支付弹窗状态
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+  
+  // 🆕 静默授权回跳后恢复支付流程的状态
+  const paymentResumeHandledRef = useRef(false);
+  const paymentResume = searchParams.get('payment_resume') === '1';
+  const paymentOpenId = searchParams.get('payment_openid');
+  const paymentAuthError = searchParams.get('payment_auth_error') === '1';
 
   // 处理小程序支付成功回调 - 仅用于检测是否处于回调场景，不显示 toast
   // toast 由 WechatPayDialog 组件内部在验证订单成功后显示
@@ -53,6 +63,55 @@ export default function Packages() {
       // 不关闭弹窗，让 WechatPayDialog 组件验证订单后再关闭
     }
   }, [isPaymentCallback, callbackOrderNo]);
+
+  // 🆕 静默授权回跳后自动恢复支付弹窗
+  useEffect(() => {
+    // 防止重复处理
+    if (paymentResumeHandledRef.current) return;
+    
+    // 授权失败提示
+    if (paymentAuthError) {
+      paymentResumeHandledRef.current = true;
+      toast.error("微信授权失败", { description: "请重新尝试支付" });
+      
+      // 清理 URL 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      url.searchParams.delete('payment_auth_error');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+    
+    // 检测是否需要恢复支付流程
+    if (paymentResume) {
+      paymentResumeHandledRef.current = true;
+      
+      try {
+        const cachedPackageStr = sessionStorage.getItem(PENDING_PAYMENT_PACKAGE_KEY);
+        if (cachedPackageStr) {
+          const cachedPackage = JSON.parse(cachedPackageStr) as PackageInfo;
+          console.log('[Packages] Resuming payment for package:', cachedPackage.name);
+          
+          // 恢复套餐选择并打开弹窗
+          setSelectedPackage(cachedPackage);
+          setPayDialogOpen(true);
+          
+          // 清理缓存
+          sessionStorage.removeItem(PENDING_PAYMENT_PACKAGE_KEY);
+        } else {
+          console.warn('[Packages] No cached package found for payment resume');
+        }
+      } catch (e) {
+        console.error('[Packages] Failed to parse cached package:', e);
+      }
+      
+      // 清理 URL 参数（保留 payment_openid 供 WechatPayDialog 使用，但清除其他）
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      // payment_openid 由 WechatPayDialog 内部读取后清理
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [paymentResume, paymentAuthError]);
 
   const handlePurchase = (packageInfo: PackageInfo) => {
     // 如果正在处理支付回调，不打开新弹窗
@@ -147,6 +206,7 @@ export default function Packages() {
           }}
           packageInfo={selectedPackage}
           onSuccess={handlePaymentSuccess}
+          openId={paymentOpenId || undefined}
         />
       </div>
     </>
