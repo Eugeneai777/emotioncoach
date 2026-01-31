@@ -7,13 +7,54 @@ interface AwakeningEntryCardProps {
   dimension: AwakeningDimension;
   onClick: () => void;
   index: number;
+  compact?: boolean;
 }
 
 const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
   dimension,
   onClick,
-  index
+  index,
+  compact = false
 }) => {
+  if (compact) {
+    return (
+      <motion.div
+        initial={{ opacity: 0.01, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.06, duration: 0.3 }}
+        whileHover={{ scale: 1.03, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onClick}
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+        className={cn(
+          "relative overflow-hidden rounded-xl p-3 cursor-pointer",
+          "bg-gradient-to-br shadow-md",
+          dimension.gradient,
+          "min-h-[90px] flex flex-col justify-between"
+        )}
+      >
+        {/* 背景装饰 */}
+        <div className="absolute top-0 right-0 w-12 h-12 opacity-20">
+          <div className="absolute top-1 right-1 text-2xl opacity-40">
+            {dimension.emoji}
+          </div>
+        </div>
+        
+        {/* 主要内容 */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-xl">{dimension.emoji}</span>
+            <h3 className="text-base font-bold text-white">{dimension.title}</h3>
+          </div>
+          <p className="text-[10px] text-white/80 leading-tight">{dimension.categoryLabel}</p>
+        </div>
+        
+        {/* 悬浮光效 */}
+        <div className="absolute inset-0 bg-white/0 hover:bg-white/10 transition-colors duration-300" />
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0.01, y: 20 }}

@@ -2,20 +2,27 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
-import { ArrowLeft, Share2, Sparkles } from "lucide-react";
+import { ArrowLeft, Share2, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
+import AwakeningPainPointCard from "@/components/awakening/AwakeningPainPointCard";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+
 const Awakening: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [selectedDimension, setSelectedDimension] = useState<AwakeningDimension | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // 分类维度
+  const challengeDimensions = awakeningDimensions.filter(d => d.category === 'challenge');
+  const blessingDimensions = awakeningDimensions.filter(d => d.category === 'blessing');
 
   // 小程序入口页：把 mp_openid / mp_unionid 缓存下来，供后续页面（如产品中心）支付复用
   useEffect(() => {
@@ -33,15 +40,19 @@ const Awakening: React.FC = () => {
       console.log('[Awakening] Cached mp_unionid for MiniProgram');
     }
   }, [searchParams]);
+
   const handleEntryClick = (dimension: AwakeningDimension) => {
     setSelectedDimension(dimension);
     setIsDrawerOpen(true);
   };
+
   const handleDrawerClose = () => {
     setIsDrawerOpen(false);
     setSelectedDimension(null);
   };
-  return <>
+
+  return (
+    <>
       <DynamicOGMeta pageKey="awakening" />
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -51,7 +62,7 @@ const Awakening: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate('/coach/wealth_coach_4_questions')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">觉察入口</h1>
+            <h1 className="text-lg font-semibold">觉察日记</h1>
             <IntroShareDialog
               config={introShareConfigs.awakening}
               trigger={
@@ -64,25 +75,107 @@ const Awakening: React.FC = () => {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-4">
-          {/* 标题区 */}
-          <motion.div 
-            initial={{ opacity: 0.01, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="text-center space-y-2"
-          >
-            
-            <p className="text-sm text-muted-foreground">
-              每天1次轻记录 → 我帮你看见盲点与模式 → 给你一个最小行动
-            </p>
-          </motion.div>
+        <main className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-5">
+          {/* Hero区：核心价值+科学依据 */}
+          <AwakeningHeroCard />
 
-          {/* 6宫格入口 */}
-          <div className="grid grid-cols-2 gap-3">
-            {awakeningDimensions.map((dimension, index) => <AwakeningEntryCard key={dimension.id} dimension={dimension} onClick={() => handleEntryClick(dimension)} index={index} />)}
+          {/* 痛点共鸣卡片（可折叠） */}
+          <AwakeningPainPointCard />
+
+          {/* 分类说明 */}
+          <div className="space-y-4">
+            {/* 困境记录 */}
+            <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0.01, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+                className="flex items-center gap-2"
+              >
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
+                <span className="text-sm font-medium text-destructive/80 flex items-center gap-1">
+                  <span>🔥</span> 困境 → 破局关键点
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
+              </motion.div>
+              <div className="grid grid-cols-3 gap-2">
+                {challengeDimensions.map((dimension, index) => (
+                  <AwakeningEntryCard
+                    key={dimension.id}
+                    dimension={dimension}
+                    onClick={() => handleEntryClick(dimension)}
+                    index={index}
+                    compact
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* 顺境记录 */}
+            <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0.01, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+                className="flex items-center gap-2"
+              >
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                <span className="text-sm font-medium text-primary/80 flex items-center gap-1">
+                  <span>✨</span> 顺境 → 滋养与锚定
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+              </motion.div>
+              <div className="grid grid-cols-3 gap-2">
+                {blessingDimensions.map((dimension, index) => (
+                  <AwakeningEntryCard
+                    key={dimension.id}
+                    dimension={dimension}
+                    onClick={() => handleEntryClick(dimension)}
+                    index={index + 3}
+                    compact
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
+          {/* 写法提示 */}
+          <motion.div
+            initial={{ opacity: 0.01, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+            className="bg-muted/50 rounded-xl p-4 space-y-2"
+          >
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Lightbulb className="h-4 w-4 text-amber-500" />
+              <span>写法小贴士</span>
+            </div>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              <li className="flex items-start gap-2">
+                <span className="text-destructive/70">•</span>
+                <span>写困境时，不叫「困难」，叫「<strong className="text-foreground">破局关键点</strong>」或「命运转折点」</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary/70">•</span>
+                <span>写顺境时，记录<strong className="text-foreground">微小美好</strong>：散步、电影、灵感、三餐</span>
+              </li>
+            </ul>
+          </motion.div>
+
+          {/* 底部金句 */}
+          <motion.div
+            initial={{ opacity: 0.01 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            style={{ transform: 'translateZ(0)', willChange: 'opacity' }}
+            className="text-center text-xs text-muted-foreground pt-2"
+          >
+            <p>把平凡日常积累成个人成长的复利资产</p>
+            <p className="mt-1">将碎片化时间冶炼成金 ✨</p>
+          </motion.div>
         </main>
 
         {/* 底部凸起导航 */}
@@ -91,6 +184,8 @@ const Awakening: React.FC = () => {
         {/* 输入抽屉 */}
         <AwakeningDrawer dimension={selectedDimension} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
       </div>
-    </>;
+    </>
+  );
 };
+
 export default Awakening;
