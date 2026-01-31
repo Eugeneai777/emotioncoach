@@ -1,13 +1,17 @@
 // 觉察记录入口配置 - 6大觉察维度
 export type AwakeningType = 'emotion' | 'gratitude' | 'action' | 'decision' | 'relation' | 'direction';
 
+export type AwakeningCategory = 'challenge' | 'blessing';
+
 export interface AwakeningDimension {
   id: AwakeningType;
   title: string;
   subtitle: string;
+  categoryLabel: string; // 分类说明，如"看见被忽略的信号"
   emoji: string;
   gradient: string;
   primaryColor: string;
+  category: AwakeningCategory; // 困境 or 顺境
   template: string;
   templateParts: {
     prefix: string;
@@ -27,9 +31,11 @@ export const awakeningDimensions: AwakeningDimension[] = [
     id: 'emotion',
     title: '情绪',
     subtitle: '盲点',
+    categoryLabel: '看见被忽略的信号',
     emoji: '🔥',
     gradient: 'from-red-500 to-orange-400',
     primaryColor: 'red',
+    category: 'challenge',
     template: '我现在有点___，因为___。',
     templateParts: {
       prefix: '我现在有点',
@@ -47,9 +53,11 @@ export const awakeningDimensions: AwakeningDimension[] = [
     id: 'gratitude',
     title: '感恩',
     subtitle: '滋养',
+    categoryLabel: '重写神经回路',
     emoji: '💛',
     gradient: 'from-amber-500 to-yellow-400',
     primaryColor: 'amber',
+    category: 'blessing',
     template: '今天我感谢___，因为___。',
     templateParts: {
       prefix: '今天我感谢',
@@ -67,9 +75,11 @@ export const awakeningDimensions: AwakeningDimension[] = [
     id: 'action',
     title: '行动',
     subtitle: '驱动',
+    categoryLabel: '把碎片变成复利',
     emoji: '⚡',
     gradient: 'from-blue-500 to-cyan-400',
     primaryColor: 'blue',
+    category: 'blessing',
     template: '我最想完成___，但卡在___。',
     templateParts: {
       prefix: '我最想完成',
@@ -87,9 +97,11 @@ export const awakeningDimensions: AwakeningDimension[] = [
     id: 'decision',
     title: '选择',
     subtitle: '潜意识',
+    categoryLabel: '理清内心的冲突',
     emoji: '🧩',
     gradient: 'from-purple-500 to-pink-400',
     primaryColor: 'purple',
+    category: 'challenge',
     template: '我在纠结___ vs ___，我担心___。',
     templateParts: {
       prefix: '我在纠结',
@@ -107,9 +119,11 @@ export const awakeningDimensions: AwakeningDimension[] = [
     id: 'relation',
     title: '关系',
     subtitle: '连结',
+    categoryLabel: '表达未被听见的话',
     emoji: '🤝',
     gradient: 'from-pink-500 to-rose-400',
     primaryColor: 'pink',
+    category: 'challenge',
     template: '我想对TA说___，但怕___。',
     templateParts: {
       prefix: '我想对TA说',
@@ -127,9 +141,11 @@ export const awakeningDimensions: AwakeningDimension[] = [
     id: 'direction',
     title: '方向',
     subtitle: '启发',
+    categoryLabel: '点亮人生主线',
     emoji: '🌟',
     gradient: 'from-teal-500 to-emerald-400',
     primaryColor: 'teal',
+    category: 'blessing',
     template: '我最近想要___，但不确定___。',
     templateParts: {
       prefix: '我最近想要',
