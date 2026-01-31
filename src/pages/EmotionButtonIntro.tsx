@@ -98,7 +98,10 @@ const EmotionButtonIntro = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="emotionButtonIntro" />
       {/* Header */}
       <header className="bg-white/60 backdrop-blur-sm border-b border-teal-100 sticky top-0 z-10">

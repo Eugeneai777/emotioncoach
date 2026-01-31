@@ -186,6 +186,11 @@ const ScrollUnlocker = () => {
   return null;
 };
 
+// 路由变化时滚动到顶部
+const ScrollToTopOnNavigate = lazy(() => 
+  import("./components/ScrollToTopOnNavigate").then(m => ({ default: m.ScrollToTopOnNavigate }))
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -197,6 +202,9 @@ const App = () => (
             <GlobalRefTracker />
             <GlobalPaymentCallback />
             <ScrollUnlocker />
+            <Suspense fallback={null}>
+              <ScrollToTopOnNavigate />
+            </Suspense>
             <UserPresenceTracker />
           {/* 全局浮动组件延迟加载 */}
           <Suspense fallback={null}>
