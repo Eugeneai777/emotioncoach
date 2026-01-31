@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Phone } from 'lucide-react';
-// Force rebuild - Vite cache fix
+// Force rebuild - Vite cache fix v2
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
