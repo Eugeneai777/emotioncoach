@@ -66,6 +66,8 @@ export class DoubaoRealtimeChat {
   private sessionConnectedTimeout: number | null = null;
   private sessionConnectedResolver: (() => void) | null = null;
   private sessionConnectedRejecter: ((err: Error) => void) | null = null;
+  // 🔧 播放端增益节点：提升 AI 回复音量（移动端微信扬声器音量偏小）
+  private playbackGainNode: GainNode | null = null;
 
   // 🔧 iOS 微信浏览器：页面切后台/前台后 AudioContext 可能被挂起，导致"完全没检测到说话"
   private visibilityHandler: (() => void) | null = null;
@@ -99,6 +101,17 @@ export class DoubaoRealtimeChat {
       if (!this.playbackAudioContext) {
         this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
         console.log('[DoubaoChat] Playback AudioContext created (24kHz), tag:', tag);
+        
+        // 🔧 创建播放增益节点：移动端微信扬声器音量偏小，增益 1.8 倍
+        try {
+          this.playbackGainNode = this.playbackAudioContext.createGain();
+          // 增益系数 1.8：明显提升音量但不会导致削波失真
+          this.playbackGainNode.gain.value = 1.8;
+          this.playbackGainNode.connect(this.playbackAudioContext.destination);
+          console.log('[DoubaoChat] Playback GainNode created with 1.8x gain');
+        } catch (e) {
+          console.warn('[DoubaoChat] Failed to create playback GainNode:', e);
+        }
       }
 
       if (this.playbackAudioContext.state === 'suspended') {
@@ -706,7 +719,12 @@ export class DoubaoRealtimeChat {
       
       const source = this.playbackAudioContext.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(this.playbackAudioContext.destination);
+      // 🔧 使用增益节点提升音量（移动端微信扬声器偏小）
+      if (this.playbackGainNode) {
+        source.connect(this.playbackGainNode);
+      } else {
+        source.connect(this.playbackAudioContext.destination);
+      }
       
       source.onended = () => {
         this.isPlaying = false;
@@ -918,6 +936,16 @@ export class DoubaoRealtimeChat {
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
+    }
+
+    // ✅ 清理播放增益节点
+    if (this.playbackGainNode) {
+      try {
+        this.playbackGainNode.disconnect();
+      } catch (e) {
+        console.warn('[DoubaoChat] Failed to disconnect playback GainNode:', e);
+      }
+      this.playbackGainNode = null;
     }
 
     // ✅ 清理播放 AudioContext
