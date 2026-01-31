@@ -1,94 +1,95 @@
 
-# 修复 `/emotion-button-intro` 页面滚动问题
+# 为情绪健康测评页面添加与财富卡点相同的头部按钮
 
-## 问题分析
+## 需求分析
 
-`/emotion-button-intro` 页面在微信浏览器中无法上下滚动，主要有以下原因：
+根据截图和代码对比，财富卡点测评页面(`/wealth-block`)的 PageHeader 右侧有两个按钮：
+1. **"AI教练" 按钮** - 橙色渐变按钮，带闪光图标和箭头，点击跳转到 `/coach-space`
+2. **分享按钮** - 图标按钮，点击打开分享弹窗
 
-1. 页面结构未遵循项目的「统一滚动容器标准」
-2. 页面导航时没有自动滚动到顶部
-3. 底部固定 CTA 按钮可能在某些情况下干扰滚动
+而情绪健康测评页面(`/emotion-health`)目前只有基础的返回按钮和标题，缺少这两个功能入口。
 
-## 修复方案
+---
 
-### 步骤 1：添加全局路由切换滚动重置
+## 修改方案
 
-创建一个 `ScrollToTopOnNavigate` 组件，在每次路由变化时自动滚动到页面顶部。
+### 修改文件：`src/pages/EmotionHealthPage.tsx`
 
-**新建文件**：`src/components/ScrollToTopOnNavigate.tsx`
-
-```typescript
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-
-export const ScrollToTopOnNavigate = () => {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  }, [pathname]);
-
-  return null;
-};
-```
-
-### 步骤 2：在 App.tsx 中注册组件
-
-将 `ScrollToTopOnNavigate` 组件添加到 `BrowserRouter` 内部。
-
-**修改文件**：`src/App.tsx`
+#### 1. 添加所需的 import
 
 ```typescript
-// 新增导入
-const ScrollToTopOnNavigate = lazy(() => 
-  import("./components/ScrollToTopOnNavigate").then(m => ({ default: m.ScrollToTopOnNavigate }))
-);
-
-// 在 BrowserRouter 内部、Routes 之前添加
-<BrowserRouter>
-  <CoachCallProvider>
-    <AICoachCallProvider>
-      {/* ... 其他组件 ... */}
-      <ScrollUnlocker />
-      <ScrollToTopOnNavigate /> {/* 新增 */}
-      {/* ... */}
-    </AICoachCallProvider>
-  </CoachCallProvider>
-</BrowserRouter>
+import { Share2, Sparkles, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 ```
 
-### 步骤 3：修复 EmotionButtonIntro 页面结构
+#### 2. 更新 PageHeader 组件
 
-按照项目统一标准，将页面根容器改为标准滚动容器。
+将当前的简单 PageHeader：
 
-**修改文件**：`src/pages/EmotionButtonIntro.tsx`
-
-```diff
-- <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24">
-+ <div 
-+   className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24"
-+   style={{ WebkitOverflowScrolling: 'touch' }}
-+ >
+```tsx
+<PageHeader 
+  title={step === 'result' ? "测评结果" : "情绪健康测评"} 
+  showBack={step !== 'start' || activeTab !== 'assessment'}
+/>
 ```
 
-这样做的好处：
-- `h-screen`：确保容器有明确的高度边界
-- `overflow-y-auto`：允许垂直滚动
-- `overscroll-contain`：防止滚动穿透到父级
-- `WebkitOverflowScrolling: 'touch'`：iOS 惯性滚动支持
+改为带有右侧操作按钮的版本：
+
+```tsx
+<PageHeader 
+  title={step === 'result' ? "测评结果" : "情绪健康测评"} 
+  showBack={step !== 'start' || activeTab !== 'assessment'}
+  className="bg-gradient-to-r from-violet-50/95 via-pink-50/95 to-violet-50/95 border-b border-violet-200/50"
+  rightActions={
+    <div className="flex items-center gap-1">
+      {/* AI教练专区入口按钮 */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/coach-space")}
+        className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
+                   bg-gradient-to-r from-amber-400 to-orange-400 
+                   hover:from-amber-500 hover:to-orange-500 
+                   text-white shadow-md hover:shadow-lg 
+                   transition-all duration-200 hover:scale-[1.02]
+                   flex items-center justify-center gap-1.5 sm:gap-2"
+      >
+        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="text-xs sm:text-sm font-medium">AI教练</span>
+        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      </Button>
+      
+      {/* 分享按钮 */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="shrink-0 h-8 w-8 sm:h-9 sm:w-9"
+        onClick={() => setShareDialogOpen(true)}
+      >
+        <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+      </Button>
+    </div>
+  }
+/>
+```
 
 ---
 
 ## 技术细节
 
-| 问题 | 原因 | 解决方案 |
-|-----|------|---------|
-| 导航后不在顶部 | React Router 不自动重置滚动 | 添加 ScrollToTopOnNavigate |
-| 微信中无法滚动 | 缺少标准滚动容器配置 | 使用 h-screen + overflow-y-auto |
-| iOS 触摸不顺滑 | 缺少 webkit 滚动属性 | 添加 WebkitOverflowScrolling |
+| 元素 | 样式 | 功能 |
+|-----|------|------|
+| AI教练按钮 | `bg-gradient-to-r from-amber-400 to-orange-400`，圆角胶囊形 | 跳转到 `/coach-space` |
+| 分享按钮 | ghost 风格图标按钮 | 打开 `EmotionHealthShareDialog` 分享弹窗 |
+| PageHeader 背景 | 紫粉渐变以匹配情绪健康的品牌色调 | 视觉统一 |
+
+## 条件显示逻辑
+
+分享按钮应该只在有测评结果时显示（即 `result` 不为空），或者可以始终显示分享页面入口。根据财富卡点的实现，分享按钮是始终可见的。
+
+---
 
 ## 影响范围
 
-- 新增 1 个组件文件
-- 修改 2 个现有文件
-- 不影响其他页面的现有行为
+- 仅修改 1 个文件：`src/pages/EmotionHealthPage.tsx`
+- 不影响其他页面的现有功能
+- 复用已有的 `EmotionHealthShareDialog` 组件
