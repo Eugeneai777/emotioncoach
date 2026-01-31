@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { Helmet } from "react-helmet";
 import PageHeader from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, History } from "lucide-react";
+import { FileText, History, Share2, Sparkles, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useEmotionHealthPurchase } from "@/hooks/useEmotionHealthPurchase";
@@ -277,6 +278,35 @@ export default function EmotionHealthPage() {
       <PageHeader 
         title={step === 'result' ? "测评结果" : "情绪健康测评"} 
         showBack={step !== 'start' || activeTab !== 'assessment'}
+        rightActions={
+          <div className="flex items-center gap-1">
+            {/* AI教练专区入口按钮 */}
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/coach-space")}
+              className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
+                         bg-gradient-to-r from-amber-400 to-orange-400 
+                         hover:from-amber-500 hover:to-orange-500 
+                         text-white shadow-md hover:shadow-lg 
+                         transition-all duration-200 hover:scale-[1.02]
+                         flex items-center justify-center gap-1.5 sm:gap-2"
+            >
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm font-medium">AI教练</span>
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </Button>
+            
+            {/* 分享按钮 */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="shrink-0 h-8 w-8 sm:h-9 sm:w-9"
+              onClick={() => setShareDialogOpen(true)}
+            >
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+          </div>
+        }
       />
 
       <main className="container max-w-2xl mx-auto px-4 py-4">
