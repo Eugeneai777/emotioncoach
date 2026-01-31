@@ -1,95 +1,110 @@
 
-# 为情绪健康测评页面添加与财富卡点相同的头部按钮
 
-## 需求分析
+# 修复「死了吗」功能紧急联系人通知问题
 
-根据截图和代码对比，财富卡点测评页面(`/wealth-block`)的 PageHeader 右侧有两个按钮：
-1. **"AI教练" 按钮** - 橙色渐变按钮，带闪光图标和箭头，点击跳转到 `/coach-space`
-2. **分享按钮** - 图标按钮，点击打开分享弹窗
+## 问题诊断
 
-而情绪健康测评页面(`/emotion-health`)目前只有基础的返回按钮和标题，缺少这两个功能入口。
+用户已经 **8 天没有打卡**（最后打卡：2026-01-23），但紧急联系人 `jennyc127@yahoo.com` 从未收到通知。
+
+### 根本原因
+
+| 问题 | 说明 |
+|------|------|
+| 函数未配置 | `batch-check-alive-status` 未在 `supabase/config.toml` 中声明 |
+| 函数未部署 | Edge Function 日志中无任何该函数的执行记录 |
+| 无定时任务 | 没有 Cron Job 每日自动触发批量检查 |
 
 ---
 
-## 修改方案
+## 修复方案
 
-### 修改文件：`src/pages/EmotionHealthPage.tsx`
+### 步骤 1：在 config.toml 中添加函数配置
 
-#### 1. 添加所需的 import
+**修改文件**：`supabase/config.toml`
 
-```typescript
-import { Share2, Sparkles, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+```toml
+[functions.batch-check-alive-status]
+verify_jwt = false
+
+[functions.send-alive-check-alert]
+verify_jwt = false
 ```
 
-#### 2. 更新 PageHeader 组件
+这两个函数都需要 `verify_jwt = false`，因为：
+- `batch-check-alive-status` 由定时任务调用，使用 `CRON_SECRET` 验证
+- `send-alive-check-alert` 由 batch 函数内部调用，使用 service role key 验证
 
-将当前的简单 PageHeader：
+### 步骤 2：添加 CRON_SECRET 密钥
 
-```tsx
-<PageHeader 
-  title={step === 'result' ? "测评结果" : "情绪健康测评"} 
-  showBack={step !== 'start' || activeTab !== 'assessment'}
-/>
+需要配置 `CRON_SECRET` 环境变量，用于验证定时任务调用的合法性。
+
+### 步骤 3：设置定时任务
+
+在后端配置中添加每日定时任务，建议每天早上 9:00 CST (UTC+8 即 01:00 UTC) 运行：
+
+```
+URL: https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/batch-check-alive-status
+Method: POST
+Headers: 
+  - Authorization: Bearer ${CRON_SECRET}
+Schedule: 0 1 * * * (每天 UTC 01:00，即北京时间 09:00)
 ```
 
-改为带有右侧操作按钮的版本：
+### 步骤 4：手动触发一次测试
 
-```tsx
-<PageHeader 
-  title={step === 'result' ? "测评结果" : "情绪健康测评"} 
-  showBack={step !== 'start' || activeTab !== 'assessment'}
-  className="bg-gradient-to-r from-violet-50/95 via-pink-50/95 to-violet-50/95 border-b border-violet-200/50"
-  rightActions={
-    <div className="flex items-center gap-1">
-      {/* AI教练专区入口按钮 */}
-      <Button
-        variant="ghost"
-        onClick={() => navigate("/coach-space")}
-        className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
-                   bg-gradient-to-r from-amber-400 to-orange-400 
-                   hover:from-amber-500 hover:to-orange-500 
-                   text-white shadow-md hover:shadow-lg 
-                   transition-all duration-200 hover:scale-[1.02]
-                   flex items-center justify-center gap-1.5 sm:gap-2"
-      >
-        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        <span className="text-xs sm:text-sm font-medium">AI教练</span>
-        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      </Button>
-      
-      {/* 分享按钮 */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="shrink-0 h-8 w-8 sm:h-9 sm:w-9"
-        onClick={() => setShareDialogOpen(true)}
-      >
-        <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-      </Button>
-    </div>
-  }
-/>
+部署完成后，手动调用函数验证功能正常：
+
+```bash
+curl -X POST \
+  https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/batch-check-alive-status \
+  -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
 ```
 
 ---
 
 ## 技术细节
 
-| 元素 | 样式 | 功能 |
-|-----|------|------|
-| AI教练按钮 | `bg-gradient-to-r from-amber-400 to-orange-400`，圆角胶囊形 | 跳转到 `/coach-space` |
-| 分享按钮 | ghost 风格图标按钮 | 打开 `EmotionHealthShareDialog` 分享弹窗 |
-| PageHeader 背景 | 紫粉渐变以匹配情绪健康的品牌色调 | 视觉统一 |
+### 通知逻辑流程
 
-## 条件显示逻辑
+```text
+定时任务 (每日 09:00)
+    │
+    ▼
+batch-check-alive-status
+    │
+    ├─ 查询所有 is_enabled=true 且有紧急联系人的用户
+    │
+    ├─ 对每个用户：
+    │   ├─ 获取最后打卡时间
+    │   ├─ 计算间隔天数
+    │   ├─ 如果超过 days_threshold：
+    │   │   ├─ 检查 last_notification_at (24小时内不重复发送)
+    │   │   └─ 调用 send-alive-check-alert 发送邮件
+    │   └─ 更新 last_notification_at
+    │
+    └─ 返回处理结果
+```
 
-分享按钮应该只在有测评结果时显示（即 `result` 不为空），或者可以始终显示分享页面入口。根据财富卡点的实现，分享按钮是始终可见的。
+### 防重复机制
+
+函数已内置 24 小时防重复发送逻辑（见 batch-check-alive-status 第 86-94 行），确保不会频繁骚扰紧急联系人。
+
+---
+
+## 需要的操作
+
+| 步骤 | 操作 | 负责方 |
+|------|------|--------|
+| 1 | 添加 config.toml 配置 | Lovable |
+| 2 | 配置 CRON_SECRET 密钥 | 用户（在 Secrets 中添加） |
+| 3 | 设置外部定时任务服务 | 用户（如 cron-job.org、EasyCron 等） |
+| 4 | 手动触发测试 | 用户验证 |
 
 ---
 
 ## 影响范围
 
-- 仅修改 1 个文件：`src/pages/EmotionHealthPage.tsx`
-- 不影响其他页面的现有功能
-- 复用已有的 `EmotionHealthShareDialog` 组件
+- 修改 1 个配置文件：`supabase/config.toml`
+- 需要用户配置外部定时任务服务
+- 修复后所有启用此功能的用户都将正常收到通知
+
