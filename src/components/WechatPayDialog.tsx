@@ -212,6 +212,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
     // 设置防抖标记
     sessionStorage.setItem("pay_auth_in_progress", "1");
+    
+    // 🆕 缓存当前选中的套餐信息，授权回跳后恢复
+    if (packageInfo) {
+      try {
+        sessionStorage.setItem('pending_payment_package', JSON.stringify(packageInfo));
+        console.log('[Payment] Cached package info for resume:', packageInfo.name);
+      } catch (e) {
+        console.error('[Payment] Failed to cache package info:', e);
+      }
+    }
 
     try {
       console.log('[Payment] Triggering silent auth for openId via wechat-pay-auth');
@@ -232,6 +242,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setIsRedirectingForOpenId(false);
         silentAuthTriggeredRef.current = false;
         sessionStorage.removeItem("pay_auth_in_progress");
+        sessionStorage.removeItem('pending_payment_package'); // 清理缓存
         setOpenIdResolved(true); // 授权失败，继续使用扫码支付
         return;
       }
@@ -243,9 +254,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
       sessionStorage.removeItem("pay_auth_in_progress");
+      sessionStorage.removeItem('pending_payment_package'); // 清理缓存
       setOpenIdResolved(true);
     }
-  }, []);
+  }, [packageInfo]);
 
   // 用 code 换取 openId（通过 wechat-pay-auth 函数）
   const exchangeCodeForOpenId = useCallback(async (code: string) => {
