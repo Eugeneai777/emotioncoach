@@ -1,145 +1,145 @@
 
+# 冥想音频库功能计划
 
-# 财富训练营冥想音频无法播放问题诊断报告
+## 目标
+创建一个专门的冥想音频库页面，让用户可以随时访问并播放全部 7 天的财富冥想音频，不受打卡进度限制。
 
-## 问题描述
-用户反馈：财富训练营从第二天开始无法播放冥想音频
+## 功能概述
 
-## 诊断结果
+### 核心功能
+1. **冥想库页面** - 展示全部 7 天冥想音频列表
+2. **独立播放器** - 点击任一冥想可进入播放界面
+3. **离线缓存** - 支持批量缓存音频供离线播放
+4. **播放历史** - 记录每首冥想的播放次数
 
-### 根本原因：音频文件未部署到生产环境
+### 用户价值
+- 毕业用户可循环收听任意天数的冥想
+- 不需要等待打卡进度解锁
+- 一站式管理所有冥想音频
 
-经过排查，发现所有冥想音频文件在生产环境都返回 **404 Not Found**：
+## 实现方案
 
-| 音频路径 | 状态 |
-|----------|------|
-| `/meditation/D1_探索与金钱的关系.mp3` | 404 |
-| `/audio/wealth-meditations/D2_探索与金钱的关系.mp3` | 404 |
-| `/audio/wealth-meditations/D3_探索与金钱的关系.mp3` | 404 |
-| ... Day 4-7 同样 404 | |
+### 1. 新建页面：冥想音频库
 
-### 次要问题：数据库路径不一致
+**文件路径**: `src/pages/MeditationLibrary.tsx`
 
-数据库 `wealth_meditations` 表中的 `audio_url` 字段存在路径不一致：
+页面结构：
+- 顶部标题区：页面标题 + 缓存状态
+- 冥想卡片列表：7 天冥想的卡片网格
+  - 每张卡片显示：天数、标题、时长、播放状态
+  - 点击卡片展开播放器
+- 底部：缓存管理（一键缓存全部 / 清空缓存）
 
-| Day | 数据库中的 audio_url | 文件系统中的位置 |
-|-----|---------------------|-----------------|
-| 1 | `/meditation/D1_探索与金钱的关系.mp3` | `public/meditation/D1_探索与金钱的关系.mp3` |
-| 2-7 | `/audio/wealth-meditations/D{n}_探索与金钱的关系.mp3` | `public/audio/wealth-meditations/D{n}_探索与金钱的关系.mp3` |
+### 2. 新建组件：冥想库卡片
 
-虽然两个目录都有对应的文件，但路径不统一会造成维护困难。
+**文件路径**: `src/components/wealth-camp/MeditationLibraryCard.tsx`
 
-### 为什么 Day 1 可能曾经能播放？
+卡片内容：
+- Day 编号 + 标题
+- 时长显示
+- 缓存状态图标
+- 播放次数统计
 
-1. 用户可能有浏览器缓存
-2. Day 1 文件可能在某次部署中被正确上传过
+### 3. 路由配置
+
+在 `App.tsx` 添加新路由：
+```
+/meditation-library → MeditationLibrary
+```
+
+### 4. 入口设置
+
+在以下位置添加入口链接：
+
+**方案 A: 财富训练营打卡页**
+- 在 `WealthCampCheckIn.tsx` 的页面头部或成长档案 Tab 添加「冥想库」入口按钮
+
+**方案 B: 设置页面**
+- 添加独立的冥想管理入口（适合管理离线缓存）
+
+**推荐方案**: 两处都添加入口，打卡页更便于访问，设置页用于缓存管理
+
+### 5. 数据交互
+
+使用现有资源：
+- 数据源：`wealth_meditations` 表（已有 7 天数据）
+- 音频缓存：复用 `useAudioCache` hook
+- 播放器：复用 `WealthMeditationPlayer` 组件
 
 ---
 
-## 修复方案
+## 技术细节
 
-### 方案 A：将音频文件迁移到 Lovable Cloud Storage（推荐）
-
-大型媒体文件不适合放在代码仓库中，建议：
-
-1. **创建 Storage bucket**：`meditation-audio`
-2. **上传音频文件**到 Storage
-3. **更新数据库**：将 `audio_url` 改为 Storage 的公开 URL
-4. **删除 public 目录中的音频文件**
-
-优点：
-- 不占用代码仓库空间
-- 更可靠的 CDN 分发
-- 支持更大的文件
-
-### 方案 B：确保静态文件正确部署
-
-1. 检查音频文件是否在 Git 中被正确跟踪（可能因文件过大未被提交）
-2. 确保部署流程包含 `public/` 目录下的所有静态资源
-3. 统一数据库中的路径格式
-
-### 方案 C：使用外部音频托管服务
-
-将音频上传到第三方服务（如阿里云 OSS、腾讯云 COS），然后更新数据库 URL。
-
----
-
-## 推荐执行步骤
-
-### 第一步：使用 Storage 存储音频（解决根本问题）
-
-```sql
--- 1. 创建 storage bucket（需要在 Lovable Cloud 后台操作）
--- bucket 名称: meditation-audio
--- 访问权限: public (公开读)
-
--- 2. 上传音频文件后，更新数据库
-UPDATE wealth_meditations 
-SET audio_url = 'https://[project-id].supabase.co/storage/v1/object/public/meditation-audio/D1_探索与金钱的关系.mp3'
-WHERE day_number = 1;
-
--- 对 Day 2-7 执行类似操作
-```
-
-### 第二步：统一路径格式
-
-确保所有冥想都使用统一的 Storage URL 格式：
-```
-https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/meditation-audio/D{n}_探索与金钱的关系.mp3
-```
-
-### 第三步：清理代码库中的大文件
-
-删除 `public/audio/` 和 `public/meditation/` 目录中的音频文件，减少仓库体积。
-
----
-
-## 技术说明
-
-### 当前代码流程（正常）
+### 页面结构
 
 ```text
-用户进入打卡页面
-       ↓
-useQuery 获取 wealth_meditations
-       ↓
-返回 audio_url（如 /audio/wealth-meditations/D2_...mp3）
-       ↓
-WealthMeditationPlayer 接收 audioUrl
-       ↓
-<audio src={encodeURI(audioUrl)} />
-       ↓
-❌ 浏览器请求该路径，服务器返回 404
-       ↓
-音频无法播放
+┌─────────────────────────────────────┐
+│  ← 返回           冥想音频库         │
+├─────────────────────────────────────┤
+│  📦 已缓存 3/7 首   [一键缓存全部]   │
+├─────────────────────────────────────┤
+│  ┌─────────────┐ ┌─────────────┐    │
+│  │ Day 1       │ │ Day 2       │    │
+│  │ 探索与金钱  │ │ 探索与金钱  │    │
+│  │ ⏱ 8:48     │ │ ⏱ 10:00    │    │
+│  │ ☁ 已缓存   │ │ ↓ 未缓存    │    │
+│  └─────────────┘ └─────────────┘    │
+│  ┌─────────────┐ ┌─────────────┐    │
+│  │ Day 3       │ │ Day 4       │    │
+│  │ ...         │ │ ...         │    │
+│  └─────────────┘ └─────────────┘    │
+│         ...                          │
+├─────────────────────────────────────┤
+│  [当前播放的冥想播放器 - 可展开]     │
+└─────────────────────────────────────┘
 ```
 
-### 修复后流程
+### 新增文件
 
-```text
-用户进入打卡页面
-       ↓
-useQuery 获取 wealth_meditations
-       ↓
-返回 audio_url（Storage 完整 URL）
-       ↓
-WealthMeditationPlayer 接收 audioUrl
-       ↓
-<audio src={Storage公开URL} />
-       ↓
-✅ 从 CDN 加载音频成功
-       ↓
-正常播放
+| 文件 | 说明 |
+|------|------|
+| `src/pages/MeditationLibrary.tsx` | 冥想库主页面 |
+| `src/components/wealth-camp/MeditationLibraryCard.tsx` | 冥想卡片组件 |
+
+### 修改文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/App.tsx` | 添加 `/meditation-library` 路由 |
+| `src/pages/WealthCampCheckIn.tsx` | 添加入口按钮 |
+
+### 数据查询
+
+```typescript
+// 获取全部冥想数据
+const { data: meditations } = useQuery({
+  queryKey: ['all-wealth-meditations'],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('wealth_meditations')
+      .select('*')
+      .order('day_number', { ascending: true });
+    return data;
+  },
+});
 ```
 
 ---
 
-## 立即行动项
+## 用户流程
 
-1. **创建 Storage bucket** `meditation-audio`，设为公开访问
-2. **手动上传** 7 个冥想音频文件到 Storage
-3. **执行 SQL** 更新 `wealth_meditations` 表的 `audio_url` 字段
-4. **测试** Day 1-7 的音频是否都能正常播放
+1. 用户在「财富训练营打卡」页面点击「冥想库」按钮
+2. 进入冥想库页面，看到 7 天冥想列表
+3. 点击任意卡片，展开播放器开始播放
+4. 可选择「离线缓存」按钮下载音频供离线使用
+5. 播放完成后可继续选择其他冥想
 
-需要我协助创建 Storage bucket 并更新数据库吗？
+---
 
+## 实现步骤
+
+1. 创建 `MeditationLibrary.tsx` 页面组件
+2. 创建 `MeditationLibraryCard.tsx` 卡片组件
+3. 在 `App.tsx` 注册路由
+4. 在 `WealthCampCheckIn.tsx` 添加入口按钮
+5. 测试全部 7 天音频播放功能
