@@ -277,7 +277,7 @@ export default function EmotionHealthPage() {
       
       <PageHeader 
         title={step === 'result' ? "测评结果" : "情绪健康测评"} 
-        showBack={step !== 'start' || activeTab !== 'assessment'}
+        showBack={true}
         rightActions={
           <div className="flex items-center gap-1">
             {/* AI教练专区入口按钮 */}
