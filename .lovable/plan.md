@@ -1,62 +1,94 @@
 
+# 修复 `/emotion-button-intro` 页面滚动问题
 
-# 启用豆包语音方案
+## 问题分析
 
-## 当前状态分析
+`/emotion-button-intro` 页面在微信浏览器中无法上下滚动，主要有以下原因：
 
-在 `src/components/coach/CoachVoiceChat.tsx` 第 927 行，豆包语音开关被硬编码禁用：
+1. 页面结构未遵循项目的「统一滚动容器标准」
+2. 页面导航时没有自动滚动到顶部
+3. 底部固定 CTA 按钮可能在某些情况下干扰滚动
+
+## 修复方案
+
+### 步骤 1：添加全局路由切换滚动重置
+
+创建一个 `ScrollToTopOnNavigate` 组件，在每次路由变化时自动滚动到页面顶部。
+
+**新建文件**：`src/components/ScrollToTopOnNavigate.tsx`
 
 ```typescript
-// 🎯 豆包语音：暂时禁用，使用 OpenAI Realtime
-const useDoubaoVoice = false; // mode === 'emotion';  // 临时禁用豆包，改用 OpenAI
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
+export const ScrollToTopOnNavigate = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
+};
 ```
 
-## 修改方案
+### 步骤 2：在 App.tsx 中注册组件
 
-将豆包语音重新启用，恢复为 `emotion` 模式使用豆包的逻辑：
+将 `ScrollToTopOnNavigate` 组件添加到 `BrowserRouter` 内部。
+
+**修改文件**：`src/App.tsx`
 
 ```typescript
-// 🎯 豆包语音：情绪教练使用豆包 Realtime（静老师）
-const useDoubaoVoice = mode === 'emotion';
+// 新增导入
+const ScrollToTopOnNavigate = lazy(() => 
+  import("./components/ScrollToTopOnNavigate").then(m => ({ default: m.ScrollToTopOnNavigate }))
+);
+
+// 在 BrowserRouter 内部、Routes 之前添加
+<BrowserRouter>
+  <CoachCallProvider>
+    <AICoachCallProvider>
+      {/* ... 其他组件 ... */}
+      <ScrollUnlocker />
+      <ScrollToTopOnNavigate /> {/* 新增 */}
+      {/* ... */}
+    </AICoachCallProvider>
+  </CoachCallProvider>
+</BrowserRouter>
 ```
 
-## 启用后的效果
+### 步骤 3：修复 EmotionButtonIntro 页面结构
 
-| 教练类型 | mode 值 | 语音服务 |
-|---------|---------|---------|
-| 情绪教练 | `emotion` | **豆包语音**（静老师人设） |
-| 有劲生活教练 | `general` | OpenAI Realtime |
-| 亲子教练 | `parent_teen` | OpenAI Realtime |
-| 青少年教练 | `teen` | OpenAI Realtime |
+按照项目统一标准，将页面根容器改为标准滚动容器。
+
+**修改文件**：`src/pages/EmotionButtonIntro.tsx`
+
+```diff
+- <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24">
++ <div 
++   className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24"
++   style={{ WebkitOverflowScrolling: 'touch' }}
++ >
+```
+
+这样做的好处：
+- `h-screen`：确保容器有明确的高度边界
+- `overflow-y-auto`：允许垂直滚动
+- `overscroll-contain`：防止滚动穿透到父级
+- `WebkitOverflowScrolling: 'touch'`：iOS 惯性滚动支持
+
+---
 
 ## 技术细节
 
-### 豆包语音架构
+| 问题 | 原因 | 解决方案 |
+|-----|------|---------|
+| 导航后不在顶部 | React Router 不自动重置滚动 | 添加 ScrollToTopOnNavigate |
+| 微信中无法滚动 | 缺少标准滚动容器配置 | 使用 h-screen + overflow-y-auto |
+| iOS 触摸不顺滑 | 缺少 webkit 滚动属性 | 添加 WebkitOverflowScrolling |
 
-```text
-┌─────────────┐       JSON/WS       ┌──────────────────────┐      Binary      ┌─────────────┐
-│   浏览器    │ ──────────────────> │ doubao-realtime-relay │ ───────────────> │  豆包 API   │
-│  客户端    │ <────────────────── │    (Edge Function)    │ <─────────────── │ 字节跳动    │
-└─────────────┘                     └──────────────────────┘                   └─────────────┘
-```
+## 影响范围
 
-### 相关配置
-
-- **Token Endpoint**: `doubao-realtime-token`
-- **Relay Function**: `doubao-realtime-relay`  
-- **音频格式**: PCM16 (输入 16kHz / 输出 24kHz)
-- **角色**: 静老师 - 温暖的情绪陪伴教练
-- **Secrets**: `DOUBAO_APP_ID`, `DOUBAO_ACCESS_TOKEN` (已配置)
-
-### 降级策略
-
-豆包连接失败时会自动降级到 OpenAI WebRTC：
-1. 检测认证错误 → 重定向登录
-2. 其他连接错误 → 切换到 OpenAI 备用通道
-
-## 修改文件
-
-**文件**: `src/components/coach/CoachVoiceChat.tsx`  
-**位置**: 第 927 行  
-**改动**: 1 行代码
-
+- 新增 1 个组件文件
+- 修改 2 个现有文件
+- 不影响其他页面的现有行为
