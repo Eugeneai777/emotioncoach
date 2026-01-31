@@ -709,8 +709,12 @@ export const CoachVoiceChat = ({
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
       
-      // 🔧 断线时明确提示用户（使用 ref 判断：非主动挂断、非余额不足）
-      if (!isEndingRef.current && !insufficientDuringCall && durationValueRef.current > 0) {
+      // 🔧 断线提示优化：
+      // 1. 非主动挂断（isEndingRef）
+      // 2. 非余额不足（insufficientDuringCall）
+      // 3. 通话已进行超过 5 秒（避免初始化/重连阶段的短暂断开误报）
+      const minDurationForAlert = 5;
+      if (!isEndingRef.current && !insufficientDuringCall && durationValueRef.current >= minDurationForAlert) {
         toast({
           title: "连接已断开",
           description: "通话意外中断，可以点击重新开始继续对话",
