@@ -32,6 +32,8 @@ import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { EmotionVoiceCallCTA } from "@/components/emotion-coach/EmotionVoiceCallCTA";
 import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionVoiceBriefingPreview";
+import { VoiceTypeSelector } from "@/components/emotion-coach/VoiceTypeSelector";
+import { getSavedVoiceType, DEFAULT_VOICE_TYPE } from "@/config/voiceTypeConfig";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
@@ -56,6 +58,7 @@ const Index = () => {
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [selectedVoiceType, setSelectedVoiceType] = useState<string>(() => getSavedVoiceType());
   const [briefingPreview, setBriefingPreview] = useState<{
     briefingId: string;
     briefingData: any;
@@ -638,6 +641,7 @@ const Index = () => {
           tokenEndpoint="vibrant-life-realtime-token"
           mode="emotion"
           featureKey="realtime_voice_emotion"
+          voiceType={selectedVoiceType}
           onBriefingSaved={(briefingId, briefingData) => {
             // 🔧 简报生成后不立即关闭语音对话，让用户可以继续或主动关闭
             // setShowVoiceChat(false); // 移除自动关闭
@@ -717,9 +721,16 @@ const Index = () => {
         enableVoiceInput={true}
         messagesEndRef={messagesEndRef}
         voiceChatCTA={
-          <EmotionVoiceCallCTA
-            onVoiceChatClick={() => setShowVoiceChat(true)}
-          />
+          <>
+            <EmotionVoiceCallCTA
+              onVoiceChatClick={() => setShowVoiceChat(true)}
+            />
+            <VoiceTypeSelector
+              value={selectedVoiceType}
+              onChange={setSelectedVoiceType}
+              className="mt-4"
+            />
+          </>
         }
       />
     </>

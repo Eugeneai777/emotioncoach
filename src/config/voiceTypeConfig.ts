@@ -1,0 +1,82 @@
+/**
+ * 豆包语音音色配置
+ * 
+ * 定义情绪教练可用的 AI 声音选项
+ */
+
+export interface VoiceTypeOption {
+  id: string;
+  name: string;
+  voice_type: string;
+  description: string;
+  gender: 'male' | 'female';
+  emoji: string;
+}
+
+export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
+  {
+    id: 'wise_elder',
+    name: '智慧长者',
+    voice_type: 'BV158_streaming',
+    description: '年长男声，沉稳睿智',
+    gender: 'male',
+    emoji: '👴'
+  },
+  {
+    id: 'wise_uncle',
+    name: '渊博小叔',
+    voice_type: 'zh_male_yuanboxiaoshu_moon_bigtts',
+    description: '成熟男声，儒雅博学',
+    gender: 'male',
+    emoji: '👨'
+  },
+  {
+    id: 'warm_female',
+    name: '心灵鸡汤',
+    voice_type: 'zh_female_xinlingjitang_moon_bigtts',
+    description: '温暖女声，治愈心灵',
+    gender: 'female',
+    emoji: '👩'
+  },
+  {
+    id: 'gentle_lady',
+    name: '温柔淑女',
+    voice_type: 'zh_female_wenroushunv_mars_bigtts',
+    description: '柔和女声，亲切温婉',
+    gender: 'female',
+    emoji: '👧'
+  }
+];
+
+export const DEFAULT_VOICE_TYPE = 'BV158_streaming'; // 智慧长者
+
+export const VOICE_TYPE_STORAGE_KEY = 'emotion_coach_voice_type';
+
+/**
+ * 获取用户保存的音色偏好
+ */
+export const getSavedVoiceType = (): string => {
+  try {
+    return localStorage.getItem(VOICE_TYPE_STORAGE_KEY) || DEFAULT_VOICE_TYPE;
+  } catch {
+    return DEFAULT_VOICE_TYPE;
+  }
+};
+
+/**
+ * 保存用户音色偏好
+ */
+export const saveVoiceType = (voiceType: string): void => {
+  try {
+    localStorage.setItem(VOICE_TYPE_STORAGE_KEY, voiceType);
+  } catch (e) {
+    console.warn('Failed to save voice type preference:', e);
+  }
+};
+
+/**
+ * 根据 voice_type 获取音色配置
+ */
+export const getVoiceTypeOption = (voiceType: string): VoiceTypeOption | undefined => {
+  return VOICE_TYPE_OPTIONS.find(opt => opt.voice_type === voiceType);
+};
