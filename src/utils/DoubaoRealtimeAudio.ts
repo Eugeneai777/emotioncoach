@@ -391,11 +391,12 @@ export class DoubaoRealtimeChat {
     const initRequest = {
       type: 'session.init',
       instructions: this.config.instructions,
-      tools: this.config.tools
+      tools: this.config.tools,
+      voice_type: (this.config as any).voice_type || 'BV158_streaming'  // ✅ 传递音色配置
     };
 
     this.ws.send(JSON.stringify(initRequest));
-    console.log('[DoubaoChat] Session init request sent');
+    console.log('[DoubaoChat] Session init request sent, voice_type:', initRequest.voice_type);
   }
 
   private startHeartbeat(): void {

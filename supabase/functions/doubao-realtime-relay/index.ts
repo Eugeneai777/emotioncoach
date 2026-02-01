@@ -372,7 +372,7 @@ function parsePacket(data: Uint8Array): {
  * 根据官方文档，StartSession 必须包含 Event + SessionID
  * 二进制帧格式: Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
  */
-function buildStartSessionRequest(userId: string, instructions: string, sessionId: string): Uint8Array {
+function buildStartSessionRequest(userId: string, instructions: string, sessionId: string, voiceType?: string): Uint8Array {
   const payload = {
     user: { uid: userId },
     audio: {
@@ -391,6 +391,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
         format: 'pcm_s16le',
         sample_rate: 24000,
       },
+      voice_type: voiceType || 'BV158_streaming'  // ✅ 添加音色配置
     },
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
@@ -405,7 +406,12 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   };
 
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
-  console.log('[Protocol] StartSession payload:', JSON.stringify(payload).substring(0, 200) + '...');
+  // ✅ 调试日志：确认发送给豆包的完整配置
+  console.log('[Protocol] 📤 StartSession payload:');
+  console.log('[Protocol]   - voice_type:', voiceType || 'BV158_streaming');
+  console.log('[Protocol]   - system_role length:', instructions.length);
+  console.log('[Protocol]   - system_role preview:', instructions.substring(0, 100) + '...');
+  console.log('[Protocol]   - full payload:', JSON.stringify(payload).substring(0, 400) + '...');
   console.log('[Protocol] StartSession sessionId:', sessionId);
 
   /**
@@ -699,7 +705,7 @@ Deno.serve(async (req) => {
 
   let doubaoConn: Deno.TlsConn | null = null;
   let isConnected = false;
-  let sessionConfig: { instructions: string } | null = null;
+  let sessionConfig: { instructions: string; voiceType: string } | null = null;
   let heartbeatInterval: number | null = null;
   let audioSequence = 0;  // 音频包序号
   let sessionStarted = false;  // 标记 session 是否已成功启动
@@ -780,10 +786,11 @@ Deno.serve(async (req) => {
         doubaoSessionId = crypto.randomUUID();
         console.log(`[DoubaoRelay] Generated SessionID: ${doubaoSessionId}`);
         
-        const startSessionPacket = buildStartSessionRequest(userId, sessionConfig.instructions, doubaoSessionId);
+        // ✅ 传递音色配置到 StartSession
+        const startSessionPacket = buildStartSessionRequest(userId, sessionConfig.instructions, doubaoSessionId, sessionConfig.voiceType);
         const frame = buildWebSocketFrame(startSessionPacket);
         await doubaoConn.write(frame);
-        console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes)`);
+        console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes), voiceType: ${sessionConfig.voiceType}`);
         
         // ✅ 关键修复：豆包新版端到端对话 API 可能不发送 event=101/150，
         // 而是直接开始处理音频。所以在发送 StartSession 后立即通知前端连接成功，
@@ -1147,8 +1154,14 @@ Deno.serve(async (req) => {
       switch (message.type) {
         case 'session.init':
           sessionConfig = {
-            instructions: message.instructions || ''
+            instructions: message.instructions || '',
+            voiceType: message.voice_type || 'BV158_streaming'  // ✅ 接收前端传递的音色
           };
+          // ✅ 调试日志：确认 prompt 和音色是否正确接收
+          console.log('[DoubaoRelay] 📋 session.init received:');
+          console.log('[DoubaoRelay]   - instructions length:', sessionConfig.instructions.length);
+          console.log('[DoubaoRelay]   - instructions preview:', sessionConfig.instructions.substring(0, 150) + '...');
+          console.log('[DoubaoRelay]   - voiceType:', sessionConfig.voiceType);
           // ✅ Fix: StartSession 使用 sequence=1；音频包从 sequence=2 开始递增
           audioSequence = 2;
           sessionStarted = false;
