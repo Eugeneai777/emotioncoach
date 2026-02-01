@@ -305,9 +305,32 @@ export default function StoryCoachDialog({
     }
   };
 
+  // 生成进度状态
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationStep, setGenerationStep] = useState('');
+
   const handleGenerate = async () => {
     setStage('generating');
     setIsGenerating(true);
+    setGenerationProgress(0);
+    setGenerationStep('正在分析你的故事素材...');
+
+    // 模拟进度更新以提供更好的用户体验
+    const progressInterval = setInterval(() => {
+      setGenerationProgress(prev => {
+        if (prev < 30) {
+          setGenerationStep('正在分析你的故事素材...');
+          return prev + 5;
+        } else if (prev < 60) {
+          setGenerationStep('正在构建故事框架...');
+          return prev + 3;
+        } else if (prev < 85) {
+          setGenerationStep('正在润色故事细节...');
+          return prev + 2;
+        }
+        return prev;
+      });
+    }, 500);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-story-coach', {
@@ -326,7 +349,15 @@ export default function StoryCoachDialog({
         }
       });
 
+      clearInterval(progressInterval);
+      
       if (error) throw error;
+
+      setGenerationProgress(100);
+      setGenerationStep('故事生成完成！');
+      
+      // 短暂延迟以显示完成状态
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       setGeneratedStory(data.story);
       setSuggestedTitles(data.suggestedTitles);
@@ -334,11 +365,13 @@ export default function StoryCoachDialog({
       setExtractedEmotionTag(data.emotionTag); // Store extracted emotion tag
       setStage('complete');
     } catch (error) {
+      clearInterval(progressInterval);
       console.error('Story generation error:', error);
       toast.error("生成失败，请重试");
       setStage(mode === 'guided' ? 'reflection' : 'welcome');
     } finally {
       setIsGenerating(false);
+      setGenerationProgress(0);
     }
   };
 
@@ -603,7 +636,19 @@ ${generatedStory.reflection.content}`;
               <div className="animate-spin">
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground">{COACH_MESSAGES.generating}</p>
+              
+              {/* 进度条 */}
+              <div className="w-full max-w-xs space-y-2">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+                    style={{ width: `${generationProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-center text-muted-foreground">
+                  {generationStep || COACH_MESSAGES.generating}
+                </p>
+              </div>
             </div>
           )}
 
