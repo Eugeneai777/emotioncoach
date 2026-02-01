@@ -229,12 +229,13 @@ export const WealthCoachEmbedded = ({
           )}
         </div>
 
-        {/* 滚动到底部按钮 */}
+        {/* 滚动到底部按钮 - 使用 embedded 模式确保在滚动容器内正确定位 */}
         {messages.length > 0 && (
           <ScrollToBottomButton
             scrollRef={mainRef}
             messagesEndRef={messagesEndRef}
             primaryColor={primaryColor}
+            embedded={true}
           />
         )}
       </div>
