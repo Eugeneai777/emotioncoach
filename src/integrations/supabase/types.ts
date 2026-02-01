@@ -6604,6 +6604,124 @@ export type Database = {
         }
         Relationships: []
       }
+      team_coaching_enrollments: {
+        Row: {
+          amount_paid: number | null
+          attendance_note: string | null
+          attended: boolean | null
+          enrolled_at: string | null
+          id: string
+          order_no: string | null
+          payment_status: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          attendance_note?: string | null
+          attended?: boolean | null
+          enrolled_at?: string | null
+          id?: string
+          order_no?: string | null
+          payment_status?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number | null
+          attendance_note?: string | null
+          attended?: boolean | null
+          enrolled_at?: string | null
+          id?: string
+          order_no?: string | null
+          payment_status?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_coaching_enrollments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "team_coaching_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_coaching_sessions: {
+        Row: {
+          content: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          current_count: number | null
+          description: string | null
+          duration_minutes: number | null
+          end_time: string
+          id: string
+          is_free: boolean | null
+          location_info: string | null
+          location_type: string | null
+          max_participants: number
+          partner_id: string
+          price: number | null
+          session_date: string
+          start_time: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          current_count?: number | null
+          description?: string | null
+          duration_minutes?: number | null
+          end_time: string
+          id?: string
+          is_free?: boolean | null
+          location_info?: string | null
+          location_type?: string | null
+          max_participants: number
+          partner_id: string
+          price?: number | null
+          session_date: string
+          start_time: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          current_count?: number | null
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string
+          id?: string
+          is_free?: boolean | null
+          location_info?: string | null
+          location_type?: string | null
+          max_participants?: number
+          partner_id?: string
+          price?: number | null
+          session_date?: string
+          start_time?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_coaching_sessions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teen_access_tokens: {
         Row: {
           access_token: string
@@ -8457,6 +8575,10 @@ export type Database = {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
       }
+      decrement_session_count: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
       deduct_coaching_balance: {
         Args: {
           p_amount: number
@@ -8495,6 +8617,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_session_count: {
+        Args: { p_session_id: string }
+        Returns: undefined
       }
       refund_coaching_balance: {
         Args: {
