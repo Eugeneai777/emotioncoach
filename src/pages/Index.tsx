@@ -638,7 +638,7 @@ const Index = () => {
           coachEmoji={coachConfig?.emoji || "💚"}
           coachTitle="情绪教练"
           primaryColor="green"
-          tokenEndpoint="vibrant-life-realtime-token"
+          tokenEndpoint="doubao-realtime-token"
           mode="emotion"
           featureKey="realtime_voice_emotion"
           voiceType={selectedVoiceType}
