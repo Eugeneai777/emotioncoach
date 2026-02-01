@@ -1,159 +1,126 @@
 
-# 添加豆包语音音色选择功能
 
-## 概述
-为情绪教练的豆包语音服务添加音色选择功能，让用户可以选择不同的 AI 声音风格（包括智慧长者 `BV158_streaming`）。
+# 情绪教练豆包语音 - 角色Prompt与音色修复计划
 
-## 当前架构分析
+## 问题分析
 
-数据流：
-1. **前端 (Index.tsx)** → 点击语音按钮 → `CoachVoiceChat` 组件
-2. **CoachVoiceChat.tsx** → 创建 `DoubaoRealtimeChat` 客户端
-3. **DoubaoRealtimeChat.ts** → 调用 `doubao-realtime-token` 获取配置
-4. **doubao-realtime-token** → 返回 relay URL 和教练 prompt
-5. **DoubaoRealtimeChat.ts** → 连接 `doubao-realtime-relay` WebSocket
-6. **doubao-realtime-relay** → 发送 `StartSession` 到豆包 API（**此处需要传递 voice_type**）
+经过代码审查，发现以下问题：
 
-## 可用音色列表（基于火山引擎文档）
+### 1. Prompt 传递链路分析
+当前数据流是正确的：
+```
+doubao-realtime-token (生成「静老师」prompt)
+       ↓
+DoubaoRealtimeAudio.ts (获取 config.instructions)
+       ↓
+session.init WebSocket 消息 {type: 'session.init', instructions: '...'}
+       ↓
+doubao-realtime-relay (读取 sessionConfig.instructions)
+       ↓
+豆包 StartSession API (request.system_role = instructions)
+```
 
-| 音色名称 | voice_type | 适用场景 |
-|---------|------------|---------|
-| 渊博小叔 | zh_male_yuanboxiaoshu_moon_bigtts | 智慧男声 |
-| 心灵鸡汤 | zh_female_xinlingjitang_moon_bigtts | 温暖女声 |
-| 深夜播客 | zh_male_shenyeboke_moon_bigtts | 磁性男声 |
-| 温柔淑女 | zh_female_wenroushunv_mars_bigtts | 温柔女声 |
-| 儒雅青年 | zh_male_ruyaqingnian_mars_bigtts | 儒雅男声 |
-| 霸气青叔 | zh_male_baqiqingshu_mars_bigtts | 成熟男声 |
-| 智慧长者 | BV158_streaming | 年长男声（用户指定） |
+**结论**：Prompt 传递链路是正确的，「静老师」角色定义已正确传递到豆包。
 
-## 实现方案
+### 2. 音色问题
+- `doubao-realtime-relay` 已支持 `voiceType` 参数（第 394 行）
+- `DoubaoRealtimeAudio.ts` 已发送 `voice_type`（第 395 行）
+- **但问题是**：`doubao-realtime-token` 没有返回 `voice_type` 字段
+- 前端 `config` 对象中缺少 `voice_type`，导致使用硬编码的默认值 `'BV158_streaming'`
 
-### 1. 创建音色配置常量文件
-创建 `src/config/voiceTypeConfig.ts`：
-- 定义音色选项数组（id, name, voice_type, description, gender, style）
-- 默认音色选择（渊博小叔 - 智慧男声）
+### 3. 用户体验问题
+- 计划中的音色选择器 `VoiceTypeSelector.tsx` 和配置文件 `voiceTypeConfig.ts` 尚未创建
+- 用户无法选择不同的 AI 声音
 
-### 2. 创建音色选择器组件
-创建 `src/components/emotion-coach/VoiceTypeSelector.tsx`：
-- 显示可选音色列表（图标 + 名称 + 描述）
+## 实现计划
+
+### 步骤 1: 创建音色配置常量文件
+**文件**: `src/config/voiceTypeConfig.ts`
+
+定义可用音色列表，包括：
+- 智慧长者 (`BV158_streaming`) - 年长男声，设为默认
+- 渊博小叔 (`zh_male_yuanboxiaoshu_moon_bigtts`) - 成熟男声
+- 心灵鸡汤 (`zh_female_xinlingjitang_moon_bigtts`) - 温暖女声
+- 温柔淑女 (`zh_female_wenroushunv_mars_bigtts`) - 柔和女声
+
+### 步骤 2: 创建音色选择器组件
+**文件**: `src/components/emotion-coach/VoiceTypeSelector.tsx`
+
+功能：
+- 显示可选音色列表（胶囊卡片形式）
 - 使用 localStorage 持久化用户选择
-- 支持预览音色（可选，后续迭代）
+- 使用 emoji 区分男声/女声
 
-### 3. 修改 Index.tsx
-更新 `/emotion-coach` 页面：
-- 在 `EmotionVoiceCallCTA` 下方添加音色选择器
-- 读取用户选择的音色并传递给 `CoachVoiceChat`
+### 步骤 3: 修改 Index.tsx 集成音色选择器
+**文件**: `src/pages/Index.tsx`
 
-### 4. 修改 CoachVoiceChat 组件
-更新 `src/components/coach/CoachVoiceChat.tsx`：
+改动：
+- 添加 `selectedVoiceType` state
+- 读取 localStorage 中的用户选择
+- 在 `EmotionVoiceCallCTA` 下方添加 `VoiceTypeSelector`
+- 传递 `voiceType` prop 给 `CoachVoiceChat`
+
+### 步骤 4: 修改 CoachVoiceChat 组件
+**文件**: `src/components/coach/CoachVoiceChat.tsx`
+
+改动：
 - 新增 `voiceType?: string` prop
-- 传递音色参数到 `DoubaoRealtimeChat`
+- 创建 `DoubaoRealtimeChat` 时传递 `voiceType`
 
-### 5. 修改 DoubaoRealtimeChat 客户端
-更新 `src/utils/DoubaoRealtimeAudio.ts`：
-- 新增 `voiceType?: string` 选项
-- 将 voice_type 包含在 `session.init` 请求中
+### 步骤 5: 修改 DoubaoRealtimeChat 客户端
+**文件**: `src/utils/DoubaoRealtimeAudio.ts`
 
-### 6. 修改 doubao-realtime-token Edge Function
-更新 `supabase/functions/doubao-realtime-token/index.ts`：
-- 接收并返回 voice_type 参数
+改动：
+- 构造函数添加 `voiceType?: string` 选项
+- 在 `sendSessionInit()` 中使用传入的 `voiceType`（而非从 config 读取）
 
-### 7. 修改 doubao-realtime-relay Edge Function
-更新 `supabase/functions/doubao-realtime-relay/index.ts`：
-- 在 `buildStartSessionRequest` 中添加 `tts.voice_type` 参数
-- 从前端 `session.init` 消息中读取 voice_type
+### 步骤 6: 修改 doubao-realtime-token 添加调试日志
+**文件**: `supabase/functions/doubao-realtime-token/index.ts`
+
+改动：
+- 添加 prompt 长度和预览的调试日志
+- 确认 instructions 正确返回
+
+## 数据传递链路（完整版）
+
+```text
+用户点击音色 → VoiceTypeSelector
+       ↓
+localStorage 保存 → voice_type_preference
+       ↓
+Index.tsx → 读取 localStorage → selectedVoiceType state
+       ↓
+<CoachVoiceChat voiceType={selectedVoiceType} />
+       ↓
+new DoubaoRealtimeChat({ voiceType })
+       ↓
+sendSessionInit() → {type: 'session.init', instructions, voice_type}
+       ↓
+doubao-realtime-relay → sessionConfig.voiceType
+       ↓
+buildStartSessionRequest() → tts.voice_type
+       ↓
+豆包 API → 使用指定音色输出语音
+```
 
 ## 文件变更清单
 
-| 文件路径 | 操作 | 说明 |
-|---------|------|------|
+| 文件 | 操作 | 说明 |
+|-----|------|-----|
 | `src/config/voiceTypeConfig.ts` | 新建 | 音色配置常量 |
 | `src/components/emotion-coach/VoiceTypeSelector.tsx` | 新建 | 音色选择器组件 |
-| `src/pages/Index.tsx` | 修改 | 集成音色选择器 |
+| `src/pages/Index.tsx` | 修改 | 集成音色选择器，传递 voiceType |
 | `src/components/coach/CoachVoiceChat.tsx` | 修改 | 添加 voiceType prop |
-| `src/utils/DoubaoRealtimeAudio.ts` | 修改 | 传递 voiceType 到 relay |
-| `supabase/functions/doubao-realtime-token/index.ts` | 修改 | 返回 voice_type 配置 |
-| `supabase/functions/doubao-realtime-relay/index.ts` | 修改 | 使用 voice_type 参数 |
+| `src/utils/DoubaoRealtimeAudio.ts` | 修改 | 构造函数支持 voiceType |
+| `supabase/functions/doubao-realtime-token/index.ts` | 修改 | 添加调试日志 |
 
-## 技术细节
+## 默认音色
+根据需求，默认音色设置为 **智慧长者 (BV158_streaming)**，年长男声风格。
 
-### 音色配置示例
-```typescript
-// src/config/voiceTypeConfig.ts
-export const VOICE_TYPE_OPTIONS = [
-  {
-    id: 'wise_elder',
-    name: '智慧长者',
-    voice_type: 'BV158_streaming',
-    description: '年长男声，沉稳睿智',
-    gender: 'male',
-    style: 'wise'
-  },
-  {
-    id: 'wise_uncle',
-    name: '渊博小叔',
-    voice_type: 'zh_male_yuanboxiaoshu_moon_bigtts',
-    description: '成熟男声，儒雅博学',
-    gender: 'male',
-    style: 'gentle'
-  },
-  {
-    id: 'warm_female',
-    name: '心灵鸡汤',
-    voice_type: 'zh_female_xinlingjitang_moon_bigtts',
-    description: '温暖女声，治愈心灵',
-    gender: 'female',
-    style: 'warm'
-  },
-  {
-    id: 'gentle_lady',
-    name: '温柔淑女',
-    voice_type: 'zh_female_wenroushunv_mars_bigtts',
-    description: '柔和女声，亲切温婉',
-    gender: 'female',
-    style: 'gentle'
-  }
-];
+## 验证方法
+1. 打开情绪教练页面
+2. 查看音色选择器，确认默认选中「智慧长者」
+3. 开始语音通话
+4. 检查 Edge Function 日志中的 `session.init` 消息，确认 `voice_type` 和 `instructions` 正确
+5. 验证 AI 使用男性老年声音回复，语气符合「静老师」温暖专业的风格
 
-export const DEFAULT_VOICE_TYPE = 'BV158_streaming'; // 智慧长者
-```
-
-### relay 修改关键点
-在 `buildStartSessionRequest` 函数中，需要在 `tts` 配置中添加 `voice_type`：
-```typescript
-tts: {
-  audio_config: {
-    channel: 1,
-    format: 'pcm_s16le',
-    sample_rate: 24000,
-  },
-  voice_type: voiceType || 'BV158_streaming'  // 新增
-}
-```
-
-### 数据传递链路
-```
-用户选择音色 (localStorage)
-       ↓
-Index.tsx (读取 localStorage)
-       ↓
-CoachVoiceChat (voiceType prop)
-       ↓
-DoubaoRealtimeChat (voiceType option)
-       ↓
-session.init WebSocket 消息 {type: 'session.init', voice_type: '...'}
-       ↓
-doubao-realtime-relay (读取并传递)
-       ↓
-豆包 StartSession API (tts.voice_type)
-```
-
-## UI 设计
-音色选择器放置在语音通话按钮下方，使用小型胶囊选择器：
-- 水平滚动的音色卡片
-- 当前选中音色高亮显示
-- 点击切换音色
-- 使用 emoji 区分男女声音（👨 / 👩）
-
-## 默认值
-根据用户需求，默认音色设置为 **智慧长者 (BV158_streaming)**，年长男声风格。
