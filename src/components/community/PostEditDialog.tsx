@@ -33,6 +33,8 @@ const PostEditDialog = ({
   post,
   onUpdate,
 }: PostEditDialogProps) => {
+  const [title, setTitle] = useState<string>(post.title || '');
+  const [content, setContent] = useState<string>(post.content || '');
   const [imageUrls, setImageUrls] = useState<string[]>(post.image_urls || []);
   const [saving, setSaving] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -43,12 +45,14 @@ const PostEditDialog = ({
   // 当 dialog 打开或 post 变化时，重新同步状态
   useEffect(() => {
     if (open) {
+      setTitle(post.title || '');
+      setContent(post.content || '');
       setImageUrls(post.image_urls || []);
       setImageStyle("warm");
       setSaving(false);
       setGeneratingImage(false);
     }
-  }, [open, post.id, post.image_urls]);
+  }, [open, post.id, post.title, post.content, post.image_urls]);
 
   const handleGenerateImage = async () => {
     if (!post.title && !post.content) {
@@ -104,6 +108,8 @@ const PostEditDialog = ({
       const { error } = await supabase
         .from("community_posts")
         .update({
+          title: title.trim() || null,
+          content: content.trim() || null,
           image_urls: imageUrls.length > 0 ? imageUrls : null,
         })
         .eq("id", post.id)
@@ -142,20 +148,43 @@ const PostEditDialog = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* 帖子信息预览 */}
-          <div className="p-4 bg-secondary/30 rounded-lg space-y-2">
-            {campSubtitle && (
+          {/* 训练营信息显示 */}
+          {campSubtitle && (
+            <div className="p-3 bg-secondary/30 rounded-lg">
               <p className="text-sm text-muted-foreground">{campSubtitle}</p>
-            )}
-            {post.title && (
-              <p className="font-semibold text-foreground">{post.title}</p>
-            )}
-            {post.emotion_theme && (
-              <Badge variant="outline" className="text-xs">
-                情绪: {post.emotion_theme}
-                {post.emotion_intensity && ` · 强度 ${post.emotion_intensity}/10`}
-              </Badge>
-            )}
+              {post.emotion_theme && (
+                <Badge variant="outline" className="text-xs mt-2">
+                  情绪: {post.emotion_theme}
+                  {post.emotion_intensity && ` · 强度 ${post.emotion_intensity}/10`}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* 标题编辑 */}
+          <div className="space-y-2">
+            <Label htmlFor="post-title">标题</Label>
+            <input
+              id="post-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="输入标题..."
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+
+          {/* 内容编辑 */}
+          <div className="space-y-2">
+            <Label htmlFor="post-content">内容</Label>
+            <textarea
+              id="post-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="输入内容..."
+              rows={4}
+              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+            />
           </div>
 
           {/* 图片上传区域 */}

@@ -193,14 +193,6 @@ export const WealthCoachEmbedded = ({
           ) : messages.length === 0 && !isLoading ? (
             <div className="text-center py-12 text-muted-foreground space-y-4">
               <p>准备开始教练梳理...</p>
-              {/* 诊断面板：用于定位自动发送为何未触发 */}
-              <div className="text-xs text-left mx-auto max-w-xs p-3 bg-muted/50 rounded-lg space-y-1">
-                <p>📊 诊断信息：</p>
-                <p>Day: {dayNumber} | Camp: {campId ? '✓' : '✗'}</p>
-                <p>Template: {template ? '✓' : '加载中...'}</p>
-                <p>InitialMsg: {initialMessage ? `${initialMessage.slice(0, 40)}...` : '(空)'}</p>
-                <p>hasAutoSent: {hasAutoSent ? '✓' : '✗'} | isLoading: {isLoading ? '✓' : '✗'}</p>
-              </div>
               <Button
                 size="sm"
                 variant="outline"
@@ -210,7 +202,7 @@ export const WealthCoachEmbedded = ({
                   sendMessage(msg);
                 }}
               >
-                手动发送启动消息
+                开始对话
               </Button>
             </div>
           ) : (

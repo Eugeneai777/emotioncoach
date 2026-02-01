@@ -54,6 +54,7 @@ interface StoryCoachDialogProps {
   action?: string;
   campName?: string;
   campDay?: number;
+  campType?: string; // 新增：用于区分训练营类型
   onComplete: (data: { title: string; story: string; emotionTag?: string }) => void;
 }
 
@@ -126,6 +127,7 @@ export default function StoryCoachDialog({
   action,
   campName,
   campDay,
+  campType,
   onComplete
 }: StoryCoachDialogProps) {
   const [stage, setStage] = useState<StoryStage>('welcome');
@@ -159,26 +161,64 @@ export default function StoryCoachDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: conversations } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user_id', user.id);
+      // 根据训练营类型选择不同的简报表
+      const isWealthCamp = campType?.includes('wealth');
+      
+      if (isWealthCamp) {
+        // 财富训练营：查询 wealth_coach_4_questions_briefings
+        const { data, error } = await supabase
+          .from('wealth_coach_4_questions_briefings')
+          .select(`
+            id, created_at,
+            actions_performed, actions_avoided, emotion_feeling, belief_insight, smallest_progress, summary
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
-      if (!conversations?.length) return;
+        if (error) throw error;
+        
+        // 转换为统一的 HistoricalBriefing 格式
+        const formattedData: HistoricalBriefing[] = (data || []).map(b => ({
+          id: b.id,
+          created_at: b.created_at,
+          emotion_theme: b.emotion_feeling || '财富梳理',
+          emotion_intensity: null,
+          stage_1_content: Array.isArray(b.actions_performed) ? b.actions_performed.join('、') : (b.actions_performed || null),
+          stage_2_content: Array.isArray(b.actions_avoided) ? b.actions_avoided.join('、') : (b.actions_avoided || null),
+          stage_3_content: b.belief_insight || null,
+          stage_4_content: b.smallest_progress || null,
+          insight: b.summary || null,
+          action: b.smallest_progress || null,
+          growth_story: null,
+        }));
+        setHistoricalBriefings(formattedData);
+      } else {
+        // 情绪训练营：查询 briefings 表（通过 conversations）
+        const { data: conversations } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('user_id', user.id);
 
-      const { data, error } = await supabase
-        .from('briefings')
-        .select(`
-          id, created_at, emotion_theme, emotion_intensity,
-          stage_1_content, stage_2_content, stage_3_content, stage_4_content,
-          insight, action, growth_story
-        `)
-        .in('conversation_id', conversations.map(c => c.id))
-        .order('created_at', { ascending: false })
-        .limit(10);
+        if (!conversations?.length) {
+          setHistoricalBriefings([]);
+          return;
+        }
 
-      if (error) throw error;
-      setHistoricalBriefings(data || []);
+        const { data, error } = await supabase
+          .from('briefings')
+          .select(`
+            id, created_at, emotion_theme, emotion_intensity,
+            stage_1_content, stage_2_content, stage_3_content, stage_4_content,
+            insight, action, growth_story
+          `)
+          .in('conversation_id', conversations.map(c => c.id))
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+        setHistoricalBriefings(data || []);
+      }
     } catch (error) {
       console.error('Error loading briefings:', error);
       toast.error("加载简报失败");

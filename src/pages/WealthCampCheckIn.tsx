@@ -336,6 +336,11 @@ export default function WealthCampCheckIn() {
 
   const handleRedoMeditation = () => {
     setMeditationCompleted(false);
+    // 切换到今日任务 Tab 并滚动到冥想播放器
+    setActiveTab('today');
+    setTimeout(() => {
+      document.getElementById('meditation-player')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleMeditationComplete = async (reflection: string) => {
