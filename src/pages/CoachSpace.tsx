@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import { EnhancedCoachCard } from "@/components/coach/EnhancedCoachCard";
 import { HumanCoachEntry } from "@/components/coach/HumanCoachEntry";
+import { TeamCoachingEntry } from "@/components/coach/TeamCoachingEntry";
 import PageHeader from "@/components/PageHeader";
 
 const CoachSpace = () => {
@@ -67,12 +68,15 @@ const CoachSpace = () => {
         )}
       </section>
 
-      {/* 真人教练入口 */}
+      {/* 绽放教练入口 */}
       <section className="px-4 pb-8">
         <h3 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
-          <span>👩‍🏫</span> 真人教练
+          <span>🌸</span> 绽放教练
         </h3>
-        <HumanCoachEntry />
+        <div className="flex flex-col gap-3">
+          <HumanCoachEntry />
+          <TeamCoachingEntry />
+        </div>
       </section>
     </div>
   );
