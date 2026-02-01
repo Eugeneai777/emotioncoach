@@ -45,7 +45,7 @@ interface ToolCard {
 
 // 快捷入口配置
 const quickEntries = [
-  { id: "coach", label: "AI教练", emoji: "🎯", route: "/coach-space", gradient: "from-rose-500 to-pink-500" },
+  { id: "coach", label: "教练空间", emoji: "🧭", route: "/coach-space", gradient: "from-rose-500 to-pink-500" },
   { id: "courses", label: "学习课程", emoji: "📚", route: "/courses", gradient: "from-blue-500 to-indigo-500" },
   { id: "camp", label: "训练营", emoji: "🏕️", route: "/camps", gradient: "from-amber-500 to-orange-500" },
   { id: "partner", label: "合伙人", emoji: "🤝", route: "/partner/type", gradient: "from-emerald-500 to-teal-500" },
