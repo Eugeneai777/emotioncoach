@@ -71,7 +71,7 @@ const CoachSpace = () => {
       {/* 绽放教练入口 */}
       <section className="px-4 pb-8">
         <h3 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
-          <span>🌸</span> 绽放教练
+          <span>👩‍🏫</span> 真人教练
         </h3>
         <div className="flex flex-col gap-3">
           <HumanCoachEntry />
