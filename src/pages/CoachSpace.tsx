@@ -50,7 +50,7 @@ const CoachSpace = () => {
       {/* AI教练列表 - 单列 */}
       <section className="px-4 pb-4">
         <h3 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
-          <span>🤖</span> AI 智能教练
+          <span>🧭</span> 教练空间
         </h3>
         
         {isLoading ? (

@@ -26,7 +26,7 @@ export default function TeamCoaching() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-semibold">团队教练</h1>
+          <h1 className="font-semibold">绽放海沃塔 · 团队教练</h1>
           <div className="w-10" />
         </div>
       </header>
