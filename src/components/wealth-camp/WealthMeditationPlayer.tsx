@@ -151,6 +151,36 @@ export function WealthMeditationPlayer({
     }
 
     try {
+      // 鸿蒙/HarmonyOS 兼容性处理：先尝试加载
+      if (audio.readyState < audio.HAVE_ENOUGH_DATA) {
+        console.log('[WealthMeditationPlayer] 等待音频加载...');
+        audio.load();
+        await new Promise<void>((resolve, reject) => {
+          const onCanPlay = () => {
+            audio.removeEventListener('canplaythrough', onCanPlay);
+            audio.removeEventListener('error', onError);
+            resolve();
+          };
+          const onError = () => {
+            audio.removeEventListener('canplaythrough', onCanPlay);
+            audio.removeEventListener('error', onError);
+            reject(new Error('音频加载失败'));
+          };
+          audio.addEventListener('canplaythrough', onCanPlay);
+          audio.addEventListener('error', onError);
+          // 5秒超时
+          setTimeout(() => {
+            audio.removeEventListener('canplaythrough', onCanPlay);
+            audio.removeEventListener('error', onError);
+            if (audio.readyState >= audio.HAVE_ENOUGH_DATA) {
+              resolve();
+            } else {
+              reject(new Error('音频加载超时'));
+            }
+          }, 5000);
+        });
+      }
+
       await audio.play();
       setIsPlaying(true);
     } catch (err) {
@@ -166,6 +196,8 @@ export function WealthMeditationPlayer({
         toast.error('请先点击页面任意位置，解除浏览器自动播放限制');
       } else if (err instanceof DOMException && err.name === 'NotSupportedError') {
         toast.error('音频格式不支持，请尝试刷新页面');
+      } else if (err instanceof Error && err.message.includes('超时')) {
+        toast.error('网络较慢，音频加载超时。请检查网络后重试');
       } else {
         toast.error('无法播放音频：请检查网络连接或稍后重试');
       }
@@ -297,12 +329,38 @@ export function WealthMeditationPlayer({
         <audio 
           ref={audioRef} 
           src={cachedAudioUrl || encodeURI(audioUrl)} 
-          preload="metadata"
-          onError={() => {
-            const code = audioRef.current?.error?.code;
-            console.error('Audio load error:', { src: audioUrl, code });
-            toast.error('音频加载失败：请刷新页面后重试');
+          preload="auto"
+          playsInline
+          crossOrigin="anonymous"
+          onError={(e) => {
+            const audio = audioRef.current;
+            const code = audio?.error?.code;
+            const mediaError = audio?.error;
+            console.error('Audio load error:', { 
+              src: audioUrl, 
+              code,
+              message: mediaError?.message,
+              networkState: audio?.networkState,
+              readyState: audio?.readyState
+            });
+            
+            // 根据错误类型给出具体提示
+            if (code === 4) {
+              // MEDIA_ERR_SRC_NOT_SUPPORTED
+              toast.error('音频格式不支持。请尝试使用其他浏览器');
+            } else if (code === 2) {
+              // MEDIA_ERR_NETWORK
+              toast.error('网络错误：请检查网络连接后重试');
+            } else {
+              toast.error('音频加载失败：请刷新页面后重试');
+            }
             setIsPlaying(false);
+          }}
+          onLoadedMetadata={() => {
+            console.log('[WealthMeditationPlayer] 音频元数据加载完成');
+          }}
+          onCanPlayThrough={() => {
+            console.log('[WealthMeditationPlayer] 音频可以流畅播放');
           }}
         />
         
