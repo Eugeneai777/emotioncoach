@@ -62,6 +62,10 @@ const CampTemplateDetail = lazy(() => import("./pages/CampTemplateDetail"));
 const CampCheckIn = lazy(() => import("./pages/CampCheckIn"));
 const TrainingCampDetail = lazy(() => import("./components/camp/TrainingCampDetail").then(m => ({ default: m.TrainingCampDetail })));
 
+// 团队教练
+const TeamCoaching = lazy(() => import("./pages/TeamCoaching"));
+const TeamCoachingDetail = lazy(() => import("./pages/TeamCoachingDetail"));
+
 // 亲子教练
 const ParentCampLanding = lazy(() => import("./pages/ParentCampLanding"));
 const ParentCampManual = lazy(() => import("./pages/ParentCampManual"));
@@ -252,6 +256,8 @@ const App = () => (
               <Route path="/camp-intro/:campType" element={<CampIntro />} />
               <Route path="/camp/:campId" element={<TrainingCampDetail />} />
               <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
+              <Route path="/team-coaching" element={<TeamCoaching />} />
+              <Route path="/team-coaching/:id" element={<TeamCoachingDetail />} />
               <Route path="/user/:userId" element={<UserProfile />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/introduction" element={<Introduction />} />
