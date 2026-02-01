@@ -497,7 +497,9 @@ export const useDynamicCoachChat = (
                 // 更新 training_camps 表的打卡状态
                 if (campIdToUse) {
                   try {
-                    const today = new Date().toISOString().split('T')[0];
+                    // 使用北京时间确保与 TrainingCampCard 的 check_in_dates 判断一致
+                    const { getTodayCST } = await import('@/utils/dateUtils');
+                    const today = getTodayCST();
                     
                     // 获取当前训练营数据
                     const { data: camp } = await supabase
