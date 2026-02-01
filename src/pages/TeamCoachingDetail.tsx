@@ -24,7 +24,7 @@ export default function TeamCoachingDetail() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: session?.title || '团队教练课程',
+          title: session?.title || '绽放海沃塔 · 团队教练',
           text: session?.description || '',
           url,
         });
