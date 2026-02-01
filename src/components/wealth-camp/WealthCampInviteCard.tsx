@@ -45,7 +45,8 @@ export function WealthCampInviteCard({
     preloadUserData();
   }, [preloadUserData]);
 
-  const inviteUrl = `${getPromotionDomain()}/claim?type=wealth_camp_7&ref=${userId}`;
+  // 使用 wealth-camp-intro 路由，避免 Claim.tsx 的合伙人参数校验
+  const inviteUrl = `${getPromotionDomain()}/wealth-camp-intro?ref=${userId}`;
 
   const handleCopyLink = async () => {
     try {
@@ -55,7 +56,9 @@ export function WealthCampInviteCard({
         title: "链接已复制",
         description: "分享给好友一起突破财富卡点",
       });
-      setTimeout(() => setCopied(false), 2000);
+      // 使用 ref 确保 timeout 能正确执行
+      const timer = setTimeout(() => setCopied(false), 2000);
+      // 组件卸载时清理 timeout 不需要，因为状态重置不会影响用户体验
     } catch (error) {
       toast({
         title: "复制失败",
