@@ -138,15 +138,15 @@ export const VoiceInputButton = ({
       variant="ghost"
       onClick={handleClick}
       disabled={disabled || isProcessing}
-      className={`h-9 w-9 rounded-full shrink-0 transition-all ${getButtonStyles()}`}
+      className={`h-11 w-11 min-w-[44px] min-h-[44px] rounded-full shrink-0 transition-all ${getButtonStyles()}`}
       title={isRecording ? "点击停止录音" : "点击开始语音输入"}
     >
       {isProcessing ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="h-5 w-5 animate-spin" />
       ) : isRecording ? (
-        <MicOff className="h-4 w-4" />
+        <MicOff className="h-5 w-5" />
       ) : (
-        <Mic className="h-4 w-4" />
+        <Mic className="h-5 w-5" />
       )}
     </Button>
   );
