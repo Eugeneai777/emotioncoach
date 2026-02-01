@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
       }
     };
 
-    console.log('[DoubaoToken] Token generated successfully');
+    console.log('[DoubaoToken] Token generated successfully, instructions length:', responseData.instructions.length, 'preview:', responseData.instructions.substring(0, 100) + '...');
 
     return new Response(
       JSON.stringify(responseData),

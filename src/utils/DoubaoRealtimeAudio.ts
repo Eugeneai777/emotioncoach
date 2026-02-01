@@ -40,6 +40,7 @@ interface DoubaoRealtimeChatOptions {
   onMessage?: (message: any) => void;
   tokenEndpoint?: string;
   mode?: string;
+  voiceType?: string; // 豆包音色类型，如 'BV158_streaming'
 }
 
 export class DoubaoRealtimeChat {
@@ -80,6 +81,7 @@ export class DoubaoRealtimeChat {
   private onMessage?: (message: any) => void;
   private tokenEndpoint: string;
   private mode: string;
+  private voiceType: string;
 
   constructor(options: DoubaoRealtimeChatOptions) {
     this.onStatusChange = options.onStatusChange;
@@ -89,6 +91,7 @@ export class DoubaoRealtimeChat {
     this.onMessage = options.onMessage;
     this.tokenEndpoint = options.tokenEndpoint || 'doubao-realtime-token';
     this.mode = options.mode || 'emotion';
+    this.voiceType = options.voiceType || 'BV158_streaming';
   }
 
   /**
@@ -388,11 +391,12 @@ export class DoubaoRealtimeChat {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.config) return;
 
     // 发送初始化请求，让 Relay 连接到豆包
+    // 优先使用构造函数传入的 voiceType，否则使用 config 返回的或默认值
     const initRequest = {
       type: 'session.init',
       instructions: this.config.instructions,
       tools: this.config.tools,
-      voice_type: (this.config as any).voice_type || 'BV158_streaming'  // ✅ 传递音色配置
+      voice_type: this.voiceType || (this.config as any).voice_type || 'BV158_streaming'
     };
 
     this.ws.send(JSON.stringify(initRequest));

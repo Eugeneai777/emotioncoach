@@ -47,6 +47,7 @@ interface CoachVoiceChatProps {
   mode?: VoiceChatMode;
   featureKey?: string; // 教练专属计费 feature_key，默认 'realtime_voice'
   scenario?: string; // 场景名称，如 "睡不着觉"，用于场景专属语音对话
+  voiceType?: string; // 豆包语音音色类型
   onBriefingSaved?: (briefingId: string, briefingData: BriefingData) => void;
   // AI主动来电相关
   isIncomingCall?: boolean;        // 是否是AI来电（被动接入）
@@ -70,6 +71,7 @@ export const CoachVoiceChat = ({
   mode = 'general',
   featureKey = 'realtime_voice',
   scenario,
+  voiceType,
   onBriefingSaved,
   isIncomingCall = false,
   aiCallId,
@@ -1006,7 +1008,8 @@ export const CoachVoiceChat = ({
           },
           onMessage: handleVoiceMessage,
           tokenEndpoint: 'doubao-realtime-token',
-          mode
+          mode,
+          voiceType
         });
         
         chatRef.current = doubaoClient;
