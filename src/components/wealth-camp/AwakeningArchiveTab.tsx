@@ -38,7 +38,7 @@ interface AwakeningArchiveTabProps {
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
   const navigate = useNavigate();
-  const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
+  const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg, isLoading: entriesLoading } = useWealthJournalEntries({ campId });
   // IMPORTANT: Pass campId to ensure consistent cache key across all components
   const { baseline } = useAssessmentBaseline(campId);
   // Get authoritative current awakening from progress (same as GameProgressCard)
@@ -77,7 +77,20 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
     },
   });
 
-  if (!entries || entries.length === 0) {
+  // 优先使用 fullEntries（来自 hook），如果为空则 fallback 到传入的 entries
+  const displayEntries = fullEntries.length > 0 ? fullEntries : entries;
+
+  // 加载状态
+  if (entriesLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-4xl mb-4 animate-pulse">🌱</div>
+        <p className="text-muted-foreground">加载成长数据中...</p>
+      </div>
+    );
+  }
+
+  if (!displayEntries || displayEntries.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">🌱</div>

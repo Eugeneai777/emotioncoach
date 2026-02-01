@@ -5,12 +5,15 @@ interface ScrollToBottomButtonProps {
   scrollRef: RefObject<HTMLDivElement>;
   messagesEndRef: RefObject<HTMLDivElement>;
   primaryColor?: string;
+  /** Use absolute positioning for embedded contexts (inside scroll containers) */
+  embedded?: boolean;
 }
 
 export const ScrollToBottomButton = ({ 
   scrollRef, 
   messagesEndRef,
-  primaryColor = "primary"
+  primaryColor = "primary",
+  embedded = false
 }: ScrollToBottomButtonProps) => {
   const [showButton, setShowButton] = useState(false);
 
@@ -41,15 +44,21 @@ export const ScrollToBottomButton = ({
     rose: 'bg-rose-500 hover:bg-rose-600',
     red: 'bg-rose-500 hover:bg-rose-600',
     teal: 'bg-teal-500 hover:bg-teal-600',
+    amber: 'bg-amber-500 hover:bg-amber-600',
     primary: 'bg-primary hover:bg-primary/90',
   };
 
   const bgColor = colorMap[primaryColor] || colorMap.primary;
+  
+  // Use sticky for embedded contexts, fixed for full-page contexts
+  const positionClass = embedded 
+    ? 'sticky bottom-4 ml-auto mr-4' 
+    : 'fixed bottom-28 right-4';
 
   return (
     <button
       onClick={scrollToBottom}
-      className={`fixed bottom-28 right-4 z-30 w-10 h-10 rounded-full 
+      className={`${positionClass} z-30 w-10 h-10 rounded-full 
         ${bgColor} text-white shadow-lg 
         flex items-center justify-center
         animate-in fade-in slide-in-from-bottom-2

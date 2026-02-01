@@ -263,12 +263,13 @@ export const WealthCoachDialog = ({
             </div>
           </main>
 
-          {/* 滚动到底部按钮 */}
+          {/* 滚动到底部按钮 - Dialog 使用 fixed 定位 */}
           {messages.length > 0 && (
             <ScrollToBottomButton
               scrollRef={mainRef}
               messagesEndRef={messagesEndRef}
               primaryColor={primaryColor}
+              embedded={false}
             />
           )}
 
