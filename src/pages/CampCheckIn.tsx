@@ -273,6 +273,9 @@ const CampCheckIn = () => {
                     if (!todayProgress?.is_checked_in) {
                       if (camp.camp_type === 'parent_emotion_21') {
                         navigate(`/parent-coach?campId=${campId}`);
+                      } else if (camp.camp_type === 'emotion_diary_21') {
+                        // 情绪日记营：明确跳转到情绪教练页面
+                        navigate("/emotion-coach");
                       } else {
                         navigate("/");
                       }
@@ -320,6 +323,9 @@ const CampCheckIn = () => {
                             e.stopPropagation();
                             if (camp.camp_type === 'parent_emotion_21') {
                               navigate(`/parent-coach?campId=${campId}`);
+                            } else if (camp.camp_type === 'emotion_diary_21') {
+                              // 情绪日记营：明确跳转到情绪教练页面
+                              navigate("/emotion-coach");
                             } else {
                               navigate("/");
                             }

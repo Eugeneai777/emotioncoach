@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { getTodayInBeijing } from "@/utils/dateUtils";
+import { format, differenceInDays, parseISO } from "date-fns";
+import { getTodayInBeijing, getTodayStartCST, parseDateCST } from "@/utils/dateUtils";
 
 type Message = {
   role: "user" | "assistant";
@@ -315,11 +315,16 @@ ${data.growth_story}
                 .eq('id', camp.id);
 
               // Trigger check-in success event
+              // 使用正确的天数计算：从训练营开始日期到今天的天数差 + 1
+              const campStartDate = parseDateCST(camp.start_date);
+              const todayDate = getTodayStartCST();
+              const calculatedCampDay = Math.max(1, differenceInDays(todayDate, campStartDate) + 1);
+              
               window.dispatchEvent(new CustomEvent('camp-checkin-success', {
                 detail: {
                   campId: camp.id,
                   campName: camp.camp_name,
-                  campDay: camp.current_day + 1,
+                  campDay: calculatedCampDay,  // 使用正确计算的天数
                   briefingId: briefing.id,
                   briefingData: briefingData
                 }

@@ -396,7 +396,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
       enable_vad: true,
-      vad_stop_time: 600,        // 缩短静音判定时间，更快响应
+      vad_stop_time: 800,        // 静音判定时间 800ms（用户反馈 600 太短，容易打断思考）
       vad_max_speech_time: 60,   // 最长语音时间60秒
       vad_silence_time: 300,     // 语音开始前的静音容忍时间
       enable_tts: true,
