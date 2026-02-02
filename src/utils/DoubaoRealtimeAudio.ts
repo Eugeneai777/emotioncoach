@@ -565,6 +565,12 @@ export class DoubaoRealtimeChat {
             console.warn('[DoubaoChat] Ignoring session.connected after session.closed');
             return;
           }
+          // ✅ relay 现在会在真正 ready(ACK/101/兜底) 后才发 connected。
+          // 仅在 ready 时触发录音+开场白，避免“过早发送你好被后端丢弃”导致 IdleTimeout。
+          if (message.ready === false) {
+            console.log('[DoubaoChat] session.connected received but not ready; waiting...');
+            return;
+          }
           console.log('[DoubaoChat] Relay connected to Doubao');
           // 🔧 解决 waitForSessionConnected 的 Promise
           if (this.sessionConnectedResolver) {
