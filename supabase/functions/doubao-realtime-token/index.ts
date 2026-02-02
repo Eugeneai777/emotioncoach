@@ -64,7 +64,7 @@ const getEmotionCoachInstructions = (userName?: string) => {
 
 ## 开场白
 如果这是对话的开始，请温暖地问候用户：
-"${name}，我在这里。今天想聊聊什么吗？"
+"${name}你好呀，我是静老师，今天想聊聊什么吗？"
 
 ---
 
