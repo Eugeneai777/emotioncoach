@@ -90,23 +90,42 @@ const EVENT_CHAT_START = 459;       // 对话开始
 const EVENT_CHAT_RESPONSE = 550;    // 模型文本回复
 const EVENT_RESPONSE_DONE = 559;    // 回复完成
 
-// ============= 音色兼容映射 =============
-// 现网发现：部分账号/资源（timber）不支持长格式 speaker id，会返回：
-// "speaker id=... not found in given timber" (error_code=45000001)
-// 因此这里提供一层“长ID -> 旧BV ID”映射，并允许在必要时降级为“不指定音色”（让服务端使用默认音色），
-// 以保证“连接后能正常出声/回复”。
-const VOICE_TYPE_ALIASES: Record<string, string> = {
-  // 长格式 -> BV（与前端 voiceTypeConfig 的 legacyIdMapping 保持一致）
-  'zh_male_M392_conversation_wvae_bigtts': 'BV158_streaming',
-  'zh_male_yuanboxiaoshu_moon_bigtts': 'BV123_streaming',
-  'zh_female_xinlingjitang_moon_bigtts': 'BV503_streaming',
-  'zh_female_wenroushunv_mars_bigtts': 'BV504_streaming',
-};
+// ============= 豆包语音大模型 2.0 官方支持音色 =============
+// doubao-speech-vision-pro-250515 模型需要使用长格式音色 ID
+// 旧版 BV 短格式 ID (BV158_streaming 等) 已不再支持！
+// 
+// 官方文档验证的可用音色列表：
+// https://www.volcengine.com/docs/6561/1257543
+const VALID_VOICE_TYPES = new Set([
+  // 男声
+  'zh_male_M392_conversation_wvae_bigtts',     // 智慧长者 - 沉稳睿智
+  'zh_male_yuanboxiaoshu_moon_bigtts',         // 渊博小叔 - 儒雅博学
+  // 女声
+  'zh_female_xinlingjitang_moon_bigtts',       // 心灵鸡汤 - 温暖治愈
+  'zh_female_wenroushunv_mars_bigtts',         // 温柔淑女 - 亲切温婉
+  // 备用音色（如果上述不可用）
+  'zh_male_rap_mars_bigtts',                   // 说唱歌手
+  'zh_female_story_mars_bigtts',               // 少儿故事
+]);
 
+// 直接使用长格式 ID，不做任何转换（删除了错误的 BV 映射）
 const resolveProviderVoiceType = (voiceType?: string): string | undefined => {
   const v = (voiceType ?? '').trim();
   if (!v) return undefined;
-  return VOICE_TYPE_ALIASES[v] ?? v;
+  
+  // 检查是否是有效的音色 ID - 直接返回长格式 ID
+  if (VALID_VOICE_TYPES.has(v)) {
+    return v;
+  }
+  
+  // 如果是旧版 BV 格式，返回 undefined 让系统使用默认音色
+  if (v.startsWith('BV') && v.includes('_streaming')) {
+    console.warn(`[DoubaoRelay] ⚠️ Legacy BV format not supported: ${v}, will use default`);
+    return undefined;
+  }
+  
+  // 其他格式原样返回尝试
+  return v;
 };
 
 // ============= 协议构建函数 =============
