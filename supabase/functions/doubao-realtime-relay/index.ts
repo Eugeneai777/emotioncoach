@@ -448,11 +448,10 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     (tts as any).speaker = resolvedVoiceType;
   }
 
-  // ✅ 豆包端到端实时对话 API (doubao-speech-vision-pro-250515) 
-  // 根据官方文档，系统提示词需同时写入多个冗余字段以确保兼容性
-  // - system_prompt: 官方推荐字段
-  // - system_role: 部分版本使用
-  // - bot_system_prompt: 某些 API 版本使用
+  // ✅ 豆包端到端实时对话 API (doubao-speech-vision-pro-250515)
+  // 按官方文档：人设/系统提示词使用 request.system_role（放在 payload.request 下）。
+  // 经验：多字段冗余（system_prompt/bot_system_prompt）在部分版本会产生优先级冲突，
+  // 反而导致模型回退到默认自我介绍；因此这里收敛为官方字段。
   const request: Record<string, unknown> = {
     model_name: 'doubao-speech-vision-pro-250515',
     enable_vad: true,
@@ -461,10 +460,9 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     vad_silence_time: 300,
     enable_tts: true,
     bot_name: '静老师',
-    // ✅ 多字段冗余写入，确保 prompt 被正确识别
-    system_prompt: instructions,
     system_role: instructions,
-    bot_system_prompt: instructions,
+    // speaking_style 为可选字段，但在部分场景下能增强“说话风格”稳定性
+    speaking_style: '温暖、接纳、专业；使用简体中文；像朋友一样自然对话',
   };
 
   if (resolvedVoiceType) {
@@ -496,11 +494,15 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   console.log('[Protocol] 🎙️ voice_type final (after fallback):', finalVoiceType);
   console.log('[Protocol] 🎙️ payload.tts.voice_type:', (payload as any).tts?.voice_type);
   console.log('[Protocol] 🎙️ payload.tts.audio_config.voice_type:', (payload as any).tts?.audio_config?.voice_type);
-  console.log('[Protocol] 📝 system_role length:', instructions.length);
-  console.log('[Protocol] 📝 system_role preview:', instructions.substring(0, 100) + '...');
-  console.log('[Protocol] 📦 full payload JSON:', JSON.stringify(payload));
-  console.log('[Protocol] ============================================');
-  console.log('[Protocol] StartSession sessionId:', sessionId);
+  // ✅ 重要：日志不要打印 full payload（太大容易被日志系统截断/丢弃），只打印关键字段
+  console.log('[DoubaoRelay] StartSession debug:', {
+    sessionId,
+    model_name: (request as any).model_name,
+    bot_name: (request as any).bot_name,
+    system_role_len: typeof instructions === 'string' ? instructions.length : 0,
+    system_role_preview: (instructions || '').substring(0, 120),
+    voice_type_final: finalVoiceType || '(none)',
+  });
 
   /**
    * ✅ IMPORTANT: StartSession 的字段布局与 “flags” 不完全一致。
@@ -1390,11 +1392,12 @@ Deno.serve(async (req) => {
             // ⚠️ 不再强制默认长ID：若不传 voice_type，则让服务端使用默认音色（更稳，避免 45000001 导致无回复）
             voiceType: (message.voice_type ?? '')
           };
-          // ✅ 调试日志：确认 prompt 和音色是否正确接收
-          console.log('[DoubaoRelay] 📋 session.init received:');
-          console.log('[DoubaoRelay]   - instructions length:', sessionConfig.instructions.length);
-          console.log('[DoubaoRelay]   - instructions preview:', sessionConfig.instructions.substring(0, 150) + '...');
-          console.log('[DoubaoRelay]   - voiceType:', sessionConfig.voiceType);
+          // ✅ 调试日志：确认 prompt 和音色是否正确接收（避免 emoji，便于日志检索）
+          console.log('[DoubaoRelay] session.init received', {
+            instructions_len: sessionConfig.instructions.length,
+            instructions_preview: sessionConfig.instructions.substring(0, 120),
+            voiceType: sessionConfig.voiceType || '(none)'
+          });
           // ✅ Fix: StartSession 使用 sequence=1；音频包从 sequence=2 开始递增
           audioSequence = 2;
           sessionStarted = false;
