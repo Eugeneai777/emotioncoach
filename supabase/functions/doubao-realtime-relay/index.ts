@@ -373,6 +373,12 @@ function parsePacket(data: Uint8Array): {
  * 二进制帧格式: Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
  */
 function buildStartSessionRequest(userId: string, instructions: string, sessionId: string, voiceType?: string): Uint8Array {
+  // ✅ 统一计算最终音色：后续同时写入 tts.voice_type 与 tts.audio_config.voice_type
+  // 经验：部分协议/版本只识别 audio_config.voice_type，导致只写 tts.voice_type 时音色不生效（回落到默认女声）
+  const resolvedVoiceType = (voiceType && String(voiceType).trim() !== '')
+    ? String(voiceType).trim()
+    : 'zh_male_M392_conversation_wvae_bigtts';
+
   const payload = {
     user: { uid: userId },
     audio: {
@@ -390,9 +396,11 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
         channel: 1,
         format: 'pcm_s16le',
         sample_rate: 24000,
+        // ✅ 关键：把音色写入 audio_config（部分实现只读取这里）
+        voice_type: resolvedVoiceType,
       },
-      // ✅ 新版模型 doubao-speech-vision-pro-250515 需要长格式 ID
-      voice_type: voiceType || 'zh_male_M392_conversation_wvae_bigtts'
+      // ✅ 同时保留顶层字段，兼容另一部分实现
+      voice_type: resolvedVoiceType,
     },
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
@@ -408,11 +416,12 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
 
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
   // ✅ 详细调试日志：确认发送给豆包的完整配置
-  const finalVoiceType = voiceType || 'zh_male_M392_conversation_wvae_bigtts';
+  const finalVoiceType = resolvedVoiceType;
   console.log('[Protocol] 📤 ============ StartSession Debug ============');
   console.log('[Protocol] 🎙️ voice_type param received:', voiceType);
   console.log('[Protocol] 🎙️ voice_type final (after fallback):', finalVoiceType);
   console.log('[Protocol] 🎙️ payload.tts.voice_type:', payload.tts.voice_type);
+  console.log('[Protocol] 🎙️ payload.tts.audio_config.voice_type:', (payload as any).tts?.audio_config?.voice_type);
   console.log('[Protocol] 📝 system_role length:', instructions.length);
   console.log('[Protocol] 📝 system_role preview:', instructions.substring(0, 100) + '...');
   console.log('[Protocol] 📦 full payload JSON:', JSON.stringify(payload));
