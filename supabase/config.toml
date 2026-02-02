@@ -374,6 +374,8 @@ verify_jwt = false
 
 [functions.doubao-realtime-relay]
 verify_jwt = false
+# 语音通话需要长时间 WebSocket 连接，设置 30 分钟超时
+wall_clock_timeout = 1800
 
 [functions.analyze-scl90]
 verify_jwt = true
