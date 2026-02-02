@@ -833,6 +833,9 @@ Deno.serve(async (req) => {
   let pendingIdentityCheck = false;
   let identityReplyBuffer = '';
 
+  // 身份问题检测（同时用于语音 ASR 与文字输入）
+  const IDENTITY_QUESTION_RE = /你是谁|你叫什么|你是豆包|你是什么模型|你是什么/;
+
   // ✅ 自动重连期间不要向前端发送 session.closed
   // 否则前端会把会话标记为 closed，从而忽略后续真正 ready 的 session.connected
   let isReconnecting = false;
@@ -1176,8 +1179,8 @@ Deno.serve(async (req) => {
                            console.log(`[DoubaoRelay] 🗣️ 用户说话(最终): "${transcript}"`);
 
                             // ✅ 如果用户在问“你是谁/你叫什么”等身份问题，开启本轮 persona 校验
-                            const normalized = String(transcript).replace(/\s+/g, '');
-                            pendingIdentityCheck = /你是谁|你叫什么|你是豆包|你是什么模型|你是什么/.test(normalized);
+                             const normalized = String(transcript).replace(/\s+/g, '');
+                             pendingIdentityCheck = IDENTITY_QUESTION_RE.test(normalized);
                             if (pendingIdentityCheck) {
                               identityReplyBuffer = '';
                               console.log('[DoubaoRelay] IdentityCheck armed for next assistant reply');
@@ -1575,6 +1578,14 @@ Deno.serve(async (req) => {
             try {
               // 提取用户文本
               const userText = message.item?.content?.[0]?.text || message.text || '';
+
+              // ✅ 文字输入也需要启用身份校验（否则只有语音问“你是谁”才会触发 persona 兜底）
+              const normalizedText = String(userText).replace(/\s+/g, '');
+              pendingIdentityCheck = IDENTITY_QUESTION_RE.test(normalizedText);
+              if (pendingIdentityCheck) {
+                identityReplyBuffer = '';
+                console.log('[DoubaoRelay] IdentityCheck armed for next assistant reply (text input)');
+              }
               
               if (!userText) {
                 console.warn('[DoubaoRelay] Empty text message, skipping');
