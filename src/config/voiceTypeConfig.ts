@@ -62,10 +62,38 @@ export const VOICE_TYPE_STORAGE_KEY = 'emotion_coach_voice_type';
 
 /**
  * 获取用户保存的音色偏好
+ * 🔧 兼容旧版短格式 ID，自动迁移到新版长格式
  */
 export const getSavedVoiceType = (): string => {
   try {
-    return localStorage.getItem(VOICE_TYPE_STORAGE_KEY) || DEFAULT_VOICE_TYPE;
+    const saved = localStorage.getItem(VOICE_TYPE_STORAGE_KEY);
+    if (!saved) return DEFAULT_VOICE_TYPE;
+    
+    // 🔧 检查是否是已废弃的旧版短格式 ID
+    const legacyIdMapping: Record<string, string> = {
+      'BV158_streaming': 'zh_male_M392_conversation_wvae_bigtts',  // 智慧长者
+      'BV123_streaming': 'zh_male_yuanboxiaoshu_moon_bigtts',       // 渊博小叔 (假设)
+      'BV503_streaming': 'zh_female_xinlingjitang_moon_bigtts',     // 心灵鸡汤 (假设)
+      'BV504_streaming': 'zh_female_wenroushunv_mars_bigtts',       // 温柔淑女 (假设)
+    };
+    
+    if (legacyIdMapping[saved]) {
+      console.log('[VoiceTypeConfig] 🔄 Migrating legacy voice ID:', saved, '→', legacyIdMapping[saved]);
+      const newId = legacyIdMapping[saved];
+      // 自动迁移存储
+      localStorage.setItem(VOICE_TYPE_STORAGE_KEY, newId);
+      return newId;
+    }
+    
+    // 验证是否是当前有效的 voice_type
+    const isValidVoiceType = VOICE_TYPE_OPTIONS.some(opt => opt.voice_type === saved);
+    if (!isValidVoiceType) {
+      console.warn('[VoiceTypeConfig] ⚠️ Invalid saved voice type:', saved, '- resetting to default');
+      localStorage.setItem(VOICE_TYPE_STORAGE_KEY, DEFAULT_VOICE_TYPE);
+      return DEFAULT_VOICE_TYPE;
+    }
+    
+    return saved;
   } catch {
     return DEFAULT_VOICE_TYPE;
   }
