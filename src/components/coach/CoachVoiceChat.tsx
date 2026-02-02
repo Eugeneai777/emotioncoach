@@ -666,6 +666,15 @@ export const CoachVoiceChat = ({
   const handleVoiceMessage = (event: any) => {
     lastActivityRef.current = Date.now();
     console.log('Voice event:', event.type);
+
+    // ✅ 后端检测到音色不可用时会自动降级重连（避免“连接成功但无回复”）
+    if (event.type === 'voice.fallback') {
+      toast({
+        title: '⚠️ 音色暂不可用，已自动切换默认音色',
+        description: '已为你自动恢复可用的语音输出（不影响对话内容）',
+      });
+      return;
+    }
     
     if (event.type === 'input_audio_buffer.speech_started' || event.type === 'speech_started') {
       setSpeakingStatus('user-speaking');

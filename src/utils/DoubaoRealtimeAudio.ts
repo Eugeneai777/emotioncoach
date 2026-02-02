@@ -670,6 +670,38 @@ export class DoubaoRealtimeChat {
             this.sessionConnectedRejecter(new Error(errMsg));
             this.clearSessionConnectedWait();
           }
+
+          // ✅ 关键修复：如果在已连接后收到 error，之前不会更新 UI 状态，导致前端卡在“正在聆听”。
+          // 这里把通话置为 error，并停止录音/心跳，关闭 ws（但不触发 disconnected 覆盖）。
+          try {
+            this.onSpeakingChange('idle');
+          } catch {
+            // ignore
+          }
+
+          try {
+            this.stopRecording();
+          } catch {
+            // ignore
+          }
+
+          this.stopHeartbeat();
+
+          // 关闭 ws，但避免 onclose 把状态改成 disconnected
+          this.isDisconnected = true;
+          if (this.ws) {
+            try {
+              if (this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({ type: 'session.close' }));
+              }
+              this.ws.close();
+            } catch {
+              // ignore
+            }
+            this.ws = null;
+          }
+
+          this.onStatusChange('error');
           break;
       }
     } catch (e) {
