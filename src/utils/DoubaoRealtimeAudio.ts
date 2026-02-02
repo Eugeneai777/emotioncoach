@@ -91,7 +91,15 @@ export class DoubaoRealtimeChat {
     this.onMessage = options.onMessage;
     this.tokenEndpoint = options.tokenEndpoint || 'doubao-realtime-token';
     this.mode = options.mode || 'emotion';
-    this.voiceType = options.voiceType || 'BV158_streaming';
+    // 🔧 强化音色默认值：确保始终使用有效的音色 ID
+    const resolvedVoiceType = options.voiceType && options.voiceType.trim() !== '' 
+      ? options.voiceType 
+      : 'BV158_streaming';
+    this.voiceType = resolvedVoiceType;
+    console.log('[DoubaoChat] Constructor voiceType:', { 
+      input: options.voiceType, 
+      resolved: resolvedVoiceType 
+    });
   }
 
   /**
@@ -390,17 +398,23 @@ export class DoubaoRealtimeChat {
   private sendSessionInit(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.config) return;
 
-    // 发送初始化请求，让 Relay 连接到豆包
-    // 优先使用构造函数传入的 voiceType，否则使用 config 返回的或默认值
+    // 🔧 修复音色传递：确保 voice_type 始终有值
+    // 优先级：this.voiceType（构造函数已确保非空）> config 返回 > 硬编码默认
+    const finalVoiceType = this.voiceType || (this.config as any).voice_type || 'BV158_streaming';
+    
     const initRequest = {
       type: 'session.init',
       instructions: this.config.instructions,
       tools: this.config.tools,
-      voice_type: this.voiceType || (this.config as any).voice_type || 'BV158_streaming'
+      voice_type: finalVoiceType
     };
 
     this.ws.send(JSON.stringify(initRequest));
-    console.log('[DoubaoChat] Session init request sent, voice_type:', initRequest.voice_type);
+    console.log('[DoubaoChat] 📤 Session init request sent:', {
+      voice_type: finalVoiceType,
+      instructions_length: this.config.instructions?.length || 0,
+      instructions_preview: this.config.instructions?.substring(0, 80) + '...'
+    });
   }
 
   private startHeartbeat(): void {
