@@ -1,129 +1,85 @@
 
-# 修复财富日记在对话中无法生成（关联）的问题
+# 修复标准模式下财富简报生成必须先询问用户
 
 ## 问题诊断
 
 ### 现象
-用户在财富教练对话中完成觉察后，系统显示"正在生成财富日记..."，但在"我的财富日记"页面中看不到生成的日记。
+用户在财富教练对话结束时，希望 AI 先询问"是否要生成财富简报"，而不是直接生成。
 
 ### 根本原因
-`DynamicCoach.tsx` 页面在调用 `useDynamicCoachChat` 钩子时，**遗漏了 `contextData` 参数的传递**。
+当前代码中**两种模式处理不一致**：
 
-虽然页面已经通过 `location.state` 接收了 `campId` 和 `dayNumber`，但这些数据没有传递给钩子，导致：
-- 日记确实生成并保存到了数据库
-- 但 `camp_id` 字段为 `NULL`
-- 财富日记列表页面按 `camp_id` 过滤查询时，无法匹配到这些记录
+| 模式 | 当前行为 | 用户期望 |
+|------|---------|---------|
+| 冥想分析模式 (`meditation_analysis`) | ✅ 先询问用户是否生成 | 正确 |
+| 标准四问法模式 (`standard`) | ❌ 完成后直接生成 | 需要修改 |
 
-### 数据库证据
-```sql
--- 最近的日记记录
-camp_id: NULL  ← 问题所在
-day_number: 1
-behavior_block: "本来预计一个法院冻结款项..."
+**问题代码位置** - `supabase/functions/wealth_coach_4_questions-coach/index.ts` 第 789 行：
+```typescript
+【完成条件】当四问全部完成后，调用 generate_wealth_briefing 工具生成财富日记。
 ```
+此处直接调用工具，未要求先询问用户。
 
 ---
 
 ## 修复方案
 
-### 步骤 1: 修改 DynamicCoach.tsx
+### 修改 Edge Function 的标准模式 Prompt
 
-**文件**: `src/pages/DynamicCoach.tsx`
+**文件**: `supabase/functions/wealth_coach_4_questions-coach/index.ts`
 
-**修改内容**: 在调用 `useDynamicCoachChat` 时，补充传递 `contextData` 参数
+**修改位置**: 第 789 行附近，标准四问法模式的完成条件
+
+**修改内容**: 将直接调用改为先询问用户
 
 ```typescript
-// 修改前 (行 161-169)
-} = useDynamicCoachChat(
-  template?.coach_key || '',
-  template?.edge_function_name || '',
-  template?.briefing_table_name || '',
-  template?.briefing_tool_config as any,
-  undefined,
-  handleBriefingGenerated,
-  initialChatMode
-);
+// 修改前
+【完成条件】当四问全部完成后，调用 generate_wealth_briefing 工具生成财富日记。
 
 // 修改后
-} = useDynamicCoachChat(
-  template?.coach_key || '',
-  template?.edge_function_name || '',
-  template?.briefing_table_name || '',
-  template?.briefing_tool_config as any,
-  undefined,
-  handleBriefingGenerated,
-  initialChatMode,
-  { 
-    campId: locationState?.campId, 
-    dayNumber: locationState?.dayNumber 
-  }
-);
+【完成条件】
+当四问全部完成后：
+1. 先询问用户："你愿意让我把今天的觉察整理成一份《财富觉醒简报》吗？✨"
+2. 只有用户明确同意后，才输出"好的，让我帮你整理今天的成长记录..."并调用 generate_wealth_briefing 工具
+3. 如果用户拒绝或犹豫，尊重用户的选择，可以继续聊天或友好道别
 ```
-
-### 步骤 2: 验证 locationState 的传递
-
-确认从训练营跳转到 DynamicCoach 页面时，`campId` 和 `dayNumber` 已经正确传递。需要检查跳转来源页面的 `navigate()` 调用是否包含这些参数。
 
 ---
 
-## 技术细节
-
-### 数据流分析
+## 数据流对比
 
 ```text
-训练营页面
+【修改前 - 标准模式】
+四问完成
     │
-    ├─→ navigate('/dynamic-coach', { 
-    │     state: { campId, dayNumber, ... } 
-    │   })
-    │
-    ▼
-DynamicCoach.tsx
-    │
-    ├─→ locationState = useLocation().state
-    │     ↓
-    │   { campId: "xxx", dayNumber: 1 }  ✓ 数据已接收
-    │
-    ├─→ useDynamicCoachChat(..., contextData)
-    │     ↓
-    │   contextData = undefined  ✗ 参数未传递！
-    │
-    ▼
-generate-wealth-journal Edge Function
-    │
-    └─→ camp_id = null  ✗ 日记无法关联训练营
-```
+    └─→ 直接调用 generate_wealth_briefing ❌ 用户无选择权
 
-### 修复后的数据流
-
-```text
-DynamicCoach.tsx
+【修改后 - 标准模式】
+四问完成
     │
-    ├─→ useDynamicCoachChat(..., { 
-    │     campId: locationState?.campId, 
-    │     dayNumber: locationState?.dayNumber 
-    │   })
-    │
-    ▼
-generate-wealth-journal Edge Function
-    │
-    └─→ camp_id = "693a7f15-..."  ✓ 日记正确关联
+    └─→ 询问"是否生成简报？"
+          │
+          ├─ 用户同意 → 调用工具生成
+          │
+          └─ 用户拒绝 → 尊重选择，不生成
 ```
 
 ---
 
 ## 影响范围
 
-- **修改文件**: 1 个 (`src/pages/DynamicCoach.tsx`)
-- **修改行数**: 约 5 行
-- **风险评估**: 低风险，仅补充缺失的参数传递
-- **向后兼容**: 完全兼容，`contextData` 是可选参数
+- **修改文件**: 1 个 (`supabase/functions/wealth_coach_4_questions-coach/index.ts`)
+- **修改行数**: 约 10 行
+- **风险评估**: 低风险，仅修改 prompt 文案
+- **兼容性**: 冥想分析模式已有此逻辑，标准模式补齐即可
 
 ---
 
 ## 测试要点
 
-1. 从训练营进入财富教练对话
-2. 完成一次完整的觉察对话
-3. 检查"我的财富日记"页面是否显示新生成的日记
-4. 验证日记的 `camp_id` 和 `day_number` 是否正确
+1. 从首页直接进入财富教练（标准四问法模式）
+2. 完成四个问题的对话
+3. 验证 AI 是否询问"是否生成简报"
+4. 回答"好"后，验证日记是否正常生成
+5. 回答"不用了"后，验证 AI 是否友好结束对话
+
