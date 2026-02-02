@@ -165,7 +165,11 @@ const DynamicCoach = () => {
     template?.briefing_tool_config as any,
     undefined,
     handleBriefingGenerated,
-    initialChatMode
+    initialChatMode,
+    { 
+      campId: locationState?.campId, 
+      dayNumber: locationState?.dayNumber 
+    }
   );
 
   // 处理从训练营带入的初始消息（冥想感受）
