@@ -448,6 +448,11 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     (tts as any).speaker = resolvedVoiceType;
   }
 
+  // ✅ 豆包端到端实时对话 API (doubao-speech-vision-pro-250515) 
+  // 根据官方文档，系统提示词需同时写入多个冗余字段以确保兼容性
+  // - system_prompt: 官方推荐字段
+  // - system_role: 部分版本使用
+  // - bot_system_prompt: 某些 API 版本使用
   const request: Record<string, unknown> = {
     model_name: 'doubao-speech-vision-pro-250515',
     enable_vad: true,
@@ -455,8 +460,11 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     vad_max_speech_time: 60,
     vad_silence_time: 300,
     enable_tts: true,
-    bot_name: '情绪教练',
+    bot_name: '静老师',
+    // ✅ 多字段冗余写入，确保 prompt 被正确识别
+    system_prompt: instructions,
     system_role: instructions,
+    bot_system_prompt: instructions,
   };
 
   if (resolvedVoiceType) {
