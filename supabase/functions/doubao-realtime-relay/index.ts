@@ -763,11 +763,32 @@ Deno.serve(async (req) => {
   // 目的：避免前端卡在“正在聆听”但无回复。
   let speakerFallbackAttempted = false;
 
+  // ✅ 自动重连期间不要向前端发送 session.closed
+  // 否则前端会把会话标记为 closed，从而忽略后续真正 ready 的 session.connected
+  let isReconnecting = false;
+
+  // ✅ Ready 兜底：部分部署可能不返回 event=101/150
+  let sessionReadySent = false;
+  let sessionReadyTimer: number | null = null;
+
+  const clearSessionReadyTimer = () => {
+    if (sessionReadyTimer) {
+      try {
+        clearTimeout(sessionReadyTimer);
+      } catch {
+        // ignore
+      }
+      sessionReadyTimer = null;
+    }
+  };
+
   // ✅ 防止“重复 session.init / 重连”导致多条 Doubao 连接并存，从而出现“双路语音叠加”。
   // 每次 connectToDoubao 都会递增 generation；旧连接/旧 readLoop 会自动退出。
   let connectionGeneration = 0;
 
   const cleanupDoubaoConnection = (reason: string) => {
+    clearSessionReadyTimer();
+    sessionReadySent = false;
     if (doubaoConn) {
       try {
         console.log('[DoubaoRelay] Cleaning up existing Doubao connection, reason:', reason);
@@ -869,16 +890,36 @@ Deno.serve(async (req) => {
         const frame = buildWebSocketFrame(startSessionPacket);
         await doubaoConn.write(frame);
         console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes), voiceType: ${sessionConfig.voiceType}`);
-        
-        // ✅ 关键修复：豆包新版端到端对话 API 可能不发送 event=101/150，
-        // 而是直接开始处理音频。所以在发送 StartSession 后立即通知前端连接成功，
-        // 让前端可以开始录音和等待响应。
+
+        // ✅ 不再“乐观 connected”：之前会导致前端过早触发 greeting，
+        // relay 侧因 session 未 ready 丢弃文本，最终出现“正在聆听但无回复/IdleTimeout”。
         sessionStarted = true;
-        console.log('[DoubaoRelay] ✅ Session started (after StartSession request sent)');
-        clientSocket.send(JSON.stringify({
-          type: 'session.connected',
-          message: 'Connected to Doubao API - StartSession sent'
-        }));
+        sessionReadySent = false;
+        clearSessionReadyTimer();
+        console.log('[DoubaoRelay] ✅ StartSession sent; waiting for ACK (101/150) or timeout fallback');
+
+        // 兜底：若 1.5s 内没有 ACK/101 且未进入重连，则认为可用并通知前端开始录音/触发开场
+        sessionReadyTimer = setTimeout(() => {
+          if (
+            myGeneration === connectionGeneration &&
+            clientSocket.readyState === WebSocket.OPEN &&
+            doubaoConn &&
+            isConnected &&
+            sessionStarted &&
+            doubaoSessionId &&
+            !isReconnecting &&
+            !sessionReadySent
+          ) {
+            sessionReadySent = true;
+            console.warn('[DoubaoRelay] No ACK observed; sending session.connected via timeout fallback');
+            clientSocket.send(JSON.stringify({
+              type: 'session.connected',
+              message: 'Connected to Doubao API - Ready (timeout fallback)',
+              ready: true,
+              reason: 'no_ack_timeout'
+            }));
+          }
+        }, 1500) as unknown as number;
       }
       
       // 开始读取响应
@@ -960,12 +1001,18 @@ Deno.serve(async (req) => {
                 if (parsed.event === EVENT_SESSION_STARTED) {
                   sessionStarted = true;
                   console.log('[DoubaoRelay] Session started successfully!');
-                  
-                  // 通知客户端连接成功
-                  clientSocket.send(JSON.stringify({ 
-                    type: 'session.connected',
-                    message: 'Connected to Doubao API - Session started'
-                  }));
+
+                  if (!sessionReadySent && clientSocket.readyState === WebSocket.OPEN) {
+                    sessionReadySent = true;
+                    isReconnecting = false;
+                    clearSessionReadyTimer();
+                    clientSocket.send(JSON.stringify({ 
+                      type: 'session.connected',
+                      message: 'Connected to Doubao API - Session started',
+                      ready: true,
+                      reason: 'event_101'
+                    }));
+                  }
                   continue;
                 }
 
@@ -1008,10 +1055,17 @@ Deno.serve(async (req) => {
                   if (isValidSessionAck) {
                     sessionStarted = true;
                     console.log('[DoubaoRelay] ✅ Session started - ACK received (event=150)');
-                    clientSocket.send(JSON.stringify({
-                      type: 'session.connected',
-                      message: 'Connected to Doubao API - Session ACK'
-                    }));
+                    if (!sessionReadySent && clientSocket.readyState === WebSocket.OPEN) {
+                      sessionReadySent = true;
+                      isReconnecting = false;
+                      clearSessionReadyTimer();
+                      clientSocket.send(JSON.stringify({
+                        type: 'session.connected',
+                        message: 'Connected to Doubao API - Session ACK',
+                        ready: true,
+                        reason: 'event_150'
+                      }));
+                    }
                     continue;
                   }
                 }
@@ -1136,6 +1190,8 @@ Deno.serve(async (req) => {
                     // ✅ 自动降级：第一次遇到 speaker not found，不向前端透传 type=error（否则前端会进入 hasSessionClosed=true 状态，忽略后续 session.connected）
                     if (isSpeakerNotFound && !speakerFallbackAttempted && sessionConfig) {
                       speakerFallbackAttempted = true;
+                      isReconnecting = true;
+                      clearSessionReadyTimer();
                       const originalVoice = sessionConfig.voiceType;
 
                       console.warn('[DoubaoRelay] ⚠️ Speaker not found, auto-fallback to default voice (omit voice_type) and reconnecting once', {
@@ -1195,11 +1251,13 @@ Deno.serve(async (req) => {
                 console.log(`[DoubaoRelay] Received close frame: code=${closeCode}, reason=${closeReason}`);
                 isConnected = false;
                 
-                clientSocket.send(JSON.stringify({
-                  type: 'session.closed',
-                  code: closeCode,
-                  reason: closeReason
-                }));
+                if (!isReconnecting && myGeneration === connectionGeneration && clientSocket.readyState === WebSocket.OPEN) {
+                  clientSocket.send(JSON.stringify({
+                    type: 'session.closed',
+                    code: closeCode,
+                    reason: closeReason
+                  }));
+                }
                 
               } else if (frame.opcode === 0x09) { // Ping
                 const pong = buildWebSocketFrame(frame.payload, 0x0A);
@@ -1217,9 +1275,11 @@ Deno.serve(async (req) => {
             myGeneration,
             connectionGeneration,
           });
+          // ✅ 重连导致旧 loop 退出：不通知前端 session.closed
+          return;
         }
         
-        if (clientSocket.readyState === WebSocket.OPEN) {
+        if (!isReconnecting && clientSocket.readyState === WebSocket.OPEN) {
           clientSocket.send(JSON.stringify({
             type: 'session.closed',
             code: 1000,
@@ -1280,6 +1340,9 @@ Deno.serve(async (req) => {
           // ✅ session.init 可能因前端重连/重复 init 触发；必须先清理旧连接，避免双路语音
           cleanupDoubaoConnection('session.init');
           speakerFallbackAttempted = false;
+          isReconnecting = false;
+          sessionReadySent = false;
+          clearSessionReadyTimer();
           sessionConfig = {
             instructions: message.instructions || '',
             // ⚠️ 不再强制默认长ID：若不传 voice_type，则让服务端使用默认音色（更稳，避免 45000001 导致无回复）
