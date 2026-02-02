@@ -579,9 +579,11 @@ export class DoubaoRealtimeChat {
           }
           // 1. 启动录音
           this.startRecording();
-          // 2. 触发 AI 开场白
-          this.triggerGreeting();
           this.onStatusChange('connected');
+          // 2. 触发 AI 开场白 - 延迟 300ms 确保豆包端完全就绪
+          setTimeout(() => {
+            this.triggerGreeting();
+          }, 300);
           break;
 
         case 'session.closed':
