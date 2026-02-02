@@ -1495,11 +1495,12 @@ Deno.serve(async (req) => {
               console.log(`[DoubaoRelay] Text message sequence: ${currentSequence}`);
 
               // ✅ 选择正确的“文本触发”事件码
-              // - 首次开场（你好/hello）用 SayHello(300) 更稳
-              // - 其他文本用 ChatTextQuery(501)
+              // 经验结论：SayHello(300) 在部分端到端模型上会触发“豆包”内置自我介绍，
+              // 从而覆盖我们注入的 system_role（静老师人格）。
+              // 因此这里统一使用 ChatTextQuery(501)，让 system_role 生效。
               const normalized = userText.trim().toLowerCase();
               const isGreeting = !hasGreeted && (normalized === '你好' || normalized === 'hello' || normalized === 'hi');
-              const eventId = isGreeting ? EVENT_SAY_HELLO : EVENT_CHAT_TEXT_QUERY;
+              const eventId = EVENT_CHAT_TEXT_QUERY;
               if (isGreeting) hasGreeted = true;
 
               // 构建文本 payload（官方常用字段为 content）
