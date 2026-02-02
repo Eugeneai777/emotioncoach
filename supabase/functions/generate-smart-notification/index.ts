@@ -56,7 +56,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 已移除去重逻辑：每次都生成智能提醒
+    // 🛡️ 恢复去重逻辑：检查最近5分钟内是否已有相同 scenario 的通知
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: recentSameScenario } = await supabase
+      .from('smart_notifications')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('scenario', scenario)
+      .gte('created_at', fiveMinutesAgo)
+      .limit(1);
+
+    if (recentSameScenario && recentSameScenario.length > 0) {
+      console.log(`⏭️ 5分钟内已有 ${scenario} 通知，跳过生成`);
+      return new Response(JSON.stringify({ 
+        success: false,
+        message: "去重：近期已有相同场景通知"
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // 获取用户偏好设置
     const { data: profile } = await supabase

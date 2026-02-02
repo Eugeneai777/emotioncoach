@@ -80,6 +80,14 @@ export const useDynamicCoachChat = (
   const [emotionButtonRecommendation, setEmotionButtonRecommendation] = useState<EmotionButtonRecommendation | null>(null);
   const [campRecommendation, setCampRecommendation] = useState<CampRecommendation | null>(null);
 
+  // 🛡️ 防重 ref：防止同一对话中重复调用工具生成日记
+  const journalGeneratedRef = useRef(false);
+  
+  // 重置对话时也重置防重 flag
+  useEffect(() => {
+    journalGeneratedRef.current = false;
+  }, [currentConversationId]);
+
   // Inline achievement checker to avoid hook dependency issues
   const checkAndAwardAchievementsInline = async (userId: string, dayNumber: number): Promise<string[]> => {
     const earned: string[] = [];
@@ -457,6 +465,13 @@ export const useDynamicCoachChat = (
           
           // 处理财富日记生成工具
           if (toolCall?.function?.name === "generate_wealth_briefing") {
+            // 🛡️ 防重检查：如果本次对话已生成日记，跳过重复调用
+            if (journalGeneratedRef.current) {
+              console.log('⚠️ [useDynamicCoachChat] 日记已生成，跳过重复调用');
+              return;
+            }
+            journalGeneratedRef.current = true;
+            
             // 如果 AI 没有返回文本内容，添加默认完成消息
             if (!assistantMessage) {
               assistantMessage = "✨ 好的，让我帮你整理今天的财富觉察，正在生成财富日记...";
@@ -468,9 +483,12 @@ export const useDynamicCoachChat = (
             // 获取当前用户
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-              // 使用传入的 dayNumber 和 campId，而非重新计算
+              // 使用传入的 dayNumber 和 campId，严格校验空字符串
               const dayNumberToUse = contextData?.dayNumber || 1;
-              const campIdToUse = contextData?.campId || null;
+              // 🔧 严格校验 campId：空字符串也视为 null
+              const campIdToUse = contextData?.campId && contextData.campId.trim() !== '' 
+                ? contextData.campId 
+                : null;
               
               // 调用日记生成 Edge Function
               const { data: journalResult, error: journalError } = await supabase.functions.invoke('generate-wealth-journal', {

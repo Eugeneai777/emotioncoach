@@ -373,40 +373,95 @@ ${trendSection}
       }
     };
 
-    // Upsert journal entry with new personalized fields
-    const { data: journalEntry, error: upsertError } = await supabaseClient
-      .from('wealth_journal_entries')
-      .upsert({
-        user_id,
-        camp_id: camp_id || null,
-        session_id: session_id || null,
-        day_number,
-        behavior_block: behaviorBlock,
-        behavior_type: behaviorType,
-        emotion_block: emotionBlock,
-        emotion_type: emotionType,
-        belief_block: beliefBlock,
-        belief_type: beliefType,
-        smallest_progress: smallestProgress,
-        action_suggestion: actionSuggestion,
-        briefing_content: briefingContent,
-        behavior_score: scores.behavior_score,
-        emotion_score: scores.emotion_score,
-        belief_score: scores.belief_score,
-        ai_insight: scores.ai_insight,
-        // 新增个性化字段
-        responsibility_items: responsibilityItems,
-        emotion_need: emotionNeed,
-        belief_source: beliefSource,
-        old_belief: oldBelief,
-        new_belief: newBelief,
-        giving_action: givingAction,
-        personal_awakening: personalAwakening,
-      }, {
-        onConflict: 'user_id,camp_id,day_number',
-      })
-      .select()
-      .single();
+    // 🔧 改进去重逻辑：先查询是否存在，再决定 insert 或 update
+    // 原因：当 camp_id 为 NULL 时，PostgreSQL 的 upsert 无法正确匹配（NULL != NULL）
+    const campIdNormalized = camp_id && String(camp_id).trim() !== '' ? camp_id : null;
+    
+    // 使用北京时间获取今日日期
+    const today = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai' }).split(' ')[0];
+    
+    console.log('🔍 查询已有日记:', { user_id, campIdNormalized, day_number, today });
+    
+    // 先查询是否已存在今日的日记
+    let existingEntry = null;
+    
+    if (campIdNormalized) {
+      // 有 camp_id 时：精确匹配 user_id + camp_id + day_number
+      const { data } = await supabaseClient
+        .from('wealth_journal_entries')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('camp_id', campIdNormalized)
+        .eq('day_number', day_number)
+        .maybeSingle();
+      existingEntry = data;
+    } else {
+      // 无 camp_id 时：匹配 user_id + day_number + 今日日期（防止每天重复生成）
+      const { data } = await supabaseClient
+        .from('wealth_journal_entries')
+        .select('id')
+        .eq('user_id', user_id)
+        .is('camp_id', null)
+        .eq('day_number', day_number)
+        .gte('created_at', `${today}T00:00:00+08:00`)
+        .lt('created_at', `${today}T23:59:59+08:00`)
+        .maybeSingle();
+      existingEntry = data;
+    }
+    
+    const journalData = {
+      user_id,
+      camp_id: campIdNormalized,
+      session_id: session_id || null,
+      day_number,
+      behavior_block: behaviorBlock,
+      behavior_type: behaviorType,
+      emotion_block: emotionBlock,
+      emotion_type: emotionType,
+      belief_block: beliefBlock,
+      belief_type: beliefType,
+      smallest_progress: smallestProgress,
+      action_suggestion: actionSuggestion,
+      briefing_content: briefingContent,
+      behavior_score: scores.behavior_score,
+      emotion_score: scores.emotion_score,
+      belief_score: scores.belief_score,
+      ai_insight: scores.ai_insight,
+      // 新增个性化字段
+      responsibility_items: responsibilityItems,
+      emotion_need: emotionNeed,
+      belief_source: beliefSource,
+      old_belief: oldBelief,
+      new_belief: newBelief,
+      giving_action: givingAction,
+      personal_awakening: personalAwakening,
+    };
+    
+    let journalEntry;
+    let upsertError;
+    
+    if (existingEntry) {
+      // 更新已有记录
+      console.log('📝 更新已有日记:', existingEntry.id);
+      const { data, error } = await supabaseClient
+        .from('wealth_journal_entries')
+        .update(journalData)
+        .eq('id', existingEntry.id)
+        .select()
+        .single();
+      journalEntry = data;
+      upsertError = error;
+    } else {
+      // 插入新记录
+      console.log('📝 创建新日记');
+      const { data, error } = await supabaseClient
+        .from('wealth_journal_entries')
+        .insert(journalData)
+        .select()
+        .single();
+      journalEntry = data;
+      upsertError = error;
+    }
 
     if (upsertError) {
       console.error('Failed to save journal:', upsertError);
