@@ -1,263 +1,173 @@
 
-# 财富模块测试问题评估与修复计划
 
-## 问题清单汇总（更新于 2026-02-01）
+# 绽放合伙人注册码批量生成方案
 
-根据测试表格截图，财富模块共有 14 个问题需要评估和修复：
+## 需求理解
 
-| 编号 | 操作 | 结果 | 期望值 | 优先级 | 状态 |
-|------|------|------|--------|--------|------|
-| 1 | 首页加载慢 | 加载时间过长 | <1S | 高 | ✅ 已优化（lazy loading已实现） |
-| 2 | 鸿蒙/iOS支付后 | 无法显示"开始测评或开始训练营" | 显示"开始探索" | 高 | ⏳ 需设备日志排查 |
-| 3 | 立即打卡-点"教练对话" | 显示代码（诊断信息） | 正常对话界面 | 中 | ✅ 已修复 |
-| 4 | 教练对话-点语音符号 | 无法输入语音 | 正常语音输入 | 中 | ✅ 已优化触摸区域 |
-| 5 | 立即打卡-点复制链接 | 页面一直显示"链接已复制" | 显示2S即可 | 中 | ✅ 已修复 |
-| 6 | 复制链接-发送微信好友点开 | 显示"无效链接 缺少合伙人信息" | 正常打开 | 中 | ✅ 已修复 |
-| 7 | 点"重新冥想" | 无反应/未知行为 | 跳转到今日任务Tab | 中 | ✅ 已修复 |
-| 8 | 当天打卡完成任务后 | 还显示"待打卡，已完成0天" | 打卡完成 | 中 | ✅ 已修复（时区同步） |
-| 9 | 点财富教练-立即打卡-成长档案 (iOS18.5) | 显示空白 | 正常加载页面 | 中 | ✅ 已修复（加载状态优化） |
-| 10 | 鸿蒙系统冥想视频 | 无法加载 | 正常播放 | 高 | ✅ 已优化（增强错误处理） |
-| 11 | 补打卡时冥想语音 | 无法上拉 | 正常滚动 | 中 | ✅ 已修复（scroll定位） |
-| 12 | 打卡分享-从简报开始 | 显示"暂无历史简报" | 如何创建历史简报？ | 低 | ✅ 已修复（数据源区分） |
-| 13 | 分享到社区后点编辑 | 不能编辑内容 | 可以编辑 | 中 | ✅ 已修复 |
-| 14 | 生成故事 | 慢 | 更快响应 | 中 | ✅ 已优化（进度反馈） |
+您需要为55位合伙人生成注册码，让他们可以自行用注册码登录注册成为绽放合伙人。
 
----
+## 现有系统能力
 
-## 详细问题分析与修复方案
+系统已有完整的邀请码流程：
 
-### 问题 3：教练对话显示诊断信息代码（高优先级）
+| 组件 | 功能 |
+|------|------|
+| `/admin/bloom-invitations` | 管理员后台邀请管理 |
+| `BloomPartnerBatchImport` | 批量导入组件 |
+| `/invite/:code` | 用户领取邀请页面 |
+| `claim-partner-invitation` | 后端领取处理 |
 
-**根因分析**：
-`WealthCoachEmbedded.tsx` 第 193-215 行存在诊断面板代码，当 `messages.length === 0 && !isLoading` 时会显示调试信息：
+**数据库已支持**: `invitee_phone` 字段已设为可空（nullable），无需修改数据库
 
-```tsx
-<div className="text-xs text-left mx-auto max-w-xs p-3 bg-muted/50 rounded-lg space-y-1">
-  <p>📊 诊断信息：</p>
-  <p>Day: {dayNumber} | Camp: {campId ? '✓' : '✗'}</p>
-  ...
-</div>
+## 当前问题
+
+批量导入组件要求 **"姓名,手机号"** 两列数据，无法支持只有姓名的导入。
+
+## 解决方案
+
+### 修改批量导入组件
+
+修改 `BloomPartnerBatchImport.tsx`，支持只有姓名的导入：
+
+**改进前**：
+```
+格式要求：姓名,手机号,备注
+示例：张三,13800138001,备注
 ```
 
-这是开发调试代码，不应该在生产环境显示。
+**改进后**：
+```
+格式要求：姓名（必填）,手机号（可选）,备注（可选）
+示例：
+张三
+李四,13800138002
+王五,,线下招募
+```
 
-**修复方案**：
-删除或隐藏诊断面板代码块
+### 文件修改清单
 
-**文件变更**：
-- `src/components/wealth-camp/WealthCoachEmbedded.tsx` - 移除诊断面板
+| 文件 | 修改内容 |
+|------|----------|
+| `src/components/admin/BloomPartnerBatchImport.tsx` | 修改CSV解析逻辑，支持单列姓名导入 |
 
----
+## 技术实现
 
-### 问题 5：链接已复制提示持续显示
+### CSV 解析逻辑调整
 
-**根因分析**：
-`WealthCampInviteCard.tsx` 第 53-58 行使用了 `setTimeout` 2秒后重置 `copied` 状态，逻辑正确。但可能存在组件重新渲染导致状态重置失败的问题。
+```typescript
+// 当前逻辑（需要2列）
+if (parts.length >= 2) {
+  results.push({ name: parts[0], phone: parts[1] });
+}
 
-**修复方案**：
-确保 `setTimeout` 正确清理，添加 `useEffect` 清理函数
-
-**文件变更**：
-- `src/components/wealth-camp/WealthCampInviteCard.tsx` - 优化 toast 显示逻辑
-
----
-
-### 问题 6：无效链接 缺少合伙人信息
-
-**根因分析**：
-根据 `PayEntry.tsx` 第 186-193 行，当 `partnerId` 参数缺失时显示此错误。问题是财富训练营邀请链接格式可能不正确：
-
-```tsx
-if (!partnerId || !partner) {
-  return <CardTitle>无效链接</CardTitle>
+// 改进逻辑（1列即可）
+if (parts.length >= 1 && parts[0].trim()) {
+  results.push({
+    name: parts[0].trim(),
+    phone: parts[1]?.trim() || '',  // 手机号可选
+    notes: parts[2]?.trim() || undefined,
+  });
 }
 ```
 
-财富训练营的邀请链接 `inviteUrl` 使用 `ref=${userId}` 而非合伙人ID，但 `PayEntry.tsx` 期望的是 `partner` 参数。
+### UI 提示更新
 
-**修复方案**：
-1. 修改 `WealthCampInviteCard.tsx` 生成正确的邀请链接格式
-2. 或添加对财富训练营邀请类型的特殊处理
+更新格式说明，告知用户手机号为可选：
 
-**文件变更**：
-- `src/components/wealth-camp/WealthCampInviteCard.tsx` - 修正链接格式
-- `src/pages/Claim.tsx` - 添加 wealth_camp 类型处理
-
----
-
-### 问题 7：点"重新冥想"跳转到AI教练对话
-
-**根因分析**：
-当前 `handleRedoMeditation` 函数只是重置冥想状态：
-
-```tsx
-const handleRedoMeditation = () => {
-  setMeditationCompleted(false);
-};
+```
+每行一条记录，格式：姓名（必填）,手机号（可选）,备注（可选）
+支持只粘贴姓名列表，每行一个姓名
 ```
 
-根据期望值，用户点击"重新冥想"应该跳转到AI教练对话页面。
+## 使用流程
 
-**修复方案**：
-修改 `handleRedoMeditation` 函数逻辑，先重置冥想状态，然后滚动到冥想播放器或切换到"今日任务"Tab
+### 管理员操作
 
-**文件变更**：
-- `src/pages/WealthCampCheckIn.tsx` - 修改重新冥想逻辑
+1. 进入 `/admin/bloom-invitations`
+2. 点击「批量导入」按钮
+3. 直接粘贴姓名列表：
+   ```
+   张艳
+   Angela安安
+   Cherie Chen鸿冰
+   郑海慧
+   陈霞
+   ...
+   ```
+4. 点击「开始导入」
+5. 系统为每人生成唯一邀请码（如 `BLOOMABC123`）
+6. 点击「导出结果」下载 CSV（包含姓名、邀请码、邀请链接）
+7. 将邀请链接分发给对应合伙人
 
----
+### 合伙人操作
 
-### 问题 8：打卡完成后仍显示"待打卡"
+1. 收到邀请链接 `https://xxx/invite/BLOOMABC123`
+2. 点击进入邀请页面
+3. 看到欢迎信息："亲爱的 [姓名]"
+4. 点击「微信登录并领取」
+5. 完成微信授权登录
+6. 自动成为绽放合伙人，跳转至合伙人中心
 
-**根因分析**：
-`TrainingCampCard.tsx` 第 130-137 行的打卡状态判断依赖 `hasCheckedInToday` 变量。需要追踪该变量的计算逻辑，确认是否正确更新。
+## 您的55人名单导入示例
 
-**修复方案**：
-检查 `hasCheckedInToday` 的计算逻辑，确保打卡成功后状态正确更新并触发重新渲染
+完成修改后，您可以直接粘贴：
 
-**文件变更**：
-- 需要先定位 `hasCheckedInToday` 的来源
-
----
-
-### 问题 12：从简报开始显示"暂无历史简报"
-
-**根因分析**：
-`StoryCoachDialog.tsx` 第 156-187 行的 `loadHistoricalBriefings` 函数查询的是 `briefings` 表（情绪教练简报），而财富训练营使用的是 `wealth_coach_4_questions_briefings` 表。
-
-```tsx
-const { data, error } = await supabase
-  .from('briefings')  // 这是情绪教练的表
-  .select(...)
+```text
+张艳
+Angela安安
+Cherie Chen鸿冰
+郑海慧
+陈霞
+聪颖
+小为
+建昭
+张辉（light）
+Sally Ding喜雅
+张华
+燕子
+Larissa
+Sophie
+苹果姐姐
+🔥恩宠的杨🔥
+刘晶
+撒拉（腊梅）
+芳芳
+司纳
+艳琴
+美丽（王南）
+Lisa
+殷辉
+丁莉
+陶子
+香草
+琴
+钒晨
+Lydia
+Esther清清
+笑笑
+景琳
+吕敏杰
+牛莹
+Fran
+冯
+娜娜
+XFF
+李莹妹
+Hannah焦
+Mi`xq宓老师
+乙安
+Tammy赵老师
+冯群
+陈颖
+DavidZheng
+Ruth-田
+恩典彩虹（翼飞）
+四叶草
+林青
+rx 景姝
+萌萌
+Rachel Xue
 ```
 
-**修复方案**：
-为财富训练营创建专门的简报加载函数，查询正确的表
+系统将为每人生成唯一邀请码和链接，可导出为 CSV 文件分发。
 
-**文件变更**：
-- `src/components/camp/StoryCoachDialog.tsx` - 根据 camp_type 区分查询表
-- 或创建财富专用的 `WealthStoryCoachDialog.tsx`
-
----
-
-### 问题 13：社区帖子不能编辑内容
-
-**根因分析**：
-`PostEditDialog.tsx` 目前只支持编辑图片（`image_urls`），不支持编辑标题和内容：
-
-```tsx
-const { error } = await supabase
-  .from("community_posts")
-  .update({
-    image_urls: imageUrls.length > 0 ? imageUrls : null,  // 只更新图片
-  })
-```
-
-**修复方案**：
-扩展 `PostEditDialog` 支持编辑 `title` 和 `content` 字段
-
-**文件变更**：
-- `src/components/community/PostEditDialog.tsx` - 添加标题和内容编辑功能
-
----
-
-## 其他问题评估
-
-### 问题 1/2/10（设备兼容性）
-这些问题涉及鸿蒙系统和特定 iOS 版本的兼容性，需要进一步的设备日志才能定位。
-
-### 问题 4（语音输入）
-需要检查语音输入组件在财富教练中的启用状态。
-
-### 问题 9（成长档案空白）
-可能是 iOS 18.5 特定的渲染问题，需要进一步排查。
-
-### 问题 11/14（滚动和性能）
-需要优化滚动容器和生成速度。
-
----
-
-## 实施顺序
-
-### 第一批（高优先级）
-1. **问题 3**：移除诊断面板代码
-2. **问题 6**：修复邀请链接格式
-
-### 第二批（中优先级）
-3. **问题 5**：优化复制链接提示
-4. **问题 7**：修改重新冥想逻辑
-5. **问题 8**：修复打卡状态显示
-6. **问题 13**：扩展帖子编辑功能
-
-### 第三批（需进一步排查）
-7. **问题 12**：区分简报数据源
-8. **问题 1/2/9/10/11**：设备兼容性问题
-9. **问题 4/14**：语音和性能优化
-
----
-
-## 预计文件变更清单
-
-| 文件路径 | 修改类型 | 说明 |
-|---------|----------|------|
-| `src/components/wealth-camp/WealthCoachEmbedded.tsx` | 修改 | 移除诊断面板代码 |
-| `src/components/wealth-camp/WealthCampInviteCard.tsx` | 修改 | 修正邀请链接格式，优化复制提示 |
-| `src/pages/WealthCampCheckIn.tsx` | 修改 | 修改重新冥想逻辑 |
-| `src/components/community/PostEditDialog.tsx` | 修改 | 支持编辑标题和内容 |
-| `src/components/camp/StoryCoachDialog.tsx` | 修改 | 区分简报数据源 |
-| `src/components/camp/TrainingCampCard.tsx` | 待定 | 需确认打卡状态逻辑 |
-
----
-
-## 技术细节
-
-### 诊断面板移除（问题 3）
-删除 `WealthCoachEmbedded.tsx` 第 193-215 行的整个诊断 `<div>` 块，保留正常的加载提示：
-
-```tsx
-// 修改前
-} else if (messages.length === 0 && !isLoading) {
-  return (
-    <div>
-      <p>准备开始教练梳理...</p>
-      <div>📊 诊断信息：...</div>  {/* 删除这部分 */}
-      <Button>手动发送启动消息</Button>  {/* 保留作为fallback */}
-    </div>
-  );
-}
-
-// 修改后
-} else if (messages.length === 0 && !isLoading) {
-  return (
-    <div>
-      <p>准备开始教练梳理...</p>
-      <Button>开始对话</Button>  {/* 简化按钮文案 */}
-    </div>
-  );
-}
-```
-
-### 邀请链接修正（问题 6）
-当前链接格式：
-```tsx
-const inviteUrl = `${getPromotionDomain()}/claim?type=wealth_camp_7&ref=${userId}`;
-```
-
-问题是 `Claim.tsx` 期望 `partner` 参数而非 `ref`。需要统一处理：
-- 方案A：将财富训练营邀请链接改为走 `/wealth-camp-intro` 路由
-- 方案B：在 `Claim.tsx` 中添加对 `type=wealth_camp*` 的特殊处理
-
-### 帖子编辑扩展（问题 13）
-在 `PostEditDialog.tsx` 中添加标题和内容的编辑输入框：
-```tsx
-const [title, setTitle] = useState(post.title || '');
-const [content, setContent] = useState(post.content || '');
-
-// 更新时包含所有字段
-const { error } = await supabase
-  .from("community_posts")
-  .update({
-    title,
-    content,
-    image_urls: imageUrls.length > 0 ? imageUrls : null,
-  })
-```
