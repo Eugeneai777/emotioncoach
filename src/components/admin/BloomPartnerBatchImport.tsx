@@ -48,11 +48,12 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
       }
       
       const parts = line.split(/[,，\t]/).map(p => p.trim());
-      if (parts.length >= 2) {
+      // 支持只有姓名的导入（1列即可）
+      if (parts.length >= 1 && parts[0].trim()) {
         results.push({
-          name: parts[0],
-          phone: parts[1],
-          notes: parts[2] || undefined,
+          name: parts[0].trim(),
+          phone: parts[1]?.trim() || '',  // 手机号可选
+          notes: parts[2]?.trim() || undefined,
         });
       }
     }
@@ -188,12 +189,16 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
                 CSV 格式说明
               </div>
               <p className="text-sm text-muted-foreground">
-                每行一条记录，格式：姓名,手机号,备注（可选）
+                每行一条记录，格式：姓名（必填）,手机号（可选）,备注（可选）
+              </p>
+              <p className="text-xs text-muted-foreground">
+                💡 支持只粘贴姓名列表，每行一个姓名
               </p>
               <pre className="text-xs bg-background p-2 rounded">
-{`张三,13800138001,首批合伙人
-李四,13800138002,线下招募
-王五,13800138003,`}
+{`张艳
+Angela安安
+李四,13800138002
+王五,,线下招募`}
               </pre>
             </div>
 
@@ -210,7 +215,7 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
             <div className="space-y-2">
               <Label>或直接粘贴数据</Label>
               <Textarea
-                placeholder="姓名,手机号,备注"
+                placeholder="每行一个姓名，或：姓名,手机号,备注"
                 value={csvContent}
                 onChange={(e) => setCsvContent(e.target.value)}
                 rows={6}
