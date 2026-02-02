@@ -472,13 +472,11 @@ function buildStartSessionRequest(
     speaking_style: '温暖、接纳、专业；使用简体中文；像朋友一样自然对话',
   };
 
-  if (promptStrategy === 'redundant_fields') {
-    (request as any).system_role = instructions;
-    (request as any).system_prompt = instructions;
-    (request as any).bot_system_prompt = instructions;
-  } else {
-    (request as any).system_role = instructions;
-  }
+  // ✅ 始终使用 redundant_fields 策略，确保首次连接就注入 prompt
+  // 移除 persona fallback 自动重连逻辑，避免对话中途突然中断
+  (request as any).system_role = instructions;
+  (request as any).system_prompt = instructions;
+  (request as any).bot_system_prompt = instructions;
 
   if (resolvedVoiceType) {
     (request as any).tts_speaker = resolvedVoiceType;
@@ -1212,32 +1210,12 @@ Deno.serve(async (req) => {
                             const hitDoubao = identityReplyBuffer.includes('豆包');
                             const hitJing = identityReplyBuffer.includes('静老师');
 
-                            if (hitDoubao && !personaFallbackAttempted && sessionConfig) {
-                              personaFallbackAttempted = true;
-                              pendingIdentityCheck = false;
-                              isReconnecting = true;
-                              clearSessionReadyTimer();
-                              console.warn('[DoubaoRelay] Persona mismatch detected (still says Doubao). Reconnecting with redundant prompt fields.', {
+                            if (hitDoubao) {
+                              // ⚠️ 仅记录日志，不触发重连（重连会导致用户对话突然中断）
+                              console.warn('[DoubaoRelay] Persona mismatch: model still says Doubao. Prompt may not be applied.', {
                                 buffer_preview: identityReplyBuffer.substring(0, 80),
                               });
-
-                              if (clientSocket.readyState === WebSocket.OPEN) {
-                                clientSocket.send(JSON.stringify({
-                                  type: 'persona.fallback',
-                                  reason: 'model_identity_is_doubao',
-                                  strategy: 'redundant_fields',
-                                }));
-                              }
-
-                              sessionConfig.promptStrategy = 'redundant_fields';
-                              audioSequence = 2;
-                              cleanupDoubaoConnection('persona_mismatch_autofallback');
-                              setTimeout(() => {
-                                if (clientSocket.readyState === WebSocket.OPEN) {
-                                  void connectToDoubao();
-                                }
-                              }, 0);
-                              continue;
+                              pendingIdentityCheck = false;
                             }
 
                             if (hitJing) {
