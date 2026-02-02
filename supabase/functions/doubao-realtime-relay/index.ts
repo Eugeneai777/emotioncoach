@@ -90,6 +90,25 @@ const EVENT_CHAT_START = 459;       // 对话开始
 const EVENT_CHAT_RESPONSE = 550;    // 模型文本回复
 const EVENT_RESPONSE_DONE = 559;    // 回复完成
 
+// ============= 音色兼容映射 =============
+// 现网发现：部分账号/资源（timber）不支持长格式 speaker id，会返回：
+// "speaker id=... not found in given timber" (error_code=45000001)
+// 因此这里提供一层“长ID -> 旧BV ID”映射，并允许在必要时降级为“不指定音色”（让服务端使用默认音色），
+// 以保证“连接后能正常出声/回复”。
+const VOICE_TYPE_ALIASES: Record<string, string> = {
+  // 长格式 -> BV（与前端 voiceTypeConfig 的 legacyIdMapping 保持一致）
+  'zh_male_M392_conversation_wvae_bigtts': 'BV158_streaming',
+  'zh_male_yuanboxiaoshu_moon_bigtts': 'BV123_streaming',
+  'zh_female_xinlingjitang_moon_bigtts': 'BV503_streaming',
+  'zh_female_wenroushunv_mars_bigtts': 'BV504_streaming',
+};
+
+const resolveProviderVoiceType = (voiceType?: string): string | undefined => {
+  const v = (voiceType ?? '').trim();
+  if (!v) return undefined;
+  return VOICE_TYPE_ALIASES[v] ?? v;
+};
+
 // ============= 协议构建函数 =============
 
 /**
@@ -373,11 +392,43 @@ function parsePacket(data: Uint8Array): {
  * 二进制帧格式: Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
  */
 function buildStartSessionRequest(userId: string, instructions: string, sessionId: string, voiceType?: string): Uint8Array {
-  // ✅ 统一计算最终音色：后续同时写入 tts.voice_type、tts.audio_config.voice_type 以及 tts.audio_config.speaker_name
-  // 经验：部分协议/版本只识别 speaker_name 或 audio_config.voice_type，导致只写 tts.voice_type 时音色不生效（回落到默认女声）
-  const resolvedVoiceType = (voiceType && String(voiceType).trim() !== '')
-    ? String(voiceType).trim()
-    : 'zh_male_M392_conversation_wvae_bigtts';
+  // ✅ 统一计算最终音色：
+  // - 先做别名映射（长ID -> BV）
+  // - 若为空则不指定音色（让服务端使用默认音色，避免 45000001 导致“连接后无回复”）
+  const resolvedVoiceType = resolveProviderVoiceType(voiceType);
+
+  const ttsAudioConfig: Record<string, unknown> = {
+    channel: 1,
+    format: 'pcm_s16le',
+    sample_rate: 24000,
+  };
+  const tts: Record<string, unknown> = {
+    audio_config: ttsAudioConfig,
+  };
+
+  if (resolvedVoiceType) {
+    // ✅ 兼容多版本字段：尽可能把 voiceType 写进所有可能被读取的位置
+    (ttsAudioConfig as any).voice_type = resolvedVoiceType;
+    (ttsAudioConfig as any).speaker_name = resolvedVoiceType;
+    (tts as any).voice_type = resolvedVoiceType;
+    (tts as any).speaker = resolvedVoiceType;
+  }
+
+  const request: Record<string, unknown> = {
+    model_name: 'doubao-speech-vision-pro-250515',
+    enable_vad: true,
+    vad_stop_time: 800,
+    vad_max_speech_time: 60,
+    vad_silence_time: 300,
+    enable_tts: true,
+    bot_name: '情绪教练',
+    system_role: instructions,
+  };
+
+  if (resolvedVoiceType) {
+    (request as any).tts_speaker = resolvedVoiceType;
+    (request as any).tts_voice_type = resolvedVoiceType;
+  }
 
   const payload = {
     user: { uid: userId },
@@ -391,34 +442,8 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     // 若前端按 PCM16 写 WAV 头会产生持续"呲呲噪声"。
     // 因此这里强制请求 16bit 小端 PCM：pcm_s16le。
     // 参考：官方说明 tts.audio_config.format = "pcm_s16le"。
-    tts: {
-      audio_config: {
-        channel: 1,
-        format: 'pcm_s16le',
-        sample_rate: 24000,
-        // ✅ 关键：把音色写入 audio_config（部分实现只读取这里）
-        voice_type: resolvedVoiceType,
-        // ✅ 补充：部分版本/模型仅识别 speaker_name 字段
-        speaker_name: resolvedVoiceType,
-      },
-      // ✅ 同时保留顶层字段，兼容另一部分实现
-      voice_type: resolvedVoiceType,
-      // ✅ 同时保留 speaker 作为顶层字段（部分 API 只读取此字段）
-      speaker: resolvedVoiceType,
-    },
-    request: {
-      model_name: 'doubao-speech-vision-pro-250515',
-      enable_vad: true,
-      vad_stop_time: 800,        // 静音判定时间 800ms（用户反馈 600 太短，容易打断思考）
-      vad_max_speech_time: 60,   // 最长语音时间60秒
-      vad_silence_time: 300,     // 语音开始前的静音容忍时间
-      enable_tts: true,
-      // ✅ 在 request 层额外冗余一份 tts 相关配置（部分版本只读取此处）
-      tts_speaker: resolvedVoiceType,
-      tts_voice_type: resolvedVoiceType,
-      bot_name: '情绪教练',
-      system_role: instructions
-    }
+    tts,
+    request,
   };
 
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
@@ -427,7 +452,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   console.log('[Protocol] 📤 ============ StartSession Debug ============');
   console.log('[Protocol] 🎙️ voice_type param received:', voiceType);
   console.log('[Protocol] 🎙️ voice_type final (after fallback):', finalVoiceType);
-  console.log('[Protocol] 🎙️ payload.tts.voice_type:', payload.tts.voice_type);
+  console.log('[Protocol] 🎙️ payload.tts.voice_type:', (payload as any).tts?.voice_type);
   console.log('[Protocol] 🎙️ payload.tts.audio_config.voice_type:', (payload as any).tts?.audio_config?.voice_type);
   console.log('[Protocol] 📝 system_role length:', instructions.length);
   console.log('[Protocol] 📝 system_role preview:', instructions.substring(0, 100) + '...');
@@ -733,6 +758,10 @@ Deno.serve(async (req) => {
   let doubaoSessionId: string | null = null; // StartSession 生成的 sessionId，后续 Audio Upload 必须复用
   let hasGreeted = false;
   let clientAudioAppendCount = 0;
+
+  // ✅ 音色降级：当 speaker id 不在 timber 内时（45000001），自动降级为“不指定音色”并重连一次。
+  // 目的：避免前端卡在“正在聆听”但无回复。
+  let speakerFallbackAttempted = false;
 
   // ✅ 防止“重复 session.init / 重连”导致多条 Doubao 连接并存，从而出现“双路语音叠加”。
   // 每次 connectToDoubao 都会递增 generation；旧连接/旧 readLoop 会自动退出。
@@ -1099,10 +1128,48 @@ Deno.serve(async (req) => {
                 if (parsed.messageType === MESSAGE_TYPE_ERROR) {
                   try {
                     const errorJson = JSON.parse(new TextDecoder().decode(parsed.payload));
+                    const errorMsg = String(errorJson.message || errorJson.error || 'Unknown error from Doubao');
                     console.error('[DoubaoRelay] Error from Doubao:', { errorCode: parsed.errorCode, errorJson });
+
+                    const isSpeakerNotFound = parsed.errorCode === 45000001 && /speaker id=.*not found/i.test(errorMsg);
+
+                    // ✅ 自动降级：第一次遇到 speaker not found，不向前端透传 type=error（否则前端会进入 hasSessionClosed=true 状态，忽略后续 session.connected）
+                    if (isSpeakerNotFound && !speakerFallbackAttempted && sessionConfig) {
+                      speakerFallbackAttempted = true;
+                      const originalVoice = sessionConfig.voiceType;
+
+                      console.warn('[DoubaoRelay] ⚠️ Speaker not found, auto-fallback to default voice (omit voice_type) and reconnecting once', {
+                        originalVoice,
+                      });
+
+                      if (clientSocket.readyState === WebSocket.OPEN) {
+                        clientSocket.send(JSON.stringify({
+                          type: 'voice.fallback',
+                          reason: 'speaker_not_found',
+                          from: originalVoice,
+                          to: 'default',
+                          details: { error_code: parsed.errorCode, message: errorMsg }
+                        }));
+                      }
+
+                      // 降级：不指定音色（让服务端使用默认音色）
+                      sessionConfig.voiceType = '';
+
+                      // 重置序号/状态并重连
+                      audioSequence = 2;
+                      cleanupDoubaoConnection('speaker_not_found_autofallback');
+                      setTimeout(() => {
+                        if (clientSocket.readyState === WebSocket.OPEN) {
+                          void connectToDoubao();
+                        }
+                      }, 0);
+
+                      continue;
+                    }
+
                     clientSocket.send(JSON.stringify({
                       type: 'error',
-                      error: errorJson.message || errorJson.error || 'Unknown error from Doubao',
+                      error: errorMsg,
                       details: { error_code: parsed.errorCode, ...errorJson }
                     }));
                   } catch {
@@ -1212,9 +1279,11 @@ Deno.serve(async (req) => {
         case 'session.init':
           // ✅ session.init 可能因前端重连/重复 init 触发；必须先清理旧连接，避免双路语音
           cleanupDoubaoConnection('session.init');
+          speakerFallbackAttempted = false;
           sessionConfig = {
             instructions: message.instructions || '',
-            voiceType: message.voice_type || 'zh_male_M392_conversation_wvae_bigtts'  // ✅ 新版模型需要长格式 ID
+            // ⚠️ 不再强制默认长ID：若不传 voice_type，则让服务端使用默认音色（更稳，避免 45000001 导致无回复）
+            voiceType: (message.voice_type ?? '')
           };
           // ✅ 调试日志：确认 prompt 和音色是否正确接收
           console.log('[DoubaoRelay] 📋 session.init received:');
