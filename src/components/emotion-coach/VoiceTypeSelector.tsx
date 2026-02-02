@@ -31,9 +31,21 @@ export const VoiceTypeSelector = ({
   }, [value]);
 
   const handleSelect = (option: VoiceTypeOption) => {
+    console.log('[VoiceTypeSelector] 🎙️ User selected voice:', {
+      name: option.name,
+      voice_type: option.voice_type,
+      previousValue: selectedVoiceType
+    });
     setSelectedVoiceType(option.voice_type);
     saveVoiceType(option.voice_type);
-    onChange?.(option.voice_type);
+    
+    // 🔧 确保 onChange 被调用
+    if (onChange) {
+      console.log('[VoiceTypeSelector] 📤 Calling onChange with:', option.voice_type);
+      onChange(option.voice_type);
+    } else {
+      console.warn('[VoiceTypeSelector] ⚠️ onChange prop is undefined!');
+    }
   };
 
   return (
