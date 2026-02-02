@@ -761,12 +761,24 @@ export const CoachVoiceChat = ({
     }
   };
 
+  // 🔧 身份替换：将"豆包"替换为"静老师"，确保用户看到一致的身份
+  const sanitizeIdentity = (text: string): string => {
+    return text
+      .replace(/豆包/g, '静老师')
+      .replace(/字节跳动/g, '')
+      .replace(/我是一个AI/g, '我是静老师')
+      .replace(/我是AI/g, '我是静老师')
+      .replace(/作为AI/g, '作为情绪教练');
+  };
+
   // 通用的转录处理函数 - 🔧 修复：改为累积模式，确保完整对话内容被保存
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
     if (role === 'assistant') {
       // AI 回复：每次收到 final 文本时累积，用换行分隔
-      if (isFinal && text.trim()) {
-        setTranscript(prev => prev ? `${prev}\n${text}` : text);
+      // ✅ 应用身份替换，确保显示"静老师"而非"豆包"
+      const sanitizedText = sanitizeIdentity(text);
+      if (isFinal && sanitizedText.trim()) {
+        setTranscript(prev => prev ? `${prev}\n${sanitizedText}` : sanitizedText);
       }
       aiLastActivityRef.current = Date.now(); // 🔧 AI 文字回复
     } else if (role === 'user' && isFinal && text.trim()) {
