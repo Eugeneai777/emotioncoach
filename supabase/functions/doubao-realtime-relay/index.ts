@@ -727,8 +727,36 @@ Deno.serve(async (req) => {
   let hasGreeted = false;
   let clientAudioAppendCount = 0;
 
+  // ✅ 防止“重复 session.init / 重连”导致多条 Doubao 连接并存，从而出现“双路语音叠加”。
+  // 每次 connectToDoubao 都会递增 generation；旧连接/旧 readLoop 会自动退出。
+  let connectionGeneration = 0;
+
+  const cleanupDoubaoConnection = (reason: string) => {
+    if (doubaoConn) {
+      try {
+        console.log('[DoubaoRelay] Cleaning up existing Doubao connection, reason:', reason);
+        doubaoConn.close();
+      } catch {
+        // ignore
+      }
+    }
+    doubaoConn = null;
+    isConnected = false;
+    sessionStarted = false;
+    doubaoSessionId = null;
+    hasGreeted = false;
+  };
+
   const connectToDoubao = async () => {
     try {
+      // ✅ 任何一次新的 connect 都视为“新一代连接”，旧 readLoop 必须退出
+      const myGeneration = ++connectionGeneration;
+
+      // 如果前一次连接仍存在，先清理，避免双路连接向同一 clientSocket 推送音频
+      if (doubaoConn || isConnected) {
+        cleanupDoubaoConnection('connectToDoubao:reconnect');
+      }
+
       const connectId = crypto.randomUUID();
       console.log(`[DoubaoRelay] Connecting to ${DOUBAO_HOST} with connectId=${connectId}`);
       
@@ -820,8 +848,9 @@ Deno.serve(async (req) => {
       // 开始读取响应
       const readLoop = async () => {
         const buffer = new Uint8Array(65536);
-        
-        while (isConnected && doubaoConn) {
+
+        // ✅ 只允许当前 generation 的 loop 运行；一旦出现新连接，旧 loop 会自动退出
+        while (isConnected && doubaoConn && myGeneration === connectionGeneration) {
           try {
             const n = await doubaoConn.read(buffer);
             if (n === null || n === 0) {
@@ -1108,6 +1137,13 @@ Deno.serve(async (req) => {
             break;
           }
         }
+
+        if (myGeneration !== connectionGeneration) {
+          console.log('[DoubaoRelay] Read loop exited due to newer connection generation', {
+            myGeneration,
+            connectionGeneration,
+          });
+        }
         
         if (clientSocket.readyState === WebSocket.OPEN) {
           clientSocket.send(JSON.stringify({
@@ -1167,6 +1203,8 @@ Deno.serve(async (req) => {
 
       switch (message.type) {
         case 'session.init':
+          // ✅ session.init 可能因前端重连/重复 init 触发；必须先清理旧连接，避免双路语音
+          cleanupDoubaoConnection('session.init');
           sessionConfig = {
             instructions: message.instructions || '',
             voiceType: message.voice_type || 'zh_male_M392_conversation_wvae_bigtts'  // ✅ 新版模型需要长格式 ID
