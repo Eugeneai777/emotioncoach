@@ -137,16 +137,39 @@ export const CoachVoiceChat = ({
   const RECONNECT_WINDOW = 30 * 1000;  // 30秒内重连复用session
   const SESSION_STORAGE_KEY = 'voice_chat_session';
 
+  const normalizeVoiceType = (v?: string) => (v && v.trim() !== '' ? v.trim() : '');
+  const resolvedVoiceTypeForSession = normalizeVoiceType(voiceType);
+
   // 断线重连保护：检查是否有最近的session可复用
   const getOrCreateSessionId = (): { sessionId: string; billedMinutes: number } => {
     try {
       const stored = localStorage.getItem(SESSION_STORAGE_KEY);
       if (stored) {
-        const { sessionId, endTime, billedMinutes, featureKey: storedFeatureKey } = JSON.parse(stored);
+        const {
+          sessionId,
+          endTime,
+          billedMinutes,
+          featureKey: storedFeatureKey,
+          mode: storedMode,
+          scenario: storedScenario,
+          voiceType: storedVoiceType,
+        } = JSON.parse(stored);
         const elapsed = Date.now() - endTime;
+
         // 30秒内重连且是同一个教练的通话，复用session
-        if (elapsed < RECONNECT_WINDOW && storedFeatureKey === featureKey) {
-          console.log(`Reconnecting within ${elapsed}ms, reusing session ${sessionId}, billed minutes: ${billedMinutes}`);
+        // ✅ 关键修复：将 voiceType / mode / scenario 纳入复用条件
+        // - 切换音色后必须创建新会话，否则豆包端会沿用旧会话音色
+        // - 防止重复 session.init 触发导致的“两个声音叠加”
+        const isSameContext =
+          storedFeatureKey === featureKey &&
+          (storedMode ?? 'general') === mode &&
+          (storedScenario ?? null) === (scenario ?? null) &&
+          normalizeVoiceType(storedVoiceType) === resolvedVoiceTypeForSession;
+
+        if (elapsed < RECONNECT_WINDOW && isSameContext) {
+          console.log(
+            `Reconnecting within ${elapsed}ms, reusing session ${sessionId}, billed minutes: ${billedMinutes}`
+          );
           return { sessionId, billedMinutes: billedMinutes || 0 };
         }
       }
@@ -1435,7 +1458,10 @@ export const CoachVoiceChat = ({
           sessionId: sessionIdRef.current,
           endTime: Date.now(),
           billedMinutes: lastBilledMinuteRef.current,
-          featureKey
+          featureKey,
+          mode,
+          scenario: scenario ?? null,
+          voiceType: resolvedVoiceTypeForSession,
         }));
         console.log(`Saved session for potential reconnection: ${sessionIdRef.current}, billed: ${lastBilledMinuteRef.current}`);
       } catch (e) {
