@@ -116,6 +116,9 @@ export const CoachVoiceChat = ({
   const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
   const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
+  // 🔧 防止 StrictMode/路由切换导致“卸载后旧初始化还在跑”，产生第二路 WS/音频流
+  const isUnmountedRef = useRef(false);
+  const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   // 🔧 连接进度追踪
   const [connectionPhase, setConnectionPhase] = useState<ConnectionPhase>('preparing');
@@ -861,16 +864,27 @@ export const CoachVoiceChat = ({
     if (chatRef.current || status === 'connecting' || status === 'connected') return;
     isInitializingRef.current = true;
 
+    const attempt = ++startAttemptRef.current;
+    const isStale = () => isUnmountedRef.current || attempt !== startAttemptRef.current;
+
     // ✅ 关键：平台信息同步获取（不要放在后面 await 之后，否则微信里会错过“用户手势上下文”）
     // 用于决定是否需要在最早阶段抢先触发麦克风授权弹窗。
     const platformInfo = getPlatformInfo();
     console.log('[VoiceChat] Platform info (early):', platformInfo);
-    
-    const lockId = acquireLock();
+
+    // ✅ 关键：用稳定 sessionId 作为锁 id，避免短时间内多次初始化拿到不同锁 id
+    const lockId = acquireLock(sessionIdRef.current);
     if (!lockId) {
       isInitializingRef.current = false;
       toast({ title: "语音通话冲突", description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`, variant: "destructive" });
       onClose();
+      return;
+    }
+
+    // 如果组件已卸载/本次初始化已过期，直接终止（避免产生第二路连接）
+    if (isStale()) {
+      isInitializingRef.current = false;
+      releaseLock();
       return;
     }
     
@@ -927,6 +941,13 @@ export const CoachVoiceChat = ({
         }
       }
 
+      if (isStale()) {
+        isInitializingRef.current = false;
+        stopConnectionTimer();
+        releaseLock();
+        return;
+      }
+
       // 🔐 确保登录态可用：没有 session 或 refresh 失败时，直接引导重新登录
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       console.log('[VoiceChat] Session check:', { 
@@ -944,6 +965,13 @@ export const CoachVoiceChat = ({
         const redirect = encodeURIComponent(window.location.pathname + window.location.search);
         navigate(`/auth?redirect=${redirect}`);
         setTimeout(onClose, 300);
+        return;
+      }
+
+      if (isStale()) {
+        isInitializingRef.current = false;
+        stopConnectionTimer();
+        releaseLock();
         return;
       }
 
@@ -979,6 +1007,13 @@ export const CoachVoiceChat = ({
       } else {
         console.log('[VoiceChat] ✅ Session refreshed successfully');
       }
+
+      if (isStale()) {
+        isInitializingRef.current = false;
+        stopConnectionTimer();
+        releaseLock();
+        return;
+      }
       
       // 🔧 预扣第一分钟点数
       updateConnectionPhase('requesting_mic');
@@ -989,6 +1024,19 @@ export const CoachVoiceChat = ({
         stopConnectionTimer();
         releaseLock();
         setTimeout(onClose, 1500);
+        return;
+      }
+
+      // ⚠️ 这里之后已经发生预扣费；如果卸载/过期，需要立刻退款并终止
+      if (isStale()) {
+        try {
+          await refundPreDeductedQuota('aborted_unmounted');
+        } catch {
+          // ignore
+        }
+        isInitializingRef.current = false;
+        stopConnectionTimer();
+        releaseLock();
         return;
       }
 
@@ -1050,8 +1098,7 @@ export const CoachVoiceChat = ({
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring();
-          // ✅ 豆包语音：init 成功后手动启动录音采集
-          doubaoClient.startRecording();
+          // ✅ 豆包语音：录音采集在 session.connected 时由 DoubaoRealtimeChat 内部启动
         } catch (doubaoError: any) {
           console.error('[VoiceChat] ❌ Doubao connection failed:', doubaoError);
           
@@ -1721,6 +1768,7 @@ export const CoachVoiceChat = ({
 
   // 初始化检查
   useEffect(() => {
+    isUnmountedRef.current = false;
     const init = async () => {
       setIsCheckingQuota(true);
       const quotaResult = await checkQuota();
@@ -1739,6 +1787,10 @@ export const CoachVoiceChat = ({
     init();
     
     return () => {
+      // 标记卸载并使在途 startCall 失效
+      isUnmountedRef.current = true;
+      startAttemptRef.current += 1;
+
       // 🔧 重置初始化标志，允许重新初始化（React 严格模式需要）
       isInitializingRef.current = false;
       
