@@ -437,6 +437,11 @@ export class DoubaoRealtimeChat {
 
   // 公开的启动录音方法（用于符合 AudioClient 接口）
   startRecording(): void {
+    // ✅ 幂等保护：避免重复调用导致多个 ScriptProcessor 并行工作（会造成重复上行/异常回声/多路触发）
+    if (this.processor || this.source) {
+      console.warn('[DoubaoChat] startRecording called while already recording; ignoring');
+      return;
+    }
     if (!this.audioContext || !this.mediaStream) return;
 
     // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
