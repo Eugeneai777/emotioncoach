@@ -373,8 +373,8 @@ function parsePacket(data: Uint8Array): {
  * 二进制帧格式: Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
  */
 function buildStartSessionRequest(userId: string, instructions: string, sessionId: string, voiceType?: string): Uint8Array {
-  // ✅ 统一计算最终音色：后续同时写入 tts.voice_type 与 tts.audio_config.voice_type
-  // 经验：部分协议/版本只识别 audio_config.voice_type，导致只写 tts.voice_type 时音色不生效（回落到默认女声）
+  // ✅ 统一计算最终音色：后续同时写入 tts.voice_type、tts.audio_config.voice_type 以及 tts.audio_config.speaker_name
+  // 经验：部分协议/版本只识别 speaker_name 或 audio_config.voice_type，导致只写 tts.voice_type 时音色不生效（回落到默认女声）
   const resolvedVoiceType = (voiceType && String(voiceType).trim() !== '')
     ? String(voiceType).trim()
     : 'zh_male_M392_conversation_wvae_bigtts';
@@ -388,7 +388,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
       channel: 1
     },
     // ✅ 关键修复：豆包文档中 `format: "pcm"` 代表 32bit PCM（常见为 F32LE/PCM32），
-    // 若前端按 PCM16 写 WAV 头会产生持续“呲呲噪声”。
+    // 若前端按 PCM16 写 WAV 头会产生持续"呲呲噪声"。
     // 因此这里强制请求 16bit 小端 PCM：pcm_s16le。
     // 参考：官方说明 tts.audio_config.format = "pcm_s16le"。
     tts: {
@@ -398,9 +398,13 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
         sample_rate: 24000,
         // ✅ 关键：把音色写入 audio_config（部分实现只读取这里）
         voice_type: resolvedVoiceType,
+        // ✅ 补充：部分版本/模型仅识别 speaker_name 字段
+        speaker_name: resolvedVoiceType,
       },
       // ✅ 同时保留顶层字段，兼容另一部分实现
       voice_type: resolvedVoiceType,
+      // ✅ 同时保留 speaker 作为顶层字段（部分 API 只读取此字段）
+      speaker: resolvedVoiceType,
     },
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
@@ -409,6 +413,9 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
       vad_max_speech_time: 60,   // 最长语音时间60秒
       vad_silence_time: 300,     // 语音开始前的静音容忍时间
       enable_tts: true,
+      // ✅ 在 request 层额外冗余一份 tts 相关配置（部分版本只读取此处）
+      tts_speaker: resolvedVoiceType,
+      tts_voice_type: resolvedVoiceType,
       bot_name: '情绪教练',
       system_role: instructions
     }
