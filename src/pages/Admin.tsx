@@ -21,6 +21,7 @@ import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
 import CostMonitorDashboard from "@/components/admin/CostMonitorDashboard";
 import ConversionAnalytics from "@/components/admin/ConversionAnalytics";
 import OGPreviewManagement from "@/components/admin/OGPreviewManagement";
+import { BloomPartnerInvitations } from "@/components/admin/BloomPartnerInvitations";
 
 function AdminRoutes() {
   return (
@@ -29,6 +30,7 @@ function AdminRoutes() {
       <Route path="users" element={<UserAccountsTable />} />
       <Route path="orders" element={<OrdersTable />} />
       <Route path="partners" element={<PartnerManagement />} />
+      <Route path="bloom-invitations" element={<BloomPartnerInvitations />} />
       <Route path="coaches" element={<CoachTemplatesManagement />} />
       <Route path="camps" element={<CampTemplatesManagement />} />
       <Route path="videos" element={<VideoCoursesManagement />} />
