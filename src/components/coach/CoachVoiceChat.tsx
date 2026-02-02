@@ -994,6 +994,13 @@ export const CoachVoiceChat = ({
         updateConnectionPhase('establishing');
         setUseMiniProgramMode(false);
         
+        // 🔧 确保 voiceType 始终有值，防止 undefined 透传
+        const resolvedVoiceType = voiceType && voiceType.trim() !== '' ? voiceType : 'BV158_streaming';
+        console.log('[VoiceChat] 🎙️ Creating DoubaoRealtimeChat with voiceType:', { 
+          prop: voiceType, 
+          resolved: resolvedVoiceType 
+        });
+        
         const doubaoClient = new DoubaoRealtimeChat({
           onStatusChange: (status) => handleStatusChange(status as any),
           onSpeakingChange: (speakingStatus) => {
@@ -1009,7 +1016,7 @@ export const CoachVoiceChat = ({
           onMessage: handleVoiceMessage,
           tokenEndpoint: 'doubao-realtime-token',
           mode,
-          voiceType
+          voiceType: resolvedVoiceType
         });
         
         chatRef.current = doubaoClient;

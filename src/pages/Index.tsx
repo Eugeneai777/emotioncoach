@@ -62,7 +62,12 @@ const Index = () => {
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const [selectedVoiceType, setSelectedVoiceType] = useState<string>(() => getSavedVoiceType());
+  const [selectedVoiceType, setSelectedVoiceType] = useState<string>(() => {
+    const saved = getSavedVoiceType();
+    console.log('[EmotionCoach] Initial voiceType from storage:', saved);
+    // 🔧 确保始终有有效值
+    return saved && saved.trim() !== '' ? saved : DEFAULT_VOICE_TYPE;
+  });
   const [briefingPreview, setBriefingPreview] = useState<{
     briefingId: string;
     briefingData: any;
