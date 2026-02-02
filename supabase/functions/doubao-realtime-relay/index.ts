@@ -91,40 +91,55 @@ const EVENT_CHAT_RESPONSE = 550;    // 模型文本回复
 const EVENT_RESPONSE_DONE = 559;    // 回复完成
 
 // ============= 豆包语音大模型 2.0 官方支持音色 =============
-// doubao-speech-vision-pro-250515 模型需要使用长格式音色 ID
-// 旧版 BV 短格式 ID (BV158_streaming 等) 已不再支持！
+// doubao-speech-vision-pro-250515 模型推荐使用 jupiter_bigtts 系列音色
+// 普通 TTS 音色（moon_bigtts/wvae_bigtts/mars_bigtts）在端到端实时模型中可能不可用
 // 
-// 官方文档验证的可用音色列表：
-// https://www.volcengine.com/docs/6561/1257543
+// 官方端到端推荐音色：https://www.volcengine.com/docs/6561/1257543
+// 
+// ✅ 前端 ID -> 后端真实音色 ID 映射
+// 前端保持语义化名称，后端转换为实际可用的音色
+const VOICE_TYPE_MAP: Record<string, string> = {
+  // 前端 voice_type -> 后端实际音色
+  'zh_male_M392_conversation_wvae_bigtts': 'zh_male_yunzhou_jupiter_bigtts',      // 智慧长者 -> 清爽沉稳男声
+  'zh_male_yuanboxiaoshu_moon_bigtts': 'zh_male_xiaotian_jupiter_bigtts',          // 渊博小叔 -> 清爽磁性男声
+  'zh_female_xinlingjitang_moon_bigtts': 'zh_female_xiaohe_jupiter_bigtts',        // 心灵鸡汤 -> 甜美活泼女声
+  'zh_female_wenroushunv_mars_bigtts': 'zh_female_vv_jupiter_bigtts',              // 温柔淑女 -> 活泼灵动女声 (默认)
+};
+
+// 实时端到端模型支持的有效音色
 const VALID_VOICE_TYPES = new Set([
-  // 男声
-  'zh_male_M392_conversation_wvae_bigtts',     // 智慧长者 - 沉稳睿智
-  'zh_male_yuanboxiaoshu_moon_bigtts',         // 渊博小叔 - 儒雅博学
-  // 女声
-  'zh_female_xinlingjitang_moon_bigtts',       // 心灵鸡汤 - 温暖治愈
-  'zh_female_wenroushunv_mars_bigtts',         // 温柔淑女 - 亲切温婉
-  // 备用音色（如果上述不可用）
-  'zh_male_rap_mars_bigtts',                   // 说唱歌手
-  'zh_female_story_mars_bigtts',               // 少儿故事
+  // 端到端优化的 jupiter 系列（推荐）
+  'zh_male_yunzhou_jupiter_bigtts',        // 清爽沉稳男声
+  'zh_male_xiaotian_jupiter_bigtts',       // 清爽磁性男声
+  'zh_female_vv_jupiter_bigtts',           // 活泼灵动女声 (默认)
+  'zh_female_xiaohe_jupiter_bigtts',       // 甜美活泼女声
 ]);
 
-// 直接使用长格式 ID，不做任何转换（删除了错误的 BV 映射）
+// 解析音色：先做前端 ID -> 后端 ID 映射，再验证是否有效
 const resolveProviderVoiceType = (voiceType?: string): string | undefined => {
   const v = (voiceType ?? '').trim();
   if (!v) return undefined;
   
-  // 检查是否是有效的音色 ID - 直接返回长格式 ID
+  // 1. 先检查是否需要映射（前端传来的语义化 ID）
+  if (VOICE_TYPE_MAP[v]) {
+    const mapped = VOICE_TYPE_MAP[v];
+    console.log(`[DoubaoRelay] 🎙️ Voice mapped: ${v} -> ${mapped}`);
+    return mapped;
+  }
+  
+  // 2. 检查是否是直接有效的音色 ID
   if (VALID_VOICE_TYPES.has(v)) {
     return v;
   }
   
-  // 如果是旧版 BV 格式，返回 undefined 让系统使用默认音色
+  // 3. 如果是旧版 BV 格式，返回 undefined 让系统使用默认音色
   if (v.startsWith('BV') && v.includes('_streaming')) {
     console.warn(`[DoubaoRelay] ⚠️ Legacy BV format not supported: ${v}, will use default`);
     return undefined;
   }
   
-  // 其他格式原样返回尝试
+  // 4. 其他未知格式，尝试使用但可能失败
+  console.warn(`[DoubaoRelay] ⚠️ Unknown voice type: ${v}, attempting to use as-is`);
   return v;
 };
 
