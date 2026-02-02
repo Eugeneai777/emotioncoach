@@ -407,12 +407,16 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   };
 
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
-  // ✅ 调试日志：确认发送给豆包的完整配置
-  console.log('[Protocol] 📤 StartSession payload:');
-  console.log('[Protocol]   - voice_type:', voiceType || 'zh_male_M392_conversation_wvae_bigtts');
-  console.log('[Protocol]   - system_role length:', instructions.length);
-  console.log('[Protocol]   - system_role preview:', instructions.substring(0, 100) + '...');
-  console.log('[Protocol]   - full payload:', JSON.stringify(payload).substring(0, 400) + '...');
+  // ✅ 详细调试日志：确认发送给豆包的完整配置
+  const finalVoiceType = voiceType || 'zh_male_M392_conversation_wvae_bigtts';
+  console.log('[Protocol] 📤 ============ StartSession Debug ============');
+  console.log('[Protocol] 🎙️ voice_type param received:', voiceType);
+  console.log('[Protocol] 🎙️ voice_type final (after fallback):', finalVoiceType);
+  console.log('[Protocol] 🎙️ payload.tts.voice_type:', payload.tts.voice_type);
+  console.log('[Protocol] 📝 system_role length:', instructions.length);
+  console.log('[Protocol] 📝 system_role preview:', instructions.substring(0, 100) + '...');
+  console.log('[Protocol] 📦 full payload JSON:', JSON.stringify(payload));
+  console.log('[Protocol] ============================================');
   console.log('[Protocol] StartSession sessionId:', sessionId);
 
   /**
