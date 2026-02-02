@@ -13,11 +13,18 @@ export interface VoiceTypeOption {
   emoji: string;
 }
 
+/**
+ * 豆包语音大模型 2.0 音色配置
+ * 
+ * 注意：doubao-speech-vision-pro-250515 模型需要使用长格式音色 ID
+ * 旧版短 ID (BV158_streaming 等) 在新模型中不生效
+ */
 export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   {
     id: 'wise_elder',
     name: '智慧长者',
-    voice_type: 'BV158_streaming',
+    // ✅ 新版模型需要使用长格式 ID（旧版 BV158_streaming 已不支持）
+    voice_type: 'zh_male_M392_conversation_wvae_bigtts',
     description: '年长男声，沉稳睿智',
     gender: 'male',
     emoji: '👴'
@@ -48,7 +55,8 @@ export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   }
 ];
 
-export const DEFAULT_VOICE_TYPE = 'BV158_streaming'; // 智慧长者
+// ✅ 使用新版长格式 ID 作为默认音色
+export const DEFAULT_VOICE_TYPE = 'zh_male_M392_conversation_wvae_bigtts'; // 智慧长者
 
 export const VOICE_TYPE_STORAGE_KEY = 'emotion_coach_voice_type';
 

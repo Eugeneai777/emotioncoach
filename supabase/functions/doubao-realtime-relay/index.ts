@@ -391,7 +391,8 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
         format: 'pcm_s16le',
         sample_rate: 24000,
       },
-      voice_type: voiceType || 'BV158_streaming'  // ✅ 添加音色配置
+      // ✅ 新版模型 doubao-speech-vision-pro-250515 需要长格式 ID
+      voice_type: voiceType || 'zh_male_M392_conversation_wvae_bigtts'
     },
     request: {
       model_name: 'doubao-speech-vision-pro-250515',
@@ -408,7 +409,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
   // ✅ 调试日志：确认发送给豆包的完整配置
   console.log('[Protocol] 📤 StartSession payload:');
-  console.log('[Protocol]   - voice_type:', voiceType || 'BV158_streaming');
+  console.log('[Protocol]   - voice_type:', voiceType || 'zh_male_M392_conversation_wvae_bigtts');
   console.log('[Protocol]   - system_role length:', instructions.length);
   console.log('[Protocol]   - system_role preview:', instructions.substring(0, 100) + '...');
   console.log('[Protocol]   - full payload:', JSON.stringify(payload).substring(0, 400) + '...');
@@ -1155,7 +1156,7 @@ Deno.serve(async (req) => {
         case 'session.init':
           sessionConfig = {
             instructions: message.instructions || '',
-            voiceType: message.voice_type || 'BV158_streaming'  // ✅ 接收前端传递的音色
+            voiceType: message.voice_type || 'zh_male_M392_conversation_wvae_bigtts'  // ✅ 新版模型需要长格式 ID
           };
           // ✅ 调试日志：确认 prompt 和音色是否正确接收
           console.log('[DoubaoRelay] 📋 session.init received:');

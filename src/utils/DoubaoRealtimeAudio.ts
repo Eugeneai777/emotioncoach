@@ -92,9 +92,11 @@ export class DoubaoRealtimeChat {
     this.tokenEndpoint = options.tokenEndpoint || 'doubao-realtime-token';
     this.mode = options.mode || 'emotion';
     // 🔧 强化音色默认值：确保始终使用有效的音色 ID
+    // 新版 doubao-speech-vision-pro 模型需要使用长格式 ID
+    const DEFAULT_VOICE = 'zh_male_M392_conversation_wvae_bigtts'; // 智慧长者
     const resolvedVoiceType = options.voiceType && options.voiceType.trim() !== '' 
       ? options.voiceType 
-      : 'BV158_streaming';
+      : DEFAULT_VOICE;
     this.voiceType = resolvedVoiceType;
     console.log('[DoubaoChat] Constructor voiceType:', { 
       input: options.voiceType, 
@@ -400,7 +402,8 @@ export class DoubaoRealtimeChat {
 
     // 🔧 修复音色传递：确保 voice_type 始终有值
     // 优先级：this.voiceType（构造函数已确保非空）> config 返回 > 硬编码默认
-    const finalVoiceType = this.voiceType || (this.config as any).voice_type || 'BV158_streaming';
+    // 新版模型需要长格式 ID
+    const finalVoiceType = this.voiceType || (this.config as any).voice_type || 'zh_male_M392_conversation_wvae_bigtts';
     
     const initRequest = {
       type: 'session.init',
