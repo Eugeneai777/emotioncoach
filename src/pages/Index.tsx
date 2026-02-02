@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { ChatEmotionIntensityPrompt } from "@/components/ChatEmotionIntensityPrompt";
@@ -42,8 +42,12 @@ import { pageTourConfig } from "@/config/pageTourConfig";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const partnerId = searchParams.get('partner');
   const { showTour, completeTour } = usePageTour('index');
+  
+  // AI 来电状态 - 从 navigation state 获取
+  const incomingCallState = location.state as { isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string } | null;
   
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
@@ -64,6 +68,14 @@ const Index = () => {
     briefingData: any;
   } | null>(null);
   const { toast } = useToast();
+
+  // AI 来电：自动启动语音聊天
+  useEffect(() => {
+    if (incomingCallState?.isIncomingCall) {
+      console.log('[EmotionCoach] AI incoming call detected, auto-starting voice chat');
+      setShowVoiceChat(true);
+    }
+  }, [incomingCallState?.isIncomingCall]);
 
   // 购买引导
   const {
