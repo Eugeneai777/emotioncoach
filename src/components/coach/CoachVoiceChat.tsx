@@ -995,7 +995,8 @@ export const CoachVoiceChat = ({
         setUseMiniProgramMode(false);
         
         // 🔧 确保 voiceType 始终有值，防止 undefined 透传
-        const resolvedVoiceType = voiceType && voiceType.trim() !== '' ? voiceType : 'BV158_streaming';
+        // 新版模型需要长格式 ID
+        const resolvedVoiceType = voiceType && voiceType.trim() !== '' ? voiceType : 'zh_male_M392_conversation_wvae_bigtts';
         console.log('[VoiceChat] 🎙️ Creating DoubaoRealtimeChat with voiceType:', { 
           prop: voiceType, 
           resolved: resolvedVoiceType 
