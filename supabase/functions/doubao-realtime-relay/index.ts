@@ -420,12 +420,20 @@ function parsePacket(data: Uint8Array): {
 
 // ============= 消息构建函数 =============
 
+type PromptStrategy = 'system_role_only' | 'redundant_fields';
+
 /**
  * 构建 StartSession 请求 (event=100)
  * 根据官方文档，StartSession 必须包含 Event + SessionID
  * 二进制帧格式: Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
  */
-function buildStartSessionRequest(userId: string, instructions: string, sessionId: string, voiceType?: string): Uint8Array {
+function buildStartSessionRequest(
+  userId: string,
+  instructions: string,
+  sessionId: string,
+  voiceType?: string,
+  promptStrategy: PromptStrategy = 'system_role_only'
+): Uint8Array {
   // ✅ 统一计算最终音色：
   // - 先做别名映射（长ID -> BV）
   // - 若为空则不指定音色（让服务端使用默认音色，避免 45000001 导致“连接后无回复”）
@@ -449,9 +457,9 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   }
 
   // ✅ 豆包端到端实时对话 API (doubao-speech-vision-pro-250515)
-  // 按官方文档：人设/系统提示词使用 request.system_role（放在 payload.request 下）。
-  // 经验：多字段冗余（system_prompt/bot_system_prompt）在部分版本会产生优先级冲突，
-  // 反而导致模型回退到默认自我介绍；因此这里收敛为官方字段。
+  // 支持两套 prompt 注入策略：
+  // - system_role_only：仅写入 request.system_role（默认）
+  // - redundant_fields：同时写入 system_role/system_prompt/bot_system_prompt（兜底）
   const request: Record<string, unknown> = {
     model_name: 'doubao-speech-vision-pro-250515',
     enable_vad: true,
@@ -460,10 +468,17 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     vad_silence_time: 300,
     enable_tts: true,
     bot_name: '静老师',
-    system_role: instructions,
     // speaking_style 为可选字段，但在部分场景下能增强“说话风格”稳定性
     speaking_style: '温暖、接纳、专业；使用简体中文；像朋友一样自然对话',
   };
+
+  if (promptStrategy === 'redundant_fields') {
+    (request as any).system_role = instructions;
+    (request as any).system_prompt = instructions;
+    (request as any).bot_system_prompt = instructions;
+  } else {
+    (request as any).system_role = instructions;
+  }
 
   if (resolvedVoiceType) {
     (request as any).tts_speaker = resolvedVoiceType;
@@ -499,6 +514,12 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
     sessionId,
     model_name: (request as any).model_name,
     bot_name: (request as any).bot_name,
+    prompt_strategy: promptStrategy,
+    prompt_fields: {
+      system_role: Boolean((request as any).system_role),
+      system_prompt: Boolean((request as any).system_prompt),
+      bot_system_prompt: Boolean((request as any).bot_system_prompt),
+    },
     system_role_len: typeof instructions === 'string' ? instructions.length : 0,
     system_role_preview: (instructions || '').substring(0, 120),
     voice_type_final: finalVoiceType || '(none)',
@@ -795,7 +816,7 @@ Deno.serve(async (req) => {
 
   let doubaoConn: Deno.TlsConn | null = null;
   let isConnected = false;
-  let sessionConfig: { instructions: string; voiceType: string } | null = null;
+  let sessionConfig: { instructions: string; voiceType: string; promptStrategy: PromptStrategy } | null = null;
   let heartbeatInterval: number | null = null;
   let audioSequence = 0;  // 音频包序号
   let sessionStarted = false;  // 标记 session 是否已成功启动
@@ -806,6 +827,11 @@ Deno.serve(async (req) => {
   // ✅ 音色降级：当 speaker id 不在 timber 内时（45000001），自动降级为“不指定音色”并重连一次。
   // 目的：避免前端卡在“正在聆听”但无回复。
   let speakerFallbackAttempted = false;
+
+  // ✅ Persona 兜底：当检测到模型仍自称“豆包”，自动切换 promptStrategy 重连一次。
+  let personaFallbackAttempted = false;
+  let pendingIdentityCheck = false;
+  let identityReplyBuffer = '';
 
   // ✅ 自动重连期间不要向前端发送 session.closed
   // 否则前端会把会话标记为 closed，从而忽略后续真正 ready 的 session.connected
@@ -930,7 +956,13 @@ Deno.serve(async (req) => {
         console.log(`[DoubaoRelay] Generated SessionID: ${doubaoSessionId}`);
         
         // ✅ 传递音色配置到 StartSession
-        const startSessionPacket = buildStartSessionRequest(userId, sessionConfig.instructions, doubaoSessionId, sessionConfig.voiceType);
+        const startSessionPacket = buildStartSessionRequest(
+          userId,
+          sessionConfig.instructions,
+          doubaoSessionId,
+          sessionConfig.voiceType,
+          sessionConfig.promptStrategy
+        );
         const frame = buildWebSocketFrame(startSessionPacket);
         await doubaoConn.write(frame);
         console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes), voiceType: ${sessionConfig.voiceType}`);
@@ -1142,6 +1174,15 @@ Deno.serve(async (req) => {
                          console.log(`[DoubaoRelay] 🎤 ASR识别: "${transcript || '(empty)'}", endpoint=${isEndpoint}`);
                          if (transcript && isEndpoint) {
                            console.log(`[DoubaoRelay] 🗣️ 用户说话(最终): "${transcript}"`);
+
+                            // ✅ 如果用户在问“你是谁/你叫什么”等身份问题，开启本轮 persona 校验
+                            const normalized = String(transcript).replace(/\s+/g, '');
+                            pendingIdentityCheck = /你是谁|你叫什么|你是豆包|你是什么模型|你是什么/.test(normalized);
+                            if (pendingIdentityCheck) {
+                              identityReplyBuffer = '';
+                              console.log('[DoubaoRelay] IdentityCheck armed for next assistant reply');
+                            }
+
                            clientSocket.send(JSON.stringify({
                              type: 'conversation.item.input_audio_transcription.completed',
                              transcript: String(transcript),
@@ -1159,6 +1200,48 @@ Deno.serve(async (req) => {
                        if (parsed.event === EVENT_CHAT_RESPONSE) {
                          const text = payload.content ?? payload.text ?? payload.result?.text;
                          console.log(`[DoubaoRelay] 💬 豆包回复文本: "${text || '(empty)'}"`);
+
+                          // ✅ Persona fallback: 若用户问身份但模型仍自称“豆包”，自动重连并切换 promptStrategy
+                          if (pendingIdentityCheck && typeof text === 'string' && text.length > 0) {
+                            identityReplyBuffer += text;
+
+                            // 流式拼接后再判断，避免单字 delta（"豆"/"包"）时漏检
+                            const hitDoubao = identityReplyBuffer.includes('豆包');
+                            const hitJing = identityReplyBuffer.includes('静老师');
+
+                            if (hitDoubao && !personaFallbackAttempted && sessionConfig) {
+                              personaFallbackAttempted = true;
+                              pendingIdentityCheck = false;
+                              isReconnecting = true;
+                              clearSessionReadyTimer();
+                              console.warn('[DoubaoRelay] Persona mismatch detected (still says Doubao). Reconnecting with redundant prompt fields.', {
+                                buffer_preview: identityReplyBuffer.substring(0, 80),
+                              });
+
+                              if (clientSocket.readyState === WebSocket.OPEN) {
+                                clientSocket.send(JSON.stringify({
+                                  type: 'persona.fallback',
+                                  reason: 'model_identity_is_doubao',
+                                  strategy: 'redundant_fields',
+                                }));
+                              }
+
+                              sessionConfig.promptStrategy = 'redundant_fields';
+                              audioSequence = 2;
+                              cleanupDoubaoConnection('persona_mismatch_autofallback');
+                              setTimeout(() => {
+                                if (clientSocket.readyState === WebSocket.OPEN) {
+                                  void connectToDoubao();
+                                }
+                              }, 0);
+                              continue;
+                            }
+
+                            if (hitJing) {
+                              pendingIdentityCheck = false;
+                            }
+                          }
+
                          if (text) {
                            clientSocket.send(JSON.stringify({
                              type: 'response.audio_transcript.delta',
@@ -1390,13 +1473,20 @@ Deno.serve(async (req) => {
           sessionConfig = {
             instructions: message.instructions || '',
             // ⚠️ 不再强制默认长ID：若不传 voice_type，则让服务端使用默认音色（更稳，避免 45000001 导致无回复）
-            voiceType: (message.voice_type ?? '')
+            voiceType: (message.voice_type ?? ''),
+            promptStrategy: 'system_role_only',
           };
+
+          // reset persona checks per new session
+          personaFallbackAttempted = false;
+          pendingIdentityCheck = false;
+          identityReplyBuffer = '';
           // ✅ 调试日志：确认 prompt 和音色是否正确接收（避免 emoji，便于日志检索）
           console.log('[DoubaoRelay] session.init received', {
             instructions_len: sessionConfig.instructions.length,
             instructions_preview: sessionConfig.instructions.substring(0, 120),
-            voiceType: sessionConfig.voiceType || '(none)'
+            voiceType: sessionConfig.voiceType || '(none)',
+            promptStrategy: sessionConfig.promptStrategy,
           });
           // ✅ Fix: StartSession 使用 sequence=1；音频包从 sequence=2 开始递增
           audioSequence = 2;
