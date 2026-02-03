@@ -467,7 +467,7 @@ function buildStartSessionRequest(
     vad_max_speech_time: 60,
     vad_silence_time: 300,
     enable_tts: true,
-    bot_name: '静老师',
+    bot_name: '劲老师',
     // speaking_style 为可选字段，但在部分场景下能增强“说话风格”稳定性
     speaking_style: '温暖、接纳、专业；使用简体中文；像朋友一样自然对话',
   };

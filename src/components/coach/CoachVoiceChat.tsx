@@ -764,10 +764,10 @@ export const CoachVoiceChat = ({
   // 🔧 身份替换：将"豆包"替换为"静老师"，确保用户看到一致的身份
   const sanitizeIdentity = (text: string): string => {
     return text
-      .replace(/豆包/g, '静老师')
+      .replace(/豆包/g, '劲老师')
       .replace(/字节跳动/g, '')
-      .replace(/我是一个AI/g, '我是静老师')
-      .replace(/我是AI/g, '我是静老师')
+      .replace(/我是一个AI/g, '我是劲老师')
+      .replace(/我是AI/g, '我是劲老师')
       .replace(/作为AI/g, '作为情绪教练');
   };
 
