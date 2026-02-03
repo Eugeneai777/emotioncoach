@@ -86,7 +86,13 @@ export class DoubaoRealtimeChat {
   // 注意：用户长时间说话时可能没有 AI 回复，但 pong 应该始终正常返回
   private lastHeartbeatResponse: number = 0;
   private missedHeartbeats: number = 0;
-  private static readonly MAX_MISSED_HEARTBEATS = 5; // 连续 5 次（75s）无响应则认为断连
+  private static readonly MAX_MISSED_HEARTBEATS = 5; // 连续 5 次无响应则认为断连
+  
+  // 🔧 新增：AI 回复状态跟踪，用于区分"AI正在回复"和"空闲等待用户"
+  // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
+  private isAssistantSpeaking: boolean = false;
+  private lastResponseEndTime: number = 0; // AI 最后一次回复结束的时间
+  private static readonly USER_IDLE_TIMEOUT = 120000; // 用户空闲超时：2 分钟
 
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -466,36 +472,55 @@ export class DoubaoRealtimeChat {
 
   private startHeartbeat(): void {
     // 🔧 修复微信环境连接中断：心跳间隔 15s
-    // 重要：只检测 pong/heartbeat 响应，不依赖业务消息
-    // 因为用户长时间说话时，可能没有 AI 回复，但连接仍然正常
+    // 关键改进：区分"AI正在回复"和"空闲等待用户"两种状态
+    // - AI 正在回复时：绝对不超时
+    // - AI 回复结束后：用户 2 分钟不说话才超时
     this.lastHeartbeatResponse = Date.now();
+    this.lastResponseEndTime = Date.now(); // 初始化为当前时间
     this.missedHeartbeats = 0;
+    this.isAssistantSpeaking = false;
     
     this.heartbeatInterval = window.setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        // 🔧 修复：只有在发送 ping 后没有收到 pong 时才认为超时
-        // 这样即使用户长时间说话（没有 AI 回复），只要后端能响应 ping，连接就是正常的
         const now = Date.now();
         const timeSinceLastResponse = now - this.lastHeartbeatResponse;
         
-        // 🔧 调整超时策略：
-        // 1. 将超时时间从 45s 增加到 90s（6 次心跳间隔）
-        // 2. 只有连续 5 次（75 秒）没有任何响应才触发断连
-        // 3. 这样可以容忍用户长时间说话/思考的场景
-        if (timeSinceLastResponse > 90000 && this.lastHeartbeatResponse > 0) {
+        // 🔧 关键修复：AI 正在回复时，绝对不检测超时
+        if (this.isAssistantSpeaking) {
+          // AI 正在说话，重置 missedHeartbeats，不检测超时
+          this.missedHeartbeats = 0;
+          // 仍然发送 ping 保持连接活跃
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+          return;
+        }
+        
+        // AI 回复结束后，检查用户空闲超时（2 分钟）
+        const timeSinceResponseEnd = now - this.lastResponseEndTime;
+        if (timeSinceResponseEnd > DoubaoRealtimeChat.USER_IDLE_TIMEOUT) {
+          console.log(`[DoubaoChat] User idle timeout: ${Math.round(timeSinceResponseEnd / 1000)}s since AI finished speaking`);
+          this.stopHeartbeat();
+          this.onStatusChange('disconnected');
+          return;
+        }
+        
+        // 检测心跳响应超时（连接可能已断开）
+        // 只有在超过 45 秒没有任何响应时才开始计数
+        if (timeSinceLastResponse > 45000 && this.lastHeartbeatResponse > 0) {
           this.missedHeartbeats++;
           console.warn(`[DoubaoChat] ⚠️ Heartbeat timeout: ${timeSinceLastResponse}ms since last response, missed: ${this.missedHeartbeats}`);
           
-          // 🔧 增加容忍次数：从 3 次增加到 5 次
-          if (this.missedHeartbeats >= 5) {
-            console.error('[DoubaoChat] ❌ Connection appears dead (no response for 90s+), triggering disconnect');
+          if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
+            console.error('[DoubaoChat] ❌ Connection appears dead, triggering disconnect');
             this.stopHeartbeat();
             this.onStatusChange('disconnected');
             return;
           }
+        } else {
+          // 收到响应，重置计数
+          this.missedHeartbeats = 0;
         }
         
-        // 发送 ping，后端会返回 pong
+        // 发送 ping
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, 15000);
@@ -693,6 +718,8 @@ export class DoubaoRealtimeChat {
           // 3. ASR 识别结果混杂/错误（如"不想听牛"）
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.isAssistantSpeaking = false; // 用户打断，AI 不再说话
+          this.lastResponseEndTime = Date.now(); // 重置空闲计时起点
           this.clearAudioQueueAndStopPlayback();
           this.onSpeakingChange('user-speaking');
           break;
@@ -708,6 +735,7 @@ export class DoubaoRealtimeChat {
           // AI 音频流数据 - 这是关键修复点！
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.isAssistantSpeaking = true; // 🔧 关键：标记 AI 正在说话，此时绝对不超时
           if (message.delta) {
             this.handleAudioDelta(message.delta);
             this.onSpeakingChange('assistant-speaking');
@@ -718,6 +746,8 @@ export class DoubaoRealtimeChat {
           // AI 音频响应完成
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.isAssistantSpeaking = false; // 🔧 关键：AI 说完了
+          this.lastResponseEndTime = Date.now(); // 🔧 从此刻开始计算用户空闲时间
           // 延迟设置 idle，避免在音频播放过程中就切换状态
           setTimeout(() => {
             this.onSpeakingChange('idle');
@@ -729,6 +759,11 @@ export class DoubaoRealtimeChat {
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
           this.awaitingResponse = false;
+          // 双重保险：response.done 也标记 AI 回复结束
+          if (this.isAssistantSpeaking) {
+            this.isAssistantSpeaking = false;
+            this.lastResponseEndTime = Date.now();
+          }
           break;
 
         case 'response.audio_transcript.delta':
