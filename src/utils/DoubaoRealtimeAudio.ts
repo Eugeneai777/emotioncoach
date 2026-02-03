@@ -924,7 +924,8 @@ export class DoubaoRealtimeChat {
 
   /**
    * 触发 AI 开场白
-   * 发送一个静默的文本消息作为对话触发，让 AI 按照 instructions 中的开场白回应
+   * 由于 relay 已配置 bot_first_speak: true，AI 会自动开口
+   * 这里仅作为备用触发（如果 API 未自动开始）
    */
   private triggerGreeting(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -932,24 +933,17 @@ export class DoubaoRealtimeChat {
       return;
     }
 
-    console.log('[DoubaoChat] Triggering AI greeting with text...');
+    // ✅ bot_first_speak 已启用，API 会自动发送开场白
+    // 这里仅发送 response.create 作为备用触发，不再发送用户消息
+    console.log('[DoubaoChat] Waiting for bot_first_speak greeting...');
     
-    // 发送一个简单的问候触发 AI 开场
-    // 豆包 API 收到用户输入后会根据 instructions 中的开场白配置回应
-    this.ws.send(JSON.stringify({ 
-      type: 'conversation.item.create',
-      item: {
-        type: 'message',
-        role: 'user',
-        content: [{
-          type: 'input_text',
-          text: '你好'
-        }]
+    // 给 API 500ms 时间自动开场，如果没有音频则手动触发
+    setTimeout(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN && !this.awaitingResponse) {
+        console.log('[DoubaoChat] Fallback: requesting response.create for greeting');
+        this.requestResponseCreate('greeting_fallback');
       }
-    }));
-
-    // ✅ 关键：显式触发生成，避免某些情况下仅发送 item.create 不会出音频
-    this.requestResponseCreate('greeting');
+    }, 500);
   }
 
   private requestResponseCreate(reason: string): void {

@@ -470,6 +470,9 @@ function buildStartSessionRequest(
     bot_name: '劲老师',
     // speaking_style 为可选字段，但在部分场景下能增强“说话风格”稳定性
     speaking_style: '温暖、接纳、专业；使用简体中文；像朋友一样自然对话',
+    // ✅ 开场白：让 AI 主动开口说固定的欢迎语
+    bot_first_speak: true,
+    welcome_message: '你好呀，我是劲老师，今天想聊点什么喃？',
   };
 
   // ✅ 始终使用 redundant_fields 策略，确保首次连接就注入 prompt
