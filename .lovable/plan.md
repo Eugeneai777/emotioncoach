@@ -1,112 +1,87 @@
 
 
-## 整合「你是否也这样？」和「写法小贴士」
+## 将「觉察日记」加入自我探索分类
 
-### 用户需求
-将两张独立卡片合并为一张：
-1. 保留「你是否也这样？」卡片的位置和样式
-2. 写法小贴士内容放在「记录=用最低成本打破无意识状态」之后
+### 当前数据库结构
 
----
-
-### 当前结构
-
-**AwakeningPainPointCard 展开内容：**
-```text
-• 每天机械化起床、上班、刷手机
-• 上周发生的事，模模糊糊没印象
-• 在信息茧房里「自动驾驶」
-• 感觉迷茫混乱，抓不住重点
-─────────────────────────────
-📝 记录 = 用最低成本打破无意识状态
-```
-
-**AwakeningTipsCard 展开内容：**
-```text
-• 写困境时，不叫「困难」，叫「破局关键点」
-• 写顺境时，记录微小美好：散步、电影、灵感、三餐
-```
-
----
-
-### 合并后结构
-
-```text
-┌─────────────────────────────────────┐
-│ ⚠️ 你是否也这样？              ▼    │  ← 触发区域（保持不变）
-├─────────────────────────────────────┤
-│ • 每天机械化起床、上班、刷手机      │
-│ • 上周发生的事，模模糊糊没印象      │
-│ • 在信息茧房里「自动驾驶」          │
-│ • 感觉迷茫混乱，抓不住重点          │
-│ ─────────────────────────────────── │
-│ 📝 记录 = 用最低成本打破无意识状态  │
-│ ─────────────────────────────────── │  ← 新增分隔线
-│ 💡 写法小贴士                       │  ← 小标题
-│ • 写困境时，叫「破局关键点」        │  ← 红色圆点
-│ • 写顺境时，记录微小美好            │  ← 绿色圆点
-└─────────────────────────────────────┘
-```
+**自我探索分类工具列表（按 display_order 排序）：**
+| display_order | tool_id | title |
+|--------------|---------|-------|
+| 0 | wealth-block | 财富卡点测评 |
+| 5 | goals | 目标设定 |
+| 6 | values | 价值探索 |
+| 7 | vision | 愿景板 |
+| 8 | strengths | 优势识别 |
 
 ---
 
 ### 修改方案
 
-**文件**：`src/components/awakening/AwakeningPainPointCard.tsx`
+#### 1. 数据库：插入新工具记录
 
-在展开内容的「记录=...」区块之后，添加写法小贴士区块：
+在 `energy_studio_tools` 表中插入「觉察日记」：
 
-```tsx
-// 在 painPoints 数组后添加 tips 数组
-const tips = [
-  {
-    colorClass: "text-destructive/70",
-    text: '写困境时，不叫「困难」，叫「破局关键点」或「命运转折点」'
-  },
-  {
-    colorClass: "text-primary/70",
-    text: '写顺境时，记录微小美好：散步、电影、灵感、三餐'
-  }
-];
-
-// 在「📝 记录=...」div 之后添加
-<div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/30">
-  <div className="flex items-center gap-1 mb-2">
-    <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-      写法小贴士
-    </span>
-  </div>
-  <ul className="space-y-1.5">
-    {tips.map((tip, index) => (
-      <motion.li key={index} className="flex items-start gap-2 text-xs text-muted-foreground">
-        <span className={cn("mt-0.5", tip.colorClass)}>•</span>
-        <span>{tip.text}</span>
-      </motion.li>
-    ))}
-  </ul>
-</div>
+```sql
+INSERT INTO energy_studio_tools (
+  tool_id, title, description, detailed_description,
+  icon_name, category, gradient, display_order, 
+  is_available, is_system, usage_scenarios
+) VALUES (
+  'awakening',
+  '觉察日记',
+  '记录困境与顺境，打破无意识状态',
+  '通过6个入口（情绪、选择、关系、感恩、行动、方向）记录生活中的困境与顺境，用最低成本打破"自动驾驶"状态，发现命运的破局点。',
+  'Sparkles',
+  'exploration',
+  'from-amber-500 to-orange-500',
+  1,  -- 放在财富卡点(0)之后
+  true,
+  true,
+  ARRAY['感觉迷茫时', '想打破惯性时', '睡前5分钟记录']
+);
 ```
 
-**文件**：`src/pages/Awakening.tsx`
+#### 2. 代码：添加跳转逻辑
 
-移除独立的 `AwakeningTipsCard` 引用：
+**文件**：`src/pages/EnergyStudio.tsx`
+
+在 `handleToolClick` 函数中添加觉察日记的路由：
 
 ```tsx
-// 删除导入
-- import AwakeningTipsCard from "@/components/awakening/AwakeningTipsCard";
-
-// 删除组件引用
-- <AwakeningTipsCard />
+// 第91-108行，添加新的跳转逻辑
+const handleToolClick = (toolId: string) => {
+  if (toolId === 'awakening') {
+    navigate('/awakening');
+    return;
+  }
+  if (toolId === 'goals') {
+    navigate('/goals');
+    return;
+  }
+  // ... 其他逻辑
+};
 ```
 
 ---
 
-### 修改文件清单
+### 修改后效果
 
-| 文件 | 操作 | 说明 |
-|-----|-----|-----|
-| `src/components/awakening/AwakeningPainPointCard.tsx` | 修改 | 添加写法小贴士内容 |
-| `src/pages/Awakening.tsx` | 修改 | 移除 AwakeningTipsCard 引用 |
-| `src/components/awakening/AwakeningTipsCard.tsx` | 可保留 | 暂不删除文件 |
+**自我探索分类工具列表：**
+```text
+├── 财富卡点测评 (display_order: 0)
+├── 觉察日记     (display_order: 1)  ← 新增
+├── 目标设定     (display_order: 5)
+├── 价值探索     (display_order: 6)
+├── 愿景板       (display_order: 7)
+└── 优势识别     (display_order: 8)
+```
+
+---
+
+### 修改清单
+
+| 类型 | 内容 | 说明 |
+|-----|------|------|
+| 数据库 | INSERT 新记录 | 添加觉察日记工具 |
+| 代码 | `src/pages/EnergyStudio.tsx` | 添加 `/awakening` 跳转逻辑 |
 
