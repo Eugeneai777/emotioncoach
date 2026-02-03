@@ -63,6 +63,12 @@ export class DoubaoRealtimeChat {
   private inputSampleRate: number = 16000;
   // 有些 realtime 服务需要显式 response.create 才会开始生成（尤其是文本触发或 VAD 轮次结束）
   private awaitingResponse = false;
+
+  // ✅ 固定开场白（用于兜底触发）
+  // 说明：部分情况下 bot_first_speak / welcome_message 不会生效，
+  // 若仅发送 response.create 也可能不会生成任何内容，因此这里在接通后
+  // 通过“隐藏文本触发”来确保一定会播报该欢迎语。
+  private static readonly FIXED_GREETING = '你好呀，我是劲老师，今天想聊点什么喃？';
   // 🔧 WeChat 连接超时修复：等待 session.connected 的超时计时器和回调
   private sessionConnectedTimeout: number | null = null;
   private sessionConnectedResolver: (() => void) | null = null;
@@ -924,8 +930,10 @@ export class DoubaoRealtimeChat {
 
   /**
    * 触发 AI 开场白
-   * 由于 relay 已配置 bot_first_speak: true，AI 会自动开口
-   * 这里仅作为备用触发（如果 API 未自动开始）
+   * ✅ 重要：不要只发 response.create。
+   * - 在部分服务端实现中，没有上下文 item 的 response.create 会返回 no_content。
+   * - bot_first_speak / welcome_message 在某些网络/版本下也可能不触发。
+   * 因此这里发送一条“隐藏的文本触发”，要求模型先用固定开场白问候。
    */
   private triggerGreeting(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -933,17 +941,28 @@ export class DoubaoRealtimeChat {
       return;
     }
 
-    // ✅ bot_first_speak 已启用，API 会自动发送开场白
-    // 这里仅发送 response.create 作为备用触发，不再发送用户消息
-    console.log('[DoubaoChat] Waiting for bot_first_speak greeting...');
-    
-    // 给 API 500ms 时间自动开场，如果没有音频则手动触发
-    setTimeout(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN && !this.awaitingResponse) {
-        console.log('[DoubaoChat] Fallback: requesting response.create for greeting');
-        this.requestResponseCreate('greeting_fallback');
-      }
-    }, 500);
+    // ✅ 发送隐藏触发：不影响用户 ASR，且能强制“带身份”的开场白
+    // 注意：这条文本不会被我们主动渲染到 UI（UI 主要展示 ASR + assistant transcript）。
+    const triggerText = `请你先用一句固定开场白问候我：${DoubaoRealtimeChat.FIXED_GREETING}`;
+    try {
+      this.ws.send(JSON.stringify({
+        type: 'conversation.item.create',
+        item: {
+          type: 'message',
+          role: 'user',
+          content: [{
+            type: 'input_text',
+            text: triggerText,
+          }],
+        },
+      }));
+      console.log('[DoubaoChat] Greeting trigger item sent');
+    } catch (e) {
+      console.warn('[DoubaoChat] Failed to send greeting trigger item:', e);
+    }
+
+    // ✅ 显式触发生成（确保有音频输出）
+    this.requestResponseCreate('greeting');
   }
 
   private requestResponseCreate(reason: string): void {
