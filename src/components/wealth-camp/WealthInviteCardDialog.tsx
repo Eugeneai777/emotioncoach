@@ -352,7 +352,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         console.log('[handleDownload] WeChat/iOS detected, showing preview');
         setPreviewImageUrl(blobUrl);
         setShowImagePreview(true);
-        setOpen(false); // Close dialog to avoid layering issues
+        // 延迟关闭对话框，确保图片预览组件完成初始化后再销毁源 DOM
+        requestAnimationFrame(() => {
+          setTimeout(() => setOpen(false), 50);
+        });
       } else {
         // Desktop/Android: Try download
         try {
