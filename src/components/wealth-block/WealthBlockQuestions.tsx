@@ -516,6 +516,31 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
           </Button>
         )}
       </div>
+
+      {/* 仅首屏（第一题）显示底部信息 */}
+      {currentIndex === 0 && (
+        <div className="mt-6 pt-4 border-t border-border/50 space-y-2 text-center pb-[env(safe-area-inset-bottom)]">
+          {/* 关注公众号链接 */}
+          <a 
+            href="https://mp.weixin.qq.com/s/your-wechat-url"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 text-sm block hover:underline"
+          >
+            点此关注公众号
+          </a>
+          
+          {/* 付费提示（红色） */}
+          <p className="text-red-500 text-xs">
+            需付费后方可查看结果，结果纯属娱乐仅供参考
+          </p>
+          
+          {/* 公司信息和ICP备案 */}
+          <p className="text-muted-foreground text-xs">
+            北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
+          </p>
+        </div>
+      )}
     </div>
   );
 }
