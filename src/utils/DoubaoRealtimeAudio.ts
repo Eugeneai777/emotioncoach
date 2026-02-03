@@ -56,6 +56,8 @@ export class DoubaoRealtimeChat {
   // 正确做法：缓存最后 1 byte，拼到下一段 PCM 前面。
   private playbackPcmRemainder: Uint8Array | null = null;
   private isPlaying = false;
+  // 🔧 打断支持：保存当前播放的 AudioBufferSourceNode，以便用户打断时能立即停止
+  private currentPlaybackSource: AudioBufferSourceNode | null = null;
   private isDisconnected = false;
   private config: DoubaoConfig | null = null;
   private heartbeatInterval: number | null = null;
@@ -176,6 +178,38 @@ export class DoubaoRealtimeChat {
   private async resumeAudioContexts(tag: string): Promise<void> {
     await this.ensurePlaybackAudioContext(tag);
     await this.ensureRecordingAudioContext(tag);
+  }
+
+  /**
+   * 🔧 打断支持：清空音频播放队列并停止当前播放
+   * 当用户开始说话（打断 AI）时调用，避免：
+   * 1. 扬声器继续播放 AI 语音
+   * 2. 麦克风采集到混合音频导致 ASR 识别错误
+   */
+  private clearAudioQueueAndStopPlayback(): void {
+    // 清空队列中待播放的音频
+    const queueLength = this.audioQueue.length;
+    this.audioQueue = [];
+    
+    // 清空 PCM 缓存
+    this.playbackPcmRemainder = null;
+    
+    // 停止当前正在播放的音频
+    if (this.currentPlaybackSource) {
+      try {
+        this.currentPlaybackSource.stop();
+        this.currentPlaybackSource.disconnect();
+      } catch (e) {
+        // 可能已经播放完毕，忽略错误
+      }
+      this.currentPlaybackSource = null;
+    }
+    
+    this.isPlaying = false;
+    
+    if (queueLength > 0) {
+      console.log('[DoubaoChat] 🔇 Interrupt: cleared', queueLength, 'queued audio chunks and stopped playback');
+    }
   }
 
   private setupLifecycleListeners(): void {
@@ -644,9 +678,14 @@ export class DoubaoRealtimeChat {
           break;
 
         case 'input_audio_buffer.speech_started':
-          // 用户开始说话
+          // 🔧 用户开始说话（打断 AI）- 关键修复！
+          // 必须立即停止 AI 音频播放，否则：
+          // 1. 扬声器继续播放 AI 语音
+          // 2. 麦克风采集到 AI 语音 + 用户语音的混合
+          // 3. ASR 识别结果混杂/错误（如"不想听牛"）
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.clearAudioQueueAndStopPlayback();
           this.onSpeakingChange('user-speaking');
           break;
 
@@ -856,7 +895,14 @@ export class DoubaoRealtimeChat {
         source.connect(this.playbackAudioContext.destination);
       }
       
+      // 🔧 打断支持：保存当前播放源引用，以便用户打断时能立即停止
+      this.currentPlaybackSource = source;
+      
       source.onended = () => {
+        // 清除引用（只有当前 source 结束时才清除）
+        if (this.currentPlaybackSource === source) {
+          this.currentPlaybackSource = null;
+        }
         this.isPlaying = false;
         this.playNextAudio();
       };
