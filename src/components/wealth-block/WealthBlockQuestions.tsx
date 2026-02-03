@@ -511,7 +511,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
 
       {/* 仅在 showFooterInfo=true 且首屏（第一题）时显示底部信息 */}
       {showFooterInfo && currentIndex === 0 && (
-        <div className="mt-8 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
+        <div className="mt-16 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
           {/* 关注公众号链接 - 点击跳转到微信关注流程 */}
           <a 
             href="/wechat-auth?mode=follow"
