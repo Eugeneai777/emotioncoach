@@ -66,7 +66,10 @@ export default function WealthAssessmentLitePage() {
   }, []);
   
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-background"
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
       {/* 入口页 */}
       {pageState === "intro" && (
         <>
