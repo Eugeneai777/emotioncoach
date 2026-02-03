@@ -19,6 +19,11 @@ import { corsHeaders } from '../_shared/cors.ts';
 const DOUBAO_HOST = 'openspeech.bytedance.com';
 const DOUBAO_PATH = '/api/v3/realtime/dialogue';
 
+// ✅ 情绪教练：前端只做纯语音交互（不展示 AI 文本）。
+// 为了降低微信 WebView 的消息/JSON 处理压力，这里默认停止向前端转发 assistant 文本。
+// （不影响语音音频流；persona 校验仍在后端完成）
+const FORWARD_ASSISTANT_TEXT = false;
+
 // 固定的 App Key (豆包文档要求)
 const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
 
@@ -1224,7 +1229,7 @@ Deno.serve(async (req) => {
                        // - { result: { text: "..." } }
                        if (parsed.event === EVENT_CHAT_RESPONSE) {
                          const text = payload.content ?? payload.text ?? payload.result?.text;
-                         console.log(`[DoubaoRelay] 💬 豆包回复文本: "${text || '(empty)'}"`);
+                          // 仅用于后端 persona 检查；不再转发到前端（纯语音体验）
 
                           // ✅ Persona fallback: 若用户问身份但模型仍自称“豆包”，自动重连并切换 promptStrategy
                           if (pendingIdentityCheck && typeof text === 'string' && text.length > 0) {
@@ -1247,13 +1252,12 @@ Deno.serve(async (req) => {
                             }
                           }
 
-                         if (text) {
-                           clientSocket.send(JSON.stringify({
-                             type: 'response.audio_transcript.delta',
-                             delta: String(text),
-                           }));
-                           console.log(`[DoubaoRelay] ✅ 已转发回复文本到前端: "${String(text).substring(0, 100)}"`);
-                         }
+                          if (FORWARD_ASSISTANT_TEXT && text && clientSocket.readyState === WebSocket.OPEN) {
+                            clientSocket.send(JSON.stringify({
+                              type: 'response.audio_transcript.delta',
+                              delta: String(text),
+                            }));
+                          }
                        }
                     }
                   } catch {
@@ -1272,27 +1276,29 @@ Deno.serve(async (req) => {
                     }
                     const payload = JSON.parse(jsonStr);
                     console.log('[DoubaoRelay] JSON payload:', JSON.stringify(payload).substring(0, 200));
-                    
-                    clientSocket.send(JSON.stringify({
-                      type: 'response.text',
-                      payload: payload,
-                      event: parsed.event
-                    }));
-                    
-                    // 提取文本转写
-                    if (payload.result?.text) {
+
+                    if (FORWARD_ASSISTANT_TEXT && clientSocket.readyState === WebSocket.OPEN) {
                       clientSocket.send(JSON.stringify({
-                        type: 'response.audio_transcript.delta',
-                        delta: payload.result.text
+                        type: 'response.text',
+                        payload: payload,
+                        event: parsed.event
                       }));
-                    }
-                    
-                    // 处理 TTS 文本
-                    if (payload.tts?.text) {
-                      clientSocket.send(JSON.stringify({
-                        type: 'response.audio_transcript.delta',
-                        delta: payload.tts.text
-                      }));
+
+                      // 提取文本转写
+                      if (payload.result?.text) {
+                        clientSocket.send(JSON.stringify({
+                          type: 'response.audio_transcript.delta',
+                          delta: payload.result.text
+                        }));
+                      }
+
+                      // 处理 TTS 文本
+                      if (payload.tts?.text) {
+                        clientSocket.send(JSON.stringify({
+                          type: 'response.audio_transcript.delta',
+                          delta: payload.tts.text
+                        }));
+                      }
                     }
                   } catch (e) {
                     // 解析失败时静默跳过，避免日志刷屏
@@ -1483,6 +1489,31 @@ Deno.serve(async (req) => {
         }
       }
     }, 15000);
+  };
+
+  // 🔧 增强诊断：明确记录是谁先断开（微信端断 / relay 断 / doubao 断）
+  clientSocket.onclose = (event: CloseEvent) => {
+    console.log('[DoubaoRelay] Client socket closed', {
+      code: event.code,
+      reason: event.reason,
+      wasClean: event.wasClean,
+    });
+
+    if (heartbeatInterval) {
+      try {
+        clearInterval(heartbeatInterval);
+      } catch {
+        // ignore
+      }
+      heartbeatInterval = null;
+    }
+
+    // 客户端断开时，立即清理 doubao 连接，避免悬挂连接导致异常 shutdown
+    cleanupDoubaoConnection('clientSocket.onclose');
+  };
+
+  clientSocket.onerror = (event: Event) => {
+    console.warn('[DoubaoRelay] Client socket error', event);
   };
 
   clientSocket.onmessage = async (event: MessageEvent) => {
