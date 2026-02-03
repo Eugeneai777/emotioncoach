@@ -1,58 +1,73 @@
 
 
-## 移除入口介绍页 - 直接开始答题
+## 跳过"准备好了吗？"页面 - 直接显示第一道问答题
 
-### 需求理解
+### 问题分析
 
-用户希望访问 `/wealth-assessment-lite` 时：
-- **移除**：LiteIntroCard 入口介绍页
-- **直接显示**：WealthBlockQuestions 答题页面
-- **保留**：底部页脚内容（公众号链接、付费提示、ICP备案）在答题页显示
+根据用户截图：
+- **截图1**：当前显示的"准备好了吗？"页面（`AssessmentStartScreen` 组件）
+- **截图2**：用户期望直接看到的第一道问答题页面
+
+当前流程中，`WealthBlockQuestions` 组件内部有一个 `showStartScreen` 状态，默认为 `true`，导致每次进入都先显示"准备好了吗？"介绍页面。
+
+### 解决方案
+
+修改 `WealthBlockQuestions` 组件，添加一个可选的 `skipStartScreen` prop，允许调用方控制是否跳过开始页面。
+
+在 `WealthAssessmentLite` 页面传入 `skipStartScreen={true}` 即可直接进入答题。
 
 ---
 
 ### 修改方案
 
-#### 文件: `src/pages/WealthAssessmentLite.tsx`
+#### 文件 1: `src/components/wealth-block/WealthBlockQuestions.tsx`
 
 | 修改项 | 内容 |
 |--------|------|
-| 修改 | 初始状态从 `"intro"` 改为 `"questions"` |
-| 移除 | `pageState === "intro"` 条件分支 |
-| 可选 | 在答题页显示底部页脚 |
+| 新增 prop | `skipStartScreen?: boolean` |
+| 修改初始状态 | `useState(!skipStartScreen)` |
 
 ```tsx
-// 修改前
-const [pageState, setPageState] = useState<PageState>("intro");
+// 修改接口定义
+interface WealthBlockQuestionsProps {
+  onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[], deepFollowUpAnswers?: DeepFollowUpAnswer[]) => void;
+  onExit?: () => void;
+  skipStartScreen?: boolean;  // 新增：是否跳过开始介绍页
+}
 
-// 修改后  
-const [pageState, setPageState] = useState<PageState>("questions");
+// 修改组件
+export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = false }: WealthBlockQuestionsProps) {
+  // 根据 prop 决定初始状态
+  const [showStartScreen, setShowStartScreen] = useState(!skipStartScreen);
+  // ...
+}
+```
+
+#### 文件 2: `src/pages/WealthAssessmentLite.tsx`
+
+| 修改项 | 内容 |
+|--------|------|
+| 传递 prop | 添加 `skipStartScreen={true}` |
+
+```tsx
+<WealthBlockQuestions 
+  onComplete={handleComplete} 
+  onExit={handleExit}
+  skipStartScreen={true}  // 跳过开始页面
+/>
 ```
 
 ---
 
-### 页面流程变更
+### 流程对比
 
 ```text
 修改前:
-intro(入口页) → questions(答题) → payment(付费) → result(结果)
+页面加载 → "准备好了吗？"页面 → 点击"开始探索" → 第一道问答题
 
 修改后:
-questions(答题) → payment(付费) → result(结果)
+页面加载 → 直接显示第一道问答题
 ```
-
----
-
-### 底部页脚处理
-
-两种方案供选择：
-
-| 方案 | 描述 |
-|------|------|
-| A. 移除页脚 | 答题页不显示底部页脚，仅在付费/结果页显示 |
-| B. 保留页脚 | 在答题页底部也显示公众号链接和ICP备案信息 |
-
-建议采用 **方案 A**（移除页脚），因为答题页面已有自己的底部导航和进度条，增加页脚会造成界面拥挤。
 
 ---
 
@@ -60,48 +75,14 @@ questions(答题) → payment(付费) → result(结果)
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/pages/WealthAssessmentLite.tsx` | 修改 | 初始状态改为 "questions"，移除 intro 分支 |
-| `src/components/wealth-block/LiteIntroCard.tsx` | 可删除 | 不再使用（可保留以备将来） |
-| `src/components/wealth-block/LiteFooter.tsx` | 保留 | 在结果页可能仍需使用 |
+| `src/components/wealth-block/WealthBlockQuestions.tsx` | 修改 | 新增 `skipStartScreen` prop |
+| `src/pages/WealthAssessmentLite.tsx` | 修改 | 传入 `skipStartScreen={true}` |
 
 ---
 
-### 代码修改示例
+### 好处
 
-```tsx
-// src/pages/WealthAssessmentLite.tsx
-
-type PageState = "questions" | "result";  // 移除 "intro"
-
-export default function WealthAssessmentLitePage() {
-  const [pageState, setPageState] = useState<PageState>("questions");  // 直接从答题开始
-  
-  // ... 其他状态保持不变
-  
-  return (
-    <div className="h-screen overflow-y-auto overscroll-contain bg-background">
-      {/* 直接显示测评页 */}
-      {pageState === "questions" && (
-        <WealthBlockQuestions 
-          onComplete={handleComplete} 
-          onExit={handleExit}
-        />
-      )}
-      
-      {/* 结果页 */}
-      {pageState === "result" && currentResult && (
-        <WealthBlockResult 
-          result={currentResult} 
-          followUpInsights={followUpInsights}
-          deepFollowUpAnswers={deepFollowUpAnswers}
-          onRetake={handleRetake}
-        />
-      )}
-      
-      {/* 付费弹窗 */}
-      <AssessmentPayDialog ... />
-    </div>
-  );
-}
-```
+1. **向后兼容**：其他使用 `WealthBlockQuestions` 的页面不受影响（默认仍显示开始页面）
+2. **灵活配置**：轻量版专用，可按需跳过介绍页
+3. **最小改动**：仅添加一个 prop，不影响现有逻辑
 
