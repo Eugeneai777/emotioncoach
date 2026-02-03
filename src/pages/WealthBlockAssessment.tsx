@@ -57,14 +57,6 @@ export default function WealthBlockAssessmentPage() {
   const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
 
-  // 已登录且已购买：自动跳过介绍页
-  useEffect(() => {
-    if (user && hasPurchased && !isPurchaseLoading) {
-      console.log('[WealthBlock] User purchased, auto-skipping intro');
-      setShowIntro(false);
-    }
-  }, [user, hasPurchased, isPurchaseLoading]);
-
   // 监听登录状态变化，登录后检查购买状态
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
