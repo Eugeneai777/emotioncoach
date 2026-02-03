@@ -718,6 +718,8 @@ export class DoubaoRealtimeChat {
           // 3. ASR 识别结果混杂/错误（如"不想听牛"）
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.isAssistantSpeaking = false; // 用户打断，AI 不再说话
+          this.lastResponseEndTime = Date.now(); // 重置空闲计时起点
           this.clearAudioQueueAndStopPlayback();
           this.onSpeakingChange('user-speaking');
           break;
@@ -733,6 +735,7 @@ export class DoubaoRealtimeChat {
           // AI 音频流数据 - 这是关键修复点！
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.isAssistantSpeaking = true; // 🔧 关键：标记 AI 正在说话，此时绝对不超时
           if (message.delta) {
             this.handleAudioDelta(message.delta);
             this.onSpeakingChange('assistant-speaking');
@@ -743,6 +746,8 @@ export class DoubaoRealtimeChat {
           // AI 音频响应完成
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
+          this.isAssistantSpeaking = false; // 🔧 关键：AI 说完了
+          this.lastResponseEndTime = Date.now(); // 🔧 从此刻开始计算用户空闲时间
           // 延迟设置 idle，避免在音频播放过程中就切换状态
           setTimeout(() => {
             this.onSpeakingChange('idle');
@@ -754,6 +759,11 @@ export class DoubaoRealtimeChat {
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
           this.awaitingResponse = false;
+          // 双重保险：response.done 也标记 AI 回复结束
+          if (this.isAssistantSpeaking) {
+            this.isAssistantSpeaking = false;
+            this.lastResponseEndTime = Date.now();
+          }
           break;
 
         case 'response.audio_transcript.delta':
