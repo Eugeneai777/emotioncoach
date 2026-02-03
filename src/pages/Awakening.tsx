@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
-import { ArrowLeft, Share2, Lightbulb } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
-import AwakeningPainPointCard from "@/components/awakening/AwakeningPainPointCard";
+import AwakeningTipsCard from "@/components/awakening/AwakeningTipsCard";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
@@ -75,15 +75,12 @@ const Awakening: React.FC = () => {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-5">
-          {/* Hero区：核心价值+科学依据 */}
+        <main className="max-w-lg mx-auto px-4 py-4 pb-24 space-y-4">
+          {/* Hero区：核心标语 */}
           <AwakeningHeroCard />
 
-          {/* 痛点共鸣卡片（可折叠） */}
-          <AwakeningPainPointCard />
-
           {/* 分类说明 */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* 困境记录 */}
             <div className="space-y-2">
               <motion.div
@@ -141,35 +138,14 @@ const Awakening: React.FC = () => {
             </div>
           </div>
 
-          {/* 写法提示 */}
-          <motion.div
-            initial={{ opacity: 0.01, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="bg-muted/50 rounded-xl p-4 space-y-2"
-          >
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Lightbulb className="h-4 w-4 text-amber-500" />
-              <span>写法小贴士</span>
-            </div>
-            <ul className="text-xs text-muted-foreground space-y-1.5">
-              <li className="flex items-start gap-2">
-                <span className="text-destructive/70">•</span>
-                <span>写困境时，不叫「困难」，叫「<strong className="text-foreground">破局关键点</strong>」或「命运转折点」</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary/70">•</span>
-                <span>写顺境时，记录<strong className="text-foreground">微小美好</strong>：散步、电影、灵感、三餐</span>
-              </li>
-            </ul>
-          </motion.div>
+          {/* 可折叠写法提示 */}
+          <AwakeningTipsCard />
 
           {/* 底部金句 */}
           <motion.div
             initial={{ opacity: 0.01 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.4 }}
             style={{ transform: 'translateZ(0)', willChange: 'opacity' }}
             className="text-center text-xs text-muted-foreground pt-2"
           >

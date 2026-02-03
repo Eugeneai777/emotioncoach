@@ -27,26 +27,26 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
         onClick={onClick}
         style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         className={cn(
-          "relative overflow-hidden rounded-xl p-3 cursor-pointer",
+          "relative overflow-hidden rounded-xl p-4 cursor-pointer",
           "bg-gradient-to-br shadow-md",
           dimension.gradient,
-          "min-h-[90px] flex flex-col justify-between"
+          "min-h-[120px] flex flex-col justify-between"
         )}
       >
         {/* 背景装饰 */}
-        <div className="absolute top-0 right-0 w-12 h-12 opacity-20">
-          <div className="absolute top-1 right-1 text-2xl opacity-40">
+        <div className="absolute top-0 right-0 w-14 h-14 opacity-20">
+          <div className="absolute top-1 right-1 text-3xl opacity-40">
             {dimension.emoji}
           </div>
         </div>
         
         {/* 主要内容 */}
         <div className="relative z-10">
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-xl">{dimension.emoji}</span>
-            <h3 className="text-base font-bold text-white">{dimension.title}</h3>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-2xl">{dimension.emoji}</span>
+            <h3 className="text-lg font-bold text-white">{dimension.title}</h3>
           </div>
-          <p className="text-[10px] text-white/80 leading-tight">{dimension.categoryLabel}</p>
+          <p className="text-xs text-white/80 leading-tight">{dimension.categoryLabel}</p>
         </div>
         
         {/* 悬浮光效 */}
