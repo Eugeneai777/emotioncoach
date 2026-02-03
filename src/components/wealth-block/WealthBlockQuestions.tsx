@@ -34,9 +34,10 @@ interface WealthBlockQuestionsProps {
   onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[], deepFollowUpAnswers?: DeepFollowUpAnswer[]) => void;
   onExit?: () => void;
   skipStartScreen?: boolean;
+  showFooterInfo?: boolean;
 }
 
-export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = false }: WealthBlockQuestionsProps) {
+export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = false, showFooterInfo = false }: WealthBlockQuestionsProps) {
   // 开始前介绍页状态：根据 skipStartScreen prop 决定初始值
   const [showStartScreen, setShowStartScreen] = useState(!skipStartScreen);
   
@@ -508,8 +509,8 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         </div>
       </div>
 
-      {/* 仅首屏（第一题）显示底部信息 */}
-      {currentIndex === 0 && (
+      {/* 仅在 showFooterInfo=true 且首屏（第一题）时显示底部信息 */}
+      {showFooterInfo && currentIndex === 0 && (
         <div className="mt-8 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
           {/* 关注公众号链接 - 点击跳转到微信关注流程 */}
           <a 
