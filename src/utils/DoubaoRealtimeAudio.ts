@@ -427,11 +427,12 @@ export class DoubaoRealtimeChat {
   }
 
   private startHeartbeat(): void {
+    // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
     this.heartbeatInterval = window.setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
-    }, 30000);
+    }, 15000);
   }
 
   private stopHeartbeat(): void {
