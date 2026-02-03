@@ -519,19 +519,17 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
 
       {/* 仅首屏（第一题）显示底部信息 */}
       {currentIndex === 0 && (
-        <div className="mt-6 pt-4 border-t border-border/50 space-y-2 text-center pb-[env(safe-area-inset-bottom)]">
-          {/* 关注公众号链接 */}
+        <div className="mt-8 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
+          {/* 关注公众号链接 - 点击跳转到微信关注流程 */}
           <a 
-            href="https://mp.weixin.qq.com/s/your-wechat-url"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 text-sm block hover:underline"
+            href="/wechat-auth?mode=follow"
+            className="text-muted-foreground text-sm block"
           >
             点此关注公众号
           </a>
           
-          {/* 付费提示（红色） */}
-          <p className="text-red-500 text-xs">
+          {/* 付费提示 - 统一灰色 */}
+          <p className="text-muted-foreground text-xs">
             需付费后方可查看结果，结果纯属娱乐仅供参考
           </p>
           
