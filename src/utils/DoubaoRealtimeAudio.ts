@@ -464,30 +464,37 @@ export class DoubaoRealtimeChat {
   }
 
   private startHeartbeat(): void {
-    // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
-    // 同时增加心跳响应检测，防止静默断连
+    // 🔧 修复微信环境连接中断：心跳间隔 15s
+    // 重要：只检测 pong/heartbeat 响应，不依赖业务消息
+    // 因为用户长时间说话时，可能没有 AI 回复，但连接仍然正常
     this.lastHeartbeatResponse = Date.now();
     this.missedHeartbeats = 0;
     
     this.heartbeatInterval = window.setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        // 检测心跳响应超时
+        // 🔧 修复：只有在发送 ping 后没有收到 pong 时才认为超时
+        // 这样即使用户长时间说话（没有 AI 回复），只要后端能响应 ping，连接就是正常的
         const now = Date.now();
         const timeSinceLastResponse = now - this.lastHeartbeatResponse;
         
-        // 如果超过 45 秒（3 次心跳间隔）没有收到任何响应，认为连接已断开
-        if (timeSinceLastResponse > 45000 && this.lastHeartbeatResponse > 0) {
+        // 🔧 调整超时策略：
+        // 1. 将超时时间从 45s 增加到 90s（6 次心跳间隔）
+        // 2. 只有连续 5 次（75 秒）没有任何响应才触发断连
+        // 3. 这样可以容忍用户长时间说话/思考的场景
+        if (timeSinceLastResponse > 90000 && this.lastHeartbeatResponse > 0) {
           this.missedHeartbeats++;
           console.warn(`[DoubaoChat] ⚠️ Heartbeat timeout: ${timeSinceLastResponse}ms since last response, missed: ${this.missedHeartbeats}`);
           
-          if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
-            console.error('[DoubaoChat] ❌ Connection appears dead, triggering disconnect');
+          // 🔧 增加容忍次数：从 3 次增加到 5 次
+          if (this.missedHeartbeats >= 5) {
+            console.error('[DoubaoChat] ❌ Connection appears dead (no response for 90s+), triggering disconnect');
             this.stopHeartbeat();
             this.onStatusChange('disconnected');
             return;
           }
         }
         
+        // 发送 ping，后端会返回 pong
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, 15000);
