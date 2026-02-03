@@ -13,7 +13,8 @@ import {
   AssessmentResult,
   shouldAskFollowUp,
   getQuestionCategory,
-  FollowUpAnswer
+  FollowUpAnswer,
+  scoreLabels
 } from "./wealthBlockData";
 import { FollowUpDialog, FollowUpData } from "./FollowUpDialog";
 import { DeepFollowUpDialog, DeepFollowUp, DeepFollowUpAnswer } from "./DeepFollowUpDialog";
@@ -326,9 +327,8 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
   };
 
   return (
-    // 备注：外层滚动容器在 /wealth-assessment-lite 页面上，这里通过增加底部留白
-    // 避免移动端 sticky 底部按钮遮挡最后一屏内容，导致“看不到底部/滚不到底”。
-    <div className="flex flex-col min-h-screen pb-[calc(112px+env(safe-area-inset-bottom))]">
+    // 使用柔和渐变背景
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white pb-[calc(80px+env(safe-area-inset-bottom))]">
       {/* 深度追问对话框 */}
       {showDeepFollowUp && (
         <DeepFollowUpDialog
@@ -357,10 +357,9 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 固定顶部区域 - 使用 fixed 定位确保移动端正确显示 */}
-      <div className="fixed top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b pb-3 px-4 pt-safe">
-        {/* 第一行：返回 + 标题 + 进度 */}
-        <div className="flex items-center justify-between mb-2 max-w-lg mx-auto">
+      {/* 顶部标题区域 */}
+      <div className="pt-safe px-4 py-4">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
           {/* 左侧：退出按钮 */}
           {onExit ? (
             <Button
@@ -378,42 +377,30 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
               <ArrowLeft className="w-5 h-5" />
             </Button>
           ) : (
-            <div className="w-9" /> // 占位保持标题居中
+            <div className="w-9" />
           )}
           
-          {/* 中间：标题 */}
-          <h1 className="font-semibold text-lg">财富卡点测评</h1>
+          {/* 中间：标题 + 徽章 */}
+          <div className="flex flex-col items-center">
+            <h1 className="font-bold text-lg">财富卡点测评</h1>
+            <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full mt-1">
+              🌐 专业版
+            </span>
+          </div>
           
-          {/* 右侧：进度 */}
-          <div className="flex items-center gap-1 min-w-[48px] justify-end">
+          {/* 右侧：追问数量 */}
+          <div className="w-9 flex justify-end">
             {followUpAnswers.length > 0 && (
               <span className="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
                 💬{followUpAnswers.length}
               </span>
             )}
-            <span className="text-sm font-medium text-amber-600">
-              {currentIndex + 1}/{questions.length}
-            </span>
           </div>
-        </div>
-        
-        {/* 第二行：进度条 */}
-        <div className="max-w-lg mx-auto">
-          <Progress value={progress} className="h-1.5 mb-2" />
-        </div>
-        
-        {/* 第三行：激励提示 */}
-        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-          <Sparkles className="w-3 h-3 text-amber-500" />
-          <span>完成测评后将获得专业分析报告</span>
         </div>
       </div>
 
-      {/* 头部占位区域 - 防止内容被固定头部遮挡 */}
-      <div className="h-[88px]" />
-
-      {/* 题目区域 */}
-      <div className="flex-1 flex flex-col justify-center">
+      {/* 问题卡片区域 */}
+      <div className="flex-1 px-4 py-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
@@ -422,47 +409,49 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
             exit={{ opacity: 0.01, x: -50 }}
             transition={{ duration: 0.2 }}
             style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+            className="max-w-lg mx-auto"
           >
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
-              <CardContent className="p-6 space-y-6">
-                {/* 题目文本 */}
-                <div className="text-center space-y-4">
-                  <div className="inline-flex items-center justify-center w-10 h-10 bg-amber-100 text-amber-600 rounded-full text-sm font-bold">
-                    {currentQuestion.id}
-                  </div>
-                  <p className="text-lg font-medium leading-relaxed px-2">
-                    {currentQuestion.text}
-                  </p>
+            <Card className="bg-white rounded-3xl shadow-lg border-0 overflow-hidden">
+              <CardContent className="p-5 sm:p-6">
+                {/* 顶部信息栏：进度提示 + 百分比 */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm text-muted-foreground">
+                    即将获取专业的分析报告
+                  </span>
+                  <span className="text-xl font-semibold text-amber-600">
+                    {Math.round(progress)}%
+                  </span>
                 </div>
-
-                {/* 水平评分条 - 响应式优化 */}
-                <div className="pt-4 sm:pt-6">
-                  <div className="flex items-center justify-center gap-1.5 sm:gap-3">
-                    <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">不符合</span>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      {[1, 2, 3, 4, 5].map(value => {
-                        const isSelected = answers[currentQuestion.id] === value;
-                        return (
-                          <motion.button
-                            key={value}
-                            whileTap={{ scale: 0.9 }}
-                            whileHover={{ scale: 1.05 }}
-                            className={cn(
-                              "w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-bold text-base sm:text-lg transition-all duration-200 touch-manipulation",
-                              isSelected
-                                ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-white shadow-lg shadow-amber-200/50 scale-110"
-                                : "border-2 border-muted bg-background text-muted-foreground hover:border-amber-300 hover:text-amber-600"
-                            )}
-                            onClick={() => handleAnswer(value)}
-                            disabled={showFollowUp}
-                          >
-                            {value}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                    <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">符合</span>
-                  </div>
+                
+                {/* 进度条 - 细长橙色 */}
+                <Progress value={progress} className="h-1 mb-6" />
+                
+                {/* 题目文本 */}
+                <p className="text-lg font-medium leading-relaxed mb-6 px-2">
+                  {currentQuestion.text}
+                </p>
+                
+                {/* 垂直选项列表 */}
+                <div className="space-y-3">
+                  {scoreLabels.map((option) => {
+                    const isSelected = answers[currentQuestion.id] === option.value;
+                    return (
+                      <motion.button
+                        key={option.value}
+                        whileTap={{ scale: 0.98 }}
+                        className={cn(
+                          "w-full py-4 px-6 rounded-full text-left transition-all duration-200 touch-manipulation",
+                          isSelected
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                        onClick={() => handleAnswer(option.value)}
+                        disabled={showFollowUp}
+                      >
+                        {option.label}
+                      </motion.button>
+                    );
+                  })}
                 </div>
 
                 {/* AI追问对话框 */}
@@ -483,38 +472,40 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         </AnimatePresence>
       </div>
 
-      {/* 导航按钮 - 移动端 sticky 底部 */}
-      <div className="flex gap-3 pt-4 sm:pt-6 mt-auto sticky bottom-0 bg-background/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)] -mx-2 px-2 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none">
-        <Button
-          variant="outline"
-          className="flex-1 h-12"
-          disabled={currentIndex === 0}
-          onClick={handlePrev}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          上一题
-        </Button>
-        
-        {isLastQuestion ? (
-          <Button
-            className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
-            disabled={!canSubmit || pendingNextQuestion}
-            onClick={handleSubmit}
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            查看结果
-          </Button>
-        ) : (
+      {/* 导航按钮 - 胶囊样式 */}
+      <div className="px-4 max-w-lg mx-auto">
+        <div className="flex gap-4 pt-6 pb-safe">
+          {/* 上一题 - outline 胶囊 */}
           <Button
             variant="outline"
-            className="flex-1 h-12"
-            disabled={!answers[currentQuestion.id] || pendingNextQuestion}
-            onClick={handleNext}
+            className="flex-1 h-14 rounded-full border-2 border-amber-400 text-amber-600 hover:bg-amber-50"
+            disabled={currentIndex === 0}
+            onClick={handlePrev}
           >
-            下一题
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            上一题
           </Button>
-        )}
+          
+          {isLastQuestion ? (
+            <Button
+              className="flex-1 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              disabled={!canSubmit || pendingNextQuestion}
+              onClick={handleSubmit}
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              查看结果
+            </Button>
+          ) : (
+            <Button
+              className="flex-1 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              disabled={!answers[currentQuestion.id] || pendingNextQuestion}
+              onClick={handleNext}
+            >
+              下一题
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* 仅首屏（第一题）显示底部信息 */}
