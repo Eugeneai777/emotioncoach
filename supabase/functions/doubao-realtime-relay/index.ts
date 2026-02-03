@@ -1041,10 +1041,15 @@ Deno.serve(async (req) => {
                   continue;
                 }
                 
-                console.log(`[DoubaoRelay] Received: msgType=${parsed.messageType}, event=${parsed.event}, seq=${parsed.sequence}, errCode=${parsed.errorCode}, payloadSize=${parsed.payloadSize}`);
+                // 🔧 优化日志：只打印关键事件，避免音频包日志刷屏导致中断
+                const isAudioPacket = parsed.event === EVENT_TTS_RESPONSE;
+                const logPacket = !isAudioPacket || (audioSequence % 100 === 0);
+                if (logPacket) {
+                  console.log(`[DoubaoRelay] Received: msgType=${parsed.messageType}, event=${parsed.event}, seq=${parsed.sequence}, errCode=${parsed.errorCode}, payloadSize=${parsed.payloadSize}`);
+                }
                 
-                // 🔍 调试：对于音频类型消息，打印更详细的解析信息
-                if (parsed.messageType === MESSAGE_TYPE_AUDIO_ONLY_SERVER) {
+                // 🔍 调试：对于音频类型消息，每 100 个包打印一次详细信息
+                if (parsed.messageType === MESSAGE_TYPE_AUDIO_ONLY_SERVER && audioSequence % 100 === 0) {
                   console.log(`[DoubaoRelay] AudioPacket detail: flags=0x${parsed.flags.toString(16)}, hasSession=${parsed.sessionId ? 'yes' : 'no'}, payloadLen=${parsed.payload.length}`);
                 }
                 
@@ -1052,20 +1057,21 @@ Deno.serve(async (req) => {
                 // 这必须在 JSON 解析之前处理，因为 payload 是二进制 PCM 数据
                 if (parsed.event === EVENT_TTS_RESPONSE) {
                   if (parsed.payload.length > 0) {
-                    // 🔍 详细日志：确认音频大小 (正常应该是几 KB，不是 36 字节)
                     const base64Audio = uint8ArrayToBase64(parsed.payload);
-                    console.log(`[DoubaoRelay] ✅ TTS audio forwarding: ${parsed.payload.length} PCM bytes -> ${base64Audio.length} base64 chars`);
+                    // 🔧 优化：每 100 个音频包才打印一次日志，避免刷屏
+                    if (audioSequence % 100 === 0) {
+                      console.log(`[DoubaoRelay] ✅ TTS audio forwarding: ${parsed.payload.length} PCM bytes -> ${base64Audio.length} base64 chars (seq=${audioSequence})`);
+                    }
                     
                     try {
                       clientSocket.send(JSON.stringify({
                         type: 'response.audio.delta',
                         delta: base64Audio
                       }));
-                      console.log(`[DoubaoRelay] ✅ Audio delta sent to client successfully`);
                     } catch (sendErr) {
                       console.error(`[DoubaoRelay] ❌ Failed to send audio to client:`, sendErr);
                     }
-                  } else {
+                  } else if (audioSequence % 100 === 0) {
                     console.warn(`[DoubaoRelay] TTS audio payload is empty!`);
                   }
                   continue; // 跳过后续处理，防止 JSON 解析失败
@@ -1426,11 +1432,13 @@ Deno.serve(async (req) => {
   clientSocket.onopen = () => {
     console.log('[DoubaoRelay] Client connected');
     
+    // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
+    // 微信 WebView 对空闲 WebSocket 的超时控制较严格
     heartbeatInterval = setInterval(() => {
       if (clientSocket.readyState === WebSocket.OPEN) {
         clientSocket.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
       }
-    }, 30000);
+    }, 15000);
   };
 
   clientSocket.onmessage = async (event: MessageEvent) => {
