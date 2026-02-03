@@ -76,6 +76,7 @@ export default function WealthAssessmentLitePage() {
           onComplete={handleComplete} 
           onExit={handleExit}
           skipStartScreen={true}
+          showFooterInfo={!hasPurchased}
         />
       )}
       
