@@ -468,51 +468,93 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 扣费函数 - 添加防重复扣费和显式 amount 参数
-  const deductQuota = async (minute: number): Promise<boolean> => {
-    try {
-      // 防重复扣费：检查是否已经扣过这一分钟
-      if (minute <= lastBilledMinuteRef.current) {
-        console.log(`Minute ${minute} already billed, skipping`);
-        return true;
-      }
-
-      console.log(`Deducting quota for minute ${minute}, amount: ${POINTS_PER_MINUTE}`);
-      
-      const { data, error } = await supabase.functions.invoke('deduct-quota', {
-        body: {
-          feature_key: featureKey,
-          source: 'voice_chat',
-          amount: POINTS_PER_MINUTE,  // 显式传递扣费金额
-          metadata: {
-            minute,
-            session_id: sessionIdRef.current,  // 使用固定 session ID
-            coach_key: coachTitle,
-            cost_per_minute: POINTS_PER_MINUTE,
-            // 🆕 AI来电标记 - 便于后台区分主动/被动来电的计费统计
-            is_incoming_call: isIncomingCall,
-            ai_call_id: aiCallId || null,
+  // 🔧 带重试的扣费逻辑 - 区分网络错误和余额不足
+  const deductQuotaWithRetry = async (minute: number, retries = 3, delay = 2000): Promise<{ success: boolean; isNetworkError: boolean; remainingQuota?: number }> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`[VoiceChat] Deducting quota for minute ${minute}, attempt ${attempt}/${retries}`);
+        
+        const { data, error } = await supabase.functions.invoke('deduct-quota', {
+          body: {
+            feature_key: featureKey,
+            source: 'voice_chat',
+            amount: POINTS_PER_MINUTE,
+            metadata: {
+              minute,
+              session_id: sessionIdRef.current,
+              coach_key: coachTitle,
+              cost_per_minute: POINTS_PER_MINUTE,
+              is_incoming_call: isIncomingCall,
+              ai_call_id: aiCallId || null,
+            }
           }
+        });
+
+        if (error) {
+          // 判断是否为网络错误（可重试）
+          const errorMsg = error.message?.toLowerCase() || '';
+          const isNetworkErr = errorMsg.includes('fetch') || 
+                               errorMsg.includes('network') ||
+                               errorMsg.includes('timeout') ||
+                               errorMsg.includes('failed to fetch') ||
+                               errorMsg.includes('aborted');
+          
+          console.warn(`[VoiceChat] Deduct attempt ${attempt} failed:`, error.message, `isNetwork: ${isNetworkErr}`);
+          
+          if (isNetworkErr && attempt < retries) {
+            console.log(`[VoiceChat] Retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+          }
+          
+          return { success: false, isNetworkError: isNetworkErr };
         }
-      });
 
-      if (error || data?.error) {
-        console.error('Deduct quota error:', error || data?.error);
-        // 🔧 不再直接 toast，而是标记需要续费
-        setInsufficientDuringCall(true);
-        return false;
+        if (data?.error) {
+          // 余额不足是业务错误，不重试
+          console.error('[VoiceChat] Deduct quota business error:', data.error);
+          return { success: false, isNetworkError: false };
+        }
+
+        // 更新状态
+        setBilledMinutes(minute);
+        setRemainingQuota(data.remaining_quota);
+        lastBilledMinuteRef.current = minute;
+        
+        console.log(`✅ Deducted ${data.cost || POINTS_PER_MINUTE} points for minute ${minute}, remaining: ${data.remaining_quota}`);
+        return { success: true, isNetworkError: false, remainingQuota: data.remaining_quota };
+      } catch (error: any) {
+        console.error(`[VoiceChat] Deduct attempt ${attempt} exception:`, error);
+        
+        if (attempt < retries) {
+          console.log(`[VoiceChat] Retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        
+        return { success: false, isNetworkError: true };
       }
-
-      setBilledMinutes(minute);
-      setRemainingQuota(data.remaining_quota);
-      lastBilledMinuteRef.current = minute;
-      
-      console.log(`✅ Deducted ${data.cost || POINTS_PER_MINUTE} points for minute ${minute}, remaining: ${data.remaining_quota}`);
-      return true;
-    } catch (error) {
-      console.error('Deduct quota error:', error);
-      return false;
     }
+    
+    return { success: false, isNetworkError: true };
+  };
+
+  // 扣费函数 - 兼容旧接口，内部使用重试逻辑
+  const deductQuota = async (minute: number): Promise<boolean> => {
+    // 防止重复扣同一分钟
+    if (minute <= lastBilledMinuteRef.current) {
+      console.log(`Minute ${minute} already billed, skipping`);
+      return true;
+    }
+
+    const result = await deductQuotaWithRetry(minute);
+    
+    if (!result.success && !result.isNetworkError) {
+      // 余额不足 - 标记需要续费
+      setInsufficientDuringCall(true);
+    }
+    
+    return result.success;
   };
 
   // 记录会话 - 🔧 修复：使用 Ref 替代 State 避免延迟问题
@@ -1663,15 +1705,48 @@ export const CoachVoiceChat = ({
     // 立即设置标志，防止并发调用
     isDeductingRef.current = true;
     
-    deductQuota(currentMinute).then(success => {
+    // 🔧 使用带重试的扣费逻辑，区分网络错误和余额不足
+    deductQuotaWithRetry(currentMinute).then(result => {
       isDeductingRef.current = false;  // 扣费完成后重置
-      if (!success) {
-        // 🔧 暂停通话但不结束，让续费弹窗显示
+      
+      if (result.success) {
+        // 扣费成功，更新状态
+        setBilledMinutes(currentMinute);
+        return;
+      }
+      
+      if (result.isNetworkError) {
+        // 🔧 网络错误：给予 30 秒宽限期，不立即断开
+        console.warn('[VoiceChat] ⚠️ Billing network error, granting 30s grace period');
+        toast({
+          title: "网络波动",
+          description: "计费请求暂时失败，通话继续进行中...",
+          duration: 5000,
+        });
+        // 30 秒后再次尝试，如果还是失败才断开
+        setTimeout(async () => {
+          if (isUnmountedRef.current || status !== 'connected') return;
+          
+          const retryResult = await deductQuotaWithRetry(currentMinute, 2, 3000);
+          if (!retryResult.success) {
+            console.error('[VoiceChat] ❌ Billing retry failed after grace period');
+            if (!retryResult.isNetworkError) {
+              // 确认是余额不足
+              setInsufficientDuringCall(true);
+            }
+            chatRef.current?.disconnect();
+            if (durationRef.current) {
+              clearInterval(durationRef.current);
+            }
+          }
+        }, 30000);
+      } else {
+        // 🔧 余额不足：暂停通话，显示续费界面
+        setInsufficientDuringCall(true);
         chatRef.current?.disconnect();
         if (durationRef.current) {
           clearInterval(durationRef.current);
         }
-        // 不调用 endCall()，让 insufficientDuringCall 状态触发续费界面
       }
     });
   }, [duration, status, maxDurationMinutes]);
