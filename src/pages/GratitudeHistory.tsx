@@ -258,7 +258,7 @@ const GratitudeHistory = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>

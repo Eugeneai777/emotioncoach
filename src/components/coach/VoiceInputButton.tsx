@@ -3,6 +3,7 @@ import { Mic, MicOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
@@ -21,7 +22,38 @@ export const VoiceInputButton = ({
   const chunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
+  // 检测当前环境
+  const isMiniProgram = isWeChatMiniProgram();
+  const isWechat = isWeChatBrowser();
+
   const startRecording = async () => {
+    // 微信小程序环境：使用 JSSDK 录音或提示用户使用原生输入
+    if (isMiniProgram) {
+      toast({
+        title: "请使用键盘语音输入",
+        description: "在小程序中，请点击键盘上的语音按钮进行输入",
+      });
+      return;
+    }
+
+    // 检查浏览器是否支持 getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // 微信浏览器可能不支持，给出降级提示
+      if (isWechat) {
+        toast({
+          title: "语音功能受限",
+          description: "请使用微信键盘的语音输入功能",
+        });
+      } else {
+        toast({
+          title: "浏览器不支持语音录制",
+          description: "请使用 Chrome、Safari 等现代浏览器",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
@@ -51,11 +83,20 @@ export const VoiceInputButton = ({
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      toast({
-        title: "无法访问麦克风",
-        description: "请确保已授予麦克风权限",
-        variant: "destructive",
-      });
+      
+      // 根据环境给出不同的提示
+      if (isWechat) {
+        toast({
+          title: "请使用键盘语音输入",
+          description: "点击微信键盘上的语音按钮进行输入",
+        });
+      } else {
+        toast({
+          title: "无法访问麦克风",
+          description: "请确保已授予麦克风权限",
+          variant: "destructive",
+        });
+      }
     }
   };
 
