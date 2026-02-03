@@ -10,7 +10,7 @@ import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 import AwakeningPainPointCard from "@/components/awakening/AwakeningPainPointCard";
-import AwakeningTipsCard from "@/components/awakening/AwakeningTipsCard";
+
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
@@ -142,8 +142,6 @@ const Awakening: React.FC = () => {
             </div>
           </div>
 
-          {/* 可折叠写法提示 */}
-          <AwakeningTipsCard />
 
           {/* 底部金句 */}
           <motion.div
