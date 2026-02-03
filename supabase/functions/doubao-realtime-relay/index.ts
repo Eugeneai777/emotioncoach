@@ -1434,9 +1434,21 @@ Deno.serve(async (req) => {
     
     // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
     // 微信 WebView 对空闲 WebSocket 的超时控制较严格
-    heartbeatInterval = setInterval(() => {
+    // 同时向 Doubao 发送 WebSocket ping 帧，保持双向连接活跃
+    heartbeatInterval = setInterval(async () => {
+      // 1. 向前端发送心跳
       if (clientSocket.readyState === WebSocket.OPEN) {
         clientSocket.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
+      }
+      // 2. 🔧 关键修复：同时向 Doubao 发送 WebSocket ping 帧
+      // 防止 relay->Doubao 连接因空闲被云网关或 Doubao 服务端断开
+      if (doubaoConn && isConnected) {
+        try {
+          const pingFrame = buildWebSocketFrame(new Uint8Array([]), 0x09); // opcode 0x09 = ping
+          await doubaoConn.write(pingFrame);
+        } catch (e) {
+          console.warn('[DoubaoRelay] Failed to send ping to Doubao:', e);
+        }
       }
     }, 15000);
   };
