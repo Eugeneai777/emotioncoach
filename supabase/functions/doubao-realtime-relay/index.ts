@@ -1100,6 +1100,10 @@ Deno.serve(async (req) => {
                 // 处理 TTS 开始/结束事件 (event=350/351) - payload 通常是 sessionId，跳过 JSON 解析
                 if (parsed.event === EVENT_TTS_START || parsed.event === EVENT_TTS_END) {
                   console.log(`[DoubaoRelay] TTS event: ${parsed.event === EVENT_TTS_START ? 'start' : 'end'}`);
+                  // ✅ 修复：转发 TTS 结束事件给前端，让 UI 能正确切换 speaking 状态
+                  if (parsed.event === EVENT_TTS_END && clientSocket.readyState === WebSocket.OPEN) {
+                    clientSocket.send(JSON.stringify({ type: 'response.audio.done' }));
+                  }
                   continue;
                 }
                 
@@ -1183,6 +1187,13 @@ Deno.serve(async (req) => {
                     parsed.event === EVENT_CHAT_START ||
                     parsed.event === EVENT_CHAT_RESPONSE ||
                     parsed.event === EVENT_RESPONSE_DONE) {
+                  
+                  // ✅ 修复：转发 response.done 给前端，让前端能正确重置 awaitingResponse 状态
+                  if (parsed.event === EVENT_RESPONSE_DONE && clientSocket.readyState === WebSocket.OPEN) {
+                    console.log('[DoubaoRelay] ✅ Forwarding response.done to client');
+                    clientSocket.send(JSON.stringify({ type: 'response.done' }));
+                  }
+                  
                   // 尝试安全解析，但失败时不报错（静默跳过）
                   try {
                     const jsonStr = new TextDecoder().decode(parsed.payload);
