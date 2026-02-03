@@ -637,10 +637,22 @@ export class DoubaoRealtimeChat {
 
         case 'heartbeat':
         case 'pong':
-          // 🔧 更新心跳响应时间，重置 missedHeartbeats
+        case 'response.audio.delta':
+        case 'response.audio.done':
+        case 'response.done':
+        case 'response.audio_transcript.delta':
+        case 'conversation.item.input_audio_transcription.completed':
+        case 'input_audio_buffer.speech_started':
+        case 'input_audio_buffer.speech_stopped':
+          // 🔧 修复：收到任何有效消息（包括音频包）都说明连接活跃，重置心跳超时
+          // 这是微信异常挂断的根本原因 - 只有 heartbeat/pong 重置导致 AI 持续回复时误判超时
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
-          break;
+          // 继续执行后续逻辑（不 break，让各自 case 处理业务逻辑）
+          if (message.type === 'heartbeat' || message.type === 'pong') {
+            break;
+          }
+          // 其他消息类型继续往下走处理业务逻辑
 
         case 'input_audio_buffer.speech_started':
           this.onSpeakingChange('user-speaking');
