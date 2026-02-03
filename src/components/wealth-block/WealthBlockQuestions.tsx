@@ -326,7 +326,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-180px)] sm:min-h-[500px]">
+    <div className="flex flex-col min-h-screen">
       {/* 深度追问对话框 */}
       {showDeepFollowUp && (
         <DeepFollowUpDialog
@@ -355,10 +355,10 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 固定顶部区域 */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b pb-3 -mx-4 px-4 pt-2 mb-4">
+      {/* 固定顶部区域 - 使用 fixed 定位确保移动端正确显示 */}
+      <div className="fixed top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b pb-3 px-4 pt-safe">
         {/* 第一行：返回 + 标题 + 进度 */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 max-w-lg mx-auto">
           {/* 左侧：退出按钮 */}
           {onExit ? (
             <Button
@@ -396,7 +396,9 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         </div>
         
         {/* 第二行：进度条 */}
-        <Progress value={progress} className="h-1.5 mb-2" />
+        <div className="max-w-lg mx-auto">
+          <Progress value={progress} className="h-1.5 mb-2" />
+        </div>
         
         {/* 第三行：激励提示 */}
         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
@@ -404,6 +406,9 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
           <span>完成测评后将获得专业分析报告</span>
         </div>
       </div>
+
+      {/* 头部占位区域 - 防止内容被固定头部遮挡 */}
+      <div className="h-[88px]" />
 
       {/* 题目区域 */}
       <div className="flex-1 flex flex-col justify-center">
