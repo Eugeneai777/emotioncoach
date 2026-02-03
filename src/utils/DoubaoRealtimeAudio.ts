@@ -80,6 +80,11 @@ export class DoubaoRealtimeChat {
   private visibilityHandler: (() => void) | null = null;
   private focusHandler: (() => void) | null = null;
   
+  // 🔧 心跳超时检测：防止微信环境下静默断连
+  private lastHeartbeatResponse: number = 0;
+  private missedHeartbeats: number = 0;
+  private static readonly MAX_MISSED_HEARTBEATS = 3; // 连续 3 次无响应则认为断连
+
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
   private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void;
@@ -395,9 +400,7 @@ export class DoubaoRealtimeChat {
       };
 
       this.ws.onmessage = (event) => {
-        // ✅ 增强日志：显示原始数据大小
-        const rawLen = typeof event.data === 'string' ? event.data.length : 'binary';
-        console.log(`[DoubaoChat] 📨 Raw WS message received, size: ${rawLen}`);
+        // 🔧 优化微信环境：移除高频日志，防止 WebView 性能问题导致断连
         this.handleMessage(event.data);
       };
     });
@@ -428,8 +431,29 @@ export class DoubaoRealtimeChat {
 
   private startHeartbeat(): void {
     // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
+    // 同时增加心跳响应检测，防止静默断连
+    this.lastHeartbeatResponse = Date.now();
+    this.missedHeartbeats = 0;
+    
     this.heartbeatInterval = window.setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        // 检测心跳响应超时
+        const now = Date.now();
+        const timeSinceLastResponse = now - this.lastHeartbeatResponse;
+        
+        // 如果超过 45 秒（3 次心跳间隔）没有收到任何响应，认为连接已断开
+        if (timeSinceLastResponse > 45000 && this.lastHeartbeatResponse > 0) {
+          this.missedHeartbeats++;
+          console.warn(`[DoubaoChat] ⚠️ Heartbeat timeout: ${timeSinceLastResponse}ms since last response, missed: ${this.missedHeartbeats}`);
+          
+          if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
+            console.error('[DoubaoChat] ❌ Connection appears dead, triggering disconnect');
+            this.stopHeartbeat();
+            this.onStatusChange('disconnected');
+            return;
+          }
+        }
+        
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, 15000);
@@ -550,18 +574,23 @@ export class DoubaoRealtimeChat {
     return btoa(binary);
   }
 
+  // 🔧 优化微信环境：日志计数器，每 100 条音频消息打印一次
+  private audioMsgCount = 0;
+
   private handleMessage(data: string): void {
     try {
       const message = JSON.parse(data);
       
-      // ✅ 详细日志：显示收到的消息类型和关键数据
+      // 🔧 优化微信环境：大幅减少日志输出频率，防止 WebView 性能问题
+      // 音频消息每 100 条打印一次，其他消息正常打印
       if (message.type === 'response.audio.delta') {
-        const deltaLen = message.delta?.length || 0;
-        console.log(`[DoubaoChat] ✅ Received: ${message.type}, delta length: ${deltaLen} chars (base64)`);
-      } else if (message.type === 'response.audio_transcript.delta') {
-        console.log(`[DoubaoChat] ✅ Received: ${message.type}, text: "${message.delta?.substring(0, 50)}..."`);
-      } else {
-        console.log('[DoubaoChat] Received:', message.type, JSON.stringify(message).substring(0, 200));
+        this.audioMsgCount++;
+        if (this.audioMsgCount % 100 === 0) {
+          console.log(`[DoubaoChat] Audio delta #${this.audioMsgCount}, queue: ${this.audioQueue.length}`);
+        }
+      } else if (message.type !== 'heartbeat' && message.type !== 'pong') {
+        // 心跳/pong 完全静默，其他消息正常打印
+        console.log('[DoubaoChat] Received:', message.type);
       }
 
       this.onMessage?.(message);
@@ -608,7 +637,9 @@ export class DoubaoRealtimeChat {
 
         case 'heartbeat':
         case 'pong':
-          // 心跳响应，忽略
+          // 🔧 更新心跳响应时间，重置 missedHeartbeats
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           break;
 
         case 'input_audio_buffer.speech_started':
@@ -749,8 +780,7 @@ export class DoubaoRealtimeChat {
          console.warn('[DoubaoChat] PCM chunk length is odd; buffered 1 byte for next chunk. current=', bytes.length, 'merged=', pcm.length);
        }
 
-      // ✅ 日志：确认收到的音频数据大小
-       console.log('[DoubaoChat] Audio delta received:', pcm.length, 'bytes, queue size:', this.audioQueue.length + 1);
+       // 🔧 优化微信环境：移除高频音频日志
        if (pcm.length > 0) {
          this.audioQueue.push(pcm);
        }
