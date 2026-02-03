@@ -771,20 +771,42 @@ export const CoachVoiceChat = ({
       .replace(/作为AI/g, '作为情绪教练');
   };
 
-  // 通用的转录处理函数 - 🔧 修复：改为累积模式，确保完整对话内容被保存
+  // ✅ 用于累积 assistant 的 delta 片段（正在生成的回复）
+  const currentAssistantDeltaRef = useRef('');
+  // ✅ 存储已完成的历史回复
+  const completedTranscriptRef = useRef('');
+
+  // 通用的转录处理函数 - 🔧 修复：实时显示 assistant 回复，不等待 isFinal
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
     if (role === 'assistant') {
-      // AI 回复：每次收到 final 文本时累积，用换行分隔
-      // ✅ 应用身份替换，确保显示"静老师"而非"豆包"
+      // ✅ 应用身份替换，确保显示"劲老师"而非"豆包"
       const sanitizedText = sanitizeIdentity(text);
-      if (isFinal && sanitizedText.trim()) {
-        setTranscript(prev => prev ? `${prev}\n${sanitizedText}` : sanitizedText);
+      
+      if (isFinal) {
+        // Final: 保存完整回复到历史，并清空当前累积
+        if (sanitizedText.trim()) {
+          completedTranscriptRef.current = completedTranscriptRef.current
+            ? `${completedTranscriptRef.current}\n${sanitizedText}`
+            : sanitizedText;
+          setTranscript(completedTranscriptRef.current);
+        }
+        currentAssistantDeltaRef.current = '';
+      } else {
+        // Delta: 实时累积并显示（历史 + 当前正在生成）
+        currentAssistantDeltaRef.current += sanitizedText;
+        const currentDelta = currentAssistantDeltaRef.current;
+        if (currentDelta.trim()) {
+          const display = completedTranscriptRef.current
+            ? `${completedTranscriptRef.current}\n${currentDelta}`
+            : currentDelta;
+          setTranscript(display);
+        }
       }
-      aiLastActivityRef.current = Date.now(); // 🔧 AI 文字回复
+      aiLastActivityRef.current = Date.now();
     } else if (role === 'user' && isFinal && text.trim()) {
       // 用户发言：每次收到 final 文本时累积，用换行分隔
       setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
-      userLastActivityRef.current = Date.now(); // 🔧 用户说话转录完成
+      userLastActivityRef.current = Date.now();
     }
   };
 
@@ -921,6 +943,9 @@ export const CoachVoiceChat = ({
       setIsEnding(false);
       setTranscript('');
       setUserTranscript('');
+      // ✅ 重置 delta 累积 refs
+      currentAssistantDeltaRef.current = '';
+      completedTranscriptRef.current = '';
 
       // 🔧 微信/小程序：在任何 await 之前先触发一次麦克风权限请求
       // iOS 微信 WKWebView 经常要求 getUserMedia 必须发生在“用户点击”同步上下文中，
