@@ -9,10 +9,10 @@ import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDial
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 
-type PageState = "intro" | "questions" | "result";
+type PageState = "questions" | "result";
 
 export default function WealthAssessmentLitePage() {
-  const [pageState, setPageState] = useState<PageState>("intro");
+  const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
   const [followUpInsights, setFollowUpInsights] = useState<FollowUpAnswer[]>([]);
@@ -60,9 +60,9 @@ export default function WealthAssessmentLitePage() {
     setPageState("questions");
   }, []);
 
-  // 退出测评
+  // 退出测评 - 重新开始答题
   const handleExit = useCallback(() => {
-    setPageState("intro");
+    setPageState("questions");
   }, []);
   
   return (
@@ -70,14 +70,6 @@ export default function WealthAssessmentLitePage() {
       className="h-screen overflow-y-auto overscroll-contain bg-background"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
-      {/* 入口页 */}
-      {pageState === "intro" && (
-        <>
-          <LiteIntroCard onStart={() => setPageState("questions")} />
-          <LiteFooter />
-        </>
-      )}
-      
       {/* 测评页 */}
       {pageState === "questions" && (
         <WealthBlockQuestions 
