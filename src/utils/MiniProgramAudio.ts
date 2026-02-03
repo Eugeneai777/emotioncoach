@@ -152,8 +152,10 @@ export class MiniProgramAudioClient {
     const wx = window.wx;
     if (!wx) return;
 
+    // ✅ 修复：duration 从 60000ms 增加到 600000ms（10分钟）
+    // 小程序 recorderManager 最长支持 10 分钟录音
     this.recorder.start({
-      duration: 60000, // 最长 60 秒
+      duration: 600000, // 最长 10 分钟（从 60 秒增加）
       sampleRate: 24000, // 24kHz 采样率（OpenAI 要求）
       numberOfChannels: 1, // 单声道
       encodeBitRate: 96000, // 提高码率，改善音质
