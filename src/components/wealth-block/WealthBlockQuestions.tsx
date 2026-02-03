@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -355,15 +355,16 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 进度指示 */}
-      <div className="space-y-3 mb-6 pt-2">
-        <div className="flex justify-between items-center">
+      {/* 固定顶部区域 */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b pb-3 -mx-4 px-4 pt-2 mb-4">
+        {/* 第一行：返回 + 标题 + 进度 */}
+        <div className="flex items-center justify-between mb-2">
           {/* 左侧：退出按钮 */}
-          {onExit && (
+          {onExit ? (
             <Button
               variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-destructive -ml-2"
+              size="icon"
+              className="text-muted-foreground hover:text-destructive h-9 w-9"
               onClick={() => {
                 if (answeredCount > 0) {
                   setShowExitConfirm(true);
@@ -372,22 +373,36 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                 }
               }}
             >
-              <X className="w-4 h-4 mr-1" />
-              退出
+              <ArrowLeft className="w-5 h-5" />
             </Button>
+          ) : (
+            <div className="w-9" /> // 占位保持标题居中
           )}
           
-          {/* 右侧：进度信息 */}
-          <div className="flex items-center gap-2 ml-auto">
+          {/* 中间：标题 */}
+          <h1 className="font-semibold text-lg">财富卡点测评</h1>
+          
+          {/* 右侧：进度 */}
+          <div className="flex items-center gap-1 min-w-[48px] justify-end">
             {followUpAnswers.length > 0 && (
-              <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                💬 {followUpAnswers.length}个追问
+              <span className="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                💬{followUpAnswers.length}
               </span>
             )}
-            <span className="text-sm font-medium text-amber-600">{currentIndex + 1} / {questions.length}</span>
+            <span className="text-sm font-medium text-amber-600">
+              {currentIndex + 1}/{questions.length}
+            </span>
           </div>
         </div>
-        <Progress value={progress} className="h-1.5" />
+        
+        {/* 第二行：进度条 */}
+        <Progress value={progress} className="h-1.5 mb-2" />
+        
+        {/* 第三行：激励提示 */}
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Sparkles className="w-3 h-3 text-amber-500" />
+          <span>完成测评后将获得专业分析报告</span>
+        </div>
       </div>
 
       {/* 题目区域 */}
