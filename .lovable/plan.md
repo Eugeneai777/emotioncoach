@@ -1,149 +1,66 @@
 
-# 情绪教练语音通话"听我说话"卡住问题修复
 
-## 问题诊断
+## 问题诊断结果
 
-### 症状
-用户在移动端微信中使用情绪教练语音通话，接通后一直显示"听我说话"状态，没有任何 AI 回复。
+**现象**：访问 `/wealth-block` 页面时，已购买用户没有看到期望的「财富卡点测评」介绍页（截图中的页面），而是看到了「准备好了吗？开始探索」的答题指南页。
 
-### 后端日志分析
-后端 `doubao-realtime-relay` 日志显示：
-- ASR 正常识别用户语音（"你好" endpoint=true）
-- TTS 正常生成 AI 回复（event=550: "好有呀，你想什么跟..."）
-- 音频包正常转发（event=352: TTS 音频数据）
-- 会话完整运行直到用户主动关闭
+**根因**：存在两层"介绍页"逻辑冲突：
 
-**结论**：后端完全正常工作。
-
-### 根本原因
-在 `DoubaoRealtimeAudio.ts` 的 `handleMessage` 方法中，存在 **switch-case 穿透（fall-through）** 逻辑错误：
-
-```typescript
-// 第 638-678 行的问题代码
-case 'heartbeat':
-case 'pong':
-case 'response.audio.delta':      // ← 问题起点
-case 'response.audio.done':
-case 'response.done':
-case 'response.audio_transcript.delta':
-case 'conversation.item.input_audio_transcription.completed':
-case 'input_audio_buffer.speech_started':
-case 'input_audio_buffer.speech_stopped':
-  // 重置心跳时间
-  this.lastHeartbeatResponse = Date.now();
-  this.missedHeartbeats = 0;
-  // 只有 heartbeat/pong 会 break
-  if (message.type === 'heartbeat' || message.type === 'pong') {
-    break;
-  }
-  // ⚠️ 关键问题：其他消息类型没有 break，会穿透到下一个 case！
-
-case 'input_audio_buffer.speech_started':  // ← 被穿透到这里
-  this.onSpeakingChange('user-speaking');  // ← 覆盖了 assistant-speaking！
-  break;
+```text
+WealthBlockAssessmentPage (父组件)
+├── showIntro = true  → 显示 AssessmentIntroCard (付费介绍页)
+├── showIntro = false & showResult = false → 显示 WealthBlockQuestions
+│   └── WealthBlockQuestions (子组件)
+│       ├── showStartScreen = true  → 显示 AssessmentStartScreen (答题指南页)
+│       └── showStartScreen = false → 显示实际题目
 ```
 
-当收到 `response.audio.delta` 时：
-1. 进入第一组 case，重置心跳时间 ✓
-2. 没有 `break`，穿透到 `input_audio_buffer.speech_started` 
-3. 调用 `onSpeakingChange('user-speaking')` ✗（错误！应该是 `assistant-speaking`）
-4. 从来没有执行到第 665-669 行真正处理音频的代码
-
-这导致：
-- UI 状态被错误地设为 "user-speaking"（听我说话）而非 "assistant-speaking"
-- `handleAudioDelta` 可能没有被正确调用，音频没有播放
+当用户已购买时：
+1. 父组件自动将 `showIntro` 设为 `false`（跳过付费介绍页）
+2. 子组件内部的 `showStartScreen` 默认仍为 `true`
+3. 结果用户看到的是子组件的「答题指南页」而非父组件的「付费介绍页」
 
 ---
 
 ## 修复方案
 
-### 核心修复
-重构 `handleMessage` 中的 switch-case 逻辑，确保：
-1. 心跳重置逻辑与业务处理逻辑分离
-2. 每个消息类型有独立的处理分支
-3. 不存在意外的 case 穿透
+**目标**：已购买用户访问页面时，应看到付费介绍页（显示"继续测评"按钮），而非直接进入答题指南页。
 
-### 代码修改
+**修改文件**：`src/pages/WealthBlockAssessment.tsx`
 
-将第 638-680 行的问题代码改为：
+**修改内容**：
+
+移除自动跳过介绍页的逻辑（第 61-66 行）。已购买用户应始终先看到 `AssessmentIntroCard`，点击「继续测评」后再进入 `WealthBlockQuestions`。
 
 ```typescript
-// 🔧 修复：心跳重置逻辑集中处理，不使用 case 穿透
-// 收到任何有效消息都说明连接活跃，重置心跳超时
-const validActivityTypes = [
-  'heartbeat', 'pong',
-  'response.audio.delta', 'response.audio.done', 'response.done',
-  'response.audio_transcript.delta',
-  'conversation.item.input_audio_transcription.completed',
-  'input_audio_buffer.speech_started', 'input_audio_buffer.speech_stopped'
-];
-if (validActivityTypes.includes(message.type)) {
-  this.lastHeartbeatResponse = Date.now();
-  this.missedHeartbeats = 0;
-}
-
-switch (message.type) {
-  case 'session.connected':
-    // ... 现有逻辑不变
-    break;
-
-  case 'session.closed':
-    // ... 现有逻辑不变
-    break;
-
-  case 'heartbeat':
-  case 'pong':
-    // 已在上面处理心跳重置，这里直接 break
-    break;
-
-  case 'input_audio_buffer.speech_started':
-    this.onSpeakingChange('user-speaking');
-    break;
-
-  case 'input_audio_buffer.speech_stopped':
-    this.onSpeakingChange('idle');
-    break;
-
-  case 'response.audio.delta':
-    if (message.delta) {
-      this.handleAudioDelta(message.delta);
-      this.onSpeakingChange('assistant-speaking');
-    }
-    break;
-
-  case 'response.audio.done':
-    setTimeout(() => {
-      this.onSpeakingChange('idle');
-    }, 500);
-    break;
-
-  case 'response.done':
-    this.awaitingResponse = false;
-    break;
-
-  // ... 其他 case 保持不变
-}
+// 删除或注释掉以下代码块：
+useEffect(() => {
+  if (user && hasPurchased && !isPurchaseLoading) {
+    console.log('[WealthBlock] User purchased, auto-skipping intro');
+    setShowIntro(false);  // ❌ 这会导致跳过付费介绍页
+  }
+}, [user, hasPurchased, isPurchaseLoading]);
 ```
 
 ---
 
 ## 技术细节
 
-### 修改文件
-| 文件 | 修改内容 |
-|-----|---------|
-| `src/utils/DoubaoRealtimeAudio.ts` | 重构 handleMessage switch-case 逻辑，消除穿透问题 |
+| 状态 | 用户未购买 | 用户已购买（修复前） | 用户已购买（修复后） |
+|------|-----------|-------------------|-------------------|
+| showIntro | true | false (自动跳过) | true |
+| 显示的页面 | AssessmentIntroCard | AssessmentStartScreen | AssessmentIntroCard |
+| 按钮文案 | "¥9.9 开始测评" | "开始探索" | "继续测评" |
 
-### 验证要点
-1. 接通后 AI 主动问好（"你好呀，我是劲老师..."）
-2. UI 状态正确切换：
-   - 用户说话时显示"用户说话中"
-   - AI 回复时显示"AI 回复中"  
-   - 空闲时显示正常状态
-3. 能听到 AI 的语音回复
-4. 不会出现"一直显示听我说话"的卡死状态
+修复后，用户无论是否已购买，都会先看到 `AssessmentIntroCard`：
+- **未购买**：显示「¥9.9 开始测评」按钮 → 触发支付流程
+- **已购买**：显示「继续测评」按钮 → 直接进入 `WealthBlockQuestions`
 
 ---
 
-## 实施优先级
-**P0 - 阻塞性 Bug**：当前情绪教练语音通话在微信中完全无法使用，必须立即修复。
+## 影响范围
+
+- 仅修改 `src/pages/WealthBlockAssessment.tsx` 一个文件
+- 删除约 6 行代码
+- 不影响支付流程、测评逻辑或数据存储
+
