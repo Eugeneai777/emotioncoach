@@ -635,34 +635,32 @@ export class DoubaoRealtimeChat {
           this.onStatusChange('disconnected');
           break;
 
+        // 🔧 修复 switch-case 穿透问题：心跳重置和业务逻辑分离
         case 'heartbeat':
         case 'pong':
-        case 'response.audio.delta':
-        case 'response.audio.done':
-        case 'response.done':
-        case 'response.audio_transcript.delta':
-        case 'conversation.item.input_audio_transcription.completed':
-        case 'input_audio_buffer.speech_started':
-        case 'input_audio_buffer.speech_stopped':
-          // 🔧 修复：收到任何有效消息（包括音频包）都说明连接活跃，重置心跳超时
-          // 这是微信异常挂断的根本原因 - 只有 heartbeat/pong 重置导致 AI 持续回复时误判超时
+          // 心跳/pong 只需要重置超时计时器
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
-          // 继续执行后续逻辑（不 break，让各自 case 处理业务逻辑）
-          if (message.type === 'heartbeat' || message.type === 'pong') {
-            break;
-          }
-          // 其他消息类型继续往下走处理业务逻辑
+          break;
 
         case 'input_audio_buffer.speech_started':
+          // 用户开始说话
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           this.onSpeakingChange('user-speaking');
           break;
 
         case 'input_audio_buffer.speech_stopped':
+          // 用户停止说话
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           this.onSpeakingChange('idle');
           break;
 
         case 'response.audio.delta':
+          // AI 音频流数据 - 这是关键修复点！
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           if (message.delta) {
             this.handleAudioDelta(message.delta);
             this.onSpeakingChange('assistant-speaking');
@@ -670,24 +668,35 @@ export class DoubaoRealtimeChat {
           break;
 
         case 'response.audio.done':
-          // 音频响应完成，延迟一小段时间后设置为 idle
-          // 避免在音频播放过程中就切换状态
+          // AI 音频响应完成
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
+          // 延迟设置 idle，避免在音频播放过程中就切换状态
           setTimeout(() => {
             this.onSpeakingChange('idle');
           }, 500);
           break;
 
         case 'response.done':
+          // 整个响应完成
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           this.awaitingResponse = false;
           break;
 
         case 'response.audio_transcript.delta':
+          // AI 转录增量
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           if (message.delta) {
             this.onTranscript(message.delta, false, 'assistant');
           }
           break;
 
         case 'response.audio_transcript.done':
+          // AI 转录完成
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           if (message.transcript) {
             this.onTranscript(message.transcript, true, 'assistant');
           }
@@ -695,12 +704,17 @@ export class DoubaoRealtimeChat {
 
         case 'response.text':
           // 豆包端到端对话的文本回复（event 550）
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           if (message.text) {
             this.onTranscript(message.text, true, 'assistant');
           }
           break;
 
         case 'conversation.item.input_audio_transcription.completed':
+          // 用户语音转录完成
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
           if (message.transcript) {
             this.onTranscript(message.transcript, true, 'user');
           }
