@@ -9,6 +9,7 @@ import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
+import AwakeningPainPointCard from "@/components/awakening/AwakeningPainPointCard";
 import AwakeningTipsCard from "@/components/awakening/AwakeningTipsCard";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
@@ -78,6 +79,9 @@ const Awakening: React.FC = () => {
         <main className="max-w-lg mx-auto px-4 py-4 pb-24 space-y-4">
           {/* Hero区：核心标语 */}
           <AwakeningHeroCard />
+
+          {/* 痛点共鸣卡片 */}
+          <AwakeningPainPointCard />
 
           {/* 分类说明 */}
           <div className="space-y-3">
