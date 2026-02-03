@@ -112,6 +112,8 @@ export const CoachVoiceChat = ({
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
   const isDeductingRef = useRef(false);  // 防止并发扣费
+  const statusRef = useRef<ConnectionStatus>('idle'); // 🔧 供 setTimeout 回调读取最新状态
+  const disconnectNoticeRef = useRef<null | { title: string; description: string; variant?: 'default' | 'destructive' }>(null);
   const lastActivityRef = useRef(Date.now());  // 最后活动时间
   const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
@@ -479,6 +481,8 @@ export const CoachVoiceChat = ({
             feature_key: featureKey,
             source: 'voice_chat',
             amount: POINTS_PER_MINUTE,
+            // 🔧 顶层补充 session_id，便于后端日志精确定位（之前日志里 session_id=undefined）
+            session_id: sessionIdRef.current,
             metadata: {
               minute,
               session_id: sessionIdRef.current,
@@ -493,11 +497,16 @@ export const CoachVoiceChat = ({
         if (error) {
           // 判断是否为网络错误（可重试）
           const errorMsg = error.message?.toLowerCase() || '';
+          // 🔧 扩展：把 5xx / FunctionsHttpError 等也视作“可重试的网络/服务端波动”
+          const maybeHttp5xx = /\b5\d\d\b/.test(errorMsg);
+          const isFunctionsHttpError = (error as any)?.name?.toLowerCase?.().includes('functionshttperror');
           const isNetworkErr = errorMsg.includes('fetch') || 
                                errorMsg.includes('network') ||
                                errorMsg.includes('timeout') ||
                                errorMsg.includes('failed to fetch') ||
-                               errorMsg.includes('aborted');
+                               errorMsg.includes('aborted') ||
+                               maybeHttp5xx ||
+                               isFunctionsHttpError;
           
           console.warn(`[VoiceChat] Deduct attempt ${attempt} failed:`, error.message, `isNetwork: ${isNetworkErr}`);
           
@@ -775,6 +784,7 @@ export const CoachVoiceChat = ({
   // 通用的状态变更处理函数
   const handleStatusChange = (newStatus: ConnectionStatus | MiniProgramStatus) => {
     const mappedStatus: ConnectionStatus = newStatus === 'disconnected' ? 'disconnected' : newStatus === 'connecting' ? 'connecting' : newStatus === 'connected' ? 'connected' : newStatus === 'error' ? 'error' : 'idle';
+    statusRef.current = mappedStatus;
     setStatus(mappedStatus);
     if (mappedStatus === 'connected') {
       lastActivityRef.current = Date.now();
@@ -787,6 +797,19 @@ export const CoachVoiceChat = ({
       }, 1000);
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
+
+      // 🔧 优先展示“明确断开原因”（例如计费网络失败/点数不足）
+      const notice = disconnectNoticeRef.current;
+      if (notice) {
+        disconnectNoticeRef.current = null;
+        toast({
+          title: notice.title,
+          description: notice.description,
+          variant: notice.variant ?? 'destructive',
+          duration: 8000,
+        });
+        return;
+      }
       
       // 🔧 断线提示优化：
       // 1. 非主动挂断（isEndingRef）
@@ -1707,46 +1730,73 @@ export const CoachVoiceChat = ({
     
     // 🔧 使用带重试的扣费逻辑，区分网络错误和余额不足
     deductQuotaWithRetry(currentMinute).then(result => {
-      isDeductingRef.current = false;  // 扣费完成后重置
-      
       if (result.success) {
         // 扣费成功，更新状态
         setBilledMinutes(currentMinute);
+        isDeductingRef.current = false;
         return;
       }
       
       if (result.isNetworkError) {
-        // 🔧 网络错误：给予 30 秒宽限期，不立即断开
-        console.warn('[VoiceChat] ⚠️ Billing network error, granting 30s grace period');
+        // 🔧 网络错误：给予宽限期，不立即断开
+        // ✅ 关键：宽限期期间保持 isDeductingRef=true，避免 effect 每秒触发重复扣费请求
+        const GRACE_MS = 60000;
+        console.warn('[VoiceChat] ⚠️ Billing network error, granting grace period:', GRACE_MS);
         toast({
           title: "网络波动",
-          description: "计费请求暂时失败，通话继续进行中...",
+          description: "计费请求暂时失败，已进入宽限期（通话继续）",
           duration: 5000,
         });
-        // 30 秒后再次尝试，如果还是失败才断开
+        // 宽限期后再尝试；仍失败才断开
         setTimeout(async () => {
-          if (isUnmountedRef.current || status !== 'connected') return;
+          if (isUnmountedRef.current || statusRef.current !== 'connected' || isEndingRef.current) {
+            isDeductingRef.current = false;
+            return;
+          }
           
           const retryResult = await deductQuotaWithRetry(currentMinute, 2, 3000);
-          if (!retryResult.success) {
-            console.error('[VoiceChat] ❌ Billing retry failed after grace period');
-            if (!retryResult.isNetworkError) {
-              // 确认是余额不足
-              setInsufficientDuringCall(true);
-            }
-            chatRef.current?.disconnect();
-            if (durationRef.current) {
-              clearInterval(durationRef.current);
-            }
+          if (retryResult.success) {
+            setBilledMinutes(currentMinute);
+            isDeductingRef.current = false;
+            return;
           }
-        }, 30000);
+
+          console.error('[VoiceChat] ❌ Billing retry failed after grace period');
+
+          if (!retryResult.isNetworkError) {
+            setInsufficientDuringCall(true);
+            disconnectNoticeRef.current = {
+              title: '点数不足',
+              description: '余额不足，通话已结束；你可以先充值后再继续。',
+              variant: 'destructive',
+            };
+          } else {
+            disconnectNoticeRef.current = {
+              title: '网络不稳定',
+              description: '计费连续失败，为避免异常扣费已暂停通话；请切换网络后重试。',
+              variant: 'destructive',
+            };
+          }
+
+          chatRef.current?.disconnect();
+          if (durationRef.current) {
+            clearInterval(durationRef.current);
+          }
+          isDeductingRef.current = false;
+        }, GRACE_MS);
       } else {
         // 🔧 余额不足：暂停通话，显示续费界面
         setInsufficientDuringCall(true);
+        disconnectNoticeRef.current = {
+          title: '点数不足',
+          description: '余额不足，通话已结束；你可以先充值后再继续。',
+          variant: 'destructive',
+        };
         chatRef.current?.disconnect();
         if (durationRef.current) {
           clearInterval(durationRef.current);
         }
+        isDeductingRef.current = false;
       }
     });
   }, [duration, status, maxDurationMinutes]);
