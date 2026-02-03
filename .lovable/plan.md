@@ -1,47 +1,38 @@
 
 
-## 移除问答页面的火箭快捷键
+## 确保底部信息需要滚动才能看见
 
 ### 问题分析
 
-火箭快捷菜单（`FloatingQuickMenu`）组件在页面右下角显示一个 🚀 按钮。该组件已经有一个路由排除列表 `EXCLUDED_ROUTES`，但 `/wealth-assessment-lite` 未被包含在内。
-
-### 当前排除路由列表
-
-```tsx
-// src/components/FloatingQuickMenu.tsx 第14行
-const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth-block', '/coach-space', '/awakening'];
-```
-
-可以看到 `/wealth-block`（支付后测评）已经被排除，但 `/wealth-assessment-lite`（测评后支付）没有被排除。
-
----
+当前底部信息（付费提示、公司备案）使用 `mt-8`（32px）的顶部间距，可能仍然会在某些手机上显示在首屏内。
 
 ### 解决方案
 
-将 `/wealth-assessment-lite` 添加到排除路由列表中。
+增加底部信息的顶部间距，确保它始终在首屏之外，用户需要滚动才能看到。
 
 ### 修改文件
 
-#### 文件: `src/components/FloatingQuickMenu.tsx`
+#### 文件: `src/components/wealth-block/WealthBlockQuestions.tsx`
 
-**修改第14行：**
+**修改第 514 行：**
 
 ```tsx
 // 修改前
-const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth-block', '/coach-space', '/awakening'];
+<div className="mt-8 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
 
-// 修改后
-const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth-block', '/wealth-assessment-lite', '/coach-space', '/awakening'];
+// 修改后 - 增加顶部间距，确保需要滚动才能看到
+<div className="mt-16 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
 ```
+
+将 `mt-8`（32px）改为 `mt-16`（64px），增加 32px 的间距，确保底部信息在视口之外。
 
 ---
 
-### 修改文件总览
+### 修改总览
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/components/FloatingQuickMenu.tsx` | 修改 | 添加 `/wealth-assessment-lite` 到排除路由列表 |
+| `src/components/wealth-block/WealthBlockQuestions.tsx` | 修改 | 增加底部信息顶部间距 `mt-8` → `mt-16` |
 
 ---
 
@@ -49,7 +40,7 @@ const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth
 
 | 要点 | 说明 |
 |------|------|
-| 单行修改 | 仅需修改 `EXCLUDED_ROUTES` 数组 |
-| 工作原理 | 组件会检查 `location.pathname.startsWith(route)`，匹配时返回 `null` |
-| 影响范围 | 仅影响 `/wealth-assessment-lite` 页面 |
+| 单行修改 | 仅修改 `mt-8` 为 `mt-16` |
+| 效果 | 底部信息距离导航按钮更远，确保首屏不可见 |
+| 用户体验 | 首屏专注于问答内容，滚动后才看到底部信息 |
 
