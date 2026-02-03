@@ -2070,18 +2070,12 @@ export const CoachVoiceChat = ({
           )}
         </div>
 
-        {/* 转录文本 - 增强对比度 */}
+        {/* 转录文本 - 仅显示用户输入 */}
         <div className="w-full max-w-md space-y-3">
           {userTranscript && (
             <div className="bg-black/30 rounded-2xl px-4 py-3 backdrop-blur-md border border-white/10">
               <p className="text-white/70 text-xs mb-1 font-medium">你说：</p>
               <p className="text-white text-sm leading-relaxed">{userTranscript}</p>
-            </div>
-          )}
-          {transcript && (
-            <div className={`bg-black/30 rounded-2xl px-4 py-3 backdrop-blur-md border ${colors.border}/40`}>
-              <p className={`${colors.text} text-xs mb-1 font-medium`}>劲老师：</p>
-              <p className="text-white text-sm leading-relaxed">{transcript}</p>
             </div>
           )}
         </div>
