@@ -326,7 +326,9 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    // 备注：外层滚动容器在 /wealth-assessment-lite 页面上，这里通过增加底部留白
+    // 避免移动端 sticky 底部按钮遮挡最后一屏内容，导致“看不到底部/滚不到底”。
+    <div className="flex flex-col min-h-screen pb-[calc(112px+env(safe-area-inset-bottom))]">
       {/* 深度追问对话框 */}
       {showDeepFollowUp && (
         <DeepFollowUpDialog
