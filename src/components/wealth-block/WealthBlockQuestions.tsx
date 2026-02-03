@@ -32,11 +32,12 @@ import {
 interface WealthBlockQuestionsProps {
   onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[], deepFollowUpAnswers?: DeepFollowUpAnswer[]) => void;
   onExit?: () => void;
+  skipStartScreen?: boolean;
 }
 
-export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestionsProps) {
-  // 新增：开始前介绍页状态
-  const [showStartScreen, setShowStartScreen] = useState(true);
+export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = false }: WealthBlockQuestionsProps) {
+  // 开始前介绍页状态：根据 skipStartScreen prop 决定初始值
+  const [showStartScreen, setShowStartScreen] = useState(!skipStartScreen);
   
   console.log('[WealthBlockQuestions] Rendering, showStartScreen:', showStartScreen);
   

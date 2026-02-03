@@ -75,6 +75,7 @@ export default function WealthAssessmentLitePage() {
         <WealthBlockQuestions 
           onComplete={handleComplete} 
           onExit={handleExit}
+          skipStartScreen={true}
         />
       )}
       
