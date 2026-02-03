@@ -83,9 +83,10 @@ export class DoubaoRealtimeChat {
   private focusHandler: (() => void) | null = null;
   
   // 🔧 心跳超时检测：防止微信环境下静默断连
+  // 注意：用户长时间说话时可能没有 AI 回复，但 pong 应该始终正常返回
   private lastHeartbeatResponse: number = 0;
   private missedHeartbeats: number = 0;
-  private static readonly MAX_MISSED_HEARTBEATS = 3; // 连续 3 次无响应则认为断连
+  private static readonly MAX_MISSED_HEARTBEATS = 5; // 连续 5 次（75s）无响应则认为断连
 
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
