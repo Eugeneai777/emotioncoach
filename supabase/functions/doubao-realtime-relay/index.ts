@@ -1005,16 +1005,31 @@ Deno.serve(async (req) => {
       // 开始读取响应
       const readLoop = async () => {
         const buffer = new Uint8Array(65536);
+        let lastReadTime = Date.now();
+        let readTimeoutWarned = false;
 
         // ✅ 只允许当前 generation 的 loop 运行；一旦出现新连接，旧 loop 会自动退出
         while (isConnected && doubaoConn && myGeneration === connectionGeneration) {
           try {
             const n = await doubaoConn.read(buffer);
+            const now = Date.now();
+            const elapsed = now - lastReadTime;
+            
+            // 🔧 诊断日志：如果读取间隔超过 10 秒，记录一次（帮助排查微信环境卡顿）
+            if (elapsed > 10000 && !readTimeoutWarned) {
+              console.warn(`[DoubaoRelay] ⚠️ Long read gap detected: ${elapsed}ms since last data`);
+              readTimeoutWarned = true;
+            }
+            lastReadTime = now;
+            
             if (n === null || n === 0) {
-              console.log('[DoubaoRelay] Connection closed by Doubao');
+              console.log(`[DoubaoRelay] Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms)`);
               isConnected = false;
               break;
             }
+            
+            // 重置警告标志
+            readTimeoutWarned = false;
             
             parser.append(buffer.slice(0, n));
             const frames = parser.getFrames();
@@ -1382,7 +1397,15 @@ Deno.serve(async (req) => {
               }
             }
           } catch (err) {
-            console.error('[DoubaoRelay] Read error:', err);
+            // 🔧 增强错误日志：区分不同类型的断开原因
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            const errorName = err instanceof Error ? err.name : 'UnknownError';
+            console.error(`[DoubaoRelay] Read error: ${errorName}: ${errorMessage}`);
+            
+            // 检查是否是连接被远端关闭
+            if (errorMessage.includes('connection') || errorMessage.includes('reset') || errorMessage.includes('closed')) {
+              console.warn('[DoubaoRelay] ⚠️ Connection appears to be reset by remote peer');
+            }
             break;
           }
         }
@@ -1395,6 +1418,15 @@ Deno.serve(async (req) => {
           // ✅ 重连导致旧 loop 退出：不通知前端 session.closed
           return;
         }
+        
+        // 🔧 增强日志：记录读循环退出原因
+        console.log('[DoubaoRelay] Read loop exited', {
+          isConnected,
+          hasDoubaoConn: !!doubaoConn,
+          myGeneration,
+          connectionGeneration,
+          clientSocketState: clientSocket.readyState,
+        });
         
         if (!isReconnecting && clientSocket.readyState === WebSocket.OPEN) {
           clientSocket.send(JSON.stringify({
