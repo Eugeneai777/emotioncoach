@@ -321,6 +321,19 @@ export const generateCanvas = async (
     document.body.appendChild(wrapper);
 
     try {
+      // 🔧 等待字体加载完成（解决中文乱码问题）
+      if (document.fonts && typeof document.fonts.ready !== 'undefined') {
+        try {
+          await Promise.race([
+            document.fonts.ready,
+            new Promise(resolve => setTimeout(resolve, 3000)) // 3秒超时
+          ]);
+          debug && console.log('[shareCardConfig] Fonts ready');
+        } catch (e) {
+          debug && console.warn('[shareCardConfig] Fonts.ready failed:', e);
+        }
+      }
+
       // 等待图片加载（可跳过）
       if (!skipImageWait) {
         const imageTimeout = isWeChat ? SHARE_TIMEOUTS.imageLoadWeChat : SHARE_TIMEOUTS.imageLoad;
@@ -361,11 +374,22 @@ export const generateCanvas = async (
           element.style.animation = 'none';
           element.style.transition = 'none';
           
-          // 递归移除子元素动画
+          // 🔧 强制设置中文 fallback 字体链（防止乱码）
+          const forceChineseFonts = (el: HTMLElement) => {
+            const computedFont = getComputedStyle(el).fontFamily;
+            if (!computedFont.includes('PingFang') && !computedFont.includes('Microsoft YaHei')) {
+              el.style.fontFamily = `${computedFont}, "PingFang SC", "Microsoft YaHei", "Heiti SC", "Noto Sans SC", sans-serif`;
+            }
+          };
+          
+          forceChineseFonts(element);
+          
+          // 递归处理子元素：移除动画 + 强制字体
           element.querySelectorAll('*').forEach((child: Element) => {
             if (child instanceof HTMLElement) {
               child.style.animation = 'none';
               child.style.transition = 'none';
+              forceChineseFonts(child);
             }
           });
         },
