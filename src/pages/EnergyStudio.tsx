@@ -89,6 +89,10 @@ const EnergyStudio = () => {
   };
 
   const handleToolClick = (toolId: string) => {
+    if (toolId === 'awakening') {
+      navigate('/awakening');
+      return;
+    }
     if (toolId === 'goals') {
       navigate('/goals');
       return;
