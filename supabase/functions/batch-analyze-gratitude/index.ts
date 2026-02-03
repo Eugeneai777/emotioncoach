@@ -91,8 +91,10 @@ serve(async (req) => {
     let failedCount = 0;
     const results: { entryId: string; success: boolean; error?: string }[] = [];
 
-    // Analyze each entry with skipDeduct: true (already deducted once above)
-    for (const entry of unanalyzedEntries) {
+    // 并行处理，每批最多 5 条，避免超时
+    const BATCH_SIZE = 5;
+    
+    const analyzeEntry = async (entry: { id: string; content: string }) => {
       try {
         const analyzeResponse = await fetch(`${supabaseUrl}/functions/v1/analyze-gratitude-entry`, {
           method: "POST",
@@ -108,26 +110,50 @@ serve(async (req) => {
         });
 
         if (analyzeResponse.ok) {
-          successCount++;
-          results.push({ entryId: entry.id, success: true });
-          console.log(`Successfully analyzed entry ${entry.id}`);
+          return { entryId: entry.id, success: true };
         } else {
           const errorData = await analyzeResponse.json().catch(() => ({}));
-          failedCount++;
-          results.push({ entryId: entry.id, success: false, error: errorData.error || "Unknown error" });
-          console.error(`Failed to analyze entry ${entry.id}:`, errorData);
-          
-          // If insufficient quota, stop processing remaining entries
-          if (errorData.insufficient_quota) {
-            console.log("Insufficient quota, stopping batch analysis");
-            break;
-          }
+          return { entryId: entry.id, success: false, error: errorData.error || "Unknown error", insufficient_quota: errorData.insufficient_quota };
         }
       } catch (err) {
-        failedCount++;
-        results.push({ entryId: entry.id, success: false, error: String(err) });
-        console.error(`Error analyzing entry ${entry.id}:`, err);
+        return { entryId: entry.id, success: false, error: String(err) };
       }
+    };
+
+    // 分批并行处理
+    for (let i = 0; i < unanalyzedEntries.length; i += BATCH_SIZE) {
+      const batch = unanalyzedEntries.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}, entries: ${batch.length}`);
+      
+      const batchResults = await Promise.allSettled(
+        batch.map(entry => analyzeEntry(entry))
+      );
+
+      let stopProcessing = false;
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled') {
+          const r = result.value;
+          results.push({ entryId: r.entryId, success: r.success, error: r.error });
+          if (r.success) {
+            successCount++;
+            console.log(`Successfully analyzed entry ${r.entryId}`);
+          } else {
+            failedCount++;
+            console.error(`Failed to analyze entry ${r.entryId}:`, r.error);
+            // 如果余额不足，停止后续批次
+            if ((r as any).insufficient_quota) {
+              console.log("Insufficient quota, stopping batch analysis");
+              stopProcessing = true;
+            }
+          }
+        } else {
+          // Promise rejected
+          failedCount++;
+          console.error(`Promise rejected:`, result.reason);
+        }
+      }
+
+      if (stopProcessing) break;
     }
 
     // 分析成功后，触发智能通知

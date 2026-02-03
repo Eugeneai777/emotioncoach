@@ -7,9 +7,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Crown, BarChart3, Brain, Target, TrendingUp, Lock } from "lucide-react";
-import { useState } from "react";
+import { Crown, BarChart3, Brain, Target, TrendingUp, Lock, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GratitudeReportPaywallProps {
   open: boolean;
@@ -21,9 +22,49 @@ export const GratitudeReportPaywall = ({
   onClose,
 }: GratitudeReportPaywallProps) => {
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [packageInfo, setPackageInfo] = useState<{ key: string; name: string; price: number } | null>(null);
+  const [isLoadingPackage, setIsLoadingPackage] = useState(false);
+
+  // 从数据库获取 basic 套餐的动态价格
+  useEffect(() => {
+    const fetchPackage = async () => {
+      if (!open) return;
+      
+      setIsLoadingPackage(true);
+      try {
+        const { data, error } = await supabase
+          .from('packages')
+          .select('package_key, package_name, price')
+          .eq('package_key', 'basic')
+          .eq('is_active', true)
+          .single();
+
+        if (error) {
+          console.error('[GratitudeReportPaywall] Failed to fetch package:', error);
+          // 降级使用默认值
+          setPackageInfo({ key: 'basic', name: '尝鲜套餐', price: 9.9 });
+        } else if (data) {
+          setPackageInfo({
+            key: data.package_key,
+            name: data.package_name,
+            price: data.price,
+          });
+        }
+      } catch (err) {
+        console.error('[GratitudeReportPaywall] Error:', err);
+        setPackageInfo({ key: 'basic', name: '尝鲜套餐', price: 9.9 });
+      } finally {
+        setIsLoadingPackage(false);
+      }
+    };
+
+    fetchPackage();
+  }, [open]);
 
   const handlePurchase = () => {
-    setShowPayDialog(true);
+    if (packageInfo) {
+      setShowPayDialog(true);
+    }
   };
 
   const handlePaySuccess = () => {
@@ -89,9 +130,13 @@ export const GratitudeReportPaywall = ({
             {/* Price */}
             <div className="text-center p-4 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-xl">
               <p className="text-xs text-muted-foreground mb-1">尝鲜价</p>
-              <p className="text-2xl font-bold text-pink-700 dark:text-pink-300">
-                ¥9.9
-              </p>
+              {isLoadingPackage ? (
+                <Loader2 className="w-5 h-5 animate-spin mx-auto text-pink-600" />
+              ) : (
+                <p className="text-2xl font-bold text-pink-700 dark:text-pink-300">
+                  ¥{packageInfo?.price ?? 9.9}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 解锁全部功能
               </p>
@@ -101,6 +146,7 @@ export const GratitudeReportPaywall = ({
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button
               onClick={handlePurchase}
+              disabled={isLoadingPackage || !packageInfo}
               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
             >
               <Crown className="w-4 h-4 mr-2" />
@@ -113,7 +159,7 @@ export const GratitudeReportPaywall = ({
         </DialogContent>
       </Dialog>
 
-      {showPayDialog && (
+      {showPayDialog && packageInfo && (
         <WechatPayDialog
           open={showPayDialog}
           onOpenChange={(open) => {
@@ -121,11 +167,7 @@ export const GratitudeReportPaywall = ({
               setShowPayDialog(false);
             }
           }}
-          packageInfo={{
-            key: "trial",
-            name: "尝鲜套餐",
-            price: 9.9,
-          }}
+          packageInfo={packageInfo}
           onSuccess={handlePaySuccess}
         />
       )}

@@ -8,8 +8,16 @@ interface GratitudeStatsCardProps {
 
 export const GratitudeStatsCard = ({ entries }: GratitudeStatsCardProps) => {
   const stats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    
+    // 用于连续天数计算的起始点（当天 00:00:00）
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    
+    // 用于周/月统计的上边界（当天 23:59:59.999）
+    // 这样可以确保今天的记录被包含在统计中
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
     
     // Total count
     const total = entries.length;
@@ -22,7 +30,7 @@ export const GratitudeStatsCard = ({ entries }: GratitudeStatsCardProps) => {
     // Calculate current streak
     let currentStreak = 0;
     for (let i = 0; i < 365; i++) {
-      const checkDate = subDays(today, i);
+      const checkDate = subDays(todayStart, i);
       checkDate.setHours(0, 0, 0, 0);
       const hasRecord = uniqueDates.some(d => {
         const recordDate = new Date(d);
@@ -38,18 +46,18 @@ export const GratitudeStatsCard = ({ entries }: GratitudeStatsCardProps) => {
       }
     }
     
-    // This week count
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    // This week count - 使用 todayEnd 确保今天的记录被包含
+    const weekStart = startOfWeek(todayStart, { weekStartsOn: 1 });
     const weekCount = entries.filter(e => {
       const entryDate = new Date(e.created_at);
-      return entryDate >= weekStart && entryDate <= today;
+      return entryDate >= weekStart && entryDate <= todayEnd;
     }).length;
     
-    // This month count
-    const monthStart = startOfMonth(today);
+    // This month count - 使用 todayEnd 确保今天的记录被包含
+    const monthStart = startOfMonth(todayStart);
     const monthCount = entries.filter(e => {
       const entryDate = new Date(e.created_at);
-      return entryDate >= monthStart && entryDate <= today;
+      return entryDate >= monthStart && entryDate <= todayEnd;
     }).length;
     
     return { total, currentStreak, weekCount, monthCount };
