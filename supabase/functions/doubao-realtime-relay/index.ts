@@ -469,7 +469,7 @@ function buildStartSessionRequest(
     model_name: 'doubao-speech-vision-pro-250515',
     enable_vad: true,
     vad_stop_time: 800,
-    vad_max_speech_time: 60,
+    vad_max_speech_time: 600, // ✅ 修复：从 60s 增加到 600s（10分钟），避免长通话被截断
     vad_silence_time: 300,
     enable_tts: true,
     bot_name: '劲老师',
