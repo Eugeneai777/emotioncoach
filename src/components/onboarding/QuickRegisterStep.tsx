@@ -599,15 +599,15 @@ export function QuickRegisterStep({
           {isMiniProgram ? '一键登录' : (isWechat ? '微信授权' : '微信扫码')}
         </button>
         <button
-          onClick={() => setRegisterMode('email')}
+          onClick={() => setRegisterMode('phone')}
           className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-            registerMode === 'email'
+            registerMode === 'phone'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
-          邮箱注册
+          <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
+          手机号注册
         </button>
         <button
           onClick={() => setRegisterMode('login')}
