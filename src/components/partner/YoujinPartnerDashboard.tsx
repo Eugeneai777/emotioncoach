@@ -215,7 +215,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
                     <div className="flex gap-3 items-start">
                       {groupQrUrl ? (
                         <div className="w-24 h-24 border rounded-lg overflow-hidden bg-white p-1.5">
-                          <img src={groupQrUrl} alt="群二维码" className="w-full h-full object-contain" />
+                          <img src={groupQrUrl} alt="群二维码" loading="lazy" decoding="async" className="w-full h-full object-contain" />
                         </div>
                       ) : (
                         <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">

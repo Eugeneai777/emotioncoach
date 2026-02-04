@@ -185,6 +185,8 @@ export function CertificationsStep({
                   <img
                     src={cert.imageUrl}
                     alt="证书"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain"
                   />
                   <Button

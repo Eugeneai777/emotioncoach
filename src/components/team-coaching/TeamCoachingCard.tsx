@@ -30,6 +30,8 @@ export function TeamCoachingCard({ session, onClick }: TeamCoachingCardProps) {
           <img 
             src={session.cover_image_url} 
             alt={session.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
           {isFull && (

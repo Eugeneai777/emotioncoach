@@ -94,6 +94,8 @@ export function GroupJoinInviteCard({
             <img 
               src={groupQrCodeUrl} 
               alt="学员群二维码" 
+              loading="lazy"
+              decoding="async"
               className="w-40 h-40 object-contain"
             />
           </div>

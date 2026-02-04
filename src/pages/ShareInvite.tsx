@@ -274,6 +274,8 @@ const ShareInvite = () => {
                       <img
                         src={entry.qrCode}
                         alt={`${entry.name}二维码`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-24 h-24"
                       />
                     </div>
