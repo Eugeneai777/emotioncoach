@@ -90,8 +90,7 @@ export function QuickRegisterStep({
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 邮箱注册/登录相关状态
-  const [email, setEmail] = useState('');
+  // 手机号注册/登录相关状态
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
