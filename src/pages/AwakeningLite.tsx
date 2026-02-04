@@ -81,7 +81,7 @@ const AwakeningLite: React.FC = () => {
 
   return (
     <>
-      <DynamicOGMeta pageKey="awakening" />
+      <DynamicOGMeta pageKey="awakeningLite" />
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
         {/* Header */}

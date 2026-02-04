@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEmotionHealthPurchase } from "@/hooks/useEmotionHealthPurchase";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { EmotionHealthQuestionsLite } from "@/components/emotion-health/EmotionHealthQuestionsLite";
 import { EmotionHealthResult, calculateEmotionHealthResult } from "@/components/emotion-health";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
@@ -57,6 +58,8 @@ export default function EmotionHealthLitePage() {
       className="h-screen overflow-y-auto overscroll-contain bg-background"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
+      <DynamicOGMeta pageKey="emotionHealthLite" />
+      
       {/* 测评页 */}
       {pageState === "questions" && (
         <EmotionHealthQuestionsLite 
