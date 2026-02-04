@@ -400,7 +400,15 @@ const Auth = () => {
 
         <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-lg space-y-4 md:space-y-6">
           <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
-            {!isLogin && (
+            {/* 邮箱模式标题 */}
+            {authMode === 'email' && (
+              <div className="text-center pb-2">
+                <p className="text-sm text-muted-foreground">使用邮箱登录</p>
+              </div>
+            )}
+
+            {/* 仅手机号模式且注册时显示用户名称 */}
+            {authMode === 'phone' && !isLogin && (
               <div className="space-y-1.5 md:space-y-2">
                 <Label htmlFor="displayName" className="text-xs md:text-sm">用户名称</Label>
                 <Input
@@ -419,33 +427,52 @@ const Auth = () => {
               </div>
             )}
 
-            <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="phone" className="text-xs md:text-sm">手机号</Label>
-              <div className="flex gap-2">
-                <Select value={countryCode} onValueChange={setCountryCode}>
-                  <SelectTrigger className="w-[100px] rounded-xl text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border shadow-lg z-50">
-                    {countryCodes.map((item) => (
-                      <SelectItem key={item.code} value={item.code}>
-                        {item.code} {item.country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* 手机号模式输入框 */}
+            {authMode === 'phone' && (
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="phone" className="text-xs md:text-sm">手机号</Label>
+                <div className="flex gap-2">
+                  <Select value={countryCode} onValueChange={setCountryCode}>
+                    <SelectTrigger className="w-[100px] rounded-xl text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      {countryCodes.map((item) => (
+                        <SelectItem key={item.code} value={item.code}>
+                          {item.code} {item.country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="请输入手机号"
+                    required
+                    maxLength={15}
+                    className="flex-1 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 邮箱模式输入框 */}
+            {authMode === 'email' && (
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="email" className="text-xs md:text-sm">邮箱</Label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="请输入手机号"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="请输入邮箱地址"
                   required
-                  maxLength={15}
-                  className="flex-1 rounded-xl text-sm"
+                  className="rounded-xl text-sm"
                 />
               </div>
-            </div>
+            )}
 
             <div className="space-y-1.5 md:space-y-2">
               <Label htmlFor="password" className="text-xs md:text-sm">密码</Label>
@@ -472,9 +499,33 @@ const Auth = () => {
                   处理中...
                 </>
               ) : (
-                isLogin ? "登录" : "注册"
+                authMode === 'email' ? "登录" : (isLogin ? "登录" : "注册")
               )}
             </Button>
+
+            {/* 邮箱/手机号模式切换入口 */}
+            <div className="text-center pt-1">
+              {authMode === 'phone' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('email');
+                    setIsLogin(true); // 邮箱模式只支持登录
+                  }}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  📧 之前用邮箱注册？点击这里登录
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('phone')}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  📱 使用手机号登录
+                </button>
+              )}
+            </div>
 
             <div className="flex items-start gap-2 mt-3">
               <Checkbox
