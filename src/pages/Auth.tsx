@@ -261,21 +261,52 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    // 验证手机号格式
-    if (!isValidPhone(phone)) {
-      toast({
-        title: "请输入有效的手机号码",
-        description: "手机号码应为5-15位数字",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    // 生成占位邮箱
-    const placeholderEmail = generatePhoneEmail(countryCode, phone);
-
     try {
+      // 邮箱模式：仅支持登录
+      if (authMode === 'email') {
+        if (!email.trim()) {
+          toast({
+            title: "请输入邮箱地址",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('邮箱或密码错误');
+          }
+          throw error;
+        }
+        
+        toast({
+          title: "登录成功",
+          description: "欢迎回来 🌿",
+        });
+        return;
+      }
+
+      // 手机号模式
+      // 验证手机号格式
+      if (!isValidPhone(phone)) {
+        toast({
+          title: "请输入有效的手机号码",
+          description: "手机号码应为5-15位数字",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // 生成占位邮箱
+      const placeholderEmail = generatePhoneEmail(countryCode, phone);
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email: placeholderEmail,
