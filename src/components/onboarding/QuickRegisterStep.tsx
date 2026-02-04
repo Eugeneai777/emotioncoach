@@ -406,21 +406,34 @@ export function QuickRegisterStep({
     }
   };
 
-  // 邮箱登录
-  const handleEmailLogin = async () => {
-    if (!email || !password) {
-      toast.error('请填写邮箱和密码');
+  // 手机号登录
+  const handlePhoneLogin = async () => {
+    if (!phone || !password) {
+      toast.error('请填写手机号和密码');
       return;
     }
+
+    if (!isValidPhone(phone)) {
+      toast.error('请输入有效的手机号码');
+      return;
+    }
+
+    // 生成占位邮箱
+    const placeholderEmail = generatePhoneEmail(countryCode, phone);
 
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: placeholderEmail,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('Invalid login credentials')) {
+          throw new Error('手机号或密码错误');
+        }
+        throw error;
+      }
       if (!data.user) throw new Error('登录失败');
 
       // 绑定订单到用户
@@ -429,12 +442,8 @@ export function QuickRegisterStep({
       toast.success('登录成功！');
       onSuccess(data.user.id);
     } catch (error: any) {
-      console.error('Email login error:', error);
-      if (error.message?.includes('Invalid login credentials')) {
-        toast.error('邮箱或密码错误');
-      } else {
-        toast.error(error.message || '登录失败，请重试');
-      }
+      console.error('Phone login error:', error);
+      toast.error(error.message || '登录失败，请重试');
     } finally {
       setIsLoading(false);
     }

@@ -387,16 +387,31 @@ const Auth = () => {
             )}
 
             <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="email" className="text-xs md:text-sm">邮箱</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="rounded-xl text-sm"
-              />
+              <Label htmlFor="phone" className="text-xs md:text-sm">手机号</Label>
+              <div className="flex gap-2">
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="w-[100px] rounded-xl text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {countryCodes.map((item) => (
+                      <SelectItem key={item.code} value={item.code}>
+                        {item.code} {item.country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="请输入手机号"
+                  required
+                  maxLength={15}
+                  className="flex-1 rounded-xl text-sm"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5 md:space-y-2">
