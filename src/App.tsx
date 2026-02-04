@@ -111,6 +111,7 @@ const PanicHistory = lazy(() => import("./pages/PanicHistory"));
 const EmotionButtonIntro = lazy(() => import("./pages/EmotionButtonIntro"));
 const EmotionButton = lazy(() => import("./pages/EmotionButton"));
 const AliveCheck = lazy(() => import("./pages/AliveCheck"));
+const AliveCheckLite = lazy(() => import("./pages/AliveCheckLite"));
 const AliveCheckIntro = lazy(() => import("./pages/AliveCheckIntro"));
 const SCL90Page = lazy(() => import("./pages/SCL90Page"));
 const SCL90Lite = lazy(() => import("./pages/SCL90Lite"));
@@ -138,6 +139,7 @@ const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
 
 // 觉醒系统
 const Awakening = lazy(() => import("./pages/Awakening"));
+const AwakeningLite = lazy(() => import("./pages/AwakeningLite"));
 const AwakeningIntro = lazy(() => import("./pages/AwakeningIntro"));
 const AwakeningSystemIntro = lazy(() => import("./pages/AwakeningSystemIntro"));
 const AwakeningJournal = lazy(() => import("./pages/AwakeningJournal"));
@@ -284,6 +286,7 @@ const App = () => (
               <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
               <Route path="/emotion-button" element={<EmotionButton />} />
               <Route path="/alive-check" element={<AliveCheck />} />
+              <Route path="/alive-check-lite" element={<AliveCheckLite />} />
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
 <Route path="/scl90" element={<SCL90Page />} />
               <Route path="/scl90-lite" element={<SCL90Lite />} />
@@ -306,6 +309,7 @@ const App = () => (
               <Route path="/coach/:coachKey" element={<DynamicCoach />} />
               <Route path="/teen-chat/:token" element={<TeenChat />} />
               <Route path="/awakening" element={<Awakening />} />
+              <Route path="/awakening-lite" element={<AwakeningLite />} />
               <Route path="/awakening-intro" element={<AwakeningIntro />} />
               <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
               <Route path="/awakening-journal" element={<AwakeningJournal />} />

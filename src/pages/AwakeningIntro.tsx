@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { useAuth } from "@/hooks/useAuth";
+import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 
 // 六大觉察配置
 const lifeSystems = [
@@ -98,7 +100,11 @@ const lifeSystems = [
 const AwakeningIntro: React.FC = () => {
   const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
+  const { user, loading: authLoading } = useAuth();
+  const { data: hasPurchased, isLoading: purchaseLoading } = usePackagePurchased('awakening_system');
+  
+  // 是否显示轻模式入口（未登录或未购买）
+  const showLiteEntry = !authLoading && !purchaseLoading && (!user || !hasPurchased);
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
@@ -381,6 +387,21 @@ const AwakeningIntro: React.FC = () => {
               <Layers className="w-4 h-4 mr-2" />
               了解四层支持
             </Button>
+            
+            {/* 轻模式入口 */}
+            {showLiteEntry && (
+              <div className="mt-6 pt-4 border-t border-amber-200/30 space-y-3 text-center">
+                <a 
+                  href="/awakening-lite" 
+                  className="text-muted-foreground text-sm block hover:text-amber-600 transition-colors"
+                >
+                  💡 先体验后付费 ¥9.9
+                </a>
+                <p className="text-muted-foreground text-xs">
+                  北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
+                </p>
+              </div>
+            )}
           </div>
         </main>
       </div>
