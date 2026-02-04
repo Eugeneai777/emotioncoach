@@ -643,6 +643,9 @@ export class DoubaoRealtimeChat {
 
   // ✅ 收集当前对话历史，重连时传给新 session 保持上下文
   private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  // ✅ 增量转录缓冲：用于在收不到 done 事件时也能保存对话历史
+  private currentUserTranscriptBuffer = '';
+  private currentAssistantTranscriptBuffer = '';
 
   private async scheduleReconnect(trigger: string, meta?: Record<string, unknown>): Promise<void> {
     if (this.isDisconnected) return;
@@ -1021,6 +1024,8 @@ export class DoubaoRealtimeChat {
           this.missedHeartbeats = 0;
           if (message.delta) {
             this.onTranscript(message.delta, false, 'assistant');
+            // ✅ 累积增量到缓冲区，以防 done 事件丢失
+            this.currentAssistantTranscriptBuffer += message.delta;
           }
           break;
 
@@ -1028,14 +1033,20 @@ export class DoubaoRealtimeChat {
           // AI 转录完成
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
-          if (message.transcript) {
-            this.onTranscript(message.transcript, true, 'assistant');
-            // ✅ 记录 AI 回复到对话历史（用于重连时恢复上下文）
-            this.conversationHistory.push({ role: 'assistant', content: message.transcript });
-            // 限制历史长度，避免内存过大
-            if (this.conversationHistory.length > 20) {
-              this.conversationHistory = this.conversationHistory.slice(-20);
+          {
+            // ✅ 优先使用 done 事件中的完整转录，否则使用缓冲区累积的内容
+            const finalTranscript = message.transcript || this.currentAssistantTranscriptBuffer;
+            if (finalTranscript) {
+              this.onTranscript(finalTranscript, true, 'assistant');
+              // ✅ 记录 AI 回复到对话历史（用于重连时恢复上下文）
+              this.conversationHistory.push({ role: 'assistant', content: finalTranscript });
+              // 限制历史长度，避免内存过大
+              if (this.conversationHistory.length > 20) {
+                this.conversationHistory = this.conversationHistory.slice(-20);
+              }
             }
+            // 清空缓冲区
+            this.currentAssistantTranscriptBuffer = '';
           }
           break;
 
@@ -1057,13 +1068,30 @@ export class DoubaoRealtimeChat {
           // 用户语音转录完成
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
-          if (message.transcript) {
-            this.onTranscript(message.transcript, true, 'user');
-            // ✅ 记录用户发言到对话历史
-            this.conversationHistory.push({ role: 'user', content: message.transcript });
-            if (this.conversationHistory.length > 20) {
-              this.conversationHistory = this.conversationHistory.slice(-20);
+          {
+            // ✅ 优先使用完整转录，否则使用缓冲区累积的内容
+            const finalUserTranscript = message.transcript || this.currentUserTranscriptBuffer;
+            if (finalUserTranscript) {
+              this.onTranscript(finalUserTranscript, true, 'user');
+              // ✅ 记录用户发言到对话历史
+              this.conversationHistory.push({ role: 'user', content: finalUserTranscript });
+              if (this.conversationHistory.length > 20) {
+                this.conversationHistory = this.conversationHistory.slice(-20);
+              }
             }
+            // 清空缓冲区
+            this.currentUserTranscriptBuffer = '';
+          }
+          break;
+
+        // ✅ 用户语音转录增量（豆包可能发送该事件）
+        case 'conversation.item.input_audio_transcription.delta':
+          this.lastHeartbeatResponse = Date.now();
+          this.missedHeartbeats = 0;
+          if (message.delta) {
+            this.onTranscript(message.delta, false, 'user');
+            // 累积增量到缓冲区
+            this.currentUserTranscriptBuffer += message.delta;
           }
           break;
 

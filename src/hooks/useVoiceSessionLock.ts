@@ -50,10 +50,22 @@ export const releaseSessionLock = (sessionId: string): boolean => {
 
 // 强制释放锁（用于错误恢复）
 export const forceReleaseSessionLock = () => {
-  console.log(`[VoiceSessionLock] 强制释放会话锁: ${activeSessionId}`);
+  if (activeSessionId) {
+    console.log(`[VoiceSessionLock] 强制释放会话锁: ${activeSessionId}`);
+  }
   activeSessionId = null;
   activeSessionComponent = null;
   notifyListeners();
+};
+
+// ✅ 新增：安全释放锁（如果存在）—— 用于取消弹框等场景
+export const safeReleaseSessionLock = () => {
+  if (activeSessionId !== null) {
+    console.log(`[VoiceSessionLock] 安全释放会话锁: ${activeSessionId}`);
+    activeSessionId = null;
+    activeSessionComponent = null;
+    notifyListeners();
+  }
 };
 
 // 检查是否有活跃会话
