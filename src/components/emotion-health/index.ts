@@ -44,6 +44,7 @@ export {
 } from './emotionHealthData';
 export { EmotionHealthStartScreen } from './EmotionHealthStartScreen';
 export { EmotionHealthQuestions } from './EmotionHealthQuestions';
+export { EmotionHealthQuestionsLite } from './EmotionHealthQuestionsLite';
 export { EmotionHealthResult } from './EmotionHealthResult';
 export { AssessmentCoachChat } from './AssessmentCoachChat';
 export { ThreeLayerDiagram } from './ThreeLayerDiagram';

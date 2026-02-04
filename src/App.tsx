@@ -114,6 +114,7 @@ const AliveCheck = lazy(() => import("./pages/AliveCheck"));
 const AliveCheckIntro = lazy(() => import("./pages/AliveCheckIntro"));
 const SCL90Page = lazy(() => import("./pages/SCL90Page"));
 const EmotionHealthPage = lazy(() => import("./pages/EmotionHealthPage"));
+const EmotionHealthLite = lazy(() => import("./pages/EmotionHealthLite"));
 const AssessmentCoachPage = lazy(() => import("./pages/AssessmentCoachPage"));
 
 // 生活教练
@@ -285,6 +286,7 @@ const App = () => (
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
               <Route path="/scl90" element={<SCL90Page />} />
               <Route path="/emotion-health" element={<EmotionHealthPage />} />
+              <Route path="/emotion-health-lite" element={<EmotionHealthLite />} />
               <Route path="/assessment-coach" element={<AssessmentCoachPage />} />
               <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
               <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
