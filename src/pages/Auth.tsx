@@ -11,10 +11,47 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
 import { useTermsAgreement } from "@/hooks/useTermsAgreement";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// 国家区号列表
+const countryCodes = [
+  { code: '+86', country: '中国' },
+  { code: '+852', country: '中国香港' },
+  { code: '+853', country: '中国澳门' },
+  { code: '+886', country: '中国台湾' },
+  { code: '+1', country: '美国/加拿大' },
+  { code: '+44', country: '英国' },
+  { code: '+81', country: '日本' },
+  { code: '+82', country: '韩国' },
+  { code: '+65', country: '新加坡' },
+  { code: '+60', country: '马来西亚' },
+  { code: '+61', country: '澳大利亚' },
+  { code: '+64', country: '新西兰' },
+  { code: '+49', country: '德国' },
+  { code: '+33', country: '法国' },
+];
+
+// 生成占位邮箱
+function generatePhoneEmail(countryCode: string, phone: string): string {
+  const cleanCode = countryCode.replace('+', '');
+  return `phone_${cleanCode}${phone}@youjin.app`;
+}
+
+// 验证手机号格式
+function isValidPhone(phone: string): boolean {
+  return /^\d{5,15}$/.test(phone);
+}
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+86");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -222,14 +259,34 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    // 验证手机号格式
+    if (!isValidPhone(phone)) {
+      toast({
+        title: "请输入有效的手机号码",
+        description: "手机号码应为5-15位数字",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // 生成占位邮箱
+    const placeholderEmail = generatePhoneEmail(countryCode, phone);
+
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: placeholderEmail,
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          // 改善错误信息
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('手机号或密码错误');
+          }
+          throw error;
+        }
         
         toast({
           title: "登录成功",
@@ -247,7 +304,7 @@ const Auth = () => {
         }
 
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: placeholderEmail,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
@@ -257,15 +314,24 @@ const Auth = () => {
           },
         });
         
-        if (error) throw error;
+        if (error) {
+          // 改善错误信息
+          if (error.message.includes('already registered')) {
+            throw new Error('该手机号已注册，请直接登录');
+          }
+          throw error;
+        }
 
-        // 创建或更新 profile
+        // 创建或更新 profile，包含手机号信息
         if (data.user) {
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
               id: data.user.id,
               display_name: displayName.trim(),
+              phone: phone,
+              phone_country_code: countryCode,
+              auth_provider: 'phone',
             });
 
           if (profileError) {
@@ -321,16 +387,31 @@ const Auth = () => {
             )}
 
             <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="email" className="text-xs md:text-sm">邮箱</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="rounded-xl text-sm"
-              />
+              <Label htmlFor="phone" className="text-xs md:text-sm">手机号</Label>
+              <div className="flex gap-2">
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="w-[100px] rounded-xl text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {countryCodes.map((item) => (
+                      <SelectItem key={item.code} value={item.code}>
+                        {item.code} {item.country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="请输入手机号"
+                  required
+                  maxLength={15}
+                  className="flex-1 rounded-xl text-sm"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5 md:space-y-2">

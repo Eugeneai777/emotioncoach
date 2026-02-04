@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, User, QrCode, Mail, LogIn, RefreshCw, Eye, EyeOff, Phone, ChevronDown } from 'lucide-react';
+import { Loader2, CheckCircle, QrCode, LogIn, RefreshCw, Eye, EyeOff, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isWeChatMiniProgram } from '@/utils/platform';
@@ -41,7 +41,18 @@ interface QuickRegisterStepProps {
   onSkip?: () => void;
 }
 
-type RegisterMode = 'wechat' | 'email' | 'login';
+type RegisterMode = 'wechat' | 'phone' | 'login';
+
+// 生成占位邮箱
+function generatePhoneEmail(countryCode: string, phone: string): string {
+  const cleanCode = countryCode.replace('+', '');
+  return `phone_${cleanCode}${phone}@youjin.app`;
+}
+
+// 验证手机号格式
+function isValidPhone(phone: string): boolean {
+  return /^\d{5,15}$/.test(phone);
+}
 
 // 根据环境智能选择默认注册模式
 const getDefaultMode = (): RegisterMode => {
@@ -50,7 +61,7 @@ const getDefaultMode = (): RegisterMode => {
   const isMobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
   
   if (isWechat) return 'wechat';  // 微信内 → 微信一键注册
-  if (isMobile) return 'email';   // 移动端非微信 → 邮箱注册更方便
+  if (isMobile) return 'phone';   // 移动端非微信 → 手机号注册更方便
   return 'wechat';                // PC端 → 微信扫码
 };
 
@@ -79,8 +90,7 @@ export function QuickRegisterStep({
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 邮箱注册/登录相关状态
-  const [email, setEmail] = useState('');
+  // 手机号注册/登录相关状态
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -323,10 +333,15 @@ export function QuickRegisterStep({
     }
   };
 
-  // 邮箱注册
-  const handleEmailRegister = async () => {
-    if (!email || !password) {
-      toast.error('请填写邮箱和密码');
+  // 手机号注册
+  const handlePhoneRegister = async () => {
+    if (!phone || !password) {
+      toast.error('请填写手机号和密码');
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      toast.error('请输入有效的手机号码');
       return;
     }
 
@@ -340,11 +355,14 @@ export function QuickRegisterStep({
       return;
     }
 
+    // 生成占位邮箱
+    const placeholderEmail = generatePhoneEmail(countryCode, phone);
+
     setIsLoading(true);
     try {
       // 使用 Supabase Auth 注册
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: placeholderEmail,
         password,
         options: {
           emailRedirectTo: window.location.origin,
@@ -352,13 +370,21 @@ export function QuickRegisterStep({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('already registered')) {
+          throw new Error('该手机号已注册，请直接登录');
+        }
+        throw error;
+      }
       if (!data.user) throw new Error('注册失败');
 
-      // 创建 profile
+      // 创建 profile，包含手机号信息
       await supabase.from('profiles').upsert({
         id: data.user.id,
         display_name: nickname || undefined,
+        phone: phone,
+        phone_country_code: countryCode,
+        auth_provider: 'phone',
       });
 
       // 绑定订单到用户
@@ -367,9 +393,9 @@ export function QuickRegisterStep({
       toast.success('注册成功！');
       onSuccess(data.user.id);
     } catch (error: any) {
-      console.error('Email register error:', error);
-      if (error.message?.includes('already registered')) {
-        toast.error('该邮箱已注册，请直接登录');
+      console.error('Phone register error:', error);
+      if (error.message?.includes('该手机号已注册')) {
+        toast.error('该手机号已注册，请直接登录');
         setRegisterMode('login');
       } else {
         toast.error(error.message || '注册失败，请重试');
@@ -379,21 +405,34 @@ export function QuickRegisterStep({
     }
   };
 
-  // 邮箱登录
-  const handleEmailLogin = async () => {
-    if (!email || !password) {
-      toast.error('请填写邮箱和密码');
+  // 手机号登录
+  const handlePhoneLogin = async () => {
+    if (!phone || !password) {
+      toast.error('请填写手机号和密码');
       return;
     }
+
+    if (!isValidPhone(phone)) {
+      toast.error('请输入有效的手机号码');
+      return;
+    }
+
+    // 生成占位邮箱
+    const placeholderEmail = generatePhoneEmail(countryCode, phone);
 
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: placeholderEmail,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('Invalid login credentials')) {
+          throw new Error('手机号或密码错误');
+        }
+        throw error;
+      }
       if (!data.user) throw new Error('登录失败');
 
       // 绑定订单到用户
@@ -402,12 +441,8 @@ export function QuickRegisterStep({
       toast.success('登录成功！');
       onSuccess(data.user.id);
     } catch (error: any) {
-      console.error('Email login error:', error);
-      if (error.message?.includes('Invalid login credentials')) {
-        toast.error('邮箱或密码错误');
-      } else {
-        toast.error(error.message || '登录失败，请重试');
-      }
+      console.error('Phone login error:', error);
+      toast.error(error.message || '登录失败，请重试');
     } finally {
       setIsLoading(false);
     }
@@ -435,10 +470,10 @@ export function QuickRegisterStep({
             刷新重试
           </Button>
           <button 
-            onClick={() => setRegisterMode('email')}
+            onClick={() => setRegisterMode('phone')}
             className="w-full text-sm text-primary hover:underline py-2"
           >
-            使用邮箱注册
+            使用手机号注册
           </button>
         </div>
       </div>
@@ -563,15 +598,15 @@ export function QuickRegisterStep({
           {isMiniProgram ? '一键登录' : (isWechat ? '微信授权' : '微信扫码')}
         </button>
         <button
-          onClick={() => setRegisterMode('email')}
+          onClick={() => setRegisterMode('phone')}
           className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-            registerMode === 'email'
+            registerMode === 'phone'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
-          邮箱注册
+          <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
+          手机号注册
         </button>
         <button
           onClick={() => setRegisterMode('login')}
@@ -716,8 +751,8 @@ export function QuickRegisterStep({
         </div>
       )}
 
-      {/* 邮箱注册 */}
-      {registerMode === 'email' && (
+      {/* 手机号注册 */}
+      {registerMode === 'phone' && (
         <div className="space-y-3 sm:space-y-4">
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="nickname" className="text-xs sm:text-sm">昵称（可选）</Label>
@@ -732,16 +767,30 @@ export function QuickRegisterStep({
           </div>
 
           <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="email" className="text-xs sm:text-sm">邮箱</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="输入邮箱地址"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              className="h-9 sm:h-10 text-sm"
-            />
+            <Label htmlFor="register-phone" className="text-xs sm:text-sm">手机号</Label>
+            <div className="flex gap-2">
+              <Select value={countryCode} onValueChange={setCountryCode}>
+                <SelectTrigger className="w-[100px] h-9 sm:h-10 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {countryCodes.map((item) => (
+                    <SelectItem key={item.code} value={item.code}>
+                      {item.flag} {item.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="register-phone"
+                type="tel"
+                placeholder="请输入手机号"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                maxLength={15}
+                className="flex-1 h-9 sm:h-10 text-sm"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5 sm:space-y-2">
@@ -782,12 +831,12 @@ export function QuickRegisterStep({
           {/* 服务条款同意 */}
           <div className="flex items-start gap-2">
             <Checkbox
-              id="email-terms"
+              id="phone-terms"
               checked={agreedTerms}
               onCheckedChange={(checked) => setAgreedTerms(checked === true)}
               className="mt-0.5"
             />
-            <label htmlFor="email-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+            <label htmlFor="phone-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
               继续即表示您同意
               <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
                 服务条款
@@ -800,8 +849,8 @@ export function QuickRegisterStep({
           </div>
 
           <Button
-            onClick={handleEmailRegister}
-            disabled={isLoading || !email || !password || !confirmPassword || !agreedTerms}
+            onClick={handlePhoneRegister}
+            disabled={isLoading || !phone || !password || !confirmPassword || !agreedTerms}
             className="w-full bg-gradient-to-r from-teal-500 to-cyan-500"
           >
             {isLoading ? (
@@ -811,7 +860,7 @@ export function QuickRegisterStep({
               </>
             ) : (
               <>
-                <Mail className="mr-2 h-4 w-4" />
+                <Phone className="mr-2 h-4 w-4" />
                 注册并开始测评
               </>
             )}
@@ -823,16 +872,30 @@ export function QuickRegisterStep({
       {registerMode === 'login' && (
         <div className="space-y-3 sm:space-y-4">
           <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="login-email" className="text-xs sm:text-sm">邮箱</Label>
-            <Input
-              id="login-email"
-              type="email"
-              placeholder="输入邮箱地址"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              className="h-9 sm:h-10 text-sm"
-            />
+            <Label htmlFor="login-phone" className="text-xs sm:text-sm">手机号</Label>
+            <div className="flex gap-2">
+              <Select value={countryCode} onValueChange={setCountryCode}>
+                <SelectTrigger className="w-[100px] h-9 sm:h-10 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {countryCodes.map((item) => (
+                    <SelectItem key={item.code} value={item.code}>
+                      {item.flag} {item.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="login-phone"
+                type="tel"
+                placeholder="请输入手机号"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                maxLength={15}
+                className="flex-1 h-9 sm:h-10 text-sm"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5 sm:space-y-2">
@@ -858,8 +921,8 @@ export function QuickRegisterStep({
           </div>
 
           <Button
-            onClick={handleEmailLogin}
-            disabled={isLoading || !email || !password}
+            onClick={handlePhoneLogin}
+            disabled={isLoading || !phone || !password}
             className="w-full h-9 sm:h-10 text-sm"
           >
             {isLoading ? (
