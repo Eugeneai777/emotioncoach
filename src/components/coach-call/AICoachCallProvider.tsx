@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAICoachIncomingCall, AICoachCall } from '@/hooks/useAICoachIncomingCall';
 import { AIIncomingCallDialog } from './AIIncomingCallDialog';
 import { supabase } from '@/integrations/supabase/client';
-
+import { safeReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 interface AICoachCallContextValue {
   incomingCall: AICoachCall | null;
   isInAICall: boolean;
@@ -88,6 +88,8 @@ export function AICoachCallProvider({ children }: AICoachCallProviderProps) {
 
   const handleReject = useCallback(async () => {
     if (!incomingCall) return;
+    // ✅ 取消时确保释放可能已被占用的会话锁（防止后台残留连接导致锁未释放）
+    safeReleaseSessionLock();
     await rejectCall(incomingCall.id);
   }, [incomingCall, rejectCall]);
 
