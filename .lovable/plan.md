@@ -1,194 +1,153 @@
 
+## 5个轻入口微信分享 OG Meta 标签优化方案
 
-## 情绪🆘按钮 收费模式改造方案
+### 现状分析
 
-### 目标
+| 轻入口页面 | 当前 OG pageKey | 问题 |
+|-----------|----------------|------|
+| `/wealth-assessment-lite` | ❌ 缺失 | 无 DynamicOGMeta 组件 |
+| `/emotion-health-lite` | ❌ 缺失 | 无 DynamicOGMeta 组件 |
+| `/scl90-lite` | ❌ 缺失 | 无 DynamicOGMeta 组件 |
+| `/alive-check-lite` | `aliveCheck` | 借用主功能配置 |
+| `/emotion-button-lite` | `emotionButtonIntro` | 借用介绍页配置 |
+| `/awakening-lite` | `awakening` | 借用主功能配置 |
 
-将情绪按钮转变为 ¥9.9 付费模式，参照其他产品（死了吗、觉察日记）的轻量版入口模式实现。
+**核心问题：**
+- 3 个页面完全缺失 OG Meta 组件
+- 所有页面没有独立的分享卡片配置
+- `pathToKeyMap` 缺少轻入口路径映射
+- 数据库没有轻入口专属 OG 配置记录
 
 ---
 
-### 整体架构
+### 实施方案
 
-| 项目 | 说明 |
-|------|------|
-| 新入口路由 | `/emotion-button-lite` |
-| 付费包Key | `emotion_button` |
-| 收费 | ¥9.9 |
-| 介绍页入口 | `/emotion-button-intro` 底部添加轻模式链接 |
+#### 第一步：数据库 - 新增 6 个轻入口 OG 配置
+
+在 `og_configurations` 表中插入专属配置：
+
+| page_key | og_title | description | 特点 |
+|----------|----------|-------------|------|
+| `wealthAssessmentLite` | 3分钟测你的财富卡点 | 先测评后付费，发现你的财富盲点 | 强调"先体验后付费" |
+| `emotionHealthLite` | 情绪健康快速自测 | 了解你的情绪健康状态，科学测评 | 突出科学性 |
+| `scl90Lite` | SCL-90心理健康自测 | 专业量表，快速了解心理健康 | 强调专业性 |
+| `aliveCheckLite` | 死了吗安全打卡 | 让关心你的人安心，每日报平安 | 情感诉求 |
+| `emotionButtonLite` | 30秒情绪急救按钮 | 9种情绪场景，即时缓解负面情绪 | 强调即时效果 |
+| `awakeningLite` | 觉察日记 | 把日常积累成个人成长的复利资产 | 强调长期价值 |
+
+统一使用现有 OG 图片：`og-ai-series-*.png`
 
 ---
 
-### 数据库变更
+#### 第二步：代码 - 更新路径映射
 
-在 `packages` 表中新增产品包：
+**修改 `src/config/ogConfig.ts`**
 
-```sql
-INSERT INTO packages (package_key, package_name, price, description, product_line, is_active, display_order)
-VALUES ('emotion_button', '情绪SOS按钮', 9.90, '9种情绪场景 + 4阶段科学设计 + 288条认知提醒', 'youjin', true, 10);
+在 `pathToKeyMap` 中添加 6 个轻入口路径：
+
+```text
+'/wealth-assessment-lite': 'wealthAssessmentLite'
+'/emotion-health-lite': 'emotionHealthLite'  
+'/scl90-lite': 'scl90Lite'
+'/alive-check-lite': 'aliveCheckLite'
+'/emotion-button-lite': 'emotionButtonLite'
+'/awakening-lite': 'awakeningLite'
 ```
+
+---
+
+#### 第三步：代码 - 为缺失页面添加 DynamicOGMeta
+
+**修改 3 个缺失 OG Meta 的页面：**
+
+| 文件 | 操作 |
+|------|------|
+| `src/pages/WealthAssessmentLite.tsx` | 添加 `<DynamicOGMeta pageKey="wealthAssessmentLite" />` |
+| `src/pages/EmotionHealthLite.tsx` | 添加 `<DynamicOGMeta pageKey="emotionHealthLite" />` |
+| `src/pages/SCL90Lite.tsx` | 添加 `<DynamicOGMeta pageKey="scl90Lite" />` |
+
+**修改 3 个使用错误 pageKey 的页面：**
+
+| 文件 | 当前 | 改为 |
+|------|------|------|
+| `src/pages/AliveCheckLite.tsx` | `pageKey="aliveCheck"` | `pageKey="aliveCheckLite"` |
+| `src/pages/EmotionButtonLite.tsx` | `pageKey="emotionButtonIntro"` | `pageKey="emotionButtonLite"` |
+| `src/pages/AwakeningLite.tsx` | `pageKey="awakening"` | `pageKey="awakeningLite"` |
+
+---
+
+### OG 配置内容设计
+
+每个轻入口的分享卡片优化方向：
+
+| 产品 | og_title | description | 核心卖点 |
+|------|----------|-------------|---------|
+| 财富卡点 | 有劲AI • 3分钟测财富卡点 | 先测评后付费，¥9.9发现你的财富盲点 | 低门槛 + 价格透明 |
+| 情绪健康 | 有劲AI • 情绪健康自测 | 科学量表评估，了解你的情绪状态 | 科学 + 专业 |
+| SCL-90 | 有劲AI • 心理健康自测 | 专业SCL-90量表，90题全面评估 | 专业 + 全面 |
+| 死了吗 | 有劲AI • 安全打卡 | 每日报平安，让关心你的人安心 | 情感 + 关怀 |
+| 情绪按钮 | 有劲AI • 情绪急救 | 30秒缓解负面情绪，9种场景全覆盖 | 即时 + 全覆盖 |
+| 觉察日记 | 有劲AI • 觉察日记 | 把平凡日常积累成个人成长复利 | 长期价值 |
 
 ---
 
 ### 文件修改清单
 
-#### 1. 新建：轻量版入口页面
-
-**`src/pages/EmotionButtonLite.tsx`**
-
-参照 `AliveCheckLite.tsx` 模式创建：
-
-| 组成部分 | 说明 |
-|---------|------|
-| 顶部导航 | 返回按钮 + 标题 + 介绍页入口 |
-| 主内容 | 直接显示 9 个情绪按钮网格 |
-| 购买状态 | 使用 `usePackagePurchased('emotion_button')` |
-| 支付逻辑 | 用户选择情绪后，若未购买则弹出 `AssessmentPayDialog` |
-| 底部提示 | 未登录用户显示"先体验后付费 ¥9.9"及备案信息 |
-| 视觉主题 | 沿用原有青色渐变（`from-teal-50 via-cyan-50 to-blue-50`）|
-
-**核心流程：**
-```text
-用户访问 /emotion-button-lite
-         │
-         ▼
-  ┌─────────────────┐
-  │  9按钮情绪选择   │ ◄─── 直接显示
-  │  (底部：轻模式   │
-  │   付费提示)      │
-  └────────┬────────┘
-           │ 用户点击任一情绪按钮
-           │
-     ┌─────┴─────┐
-     │           │
-  已购买?     未购买?
-     │           │
-     ▼           ▼
- 进入完整    弹出支付弹窗
- 疗愈流程    ───────────┐
-                        │
-              支付成功后 │
-     ┌──────────────────┘
-     ▼
-   进入疗愈流程
-```
-
-#### 2. 修改：介绍页添加轻模式入口
-
-**`src/pages/EmotionButtonIntro.tsx`**
-
-在固定底部CTA区域添加轻模式入口链接：
-
-```tsx
-// 底部CTA区域修改
-<div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-teal-100 p-4 z-20">
-  <div className="container max-w-4xl mx-auto space-y-2">
-    <Button ...>
-      立即体验情绪急救 🆘
-    </Button>
-    
-    {/* 新增：轻模式入口（未登录/未购买用户可见） */}
-    {!user && (
-      <a 
-        href="/emotion-button-lite" 
-        className="text-muted-foreground text-sm block text-center hover:text-primary transition-colors"
-      >
-        💡 先体验后付费 ¥9.9
-      </a>
-    )}
-  </div>
-</div>
-```
-
-需要在组件中：
-- 导入 `useAuth` hook
-- 导入 `usePackagePurchased` hook
-- 添加条件渲染逻辑
-
-#### 3. 修改：路由注册
-
-**`src/App.tsx`**
-
-```tsx
-// 新增懒加载
-const EmotionButtonLite = lazy(() => import("./pages/EmotionButtonLite"));
-
-// 新增路由（在 emotion-button 路由附近）
-<Route path="/emotion-button-lite" element={<EmotionButtonLite />} />
-```
-
-#### 4. 修改：浮动菜单排除
-
-**`src/components/FloatingQuickMenu.tsx`**
-
-将 `/emotion-button-lite` 添加到排除列表：
-
-```tsx
-const EXCLUDED_ROUTES = [
-  // ... 现有路由
-  '/emotion-button-lite',  // 新增
-];
-```
-
----
-
-### 与现有免费试用系统的关系
-
-| 现有实现 | 改造后 |
-|---------|--------|
-| `useFreeTrialTracking` 追踪使用次数 | 保留，用于未购买用户的体验限制追踪 |
-| `EmotionButtonPurchaseDialog` 弹窗 | 在轻入口用 `AssessmentPayDialog` 替代 |
-| 5 次免费使用后弹窗 | 轻入口首次使用即弹窗（未购买时） |
-
-**注意：** 原有 `/` 页面的情绪按钮入口（从情绪教练推荐跳转）保持现有逻辑不变，轻入口是独立的付费转化路径。
-
----
-
-### 样式主题
-
-| 元素 | 样式 |
-|------|------|
-| 背景渐变 | `from-teal-50 via-cyan-50 to-blue-50`（沿用原有） |
-| 导航按钮 | `text-teal-700`、`bg-white/60` |
-| 标题 | `情绪🆘按钮`、`text-teal-800` |
-| 9 按钮 | 沿用 `emotionTypes` 配置的渐变色 |
-
----
-
-### 修改文件总览
-
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/pages/EmotionButtonLite.tsx` | 新建 | 轻量版页面主入口 |
-| `src/pages/EmotionButtonIntro.tsx` | 修改 | 底部添加轻模式入口链接 |
-| `src/App.tsx` | 修改 | 添加 /emotion-button-lite 路由 |
-| `src/components/FloatingQuickMenu.tsx` | 修改 | 排除新路由 |
-| 数据库迁移 | 新建 | 添加 emotion_button 产品包 |
+| `src/config/ogConfig.ts` | 修改 | 添加 6 个轻入口路径映射 |
+| `src/pages/WealthAssessmentLite.tsx` | 修改 | 添加 DynamicOGMeta 组件 |
+| `src/pages/EmotionHealthLite.tsx` | 修改 | 添加 DynamicOGMeta 组件 |
+| `src/pages/SCL90Lite.tsx` | 修改 | 添加 DynamicOGMeta 组件 |
+| `src/pages/AliveCheckLite.tsx` | 修改 | 更新 pageKey |
+| `src/pages/EmotionButtonLite.tsx` | 修改 | 更新 pageKey |
+| `src/pages/AwakeningLite.tsx` | 修改 | 更新 pageKey |
+| 数据库迁移 | 新建 | 插入 6 条 OG 配置记录 |
 
 ---
 
-### 外部链接
+### 技术细节
 
-改造完成后的轻入口链接：
+**数据库插入 SQL：**
 
+```sql
+INSERT INTO og_configurations (page_key, title, og_title, description, image_url, url, site_name, is_active)
+VALUES 
+  ('wealthAssessmentLite', '财富卡点测评 - 有劲AI', '有劲AI • 3分钟测财富卡点', '先测评后付费，¥9.9发现你的财富盲点', 'https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/og-images/og-ai-series-1768516908677.png', 'https://wechat.eugenewe.net/wealth-assessment-lite', NULL, true),
+  ('emotionHealthLite', '情绪健康测评 - 有劲AI', '有劲AI • 情绪健康自测', '科学量表评估，了解你的情绪状态', 'https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/og-images/og-ai-series-1768516908677.png', 'https://wechat.eugenewe.net/emotion-health-lite', NULL, true),
+  ('scl90Lite', 'SCL-90心理测评 - 有劲AI', '有劲AI • 心理健康自测', '专业SCL-90量表，90题全面评估', 'https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/og-images/og-ai-series-1768516908677.png', 'https://wechat.eugenewe.net/scl90-lite', NULL, true),
+  ('aliveCheckLite', '死了吗安全打卡 - 有劲AI', '有劲AI • 安全打卡', '每日报平安，让关心你的人安心', 'https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/og-images/og-ai-series-1768516908677.png', 'https://wechat.eugenewe.net/alive-check-lite', NULL, true),
+  ('emotionButtonLite', '情绪急救按钮 - 有劲AI', '有劲AI • 情绪急救', '30秒缓解负面情绪，9种场景全覆盖', 'https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/og-images/og-ai-series-1768516908677.png', 'https://wechat.eugenewe.net/emotion-button-lite', NULL, true),
+  ('awakeningLite', '觉察日记 - 有劲AI', '有劲AI • 觉察日记', '把平凡日常积累成个人成长复利', 'https://vlsuzskvykddwrxbmcbu.supabase.co/storage/v1/object/public/og-images/og-ai-series-1768516908677.png', 'https://wechat.eugenewe.net/awakening-lite', NULL, true);
 ```
-https://wechat.eugenewe.net/emotion-button-lite
-```
 
-介绍页链接（带轻模式入口）：
+**代码修改示例（WealthAssessmentLite.tsx）：**
 
-```
-https://wechat.eugenewe.net/emotion-button-intro
+```tsx
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+
+export default function WealthAssessmentLitePage() {
+  // ...existing code...
+  
+  return (
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background">
+      <DynamicOGMeta pageKey="wealthAssessmentLite" />
+      
+      {/* 测评页 */}
+      {pageState === "questions" && (
+        // ...
+      )}
+    </div>
+  );
+}
 ```
 
 ---
 
 ### 验收标准
 
-1. ✅ `/emotion-button-lite` 入口直接显示 9 个情绪按钮
-2. ✅ 未购买用户点击情绪按钮后弹出 ¥9.9 支付弹窗
-3. ✅ 已购买用户可直接进入疗愈流程
-4. ✅ 介绍页底部显示轻模式入口（未登录/未购买用户可见）
-5. ✅ 登录且已购买用户自动隐藏轻模式提示
-6. ✅ 支付成功后可正常使用全部功能
-
+1. ✅ 6 个轻入口在微信分享时显示正确的标题和描述
+2. ✅ 分享卡片图片正常加载（使用统一 og-ai-series 图片）
+3. ✅ 每个轻入口 URL 正确指向对应页面
+4. ✅ 微信 JS-SDK 分享配置正确触发
+5. ✅ 后台 og_configurations 表可动态修改配置
