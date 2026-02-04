@@ -86,8 +86,16 @@ export class DoubaoRealtimeChat {
   // 注意：用户长时间说话时可能没有 AI 回复，但 pong 应该始终正常返回
   private lastHeartbeatResponse: number = 0;
   private missedHeartbeats: number = 0;
-  // 🔧 iOS 微信优化：减少最大容忍次数从 8 到 6（约 135s），更早发现断连
-  private static readonly MAX_MISSED_HEARTBEATS = 6;
+  // 🔧 Heartbeat interval 本身也可能在 WebView 中被“冻结/延迟执行”，
+  // 若直接按时间差累加 missed，会在恢复后误判为断连。
+  // 因此：
+  // 1) 只要收到任意 WS 消息就视为“连接活着”，更新 lastHeartbeatResponse
+  // 2) 检测到定时器严重漂移时，跳过一次超时判定并重置计数
+  private lastHeartbeatTick: number = 0;
+  private static readonly HEARTBEAT_INTERVAL_MS = 15000;
+  private static readonly HEARTBEAT_TIMEOUT_START_MS = 60000; // 60s 后才开始判定“心跳超时”
+  private static readonly HEARTBEAT_TIMER_DRIFT_MS = 20000; // interval 漂移超过 20s 认为发生了冻结/系统调度
+  private static readonly MAX_MISSED_HEARTBEATS = 12; // 更宽容，避免移动端误判（约 3-4 分钟级别）
   
   // 🔧 新增：AI 回复状态跟踪，用于区分"AI正在回复"和"空闲等待用户"
   // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
@@ -494,9 +502,25 @@ export class DoubaoRealtimeChat {
     this.missedHeartbeats = 0;
     this.isAssistantSpeaking = false;
     this.lastReadyStateCheck = Date.now();
+    this.lastHeartbeatTick = Date.now();
     
     this.heartbeatInterval = window.setInterval(() => {
       const now = Date.now();
+
+      // 🔧 关键：检测 interval 执行是否被“冻结/延迟”。
+      // 在 iOS/Android 微信 WebView 中，即便前台亮屏，也可能出现短暂停顿，
+      // 如果我们直接用 timeSinceLastResponse 累加 missed，会误判断连。
+      const tickDrift = now - this.lastHeartbeatTick - DoubaoRealtimeChat.HEARTBEAT_INTERVAL_MS;
+      this.lastHeartbeatTick = now;
+      if (tickDrift > DoubaoRealtimeChat.HEARTBEAT_TIMER_DRIFT_MS) {
+        console.warn('[DoubaoChat] ⚠️ Heartbeat timer drift detected, skipping timeout check once:', {
+          tickDrift,
+          readyState: this.ws?.readyState,
+        });
+        // 恢复后先“放过一次”，避免立刻误判。
+        this.missedHeartbeats = 0;
+        this.lastHeartbeatResponse = now;
+      }
       
       // 🔧 iOS 微信关键修复：主动检测 WebSocket readyState
       // iOS 微信 WebView 可能静默回收 WebSocket，onclose 事件不触发
@@ -508,6 +532,7 @@ export class DoubaoRealtimeChat {
         // WebSocket 状态：0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
         if (wsState !== WebSocket.OPEN) {
           console.error(`[DoubaoChat] ❌ WebSocket readyState=${wsState} (not OPEN), connection lost`);
+          this.onMessage?.({ type: 'debug.disconnect', reason: 'ws_not_open', wsState });
           this.stopHeartbeat();
           this.onStatusChange('disconnected');
           return;
@@ -526,6 +551,7 @@ export class DoubaoRealtimeChat {
             this.ws.send(JSON.stringify({ type: 'ping' }));
           } catch (e) {
             console.error('[DoubaoChat] ❌ Failed to send ping during AI speaking:', e);
+            this.onMessage?.({ type: 'debug.disconnect', reason: 'ping_send_failed_during_ai', error: String(e) });
             this.stopHeartbeat();
             this.onStatusChange('disconnected');
           }
@@ -536,19 +562,26 @@ export class DoubaoRealtimeChat {
         const timeSinceResponseEnd = now - this.lastResponseEndTime;
         if (timeSinceResponseEnd > DoubaoRealtimeChat.USER_IDLE_TIMEOUT) {
           console.log(`[DoubaoChat] User idle timeout: ${Math.round(timeSinceResponseEnd / 1000)}s since AI finished speaking`);
+          this.onMessage?.({ type: 'debug.disconnect', reason: 'user_idle_timeout', seconds: Math.round(timeSinceResponseEnd / 1000) });
           this.stopHeartbeat();
           this.onStatusChange('disconnected');
           return;
         }
         
         // 检测心跳响应超时（连接可能已断开）
-        // 🔧 优化：缩短初始容忍时间从 45s 到 30s，更快发现问题
-        if (timeSinceLastResponse > 30000 && this.lastHeartbeatResponse > 0) {
+        // ✅ 重要修复：只在超过更长阈值后才开始累计 missed，避免移动端调度/卡顿误判。
+        if (timeSinceLastResponse > DoubaoRealtimeChat.HEARTBEAT_TIMEOUT_START_MS && this.lastHeartbeatResponse > 0) {
           this.missedHeartbeats++;
           console.warn(`[DoubaoChat] ⚠️ Heartbeat timeout: ${timeSinceLastResponse}ms since last response, missed: ${this.missedHeartbeats}/${DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS}`);
           
           if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
             console.error('[DoubaoChat] ❌ Connection appears dead, triggering disconnect');
+            this.onMessage?.({
+              type: 'debug.disconnect',
+              reason: 'heartbeat_timeout',
+              timeSinceLastResponse,
+              missed: this.missedHeartbeats,
+            });
             this.stopHeartbeat();
             this.onStatusChange('disconnected');
             return;
@@ -565,12 +598,13 @@ export class DoubaoRealtimeChat {
           console.error('[DoubaoChat] ❌ Failed to send ping:', e);
           this.missedHeartbeats++;
           if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
+            this.onMessage?.({ type: 'debug.disconnect', reason: 'ping_send_failed', error: String(e) });
             this.stopHeartbeat();
             this.onStatusChange('disconnected');
           }
         }
       }
-    }, 15000);
+    }, DoubaoRealtimeChat.HEARTBEAT_INTERVAL_MS);
   }
 
   private stopHeartbeat(): void {
@@ -694,6 +728,11 @@ export class DoubaoRealtimeChat {
   private handleMessage(data: string): void {
     try {
       const message = JSON.parse(data);
+
+      // ✅ 关键修复：只要收到任意 WS 消息，就说明连接仍然活着。
+      // 之前仅 heartbeat/pong 会更新时间戳，导致在持续音频/转录流中也可能被误判“超时”。
+      this.lastHeartbeatResponse = Date.now();
+      this.missedHeartbeats = 0;
       
       // 🔧 优化微信环境：大幅减少日志输出频率，防止 WebView 性能问题
       // 音频消息每 100 条打印一次，其他消息正常打印
@@ -752,9 +791,7 @@ export class DoubaoRealtimeChat {
         // 🔧 修复 switch-case 穿透问题：心跳重置和业务逻辑分离
         case 'heartbeat':
         case 'pong':
-          // 心跳/pong 只需要重置超时计时器
-          this.lastHeartbeatResponse = Date.now();
-          this.missedHeartbeats = 0;
+          // 心跳/pong 已在上方统一刷新 lastHeartbeatResponse；这里保持分支存在，便于阅读
           break;
 
         case 'input_audio_buffer.speech_started':
