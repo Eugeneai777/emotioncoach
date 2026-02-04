@@ -113,6 +113,7 @@ const EmotionButton = lazy(() => import("./pages/EmotionButton"));
 const AliveCheck = lazy(() => import("./pages/AliveCheck"));
 const AliveCheckIntro = lazy(() => import("./pages/AliveCheckIntro"));
 const SCL90Page = lazy(() => import("./pages/SCL90Page"));
+const SCL90Lite = lazy(() => import("./pages/SCL90Lite"));
 const EmotionHealthPage = lazy(() => import("./pages/EmotionHealthPage"));
 const EmotionHealthLite = lazy(() => import("./pages/EmotionHealthLite"));
 const AssessmentCoachPage = lazy(() => import("./pages/AssessmentCoachPage"));
@@ -284,7 +285,8 @@ const App = () => (
               <Route path="/emotion-button" element={<EmotionButton />} />
               <Route path="/alive-check" element={<AliveCheck />} />
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
-              <Route path="/scl90" element={<SCL90Page />} />
+<Route path="/scl90" element={<SCL90Page />} />
+              <Route path="/scl90-lite" element={<SCL90Lite />} />
               <Route path="/emotion-health" element={<EmotionHealthPage />} />
               <Route path="/emotion-health-lite" element={<EmotionHealthLite />} />
               <Route path="/assessment-coach" element={<AssessmentCoachPage />} />
