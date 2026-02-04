@@ -334,10 +334,15 @@ export function QuickRegisterStep({
     }
   };
 
-  // 邮箱注册
-  const handleEmailRegister = async () => {
-    if (!email || !password) {
-      toast.error('请填写邮箱和密码');
+  // 手机号注册
+  const handlePhoneRegister = async () => {
+    if (!phone || !password) {
+      toast.error('请填写手机号和密码');
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      toast.error('请输入有效的手机号码');
       return;
     }
 
@@ -351,11 +356,14 @@ export function QuickRegisterStep({
       return;
     }
 
+    // 生成占位邮箱
+    const placeholderEmail = generatePhoneEmail(countryCode, phone);
+
     setIsLoading(true);
     try {
       // 使用 Supabase Auth 注册
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: placeholderEmail,
         password,
         options: {
           emailRedirectTo: window.location.origin,
@@ -363,13 +371,21 @@ export function QuickRegisterStep({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('already registered')) {
+          throw new Error('该手机号已注册，请直接登录');
+        }
+        throw error;
+      }
       if (!data.user) throw new Error('注册失败');
 
-      // 创建 profile
+      // 创建 profile，包含手机号信息
       await supabase.from('profiles').upsert({
         id: data.user.id,
         display_name: nickname || undefined,
+        phone: phone,
+        phone_country_code: countryCode,
+        auth_provider: 'phone',
       });
 
       // 绑定订单到用户
@@ -378,9 +394,9 @@ export function QuickRegisterStep({
       toast.success('注册成功！');
       onSuccess(data.user.id);
     } catch (error: any) {
-      console.error('Email register error:', error);
-      if (error.message?.includes('already registered')) {
-        toast.error('该邮箱已注册，请直接登录');
+      console.error('Phone register error:', error);
+      if (error.message?.includes('该手机号已注册')) {
+        toast.error('该手机号已注册，请直接登录');
         setRegisterMode('login');
       } else {
         toast.error(error.message || '注册失败，请重试');
