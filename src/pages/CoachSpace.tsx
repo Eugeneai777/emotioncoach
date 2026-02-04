@@ -3,12 +3,13 @@ import { motion } from "framer-motion";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Bell, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import { EnhancedCoachCard } from "@/components/coach/EnhancedCoachCard";
 import { HumanCoachEntry } from "@/components/coach/HumanCoachEntry";
 import { TeamCoachingEntry } from "@/components/coach/TeamCoachingEntry";
 import PageHeader from "@/components/PageHeader";
+import { CoachCardSkeleton, LoadingMessage } from "@/components/CoachCardSkeleton";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 const CoachSpace = () => {
   const navigate = useNavigate();
@@ -23,8 +24,18 @@ const CoachSpace = () => {
       {/* 通用顶部 Header */}
       <PageHeader
         title="教练空间"
+        showHomeButton
         rightActions={
           <>
+            <HelpTooltip
+              title="教练空间使用指南"
+              description="选择适合你的AI教练，开始成长对话"
+              tips={[
+                "每位教练专注不同领域，选择最匹配你需求的",
+                "可以随时切换教练，对话记录会保存",
+                "语音对话功能让交流更自然"
+              ]}
+            />
             <Button variant="ghost" size="icon" onClick={() => navigate('/coach-space-intro')}>
               <Info className="w-5 h-5" />
             </Button>
@@ -54,11 +65,10 @@ const CoachSpace = () => {
         </h3>
         
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3, 4].map(i => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
-            ))}
-          </div>
+          <>
+            <LoadingMessage message="正在为您加载专属教练..." />
+            <CoachCardSkeleton count={4} />
+          </>
         ) : (
           <div className="flex flex-col gap-3">
             {templates?.map((coach, index) => (

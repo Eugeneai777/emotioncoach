@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -10,13 +10,14 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, X } from "lucide-react";
+import { Loader2, Send, X, RotateCcw } from "lucide-react";
 import { AwakeningDimension, InputMode, inputModes, LifeCard } from "@/config/awakeningConfig";
 import AwakeningQuickSelect from "./AwakeningQuickSelect";
 import AwakeningInputForm from "./AwakeningInputForm";
 import AwakeningLifeCard from "./AwakeningLifeCard";
 import { useAwakeningAnalysis } from "@/hooks/useAwakeningAnalysis";
 import { useAuth } from "@/hooks/useAuth";
+import { useDraftSave } from "@/hooks/useDraftSave";
 import { toast } from "sonner";
 
 interface AwakeningDrawerProps {
@@ -41,17 +42,55 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
   
   const { analyze, isAnalyzing } = useAwakeningAnalysis();
 
-  const resetForm = () => {
+  // 草稿保存功能
+  const draftKey = dimension ? `awakening_${dimension.id}` : 'awakening_default';
+  const { saveDraft, loadDraft, clearDraft, hasDraft } = useDraftSave({ 
+    key: draftKey,
+    debounceMs: 800 
+  });
+
+  // 当输入变化时自动保存草稿
+  useEffect(() => {
+    if (dimension && isOpen) {
+      saveDraft({
+        value1,
+        value2,
+        detailedValue,
+        selectedWords: selectedWords.join(','),
+        inputMode
+      });
+    }
+  }, [value1, value2, detailedValue, selectedWords, inputMode, dimension, isOpen, saveDraft]);
+
+  // 打开抽屉时恢复草稿
+  useEffect(() => {
+    if (dimension && isOpen) {
+      const draft = loadDraft();
+      if (draft) {
+        setValue1(draft.value1 || '');
+        setValue2(draft.value2 || '');
+        setDetailedValue(draft.detailedValue || '');
+        setSelectedWords(draft.selectedWords ? draft.selectedWords.split(',').filter(Boolean) : []);
+        if (draft.inputMode && ['quick', 'template', 'detailed'].includes(draft.inputMode)) {
+          setInputMode(draft.inputMode as InputMode);
+        }
+      }
+    }
+  }, [dimension?.id, isOpen, loadDraft]);
+
+  const resetForm = useCallback(() => {
     setInputMode('template');
     setSelectedWords([]);
     setValue1('');
     setValue2('');
     setDetailedValue('');
     setLifeCard(null);
-  };
+    clearDraft();
+  }, [clearDraft]);
 
   const handleClose = () => {
-    resetForm();
+    // 不清除草稿，允许用户下次恢复
+    setLifeCard(null);
     onClose();
   };
 
