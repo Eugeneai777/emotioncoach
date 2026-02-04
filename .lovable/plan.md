@@ -1,188 +1,157 @@
 
-## 「死了吗」和「觉察日记」收费模式实现方案
+
+## 情绪🆘按钮 收费模式改造方案
 
 ### 目标
 
-将"死了吗"安全打卡和"觉察日记"两个功能转变为付费模式，收费 ¥9.9。参照现有测评类产品（财富卡点、情绪健康、SCL-90）的"先体验后支付"轻量版模式实现。
+将情绪按钮转变为 ¥9.9 付费模式，参照其他产品（死了吗、觉察日记）的轻量版入口模式实现。
 
 ---
 
 ### 整体架构
 
-| 功能 | 新入口路由 | 付费包Key | 收费 |
-|------|-----------|----------|------|
-| 死了吗 | `/alive-check-lite` | `alive_check` | ¥9.9 |
-| 觉察日记 | `/awakening-lite` | `awakening_system` | ¥9.9 |
+| 项目 | 说明 |
+|------|------|
+| 新入口路由 | `/emotion-button-lite` |
+| 付费包Key | `emotion_button` |
+| 收费 | ¥9.9 |
+| 介绍页入口 | `/emotion-button-intro` 底部添加轻模式链接 |
 
 ---
 
 ### 数据库变更
 
-在 `packages` 表中新增两个产品包：
+在 `packages` 表中新增产品包：
 
 ```sql
--- 死了吗安全打卡
 INSERT INTO packages (package_key, package_name, price, description, product_line, is_active, display_order)
-VALUES ('alive_check', '死了吗安全打卡', 9.90, '每日安全确认 + 紧急联系人自动通知', 'youjin', true, 8);
-
--- 觉察日记系统
-INSERT INTO packages (package_key, package_name, price, description, product_line, is_active, display_order)
-VALUES ('awakening_system', '觉察日记', 9.90, '6维觉察入口 + AI生命卡片分析', 'youjin', true, 9);
+VALUES ('emotion_button', '情绪SOS按钮', 9.90, '9种情绪场景 + 4阶段科学设计 + 288条认知提醒', 'youjin', true, 10);
 ```
 
 ---
 
 ### 文件修改清单
 
-#### 1. 新建：死了吗轻量版入口
+#### 1. 新建：轻量版入口页面
 
-**`src/pages/AliveCheckLite.tsx`**
-- 状态机：intro → main → (已购买直接使用，未购买显示支付弹窗)
-- 入口直接显示功能界面
-- 复用 `AliveCheck` 组件
-- 使用 `AssessmentPayDialog` 弹窗（packageKey: `alive_check`）
-- 首屏底部显示轻模式文字（未登录用户可见）
+**`src/pages/EmotionButtonLite.tsx`**
 
-**`src/hooks/useAliveCheckPurchase.ts`**
-- 新建 hook 检查用户是否已购买 `alive_check` 包
+参照 `AliveCheckLite.tsx` 模式创建：
 
-#### 2. 新建：觉察日记轻量版入口
+| 组成部分 | 说明 |
+|---------|------|
+| 顶部导航 | 返回按钮 + 标题 + 介绍页入口 |
+| 主内容 | 直接显示 9 个情绪按钮网格 |
+| 购买状态 | 使用 `usePackagePurchased('emotion_button')` |
+| 支付逻辑 | 用户选择情绪后，若未购买则弹出 `AssessmentPayDialog` |
+| 底部提示 | 未登录用户显示"先体验后付费 ¥9.9"及备案信息 |
+| 视觉主题 | 沿用原有青色渐变（`from-teal-50 via-cyan-50 to-blue-50`）|
 
-**`src/pages/AwakeningLite.tsx`**
-- 入口直接显示觉察日记主界面
-- 复用现有 `Awakening` 页面组件逻辑
-- 使用 `AssessmentPayDialog` 弹窗（packageKey: `awakening_system`）
-- 首屏底部显示轻模式文字（未登录用户可见）
-
-**`src/hooks/useAwakeningPurchase.ts`**
-- 新建 hook 检查用户是否已购买 `awakening_system` 包
-
-#### 3. 修改：Landing页面添加轻模式入口
-
-**`src/pages/AliveCheckIntro.tsx`**
-- 底部CTA区域添加"轻模式"文字链接
-- 未登录用户显示"💡 先体验后付费 ¥9.9"文字
-- 登录/已购买用户隐藏该文字
-- 添加跳转到 `/alive-check-lite` 的入口
-
-**`src/pages/AwakeningIntro.tsx`**
-- 底部CTA区域添加"轻模式"文字链接
-- 未登录用户显示"💡 先体验后付费 ¥9.9"文字
-- 登录/已购买用户隐藏该文字
-- 添加跳转到 `/awakening-lite` 的入口
-
-#### 4. 修改：路由注册
-
-**`src/App.tsx`**
-```tsx
-// 新增懒加载
-const AliveCheckLite = lazy(() => import("./pages/AliveCheckLite"));
-const AwakeningLite = lazy(() => import("./pages/AwakeningLite"));
-
-// 新增路由
-<Route path="/alive-check-lite" element={<AliveCheckLite />} />
-<Route path="/awakening-lite" element={<AwakeningLite />} />
+**核心流程：**
+```text
+用户访问 /emotion-button-lite
+         │
+         ▼
+  ┌─────────────────┐
+  │  9按钮情绪选择   │ ◄─── 直接显示
+  │  (底部：轻模式   │
+  │   付费提示)      │
+  └────────┬────────┘
+           │ 用户点击任一情绪按钮
+           │
+     ┌─────┴─────┐
+     │           │
+  已购买?     未购买?
+     │           │
+     ▼           ▼
+ 进入完整    弹出支付弹窗
+ 疗愈流程    ───────────┐
+                        │
+              支付成功后 │
+     ┌──────────────────┘
+     ▼
+   进入疗愈流程
 ```
 
-#### 5. 修改：浮动菜单排除
+#### 2. 修改：介绍页添加轻模式入口
+
+**`src/pages/EmotionButtonIntro.tsx`**
+
+在固定底部CTA区域添加轻模式入口链接：
+
+```tsx
+// 底部CTA区域修改
+<div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-teal-100 p-4 z-20">
+  <div className="container max-w-4xl mx-auto space-y-2">
+    <Button ...>
+      立即体验情绪急救 🆘
+    </Button>
+    
+    {/* 新增：轻模式入口（未登录/未购买用户可见） */}
+    {!user && (
+      <a 
+        href="/emotion-button-lite" 
+        className="text-muted-foreground text-sm block text-center hover:text-primary transition-colors"
+      >
+        💡 先体验后付费 ¥9.9
+      </a>
+    )}
+  </div>
+</div>
+```
+
+需要在组件中：
+- 导入 `useAuth` hook
+- 导入 `usePackagePurchased` hook
+- 添加条件渲染逻辑
+
+#### 3. 修改：路由注册
+
+**`src/App.tsx`**
+
+```tsx
+// 新增懒加载
+const EmotionButtonLite = lazy(() => import("./pages/EmotionButtonLite"));
+
+// 新增路由（在 emotion-button 路由附近）
+<Route path="/emotion-button-lite" element={<EmotionButtonLite />} />
+```
+
+#### 4. 修改：浮动菜单排除
 
 **`src/components/FloatingQuickMenu.tsx`**
+
+将 `/emotion-button-lite` 添加到排除列表：
+
 ```tsx
 const EXCLUDED_ROUTES = [
   // ... 现有路由
-  '/alive-check-lite',  // 新增
-  '/awakening-lite',    // 新增
+  '/emotion-button-lite',  // 新增
 ];
 ```
 
 ---
 
-### 页面流程
+### 与现有免费试用系统的关系
 
-#### 死了吗轻量版流程
+| 现有实现 | 改造后 |
+|---------|--------|
+| `useFreeTrialTracking` 追踪使用次数 | 保留，用于未购买用户的体验限制追踪 |
+| `EmotionButtonPurchaseDialog` 弹窗 | 在轻入口用 `AssessmentPayDialog` 替代 |
+| 5 次免费使用后弹窗 | 轻入口首次使用即弹窗（未购买时） |
 
-```text
-用户访问 /alive-check-lite
-         │
-         ▼
-  ┌─────────────────┐
-  │  功能主界面      │ ◄─── 直接进入，可体验设置联系人/打卡
-  │  (底部：轻模式   │
-  │   付费提示)      │
-  └────────┬────────┘
-           │ 用户尝试核心操作（如添加联系人/打卡）
-           │
-     ┌─────┴─────┐
-     │           │
-  已购买?     未购买?
-     │           │
-     ▼           ▼
- 正常使用    弹出支付弹窗
-             ───────────┐
-                        │
-              支付成功后 │
-     ┌──────────────────┘
-     ▼
-   正常使用
-```
-
-#### 觉察日记轻量版流程
-
-```text
-用户访问 /awakening-lite
-         │
-         ▼
-  ┌─────────────────┐
-  │  觉察日记主界面  │ ◄─── 直接显示6维觉察入口
-  │  (底部：轻模式   │
-  │   付费提示)      │
-  └────────┬────────┘
-           │ 用户点击任一维度
-           │
-     ┌─────┴─────┐
-     │           │
-  已购买?     未购买?
-     │           │
-     ▼           ▼
- 正常记录    弹出支付弹窗
-             ───────────┐
-                        │
-              支付成功后 │
-     ┌──────────────────┘
-     ▼
-   正常使用
-```
-
----
-
-### 底部轻模式文字设计
-
-未登录/未购买用户在Landing页面底部可见：
-
-```tsx
-<div className="mt-6 pt-4 border-t border-border/30 space-y-3 text-center">
-  <a 
-    href="/alive-check-lite" 
-    className="text-muted-foreground text-sm block hover:text-primary transition-colors"
-  >
-    💡 先体验后付费 ¥9.9
-  </a>
-  <p className="text-muted-foreground text-xs">
-    北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
-  </p>
-</div>
-```
-
-登录且已购买用户：隐藏该区域。
+**注意：** 原有 `/` 页面的情绪按钮入口（从情绪教练推荐跳转）保持现有逻辑不变，轻入口是独立的付费转化路径。
 
 ---
 
 ### 样式主题
 
-| 功能 | 主色调 | 渐变 |
-|------|--------|------|
-| 死了吗 | 玫红色 | `from-rose-500 to-pink-500` |
-| 觉察日记 | 琥珀橙 | `from-amber-500 to-orange-500` |
+| 元素 | 样式 |
+|------|------|
+| 背景渐变 | `from-teal-50 via-cyan-50 to-blue-50`（沿用原有） |
+| 导航按钮 | `text-teal-700`、`bg-white/60` |
+| 标题 | `情绪🆘按钮`、`text-teal-800` |
+| 9 按钮 | 沿用 `emotionTypes` 配置的渐变色 |
 
 ---
 
@@ -190,35 +159,36 @@ const EXCLUDED_ROUTES = [
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/pages/AliveCheckLite.tsx` | 新建 | 死了吗轻量版页面 |
-| `src/pages/AwakeningLite.tsx` | 新建 | 觉察日记轻量版页面 |
-| `src/hooks/useAliveCheckPurchase.ts` | 新建 | 死了吗购买状态hook |
-| `src/hooks/useAwakeningPurchase.ts` | 新建 | 觉察日记购买状态hook |
-| `src/pages/AliveCheckIntro.tsx` | 修改 | 添加轻模式入口文字 |
-| `src/pages/AwakeningIntro.tsx` | 修改 | 添加轻模式入口文字 |
-| `src/App.tsx` | 修改 | 添加两个新路由 |
+| `src/pages/EmotionButtonLite.tsx` | 新建 | 轻量版页面主入口 |
+| `src/pages/EmotionButtonIntro.tsx` | 修改 | 底部添加轻模式入口链接 |
+| `src/App.tsx` | 修改 | 添加 /emotion-button-lite 路由 |
 | `src/components/FloatingQuickMenu.tsx` | 修改 | 排除新路由 |
-| 数据库迁移 | 新建 | 添加两个产品包 |
+| 数据库迁移 | 新建 | 添加 emotion_button 产品包 |
 
 ---
 
-### 技术要点
+### 外部链接
 
-| 要点 | 说明 |
-|------|------|
-| 复用组件 | 复用 `AliveCheck`、`Awakening` 核心组件 |
-| 支付弹窗 | 使用通用 `AssessmentPayDialog` |
-| 购买验证 | 类似其他测评的 `useAssessmentPurchase` 模式 |
-| 条件显示 | 轻模式文字仅对未登录/未购买用户显示 |
-| 动画兼容 | 使用 `opacity: 0.01` 和 `translateZ(0)` 确保微信兼容 |
+改造完成后的轻入口链接：
+
+```
+https://wechat.eugenewe.net/emotion-button-lite
+```
+
+介绍页链接（带轻模式入口）：
+
+```
+https://wechat.eugenewe.net/emotion-button-intro
+```
 
 ---
 
 ### 验收标准
 
-1. ✅ `/alive-check-lite` 入口可直接体验功能
-2. ✅ `/awakening-lite` 入口可直接查看6维觉察
-3. ✅ 核心操作时触发 ¥9.9 付费弹窗
-4. ✅ Landing页面底部显示轻模式入口（未购买用户可见）
-5. ✅ 登录/已购买用户自动隐藏轻模式提示
+1. ✅ `/emotion-button-lite` 入口直接显示 9 个情绪按钮
+2. ✅ 未购买用户点击情绪按钮后弹出 ¥9.9 支付弹窗
+3. ✅ 已购买用户可直接进入疗愈流程
+4. ✅ 介绍页底部显示轻模式入口（未登录/未购买用户可见）
+5. ✅ 登录且已购买用户自动隐藏轻模式提示
 6. ✅ 支付成功后可正常使用全部功能
+
