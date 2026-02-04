@@ -31,7 +31,7 @@ const AliveCheckLite = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50">
-      <DynamicOGMeta pageKey="aliveCheck" />
+      <DynamicOGMeta pageKey="aliveCheckLite" />
       
       {/* 装饰性背景元素 */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">

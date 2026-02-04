@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { LiteIntroCard } from "@/components/wealth-block/LiteIntroCard";
 import { LiteFooter } from "@/components/wealth-block/LiteFooter";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
@@ -70,6 +71,8 @@ export default function WealthAssessmentLitePage() {
       className="h-screen overflow-y-auto overscroll-contain bg-background"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
+      <DynamicOGMeta pageKey="wealthAssessmentLite" />
+      
       {/* 测评页 */}
       {pageState === "questions" && (
         <WealthBlockQuestions 

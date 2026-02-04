@@ -160,6 +160,13 @@ export const pathToKeyMap: Record<string, string> = {
   '/parent-diary': 'parentChildDiary',
   '/parent/intake': 'parentIntake',
   '/parent-camp': 'parentCampLanding',
+  // Lite 轻入口
+  '/wealth-assessment-lite': 'wealthAssessmentLite',
+  '/emotion-health-lite': 'emotionHealthLite',
+  '/scl90-lite': 'scl90Lite',
+  '/alive-check-lite': 'aliveCheckLite',
+  '/emotion-button-lite': 'emotionButtonLite',
+  '/awakening-lite': 'awakeningLite',
 };
 
 /**

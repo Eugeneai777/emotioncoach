@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSCL90Purchase } from "@/hooks/useSCL90Purchase";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { 
   SCL90QuestionsLite, 
   SCL90Result as SCL90ResultComponent, 
@@ -60,6 +61,8 @@ export default function SCL90LitePage() {
       className="h-screen overflow-y-auto overscroll-contain bg-background"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
+      <DynamicOGMeta pageKey="scl90Lite" />
+      
       {/* 测评页 */}
       {pageState === "questions" && (
         <SCL90QuestionsLite 

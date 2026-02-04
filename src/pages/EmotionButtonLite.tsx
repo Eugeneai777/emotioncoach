@@ -41,7 +41,7 @@ const EmotionButtonLite = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      <DynamicOGMeta pageKey="emotionButtonIntro" />
+      <DynamicOGMeta pageKey="emotionButtonLite" />
       
       {/* 装饰性背景元素 */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
