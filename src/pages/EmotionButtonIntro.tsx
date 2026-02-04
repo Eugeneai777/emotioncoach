@@ -13,9 +13,13 @@ import {
 import { ArrowLeft, ArrowRight, Brain, Heart, Shield, Phone, Share2, Sparkles, ChevronRight } from "lucide-react";
 import { emotionTypes } from "@/config/emotionReliefConfig";
 import EmotionButtonShareDialog from "@/components/tools/EmotionButtonShareDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 
 const EmotionButtonIntro = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: hasPurchased } = usePackagePurchased('emotion_button');
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // 核心数据徽章
@@ -342,7 +346,7 @@ const EmotionButtonIntro = () => {
 
       {/* 固定底部CTA */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-teal-100 p-4 z-20">
-        <div className="container max-w-4xl mx-auto">
+        <div className="container max-w-4xl mx-auto space-y-2">
           <Button
             onClick={() => navigate("/energy-studio")}
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 hover:opacity-90 text-white shadow-lg shadow-rose-200"
@@ -350,6 +354,16 @@ const EmotionButtonIntro = () => {
             立即体验情绪急救 🆘
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
+          
+          {/* 轻模式入口（未登录/未购买用户可见） */}
+          {!user && !hasPurchased && (
+            <a 
+              href="/emotion-button-lite" 
+              className="text-muted-foreground text-sm block text-center hover:text-primary transition-colors"
+            >
+              💡 先体验后付费 ¥9.9
+            </a>
+          )}
         </div>
       </div>
 

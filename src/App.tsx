@@ -110,6 +110,7 @@ const MyPosts = lazy(() => import("./pages/MyPosts"));
 const PanicHistory = lazy(() => import("./pages/PanicHistory"));
 const EmotionButtonIntro = lazy(() => import("./pages/EmotionButtonIntro"));
 const EmotionButton = lazy(() => import("./pages/EmotionButton"));
+const EmotionButtonLite = lazy(() => import("./pages/EmotionButtonLite"));
 const AliveCheck = lazy(() => import("./pages/AliveCheck"));
 const AliveCheckLite = lazy(() => import("./pages/AliveCheckLite"));
 const AliveCheckIntro = lazy(() => import("./pages/AliveCheckIntro"));
@@ -285,6 +286,7 @@ const App = () => (
               <Route path="/panic-history" element={<PanicHistory />} />
               <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
               <Route path="/emotion-button" element={<EmotionButton />} />
+              <Route path="/emotion-button-lite" element={<EmotionButtonLite />} />
               <Route path="/alive-check" element={<AliveCheck />} />
               <Route path="/alive-check-lite" element={<AliveCheckLite />} />
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
