@@ -1,0 +1,2 @@
+INSERT INTO packages (package_key, package_name, price, description, product_line, is_active, display_order)
+VALUES ('emotion_button', '情绪SOS按钮', 9.90, '9种情绪场景 + 4阶段科学设计 + 288条认知提醒', 'youjin', true, 10);
