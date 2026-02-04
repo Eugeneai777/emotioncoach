@@ -13,8 +13,8 @@ const packageConfig = [
     name: "尝鲜会员",
     duration: "365天",
     icon: Sparkles,
-    limitPurchase: true, // 限购一次
-    features: ["AI对话体验", "基础功能", "365天有效", "⚠️ 限购一次"],
+    limitPurchase: true,
+    features: ["AI对话体验", "基础功能", "365天有效"],
   },
   {
     key: "member365",
@@ -22,7 +22,7 @@ const packageConfig = [
     duration: "365天",
     icon: Crown,
     popular: true,
-    limitPurchase: false, // 可多次购买
+    limitPurchase: false,
     features: ["AI对话无限使用", "全部高级功能", "365天有效期"],
   },
 ];
