@@ -259,14 +259,34 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    // 验证手机号格式
+    if (!isValidPhone(phone)) {
+      toast({
+        title: "请输入有效的手机号码",
+        description: "手机号码应为5-15位数字",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // 生成占位邮箱
+    const placeholderEmail = generatePhoneEmail(countryCode, phone);
+
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: placeholderEmail,
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          // 改善错误信息
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('手机号或密码错误');
+          }
+          throw error;
+        }
         
         toast({
           title: "登录成功",
@@ -284,7 +304,7 @@ const Auth = () => {
         }
 
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: placeholderEmail,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
@@ -294,15 +314,24 @@ const Auth = () => {
           },
         });
         
-        if (error) throw error;
+        if (error) {
+          // 改善错误信息
+          if (error.message.includes('already registered')) {
+            throw new Error('该手机号已注册，请直接登录');
+          }
+          throw error;
+        }
 
-        // 创建或更新 profile
+        // 创建或更新 profile，包含手机号信息
         if (data.user) {
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
               id: data.user.id,
               display_name: displayName.trim(),
+              phone: phone,
+              phone_country_code: countryCode,
+              auth_provider: 'phone',
             });
 
           if (profileError) {
