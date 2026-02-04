@@ -59,10 +59,65 @@ export function SmartNotificationPreferences() {
     loadPreferences();
   }, []);
 
+  // 实时监听微信绑定状态变化（用于PC端扫码后自动刷新）
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel(`wechat_bind_${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'wechat_user_mappings',
+            filter: `system_user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('WeChat binding detected via realtime:', payload);
+            setWechatBound(true);
+            setShowBindDialog(false);
+            setShowFollowGuide(true);
+            toast({
+              title: "绑定成功",
+              description: "微信账号已成功绑定 🎉",
+            });
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'wechat_user_mappings',
+            filter: `system_user_id=eq.${user.id}`
+          },
+          () => {
+            console.log('WeChat unbinding detected via realtime');
+            setWechatBound(false);
+          }
+        )
+        .subscribe();
+    };
+
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [toast]);
+
   // 单独监听URL参数变化，检测绑定成功后显示关注引导
   useEffect(() => {
     if (searchParams.get('wechat_bound') === 'success') {
       setShowFollowGuide(true);
+      setWechatBound(true); // 同步更新绑定状态
       // 清除URL参数
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('wechat_bound');
