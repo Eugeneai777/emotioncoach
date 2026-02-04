@@ -508,7 +508,7 @@ export default function PosterCenter() {
               </Button>
               {backgroundImageUrl && backgroundSource === 'ai' && (
                 <div className="mt-3">
-                  <img src={backgroundImageUrl} alt="AI Generated" className="w-32 h-auto mx-auto rounded-lg" />
+                  <img src={backgroundImageUrl} alt="AI Generated" loading="lazy" decoding="async" className="w-32 h-auto mx-auto rounded-lg" />
                 </div>
               )}
             </div>

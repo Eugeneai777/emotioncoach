@@ -152,6 +152,8 @@ export const UnsplashImagePicker = ({
               <img
                 src={image.urls.small}
                 alt={image.alt}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               {selectedImageUrl === image.urls.regular && (

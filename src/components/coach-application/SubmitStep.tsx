@@ -116,6 +116,8 @@ export function SubmitStep({
                 <img
                   src={cert.imageUrl}
                   alt="证书"
+                  loading="lazy"
+                  decoding="async"
                   className="h-10 w-14 object-cover rounded"
                 />
               )}
