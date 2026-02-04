@@ -50,8 +50,10 @@ function isValidPhone(phone: string): boolean {
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<'phone' | 'email'>('phone');
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+86");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
