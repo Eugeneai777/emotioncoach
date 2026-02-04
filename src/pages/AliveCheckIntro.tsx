@@ -5,9 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, HeartHandshake, Bell, Shield, Users, Clock, Check, ArrowRight, Share2 } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+import { useAuth } from "@/hooks/useAuth";
+import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 
 const AliveCheckIntro = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { data: hasPurchased, isLoading: purchaseLoading } = usePackagePurchased('alive_check');
+  
+  // 是否显示轻模式入口（未登录或未购买）
+  const showLiteEntry = !authLoading && !purchaseLoading && (!user || !hasPurchased);
 
   // 核心功能
   const features = [
@@ -220,6 +227,21 @@ const AliveCheckIntro = () => {
           <p className="text-xs text-center text-muted-foreground">
             💡 需要注册/登录后使用，您的数据安全有保障
           </p>
+          
+          {/* 轻模式入口 */}
+          {showLiteEntry && (
+            <div className="mt-6 pt-4 border-t border-rose-200/30 space-y-3 text-center">
+              <a 
+                href="/alive-check-lite" 
+                className="text-muted-foreground text-sm block hover:text-rose-600 transition-colors"
+              >
+                💡 先体验后付费 ¥9.9
+              </a>
+              <p className="text-muted-foreground text-xs">
+                北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
+              </p>
+            </div>
+          )}
         </section>
       </div>
     </div>
