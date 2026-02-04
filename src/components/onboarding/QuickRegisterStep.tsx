@@ -41,7 +41,18 @@ interface QuickRegisterStepProps {
   onSkip?: () => void;
 }
 
-type RegisterMode = 'wechat' | 'email' | 'login';
+type RegisterMode = 'wechat' | 'phone' | 'login';
+
+// 生成占位邮箱
+function generatePhoneEmail(countryCode: string, phone: string): string {
+  const cleanCode = countryCode.replace('+', '');
+  return `phone_${cleanCode}${phone}@youjin.app`;
+}
+
+// 验证手机号格式
+function isValidPhone(phone: string): boolean {
+  return /^\d{5,15}$/.test(phone);
+}
 
 // 根据环境智能选择默认注册模式
 const getDefaultMode = (): RegisterMode => {
@@ -50,7 +61,7 @@ const getDefaultMode = (): RegisterMode => {
   const isMobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
   
   if (isWechat) return 'wechat';  // 微信内 → 微信一键注册
-  if (isMobile) return 'email';   // 移动端非微信 → 邮箱注册更方便
+  if (isMobile) return 'phone';   // 移动端非微信 → 手机号注册更方便
   return 'wechat';                // PC端 → 微信扫码
 };
 
