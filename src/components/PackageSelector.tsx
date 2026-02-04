@@ -69,7 +69,7 @@ export const PackageSelector = () => {
               const isDisabled = pkg.isPurchased;
               
               return (
-                <Card key={pkg.key} className={pkg.popular ? "border-primary" : ""}>
+                <Card key={pkg.key} className={`h-full flex flex-col ${pkg.popular ? "border-primary" : ""}`}>
                   <CardHeader className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -84,13 +84,15 @@ export const PackageSelector = () => {
                       <div className="text-sm text-muted-foreground mt-1">
                         {pkg.quota}次 / {pkg.duration}
                       </div>
+                    </div>
+                    <div className="h-5">
                       {pkg.limitPurchase && !pkg.isPurchased && (
-                        <div className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1">⚠️ 限购一次</div>
+                        <div className="text-xs text-amber-600 dark:text-amber-500 font-medium">⚠️ 限购一次</div>
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2">
+                  <CardContent className="flex-1 flex flex-col space-y-4">
+                    <ul className="flex-1 space-y-2">
                       {pkg.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-sm">
                           <Check className="w-4 h-4 text-primary" />
@@ -99,7 +101,7 @@ export const PackageSelector = () => {
                       ))}
                     </ul>
                     <Button 
-                      className="w-full" 
+                      className="w-full mt-auto" 
                       variant={isDisabled ? "secondary" : "default"}
                       disabled={isDisabled}
                       onClick={() => !isDisabled && navigate("/packages")}
