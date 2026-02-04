@@ -512,20 +512,9 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       {/* 仅在 showFooterInfo=true 且首屏（第一题）时显示底部信息 */}
       {showFooterInfo && currentIndex === 0 && (
         <div className="mt-16 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
-          {/* 关注公众号链接 - 点击跳转到微信关注流程 */}
-          <a 
-            href="/wechat-auth?mode=follow"
-            className="text-muted-foreground text-sm block"
-          >
-            点此关注公众号
-          </a>
-          
-          {/* 付费提示 - 统一灰色 */}
-          <p className="text-muted-foreground text-xs">
-            需付费后方可查看结果，结果纯属娱乐仅供参考
+          <p className="text-muted-foreground text-sm">
+            💡 先体验后付费 ¥9.9
           </p>
-          
-          {/* 公司信息和ICP备案 */}
           <p className="text-muted-foreground text-xs">
             北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
           </p>
