@@ -647,6 +647,39 @@ export class DoubaoRealtimeChat {
   private currentUserTranscriptBuffer = '';
   private currentAssistantTranscriptBuffer = '';
 
+  /**
+   * ✅ 强制将缓冲区中未完成的转录内容保存到历史记录
+   * 在重连或断开前调用，确保即使没收到 .done 事件也能保留最后一段对话
+   */
+  private flushTranscriptBuffersToHistory(): void {
+    // 先保存用户发言缓冲区
+    if (this.currentUserTranscriptBuffer.trim()) {
+      console.log('[DoubaoChat] 🔄 Flushing user transcript buffer to history:', this.currentUserTranscriptBuffer.length, 'chars');
+      this.conversationHistory.push({ 
+        role: 'user', 
+        content: this.currentUserTranscriptBuffer.trim() 
+      });
+      this.currentUserTranscriptBuffer = '';
+    }
+    
+    // 再保存 AI 回复缓冲区
+    if (this.currentAssistantTranscriptBuffer.trim()) {
+      console.log('[DoubaoChat] 🔄 Flushing assistant transcript buffer to history:', this.currentAssistantTranscriptBuffer.length, 'chars');
+      this.conversationHistory.push({ 
+        role: 'assistant', 
+        content: this.currentAssistantTranscriptBuffer.trim() 
+      });
+      this.currentAssistantTranscriptBuffer = '';
+    }
+    
+    // 限制历史长度
+    if (this.conversationHistory.length > 20) {
+      this.conversationHistory = this.conversationHistory.slice(-20);
+    }
+    
+    console.log('[DoubaoChat] 📝 Conversation history after flush:', this.conversationHistory.length, 'messages');
+  }
+
   private async scheduleReconnect(trigger: string, meta?: Record<string, unknown>): Promise<void> {
     if (this.isDisconnected) return;
     if (!this.everConnected) return;
@@ -654,6 +687,10 @@ export class DoubaoRealtimeChat {
 
     this.reconnectInProgress = true;
     this.reconnectAttempts = 0;
+
+    // ✅ 重连前强制保存缓冲区中未完成的转录内容到历史记录
+    // 这样即使断线时没收到 .done 事件，也能保留最后一段对话
+    this.flushTranscriptBuffersToHistory();
 
     // 断开时先停录音/播放，避免后台还在跑 ScriptProcessor 导致资源升高（微信更容易因此回收连接）
     try {

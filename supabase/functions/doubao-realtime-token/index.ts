@@ -192,9 +192,16 @@ Deno.serve(async (req) => {
         )
         .join('\n');
       
-      instructions += `\n\n---\n\n【对话历史 - 请基于以下上下文继续对话，不要重新打招呼】\n${historyText}\n\n---\n\n请基于以上对话历史，自然地继续对话。不要重复开场白，不要问候语，直接继续之前的话题。`;
+      // ✅ 增强：明确标记最后一条消息，让 AI 知道应该接着什么继续
+      const lastMessage = conversation_history[conversation_history.length - 1];
+      const lastSpeaker = lastMessage.role === 'user' ? '用户' : '劲老师';
+      const continuationHint = lastMessage.role === 'user' 
+        ? `用户刚才说："${lastMessage.content}"，请直接回应这句话。`
+        : `你刚才说了："${lastMessage.content}"，如果用户沉默或只是简单回应，可以继续深入这个话题。`;
       
-      console.log(`[DoubaoToken] Reconnect with ${conversation_history.length} history messages`);
+      instructions += `\n\n---\n\n【重要：这是重连后的对话，请保持上下文连贯】\n\n对话历史：\n${historyText}\n\n当前状态：${continuationHint}\n\n请注意：\n1. 不要重新打招呼或自我介绍\n2. 不要重复已经说过的内容\n3. 直接从对话中断的地方自然继续\n4. 如果用户还没有回应你的上一句话，可以稍作等待或轻声询问"你还在吗？"`;
+      
+      console.log(`[DoubaoToken] Reconnect with ${conversation_history.length} history messages, last speaker: ${lastSpeaker}`);
     }
 
     // 生成 session token 用于 relay 验证
