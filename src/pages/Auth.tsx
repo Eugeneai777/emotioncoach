@@ -571,8 +571,9 @@ const Auth = () => {
                 className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {isLogin ? "还没有账号？点击注册" : "已有账号？点击登录"}
-            </button>
-          </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
