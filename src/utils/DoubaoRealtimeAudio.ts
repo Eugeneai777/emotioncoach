@@ -30,6 +30,7 @@ interface DoubaoConfig {
     output_format: string;
     output_sample_rate: number;
   };
+  is_reconnect?: boolean; // ✅ 标记是否为重连
 }
 
 interface DoubaoRealtimeChatOptions {
@@ -640,6 +641,9 @@ export class DoubaoRealtimeChat {
     }, DoubaoRealtimeChat.HEARTBEAT_INTERVAL_MS);
   }
 
+  // ✅ 收集当前对话历史，重连时传给新 session 保持上下文
+  private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
   private async scheduleReconnect(trigger: string, meta?: Record<string, unknown>): Promise<void> {
     if (this.isDisconnected) return;
     if (!this.everConnected) return;
@@ -661,8 +665,9 @@ export class DoubaoRealtimeChat {
     }
     this.clearAudioQueueAndStopPlayback();
 
+    // ✅ 静默重连：不改变 UI 状态，用户无感
     this.onMessage?.({ type: 'debug.reconnect', stage: 'start', trigger, meta, at: Date.now() });
-    this.onStatusChange('connecting');
+    // 不再调用 this.onStatusChange('connecting'); 保持 connected 状态
 
     const sleep = (ms: number) => new Promise<void>((resolve) => {
       this.reconnectTimer = window.setTimeout(() => resolve(), ms);
@@ -724,9 +729,13 @@ export class DoubaoRealtimeChat {
       this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     }
 
-    // 重新获取 relay 会话信息（更稳，避免旧 session_token 不可用）
+    // ✅ 重连时传递对话历史，让新 session 保持上下文
     const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
-      body: { mode: this.mode },
+      body: { 
+        mode: this.mode,
+        conversation_history: this.conversationHistory.length > 0 ? this.conversationHistory : undefined,
+        is_reconnect: true,
+      },
     });
 
     if (error || !data) {
@@ -1021,6 +1030,12 @@ export class DoubaoRealtimeChat {
           this.missedHeartbeats = 0;
           if (message.transcript) {
             this.onTranscript(message.transcript, true, 'assistant');
+            // ✅ 记录 AI 回复到对话历史（用于重连时恢复上下文）
+            this.conversationHistory.push({ role: 'assistant', content: message.transcript });
+            // 限制历史长度，避免内存过大
+            if (this.conversationHistory.length > 20) {
+              this.conversationHistory = this.conversationHistory.slice(-20);
+            }
           }
           break;
 
@@ -1030,6 +1045,11 @@ export class DoubaoRealtimeChat {
           this.missedHeartbeats = 0;
           if (message.text) {
             this.onTranscript(message.text, true, 'assistant');
+            // ✅ 记录 AI 回复到对话历史
+            this.conversationHistory.push({ role: 'assistant', content: message.text });
+            if (this.conversationHistory.length > 20) {
+              this.conversationHistory = this.conversationHistory.slice(-20);
+            }
           }
           break;
 
@@ -1039,6 +1059,11 @@ export class DoubaoRealtimeChat {
           this.missedHeartbeats = 0;
           if (message.transcript) {
             this.onTranscript(message.transcript, true, 'user');
+            // ✅ 记录用户发言到对话历史
+            this.conversationHistory.push({ role: 'user', content: message.transcript });
+            if (this.conversationHistory.length > 20) {
+              this.conversationHistory = this.conversationHistory.slice(-20);
+            }
           }
           break;
 

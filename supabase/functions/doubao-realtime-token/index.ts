@@ -121,7 +121,12 @@ Deno.serve(async (req) => {
     }
 
     // 解析请求
-    const { mode = 'emotion', preheat = false } = await req.json().catch(() => ({}));
+    const { 
+      mode = 'emotion', 
+      preheat = false,
+      conversation_history = [],
+      is_reconnect = false,
+    } = await req.json().catch(() => ({}));
 
     // 预热请求：只验证配置存在
     if (preheat) {
@@ -176,6 +181,22 @@ Deno.serve(async (req) => {
 
     const userName = profile?.display_name;
 
+    // ✅ 如果是重连且有对话历史，构建带上下文的 instructions
+    let instructions = getEmotionCoachInstructions(userName);
+    
+    if (is_reconnect && conversation_history && conversation_history.length > 0) {
+      // 将对话历史拼接到 instructions 中，让 AI 知道之前聊了什么
+      const historyText = conversation_history
+        .map((msg: { role: string; content: string }) => 
+          msg.role === 'user' ? `用户：${msg.content}` : `劲老师：${msg.content}`
+        )
+        .join('\n');
+      
+      instructions += `\n\n---\n\n【对话历史 - 请基于以下上下文继续对话，不要重新打招呼】\n${historyText}\n\n---\n\n请基于以上对话历史，自然地继续对话。不要重复开场白，不要问候语，直接继续之前的话题。`;
+      
+      console.log(`[DoubaoToken] Reconnect with ${conversation_history.length} history messages`);
+    }
+
     // 生成 session token 用于 relay 验证
     const sessionToken = crypto.randomUUID();
     
@@ -192,7 +213,7 @@ Deno.serve(async (req) => {
       mode: mode,
       
       // 教练配置
-      instructions: getEmotionCoachInstructions(userName),
+      instructions: instructions,
       tools: emotionCoachTools,
       
       // 音频配置
@@ -201,7 +222,10 @@ Deno.serve(async (req) => {
         input_sample_rate: 16000,
         output_format: 'pcm',
         output_sample_rate: 24000
-      }
+      },
+      
+      // ✅ 标记是否为重连（relay 可据此跳过开场白触发）
+      is_reconnect: is_reconnect,
     };
 
     console.log('[DoubaoToken] Token generated successfully, instructions length:', responseData.instructions.length, 'preview:', responseData.instructions.substring(0, 100) + '...');
