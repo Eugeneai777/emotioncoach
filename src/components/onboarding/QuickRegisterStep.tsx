@@ -873,16 +873,30 @@ export function QuickRegisterStep({
       {registerMode === 'login' && (
         <div className="space-y-3 sm:space-y-4">
           <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="login-email" className="text-xs sm:text-sm">邮箱</Label>
-            <Input
-              id="login-email"
-              type="email"
-              placeholder="输入邮箱地址"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              className="h-9 sm:h-10 text-sm"
-            />
+            <Label htmlFor="login-phone" className="text-xs sm:text-sm">手机号</Label>
+            <div className="flex gap-2">
+              <Select value={countryCode} onValueChange={setCountryCode}>
+                <SelectTrigger className="w-[100px] h-9 sm:h-10 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {countryCodes.map((item) => (
+                    <SelectItem key={item.code} value={item.code}>
+                      {item.flag} {item.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="login-phone"
+                type="tel"
+                placeholder="请输入手机号"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                maxLength={15}
+                className="flex-1 h-9 sm:h-10 text-sm"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5 sm:space-y-2">
@@ -908,8 +922,8 @@ export function QuickRegisterStep({
           </div>
 
           <Button
-            onClick={handleEmailLogin}
-            disabled={isLoading || !email || !password}
+            onClick={handlePhoneLogin}
+            disabled={isLoading || !phone || !password}
             className="w-full h-9 sm:h-10 text-sm"
           >
             {isLoading ? (
