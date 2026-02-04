@@ -107,6 +107,18 @@ export class DoubaoRealtimeChat {
   private lastReadyStateCheck: number = 0;
   private static readonly READY_STATE_CHECK_INTERVAL = 5000; // 每 5 秒检查一次
 
+  // ✅ 最终兜底：微信 WebView 可能在前台也“静默回收” WebSocket。
+  // 我们无法从根因上完全禁止断连，但可以做到“断了自动恢复、用户无感”。
+  private everConnected = false; // 仅在成功 session.connected(ready) 后置为 true
+  private reconnectInProgress = false;
+  private reconnectAttempts = 0;
+  private reconnectTimer: number | null = null;
+  private static readonly MAX_RECONNECT_ATTEMPTS = 5;
+  private static readonly RECONNECT_BACKOFF_MS = [800, 1500, 2500, 4000, 6000];
+
+  // ✅ 给上层“用户活动检测”喂低频事件，避免被误判无活动自动挂断
+  private lastUserAudioActivityEventAt = 0;
+
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
   private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void;
@@ -458,7 +470,16 @@ export class DoubaoRealtimeChat {
           this.clearSessionConnectedWait();
         }
         if (!this.isDisconnected) {
-          this.onStatusChange('disconnected');
+          // ✅ 若曾经成功连通，则自动重连（微信 WebView 常见“静默回收”）
+          if (this.everConnected) {
+            void this.scheduleReconnect('ws_close', {
+              code: event.code,
+              reason: event.reason,
+              wasClean: event.wasClean,
+            });
+          } else {
+            this.onStatusChange('disconnected');
+          }
         }
       };
 
@@ -534,7 +555,11 @@ export class DoubaoRealtimeChat {
           console.error(`[DoubaoChat] ❌ WebSocket readyState=${wsState} (not OPEN), connection lost`);
           this.onMessage?.({ type: 'debug.disconnect', reason: 'ws_not_open', wsState });
           this.stopHeartbeat();
-          this.onStatusChange('disconnected');
+          if (this.everConnected && !this.isDisconnected) {
+            void this.scheduleReconnect('ws_not_open', { wsState });
+          } else {
+            this.onStatusChange('disconnected');
+          }
           return;
         }
       }
@@ -583,7 +608,11 @@ export class DoubaoRealtimeChat {
               missed: this.missedHeartbeats,
             });
             this.stopHeartbeat();
-            this.onStatusChange('disconnected');
+            if (this.everConnected && !this.isDisconnected) {
+              void this.scheduleReconnect('heartbeat_timeout', { timeSinceLastResponse, missed: this.missedHeartbeats });
+            } else {
+              this.onStatusChange('disconnected');
+            }
             return;
           }
         } else {
@@ -600,11 +629,123 @@ export class DoubaoRealtimeChat {
           if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
             this.onMessage?.({ type: 'debug.disconnect', reason: 'ping_send_failed', error: String(e) });
             this.stopHeartbeat();
-            this.onStatusChange('disconnected');
+            if (this.everConnected && !this.isDisconnected) {
+              void this.scheduleReconnect('ping_send_failed', { error: String(e) });
+            } else {
+              this.onStatusChange('disconnected');
+            }
           }
         }
       }
     }, DoubaoRealtimeChat.HEARTBEAT_INTERVAL_MS);
+  }
+
+  private async scheduleReconnect(trigger: string, meta?: Record<string, unknown>): Promise<void> {
+    if (this.isDisconnected) return;
+    if (!this.everConnected) return;
+    if (this.reconnectInProgress) return;
+
+    this.reconnectInProgress = true;
+    this.reconnectAttempts = 0;
+
+    // 断开时先停录音/播放，避免后台还在跑 ScriptProcessor 导致资源升高（微信更容易因此回收连接）
+    try {
+      this.onSpeakingChange('idle');
+    } catch {
+      // ignore
+    }
+    try {
+      this.stopRecording();
+    } catch {
+      // ignore
+    }
+    this.clearAudioQueueAndStopPlayback();
+
+    this.onMessage?.({ type: 'debug.reconnect', stage: 'start', trigger, meta, at: Date.now() });
+    this.onStatusChange('connecting');
+
+    const sleep = (ms: number) => new Promise<void>((resolve) => {
+      this.reconnectTimer = window.setTimeout(() => resolve(), ms);
+    });
+
+    for (let i = 0; i < DoubaoRealtimeChat.MAX_RECONNECT_ATTEMPTS; i++) {
+      if (this.isDisconnected) break;
+      const attempt = i + 1;
+      const backoff = DoubaoRealtimeChat.RECONNECT_BACKOFF_MS[Math.min(i, DoubaoRealtimeChat.RECONNECT_BACKOFF_MS.length - 1)];
+
+      try {
+        if (i > 0) {
+          this.onMessage?.({ type: 'debug.reconnect', stage: 'retrying', attempt, backoff });
+          await sleep(backoff);
+        }
+
+        this.reconnectAttempts = attempt;
+        await this.reconnectOnce(trigger);
+
+        this.onMessage?.({ type: 'debug.reconnect', stage: 'success', attempt });
+        this.reconnectInProgress = false;
+        this.reconnectAttempts = 0;
+        return;
+      } catch (e) {
+        console.warn('[DoubaoChat] Reconnect attempt failed', { attempt, error: String(e) });
+        this.onMessage?.({ type: 'debug.reconnect', stage: 'failed_attempt', attempt, error: String(e) });
+      }
+    }
+
+    this.reconnectInProgress = false;
+    this.onMessage?.({ type: 'debug.reconnect', stage: 'giveup', attempts: this.reconnectAttempts });
+    this.onStatusChange('disconnected');
+  }
+
+  private async reconnectOnce(trigger: string): Promise<void> {
+    console.log('[DoubaoChat] 🔄 Reconnecting...', { trigger });
+
+    // 关闭旧 ws
+    if (this.ws) {
+      try {
+        if (this.ws.readyState === WebSocket.OPEN) {
+          try {
+            this.ws.send(JSON.stringify({ type: 'session.close' }));
+          } catch {
+            // ignore
+          }
+        }
+        this.ws.close();
+      } catch {
+        // ignore
+      }
+      this.ws = null;
+    }
+
+    await this.resumeAudioContexts('reconnect');
+
+    // 若麦克风流被系统回收则重取一次（一般不会重复弹窗）
+    if (!this.mediaStream) {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+
+    // 重新获取 relay 会话信息（更稳，避免旧 session_token 不可用）
+    const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
+      body: { mode: this.mode },
+    });
+
+    if (error || !data) {
+      const errorMessage = (data as any)?.message || (data as any)?.error || error?.message || 'Failed to get relay config during reconnect';
+      throw new Error(errorMessage);
+    }
+
+    this.config = data as DoubaoConfig;
+    this.inputSampleRate = this.config.audio_config?.input_sample_rate || 16000;
+    this.hasSessionClosed = false;
+
+    const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
+    this.ws = new WebSocket(wsUrl);
+    await this.setupWebSocket();
+
+    const sessionConnectedPromise = this.waitForSessionConnected();
+    this.sendSessionInit();
+    this.startHeartbeat();
+    await sessionConnectedPromise;
   }
 
   private stopHeartbeat(): void {
@@ -667,6 +808,13 @@ export class DoubaoRealtimeChat {
         type: 'input_audio_buffer.append',
         audio: audioBase64
       }));
+
+      // ✅ 每 1s 上报一次“用户仍在输出音频”，用于上层无活动检测（避免误挂断）
+      const now = Date.now();
+      if (now - this.lastUserAudioActivityEventAt > 1000) {
+        this.lastUserAudioActivityEventAt = now;
+        this.onMessage?.({ type: 'input_audio_buffer.append', timestamp: now });
+      }
 
       // ⚠️ 不在这里更新 speaking 状态，改为由 relay 的 ASR 事件驱动
       // 避免与 assistant-speaking 状态冲突导致抖动
@@ -761,6 +909,8 @@ export class DoubaoRealtimeChat {
             return;
           }
           console.log('[DoubaoChat] Relay connected to Doubao');
+          const isFirstConnect = !this.everConnected;
+          this.everConnected = true;
           // 🔧 解决 waitForSessionConnected 的 Promise
           if (this.sessionConnectedResolver) {
             this.sessionConnectedResolver();
@@ -769,10 +919,12 @@ export class DoubaoRealtimeChat {
           // 1. 启动录音
           this.startRecording();
           this.onStatusChange('connected');
-          // 2. 触发 AI 开场白 - 延迟 300ms 确保豆包端完全就绪
-          setTimeout(() => {
-            this.triggerGreeting();
-          }, 300);
+          // 2. 仅首次接通触发开场白；重连不重复播报
+          if (isFirstConnect) {
+            setTimeout(() => {
+              this.triggerGreeting();
+            }, 300);
+          }
           break;
 
         case 'session.closed':
@@ -785,7 +937,11 @@ export class DoubaoRealtimeChat {
           }
           // 立刻停止录音，避免继续发送音频导致 relay 端 BrokenPipe 刷屏
           this.stopRecording();
-          this.onStatusChange('disconnected');
+          if (this.everConnected && !this.isDisconnected) {
+            void this.scheduleReconnect('session_closed', { code: (message as any).code, reason: (message as any).reason });
+          } else {
+            this.onStatusChange('disconnected');
+          }
           break;
 
         // 🔧 修复 switch-case 穿透问题：心跳重置和业务逻辑分离
@@ -1225,6 +1381,12 @@ export class DoubaoRealtimeChat {
     console.log('[DoubaoChat] Disconnecting...');
     this.isDisconnected = true;
     this.stopHeartbeat();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectInProgress = false;
+    this.reconnectAttempts = 0;
     this.removeLifecycleListeners();
     this.clearSessionConnectedWait();
 
