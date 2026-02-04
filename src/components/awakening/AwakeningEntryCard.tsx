@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AwakeningDimension } from "@/config/awakeningConfig";
@@ -10,12 +10,24 @@ interface AwakeningEntryCardProps {
   compact?: boolean;
 }
 
+// 触感反馈（如果支持）
+const triggerHaptic = () => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(10);
+  }
+};
+
 const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
   dimension,
   onClick,
   index,
   compact = false
 }) => {
+  const handleClick = useCallback(() => {
+    triggerHaptic();
+    onClick();
+  }, [onClick]);
+
   if (compact) {
     return (
       <motion.div
@@ -23,14 +35,15 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.06, duration: 0.3 }}
         whileHover={{ scale: 1.03, y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={onClick}
+        whileTap={{ scale: 0.95, transition: { duration: 0.1 } }}
+        onClick={handleClick}
         style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         className={cn(
           "relative overflow-hidden rounded-xl p-4 cursor-pointer",
           "bg-gradient-to-br shadow-md",
           dimension.gradient,
-          "min-h-[120px] flex flex-col justify-between"
+          "min-h-[120px] flex flex-col justify-between",
+          "active:shadow-lg transition-shadow duration-150"
         )}
       >
         {/* 背景装饰 */}
@@ -49,8 +62,8 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
           <p className="text-xs text-white/80 leading-tight">{dimension.categoryLabel}</p>
         </div>
         
-        {/* 悬浮光效 */}
-        <div className="absolute inset-0 bg-white/0 hover:bg-white/10 transition-colors duration-300" />
+        {/* 悬浮光效 + 点击反馈 */}
+        <div className="absolute inset-0 bg-white/0 hover:bg-white/10 active:bg-white/20 transition-colors duration-150" />
       </motion.div>
     );
   }
@@ -61,14 +74,15 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.4 }}
       whileHover={{ scale: 1.03, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
+      whileTap={{ scale: 0.95, transition: { duration: 0.1 } }}
+      onClick={handleClick}
       style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       className={cn(
         "relative overflow-hidden rounded-2xl p-3 cursor-pointer",
         "bg-gradient-to-br shadow-lg",
         dimension.gradient,
-        "min-h-[100px] flex flex-col justify-between"
+        "min-h-[100px] flex flex-col justify-between",
+        "active:shadow-xl transition-shadow duration-150"
       )}
     >
       {/* 背景装饰 */}
@@ -94,8 +108,8 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
         </p>
       </div>
       
-      {/* 悬浮光效 */}
-      <div className="absolute inset-0 bg-white/0 hover:bg-white/10 transition-colors duration-300" />
+      {/* 悬浮光效 + 点击反馈 */}
+      <div className="absolute inset-0 bg-white/0 hover:bg-white/10 active:bg-white/20 transition-colors duration-150" />
     </motion.div>
   );
 };

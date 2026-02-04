@@ -21,11 +21,13 @@ import { AccountCredentials } from "@/components/profile/AccountCredentials";
 import { PhoneNumberManager } from "@/components/profile/PhoneNumberManager";
 import { WeChatBindStatus } from "@/components/profile/WeChatBindStatus";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle2, AlertCircle, Home } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Home, Zap } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { Switch } from "@/components/ui/switch";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -42,6 +44,9 @@ export default function Settings() {
   const [timezone, setTimezone] = useState("Asia/Shanghai");
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // 流畅模式 Hook
+  const { prefersReducedMotion, setReducedMotion, systemPreference } = useReducedMotion();
   
   const defaultTab = searchParams.get("tab") || "reminders";
 
@@ -309,6 +314,30 @@ export default function Settings() {
                 </div>
 
                 <TimezoneSelector value={timezone} onChange={setTimezone} />
+
+                {/* 流畅模式开关 */}
+                <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-primary" />
+                        <Label className="text-sm font-medium">流畅模式</Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        减少动画效果，提升低配设备体验
+                      </p>
+                    </div>
+                    <Switch
+                      checked={prefersReducedMotion}
+                      onCheckedChange={setReducedMotion}
+                    />
+                  </div>
+                  {systemPreference && (
+                    <p className="text-xs text-muted-foreground/70">
+                      💡 已检测到系统偏好减少动画
+                    </p>
+                  )}
+                </div>
 
                 <Button
                   onClick={saveSettings}

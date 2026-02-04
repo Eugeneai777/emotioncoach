@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageCircle, Settings, User } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Settings, User, Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { VideoLearningProfile } from "@/components/VideoLearningProfile";
+import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 
 interface UserProfileData {
   display_name: string | null;
@@ -192,17 +193,22 @@ const UserProfile = () => {
             <ArrowLeft className="w-4 h-4 mr-1" />
             返回
           </Button>
-          {isOwnProfile && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/settings")}
-              className="text-muted-foreground"
-            >
-              <Settings className="w-4 h-4 mr-1" />
-              编辑资料
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* 消息中心入口 */}
+            {isOwnProfile && <SmartNotificationCenter />}
+            
+            {isOwnProfile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/settings")}
+                className="text-muted-foreground"
+              >
+                <Settings className="w-4 h-4 mr-1" />
+                编辑资料
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* 用户信息卡片 - 增强版 */}

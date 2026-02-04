@@ -569,3 +569,29 @@ input:focus, textarea:focus, select:focus {
   -webkit-perspective: 1000px;
   perspective: 1000px;
 }
+
+/* ========================================
+   流畅模式 - 减少动画
+   ======================================== */
+
+/* 当用户开启流畅模式时，减少所有动画 */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* 尊重系统偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

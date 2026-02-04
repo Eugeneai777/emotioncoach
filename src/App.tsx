@@ -172,6 +172,7 @@ const BloomPartnerTerms = lazy(() => import("./pages/BloomPartnerTerms"));
 const FloatingVoiceButton = lazy(() => import("./components/FloatingVoiceButton"));
 const FloatingQuickMenu = lazy(() => import("./components/FloatingQuickMenu").then(m => ({ default: m.FloatingQuickMenu })));
 const FollowWechatReminder = lazy(() => import("./components/FollowWechatReminder").then(m => ({ default: m.FollowWechatReminder })));
+const GlobalOnboarding = lazy(() => import("./components/GlobalOnboarding").then(m => ({ default: m.GlobalOnboarding })));
 
 const queryClient = new QueryClient();
 
@@ -222,6 +223,7 @@ const App = () => (
             <FloatingVoiceButton />
             <FloatingQuickMenu />
             <FollowWechatReminder />
+            <GlobalOnboarding />
           </Suspense>
           <Suspense fallback={<PageLoader />}>
             <Routes>
