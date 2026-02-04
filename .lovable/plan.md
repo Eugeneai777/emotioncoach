@@ -1,185 +1,188 @@
 
-## SCL-90 心理测评 - 先测评后支付轻量版路径
+## 「死了吗」和「觉察日记」收费模式实现方案
 
 ### 目标
 
-参照财富卡点测评和情绪健康测评的轻量版实现模式，为 SCL-90 心理测评创建一个独立的"先测评后支付"入口路径 `/scl90-lite`。
+将"死了吗"安全打卡和"觉察日记"两个功能转变为付费模式，收费 ¥9.9。参照现有测评类产品（财富卡点、情绪健康、SCL-90）的"先体验后支付"轻量版模式实现。
 
 ---
 
-### 实现内容概览
+### 整体架构
 
-| 项目 | 说明 |
-|------|------|
-| 新路由 | `/scl90-lite` |
-| 核心特点 | 进入即显示第一道题，跳过介绍页 |
-| 题目展示 | 单题模式（非分页 9 题模式），垂直选项按钮 |
-| 底部信息 | 仅首题显示，需滚动才能看见 |
-| 付费流程 | 测评完成后弹出支付弹窗 |
-| 火箭菜单 | 排除该路由 |
+| 功能 | 新入口路由 | 付费包Key | 收费 |
+|------|-----------|----------|------|
+| 死了吗 | `/alive-check-lite` | `alive_check` | ¥9.9 |
+| 觉察日记 | `/awakening-lite` | `awakening_system` | ¥9.9 |
+
+---
+
+### 数据库变更
+
+在 `packages` 表中新增两个产品包：
+
+```sql
+-- 死了吗安全打卡
+INSERT INTO packages (package_key, package_name, price, description, product_line, is_active, display_order)
+VALUES ('alive_check', '死了吗安全打卡', 9.90, '每日安全确认 + 紧急联系人自动通知', 'youjin', true, 8);
+
+-- 觉察日记系统
+INSERT INTO packages (package_key, package_name, price, description, product_line, is_active, display_order)
+VALUES ('awakening_system', '觉察日记', 9.90, '6维觉察入口 + AI生命卡片分析', 'youjin', true, 9);
+```
 
 ---
 
 ### 文件修改清单
 
-#### 1. 新建页面: `src/pages/SCL90Lite.tsx`
+#### 1. 新建：死了吗轻量版入口
 
-参照 `WealthAssessmentLite.tsx` 和 `EmotionHealthLite.tsx` 模式创建：
+**`src/pages/AliveCheckLite.tsx`**
+- 状态机：intro → main → (已购买直接使用，未购买显示支付弹窗)
+- 入口直接显示功能界面
+- 复用 `AliveCheck` 组件
+- 使用 `AssessmentPayDialog` 弹窗（packageKey: `alive_check`）
+- 首屏底部显示轻模式文字（未登录用户可见）
 
-```text
-结构:
-├── 状态管理: pageState (questions | result)
-├── 答案状态: answers, result
-├── 购买状态: useSCL90Purchase
-├── 支付弹窗: showPayDialog
-│
-├── 问答组件: SCL90QuestionsLite
-│   ├── skipStartScreen={true}
-│   └── showFooterInfo={!hasPurchased}
-│
-├── 结果组件: SCL90Result
-│
-└── 支付弹窗: SCL90PayDialog
-    ├── packageKey="scl90_report"
-    └── pendingAnswers, pendingResult
-```
+**`src/hooks/useAliveCheckPurchase.ts`**
+- 新建 hook 检查用户是否已购买 `alive_check` 包
 
-#### 2. 新建组件: `src/components/scl90/SCL90QuestionsLite.tsx`
+#### 2. 新建：觉察日记轻量版入口
 
-创建全新的轻量版问答组件，采用单题模式而非原版的 9 题分页模式：
+**`src/pages/AwakeningLite.tsx`**
+- 入口直接显示觉察日记主界面
+- 复用现有 `Awakening` 页面组件逻辑
+- 使用 `AssessmentPayDialog` 弹窗（packageKey: `awakening_system`）
+- 首屏底部显示轻模式文字（未登录用户可见）
 
-| Prop | 类型 | 说明 |
-|------|------|------|
-| `onComplete` | function | 完成回调 |
-| `onExit` | function | 退出回调 |
-| `showFooterInfo` | boolean | 是否显示底部信息 |
+**`src/hooks/useAwakeningPurchase.ts`**
+- 新建 hook 检查用户是否已购买 `awakening_system` 包
 
-**关键设计点：**
+#### 3. 修改：Landing页面添加轻模式入口
 
-1. **单题模式**：每次只显示一道题目，答完自动跳转下一题
-2. **垂直选项布局**：5 个评分选项（没有/很轻/中等/偏重/严重）垂直排列
-3. **固定顶部标题栏**：
-   - 标题：SCL-90 心理测评
-   - 进度：1/90 格式
-   - 进度条
-   - 激励文案
-   
-4. **视觉主题**：采用紫色渐变（SCL-90 专属配色）
-   - 背景：`from-purple-50 via-indigo-50/30 to-white`
-   - 选中按钮：`from-purple-600 to-indigo-600`
+**`src/pages/AliveCheckIntro.tsx`**
+- 底部CTA区域添加"轻模式"文字链接
+- 未登录用户显示"💡 先体验后付费 ¥9.9"文字
+- 登录/已购买用户隐藏该文字
+- 添加跳转到 `/alive-check-lite` 的入口
 
-5. **底部信息区域**（仅首题且 `showFooterInfo=true` 时显示）：
+**`src/pages/AwakeningIntro.tsx`**
+- 底部CTA区域添加"轻模式"文字链接
+- 未登录用户显示"💡 先体验后付费 ¥9.9"文字
+- 登录/已购买用户隐藏该文字
+- 添加跳转到 `/awakening-lite` 的入口
+
+#### 4. 修改：路由注册
+
+**`src/App.tsx`**
 ```tsx
-{showFooterInfo && currentIndex === 0 && (
-  <div className="mt-16 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
-    <a href="/wechat-auth?mode=follow" className="text-muted-foreground text-sm block">
-      点此关注公众号
-    </a>
-    <p className="text-muted-foreground text-xs">
-      需付费后方可查看结果，结果纯属娱乐仅供参考
-    </p>
-    <p className="text-muted-foreground text-xs">
-      北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
-    </p>
-  </div>
-)}
+// 新增懒加载
+const AliveCheckLite = lazy(() => import("./pages/AliveCheckLite"));
+const AwakeningLite = lazy(() => import("./pages/AwakeningLite"));
+
+// 新增路由
+<Route path="/alive-check-lite" element={<AliveCheckLite />} />
+<Route path="/awakening-lite" element={<AwakeningLite />} />
 ```
 
-6. **主容器**：底部内边距适配
-```tsx
-className="min-h-screen bg-gradient-to-b from-purple-50 via-indigo-50/30 to-white pb-[calc(80px+env(safe-area-inset-bottom))]"
-```
+#### 5. 修改：浮动菜单排除
 
-#### 3. 修改导出: `src/components/scl90/index.ts`
-
-添加新组件导出：
-```tsx
-export { SCL90QuestionsLite } from './SCL90QuestionsLite';
-```
-
-#### 4. 修改路由: `src/App.tsx`
-
-添加懒加载和路由：
-```tsx
-// 懒加载
-const SCL90Lite = lazy(() => import("./pages/SCL90Lite"));
-
-// 路由定义（在 /scl90 路由附近）
-<Route path="/scl90-lite" element={<SCL90Lite />} />
-```
-
-#### 5. 修改火箭菜单排除: `src/components/FloatingQuickMenu.tsx`
-
-将 `/scl90-lite` 添加到排除列表：
+**`src/components/FloatingQuickMenu.tsx`**
 ```tsx
 const EXCLUDED_ROUTES = [
-  '/auth', '/login', '/register', '/onboarding', 
-  '/wealth-block', '/wealth-assessment-lite', 
-  '/emotion-health-lite',
-  '/scl90-lite',  // 新增
-  '/coach-space', '/awakening'
+  // ... 现有路由
+  '/alive-check-lite',  // 新增
+  '/awakening-lite',    // 新增
 ];
 ```
 
 ---
 
-### 页面流程图
+### 页面流程
+
+#### 死了吗轻量版流程
 
 ```text
-用户访问 /scl90-lite
+用户访问 /alive-check-lite
          │
          ▼
   ┌─────────────────┐
-  │  第1题问答界面   │ ◄─── 直接显示，无引导页
-  │  (顶部: 进度条)  │
-  │  (底部: 可滚动   │
-  │   查看付费信息)  │
+  │  功能主界面      │ ◄─── 直接进入，可体验设置联系人/打卡
+  │  (底部：轻模式   │
+  │   付费提示)      │
   └────────┬────────┘
-           │ 单题模式答题（共90题）
-           │ 每答一题自动跳转
-           ▼
-  ┌─────────────────┐
-  │   完成所有题目   │
-  └────────┬────────┘
+           │ 用户尝试核心操作（如添加联系人/打卡）
            │
      ┌─────┴─────┐
      │           │
   已购买?     未购买?
      │           │
      ▼           ▼
- 直接显示    弹出支付弹窗
-  结果页    ───────────┐
-     ▲                 │
-     │     支付成功后   │
-     └─────────────────┘
+ 正常使用    弹出支付弹窗
+             ───────────┐
+                        │
+              支付成功后 │
+     ┌──────────────────┘
+     ▼
+   正常使用
+```
+
+#### 觉察日记轻量版流程
+
+```text
+用户访问 /awakening-lite
+         │
+         ▼
+  ┌─────────────────┐
+  │  觉察日记主界面  │ ◄─── 直接显示6维觉察入口
+  │  (底部：轻模式   │
+  │   付费提示)      │
+  └────────┬────────┘
+           │ 用户点击任一维度
+           │
+     ┌─────┴─────┐
+     │           │
+  已购买?     未购买?
+     │           │
+     ▼           ▼
+ 正常记录    弹出支付弹窗
+             ───────────┐
+                        │
+              支付成功后 │
+     ┌──────────────────┘
+     ▼
+   正常使用
 ```
 
 ---
 
-### 与原版 SCL90Questions 的区别
+### 底部轻模式文字设计
 
-| 特性 | 原版（分页模式） | 轻量版（单题模式） |
-|------|-----------------|-------------------|
-| 每页题数 | 9 题 | 1 题 |
-| 翻页方式 | 手动点击"下一页" | 答题后自动跳转 |
-| 选项布局 | 5列横向网格 | 垂直按钮 |
-| 进度保存 | localStorage | 不保存（轻量测评） |
-| 退出确认 | 弹窗确认 | 简化或无 |
-| 页码指示 | 圆点分页器 | 简单进度文字 |
-| 介绍页 | 有 | 跳过 |
+未登录/未购买用户在Landing页面底部可见：
+
+```tsx
+<div className="mt-6 pt-4 border-t border-border/30 space-y-3 text-center">
+  <a 
+    href="/alive-check-lite" 
+    className="text-muted-foreground text-sm block hover:text-primary transition-colors"
+  >
+    💡 先体验后付费 ¥9.9
+  </a>
+  <p className="text-muted-foreground text-xs">
+    北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
+  </p>
+</div>
+```
+
+登录且已购买用户：隐藏该区域。
 
 ---
 
 ### 样式主题
 
-采用 SCL-90 的专属紫色配色（与其他测评区分）：
-
-| 元素 | 样式 |
-|------|------|
-| 背景渐变 | `from-purple-50 via-indigo-50/30 to-white` |
-| 选中按钮 | `from-purple-600 to-indigo-600` |
-| 进度条 | 紫色主题 |
-| 标题徽章 | 紫色系 |
+| 功能 | 主色调 | 渐变 |
+|------|--------|------|
+| 死了吗 | 玫红色 | `from-rose-500 to-pink-500` |
+| 觉察日记 | 琥珀橙 | `from-amber-500 to-orange-500` |
 
 ---
 
@@ -187,11 +190,15 @@ const EXCLUDED_ROUTES = [
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/pages/SCL90Lite.tsx` | 新建 | 轻量版页面主入口 |
-| `src/components/scl90/SCL90QuestionsLite.tsx` | 新建 | 单题模式问答组件 |
-| `src/components/scl90/index.ts` | 修改 | 导出新组件 |
-| `src/App.tsx` | 修改 | 添加 /scl90-lite 路由 |
+| `src/pages/AliveCheckLite.tsx` | 新建 | 死了吗轻量版页面 |
+| `src/pages/AwakeningLite.tsx` | 新建 | 觉察日记轻量版页面 |
+| `src/hooks/useAliveCheckPurchase.ts` | 新建 | 死了吗购买状态hook |
+| `src/hooks/useAwakeningPurchase.ts` | 新建 | 觉察日记购买状态hook |
+| `src/pages/AliveCheckIntro.tsx` | 修改 | 添加轻模式入口文字 |
+| `src/pages/AwakeningIntro.tsx` | 修改 | 添加轻模式入口文字 |
+| `src/App.tsx` | 修改 | 添加两个新路由 |
 | `src/components/FloatingQuickMenu.tsx` | 修改 | 排除新路由 |
+| 数据库迁移 | 新建 | 添加两个产品包 |
 
 ---
 
@@ -199,10 +206,19 @@ const EXCLUDED_ROUTES = [
 
 | 要点 | 说明 |
 |------|------|
-| 复用组件 | 复用 `SCL90Result`、`SCL90PayDialog` |
-| 购买状态 | 使用现有 `useSCL90Purchase` hook |
-| 支付参数 | `packageKey="scl90_report"` |
-| 计分函数 | 复用 `calculateSCL90Result` |
+| 复用组件 | 复用 `AliveCheck`、`Awakening` 核心组件 |
+| 支付弹窗 | 使用通用 `AssessmentPayDialog` |
+| 购买验证 | 类似其他测评的 `useAssessmentPurchase` 模式 |
+| 条件显示 | 轻模式文字仅对未登录/未购买用户显示 |
 | 动画兼容 | 使用 `opacity: 0.01` 和 `translateZ(0)` 确保微信兼容 |
-| 自动跳转 | 答题后 300ms 延迟自动跳转下一题 |
 
+---
+
+### 验收标准
+
+1. ✅ `/alive-check-lite` 入口可直接体验功能
+2. ✅ `/awakening-lite` 入口可直接查看6维觉察
+3. ✅ 核心操作时触发 ¥9.9 付费弹窗
+4. ✅ Landing页面底部显示轻模式入口（未购买用户可见）
+5. ✅ 登录/已购买用户自动隐藏轻模式提示
+6. ✅ 支付成功后可正常使用全部功能
