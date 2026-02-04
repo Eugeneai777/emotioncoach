@@ -471,10 +471,10 @@ export function QuickRegisterStep({
             刷新重试
           </Button>
           <button 
-            onClick={() => setRegisterMode('email')}
+            onClick={() => setRegisterMode('phone')}
             className="w-full text-sm text-primary hover:underline py-2"
           >
-            使用邮箱注册
+            使用手机号注册
           </button>
         </div>
       </div>
