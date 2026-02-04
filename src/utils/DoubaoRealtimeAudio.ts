@@ -94,15 +94,15 @@ export class DoubaoRealtimeChat {
   // 2) 检测到定时器严重漂移时，跳过一次超时判定并重置计数
   private lastHeartbeatTick: number = 0;
   private static readonly HEARTBEAT_INTERVAL_MS = 15000;
-  private static readonly HEARTBEAT_TIMEOUT_START_MS = 60000; // 60s 后才开始判定“心跳超时”
-  private static readonly HEARTBEAT_TIMER_DRIFT_MS = 20000; // interval 漂移超过 20s 认为发生了冻结/系统调度
-  private static readonly MAX_MISSED_HEARTBEATS = 12; // 更宽容，避免移动端误判（约 3-4 分钟级别）
+  private static readonly HEARTBEAT_TIMEOUT_START_MS = 120000; // 120s 后才开始判定"心跳超时"（放宽至2分钟）
+  private static readonly HEARTBEAT_TIMER_DRIFT_MS = 30000; // interval 漂移超过 30s 认为发生了冻结/系统调度
+  private static readonly MAX_MISSED_HEARTBEATS = 15; // 更宽容，避免移动端误判（约 4-5 分钟级别）
   
   // 🔧 新增：AI 回复状态跟踪，用于区分"AI正在回复"和"空闲等待用户"
   // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
   private isAssistantSpeaking: boolean = false;
   private lastResponseEndTime: number = 0; // AI 最后一次回复结束的时间
-  private static readonly USER_IDLE_TIMEOUT = 120000; // 用户空闲超时：2 分钟
+  private static readonly USER_IDLE_TIMEOUT = 180000; // 用户空闲超时：3 分钟（从2分钟放宽）
   
   // 🔧 iOS 微信：WebSocket 可能被系统静默回收，需要主动检测 readyState
   private lastReadyStateCheck: number = 0;
