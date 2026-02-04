@@ -86,7 +86,7 @@ export class DoubaoRealtimeChat {
   // 注意：用户长时间说话时可能没有 AI 回复，但 pong 应该始终正常返回
   private lastHeartbeatResponse: number = 0;
   private missedHeartbeats: number = 0;
-  private static readonly MAX_MISSED_HEARTBEATS = 5; // 连续 5 次无响应则认为断连
+  private static readonly MAX_MISSED_HEARTBEATS = 8; // 连续 8 次无响应则认为断连（微信环境需要更宽容）
   
   // 🔧 新增：AI 回复状态跟踪，用于区分"AI正在回复"和"空闲等待用户"
   // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
