@@ -157,7 +157,7 @@ export function FollowWechatReminder() {
               }}
             />
             <p className="text-sm text-muted-foreground text-center">
-              {isWechat ? '长按识别二维码关注' : '微信扫码关注「有劲情绪日记」'}
+              {isWechat ? '长按识别二维码关注' : '使用微信扫码关注'}
             </p>
           </div>
         </Card>
@@ -169,7 +169,7 @@ export function FollowWechatReminder() {
 
         {/* Benefits */}
         <div className="space-y-2">
-          <p className="text-sm font-medium text-center">关注后可获得：</p>
+          <p className="text-sm font-medium text-center">扫码关注后可获得：</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
               <Bell className="w-4 h-4 text-teal-500" />
