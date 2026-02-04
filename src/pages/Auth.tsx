@@ -11,10 +11,47 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
 import { useTermsAgreement } from "@/hooks/useTermsAgreement";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// 国家区号列表
+const countryCodes = [
+  { code: '+86', country: '中国' },
+  { code: '+852', country: '中国香港' },
+  { code: '+853', country: '中国澳门' },
+  { code: '+886', country: '中国台湾' },
+  { code: '+1', country: '美国/加拿大' },
+  { code: '+44', country: '英国' },
+  { code: '+81', country: '日本' },
+  { code: '+82', country: '韩国' },
+  { code: '+65', country: '新加坡' },
+  { code: '+60', country: '马来西亚' },
+  { code: '+61', country: '澳大利亚' },
+  { code: '+64', country: '新西兰' },
+  { code: '+49', country: '德国' },
+  { code: '+33', country: '法国' },
+];
+
+// 生成占位邮箱
+function generatePhoneEmail(countryCode: string, phone: string): string {
+  const cleanCode = countryCode.replace('+', '');
+  return `phone_${cleanCode}${phone}@youjin.app`;
+}
+
+// 验证手机号格式
+function isValidPhone(phone: string): boolean {
+  return /^\d{5,15}$/.test(phone);
+}
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+86");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
