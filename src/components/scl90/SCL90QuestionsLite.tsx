@@ -134,14 +134,8 @@ export function SCL90QuestionsLite({
         {/* 底部信息区域（仅首题且 showFooterInfo=true 时显示） */}
         {showFooterInfo && currentIndex === 0 && (
           <div className="mt-16 pt-6 border-t border-border/30 space-y-3 text-center pb-[env(safe-area-inset-bottom)]">
-            <a 
-              href="/wechat-auth?mode=follow" 
-              className="text-muted-foreground text-sm block hover:text-primary transition-colors"
-            >
-              点此关注公众号
-            </a>
-            <p className="text-muted-foreground text-xs">
-              需付费后方可查看结果，结果纯属娱乐仅供参考
+            <p className="text-muted-foreground text-sm">
+              💡 先体验后付费 ¥9.9
             </p>
             <p className="text-muted-foreground text-xs">
               北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
