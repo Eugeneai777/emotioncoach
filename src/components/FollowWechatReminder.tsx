@@ -157,7 +157,7 @@ export function FollowWechatReminder() {
               }}
             />
             <p className="text-sm text-muted-foreground text-center">
-              {isWechat ? '长按识别二维码关注' : '微信扫码关注「有劲情绪日记」'}
+              {isWechat ? '长按识别二维码关注' : '使用微信扫码关注'}
             </p>
           </div>
         </Card>
