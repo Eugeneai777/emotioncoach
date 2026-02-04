@@ -562,13 +562,15 @@ const Auth = () => {
             使用微信{isLogin ? "登录" : "注册"}
           </Button>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isLogin ? "还没有账号？点击注册" : "已有账号？点击登录"}
+          {/* 仅手机号模式显示注册/登录切换 */}
+          {authMode === 'phone' && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {isLogin ? "还没有账号？点击注册" : "已有账号？点击登录"}
             </button>
           </div>
         </div>
