@@ -86,13 +86,18 @@ export class DoubaoRealtimeChat {
   // 注意：用户长时间说话时可能没有 AI 回复，但 pong 应该始终正常返回
   private lastHeartbeatResponse: number = 0;
   private missedHeartbeats: number = 0;
-  private static readonly MAX_MISSED_HEARTBEATS = 8; // 连续 8 次无响应则认为断连（微信环境需要更宽容）
+  // 🔧 iOS 微信优化：减少最大容忍次数从 8 到 6（约 135s），更早发现断连
+  private static readonly MAX_MISSED_HEARTBEATS = 6;
   
   // 🔧 新增：AI 回复状态跟踪，用于区分"AI正在回复"和"空闲等待用户"
   // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
   private isAssistantSpeaking: boolean = false;
   private lastResponseEndTime: number = 0; // AI 最后一次回复结束的时间
   private static readonly USER_IDLE_TIMEOUT = 120000; // 用户空闲超时：2 分钟
+  
+  // 🔧 iOS 微信：WebSocket 可能被系统静默回收，需要主动检测 readyState
+  private lastReadyStateCheck: number = 0;
+  private static readonly READY_STATE_CHECK_INTERVAL = 5000; // 每 5 秒检查一次
 
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -428,7 +433,16 @@ export class DoubaoRealtimeChat {
       };
 
       this.ws.onclose = (event) => {
-        console.log('[DoubaoChat] WebSocket closed:', event.code, event.reason, 'wasClean:', event.wasClean);
+        // 🔧 增强诊断日志：iOS 微信环境下需要更多信息定位断开原因
+        const connectionDuration = Date.now() - (this.lastHeartbeatResponse || Date.now());
+        console.log('[DoubaoChat] WebSocket closed:', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+          connectionDurationMs: connectionDuration,
+          missedHeartbeats: this.missedHeartbeats,
+          isAssistantSpeaking: this.isAssistantSpeaking,
+        });
         this.stopHeartbeat();
         // 🔧 如果正在等待 session.connected，也要拒绝那个 Promise
         if (this.sessionConnectedRejecter) {
@@ -479,10 +493,28 @@ export class DoubaoRealtimeChat {
     this.lastResponseEndTime = Date.now(); // 初始化为当前时间
     this.missedHeartbeats = 0;
     this.isAssistantSpeaking = false;
+    this.lastReadyStateCheck = Date.now();
     
     this.heartbeatInterval = window.setInterval(() => {
+      const now = Date.now();
+      
+      // 🔧 iOS 微信关键修复：主动检测 WebSocket readyState
+      // iOS 微信 WebView 可能静默回收 WebSocket，onclose 事件不触发
+      // 通过主动检测 readyState 发现问题
+      if (now - this.lastReadyStateCheck > DoubaoRealtimeChat.READY_STATE_CHECK_INTERVAL) {
+        this.lastReadyStateCheck = now;
+        const wsState = this.ws?.readyState;
+        
+        // WebSocket 状态：0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
+        if (wsState !== WebSocket.OPEN) {
+          console.error(`[DoubaoChat] ❌ WebSocket readyState=${wsState} (not OPEN), connection lost`);
+          this.stopHeartbeat();
+          this.onStatusChange('disconnected');
+          return;
+        }
+      }
+      
       if (this.ws?.readyState === WebSocket.OPEN) {
-        const now = Date.now();
         const timeSinceLastResponse = now - this.lastHeartbeatResponse;
         
         // 🔧 关键修复：AI 正在回复时，绝对不检测超时
@@ -490,7 +522,13 @@ export class DoubaoRealtimeChat {
           // AI 正在说话，重置 missedHeartbeats，不检测超时
           this.missedHeartbeats = 0;
           // 仍然发送 ping 保持连接活跃
-          this.ws.send(JSON.stringify({ type: 'ping' }));
+          try {
+            this.ws.send(JSON.stringify({ type: 'ping' }));
+          } catch (e) {
+            console.error('[DoubaoChat] ❌ Failed to send ping during AI speaking:', e);
+            this.stopHeartbeat();
+            this.onStatusChange('disconnected');
+          }
           return;
         }
         
@@ -504,10 +542,10 @@ export class DoubaoRealtimeChat {
         }
         
         // 检测心跳响应超时（连接可能已断开）
-        // 只有在超过 45 秒没有任何响应时才开始计数
-        if (timeSinceLastResponse > 45000 && this.lastHeartbeatResponse > 0) {
+        // 🔧 优化：缩短初始容忍时间从 45s 到 30s，更快发现问题
+        if (timeSinceLastResponse > 30000 && this.lastHeartbeatResponse > 0) {
           this.missedHeartbeats++;
-          console.warn(`[DoubaoChat] ⚠️ Heartbeat timeout: ${timeSinceLastResponse}ms since last response, missed: ${this.missedHeartbeats}`);
+          console.warn(`[DoubaoChat] ⚠️ Heartbeat timeout: ${timeSinceLastResponse}ms since last response, missed: ${this.missedHeartbeats}/${DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS}`);
           
           if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
             console.error('[DoubaoChat] ❌ Connection appears dead, triggering disconnect');
@@ -520,8 +558,17 @@ export class DoubaoRealtimeChat {
           this.missedHeartbeats = 0;
         }
         
-        // 发送 ping
-        this.ws.send(JSON.stringify({ type: 'ping' }));
+        // 发送 ping（带异常捕获）
+        try {
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        } catch (e) {
+          console.error('[DoubaoChat] ❌ Failed to send ping:', e);
+          this.missedHeartbeats++;
+          if (this.missedHeartbeats >= DoubaoRealtimeChat.MAX_MISSED_HEARTBEATS) {
+            this.stopHeartbeat();
+            this.onStatusChange('disconnected');
+          }
+        }
       }
     }, 15000);
   }
