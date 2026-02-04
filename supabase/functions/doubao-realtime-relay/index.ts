@@ -830,6 +830,15 @@ Deno.serve(async (req) => {
   let hasGreeted = false;
   let clientAudioAppendCount = 0;
 
+  // ✅ 上行/下行活动时间戳：用于诊断“1分40秒自动挂断”以及做 Keepalive
+  // - lastClientAudioAt: 最近一次收到客户端音频 append 的时间
+  // - lastDoubaoActivityAt: 最近一次从 Doubao 读到任何数据的时间
+  // - lastKeepaliveAt: 最近一次向 Doubao 发送“静默音频 keepalive”的时间
+  let lastClientAudioAt = Date.now();
+  let lastDoubaoActivityAt = Date.now();
+  let lastKeepaliveAt = 0;
+  let lastKeepaliveLogAt = 0;
+
   // ✅ 音色降级：当 speaker id 不在 timber 内时（45000001），自动降级为“不指定音色”并重连一次。
   // 目的：避免前端卡在“正在聆听”但无回复。
   let speakerFallbackAttempted = false;
@@ -881,6 +890,7 @@ Deno.serve(async (req) => {
     sessionStarted = false;
     doubaoSessionId = null;
     hasGreeted = false;
+    lastDoubaoActivityAt = Date.now();
   };
 
   const connectToDoubao = async () => {
@@ -1019,7 +1029,7 @@ Deno.serve(async (req) => {
             const n = await doubaoConn.read(buffer);
             const now = Date.now();
             const elapsed = now - lastReadTime;
-            
+
             // 🔧 诊断日志：如果读取间隔超过 10 秒，记录一次（帮助排查微信环境卡顿）
             if (elapsed > 10000 && !readTimeoutWarned) {
               console.warn(`[DoubaoRelay] ⚠️ Long read gap detected: ${elapsed}ms since last data`);
@@ -1028,10 +1038,28 @@ Deno.serve(async (req) => {
             lastReadTime = now;
             
             if (n === null || n === 0) {
-              console.log(`[DoubaoRelay] Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms)`);
+              const idleClientSec = Math.round((now - lastClientAudioAt) / 1000);
+              const idleUpstreamSec = Math.round((now - lastDoubaoActivityAt) / 1000);
+              console.log(`[DoubaoRelay] Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms, idleClient=${idleClientSec}s, idleUpstream=${idleUpstreamSec}s)`);
               isConnected = false;
+
+              // ✅ 把“谁先断开 + 空闲时长”传回前端，便于定位微信 1分40 挂断
+              if (!isReconnecting && myGeneration === connectionGeneration && clientSocket.readyState === WebSocket.OPEN) {
+                try {
+                  clientSocket.send(JSON.stringify({
+                    type: 'session.closed',
+                    code: 1000,
+                    reason: `doubao_closed (idleClient=${idleClientSec}s idleUpstream=${idleUpstreamSec}s)`
+                  }));
+                } catch {
+                  // ignore
+                }
+              }
               break;
             }
+
+            // ✅ 只有在读到有效数据时才更新“上游活跃时间”
+            lastDoubaoActivityAt = now;
             
             // 重置警告标志
             readTimeoutWarned = false;
@@ -1499,6 +1527,37 @@ Deno.serve(async (req) => {
           console.warn('[DoubaoRelay] Failed to send ping to Doubao:', e);
         }
       }
+
+      // 3. ✅ 额外 keepalive：微信场景下，部分上游会在“没有音频上行”时提前断开（~100s 级别）
+      // 仅在 session 已 ready 且一段时间没有用户音频输入时，发送极短静默 PCM16，避免触发 VAD。
+      if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
+        const now = Date.now();
+        const NO_CLIENT_AUDIO_MS = 20_000;
+        const KEEPALIVE_GAP_MS = 20_000;
+        const idleSinceClientAudio = now - lastClientAudioAt;
+
+        if (idleSinceClientAudio > NO_CLIENT_AUDIO_MS && now - lastKeepaliveAt > KEEPALIVE_GAP_MS) {
+          try {
+            // 10ms 静默音频：160 samples @16kHz => 320 bytes PCM16
+            const silence = new Uint8Array(320);
+            const audioPacket = buildAudioUploadRequest(silence, audioSequence++, doubaoSessionId);
+            const frame = buildWebSocketFrame(audioPacket);
+            await doubaoConn.write(frame);
+            lastKeepaliveAt = now;
+
+            // 避免刷屏：最多每 60 秒打一次日志
+            if (now - lastKeepaliveLogAt > 60_000) {
+              lastKeepaliveLogAt = now;
+              console.log('[DoubaoRelay] Sent silent audio keepalive', {
+                idleClientMs: idleSinceClientAudio,
+                seq: audioSequence,
+              });
+            }
+          } catch (e) {
+            console.warn('[DoubaoRelay] Failed to send silent keepalive:', e);
+          }
+        }
+      }
     }, 15000);
   };
 
@@ -1532,6 +1591,7 @@ Deno.serve(async (req) => {
       const message = JSON.parse(event.data);
       if (message.type === 'input_audio_buffer.append') {
         clientAudioAppendCount++;
+        lastClientAudioAt = Date.now();
         // 避免日志刷屏：每 50 条记录一次
         if (clientAudioAppendCount % 50 === 0) {
           console.log(`[DoubaoRelay] Received from client: type=input_audio_buffer.append (#${clientAudioAppendCount})`);
@@ -1717,27 +1777,6 @@ Deno.serve(async (req) => {
       }
     } catch (err) {
       console.error('[DoubaoRelay] Error processing client message:', err);
-    }
-  };
-
-  clientSocket.onerror = (event: Event) => {
-    console.error('[DoubaoRelay] Client WebSocket error:', event);
-  };
-
-  clientSocket.onclose = () => {
-    console.log('[DoubaoRelay] Client disconnected');
-    
-    if (heartbeatInterval) {
-      clearInterval(heartbeatInterval);
-    }
-    
-    isConnected = false;
-    if (doubaoConn) {
-      try {
-        doubaoConn.close();
-      } catch {
-        // Ignore close errors
-      }
     }
   };
 
