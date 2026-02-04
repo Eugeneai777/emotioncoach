@@ -90,13 +90,25 @@ export default function WeChatOAuthCallback() {
             }
           }
           
-          // 新用户跳转到关注页，老用户直接进入首页
+        // 新用户跳转到关注页，老用户直接进入首页
           if (data.isNewUser) {
             navigate("/wechat-auth?mode=follow");
           } else {
             navigate("/");
           }
+          return;
         }
+
+        // 兜底处理：如果没有匹配任何已知情况，也导航到设置页
+        if (isBind) {
+          console.warn('Unexpected bind response:', data);
+          navigate("/settings?tab=notifications");
+          return;
+        }
+
+        // 对于其他未知情况，导航到首页
+        console.warn('Unknown OAuth response:', data);
+        navigate("/");
       } catch (err) {
         console.error("OAuth callback error:", err);
         const message = err instanceof Error ? err.message : "未知错误";

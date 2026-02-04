@@ -266,10 +266,10 @@ serve(async (req) => {
       console.log('Profile auth_provider updated to wechat for:', finalUserId);
     }
 
-    // 对于绑定流程，直接返回成功
-    if (state === 'bind') {
+    // 对于绑定流程，直接返回成功（不生成 magic link）
+    if (isBind) {
       return new Response(
-        JSON.stringify({ success: true, isNewUser: false }),
+        JSON.stringify({ success: true, isNewUser: false, bindSuccess: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
