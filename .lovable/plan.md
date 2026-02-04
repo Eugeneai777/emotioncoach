@@ -1,125 +1,101 @@
 
 
-# 修复微信扫码绑定后白屏问题
+# 统一套餐卡片规格方案
 
-## 问题诊断
+## 问题分析
 
-### 根本原因
+从截图可见，两个卡片高度不同的原因：
 
-经过代码分析，发现白屏问题由 **Edge Function 中的条件判断错误** 导致：
+| 卡片 | 功能点数量 | 额外元素 |
+|------|-----------|---------|
+| 尝鲜会员 | 4 个 | 价格下方有"⚠️ 限购一次"提示 |
+| 365会员 | 3 个 | 无额外提示 |
 
-**位置**：`supabase/functions/wechat-oauth-process/index.ts` 第 269-275 行
+## 解决方案
 
-```typescript
-// 对于绑定流程，直接返回成功
-if (state === 'bind') {  // ❌ 永远不匹配！state 实际是 'bind_用户ID'
-  return new Response(...)
-}
-```
+### 方案：使用 Flexbox 拉伸 + 固定功能区高度
 
-**问题**：
-- 实际传入的 state 格式是 `bind_{userId}`（如 `bind_13807a48-2b04-4c09-8fa0-1eb678cc58ce`）
-- 条件 `state === 'bind'` 永远为 false
-- 绑定流程不会在这里返回，而是继续执行 magic link 生成逻辑
+通过 CSS Flexbox 让两张卡片自动等高，并将按钮固定在底部。
 
-### 导致的问题链
+### 具体改动
 
-```text
-1. 用户在 PC 端点击"绑定微信"
-2. 生成二维码（指向设置页面）
-3. 用户用微信扫码 → 在微信浏览器中打开设置页面
-4. 用户点击"绑定微信账号" → 跳转到微信授权
-5. 授权成功后跳转到 /wechat-oauth-callback
-6. Edge Function 处理绑定：
-   ✅ 保存映射成功
-   ❌ 错误地生成 magic link（本不该生成）
-7. 前端收到 { success: true, magicLink: true, tokenHash: ... }
-8. 前端尝试 verifyOtp 登录（第 59-68 行）
-   → 但此时微信浏览器内可能有另一个 session
-   → 或 tokenHash 与当前用户不匹配
-   → 导致错误或白屏
-```
+**文件**：`src/components/PackageSelector.tsx`
 
----
+1. **统一功能点数量**
+   - 移除 features 数组中的"⚠️ 限购一次"（因为已在价格下方单独显示）
+   - 为 365会员添加一个占位功能点，使两边数量相同
 
-## 修复方案
+2. **卡片结构优化**
+   ```text
+   Card (h-full flex flex-col)
+   ├── CardHeader (固定高度区域)
+   │   ├── 标题 + 图标 + 徽章
+   │   ├── 价格
+   │   └── 配额信息 + 限购提示（固定高度，无内容时保留空间）
+   ├── CardContent (flex-1 flex flex-col)
+   │   ├── 功能列表 (flex-1，自动填充)
+   │   └── 按钮 (mt-auto，始终在底部)
+   ```
 
-### 修改 1：修复 Edge Function 条件判断
-
-**文件**：`supabase/functions/wechat-oauth-process/index.ts`
-
-**位置**：第 269-275 行
-
-**改动前**：
-```typescript
-// 对于绑定流程，直接返回成功
-if (state === 'bind') {
-  return new Response(
-    JSON.stringify({ success: true, isNewUser: false }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-```
-
-**改动后**：
-```typescript
-// 对于绑定流程，直接返回成功（不生成 magic link）
-if (isBind) {
-  return new Response(
-    JSON.stringify({ success: true, isNewUser: false, bindSuccess: true }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-```
-
-### 修改 2：增强前端错误处理
-
-**文件**：`src/pages/WeChatOAuthCallback.tsx`
-
-添加兜底处理，防止未知响应导致白屏：
-
-**位置**：第 99 行之后
-
-**添加**：
-```typescript
-// 兜底处理：如果没有匹配任何已知情况，也导航到设置页
-if (isBind) {
-  console.warn('Unexpected bind response:', data);
-  navigate("/settings?tab=notifications");
-  return;
-}
-
-// 对于其他未知情况，导航到首页
-console.warn('Unknown OAuth response:', data);
-navigate("/");
-```
+3. **CSS 改动**
+   - 外层卡片：`h-full flex flex-col`
+   - CardContent：`flex-1 flex flex-col`
+   - 功能列表：`flex-1`
+   - 按钮：`mt-auto`
 
 ---
 
-## 文件清单
+## 改动文件
 
-| 操作 | 文件路径 | 改动说明 |
-|------|----------|----------|
-| 修改 | `supabase/functions/wechat-oauth-process/index.ts` | 修复绑定流程的返回条件 |
-| 修改 | `src/pages/WeChatOAuthCallback.tsx` | 添加兜底错误处理 |
+| 文件 | 改动说明 |
+|------|----------|
+| `src/components/PackageSelector.tsx` | 调整卡片布局为等高 flex 结构 |
 
 ---
 
 ## 技术细节
 
-### 条件判断修复
+```typescript
+// packageConfig 调整
+const packageConfig = [
+  {
+    key: "basic",
+    features: ["AI对话体验", "基础功能", "365天有效"],  // 移除重复的限购提示
+  },
+  {
+    key: "member365",
+    features: ["AI对话无限使用", "全部高级功能", "365天有效期"],
+  },
+];
 
-原代码使用 `state === 'bind'` 严格匹配，但实际 state 是 `bind_用户ID` 格式。需要使用已有的 `isBind` 变量（第 74 行已定义：`const isBind = state.startsWith('bind_')`）。
-
-### 返回值增强
-
-在绑定成功返回中添加 `bindSuccess: true` 字段，与前端期望的判断条件 `(data?.success || data?.bindSuccess)` 匹配。
+// 卡片结构
+<Card className={`h-full flex flex-col ${pkg.popular ? "border-primary" : ""}`}>
+  <CardHeader className="space-y-3">
+    {/* 标题、价格等保持不变 */}
+    {/* 限购提示保留，但添加固定高度容器 */}
+    <div className="h-5">
+      {pkg.limitPurchase && !pkg.isPurchased && (
+        <div className="text-xs text-amber-600">⚠️ 限购一次</div>
+      )}
+    </div>
+  </CardHeader>
+  <CardContent className="flex-1 flex flex-col space-y-4">
+    <ul className="flex-1 space-y-2">
+      {/* 功能列表 */}
+    </ul>
+    <Button className="w-full mt-auto">
+      {/* 按钮始终在底部 */}
+    </Button>
+  </CardContent>
+</Card>
+```
 
 ---
 
 ## 预期效果
 
-- 绑定流程不再错误地生成 magic link
-- 绑定成功后正确返回到设置页面
-- 即使出现未知响应，也不会显示白屏
+- 两张卡片始终等高
+- 按钮始终对齐在底部
+- 功能列表区域自动适应
+- 限购提示不再影响布局
 
