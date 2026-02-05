@@ -1340,6 +1340,47 @@ export class DoubaoRealtimeChat {
   }
 
   /**
+   * 🔧 尝试恢复麦克风流
+   * 在检测到持续静音且麦克风 track 已结束时调用
+   */
+  private async attemptMicrophoneRecovery(): Promise<void> {
+    console.log('[DoubaoChat] 🔄 Attempting microphone recovery...');
+    
+    // 停止当前录音
+    this.stopRecording();
+    
+    // 清理旧的麦克风流
+    if (this.mediaStream) {
+      try {
+        this.mediaStream.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        // ignore
+      }
+      this.mediaStream = null;
+    }
+    
+    // 重新获取麦克风
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      console.log('[DoubaoChat] ✅ Microphone recovered successfully');
+      
+      // 重新启动录音
+      await this.startRecording();
+      console.log('[DoubaoChat] ✅ Recording restarted after microphone recovery');
+    } catch (e) {
+      console.error('[DoubaoChat] ❌ Failed to recover microphone:', e);
+      this.onMessage?.({ type: 'debug.microphone_recovery_failed', error: String(e) });
+    }
+  }
+
+  /**
    * 将 Float32 PCM 从 sourceRate 重采样到 targetRate（简单抽样/插值，足够用于语音 ASR）
    */
   private resampleFloat32(input: Float32Array, sourceRate: number, targetRate: number): Float32Array {
