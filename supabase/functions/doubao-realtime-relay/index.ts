@@ -1154,7 +1154,9 @@ Deno.serve(async (req) => {
                       type: 'session.connected',
                       message: 'Connected to Doubao API - Session started',
                       ready: true,
-                      reason: 'event_101'
+                      reason: 'event_101',
+                      // ✅ 告知前端是否需要跳过开场白（重连场景）
+                      skip_greeting: isReconnectParam
                     }));
                   }
                   continue;
@@ -1207,7 +1209,9 @@ Deno.serve(async (req) => {
                         type: 'session.connected',
                         message: 'Connected to Doubao API - Session ACK',
                         ready: true,
-                        reason: 'event_150'
+                        reason: 'event_150',
+                        // ✅ 告知前端是否需要跳过开场白（重连场景）
+                        skip_greeting: isReconnectParam
                       }));
                     }
                     continue;
