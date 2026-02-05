@@ -164,10 +164,10 @@ export class DoubaoRealtimeChat {
         // 🔧 创建播放增益节点：移动端微信扬声器音量偏小，增益 2.5 倍
         try {
           this.playbackGainNode = this.playbackAudioContext.createGain();
-          // 增益系数 2.5：显著提升音量（用户反馈 1.8 偏小）
-          this.playbackGainNode.gain.value = 2.5;
+          // 增益系数 4.0：大幅提升音量（用户反馈 2.5 仍偏小）
+          this.playbackGainNode.gain.value = 4.0;
           this.playbackGainNode.connect(this.playbackAudioContext.destination);
-          console.log('[DoubaoChat] Playback GainNode created with 2.5x gain');
+          console.log('[DoubaoChat] Playback GainNode created with 4.0x gain');
         } catch (e) {
           console.warn('[DoubaoChat] Failed to create playback GainNode:', e);
         }
@@ -1242,6 +1242,15 @@ export class DoubaoRealtimeChat {
     if (!this.playbackAudioContext) {
       console.warn('[DoubaoChat] No playback AudioContext, creating one...');
       this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+      // 🔧 同时创建增益节点，确保音量提升生效
+      try {
+        this.playbackGainNode = this.playbackAudioContext.createGain();
+        this.playbackGainNode.gain.value = 4.0;
+        this.playbackGainNode.connect(this.playbackAudioContext.destination);
+        console.log('[DoubaoChat] Fallback GainNode created with 4.0x gain');
+      } catch (e) {
+        console.warn('[DoubaoChat] Failed to create fallback GainNode:', e);
+      }
     }
     
     // ✅ 如果 AudioContext 被挂起（浏览器策略），尝试恢复
