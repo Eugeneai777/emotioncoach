@@ -1412,8 +1412,12 @@ export class DoubaoRealtimeChat {
             this.sessionConnectedResolver();
             this.clearSessionConnectedWait();
           }
-          // 1. 启动录音
-          this.startRecording();
+          // 1. 启动录音（异步，但不阻塞后续流程）
+          void this.startRecording().then(() => {
+            console.log('[DoubaoChat] ✅ Recording started after session.connected');
+          }).catch((e) => {
+            console.error('[DoubaoChat] ❌ Failed to start recording:', e);
+          });
           this.onStatusChange('connected');
           // 2. ✅ 仅首次接通且 skip_greeting 不为 true 时触发开场白
           // skip_greeting 来自 relay 的 session.connected 消息，用于重连场景
