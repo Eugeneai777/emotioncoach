@@ -459,7 +459,22 @@ export class DoubaoRealtimeChat {
           }
           this.mediaStream = null;
         } else {
-          console.log('[DoubaoChat] ✅ MediaStream is valid, track state: live, tag:', tag);
+          // ✅ 额外检查：track.enabled 和 track.muted
+          console.log('[DoubaoChat] ✅ MediaStream is valid, tag:', tag, {
+            trackState: track.readyState,
+            enabled: track.enabled,
+            muted: track.muted,
+            label: track.label
+          });
+          
+          // 如果 track 被静音，尝试恢复
+          if (track.muted) {
+            console.warn('[DoubaoChat] ⚠️ Microphone track is muted, this may cause ASR to fail');
+          }
+          if (!track.enabled) {
+            console.warn('[DoubaoChat] ⚠️ Microphone track is disabled, enabling...');
+            track.enabled = true;
+          }
         }
       }
     }
@@ -1158,6 +1173,20 @@ export class DoubaoRealtimeChat {
       });
       return;
     }
+    
+    // ✅ 额外诊断：打印麦克风和 AudioContext 的详细状态
+    const micTrack = audioTracks[0];
+    console.log('[DoubaoChat] 🎙️ Starting recording with:', {
+      audioContextState: this.audioContext.state,
+      audioContextSampleRate: this.audioContext.sampleRate,
+      targetSampleRate: this.inputSampleRate,
+      needsResampling: this.audioContext.sampleRate !== this.inputSampleRate,
+      micTrackState: micTrack.readyState,
+      micTrackEnabled: micTrack.enabled,
+      micTrackMuted: micTrack.muted,
+      micTrackLabel: micTrack.label,
+      micTrackSettings: micTrack.getSettings?.() || 'N/A'
+    });
 
     // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
     if (this.audioContext.state === 'suspended') {
