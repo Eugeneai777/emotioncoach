@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { preheatTokenEndpoint, prewarmMicrophoneStream } from '@/utils/RealtimeAudio';
+import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 
 interface EmotionVoiceCallCTAProps {
   onVoiceChatClick: () => void;
@@ -23,13 +24,28 @@ export const EmotionVoiceCallCTA = ({
 
   // 🚀 P0: 预热 Edge Function 和麦克风流
   const handlePreheat = useCallback(() => {
+    // 微信端：先预热 AudioContext（不触发麦克风授权弹窗）
+    try {
+      DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: false });
+    } catch {
+      // ignore
+    }
+
     Promise.all([
-      preheatTokenEndpoint('vibrant-life-realtime-token'),
+      // 情绪教练必须预热豆包 token
+      preheatTokenEndpoint('doubao-realtime-token'),
       prewarmMicrophoneStream()
     ]).catch(console.warn);
   }, []);
 
   const handleClick = () => {
+    // ✅ 关键：在用户点击同步上下文中解锁微信音频（并触发麦克风授权）
+    try {
+      DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: true });
+    } catch {
+      // ignore
+    }
+
     // 触发涟漪动画
     setIsRippling(true);
     setTimeout(() => setIsRippling(false), 600);
