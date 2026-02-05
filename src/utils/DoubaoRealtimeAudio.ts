@@ -146,6 +146,22 @@ export class DoubaoRealtimeChat {
   // ✅ 给上层“用户活动检测”喂低频事件，避免被误判无活动自动挂断
   private lastUserAudioActivityEventAt = 0;
 
+  // =====================
+  // 本地麦克风“真实说话”判定（用于避免误打断）
+  //
+  // 背景：Relay 为绕过上游“上行空闲”超时，会注入极低幅度保活噪声。
+  // 某些环境下该噪声可能触发服务端 speech_started，导致前端误执行“打断 AI 播放”，
+  // 表现为：AI 回复说到一半突然停止，但通话未挂断、可以继续交流。
+  //
+  // 方案：只有当本地麦克风也在近期检测到足够能量的语音输入时，才打断 AI。
+  // =====================
+  private lastLocalSpeechAt = 0;
+  private lastLocalRms = 0;
+  private lastLocalPeak = 0;
+  private static readonly LOCAL_SPEECH_CONFIRM_WINDOW_MS = 800;
+  private static readonly LOCAL_SPEECH_PEAK_THRESHOLD = 0.01;
+  private static readonly LOCAL_SPEECH_RMS_THRESHOLD = 0.003;
+
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
   private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void;
@@ -1141,6 +1157,21 @@ export class DoubaoRealtimeChat {
     }
   }
 
+  private shouldInterruptAssistantOnSpeechStarted(): boolean {
+    // 没在播 AI，没必要打断
+    if (!this.isAssistantSpeaking) return false;
+
+    // 录音链路不可用时，为避免回声/串音，保守策略：仍允许打断
+    if (!this.processor) return true;
+
+    const now = Date.now();
+    const isRecent = now - this.lastLocalSpeechAt <= DoubaoRealtimeChat.LOCAL_SPEECH_CONFIRM_WINDOW_MS;
+    const energyOk =
+      this.lastLocalPeak >= DoubaoRealtimeChat.LOCAL_SPEECH_PEAK_THRESHOLD ||
+      this.lastLocalRms >= DoubaoRealtimeChat.LOCAL_SPEECH_RMS_THRESHOLD;
+    return isRecent && energyOk;
+  }
+
   // 公开的启动录音方法（用于符合 AudioClient 接口）
   // 🔧 修复：改为异步方法，确保 AudioContext 完全就绪后再创建音频链路
   async startRecording(): Promise<void> {
@@ -1244,6 +1275,8 @@ export class DoubaoRealtimeChat {
     this.processor.onaudioprocess = (e) => {
       if (this.isDisconnected || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
+      const now = Date.now();
+
       const inputData = e.inputBuffer.getChannelData(0);
       const actualRate = this.audioContext?.sampleRate || this.inputSampleRate;
 
@@ -1257,6 +1290,16 @@ export class DoubaoRealtimeChat {
         sumSquares += sample * sample;
       }
       const rms = Math.sqrt(sumSquares / inputData.length);
+
+      // ✅ 记录本地能量，用于 speech_started 去抖（防止 relay keepalive 噪声误打断）
+      this.lastLocalPeak = maxAmplitude;
+      this.lastLocalRms = rms;
+      if (
+        maxAmplitude >= DoubaoRealtimeChat.LOCAL_SPEECH_PEAK_THRESHOLD ||
+        rms >= DoubaoRealtimeChat.LOCAL_SPEECH_RMS_THRESHOLD
+      ) {
+        this.lastLocalSpeechAt = now;
+      }
       
       // 每 50 帧（约 10 秒）打印一次音频电平诊断
       if (!this._audioLevelLogCounter) this._audioLevelLogCounter = 0;
@@ -1318,7 +1361,6 @@ export class DoubaoRealtimeChat {
       }));
 
       // ✅ 每 1s 上报一次“用户仍在输出音频”，用于上层无活动检测（避免误挂断）
-      const now = Date.now();
       if (now - this.lastUserAudioActivityEventAt > 1000) {
         this.lastUserAudioActivityEventAt = now;
         this.onMessage?.({ type: 'input_audio_buffer.append', timestamp: now });
@@ -1517,10 +1559,17 @@ export class DoubaoRealtimeChat {
           // 3. ASR 识别结果混杂/错误（如"不想听牛"）
           this.lastHeartbeatResponse = Date.now();
           this.missedHeartbeats = 0;
-          this.isAssistantSpeaking = false; // 用户打断，AI 不再说话
-          this.lastResponseEndTime = Date.now(); // 重置空闲计时起点
-          this.clearAudioQueueAndStopPlayback();
-          this.onSpeakingChange('user-speaking');
+
+          // ✅ 仅当本地麦克风也确认“真的在说话”时，才打断 AI 播放。
+          // 否则可能是 relay 保活噪声触发的误报，打断会造成“AI 回复中途停止”。
+          if (this.shouldInterruptAssistantOnSpeechStarted()) {
+            this.isAssistantSpeaking = false; // 用户打断，AI 不再说话
+            this.lastResponseEndTime = Date.now(); // 重置空闲计时起点
+            this.clearAudioQueueAndStopPlayback();
+            this.onSpeakingChange('user-speaking');
+          } else {
+            console.log('[DoubaoChat] Ignoring speech_started (local mic energy not confirmed)');
+          }
           break;
 
         case 'input_audio_buffer.speech_stopped':
