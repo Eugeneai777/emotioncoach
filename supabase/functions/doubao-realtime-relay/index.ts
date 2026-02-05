@@ -24,6 +24,10 @@ const DOUBAO_PATH = '/api/v3/realtime/dialogue';
 // （不影响语音音频流；persona 校验仍在后端完成）
 const FORWARD_ASSISTANT_TEXT = false;
 
+// ✅ 静默保活帧大小：200ms @16kHz = 3200 samples = 6400 bytes PCM16
+// 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
+const KEEPALIVE_SILENCE_BYTES = 6400;
+
 // 固定的 App Key (豆包文档要求)
 const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
 
@@ -815,8 +819,10 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const userId = url.searchParams.get('user_id') || 'anonymous';
   const mode = url.searchParams.get('mode') || 'emotion';
+  // ✅ 重连标志：前端在重连时传入 is_reconnect=true，用于跳过开场白触发
+  const isReconnectParam = url.searchParams.get('is_reconnect') === 'true';
 
-  console.log(`[DoubaoRelay] New connection: userId=${userId}, mode=${mode}`);
+  console.log(`[DoubaoRelay] New connection: userId=${userId}, mode=${mode}, isReconnect=${isReconnectParam}`);
 
   const { socket: clientSocket, response } = Deno.upgradeWebSocket(req);
 
@@ -1148,7 +1154,9 @@ Deno.serve(async (req) => {
                       type: 'session.connected',
                       message: 'Connected to Doubao API - Session started',
                       ready: true,
-                      reason: 'event_101'
+                      reason: 'event_101',
+                      // ✅ 告知前端是否需要跳过开场白（重连场景）
+                      skip_greeting: isReconnectParam
                     }));
                   }
                   continue;
@@ -1201,7 +1209,9 @@ Deno.serve(async (req) => {
                         type: 'session.connected',
                         message: 'Connected to Doubao API - Session ACK',
                         ready: true,
-                        reason: 'event_150'
+                        reason: 'event_150',
+                        // ✅ 告知前端是否需要跳过开场白（重连场景）
+                        skip_greeting: isReconnectParam
                       }));
                     }
                     continue;
@@ -1532,23 +1542,25 @@ Deno.serve(async (req) => {
       // 仅在 session 已 ready 且一段时间没有用户音频输入时，发送极短静默 PCM16，避免触发 VAD。
       if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
         const now = Date.now();
-        const NO_CLIENT_AUDIO_MS = 20_000;
-        const KEEPALIVE_GAP_MS = 20_000;
+        // ✅ 缩短保活触发间隔：15s 没有用户音频就开始发静默帧，每 15s 发一次
+        const NO_CLIENT_AUDIO_MS = 15_000;
+        const KEEPALIVE_GAP_MS = 15_000;
         const idleSinceClientAudio = now - lastClientAudioAt;
 
         if (idleSinceClientAudio > NO_CLIENT_AUDIO_MS && now - lastKeepaliveAt > KEEPALIVE_GAP_MS) {
           try {
-            // 10ms 静默音频：160 samples @16kHz => 320 bytes PCM16
-            const silence = new Uint8Array(320);
+            // ✅ 200ms 静默音频：使用全局常量 KEEPALIVE_SILENCE_BYTES (6400 bytes)
+            // 更长的静默帧更能有效阻止上游 idle 断开
+            const silence = new Uint8Array(KEEPALIVE_SILENCE_BYTES);
             const audioPacket = buildAudioUploadRequest(silence, audioSequence++, doubaoSessionId);
             const frame = buildWebSocketFrame(audioPacket);
             await doubaoConn.write(frame);
             lastKeepaliveAt = now;
 
-            // 避免刷屏：最多每 60 秒打一次日志
-            if (now - lastKeepaliveLogAt > 60_000) {
+            // 避免刷屏：最多每 30 秒打一次日志
+            if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-              console.log('[DoubaoRelay] Sent silent audio keepalive', {
+              console.log('[DoubaoRelay] 🔇 Sent silent audio keepalive (200ms)', {
                 idleClientMs: idleSinceClientAudio,
                 seq: audioSequence,
               });
