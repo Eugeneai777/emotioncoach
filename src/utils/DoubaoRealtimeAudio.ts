@@ -1127,7 +1127,7 @@ export class DoubaoRealtimeChat {
    // 之前 scheduleReconnect 中调用了 stopRecording，需要恢复
    // 注意：startRecording 会检查 processor/source 是否已存在，避免重复
    if (!this.processor && !this.source) {
-     this.startRecording();
+     await this.startRecording();
      console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted manually');
    } else {
      console.log('[DoubaoChat] 🔄 Reconnect complete: recording already started by session.connected');
@@ -1142,7 +1142,8 @@ export class DoubaoRealtimeChat {
   }
 
   // 公开的启动录音方法（用于符合 AudioClient 接口）
-  startRecording(): void {
+  // 🔧 修复：改为异步方法，确保 AudioContext 完全就绪后再创建音频链路
+  async startRecording(): Promise<void> {
     // ✅ 幂等保护：避免重复调用导致多个 ScriptProcessor 并行工作（会造成重复上行/异常回声/多路触发）
     if (this.processor || this.source) {
       console.warn('[DoubaoChat] startRecording called while already recording; ignoring');
@@ -1188,13 +1189,39 @@ export class DoubaoRealtimeChat {
       micTrackSettings: micTrack.getSettings?.() || 'N/A'
     });
 
-    // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
+    // 🔧 关键修复：必须等待 AudioContext 完全 resume 后再创建音频链路
+    // iOS 微信 WebView 中，如果 AudioContext 仍在 suspended 状态，
+    // ScriptProcessor 的 onaudioprocess 回调虽然会触发，但 inputBuffer 全是 0
     if (this.audioContext.state === 'suspended') {
-      this.audioContext.resume().then(() => {
-        console.log('[DoubaoChat] Recording AudioContext resumed in startRecording');
-      }).catch((e) => {
-        console.warn('[DoubaoChat] Failed to resume recording AudioContext in startRecording:', e);
-      });
+      console.log('[DoubaoChat] ⏳ Recording AudioContext is suspended, waiting for resume...');
+      try {
+        await this.audioContext.resume();
+        console.log('[DoubaoChat] ✅ Recording AudioContext resumed, state:', this.audioContext.state);
+      } catch (e) {
+        console.error('[DoubaoChat] ❌ Failed to resume recording AudioContext:', e);
+        // 尝试重建 AudioContext
+        try {
+          this.audioContext = new AudioContext();
+          await this.audioContext.resume();
+          console.log('[DoubaoChat] ✅ Recording AudioContext rebuilt and resumed');
+        } catch (e2) {
+          console.error('[DoubaoChat] ❌ Failed to rebuild recording AudioContext:', e2);
+          return;
+        }
+      }
+    }
+    
+    // 🔧 二次确认：即使上面没有进入 suspended 分支，也确保状态正确
+    if (this.audioContext.state !== 'running') {
+      console.warn('[DoubaoChat] ⚠️ AudioContext state is', this.audioContext.state, ', attempting resume...');
+      try {
+        await this.audioContext.resume();
+        // 等待一小段时间让状态完全生效
+        await new Promise(r => setTimeout(r, 100));
+        console.log('[DoubaoChat] AudioContext state after retry:', this.audioContext.state);
+      } catch (e) {
+        console.error('[DoubaoChat] Failed to resume AudioContext on retry:', e);
+      }
     }
 
     this.source = this.audioContext.createMediaStreamSource(this.mediaStream);
@@ -1250,14 +1277,28 @@ export class DoubaoRealtimeChat {
         if (!this._silentFrameCount) this._silentFrameCount = 0;
         this._silentFrameCount++;
         
-        // 连续 100 帧静音（约 20 秒）发出警告
-        if (this._silentFrameCount === 100) {
+        // 连续 50 帧静音（约 10 秒）发出警告并尝试恢复
+        if (this._silentFrameCount === 50) {
           console.warn('[DoubaoChat] ⚠️ Sustained silence detected - microphone may be muted or reclaimed');
           this.onMessage?.({ 
             type: 'debug.audio_silence', 
             silentFrames: this._silentFrameCount,
-            maxAmplitude
+            maxAmplitude,
+            audioContextState: this.audioContext?.state,
+            micTrackState: this.mediaStream?.getAudioTracks()[0]?.readyState
           });
+          
+          // 🔧 尝试恢复：检查麦克风状态并重新获取
+          const track = this.mediaStream?.getAudioTracks()[0];
+          if (track && track.readyState === 'ended') {
+            console.error('[DoubaoChat] ❌ Microphone track ended! Attempting to recover...');
+            void this.attemptMicrophoneRecovery();
+          } else if (this.audioContext?.state === 'suspended') {
+            console.warn('[DoubaoChat] ⚠️ AudioContext suspended during recording, resuming...');
+            void this.audioContext.resume().then(() => {
+              console.log('[DoubaoChat] AudioContext resumed after silence detection');
+            });
+          }
         }
       } else {
         this._silentFrameCount = 0; // 有声音，重置计数
@@ -1296,6 +1337,47 @@ export class DoubaoRealtimeChat {
     }
     this.processor.connect(this.audioContext.destination);
     console.log('[DoubaoChat] Recording started with mobile audio optimization');
+  }
+
+  /**
+   * 🔧 尝试恢复麦克风流
+   * 在检测到持续静音且麦克风 track 已结束时调用
+   */
+  private async attemptMicrophoneRecovery(): Promise<void> {
+    console.log('[DoubaoChat] 🔄 Attempting microphone recovery...');
+    
+    // 停止当前录音
+    this.stopRecording();
+    
+    // 清理旧的麦克风流
+    if (this.mediaStream) {
+      try {
+        this.mediaStream.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        // ignore
+      }
+      this.mediaStream = null;
+    }
+    
+    // 重新获取麦克风
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      console.log('[DoubaoChat] ✅ Microphone recovered successfully');
+      
+      // 重新启动录音
+      await this.startRecording();
+      console.log('[DoubaoChat] ✅ Recording restarted after microphone recovery');
+    } catch (e) {
+      console.error('[DoubaoChat] ❌ Failed to recover microphone:', e);
+      this.onMessage?.({ type: 'debug.microphone_recovery_failed', error: String(e) });
+    }
   }
 
   /**
@@ -1385,8 +1467,12 @@ export class DoubaoRealtimeChat {
             this.sessionConnectedResolver();
             this.clearSessionConnectedWait();
           }
-          // 1. 启动录音
-          this.startRecording();
+          // 1. 启动录音（异步，但不阻塞后续流程）
+          void this.startRecording().then(() => {
+            console.log('[DoubaoChat] ✅ Recording started after session.connected');
+          }).catch((e) => {
+            console.error('[DoubaoChat] ❌ Failed to start recording:', e);
+          });
           this.onStatusChange('connected');
           // 2. ✅ 仅首次接通且 skip_greeting 不为 true 时触发开场白
           // skip_greeting 来自 relay 的 session.connected 消息，用于重连场景
