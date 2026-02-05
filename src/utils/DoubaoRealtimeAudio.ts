@@ -1277,14 +1277,28 @@ export class DoubaoRealtimeChat {
         if (!this._silentFrameCount) this._silentFrameCount = 0;
         this._silentFrameCount++;
         
-        // 连续 100 帧静音（约 20 秒）发出警告
-        if (this._silentFrameCount === 100) {
+        // 连续 50 帧静音（约 10 秒）发出警告并尝试恢复
+        if (this._silentFrameCount === 50) {
           console.warn('[DoubaoChat] ⚠️ Sustained silence detected - microphone may be muted or reclaimed');
           this.onMessage?.({ 
             type: 'debug.audio_silence', 
             silentFrames: this._silentFrameCount,
-            maxAmplitude
+            maxAmplitude,
+            audioContextState: this.audioContext?.state,
+            micTrackState: this.mediaStream?.getAudioTracks()[0]?.readyState
           });
+          
+          // 🔧 尝试恢复：检查麦克风状态并重新获取
+          const track = this.mediaStream?.getAudioTracks()[0];
+          if (track && track.readyState === 'ended') {
+            console.error('[DoubaoChat] ❌ Microphone track ended! Attempting to recover...');
+            void this.attemptMicrophoneRecovery();
+          } else if (this.audioContext?.state === 'suspended') {
+            console.warn('[DoubaoChat] ⚠️ AudioContext suspended during recording, resuming...');
+            void this.audioContext.resume().then(() => {
+              console.log('[DoubaoChat] AudioContext resumed after silence detection');
+            });
+          }
         }
       } else {
         this._silentFrameCount = 0; // 有声音，重置计数
