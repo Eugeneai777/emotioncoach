@@ -120,9 +120,9 @@ export class DoubaoRealtimeChat {
   // 2) 检测到定时器严重漂移时，跳过一次超时判定并重置计数
   private lastHeartbeatTick: number = 0;
   private static readonly HEARTBEAT_INTERVAL_MS = 15000;
-  private static readonly HEARTBEAT_TIMEOUT_START_MS = 120000; // 120s 后才开始判定"心跳超时"（放宽至2分钟）
+   private static readonly HEARTBEAT_TIMEOUT_START_MS = 180000; // 180s 后才开始判定"心跳超时"（放宽至3分钟）
   private static readonly HEARTBEAT_TIMER_DRIFT_MS = 30000; // interval 漂移超过 30s 认为发生了冻结/系统调度
-  private static readonly MAX_MISSED_HEARTBEATS = 15; // 更宽容，避免移动端误判（约 4-5 分钟级别）
+   private static readonly MAX_MISSED_HEARTBEATS = 20; // 更宽容，避免移动端误判（约 6-8 分钟级别）
   
   // 🔧 新增：AI 回复状态跟踪，用于区分"AI正在回复"和"空闲等待用户"
   // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
