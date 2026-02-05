@@ -213,6 +213,80 @@ export class DoubaoRealtimeChat {
     await this.ensureRecordingAudioContext(tag);
   }
 
+ /**
+  * ✅ 重连修复：重建整个音频播放链路
+  * 微信 WebView 在后台时可能暂停/回收 AudioContext，
+  * 简单 resume() 不够，需要重新创建 GainNode 并连接到 destination
+  */
+ private async rebuildAudioPipeline(tag: string): Promise<void> {
+   console.log('[DoubaoChat] 🔄 Rebuilding audio pipeline, tag:', tag);
+   
+   // 1. 清空音频播放队列和 PCM 缓冲
+   this.clearAudioQueueAndStopPlayback();
+   this.playbackPcmRemainder = null;
+   
+   // 2. 强制重建播放 AudioContext（如果状态异常则关闭重建）
+   if (this.playbackAudioContext) {
+     try {
+       // 检查状态，如果 closed 或异常则重建
+       if (this.playbackAudioContext.state === 'closed') {
+         console.log('[DoubaoChat] Playback AudioContext was closed, recreating...');
+         this.playbackAudioContext = null;
+         this.playbackGainNode = null;
+       } else if (this.playbackAudioContext.state === 'suspended') {
+         // 尝试 resume
+         await this.playbackAudioContext.resume();
+         console.log('[DoubaoChat] Playback AudioContext resumed from suspended');
+       }
+     } catch (e) {
+       console.warn('[DoubaoChat] Error checking playback AudioContext state, recreating:', e);
+       this.playbackAudioContext = null;
+       this.playbackGainNode = null;
+     }
+   }
+   
+   // 3. 如果 AudioContext 不存在则创建
+   if (!this.playbackAudioContext) {
+     try {
+       this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+       console.log('[DoubaoChat] Playback AudioContext recreated (24kHz), tag:', tag);
+     } catch (e) {
+       console.error('[DoubaoChat] Failed to create playback AudioContext:', e);
+     }
+   }
+   
+   // 4. 强制 resume（即使状态显示 running 也调用一次，某些 WebView 状态不准）
+   if (this.playbackAudioContext) {
+     try {
+       await this.playbackAudioContext.resume();
+       console.log('[DoubaoChat] Playback AudioContext force resumed, state:', this.playbackAudioContext.state);
+     } catch (e) {
+       console.warn('[DoubaoChat] Failed to force resume playback AudioContext:', e);
+     }
+   }
+   
+   // 5. 重建 GainNode（关键！重连后音频无声通常是因为 GainNode 未重建）
+   if (this.playbackAudioContext && (!this.playbackGainNode || this.playbackGainNode.context !== this.playbackAudioContext)) {
+     try {
+       this.playbackGainNode = this.playbackAudioContext.createGain();
+       this.playbackGainNode.gain.value = 4.0;
+       this.playbackGainNode.connect(this.playbackAudioContext.destination);
+       console.log('[DoubaoChat] Playback GainNode rebuilt with 4.0x gain');
+     } catch (e) {
+       console.warn('[DoubaoChat] Failed to rebuild playback GainNode:', e);
+     }
+   }
+   
+   // 6. 确保录音 AudioContext 正常
+   await this.ensureRecordingAudioContext(tag);
+   
+   console.log('[DoubaoChat] 🔄 Audio pipeline rebuild complete, tag:', tag, {
+     playbackState: this.playbackAudioContext?.state,
+     recordingState: this.audioContext?.state,
+     hasGainNode: !!this.playbackGainNode
+   });
+ }
+
   /**
    * 🔧 打断支持：清空音频播放队列并停止当前播放
    * 当用户开始说话（打断 AI）时调用，避免：
