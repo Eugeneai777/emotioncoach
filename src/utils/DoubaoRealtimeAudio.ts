@@ -714,9 +714,35 @@ export class DoubaoRealtimeChat {
     // 新版模型需要长格式 ID
     const finalVoiceType = this.voiceType || (this.config as any).voice_type || 'zh_male_M392_conversation_wvae_bigtts';
     
+    // ✅ 重连兜底：即使 token 端没有成功把 history 注入 instructions，
+    // 这里也强制附加最近对话，确保模型“接着聊”。
+    let finalInstructions = this.config.instructions;
+    try {
+      if (this.config.is_reconnect === true && this.conversationHistory.length > 0) {
+        const recent = this.conversationHistory.slice(-12);
+        const historyText = recent
+          .map((m) => (m.role === 'user' ? `用户：${m.content}` : `劲老师：${m.content}`))
+          .join('\n');
+
+        const last = recent[recent.length - 1];
+        const continuationHint = last?.role === 'user'
+          ? `用户刚才最后一句是：“${last.content}”。请直接回应这句话，并保持语气连贯。`
+          : `你刚才最后一句是：“${last.content}”。如果用户短暂沉默，请自然追问/延展该话题。`;
+
+        finalInstructions = `${finalInstructions}\n\n---\n【重要：断线重连续接】\n你正在与同一位用户继续刚才的通话。不要重新自我介绍，不要重新打招呼。\n\n最近对话：\n${historyText}\n\n续接要求：\n${continuationHint}\n`;
+        console.log('[DoubaoChat] ✅ Reconnect continuity instructions appended:', {
+          historyCount: recent.length,
+          appendedLength: finalInstructions.length - (this.config.instructions?.length || 0),
+        });
+      }
+    } catch (e) {
+      console.warn('[DoubaoChat] Failed to append reconnect continuity instructions:', e);
+      finalInstructions = this.config.instructions;
+    }
+
     const initRequest = {
       type: 'session.init',
-      instructions: this.config.instructions,
+      instructions: finalInstructions,
       tools: this.config.tools,
       voice_type: finalVoiceType
     };
@@ -724,8 +750,8 @@ export class DoubaoRealtimeChat {
     this.ws.send(JSON.stringify(initRequest));
     console.log('[DoubaoChat] 📤 Session init request sent:', {
       voice_type: finalVoiceType,
-      instructions_length: this.config.instructions?.length || 0,
-      instructions_preview: this.config.instructions?.substring(0, 80) + '...'
+      instructions_length: finalInstructions?.length || 0,
+      instructions_preview: finalInstructions?.substring(0, 80) + '...'
     });
   }
 
