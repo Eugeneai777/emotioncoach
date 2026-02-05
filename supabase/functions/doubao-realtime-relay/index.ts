@@ -1542,23 +1542,25 @@ Deno.serve(async (req) => {
       // 仅在 session 已 ready 且一段时间没有用户音频输入时，发送极短静默 PCM16，避免触发 VAD。
       if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
         const now = Date.now();
-        const NO_CLIENT_AUDIO_MS = 20_000;
-        const KEEPALIVE_GAP_MS = 20_000;
+        // ✅ 缩短保活触发间隔：15s 没有用户音频就开始发静默帧，每 15s 发一次
+        const NO_CLIENT_AUDIO_MS = 15_000;
+        const KEEPALIVE_GAP_MS = 15_000;
         const idleSinceClientAudio = now - lastClientAudioAt;
 
         if (idleSinceClientAudio > NO_CLIENT_AUDIO_MS && now - lastKeepaliveAt > KEEPALIVE_GAP_MS) {
           try {
-            // 10ms 静默音频：160 samples @16kHz => 320 bytes PCM16
-            const silence = new Uint8Array(320);
+            // ✅ 200ms 静默音频：使用全局常量 KEEPALIVE_SILENCE_BYTES (6400 bytes)
+            // 更长的静默帧更能有效阻止上游 idle 断开
+            const silence = new Uint8Array(KEEPALIVE_SILENCE_BYTES);
             const audioPacket = buildAudioUploadRequest(silence, audioSequence++, doubaoSessionId);
             const frame = buildWebSocketFrame(audioPacket);
             await doubaoConn.write(frame);
             lastKeepaliveAt = now;
 
-            // 避免刷屏：最多每 60 秒打一次日志
-            if (now - lastKeepaliveLogAt > 60_000) {
+            // 避免刷屏：最多每 30 秒打一次日志
+            if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-              console.log('[DoubaoRelay] Sent silent audio keepalive', {
+              console.log('[DoubaoRelay] 🔇 Sent silent audio keepalive (200ms)', {
                 idleClientMs: idleSinceClientAudio,
                 seq: audioSequence,
               });
