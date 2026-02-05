@@ -498,17 +498,13 @@ function buildStartSessionRequest(
   const payload = {
     user: { uid: userId },
     audio: {
-      // ✅ 关键：输入音频使用 16bit 小端 PCM。
-      // 若使用 format: "pcm"，部分部署会按 32bit PCM/float 解释，导致 VAD/ASR 认为全是无效/静音，从而出现 input_audio_tokens=0。
-      format: 'pcm_s16le',
+      // ✅ 用户输入音频（ASR）：使用豆包端到端对话接口要求的标准值 'pcm'
+      // 说明：'pcm_s16le' 主要用于 TTS 输出配置；这里若填错，会导致 ASR 侧出现 input_audio_tokens=0（表现为“听不到用户说话”）
+      format: 'pcm',
       sample_rate: 16000,
       bits: 16,
       channel: 1
     },
-    // ✅ 关键修复：豆包文档中 `format: "pcm"` 代表 32bit PCM（常见为 F32LE/PCM32），
-    // 若前端按 PCM16 写 WAV 头会产生持续"呲呲噪声"。
-    // 因此这里强制请求 16bit 小端 PCM：pcm_s16le。
-    // 参考：官方说明 tts.audio_config.format = "pcm_s16le"。
     tts,
     request,
   };
@@ -1660,14 +1656,76 @@ Deno.serve(async (req) => {
                 return;
               }
 
-              const audioBytes = base64ToUint8Array(message.audio);
-              const audioPacket = buildAudioUploadRequest(audioBytes, audioSequence++, doubaoSessionId);
+              const audioBytesRaw = base64ToUint8Array(message.audio);
+
+              // ✅ 微信环境兼容：部分 WebView 可能会误把 Float32 PCM 直接传上来。
+              // 若我们按 PCM16 转发，会被 ASR 当作静音/无效，从而出现 input_audio_tokens=0。
+              // 这里做一次轻量检测：
+              // - 如果按 int16 解读振幅几乎为 0
+              // - 但按 float32 解读振幅明显 > 0
+              // 则把 float32 转换为 pcm16 再转发。
+              let audioBytes = audioBytesRaw;
+              let convertedFromFloat32 = false;
+              let diagInt16Max = 0;
+              let diagFloat32Max = 0;
+
+              try {
+                if (audioBytesRaw.length >= 8) {
+                  const view = new DataView(audioBytesRaw.buffer, audioBytesRaw.byteOffset, audioBytesRaw.byteLength);
+
+                  // int16 max abs (sample a bit)
+                  const int16Samples = Math.min(256, Math.floor(audioBytesRaw.length / 2));
+                  for (let i = 0; i < int16Samples; i++) {
+                    const v = view.getInt16(i * 2, true);
+                    const a = Math.abs(v);
+                    if (a > diagInt16Max) diagInt16Max = a;
+                  }
+
+                  // float32 max abs (sample a bit)
+                  if (audioBytesRaw.length % 4 === 0) {
+                    const floatSamples = Math.min(128, Math.floor(audioBytesRaw.length / 4));
+                    for (let i = 0; i < floatSamples; i++) {
+                      const f = view.getFloat32(i * 4, true);
+                      const a = Math.abs(f);
+                      if (a > diagFloat32Max) diagFloat32Max = a;
+                    }
+
+                    // convert only when int16 looks silent but float32 looks like real audio
+                    if (diagInt16Max < 16 && diagFloat32Max > 0.02 && diagFloat32Max < 5) {
+                      const floatCount = Math.floor(audioBytesRaw.length / 4);
+                      const int16Arr = new Int16Array(floatCount);
+                      for (let i = 0; i < floatCount; i++) {
+                        const f = view.getFloat32(i * 4, true);
+                        const clamped = Math.max(-1, Math.min(1, f));
+                        int16Arr[i] = Math.round(clamped * 32767);
+                      }
+                      audioBytes = new Uint8Array(int16Arr.buffer);
+                      convertedFromFloat32 = true;
+                    }
+                  }
+                }
+              } catch (e) {
+                console.warn('[DoubaoRelay] Audio diag/convert failed, sending raw audio', e);
+                audioBytes = audioBytesRaw;
+                convertedFromFloat32 = false;
+              }
+
+              const seq = audioSequence++;
+              const audioPacket = buildAudioUploadRequest(audioBytes, seq, doubaoSessionId);
               const frame = buildWebSocketFrame(audioPacket);
               await doubaoConn.write(frame);
               
               // 每 50 个包记录一次日志，避免刷屏
-              if (audioSequence % 50 === 0) {
-                console.log(`[DoubaoRelay] Sent audio packet #${audioSequence}, size=${audioBytes.length}`);
+              if (seq % 50 === 0 || convertedFromFloat32) {
+                console.log('[DoubaoRelay] Sent audio packet', {
+                  seq,
+                  bytes: audioBytes.length,
+                  convertedFromFloat32,
+                  diag: {
+                    int16MaxAbs: diagInt16Max,
+                    float32MaxAbs: diagFloat32Max,
+                  },
+                });
               }
             } catch (err) {
               console.error('[DoubaoRelay] Error sending audio:', err);
