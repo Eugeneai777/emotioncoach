@@ -459,7 +459,22 @@ export class DoubaoRealtimeChat {
           }
           this.mediaStream = null;
         } else {
-          console.log('[DoubaoChat] ✅ MediaStream is valid, track state: live, tag:', tag);
+          // ✅ 额外检查：track.enabled 和 track.muted
+          console.log('[DoubaoChat] ✅ MediaStream is valid, tag:', tag, {
+            trackState: track.readyState,
+            enabled: track.enabled,
+            muted: track.muted,
+            label: track.label
+          });
+          
+          // 如果 track 被静音，尝试恢复
+          if (track.muted) {
+            console.warn('[DoubaoChat] ⚠️ Microphone track is muted, this may cause ASR to fail');
+          }
+          if (!track.enabled) {
+            console.warn('[DoubaoChat] ⚠️ Microphone track is disabled, enabling...');
+            track.enabled = true;
+          }
         }
       }
     }
@@ -1158,6 +1173,20 @@ export class DoubaoRealtimeChat {
       });
       return;
     }
+    
+    // ✅ 额外诊断：打印麦克风和 AudioContext 的详细状态
+    const micTrack = audioTracks[0];
+    console.log('[DoubaoChat] 🎙️ Starting recording with:', {
+      audioContextState: this.audioContext.state,
+      audioContextSampleRate: this.audioContext.sampleRate,
+      targetSampleRate: this.inputSampleRate,
+      needsResampling: this.audioContext.sampleRate !== this.inputSampleRate,
+      micTrackState: micTrack.readyState,
+      micTrackEnabled: micTrack.enabled,
+      micTrackMuted: micTrack.muted,
+      micTrackLabel: micTrack.label,
+      micTrackSettings: micTrack.getSettings?.() || 'N/A'
+    });
 
     // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
     if (this.audioContext.state === 'suspended') {
@@ -1190,6 +1219,49 @@ export class DoubaoRealtimeChat {
 
       const inputData = e.inputBuffer.getChannelData(0);
       const actualRate = this.audioContext?.sampleRate || this.inputSampleRate;
+
+      // ✅ 关键诊断：检测输入音频是否全是静音/接近静音
+      // 如果全是静音，可能是麦克风被系统静默回收或权限问题
+      let maxAmplitude = 0;
+      let sumSquares = 0;
+      for (let i = 0; i < inputData.length; i++) {
+        const sample = Math.abs(inputData[i]);
+        if (sample > maxAmplitude) maxAmplitude = sample;
+        sumSquares += sample * sample;
+      }
+      const rms = Math.sqrt(sumSquares / inputData.length);
+      
+      // 每 50 帧（约 10 秒）打印一次音频电平诊断
+      if (!this._audioLevelLogCounter) this._audioLevelLogCounter = 0;
+      this._audioLevelLogCounter++;
+      if (this._audioLevelLogCounter % 50 === 1) {
+        console.log('[DoubaoChat] 🎙️ Audio level:', {
+          maxAmplitude: maxAmplitude.toFixed(4),
+          rms: rms.toFixed(4),
+          sampleRate: actualRate,
+          targetRate: this.inputSampleRate,
+          bufferLength: inputData.length,
+          isSilent: maxAmplitude < 0.001
+        });
+      }
+      
+      // ⚠️ 静音警告：如果连续静音太久，可能需要重新获取麦克风
+      if (maxAmplitude < 0.0001) {
+        if (!this._silentFrameCount) this._silentFrameCount = 0;
+        this._silentFrameCount++;
+        
+        // 连续 100 帧静音（约 20 秒）发出警告
+        if (this._silentFrameCount === 100) {
+          console.warn('[DoubaoChat] ⚠️ Sustained silence detected - microphone may be muted or reclaimed');
+          this.onMessage?.({ 
+            type: 'debug.audio_silence', 
+            silentFrames: this._silentFrameCount,
+            maxAmplitude
+          });
+        }
+      } else {
+        this._silentFrameCount = 0; // 有声音，重置计数
+      }
 
       // ✅ 关键修复：如果实际采样率不是 16kHz，先重采样到 16kHz
       const data16k = actualRate === this.inputSampleRate
@@ -1267,6 +1339,8 @@ export class DoubaoRealtimeChat {
 
   // 🔧 优化微信环境：日志计数器，每 100 条音频消息打印一次
   private audioMsgCount = 0;
+  private _audioLevelLogCounter = 0;
+  private _silentFrameCount = 0;
 
   private handleMessage(data: string): void {
     try {
