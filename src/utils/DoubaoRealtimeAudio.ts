@@ -392,7 +392,9 @@ export class DoubaoRealtimeChat {
       console.log('[DoubaoChat] Recording context sampleRate:', this.audioContext?.sampleRate, 'target inputSampleRate:', this.inputSampleRate);
 
       // 4. 建立 WebSocket 连接到 Relay
-      const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
+      // ✅ 透传 is_reconnect 给 relay：用于后端跳过 welcome_message / bot_first_speak
+      const isReconnectParam = this.config.is_reconnect ? 'true' : 'false';
+      const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}&is_reconnect=${isReconnectParam}`;
       console.log('[DoubaoChat] Connecting to relay...');
       this.ws = new WebSocket(wsUrl);
 
@@ -787,7 +789,8 @@ export class DoubaoRealtimeChat {
     this.inputSampleRate = this.config.audio_config?.input_sample_rate || 16000;
     this.hasSessionClosed = false;
 
-    const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
+    // ✅ 重连时明确标记 is_reconnect=true，relay 将跳过欢迎语与主动开场
+    const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}&is_reconnect=true`;
     this.ws = new WebSocket(wsUrl);
     await this.setupWebSocket();
 
