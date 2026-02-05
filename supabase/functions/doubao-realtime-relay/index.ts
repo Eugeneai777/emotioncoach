@@ -26,11 +26,14 @@ const FORWARD_ASSISTANT_TEXT = false;
 
 // ✅ 静默保活帧大小：200ms @16kHz = 3200 samples = 6400 bytes PCM16
 // 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
-const KEEPALIVE_SILENCE_BYTES = 6400;
+const KEEPALIVE_SILENCE_BYTES = 16000;
 
 // ✅ 保活噪声幅度：给上行注入“几乎不可闻”的微弱能量，避免被 VAD 判定为纯静音而忽略
 // PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3;
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 80;
+
+// ✅ 保活间隔：10s，确保在 90s 超时前有更多有效包到达上游
+const KEEPALIVE_INTERVAL_MS = 10_000;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
   // byteLength 必须为偶数（Int16）
@@ -1561,9 +1564,9 @@ Deno.serve(async (req) => {
         const now = Date.now();
          // 🔧 修复：无条件每 15 秒发送一次保活帧，不再依赖用户空闲检测
          // 即使 AI 正在回复，上游网关也可能因为"上行空闲 90s"而断开连接
-        const KEEPALIVE_GAP_MS = 15_000;
+        // 使用顶部定义的 KEEPALIVE_INTERVAL_MS
 
-         if (now - lastKeepaliveAt > KEEPALIVE_GAP_MS) {
+         if (now - lastKeepaliveAt > KEEPALIVE_INTERVAL_MS) {
           try {
             // ✅ 200ms 上行保活帧：从“纯 0 静音”改为“极低幅度噪声”
             // 原因：部分上游网关/VAD 会忽略纯静音，导致仍在 ~90s 被判 idle
@@ -1579,7 +1582,7 @@ Deno.serve(async (req) => {
             // 避免刷屏：最多每 30 秒打一次日志
             if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent unconditional keepalive-noise (200ms)', {
+               console.log('[DoubaoRelay] 🔇 Sent unconditional keepalive-noise (500ms)', {
                  idleClientMs: now - lastClientAudioAt,
                 seq: audioSequence,
                   ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
@@ -1590,7 +1593,7 @@ Deno.serve(async (req) => {
           }
         }
       }
-    }, 15000);
+    }, 5000);
   };
 
   // 🔧 增强诊断：明确记录是谁先断开（微信端断 / relay 断 / doubao 断）
