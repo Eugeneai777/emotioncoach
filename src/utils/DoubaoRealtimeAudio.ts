@@ -14,6 +14,32 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+/**
+ * ============ WeChat/iOS 手势解锁预热缓存 ============
+ *
+ * 背景：微信移动端（尤其 iOS WKWebView）对音频/麦克风有“用户手势”限制：
+ * - AudioContext 的 create/resume 必须发生在点击/触摸的同步调用栈内
+ * - getUserMedia 也经常要求在用户手势内触发，否则会“不弹授权框/一直连接中”
+ *
+ * 现实：CoachVoiceChat 的 startCall 往往在 useEffect/异步链路里触发（扣费/查 session 等 await），
+ * 会丢失用户手势上下文。
+ *
+ * 方案：在真正的点击入口（EmotionVoiceCallCTA）里预热，并在 DoubaoRealtimeChat.init() 中“接管”这些资源。
+ */
+type DoubaoPrewarmOptions = {
+  includeMicrophone?: boolean;
+};
+
+const PREWARM_TTL_MS = 2 * 60 * 1000;
+
+const doubaoPrewarmState = {
+  updatedAt: 0,
+  playbackCtx: null as AudioContext | null,
+  recordingCtx: null as AudioContext | null,
+  micStream: null as MediaStream | null,
+  micPromise: null as Promise<MediaStream | null> | null,
+};
+
 export type DoubaoConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
 export type DoubaoSpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
@@ -148,6 +174,111 @@ export class DoubaoRealtimeChat {
       input: options.voiceType, 
       resolved: resolvedVoiceType 
     });
+  }
+
+  /**
+   * ✅ 微信手势预热：在用户点击/触摸同步栈内调用。
+   * - 同步创建并触发 resume()（不等待）
+   * - 可选在手势内触发 getUserMedia（可避免微信“卡连接中/不弹授权框”）
+   */
+  static prewarmAudioContexts(options: DoubaoPrewarmOptions = {}): void {
+    const includeMicrophone = options.includeMicrophone === true;
+    doubaoPrewarmState.updatedAt = Date.now();
+
+    try {
+      if (!doubaoPrewarmState.playbackCtx || doubaoPrewarmState.playbackCtx.state === 'closed') {
+        doubaoPrewarmState.playbackCtx = new AudioContext({ sampleRate: 24000 });
+        console.log('[DoubaoChat] ✅ Prewarm: playback AudioContext created');
+      }
+      // 关键：触发即可，不 await
+      void doubaoPrewarmState.playbackCtx.resume().catch(() => {});
+    } catch (e) {
+      console.warn('[DoubaoChat] Prewarm playback AudioContext failed:', e);
+    }
+
+    try {
+      if (!doubaoPrewarmState.recordingCtx || doubaoPrewarmState.recordingCtx.state === 'closed') {
+        doubaoPrewarmState.recordingCtx = new AudioContext();
+        console.log('[DoubaoChat] ✅ Prewarm: recording AudioContext created');
+      }
+      void doubaoPrewarmState.recordingCtx.resume().catch(() => {});
+    } catch (e) {
+      console.warn('[DoubaoChat] Prewarm recording AudioContext failed:', e);
+    }
+
+    // 麦克风：只在明确需要时触发，避免 hover/touchstart 就弹授权
+    if (includeMicrophone && !doubaoPrewarmState.micPromise && navigator.mediaDevices?.getUserMedia) {
+      try {
+        doubaoPrewarmState.micPromise = navigator.mediaDevices
+          .getUserMedia({
+            audio: {
+              channelCount: 1,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          })
+          .then((stream) => {
+            doubaoPrewarmState.micStream = stream;
+            console.log('[DoubaoChat] ✅ Prewarm: microphone stream acquired');
+            return stream;
+          })
+          .catch((err) => {
+            console.warn('[DoubaoChat] Prewarm microphone failed:', err);
+            return null;
+          });
+      } catch (e) {
+        console.warn('[DoubaoChat] Prewarm microphone threw:', e);
+      }
+    }
+  }
+
+  private isPrewarmFresh(): boolean {
+    return Date.now() - doubaoPrewarmState.updatedAt <= PREWARM_TTL_MS;
+  }
+
+  /**
+   * 尝试接管在用户手势内预热好的 AudioContext。
+   * 注意：这里不要关闭/销毁旧的 ctx（它们本来就是要被复用的）。
+   */
+  private adoptPrewarmedAudioContexts(tag: string): void {
+    if (!this.isPrewarmFresh()) return;
+
+    if (!this.playbackAudioContext && doubaoPrewarmState.playbackCtx) {
+      this.playbackAudioContext = doubaoPrewarmState.playbackCtx;
+      doubaoPrewarmState.playbackCtx = null;
+      console.log('[DoubaoChat] ✅ Adopted prewarmed playback AudioContext, tag:', tag);
+    }
+
+    if ((!this.audioContext || this.audioContext.state === 'closed') && doubaoPrewarmState.recordingCtx) {
+      this.audioContext = doubaoPrewarmState.recordingCtx;
+      doubaoPrewarmState.recordingCtx = null;
+      console.log('[DoubaoChat] ✅ Adopted prewarmed recording AudioContext, tag:', tag);
+    }
+  }
+
+  /**
+   * 尝试接管在用户手势内触发的麦克风流（避免 init() 再次 getUserMedia）。
+   */
+  private async adoptPrewarmedMicrophone(tag: string): Promise<void> {
+    if (this.mediaStream) return;
+    if (!this.isPrewarmFresh()) return;
+
+    // 先等 promise（如果仍在 pending）
+    if (doubaoPrewarmState.micPromise) {
+      const stream = await doubaoPrewarmState.micPromise;
+      // promise 使用一次就清掉，避免复用过期
+      doubaoPrewarmState.micPromise = null;
+      if (stream) {
+        doubaoPrewarmState.micStream = stream;
+      }
+    }
+
+    if (doubaoPrewarmState.micStream) {
+      this.mediaStream = doubaoPrewarmState.micStream;
+      doubaoPrewarmState.micStream = null;
+      console.log('[DoubaoChat] ✅ Adopted prewarmed microphone stream, tag:', tag);
+    }
   }
 
   /**
@@ -391,6 +522,9 @@ export class DoubaoRealtimeChat {
     console.log('[DoubaoChat] Initializing with Relay architecture...');
     this.onStatusChange('connecting');
 
+    // ✅ 先尝试接管“用户手势内预热”的资源
+    this.adoptPrewarmedAudioContexts('init:pre');
+
     // ✅ 关键 iOS 微信修复：在任何 await（包括 getUserMedia）之前，
     // 同步创建 AudioContext 并调用 resume()（不等待 Promise resolve），
     // 确保浏览器将其视为 "用户手势触发"。
@@ -449,16 +583,21 @@ export class DoubaoRealtimeChat {
       });
 
       // 2. 请求麦克风权限
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: this.config.audio_config.input_sample_rate,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-      console.log('[DoubaoChat] Microphone access granted');
+      await this.adoptPrewarmedMicrophone('init:pre');
+      if (!this.mediaStream) {
+        this.mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            sampleRate: this.config.audio_config.input_sample_rate,
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        console.log('[DoubaoChat] Microphone access granted (fresh getUserMedia)');
+      } else {
+        console.log('[DoubaoChat] Microphone stream ready (prewarmed/adopted)');
+      }
 
       // 3. ✅ 二次兜底：如果上面 pre-await 没成功，这里再确保一次（但这里可能已不在手势上下文）
       await this.ensurePlaybackAudioContext('init:post-mic');
