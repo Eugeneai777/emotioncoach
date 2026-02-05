@@ -28,6 +28,25 @@ const FORWARD_ASSISTANT_TEXT = false;
 // 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
 const KEEPALIVE_SILENCE_BYTES = 6400;
 
+// ✅ 保活噪声幅度：给上行注入“几乎不可闻”的微弱能量，避免被 VAD 判定为纯静音而忽略
+// PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3;
+
+function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
+  // byteLength 必须为偶数（Int16）
+  const buf = new Uint8Array(byteLength);
+  const samples = Math.floor(byteLength / 2);
+  for (let i = 0; i < samples; i++) {
+    // [-amplitude, amplitude] 的随机噪声
+    const v = Math.floor((Math.random() * 2 - 1) * amplitudeI16);
+    // little-endian PCM16
+    const off = i * 2;
+    buf[off] = v & 0xff;
+    buf[off + 1] = (v >> 8) & 0xff;
+  }
+  return buf;
+}
+
 // 固定的 App Key (豆包文档要求)
 const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
 
@@ -1546,10 +1565,13 @@ Deno.serve(async (req) => {
 
          if (now - lastKeepaliveAt > KEEPALIVE_GAP_MS) {
           try {
-            // ✅ 200ms 静默音频：使用全局常量 KEEPALIVE_SILENCE_BYTES (6400 bytes)
-            // 更长的静默帧更能有效阻止上游 idle 断开
-            const silence = new Uint8Array(KEEPALIVE_SILENCE_BYTES);
-            const audioPacket = buildAudioUploadRequest(silence, audioSequence++, doubaoSessionId);
+            // ✅ 200ms 上行保活帧：从“纯 0 静音”改为“极低幅度噪声”
+            // 原因：部分上游网关/VAD 会忽略纯静音，导致仍在 ~90s 被判 idle
+            const keepaliveNoise = makePcm16NoiseBytes(
+              KEEPALIVE_SILENCE_BYTES,
+              KEEPALIVE_NOISE_AMPLITUDE_I16,
+            );
+            const audioPacket = buildAudioUploadRequest(keepaliveNoise, audioSequence++, doubaoSessionId);
             const frame = buildWebSocketFrame(audioPacket);
             await doubaoConn.write(frame);
             lastKeepaliveAt = now;
@@ -1557,9 +1579,10 @@ Deno.serve(async (req) => {
             // 避免刷屏：最多每 30 秒打一次日志
             if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent unconditional keepalive (200ms)', {
+               console.log('[DoubaoRelay] 🔇 Sent unconditional keepalive-noise (200ms)', {
                  idleClientMs: now - lastClientAudioAt,
                 seq: audioSequence,
+                  ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
               });
             }
           } catch (e) {
