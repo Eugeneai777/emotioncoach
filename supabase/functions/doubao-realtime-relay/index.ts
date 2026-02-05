@@ -1546,6 +1546,7 @@ Deno.serve(async (req) => {
         const idleSinceClientAudio = now - lastClientAudioAt;
 
         if (idleSinceClientAudio > NO_CLIENT_AUDIO_MS && now - lastKeepaliveAt > KEEPALIVE_GAP_MS) {
+         // 🔧 核心修复：无条件定期发送保活包（原条件已废弃）
           try {
             // ✅ 200ms 静默音频：使用全局常量 KEEPALIVE_SILENCE_BYTES (6400 bytes)
             // 更长的静默帧更能有效阻止上游 idle 断开
