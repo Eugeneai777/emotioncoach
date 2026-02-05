@@ -971,11 +971,15 @@ export class DoubaoRealtimeChat {
           // 1. 启动录音
           this.startRecording();
           this.onStatusChange('connected');
-          // 2. 仅首次接通触发开场白；重连不重复播报
-          if (isFirstConnect) {
+          // 2. ✅ 仅首次接通且 skip_greeting 不为 true 时触发开场白
+          // skip_greeting 来自 relay 的 session.connected 消息，用于重连场景
+          const skipGreeting = message.skip_greeting === true;
+          if (isFirstConnect && !skipGreeting) {
             setTimeout(() => {
               this.triggerGreeting();
             }, 300);
+          } else if (skipGreeting) {
+            console.log('[DoubaoChat] ✅ Skipping greeting (reconnect session)');
           }
           break;
 
