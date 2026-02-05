@@ -764,7 +764,9 @@ export class DoubaoRealtimeChat {
       this.ws = null;
     }
 
-    await this.resumeAudioContexts('reconnect');
+   // ✅ 重连修复：强制重建播放音频链路
+   // 微信 WebView 可能在后台暂停/回收 AudioContext，简单 resume 不够
+   await this.rebuildAudioPipeline('reconnect');
 
     // 若麦克风流被系统回收则重取一次（一般不会重复弹窗）
     if (!this.mediaStream) {
@@ -798,6 +800,11 @@ export class DoubaoRealtimeChat {
     this.sendSessionInit();
     this.startHeartbeat();
     await sessionConnectedPromise;
+
+   // ✅ 重连成功后重新启动录音
+   // 之前 scheduleReconnect 中调用了 stopRecording，需要恢复
+   this.startRecording();
+   console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted');
   }
 
   private stopHeartbeat(): void {
