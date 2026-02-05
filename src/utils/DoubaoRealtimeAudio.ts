@@ -410,13 +410,84 @@ export class DoubaoRealtimeChat {
    
    // 6. 确保录音 AudioContext 正常
    await this.ensureRecordingAudioContext(tag);
+    
+    // 7. ✅ 关键修复：检查并重建麦克风流
+    // 微信 WebView 可能在后台静默回收麦克风流（track.readyState 变为 'ended'）
+    await this.ensureMediaStream(tag);
    
    console.log('[DoubaoChat] 🔄 Audio pipeline rebuild complete, tag:', tag, {
      playbackState: this.playbackAudioContext?.state,
      recordingState: this.audioContext?.state,
-     hasGainNode: !!this.playbackGainNode
+      hasGainNode: !!this.playbackGainNode,
+      hasMediaStream: !!this.mediaStream,
+      micTrackState: this.mediaStream?.getAudioTracks()[0]?.readyState
    });
  }
+
+  /**
+   * ✅ 关键修复：确保麦克风流有效
+   * 微信 WebView 在后台时可能静默回收麦克风流，导致：
+   * - mediaStream 对象仍然存在
+   * - 但 track.readyState 已变为 'ended'
+   * - ScriptProcessor 的 onaudioprocess 仍会触发，但 inputBuffer 全是 0
+   * - 结果：音频在发送，但全是静音，ASR 无法识别
+   */
+  private async ensureMediaStream(tag: string): Promise<void> {
+    let needNewStream = false;
+    
+    // 情况 1：完全没有流
+    if (!this.mediaStream) {
+      console.log('[DoubaoChat] No mediaStream, need to acquire one, tag:', tag);
+      needNewStream = true;
+    } else {
+      // 情况 2：流存在但 track 已失效
+      const audioTracks = this.mediaStream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        console.log('[DoubaoChat] MediaStream has no audio tracks, need new one, tag:', tag);
+        needNewStream = true;
+      } else {
+        const track = audioTracks[0];
+        // readyState: 'live' = 正常, 'ended' = 已被停止/回收
+        if (track.readyState !== 'live') {
+          console.log('[DoubaoChat] ⚠️ Microphone track state is', track.readyState, ', acquiring new stream, tag:', tag);
+          needNewStream = true;
+          // 清理旧的失效流
+          try {
+            this.mediaStream.getTracks().forEach(t => t.stop());
+          } catch (e) {
+            // ignore
+          }
+          this.mediaStream = null;
+        } else {
+          console.log('[DoubaoChat] ✅ MediaStream is valid, track state: live, tag:', tag);
+        }
+      }
+    }
+    
+    if (needNewStream) {
+      try {
+        // 尝试接管预热的麦克风流
+        await this.adoptPrewarmedMicrophone(tag);
+        
+        // 如果仍然没有，重新获取
+        if (!this.mediaStream) {
+          console.log('[DoubaoChat] Acquiring new microphone stream via getUserMedia, tag:', tag);
+          this.mediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 1,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+          console.log('[DoubaoChat] ✅ New microphone stream acquired, tag:', tag);
+        }
+      } catch (e) {
+        console.error('[DoubaoChat] ❌ Failed to acquire microphone stream:', e);
+        throw new Error('Failed to acquire microphone: ' + String(e));
+      }
+    }
+  }
 
   /**
    * 🔧 打断支持：清空音频播放队列并停止当前播放
@@ -1007,10 +1078,7 @@ export class DoubaoRealtimeChat {
    // 微信 WebView 可能在后台暂停/回收 AudioContext，简单 resume 不够
    await this.rebuildAudioPipeline('reconnect');
 
-    // 若麦克风流被系统回收则重取一次（一般不会重复弹窗）
-    if (!this.mediaStream) {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    }
+    // ✅ rebuildAudioPipeline 已包含 ensureMediaStream，这里无需重复检查
 
     // ✅ 重连时传递对话历史，让新 session 保持上下文
     const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
@@ -1040,10 +1108,15 @@ export class DoubaoRealtimeChat {
     this.startHeartbeat();
     await sessionConnectedPromise;
 
-   // ✅ 重连成功后重新启动录音
+   // ✅ 重连成功后重新启动录音（由 session.connected 消息触发）
    // 之前 scheduleReconnect 中调用了 stopRecording，需要恢复
-   this.startRecording();
-   console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted');
+   // 注意：startRecording 会检查 processor/source 是否已存在，避免重复
+   if (!this.processor && !this.source) {
+     this.startRecording();
+     console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted manually');
+   } else {
+     console.log('[DoubaoChat] 🔄 Reconnect complete: recording already started by session.connected');
+   }
   }
 
   private stopHeartbeat(): void {
@@ -1060,7 +1133,31 @@ export class DoubaoRealtimeChat {
       console.warn('[DoubaoChat] startRecording called while already recording; ignoring');
       return;
     }
-    if (!this.audioContext || !this.mediaStream) return;
+    if (!this.audioContext || !this.mediaStream) {
+      console.warn('[DoubaoChat] startRecording: missing audioContext or mediaStream', {
+        hasAudioContext: !!this.audioContext,
+        audioContextState: this.audioContext?.state,
+        hasMediaStream: !!this.mediaStream,
+        micTrackState: this.mediaStream?.getAudioTracks()[0]?.readyState
+      });
+      return;
+    }
+    
+    // ✅ 关键检查：确保录音 AudioContext 没有被关闭
+    if (this.audioContext.state === 'closed') {
+      console.error('[DoubaoChat] ❌ Recording AudioContext is closed, cannot start recording');
+      return;
+    }
+    
+    // ✅ 关键检查：确保麦克风 track 仍然有效
+    const audioTracks = this.mediaStream.getAudioTracks();
+    if (audioTracks.length === 0 || audioTracks[0].readyState !== 'live') {
+      console.error('[DoubaoChat] ❌ Microphone track is not live:', {
+        trackCount: audioTracks.length,
+        trackState: audioTracks[0]?.readyState
+      });
+      return;
+    }
 
     // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
     if (this.audioContext.state === 'suspended') {
