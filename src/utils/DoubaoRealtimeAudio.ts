@@ -1142,7 +1142,8 @@ export class DoubaoRealtimeChat {
   }
 
   // 公开的启动录音方法（用于符合 AudioClient 接口）
-  startRecording(): void {
+  // 🔧 修复：改为异步方法，确保 AudioContext 完全就绪后再创建音频链路
+  async startRecording(): Promise<void> {
     // ✅ 幂等保护：避免重复调用导致多个 ScriptProcessor 并行工作（会造成重复上行/异常回声/多路触发）
     if (this.processor || this.source) {
       console.warn('[DoubaoChat] startRecording called while already recording; ignoring');
@@ -1188,13 +1189,39 @@ export class DoubaoRealtimeChat {
       micTrackSettings: micTrack.getSettings?.() || 'N/A'
     });
 
-    // 🔧 微信/iOS：确保录音 AudioContext 没被挂起，否则 onaudioprocess 可能不触发
+    // 🔧 关键修复：必须等待 AudioContext 完全 resume 后再创建音频链路
+    // iOS 微信 WebView 中，如果 AudioContext 仍在 suspended 状态，
+    // ScriptProcessor 的 onaudioprocess 回调虽然会触发，但 inputBuffer 全是 0
     if (this.audioContext.state === 'suspended') {
-      this.audioContext.resume().then(() => {
-        console.log('[DoubaoChat] Recording AudioContext resumed in startRecording');
-      }).catch((e) => {
-        console.warn('[DoubaoChat] Failed to resume recording AudioContext in startRecording:', e);
-      });
+      console.log('[DoubaoChat] ⏳ Recording AudioContext is suspended, waiting for resume...');
+      try {
+        await this.audioContext.resume();
+        console.log('[DoubaoChat] ✅ Recording AudioContext resumed, state:', this.audioContext.state);
+      } catch (e) {
+        console.error('[DoubaoChat] ❌ Failed to resume recording AudioContext:', e);
+        // 尝试重建 AudioContext
+        try {
+          this.audioContext = new AudioContext();
+          await this.audioContext.resume();
+          console.log('[DoubaoChat] ✅ Recording AudioContext rebuilt and resumed');
+        } catch (e2) {
+          console.error('[DoubaoChat] ❌ Failed to rebuild recording AudioContext:', e2);
+          return;
+        }
+      }
+    }
+    
+    // 🔧 二次确认：即使上面没有进入 suspended 分支，也确保状态正确
+    if (this.audioContext.state !== 'running') {
+      console.warn('[DoubaoChat] ⚠️ AudioContext state is', this.audioContext.state, ', attempting resume...');
+      try {
+        await this.audioContext.resume();
+        // 等待一小段时间让状态完全生效
+        await new Promise(r => setTimeout(r, 100));
+        console.log('[DoubaoChat] AudioContext state after retry:', this.audioContext.state);
+      } catch (e) {
+        console.error('[DoubaoChat] Failed to resume AudioContext on retry:', e);
+      }
     }
 
     this.source = this.audioContext.createMediaStreamSource(this.mediaStream);
