@@ -1127,7 +1127,7 @@ export class DoubaoRealtimeChat {
    // 之前 scheduleReconnect 中调用了 stopRecording，需要恢复
    // 注意：startRecording 会检查 processor/source 是否已存在，避免重复
    if (!this.processor && !this.source) {
-     this.startRecording();
+     await this.startRecording();
      console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted manually');
    } else {
      console.log('[DoubaoChat] 🔄 Reconnect complete: recording already started by session.connected');
