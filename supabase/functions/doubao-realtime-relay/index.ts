@@ -24,6 +24,10 @@ const DOUBAO_PATH = '/api/v3/realtime/dialogue';
 // （不影响语音音频流；persona 校验仍在后端完成）
 const FORWARD_ASSISTANT_TEXT = false;
 
+// ✅ 静默保活帧大小：200ms @16kHz = 3200 samples = 6400 bytes PCM16
+// 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
+const KEEPALIVE_SILENCE_BYTES = 6400;
+
 // 固定的 App Key (豆包文档要求)
 const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
 
