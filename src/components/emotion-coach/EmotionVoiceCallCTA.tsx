@@ -39,9 +39,12 @@ export const EmotionVoiceCallCTA = ({
   }, []);
 
   const handleClick = () => {
-    // ✅ 关键：在用户点击同步上下文中解锁微信音频（并触发麦克风授权）
+    // ✅ 关键：在用户点击同步上下文中解锁微信音频
+    // 这是 iOS 微信 WebView 能正常工作的唯一方式
     try {
-      DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: true });
+      // 先预热 AudioContext（播放 + 录音）
+      DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: false });
+      console.log('[EmotionVoiceCallCTA] ✅ AudioContext prewarmed on click');
     } catch {
       // ignore
     }
