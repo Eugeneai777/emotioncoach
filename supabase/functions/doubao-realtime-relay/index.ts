@@ -498,7 +498,9 @@ function buildStartSessionRequest(
   const payload = {
     user: { uid: userId },
     audio: {
-      format: 'pcm',
+      // ✅ 关键：输入音频使用 16bit 小端 PCM。
+      // 若使用 format: "pcm"，部分部署会按 32bit PCM/float 解释，导致 VAD/ASR 认为全是无效/静音，从而出现 input_audio_tokens=0。
+      format: 'pcm_s16le',
       sample_rate: 16000,
       bits: 16,
       channel: 1
