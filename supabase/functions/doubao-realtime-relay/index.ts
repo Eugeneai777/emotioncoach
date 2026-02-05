@@ -819,8 +819,10 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const userId = url.searchParams.get('user_id') || 'anonymous';
   const mode = url.searchParams.get('mode') || 'emotion';
+  // ✅ 重连标志：前端在重连时传入 is_reconnect=true，用于跳过开场白触发
+  const isReconnectParam = url.searchParams.get('is_reconnect') === 'true';
 
-  console.log(`[DoubaoRelay] New connection: userId=${userId}, mode=${mode}`);
+  console.log(`[DoubaoRelay] New connection: userId=${userId}, mode=${mode}, isReconnect=${isReconnectParam}`);
 
   const { socket: clientSocket, response } = Deno.upgradeWebSocket(req);
 
