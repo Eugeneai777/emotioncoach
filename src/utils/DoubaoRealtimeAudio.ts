@@ -1564,15 +1564,13 @@ export class DoubaoRealtimeChat {
             console.error('[DoubaoChat] ❌ Failed to start recording:', e);
           });
           this.onStatusChange('connected');
-          // 2. ✅ 仅首次接通且 skip_greeting 不为 true 时触发开场白
-          // skip_greeting 来自 relay 的 session.connected 消息，用于重连场景
+          // 2. ✅ 问候语由后端 bot_first_speak: true 处理，前端不再触发
+          // 避免双重问候（后端 welcome_message + 前端 triggerGreeting）
           const skipGreeting = message.skip_greeting === true;
-          if (isFirstConnect && !skipGreeting) {
-            setTimeout(() => {
-              this.triggerGreeting();
-            }, 300);
-          } else if (skipGreeting) {
+          if (skipGreeting) {
             console.log('[DoubaoChat] ✅ Skipping greeting (reconnect session)');
+          } else {
+            console.log('[DoubaoChat] ✅ First connect, greeting handled by backend bot_first_speak');
           }
           break;
 
