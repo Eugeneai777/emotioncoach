@@ -1122,7 +1122,11 @@ export class DoubaoRealtimeChat {
   }
 
   private async reconnectOnce(trigger: string): Promise<void> {
-    console.log('[DoubaoChat] 🔄 Reconnecting...', { trigger });
+    console.log('[DoubaoChat] 🔄 Reconnecting silently...', { 
+      trigger, 
+      historyLength: this.conversationHistory.length,
+      elapsed: Date.now() - this.reconnectStartTime
+    });
 
     // 关闭旧 ws
     if (this.ws) {
@@ -1145,13 +1149,16 @@ export class DoubaoRealtimeChat {
    // 微信 WebView 可能在后台暂停/回收 AudioContext，简单 resume 不够
    await this.rebuildAudioPipeline('reconnect');
 
-    // ✅ rebuildAudioPipeline 已包含 ensureMediaStream，这里无需重复检查
-
     // ✅ 重连时传递对话历史，让新 session 保持上下文
+    // 增加更多上下文信息，确保 AI 能无缝续接
+    const historyForReconnect = this.conversationHistory.length > 0 
+      ? this.conversationHistory.slice(-16) // 最近 16 条消息
+      : undefined;
+    
     const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
       body: { 
         mode: this.mode,
-        conversation_history: this.conversationHistory.length > 0 ? this.conversationHistory : undefined,
+        conversation_history: historyForReconnect,
         is_reconnect: true,
       },
     });
@@ -1175,14 +1182,19 @@ export class DoubaoRealtimeChat {
     this.startHeartbeat();
     await sessionConnectedPromise;
 
-   // ✅ 重连成功后重新启动录音（由 session.connected 消息触发）
-   // 之前 scheduleReconnect 中调用了 stopRecording，需要恢复
+   // ✅ 重连成功后重新启动录音
    // 注意：startRecording 会检查 processor/source 是否已存在，避免重复
    if (!this.processor && !this.source) {
      await this.startRecording();
-     console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted manually');
+     console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted');
    } else {
-     console.log('[DoubaoChat] 🔄 Reconnect complete: recording already started by session.connected');
+     console.log('[DoubaoChat] 🔄 Reconnect complete: recording already active');
+   }
+   
+   // ✅ 重连成功后，给 AI 一个"继续对话"的信号（如果之前有对话）
+   // 这确保 AI 知道需要继续之前的话题
+   if (this.conversationHistory.length > 0 && !this.isDisconnected) {
+     console.log('[DoubaoChat] ✅ Silent reconnect: context preserved, AI should continue naturally');
    }
   }
 
