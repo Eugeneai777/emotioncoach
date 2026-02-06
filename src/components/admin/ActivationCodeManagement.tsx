@@ -36,9 +36,6 @@ interface ActivationCode {
   redeemed_by: string | null;
   expires_at: string | null;
   created_at: string;
-  user_profile?: {
-    display_name: string | null;
-  } | null;
 }
 
 type StatusFilter = 'all' | 'unused' | 'used' | 'expired';
@@ -57,10 +54,7 @@ export function ActivationCodeManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('wealth_assessment_activation_codes')
-        .select(`
-          *,
-          user_profile:profiles!wealth_assessment_activation_codes_redeemed_by_fkey(display_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
