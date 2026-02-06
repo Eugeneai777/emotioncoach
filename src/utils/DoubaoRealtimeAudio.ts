@@ -1038,6 +1038,10 @@ export class DoubaoRealtimeChat {
 
     this.reconnectInProgress = true;
     this.reconnectAttempts = 0;
+    
+    // ✅ 静默重连：记录开始时间，用于判断是否超过静默阈值
+    this.isReconnectingSilently = true;
+    this.reconnectStartTime = Date.now();
 
     // ✅ 重连前强制保存缓冲区中未完成的转录内容到历史记录
     // 这样即使断线时没收到 .done 事件，也能保留最后一段对话
@@ -1056,9 +1060,13 @@ export class DoubaoRealtimeChat {
     }
     this.clearAudioQueueAndStopPlayback();
 
-    // ✅ 静默重连：不改变 UI 状态，用户无感
+    // ✅ 静默重连：完全不改变 UI 状态，用户无感
+    // 仅发送 debug 事件供开发者调试
     this.onMessage?.({ type: 'debug.reconnect', stage: 'start', trigger, meta, at: Date.now() });
-    // 不再调用 this.onStatusChange('connecting'); 保持 connected 状态
+    this.onReconnectProgress?.('start', 0);
+    
+    // ✅ 关键：不调用 this.onStatusChange('connecting'); 保持 connected 状态
+    // 用户在 UI 上看到的仍然是"通话中"
 
     const sleep = (ms: number) => new Promise<void>((resolve) => {
       this.reconnectTimer = window.setTimeout(() => resolve(), ms);
@@ -1070,17 +1078,32 @@ export class DoubaoRealtimeChat {
       const backoff = DoubaoRealtimeChat.RECONNECT_BACKOFF_MS[Math.min(i, DoubaoRealtimeChat.RECONNECT_BACKOFF_MS.length - 1)];
 
       try {
+        // 第一次立即尝试，后续才等待
         if (i > 0) {
           this.onMessage?.({ type: 'debug.reconnect', stage: 'retrying', attempt, backoff });
+          this.onReconnectProgress?.('retrying', attempt);
           await sleep(backoff);
         }
 
         this.reconnectAttempts = attempt;
+        
+        // ✅ 检查是否超过静默重连时间阈值
+        const elapsed = Date.now() - this.reconnectStartTime;
+        if (elapsed > DoubaoRealtimeChat.SILENT_RECONNECT_TIMEOUT_MS) {
+          console.warn('[DoubaoChat] ⚠️ Silent reconnect timeout exceeded, notifying user', { elapsed, threshold: DoubaoRealtimeChat.SILENT_RECONNECT_TIMEOUT_MS });
+          this.onMessage?.({ type: 'reconnect.slow', elapsed, attempt });
+        }
+        
         await this.reconnectOnce(trigger);
 
-        this.onMessage?.({ type: 'debug.reconnect', stage: 'success', attempt });
+        // ✅ 重连成功
+        this.onMessage?.({ type: 'debug.reconnect', stage: 'success', attempt, duration: Date.now() - this.reconnectStartTime });
+        this.onReconnectProgress?.('success', attempt);
+        this.isReconnectingSilently = false;
         this.reconnectInProgress = false;
         this.reconnectAttempts = 0;
+        
+        console.log('[DoubaoChat] ✅ Silent reconnect successful, user should not notice any interruption');
         return;
       } catch (e) {
         console.warn('[DoubaoChat] Reconnect attempt failed', { attempt, error: String(e) });
@@ -1088,8 +1111,13 @@ export class DoubaoRealtimeChat {
       }
     }
 
+    // ✅ 所有重试都失败了，才通知用户
+    this.isReconnectingSilently = false;
     this.reconnectInProgress = false;
-    this.onMessage?.({ type: 'debug.reconnect', stage: 'giveup', attempts: this.reconnectAttempts });
+    this.onReconnectProgress?.('failed', this.reconnectAttempts);
+    this.onMessage?.({ type: 'debug.reconnect', stage: 'giveup', attempts: this.reconnectAttempts, duration: Date.now() - this.reconnectStartTime });
+    
+    // 只有在完全放弃时才改变 UI 状态
     this.onStatusChange('disconnected');
   }
 
