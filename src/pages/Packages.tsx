@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { useState, useEffect, useRef } from "react";
+import { AlipayPayDialog } from "@/components/AlipayPayDialog";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -14,6 +15,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
+import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 
 // 静默授权恢复支付的 sessionStorage key
 const PENDING_PAYMENT_PACKAGE_KEY = 'pending_payment_package';
