@@ -406,3 +406,9 @@ verify_jwt = false
 
 [functions.send-alive-check-alert]
 verify_jwt = false
+
+[functions.create-alipay-order]
+verify_jwt = false
+
+[functions.alipay-callback]
+verify_jwt = false
