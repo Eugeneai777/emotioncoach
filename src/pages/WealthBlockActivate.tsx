@@ -7,7 +7,7 @@ import { Loader2, KeyRound, CheckCircle, Sparkles, ArrowRight } from 'lucide-rea
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { QuickRegisterStep } from '@/components/wealth-block/AssessmentPayDialog';
+import { QuickRegisterStep } from '@/components/onboarding/QuickRegisterStep';
 
 const WealthBlockActivate = () => {
   const navigate = useNavigate();
