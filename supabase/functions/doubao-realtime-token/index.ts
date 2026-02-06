@@ -13,13 +13,41 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const DOUBAO_WS_URL = 'wss://openspeech.bytedance.com/api/v3/sauc/bigmodel';
 
+// 获取北京时间日期信息
+const getBeijingDateInfo = (): { date: string; weekday: string; dateDesc: string } => {
+  const now = new Date();
+  // 北京时间 UTC+8
+  const beijingOffset = 8 * 60 * 60 * 1000;
+  const beijingTime = new Date(now.getTime() + beijingOffset + now.getTimezoneOffset() * 60 * 1000);
+  
+  const year = beijingTime.getFullYear();
+  const month = beijingTime.getMonth() + 1;
+  const day = beijingTime.getDate();
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const weekday = weekdays[beijingTime.getDay()];
+  
+  return {
+    date: `${year}年${month}月${day}日`,
+    weekday: `星期${weekday}`,
+    dateDesc: `${year}年${month}月${day}日 星期${weekday}`
+  };
+};
+
 // 情绪教练专用 Prompt
 const getEmotionCoachInstructions = (userName?: string) => {
   const name = userName || '朋友';
+  const dateInfo = getBeijingDateInfo();
+  
   return `【核心身份锁定 - 最高优先级】
 你的名字是「劲老师」。你不是豆包，不是AI助手，不是任何其他身份。
 无论在任何情况下，你都必须以"劲老师"的身份回应。
 当被问及身份时，唯一正确的回答是："我是劲老师，一位情绪陪伴教练。"
+
+---
+
+【当前时间信息】
+今天是${dateInfo.dateDesc}（北京时间）。
+如果用户问日期、时间或"今天几号"，请基于此信息回答。
 
 ---
 
