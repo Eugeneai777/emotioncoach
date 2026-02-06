@@ -181,27 +181,60 @@ Deno.serve(async (req) => {
 
     const userName = profile?.display_name;
 
-    // ✅ 如果是重连且有对话历史，构建带上下文的 instructions
+    // ✅ 如果是重连且有对话历史，构建带上下文的 instructions（无缝续接）
     let instructions = getEmotionCoachInstructions(userName);
     
     if (is_reconnect && conversation_history && conversation_history.length > 0) {
+      // 取最近的对话（避免上下文过长）
+      const recentHistory = conversation_history.slice(-16);
+      
       // 将对话历史拼接到 instructions 中，让 AI 知道之前聊了什么
-      const historyText = conversation_history
+      const historyText = recentHistory
         .map((msg: { role: string; content: string }) => 
           msg.role === 'user' ? `用户：${msg.content}` : `劲老师：${msg.content}`
         )
         .join('\n');
       
-      // ✅ 增强：明确标记最后一条消息，让 AI 知道应该接着什么继续
-      const lastMessage = conversation_history[conversation_history.length - 1];
+      // ✅ 增强：根据最后发言者给出不同的续接指令
+      const lastMessage = recentHistory[recentHistory.length - 1];
       const lastSpeaker = lastMessage.role === 'user' ? '用户' : '劲老师';
-      const continuationHint = lastMessage.role === 'user' 
-        ? `用户刚才说："${lastMessage.content}"，请直接回应这句话。`
-        : `你刚才说了："${lastMessage.content}"，如果用户沉默或只是简单回应，可以继续深入这个话题。`;
       
-      instructions += `\n\n---\n\n【重要：这是重连后的对话，请保持上下文连贯】\n\n对话历史：\n${historyText}\n\n当前状态：${continuationHint}\n\n请注意：\n1. 不要重新打招呼或自我介绍\n2. 不要重复已经说过的内容\n3. 直接从对话中断的地方自然继续\n4. 如果用户还没有回应你的上一句话，可以稍作等待或轻声询问"你还在吗？"`;
+      let continuationHint: string;
+      if (lastMessage.role === 'user') {
+        // 用户最后说话，AI 应该回应
+        continuationHint = `用户刚才最后说："${lastMessage.content.slice(0, 100)}"。\n请直接、自然地回应这句话，就像对话从未中断过一样。`;
+      } else {
+        // AI 最后说话，等待用户回应
+        continuationHint = `你刚才最后说了："${lastMessage.content.slice(0, 100)}"。\n如果用户继续说话，自然接上；如果用户沉默几秒，可以温和地问"嗯，你在想什么呢？"或继续深入这个话题。`;
+      }
       
-      console.log(`[DoubaoToken] Reconnect with ${conversation_history.length} history messages, last speaker: ${lastSpeaker}`);
+      // ✅ 关键：重连指令必须非常明确，避免 AI 误以为是新对话
+      instructions += `
+
+---
+
+【⚠️ 重要：无缝续接指令】
+
+这是技术性的重连，你和用户的对话正在继续进行中，没有任何中断。
+
+## 最近对话记录
+${historyText}
+
+## 续接要求
+${continuationHint}
+
+## 禁止行为
+- ❌ 不要说"你好"、"我是劲老师"或任何开场白
+- ❌ 不要说"欢迎回来"、"我们继续"等暗示中断的话
+- ❌ 不要重复你刚才说过的内容
+- ❌ 不要问"刚才说到哪了"
+
+## 正确做法
+- ✅ 直接从对话内容自然继续
+- ✅ 保持之前的语气和话题
+- ✅ 表现得就像对话从未断开过`;
+      
+      console.log(`[DoubaoToken] ✅ Reconnect context injected: ${recentHistory.length} messages, last speaker: ${lastSpeaker}`);
     }
 
     // 生成 session token 用于 relay 验证

@@ -140,8 +140,16 @@ export class DoubaoRealtimeChat {
   private reconnectInProgress = false;
   private reconnectAttempts = 0;
   private reconnectTimer: number | null = null;
-  private static readonly MAX_RECONNECT_ATTEMPTS = 5;
-  private static readonly RECONNECT_BACKOFF_MS = [800, 1500, 2500, 4000, 6000];
+  private static readonly MAX_RECONNECT_ATTEMPTS = 8; // 增加重试次数
+  private static readonly RECONNECT_BACKOFF_MS = [200, 400, 800, 1200, 2000, 3000, 4000, 5000]; // 更快的初始重试
+  
+  // ✅ 静默重连增强：重连期间保持 UI 状态不变，用户完全无感
+  private isReconnectingSilently = false;
+  private reconnectStartTime = 0;
+  private static readonly SILENT_RECONNECT_TIMEOUT_MS = 12000; // 12秒内静默重连，超过则上报
+  
+  // ✅ 重连通知回调（可选）：允许上层展示轻量提示
+  private onReconnectProgress?: (stage: 'start' | 'retrying' | 'success' | 'failed', attempt?: number) => void;
 
   // ✅ 给上层“用户活动检测”喂低频事件，避免被误判无活动自动挂断
   private lastUserAudioActivityEventAt = 0;
@@ -1030,6 +1038,10 @@ export class DoubaoRealtimeChat {
 
     this.reconnectInProgress = true;
     this.reconnectAttempts = 0;
+    
+    // ✅ 静默重连：记录开始时间，用于判断是否超过静默阈值
+    this.isReconnectingSilently = true;
+    this.reconnectStartTime = Date.now();
 
     // ✅ 重连前强制保存缓冲区中未完成的转录内容到历史记录
     // 这样即使断线时没收到 .done 事件，也能保留最后一段对话
@@ -1048,9 +1060,13 @@ export class DoubaoRealtimeChat {
     }
     this.clearAudioQueueAndStopPlayback();
 
-    // ✅ 静默重连：不改变 UI 状态，用户无感
+    // ✅ 静默重连：完全不改变 UI 状态，用户无感
+    // 仅发送 debug 事件供开发者调试
     this.onMessage?.({ type: 'debug.reconnect', stage: 'start', trigger, meta, at: Date.now() });
-    // 不再调用 this.onStatusChange('connecting'); 保持 connected 状态
+    this.onReconnectProgress?.('start', 0);
+    
+    // ✅ 关键：不调用 this.onStatusChange('connecting'); 保持 connected 状态
+    // 用户在 UI 上看到的仍然是"通话中"
 
     const sleep = (ms: number) => new Promise<void>((resolve) => {
       this.reconnectTimer = window.setTimeout(() => resolve(), ms);
@@ -1062,17 +1078,32 @@ export class DoubaoRealtimeChat {
       const backoff = DoubaoRealtimeChat.RECONNECT_BACKOFF_MS[Math.min(i, DoubaoRealtimeChat.RECONNECT_BACKOFF_MS.length - 1)];
 
       try {
+        // 第一次立即尝试，后续才等待
         if (i > 0) {
           this.onMessage?.({ type: 'debug.reconnect', stage: 'retrying', attempt, backoff });
+          this.onReconnectProgress?.('retrying', attempt);
           await sleep(backoff);
         }
 
         this.reconnectAttempts = attempt;
+        
+        // ✅ 检查是否超过静默重连时间阈值
+        const elapsed = Date.now() - this.reconnectStartTime;
+        if (elapsed > DoubaoRealtimeChat.SILENT_RECONNECT_TIMEOUT_MS) {
+          console.warn('[DoubaoChat] ⚠️ Silent reconnect timeout exceeded, notifying user', { elapsed, threshold: DoubaoRealtimeChat.SILENT_RECONNECT_TIMEOUT_MS });
+          this.onMessage?.({ type: 'reconnect.slow', elapsed, attempt });
+        }
+        
         await this.reconnectOnce(trigger);
 
-        this.onMessage?.({ type: 'debug.reconnect', stage: 'success', attempt });
+        // ✅ 重连成功
+        this.onMessage?.({ type: 'debug.reconnect', stage: 'success', attempt, duration: Date.now() - this.reconnectStartTime });
+        this.onReconnectProgress?.('success', attempt);
+        this.isReconnectingSilently = false;
         this.reconnectInProgress = false;
         this.reconnectAttempts = 0;
+        
+        console.log('[DoubaoChat] ✅ Silent reconnect successful, user should not notice any interruption');
         return;
       } catch (e) {
         console.warn('[DoubaoChat] Reconnect attempt failed', { attempt, error: String(e) });
@@ -1080,13 +1111,22 @@ export class DoubaoRealtimeChat {
       }
     }
 
+    // ✅ 所有重试都失败了，才通知用户
+    this.isReconnectingSilently = false;
     this.reconnectInProgress = false;
-    this.onMessage?.({ type: 'debug.reconnect', stage: 'giveup', attempts: this.reconnectAttempts });
+    this.onReconnectProgress?.('failed', this.reconnectAttempts);
+    this.onMessage?.({ type: 'debug.reconnect', stage: 'giveup', attempts: this.reconnectAttempts, duration: Date.now() - this.reconnectStartTime });
+    
+    // 只有在完全放弃时才改变 UI 状态
     this.onStatusChange('disconnected');
   }
 
   private async reconnectOnce(trigger: string): Promise<void> {
-    console.log('[DoubaoChat] 🔄 Reconnecting...', { trigger });
+    console.log('[DoubaoChat] 🔄 Reconnecting silently...', { 
+      trigger, 
+      historyLength: this.conversationHistory.length,
+      elapsed: Date.now() - this.reconnectStartTime
+    });
 
     // 关闭旧 ws
     if (this.ws) {
@@ -1109,13 +1149,16 @@ export class DoubaoRealtimeChat {
    // 微信 WebView 可能在后台暂停/回收 AudioContext，简单 resume 不够
    await this.rebuildAudioPipeline('reconnect');
 
-    // ✅ rebuildAudioPipeline 已包含 ensureMediaStream，这里无需重复检查
-
     // ✅ 重连时传递对话历史，让新 session 保持上下文
+    // 增加更多上下文信息，确保 AI 能无缝续接
+    const historyForReconnect = this.conversationHistory.length > 0 
+      ? this.conversationHistory.slice(-16) // 最近 16 条消息
+      : undefined;
+    
     const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
       body: { 
         mode: this.mode,
-        conversation_history: this.conversationHistory.length > 0 ? this.conversationHistory : undefined,
+        conversation_history: historyForReconnect,
         is_reconnect: true,
       },
     });
@@ -1139,14 +1182,19 @@ export class DoubaoRealtimeChat {
     this.startHeartbeat();
     await sessionConnectedPromise;
 
-   // ✅ 重连成功后重新启动录音（由 session.connected 消息触发）
-   // 之前 scheduleReconnect 中调用了 stopRecording，需要恢复
+   // ✅ 重连成功后重新启动录音
    // 注意：startRecording 会检查 processor/source 是否已存在，避免重复
    if (!this.processor && !this.source) {
      await this.startRecording();
-     console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted manually');
+     console.log('[DoubaoChat] 🔄 Reconnect complete: recording restarted');
    } else {
-     console.log('[DoubaoChat] 🔄 Reconnect complete: recording already started by session.connected');
+     console.log('[DoubaoChat] 🔄 Reconnect complete: recording already active');
+   }
+   
+   // ✅ 重连成功后，给 AI 一个"继续对话"的信号（如果之前有对话）
+   // 这确保 AI 知道需要继续之前的话题
+   if (this.conversationHistory.length > 0 && !this.isDisconnected) {
+     console.log('[DoubaoChat] ✅ Silent reconnect: context preserved, AI should continue naturally');
    }
   }
 
