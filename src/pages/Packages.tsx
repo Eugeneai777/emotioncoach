@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { useState, useEffect, useRef } from "react";
+import { AlipayPayDialog } from "@/components/AlipayPayDialog";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -14,6 +15,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
+import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 
 // 静默授权恢复支付的 sessionStorage key
 const PENDING_PAYMENT_PACKAGE_KEY = 'pending_payment_package';
@@ -35,6 +37,16 @@ export default function Packages() {
   
   // 支付弹窗状态
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [alipayDialogOpen, setAlipayDialogOpen] = useState(false);
+  
+  // 检测是否在移动端普通浏览器（非微信环境）—— 这种情况使用支付宝H5支付
+  const shouldUseAlipay = useMemo(() => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isWechat = isWeChatBrowser();
+    const isMiniProgram = isWeChatMiniProgram();
+    // 移动端 + 非微信浏览器 + 非小程序 = 使用支付宝
+    return isMobile && !isWechat && !isMiniProgram;
+  }, []);
   
   // 🆕 静默授权回跳后恢复支付流程的状态
   const paymentResumeHandledRef = useRef(false);
@@ -132,15 +144,23 @@ export default function Packages() {
       navigate('/auth');
       return;
     }
-    // 训练营和普通套餐统一使用微信支付
+    
+    // 根据环境选择支付方式
     setSelectedPackage(packageInfo);
-    setPayDialogOpen(true);
+    if (shouldUseAlipay) {
+      // 移动端浏览器（非微信）使用支付宝
+      console.log('[Packages] Mobile browser detected, using Alipay');
+      setAlipayDialogOpen(true);
+    } else {
+      // 其他环境使用微信支付
+      setPayDialogOpen(true);
+    }
   };
   
   const handlePaymentSuccess = () => {
     console.log('[Packages] Dialog payment success callback');
-    // toast 由 WechatPayDialog 内部在验证成功后显示
     setPayDialogOpen(false);
+    setAlipayDialogOpen(false);
     // 重置状态以允许再次购买其他产品
     setSelectedPackage(null);
   };
@@ -207,6 +227,14 @@ export default function Packages() {
           packageInfo={selectedPackage}
           onSuccess={handlePaymentSuccess}
           openId={paymentOpenId || undefined}
+        />
+        
+        {/* 支付宝支付对话框（移动端浏览器专用） */}
+        <AlipayPayDialog
+          open={alipayDialogOpen}
+          onOpenChange={setAlipayDialogOpen}
+          packageInfo={selectedPackage}
+          onSuccess={handlePaymentSuccess}
         />
       </div>
     </>
