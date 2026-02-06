@@ -415,3 +415,6 @@ verify_jwt = false
 
 [functions.redeem-activation-code]
 verify_jwt = true
+
+[functions.generate-activation-codes]
+verify_jwt = true
