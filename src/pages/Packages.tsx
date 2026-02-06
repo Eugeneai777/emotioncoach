@@ -37,6 +37,16 @@ export default function Packages() {
   
   // 支付弹窗状态
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [alipayDialogOpen, setAlipayDialogOpen] = useState(false);
+  
+  // 检测是否在移动端普通浏览器（非微信环境）—— 这种情况使用支付宝H5支付
+  const shouldUseAlipay = useMemo(() => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isWechat = isWeChatBrowser();
+    const isMiniProgram = isWeChatMiniProgram();
+    // 移动端 + 非微信浏览器 + 非小程序 = 使用支付宝
+    return isMobile && !isWechat && !isMiniProgram;
+  }, []);
   
   // 🆕 静默授权回跳后恢复支付流程的状态
   const paymentResumeHandledRef = useRef(false);
