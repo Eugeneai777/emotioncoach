@@ -60,6 +60,7 @@ export function AdminLayout() {
               <Route path="knowledge" element={<KnowledgeBaseManagement />} />
               <Route path="tools" element={<EnergyStudioToolsManagement />} />
               <Route path="usage" element={<UsageRecordsTable />} />
+              <Route path="activation-codes" element={<ActivationCodeManagement />} />
               <Route path="funnel" element={<ConversionFunnelDashboard />} />
               <Route path="cost-monitor" element={<CostMonitorDashboard />} />
               <Route path="reports" element={<ReportsManagement />} />
