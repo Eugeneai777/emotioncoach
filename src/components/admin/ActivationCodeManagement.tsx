@@ -32,8 +32,8 @@ interface ActivationCode {
   batch_name: string | null;
   source_channel: string | null;
   is_used: boolean;
-  used_at: string | null;
-  used_by: string | null;
+  redeemed_at: string | null;
+  redeemed_by: string | null;
   expires_at: string | null;
   created_at: string;
   user_profile?: {
