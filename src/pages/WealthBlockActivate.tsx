@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, KeyRound, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, KeyRound, CheckCircle, Sparkles, ArrowRight, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { QuickRegisterStep } from '@/components/onboarding/QuickRegisterStep';
 
 const WealthBlockActivate = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [code, setCode] = useState('');
   const [isActivating, setIsActivating] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [activationSuccess, setActivationSuccess] = useState(false);
+  const [pendingCode, setPendingCode] = useState('');
 
   // Check if user already has access
   useEffect(() => {
@@ -39,6 +40,14 @@ const WealthBlockActivate = () => {
     checkExistingAccess();
   }, [user, navigate]);
 
+  // After login, check if there's a pending activation
+  useEffect(() => {
+    if (user && pendingCode) {
+      performActivation(pendingCode);
+      setPendingCode('');
+    }
+  }, [user, pendingCode]);
+
   const handleActivate = async () => {
     const trimmedCode = code.trim();
     if (!trimmedCode) {
@@ -46,9 +55,10 @@ const WealthBlockActivate = () => {
       return;
     }
 
-    // If not logged in, show register dialog
+    // If not logged in, show login prompt
     if (!user) {
-      setShowRegister(true);
+      setPendingCode(trimmedCode);
+      setShowLoginPrompt(true);
       return;
     }
 
@@ -95,14 +105,25 @@ const WealthBlockActivate = () => {
     }
   };
 
-  const handleRegisterSuccess = async () => {
-    setShowRegister(false);
-    // After registration, perform activation
-    const trimmedCode = code.trim();
-    if (trimmedCode) {
-      await performActivation(trimmedCode);
+  const handleGoToLogin = () => {
+    // Save the code to localStorage for after login
+    if (code.trim()) {
+      localStorage.setItem('pending_activation_code', code.trim());
     }
+    navigate('/auth?redirect=/wealth-block-activate');
   };
+
+  // Check for pending code from localStorage after login
+  useEffect(() => {
+    if (user && !authLoading) {
+      const savedCode = localStorage.getItem('pending_activation_code');
+      if (savedCode) {
+        localStorage.removeItem('pending_activation_code');
+        setCode(savedCode);
+        performActivation(savedCode);
+      }
+    }
+  }, [user, authLoading]);
 
   if (authLoading) {
     return (
@@ -184,7 +205,7 @@ const WealthBlockActivate = () => {
 
             {!user && (
               <p className="text-xs text-center text-muted-foreground">
-                点击激活后需要快速注册/登录
+                点击激活后需要登录/注册账号
               </p>
             )}
           </CardContent>
@@ -209,16 +230,29 @@ const WealthBlockActivate = () => {
         </div>
       </div>
 
-      {/* Quick Register Dialog */}
-      {showRegister && (
-        <QuickRegisterStep
-          open={showRegister}
-          onOpenChange={setShowRegister}
-          onSuccess={handleRegisterSuccess}
-          title="激活测评"
-          subtitle="请先注册/登录，再激活测评"
-        />
-      )}
+      {/* Login Prompt Dialog */}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">请先登录</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-center text-muted-foreground">
+              激活测评需要先登录或注册账号
+            </p>
+            <Button 
+              onClick={handleGoToLogin} 
+              className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            >
+              <LogIn className="w-4 h-4" />
+              前往登录/注册
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              登录后将自动继续激活流程
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
