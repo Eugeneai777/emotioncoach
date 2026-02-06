@@ -201,7 +201,7 @@ export function ActivationCodeManagement() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
+              <Clock className="h-5 w-5 text-muted-foreground" />
               <span className="text-2xl font-bold">{stats.unused}</span>
             </div>
           </CardContent>
