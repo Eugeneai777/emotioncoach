@@ -412,3 +412,6 @@ verify_jwt = false
 
 [functions.alipay-callback]
 verify_jwt = false
+
+[functions.redeem-activation-code]
+verify_jwt = true
