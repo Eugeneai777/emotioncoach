@@ -144,15 +144,23 @@ export default function Packages() {
       navigate('/auth');
       return;
     }
-    // 训练营和普通套餐统一使用微信支付
+    
+    // 根据环境选择支付方式
     setSelectedPackage(packageInfo);
-    setPayDialogOpen(true);
+    if (shouldUseAlipay) {
+      // 移动端浏览器（非微信）使用支付宝
+      console.log('[Packages] Mobile browser detected, using Alipay');
+      setAlipayDialogOpen(true);
+    } else {
+      // 其他环境使用微信支付
+      setPayDialogOpen(true);
+    }
   };
   
   const handlePaymentSuccess = () => {
     console.log('[Packages] Dialog payment success callback');
-    // toast 由 WechatPayDialog 内部在验证成功后显示
     setPayDialogOpen(false);
+    setAlipayDialogOpen(false);
     // 重置状态以允许再次购买其他产品
     setSelectedPackage(null);
   };
