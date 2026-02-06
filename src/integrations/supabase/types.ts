@@ -7940,6 +7940,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_assessment_activation_codes: {
+        Row: {
+          batch_name: string | null
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_used: boolean
+          redeemed_at: string | null
+          redeemed_by: string | null
+          source_channel: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_name?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          source_channel?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_name?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          source_channel?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wealth_block_assessments: {
         Row: {
           answers: Json
