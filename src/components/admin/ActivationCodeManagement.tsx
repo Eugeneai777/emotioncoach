@@ -311,8 +311,8 @@ export function ActivationCodeManagement() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {code.is_used && code.user_profile?.display_name
-                          ? code.user_profile.display_name
+                        {code.is_used && code.redeemed_by
+                          ? code.redeemed_by.slice(0, 8) + '...'
                           : '-'}
                       </TableCell>
                       <TableCell>
