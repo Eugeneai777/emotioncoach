@@ -228,6 +228,14 @@ export default function Packages() {
           onSuccess={handlePaymentSuccess}
           openId={paymentOpenId || undefined}
         />
+        
+        {/* 支付宝支付对话框（移动端浏览器专用） */}
+        <AlipayPayDialog
+          open={alipayDialogOpen}
+          onOpenChange={setAlipayDialogOpen}
+          packageInfo={selectedPackage}
+          onSuccess={handlePaymentSuccess}
+        />
       </div>
     </>
   );
