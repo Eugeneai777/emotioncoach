@@ -200,13 +200,13 @@ export function ActivationCodeBatchGenerate({
           </div>
         ) : (
           <div className="space-y-4 py-4">
-            <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-              <CheckCircle className="h-8 w-8 text-green-500" />
+            <div className="flex items-center gap-3 p-4 bg-primary/10 rounded-lg">
+              <CheckCircle className="h-8 w-8 text-primary" />
               <div>
-                <p className="font-medium text-green-700 dark:text-green-300">
+                <p className="font-medium text-primary">
                   成功生成 {generatedCodes.length} 个激活码
                 </p>
-                <p className="text-sm text-green-600 dark:text-green-400">
+                <p className="text-sm text-muted-foreground">
                   批次：{batchName}
                 </p>
               </div>
