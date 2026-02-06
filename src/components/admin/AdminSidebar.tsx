@@ -24,7 +24,8 @@ import {
   Wallet,
   Mail,
   Share2,
-  Tent
+  Tent,
+  Key
 } from "lucide-react";
 import {
   Sidebar,

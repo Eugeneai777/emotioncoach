@@ -27,6 +27,7 @@ import { ConversionFunnelDashboard } from "@/components/analytics/ConversionFunn
 import OGPreviewManagement from "./OGPreviewManagement";
 import ShareCardsAdmin from "@/pages/admin/ShareCardsAdmin";
 import { BloomPartnerInvitations } from "./BloomPartnerInvitations";
+import { ActivationCodeManagement } from "./ActivationCodeManagement";
 
 export function AdminLayout() {
   return (
