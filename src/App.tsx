@@ -149,6 +149,7 @@ const TransformationFlow = lazy(() => import("./pages/TransformationFlow"));
 // 财富教练
 const WealthBlockAssessment = lazy(() => import("./pages/WealthBlockAssessment"));
 const WealthAssessmentLite = lazy(() => import("./pages/WealthAssessmentLite"));
+const WealthBlockActivate = lazy(() => import("./pages/WealthBlockActivate"));
 const WealthCampCheckIn = lazy(() => import("./pages/WealthCampCheckIn"));
 const MeditationLibrary = lazy(() => import("./pages/MeditationLibrary"));
 const WealthJournal = lazy(() => import("./pages/WealthJournal"));
