@@ -463,11 +463,12 @@ function buildStartSessionRequest(
   instructions: string,
   sessionId: string,
   voiceType?: string,
-  promptStrategy: PromptStrategy = 'system_role_only'
+  promptStrategy: PromptStrategy = 'system_role_only',
+  isReconnect: boolean = false
 ): Uint8Array {
   // ✅ 统一计算最终音色：
   // - 先做别名映射（长ID -> BV）
-  // - 若为空则不指定音色（让服务端使用默认音色，避免 45000001 导致“连接后无回复”）
+  // - 若为空则不指定音色（让服务端使用默认音色，避免 45000001 导致"连接后无回复"）
   const resolvedVoiceType = resolveProviderVoiceType(voiceType);
 
   const ttsAudioConfig: Record<string, unknown> = {
@@ -499,11 +500,12 @@ function buildStartSessionRequest(
     vad_silence_time: 300,
     enable_tts: true,
     bot_name: '劲老师',
-    // speaking_style 为可选字段，但在部分场景下能增强“说话风格”稳定性
+    // speaking_style 为可选字段，但在部分场景下能增强"说话风格"稳定性
     speaking_style: '温暖、接纳、专业；使用简体中文；像朋友一样自然对话',
-    // ✅ 开场白：让 AI 主动开口说固定的欢迎语
-    bot_first_speak: true,
-    welcome_message: '你好呀，我是劲老师，今天想聊点什么喃？',
+    // ✅ 关键修复：重连时禁用开场白，让 AI 根据对话历史自然续接
+    // 首次连接时 AI 主动问候；重连时静默续接
+    bot_first_speak: !isReconnect,
+    welcome_message: isReconnect ? '' : '你好呀，我是劲老师，今天想聊点什么喃？',
   };
 
   // ✅ 始终使用 redundant_fields 策略，确保首次连接就注入 prompt
@@ -848,7 +850,7 @@ Deno.serve(async (req) => {
 
   let doubaoConn: Deno.TlsConn | null = null;
   let isConnected = false;
-  let sessionConfig: { instructions: string; voiceType: string; promptStrategy: PromptStrategy } | null = null;
+  let sessionConfig: { instructions: string; voiceType: string; promptStrategy: PromptStrategy; isReconnect: boolean } | null = null;
   let heartbeatInterval: number | null = null;
   let audioSequence = 0;  // 音频包序号
   let sessionStarted = false;  // 标记 session 是否已成功启动
@@ -1000,17 +1002,18 @@ Deno.serve(async (req) => {
         doubaoSessionId = crypto.randomUUID();
         console.log(`[DoubaoRelay] Generated SessionID: ${doubaoSessionId}`);
         
-        // ✅ 传递音色配置到 StartSession
+        // ✅ 传递音色配置和重连标志到 StartSession
         const startSessionPacket = buildStartSessionRequest(
           userId,
           sessionConfig.instructions,
           doubaoSessionId,
           sessionConfig.voiceType,
-          sessionConfig.promptStrategy
+          sessionConfig.promptStrategy,
+          sessionConfig.isReconnect
         );
         const frame = buildWebSocketFrame(startSessionPacket);
         await doubaoConn.write(frame);
-        console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes), voiceType: ${sessionConfig.voiceType}`);
+        console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes), voiceType: ${sessionConfig.voiceType}, isReconnect: ${sessionConfig.isReconnect}`);
 
         // ✅ 不再“乐观 connected”：之前会导致前端过早触发 greeting，
         // relay 侧因 session 未 ready 丢弃文本，最终出现“正在聆听但无回复/IdleTimeout”。
@@ -1648,6 +1651,8 @@ Deno.serve(async (req) => {
             // ⚠️ 不再强制默认长ID：若不传 voice_type，则让服务端使用默认音色（更稳，避免 45000001 导致无回复）
             voiceType: (message.voice_type ?? ''),
             promptStrategy: 'system_role_only',
+            // ✅ 关键修复：从消息或 URL 参数获取重连标志，用于禁用开场白
+            isReconnect: message.is_reconnect === true || isReconnectParam,
           };
 
           // reset persona checks per new session
@@ -1660,6 +1665,7 @@ Deno.serve(async (req) => {
             instructions_preview: sessionConfig.instructions.substring(0, 120),
             voiceType: sessionConfig.voiceType || '(none)',
             promptStrategy: sessionConfig.promptStrategy,
+            isReconnect: sessionConfig.isReconnect,
           });
           // ✅ Fix: StartSession 使用 sequence=1；音频包从 sequence=2 开始递增
           audioSequence = 2;
