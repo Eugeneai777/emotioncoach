@@ -1,30 +1,55 @@
 
 
-## 优化有劲小工具卡片布局
+## 修复有劲合伙人佣金比例不一致
 
-### 当前问题
+### 问题
 
-截图显示每个产品卡片被拉伸到整列的高度，导致"尝鲜会员"和"死了吗打卡"下方出现大量空白。原因是 `ProductCard` 使用了 `h-full` 和 `flex-1`，使卡片撑满网格单元格高度。
+多个文件中硬编码的佣金比例与数据库 `partner_level_rules` 表定义不一致。数据库中的正确值为：
+- L1 初级：一级 18%，二级 0%
+- L2 高级：一级 30%，二级 5%
+- L3 钻石：一级 50%，二级 12%
 
-### 修改方案
+### 修改清单
 
-**文件：** `src/components/Tools99Grid.tsx`
+#### 1. `src/components/admin/AddPartnerDialog.tsx`（第 19-23 行）
 
-1. 移除 `MobileCard` 上的 `h-full` 类，让卡片根据内容自适应高度
-2. 移除 features 列表上的 `flex-1`，避免内容区域被拉伸
-3. 每个卡片紧凑排列，自然堆叠在各自列中
+将 `LEVEL_CONFIG` 中的硬编码佣金比例修正为：
 
-### 技术细节
+| 等级 | 修改前 | 修改后 |
+|------|--------|--------|
+| L1 | l1Rate: 20, l2Rate: 0 | l1Rate: 18, l2Rate: 0 |
+| L2 | l1Rate: 35, l2Rate: 0 | l1Rate: 30, l2Rate: 5 |
+| L3 | l1Rate: 50, l2Rate: 10 | l1Rate: 50, l2Rate: 12 |
 
-在 `ProductCard` 组件中：
-- `MobileCard` 的 className 从 `relative flex flex-col h-full` 改为 `relative flex flex-col`（去掉 `h-full`）
-- `<ul>` 的 className 从 `mt-2 space-y-1 flex-1` 改为 `mt-2 space-y-1`（去掉 `flex-1`）
+#### 2. `src/pages/YoujinPartnerTerms.tsx`（第 59 行）
 
-这样每张卡片高度由内容决定，左列 4 张卡片、右列 3 张卡片紧凑堆叠，不再出现大面积空白。
+将佣金说明文字从 `L1: 20%, L2: 35%, L3: 50%` 改为 `L1: 18%, L2: 30%, L3: 50%`
+
+#### 3. `src/pages/PartnerTypeSelector.tsx`（第 88 行、第 155 行）
+
+- 第 88 行：`"预购体验包，根据数量获得20%-50%佣金"` 改为 `"预购体验包，根据数量获得18%-50%佣金"`
+- 第 155 行：`"佣金比例20%-50%，取决于预购数量"` 改为 `"佣金比例18%-50%，取决于预购数量"`
+
+#### 4. `src/components/poster/PosterTemplateGrid.tsx`（第 230 行、第 239 行）
+
+- 第 230 行：`'分享就能赚取20%-50%佣金'` 改为 `'分享就能赚取18%-50%佣金'`
+- 第 239 行：`'20%-50%高额佣金'` 改为 `'18%-50%高额佣金'`
+
+### 已确认一致的文件（无需修改）
+
+以下文件已使用正确的 18%-50% 比例：
+- `src/pages/Partner.tsx`（18%-50%）
+- `src/pages/PlatformIntro.tsx`（18%-50%）
+- `src/components/partner/PartnerPlanShareCard.tsx`（18%-50%）
+- `src/config/partnerLevels.ts`（18%/30%/50% + 0%/5%/12%）
 
 ### 文件变更
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/components/Tools99Grid.tsx` | 修改 | 移除 h-full 和 flex-1，卡片自适应高度 |
+| `src/components/admin/AddPartnerDialog.tsx` | 修改 | L1: 18%/0%, L2: 30%/5%, L3: 50%/12% |
+| `src/pages/YoujinPartnerTerms.tsx` | 修改 | L1: 18%, L2: 30% |
+| `src/pages/PartnerTypeSelector.tsx` | 修改 | 20%-50% 改为 18%-50%（两处） |
+| `src/components/poster/PosterTemplateGrid.tsx` | 修改 | 20%-50% 改为 18%-50%（两处） |
 
+无需数据库变更，仅前端文案和配置修正。
