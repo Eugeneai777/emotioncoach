@@ -421,3 +421,6 @@ verify_jwt = true
 
 [functions.beautify-post]
 verify_jwt = true
+
+[functions.partner-self-redeem]
+verify_jwt = false
