@@ -57,7 +57,7 @@ function ProductCard({
 }) {
   return (
     <MobileCard
-      className={`relative flex flex-col h-full ${isPurchased ? 'opacity-60' : ''}`}
+      className={`relative flex flex-col ${isPurchased ? 'opacity-60' : ''}`}
       interactive={!isPurchased}
       onClick={() => !isPurchased && onPurchase()}
     >
@@ -73,7 +73,7 @@ function ProductCard({
         <h3 className="font-bold text-sm leading-tight">{product.name}</h3>
         <span className="text-lg font-bold text-primary mt-1">¥{price}</span>
 
-        <ul className="mt-2 space-y-1 flex-1">
+        <ul className="mt-2 space-y-1">
           {product.features.map((feature, i) => (
             <li key={i} className="flex items-center gap-1 text-xs text-muted-foreground">
               <span className="w-1 h-1 rounded-full bg-muted-foreground/50 flex-shrink-0" />
