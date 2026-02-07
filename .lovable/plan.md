@@ -1,36 +1,74 @@
 
+
 ## Problem
 
-Comment section displays "用户" (User) for all non-anonymous comments instead of showing the commenter's actual nickname/display name and avatar. This is because `CommentSection.tsx` only queries the `post_comments` table and never fetches profile data.
+The comment count in the bottom bar always shows "0" even when comments exist. Two root causes:
 
-Other components (like `CommunityWaterfall` and `PostDetailSheet`) already correctly fetch `display_name` and `avatar_url` from the `profiles` table.
+1. **Database out of sync**: The `comments_count` column in the `community_posts` table is `0` for this post, yet there is 1 actual comment in the `post_comments` table. The update logic after submitting a comment uses the stale prop value `(post.comments_count || 0) + 1`, which can produce incorrect counts.
+
+2. **No local state tracking**: `PostDetailSheet` displays `post.comments_count` directly from the prop (which never changes after the sheet opens). Even after a user submits a new comment and the DB is updated, the displayed count stays at whatever value was passed in.
 
 ## Solution
 
-Update `CommentSection.tsx` to fetch commenter profile information (display name and avatar) from the `profiles` table, following the same pattern already used in `CommunityWaterfall.tsx`.
+### 1. Add local `commentsCount` state in `PostDetailSheet.tsx`
 
-## Changes
+- Create a `commentsCount` state initialized from `post.comments_count`
+- After a successful comment submission, increment the local state
+- Display the local state value instead of the prop in the bottom bar
+- Sync the state when the `post` prop changes
 
-### File: `src/components/community/CommentSection.tsx`
+### 2. Fix the DB update to use actual count
 
-1. **Import `AvatarImage`**: Add it to the existing Avatar import so we can display actual user avatars.
+- After inserting a comment, query the real count from `post_comments` table and update `community_posts.comments_count` with the accurate value (instead of relying on the potentially stale prop)
 
-2. **Add profile state**: Create a `Map<string, { display_name: string | null; avatar_url: string | null }>` to store commenter profiles.
+### 3. Fix the existing stale data
 
-3. **Fetch profiles after loading comments**: After comments are loaded, collect unique `user_id`s (excluding anonymous ones), then batch-query the `profiles` table for `id, display_name, avatar_url` — the same approach used in `CommunityWaterfall.tsx` (lines 342-354).
+- Run a one-time SQL migration to sync `comments_count` for all posts based on the actual count in the `post_comments` table
 
-4. **Update display logic** (line 94): Change from:
-   ```
-   const displayName = comment.is_anonymous ? "匿名用户" : "用户";
-   ```
-   To:
-   ```
-   const profile = profiles.get(comment.user_id);
-   const displayName = comment.is_anonymous
-     ? "匿名用户"
-     : (profile?.display_name || "用户" + comment.user_id.slice(0, 6));
-   ```
+---
 
-5. **Show avatar image**: Add `<AvatarImage>` for non-anonymous comments that have an `avatar_url`, replacing the current fallback-only Avatar.
+## Technical Details
 
-These changes are purely display-side and do not affect any comment submission, payment, or other business logic.
+### File: `src/components/community/PostDetailSheet.tsx`
+
+**Add state** (near line 72):
+```typescript
+const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
+```
+
+**Sync state when post changes** (add useEffect):
+```typescript
+useEffect(() => {
+  setCommentsCount(post.comments_count || 0);
+}, [post.comments_count]);
+```
+
+**Fix comment submission** (lines 347-350): Replace the stale prop-based update with an actual count query:
+```typescript
+// Query actual comment count
+const { count } = await supabase
+  .from("post_comments")
+  .select("*", { count: "exact", head: true })
+  .eq("post_id", post.id);
+
+await supabase.from("community_posts").update({
+  comments_count: count || 0
+}).eq("id", post.id);
+
+setCommentsCount(count || 0);
+```
+
+**Update display** (line 644): Change from `post.comments_count || 0` to `commentsCount`.
+
+### Database Migration
+
+Sync all existing posts' `comments_count` with the actual count:
+```sql
+UPDATE community_posts cp
+SET comments_count = (
+  SELECT COUNT(*)
+  FROM post_comments pc
+  WHERE pc.post_id = cp.id
+);
+```
+
