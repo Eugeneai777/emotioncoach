@@ -270,21 +270,25 @@ export function PaymentStep({
         return;
       }
 
+      // 先保存订单信息到 sessionStorage，以便支付完成后返回时恢复
+      sessionStorage.setItem('pending_alipay_order', JSON.stringify({
+        orderNo: data.orderNo,
+        payUrl: data.payUrl,
+        packageKey: packageInfo.package_key,
+        timestamp: Date.now(),
+      }));
+
+      // 立即跳转到支付宝支付页面，不等待状态更新
+      if (data.payUrl) {
+        window.location.href = data.payUrl;
+        return;
+      }
+
+      // 如果没有payUrl，才设置状态（理论上不应该发生）
       setOrderNo(data.orderNo);
       setPayUrl(data.payUrl);
       setStatus('polling');
       startPolling(data.orderNo);
-      
-      // 自动跳转支付宝支付 - 使用多种方式确保跳转成功
-      if (data.payUrl) {
-        // 尝试使用 location.replace 实现无需返回的跳转
-        try {
-          window.location.replace(data.payUrl);
-        } catch {
-          window.location.href = data.payUrl;
-        }
-        return;
-      }
 
       // 设置15分钟超时
       timeoutRef.current = setTimeout(() => {
