@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { experiencePackageItems } from "@/config/youjinPartnerProducts";
+import { useExperiencePackageItems } from "@/hooks/useExperiencePackageItems";
 import { PartnerEarningsComparison } from "./partner/PartnerEarningsComparison";
 
 // 统一金额格式化函数
@@ -104,6 +104,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   const isMobile = useIsMobile();
   const { data: packages } = usePackages();
   const { user } = useAuth();
+  const { items: experiencePackageItems } = useExperiencePackageItems();
   
   // 检查限购套餐是否已购买
   const { data: basicPurchased, isLoading: isCheckingBasic } = usePackagePurchased('basic', category === 'youjin-member');
@@ -610,37 +611,37 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-xl">🎁</span>
-              <h4 className="font-bold text-base">可分发的体验包（共4种）</h4>
+              <h4 className="font-bold text-base">可分发的体验包（共{experiencePackageItems.length}种）</h4>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {experiencePackageItems.map((pkg) => {
-                const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-                  ai_points: { 
+                const colorThemeMap: Record<string, { bg: string; border: string; text: string }> = {
+                  blue: { 
                     bg: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30', 
                     border: 'border-blue-200 dark:border-blue-800',
                     text: 'text-blue-600 dark:text-blue-400'
                   },
-                  emotion_health: { 
+                  green: { 
                     bg: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30', 
                     border: 'border-green-200 dark:border-green-800',
                     text: 'text-green-600 dark:text-green-400'
                   },
-                  scl90: { 
+                  amber: { 
                     bg: 'from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30', 
                     border: 'border-amber-200 dark:border-amber-800',
                     text: 'text-amber-600 dark:text-amber-400'
                   },
-                  wealth_block: { 
+                  purple: { 
                     bg: 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30', 
                     border: 'border-purple-200 dark:border-purple-800',
                     text: 'text-purple-600 dark:text-purple-400'
                   },
                 };
-                const colors = colorMap[pkg.key] || colorMap.ai_points;
+                const colors = colorThemeMap[pkg.color_theme] || colorThemeMap.blue;
 
                 return (
-                  <Dialog key={pkg.key}>
+                  <Dialog key={pkg.item_key}>
                     <DialogTrigger asChild>
                       <div 
                         className={`bg-gradient-to-br ${colors.bg} rounded-lg p-3 ${colors.border} border text-center cursor-pointer hover:scale-105 transition-transform`}

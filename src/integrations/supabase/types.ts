@@ -5241,6 +5241,51 @@ export type Database = {
           },
         ]
       }
+      partner_experience_items: {
+        Row: {
+          color_theme: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          features: string[] | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          item_key: string
+          name: string
+          package_key: string
+          value: string | null
+        }
+        Insert: {
+          color_theme?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          features?: string[] | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_key: string
+          name: string
+          package_key: string
+          value?: string | null
+        }
+        Update: {
+          color_theme?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          features?: string[] | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_key?: string
+          name?: string
+          package_key?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       partner_invitations: {
         Row: {
           claimed_at: string | null

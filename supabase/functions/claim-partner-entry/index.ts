@@ -91,9 +91,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get selected packages from partner config, default to all 4 packages
-    const selectedPackages: string[] = partner.selected_experience_packages 
-      || ['basic', 'emotion_health_assessment', 'scl90_report', 'wealth_block_assessment'];
+    // Read experience package items from database for default list
+    const { data: experienceItems, error: itemsError } = await supabase
+      .from('partner_experience_items')
+      .select('item_key, package_key, name')
+      .eq('is_active', true)
+      .order('display_order');
+
+    if (itemsError) {
+      console.error('Failed to fetch experience items:', itemsError);
+    }
+
+    // Build default package keys from DB, fallback to hardcoded
+    const defaultPackageKeys = experienceItems && experienceItems.length > 0
+      ? experienceItems.map((i: any) => i.package_key)
+      : ['basic', 'emotion_health_assessment', 'scl90_report', 'wealth_block_assessment'];
+
+    // Get selected packages from partner config, default to all from DB
+    const selectedPackages: string[] = partner.selected_experience_packages || defaultPackageKeys;
 
     console.log(`Partner ${partner_id} selected packages:`, selectedPackages);
 
@@ -197,22 +212,19 @@ Deno.serve(async (req) => {
       })
       .eq('id', partner_id);
 
-    // Grant assessments based on selected packages (all 4 assessment types)
-    const assessmentPackages = [
-      { key: 'emotion_health_assessment', package_key: 'emotion_health_assessment', package_name: '情绪健康测评' },
-      { key: 'scl90_report', package_key: 'scl90_report', package_name: 'SCL-90心理测评报告' },
-      { key: 'wealth_block_assessment', package_key: 'wealth_block_assessment', package_name: '财富卡点测评' }
-    ];
+    // Grant assessments based on selected packages (dynamically from DB)
+    // Build assessment info from DB items, filtered by selectedPackages
+    const assessmentItemsFromDB = experienceItems
+      ? experienceItems.filter((i: any) => i.package_key !== 'basic' && selectedPackages.includes(i.package_key))
+      : [
+          { package_key: 'emotion_health_assessment', name: '情绪健康测评' },
+          { package_key: 'scl90_report', name: 'SCL-90心理测评报告' },
+          { package_key: 'wealth_block_assessment', name: '财富卡点测评' },
+        ].filter(i => selectedPackages.includes(i.package_key));
 
     const grantedAssessments: string[] = [];
 
-    for (const pkg of assessmentPackages) {
-      // Only grant if this package is selected by partner
-      if (!selectedPackages.includes(pkg.key)) {
-        console.log(`Skipping ${pkg.key} - not selected by partner`);
-        continue;
-      }
-
+    for (const pkg of assessmentItemsFromDB) {
       // Check if user already has this assessment
       const { data: existingOrder } = await supabase
         .from('orders')
@@ -231,7 +243,7 @@ Deno.serve(async (req) => {
           .insert({
             user_id: user.id,
             package_key: pkg.package_key,
-            package_name: pkg.package_name,
+            package_name: pkg.name,
             amount: 0,
             status: 'paid',
             paid_at: new Date().toISOString(),
@@ -240,7 +252,7 @@ Deno.serve(async (req) => {
 
         if (!orderError) {
           grantedAssessments.push(pkg.package_key);
-          grantedItems.push(pkg.package_name);
+          grantedItems.push(pkg.name);
           console.log(`Granted ${pkg.package_key} to user ${user.id}`);
         } else {
           console.error(`Failed to grant ${pkg.package_key}:`, orderError);

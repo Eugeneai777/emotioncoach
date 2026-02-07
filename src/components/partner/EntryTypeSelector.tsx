@@ -6,16 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Gift, CreditCard, Check, Loader2, AlertCircle, Copy, Save } from "lucide-react";
 import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
-
-// 体验包选项定义 - 包含全部4个体验包（默认全选，不可更改）
-const EXPERIENCE_PACKAGES = [
-  { key: 'basic', label: '尝鲜会员', description: '50点', icon: '🎫' },
-  { key: 'emotion_health_assessment', label: '情绪健康测评', description: '专业测评', icon: '💚' },
-  { key: 'scl90_report', label: 'SCL-90心理测评', description: '心理健康筛查', icon: '📋' },
-  { key: 'wealth_block_assessment', label: '财富卡点测评', description: '财富诊断', icon: '💰' },
-] as const;
-
-const DEFAULT_PACKAGES = ['basic', 'emotion_health_assessment', 'scl90_report', 'wealth_block_assessment'];
+import { useExperiencePackageItems } from "@/hooks/useExperiencePackageItems";
 
 interface EntryTypeSelectorProps {
   partnerId: string;
@@ -30,6 +21,7 @@ export function EntryTypeSelector({
   prepurchaseCount = 0,
   onUpdate 
 }: EntryTypeSelectorProps) {
+  const { items: experienceItems, allPackageKeys } = useExperiencePackageItems();
   const [entryType, setEntryType] = useState<'free' | 'paid'>(currentEntryType as 'free' | 'paid');
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -66,7 +58,7 @@ export function EntryTypeSelector({
           default_product_type: 'trial_member',
           default_entry_price: entryType === 'paid' ? 9.9 : 0,
           default_quota_amount: 50,
-          selected_experience_packages: DEFAULT_PACKAGES,
+          selected_experience_packages: allPackageKeys,
           updated_at: new Date().toISOString()
         } as Record<string, unknown>)
         .eq('id', partnerId);
@@ -169,12 +161,12 @@ export function EntryTypeSelector({
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground">包含内容</Label>
           <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-2">
-            {EXPERIENCE_PACKAGES.map((pkg) => (
-              <div key={pkg.key} className="flex items-center gap-2">
+            {experienceItems.map((pkg) => (
+              <div key={pkg.item_key} className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-teal-500" />
                 <span className="text-sm">{pkg.icon}</span>
-                <span className="text-sm font-medium">{pkg.label}</span>
-                <span className="text-xs text-muted-foreground">({pkg.description})</span>
+                <span className="text-sm font-medium">{pkg.name}</span>
+                <span className="text-xs text-muted-foreground">({pkg.value})</span>
               </div>
             ))}
           </div>

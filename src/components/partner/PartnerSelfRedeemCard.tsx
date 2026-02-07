@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Gift, Check, Loader2, Sparkles } from "lucide-react";
-import { experiencePackageItems } from "@/config/youjinPartnerProducts";
+import { useExperiencePackageItems } from "@/hooks/useExperiencePackageItems";
 
 interface PartnerSelfRedeemCardProps {
   partnerId: string;
@@ -17,10 +17,14 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [redeeming, setRedeeming] = useState(false);
+  const { items: experienceItems, allPackageKeys } = useExperiencePackageItems();
+
+  // Derive assessment keys (non-basic packages)
+  const assessmentKeys = allPackageKeys.filter(k => k !== 'basic');
 
   // Check which products the user already owns
   const { data: ownedProducts, isLoading } = useQuery({
-    queryKey: ['self-redeem-status', user?.id],
+    queryKey: ['self-redeem-status', user?.id, assessmentKeys],
     queryFn: async () => {
       if (!user) return { hasBasic: false, assessments: [] as string[] };
 
@@ -36,7 +40,7 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
           .from('orders')
           .select('package_key')
           .eq('user_id', user.id)
-          .in('package_key', ['emotion_health_assessment', 'scl90_report', 'wealth_block_assessment'])
+          .in('package_key', assessmentKeys)
           .eq('status', 'paid')
       ]);
 
@@ -45,21 +49,15 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
         assessments: (ordersResult.data || []).map(o => o.package_key)
       };
     },
-    enabled: !!user
+    enabled: !!user && assessmentKeys.length > 0
   });
 
   const allOwned = ownedProducts?.hasBasic && 
-    ['emotion_health_assessment', 'scl90_report', 'wealth_block_assessment']
-      .every(k => ownedProducts.assessments.includes(k));
+    assessmentKeys.every(k => ownedProducts.assessments.includes(k));
 
-  const isOwned = (key: string) => {
-    if (key === 'ai_points') return ownedProducts?.hasBasic;
-    const keyMap: Record<string, string> = {
-      'emotion_health': 'emotion_health_assessment',
-      'scl90': 'scl90_report',
-      'wealth_block': 'wealth_block_assessment'
-    };
-    return ownedProducts?.assessments.includes(keyMap[key] || '');
+  const isOwned = (item: { item_key: string; package_key: string }) => {
+    if (item.package_key === 'basic') return ownedProducts?.hasBasic;
+    return ownedProducts?.assessments.includes(item.package_key);
   };
 
   const handleRedeem = async () => {
@@ -101,17 +99,17 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
           自用兑换体验包
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          消耗 1 个体验包名额，为自己开通全部 4 种产品
+          消耗 1 个体验包名额，为自己开通全部 {experienceItems.length} 种产品
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Product list */}
         <div className="grid grid-cols-2 gap-2">
-          {experiencePackageItems.map((item) => {
-            const owned = isOwned(item.key);
+          {experienceItems.map((item) => {
+            const owned = isOwned(item);
             return (
               <div 
-                key={item.key}
+                key={item.item_key}
                 className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
                   owned 
                     ? 'bg-green-50 border border-green-200' 

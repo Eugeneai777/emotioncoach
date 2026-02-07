@@ -64,7 +64,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user already has all 4 products
+    // Read experience package items from database
+    const { data: experienceItems, error: itemsError } = await supabase
+      .from('partner_experience_items')
+      .select('item_key, package_key, name')
+      .eq('is_active', true)
+      .order('display_order');
+
+    if (itemsError) {
+      console.error('Failed to fetch experience items:', itemsError);
+      return new Response(
+        JSON.stringify({ success: false, message: '获取体验包配置失败' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Separate basic (subscription) from assessment items (orders)
+    const basicItem = experienceItems.find((i: any) => i.package_key === 'basic');
+    const assessmentItems = experienceItems.filter((i: any) => i.package_key !== 'basic');
+    const assessmentKeys = assessmentItems.map((i: any) => i.package_key);
+
+    console.log(`Experience items from DB: basic=${!!basicItem}, assessments=${assessmentKeys.join(',')}`);
+
+    // Check if user already has all products
     const { data: existingSubscription } = await supabase
       .from('subscriptions')
       .select('id')
@@ -73,7 +95,6 @@ Deno.serve(async (req) => {
       .eq('status', 'active')
       .maybeSingle();
 
-    const assessmentKeys = ['emotion_health_assessment', 'scl90_report', 'wealth_block_assessment'];
     const { data: existingOrders } = await supabase
       .from('orders')
       .select('package_key')
@@ -81,8 +102,8 @@ Deno.serve(async (req) => {
       .in('package_key', assessmentKeys)
       .eq('status', 'paid');
 
-    const existingAssessmentKeys = (existingOrders || []).map(o => o.package_key);
-    const hasAllAssessments = assessmentKeys.every(k => existingAssessmentKeys.includes(k));
+    const existingAssessmentKeys = (existingOrders || []).map((o: any) => o.package_key);
+    const hasAllAssessments = assessmentKeys.every((k: string) => existingAssessmentKeys.includes(k));
 
     if (existingSubscription && hasAllAssessments) {
       return new Response(
@@ -94,7 +115,7 @@ Deno.serve(async (req) => {
     const grantedItems: string[] = [];
 
     // 1. Grant AI quota (basic subscription) if not already owned
-    if (!existingSubscription) {
+    if (basicItem && !existingSubscription) {
       const { data: basicPackage } = await supabase
         .from('packages')
         .select('id, package_name, ai_quota, duration_days')
@@ -158,16 +179,10 @@ Deno.serve(async (req) => {
       console.log(`Granted ${quotaAmount} AI quota to user ${user.id}`);
     }
 
-    // 2. Grant assessments if not already owned
-    const assessmentPackages = [
-      { key: 'emotion_health_assessment', name: '情绪健康测评' },
-      { key: 'scl90_report', name: 'SCL-90心理测评' },
-      { key: 'wealth_block_assessment', name: '财富卡点测评' },
-    ];
-
-    for (const pkg of assessmentPackages) {
-      if (existingAssessmentKeys.includes(pkg.key)) {
-        console.log(`Skipping ${pkg.key} - user already owns it`);
+    // 2. Grant assessments if not already owned (dynamically from DB)
+    for (const item of assessmentItems) {
+      if (existingAssessmentKeys.includes(item.package_key)) {
+        console.log(`Skipping ${item.package_key} - user already owns it`);
         continue;
       }
 
@@ -177,8 +192,8 @@ Deno.serve(async (req) => {
         .from('orders')
         .insert({
           user_id: user.id,
-          package_key: pkg.key,
-          package_name: pkg.name,
+          package_key: item.package_key,
+          package_name: item.name,
           amount: 0,
           status: 'paid',
           paid_at: new Date().toISOString(),
@@ -186,10 +201,10 @@ Deno.serve(async (req) => {
         });
 
       if (!orderError) {
-        grantedItems.push(pkg.name);
-        console.log(`Granted ${pkg.key} to user ${user.id}`);
+        grantedItems.push(item.name);
+        console.log(`Granted ${item.package_key} to user ${user.id}`);
       } else {
-        console.error(`Failed to grant ${pkg.key}:`, orderError);
+        console.error(`Failed to grant ${item.package_key}:`, orderError);
       }
     }
 
