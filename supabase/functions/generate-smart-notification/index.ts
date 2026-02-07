@@ -77,9 +77,16 @@ serve(async (req) => {
     // 获取用户偏好设置
     const { data: profile } = await supabase
       .from('profiles')
-      .select('preferred_encouragement_style, companion_type, display_name, notification_frequency, smart_notification_enabled, wecom_enabled, wecom_webhook_url, wechat_enabled')
+      .select('preferred_encouragement_style, companion_type, display_name, notification_frequency, smart_notification_enabled, wecom_enabled, wechat_enabled')
       .eq('id', userId)
       .single();
+
+    // 获取用户集成密钥（从独立的安全表中获取）
+    const { data: integrationSecrets } = await supabase
+      .from('user_integration_secrets')
+      .select('wecom_webhook_url')
+      .eq('user_id', userId)
+      .maybeSingle();
 
     // 检查用户是否启用了智能通知
     if (!context?.preview && profile?.smart_notification_enabled === false) {
@@ -518,11 +525,11 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
     }
 
     // 如果用户启用了企业微信推送，同时发送到企业微信
-    if (profile?.wecom_enabled && profile?.wecom_webhook_url) {
+    if (profile?.wecom_enabled && integrationSecrets?.wecom_webhook_url) {
       try {
         await supabase.functions.invoke('send-wecom-notification', {
           body: {
-            webhookUrl: profile.wecom_webhook_url,
+            webhookUrl: integrationSecrets.wecom_webhook_url,
             notification: {
               title: notificationData.title,
               message: notificationData.message,
