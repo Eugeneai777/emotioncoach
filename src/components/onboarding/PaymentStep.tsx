@@ -75,6 +75,7 @@ export function PaymentStep({
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<PayType>('h5');
+  const [isRedirecting, setIsRedirecting] = useState(false); // 是否正在跳转
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -278,9 +279,13 @@ export function PaymentStep({
         timestamp: Date.now(),
       }));
 
-      // 立即跳转到支付宝支付页面，不等待状态更新
+      // 立即跳转到支付宝支付页面
       if (data.payUrl) {
-        window.location.href = data.payUrl;
+        setIsRedirecting(true);
+        // 使用 setTimeout 确保状态更新后再跳转，给用户一个视觉反馈
+        setTimeout(() => {
+          window.location.href = data.payUrl;
+        }, 100);
         return;
       }
 
@@ -394,7 +399,15 @@ export function PaymentStep({
       <div className={`flex items-center justify-center border rounded-lg bg-white ${
         (payType === 'h5' || payType === 'alipay_h5') && (status === 'ready' || status === 'polling') ? 'h-32' : 'h-52'
       }`}>
-        {status === 'loading' && (
+        {/* 正在跳转到支付宝 */}
+        {isRedirecting && (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-[#1677FF]" />
+            <span className="text-sm text-muted-foreground">正在跳转到支付宝...</span>
+          </div>
+        )}
+
+        {status === 'loading' && !isRedirecting && (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="text-sm text-muted-foreground">
@@ -448,23 +461,26 @@ export function PaymentStep({
         )}
       </div>
 
-      {/* 操作按钮 */}
-      {(status === 'ready' || status === 'polling') && (
+      {/* 操作按钮 - 跳转中时不显示 */}
+      {(status === 'ready' || status === 'polling') && !isRedirecting && (
         <div className="space-y-3">
           {payType === 'alipay_h5' ? (
             <>
-              <Button
-                onClick={handleAlipayPay}
-                className="w-full gap-2 bg-[#1677FF] hover:bg-[#0958D9] text-white"
-              >
-                <ExternalLink className="h-4 w-4" />
-                跳转支付宝支付
-              </Button>
               {status === 'polling' && (
-                <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  等待支付确认...
-                </p>
+                <>
+                  <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    等待支付确认...
+                  </p>
+                  <Button
+                    onClick={handleAlipayPay}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    重新打开支付页面
+                  </Button>
+                </>
               )}
               <p className="text-xs text-center text-muted-foreground">
                 支付完成后请返回此页面，系统将自动确认订单
