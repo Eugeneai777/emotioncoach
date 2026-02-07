@@ -24,7 +24,7 @@ interface AlipayPayDialogProps {
   returnUrl?: string;
 }
 
-type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
+type PaymentStatus = 'idle' | 'loading' | 'redirecting' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
 
 export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl }: AlipayPayDialogProps) {
   const { user } = useAuth();
@@ -32,6 +32,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [payUrl, setPayUrl] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [countdown, setCountdown] = useState<number>(2); // 倒计时秒数
   
   // 判断是否需要显示条款（仅合伙人套餐需要）
   const requiresTermsAgreement = () => {
@@ -46,6 +47,8 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false);
 
   // 清理定时器
@@ -58,6 +61,14 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (redirectTimerRef.current) {
+      clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
   };
 
   // 重置状态
@@ -67,6 +78,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setPayUrl('');
     setOrderNo('');
     setErrorMessage('');
+    setCountdown(2);
     setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false;
   };
@@ -168,8 +180,31 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       setOrderNo(data.orderNo);
       setPayUrl(data.payUrl);
-      setStatus('ready');
+      setStatus('redirecting');
       startPolling(data.orderNo);
+      
+      // 开始倒计时
+      setCountdown(2);
+      countdownRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            if (countdownRef.current) {
+              clearInterval(countdownRef.current);
+              countdownRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      // 2秒后自动跳转
+      redirectTimerRef.current = setTimeout(() => {
+        setStatus('polling');
+        if (data.payUrl) {
+          window.location.href = data.payUrl;
+        }
+      }, 2000);
 
       // 设置15分钟超时
       timeoutRef.current = setTimeout(() => {
@@ -266,7 +301,20 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             </div>
           )}
 
-          {/* 准备支付 */}
+          {/* 正在跳转 */}
+          {status === 'redirecting' && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-[#1677FF]" />
+              <p className="text-lg font-medium text-[#1677FF]">{countdown}秒后自动跳转...</p>
+              <p className="text-sm text-muted-foreground">即将打开支付宝支付页面</p>
+              <Button onClick={handlePay} variant="outline" size="sm" className="gap-2 mt-2">
+                <ExternalLink className="w-4 h-4" />
+                立即跳转
+              </Button>
+            </div>
+          )}
+
+          {/* 准备支付（备用，一般不会显示） */}
           {status === 'ready' && (
             <div className="space-y-4">
               <div className="text-center text-sm text-muted-foreground">
