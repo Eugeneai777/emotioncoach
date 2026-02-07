@@ -365,6 +365,33 @@ const PostDetailSheet = ({
       setNewComment("");
       toast.success("评论成功");
 
+      // 发送评论通知给帖子作者（跳过自评和匿名帖）
+      if (session.user.id !== post.user_id && !post.is_anonymous) {
+        try {
+          const { data: commenterProfile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", session.user.id)
+            .single();
+
+          const commenterName = commenterProfile?.display_name || "有人";
+
+          await supabase.from("smart_notifications").insert({
+            user_id: post.user_id,
+            notification_type: "community",
+            scenario: "new_comment",
+            title: `${commenterName}评论了你的帖子`,
+            message: newComment.trim().substring(0, 80),
+            icon: "message-circle",
+            action_type: "navigate",
+            action_data: { post_id: post.id },
+            priority: 3,
+          });
+        } catch (notifError) {
+          console.error("发送评论通知失败:", notifError);
+        }
+      }
+
       // 触发评论区刷新事件
       window.dispatchEvent(new CustomEvent('comment-added', { detail: { postId: post.id } }));
     } catch (error) {
