@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Tools99Grid } from "@/components/Tools99Grid";
 import { Button } from "@/components/ui/button";
 import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown, Loader2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -32,7 +33,7 @@ interface PackageInfo {
 }
 
 interface ProductComparisonTableProps {
-  category: 'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach';
+  category: 'youjin-member' | 'tools-99' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach';
   onPurchase?: (packageInfo: PackageInfo) => void;
 }
 
@@ -217,6 +218,11 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
         </Button>
       </div>
     );
+  }
+
+  // 9.9工具测评 - 独立组件
+  if (category === 'tools-99') {
+    return <Tools99Grid onPurchase={onPurchase} />;
   }
 
   // 有劲会员 - 尝鲜会员 + 365会员对比表
