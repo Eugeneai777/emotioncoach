@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Check, Users, Clock, ArrowLeft, ShoppingCart } from "lucide-react";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { toast } from "sonner";
 const CampTemplateDetail = () => {
   const {
@@ -343,7 +343,7 @@ const CampTemplateDetail = () => {
       navigate(`/camp-checkin/${campId}`);
     }} />
 
-      <WechatPayDialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog} packageInfo={camp ? {
+      <UnifiedPayDialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog} packageInfo={camp ? {
       key: `camp-${camp.camp_type}`,
       name: camp.camp_name,
       price: camp.price || 0

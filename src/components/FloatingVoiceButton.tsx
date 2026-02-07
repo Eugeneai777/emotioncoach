@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { CoachVoiceChat } from '@/components/coach/CoachVoiceChat';
-import { WechatPayDialog } from '@/components/WechatPayDialog';
+import { UnifiedPayDialog } from '@/components/UnifiedPayDialog';
 import { PurchaseOnboardingDialog } from '@/components/onboarding/PurchaseOnboardingDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { hasActiveSession, getActiveSession } from '@/hooks/useVoiceSessionLock';
@@ -293,7 +293,7 @@ const FloatingVoiceButton: React.FC = () => {
       )}
 
       {/* 额度不足时直接弹出365续费 */}
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageInfo={MEMBER_365_PACKAGE}

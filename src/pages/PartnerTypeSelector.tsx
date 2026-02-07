@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Users, Sparkles, ShoppingCart } from "lucide-react";
 import { productCategories } from "@/config/productCategories";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 export default function PartnerTypeSelector() {
@@ -172,7 +172,7 @@ export default function PartnerTypeSelector() {
         </Card>
       </div>
 
-      <WechatPayDialog open={payDialogOpen} onOpenChange={setPayDialogOpen} packageInfo={bloomPackage} onSuccess={handlePaymentSuccess} />
+      <UnifiedPayDialog open={payDialogOpen} onOpenChange={setPayDialogOpen} packageInfo={bloomPackage} onSuccess={handlePaymentSuccess} />
     </div>
   </>;
 }

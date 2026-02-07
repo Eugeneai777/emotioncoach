@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 
 export default function PayEntry() {
   const [searchParams] = useSearchParams();
@@ -348,7 +348,7 @@ export default function PayEntry() {
         </CardContent>
       </Card>
 
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageInfo={{

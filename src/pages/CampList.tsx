@@ -17,7 +17,7 @@ import { ArrowLeft, TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } fr
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -393,7 +393,7 @@ const CampList = () => {
       </footer>
 
       {/* WeChat Pay Dialog */}
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={payDialogOpen}
         onOpenChange={setPayDialogOpen}
         packageInfo={selectedCamp ? {

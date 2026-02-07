@@ -12,7 +12,7 @@ import { AlertTriangle, Loader2, Calendar, Clock, Users } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { TeamCoachingSession, useEnrollPaidSession } from "@/hooks/useTeamCoaching";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface TeamCoachingPayDialogProps {
@@ -147,7 +147,7 @@ export function TeamCoachingPayDialog({
       </Dialog>
 
       {/* 微信支付对话框 */}
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={showWechatPay}
         onOpenChange={(open) => {
           setShowWechatPay(open);

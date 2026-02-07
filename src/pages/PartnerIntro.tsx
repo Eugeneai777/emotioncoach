@@ -14,7 +14,7 @@ import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { toast } from "sonner";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 const PartnerIntro = () => {
   const navigate = useNavigate();
   const {
@@ -370,7 +370,7 @@ const PartnerIntro = () => {
       </main>
 
       {/* WeChat Pay Dialog */}
-      <WechatPayDialog open={payDialogOpen} onOpenChange={setPayDialogOpen} packageInfo={bloomPackage} onSuccess={handlePaymentSuccess} />
+      <UnifiedPayDialog open={payDialogOpen} onOpenChange={setPayDialogOpen} packageInfo={bloomPackage} onSuccess={handlePaymentSuccess} />
     </div>;
 };
 export default PartnerIntro;

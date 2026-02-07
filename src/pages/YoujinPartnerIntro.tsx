@@ -9,7 +9,7 @@ import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import { usePartner } from "@/hooks/usePartner";
@@ -394,7 +394,7 @@ export default function YoujinPartnerIntro() {
         </Card>
       </div>
 
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={payDialogOpen}
         onOpenChange={setPayDialogOpen}
         packageInfo={selectedPackage}
