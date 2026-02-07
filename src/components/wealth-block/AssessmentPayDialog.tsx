@@ -480,56 +480,56 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
         console.log("[Payment] WeChat browser with openId, using jsapi");
         selectedPayType = "jsapi";
-       } else if (isMobile && !isWechat) {
-         // 移动端非微信浏览器：使用支付宝
-         console.log("[Payment] Mobile non-WeChat browser, using alipay");
-         selectedPayType = "alipay";
+      } else if (isMobile && !isWechat) {
+        // 移动端非微信浏览器：使用支付宝
+        console.log("[Payment] Mobile non-WeChat browser, using alipay");
+        selectedPayType = "alipay";
       } else {
         selectedPayType = "native";
       }
-       setPayType(selectedPayType === "miniprogram" ? "jsapi" : (selectedPayType === "alipay" ? "h5" : selectedPayType));
+      setPayType(selectedPayType === "miniprogram" ? "jsapi" : (selectedPayType === "alipay" ? "alipay" : selectedPayType));
 
-       // 小程序支付和 JSAPI 支付都需要 openId
-       const needsOpenId = selectedPayType === "jsapi" || selectedPayType === "miniprogram";
+      // 小程序支付和 JSAPI 支付都需要 openId
+      const needsOpenId = selectedPayType === "jsapi" || selectedPayType === "miniprogram";
 
-       // 移动端支付宝：调用 create-alipay-order
-       if (selectedPayType === "alipay") {
-         console.log("[Payment] Creating Alipay order for assessment");
-         const { data: alipayData, error: alipayError } = await supabase.functions.invoke("create-alipay-order", {
-           body: {
-             packageKey: packageKey,
-             packageName: packageName,
-             amount: assessmentPrice,
-             userId: userId || "guest",
-             returnUrl: returnUrl || window.location.href,
-           },
-         });
+      // 移动端支付宝：调用 create-alipay-order
+      if (selectedPayType === "alipay") {
+        console.log("[Payment] Creating Alipay order for assessment");
+        const { data: alipayData, error: alipayError } = await supabase.functions.invoke("create-alipay-order", {
+          body: {
+            packageKey: packageKey,
+            packageName: packageName,
+            amount: assessmentPrice,
+            userId: userId || "guest",
+            returnUrl: returnUrl || window.location.href,
+          },
+        });
 
-         clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-         if (alipayError) throw alipayError;
-         if (!alipayData?.success) throw new Error(alipayData?.error || "创建支付宝订单失败");
+        if (alipayError) throw alipayError;
+        if (!alipayData?.success) throw new Error(alipayData?.error || "创建支付宝订单失败");
 
-         if (alipayData.alreadyPaid) {
-           toast.success('您已购买过测评，直接开始！');
-           if (userId && userId !== 'guest') {
-             onSuccess(userId);
-             onOpenChange(false);
-           }
-           return;
-         }
+        if (alipayData.alreadyPaid) {
+          toast.success('您已购买过测评，直接开始！');
+          if (userId && userId !== 'guest') {
+            onSuccess(userId);
+            onOpenChange(false);
+          }
+          return;
+        }
 
-         setOrderNo(alipayData.orderNo);
-         setPayUrl(alipayData.payUrl);
-         setStatus("pending");
-         toast.info("即将跳转支付宝，请稍候...");
-         
-         // 2秒后跳转
-         setTimeout(() => {
-           window.location.href = alipayData.payUrl;
-         }, 2000);
-         return;
-       }
+        setOrderNo(alipayData.orderNo);
+        setPayUrl(alipayData.payUrl);
+        setStatus("pending");
+        toast.info("即将跳转支付宝，请稍候...");
+        
+        // 2秒后跳转
+        setTimeout(() => {
+          window.location.href = alipayData.payUrl;
+        }, 2000);
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke("create-wechat-order", {
         body: {
