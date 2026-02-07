@@ -1875,6 +1875,49 @@ Deno.serve(async (req) => {
           }
           break;
 
+        // ✅ 重连续接触发器：前端在重连成功后发送，如果 AI 之前正在回复
+        // 这会让 AI 根据历史上下文继续之前未完成的回复
+        case 'continuation.trigger':
+          console.log('[DoubaoRelay] Received continuation.trigger, session state:', {
+            hasConn: !!doubaoConn,
+            isConnected,
+            sessionStarted,
+            hasSessionId: !!doubaoSessionId
+          });
+          
+          if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
+            try {
+              // 发送一个隐式的"继续"文本，让 AI 续接之前的回复
+              // 这个文本不会显示给用户，只是触发 AI 继续说话
+              const continuationText = message.hint || '请继续';
+              
+              console.log(`[DoubaoRelay] 🔄 Sending continuation trigger: "${continuationText}"`);
+
+              const currentSequence = audioSequence++;
+              const payloadBytes = new TextEncoder().encode(JSON.stringify({ content: continuationText }));
+
+              const packet = buildPacket({
+                messageType: MESSAGE_TYPE_FULL_CLIENT,
+                flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
+                sequence: currentSequence,
+                event: EVENT_CHAT_TEXT_QUERY,
+                sessionId: doubaoSessionId,
+                payload: payloadBytes,
+                serialization: SERIALIZATION_JSON,
+              });
+              
+              const frame = buildWebSocketFrame(packet);
+              await doubaoConn.write(frame);
+
+              console.log(`[DoubaoRelay] ✅ Continuation trigger sent, seq=${currentSequence}`);
+            } catch (err) {
+              console.error('[DoubaoRelay] Error sending continuation trigger:', err);
+            }
+          } else {
+            console.warn('[DoubaoRelay] Cannot send continuation: session not ready');
+          }
+          break;
+
         default:
           console.log(`[DoubaoRelay] Unknown message type: ${message.type}`);
       }
