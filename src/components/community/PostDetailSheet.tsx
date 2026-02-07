@@ -65,6 +65,7 @@ const PostDetailSheet = ({
     partner,
     isPartner
   } = usePartner();
+  const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -88,6 +89,11 @@ const PostDetailSheet = ({
   };
   
   const { isWeChat } = getShareEnvironment();
+
+  // Sync commentsCount when post prop changes
+  useEffect(() => {
+    setCommentsCount(post.comments_count || 0);
+  }, [post.comments_count]);
 
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(post.camp_type, post.camp_name, post.template_id);
@@ -344,10 +350,17 @@ const PostDetailSheet = ({
       });
       if (error) throw error;
 
-      // 更新评论数
+      // 查询实际评论数并更新
+      const { count: actualCount } = await supabase
+        .from("post_comments")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", post.id);
+
       await supabase.from("community_posts").update({
-        comments_count: (post.comments_count || 0) + 1
+        comments_count: actualCount || 0
       }).eq("id", post.id);
+
+      setCommentsCount(actualCount || 0);
 
       setNewComment("");
       toast.success("评论成功");
@@ -641,7 +654,7 @@ const PostDetailSheet = ({
               commentSection?.scrollIntoView({ behavior: 'smooth' });
             }}>
               <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
-              <span className="text-[10px] sm:text-xs text-muted-foreground">{post.comments_count || 0}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{commentsCount}</span>
             </button>
 
             {/* 分享 */}
