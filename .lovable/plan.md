@@ -1,70 +1,88 @@
 
 
-## 体验包管理页面
+## AI 自动配置体验包
 
-在管理后台新增"体验包管理"页面，支持对 `partner_experience_items` 表进行增删改查操作，无需通过 Cloud 数据库视图手动操作。
+选择产品后，系统自动调用 AI 生成图标、描述、功能特性、颜色主题等字段，管理员只需确认或微调即可保存。
 
 ---
 
-### 功能概览
+### 交互流程
 
-- 以表格形式展示所有体验包项目（名称、图标、关联套餐、颜色主题、排序、启用状态等）
-- 支持新增、编辑、删除体验包项目
-- 支持切换启用/禁用状态
-- 支持调整显示排序
-- 实时预览图标和颜色主题效果
+1. 管理员在下拉菜单中选择一个产品
+2. 界面显示"AI 配置中..."加载状态
+3. 后端函数调用 AI，根据产品名称和描述自动生成：
+   - icon（合适的 emoji）
+   - value（如"1次"、"50点"等）
+   - description（一句话描述，约30-50字）
+   - features（4条功能亮点）
+   - color_theme（blue/green/amber/purple 之一）
+4. 自动填充所有字段，管理员可修改后保存
 
 ---
 
 ### 实现步骤
 
-#### 1. 新建管理组件
+#### 1. 新建后端函数
+
+**文件：** `supabase/functions/generate-experience-config/index.ts`
+
+- 接收 `package_name`、`description`、`price` 参数
+- 使用 Lovable AI（`google/gemini-2.5-flash`）生成配置
+- Prompt 要求 AI 返回 JSON 格式：`{ icon, value, description, features, color_theme }`
+- 参考现有体验包数据风格（如已有的尝鲜会员、情绪健康测评等）作为 few-shot 示例
+- 需要管理员权限验证（检查 `user_roles` 表中的 admin 角色）
+
+#### 2. 修改前端组件
 
 **文件：** `src/components/admin/ExperiencePackageManagement.tsx`
 
-参照 `EnergyStudioToolsManagement.tsx` 的结构模式：
-- 使用 React Query 查询 `partner_experience_items` 表全部记录
-- 表格列：图标、名称、关联套餐(package_key)、价值(value)、颜色主题、排序、启用状态、操作
-- 新增/编辑弹窗：包含所有可编辑字段（item_key、package_key、name、value、icon、description、features、color_theme、display_order、is_active）
-- features 字段支持动态添加/删除多行输入
-- color_theme 使用下拉选择（blue/green/amber/purple）
-- 删除操作使用确认弹窗
+修改 `handlePackageSelect` 函数：
 
-#### 2. 注册路由
-
-**文件：** `src/components/admin/AdminLayout.tsx`
-
-- 导入 `ExperiencePackageManagement` 组件
-- 添加路由：`<Route path="experience-items" element={<ExperiencePackageManagement />} />`
-
-#### 3. 添加侧边栏入口
-
-**文件：** `src/components/admin/AdminSidebar.tsx`
-
-- 在"系统配置"分组中添加菜单项：
-  - key: `experience-items`
-  - label: `体验包管理`
-  - path: `/admin/experience-items`
-  - icon: `Gift`（从 lucide-react 导入）
+- 选择产品后，立即调用 `generate-experience-config` 函数
+- 显示加载状态（按钮/输入框显示 skeleton 或 spinner）
+- AI 返回结果后，自动填充所有表单字段（name、value、icon、description、features、color_theme）
+- 如果 AI 调用失败，回退到当前逻辑（仅填充 name 和 value）
+- 添加"重新生成"按钮，允许管理员对 AI 结果不满意时重新请求
 
 ---
 
 ### 技术细节
 
-| 项目 | 说明 |
-|------|------|
-| 数据查询 | `supabase.from('partner_experience_items').select('*').order('display_order')` |
-| 新增 | `supabase.from('partner_experience_items').insert(...)` |
-| 编辑 | `supabase.from('partner_experience_items').update(...).eq('id', id)` |
-| 删除 | `supabase.from('partner_experience_items').delete().eq('id', id)` |
-| 缓存刷新 | 操作成功后 invalidate `experience-package-items` 和 `admin-experience-items` 两个 query key |
-| 类型安全 | 使用 `Database["public"]["Tables"]["partner_experience_items"]` 类型 |
+**AI Prompt 设计：**
+
+```text
+你是一个体验包配置助手。根据以下产品信息，生成体验包的展示配置。
+
+产品名称：{package_name}
+产品描述：{description}
+产品价格：¥{price}
+
+请参考以下已有配置风格：
+- 尝鲜会员：icon=🎫, value=50点, description=体验有劲AI教练的入门权益...
+- 情绪健康测评：icon=💚, value=1次, description=56道专业题目评估...
+
+返回 JSON 格式（不要包含其他文字）：
+{
+  "icon": "一个最贴切的emoji",
+  "value": "如1次、50点等",
+  "description": "30-50字的一句话描述",
+  "features": ["亮点1", "亮点2", "亮点3", "亮点4"],
+  "color_theme": "blue或green或amber或purple"
+}
+```
+
+**调用方式：**
+
+```typescript
+const response = await supabase.functions.invoke('generate-experience-config', {
+  body: { package_name, description, price }
+});
+```
 
 ### 文件变更总表
 
 | 文件 | 操作 |
 |------|------|
-| `src/components/admin/ExperiencePackageManagement.tsx` | 新建 |
-| `src/components/admin/AdminLayout.tsx` | 修改 - 添加路由 |
-| `src/components/admin/AdminSidebar.tsx` | 修改 - 添加侧边栏入口 |
+| `supabase/functions/generate-experience-config/index.ts` | 新建 |
+| `src/components/admin/ExperiencePackageManagement.tsx` | 修改 - 添加 AI 自动配置逻辑 |
 
