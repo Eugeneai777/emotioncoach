@@ -1,134 +1,115 @@
 
 
-## 有劲合伙人年费续费制
+## 体验包动态化：从数据库读取，自动同步更新
 
-### 概述
+### 问题
 
-为有劲合伙人增加年费机制：购买后有效期 1 年，到期需续费；续费时可自由选择任意等级；过期后冻结佣金权益（不产生新佣金），但保留推荐关系和已有余额；到期前自动提醒。
+当前体验包内容在 4 个前端文件 + 2 个后端函数中硬编码，每次新增体验包项目都需要手动同步修改多处代码，容易遗漏。
+
+### 方案
+
+创建 `partner_experience_items` 数据库表存储体验包配置，前端通过 hook 动态读取，后端函数从数据库查询，实现"加一条记录 = 全站自动更新"。
 
 ---
 
 ### 1. 数据库变更
 
-**新增字段：** `partners` 表添加 `partner_expires_at` 列
+**新建表：** `partner_experience_items`
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| partner_expires_at | TIMESTAMPTZ | 合伙人资格到期时间，null 表示永久（绽放合伙人） |
+| id | UUID | 主键 |
+| item_key | TEXT | 唯一标识，如 `ai_points`、`emotion_health` |
+| package_key | TEXT | 对应 packages 表的 package_key（后端兑换用），如 `basic`、`emotion_health_assessment` |
+| name | TEXT | 显示名称，如"尝鲜会员" |
+| value | TEXT | 数量描述，如"50点"、"1次" |
+| icon | TEXT | Emoji 图标 |
+| description | TEXT | 详细描述 |
+| features | TEXT[] | 特色功能列表 |
+| color_theme | TEXT | 颜色主题标识（`blue`/`green`/`amber`/`purple`），UI 渲染用 |
+| display_order | INTEGER | 排序 |
+| is_active | BOOLEAN | 是否启用，默认 true |
+| created_at | TIMESTAMPTZ | 创建时间 |
 
-**数据迁移：** 将现有有劲合伙人的 `prepurchase_expires_at` 值复制到 `partner_expires_at`，确保已有数据平滑过渡。
+**数据初始化：** 插入当前 4 项体验包数据。
 
-> 注：`prepurchase_expires_at` 保留，专门用于体验包名额的有效期；`partner_expires_at` 用于合伙人资格（佣金权益）的有效期。两者分开管理。
-
----
-
-### 2. 后端逻辑变更
-
-#### 2.1 `wechat-pay-callback`（支付回调）
-
-- **新建合伙人：** 设置 `partner_expires_at` 为当前时间 + 1 年
-- **续费/升级：** 
-  - 如果当前未过期：`partner_expires_at = MAX(当前到期时间, 当前时间) + 1 年`（叠加剩余天数）
-  - 如果已过期：`partner_expires_at = 当前时间 + 1 年`
-  - 更新 `partner_level`、`commission_rate_l1/l2`、`prepurchase_count` 为新等级对应值
-  - 将 `status` 恢复为 `active`（如果之前是 expired）
-- **允许降级续费：** 移除现有的升级限制逻辑，续费时可选任意等级
-
-#### 2.2 `calculate-commission`（佣金计算）
-
-- 在计算 L1/L2 佣金前，检查合伙人的 `partner_expires_at`
-- 如果 `partner_expires_at` 不为 null 且已过期，跳过佣金计算，记录日志
-- 已过期的合伙人不再产生新佣金，但已有的 pending/available 余额不受影响
-
-#### 2.3 `create-wechat-order`（创建订单）
-
-- 续费时传入的 `package_key` 仍为 `youjin_partner_l1/l2/l3`
-- 移除"禁止降级购买"的校验，允许续费时选择任何等级
+**RLS 策略：** 所有人可读（公开展示数据），仅管理员可写。
 
 ---
 
-### 3. 前端变更
+### 2. 前端变更
 
-#### 3.1 `PartnerOverviewCard`（概览卡片）
+#### 2.1 新建 Hook：`src/hooks/useExperiencePackageItems.ts`
 
-- 将现有的底部小字有效期提示升级为醒目的倒计时显示
-- 根据剩余天数显示不同状态：
-  - 大于 30 天：正常显示到期日期（绿色）
-  - 30 天内：黄色警告 "还有 X 天到期"
-  - 7 天内：红色紧急 "即将到期，请尽快续费"
-  - 已过期：红色 "已过期" + 续费按钮
+- 从 `partner_experience_items` 表读取 `is_active = true` 的记录，按 `display_order` 排序
+- 5 分钟缓存（staleTime）
+- 导出数据和 loading 状态
+- 同时保留静态 fallback（网络异常时使用当前硬编码数据）
 
-#### 3.2 `YoujinPartnerDashboard`（合伙人面板）
+#### 2.2 更新 `src/config/youjinPartnerProducts.ts`
 
-- 过期状态下：顶部显示醒目的续费横幅，说明"佣金权益已冻结，续费后恢复"
-- 临近过期（30天内）：显示续费提醒卡片
-- 过期后仍可查看学员列表、佣金明细、提现余额，但推广功能提示"续费后可用"
+- `experiencePackageItems` 保留为 fallback 默认值
+- 新增 `ExperiencePackageItem` 接口补充 `color_theme` 字段
 
-#### 3.3 `YoujinPartnerIntro`（购买/续费页面）
+#### 2.3 更新消费组件（4 处）
 
-- 已过期的合伙人：所有等级按钮显示"续费"而非"升级"
-- 未过期的合伙人：允许选择任意等级（含降级），按钮显示"续费并切换等级"或"续费"
-- 新增续费说明文案：说明续费后有效期延长 1 年，佣金比例按新等级生效
-
-#### 3.4 `PartnerUpgradeCard`（升级提示卡片）
-
-- 改为"续费/升级"卡片，临近到期时优先提示续费
-- 已过期时直接显示续费引导
-
-#### 3.5 `usePartner` Hook
-
-- 新增 `isExpired` 计算属性：基于 `partner_expires_at` 判断是否过期
-- 新增 `daysUntilExpiry` 计算属性：剩余天数
-- 新增 `needsRenewalReminder`：30 天内到期返回 true
+| 文件 | 改动 |
+|------|------|
+| `src/pages/YoujinPartnerIntro.tsx` | 用 hook 替换静态导入，动态渲染体验包列表，标题中的"共X种"自动计算 |
+| `src/components/ProductComparisonTable.tsx` | 用 hook 替换静态导入，颜色映射改为按 `color_theme` 字段动态匹配 |
+| `src/components/partner/PartnerSelfRedeemCard.tsx` | 用 hook 替换静态导入，兑换状态检查基于 `package_key` 字段 |
+| `src/components/partner/EntryTypeSelector.tsx` | 用 hook 替换硬编码的 `EXPERIENCE_PACKAGES` 常量，`DEFAULT_PACKAGES` 改为动态生成 |
 
 ---
 
-### 4. 文件变更总表
+### 3. 后端变更
+
+#### 3.1 `supabase/functions/partner-self-redeem/index.ts`
+
+- 从 `partner_experience_items` 表查询活跃体验包列表
+- 用查询结果替代硬编码的 `assessmentKeys` 和 `assessmentPackages`
+- 自动适应新增的体验包项目
+
+#### 3.2 `supabase/functions/claim-partner-entry/index.ts`
+
+- 从 `partner_experience_items` 表查询作为默认包列表
+- `selectedPackages` 的 fallback 值改为从数据库读取
+- 兑换逻辑循环基于查询结果
+
+---
+
+### 4. 数据流
+
+```text
+管理员在数据库新增一条体验包记录
+            |
+            v
+  partner_experience_items 表更新
+       /            \
+      v              v
+  前端 Hook          后端函数
+  自动刷新           下次调用时
+  UI 更新            读取最新列表
+      |                  |
+      v                  v
+  介绍页/面板/        兑换/分发
+  比较表自动          自动包含
+  显示新项目          新产品
+```
+
+---
+
+### 5. 文件变更总表
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| 数据库迁移 | 新增 | 添加 `partner_expires_at` 列 + 数据迁移 |
-| `src/hooks/usePartner.ts` | 修改 | 新增 isExpired、daysUntilExpiry 等计算属性 |
-| `src/components/partner/PartnerOverviewCard.tsx` | 修改 | 到期倒计时 + 状态颜色 + 续费按钮 |
-| `src/components/partner/YoujinPartnerDashboard.tsx` | 修改 | 过期横幅 + 续费提醒 + 功能限制提示 |
-| `src/components/partner/PartnerUpgradeCard.tsx` | 修改 | 改为续费/升级双功能卡片 |
-| `src/pages/YoujinPartnerIntro.tsx` | 修改 | 支持续费流程 + 允许降级选择 + 续费文案 |
-| `supabase/functions/wechat-pay-callback/index.ts` | 修改 | 续费逻辑：延长有效期 + 更新等级 + 恢复状态 |
-| `supabase/functions/calculate-commission/index.ts` | 修改 | 佣金计算前检查合伙人是否过期 |
-| `supabase/functions/create-wechat-order/index.ts` | 修改 | 移除降级购买限制 |
-| `src/config/partnerLevels.ts` | 修改 | 可选：添加续费相关配置 |
-| `src/pages/YoujinPartnerTerms.tsx` | 修改 | 更新条款：说明年费制和续费规则 |
-
----
-
-### 5. 业务流程
-
-```text
-用户购买合伙人套餐
-       |
-       v
-  设置 partner_expires_at = now() + 1年
-  设置等级、佣金比例、预购额度
-       |
-       v
-  正常使用合伙人功能（推广、分发、赚佣金）
-       |
-       v
-  到期前30天 --> 面板显示续费提醒
-  到期前7天  --> 红色紧急提醒
-       |
-       v
-  [到期日]
-       |
-  +----+----+
-  |         |
-  续费      不续费
-  |         |
-  v         v
-选择等级   佣金冻结
-延长1年    推荐关系保留
-更新佣金   余额可提现
-恢复active  status不变(仍active)
-            但佣金不再产生
-```
+| 数据库迁移 | 新建 | 创建 `partner_experience_items` 表 + 初始数据 |
+| `src/hooks/useExperiencePackageItems.ts` | 新建 | 动态读取体验包配置的 Hook |
+| `src/config/youjinPartnerProducts.ts` | 修改 | 保留为 fallback，补充 color_theme |
+| `src/pages/YoujinPartnerIntro.tsx` | 修改 | 使用 hook 动态渲染 |
+| `src/components/ProductComparisonTable.tsx` | 修改 | 使用 hook 动态渲染 |
+| `src/components/partner/PartnerSelfRedeemCard.tsx` | 修改 | 使用 hook 动态渲染 |
+| `src/components/partner/EntryTypeSelector.tsx` | 修改 | 使用 hook 动态渲染 |
+| `supabase/functions/partner-self-redeem/index.ts` | 修改 | 从数据库读取体验包列表 |
+| `supabase/functions/claim-partner-entry/index.ts` | 修改 | 从数据库读取体验包列表 |
 
