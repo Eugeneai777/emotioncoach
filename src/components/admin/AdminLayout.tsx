@@ -28,6 +28,7 @@ import OGPreviewManagement from "./OGPreviewManagement";
 import ShareCardsAdmin from "@/pages/admin/ShareCardsAdmin";
 import { BloomPartnerInvitations } from "./BloomPartnerInvitations";
 import { ActivationCodeManagement } from "./ActivationCodeManagement";
+import { ExperiencePackageManagement } from "./ExperiencePackageManagement";
 
 export function AdminLayout() {
   return (
@@ -70,6 +71,7 @@ export function AdminLayout() {
               <Route path="service" element={<CustomerServiceManagement />} />
               <Route path="og-preview" element={<OGPreviewManagement />} />
               <Route path="share-cards" element={<ShareCardsAdmin />} />
+              <Route path="experience-items" element={<ExperiencePackageManagement />} />
             </Routes>
           </main>
         </SidebarInset>
