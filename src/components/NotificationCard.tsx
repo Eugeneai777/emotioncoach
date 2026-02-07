@@ -147,9 +147,10 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
 
   return (
     <Card 
-      className={`relative p-3 transition-all hover:shadow-md ${style.bg} ${style.border} ${
+      className={`relative p-3 transition-all hover:shadow-md cursor-pointer ${style.bg} ${style.border} ${
         !notification.is_read ? 'border-2' : 'border'
       } ${isHighPriority ? 'ring-2 ring-amber-400/50' : ''}`}
+      onClick={handleMarkAsRead}
     >
       {/* 高优先级标识 */}
       {isHighPriority && (
