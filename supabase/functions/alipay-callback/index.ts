@@ -130,7 +130,7 @@ serve(async (req) => {
         .from('orders')
         .update({
           status: 'paid',
-          transaction_id: tradeNo,
+          trade_no: tradeNo,
           paid_at: new Date().toISOString(),
         })
         .eq('order_no', orderNo);
