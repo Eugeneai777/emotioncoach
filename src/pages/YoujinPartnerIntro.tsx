@@ -14,10 +14,10 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import { usePartner } from "@/hooks/usePartner";
 import { 
-  experiencePackageItems, 
   commissionableProducts, 
   totalCommissionableCount 
 } from "@/config/youjinPartnerProducts";
+import { useExperiencePackageItems } from "@/hooks/useExperiencePackageItems";
 
 // 等级顺序映射
 const levelOrder: Record<string, number> = { 'L1': 1, 'L2': 2, 'L3': 3 };
@@ -25,6 +25,7 @@ const levelOrder: Record<string, number> = { 'L1': 1, 'L2': 2, 'L3': 3 };
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
   const { partner, isExpired, daysUntilExpiry } = usePartner();
+  const { items: experiencePackageItems } = useExperiencePackageItems();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<{
     key: string;
@@ -192,7 +193,7 @@ export default function YoujinPartnerIntro() {
           <CardHeader>
             <CardTitle className="text-xl flex items-center gap-2">
               <Gift className="w-5 h-5 text-teal-500" />
-              可分发的体验包（共4种）
+              可分发的体验包（共{experiencePackageItems.length}种）
             </CardTitle>
             <CardDescription>合伙人可使用以下体验包转化用户，每次扫码兑换1种</CardDescription>
           </CardHeader>

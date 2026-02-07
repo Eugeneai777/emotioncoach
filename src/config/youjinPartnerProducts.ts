@@ -8,6 +8,7 @@ export interface ExperiencePackageItem {
   icon: string;
   description: string;
   features: string[];
+  color_theme?: string;
 }
 
 export const experiencePackageItems: ExperiencePackageItem[] = [
