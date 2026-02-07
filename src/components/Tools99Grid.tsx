@@ -117,7 +117,6 @@ export function Tools99Grid({ onPurchase }: Tools99GridProps) {
       <MobileCard className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20">
         <div className="text-center">
           <h2 className="text-lg font-bold">🧰 有劲小工具</h2>
-          <p className="text-sm text-muted-foreground mt-1">每项仅 <span className="text-primary font-bold">¥9.9</span></p>
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             {['专业工具', '即买即用'].map((tag) => (
               <span
