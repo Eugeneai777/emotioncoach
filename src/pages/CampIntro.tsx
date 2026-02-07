@@ -28,7 +28,7 @@ import {
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CampDualTrackSection } from "@/components/camp/CampDualTrackSection";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { toast } from "sonner";
 
@@ -352,7 +352,7 @@ const CampIntro = () => {
       />
 
       {/* 付费弹窗 */}
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageInfo={{

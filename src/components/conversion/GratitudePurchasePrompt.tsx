@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Crown, Cloud, BarChart3, Sparkles, Users } from "lucide-react";
 import { useState, useEffect } from "react";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 
 interface GratitudePurchasePromptProps {
   open: boolean;
@@ -144,7 +144,7 @@ export const GratitudePurchasePrompt = ({
       </Dialog>
 
       {showPayDialog && (
-        <WechatPayDialog
+        <UnifiedPayDialog
           open={showPayDialog}
           onOpenChange={(open) => {
             if (!open) {

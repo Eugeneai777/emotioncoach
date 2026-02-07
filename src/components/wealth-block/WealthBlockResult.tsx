@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
@@ -704,7 +704,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </Button>
         
         {/* 微信支付对话框 */}
-        <WechatPayDialog
+        <UnifiedPayDialog
           open={showPayDialog}
           onOpenChange={(open) => {
             setShowPayDialog(open);

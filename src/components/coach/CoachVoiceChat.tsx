@@ -9,7 +9,7 @@ import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { WechatPayDialog } from '@/components/WechatPayDialog';
+import { UnifiedPayDialog } from '@/components/UnifiedPayDialog';
 import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type NetworkQuality } from './ConnectionProgress';
 import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
@@ -1990,7 +1990,7 @@ export const CoachVoiceChat = ({
           <p className="text-white/60 text-sm">至少需要 {POINTS_PER_MINUTE} 点才能开始语音对话</p>
         </div>
         
-        <WechatPayDialog
+        <UnifiedPayDialog
           open={true}
           onOpenChange={(open) => {
             if (!open) {
@@ -2053,7 +2053,7 @@ export const CoachVoiceChat = ({
         </div>
         
         <div className="w-full max-w-sm space-y-3">
-          <WechatPayDialog
+          <UnifiedPayDialog
             open={true}
             onOpenChange={(open) => {
               if (!open) {

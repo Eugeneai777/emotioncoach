@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Heart, Sparkles, Users, Shield, Clock } from "lucide-react";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmotionButtonPurchaseDialogProps {
@@ -163,7 +163,7 @@ const EmotionButtonPurchaseDialog: React.FC<EmotionButtonPurchaseDialogProps> = 
         </DialogContent>
       </Dialog>
 
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageInfo={{

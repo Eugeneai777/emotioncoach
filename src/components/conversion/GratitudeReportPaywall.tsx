@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Crown, BarChart3, Brain, Target, TrendingUp, Lock, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface GratitudeReportPaywallProps {
@@ -160,7 +160,7 @@ export const GratitudeReportPaywall = ({
       </Dialog>
 
       {showPayDialog && packageInfo && (
-        <WechatPayDialog
+        <UnifiedPayDialog
           open={showPayDialog}
           onOpenChange={(open) => {
             if (!open) {

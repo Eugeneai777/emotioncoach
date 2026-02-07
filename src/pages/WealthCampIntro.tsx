@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { AssessmentFocusCard } from "@/components/wealth-camp/AssessmentFocusCard";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { toast } from "sonner";
 import { AIThreeLocksCardLight } from "@/components/wealth-block/AIThreeLocksCardLight";
@@ -516,7 +516,7 @@ const WealthCampIntro = () => {
       </div>
 
       {/* WeChat Pay Dialog */}
-      <WechatPayDialog
+      <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={(open) => {
           setShowPayDialog(open);
