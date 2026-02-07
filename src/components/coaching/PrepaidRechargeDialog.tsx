@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, CheckCircle, XCircle, AlertCircle, Gift } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle, Gift, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoachingPrepaid, PrepaidPackage } from "@/hooks/useCoachingPrepaid";
 import { toast } from "sonner";
@@ -32,7 +32,18 @@ interface PrepaidRechargeDialogProps {
   onSuccess?: () => void;
 }
 
-type PaymentStatus = 'selecting' | 'loading' | 'pending' | 'success' | 'failed' | 'expired';
+type PaymentStatus = 'selecting' | 'loading' | 'pending' | 'redirecting' | 'polling' | 'success' | 'failed' | 'expired';
+
+/**
+ * 判断是否应该使用支付宝支付
+ * 条件：移动端 + 非微信浏览器 + 非小程序
+ */
+function shouldUseAlipay(): boolean {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  const isMiniProgram = isWeChatMiniProgram();
+  return isMobile && !isWechat && !isMiniProgram;
+}
 
 export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: PrepaidRechargeDialogProps) {
   const { user } = useAuth();
@@ -42,13 +53,17 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [payUrl, setPayUrl] = useState<string>('');
+  const [countdown, setCountdown] = useState<number>(2);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const expiryRef = useRef<NodeJS.Timeout | null>(null);
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const isWechat = isWeChatBrowser();
   const isMiniProgram = isWeChatMiniProgram();
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const useAlipay = shouldUseAlipay();
 
   const clearTimers = () => {
     if (pollingRef.current) {
@@ -59,6 +74,14 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
       clearTimeout(expiryRef.current);
       expiryRef.current = null;
     }
+    if (redirectTimerRef.current) {
+      clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
   };
 
   const resetState = () => {
@@ -68,6 +91,8 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
     setQrCodeDataUrl('');
     setOrderNo('');
     setErrorMessage('');
+    setPayUrl('');
+    setCountdown(2);
   };
 
   useEffect(() => {
@@ -81,13 +106,99 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
     setSelectedPackage(pkg);
   };
 
-  const handleConfirmRecharge = async () => {
+  const startPolling = (orderNumber: string) => {
+    pollingRef.current = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-order-status', {
+          body: { orderNo: orderNumber },
+        });
+
+        if (error) throw error;
+
+        if (data.status === 'paid') {
+          clearTimers();
+          setStatus('success');
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          await refreshBalance();
+          toast.success('充值成功！');
+          setTimeout(() => {
+            onSuccess?.();
+            onOpenChange(false);
+          }, 1500);
+        }
+      } catch (error) {
+        console.error('Error checking order status:', error);
+      }
+    }, 3000);
+  };
+
+  // 支付宝 H5 充值流程
+  const handleAlipayRecharge = async () => {
     if (!selectedPackage || !user) return;
 
     setStatus('loading');
 
     try {
-      // 确定支付类型
+      const returnUrl = window.location.origin + window.location.pathname + '?payment_success=1';
+      
+      const { data, error } = await supabase.functions.invoke('create-prepaid-alipay-order', {
+        body: { 
+          packageKey: selectedPackage.package_key,
+          returnUrl,
+        },
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+
+      setOrderNo(data.orderNo);
+      setPayUrl(data.payUrl);
+      setStatus('redirecting');
+      startPolling(data.orderNo);
+
+      // 开始倒计时
+      setCountdown(2);
+      countdownRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            if (countdownRef.current) {
+              clearInterval(countdownRef.current);
+              countdownRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // 2秒后自动跳转
+      redirectTimerRef.current = setTimeout(() => {
+        setStatus('polling');
+        if (data.payUrl) {
+          window.location.href = data.payUrl;
+        }
+      }, 2000);
+
+      // 15 分钟过期
+      expiryRef.current = setTimeout(() => {
+        setStatus('expired');
+        clearTimers();
+      }, 15 * 60 * 1000);
+
+    } catch (error: any) {
+      console.error('Error creating Alipay recharge order:', error);
+      setErrorMessage(error.message || '创建订单失败');
+      setStatus('failed');
+    }
+  };
+
+  // 微信支付充值流程
+  const handleWechatRecharge = async () => {
+    if (!selectedPackage || !user) return;
+
+    setStatus('loading');
+
+    try {
       let payType: 'native' | 'h5' | 'jsapi' | 'miniprogram' = 'native';
       let openIdForPayment: string | undefined;
 
@@ -101,8 +212,9 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
         }
         openIdForPayment = mpOpenId;
         payType = 'miniprogram';
-      } else if (isMobile && !isWechat) {
-        payType = 'h5';
+      } else if (isWechat) {
+        // 微信浏览器使用 JSAPI
+        payType = 'jsapi';
       }
 
       const result = await createRechargeOrder(
@@ -162,30 +274,18 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
     mp.navigateTo({ url: payPageUrl } as any);
   };
 
-  const startPolling = (orderNumber: string) => {
-    pollingRef.current = setInterval(async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('check-order-status', {
-          body: { orderNo: orderNumber },
-        });
+  const handleConfirmRecharge = async () => {
+    if (useAlipay) {
+      await handleAlipayRecharge();
+    } else {
+      await handleWechatRecharge();
+    }
+  };
 
-        if (error) throw error;
-
-        if (data.status === 'paid') {
-          clearTimers();
-          setStatus('success');
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          await refreshBalance();
-          toast.success('充值成功！');
-          setTimeout(() => {
-            onSuccess?.();
-            onOpenChange(false);
-          }, 1500);
-        }
-      } catch (error) {
-        console.error('Error checking order status:', error);
-      }
-    }, 3000);
+  const handlePayNow = () => {
+    if (payUrl) {
+      window.location.href = payUrl;
+    }
   };
 
   const handleRetry = () => {
@@ -255,6 +355,32 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
             </div>
           )}
 
+          {/* 支付宝跳转倒计时 */}
+          {status === 'redirecting' && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-[#1677FF]" />
+              <p className="text-lg font-medium text-[#1677FF]">{countdown}秒后自动跳转...</p>
+              <p className="text-sm text-muted-foreground">即将打开支付宝支付页面</p>
+              <Button onClick={handlePayNow} variant="outline" size="sm" className="gap-2 mt-2">
+                <ExternalLink className="w-4 h-4" />
+                立即跳转
+              </Button>
+            </div>
+          )}
+
+          {/* 支付宝等待支付确认 */}
+          {status === 'polling' && useAlipay && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">等待支付确认...</p>
+              <Button onClick={handlePayNow} variant="outline" size="sm" className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                重新打开支付页面
+              </Button>
+            </div>
+          )}
+
+          {/* 微信二维码支付 */}
           {status === 'pending' && qrCodeDataUrl && (
             <div className="flex flex-col items-center py-4">
               <img src={qrCodeDataUrl} alt="Payment QR" className="w-48 h-48 mb-4" />
@@ -265,7 +391,8 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
             </div>
           )}
 
-          {status === 'pending' && !qrCodeDataUrl && (
+          {/* 微信等待支付确认（无二维码，如小程序） */}
+          {status === 'pending' && !qrCodeDataUrl && !useAlipay && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">等待支付确认...</p>
@@ -293,7 +420,7 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
           {status === 'expired' && (
             <div className="flex flex-col items-center py-8">
               <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
-              <p className="font-medium text-amber-600">二维码已过期</p>
+              <p className="font-medium text-amber-600">订单已过期</p>
               <Button onClick={handleRetry} variant="outline" className="mt-4">
                 重新生成
               </Button>
