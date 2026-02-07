@@ -24,7 +24,7 @@ const levelOrder: Record<string, number> = { 'L1': 1, 'L2': 2, 'L3': 3 };
 
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
-  const { partner } = usePartner();
+  const { partner, isExpired, daysUntilExpiry } = usePartner();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<{
     key: string;
@@ -33,14 +33,15 @@ export default function YoujinPartnerIntro() {
   } | null>(null);
 
   // 判断是否已是有劲合伙人
-  const isYoujinPartner = partner?.partner_type === 'youjin' && partner?.status === 'active';
+  const isYoujinPartner = partner?.partner_type === 'youjin' && (partner?.status === 'active' || isExpired);
   const currentLevel = isYoujinPartner ? partner.partner_level : null;
 
   // 处理小程序支付成功回调
   const { isPaymentCallback } = usePaymentCallback({
     onSuccess: () => {
       console.log('[YoujinPartnerIntro] Payment callback success');
-      toast.success(isYoujinPartner ? '升级成功！' : '恭喜您成为有劲合伙人！');
+      const msg = isExpired ? '续费成功！佣金权益已恢复' : isYoujinPartner ? '续费成功！' : '恭喜您成为有劲合伙人！';
+      toast.success(msg);
       setPayDialogOpen(false);
       navigate('/partner');
     },
@@ -56,24 +57,21 @@ export default function YoujinPartnerIntro() {
     }
   }, [isPaymentCallback]);
 
-  // 判断按钮状态
+  // 判断按钮状态 - 续费时允许选择任意等级
   const getButtonState = (levelId: string) => {
     if (!currentLevel) return 'purchase'; // 未购买
+    
+    // 已过期或需要续费时，所有等级都可选
+    if (isExpired) return levelId === currentLevel ? 'renew' : 'renew_switch';
     
     const currentOrder = levelOrder[currentLevel] || 0;
     const targetOrder = levelOrder[levelId] || 0;
     
-    if (targetOrder === currentOrder) return 'current';
-    if (targetOrder < currentOrder) return 'downgrade';
-    return 'upgrade';
+    if (targetOrder === currentOrder) return 'renew'; // 同等级续费
+    return 'renew_switch'; // 切换等级续费（不再区分升降级）
   };
 
   const handlePurchase = (levelId: string) => {
-    const buttonState = getButtonState(levelId);
-    if (buttonState === 'current' || buttonState === 'downgrade') {
-      return; // 不可操作
-    }
-
     const level = youjinPartnerLevels.find(l => l.level === levelId);
     if (!level) return;
 
@@ -86,8 +84,23 @@ export default function YoujinPartnerIntro() {
   };
 
   const handlePaymentSuccess = () => {
-    toast.success(isYoujinPartner ? '升级成功！' : '恭喜您成为有劲合伙人！');
+    const msg = isExpired ? '续费成功！佣金权益已恢复' : isYoujinPartner ? '续费成功！' : '恭喜您成为有劲合伙人！';
+    toast.success(msg);
     navigate('/partner');
+  };
+
+  // 获取按钮文案
+  const getButtonLabel = (levelId: string) => {
+    const state = getButtonState(levelId);
+    const level = youjinPartnerLevels.find(l => l.level === levelId);
+    if (!level) return '';
+    
+    switch (state) {
+      case 'purchase': return `立即购买 ${level.name}`;
+      case 'renew': return `续费 ${level.name} ¥${level.price}`;
+      case 'renew_switch': return `续费并切换到 ${level.name} ¥${level.price}`;
+      default: return `立即购买 ${level.name}`;
+    }
   };
 
   return (
@@ -225,15 +238,21 @@ export default function YoujinPartnerIntro() {
         </Card>
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold">选择您的合伙人等级</h2>
+            <h2 className="text-2xl font-bold">
+              {isYoujinPartner ? '续费 / 选择等级' : '选择您的合伙人等级'}
+            </h2>
             <p className="text-muted-foreground">
-              {isYoujinPartner ? '升级到更高等级，享受更高佣金' : '点击任意等级直接购买'}
+              {isExpired 
+                ? '续费后有效期延长1年，佣金比例按所选等级生效'
+                : isYoujinPartner 
+                  ? '续费后有效期延长1年，可自由选择任意等级'
+                  : '购买后有效期1年，到期可续费'}
             </p>
           </div>
 
           {/* 已是合伙人提示 */}
           {isYoujinPartner && (
-            <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+            <Card className={`border-amber-200 bg-gradient-to-r ${isExpired ? 'from-red-50 to-orange-50' : 'from-amber-50 to-orange-50'}`}>
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -241,12 +260,15 @@ export default function YoujinPartnerIntro() {
                     <div>
                       <p className="font-medium text-amber-800">
                         您当前是 <strong>{currentLevel}</strong> 合伙人
+                        {isExpired && <span className="text-red-600 ml-2">（已过期）</span>}
                       </p>
-                      {currentLevel !== 'L3' && (
-                        <p className="text-sm text-amber-600 mt-0.5">
-                          升级到更高等级需支付等级全价
-                        </p>
-                      )}
+                      <p className="text-sm text-amber-600 mt-0.5">
+                        {isExpired 
+                          ? '续费任意等级即可恢复佣金权益，有效期延长1年'
+                          : daysUntilExpiry !== null 
+                            ? `还有 ${daysUntilExpiry} 天到期，续费可选任意等级`
+                            : '续费可选任意等级'}
+                      </p>
                     </div>
                   </div>
                   <Badge variant="outline" className="border-amber-300 text-amber-700">
@@ -277,17 +299,14 @@ export default function YoujinPartnerIntro() {
           <div className="grid gap-6">
             {youjinPartnerLevels.map((level) => {
               const buttonState = getButtonState(level.level);
-              const isDisabled = buttonState === 'current' || buttonState === 'downgrade';
               
               return (
                 <Card 
                   key={level.level}
-                  className={`transition-all ${
-                    isDisabled 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'cursor-pointer hover:border-orange-500 hover:shadow-lg'
-                  } ${buttonState === 'current' ? 'border-green-300 bg-green-50/30' : ''}`}
-                  onClick={() => !isDisabled && handlePurchase(level.level)}
+                  className={`transition-all cursor-pointer hover:border-orange-500 hover:shadow-lg ${
+                    buttonState === 'renew' && !isExpired ? 'border-green-300 bg-green-50/30' : ''
+                  }`}
+                  onClick={() => handlePurchase(level.level)}
                 >
                   <CardContent className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
@@ -296,7 +315,7 @@ export default function YoujinPartnerIntro() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-xl font-bold">{level.name}</p>
-                            {buttonState === 'current' && (
+                            {buttonState === 'renew' && !isExpired && (
                               <Badge className="bg-green-100 text-green-700 border-green-200">当前等级</Badge>
                             )}
                           </div>
@@ -305,7 +324,7 @@ export default function YoujinPartnerIntro() {
                       </div>
                       <div className="text-right">
                         <p className="text-3xl font-bold text-orange-600">¥{level.price}</p>
-                        <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包分发权</p>
+                        <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包 · 1年有效</p>
                       </div>
                     </div>
 
@@ -330,25 +349,14 @@ export default function YoujinPartnerIntro() {
                     </div>
 
                     <Button 
-                      className={`w-full gap-2 ${
-                        isDisabled 
-                          ? 'bg-gray-300 cursor-not-allowed' 
-                          : `bg-gradient-to-r ${level.gradient} hover:opacity-90`
-                      } text-white`}
+                      className={`w-full gap-2 bg-gradient-to-r ${level.gradient} hover:opacity-90 text-white`}
                       size="lg"
-                      disabled={isDisabled}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!isDisabled) handlePurchase(level.level);
+                        handlePurchase(level.level);
                       }}
                     >
-                      {buttonState === 'current' 
-                        ? '当前等级' 
-                        : buttonState === 'downgrade' 
-                          ? '不可降级' 
-                          : buttonState === 'upgrade' 
-                            ? `升级购买 ¥${level.price}` 
-                            : `立即购买 ${level.name}`}
+                      {getButtonLabel(level.level)}
                     </Button>
                   </CardContent>
                 </Card>
@@ -364,9 +372,16 @@ export default function YoujinPartnerIntro() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <p className="font-medium">Q: 体验包有效期多久？</p>
+              <p className="font-medium">Q: 合伙人有效期多久？</p>
               <p className="text-sm text-muted-foreground">
-                A: 从购买日起1年内有效，用户可以随时兑换。
+                A: 购买后有效期1年，到期后需续费。续费时可自由选择任意等级，有效期延长1年。
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="font-medium">Q: 到期后不续费会怎样？</p>
+              <p className="text-sm text-muted-foreground">
+                A: 到期后佣金权益冻结（不产生新佣金），但推荐关系永久保留，已有余额仍可提现。续费后即刻恢复。
               </p>
             </div>
 
@@ -385,9 +400,9 @@ export default function YoujinPartnerIntro() {
             </div>
 
             <div className="space-y-2">
-              <p className="font-medium">Q: 能否升级到更高等级？</p>
+              <p className="font-medium">Q: 续费时可以换等级吗？</p>
               <p className="text-sm text-muted-foreground">
-                A: 可以！升级需支付目标等级全价，体验包配额将直接设为新等级额度。建议一步到位选择钻石等级更划算！
+                A: 可以！续费时可自由选择任意等级，佣金比例和体验包配额按新等级生效。
               </p>
             </div>
           </CardContent>

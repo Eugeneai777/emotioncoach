@@ -5558,6 +5558,7 @@ export type Database = {
           default_quota_amount: number | null
           id: string
           partner_code: string
+          partner_expires_at: string | null
           partner_level: string | null
           partner_type: string | null
           pending_balance: number
@@ -5589,6 +5590,7 @@ export type Database = {
           default_quota_amount?: number | null
           id?: string
           partner_code: string
+          partner_expires_at?: string | null
           partner_level?: string | null
           partner_type?: string | null
           pending_balance?: number
@@ -5620,6 +5622,7 @@ export type Database = {
           default_quota_amount?: number | null
           id?: string
           partner_code?: string
+          partner_expires_at?: string | null
           partner_level?: string | null
           partner_type?: string | null
           pending_balance?: number

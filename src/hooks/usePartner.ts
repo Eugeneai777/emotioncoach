@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -21,6 +21,7 @@ export interface Partner {
   partner_level: string;
   prepurchase_count: number;
   prepurchase_expires_at: string | null;
+  partner_expires_at: string | null;
   wecom_group_qrcode_url?: string | null;
   wecom_group_name?: string | null;
   default_entry_type?: string | null;
@@ -70,5 +71,24 @@ export function usePartner() {
     fetchPartner();
   }, [user]);
 
-  return { partner, isPartner, loading };
+  // 计算合伙人资格是否过期（基于 partner_expires_at）
+  const isExpired = useMemo(() => {
+    if (!partner?.partner_expires_at) return false; // null = 永久有效（绽放合伙人）
+    return new Date(partner.partner_expires_at) < new Date();
+  }, [partner?.partner_expires_at]);
+
+  // 计算剩余天数
+  const daysUntilExpiry = useMemo(() => {
+    if (!partner?.partner_expires_at) return null; // null = 永久有效
+    const diff = new Date(partner.partner_expires_at).getTime() - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  }, [partner?.partner_expires_at]);
+
+  // 是否需要续费提醒（30天内到期）
+  const needsRenewalReminder = useMemo(() => {
+    if (daysUntilExpiry === null) return false;
+    return daysUntilExpiry <= 30;
+  }, [daysUntilExpiry]);
+
+  return { partner, isPartner, loading, isExpired, daysUntilExpiry, needsRenewalReminder };
 }

@@ -250,22 +250,43 @@ serve(async (req) => {
         };
         
         if (existingPartner && existingPartner.partner_type === 'youjin') {
-          // 升级：直接覆盖为新等级（全价购买模式）
+          // 续费/升级/降级：更新等级和有效期
+          const now = new Date();
+          let newExpiresAt: Date;
+          
+          // 计算新的到期时间
+          if (existingPartner.partner_expires_at) {
+            const currentExpiry = new Date(existingPartner.partner_expires_at);
+            if (currentExpiry > now) {
+              // 未过期：叠加剩余天数 + 1年
+              newExpiresAt = new Date(currentExpiry.getTime() + 365 * 24 * 60 * 60 * 1000);
+            } else {
+              // 已过期：从当前时间 + 1年
+              newExpiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+            }
+          } else {
+            // 首次设置（老数据无 partner_expires_at）
+            newExpiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+          }
+          
           const { error: updateError } = await supabase
             .from('partners')
             .update({
               partner_level: levelName,
               prepurchase_count: levelRule.min_prepurchase,  // 直接设为新等级配额
+              prepurchase_expires_at: newExpiresAt.toISOString(),
+              partner_expires_at: newExpiresAt.toISOString(),
               commission_rate_l1: levelRule.commission_rate_l1,
               commission_rate_l2: levelRule.commission_rate_l2,
+              status: 'active', // 恢复为 active（如之前过期）
               updated_at: new Date().toISOString(),
             })
             .eq('id', existingPartner.id);
           
           if (updateError) {
-            console.error('Upgrade partner error:', updateError);
+            console.error('Renew/upgrade partner error:', updateError);
           } else {
-            console.log('Partner upgraded:', order.user_id, existingPartner.partner_level, '->', levelName);
+            console.log('Partner renewed:', order.user_id, existingPartner.partner_level, '->', levelName, 'expires:', newExpiresAt.toISOString());
           }
         } else {
           // 新建合伙人记录
@@ -281,6 +302,7 @@ serve(async (req) => {
               partner_code: partnerCode,
               prepurchase_count: levelRule.min_prepurchase,
               prepurchase_expires_at: expiresAt.toISOString(),
+              partner_expires_at: expiresAt.toISOString(),
               commission_rate_l1: levelRule.commission_rate_l1,
               commission_rate_l2: levelRule.commission_rate_l2,
               status: 'active',
@@ -290,7 +312,7 @@ serve(async (req) => {
           if (insertError) {
             console.error('Create youjin partner error:', insertError);
           } else {
-            console.log('Youjin partner created:', order.user_id, levelName, 'code:', partnerCode);
+            console.log('Youjin partner created:', order.user_id, levelName, 'code:', partnerCode, 'expires:', expiresAt.toISOString());
           }
         }
       }

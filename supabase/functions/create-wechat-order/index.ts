@@ -171,32 +171,8 @@ serve(async (req) => {
       }
     }
 
-    // 有劲合伙人升级校验：禁止降级购买
-    if (packageKey.startsWith('youjin_partner_') && finalUserId && finalUserId !== 'guest') {
-      const { data: existingPartner } = await supabase
-        .from('partners')
-        .select('partner_level, partner_type')
-        .eq('user_id', finalUserId)
-        .eq('partner_type', 'youjin')
-        .maybeSingle();
-
-      if (existingPartner) {
-        const levelOrder: Record<string, number> = { 'L1': 1, 'L2': 2, 'L3': 3 };
-        const targetLevel = packageKey.replace('youjin_partner_', '').toUpperCase();
-        const currentLevel = existingPartner.partner_level;
-        
-        if (levelOrder[targetLevel] <= levelOrder[currentLevel]) {
-          console.log('[CreateOrder] Partner downgrade prevented:', currentLevel, '->', targetLevel);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: '您已是同等级或更高等级合伙人' 
-            }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-      }
-    }
+    // 有劲合伙人续费：允许选择任意等级（含降级），不再限制
+    // （旧逻辑：禁止降级购买，已移除）
 
     // JSAPI 支付需要 openId（小程序支付也需要 openId，但由小程序原生端提供）
     if ((payType === 'jsapi' || payType === 'miniprogram') && !openId) {

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Partner } from "@/hooks/usePartner";
+import { Partner, usePartner } from "@/hooks/usePartner";
 import { Upload, ImageIcon, Palette, Users, TrendingUp, Wallet, ChevronDown, ChevronUp, Bell, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +32,7 @@ interface YoujinPartnerDashboardProps {
 
 export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps) {
   const navigate = useNavigate();
+  const { isExpired, daysUntilExpiry, needsRenewalReminder } = usePartner();
   const [groupQrUrl, setGroupQrUrl] = useState(partner.wecom_group_qrcode_url || '');
   const [groupName, setGroupName] = useState(partner.wecom_group_name || '有劲学员群');
   const [uploading, setUploading] = useState(false);
@@ -97,9 +98,35 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
 
   return (
     <div className="space-y-4">
+      {/* 过期横幅 */}
+      {isExpired && (
+        <Card className="border-red-300 bg-gradient-to-r from-red-50 to-orange-50">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 text-red-500 shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-red-800">佣金权益已冻结</p>
+                <p className="text-sm text-red-600 mt-0.5">
+                  合伙人资格已过期，新订单不再产生佣金。续费后即可恢复，推荐关系和已有余额不受影响。
+                </p>
+              </div>
+              <Button 
+                size="sm"
+                className="bg-gradient-to-r from-red-500 to-orange-500 text-white shrink-0"
+                onClick={() => navigate('/partner/youjin-intro')}
+              >
+                立即续费
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 顶部概览卡片 */}
       <PartnerOverviewCard 
         partner={partner} 
+        isExpired={isExpired}
+        daysUntilExpiry={daysUntilExpiry}
         onWithdraw={() => setActiveTab('earnings')}
       />
 
@@ -109,10 +136,12 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         onClick={() => setActiveTab('students')}
       />
 
-      {/* 升级提示 - 仅L1/L2显示 */}
-      {partner.partner_level !== 'L3' && (
-        <PartnerUpgradeCard currentLevel={partner.partner_level} />
-      )}
+      {/* 续费/升级提示 */}
+      <PartnerUpgradeCard 
+        currentLevel={partner.partner_level} 
+        isExpired={isExpired}
+        daysUntilExpiry={daysUntilExpiry}
+      />
 
       {/* 快捷操作 */}
       <PartnerQuickActions onTabChange={handleTabChange} />
