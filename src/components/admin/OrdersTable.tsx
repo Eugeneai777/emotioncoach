@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { format } from "date-fns";
+import { Download } from "lucide-react";
+import { saveAs } from "file-saver";
+import { Button } from "@/components/ui/button";
 
 interface UnifiedOrder {
   id: string;
@@ -105,6 +108,32 @@ export function OrdersTable() {
     return matchesSearch && matchesSource && matchesStatus;
   });
 
+  const exportToCSV = () => {
+    if (!filteredOrders?.length) return;
+
+    const headers = ['订单号', '用户昵称', '用户ID', '套餐名称', '金额', '订单来源', '状态', '创建时间'];
+    const statusMap: Record<string, string> = { paid: '已支付', active: '已激活', pending: '待支付', expired: '已过期' };
+    const sourceMap: Record<string, string> = { wechat_pay: '微信支付', admin_charge: '管理员充值' };
+
+    const rows = filteredOrders.map(order => [
+      order.order_id || order.id,
+      order.user_display_name || '未设置昵称',
+      order.user_id,
+      order.package_name === 'custom' ? '管理员充值' : (order.package_name || '-'),
+      order.amount.toString(),
+      sourceMap[order.source] || order.source,
+      statusMap[order.status] || order.status,
+      format(new Date(order.created_at), 'yyyy-MM-dd HH:mm'),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${(cell || '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' });
+    saveAs(blob, `订单明细_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
@@ -161,6 +190,16 @@ export function OrdersTable() {
         <div className="text-sm text-muted-foreground self-center">
           共 {filteredOrders?.length || 0} 条订单
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={exportToCSV}
+          disabled={!filteredOrders?.length}
+          className="gap-2 ml-auto"
+        >
+          <Download className="w-4 h-4" />
+          导出 CSV
+        </Button>
       </div>
 
       <Table>
