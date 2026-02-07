@@ -18,7 +18,7 @@ interface UnifiedOrder {
   package_name: string | null;
   amount: number;
   status: string;
-  source: 'wechat_pay' | 'admin_charge';
+  source: 'wechat_pay' | 'alipay_pay' | 'admin_charge';
   created_at: string;
   user_display_name?: string | null;
   user_avatar_url?: string | null;
@@ -32,10 +32,10 @@ export function OrdersTable() {
   const { data: orders, isLoading } = useQuery({
     queryKey: ['admin-orders'],
     queryFn: async () => {
-      // 查询微信支付订单
+      // 查询微信/支付宝订单
       const { data: wechatOrders, error: ordersError } = await supabase
         .from('orders')
-        .select('*')
+        .select('*, pay_type')
         .order('created_at', { ascending: false });
 
       if (ordersError) console.error('Error fetching orders:', ordersError);
@@ -57,7 +57,7 @@ export function OrdersTable() {
           package_name: o.package_name,
           amount: o.amount || 0,
           status: o.status,
-          source: 'wechat_pay' as const,
+          source: (o.pay_type === 'alipay_h5' ? 'alipay_pay' : 'wechat_pay') as 'wechat_pay' | 'alipay_pay',
           created_at: o.created_at,
         })) || []),
         ...(subscriptions?.map(s => ({
@@ -113,7 +113,7 @@ export function OrdersTable() {
 
     const headers = ['订单号', '用户昵称', '用户ID', '套餐名称', '金额', '订单来源', '状态', '创建时间'];
     const statusMap: Record<string, string> = { paid: '已支付', active: '已激活', pending: '待支付', expired: '已过期' };
-    const sourceMap: Record<string, string> = { wechat_pay: '微信支付', admin_charge: '管理员充值' };
+    const sourceMap: Record<string, string> = { wechat_pay: '微信支付', alipay_pay: '支付宝', admin_charge: '管理员充值' };
 
     const rows = filteredOrders.map(order => [
       order.order_id || order.id,
@@ -149,9 +149,12 @@ export function OrdersTable() {
   };
 
   const getSourceBadge = (source: string) => {
+    if (source === 'alipay_pay') {
+      return <Badge className="bg-blue-600">支付宝</Badge>;
+    }
     return source === 'wechat_pay' 
       ? <Badge className="bg-green-600">微信支付</Badge>
-      : <Badge className="bg-blue-600">管理员充值</Badge>;
+      : <Badge className="bg-purple-600">管理员充值</Badge>;
   };
 
   if (isLoading) return <div>加载中...</div>;
@@ -172,6 +175,7 @@ export function OrdersTable() {
           <SelectContent>
             <SelectItem value="all">全部来源</SelectItem>
             <SelectItem value="wechat_pay">微信支付</SelectItem>
+            <SelectItem value="alipay_pay">支付宝</SelectItem>
             <SelectItem value="admin_charge">管理员充值</SelectItem>
           </SelectContent>
         </Select>
