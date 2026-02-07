@@ -505,30 +505,26 @@ const YoujinPartnerPlan = () => {
                 <div className="flex items-center gap-3 text-left">
                   <span className="text-2xl">🧠</span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold">05｜有劲产品生态：11款可分成产品</h3>
+                    <h3 className="text-base sm:text-lg font-bold">05｜有劲产品生态：7款可分成产品</h3>
                     <p className="text-sm text-muted-foreground font-normal mt-1">覆盖情绪、财富、亲子三大场景</p>
                   </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-6">
                 <div className="space-y-4 pt-2">
-                  <p className="text-base">有劲提供完整的产品矩阵，每款都可获得佣金：</p>
+                  <p className="text-base">用户购买以下产品，您都能获得佣金分成：</p>
 
                   {/* 产品分类展示 */}
                   <div className="space-y-3">
-                    {/* 基础产品 */}
-                    <Card className="border-l-4 border-l-blue-400">
+                    {/* 体验包说明 */}
+                    <Card className="border-l-4 border-l-gray-300 bg-gray-50/50">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">🎫</span>
-                          <p className="font-bold text-sm">基础产品（4款 × ¥9.9）</p>
+                          <span className="text-lg">📦</span>
+                          <p className="font-bold text-sm">体验包（4款 × ¥9.9）</p>
+                          <Badge variant="outline" className="text-xs">不参与分成</Badge>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary">尝鲜会员</Badge>
-                          <Badge variant="secondary">情绪健康测评</Badge>
-                          <Badge variant="secondary">SCL-90心理测评</Badge>
-                          <Badge variant="secondary">财富卡点测评</Badge>
-                        </div>
+                        <p className="text-xs text-muted-foreground">体验包从预购名额扣减，付费模式下¥9.9全额为合伙人收入</p>
                       </CardContent>
                     </Card>
 
@@ -588,7 +584,7 @@ const YoujinPartnerPlan = () => {
 
                   <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
                     <CardContent className="p-5 text-center">
-                      <p className="text-xl font-bold">11款产品 × 三大场景 = 多元收益来源</p>
+                      <p className="text-xl font-bold">7款可分成产品 × 三大场景 = 多元收益来源</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -731,7 +727,7 @@ const YoujinPartnerPlan = () => {
         <section className="mb-12 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-orange-500" />
-            可分成产品一览（11款）
+            可分成产品一览（7款）
           </h3>
           
           <div className="grid grid-cols-2 gap-2">

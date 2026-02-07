@@ -159,7 +159,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
               </Button>
             </div>
             <p className="text-sm text-teal-700">
-              设置入口类型后，你在社区分享、训练营打卡或情绪按钮分享时，生成的二维码会自动使用你的设置。用户扫码后即可按你选择的方式获得对话额度，并自动成为你的学员。
+              设置入口类型后，生成的二维码会自动使用你的设置。用户扫码后获得体验包并自动成为你的学员。体验包从预购名额扣减，不参与佣金分成；付费模式下¥9.9全额为你的收入。用户后续购买365会员、训练营等产品时，你将获得佣金分成。
             </p>
           </div>
           
