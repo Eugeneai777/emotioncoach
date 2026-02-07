@@ -187,7 +187,7 @@ const VibrantLifeIntro = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-teal-50/30 to-cyan-50/50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-teal-50/30 to-cyan-50/50 relative overflow-x-hidden overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
       <DynamicOGMeta pageKey="vibrantLifeIntro" />
       {/* 装饰性背景元素 */}
       <div className="absolute top-20 left-0 w-72 h-72 bg-teal-200/20 rounded-full blur-3xl" />
