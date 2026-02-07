@@ -226,13 +226,21 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }
   };
 
-  // 自动创建订单
+  // 自动创建订单（不需要条款的直接创建，需要条款的等待用户确认后创建）
   useEffect(() => {
     if (open && packageInfo && user && !orderCreatedRef.current && status === 'idle') {
-      orderCreatedRef.current = true;
-      createOrder();
+      // 如果不需要条款，直接创建订单
+      if (!needsTerms) {
+        orderCreatedRef.current = true;
+        createOrder();
+      }
+      // 如果需要条款但已同意，也创建订单
+      else if (agreedTerms) {
+        orderCreatedRef.current = true;
+        createOrder();
+      }
     }
-  }, [open, packageInfo, user, status]);
+  }, [open, packageInfo, user, status, agreedTerms, needsTerms]);
 
   // 关闭时重置
   useEffect(() => {
@@ -271,25 +279,30 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             </div>
           )}
 
-          {/* 条款确认 */}
-          {needsTerms && status === 'idle' && (
-            <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-              <Checkbox
-                id="terms"
-                checked={agreedTerms}
-                onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-                className="mt-0.5"
-              />
-              <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-                我已阅读并同意{' '}
-                <Link to={getTermsLink()} className="text-primary underline" target="_blank">
-                  {getTermsName()}
-                </Link>
-                {' '}和{' '}
-                <Link to="/privacy" className="text-primary underline" target="_blank">
-                  《隐私政策》
-                </Link>
-              </label>
+          {/* 条款确认 - 需要条款且尚未同意时显示 */}
+          {needsTerms && status === 'idle' && !agreedTerms && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+                <Checkbox
+                  id="terms"
+                  checked={agreedTerms}
+                  onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
+                  我已阅读并同意{' '}
+                  <Link to={getTermsLink()} className="text-primary underline" target="_blank">
+                    {getTermsName()}
+                  </Link>
+                  {' '}和{' '}
+                  <Link to="/privacy" className="text-primary underline" target="_blank">
+                    《隐私政策》
+                  </Link>
+                </label>
+              </div>
+              <p className="text-sm text-center text-muted-foreground">
+                请先勾选同意条款后自动发起支付
+              </p>
             </div>
           )}
 
