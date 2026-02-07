@@ -272,16 +272,19 @@ export function PaymentStep({
 
       setOrderNo(data.orderNo);
       setPayUrl(data.payUrl);
+      setStatus('polling');
       startPolling(data.orderNo);
       
-      // 自动跳转支付宝支付
+      // 自动跳转支付宝支付 - 使用多种方式确保跳转成功
       if (data.payUrl) {
-        setStatus('polling');
-        window.location.href = data.payUrl;
+        // 尝试使用 location.replace 实现无需返回的跳转
+        try {
+          window.location.replace(data.payUrl);
+        } catch {
+          window.location.href = data.payUrl;
+        }
         return;
       }
-      
-      setStatus('ready');
 
       // 设置15分钟超时
       timeoutRef.current = setTimeout(() => {
