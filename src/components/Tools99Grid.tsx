@@ -25,14 +25,14 @@ interface ProductItem {
 
 const TOOLS_99_PRODUCTS: ProductItem[] = [
   // 测评诊断
-  { key: 'basic', emoji: '🎫', name: '尝鲜会员', features: ['50点AI额度', '5位AI教练'], category: 'assessment' },
-  { key: 'emotion_health_assessment', emoji: '💚', name: '情绪健康测评', features: ['56题专业评估', '5大维度分析'], category: 'assessment' },
-  { key: 'scl90_report', emoji: '📋', name: 'SCL-90测评', features: ['90题权威量表', '10因子分析'], category: 'assessment' },
-  { key: 'wealth_block_assessment', emoji: '💰', name: '财富卡点测评', features: ['24题精准诊断', '卡点定位'], category: 'assessment' },
+  { key: 'basic', emoji: '🎫', name: '尝鲜会员', features: ['AI情绪教练体验', '解锁全部功能7天'], category: 'assessment' },
+  { key: 'emotion_health_assessment', emoji: '💚', name: '情绪健康测评', features: ['全面了解情绪状态', '生成专属分析报告'], category: 'assessment' },
+  { key: 'scl90_report', emoji: '📋', name: 'SCL-90测评', features: ['心理健康全面筛查', '医院同款专业标准'], category: 'assessment' },
+  { key: 'wealth_block_assessment', emoji: '💰', name: '财富卡点测评', features: ['找到赚钱卡住的原因', '定制突破方案'], category: 'assessment' },
   // 日常工具
-  { key: 'alive_check', emoji: '🫀', name: '死了吗打卡', features: ['每日生命觉察', '自动提醒'], category: 'tool' },
-  { key: 'awakening_system', emoji: '📔', name: '觉察日记', features: ['AI教练反馈', '情绪追踪'], category: 'tool' },
-  { key: 'emotion_button', emoji: '🆘', name: '情绪SOS按钮', features: ['即时安抚', '呼吸引导'], category: 'tool' },
+  { key: 'alive_check', emoji: '🫀', name: '死了吗打卡', features: ['每天1秒确认活着', '唤醒生命热情'], category: 'tool' },
+  { key: 'awakening_system', emoji: '📔', name: '觉察日记', features: ['AI教练陪你写日记', '看见情绪变化轨迹'], category: 'tool' },
+  { key: 'emotion_button', emoji: '🆘', name: '情绪SOS按钮', features: ['崩溃时按一下就好', '3分钟恢复平静'], category: 'tool' },
 ];
 
 const TOOLS_99_KEYS = TOOLS_99_PRODUCTS.map(p => p.key);
@@ -130,18 +130,18 @@ export function Tools99Grid({ onPurchase }: Tools99GridProps) {
         </div>
       </MobileCard>
 
-      {/* Product groups */}
-      {PRODUCT_GROUPS.map((group) => {
-        const groupProducts = TOOLS_99_PRODUCTS.filter(p => p.category === group.category);
+      {/* Side-by-side columns: assessments left, tools right */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {PRODUCT_GROUPS.map((group) => {
+          const groupProducts = TOOLS_99_PRODUCTS.filter(p => p.category === group.category);
 
-        return (
-          <div key={group.category} className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 px-1">
-              <span>{group.emoji}</span>
-              <span>{group.label}</span>
-            </h3>
+          return (
+            <div key={group.category} className="space-y-2.5">
+              <h3 className="text-xs font-semibold text-foreground flex items-center gap-1 px-0.5">
+                <span>{group.emoji}</span>
+                <span>{group.label}</span>
+              </h3>
 
-            <div className="grid grid-cols-2 gap-2.5">
               {groupProducts.map((product) => {
                 const pkg = packages?.find(p => p.package_key === product.key);
                 const price = pkg?.price ?? 9.9;
@@ -166,9 +166,9 @@ export function Tools99Grid({ onPurchase }: Tools99GridProps) {
                 );
               })}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
