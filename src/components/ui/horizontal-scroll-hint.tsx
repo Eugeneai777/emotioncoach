@@ -69,7 +69,13 @@ export function HorizontalScrollHint({
       {/* 滚动容器 */}
       <div
         ref={scrollRef}
-        className={cn("overflow-x-auto scrollbar-hide", className)}
+        className={cn(
+          "overflow-x-auto scrollbar-hide",
+          // 允许水平触摸滑动，防止被父容器捕获
+          "touch-pan-x",
+          className
+        )}
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {children}
       </div>
