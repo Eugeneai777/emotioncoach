@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -14,6 +14,11 @@ interface Comment {
   created_at: string;
 }
 
+interface UserProfile {
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 interface CommentSectionProps {
   postId: string;
   onUpdate?: () => void;
@@ -23,9 +28,43 @@ const COMMENTS_PER_PAGE = 10;
 
 const CommentSection = ({ postId, onUpdate }: CommentSectionProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
+  const [profiles, setProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchProfiles = useCallback(async (commentList: Comment[]) => {
+    const userIds = [
+      ...new Set(
+        commentList
+          .filter((c) => !c.is_anonymous)
+          .map((c) => c.user_id)
+      ),
+    ];
+
+    if (userIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", userIds);
+
+    if (error) {
+      console.error("加载用户资料失败:", error);
+      return;
+    }
+
+    setProfiles((prev) => {
+      const next = new Map(prev);
+      for (const p of data || []) {
+        next.set(p.id, {
+          display_name: p.display_name,
+          avatar_url: p.avatar_url,
+        });
+      }
+      return next;
+    });
+  }, []);
 
   const loadComments = useCallback(async (append = false) => {
     try {
@@ -46,19 +85,24 @@ const CommentSection = ({ postId, onUpdate }: CommentSectionProps) => {
 
       if (error) throw error;
 
+      const newComments = data || [];
+
       if (append) {
-        setComments(prev => [...prev, ...(data || [])]);
+        const merged = [...comments, ...newComments];
+        setComments(merged);
+        fetchProfiles(merged);
       } else {
-        setComments(data || []);
+        setComments(newComments);
+        fetchProfiles(newComments);
       }
-      setHasMore((data || []).length === COMMENTS_PER_PAGE);
+      setHasMore(newComments.length === COMMENTS_PER_PAGE);
     } catch (error) {
       console.error("加载评论失败:", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [postId, comments.length]);
+  }, [postId, comments.length, fetchProfiles]);
 
   useEffect(() => {
     loadComments();
@@ -91,11 +135,18 @@ const CommentSection = ({ postId, onUpdate }: CommentSectionProps) => {
       ) : (
         <div className="space-y-3">
           {comments.map((comment) => {
-            const displayName = comment.is_anonymous ? "匿名用户" : "用户";
+            const profile = profiles.get(comment.user_id);
+            const displayName = comment.is_anonymous
+              ? "匿名用户"
+              : (profile?.display_name || `用户${comment.user_id.slice(0, 6)}`);
+            const avatarUrl = comment.is_anonymous ? null : profile?.avatar_url;
 
             return (
               <div key={comment.id} className="flex gap-3">
                 <Avatar className="h-8 w-8">
+                  {avatarUrl && (
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                  )}
                   <AvatarFallback className="text-xs bg-secondary">
                     {comment.is_anonymous ? "匿" : displayName.charAt(0)}
                   </AvatarFallback>
