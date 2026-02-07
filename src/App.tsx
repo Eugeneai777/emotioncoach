@@ -150,6 +150,7 @@ const TransformationFlow = lazy(() => import("./pages/TransformationFlow"));
 const WealthBlockAssessment = lazy(() => import("./pages/WealthBlockAssessment"));
 const WealthAssessmentLite = lazy(() => import("./pages/WealthAssessmentLite"));
 const WealthBlockActivate = lazy(() => import("./pages/WealthBlockActivate"));
+const WealthCampActivate = lazy(() => import("./pages/WealthCampActivate"));
 const WealthCampCheckIn = lazy(() => import("./pages/WealthCampCheckIn"));
 const MeditationLibrary = lazy(() => import("./pages/MeditationLibrary"));
 const WealthJournal = lazy(() => import("./pages/WealthJournal"));
@@ -321,6 +322,7 @@ const App = () => (
               <Route path="/transformation-flow" element={<TransformationFlow />} />
               <Route path="/wealth-block" element={<WealthBlockAssessment />} />
               <Route path="/wealth-block-activate" element={<WealthBlockActivate />} />
+              <Route path="/wealth-camp-activate" element={<WealthCampActivate />} />
               <Route path="/wealth-assessment-lite" element={<WealthAssessmentLite />} />
               <Route path="/wealth-camp-checkin" element={<WealthCampCheckIn />} />
               <Route path="/wealth-camp/:campId" element={<WealthCampCheckIn />} />
