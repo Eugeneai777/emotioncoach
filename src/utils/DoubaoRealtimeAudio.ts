@@ -148,6 +148,9 @@ export class DoubaoRealtimeChat {
   private reconnectStartTime = 0;
   private static readonly SILENT_RECONNECT_TIMEOUT_MS = 12000; // 12秒内静默重连，超过则上报
   
+  // ✅ 断连时保存 AI 回复状态，用于重连后"续接"未完成的回复
+  private wasAssistantSpeakingWhenDisconnected = false;
+  
   // ✅ 重连通知回调（可选）：允许上层展示轻量提示
   private onReconnectProgress?: (stage: 'start' | 'retrying' | 'success' | 'failed', attempt?: number) => void;
 
@@ -1045,6 +1048,11 @@ export class DoubaoRealtimeChat {
     // ✅ 静默重连：记录开始时间，用于判断是否超过静默阈值
     this.isReconnectingSilently = true;
     this.reconnectStartTime = Date.now();
+    
+    // ✅ 关键修复：记录断连时 AI 是否正在回复
+    // 如果 AI 正在说话时断连，重连后需要让 AI 主动"续接"未完成的回复
+    this.wasAssistantSpeakingWhenDisconnected = this.isAssistantSpeaking;
+    console.log('[DoubaoChat] 📌 Saved assistant speaking state for reconnect:', this.wasAssistantSpeakingWhenDisconnected);
 
     // ✅ 重连前强制保存缓冲区中未完成的转录内容到历史记录
     // 这样即使断线时没收到 .done 事件，也能保留最后一段对话
@@ -1194,9 +1202,28 @@ export class DoubaoRealtimeChat {
      console.log('[DoubaoChat] 🔄 Reconnect complete: recording already active');
    }
    
-   // ✅ 重连成功后，给 AI 一个"继续对话"的信号（如果之前有对话）
-   // 这确保 AI 知道需要继续之前的话题
-   if (this.conversationHistory.length > 0 && !this.isDisconnected) {
+   // ✅ 关键修复：如果断连时 AI 正在回复，发送续接指令让 AI 继续
+   // 豆包的每个 session 是独立的，不会自动"继续"之前的回复
+   // 需要主动发送一个触发信号，让 AI 根据历史上下文继续回应
+   if (this.wasAssistantSpeakingWhenDisconnected && this.conversationHistory.length > 0 && !this.isDisconnected) {
+     console.log('[DoubaoChat] 🔄 AI was speaking when disconnected, sending continuation trigger...');
+     
+     // 延迟一小段时间确保 session 完全就绪
+     setTimeout(() => {
+       if (this.ws?.readyState === WebSocket.OPEN && !this.isDisconnected) {
+         // 发送一个隐式的"继续"指令，不会显示在对话中
+         // 让 AI 根据 instructions 中注入的历史上下文自然续接
+         this.ws.send(JSON.stringify({
+           type: 'continuation.trigger',
+           hint: '请继续你刚才说到一半的话',
+         }));
+         console.log('[DoubaoChat] ✅ Continuation trigger sent');
+       }
+     }, 300);
+     
+     // 重置状态
+     this.wasAssistantSpeakingWhenDisconnected = false;
+   } else if (this.conversationHistory.length > 0 && !this.isDisconnected) {
      console.log('[DoubaoChat] ✅ Silent reconnect: context preserved, AI should continue naturally');
    }
   }
