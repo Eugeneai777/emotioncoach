@@ -72,6 +72,8 @@ const PostDetailSheet = ({
   const [likesCount, setLikesCount] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -560,52 +562,94 @@ const PostDetailSheet = ({
           </div>
         </ScrollArea>
 
-        {/* 底部固定互动栏 - 优化移动端布局 */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 sm:p-3 flex items-center gap-1.5 sm:gap-3 z-50">
-          {/* 评论输入框 - 限制最大宽度防止溢出 */}
-          {session ? <div className="flex-1 flex items-center gap-1.5 min-w-0 max-w-[calc(100%-180px)] sm:max-w-none">
-              <input type="text" placeholder="说点什么..." value={newComment} onChange={e => setNewComment(e.target.value)} onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmitComment();
-            }
-          }} className="flex-1 min-w-0 bg-muted/50 rounded-full px-3 py-2 text-sm outline-none focus:bg-muted/70 transition-colors" />
-              {newComment.trim() && <button onClick={handleSubmitComment} disabled={submitting} className="px-3 py-1.5 bg-primary text-primary-foreground rounded-full text-xs font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors whitespace-nowrap">
+        {/* 底部固定互动栏 - 两行布局 */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 sm:p-3 flex flex-col gap-2 z-50 safe-bottom">
+          {/* 第一行：评论输入框 + 发送按钮 */}
+          {session ? (
+            <div className="flex items-end gap-2 w-full">
+              <textarea
+                ref={commentTextareaRef}
+                placeholder="说点什么..."
+                value={newComment}
+                onChange={(e) => {
+                  setNewComment(e.target.value);
+                  // 自动调整高度
+                  const textarea = e.target;
+                  textarea.style.height = 'auto';
+                  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                }}
+                onKeyDown={(e) => {
+                  if (isComposing) return;
+                  if (e.key === 'Enter' && !e.shiftKey && newComment.trim()) {
+                    e.preventDefault();
+                    handleSubmitComment();
+                    // 重置高度
+                    if (commentTextareaRef.current) {
+                      commentTextareaRef.current.style.height = 'auto';
+                    }
+                  }
+                }}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
+                className="flex-1 min-w-0 bg-muted/50 rounded-2xl px-4 py-2.5 text-sm outline-none focus:bg-muted/70 transition-colors resize-none leading-relaxed"
+                style={{ fontSize: '16px', minHeight: '44px', maxHeight: '120px' }}
+                rows={1}
+                enterKeyHint="send"
+              />
+              {newComment.trim() && (
+                <button
+                  onClick={() => {
+                    handleSubmitComment();
+                    if (commentTextareaRef.current) {
+                      commentTextareaRef.current.style.height = 'auto';
+                    }
+                  }}
+                  disabled={submitting}
+                  className="px-4 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors whitespace-nowrap flex-shrink-0 min-h-[44px]"
+                >
                   {submitting ? "..." : "发送"}
-                </button>}
-            </div> : <div className="flex-1 flex items-center gap-1.5 min-w-0 max-w-[calc(100%-180px)] sm:max-w-none bg-muted/50 rounded-full px-3 py-2 cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => toast.error("请先登录")}>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div
+              className="flex items-center gap-2 w-full bg-muted/50 rounded-2xl px-4 py-2.5 cursor-pointer hover:bg-muted/70 transition-colors min-h-[44px]"
+              onClick={() => toast.error("请先登录")}
+            >
               <Pencil className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-muted-foreground text-sm truncate">说点什么...</span>
-            </div>}
-          
-          {/* 点赞 */}
-          <button onClick={handleLike} className="flex flex-col items-center gap-0.5 min-w-[40px] sm:min-w-[48px] hover:scale-110 transition-transform flex-shrink-0">
-            <Heart className={cn("h-5 w-5 sm:h-6 sm:w-6 transition-colors", liked ? "fill-red-500 text-red-500" : "text-foreground")} />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{likesCount}</span>
-          </button>
-          
-          {/* 关注 - 星星图标 */}
-          <button onClick={handleFollowToggle} disabled={isLoadingFollow || post.is_anonymous || !session || session?.user?.id === post.user_id} className={cn("flex flex-col items-center gap-0.5 min-w-[40px] sm:min-w-[48px] transition-transform flex-shrink-0", !(post.is_anonymous || !session || session?.user?.id === post.user_id) && "hover:scale-110", (isLoadingFollow || post.is_anonymous || !session || session?.user?.id === post.user_id) && "opacity-50 cursor-not-allowed")}>
-            <Star className={cn("h-5 w-5 sm:h-6 sm:w-6 transition-colors", isFollowing ? "fill-yellow-400 text-yellow-400" : "text-foreground")} />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{followersCount}</span>
-          </button>
-          
-          {/* 评论 */}
-          <button className="flex flex-col items-center gap-0.5 min-w-[40px] sm:min-w-[48px] hover:scale-110 transition-transform flex-shrink-0" onClick={() => {
-          const commentSection = document.querySelector('[data-comment-section]');
-          commentSection?.scrollIntoView({
-            behavior: 'smooth'
-          });
-        }}>
-            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{post.comments_count || 0}</span>
-          </button>
-          
-          {/* 分享 */}
-          <button onClick={handleShare} className="flex flex-col items-center gap-0.5 min-w-[40px] sm:min-w-[48px] hover:scale-110 transition-transform flex-shrink-0">
-            <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{post.shares_count || 0}</span>
-          </button>
+              <span className="text-muted-foreground text-sm" style={{ fontSize: '16px' }}>说点什么...</span>
+            </div>
+          )}
+
+          {/* 第二行：互动按钮 */}
+          <div className="flex items-center justify-around w-full">
+            {/* 点赞 */}
+            <button onClick={handleLike} className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform">
+              <Heart className={cn("h-5 w-5 sm:h-6 sm:w-6 transition-colors", liked ? "fill-red-500 text-red-500" : "text-foreground")} />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{likesCount}</span>
+            </button>
+
+            {/* 关注 */}
+            <button onClick={handleFollowToggle} disabled={isLoadingFollow || post.is_anonymous || !session || session?.user?.id === post.user_id} className={cn("flex flex-col items-center gap-0.5 min-w-[48px] transition-transform", !(post.is_anonymous || !session || session?.user?.id === post.user_id) && "hover:scale-110", (isLoadingFollow || post.is_anonymous || !session || session?.user?.id === post.user_id) && "opacity-50 cursor-not-allowed")}>
+              <Star className={cn("h-5 w-5 sm:h-6 sm:w-6 transition-colors", isFollowing ? "fill-yellow-400 text-yellow-400" : "text-foreground")} />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{followersCount}</span>
+            </button>
+
+            {/* 评论 */}
+            <button className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform" onClick={() => {
+              const commentSection = document.querySelector('[data-comment-section]');
+              commentSection?.scrollIntoView({ behavior: 'smooth' });
+            }}>
+              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{post.comments_count || 0}</span>
+            </button>
+
+            {/* 分享 */}
+            <button onClick={handleShare} className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform">
+              <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{post.shares_count || 0}</span>
+            </button>
+          </div>
         </div>
         </SheetContent>
       </Sheet>
