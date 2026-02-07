@@ -424,3 +424,6 @@ verify_jwt = true
 
 [functions.partner-self-redeem]
 verify_jwt = false
+
+[functions.redeem-camp-activation-code]
+verify_jwt = true
