@@ -17,9 +17,9 @@ interface AddPartnerDialogProps {
 }
 
 const LEVEL_CONFIG = {
-  L1: { name: '初级', icon: Zap, gradient: 'from-orange-400 to-amber-400', l1Rate: 20, l2Rate: 0, price: 792, minPrepurchase: 100 },
-  L2: { name: '高级', icon: Flame, gradient: 'from-orange-500 to-amber-500', l1Rate: 35, l2Rate: 0, price: 3217, minPrepurchase: 500 },
-  L3: { name: '钻石', icon: Gem, gradient: 'from-orange-600 to-amber-600', l1Rate: 50, l2Rate: 10, price: 4950, minPrepurchase: 1000 },
+  L1: { name: '初级', icon: Zap, gradient: 'from-orange-400 to-amber-400', l1Rate: 18, l2Rate: 0, price: 792, minPrepurchase: 100 },
+  L2: { name: '高级', icon: Flame, gradient: 'from-orange-500 to-amber-500', l1Rate: 30, l2Rate: 5, price: 3217, minPrepurchase: 500 },
+  L3: { name: '钻石', icon: Gem, gradient: 'from-orange-600 to-amber-600', l1Rate: 50, l2Rate: 12, price: 4950, minPrepurchase: 1000 },
 };
 
 export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDialogProps) {

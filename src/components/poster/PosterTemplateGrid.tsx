@@ -227,7 +227,7 @@ const posterTemplates: PosterTemplate[] = [
     emoji: '🤝',
     tagline: 'AI时代，用你的影响力帮更多人走出情绪困境',
     gradient: 'from-rose-400 to-pink-500',
-    sellingPoints: ['分享就能赚取20%-50%佣金', '帮助他人疗愈，自己也有收入', '零囤货零压力，链接就是资产'],
+    sellingPoints: ['分享就能赚取18%-50%佣金', '帮助他人疗愈，自己也有收入', '零囤货零压力，链接就是资产'],
     sceneVariants: {
       moments: {
         tagline: '这个月靠分享这个APP又多了几千块收入',
@@ -236,7 +236,7 @@ const posterTemplates: PosterTemplate[] = [
       },
       xiaohongshu: {
         tagline: 'AI时代副业推荐｜心理健康赛道合伙人计划',
-        sellingPoints: ['20%-50%高额佣金', '三级分销团队裂变', '万亿心理健康市场红利'],
+        sellingPoints: ['18%-50%高额佣金', '三级分销团队裂变', '万亿心理健康市场红利'],
         tone: '副业种草+赛道机会'
       },
       wechat_group: {

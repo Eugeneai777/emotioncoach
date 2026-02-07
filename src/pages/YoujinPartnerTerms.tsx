@@ -56,7 +56,7 @@ export default function YoujinPartnerTerms() {
             <p>3.2 <strong>佣金收益权益</strong></p>
             <ul className="list-disc pl-6 space-y-1">
               <li>用户通过您的体验包成为正式用户后，其后续付费消费您可获得佣金分成</li>
-              <li>佣金比例根据您的合伙人等级确定（L1: 20%, L2: 35%, L3: 50%）</li>
+              <li>佣金比例根据您的合伙人等级确定（L1: 18%, L2: 30%, L3: 50%）</li>
               <li>佣金为永久制，只要用户持续付费，您将持续获得分成</li>
             </ul>
             <p>3.3 <strong>其他权益</strong></p>
