@@ -1,76 +1,123 @@
 
 
-## 社区帖子「一键美化」排版优化功能
+## 修复支付宝订单显示「微信支付」标签的问题
 
-为社区帖子的创建和编辑页面增加 AI 一键美化按钮，用户点击后自动优化文字排版（加段落、标点、分行、适当 Emoji），保留原意不变。
+### 问题分析
+
+从数据库记录中确认，支付宝订单的 `pay_type` 字段已正确存储为 `alipay_h5`：
+```
+order_no: ALI20260207070549TMZ3W8
+pay_type: alipay_h5
+status: paid
+```
+
+**但问题出在前端显示逻辑**：两个组件在查询 `orders` 表时没有读取 `pay_type` 字段，而是硬编码为 `wechat_pay`。
 
 ---
 
-### 功能说明
+### 需要修改的文件
 
-1. 在「发布帖子」和「编辑帖子」的内容输入框旁，各增加一个「一键美化」按钮
-2. 用户写完内容后点击按钮，AI 自动优化排版：
-   - 合理分段（避免大段文字堆在一起）
-   - 修正标点符号
-   - 适当添加 Emoji 点缀
-   - 纠正明显错别字
-   - 保持原意和语气不变
-3. 优化后的文本直接替换到输入框中，用户可继续编辑
+| 文件 | 问题 | 修复方案 |
+|------|------|----------|
+| `src/components/PurchaseHistory.tsx` | 查询时未取 `pay_type`，硬编码 `source: 'wechat_pay'` | 读取 `pay_type` 并根据值动态设置来源 |
+| `src/components/admin/UserDetailDialog.tsx` | 同上 | 同上 |
 
 ---
 
 ### 技术实现
 
-#### 1. 新建后端函数：`supabase/functions/beautify-post/index.ts`
+#### 1. `PurchaseHistory.tsx` 修改
 
-- 调用 Lovable AI Gateway（`google/gemini-3-flash-preview` 模型）
-- System Prompt 指导 AI 进行纯排版优化，不改变内容含义
-- 处理 429（限流）和 402（额度不足）错误码
-- 清理可能的 Markdown 包裹格式
+**查询部分（第 29 行）**：
+```typescript
+// 修改前
+.select('id, order_no, package_name, amount, status, paid_at, created_at')
 
-```text
-调用流程：
-前端点击按钮 -> supabase.functions.invoke('beautify-post', { body: { content } })
-             -> AI 返回优化后文本 -> 替换输入框内容
+// 修改后（增加 pay_type）
+.select('id, order_no, package_name, amount, status, paid_at, created_at, pay_type')
 ```
 
-#### 2. 修改前端组件
+**类型定义（第 10 行）**：
+```typescript
+// 修改前
+source: 'wechat_pay' | 'admin_charge';
 
-**`src/components/community/PostComposer.tsx`（创建帖子）**：
-- 新增 `beautifying` 状态
-- 新增 `handleBeautify` 函数：调用后端 `beautify-post`，将返回结果写入 `content` state
-- 在「内容」Label 旁添加「一键美化」按钮（Sparkles 图标），内容为空或正在美化时禁用
-- 按钮样式：ghost variant，小号，与 Label 同行右对齐
-
-**`src/components/community/PostEditDialog.tsx`（编辑帖子）**：
-- 同样新增 `beautifying` 状态和 `handleBeautify` 函数
-- 在「内容」Label 旁添加同样的「一键美化」按钮
-- 添加 `Sparkles` 和 `Loader2` 图标的 import
-
-#### 3. AI Prompt 设计
-
+// 修改后（增加支付宝类型）
+source: 'wechat_pay' | 'alipay_pay' | 'admin_charge';
 ```
-你是专业的社区帖子排版优化助手。请优化用户的帖子内容排版，使其更易读、美观。
 
-规则：
-1. 合理分段，每段不超过 3-4 句话
-2. 修正标点符号（如漏掉的句号、逗号）
-3. 纠正明显的错别字
-4. 在合适的位置添加 1-3 个相关的 Emoji（不要过多）
-5. 严格保持原文含义和语气不变
-6. 不要添加标题或额外的内容
-7. 直接返回优化后的文本，不要任何解释或 markdown 格式
+**数据映射（第 46 行）**：
+```typescript
+// 修改前
+source: 'wechat_pay' as const,
+
+// 修改后（根据 pay_type 动态判断）
+source: (o.pay_type === 'alipay_h5' ? 'alipay_pay' : 'wechat_pay') as const,
+```
+
+**显示标签（第 145 行）**：
+```typescript
+// 修改前
+{purchase.source === 'wechat_pay' ? '微信支付' : '管理员充值'}
+
+// 修改后
+{purchase.source === 'alipay_pay' ? '支付宝' : 
+ purchase.source === 'wechat_pay' ? '微信支付' : '管理员充值'}
+```
+
+**图标显示（第 81-86 行）**：
+```typescript
+// 增加支付宝图标
+const getSourceIcon = (source: 'wechat_pay' | 'alipay_pay' | 'admin_charge') => {
+  if (source === 'alipay_pay') {
+    return <CreditCard className="h-4 w-4 text-blue-600" />;
+  }
+  if (source === 'wechat_pay') {
+    return <CreditCard className="h-4 w-4 text-green-600" />;
+  }
+  return <Gift className="h-4 w-4 text-amber-600" />;
+};
+```
+
+#### 2. `UserDetailDialog.tsx` 修改
+
+**查询部分（第 233 行）**：
+```typescript
+// 修改前
+.select('id, order_no, package_name, amount, status, created_at')
+
+// 修改后
+.select('id, order_no, package_name, amount, status, created_at, pay_type')
+```
+
+**类型定义**：
+在 `PurchaseRecord` 接口的 `source` 类型中增加 `'alipay_pay'`
+
+**数据映射（第 259 行）**：
+```typescript
+// 修改前
+source: 'wechat_pay',
+
+// 修改后
+source: order.pay_type === 'alipay_h5' ? 'alipay_pay' : 'wechat_pay',
+```
+
+**显示标签（约第 596 行）**：
+```typescript
+// 修改前
+{record.source === 'wechat_pay' ? '微信支付' : ...}
+
+// 修改后
+{record.source === 'alipay_pay' ? '支付宝' :
+ record.source === 'wechat_pay' ? '微信支付' : ...}
 ```
 
 ---
 
-### 涉及文件
+### 预期效果
 
-| 文件 | 操作 |
-|------|------|
-| `supabase/functions/beautify-post/index.ts` | 新建 |
-| `src/components/community/PostComposer.tsx` | 修改 |
-| `src/components/community/PostEditDialog.tsx` | 修改 |
-
-不涉及数据库变更，不影响现有支付或其他功能流程。
+修复后，用户在「购买历史」中将看到：
+- 支付宝订单显示 **「支付宝」** 标签（蓝色图标）
+- 微信订单显示 **「微信支付」** 标签（绿色图标）
+- 管理员充值显示 **「管理员充值」** 标签（橙色图标）
 
