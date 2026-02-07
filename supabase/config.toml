@@ -427,3 +427,6 @@ verify_jwt = false
 
 [functions.redeem-camp-activation-code]
 verify_jwt = true
+
+[functions.generate-experience-config]
+verify_jwt = false
