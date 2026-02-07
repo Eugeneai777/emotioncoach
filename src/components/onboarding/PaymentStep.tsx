@@ -272,8 +272,16 @@ export function PaymentStep({
 
       setOrderNo(data.orderNo);
       setPayUrl(data.payUrl);
-      setStatus('ready');
       startPolling(data.orderNo);
+      
+      // 自动跳转支付宝支付
+      if (data.payUrl) {
+        setStatus('polling');
+        window.location.href = data.payUrl;
+        return;
+      }
+      
+      setStatus('ready');
 
       // 设置15分钟超时
       timeoutRef.current = setTimeout(() => {
