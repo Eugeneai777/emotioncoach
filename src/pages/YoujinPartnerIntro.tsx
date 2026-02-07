@@ -380,7 +380,7 @@ export default function YoujinPartnerIntro() {
             <div className="space-y-2">
               <p className="font-medium">Q: 可以分成哪些产品？</p>
               <p className="text-sm text-muted-foreground">
-                A: 所有有劲产品线共11款付费产品（不含绽放训练营）。详见上方"可分成产品一览"。
+                A: 有劲产品线共7款可分成产品（365会员、训练营、合伙人套餐），体验包（¥9.9小工具）不参与佣金分成。详见上方"可分成产品一览"。
               </p>
             </div>
 

@@ -136,7 +136,7 @@ export function EntryTypeSelector({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                扫码直接获得体验套餐
+                扫码免费获得体验套餐，消耗1个名额，无收入
               </p>
             </div>
 
@@ -159,7 +159,7 @@ export function EntryTypeSelector({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                支付后获得体验套餐
+                支付¥9.9获得体验套餐，消耗1个名额，¥9.9归你
               </p>
             </div>
           </div>
@@ -220,6 +220,8 @@ export function EntryTypeSelector({
         <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded-lg space-y-1">
           <p>💡 设置影响固定推广链接和分享二维码</p>
           <p>🔗 用户通过推广链接注册后将永久绑定为你的学员</p>
+          <p>📦 体验包从预购名额中扣减，不参与佣金分成</p>
+          <p>💵 付费模式下，用户支付的¥9.9全额为你的收入</p>
         </div>
       </CardContent>
     </Card>
