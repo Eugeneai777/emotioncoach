@@ -25,7 +25,8 @@ import {
   Mail,
   Share2,
   Tent,
-  Key
+  Key,
+  Gift
 } from "lucide-react";
 import {
   Sidebar,
@@ -111,7 +112,8 @@ const NAV_GROUPS = [
       { key: "share-cards", label: "分享卡片", path: "/admin/share-cards", icon: Share2 },
       { key: "og-preview", label: "OG预览", path: "/admin/og-preview", icon: Share2 },
       { key: "sync", label: "同步状态", path: "/admin/sync", icon: RefreshCw },
-      { key: "service", label: "客服管理", path: "/admin/service", icon: Headphones }
+      { key: "service", label: "客服管理", path: "/admin/service", icon: Headphones },
+      { key: "experience-items", label: "体验包管理", path: "/admin/experience-items", icon: Gift }
     ]
   }
 ];
