@@ -303,7 +303,7 @@ const Community = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="community" />
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
