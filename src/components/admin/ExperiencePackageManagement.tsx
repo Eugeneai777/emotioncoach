@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExperienceItem {
@@ -35,6 +36,7 @@ interface PackageOption {
   package_name: string;
   product_line: string;
   price: number | null;
+  description: string | null;
 }
 
 interface FormData {
@@ -82,6 +84,7 @@ export function ExperiencePackageManagement() {
   const [deleteTarget, setDeleteTarget] = useState<ExperienceItem | null>(null);
   const [editingItem, setEditingItem] = useState<ExperienceItem | null>(null);
   const [formData, setFormData] = useState<FormData>({ ...INITIAL_FORM });
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   // Fetch experience items
   const { data: items, isLoading } = useQuery({
@@ -102,7 +105,7 @@ export function ExperiencePackageManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("packages")
-        .select("package_key, package_name, product_line, price")
+        .select("package_key, package_name, product_line, price, description")
         .eq("is_active", true)
         .order("display_order");
       if (error) throw error;
@@ -120,7 +123,7 @@ export function ExperiencePackageManagement() {
       const { error } = await supabase
         .from("partner_experience_items" as any)
         .insert({
-          item_key: data.package_key, // use package_key as item_key
+          item_key: data.package_key,
           package_key: data.package_key,
           name: data.name,
           value: data.value,
@@ -214,18 +217,69 @@ export function ExperiencePackageManagement() {
     });
   };
 
-  // When selecting a package, auto-fill name and description
+  // AI auto-generate config for a selected package
+  const generateAiConfig = async (pkg: PackageOption) => {
+    setIsAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-experience-config', {
+        body: {
+          package_name: pkg.package_name,
+          description: pkg.description || '',
+          price: pkg.price,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data && typeof data === 'object' && !data.error) {
+        setFormData((prev) => ({
+          ...prev,
+          icon: data.icon || prev.icon,
+          value: data.value || prev.value,
+          description: data.description || prev.description,
+          features: Array.isArray(data.features) && data.features.length > 0
+            ? data.features
+            : prev.features,
+          color_theme: data.color_theme || prev.color_theme,
+        }));
+        toast.success("AI 配置已生成，可修改后保存");
+      } else {
+        throw new Error(data?.error || 'AI 返回异常');
+      }
+    } catch (err: any) {
+      console.error('AI generate error:', err);
+      toast.error(err.message || "AI 生成失败，请手动填写");
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  // When selecting a package, auto-fill name and trigger AI config
   const handlePackageSelect = (packageKey: string) => {
     const pkg = packages?.find((p) => p.package_key === packageKey);
     if (pkg) {
       setFormData((prev) => ({
         ...prev,
         package_key: pkg.package_key,
-        name: prev.name || pkg.package_name,
-        value: prev.value || (pkg.price ? `¥${pkg.price}` : ""),
+        name: pkg.package_name,
+        value: "",
+        icon: "",
+        description: "",
+        features: [""],
+        color_theme: "blue",
       }));
+      // Trigger AI auto-config
+      generateAiConfig(pkg);
     } else {
       setFormData((prev) => ({ ...prev, package_key: packageKey }));
+    }
+  };
+
+  // Regenerate AI config for current package
+  const handleRegenerate = () => {
+    const pkg = packages?.find((p) => p.package_key === formData.package_key);
+    if (pkg) {
+      generateAiConfig(pkg);
     }
   };
 
@@ -296,7 +350,7 @@ export function ExperiencePackageManagement() {
         <div>
           <h2 className="text-2xl font-bold">体验包管理</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            从已有产品（工具/测评）中选择，配置为合伙人体验包项目
+            从已有产品（工具/测评）中选择，AI 自动生成配置，确认后保存
           </p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -315,13 +369,15 @@ export function ExperiencePackageManagement() {
               setFormData={setFormData}
               packages={availablePackages || []}
               onPackageSelect={handlePackageSelect}
+              onRegenerate={handleRegenerate}
+              isAiGenerating={isAiGenerating}
               isEditing={false}
             />
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 取消
               </Button>
-              <Button onClick={handleSubmit} disabled={createMutation.isPending}>
+              <Button onClick={handleSubmit} disabled={createMutation.isPending || isAiGenerating}>
                 添加
               </Button>
             </div>
@@ -426,13 +482,15 @@ export function ExperiencePackageManagement() {
             setFormData={setFormData}
             packages={availablePackages || []}
             onPackageSelect={handlePackageSelect}
+            onRegenerate={handleRegenerate}
+            isAiGenerating={isAiGenerating}
             isEditing={true}
           />
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSubmit} disabled={updateMutation.isPending}>
+            <Button onClick={handleSubmit} disabled={updateMutation.isPending || isAiGenerating}>
               保存
             </Button>
           </div>
@@ -468,12 +526,16 @@ function ExperienceItemForm({
   setFormData,
   packages,
   onPackageSelect,
+  onRegenerate,
+  isAiGenerating,
   isEditing,
 }: {
   formData: FormData;
   setFormData: (data: FormData) => void;
   packages: PackageOption[];
   onPackageSelect: (key: string) => void;
+  onRegenerate: () => void;
+  isAiGenerating: boolean;
   isEditing: boolean;
 }) {
   const addFeature = () => {
@@ -544,6 +606,36 @@ function ExperienceItemForm({
         )}
       </div>
 
+      {/* AI Loading State */}
+      {isAiGenerating && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            <span className="text-sm font-medium text-primary">AI 配置生成中...</span>
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        </div>
+      )}
+
+      {/* Regenerate Button - show when package is selected and not generating */}
+      {formData.package_key && !isAiGenerating && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRegenerate}
+            className="gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            重新生成 AI 配置
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>显示名称 *</Label>
@@ -551,6 +643,7 @@ function ExperienceItemForm({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="体验包显示的名称"
+            disabled={isAiGenerating}
           />
         </div>
         <div>
@@ -559,6 +652,7 @@ function ExperienceItemForm({
             value={formData.value}
             onChange={(e) => setFormData({ ...formData, value: e.target.value })}
             placeholder="如: 50点、1次"
+            disabled={isAiGenerating}
           />
         </div>
       </div>
@@ -570,6 +664,7 @@ function ExperienceItemForm({
             value={formData.icon}
             onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
             placeholder="如: 🎯"
+            disabled={isAiGenerating}
           />
         </div>
         <div>
@@ -577,6 +672,7 @@ function ExperienceItemForm({
           <Select
             value={formData.color_theme}
             onValueChange={(value) => setFormData({ ...formData, color_theme: value })}
+            disabled={isAiGenerating}
           >
             <SelectTrigger>
               <SelectValue />
@@ -599,6 +695,7 @@ function ExperienceItemForm({
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="体验包简要描述"
           rows={2}
+          disabled={isAiGenerating}
         />
       </div>
 
@@ -630,18 +727,19 @@ function ExperienceItemForm({
               value={feature}
               onChange={(e) => updateFeature(index, e.target.value)}
               placeholder="如: 10次AI教练对话"
+              disabled={isAiGenerating}
             />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => removeFeature(index)}
-              disabled={formData.features.length === 1}
+              disabled={formData.features.length === 1 || isAiGenerating}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         ))}
-        <Button variant="outline" size="sm" onClick={addFeature}>
+        <Button variant="outline" size="sm" onClick={addFeature} disabled={isAiGenerating}>
           <Plus className="w-4 h-4 mr-2" />
           添加特性
         </Button>
