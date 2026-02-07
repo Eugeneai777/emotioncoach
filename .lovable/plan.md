@@ -1,73 +1,98 @@
 
 
-## 需求概述
+## 财富觉醒训练营兑换码兑换页面
 
-让有劲合伙人在自己的后台面板中，能够消耗1个体验包名额（prepurchase_count），为自己的账号激活全部4种体验包产品：
-- 尝鲜会员（50点AI额度）
-- 情绪健康测评
-- SCL-90心理测评
-- 财富卡点测评
+### 目标
 
-## 实现方案
+创建一个独立的训练营兑换页面（`/wealth-camp-activate`），允许用户通过兑换码免费开通财富觉醒训练营，流程与现有的财富测评激活码页面（`/wealth-block-activate`）保持一致的交互模式。
 
-### 1. 新增后端函数：`partner-self-redeem`
-
-创建一个新的 Edge Function，处理合伙人自用兑换逻辑。核心流程：
+### 整体流程
 
 ```text
-验证用户身份
-  -> 确认是活跃合伙人
-  -> 检查 prepurchase_count >= 1
-  -> 检查用户是否已拥有全部4种产品（防止重复兑换）
-  -> 为用户创建订单/订阅记录（复用 claim-partner-entry 的授权逻辑）
-  -> 扣减 prepurchase_count
-  -> 返回成功结果
+用户访问 /wealth-camp-activate
+  -> 输入兑换码
+  -> 未登录？弹窗提示登录，暂存兑换码到 localStorage
+  -> 已登录？调用后端验证兑换码
+  -> 后端验证通过 -> 创建 user_camp_purchases 记录（price=0, 免费开通）
+  -> 标记兑换码为已使用
+  -> 前端跳转到训练营介绍页（/wealth-camp-intro）开始训练
 ```
 
-与现有 `claim-partner-entry` 的区别：
-- 跳过"不能领取自己的推广福利"检查（因为这是合法的自用场景）
-- 不创建 `partner_referrals` 推荐关系记录
-- 不增加 `total_referrals` 计数
+### 需要的变更
 
-### 2. 新增前端组件：`PartnerSelfRedeemCard`
+#### 1. 新建数据库表：`wealth_camp_activation_codes`
 
-在合伙人面板的"推广"Tab 中添加一个"自用兑换"卡片，包含：
-- 标题和说明文字："使用1个体验包名额为自己开通全部产品"
-- 4种产品的权益展示列表（与 EntryTypeSelector 中的 EXPERIENCE_PACKAGES 一致）
-- "立即兑换"按钮（消耗1个名额）
-- 兑换成功后的状态展示
-- 已兑换状态：检查用户是否已拥有这些产品，若已拥有则显示"已开通"
+复用现有 `wealth_assessment_activation_codes` 的结构，新建一张训练营专用的兑换码表：
 
-### 3. 修改现有文件
+| 列名 | 类型 | 说明 |
+|------|------|------|
+| id | uuid | 主键 |
+| code | text | 兑换码（唯一） |
+| batch_name | text | 批次名称 |
+| source_channel | text | 来源渠道 |
+| is_used | boolean | 是否已使用 |
+| redeemed_by | uuid | 兑换用户 ID |
+| redeemed_at | timestamptz | 兑换时间 |
+| expires_at | timestamptz | 过期时间 |
+| created_at | timestamptz | 创建时间 |
 
-**`src/components/partner/YoujinPartnerDashboard.tsx`**：
-- 在"推广"Tab 中引入并渲染 `PartnerSelfRedeemCard` 组件
-- 传入 partner 信息
+#### 2. 新建后端函数：`redeem-camp-activation-code`
+
+核心逻辑（参考现有 `redeem-activation-code`）：
+
+- 验证用户身份（JWT）
+- 验证兑换码有效性（存在、未使用、未过期）
+- 检查用户是否已购买训练营（查询 `user_camp_purchases`）
+- 创建购买记录（`user_camp_purchases` 表，price=0, payment_method='activation_code'）
+- 标记兑换码为已使用
+- 返回成功信息
+
+#### 3. 新建前端页面：`/wealth-camp-activate`
+
+参考现有 `WealthBlockActivate.tsx` 的 UI 和交互模式：
+
+- 主题色保持琥珀/橙色渐变（与训练营风格统一）
+- 输入框：兑换码输入（自动大写，tracking-widest 等宽字体）
+- 登录检测：未登录用户先引导登录，兑换码暂存 `localStorage`
+- 兑换成功：显示成功动画，2 秒后跳转到 `/wealth-camp-intro`
+- 信息卡片：展示训练营核心权益（7天冥想、财富教练对话、打卡社区等）
+
+#### 4. 路由注册
+
+在 `App.tsx` 中添加 `/wealth-camp-activate` 路由。
 
 ### 文件变更清单
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `supabase/functions/partner-self-redeem/index.ts` | 新建 | 后端兑换逻辑 |
-| `src/components/partner/PartnerSelfRedeemCard.tsx` | 新建 | 自用兑换UI卡片 |
-| `src/components/partner/YoujinPartnerDashboard.tsx` | 修改 | 引入自用兑换卡片 |
+| 数据库迁移 | 新建 | 创建 `wealth_camp_activation_codes` 表 + RLS 策略 |
+| `supabase/functions/redeem-camp-activation-code/index.ts` | 新建 | 训练营兑换码后端验证和开通 |
+| `src/pages/WealthCampActivate.tsx` | 新建 | 训练营兑换页面 |
+| `src/App.tsx` | 修改 | 添加路由和懒加载 |
+| `supabase/config.toml` | 修改 | 注册新 Edge Function |
 
-## 技术细节
+### 技术细节
 
-### Edge Function: `partner-self-redeem`
+**Edge Function: `redeem-camp-activation-code`**
 
-- 使用 service_role 客户端操作数据库（绕过 RLS）
-- 通过 JWT 验证用户身份
-- 授权逻辑与 `claim-partner-entry` 保持一致：
-  - 尝鲜会员：创建 subscription + 增加 user_accounts quota
-  - 3种测评：创建 orders 记录（amount=0, status=paid）
-- 订单号前缀使用 `SELF` 以区分来源
+- 使用 `service_role` 客户端绕过 RLS 进行数据库操作
+- 查询 `wealth_camp_activation_codes` 表验证兑换码
+- 成功后写入 `user_camp_purchases`：
+  - `camp_type`: `'wealth_block_7'`
+  - `camp_name`: `'财富觉醒训练营（兑换码）'`
+  - `purchase_price`: `0`
+  - `payment_method`: `'activation_code'`
+  - `payment_status`: `'completed'`
+- 订单号前缀使用 `CAMP-ACT`
 
-### 前端组件
+**前端页面: `WealthCampActivate.tsx`**
 
-- 使用 `useAuth` 获取当前用户
-- 使用 `usePartner` 获取合伙人信息
-- 调用 `supabase.functions.invoke('partner-self-redeem')` 执行兑换
-- 兑换前检查：通过查询 orders 表判断是否已拥有对应产品
-- 兑换成功后刷新页面数据
+- 复用 `WealthBlockActivate.tsx` 的交互逻辑（输入、登录检测、localStorage 暂存）
+- 兑换成功后跳转到 `/wealth-camp-intro`（已购买状态，可直接开始训练营）
+- 已拥有训练营权限的用户直接提示并跳转
+
+**数据库 RLS 策略**
+
+- `wealth_camp_activation_codes` 表不开放前端直接访问
+- 所有操作通过 Edge Function 的 `service_role` 客户端完成
 
