@@ -279,13 +279,12 @@ export function PaymentStep({
         timestamp: Date.now(),
       }));
 
-      // 立即跳转到支付宝支付页面
+      // 2秒后自动跳转到支付宝支付页面
       if (data.payUrl) {
         setIsRedirecting(true);
-        // 使用 setTimeout 确保状态更新后再跳转，给用户一个视觉反馈
         setTimeout(() => {
           window.location.href = data.payUrl;
-        }, 100);
+        }, 2000); // 2秒后自动跳转
         return;
       }
 
