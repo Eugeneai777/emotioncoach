@@ -1,5 +1,5 @@
 export interface ProductCategory {
-  id: 'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach';
+  id: 'youjin-member' | 'tools-99' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach';
   name: string;
   emoji: string;
   gradient: string;
@@ -17,6 +17,15 @@ export const productCategories: ProductCategory[] = [
     description: '日常成长必备，性价比之选',
     tagline: '解锁全部AI功能',
     buttonGradient: 'from-orange-500/20 to-amber-500/20'
+  },
+  {
+    id: 'tools-99',
+    name: '9.9工具',
+    emoji: '🧰',
+    gradient: 'from-cyan-500 to-blue-500',
+    description: '先体验后付费，每项仅¥9.9',
+    tagline: '先体验后付费 · 每项仅¥9.9',
+    buttonGradient: 'from-cyan-500/20 to-blue-500/20'
   },
   {
     id: 'youjin-camp',

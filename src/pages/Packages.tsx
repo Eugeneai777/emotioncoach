@@ -32,7 +32,7 @@ export default function Packages() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { showTour, completeTour } = usePageTour('packages');
-  const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach'>('youjin-member');
+  const [activeTab, setActiveTab] = useState<'youjin-member' | 'tools-99' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner' | 'bloom-coach'>('youjin-member');
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
   
   // 支付弹窗状态
