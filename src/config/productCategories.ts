@@ -20,7 +20,7 @@ export const productCategories: ProductCategory[] = [
   },
   {
     id: 'tools-99',
-    name: '9.9工具',
+    name: '有劲小工具',
     emoji: '🧰',
     gradient: 'from-cyan-500 to-blue-500',
     description: '先体验后付费，每项仅¥9.9',
