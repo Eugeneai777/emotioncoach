@@ -85,7 +85,7 @@ export default function PartnerTypeSelector() {
               
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">佣金模式</p>
-                <p className="font-medium">预购体验包，根据数量获得20%-50%佣金</p>
+                <p className="font-medium">预购体验包，根据数量获得18%-50%佣金</p>
               </div>
 
               <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function PartnerTypeSelector() {
                   <li>• 预购100-1000份体验包（含4项权益）</li>
                   <li>• 通过分发体验包建立用户关系</li>
                   <li>• 用户购买11款有劲产品都能分成</li>
-                  <li>• 佣金比例20%-50%，取决于预购数量</li>
+                  <li>• 佣金比例18%-50%，取决于预购数量</li>
                   <li>• 适合长期经营，建立私域流量</li>
                 </ul>
               </div>
