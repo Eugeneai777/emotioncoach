@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Save } from "lucide-react";
+import { Loader2, Sparkles, Save, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +38,7 @@ const PostEditDialog = ({
   const [imageUrls, setImageUrls] = useState<string[]>(post.image_urls || []);
   const [saving, setSaving] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [beautifying, setBeautifying] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
   const { session } = useAuth();
   const { toast } = useToast();
@@ -97,6 +98,26 @@ const PostEditDialog = ({
       });
     } finally {
       setGeneratingImage(false);
+    }
+  };
+
+  const handleBeautify = async () => {
+    if (!content.trim()) return;
+    setBeautifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("beautify-post", {
+        body: { content: content.trim() },
+      });
+      if (error) throw error;
+      if (data?.beautified) {
+        setContent(data.beautified);
+        toast({ title: "排版优化完成 ✨", description: "内容已自动美化，你可以继续编辑" });
+      }
+    } catch (error: any) {
+      console.error("美化失败:", error);
+      toast({ title: "美化失败", description: "请稍后重试", variant: "destructive" });
+    } finally {
+      setBeautifying(false);
     }
   };
 
@@ -176,7 +197,29 @@ const PostEditDialog = ({
 
           {/* 内容编辑 */}
           <div className="space-y-2">
-            <Label htmlFor="post-content">内容</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="post-content">内容</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleBeautify}
+                disabled={beautifying || !content.trim()}
+                className="h-7 gap-1 text-xs text-muted-foreground hover:text-primary"
+              >
+                {beautifying ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    美化中...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-3 w-3" />
+                    一键美化
+                  </>
+                )}
+              </Button>
+            </div>
             <textarea
               id="post-content"
               value={content}
