@@ -119,7 +119,7 @@ export function Tools99Grid({ onPurchase }: Tools99GridProps) {
           <h2 className="text-lg font-bold">🧰 有劲小工具</h2>
           <p className="text-sm text-muted-foreground mt-1">每项仅 <span className="text-primary font-bold">¥9.9</span></p>
           <div className="flex flex-wrap justify-center gap-2 mt-3">
-            {['先体验后付费', '专业工具', '即买即用'].map((tag) => (
+            {['专业工具', '即买即用'].map((tag) => (
               <span
                 key={tag}
                 className="px-2.5 py-1 text-xs font-medium rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/20"
