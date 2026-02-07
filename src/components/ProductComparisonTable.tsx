@@ -537,16 +537,23 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <MobileCardTitle>可分发的体验包</MobileCardTitle>
             </MobileCardHeader>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className="bg-teal-50 dark:bg-teal-950/30 rounded-lg p-2 text-center">
-                <span className="text-xl">💎</span>
-                <p className="text-xs font-medium mt-1">尝鲜会员</p>
-                <p className="text-xs text-teal-600">¥9.9</p>
-              </div>
-              <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2 text-center">
-                <span className="text-xl">📊</span>
-                <p className="text-xs font-medium mt-1">财富测评</p>
-                <p className="text-xs text-purple-600">¥9.9</p>
-              </div>
+              {experiencePackageItems.slice(0, 4).map((item) => {
+                const colors: Record<string, string> = {
+                  blue: 'bg-teal-50 dark:bg-teal-950/30 text-teal-600',
+                  green: 'bg-green-50 dark:bg-green-950/30 text-green-600',
+                  amber: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600',
+                  purple: 'bg-purple-50 dark:bg-purple-950/30 text-purple-600',
+                };
+                const colorClass = colors[item.color_theme] || colors.blue;
+                const [bgClass, , valueClass] = colorClass.split(' ');
+                return (
+                  <div key={item.item_key} className={`${colorClass.split(' text-')[0]} rounded-lg p-2 text-center`}>
+                    <span className="text-xl">{item.icon}</span>
+                    <p className="text-xs font-medium mt-1">{item.name}</p>
+                    <p className={`text-xs ${valueClass}`}>{item.value}</p>
+                  </div>
+                );
+              })}
             </div>
           </MobileCard>
 
@@ -686,7 +693,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
               <p className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                <span>合伙人可使用以上4种体验包来转化用户，用户扫码兑换后<strong className="text-foreground">永久绑定</strong>为您的学员。</span>
+                <span>合伙人可使用以上{experiencePackageItems.length}种体验包来转化用户，用户扫码兑换后<strong className="text-foreground">永久绑定</strong>为您的学员。</span>
               </p>
             </div>
           </CardContent>
