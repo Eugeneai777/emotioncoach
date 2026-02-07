@@ -418,3 +418,6 @@ verify_jwt = true
 
 [functions.generate-activation-codes]
 verify_jwt = true
+
+[functions.beautify-post]
+verify_jwt = true

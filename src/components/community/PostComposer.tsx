@@ -12,7 +12,7 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { ProfileCompletionPrompt } from "@/components/profile/ProfileCompletionPrompt";
 import ImageUploader from "./ImageUploader";
 import { ImageStyleSelector } from "./ImageStyleSelector";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Wand2 } from "lucide-react";
 
 interface PostComposerProps {
   open: boolean;
@@ -28,6 +28,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [beautifying, setBeautifying] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const { toast } = useToast();
@@ -150,6 +151,26 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
     }
   };
 
+  const handleBeautify = async () => {
+    if (!content.trim()) return;
+    setBeautifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("beautify-post", {
+        body: { content: content.trim() },
+      });
+      if (error) throw error;
+      if (data?.beautified) {
+        setContent(data.beautified);
+        toast({ title: "排版优化完成 ✨", description: "内容已自动美化，你可以继续编辑" });
+      }
+    } catch (error: any) {
+      console.error("美化失败:", error);
+      toast({ title: "美化失败", description: "请稍后重试", variant: "destructive" });
+    } finally {
+      setBeautifying(false);
+    }
+  };
+
   return (
     <>
       {/* 资料完善引导弹窗 */}
@@ -185,7 +206,29 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
 
           {/* 内容 */}
           <div className="space-y-2">
-            <Label>内容</Label>
+            <div className="flex items-center justify-between">
+              <Label>内容</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleBeautify}
+                disabled={beautifying || !content.trim()}
+                className="h-7 gap-1 text-xs text-muted-foreground hover:text-primary"
+              >
+                {beautifying ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    美化中...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-3 w-3" />
+                    一键美化
+                  </>
+                )}
+              </Button>
+            </div>
             <Textarea
               placeholder="分享你的故事、感悟或成长..."
               value={content}
