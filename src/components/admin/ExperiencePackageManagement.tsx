@@ -30,8 +30,14 @@ interface ExperienceItem {
   created_at: string;
 }
 
+interface PackageOption {
+  package_key: string;
+  package_name: string;
+  product_line: string;
+  price: number | null;
+}
+
 interface FormData {
-  item_key: string;
   package_key: string;
   name: string;
   value: string;
@@ -58,7 +64,6 @@ const COLOR_BADGE_MAP: Record<string, string> = {
 };
 
 const INITIAL_FORM: FormData = {
-  item_key: "",
   package_key: "",
   name: "",
   value: "",
@@ -78,6 +83,7 @@ export function ExperiencePackageManagement() {
   const [editingItem, setEditingItem] = useState<ExperienceItem | null>(null);
   const [formData, setFormData] = useState<FormData>({ ...INITIAL_FORM });
 
+  // Fetch experience items
   const { data: items, isLoading } = useQuery({
     queryKey: ["admin-experience-items"],
     queryFn: async () => {
@@ -85,9 +91,22 @@ export function ExperiencePackageManagement() {
         .from("partner_experience_items" as any)
         .select("*")
         .order("display_order");
-
       if (error) throw error;
       return (data || []) as unknown as ExperienceItem[];
+    },
+  });
+
+  // Fetch available packages for selection
+  const { data: packages } = useQuery({
+    queryKey: ["admin-packages-for-experience"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("packages")
+        .select("package_key, package_name, product_line, price")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return (data || []) as PackageOption[];
     },
   });
 
@@ -101,7 +120,7 @@ export function ExperiencePackageManagement() {
       const { error } = await supabase
         .from("partner_experience_items" as any)
         .insert({
-          item_key: data.item_key,
+          item_key: data.package_key, // use package_key as item_key
           package_key: data.package_key,
           name: data.name,
           value: data.value,
@@ -195,10 +214,24 @@ export function ExperiencePackageManagement() {
     });
   };
 
+  // When selecting a package, auto-fill name and description
+  const handlePackageSelect = (packageKey: string) => {
+    const pkg = packages?.find((p) => p.package_key === packageKey);
+    if (pkg) {
+      setFormData((prev) => ({
+        ...prev,
+        package_key: pkg.package_key,
+        name: prev.name || pkg.package_name,
+        value: prev.value || (pkg.price ? `¥${pkg.price}` : ""),
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, package_key: packageKey }));
+    }
+  };
+
   const openEditDialog = (item: ExperienceItem) => {
     setEditingItem(item);
     setFormData({
-      item_key: item.item_key,
       package_key: item.package_key,
       name: item.name,
       value: item.value || "",
@@ -213,16 +246,16 @@ export function ExperiencePackageManagement() {
   };
 
   const handleSubmit = () => {
-    if (!formData.item_key || !formData.package_key || !formData.name) {
-      toast.error("请填写必填字段");
+    if (!formData.package_key || !formData.name) {
+      toast.error("请选择关联产品并填写名称");
       return;
     }
     if (editingItem) {
       updateMutation.mutate({
         id: editingItem.id,
         data: {
-          item_key: formData.item_key,
           package_key: formData.package_key,
+          item_key: formData.package_key,
           name: formData.name,
           value: formData.value,
           icon: formData.icon,
@@ -238,6 +271,21 @@ export function ExperiencePackageManagement() {
     }
   };
 
+  // Get package name for display
+  const getPackageName = (packageKey: string) => {
+    return packages?.find((p) => p.package_key === packageKey)?.package_name || packageKey;
+  };
+
+  // Filter out packages already used (except the one being edited)
+  const availablePackages = packages?.filter(
+    (pkg) =>
+      !items?.some(
+        (item) =>
+          item.package_key === pkg.package_key &&
+          item.id !== editingItem?.id
+      )
+  );
+
   if (isLoading) {
     return <div className="flex justify-center p-8">加载中...</div>;
   }
@@ -245,19 +293,30 @@ export function ExperiencePackageManagement() {
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">体验包管理</h2>
+        <div>
+          <h2 className="text-2xl font-bold">体验包管理</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            从已有产品（工具/测评）中选择，配置为合伙人体验包项目
+          </p>
+        </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="w-4 h-4 mr-2" />
-              添加体验包
+              添加体验项
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>添加体验包</DialogTitle>
+              <DialogTitle>添加体验项</DialogTitle>
             </DialogHeader>
-            <ExperienceItemForm formData={formData} setFormData={setFormData} />
+            <ExperienceItemForm
+              formData={formData}
+              setFormData={setFormData}
+              packages={availablePackages || []}
+              onPackageSelect={handlePackageSelect}
+              isEditing={false}
+            />
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 取消
@@ -276,8 +335,7 @@ export function ExperiencePackageManagement() {
             <TableHead>排序</TableHead>
             <TableHead>图标</TableHead>
             <TableHead>名称</TableHead>
-            <TableHead>Item Key</TableHead>
-            <TableHead>关联套餐</TableHead>
+            <TableHead>关联产品</TableHead>
             <TableHead>价值</TableHead>
             <TableHead>颜色主题</TableHead>
             <TableHead>启用状态</TableHead>
@@ -309,10 +367,14 @@ export function ExperiencePackageManagement() {
               </TableCell>
               <TableCell className="text-xl">{item.icon || "—"}</TableCell>
               <TableCell className="font-medium">{item.name}</TableCell>
-              <TableCell className="font-mono text-sm text-muted-foreground">
-                {item.item_key}
+              <TableCell>
+                <div>
+                  <span className="text-sm">{getPackageName(item.package_key)}</span>
+                  <span className="block text-xs text-muted-foreground font-mono">
+                    {item.package_key}
+                  </span>
+                </div>
               </TableCell>
-              <TableCell className="font-mono text-sm">{item.package_key}</TableCell>
               <TableCell>{item.value || "—"}</TableCell>
               <TableCell>
                 <Badge
@@ -333,18 +395,10 @@ export function ExperiencePackageManagement() {
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(item)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => openEditDialog(item)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteTarget(item)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -353,8 +407,8 @@ export function ExperiencePackageManagement() {
           ))}
           {(!items || items.length === 0) && (
             <TableRow>
-              <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                暂无体验包数据
+              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                暂无体验包数据，点击"添加体验项"从已有产品中选择
               </TableCell>
             </TableRow>
           )}
@@ -367,7 +421,13 @@ export function ExperiencePackageManagement() {
           <DialogHeader>
             <DialogTitle>编辑体验包</DialogTitle>
           </DialogHeader>
-          <ExperienceItemForm formData={formData} setFormData={setFormData} />
+          <ExperienceItemForm
+            formData={formData}
+            setFormData={setFormData}
+            packages={availablePackages || []}
+            onPackageSelect={handlePackageSelect}
+            isEditing={true}
+          />
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               取消
@@ -406,9 +466,15 @@ export function ExperiencePackageManagement() {
 function ExperienceItemForm({
   formData,
   setFormData,
+  packages,
+  onPackageSelect,
+  isEditing,
 }: {
   formData: FormData;
   setFormData: (data: FormData) => void;
+  packages: PackageOption[];
+  onPackageSelect: (key: string) => void;
+  isEditing: boolean;
 }) {
   const addFeature = () => {
     setFormData({ ...formData, features: [...formData.features, ""] });
@@ -427,42 +493,72 @@ function ExperienceItemForm({
     });
   };
 
+  // Group packages by product_line
+  const groupedPackages = packages.reduce<Record<string, PackageOption[]>>((acc, pkg) => {
+    const line = pkg.product_line || "other";
+    if (!acc[line]) acc[line] = [];
+    acc[line].push(pkg);
+    return acc;
+  }, {});
+
+  const productLineLabels: Record<string, string> = {
+    youjin: "有劲产品",
+    bloom: "绽放产品",
+    other: "其他",
+  };
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Item Key *</Label>
-          <Input
-            value={formData.item_key}
-            onChange={(e) => setFormData({ ...formData, item_key: e.target.value })}
-            placeholder="如: ai_points"
-          />
-        </div>
-        <div>
-          <Label>关联套餐 (package_key) *</Label>
-          <Input
-            value={formData.package_key}
-            onChange={(e) => setFormData({ ...formData, package_key: e.target.value })}
-            placeholder="如: basic"
-          />
-        </div>
+      {/* Package Selection */}
+      <div>
+        <Label>选择关联产品 *</Label>
+        <Select
+          value={formData.package_key}
+          onValueChange={onPackageSelect}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="请选择一个产品（工具/测评）" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(groupedPackages).map(([line, pkgs]) => (
+              <div key={line}>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {productLineLabels[line] || line}
+                </div>
+                {pkgs.map((pkg) => (
+                  <SelectItem key={pkg.package_key} value={pkg.package_key}>
+                    <span>{pkg.package_name}</span>
+                    {pkg.price != null && (
+                      <span className="ml-2 text-muted-foreground">¥{pkg.price}</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </div>
+            ))}
+          </SelectContent>
+        </Select>
+        {formData.package_key && (
+          <p className="text-xs text-muted-foreground mt-1">
+            关联套餐: <code className="bg-muted px-1 rounded">{formData.package_key}</code>
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>名称 *</Label>
+          <Label>显示名称 *</Label>
           <Input
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="如: AI能量点数"
+            placeholder="体验包显示的名称"
           />
         </div>
         <div>
-          <Label>价值</Label>
+          <Label>价值展示</Label>
           <Input
             value={formData.value}
             onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-            placeholder="如: ¥99"
+            placeholder="如: 50点、1次"
           />
         </div>
       </div>
