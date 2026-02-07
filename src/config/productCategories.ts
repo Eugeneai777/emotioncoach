@@ -23,8 +23,8 @@ export const productCategories: ProductCategory[] = [
     name: '有劲小工具',
     emoji: '🧰',
     gradient: 'from-cyan-500 to-blue-500',
-    description: '先体验后付费，每项仅¥9.9',
-    tagline: '先体验后付费 · 每项仅¥9.9',
+    description: '测评诊断 · 日常工具',
+    tagline: '每项仅¥9.9',
     buttonGradient: 'from-cyan-500/20 to-blue-500/20'
   },
   {
