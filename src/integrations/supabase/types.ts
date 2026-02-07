@@ -5851,25 +5851,17 @@ export type Database = {
           voice_gender: string | null
           voice_rate: number | null
           wechat_appid: string | null
-          wechat_appsecret: string | null
           wechat_bind_prompted: boolean | null
           wechat_bind_prompted_at: string | null
           wechat_enabled: boolean | null
-          wechat_encoding_aes_key: string | null
-          wechat_proxy_auth_token: string | null
           wechat_proxy_enabled: boolean | null
           wechat_proxy_url: string | null
           wechat_template_ids: Json | null
-          wechat_token: string | null
           wecom_agent_id: string | null
           wecom_bot_enabled: boolean | null
-          wecom_bot_encoding_aes_key: string | null
-          wecom_bot_token: string | null
           wecom_corp_id: string | null
-          wecom_corp_secret: string | null
           wecom_enabled: boolean | null
           wecom_mention_all: boolean | null
-          wecom_webhook_url: string | null
         }
         Insert: {
           ai_call_enabled?: boolean | null
@@ -5922,25 +5914,17 @@ export type Database = {
           voice_gender?: string | null
           voice_rate?: number | null
           wechat_appid?: string | null
-          wechat_appsecret?: string | null
           wechat_bind_prompted?: boolean | null
           wechat_bind_prompted_at?: string | null
           wechat_enabled?: boolean | null
-          wechat_encoding_aes_key?: string | null
-          wechat_proxy_auth_token?: string | null
           wechat_proxy_enabled?: boolean | null
           wechat_proxy_url?: string | null
           wechat_template_ids?: Json | null
-          wechat_token?: string | null
           wecom_agent_id?: string | null
           wecom_bot_enabled?: boolean | null
-          wecom_bot_encoding_aes_key?: string | null
-          wecom_bot_token?: string | null
           wecom_corp_id?: string | null
-          wecom_corp_secret?: string | null
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
-          wecom_webhook_url?: string | null
         }
         Update: {
           ai_call_enabled?: boolean | null
@@ -5993,25 +5977,17 @@ export type Database = {
           voice_gender?: string | null
           voice_rate?: number | null
           wechat_appid?: string | null
-          wechat_appsecret?: string | null
           wechat_bind_prompted?: boolean | null
           wechat_bind_prompted_at?: string | null
           wechat_enabled?: boolean | null
-          wechat_encoding_aes_key?: string | null
-          wechat_proxy_auth_token?: string | null
           wechat_proxy_enabled?: boolean | null
           wechat_proxy_url?: string | null
           wechat_template_ids?: Json | null
-          wechat_token?: string | null
           wecom_agent_id?: string | null
           wecom_bot_enabled?: boolean | null
-          wecom_bot_encoding_aes_key?: string | null
-          wecom_bot_token?: string | null
           wecom_corp_id?: string | null
-          wecom_corp_secret?: string | null
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
-          wecom_webhook_url?: string | null
         }
         Relationships: []
       }
@@ -7476,6 +7452,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_integration_secrets: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          wechat_appid: string | null
+          wechat_appsecret: string | null
+          wechat_encoding_aes_key: string | null
+          wechat_proxy_auth_token: string | null
+          wechat_token: string | null
+          wecom_bot_encoding_aes_key: string | null
+          wecom_bot_token: string | null
+          wecom_corp_secret: string | null
+          wecom_webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          wechat_appid?: string | null
+          wechat_appsecret?: string | null
+          wechat_encoding_aes_key?: string | null
+          wechat_proxy_auth_token?: string | null
+          wechat_token?: string | null
+          wecom_bot_encoding_aes_key?: string | null
+          wecom_bot_token?: string | null
+          wecom_corp_secret?: string | null
+          wecom_webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          wechat_appid?: string | null
+          wechat_appsecret?: string | null
+          wechat_encoding_aes_key?: string | null
+          wechat_proxy_auth_token?: string | null
+          wechat_token?: string | null
+          wecom_bot_encoding_aes_key?: string | null
+          wecom_bot_token?: string | null
+          wecom_corp_secret?: string | null
+          wecom_webhook_url?: string | null
+        }
+        Relationships: []
+      }
       user_quick_menu_config: {
         Row: {
           created_at: string
@@ -8663,6 +8687,15 @@ export type Database = {
       increment_session_count: {
         Args: { p_session_id: string }
         Returns: undefined
+      }
+      lookup_partner_invitation: {
+        Args: { p_invite_code: string }
+        Returns: {
+          invite_code: string
+          invitee_name: string
+          order_amount: number
+          status: string
+        }[]
       }
       refund_coaching_balance: {
         Args: {

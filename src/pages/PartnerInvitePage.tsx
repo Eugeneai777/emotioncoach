@@ -29,11 +29,9 @@ export default function PartnerInvitePage() {
       }
 
       try {
-        // Check invitation status
+        // Check invitation status via secure lookup function
         const { data, error: fetchError } = await supabase
-          .from('partner_invitations')
-          .select('invite_code, invitee_name, status, order_amount')
-          .eq('invite_code', code.toUpperCase())
+          .rpc('lookup_partner_invitation', { p_invite_code: code.toUpperCase() })
           .maybeSingle();
 
         if (fetchError || !data) {
