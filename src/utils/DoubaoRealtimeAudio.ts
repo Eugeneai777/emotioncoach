@@ -854,14 +854,17 @@ export class DoubaoRealtimeChat {
       type: 'session.init',
       instructions: finalInstructions,
       tools: this.config.tools,
-      voice_type: finalVoiceType
+      voice_type: finalVoiceType,
+      // ✅ 关键修复：传递重连标志，让 relay 禁用开场白
+      is_reconnect: this.config.is_reconnect === true
     };
 
     this.ws.send(JSON.stringify(initRequest));
     console.log('[DoubaoChat] 📤 Session init request sent:', {
       voice_type: finalVoiceType,
       instructions_length: finalInstructions?.length || 0,
-      instructions_preview: finalInstructions?.substring(0, 80) + '...'
+      instructions_preview: finalInstructions?.substring(0, 80) + '...',
+      is_reconnect: this.config.is_reconnect === true
     });
   }
 
