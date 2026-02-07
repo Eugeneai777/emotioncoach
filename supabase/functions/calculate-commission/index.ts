@@ -103,6 +103,10 @@ Deno.serve(async (req) => {
     if (l1Referral && l1Referral.partners) {
       const partner = l1Referral.partners as any;
       
+      // 检查合伙人资格是否过期（partner_expires_at 不为 null 且已过期）
+      if (partner.partner_expires_at && new Date(partner.partner_expires_at) < new Date()) {
+        console.log(`L1 partner ${partner.id} has expired (expires_at: ${partner.partner_expires_at}), skipping commission`);
+      } else {
       // 检查是否应计算佣金：产品线匹配 或 绽放合伙人推广有劲产品
       const isMatchingProductLine = partner.partner_type === productLine;
       const isBloomPromotingYoujin = shouldBloomGetYoujinCommission(partner.partner_type, productLine);
@@ -227,7 +231,8 @@ Deno.serve(async (req) => {
             }
           }
         }
-      }
+        }
+      } // end of expiry check
     }
 
     // L2 推荐人
@@ -241,7 +246,10 @@ Deno.serve(async (req) => {
     if (l2Referral && l2Referral.partners) {
       const partner = l2Referral.partners as any;
       
-      if (partner.partner_type === productLine) {
+      // 检查合伙人资格是否过期
+      if (partner.partner_expires_at && new Date(partner.partner_expires_at) < new Date()) {
+        console.log(`L2 partner ${partner.id} has expired (expires_at: ${partner.partner_expires_at}), skipping commission`);
+      } else if (partner.partner_type === productLine) {
         // 获取合伙人等级规则ID
         const { data: levelRule } = await supabase
           .from('partner_level_rules')
@@ -325,7 +333,7 @@ Deno.serve(async (req) => {
             }
           }
         }
-      }
+      } // end of expiry/productline check
     }
 
     return new Response(
