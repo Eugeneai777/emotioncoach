@@ -24,7 +24,7 @@ export const productCategories: ProductCategory[] = [
     emoji: '🧰',
     gradient: 'from-cyan-500 to-blue-500',
     description: '测评诊断 · 日常工具',
-    tagline: '每项仅¥9.9',
+    tagline: '测评诊断 · 日常工具',
     buttonGradient: 'from-cyan-500/20 to-blue-500/20'
   },
   {
