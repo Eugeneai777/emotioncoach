@@ -22,6 +22,7 @@ import { PartnerOverviewCard } from "./PartnerOverviewCard";
 import { PartnerQuickActions } from "./PartnerQuickActions";
 import { CompactConversionFunnel } from "./CompactConversionFunnel";
 import { PartnerUpgradeCard } from "./PartnerUpgradeCard";
+import { PartnerSelfRedeemCard } from "./PartnerSelfRedeemCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -138,7 +139,13 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
 
         {/* 推广Tab */}
         <TabsContent value="promote" className="space-y-4 mt-4">
-          {/* 推广指南 - 放在最上面 */}
+          {/* 自用兑换体验包 */}
+          <PartnerSelfRedeemCard 
+            partnerId={partner.id} 
+            prepurchaseCount={partner.prepurchase_count || 0} 
+          />
+
+          {/* 推广指南 */}
           <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-medium text-teal-800">💡 如何推广</h4>
