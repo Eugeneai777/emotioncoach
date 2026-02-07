@@ -7,7 +7,7 @@ import { Receipt, Calendar, Coins, Package, CreditCard, Gift } from "lucide-reac
 
 interface UnifiedPurchaseRecord {
   id: string;
-  source: 'wechat_pay' | 'admin_charge';
+  source: 'wechat_pay' | 'alipay_pay' | 'admin_charge';
   name: string;
   amount: number;
   quota?: number;
@@ -26,7 +26,7 @@ export function PurchaseHistory() {
       const [ordersResult, subscriptionsResult] = await Promise.all([
         supabase
           .from('orders')
-          .select('id, order_no, package_name, amount, status, paid_at, created_at')
+          .select('id, order_no, package_name, amount, status, paid_at, created_at, pay_type')
           .eq('user_id', user.id)
           .eq('status', 'paid')
           .order('created_at', { ascending: false })
@@ -43,7 +43,7 @@ export function PurchaseHistory() {
       const records: UnifiedPurchaseRecord[] = [
         ...(ordersResult.data || []).map(o => ({
           id: o.id,
-          source: 'wechat_pay' as const,
+          source: (o.pay_type === 'alipay_h5' ? 'alipay_pay' : 'wechat_pay') as 'wechat_pay' | 'alipay_pay',
           name: o.package_name || '套餐购买',
           amount: o.amount || 0,
           status: o.status,
@@ -78,7 +78,10 @@ export function PurchaseHistory() {
     }
   };
 
-  const getSourceIcon = (source: 'wechat_pay' | 'admin_charge') => {
+  const getSourceIcon = (source: 'wechat_pay' | 'alipay_pay' | 'admin_charge') => {
+    if (source === 'alipay_pay') {
+      return <CreditCard className="h-4 w-4 text-blue-600" />;
+    }
     if (source === 'wechat_pay') {
       return <CreditCard className="h-4 w-4 text-green-600" />;
     }
@@ -142,7 +145,8 @@ export function PurchaseHistory() {
                       <span className="text-primary font-medium">+{purchase.quota}次</span>
                     ) : (
                       <Badge variant="outline" className="text-[10px] py-0">
-                        {purchase.source === 'wechat_pay' ? '微信支付' : '管理员充值'}
+                        {purchase.source === 'alipay_pay' ? '支付宝' :
+                         purchase.source === 'wechat_pay' ? '微信支付' : '管理员充值'}
                       </Badge>
                     )}
                   </div>

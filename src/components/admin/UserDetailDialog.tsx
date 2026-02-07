@@ -43,7 +43,7 @@ interface UsageRecord {
 
 interface PurchaseRecord {
   id: string;
-  source: 'wechat_pay' | 'admin_charge' | 'camp_purchase';
+  source: 'wechat_pay' | 'alipay_pay' | 'admin_charge' | 'camp_purchase';
   order_id?: string;
   package_name?: string;
   amount: number;
@@ -227,10 +227,10 @@ export function UserDetailDialog({
     queryFn: async () => {
       // 并行查询三个来源
       const [ordersResult, subscriptionsResult, campPurchasesResult] = await Promise.all([
-        // 微信支付订单
+        // 微信/支付宝订单
         supabase
           .from('orders')
-          .select('id, order_no, package_name, amount, status, created_at')
+          .select('id, order_no, package_name, amount, status, created_at, pay_type')
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(50),
@@ -252,11 +252,11 @@ export function UserDetailDialog({
 
       const records: PurchaseRecord[] = [];
 
-      // 合并微信支付订单
+      // 合并微信/支付宝订单
       ordersResult.data?.forEach(order => {
         records.push({
           id: order.id,
-          source: 'wechat_pay',
+          source: order.pay_type === 'alipay_h5' ? 'alipay_pay' : 'wechat_pay',
           order_id: order.order_no,
           package_name: order.package_name,
           amount: order.amount || 0,
@@ -579,10 +579,12 @@ export function UserDetailDialog({
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div className={`p-2 rounded-full ${
-                                  record.source === 'wechat_pay' 
+                                  record.source === 'alipay_pay'
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : record.source === 'wechat_pay' 
                                     ? 'bg-green-100 text-green-600'
                                     : record.source === 'admin_charge'
-                                    ? 'bg-blue-100 text-blue-600'
+                                    ? 'bg-purple-100 text-purple-600'
                                     : 'bg-amber-100 text-amber-600'
                                 }`}>
                                   <CreditCard className="h-4 w-4" />
@@ -593,7 +595,8 @@ export function UserDetailDialog({
                                       {record.package_name || '未知套餐'}
                                     </span>
                                     <Badge variant="outline" className="text-xs">
-                                      {record.source === 'wechat_pay' ? '微信支付' : 
+                                      {record.source === 'alipay_pay' ? '支付宝' :
+                                       record.source === 'wechat_pay' ? '微信支付' : 
                                        record.source === 'admin_charge' ? '管理员充值' : '训练营'}
                                     </Badge>
                                   </div>
