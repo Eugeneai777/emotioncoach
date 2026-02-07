@@ -58,7 +58,7 @@ interface PaymentStepProps {
 }
 
 type PaymentStatus = 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
-type PayType = 'h5' | 'native' | 'miniprogram';
+type PayType = 'h5' | 'native' | 'miniprogram' | 'alipay_h5';
 
 export function PaymentStep({
   packageInfo,
@@ -81,6 +81,9 @@ export function PaymentStep({
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const isWechat = isWeChatBrowser();
   const isMiniProgram = isWeChatMiniProgram();
+  
+  // 判断是否使用支付宝（移动端 + 非微信 + 非小程序）
+  const shouldUseAlipay = isMobile && !isWechat && !isMiniProgram;
 
   const clearTimers = () => {
     if (pollingRef.current) {
@@ -146,7 +149,14 @@ export function PaymentStep({
     setStatus('loading');
     setErrorMessage('');
 
-    // 确定支付类型
+    // 移动端非微信/非小程序：使用支付宝H5
+    if (shouldUseAlipay) {
+      setPayType('alipay_h5');
+      await createAlipayOrder();
+      return;
+    }
+
+    // 确定微信支付类型
     let selectedPayType: PayType;
     let userOpenId: string | undefined;
 
@@ -223,6 +233,65 @@ export function PaymentStep({
       console.error('Create order error:', error);
       setErrorMessage(error.message || '创建订单失败');
       setStatus('failed');
+    }
+  };
+
+  // 创建支付宝订单
+  const createAlipayOrder = async () => {
+    try {
+      const targetPath = returnUrl || window.location.pathname;
+      const redirectUrl = window.location.origin + targetPath + '?payment_success=1';
+
+      const { data, error } = await supabase.functions.invoke('create-alipay-order', {
+        body: {
+          packageKey: packageInfo.package_key,
+          packageName: packageInfo.package_name,
+          amount: packageInfo.price,
+          userId: tempUserId || 'guest',
+          returnUrl: redirectUrl,
+        },
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || '创建订单失败');
+
+      // 处理已购买响应
+      if (data.alreadyPaid) {
+        toast.success('您已购买过此产品，无需重复购买！');
+        setStatus('success');
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+        setTimeout(() => {
+          onSuccess(data.orderNo);
+        }, 1500);
+        return;
+      }
+
+      setOrderNo(data.orderNo);
+      setPayUrl(data.payUrl);
+      setStatus('ready');
+      startPolling(data.orderNo);
+
+      // 设置15分钟超时
+      timeoutRef.current = setTimeout(() => {
+        clearTimers();
+        setStatus('expired');
+      }, 15 * 60 * 1000);
+
+    } catch (error: any) {
+      console.error('[PaymentStep] Alipay order error:', error);
+      setErrorMessage(error.message || '创建订单失败');
+      setStatus('failed');
+    }
+  };
+
+  // 跳转支付宝支付
+  const handleAlipayPay = () => {
+    if (payUrl) {
+      window.location.href = payUrl;
     }
   };
 
@@ -308,13 +377,13 @@ export function PaymentStep({
 
       {/* 支付区域 */}
       <div className={`flex items-center justify-center border rounded-lg bg-white ${
-        payType === 'h5' && (status === 'ready' || status === 'polling') ? 'h-32' : 'h-52'
+        (payType === 'h5' || payType === 'alipay_h5') && (status === 'ready' || status === 'polling') ? 'h-32' : 'h-52'
       }`}>
         {status === 'loading' && (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="text-sm text-muted-foreground">
-              {payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
+              {payType === 'h5' || payType === 'alipay_h5' ? '正在创建订单...' : '正在生成二维码...'}
             </span>
           </div>
         )}
@@ -332,8 +401,18 @@ export function PaymentStep({
           </div>
         )}
 
+        {/* 支付宝订单已创建 */}
+        {(status === 'ready' || status === 'polling') && payType === 'alipay_h5' && (
+          <div className="flex flex-col items-center gap-2 text-[#1677FF]">
+            <svg className="h-12 w-12" viewBox="0 0 1024 1024" fill="currentColor">
+              <path d="M789.6 455.2c-12.8-4.8-88-30.4-127.2-41.6 28.8-52.8 49.6-113.6 59.2-178.4H560V176h-96v59.2h-80V176h-96v59.2H128v64h160v56H128v64h256.8c-3.2 19.2-7.2 38.4-12.8 56H128v64h213.6c-52.8 84-128 150.4-219.2 190.4l44.8 68.8c76-33.6 140-83.2 192-144v169.6h96v-208c17.6 11.2 36 21.6 55.2 30.4l44.8-68.8c-35.2-16-68-36-97.6-59.2h188v-64H460c5.6-17.6 10.4-36.8 14.4-56h149.6v56H560v64h136.8c-16 40-40.8 76-72.8 106.4l57.6 52c48-44.8 84.8-100 106.4-161.6 100 36.8 197.6 75.2 197.6 75.2l36-68s-97.6-40.8-232-91.2z"/>
+            </svg>
+            <span className="font-medium">订单已创建</span>
+          </div>
+        )}
+
         {status === 'success' && (
-          <div className="flex flex-col items-center gap-2 text-green-500">
+          <div className="flex flex-col items-center gap-2 text-green-600">
             <CheckCircle className="h-16 w-16" />
             <span className="font-medium">支付成功</span>
           </div>
@@ -357,7 +436,26 @@ export function PaymentStep({
       {/* 操作按钮 */}
       {(status === 'ready' || status === 'polling') && (
         <div className="space-y-3">
-          {payType === 'h5' ? (
+          {payType === 'alipay_h5' ? (
+            <>
+              <Button
+                onClick={handleAlipayPay}
+                className="w-full gap-2 bg-[#1677FF] hover:bg-[#0958D9] text-white"
+              >
+                <ExternalLink className="h-4 w-4" />
+                跳转支付宝支付
+              </Button>
+              {status === 'polling' && (
+                <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  等待支付确认...
+                </p>
+              )}
+              <p className="text-xs text-center text-muted-foreground">
+                支付完成后请返回此页面，系统将自动确认订单
+              </p>
+            </>
+          ) : payType === 'h5' ? (
             <>
               <Button
                 onClick={handleH5Pay}
