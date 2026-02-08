@@ -1,129 +1,136 @@
 
 
-## Simplify Share Card Generation and Sharing Flow
+## 简化 WealthInviteCardDialog：从 6 个标签精简到 3 个固定模板
 
-### Current Problems
+### 当前问题
 
-The sharing system has **26+ share dialog components** with massive code duplication. Each dialog re-implements nearly identical logic for:
+WealthInviteCardDialog 组件有 **780 行代码**，显示 6 个只有 emoji 图标的小标签（🎁🔓👁️✨🏕️🏅），用户很难理解每个标签代表什么。其中 3 种卡片（情绪锁🔓、盲区👁️、转变✨）**没有任何调用方使用过**，属于冗余功能。成就墙卡片还额外有"风格选择器"和"路径选择器"，增加了不必要的操作复杂度。
 
-1. **State management**: `isGenerating`, `previewUrl`, `showPreview`, `copied` -- repeated in every dialog
-2. **Image generation**: `generateCardBlob` / `generateCanvas` + `canvasToBlob` -- each dialog writes its own version
-3. **Environment-aware sharing**: WeChat detection, native share fallback, image preview -- copy-pasted across 14+ files
-4. **Copy link**: Clipboard API with toast feedback -- duplicated everywhere
-5. **Scroll lock cleanup**: Each dialog needs its own cleanup logic
-6. **Avatar proxy**: `getProxiedAvatarUrl` helper is copy-pasted into 4+ files
+### 改造方案
 
-Meanwhile, there's already a `ShareDialogBase` component that handles all of this -- but **most dialogs don't use it**.
+#### 1. 保留 3 种核心卡片
 
-### Current Architecture (Fragmented)
+根据全部 5 个调用方的实际使用情况，只保留以下 3 种模板：
+
+| 模板 | 说明 | 调用场景 | 二维码链接 |
+|------|------|----------|-----------|
+| 测评结果 🎁 | 财富觉醒指数 + 反应模式 | 测评完成页、结果页 | /wealth-block |
+| 训练营邀请 🏕️ | 7天训练营进度 + 邀请 | 训练营打卡页 | /wealth-camp-intro |
+| 成就墙 🏅 | 成就徽章展示 | 成就页、毕业页 | /wealth-camp-intro |
+
+**删除 3 种不用的卡片**（从此对话框中移除导入，文件本身保留不删）：
+- FearAwakeningShareCard（情绪锁）
+- BlockRevealShareCard（盲区）
+- TransformationValueShareCard（转变）
+
+#### 2. 选择器 UI 改造
+
+将 6 个小 emoji 图标替换为 3 个清晰的大按钮，包含图标和文字标签：
 
 ```text
-ShareDialogBase (unified, but only used by ~3 dialogs)
-    |
-    +-- handles generation, preview, copy, environment detection
-    
-Meanwhile, each legacy dialog does it all manually:
-    AliveCheckShareDialog   -- 189 lines of boilerplate
-    EmotionButtonShareDialog -- 189 lines of boilerplate  
-    WealthJournalShareDialog -- 266 lines of boilerplate
-    EmotionHealthShareDialog -- 140 lines of boilerplate
-    GratitudeJournalShareDialog -- 263 lines of boilerplate
-    WealthInviteCardDialog  -- 798 lines (complex multi-tab)
-    ...and 10+ more
++----------------------------------+
+|  生成分享卡片                  X  |
++----------------------------------+
+|                                  |
+|  [🎁 测评结果] [🏕️ 训练营] [🏅 成就墙]  |
+|                                  |
+|  +----------------------------+  |
+|  |                            |  |
+|  |      卡片预览（缩放显示）    |  |
+|  |                            |  |
+|  +----------------------------+  |
+|                                  |
+|  [  分享  ]                [复制] |
+|  点击分享按钮，或复制链接后发送    |
++----------------------------------+
 ```
 
-### Simplification Plan
+#### 3. 成就墙卡片固定模板
 
-#### Phase 1: Migrate Legacy Dialogs to ShareDialogBase
+移除当前的风格选择器（深邃/渐变/简约/霓虹）和路径选择器（里程碑/坚持/成长/社交），使用固定默认值：
+- 风格：`dark`（深邃）
+- 路径：`null`（显示全部）
 
-Refactor the following 5 highest-duplication dialogs to use `ShareDialogBase` instead of manually implementing generation/sharing logic. Each dialog shrinks from 150-250 lines to ~30-50 lines.
+#### 4. 二维码与署名自动处理
 
-| Dialog | Before | After (est.) | Change |
-|--------|--------|--------------|--------|
-| `AliveCheckShareDialog` | 189 lines | ~40 lines | -79% |
-| `EmotionButtonShareDialog` | 189 lines | ~40 lines | -79% |
-| `EmotionHealthShareDialog` | 140 lines | ~35 lines | -75% |
-| `WealthJournalShareDialog` | 266 lines | ~60 lines | -77% |
-| `GratitudeJournalShareDialog` | 263 lines | ~55 lines | -79% |
+不需要改动 -- 现有的 `useQRCode` + `getPromotionDomain()` + `partnerInfo` 已在各卡片组件内自动生成二维码和合伙人归因链接。本次重构完整保留这些逻辑。
 
-**What each refactored dialog looks like:**
+#### 5. 迁移到 ShareDialogBase
+
+利用上一轮已建好的 `ShareDialogBase` 统一处理：
+- 图片生成（html2canvas）
+- 环境检测（微信/iOS/桌面）
+- 滚动锁清理
+- 复制链接
+- 全屏图片预览
+
+### 技术细节
+
+#### 代码精简：780 行 → 约 180 行
+
+移除的内容：
+- `fearCardRef`、`blindspotCardRef`、`transformCardRef`（3个多余的ref）
+- `achievementPath`、`achievementStyle` 状态及其选择器 UI
+- `handleDownload`、`handleNativeShare`、`handleLinkSharePrompt`、`handleCloseImagePreview`、`handleRegeneratePreview`、`handleCopyLink`（全部由 ShareDialogBase 接管）
+- `FearAwakeningShareCard`、`BlockRevealShareCard`、`TransformationValueShareCard` 的导入和渲染
+- `ShareImagePreview` 的直接使用（由 ShareDialogBase 内部管理）
+- 手动的滚动锁清理逻辑
+
+保留的内容：
+- 用户数据获取逻辑（头像、昵称、合伙人信息、测评数据）
+- `onViewComplete` 3秒查看完成回调
+- `trigger` 属性（支持自定义触发按钮）
+- 所有现有 props 接口（`defaultTab`、`assessmentScore`、`reactionPattern`、`campId` 等）
+- 受控/非受控模式兼容
+
+#### 新增 CardTab 类型
 
 ```tsx
-// Before: 189 lines of boilerplate
-// After: ~40 lines
-const AliveCheckShareDialog = ({ open, onOpenChange, partnerCode }) => {
-  const exportRef = useRef<HTMLDivElement>(null);
-  const shareUrl = partnerCode
-    ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
-    : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
+type CardTab = 'value' | 'camp' | 'achievement';  // 从6种缩减为3种
 
-  return (
-    <ShareDialogBase
-      open={open}
-      onOpenChange={onOpenChange}
-      title="生成分享卡片"
-      shareUrl={shareUrl}
-      fileName="alive-check-share.png"
-      exportCardRef={exportRef}
-      buttonGradient="bg-gradient-to-r from-rose-500 to-pink-500"
-      previewCard={<AliveCheckShareCard partnerCode={partnerCode} />}
-      exportCard={<AliveCheckShareCard ref={exportRef} partnerCode={partnerCode} />}
-    />
-  );
-};
+const CARD_OPTIONS = [
+  { id: 'value', label: '测评结果', emoji: '🎁' },
+  { id: 'camp',  label: '训练营',   emoji: '🏕️' },
+  { id: 'achievement', label: '成就墙', emoji: '🏅' },
+];
 ```
 
-#### Phase 2: Consolidate Avatar Proxy Helper
+#### 动态 exportCardRef 处理
 
-The `getProxiedAvatarUrl` function is copy-pasted into 4+ files. It already exists in `src/utils/avatarUtils.ts`. Remove all local copies and import from the canonical location.
+由于 ShareDialogBase 只接受单个 `exportCardRef`，需要根据 `activeTab` 动态指向对应的卡片 ref：
 
-**Files affected:**
-- `WealthJournalShareDialog.tsx` -- remove local copy, import from utils
-- `WealthInviteCardDialog.tsx` -- remove local copy, import from utils
-- `useOneClickShare.ts` -- remove local copy, import from utils
-
-#### Phase 3: Enhance ShareDialogBase with Scroll Lock Cleanup
-
-Add the scroll lock cleanup logic (from the previous fix) directly into `ShareDialogBase`, so no individual dialog needs to worry about it.
-
-**File:** `src/components/ui/share-dialog-base.tsx`
-
-Add:
 ```tsx
-useEffect(() => {
-  if (!open) {
-    const timer = setTimeout(() => {
-      document.body.removeAttribute('data-scroll-locked');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }, 100);
-    return () => clearTimeout(timer);
-  }
-}, [open]);
+const valueCardRef = useRef<HTMLDivElement>(null);
+const campCardRef = useRef<HTMLDivElement>(null);
+const achievementCardRef = useRef<HTMLDivElement>(null);
+
+const activeCardRef = activeTab === 'value' ? valueCardRef
+  : activeTab === 'camp' ? campCardRef
+  : achievementCardRef;
 ```
 
-### Files to Edit
+#### 调用方兼容性验证
 
-| File | Action |
-|------|--------|
-| `src/components/tools/AliveCheckShareDialog.tsx` | Refactor to use ShareDialogBase |
-| `src/components/tools/EmotionButtonShareDialog.tsx` | Refactor to use ShareDialogBase |
-| `src/components/emotion-health/EmotionHealthShareDialog.tsx` | Refactor to use ShareDialogBase |
-| `src/components/wealth-camp/WealthJournalShareDialog.tsx` | Refactor to use ShareDialogBase |
-| `src/components/gratitude/GratitudeJournalShareDialog.tsx` | Refactor to use ShareDialogBase |
-| `src/components/ui/share-dialog-base.tsx` | Add scroll lock cleanup |
-| `src/hooks/useOneClickShare.ts` | Import avatarUtils instead of local copy |
+全部 5 个调用方无需任何改动：
 
-### What We Are NOT Changing
+| 调用方文件 | defaultTab | 其他 props | 状态 |
+|-----------|-----------|-----------|------|
+| WealthBlockAssessment.tsx | `"value"` | assessmentScore, reactionPattern | 兼容 |
+| WealthBlockResult.tsx | `"value"` | assessmentScore, reactionPattern | 兼容 |
+| WealthCampCheckIn.tsx | `"camp"` | campId, currentDay | 兼容 |
+| CompactAchievementGrid.tsx | `"achievement"` | open/onOpenChange | 兼容 |
+| CampGraduate.tsx | `"achievement"` | campId, currentDay | 兼容 |
 
-- **WealthInviteCardDialog** (798 lines): This is a complex multi-tab dialog with 6 different card types, custom tab switching logic, and data fetching. It needs its own dedicated simplification effort and is out of scope for this round.
-- **ShareDialogBase API**: No breaking changes to the existing component interface.
-- **ShareCardBase / shareCardConfig**: The card rendering and canvas generation layer remains untouched.
+### 修改文件
 
-### Expected Benefits
+| 文件 | 操作 |
+|------|------|
+| `src/components/wealth-camp/WealthInviteCardDialog.tsx` | 主要重写：780行 → 约180行。移除3种卡片、移除选择器、迁移到 ShareDialogBase、使用清晰标签选择器。 |
 
-- ~700 lines of duplicated code removed
-- Scroll lock bug fix automatically applied to all 5 refactored dialogs
-- Future share dialogs take 30 lines instead of 190
-- Single source of truth for generation, sharing, and environment detection logic
+### 不改动的文件
+
+- 各卡片组件文件（AssessmentValueShareCard、WealthCampShareCard、AchievementShareCard）-- 不变
+- FearAwakeningShareCard、BlockRevealShareCard、TransformationValueShareCard 文件 -- 保留在代码库但不再被此对话框导入
+- 全部 5 个调用方文件 -- 无需改动，接口完全兼容
+- shareCardsRegistry.ts -- 保持审计注册记录
 
