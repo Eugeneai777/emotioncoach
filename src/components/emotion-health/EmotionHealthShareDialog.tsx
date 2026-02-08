@@ -1,15 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Button } from "@/components/ui/button";
-import { Download, X, Loader2, Copy, Check } from "lucide-react";
+import { useRef } from "react";
+import { ShareDialogBase } from "@/components/ui/share-dialog-base";
 import { EmotionHealthShareCard } from "./EmotionHealthShareCard";
-import { generateCardDataUrl } from "@/utils/shareCardConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
-import { useToast } from "@/hooks/use-toast";
 import type { EmotionHealthResult } from "./emotionHealthData";
 
 interface EmotionHealthShareDialogProps {
@@ -21,160 +16,39 @@ interface EmotionHealthShareDialogProps {
 export function EmotionHealthShareDialog({ open, onOpenChange, result }: EmotionHealthShareDialogProps) {
   const { user } = useAuth();
   const { profile } = useProfileCompletion();
-  const { toast } = useToast();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [showFullPreview, setShowFullPreview] = useState(false);
-  const [copied, setCopied] = useState(false);
   const exportCardRef = useRef<HTMLDivElement>(null);
 
-  // Get user display info
   const userName = profile?.display_name || user?.user_metadata?.name || '用户';
   const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
-
-  // Share URL
   const shareUrl = `${getPromotionDomain()}/emotion-health`;
 
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (open) {
-      setPreviewUrl(null);
-      setShowFullPreview(false);
-      setCopied(false);
-    }
-  }, [open]);
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      toast({ title: "链接已复制" });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ title: "复制失败", variant: "destructive" });
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!exportCardRef.current) return;
-    
-    setIsGenerating(true);
-    try {
-      const dataUrl = await generateCardDataUrl(exportCardRef, {
-        isWeChat: true,
-        skipImageWait: false,
-      });
-      
-      if (dataUrl) {
-        setPreviewUrl(dataUrl);
-        setShowFullPreview(true);
-        onOpenChange(false); // Close dialog when showing preview
-      }
-    } catch (error) {
-      console.error('Failed to generate share card:', error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleClosePreview = () => {
-    setShowFullPreview(false);
-    setPreviewUrl(null);
-  };
-
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm p-0 gap-0 max-h-[85vh] flex flex-col">
-          <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
-            <DialogTitle className="text-base">分享测评结果</DialogTitle>
-            <VisuallyHidden>
-              <DialogDescription>生成情绪健康测评分享图片或复制分享链接</DialogDescription>
-            </VisuallyHidden>
-          </DialogHeader>
-
-          <div className="p-4 bg-muted/30 overflow-y-auto flex-1 min-h-0">
-            {/* Preview card (scaled) */}
-            <div className="flex justify-center">
-              <div className="transform scale-[0.75] origin-top">
-                <EmotionHealthShareCard
-                  result={result}
-                  userName={userName}
-                  avatarUrl={avatarUrl}
-                />
-              </div>
-            </div>
-
-            {/* Hidden export card (full size) */}
-            <div className="absolute -left-[9999px] top-0">
-              <EmotionHealthShareCard
-                ref={exportCardRef}
-                result={result}
-                userName={userName}
-                avatarUrl={avatarUrl}
-              />
-            </div>
-          </div>
-
-          <div className="p-4 border-t flex-shrink-0">
-            <div className="flex gap-2">
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="flex-1 bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    生成中...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 mr-2" />
-                    生成分享图片
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCopyLink}
-                className="px-4"
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-2">
-              点击生成图片后长按保存到相册
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Full screen image preview */}
-      {showFullPreview && previewUrl && (
-        <div
-          className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4"
-          onClick={handleClosePreview}
-        >
-          <button
-            onClick={handleClosePreview}
-            className="absolute top-4 right-4 text-white/80 hover:text-white z-10"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          
-          <div className="max-w-sm w-full">
-            <img
-              src={previewUrl}
-              alt="分享卡片"
-              className="w-full rounded-xl shadow-2xl"
-            />
-            <p className="text-center text-white/60 text-sm mt-4 animate-pulse">
-              长按图片保存到相册
-            </p>
-          </div>
-        </div>
-      )}
-    </>
+    <ShareDialogBase
+      open={open}
+      onOpenChange={onOpenChange}
+      title="分享测评结果"
+      description="生成情绪健康测评分享图片或复制分享链接"
+      shareUrl={shareUrl}
+      fileName="情绪健康测评.png"
+      buttonGradient="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700"
+      exportCardRef={exportCardRef}
+      previewScale={0.75}
+      useDataUrl
+      previewCard={
+        <EmotionHealthShareCard
+          result={result}
+          userName={userName}
+          avatarUrl={avatarUrl}
+        />
+      }
+      exportCard={
+        <EmotionHealthShareCard
+          ref={exportCardRef}
+          result={result}
+          userName={userName}
+          avatarUrl={avatarUrl}
+        />
+      }
+    />
   );
 }

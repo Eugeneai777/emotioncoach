@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { executeOneClickShare, CardType } from '@/utils/oneClickShare';
+import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PartnerInfo {
@@ -47,23 +48,6 @@ interface UseOneClickShareReturn {
   preloadUserData: () => Promise<void>;
 }
 
-// Helper: Proxy third-party avatar URLs
-const getProxiedAvatarUrl = (avatarUrl?: string): string | undefined => {
-  if (!avatarUrl) return undefined;
-  
-  try {
-    const url = new URL(avatarUrl);
-    const thirdPartyDomains = ['thirdwx.qlogo.cn', 'wx.qlogo.cn', 'qlogo.cn'];
-    const needsProxy = thirdPartyDomains.some(domain => url.hostname.includes(domain));
-    
-    if (needsProxy) {
-      return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(avatarUrl)}`;
-    }
-    return avatarUrl;
-  } catch {
-    return avatarUrl;
-  }
-};
 
 // Separate data fetching to avoid deep type instantiation
 async function fetchShareUserData(campId?: string): Promise<{

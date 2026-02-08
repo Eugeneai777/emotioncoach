@@ -101,12 +101,20 @@ export function ShareDialogBase({
   const { isWeChat, isIOS } = getShareEnvironment();
   const showImagePreview = shouldUseImagePreview();
 
-  // Reset state when dialog opens
+  // Reset state when dialog opens & clean up scroll lock when it closes
   useEffect(() => {
     if (open) {
       setPreviewUrl(null);
       setShowPreview(false);
       setCopied(false);
+    } else {
+      // Clean up scroll lock that Radix Dialog may leave behind
+      const timer = setTimeout(() => {
+        document.body.removeAttribute('data-scroll-locked');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [open]);
 
