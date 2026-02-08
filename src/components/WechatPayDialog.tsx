@@ -929,10 +929,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
     setStatus('polling');
     
+    let pollCount = 0;
     pollingRef.current = setInterval(async () => {
+      pollCount++;
+      // 前2次（0-6秒）只查数据库，给webhook时间到达；第3次起主动查询微信
+      const shouldForceQuery = pollCount >= 3;
       try {
         const { data, error } = await supabase.functions.invoke('check-order-status', {
-          body: { orderNo },
+          body: { orderNo, forceWechatQuery: shouldForceQuery },
         });
 
         if (error) throw error;
@@ -1019,7 +1023,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       try {
         console.log('[WechatPayDialog] Resume check on return, order:', pendingOrderNo);
         const { data, error } = await supabase.functions.invoke('check-order-status', {
-          body: { orderNo: pendingOrderNo },
+          body: { orderNo: pendingOrderNo, forceWechatQuery: true },
         });
         if (error) throw error;
 
@@ -1077,7 +1081,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     const verifyOrder = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('check-order-status', {
-          body: { orderNo: callbackOrderNo },
+          body: { orderNo: callbackOrderNo, forceWechatQuery: true },
         });
         
         if (error) throw error;
