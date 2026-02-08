@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +9,8 @@ import { AICoachCallProvider } from "@/components/coach-call/AICoachCallProvider
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 import { UserPresenceTracker } from "./hooks/useUserPresence";
+import { lazyRetry } from "./utils/lazyRetry";
+import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
 // 页面加载状态组件
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -19,162 +21,162 @@ const PageLoader = () => (
   </div>
 );
 
-// ============= 懒加载页面组件 =============
+// ============= 懒加载页面组件（带重试机制） =============
 // 核心页面（优先加载）
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const WeChatAuth = lazy(() => import("./pages/WeChatAuth"));
-const WeChatOAuthCallback = lazy(() => import("./pages/WeChatOAuthCallback"));
-const DynamicCoach = lazy(() => import("./pages/DynamicCoach"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const Index = lazyRetry(() => import("./pages/Index"));
+const Auth = lazyRetry(() => import("./pages/Auth"));
+const WeChatAuth = lazyRetry(() => import("./pages/WeChatAuth"));
+const WeChatOAuthCallback = lazyRetry(() => import("./pages/WeChatOAuthCallback"));
+const DynamicCoach = lazyRetry(() => import("./pages/DynamicCoach"));
+const NotFound = lazyRetry(() => import("./pages/NotFound"));
 
 // 历史和社区
-const History = lazy(() => import("./pages/History"));
-const Community = lazy(() => import("./pages/Community"));
-const CommunityDiscover = lazy(() => import("./pages/CommunityDiscover"));
+const History = lazyRetry(() => import("./pages/History"));
+const Community = lazyRetry(() => import("./pages/Community"));
+const CommunityDiscover = lazyRetry(() => import("./pages/CommunityDiscover"));
 
 // 设置和统计
-const Settings = lazy(() => import("./pages/Settings"));
-const TagStats = lazy(() => import("./pages/TagStats"));
-const Goals = lazy(() => import("./pages/Goals"));
-const Calendar = lazy(() => import("./pages/Calendar"));
+const Settings = lazyRetry(() => import("./pages/Settings"));
+const TagStats = lazyRetry(() => import("./pages/TagStats"));
+const Goals = lazyRetry(() => import("./pages/Goals"));
+const Calendar = lazyRetry(() => import("./pages/Calendar"));
 
 // 管理后台
-const Admin = lazy(() => import("./pages/Admin"));
+const Admin = lazyRetry(() => import("./pages/Admin"));
 
 // 套餐和支付
-const Packages = lazy(() => import("./pages/Packages"));
-const DeploymentPackage = lazy(() => import("./pages/DeploymentPackage"));
-const Claim = lazy(() => import("./pages/Claim"));
-const PayEntry = lazy(() => import("./pages/PayEntry"));
+const Packages = lazyRetry(() => import("./pages/Packages"));
+const DeploymentPackage = lazyRetry(() => import("./pages/DeploymentPackage"));
+const Claim = lazyRetry(() => import("./pages/Claim"));
+const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 
 // 能量空间
-const EnergyStudio = lazy(() => import("./pages/EnergyStudio"));
-const EnergyStudioIntro = lazy(() => import("./pages/EnergyStudioIntro"));
-const CoachSpace = lazy(() => import("./pages/CoachSpace"));
-const CoachSpaceIntro = lazy(() => import("./pages/CoachSpaceIntro"));
-const PlatformIntro = lazy(() => import("./pages/PlatformIntro"));
+const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
+const EnergyStudioIntro = lazyRetry(() => import("./pages/EnergyStudioIntro"));
+const CoachSpace = lazyRetry(() => import("./pages/CoachSpace"));
+const CoachSpaceIntro = lazyRetry(() => import("./pages/CoachSpaceIntro"));
+const PlatformIntro = lazyRetry(() => import("./pages/PlatformIntro"));
 
 // 训练营相关
-const CampIntro = lazy(() => import("./pages/CampIntro"));
-const CampList = lazy(() => import("./pages/CampList"));
-const CampTemplateDetail = lazy(() => import("./pages/CampTemplateDetail"));
-const CampCheckIn = lazy(() => import("./pages/CampCheckIn"));
-const TrainingCampDetail = lazy(() => import("./components/camp/TrainingCampDetail").then(m => ({ default: m.TrainingCampDetail })));
+const CampIntro = lazyRetry(() => import("./pages/CampIntro"));
+const CampList = lazyRetry(() => import("./pages/CampList"));
+const CampTemplateDetail = lazyRetry(() => import("./pages/CampTemplateDetail"));
+const CampCheckIn = lazyRetry(() => import("./pages/CampCheckIn"));
+const TrainingCampDetail = lazyRetry(() => import("./components/camp/TrainingCampDetail").then(m => ({ default: m.TrainingCampDetail })));
 
 // 团队教练
-const TeamCoaching = lazy(() => import("./pages/TeamCoaching"));
-const TeamCoachingDetail = lazy(() => import("./pages/TeamCoachingDetail"));
+const TeamCoaching = lazyRetry(() => import("./pages/TeamCoaching"));
+const TeamCoachingDetail = lazyRetry(() => import("./pages/TeamCoachingDetail"));
 
 // 亲子教练
-const ParentCampLanding = lazy(() => import("./pages/ParentCampLanding"));
-const ParentCampManual = lazy(() => import("./pages/ParentCampManual"));
-const ParentCoach = lazy(() => import("./pages/ParentCoach"));
-const ParentCoachIntro = lazy(() => import("./pages/ParentCoachIntro"));
-const ParentIntake = lazy(() => import("./pages/ParentIntake"));
-const ParentTeenIntro = lazy(() => import("./pages/ParentTeenIntro"));
-const TeenBind = lazy(() => import("./pages/TeenBind"));
-const TeenCoach = lazy(() => import("./pages/TeenCoach"));
-const TeenChat = lazy(() => import("./pages/TeenChat"));
-const ParentChildDiary = lazy(() => import("./pages/ParentChildDiary"));
+const ParentCampLanding = lazyRetry(() => import("./pages/ParentCampLanding"));
+const ParentCampManual = lazyRetry(() => import("./pages/ParentCampManual"));
+const ParentCoach = lazyRetry(() => import("./pages/ParentCoach"));
+const ParentCoachIntro = lazyRetry(() => import("./pages/ParentCoachIntro"));
+const ParentIntake = lazyRetry(() => import("./pages/ParentIntake"));
+const ParentTeenIntro = lazyRetry(() => import("./pages/ParentTeenIntro"));
+const TeenBind = lazyRetry(() => import("./pages/TeenBind"));
+const TeenCoach = lazyRetry(() => import("./pages/TeenCoach"));
+const TeenChat = lazyRetry(() => import("./pages/TeenChat"));
+const ParentChildDiary = lazyRetry(() => import("./pages/ParentChildDiary"));
 
 // 沟通教练
-const CommunicationCoach = lazy(() => import("./pages/CommunicationCoach"));
-const CommunicationHistory = lazy(() => import("./pages/CommunicationHistory"));
-const CommunicationCoachIntro = lazy(() => import("./pages/CommunicationCoachIntro"));
+const CommunicationCoach = lazyRetry(() => import("./pages/CommunicationCoach"));
+const CommunicationHistory = lazyRetry(() => import("./pages/CommunicationHistory"));
+const CommunicationCoachIntro = lazyRetry(() => import("./pages/CommunicationCoachIntro"));
 
 // 用户相关
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const Introduction = lazy(() => import("./pages/Introduction"));
-const UserManual = lazy(() => import("./pages/UserManual"));
-const Courses = lazy(() => import("./pages/Courses"));
+const UserProfile = lazyRetry(() => import("./pages/UserProfile"));
+const Introduction = lazyRetry(() => import("./pages/Introduction"));
+const UserManual = lazyRetry(() => import("./pages/UserManual"));
+const Courses = lazyRetry(() => import("./pages/Courses"));
 
 // 合伙人相关
-const Partner = lazy(() => import("./pages/Partner"));
-const PartnerBenefits = lazy(() => import("./pages/PartnerBenefits"));
-const PartnerIntro = lazy(() => import("./pages/PartnerIntro"));
-const PartnerTypeSelector = lazy(() => import("./pages/PartnerTypeSelector"));
-const YoujinPartnerIntro = lazy(() => import("./pages/YoujinPartnerIntro"));
-const YoujinPartnerPlan = lazy(() => import("./pages/YoujinPartnerPlan"));
-const PromoGuide = lazy(() => import("./pages/partner/PromoGuide"));
-const CampGraduate = lazy(() => import("./pages/partner/CampGraduate"));
-const PartnerInvitePage = lazy(() => import("./pages/PartnerInvitePage"));
+const Partner = lazyRetry(() => import("./pages/Partner"));
+const PartnerBenefits = lazyRetry(() => import("./pages/PartnerBenefits"));
+const PartnerIntro = lazyRetry(() => import("./pages/PartnerIntro"));
+const PartnerTypeSelector = lazyRetry(() => import("./pages/PartnerTypeSelector"));
+const YoujinPartnerIntro = lazyRetry(() => import("./pages/YoujinPartnerIntro"));
+const YoujinPartnerPlan = lazyRetry(() => import("./pages/YoujinPartnerPlan"));
+const PromoGuide = lazyRetry(() => import("./pages/partner/PromoGuide"));
+const CampGraduate = lazyRetry(() => import("./pages/partner/CampGraduate"));
+const PartnerInvitePage = lazyRetry(() => import("./pages/PartnerInvitePage"));
 
 // 故事教练
-const StoryCoach = lazy(() => import("./pages/StoryCoach"));
-const StoryCoachIntro = lazy(() => import("./pages/StoryCoachIntro"));
-const MyStories = lazy(() => import("./pages/MyStories"));
-const MyPosts = lazy(() => import("./pages/MyPosts"));
+const StoryCoach = lazyRetry(() => import("./pages/StoryCoach"));
+const StoryCoachIntro = lazyRetry(() => import("./pages/StoryCoachIntro"));
+const MyStories = lazyRetry(() => import("./pages/MyStories"));
+const MyPosts = lazyRetry(() => import("./pages/MyPosts"));
 
 // 情绪工具
-const PanicHistory = lazy(() => import("./pages/PanicHistory"));
-const EmotionButtonIntro = lazy(() => import("./pages/EmotionButtonIntro"));
-const EmotionButton = lazy(() => import("./pages/EmotionButton"));
-const EmotionButtonLite = lazy(() => import("./pages/EmotionButtonLite"));
-const AliveCheck = lazy(() => import("./pages/AliveCheck"));
-const AliveCheckLite = lazy(() => import("./pages/AliveCheckLite"));
-const AliveCheckIntro = lazy(() => import("./pages/AliveCheckIntro"));
-const SCL90Page = lazy(() => import("./pages/SCL90Page"));
-const SCL90Lite = lazy(() => import("./pages/SCL90Lite"));
-const EmotionHealthPage = lazy(() => import("./pages/EmotionHealthPage"));
-const EmotionHealthLite = lazy(() => import("./pages/EmotionHealthLite"));
-const AssessmentCoachPage = lazy(() => import("./pages/AssessmentCoachPage"));
+const PanicHistory = lazyRetry(() => import("./pages/PanicHistory"));
+const EmotionButtonIntro = lazyRetry(() => import("./pages/EmotionButtonIntro"));
+const EmotionButton = lazyRetry(() => import("./pages/EmotionButton"));
+const EmotionButtonLite = lazyRetry(() => import("./pages/EmotionButtonLite"));
+const AliveCheck = lazyRetry(() => import("./pages/AliveCheck"));
+const AliveCheckLite = lazyRetry(() => import("./pages/AliveCheckLite"));
+const AliveCheckIntro = lazyRetry(() => import("./pages/AliveCheckIntro"));
+const SCL90Page = lazyRetry(() => import("./pages/SCL90Page"));
+const SCL90Lite = lazyRetry(() => import("./pages/SCL90Lite"));
+const EmotionHealthPage = lazyRetry(() => import("./pages/EmotionHealthPage"));
+const EmotionHealthLite = lazyRetry(() => import("./pages/EmotionHealthLite"));
+const AssessmentCoachPage = lazyRetry(() => import("./pages/AssessmentCoachPage"));
 
 // 生活教练
-const VibrantLifeIntro = lazy(() => import("./pages/VibrantLifeIntro"));
-const VibrantLifeHistory = lazy(() => import("./pages/VibrantLifeHistory"));
-const GratitudeJournalIntro = lazy(() => import("./pages/GratitudeJournalIntro"));
-const GratitudeHistory = lazy(() => import("./pages/GratitudeHistory"));
+const VibrantLifeIntro = lazyRetry(() => import("./pages/VibrantLifeIntro"));
+const VibrantLifeHistory = lazyRetry(() => import("./pages/VibrantLifeHistory"));
+const GratitudeJournalIntro = lazyRetry(() => import("./pages/GratitudeJournalIntro"));
+const GratitudeHistory = lazyRetry(() => import("./pages/GratitudeHistory"));
 
 // 工具和帮助
-const ApiDocs = lazy(() => import("./pages/ApiDocs"));
-const PosterCenter = lazy(() => import("./pages/PosterCenter"));
-const CustomerSupport = lazy(() => import("./pages/CustomerSupport"));
+const ApiDocs = lazyRetry(() => import("./pages/ApiDocs"));
+const PosterCenter = lazyRetry(() => import("./pages/PosterCenter"));
+const CustomerSupport = lazyRetry(() => import("./pages/CustomerSupport"));
 
 // 人工教练
-const HumanCoaches = lazy(() => import("./pages/HumanCoaches"));
-const HumanCoachDetail = lazy(() => import("./pages/HumanCoachDetail"));
-const MyAppointments = lazy(() => import("./pages/MyAppointments"));
-const BecomeCoach = lazy(() => import("./pages/BecomeCoach"));
-const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
+const HumanCoaches = lazyRetry(() => import("./pages/HumanCoaches"));
+const HumanCoachDetail = lazyRetry(() => import("./pages/HumanCoachDetail"));
+const MyAppointments = lazyRetry(() => import("./pages/MyAppointments"));
+const BecomeCoach = lazyRetry(() => import("./pages/BecomeCoach"));
+const CoachDashboard = lazyRetry(() => import("./pages/CoachDashboard"));
 
 // 觉醒系统
-const Awakening = lazy(() => import("./pages/Awakening"));
-const AwakeningLite = lazy(() => import("./pages/AwakeningLite"));
-const AwakeningIntro = lazy(() => import("./pages/AwakeningIntro"));
-const AwakeningSystemIntro = lazy(() => import("./pages/AwakeningSystemIntro"));
-const AwakeningJournal = lazy(() => import("./pages/AwakeningJournal"));
-const TransformationFlow = lazy(() => import("./pages/TransformationFlow"));
+const Awakening = lazyRetry(() => import("./pages/Awakening"));
+const AwakeningLite = lazyRetry(() => import("./pages/AwakeningLite"));
+const AwakeningIntro = lazyRetry(() => import("./pages/AwakeningIntro"));
+const AwakeningSystemIntro = lazyRetry(() => import("./pages/AwakeningSystemIntro"));
+const AwakeningJournal = lazyRetry(() => import("./pages/AwakeningJournal"));
+const TransformationFlow = lazyRetry(() => import("./pages/TransformationFlow"));
 
 // 财富教练
-const WealthBlockAssessment = lazy(() => import("./pages/WealthBlockAssessment"));
-const WealthAssessmentLite = lazy(() => import("./pages/WealthAssessmentLite"));
-const WealthBlockActivate = lazy(() => import("./pages/WealthBlockActivate"));
-const WealthCampActivate = lazy(() => import("./pages/WealthCampActivate"));
-const WealthCampCheckIn = lazy(() => import("./pages/WealthCampCheckIn"));
-const MeditationLibrary = lazy(() => import("./pages/MeditationLibrary"));
-const WealthJournal = lazy(() => import("./pages/WealthJournal"));
-const WealthJournalDetail = lazy(() => import("./pages/WealthJournalDetail"));
-const WealthCoachIntro = lazy(() => import("./pages/WealthCoachIntro"));
-const ShareInvite = lazy(() => import("./pages/ShareInvite"));
-const WealthCampIntro = lazy(() => import("./pages/WealthCampIntro"));
-const WealthAwakeningProgress = lazy(() => import("./pages/WealthAwakeningProgress"));
-const WealthAwakeningArchive = lazy(() => import("./pages/WealthAwakeningArchive"));
+const WealthBlockAssessment = lazyRetry(() => import("./pages/WealthBlockAssessment"));
+const WealthAssessmentLite = lazyRetry(() => import("./pages/WealthAssessmentLite"));
+const WealthBlockActivate = lazyRetry(() => import("./pages/WealthBlockActivate"));
+const WealthCampActivate = lazyRetry(() => import("./pages/WealthCampActivate"));
+const WealthCampCheckIn = lazyRetry(() => import("./pages/WealthCampCheckIn"));
+const MeditationLibrary = lazyRetry(() => import("./pages/MeditationLibrary"));
+const WealthJournal = lazyRetry(() => import("./pages/WealthJournal"));
+const WealthJournalDetail = lazyRetry(() => import("./pages/WealthJournalDetail"));
+const WealthCoachIntro = lazyRetry(() => import("./pages/WealthCoachIntro"));
+const ShareInvite = lazyRetry(() => import("./pages/ShareInvite"));
+const WealthCampIntro = lazyRetry(() => import("./pages/WealthCampIntro"));
+const WealthAwakeningProgress = lazyRetry(() => import("./pages/WealthAwakeningProgress"));
+const WealthAwakeningArchive = lazyRetry(() => import("./pages/WealthAwakeningArchive"));
 
 // 成长路径
-const GrowthSupportPath = lazy(() => import("./pages/GrowthSupportPath"));
+const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 
 // 法律条款
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const YoujinPartnerTerms = lazy(() => import("./pages/YoujinPartnerTerms"));
-const BloomPartnerTerms = lazy(() => import("./pages/BloomPartnerTerms"));
+const TermsOfService = lazyRetry(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazyRetry(() => import("./pages/PrivacyPolicy"));
+const YoujinPartnerTerms = lazyRetry(() => import("./pages/YoujinPartnerTerms"));
+const BloomPartnerTerms = lazyRetry(() => import("./pages/BloomPartnerTerms"));
 
 // ============= 懒加载全局组件 =============
-const FloatingVoiceButton = lazy(() => import("./components/FloatingVoiceButton"));
-const FloatingQuickMenu = lazy(() => import("./components/FloatingQuickMenu").then(m => ({ default: m.FloatingQuickMenu })));
-const FollowWechatReminder = lazy(() => import("./components/FollowWechatReminder").then(m => ({ default: m.FollowWechatReminder })));
-const GlobalOnboarding = lazy(() => import("./components/GlobalOnboarding").then(m => ({ default: m.GlobalOnboarding })));
+const FloatingVoiceButton = lazyRetry(() => import("./components/FloatingVoiceButton"));
+const FloatingQuickMenu = lazyRetry(() => import("./components/FloatingQuickMenu").then(m => ({ default: m.FloatingQuickMenu })));
+const FollowWechatReminder = lazyRetry(() => import("./components/FollowWechatReminder").then(m => ({ default: m.FollowWechatReminder })));
+const GlobalOnboarding = lazyRetry(() => import("./components/GlobalOnboarding").then(m => ({ default: m.GlobalOnboarding })));
 
 const queryClient = new QueryClient();
 
@@ -201,7 +203,7 @@ const ScrollUnlocker = () => {
 };
 
 // 路由变化时滚动到顶部
-const ScrollToTopOnNavigate = lazy(() => 
+const ScrollToTopOnNavigate = lazyRetry(() => 
   import("./components/ScrollToTopOnNavigate").then(m => ({ default: m.ScrollToTopOnNavigate }))
 );
 
@@ -227,6 +229,7 @@ const App = () => (
             <FollowWechatReminder />
             <GlobalOnboarding />
           </Suspense>
+          <ChunkErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Navigate to="/coach/vibrant_life_sage" replace />} />
@@ -344,6 +347,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          </ChunkErrorBoundary>
           </AICoachCallProvider>
         </CoachCallProvider>
       </BrowserRouter>
