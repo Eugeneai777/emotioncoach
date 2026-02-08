@@ -18,7 +18,7 @@ import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
-import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer, calculateResult } from "@/components/wealth-block/wealthBlockData";
+import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer, calculateResult, calculateHealthScore } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
@@ -698,6 +698,10 @@ export default function WealthBlockAssessmentPage() {
             
             <WealthInviteCardDialog
               defaultTab="value"
+              assessmentScore={currentResult ? 100 - calculateHealthScore(
+                currentResult.behaviorScore + currentResult.emotionScore + currentResult.beliefScore
+              ) : undefined}
+              reactionPattern={currentResult?.reactionPattern}
               trigger={
                 <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
                   <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
