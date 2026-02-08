@@ -1,30 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, Copy, Check, ImageIcon, Share2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import ShareImagePreview from '@/components/ui/share-image-preview';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import WealthCampShareCard from './WealthCampShareCard';
 import AchievementShareCard from './AchievementShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
-import FearAwakeningShareCard from '@/components/wealth-block/FearAwakeningShareCard';
-import BlockRevealShareCard from '@/components/wealth-block/BlockRevealShareCard';
-import TransformationValueShareCard from '@/components/wealth-block/TransformationValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 import useWechatShare from '@/hooks/useWechatShare';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
-import { getShareEnvironment } from '@/utils/shareUtils';
-import { generateCanvas, canvasToBlob, CardBackgroundType } from '@/utils/shareCardConfig';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
+import { ShareDialogBase } from '@/components/ui/share-dialog-base';
+import { cn } from '@/lib/utils';
+
+// ── Types ──────────────────────────────────────────────────────
 
 interface UserInfo {
   avatarUrl?: string;
@@ -33,15 +21,13 @@ interface UserInfo {
   totalDays?: number;
 }
 
-interface AwakeningData {
-  dayNumber: number;
-  behaviorAwakening?: string;
-  emotionAwakening?: string;
-  beliefAwakening?: string;
-  newBelief?: string;
-}
+type CardTab = 'value' | 'camp' | 'achievement';
 
-type CardTab = 'camp' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform';
+const CARD_OPTIONS: { id: CardTab; label: string; emoji: string }[] = [
+  { id: 'value', label: '测评结果', emoji: '🎁' },
+  { id: 'camp', label: '训练营', emoji: '🏕️' },
+  { id: 'achievement', label: '成就墙', emoji: '🏅' },
+];
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
@@ -59,29 +45,7 @@ interface WealthInviteCardDialogProps {
   reactionPattern?: string;
 }
 
-
-// Helper: Clean up any lingering clone elements
-const cleanupCloneElements = () => {
-  document.querySelectorAll('#share-card-render-wrapper').forEach(el => el.remove());
-};
-
-// Get best awakening content with priority: belief > emotion > behavior
-const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' | 'belief'; content: string } | null => {
-  if (data.beliefAwakening) return { type: 'belief', content: data.beliefAwakening };
-  if (data.newBelief) return { type: 'belief', content: data.newBelief };
-  if (data.emotionAwakening) return { type: 'emotion', content: data.emotionAwakening };
-  if (data.behaviorAwakening) return { type: 'behavior', content: data.behaviorAwakening };
-  return null;
-};
-
-const CARD_TABS = [
-  { id: 'value' as const, label: '测评价值', emoji: '🎁' },
-  { id: 'fear' as const, label: '情绪锁', emoji: '🔓' },
-  { id: 'blindspot' as const, label: '盲区', emoji: '👁️' },
-  { id: 'transform' as const, label: '转变', emoji: '✨' },
-  { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
-  { id: 'achievement' as const, label: '成就墙', emoji: '🏅' },
-];
+// ── Component ──────────────────────────────────────────────────
 
 const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   trigger,
@@ -97,19 +61,13 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [viewCompleted, setViewCompleted] = useState(false);
-  
+
   // Support both controlled and uncontrolled modes
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? (controlledOnOpenChange || (() => {})) : setInternalOpen;
-  
+
   const [activeTab, setActiveTab] = useState<CardTab>(defaultTab);
-  const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
-  
-  // Image preview state for WeChat/mobile environments
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [showImagePreview, setShowImagePreview] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
@@ -117,42 +75,31 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     awakeningScore: number;
     reactionPattern: string;
   } | null>(null);
-  
-  // Achievement share card settings
-  const [achievementPath, setAchievementPath] = useState<string | null>(null);
-  const [achievementStyle, setAchievementStyle] = useState<'dark' | 'gradient' | 'minimal' | 'neon'>('dark');
-  
-  const campCardRef = useRef<HTMLDivElement>(null);
+
+  // One ref per card type
   const valueCardRef = useRef<HTMLDivElement>(null);
+  const campCardRef = useRef<HTMLDivElement>(null);
   const achievementCardRef = useRef<HTMLDivElement>(null);
-  const fearCardRef = useRef<HTMLDivElement>(null);
-  const blindspotCardRef = useRef<HTMLDivElement>(null);
-  const transformCardRef = useRef<HTMLDivElement>(null);
 
-  // Generate share URLs with partner tracking if available
-  const getAssessmentUrl = (): string => {
-    const baseUrl = `${getPromotionDomain()}/wealth-block`;
-    if (partnerInfo?.partnerCode) {
-      return `${baseUrl}?ref=${partnerInfo.partnerCode}`;
-    }
-    return baseUrl;
-  };
-  
-  const getCampUrl = (): string => {
-    const baseUrl = `${getPromotionDomain()}/wealth-camp-intro`;
-    if (partnerInfo?.partnerCode) {
-      return `${baseUrl}?ref=${partnerInfo.partnerCode}`;
-    }
-    return baseUrl;
+  // Dynamic ref based on active tab
+  const activeCardRef = activeTab === 'value' ? valueCardRef
+    : activeTab === 'camp' ? campCardRef
+    : achievementCardRef;
+
+  // ── URLs ──────────────────────────────────────────────────────
+
+  const getUrlWithRef = (path: string): string => {
+    const baseUrl = `${getPromotionDomain()}${path}`;
+    return partnerInfo?.partnerCode ? `${baseUrl}?ref=${partnerInfo.partnerCode}` : baseUrl;
   };
 
-  const assessmentUrl = getAssessmentUrl();
-  const campUrl = getCampUrl();
-  
-  // Get share environment
-  const env = getShareEnvironment();
+  const shareUrl = activeTab === 'value'
+    ? getUrlWithRef('/wealth-block')
+    : getUrlWithRef('/wealth-camp-intro');
 
-  // Configure WeChat JS-SDK share content (use static title for hook stability)
+  const campUrl = getUrlWithRef('/wealth-camp-intro');
+
+  // Configure WeChat JS-SDK share content
   useWechatShare({
     title: '财富觉醒训练营 - 邀请你一起突破',
     desc: '每天15分钟，7天突破财富卡点',
@@ -160,105 +107,70 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     imgUrl: `${getPromotionDomain()}/og-youjin-ai.png`,
   });
 
-  // Cleanup clone elements on unmount
-  useEffect(() => {
-    return () => {
-      cleanupCloneElements();
-    };
-  }, []);
+  // ── 3-second view completion timer ────────────────────────────
 
-  // Cleanup clone elements and scroll locks when dialog closes
-  useEffect(() => {
-    if (!open) {
-      cleanupCloneElements();
-      // Force cleanup Radix Dialog scroll lock that may linger
-      const timer = setTimeout(() => {
-        document.body.removeAttribute('data-scroll-locked');
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-        document.body.style.marginRight = '';
-        document.body.style.position = '';
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
-
-  // 3-second view completion timer for task tracking
   useEffect(() => {
     if (!open || viewCompleted) return;
-    
     const timer = setTimeout(() => {
       setViewCompleted(true);
       onViewComplete?.();
     }, 3000);
-    
     return () => clearTimeout(timer);
   }, [open, viewCompleted, onViewComplete]);
 
-  // Reset viewCompleted when dialog closes
   useEffect(() => {
-    if (!open) {
-      setViewCompleted(false);
-    }
+    if (!open) setViewCompleted(false);
   }, [open]);
 
-  // Fetch user profile and camp progress
+  // ── Fetch user data ───────────────────────────────────────────
+
   useEffect(() => {
     if (!open) return;
     setIsLoadingUser(true);
+
     const fetchUserInfo = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get profile
+        // Profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('avatar_url, display_name')
           .eq('id', user.id)
           .single();
 
-        // Get camp progress if campId provided
+        // Camp progress
         let currentDay = propCurrentDay;
         let totalDays = 7;
-
         if (campId && !propCurrentDay) {
           const { data: camp } = await supabase
             .from('training_camps')
             .select('start_date, duration_days')
             .eq('id', campId)
             .single();
-
           if (camp?.start_date) {
-            const startDate = new Date(camp.start_date);
-            const today = new Date();
-            const diffTime = today.getTime() - startDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const diffMs = Date.now() - new Date(camp.start_date).getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
             currentDay = Math.min(Math.max(1, diffDays), camp.duration_days || 7);
             totalDays = camp.duration_days || 7;
           }
         }
 
-        // Proxy third-party avatar URLs
         const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
 
-        // Fetch partner info for referral tracking
+        // Partner info
         const { data: partner } = await supabase
           .from('partners')
           .select('id, partner_code')
           .eq('user_id', user.id)
           .eq('status', 'active')
           .maybeSingle();
-
         if (partner) {
-          setPartnerInfo({
-            partnerId: partner.id,
-            partnerCode: partner.partner_code,
-          });
+          setPartnerInfo({ partnerId: partner.id, partnerCode: partner.partner_code });
         }
 
-        // Use props if provided (avoids race condition with async auto-save),
-        // otherwise fall back to DB fetch for callers that don't have the data.
+        // Assessment data
         if (propAssessmentScore !== undefined) {
           setAssessmentData({
             awakeningScore: propAssessmentScore,
@@ -272,11 +184,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
-
           if (assessment) {
             const totalScore = (assessment.behavior_score || 0) + (assessment.emotion_score || 0) + (assessment.belief_score || 0);
-            const healthScore = Math.round((totalScore / 150) * 100);
-            const awakeningScore = 100 - healthScore;
+            const awakeningScore = 100 - Math.round((totalScore / 150) * 100);
             setAssessmentData({
               awakeningScore,
               reactionPattern: (assessment as any).reaction_pattern || '追逐型',
@@ -300,480 +210,113 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     fetchUserInfo();
   }, [open, campId, propCurrentDay]);
 
-  const getActiveCardRef = () => {
+  // ── Card rendering helpers ────────────────────────────────────
+
+  const renderCard = (forExport: boolean) => {
+    const ref = forExport
+      ? (activeTab === 'value' ? valueCardRef : activeTab === 'camp' ? campCardRef : achievementCardRef)
+      : undefined;
+
+    if (isLoadingUser && !forExport) return <ShareCardSkeleton />;
+
     switch (activeTab) {
-      case 'camp': return campCardRef;
-      case 'value': return valueCardRef;
-      case 'achievement': return achievementCardRef;
-      case 'fear': return fearCardRef;
-      case 'blindspot': return blindspotCardRef;
-      case 'transform': return transformCardRef;
-      default: return campCardRef;
+      case 'value':
+        return (
+          <AssessmentValueShareCard
+            ref={ref as any}
+            avatarUrl={userInfo.avatarUrl}
+            displayName={userInfo.displayName}
+            partnerInfo={partnerInfo || undefined}
+            healthScore={assessmentData?.awakeningScore}
+            reactionPattern={assessmentData?.reactionPattern}
+          />
+        );
+      case 'camp':
+        return (
+          <WealthCampShareCard
+            ref={ref as any}
+            avatarUrl={userInfo.avatarUrl}
+            displayName={userInfo.displayName}
+            currentDay={userInfo.currentDay}
+            totalDays={userInfo.totalDays}
+            partnerInfo={partnerInfo || undefined}
+          />
+        );
+      case 'achievement':
+        return (
+          <AchievementShareCard
+            ref={ref as any}
+            avatarUrl={userInfo.avatarUrl}
+            displayName={userInfo.displayName}
+            selectedPath={null}
+            showPathSelector={false}
+            stylePreset="dark"
+            showStyleSelector={false}
+            partnerInfo={partnerInfo || undefined}
+          />
+        );
     }
   };
 
-  // Get background type for canvas generation based on active tab
-  const getBackgroundType = (): CardBackgroundType => {
-    switch (activeTab) {
-      case 'camp': return 'camp';
-      case 'value': return 'value';
-      case 'fear': return 'fear';
-      case 'blindspot': return 'blindspot';
-      case 'transform': return 'transform';
-      case 'achievement': return 'achievement';
-      default: return 'value';
-    }
-  };
+  // ── Tab Selector ──────────────────────────────────────────────
 
-  const getCardName = () => {
-    switch (activeTab) {
-      case 'camp': return '7天财富训练营邀请卡';
-      case 'value': return '财富测评价值卡';
-      case 'achievement': return '财富觉醒成就墙';
-      case 'fear': return '财富情绪锁诊断卡';
-      case 'blindspot': return '财富盲区测评卡';
-      case 'transform': return '财富觉醒之旅卡';
-      default: return '邀请卡片';
-    }
-  };
+  const tabSelector = (
+    <div className="flex gap-2 px-4 pt-3">
+      {CARD_OPTIONS.map((opt) => (
+        <button
+          key={opt.id}
+          onClick={() => setActiveTab(opt.id)}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-all',
+            activeTab === opt.id
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+          )}
+        >
+          <span>{opt.emoji}</span>
+          <span>{opt.label}</span>
+        </button>
+      ))}
+    </div>
+  );
 
-  const handleDownload = async () => {
-    const cardRef = getActiveCardRef();
-    const cardName = getCardName();
-    const env = getShareEnvironment();
-    
-    console.log('[handleDownload] Starting, env:', env, 'activeTab:', activeTab);
-    
-    if (!cardRef.current) {
-      console.error('[handleDownload] Card ref not found for tab:', activeTab);
-      toast.error('卡片未加载完成，请稍后重试');
-      return;
-    }
+  // ── Render ────────────────────────────────────────────────────
 
-    setGenerating(true);
-    
-    try {
-      // Show loading toast for better UX
-      const toastId = toast.loading('正在生成图片...');
-      
-      console.log('[handleDownload] Generating canvas with backgroundType:', getBackgroundType());
-      const canvas = await generateCanvas(cardRef, { backgroundType: getBackgroundType() });
-      if (!canvas) {
-        toast.dismiss(toastId);
-        console.error('[handleDownload] Canvas generation failed');
-        toast.error('图片生成失败，请重试或截图分享');
-        return;
-      }
-
-      console.log('[handleDownload] Converting to blob...');
-      const blob = await canvasToBlob(canvas);
-      if (!blob) {
-        toast.dismiss(toastId);
-        console.error('[handleDownload] Blob conversion failed');
-        toast.error('图片转换失败，请重试或截图分享');
-        return;
-      }
-
-      toast.dismiss(toastId);
-      console.log('[handleDownload] Blob created, size:', blob.size);
-
-      // Create blob URL for preview/download
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // WeChat/iOS: Always show image preview for long-press save
-      if (env.isWeChat || env.isIOS || env.isMiniProgram) {
-        console.log('[handleDownload] WeChat/iOS detected, showing preview');
-        setPreviewImageUrl(blobUrl);
-        setShowImagePreview(true);
-        // 延迟关闭对话框，确保图片预览组件完成初始化后再销毁源 DOM
-        requestAnimationFrame(() => {
-          setTimeout(() => setOpen(false), 50);
-        });
-      } else {
-        // Desktop/Android: Try download
-        try {
-          const link = document.createElement('a');
-          link.download = `${cardName}.png`;
-          link.href = blobUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast.success('卡片已保存');
-        } catch (downloadError) {
-          console.error('[handleDownload] Download failed:', downloadError);
-          // Fallback to preview
-          setPreviewImageUrl(blobUrl);
-          setShowImagePreview(true);
-        }
-        
-        // Revoke blob URL after a delay
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      }
-      
-      onGenerate?.();
-    } catch (error) {
-      console.error('[handleDownload] Error:', error);
-      toast.error('生成失败，请截图分享');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Handle native share (non-WeChat environments)
-  const handleNativeShare = async () => {
-    const cardRef = getActiveCardRef();
-    const cardName = getCardName();
-    
-    if (!cardRef.current) {
-      toast.error('卡片未加载完成，请稍后重试');
-      return;
-    }
-
-    setGenerating(true);
-    
-    try {
-      const toastId = toast.loading('正在生成图片...');
-      
-      const canvas = await generateCanvas(cardRef, { backgroundType: getBackgroundType() });
-      if (!canvas) {
-        toast.dismiss(toastId);
-        toast.error('生成失败，请重试或截图分享');
-        return;
-      }
-
-      const blob = await canvasToBlob(canvas);
-      if (!blob) {
-        toast.dismiss(toastId);
-        toast.error('转换失败，请重试或截图分享');
-        return;
-      }
-
-      toast.dismiss(toastId);
-
-      // Try Web Share API first (iOS, Android native share sheet)
-      const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
-      
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: cardName,
-            text: '邀请你一起突破财富卡点',
-          });
-          toast.success('分享成功');
-          onGenerate?.();
-          return;
-        } catch (shareError) {
-          if ((shareError as Error).name === 'AbortError') {
-            return; // User cancelled
-          }
-          console.error('[handleNativeShare] Web Share failed, falling back:', shareError);
-          // Fall through to fallback below
-        }
-      }
-
-      // Fallback: WeChat/iOS show image preview, others download
-      const blobUrl = URL.createObjectURL(blob);
-      const env = getShareEnvironment();
-      
-      if (env.isWeChat || env.isIOS || env.isMiniProgram) {
-        setPreviewImageUrl(blobUrl);
-        setShowImagePreview(true);
-        requestAnimationFrame(() => {
-          setTimeout(() => setOpen(false), 50);
-        });
-      } else {
-        try {
-          const link = document.createElement('a');
-          link.download = `${cardName}.png`;
-          link.href = blobUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast.success('卡片已保存');
-        } catch (downloadError) {
-          console.error('[handleNativeShare] Download failed:', downloadError);
-          setPreviewImageUrl(blobUrl);
-          setShowImagePreview(true);
-        }
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      }
-      
-      onGenerate?.();
-    } catch (error) {
-      console.error('Failed to share card:', error);
-      const errorMessage = error instanceof Error ? error.message : '分享失败，请重试';
-      toast.error(errorMessage);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Handle link share prompt for WeChat
-  const handleLinkSharePrompt = () => {
-    setOpen(false);
-    toast.info('请点击微信右上角「...」→「发送给朋友」', { duration: 4000 });
-  };
-
-  // Handle closing image preview
-  const handleCloseImagePreview = () => {
-    setShowImagePreview(false);
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl);
-      setPreviewImageUrl(null);
-    }
-  };
-
-  // Regenerate image for preview
-  const handleRegeneratePreview = async () => {
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl);
-    }
-    await handleDownload();
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(campUrl);
-      setCopied(true);
-      toast.success('链接已复制');
-      setTimeout(() => setCopied(false), 2000);
-      onGenerate?.();
-    } catch (error) {
-      toast.error('复制失败');
-    }
-  };
+  // Uncontrolled trigger support
+  const dialogTrigger = !isControlled && trigger ? (
+    <div onClick={() => setOpen(true)}>
+      {trigger}
+    </div>
+  ) : !isControlled && !trigger ? (
+    <Button variant="outline" size="sm" className="gap-2" onClick={() => setOpen(true)}>
+      <Share2 className="h-4 w-4" />
+      生成邀请卡片
+    </Button>
+  ) : null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" className="gap-2">
-            <Image className="h-4 w-4" />
-            生成邀请卡片
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>生成分享卡片</DialogTitle>
-        </DialogHeader>
-
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
-          <TabsList className="grid w-full grid-cols-6 gap-0.5 h-auto p-1">
-            {CARD_TABS.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-0.5 py-1.5">
-                {tab.emoji}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value="value" className="mt-3">
-            <div className="flex justify-center overflow-hidden" style={{ height: '340px' }}>
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
-                {isLoadingUser ? (
-                  <ShareCardSkeleton />
-                ) : (
-                  <AssessmentValueShareCard 
-                    ref={valueCardRef}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                    partnerInfo={partnerInfo || undefined}
-                    healthScore={assessmentData?.awakeningScore}
-                    reactionPattern={assessmentData?.reactionPattern}
-                  />
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="fear" className="mt-3">
-            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
-                {isLoadingUser ? (
-                  <ShareCardSkeleton />
-                ) : (
-                  <FearAwakeningShareCard 
-                    ref={fearCardRef}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                    partnerInfo={partnerInfo || undefined}
-                  />
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="blindspot" className="mt-3">
-            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
-                {isLoadingUser ? (
-                  <ShareCardSkeleton />
-                ) : (
-                  <BlockRevealShareCard 
-                    ref={blindspotCardRef}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                    partnerInfo={partnerInfo || undefined}
-                  />
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="transform" className="mt-3">
-            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
-                {isLoadingUser ? (
-                  <ShareCardSkeleton />
-                ) : (
-                  <TransformationValueShareCard 
-                    ref={transformCardRef}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                    partnerInfo={partnerInfo || undefined}
-                  />
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="camp" className="mt-3">
-            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
-                {isLoadingUser ? (
-                  <ShareCardSkeleton />
-                ) : (
-                  <WealthCampShareCard 
-                    ref={campCardRef}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                    currentDay={userInfo.currentDay}
-                    totalDays={userInfo.totalDays}
-                    partnerInfo={partnerInfo || undefined}
-                  />
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="achievement" className="mt-3 space-y-2">
-            {/* Style & Path Selectors (outside card for cleaner screenshot) */}
-            <div className="flex flex-wrap gap-1.5 px-1">
-              {(['dark', 'gradient', 'minimal', 'neon'] as const).map((style) => (
-                <button
-                  key={style}
-                  onClick={() => setAchievementStyle(style)}
-                  className={`px-2 py-1 rounded-md text-[10px] transition-all ${
-                    achievementStyle === style 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                  }`}
-                >
-                  {style === 'dark' ? '深邃' : style === 'gradient' ? '渐变' : style === 'minimal' ? '简约' : '霓虹'}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-1.5 px-1">
-              <button
-                onClick={() => setAchievementPath(null)}
-                className={`px-2 py-1 rounded-md text-[10px] transition-all ${
-                  !achievementPath 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                }`}
-              >
-                全部
-              </button>
-              {[
-                { key: 'milestone', icon: '🎯', name: '里程碑' },
-                { key: 'streak', icon: '🔥', name: '坚持' },
-                { key: 'growth', icon: '🌟', name: '成长' },
-                { key: 'social', icon: '💫', name: '社交' },
-              ].map((path) => (
-                <button
-                  key={path.key}
-                  onClick={() => setAchievementPath(path.key)}
-                  className={`px-2 py-1 rounded-md text-[10px] transition-all flex items-center gap-0.5 ${
-                    achievementPath === path.key 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                  }`}
-                >
-                  {path.icon} {path.name}
-                </button>
-              ))}
-            </div>
-            
-            {/* Card Preview */}
-            <div className="flex justify-center overflow-hidden" style={{ height: '380px' }}>
-              <div className="origin-top scale-[0.55] sm:scale-[0.62]">
-                <AchievementShareCard 
-                  ref={achievementCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  selectedPath={achievementPath}
-                  onPathChange={setAchievementPath}
-                  showPathSelector={false}
-                  stylePreset={achievementStyle}
-                  onStyleChange={setAchievementStyle}
-                  showStyleSelector={false}
-                  partnerInfo={partnerInfo || undefined}
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        {/* Action Buttons - Unified across all environments */}
-        <div className="flex flex-col gap-3 mt-4">
-          <div className="flex gap-2">
-            <Button
-              onClick={handleNativeShare}
-              disabled={generating}
-              className="flex-1 gap-2 h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/80"
-            >
-              {generating ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </motion.div>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <Share2 className="h-5 w-5" />
-                  分享
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCopyLink}
-              className="h-12 px-4"
-            >
-              {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-          
-          <p className="text-xs text-muted-foreground text-center">
-            点击分享按钮，或复制链接后发送
-          </p>
-        </div>
-      </DialogContent>
-      
-      {/* Full-screen image preview for WeChat/iOS */}
-      <ShareImagePreview
-        open={showImagePreview}
-        onClose={handleCloseImagePreview}
-        imageUrl={previewImageUrl}
-        onRegenerate={handleRegeneratePreview}
-        isRegenerating={generating}
+    <>
+      {dialogTrigger}
+      <ShareDialogBase
+        open={open}
+        onOpenChange={setOpen}
+        title="生成分享卡片"
+        shareUrl={shareUrl}
+        fileName={`${activeTab === 'value' ? '财富测评价值卡' : activeTab === 'camp' ? '7天财富训练营邀请卡' : '财富觉醒成就墙'}.png`}
+        shareTitle="财富觉醒训练营"
+        shareText="邀请你一起突破财富卡点"
+        previewHeight={activeTab === 'achievement' ? 360 : 340}
+        previewScale={0.55}
+        abovePreview={tabSelector}
+        previewCard={renderCard(false)}
+        exportCard={renderCard(true)}
+        exportCardRef={activeCardRef}
+        skeleton={<ShareCardSkeleton />}
+        cardReady={!isLoadingUser}
+        footerHint="点击分享按钮，或复制链接后发送"
+        maxWidthClass="max-w-md"
       />
-    </Dialog>
+    </>
   );
 };
 

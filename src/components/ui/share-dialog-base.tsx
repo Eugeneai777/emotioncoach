@@ -67,6 +67,8 @@ export interface ShareDialogBaseProps {
   maxWidthClass?: string;
   /** Whether to use data URL instead of blob (for some platforms) */
   useDataUrl?: boolean;
+  /** Optional content rendered between header and preview (e.g. tab selector) */
+  abovePreview?: ReactNode;
 }
 
 export function ShareDialogBase({
@@ -92,6 +94,7 @@ export function ShareDialogBase({
   onGenerate,
   maxWidthClass = "max-w-sm",
   useDataUrl = false,
+  abovePreview,
 }: ShareDialogBaseProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -247,6 +250,8 @@ export function ShareDialogBase({
               <DialogDescription>{description}</DialogDescription>
             )}
           </DialogHeader>
+
+          {abovePreview}
 
           {/* Preview Area */}
           <div className="p-4 bg-muted/30">
