@@ -459,10 +459,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
       toast.dismiss(toastId);
 
-      // Try Web Share API
+      // Try Web Share API first (iOS, Android native share sheet)
       const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
       
-      if (navigator.canShare?.({ files: [file] })) {
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
@@ -476,20 +476,38 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           if ((shareError as Error).name === 'AbortError') {
             return; // User cancelled
           }
-          console.error('[handleNativeShare] Web Share failed:', shareError);
+          console.error('[handleNativeShare] Web Share failed, falling back:', shareError);
+          // Fall through to fallback below
         }
       }
 
-      // Fallback: Download the image
+      // Fallback: WeChat/iOS show image preview, others download
       const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `${cardName}.png`;
-      link.href = blobUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      toast.success('卡片已保存');
+      const env = getShareEnvironment();
+      
+      if (env.isWeChat || env.isIOS || env.isMiniProgram) {
+        setPreviewImageUrl(blobUrl);
+        setShowImagePreview(true);
+        requestAnimationFrame(() => {
+          setTimeout(() => setOpen(false), 50);
+        });
+      } else {
+        try {
+          const link = document.createElement('a');
+          link.download = `${cardName}.png`;
+          link.href = blobUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('卡片已保存');
+        } catch (downloadError) {
+          console.error('[handleNativeShare] Download failed:', downloadError);
+          setPreviewImageUrl(blobUrl);
+          setShowImagePreview(true);
+        }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      }
+      
       onGenerate?.();
     } catch (error) {
       console.error('Failed to share card:', error);
@@ -720,7 +738,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         <div className="flex flex-col gap-3 mt-4">
           <div className="flex gap-2">
             <Button
-              onClick={handleDownload}
+              onClick={handleNativeShare}
               disabled={generating}
               className="flex-1 gap-2 h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/80"
             >

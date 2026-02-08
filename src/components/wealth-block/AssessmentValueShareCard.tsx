@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { useQRCode } from '@/utils/qrCodeUtils';
+import { getPatternConfig } from '@/config/reactionPatternConfig';
 
 interface PartnerInfo {
   partnerId: string;
@@ -17,7 +18,10 @@ interface AssessmentValueShareCardProps {
 }
 
 const AssessmentValueShareCard = forwardRef<HTMLDivElement, AssessmentValueShareCardProps>(
-  ({ className, avatarUrl, displayName, partnerInfo, healthScore = 68, reactionPattern = '追逐型' }, ref) => {
+  ({ className, avatarUrl, displayName, partnerInfo, healthScore = 68, reactionPattern = 'chase' }, ref) => {
+    // Translate English key to Chinese display name
+    const patternConfig = getPatternConfig(reactionPattern);
+    const displayPattern = patternConfig?.name || reactionPattern;
     // Generate shareable URL with partner tracking
     const getShareUrl = (): string => {
       const baseUrl = `${getPromotionDomain()}/wealth-block`;
@@ -110,7 +114,7 @@ const AssessmentValueShareCard = forwardRef<HTMLDivElement, AssessmentValueShare
               <div className="flex-1 text-right">
                 <p className="text-white/60 text-xs mb-1">反应模式</p>
                 <span className="inline-block px-3 py-1 bg-amber-500/30 rounded-full text-amber-300 text-sm font-medium">
-                  {reactionPattern}
+                  {displayPattern}
                 </span>
               </div>
             </div>
