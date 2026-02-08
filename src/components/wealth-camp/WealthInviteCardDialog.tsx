@@ -185,10 +185,19 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     };
   }, []);
 
-  // Cleanup clone elements when dialog closes
+  // Cleanup clone elements and scroll locks when dialog closes
   useEffect(() => {
     if (!open) {
       cleanupCloneElements();
+      // Force cleanup Radix Dialog scroll lock that may linger
+      const timer = setTimeout(() => {
+        document.body.removeAttribute('data-scroll-locked');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.body.style.marginRight = '';
+        document.body.style.position = '';
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [open]);
 

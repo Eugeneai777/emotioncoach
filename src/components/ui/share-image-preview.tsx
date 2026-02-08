@@ -30,6 +30,15 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const isIOS = typeof navigator !== 'undefined' && 
     /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
 
+  // Comprehensive scroll lock cleanup helper
+  const cleanupScrollLocks = useCallback(() => {
+    document.body.removeAttribute('data-scroll-locked');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.body.style.marginRight = '';
+    document.body.style.position = '';
+  }, []);
+
   // Prevent body scroll when preview is open
   useEffect(() => {
     if (open) {
@@ -39,10 +48,11 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
       setImageLoaded(false);
       setImageError(false);
       return () => {
-        document.body.style.overflow = '';
+        // Clean up all scroll locks comprehensively on close
+        cleanupScrollLocks();
       };
     }
-  }, [open]);
+  }, [open, cleanupScrollLocks]);
 
   // Auto-hide tip after delay on all platforms
   useEffect(() => {
