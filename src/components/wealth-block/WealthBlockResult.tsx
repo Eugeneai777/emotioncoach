@@ -686,6 +686,8 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       >
         <WealthInviteCardDialog
           defaultTab="value"
+          assessmentScore={100 - healthScore}
+          reactionPattern={result.reactionPattern}
           trigger={
             <Button className="w-full h-14 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg text-base">
               <Share2 className="w-5 h-5 mr-2" />

@@ -52,6 +52,10 @@ interface WealthInviteCardDialogProps {
   currentDay?: number;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Pre-calculated awakening index (0-100). When provided, skips DB fetch for score. */
+  assessmentScore?: number;
+  /** Pre-determined reaction pattern (e.g. "chase"). When provided, skips DB fetch for pattern. */
+  reactionPattern?: string;
 }
 
 // Helper: Normalize avatar URL (proxy third-party domains)
@@ -106,6 +110,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   currentDay: propCurrentDay,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  assessmentScore: propAssessmentScore,
+  reactionPattern: propReactionPattern,
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [viewCompleted, setViewCompleted] = useState(false);
@@ -259,23 +265,31 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         });
       }
 
-      // Fetch latest assessment data for share card score
-      const { data: assessment } = await supabase
-        .from('wealth_block_assessments')
-        .select('behavior_score, emotion_score, belief_score, reaction_pattern')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (assessment) {
-        const totalScore = (assessment.behavior_score || 0) + (assessment.emotion_score || 0) + (assessment.belief_score || 0);
-        const healthScore = Math.round((totalScore / 150) * 100);
-        const awakeningScore = 100 - healthScore;
+      // Use props if provided (avoids race condition with async auto-save),
+      // otherwise fall back to DB fetch for callers that don't have the data.
+      if (propAssessmentScore !== undefined) {
         setAssessmentData({
-          awakeningScore,
-          reactionPattern: (assessment as any).reaction_pattern || '追逐型',
+          awakeningScore: propAssessmentScore,
+          reactionPattern: propReactionPattern || '追逐型',
         });
+      } else {
+        const { data: assessment } = await supabase
+          .from('wealth_block_assessments')
+          .select('behavior_score, emotion_score, belief_score, reaction_pattern')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (assessment) {
+          const totalScore = (assessment.behavior_score || 0) + (assessment.emotion_score || 0) + (assessment.belief_score || 0);
+          const healthScore = Math.round((totalScore / 150) * 100);
+          const awakeningScore = 100 - healthScore;
+          setAssessmentData({
+            awakeningScore,
+            reactionPattern: (assessment as any).reaction_pattern || '追逐型',
+          });
+        }
       }
 
       setUserInfo({
