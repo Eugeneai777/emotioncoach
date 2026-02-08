@@ -216,89 +216,94 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     if (!open) return;
     setIsLoadingUser(true);
     const fetchUserInfo = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      // Get profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('avatar_url, display_name')
-        .eq('id', user.id)
-        .single();
-
-      // Get camp progress if campId provided
-      let currentDay = propCurrentDay;
-      let totalDays = 7;
-
-      if (campId && !propCurrentDay) {
-        const { data: camp } = await supabase
-          .from('training_camps')
-          .select('start_date, duration_days')
-          .eq('id', campId)
+        // Get profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url, display_name')
+          .eq('id', user.id)
           .single();
 
-        if (camp?.start_date) {
-          const startDate = new Date(camp.start_date);
-          const today = new Date();
-          const diffTime = today.getTime() - startDate.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-          currentDay = Math.min(Math.max(1, diffDays), camp.duration_days || 7);
-          totalDays = camp.duration_days || 7;
+        // Get camp progress if campId provided
+        let currentDay = propCurrentDay;
+        let totalDays = 7;
+
+        if (campId && !propCurrentDay) {
+          const { data: camp } = await supabase
+            .from('training_camps')
+            .select('start_date, duration_days')
+            .eq('id', campId)
+            .single();
+
+          if (camp?.start_date) {
+            const startDate = new Date(camp.start_date);
+            const today = new Date();
+            const diffTime = today.getTime() - startDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            currentDay = Math.min(Math.max(1, diffDays), camp.duration_days || 7);
+            totalDays = camp.duration_days || 7;
+          }
         }
-      }
 
-      // Proxy third-party avatar URLs
-      const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
+        // Proxy third-party avatar URLs
+        const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
 
-      // Fetch partner info for referral tracking
-      const { data: partner } = await supabase
-        .from('partners')
-        .select('id, partner_code')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (partner) {
-        setPartnerInfo({
-          partnerId: partner.id,
-          partnerCode: partner.partner_code,
-        });
-      }
-
-      // Use props if provided (avoids race condition with async auto-save),
-      // otherwise fall back to DB fetch for callers that don't have the data.
-      if (propAssessmentScore !== undefined) {
-        setAssessmentData({
-          awakeningScore: propAssessmentScore,
-          reactionPattern: propReactionPattern || '追逐型',
-        });
-      } else {
-        const { data: assessment } = await supabase
-          .from('wealth_block_assessments')
-          .select('behavior_score, emotion_score, belief_score, reaction_pattern')
+        // Fetch partner info for referral tracking
+        const { data: partner } = await supabase
+          .from('partners')
+          .select('id, partner_code')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
+          .eq('status', 'active')
           .maybeSingle();
 
-        if (assessment) {
-          const totalScore = (assessment.behavior_score || 0) + (assessment.emotion_score || 0) + (assessment.belief_score || 0);
-          const healthScore = Math.round((totalScore / 150) * 100);
-          const awakeningScore = 100 - healthScore;
-          setAssessmentData({
-            awakeningScore,
-            reactionPattern: (assessment as any).reaction_pattern || '追逐型',
+        if (partner) {
+          setPartnerInfo({
+            partnerId: partner.id,
+            partnerCode: partner.partner_code,
           });
         }
-      }
 
-      setUserInfo({
-        avatarUrl: proxiedAvatarUrl,
-        displayName: profile?.display_name || '财富觉醒者',
-        currentDay: currentDay || undefined,
-        totalDays,
-      });
-      setIsLoadingUser(false);
+        // Use props if provided (avoids race condition with async auto-save),
+        // otherwise fall back to DB fetch for callers that don't have the data.
+        if (propAssessmentScore !== undefined) {
+          setAssessmentData({
+            awakeningScore: propAssessmentScore,
+            reactionPattern: propReactionPattern || '追逐型',
+          });
+        } else {
+          const { data: assessment } = await supabase
+            .from('wealth_block_assessments')
+            .select('behavior_score, emotion_score, belief_score, reaction_pattern')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (assessment) {
+            const totalScore = (assessment.behavior_score || 0) + (assessment.emotion_score || 0) + (assessment.belief_score || 0);
+            const healthScore = Math.round((totalScore / 150) * 100);
+            const awakeningScore = 100 - healthScore;
+            setAssessmentData({
+              awakeningScore,
+              reactionPattern: (assessment as any).reaction_pattern || '追逐型',
+            });
+          }
+        }
+
+        setUserInfo({
+          avatarUrl: proxiedAvatarUrl,
+          displayName: profile?.display_name || '财富觉醒者',
+          currentDay: currentDay || undefined,
+          totalDays,
+        });
+      } catch (err) {
+        console.error('[WealthInviteCardDialog] Failed to fetch user info:', err);
+      } finally {
+        setIsLoadingUser(false);
+      }
     };
 
     fetchUserInfo();
