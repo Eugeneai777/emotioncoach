@@ -125,6 +125,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
+  const [assessmentData, setAssessmentData] = useState<{
+    awakeningScore: number;
+    reactionPattern: string;
+  } | null>(null);
   
   // Achievement share card settings
   const [achievementPath, setAchievementPath] = useState<string | null>(null);
@@ -252,6 +256,25 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         setPartnerInfo({
           partnerId: partner.id,
           partnerCode: partner.partner_code,
+        });
+      }
+
+      // Fetch latest assessment data for share card score
+      const { data: assessment } = await supabase
+        .from('wealth_block_assessments')
+        .select('behavior_score, emotion_score, belief_score, reaction_pattern')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (assessment) {
+        const totalScore = (assessment.behavior_score || 0) + (assessment.emotion_score || 0) + (assessment.belief_score || 0);
+        const healthScore = Math.round((totalScore / 150) * 100);
+        const awakeningScore = 100 - healthScore;
+        setAssessmentData({
+          awakeningScore,
+          reactionPattern: (assessment as any).reaction_pattern || '追逐型',
         });
       }
 
@@ -528,6 +551,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                     avatarUrl={userInfo.avatarUrl}
                     displayName={userInfo.displayName}
                     partnerInfo={partnerInfo || undefined}
+                    healthScore={assessmentData?.awakeningScore}
+                    reactionPattern={assessmentData?.reactionPattern}
                   />
                 )}
               </div>
