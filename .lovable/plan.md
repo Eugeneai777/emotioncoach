@@ -1,88 +1,89 @@
 
 
-## AI 自动配置体验包
+## 小程序支付 openId 报错修复
 
-选择产品后，系统自动调用 AI 生成图标、描述、功能特性、颜色主题等字段，管理员只需确认或微调即可保存。
+### 问题根因
 
----
+小程序支付流程中存在前后端逻辑不一致：
 
-### 交互流程
+- **前端**（WechatPayDialog.tsx 第 754 行）：允许在没有 `mp_openid` 的情况下继续创建订单，设计意图是由小程序原生支付页面（`/pages/pay/index`）负责获取 openId 并完成支付
+- **后端**（create-wechat-order 第 178 行）：强制要求 `miniprogram` 类型的订单必须传入 `openId`，否则直接抛出错误 `"支付需要 openId（小程序请确保传入 mp_openid）"`
 
-1. 管理员在下拉菜单中选择一个产品
-2. 界面显示"AI 配置中..."加载状态
-3. 后端函数调用 AI，根据产品名称和描述自动生成：
-   - icon（合适的 emoji）
-   - value（如"1次"、"50点"等）
-   - description（一句话描述，约30-50字）
-   - features（4条功能亮点）
-   - color_theme（blue/green/amber/purple 之一）
-4. 自动填充所有字段，管理员可修改后保存
+当小程序 WebView 打开页面时，如果 URL 中没有携带 `mp_openid` 参数，且 `sessionStorage` 中也没有缓存，前端会以 `openId=undefined` 调用后端，导致后端报错。
 
----
+```text
+前端流程（当前）：
+  选择套餐 → payType=miniprogram, openId=undefined → 调用后端 → 报错 ✗
 
-### 实现步骤
+期望流程：
+  选择套餐 → payType=miniprogram, openId=undefined → 后端创建订单
+  → 返回 prepay 参数 → navigateTo 小程序原生支付页 → 原生获取 openId
+  → 调用 wx.requestPayment → 完成支付 ✓
+```
 
-#### 1. 新建后端函数
+### 修复方案
 
-**文件：** `supabase/functions/generate-experience-config/index.ts`
+#### 1. 后端：放宽小程序支付的 openId 校验
 
-- 接收 `package_name`、`description`、`price` 参数
-- 使用 Lovable AI（`google/gemini-2.5-flash`）生成配置
-- Prompt 要求 AI 返回 JSON 格式：`{ icon, value, description, features, color_theme }`
-- 参考现有体验包数据风格（如已有的尝鲜会员、情绪健康测评等）作为 few-shot 示例
-- 需要管理员权限验证（检查 `user_roles` 表中的 admin 角色）
+**文件：** `supabase/functions/create-wechat-order/index.ts`
 
-#### 2. 修改前端组件
+- 修改第 178 行的验证逻辑，仅对 `jsapi` 类型强制要求 openId，`miniprogram` 类型允许不传
+- 当 `miniprogram` 没有 openId 时，不向微信 JSAPI 接口发请求（因为缺少 payer.openid 必定失败），而是只在数据库中创建订单记录，并返回 orderNo 给前端
+- 前端拿到 orderNo 后，通过 `navigateTo` 跳转到小程序原生支付页，由原生端用自己的 openId 重新调用微信支付
 
-**文件：** `src/components/admin/ExperiencePackageManagement.tsx`
+具体改动：
 
-修改 `handlePackageSelect` 函数：
+```typescript
+// 第 178 行：仅 JSAPI 强制要求 openId，小程序允许缺失
+if (payType === 'jsapi' && !openId) {
+  throw new Error('JSAPI 支付需要 openId');
+}
 
-- 选择产品后，立即调用 `generate-experience-config` 函数
-- 显示加载状态（按钮/输入框显示 skeleton 或 spinner）
-- AI 返回结果后，自动填充所有表单字段（name、value、icon、description、features、color_theme）
-- 如果 AI 调用失败，回退到当前逻辑（仅填充 name 和 value）
-- 添加"重新生成"按钮，允许管理员对 AI 结果不满意时重新请求
+// 第 277 行附近：小程序无 openId 时，跳过微信下单，只创建本地订单
+if (isMiniProgramPay && !openId) {
+  // 只在数据库中创建订单，不调用微信支付接口
+  // 返回 orderNo，由小程序原生端获取 openId 后再发起支付
+}
+```
+
+#### 2. 后端：新增小程序无 openId 的订单创建分支
+
+当 `payType=miniprogram` 且无 openId 时：
+- 生成 orderNo 并写入 orders 表（status=pending）
+- 直接返回 `{ success: true, orderNo, payType: 'miniprogram', needsNativePayment: true }`
+- 不调用微信支付 API（因为无法调用）
+
+#### 3. 前端：处理 needsNativePayment 响应
+
+**文件：** `src/components/WechatPayDialog.tsx`
+
+- 在 `createOrder` 函数中，当后端返回 `needsNativePayment: true` 时，直接跳转到小程序原生支付页
+- 原生支付页需要知道 orderNo、packageName、amount 等信息，通过 URL 参数传递
+- 原生端拿到这些信息后，获取 openId，调用后端重新生成 prepay 参数，最后调用 `wx.requestPayment`
 
 ---
 
 ### 技术细节
 
-**AI Prompt 设计：**
+#### 后端改动（create-wechat-order/index.ts）
 
-```text
-你是一个体验包配置助手。根据以下产品信息，生成体验包的展示配置。
+| 位置 | 改动 |
+|------|------|
+| 第 178 行 | 放宽校验：`payType === 'jsapi' && !openId` 才报错，miniprogram 允许无 openId |
+| 第 270-290 行 | 新增分支：miniprogram 无 openId 时，跳过微信 API 调用，仅创建本地订单 |
+| 返回数据 | 新增 `needsNativePayment` 字段，告知前端需要走原生支付 |
 
-产品名称：{package_name}
-产品描述：{description}
-产品价格：¥{price}
+#### 前端改动（WechatPayDialog.tsx）
 
-请参考以下已有配置风格：
-- 尝鲜会员：icon=🎫, value=50点, description=体验有劲AI教练的入门权益...
-- 情绪健康测评：icon=💚, value=1次, description=56道专业题目评估...
-
-返回 JSON 格式（不要包含其他文字）：
-{
-  "icon": "一个最贴切的emoji",
-  "value": "如1次、50点等",
-  "description": "30-50字的一句话描述",
-  "features": ["亮点1", "亮点2", "亮点3", "亮点4"],
-  "color_theme": "blue或green或amber或purple"
-}
-```
-
-**调用方式：**
-
-```typescript
-const response = await supabase.functions.invoke('generate-experience-config', {
-  body: { package_name, description, price }
-});
-```
+| 位置 | 改动 |
+|------|------|
+| createOrder 函数（约第 800 行） | 处理 `needsNativePayment` 响应：构建参数并跳转到小程序原生支付页 |
+| triggerMiniProgramNativePay | 支持传入 packageKey/amount 等额外参数，供原生端重新下单时使用 |
 
 ### 文件变更总表
 
 | 文件 | 操作 |
 |------|------|
-| `supabase/functions/generate-experience-config/index.ts` | 新建 |
-| `src/components/admin/ExperiencePackageManagement.tsx` | 修改 - 添加 AI 自动配置逻辑 |
+| `supabase/functions/create-wechat-order/index.ts` | 修改 - 放宽 miniprogram openId 校验，新增无 openId 分支 |
+| `src/components/WechatPayDialog.tsx` | 修改 - 处理 needsNativePayment 响应 |
 
