@@ -1,79 +1,85 @@
 
 
-## 修复分享卡片分数与实际不一致的问题
+## 修复小程序支付后长时间等待的问题
 
-### 问题原因
+### 问题根因
 
-分享卡片中的"觉醒指数"始终显示 **68**，而实际结果页显示 **77**。原因是分享卡片组件使用了**硬编码默认值**，从未接收到真实数据：
+支付完成后，前端轮询 `check-order-status` 时只传了 `{ orderNo }`，**没有传 `forceWechatQuery: true`**。
+
+这导致后端只查数据库，而数据库的状态更新依赖微信的异步回调（webhook）。微信回调有延迟（通常 2-15 秒，偶尔更久），所以用户会看到"等待支付完成"很长时间。
 
 ```text
-结果页流程：
-  数据库查询 → 计算 totalScore → calculateHealthScore → 100 - healthScore = 77 ✓
+当前流程：
+  用户完成支付 → 前端轮询（每3秒） → 只查数据库 → 状态仍为 pending
+  ← 等等等...
+  微信回调到达（延迟不确定） → 更新数据库 → 下一次轮询 → 终于显示成功
 
-分享卡片流程：
-  未传入 healthScore → 使用默认值 68 ✗
+优化后：
+  用户完成支付 → 前端轮询（每3秒） → 前几次查数据库
+  → 第3次开始加 forceWechatQuery → 主动问微信"这个订单付了没？"
+  → 微信说"付了" → 立即更新数据库并返回成功
 ```
-
-具体代码问题：
-- `AssessmentValueShareCard` 组件的 `healthScore` 参数默认值为 68，`reactionPattern` 默认值为"追逐型"
-- `WealthInviteCardDialog` 渲染该组件时，没有传入 `healthScore` 和 `reactionPattern`，导致永远显示默认值
 
 ### 修复方案
 
-#### 1. 在 WealthInviteCardDialog 中获取用户测评数据
+#### 1. 轮询函数增加主动查询微信
 
-**文件：** `src/components/wealth-camp/WealthInviteCardDialog.tsx`
+**文件：** `src/components/WechatPayDialog.tsx`
 
-在现有的 `fetchUserInfo` 函数中，增加一步查询 `wealth_block_assessments` 表，获取用户最近一次测评的三层分数和反应模式：
-
-```typescript
-// 查询最近一次测评数据
-const { data: assessment } = await supabase
-  .from('wealth_block_assessments')
-  .select('behavior_score, emotion_score, belief_score, reaction_pattern')
-  .eq('user_id', user.id)
-  .order('created_at', { ascending: false })
-  .limit(1)
-  .maybeSingle();
-```
-
-然后计算觉醒指数（与结果页使用完全相同的公式）：
-
-```text
-totalScore = behavior_score + emotion_score + belief_score
-healthScore = Math.round((totalScore / 150) * 100)   // 卡点分（越低越好）
-awakeningScore = 100 - healthScore                     // 觉醒指数（越高越好）
-```
-
-#### 2. 将真实数据传入分享卡片
-
-将计算后的 `awakeningScore` 和 `reaction_pattern` 传入 `AssessmentValueShareCard`：
-
-```tsx
-<AssessmentValueShareCard 
-  ref={valueCardRef}
-  avatarUrl={userInfo.avatarUrl}
-  displayName={userInfo.displayName}
-  partnerInfo={partnerInfo || undefined}
-  healthScore={assessmentData.awakeningScore}    // 真实觉醒指数
-  reactionPattern={assessmentData.reactionPattern} // 真实反应模式
-/>
-```
-
-#### 3. 新增 state 存储测评数据
-
-在组件中新增状态：
+修改 `startPolling` 函数，增加轮询计数器：
+- 前 2 次（0-6秒）：只查数据库（给 webhook 时间到达）
+- 第 3 次起（6秒+）：携带 `forceWechatQuery: true`，主动查询微信
 
 ```typescript
-const [assessmentData, setAssessmentData] = useState<{
-  awakeningScore: number;
-  reactionPattern: string;
-} | null>(null);
+let pollCount = 0;
+pollingRef.current = setInterval(async () => {
+  pollCount++;
+  const shouldForceQuery = pollCount >= 3; // 6秒后开始主动查询
+
+  const { data, error } = await supabase.functions.invoke('check-order-status', {
+    body: { orderNo, forceWechatQuery: shouldForceQuery },
+  });
+  // ...
+}, 3000);
 ```
+
+#### 2. 小程序回前台时主动查询
+
+**文件：** `src/components/WechatPayDialog.tsx`
+
+修改 `maybeResumeCheck` 函数（约第 1003 行），在用户从小程序原生支付页返回时，立即传 `forceWechatQuery: true`。因为此时用户大概率刚完成支付，主动查询能立刻确认。
+
+```typescript
+const { data, error } = await supabase.functions.invoke('check-order-status', {
+  body: { orderNo: pendingOrderNo, forceWechatQuery: true },
+});
+```
+
+#### 3. 支付回调场景也主动查询
+
+**文件：** `src/components/WechatPayDialog.tsx`
+
+修改 `verifyOrder` 函数（约第 1077 行），支付回调 URL 参数场景也传 `forceWechatQuery: true`。
+
+---
+
+### 技术细节
+
+| 位置 | 改动 |
+|------|------|
+| `startPolling` 函数（第 926-996 行） | 增加 `pollCount` 计数器，第 3 次起传 `forceWechatQuery: true` |
+| `maybeResumeCheck` 函数（第 1021 行） | 调用时传 `forceWechatQuery: true` |
+| `verifyOrder` 函数（第 1079 行） | 调用时传 `forceWechatQuery: true` |
+
+### 预期效果
+
+- 支付完成后 6-9 秒内即可确认成功（之前可能需要 10-30+ 秒）
+- 小程序返回前台时几乎立即确认（1-2 秒）
+- 前 6 秒仍优先依赖 webhook（避免频繁调用微信 API）
 
 ### 文件变更总表
 
 | 文件 | 操作 |
 |------|------|
-| `src/components/wealth-camp/WealthInviteCardDialog.tsx` | 修改 - 获取真实测评数据并传入分享卡片 |
+| `src/components/WechatPayDialog.tsx` | 修改 - 轮询和回调验证时传入 forceWechatQuery |
 
