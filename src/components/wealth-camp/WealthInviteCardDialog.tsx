@@ -24,6 +24,7 @@ import useWechatShare from '@/hooks/useWechatShare';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getShareEnvironment } from '@/utils/shareUtils';
 import { generateCanvas, canvasToBlob, CardBackgroundType } from '@/utils/shareCardConfig';
+import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -58,25 +59,6 @@ interface WealthInviteCardDialogProps {
   reactionPattern?: string;
 }
 
-// Helper: Normalize avatar URL (proxy third-party domains)
-const getProxiedAvatarUrl = (avatarUrl?: string): string | undefined => {
-  if (!avatarUrl) return undefined;
-  
-  try {
-    const url = new URL(avatarUrl);
-    // Check if it's a third-party domain that needs proxying
-    const thirdPartyDomains = ['thirdwx.qlogo.cn', 'wx.qlogo.cn', 'qlogo.cn'];
-    const needsProxy = thirdPartyDomains.some(domain => url.hostname.includes(domain));
-    
-    if (needsProxy) {
-      const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(avatarUrl)}`;
-      return proxyUrl;
-    }
-    return avatarUrl;
-  } catch {
-    return avatarUrl;
-  }
-};
 
 // Helper: Clean up any lingering clone elements
 const cleanupCloneElements = () => {
