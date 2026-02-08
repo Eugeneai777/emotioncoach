@@ -174,9 +174,9 @@ serve(async (req) => {
     // 有劲合伙人续费：允许选择任意等级（含降级），不再限制
     // （旧逻辑：禁止降级购买，已移除）
 
-    // JSAPI 支付需要 openId（小程序支付也需要 openId，但由小程序原生端提供）
-    if ((payType === 'jsapi' || payType === 'miniprogram') && !openId) {
-      throw new Error('支付需要 openId（小程序请确保传入 mp_openid）');
+    // JSAPI 支付强制要求 openId；小程序允许缺失（由原生端获取后再发起支付）
+    if (payType === 'jsapi' && !openId) {
+      throw new Error('JSAPI 支付需要 openId');
     }
     
     // 小程序支付：需要返回 prepay_id，由原生端获取 openId 后调用 wx.requestPayment
@@ -280,8 +280,41 @@ serve(async (req) => {
         requestBody.payer = { openid: openId };
         console.log('MiniProgram pay with openId, using JSAPI with miniProgramAppId:', appId);
       } else {
-        // 无 openId：这种情况应该让前端先获取 openId
-        console.log('MiniProgram pay without openId - this will likely fail, please ensure mp_openid is passed');
+        // 🆕 无 openId：跳过微信支付 API，仅创建本地订单
+        // 由小程序原生端获取 openId 后再调用微信支付
+        console.log('[CreateOrder] MiniProgram without openId: creating local order only, skipping WeChat API');
+        
+        const isGuest = finalUserId === 'guest' || !finalUserId;
+        const { error: insertError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: isGuest ? null : finalUserId,
+            package_key: packageKey,
+            package_name: packageName,
+            amount: amount,
+            order_no: orderNo,
+            status: 'pending',
+            qr_code_url: null,
+            expired_at: expiredAt.toISOString(),
+          });
+
+        if (insertError) {
+          console.error('Insert order error:', insertError);
+          throw new Error('订单创建失败');
+        }
+
+        console.log('[CreateOrder] Local order created for miniprogram native pay:', orderNo, 'userId:', isGuest ? 'guest' : finalUserId);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            orderNo,
+            payType: 'miniprogram',
+            needsNativePayment: true,
+            expiredAt: expiredAt.toISOString(),
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     }
 

@@ -801,11 +801,26 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setPendingOrderToCache(data.orderNo);
       }
 
-      if (selectedPayType === 'miniprogram' && data.miniprogramPayParams) {
-        console.log('[Payment] MiniProgram: triggering native pay via navigateTo');
-        setStatus('polling');
-        startPolling(data.orderNo);
-        triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+      if (selectedPayType === 'miniprogram') {
+        if (data.needsNativePayment || !data.miniprogramPayParams) {
+          // 🆕 后端未调用微信支付 API（无 openId），直接跳转小程序原生支付页
+          // 由原生端获取 openId，再调用后端生成 prepay 参数并完成支付
+          console.log('[Payment] MiniProgram: needsNativePayment, navigating to native pay page with orderNo');
+          setStatus('polling');
+          startPolling(data.orderNo);
+          triggerMiniProgramNativePay({
+            orderNo: data.orderNo,
+            packageKey: packageInfo.key,
+            packageName: packageInfo.name,
+            amount: String(packageInfo.price),
+            needsNativePayment: 'true',
+          }, data.orderNo);
+        } else {
+          console.log('[Payment] MiniProgram: triggering native pay via navigateTo with prepay params');
+          setStatus('polling');
+          startPolling(data.orderNo);
+          triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        }
       } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
         setStatus('polling');
         startPolling(data.orderNo);
