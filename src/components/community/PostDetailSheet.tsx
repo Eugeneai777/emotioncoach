@@ -74,6 +74,7 @@ const PostDetailSheet = ({
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<{ id: string; userName: string } | null>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
