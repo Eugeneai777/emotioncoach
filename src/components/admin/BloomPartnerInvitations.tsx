@@ -154,7 +154,7 @@ export function BloomPartnerInvitations() {
                 if (!filteredInvitations?.length) return;
                 const header = '邀请码,姓名,手机号,邀请链接,金额,状态,创建时间,领取时间\n';
                 const rows = filteredInvitations.map(inv => {
-                  const link = `${window.location.origin}/invite/${inv.invite_code}`;
+                  const link = `${getPromotionDomain()}/invite/${inv.invite_code}`;
                   const status = inv.status === 'pending' ? '待领取' : inv.status === 'claimed' ? '已领取' : '已过期';
                   const claimedAt = inv.claimed_at ? format(new Date(inv.claimed_at), 'yyyy-MM-dd HH:mm') : '';
                   return `${inv.invite_code},${inv.invitee_name || ''},${inv.invitee_phone || ''},${link},${inv.order_amount},${status},${format(new Date(inv.created_at), 'yyyy-MM-dd HH:mm')},${claimedAt}`;
