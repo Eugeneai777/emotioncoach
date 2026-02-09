@@ -20,6 +20,7 @@ interface WaterfallPostCardProps {
     image_urls: string[] | null;
     emotion_theme: string | null;
     is_anonymous: boolean;
+    visibility?: string;
     likes_count: number;
     created_at: string;
     camp_id?: string;
