@@ -136,6 +136,7 @@ const PostEditDialog = ({
           title: title.trim() || null,
           content: content.trim() || null,
           image_urls: imageUrls.length > 0 ? imageUrls : null,
+          visibility,
         })
         .eq("id", post.id)
         .eq("user_id", session.user.id);
