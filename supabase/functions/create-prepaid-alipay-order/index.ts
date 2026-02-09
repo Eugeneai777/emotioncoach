@@ -172,7 +172,7 @@ serve(async (req) => {
         amount: pkg.price,
         status: 'pending',
         order_type: 'prepaid_recharge',
-        product_name: pkg.package_name,
+        package_name: pkg.package_name,
         pay_type: 'alipay_h5',
         expired_at: expiredAt.toISOString(),
       });

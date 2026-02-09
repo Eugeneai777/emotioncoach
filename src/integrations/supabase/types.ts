@@ -4554,6 +4554,7 @@ export type Database = {
           expired_at: string | null
           id: string
           order_no: string
+          order_type: string | null
           package_key: string
           package_name: string
           paid_at: string | null
@@ -4570,6 +4571,7 @@ export type Database = {
           expired_at?: string | null
           id?: string
           order_no: string
+          order_type?: string | null
           package_key: string
           package_name: string
           paid_at?: string | null
@@ -4586,6 +4588,7 @@ export type Database = {
           expired_at?: string | null
           id?: string
           order_no?: string
+          order_type?: string | null
           package_key?: string
           package_name?: string
           paid_at?: string | null

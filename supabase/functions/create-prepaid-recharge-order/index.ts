@@ -63,7 +63,7 @@ serve(async (req) => {
         amount: pkg.price,
         status: 'pending',
         order_type: 'prepaid_recharge',
-        product_name: pkg.package_name,
+        package_name: pkg.package_name,
       });
 
     if (orderError) {
