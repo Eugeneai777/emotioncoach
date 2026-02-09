@@ -27,6 +27,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [content, setContent] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>("public");
   const [submitting, setSubmitting] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [beautifying, setBeautifying] = useState(false);
