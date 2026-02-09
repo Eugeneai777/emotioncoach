@@ -286,6 +286,9 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
             </Button>
           </div>
 
+          {/* 可见范围 */}
+          <VisibilitySelector value={visibility} onChange={setVisibility} />
+
           {/* 匿名选项 */}
           <div className="flex items-center justify-between">
             <Label htmlFor="anonymous">匿名分享</Label>
