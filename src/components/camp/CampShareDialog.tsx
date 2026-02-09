@@ -187,7 +187,7 @@ const CampShareDialog = ({
         insight: insight,
         action: action,
         is_anonymous: isAnonymous,
-        visibility: "public",
+        visibility,
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         badges: {
           type: postType,
