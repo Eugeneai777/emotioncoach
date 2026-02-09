@@ -365,6 +365,7 @@ const PostDetailSheet = ({
       setCommentsCount(actualCount || 0);
 
       setNewComment("");
+      setReplyTarget(null);
       toast.success("评论成功");
 
       // 发送评论通知给帖子作者（跳过自评和匿名帖）
