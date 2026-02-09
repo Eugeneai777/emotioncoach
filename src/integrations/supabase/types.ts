@@ -8778,6 +8778,10 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
+      is_following: {
+        Args: { follower: string; following: string }
+        Returns: boolean
+      }
       lookup_partner_invitation: {
         Args: { p_invite_code: string }
         Returns: {
