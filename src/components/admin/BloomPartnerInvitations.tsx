@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Check, Search, RefreshCw, Send } from "lucide-react";
+import { Copy, Check, Search, RefreshCw, Send, Download } from "lucide-react";
+import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { BloomPartnerBatchImport } from "./BloomPartnerBatchImport";
@@ -148,6 +149,23 @@ export function BloomPartnerInvitations() {
                   <SelectItem value="expired">已过期</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={() => {
+                if (!filteredInvitations?.length) return;
+                const header = '邀请码,姓名,手机号,邀请链接,金额,状态,创建时间,领取时间\n';
+                const rows = filteredInvitations.map(inv => {
+                  const link = `${window.location.origin}/invite/${inv.invite_code}`;
+                  const status = inv.status === 'pending' ? '待领取' : inv.status === 'claimed' ? '已领取' : '已过期';
+                  const claimedAt = inv.claimed_at ? format(new Date(inv.claimed_at), 'yyyy-MM-dd HH:mm') : '';
+                  return `${inv.invite_code},${inv.invitee_name || ''},${inv.invitee_phone || ''},${link},${inv.order_amount},${status},${format(new Date(inv.created_at), 'yyyy-MM-dd HH:mm')},${claimedAt}`;
+                }).join('\n');
+                const bom = '\uFEFF';
+                const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8' });
+                saveAs(blob, `绽放合伙人名单_${format(new Date(), 'yyyyMMdd')}.csv`);
+                toast.success('导出成功');
+              }}>
+                <Download className="h-4 w-4 mr-1" />
+                导出CSV
+              </Button>
               <Button variant="outline" size="icon" onClick={() => refetch()}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
