@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Share2, Loader2, Sparkles, Download, RefreshCw, BookOpen } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
 import { ImageStyleSelector } from "@/components/community/ImageStyleSelector";
+import VisibilitySelector, { type PostVisibility } from "@/components/community/VisibilitySelector";
 import StoryCoachDialog from "./StoryCoachDialog";
 import { getTodayInBeijing } from "@/utils/dateUtils";
 
