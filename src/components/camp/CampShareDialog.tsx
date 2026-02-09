@@ -455,6 +455,9 @@ const CampShareDialog = ({
             />
           </div>
 
+          {/* 可见范围 */}
+          <VisibilitySelector value={visibility} onChange={setVisibility} />
+
           {/* 匿名选项 */}
           <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
             <div className="space-y-0.5">

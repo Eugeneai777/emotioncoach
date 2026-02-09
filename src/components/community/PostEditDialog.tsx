@@ -269,6 +269,9 @@ const PostEditDialog = ({
             </Button>
           </div>
 
+          {/* 可见范围 */}
+          <VisibilitySelector value={visibility} onChange={setVisibility} />
+
           {/* 底部按钮 */}
           <div className="flex gap-3 justify-end pt-4 border-t">
             <Button
