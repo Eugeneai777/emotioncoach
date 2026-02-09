@@ -52,6 +52,7 @@ const PostEditDialog = ({
       setTitle(post.title || '');
       setContent(post.content || '');
       setImageUrls(post.image_urls || []);
+      setVisibility((post.visibility as PostVisibility) || "public");
       setImageStyle("warm");
       setSaving(false);
       setGeneratingImage(false);
