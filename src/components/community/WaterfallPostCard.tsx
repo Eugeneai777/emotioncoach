@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart } from "lucide-react";
+import { Heart, Lock, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useCallback, memo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
