@@ -206,8 +206,11 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
       )}
       {/* 标题区域 */}
       <div className="p-3">
-        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-relaxed">
+        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-relaxed flex items-start gap-1">
+          {post.visibility === 'private' && <Lock className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />}
+          {post.visibility === 'followers_only' && <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />}
           {displayTitle}
+        </h3>
         </h3>
 
         {/* 用户信息和点赞 */}
