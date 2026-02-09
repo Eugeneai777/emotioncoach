@@ -191,7 +191,30 @@ serve(async (req) => {
       })
       .eq('id', invitation.id);
 
-    console.log(`Partner invitation claimed: ${invite_code} by user ${userId}`);
+    // Grant wealth block assessment benefit (free order)
+    await adminClient.from('orders').insert({
+      user_id: userId,
+      package_key: 'wealth_block_assessment',
+      package_name: '财富卡点测评',
+      amount: 0,
+      order_no: `BLOOM-WB-${Date.now()}`,
+      status: 'paid',
+      paid_at: new Date().toISOString(),
+      order_type: 'partner_benefit',
+      product_name: '财富卡点测评（绽放合伙人权益）',
+    });
+
+    // Grant 21-day wealth awakening camp benefit
+    await adminClient.from('user_camp_purchases').insert({
+      user_id: userId,
+      camp_type: 'wealth_block_7',
+      camp_name: '7天财富突破训练营',
+      purchase_price: 0,
+      payment_method: 'partner_benefit',
+      payment_status: 'completed',
+    });
+
+    console.log(`Partner invitation claimed: ${invite_code} by user ${userId}, benefits granted`);
 
     return new Response(
       JSON.stringify({
