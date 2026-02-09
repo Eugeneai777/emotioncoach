@@ -631,7 +631,7 @@ const PostDetailSheet = ({
             <div className="flex items-end gap-2 w-full">
               <textarea
                 ref={commentTextareaRef}
-                placeholder="说点什么..."
+                placeholder={replyTarget ? `回复 @${replyTarget.userName}...` : "说点什么..."}
                 value={newComment}
                 onChange={(e) => {
                   setNewComment(e.target.value);
