@@ -12,6 +12,7 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { ProfileCompletionPrompt } from "@/components/profile/ProfileCompletionPrompt";
 import ImageUploader from "./ImageUploader";
 import { ImageStyleSelector } from "./ImageStyleSelector";
+import VisibilitySelector, { type PostVisibility } from "./VisibilitySelector";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
 
 interface PostComposerProps {
@@ -26,6 +27,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [content, setContent] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>("public");
   const [submitting, setSubmitting] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [beautifying, setBeautifying] = useState(false);
@@ -81,7 +83,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
         content: content.trim(),
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         is_anonymous: isAnonymous,
-        visibility: "public",
+        visibility,
       });
 
       if (error) throw error;
@@ -283,6 +285,9 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
               )}
             </Button>
           </div>
+
+          {/* 可见范围 */}
+          <VisibilitySelector value={visibility} onChange={setVisibility} />
 
           {/* 匿名选项 */}
           <div className="flex items-center justify-between">

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import ImageUploader from "./ImageUploader";
 import { ImageStyleSelector } from "./ImageStyleSelector";
+import VisibilitySelector, { type PostVisibility } from "./VisibilitySelector";
 
 interface PostEditDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface PostEditDialogProps {
     emotion_intensity: number | null;
     camp_day: number | null;
     badges: any;
+    visibility?: string;
   };
   onUpdate: () => void;
 }
@@ -37,6 +39,7 @@ const PostEditDialog = ({
   const [content, setContent] = useState<string>(post.content || '');
   const [imageUrls, setImageUrls] = useState<string[]>(post.image_urls || []);
   const [saving, setSaving] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>((post.visibility as PostVisibility) || "public");
   const [generatingImage, setGeneratingImage] = useState(false);
   const [beautifying, setBeautifying] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
@@ -49,6 +52,7 @@ const PostEditDialog = ({
       setTitle(post.title || '');
       setContent(post.content || '');
       setImageUrls(post.image_urls || []);
+      setVisibility((post.visibility as PostVisibility) || "public");
       setImageStyle("warm");
       setSaving(false);
       setGeneratingImage(false);
@@ -132,6 +136,7 @@ const PostEditDialog = ({
           title: title.trim() || null,
           content: content.trim() || null,
           image_urls: imageUrls.length > 0 ? imageUrls : null,
+          visibility,
         })
         .eq("id", post.id)
         .eq("user_id", session.user.id);
@@ -263,6 +268,9 @@ const PostEditDialog = ({
               )}
             </Button>
           </div>
+
+          {/* 可见范围 */}
+          <VisibilitySelector value={visibility} onChange={setVisibility} />
 
           {/* 底部按钮 */}
           <div className="flex gap-3 justify-end pt-4 border-t">

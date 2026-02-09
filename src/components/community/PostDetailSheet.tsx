@@ -74,6 +74,7 @@ const PostDetailSheet = ({
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<{ id: string; userName: string } | null>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -346,7 +347,8 @@ const PostDetailSheet = ({
         post_id: post.id,
         user_id: session.user.id,
         content: newComment.trim(),
-        is_anonymous: false
+        is_anonymous: false,
+        parent_id: replyTarget?.id || null,
       });
       if (error) throw error;
 
@@ -363,19 +365,21 @@ const PostDetailSheet = ({
       setCommentsCount(actualCount || 0);
 
       setNewComment("");
+      setReplyTarget(null);
       toast.success("评论成功");
 
-      // 发送评论通知给帖子作者（跳过自评和匿名帖）
-      if (session.user.id !== post.user_id && !post.is_anonymous) {
-        try {
-          const { data: commenterProfile } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", session.user.id)
-            .single();
+      // 发送通知
+      try {
+        const { data: commenterProfile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", session.user.id)
+          .single();
 
-          const commenterName = commenterProfile?.display_name || "有人";
+        const commenterName = commenterProfile?.display_name || "有人";
 
+        // 通知帖子作者（跳过自评和匿名帖）
+        if (session.user.id !== post.user_id && !post.is_anonymous) {
           await supabase.from("smart_notifications").insert({
             user_id: post.user_id,
             notification_type: "community",
@@ -387,9 +391,32 @@ const PostDetailSheet = ({
             action_data: { post_id: post.id },
             priority: 3,
           });
-        } catch (notifError) {
-          console.error("发送评论通知失败:", notifError);
         }
+
+        // 如果是回复，还要通知被回复的评论作者
+        if (replyTarget) {
+          const { data: parentComment } = await supabase
+            .from("post_comments")
+            .select("user_id")
+            .eq("id", replyTarget.id)
+            .single();
+
+          if (parentComment && parentComment.user_id !== session.user.id && parentComment.user_id !== post.user_id) {
+            await supabase.from("smart_notifications").insert({
+              user_id: parentComment.user_id,
+              notification_type: "community",
+              scenario: "comment_reply",
+              title: `${commenterName}回复了你的评论`,
+              message: newComment.trim().substring(0, 80),
+              icon: "reply",
+              action_type: "navigate",
+              action_data: { post_id: post.id },
+              priority: 3,
+            });
+          }
+        }
+      } catch (notifError) {
+        console.error("发送通知失败:", notifError);
       }
 
       // 触发评论区刷新事件
@@ -597,19 +624,38 @@ const PostDetailSheet = ({
 
             {/* 评论区 */}
             <div className="mt-6 pb-24">
-              <CommentSection postId={post.id} onUpdate={() => {}} />
+              <CommentSection
+                postId={post.id}
+                onUpdate={() => {}}
+                onReply={(target) => {
+                  setReplyTarget(target);
+                  commentTextareaRef.current?.focus();
+                }}
+              />
             </div>
           </div>
         </ScrollArea>
 
         {/* 底部固定互动栏 - 两行布局 */}
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 sm:p-3 flex flex-col gap-2 z-50 safe-bottom">
+          {/* 回复提示 */}
+          {replyTarget && (
+            <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+              <span>回复 @{replyTarget.userName}</span>
+              <button
+                onClick={() => setReplyTarget(null)}
+                className="text-muted-foreground hover:text-foreground ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           {/* 第一行：评论输入框 + 发送按钮 */}
           {session ? (
             <div className="flex items-end gap-2 w-full">
               <textarea
                 ref={commentTextareaRef}
-                placeholder="说点什么..."
+                placeholder={replyTarget ? `回复 @${replyTarget.userName}...` : "说点什么..."}
                 value={newComment}
                 onChange={(e) => {
                   setNewComment(e.target.value);

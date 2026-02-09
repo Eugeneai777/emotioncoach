@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Share2, Loader2, Sparkles, Download, RefreshCw, BookOpen } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
 import { ImageStyleSelector } from "@/components/community/ImageStyleSelector";
+import VisibilitySelector, { type PostVisibility } from "@/components/community/VisibilitySelector";
 import StoryCoachDialog from "@/components/camp/StoryCoachDialog";
 
 export type CoachType = 'emotion' | 'communication' | 'parent' | 'vibrant_life';
@@ -80,6 +81,7 @@ const BriefingShareDialog = ({
   const [customTitle, setCustomTitle] = useState(insight || emotionTheme || "");
   const [shareContent, setShareContent] = useState(growthStory || "");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>("public");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
@@ -191,7 +193,7 @@ const BriefingShareDialog = ({
         insight: insight,
         action: action,
         is_anonymous: isAnonymous,
-        visibility: "public",
+        visibility,
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         badges: {
           type: hasStoryContent ? "story" : "briefing_share",
@@ -385,6 +387,9 @@ const BriefingShareDialog = ({
               className="resize-none"
             />
           </div>
+
+          {/* 可见范围 */}
+          <VisibilitySelector value={visibility} onChange={setVisibility} />
 
           {/* 匿名选项 */}
           <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
