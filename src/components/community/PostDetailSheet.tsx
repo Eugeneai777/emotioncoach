@@ -368,17 +368,18 @@ const PostDetailSheet = ({
       setReplyTarget(null);
       toast.success("评论成功");
 
-      // 发送评论通知给帖子作者（跳过自评和匿名帖）
-      if (session.user.id !== post.user_id && !post.is_anonymous) {
-        try {
-          const { data: commenterProfile } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", session.user.id)
-            .single();
+      // 发送通知
+      try {
+        const { data: commenterProfile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", session.user.id)
+          .single();
 
-          const commenterName = commenterProfile?.display_name || "有人";
+        const commenterName = commenterProfile?.display_name || "有人";
 
+        // 通知帖子作者（跳过自评和匿名帖）
+        if (session.user.id !== post.user_id && !post.is_anonymous) {
           await supabase.from("smart_notifications").insert({
             user_id: post.user_id,
             notification_type: "community",
@@ -390,9 +391,32 @@ const PostDetailSheet = ({
             action_data: { post_id: post.id },
             priority: 3,
           });
-        } catch (notifError) {
-          console.error("发送评论通知失败:", notifError);
         }
+
+        // 如果是回复，还要通知被回复的评论作者
+        if (replyTarget) {
+          const { data: parentComment } = await supabase
+            .from("post_comments")
+            .select("user_id")
+            .eq("id", replyTarget.id)
+            .single();
+
+          if (parentComment && parentComment.user_id !== session.user.id && parentComment.user_id !== post.user_id) {
+            await supabase.from("smart_notifications").insert({
+              user_id: parentComment.user_id,
+              notification_type: "community",
+              scenario: "comment_reply",
+              title: `${commenterName}回复了你的评论`,
+              message: newComment.trim().substring(0, 80),
+              icon: "reply",
+              action_type: "navigate",
+              action_data: { post_id: post.id },
+              priority: 3,
+            });
+          }
+        }
+      } catch (notifError) {
+        console.error("发送通知失败:", notifError);
       }
 
       // 触发评论区刷新事件
