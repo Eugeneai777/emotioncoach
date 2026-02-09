@@ -26,7 +26,7 @@ const getBeijingDateInfo = (): { date: string; weekday: string; dateDesc: string
   };
 };
 
-// 情绪教练专用 Prompt
+// 情绪教练专用 Prompt（与豆包版本保持一致）
 const getEmotionCoachInstructions = (userName?: string) => {
   const name = userName || '朋友';
   const dateInfo = getBeijingDateInfo();
@@ -85,7 +85,7 @@ const getEmotionCoachInstructions = (userName?: string) => {
 
 ## 开场白
 如果这是对话的开始，请温暖地问候用户：
-"你好呀，我是劲老师，今天想聊点什么呢？"
+"你好呀，我是劲老师，今天想聊点什么喃？"
 
 ---
 
