@@ -1,136 +1,125 @@
 
 
-## 简化 WealthInviteCardDialog：从 6 个标签精简到 3 个固定模板
+## 问题诊断
 
-### 当前问题
+### 根本原因
 
-WealthInviteCardDialog 组件有 **780 行代码**，显示 6 个只有 emoji 图标的小标签（🎁🔓👁️✨🏕️🏅），用户很难理解每个标签代表什么。其中 3 种卡片（情绪锁🔓、盲区👁️、转变✨）**没有任何调用方使用过**，属于冗余功能。成就墙卡片还额外有"风格选择器"和"路径选择器"，增加了不必要的操作复杂度。
-
-### 改造方案
-
-#### 1. 保留 3 种核心卡片
-
-根据全部 5 个调用方的实际使用情况，只保留以下 3 种模板：
-
-| 模板 | 说明 | 调用场景 | 二维码链接 |
-|------|------|----------|-----------|
-| 测评结果 🎁 | 财富觉醒指数 + 反应模式 | 测评完成页、结果页 | /wealth-block |
-| 训练营邀请 🏕️ | 7天训练营进度 + 邀请 | 训练营打卡页 | /wealth-camp-intro |
-| 成就墙 🏅 | 成就徽章展示 | 成就页、毕业页 | /wealth-camp-intro |
-
-**删除 3 种不用的卡片**（从此对话框中移除导入，文件本身保留不删）：
-- FearAwakeningShareCard（情绪锁）
-- BlockRevealShareCard（盲区）
-- TransformationValueShareCard（转变）
-
-#### 2. 选择器 UI 改造
-
-将 6 个小 emoji 图标替换为 3 个清晰的大按钮，包含图标和文字标签：
-
-```text
-+----------------------------------+
-|  生成分享卡片                  X  |
-+----------------------------------+
-|                                  |
-|  [🎁 测评结果] [🏕️ 训练营] [🏅 成就墙]  |
-|                                  |
-|  +----------------------------+  |
-|  |                            |  |
-|  |      卡片预览（缩放显示）    |  |
-|  |                            |  |
-|  +----------------------------+  |
-|                                  |
-|  [  分享  ]                [复制] |
-|  点击分享按钮，或复制链接后发送    |
-+----------------------------------+
+日志显示错误信息：
+```
+Error creating order: {
+  code: "PGRST204",
+  message: "Could not find the 'order_type' column of 'orders' in the schema cache"
+}
 ```
 
-#### 3. 成就墙卡片固定模板
+**问题**：`orders` 表缺少两个必要的列，但边缘函数尝试写入它们：
 
-移除当前的风格选择器（深邃/渐变/简约/霓虹）和路径选择器（里程碑/坚持/成长/社交），使用固定默认值：
-- 风格：`dark`（深邃）
-- 路径：`null`（显示全部）
+| 缺失列 | 函数中的用途 |
+|--------|-------------|
+| `order_type` | 区分订单类型（如 `prepaid_recharge`、`package_purchase`） |
+| `product_name` | 存储产品名称（如 `教练预付卡 ¥1000`） |
 
-#### 4. 二维码与署名自动处理
+### 当前 orders 表结构
 
-不需要改动 -- 现有的 `useQRCode` + `getPromotionDomain()` + `partnerInfo` 已在各卡片组件内自动生成二维码和合伙人归因链接。本次重构完整保留这些逻辑。
+现有列：`id`, `user_id`, `package_key`, `package_name`, `amount`, `order_no`, `trade_no`, `status`, `qr_code_url`, `paid_at`, `expired_at`, `created_at`, `updated_at`, `pay_type`
 
-#### 5. 迁移到 ShareDialogBase
+### 受影响的功能
 
-利用上一轮已建好的 `ShareDialogBase` 统一处理：
-- 图片生成（html2canvas）
-- 环境检测（微信/iOS/桌面）
-- 滚动锁清理
-- 复制链接
-- 全屏图片预览
+- `create-prepaid-alipay-order`（支付宝 H5 充值）
+- `create-prepaid-recharge-order`（微信支付充值）
 
-### 技术细节
+---
 
-#### 代码精简：780 行 → 约 180 行
+## 修复方案
 
-移除的内容：
-- `fearCardRef`、`blindspotCardRef`、`transformCardRef`（3个多余的ref）
-- `achievementPath`、`achievementStyle` 状态及其选择器 UI
-- `handleDownload`、`handleNativeShare`、`handleLinkSharePrompt`、`handleCloseImagePreview`、`handleRegeneratePreview`、`handleCopyLink`（全部由 ShareDialogBase 接管）
-- `FearAwakeningShareCard`、`BlockRevealShareCard`、`TransformationValueShareCard` 的导入和渲染
-- `ShareImagePreview` 的直接使用（由 ShareDialogBase 内部管理）
-- 手动的滚动锁清理逻辑
+### 方案一：添加缺失的数据库列（推荐）
 
-保留的内容：
-- 用户数据获取逻辑（头像、昵称、合伙人信息、测评数据）
-- `onViewComplete` 3秒查看完成回调
-- `trigger` 属性（支持自定义触发按钮）
-- 所有现有 props 接口（`defaultTab`、`assessmentScore`、`reactionPattern`、`campId` 等）
-- 受控/非受控模式兼容
+为 `orders` 表添加两个新列：
 
-#### 新增 CardTab 类型
+```sql
+-- 添加 order_type 列，用于区分订单类型
+ALTER TABLE public.orders 
+ADD COLUMN order_type TEXT DEFAULT 'package_purchase';
 
-```tsx
-type CardTab = 'value' | 'camp' | 'achievement';  // 从6种缩减为3种
-
-const CARD_OPTIONS = [
-  { id: 'value', label: '测评结果', emoji: '🎁' },
-  { id: 'camp',  label: '训练营',   emoji: '🏕️' },
-  { id: 'achievement', label: '成就墙', emoji: '🏅' },
-];
+-- 添加 product_name 列（如果 package_name 已满足需求可复用）
+-- 检查发现 package_name 已存在，可以用它替代 product_name
 ```
 
-#### 动态 exportCardRef 处理
+**注意**：发现 `package_name` 列已存在，可以复用它代替 `product_name`。
 
-由于 ShareDialogBase 只接受单个 `exportCardRef`，需要根据 `activeTab` 动态指向对应的卡片 ref：
+### 方案二：修改边缘函数以匹配现有表结构
 
-```tsx
-const valueCardRef = useRef<HTMLDivElement>(null);
-const campCardRef = useRef<HTMLDivElement>(null);
-const achievementCardRef = useRef<HTMLDivElement>(null);
+移除或调整边缘函数中不存在的列引用。
 
-const activeCardRef = activeTab === 'value' ? valueCardRef
-  : activeTab === 'camp' ? campCardRef
-  : achievementCardRef;
+---
+
+## 推荐方案
+
+采用**混合方案**：
+
+1. **添加 `order_type` 列**：这是业务必需的字段，用于区分普通套餐购买 vs 预付卡充值
+2. **复用 `package_name` 列**：用现有的 `package_name` 替代 `product_name`，无需新增列
+
+### 数据库迁移
+
+```sql
+ALTER TABLE public.orders 
+ADD COLUMN IF NOT EXISTS order_type TEXT DEFAULT 'package_purchase';
+
+COMMENT ON COLUMN public.orders.order_type IS '订单类型：package_purchase（套餐购买）、prepaid_recharge（预付卡充值）';
 ```
 
-#### 调用方兼容性验证
+### 边缘函数修改
 
-全部 5 个调用方无需任何改动：
+修改两个边缘函数，将 `product_name` 改为使用已存在的 `package_name` 列：
 
-| 调用方文件 | defaultTab | 其他 props | 状态 |
-|-----------|-----------|-----------|------|
-| WealthBlockAssessment.tsx | `"value"` | assessmentScore, reactionPattern | 兼容 |
-| WealthBlockResult.tsx | `"value"` | assessmentScore, reactionPattern | 兼容 |
-| WealthCampCheckIn.tsx | `"camp"` | campId, currentDay | 兼容 |
-| CompactAchievementGrid.tsx | `"achievement"` | open/onOpenChange | 兼容 |
-| CampGraduate.tsx | `"achievement"` | campId, currentDay | 兼容 |
+**`create-prepaid-alipay-order/index.ts`** 第 166-178 行：
+```typescript
+// 修改前
+.insert({
+  order_no: orderNo,
+  ...
+  order_type: 'prepaid_recharge',
+  product_name: pkg.package_name,  // ← 列不存在
+  ...
+});
 
-### 修改文件
+// 修改后
+.insert({
+  order_no: orderNo,
+  ...
+  order_type: 'prepaid_recharge',
+  package_name: pkg.package_name,  // ← 使用已存在的列
+  ...
+});
+```
+
+**`create-prepaid-recharge-order/index.ts`** 第 57-67 行：
+```typescript
+// 修改前
+.insert({
+  order_no: orderNo,
+  ...
+  order_type: 'prepaid_recharge',
+  product_name: pkg.package_name,  // ← 列不存在
+});
+
+// 修改后
+.insert({
+  order_no: orderNo,
+  ...
+  order_type: 'prepaid_recharge',
+  package_name: pkg.package_name,  // ← 使用已存在的列
+});
+```
+
+---
+
+## 修改文件清单
 
 | 文件 | 操作 |
 |------|------|
-| `src/components/wealth-camp/WealthInviteCardDialog.tsx` | 主要重写：780行 → 约180行。移除3种卡片、移除选择器、迁移到 ShareDialogBase、使用清晰标签选择器。 |
-
-### 不改动的文件
-
-- 各卡片组件文件（AssessmentValueShareCard、WealthCampShareCard、AchievementShareCard）-- 不变
-- FearAwakeningShareCard、BlockRevealShareCard、TransformationValueShareCard 文件 -- 保留在代码库但不再被此对话框导入
-- 全部 5 个调用方文件 -- 无需改动，接口完全兼容
-- shareCardsRegistry.ts -- 保持审计注册记录
+| 数据库迁移 | 添加 `order_type` 列 |
+| `supabase/functions/create-prepaid-alipay-order/index.ts` | 将 `product_name` 改为 `package_name` |
+| `supabase/functions/create-prepaid-recharge-order/index.ts` | 将 `product_name` 改为 `package_name` |
 
