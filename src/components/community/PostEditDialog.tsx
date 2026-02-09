@@ -24,6 +24,7 @@ interface PostEditDialogProps {
     emotion_intensity: number | null;
     camp_day: number | null;
     badges: any;
+    visibility?: string;
   };
   onUpdate: () => void;
 }
