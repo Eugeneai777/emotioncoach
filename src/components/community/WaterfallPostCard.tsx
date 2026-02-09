@@ -103,36 +103,22 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
       setLoading(true);
 
       if (liked) {
-        // 取消点赞
         await supabase
           .from("post_likes")
           .delete()
           .eq("post_id", post.id)
           .eq("user_id", session.user.id);
 
-        // 更新计数
-        await supabase
-          .from("community_posts")
-          .update({ likes_count: Math.max(0, likesCount - 1) })
-          .eq("id", post.id);
-
         setLiked(false);
         setLikesCount((prev) => Math.max(0, prev - 1));
         onLikeChange?.(post.id, false);
       } else {
-        // 点赞
         await supabase
           .from("post_likes")
           .insert({
             post_id: post.id,
             user_id: session.user.id,
           });
-
-        // 更新计数
-        await supabase
-          .from("community_posts")
-          .update({ likes_count: likesCount + 1 })
-          .eq("id", post.id);
 
         setLiked(true);
         setLikesCount((prev) => prev + 1);
