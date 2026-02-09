@@ -39,6 +39,7 @@ const PostEditDialog = ({
   const [content, setContent] = useState<string>(post.content || '');
   const [imageUrls, setImageUrls] = useState<string[]>(post.image_urls || []);
   const [saving, setSaving] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>((post.visibility as PostVisibility) || "public");
   const [generatingImage, setGeneratingImage] = useState(false);
   const [beautifying, setBeautifying] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
