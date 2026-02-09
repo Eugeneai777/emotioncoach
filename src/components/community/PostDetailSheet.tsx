@@ -614,6 +614,18 @@ const PostDetailSheet = ({
 
         {/* 底部固定互动栏 - 两行布局 */}
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-2 sm:p-3 flex flex-col gap-2 z-50 safe-bottom">
+          {/* 回复提示 */}
+          {replyTarget && (
+            <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+              <span>回复 @{replyTarget.userName}</span>
+              <button
+                onClick={() => setReplyTarget(null)}
+                className="text-muted-foreground hover:text-foreground ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           {/* 第一行：评论输入框 + 发送按钮 */}
           {session ? (
             <div className="flex items-end gap-2 w-full">
