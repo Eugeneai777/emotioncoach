@@ -600,7 +600,14 @@ const PostDetailSheet = ({
 
             {/* 评论区 */}
             <div className="mt-6 pb-24">
-              <CommentSection postId={post.id} onUpdate={() => {}} />
+              <CommentSection
+                postId={post.id}
+                onUpdate={() => {}}
+                onReply={(target) => {
+                  setReplyTarget(target);
+                  commentTextareaRef.current?.focus();
+                }}
+              />
             </div>
           </div>
         </ScrollArea>
