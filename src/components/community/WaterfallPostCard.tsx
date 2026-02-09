@@ -155,7 +155,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           <ProgressiveImage
             src={coverImage}
             alt={displayTitle}
-            className="group-hover:scale-105 transition-transform duration-300"
+            className="group-hover:scale-105 transition-transform duration-300 max-h-[280px]"
           />
           {/* 教练空间标签 */}
           {coachSpace && (
