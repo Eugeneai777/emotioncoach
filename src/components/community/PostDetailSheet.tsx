@@ -347,7 +347,8 @@ const PostDetailSheet = ({
         post_id: post.id,
         user_id: session.user.id,
         content: newComment.trim(),
-        is_anonymous: false
+        is_anonymous: false,
+        parent_id: replyTarget?.id || null,
       });
       if (error) throw error;
 
