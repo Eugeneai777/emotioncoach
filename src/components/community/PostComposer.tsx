@@ -12,6 +12,7 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { ProfileCompletionPrompt } from "@/components/profile/ProfileCompletionPrompt";
 import ImageUploader from "./ImageUploader";
 import { ImageStyleSelector } from "./ImageStyleSelector";
+import VisibilitySelector, { type PostVisibility } from "./VisibilitySelector";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
 
 interface PostComposerProps {
