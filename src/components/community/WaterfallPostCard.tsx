@@ -211,7 +211,6 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           {post.visibility === 'followers_only' && <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />}
           {displayTitle}
         </h3>
-        </h3>
 
         {/* 用户信息和点赞 */}
         <div className="flex items-center justify-between">
