@@ -295,7 +295,7 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto">
+      <DialogContent className="w-full max-w-sm sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>充值教练预付卡</DialogTitle>
         </DialogHeader>
