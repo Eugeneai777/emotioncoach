@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Copy, Check, Search, RefreshCw, Send, Download } from "lucide-react";
 import { saveAs } from "file-saver";
 import { toast } from "sonner";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import { format } from "date-fns";
 import { BloomPartnerBatchImport } from "./BloomPartnerBatchImport";
 
