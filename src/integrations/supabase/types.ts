@@ -4559,6 +4559,7 @@ export type Database = {
           package_name: string
           paid_at: string | null
           pay_type: string | null
+          product_name: string | null
           qr_code_url: string | null
           status: string | null
           trade_no: string | null
@@ -4576,6 +4577,7 @@ export type Database = {
           package_name: string
           paid_at?: string | null
           pay_type?: string | null
+          product_name?: string | null
           qr_code_url?: string | null
           status?: string | null
           trade_no?: string | null
@@ -4593,6 +4595,7 @@ export type Database = {
           package_name?: string
           paid_at?: string | null
           pay_type?: string | null
+          product_name?: string | null
           qr_code_url?: string | null
           status?: string | null
           trade_no?: string | null
