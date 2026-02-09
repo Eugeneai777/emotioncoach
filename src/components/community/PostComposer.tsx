@@ -83,7 +83,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
         content: content.trim(),
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         is_anonymous: isAnonymous,
-        visibility: "public",
+        visibility,
       });
 
       if (error) throw error;
