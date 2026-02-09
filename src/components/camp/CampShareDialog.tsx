@@ -60,6 +60,7 @@ const CampShareDialog = ({
   const [customTitle, setCustomTitle] = useState(insight || "");
   const [shareContent, setShareContent] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>("public");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
