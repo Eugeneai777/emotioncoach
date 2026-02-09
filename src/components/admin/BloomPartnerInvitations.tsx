@@ -64,7 +64,7 @@ export function BloomPartnerInvitations() {
   });
 
   const handleCopyLink = (code: string) => {
-    const link = `${window.location.origin}/invite/${code}`;
+    const link = `${getPromotionDomain()}/invite/${code}`;
     navigator.clipboard.writeText(link);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
