@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import ImageUploader from "./ImageUploader";
 import { ImageStyleSelector } from "./ImageStyleSelector";
+import VisibilitySelector, { type PostVisibility } from "./VisibilitySelector";
 
 interface PostEditDialogProps {
   open: boolean;
