@@ -656,10 +656,9 @@ const Index = () => {
           coachEmoji={coachConfig?.emoji || "💚"}
           coachTitle="情绪教练"
           primaryColor="green"
-          tokenEndpoint="doubao-realtime-token"
+          tokenEndpoint="emotion-realtime-token"
           mode="emotion"
           featureKey="realtime_voice_emotion"
-          voiceType={selectedVoiceType}
           onBriefingSaved={(briefingId, briefingData) => {
             // 🔧 简报生成后不立即关闭语音对话，让用户可以继续或主动关闭
             // setShowVoiceChat(false); // 移除自动关闭

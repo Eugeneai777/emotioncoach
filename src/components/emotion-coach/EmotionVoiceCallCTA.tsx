@@ -4,7 +4,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { preheatTokenEndpoint, prewarmMicrophoneStream } from '@/utils/RealtimeAudio';
-import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 
 interface EmotionVoiceCallCTAProps {
   onVoiceChatClick: () => void;
@@ -22,32 +21,18 @@ export const EmotionVoiceCallCTA = ({
     isLoading
   } = usePersonalizedGreeting();
 
-  // 🚀 P0: 预热 Edge Function 和麦克风流
+  // 🚀 P0: 预热 Edge Function 和麦克风流（使用 OpenAI Realtime）
   const handlePreheat = useCallback(() => {
-    // 微信端：先预热 AudioContext（不触发麦克风授权弹窗）
-    try {
-      DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: false });
-    } catch {
-      // ignore
-    }
-
     Promise.all([
-      // 情绪教练必须预热豆包 token
-      preheatTokenEndpoint('doubao-realtime-token'),
+      // 情绪教练使用 OpenAI Realtime token
+      preheatTokenEndpoint('emotion-realtime-token'),
       prewarmMicrophoneStream()
     ]).catch(console.warn);
   }, []);
 
   const handleClick = () => {
-    // ✅ 关键：在用户点击同步上下文中解锁微信音频
-    // 这是 iOS 微信 WebView 能正常工作的唯一方式
-    try {
-      // 先预热 AudioContext（播放 + 录音）
-      DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: false });
-      console.log('[EmotionVoiceCallCTA] ✅ AudioContext prewarmed on click');
-    } catch {
-      // ignore
-    }
+    // ✅ 在用户点击时预热音频（用于 WebRTC）
+    console.log('[EmotionVoiceCallCTA] ✅ Click handled, starting voice chat');
 
     // 触发涟漪动画
     setIsRippling(true);
