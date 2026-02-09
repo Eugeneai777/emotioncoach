@@ -55,7 +55,6 @@ const LikeButton = ({ postId, initialLikesCount, onUpdate }: LikeButtonProps) =>
       setLoading(true);
 
       if (liked) {
-        // 取消点赞
         const { error } = await supabase
           .from("post_likes")
           .delete()
@@ -64,24 +63,9 @@ const LikeButton = ({ postId, initialLikesCount, onUpdate }: LikeButtonProps) =>
 
         if (error) throw error;
 
-        // 更新计数
-        const { data: postData } = await supabase
-          .from("community_posts")
-          .select("likes_count")
-          .eq("id", postId)
-          .single();
-
-        if (postData) {
-          await supabase
-            .from("community_posts")
-            .update({ likes_count: Math.max(0, postData.likes_count - 1) })
-            .eq("id", postId);
-        }
-
         setLiked(false);
         setLikesCount((prev) => Math.max(0, prev - 1));
       } else {
-        // 点赞
         const { error } = await supabase
           .from("post_likes")
           .insert({
@@ -90,14 +74,6 @@ const LikeButton = ({ postId, initialLikesCount, onUpdate }: LikeButtonProps) =>
           });
 
         if (error) throw error;
-
-        // 更新计数
-        const { error: updateError } = await supabase
-          .from("community_posts")
-          .update({ likes_count: likesCount + 1 })
-          .eq("id", postId);
-
-        if (updateError) throw updateError;
 
         setLiked(true);
         setLikesCount((prev) => prev + 1);
