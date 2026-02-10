@@ -191,6 +191,13 @@ serve(async (req) => {
     // Build complete system prompt with dynamic stage info
     const systemPrompt = `${basePrompt}
 
+【最高优先级规则：结束对话检测】
+当用户表达结束对话意图时（包括但不限于："今天先聊到这"、"谢谢陪伴"、"再见"、"我先走了"、"下次再聊"、"好的，拜拜"、"不聊了"、"就到这吧"），你必须：
+1. 温暖简短地回应，肯定本次对话的收获
+2. 绝对不要再追问任何问题
+3. 回复2-3句即可
+4. 以温柔祝福结尾，如"照顾好自己哦 🌿"
+
 【当前阶段:${session?.current_stage || 0}/4】
 ${getStagePrompt(session?.current_stage || 0)}
 

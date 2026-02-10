@@ -151,13 +151,80 @@ export const useDynamicCoachChat = (
       return [];
     }
   };
+  // 🔄 未完成对话恢复逻辑
+  const [isRecovering, setIsRecovering] = useState(false);
+  const briefingGeneratedRef = useRef(false);
+
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
+    } else if (coachKey && edgeFunctionName) {
+      // 尝试恢复未完成的对话
+      recoverActiveSession();
     } else {
       setMessages([]);
     }
-  }, [conversationId]);
+  }, [conversationId, coachKey]);
+
+  const recoverActiveSession = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 查询最近24小时内该教练的对话
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentConvs } = await supabase
+        .from('conversations')
+        .select('id, created_at, updated_at')
+        .eq('user_id', user.id)
+        .eq('title', `${coachKey}对话`)
+        .gte('created_at', twentyFourHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (!recentConvs || recentConvs.length === 0) return;
+
+      const recentConv = recentConvs[0];
+
+      // 检查该对话是否有消息
+      const { data: convMessages, error: msgError } = await supabase
+        .from('messages')
+        .select('role, content, created_at')
+        .eq('conversation_id', recentConv.id)
+        .order('created_at', { ascending: true });
+
+      if (msgError || !convMessages || convMessages.length === 0) return;
+
+      // 检查该对话是否已生成简报（通过 briefingTableName 查询）
+      if (briefingTableName) {
+        const { data: existingBriefing } = await (supabase as any)
+          .from(briefingTableName)
+          .select('id')
+          .eq('conversation_id', recentConv.id)
+          .limit(1);
+
+        if (existingBriefing && existingBriefing.length > 0) {
+          // 已有简报，不需要恢复
+          return;
+        }
+      }
+
+      // 恢复对话
+      console.log('🔄 [useDynamicCoachChat] 恢复未完成对话:', recentConv.id);
+      setIsRecovering(true);
+      setCurrentConversationId(recentConv.id);
+      const loadedMessages: Message[] = convMessages.map((msg: any) => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      }));
+      setMessages(loadedMessages);
+      messagesRef.current = loadedMessages;
+      setIsRecovering(false);
+    } catch (error) {
+      console.error('恢复对话失败:', error);
+      setIsRecovering(false);
+    }
+  };
 
   const loadConversation = async (convId: string) => {
     try {
@@ -234,6 +301,7 @@ export const useDynamicCoachChat = (
 
       if (error) throw error;
       setLastBriefingId(data.id);
+      briefingGeneratedRef.current = true;
 
       // 更新场景策略效果追踪（如果有满意度数据）
       if (user_satisfaction !== undefined) {
@@ -502,6 +570,7 @@ export const useDynamicCoachChat = (
               });
               
               if (!journalError && journalResult?.success) {
+                briefingGeneratedRef.current = true;
                 console.log('📝 [useDynamicCoachChat] 日记生成成功:', { 
                   journalId: journalResult.journal?.id, 
                   dayNumber: dayNumberToUse 
@@ -760,9 +829,39 @@ export const useDynamicCoachChat = (
     setCampRecommendation(null);
   }, []);
 
+  // 🔔 离开页面时触发未完成对话通知
+  useEffect(() => {
+    return () => {
+      // 组件卸载时检查是否有未完成的对话
+      const currentMessages = messagesRef.current;
+      const convId = currentConversationId;
+      if (currentMessages.length >= 2 && convId && !briefingGeneratedRef.current) {
+        // 异步触发通知，不阻塞卸载
+        supabase.functions.invoke('generate-smart-notification', {
+          body: {
+            scenario: 'incomplete_coach_session',
+            context: {
+              sessionId: convId,
+              coachKey,
+              message_count: currentMessages.length,
+            }
+          }
+        }).catch(err => console.error('触发未完成通知失败:', err));
+      }
+    };
+  }, [currentConversationId, coachKey]);
+
+  // 标记简报已生成
+  const originalOnBriefingGenerated = onBriefingGenerated;
+  const wrappedOnBriefingGenerated = useCallback((data: any) => {
+    briefingGeneratedRef.current = true;
+    originalOnBriefingGenerated?.(data);
+  }, [originalOnBriefingGenerated]);
+
   return {
     messages,
     isLoading,
+    isRecovering,
     lastBriefingId,
     coachRecommendation,
     videoRecommendation,
