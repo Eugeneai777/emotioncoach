@@ -37,6 +37,7 @@ interface LocationState {
   campId?: string;
   dayNumber?: number;
   meditationTitle?: string;
+  sessionId?: string; // 从通知跳转恢复的会话ID
 }
 
 
@@ -163,7 +164,7 @@ const DynamicCoach = () => {
     template?.edge_function_name || '',
     template?.briefing_table_name || '',
     template?.briefing_tool_config as any,
-    undefined,
+    locationState?.sessionId || undefined,
     handleBriefingGenerated,
     initialChatMode,
     { 
