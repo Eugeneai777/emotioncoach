@@ -1,98 +1,119 @@
 
 
-## 全教练体系同步：告别检测 + 未完成对话恢复
+## 修复支付回调缺失 subscriptions 写入的问题
 
-### 当前状态
+### 问题根因
 
-**告别检测规则**已添加的教练（3个）：
-- emotion-coach
-- assessment-coach-chat
-- assessment-emotion-coach
+支付成功后有 3 条回调路径，**全部缺少 `subscriptions` 表的写入**：
 
-**尚未添加告别规则**的教练（5个）：
-- vibrant-life-sage-coach（有劲生活教练）- 有部分结束检测但缺少"不再追问"的强制规则
-- carnegie-coach（沟通教练）
-- gratitude-coach（感恩教练）
-- parent-emotion-coach（亲子教练）
-- wealth_coach_4_questions-coach（财富教练）
+| 回调路径 | 写 orders | 写 user_accounts | 写 subscriptions | 写 camp_purchases |
+|---------|----------|-----------------|-----------------|------------------|
+| `wechat-pay-callback` | OK | OK | **缺失** | OK |
+| `alipay-callback` | OK | OK | **缺失** | 未处理 |
+| `check-order-status` (forceWechatQuery) | OK | **缺失** | **缺失** | **缺失** |
 
-**未完成对话恢复**：仅 `AssessmentCoachChat` 已实现，其他所有教练使用的 `useDynamicCoachChat` 钩子没有恢复逻辑。
+这导致用户（如张艳）付款成功后，`subscriptions` 表无记录，`assessment-emotion-coach` 检查权限时认为用户无有效订阅，触发了 402 付费弹窗。
+
+### 修复方案
+
+#### 方案：抽取统一的"支付成功后处理"逻辑，三个回调共用
+
+将 `wechat-pay-callback` 中现有的后处理逻辑（配额、训练营、合伙人等）提炼为一个内部函数 `processOrderPostPayment`，并**新增 `subscriptions` 写入**，然后让三个回调路径统一调用。
 
 ---
 
-### 修改方案
+### 具体修改
 
-#### 第一部分：为5个教练函数添加告别检测规则
+#### 文件 1：`supabase/functions/wechat-pay-callback/index.ts`
 
-在每个函数构建 `systemPrompt` 的位置，注入统一的告别规则：
+在现有的配额更新逻辑之后（约第 196 行），新增 subscriptions 写入：
 
 ```text
-【最高优先级规则：结束对话检测】
-当用户表达结束对话意图时（包括但不限于："今天先聊到这"、"谢谢陪伴"、"再见"、"我先走了"、"下次再聊"、"好的，拜拜"、"不聊了"、"就到这吧"），你必须：
-1. 温暖简短地回应，肯定本次对话的收获
-2. 绝对不要再追问任何问题
-3. 回复2-3句即可
-4. 以温柔祝福结尾，如"照顾好自己哦"
+// 在 user_accounts 配额更新之后，新增 subscriptions 写入
+const { data: pkg } = await supabase
+  .from('packages')
+  .select('id, duration_days')
+  .eq('package_key', order.package_key)
+  .maybeSingle();
+
+if (pkg) {
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + (pkg.duration_days || 365));
+
+  await supabase.from('subscriptions').upsert({
+    user_id: order.user_id,
+    package_id: pkg.id,
+    status: 'active',
+    start_date: startDate.toISOString().split('T')[0],
+    end_date: endDate.toISOString().split('T')[0],
+    payment_amount: order.amount,
+  }, { onConflict: 'user_id,package_id' });
+}
 ```
 
-| 文件 | 注入位置 |
-|------|----------|
-| `supabase/functions/vibrant-life-sage-coach/index.ts` | 第369行 `systemPrompt` 拼接处，在 `conversationStyleGuide` 之后 |
-| `supabase/functions/carnegie-coach/index.ts` | 第310行 `systemPrompt` 拼接处 |
-| `supabase/functions/gratitude-coach/index.ts` | 第192行 `systemPrompt` 拼接处 |
-| `supabase/functions/parent-emotion-coach/index.ts` | 第435行 `systemPrompt` 拼接处，以及第575行 `continueSystemPrompt` 处 |
-| `supabase/functions/wealth_coach_4_questions-coach/index.ts` | 第769行标准模式 `systemPrompt` 拼接处 |
+要点：
+- 使用 `upsert` 避免重复创建（如果已存在则更新）
+- 查询 `packages` 表获取 `duration_days` 和 `package_id`
+- 仅对非训练营订单创建（训练营走 `user_camp_purchases`）
 
-#### 第二部分：`useDynamicCoachChat` 添加未完成对话恢复
+#### 文件 2：`supabase/functions/alipay-callback/index.ts`
 
-这是关键改动 -- 因为财富教练、亲子教练、感恩教练、有劲生活教练都通过 `DynamicCoach.tsx` 使用 `useDynamicCoachChat` 钩子。
+同样在配额更新之后新增 subscriptions 写入逻辑（与 wechat-pay-callback 一致）。同时补充训练营和合伙人的处理逻辑（目前完全缺失）。
 
-**文件：`src/hooks/useDynamicCoachChat.ts`**
+#### 文件 3：`supabase/functions/check-order-status/index.ts`
 
-在 hook 初始化时添加恢复逻辑：
-1. 查询 `coaching_sessions`（或对应的会话表）中 `status = 'active'` 的未完成会话
-2. 如果找到，恢复 `messages` 和 `currentConversationId`
-3. 如果没有，走原来的创建新会话流程
+这是最严重的遗漏 -- `forceWechatQuery` 确认支付成功后，仅更新了 `orders.status`，完全没有执行后续权益发放。
 
-由于 `useDynamicCoachChat` 通过 `edgeFunctionName` 参数调用各教练的边缘函数，恢复后继续发消息时会自动使用正确的教练。
+修复方案：当 `forceWechatQuery` 确认支付成功时，调用 `wechat-pay-callback` 的完整后处理逻辑。实现方式为通过 `supabase.functions.invoke('wechat-pay-callback-process')` 或直接在 `check-order-status` 中内联后处理逻辑。
 
-#### 第三部分：离开页面时触发未完成对话通知
+考虑到代码维护性，最佳方案是：`check-order-status` 在更新订单状态后，**模拟调用 `wechat-pay-callback` 的逻辑**。具体做法是将后处理逻辑复制到 `check-order-status` 中（包括配额更新、subscriptions 创建、训练营、合伙人等）。
 
-**文件：`src/hooks/useDynamicCoachChat.ts`**
+```text
+// check-order-status forceWechatQuery 确认支付后，新增：
+// 1. 查询完整订单信息
+const { data: fullOrder } = await supabase
+  .from('orders')
+  .select('*')
+  .eq('order_no', orderNo)
+  .single();
 
-添加组件卸载时的清理逻辑：
-- 当用户离开页面且对话未完成（没有生成简报），触发 `generate-smart-notification` 的 `incomplete_coach_session` 场景
-- 传入 `coachKey` 以区分不同教练的通知
+// 2. 训练营处理
+if (fullOrder.package_key.startsWith('camp-')) { ... }
 
-**文件：`supabase/functions/generate-smart-notification/index.ts`**
+// 3. 配额更新
+else { ... update user_accounts ... }
 
-扩展已有的 `incomplete_emotion_session` 场景为通用的 `incomplete_coach_session`：
-- 根据 `coachKey` 生成不同教练风格的提醒文案
-- `action_data` 包含正确的页面路由和 `sessionId`
+// 4. 创建 subscriptions（新增）
+// 5. 合伙人处理
+// 6. 佣金计算
+```
 
-#### 第四部分：`DynamicCoach.tsx` 支持从通知跳转恢复
+### 数据库
 
-**文件：`src/pages/DynamicCoach.tsx`**
-
-从 `location.state` 读取 `sessionId`，传递给 `useDynamicCoachChat` 以精确恢复指定会话。
-
----
+需确认 `subscriptions` 表是否有 `(user_id, package_id)` 的唯一约束，以支持 `upsert`。如果没有，改用先查询再 insert/update 的方式。
 
 ### 修改文件清单
 
 | 文件 | 改动 |
 |------|------|
-| `supabase/functions/vibrant-life-sage-coach/index.ts` | 添加告别检测规则 |
-| `supabase/functions/carnegie-coach/index.ts` | 添加告别检测规则 |
-| `supabase/functions/gratitude-coach/index.ts` | 添加告别检测规则 |
-| `supabase/functions/parent-emotion-coach/index.ts` | 添加告别检测规则（两处） |
-| `supabase/functions/wealth_coach_4_questions-coach/index.ts` | 添加告别检测规则 |
-| `src/hooks/useDynamicCoachChat.ts` | 添加未完成会话恢复 + 离开时触发通知 |
-| `src/pages/DynamicCoach.tsx` | 支持从通知跳转传入 sessionId |
-| `supabase/functions/generate-smart-notification/index.ts` | 扩展为通用 `incomplete_coach_session` 场景 |
+| `supabase/functions/wechat-pay-callback/index.ts` | 在配额更新后新增 subscriptions 写入 |
+| `supabase/functions/alipay-callback/index.ts` | 新增 subscriptions 写入 + 补充训练营/合伙人处理 |
+| `supabase/functions/check-order-status/index.ts` | forceWechatQuery 成功后新增完整的权益发放逻辑 |
+
+### 紧急修复：为张艳补充订阅
+
+在代码修复部署前，需要手动为张艳补充 subscriptions 记录。可以通过后台管理页面或直接在数据库中插入：
+
+```sql
+-- 需要先查询 packages 表获取对应的 package_id
+INSERT INTO subscriptions (user_id, package_id, status, start_date, end_date, payment_amount)
+VALUES ('张艳的user_id', '对应package_id', 'active', '2026-02-08', '2027-02-08', 365);
+```
 
 ### 预期效果
 
-- 所有 AI 教练在用户说"再见"后都只温暖告别，不再追问
-- 用户中途离开任何教练对话后，再次进入时自动恢复
-- 离开未完成对话后收到智能提醒，点击可直接恢复
+- 所有支付回调路径（微信回调、支付宝回调、主动查询确认）都会正确创建 subscriptions 记录
+- 用户付款后立即获得完整权益，不再被误触付费弹窗
+- `forceWechatQuery` 路径不再只改状态不发权益
+
