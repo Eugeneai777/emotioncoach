@@ -101,7 +101,7 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary' | 'profile_completion' | 'emotion_trend_warning' | 'upcoming_milestone' | 'weekly_rhythm_care' | 'pattern_breakthrough' | 'cycle_low_prevention' | 'morning_intention' | 'evening_reflection' | 'memory_connection';
+    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary' | 'profile_completion' | 'emotion_trend_warning' | 'upcoming_milestone' | 'weekly_rhythm_care' | 'pattern_breakthrough' | 'cycle_low_prevention' | 'morning_intention' | 'evening_reflection' | 'memory_connection' | 'incomplete_emotion_session';
     // 维度名称映射
     const dimensionNames: Record<string, string> = {
       'CREATION': '创造',
@@ -284,7 +284,8 @@ ${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string)
       cycle_low_prevention: `根据历史数据分析，用户${context?.historical_pattern}。${context?.predicted_low_day}可能是情绪较低的时期。请在用户进入低谷前给予预防性的温暖关怀，提供一些应对建议："${context?.preventive_suggestion}"，但语气要轻松，不要让用户感到焦虑。`,
       morning_intention: `早安问候时刻。${context?.yesterday_summary ? `用户昨天的情绪主题是"${context.yesterday_summary}"。` : ''}${context?.memory_hint ? `用户曾经说过："${context.memory_hint}"。` : ''}请给用户一个温暖的早安问候，设定今天的积极意向，可以包含一个小小的今日建议。`,
       evening_reflection: `晚间回顾时刻。用户今天有${context?.today_activities || 0}次活动记录。${context?.positive_moment ? `今天有平静的时刻。` : ''}请给用户一个温暖的晚间问候，肯定他们今天的付出，引导一个简单的反思："${context?.reflection_prompt}"`,
-      memory_connection: `这是一个记忆连接场景。${context?.days_ago}天前，用户分享了一个重要的洞察："${context?.connected_memory}"。请温暖地引用这个记忆，表达"我一直记得你说过..."，让用户感受到被记住和理解，并询问他们现在对这个话题有什么新的想法。`
+      memory_connection: `这是一个记忆连接场景。${context?.days_ago}天前，用户分享了一个重要的洞察："${context?.connected_memory}"。请温暖地引用这个记忆，表达"我一直记得你说过..."，让用户感受到被记住和理解，并询问他们现在对这个话题有什么新的想法。`,
+      incomplete_emotion_session: `用户有一个未完成的情绪觉察对话，已进行到第${context?.current_stage || 0}阶段（共4阶段），当前情绪模式是"${context?.patternName || '情绪探索'}"。已经进行了${context?.message_count || 0}条消息的对话。请温暖地提醒他们回来继续这段对话，强调：1. 已有的进展不会丢失；2. 继续完成可以获得专属情绪简报；3. 语气轻松，不施压，像朋友轻轻提醒。`
     };
 
     const styleDescriptions: Record<EncouragementStyle, string> = {
@@ -431,7 +432,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       cycle_low_prevention: { type: 'care', priority: 4 },
       morning_intention: { type: 'encouragement', priority: 3 },
       evening_reflection: { type: 'insight', priority: 3 },
-      memory_connection: { type: 'insight', priority: 4 }
+      memory_connection: { type: 'insight', priority: 4 },
+      incomplete_emotion_session: { type: 'reminder', priority: 3 }
     };
 
     // 场景到教练类型的映射
@@ -468,7 +470,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       cycle_low_prevention: 'emotion_coach',
       morning_intention: 'general',
       evening_reflection: 'general',
-      memory_connection: 'general'
+      memory_connection: 'general',
+      incomplete_emotion_session: 'emotion_coach'
     };
 
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
@@ -499,6 +502,22 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       });
     }
 
+    // 构建 action_data - 特殊场景需要导航路径
+    let actionData = context || {};
+    if (scenarioTyped === 'incomplete_emotion_session' && context?.sessionId) {
+      actionData = {
+        path: '/assessment-coach',
+        sessionId: context.sessionId,
+        pattern: context.pattern,
+        patternName: context.patternName
+      };
+      // 强制设置 action_type 为 navigate
+      notificationData.action_type = 'navigate';
+      if (!notificationData.action_text) {
+        notificationData.action_text = '继续对话';
+      }
+    }
+
     // 保存通知到数据库
     const { data: notification, error: insertError } = await supabase
       .from('smart_notifications')
@@ -511,7 +530,7 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
         icon: notificationData.icon,
         action_text: notificationData.action_text,
         action_type: notificationData.action_type,
-        action_data: context || {},
+        action_data: actionData,
         context: context,
         priority: priority,
         coach_type: coachType

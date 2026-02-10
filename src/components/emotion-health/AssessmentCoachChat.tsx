@@ -37,6 +37,7 @@ interface AssessmentCoachChatProps {
   pattern: PatternType;
   blockedDimension?: BlockedDimension;
   onComplete?: (action: string) => void;
+  resumeSessionId?: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-emotion-coach`;
@@ -49,7 +50,7 @@ const emotionStages: StageConfig[] = [
   { id: 4, name: "转化", subtitle: "Transform it", emoji: "🦋" }
 ];
 
-export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: AssessmentCoachChatProps) {
+export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, resumeSessionId }: AssessmentCoachChatProps) {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -59,8 +60,10 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
   const [currentStage, setCurrentStage] = useState(0);
   const [briefing, setBriefing] = useState<BriefingData | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [isResumed, setIsResumed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const sessionCompletedRef = useRef(false);
 
   const patternInfo = patternConfig[pattern];
 
@@ -159,6 +162,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
       // 检查是否生成了简报
       if (data.tool_call?.function === 'generate_briefing') {
         setBriefing(data.tool_call.args);
+        sessionCompletedRef.current = true; // 标记会话已完成，防止触发未完成通知
       }
 
       // 添加助手回复
@@ -176,12 +180,74 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
     }
   }, [pattern, patternInfo.name]);
 
+  // 恢复未完成会话
+  const resumeExistingSession = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return false;
+
+      // 如果有指定的 sessionId，优先恢复
+      const targetSessionId = resumeSessionId;
+
+      let existingSessions: any[] | null = null;
+
+      if (targetSessionId) {
+        const { data } = await supabase
+          .from('emotion_coaching_sessions')
+          .select('id, messages, current_stage, status')
+          .eq('id', targetSessionId)
+          .eq('status', 'active' as any)
+          .limit(1) as any;
+        existingSessions = data;
+      } else {
+        const result = await (supabase
+          .from('emotion_coaching_sessions')
+          .select('id, messages, current_stage, status')
+          .eq('status', 'active') as any)
+          .eq('source', 'assessment')
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        existingSessions = result.data;
+      }
+
+      if (existingSessions && existingSessions.length > 0) {
+        const existingSession = existingSessions[0];
+        const savedMessages = (existingSession.messages as any[]) || [];
+        
+        // 只恢复有实际对话内容的会话
+        if (savedMessages.length > 0) {
+          setSessionId(existingSession.id);
+          setCurrentStage(existingSession.current_stage || 0);
+          
+          // 过滤出 user 和 assistant 消息用于展示
+          const displayMessages: Message[] = savedMessages
+            .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+            .map((m: any) => ({ role: m.role, content: m.content }));
+          
+          setMessages(displayMessages);
+          setIsResumed(true);
+          console.log('Resumed session:', existingSession.id, 'stage:', existingSession.current_stage);
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Resume session error:', error);
+      return false;
+    }
+  }, [resumeSessionId]);
+
   // 初始化
   useEffect(() => {
     const init = async () => {
       if (initialized) return;
       setInitialized(true);
 
+      // 先尝试恢复未完成的会话
+      const resumed = await resumeExistingSession();
+      if (resumed) return;
+
+      // 没有可恢复的会话，创建新会话
       const sid = await createSession();
       if (!sid) return;
       
@@ -193,7 +259,28 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
     };
 
     init();
-  }, [initialized, createSession, sendMessage, patternInfo.name]);
+  }, [initialized, createSession, sendMessage, patternInfo.name, resumeExistingSession]);
+
+  // 离开页面时触发未完成对话通知
+  useEffect(() => {
+    return () => {
+      // 组件卸载时，如果对话未完成，触发通知
+      if (sessionId && !sessionCompletedRef.current && messages.length > 1) {
+        supabase.functions.invoke('generate-smart-notification', {
+          body: {
+            scenario: 'incomplete_emotion_session',
+            context: {
+              sessionId,
+              current_stage: currentStage,
+              pattern,
+              patternName: patternInfo.name,
+              message_count: messages.length
+            }
+          }
+        }).catch(err => console.error('Failed to trigger incomplete session notification:', err));
+      }
+    };
+  }, [sessionId, currentStage, messages.length, pattern, patternInfo.name]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading || !sessionId) return;
