@@ -1,93 +1,109 @@
 
 
-## 觉察日记白屏问题诊断与修复
+## 未完成对话恢复 + 智能提醒方案
 
 ### 问题分析
 
-从截图看，用户在**微信小程序** WebView 中打开 `/awakening` 页面，整个内容区域为空白（淡色背景），键盘已弹出但无可见 UI 元素。
+目前 `AssessmentCoachChat` 组件中的对话状态（messages、sessionId、currentStage）仅存储在 React 的内存状态中。用户离开页面后，虽然后端 `emotion_coaching_sessions` 表已保存了 messages 和 current_stage，但前端没有恢复逻辑。
 
-### 根本原因（3个风险点）
+好消息是：**后端已经保存了所有必要数据**（messages、current_stage、status、metadata），只需要在前端添加恢复逻辑 + 后端添加通知场景。
 
-**1. Framer Motion 动画在小程序 WebView 中可能未触发**
+### 修改方案
 
-页面中所有可见内容（HeroCard、PainPointCard、6个 EntryCard、底部金句）都包裹在 `motion.div` 中，初始状态为 `opacity: 0.01`。在微信小程序的 WebView 中，Framer Motion 的动画引擎可能因为以下原因未能正常启动：
-- WebView 后台加载时 `requestAnimationFrame` 被暂停
-- IntersectionObserver 或 ResizeObserver polyfill 缺失
-- 页面可见性状态异常导致动画队列不执行
+#### 第一部分：前端 - 恢复未完成对话
 
-结果：所有元素停留在 `opacity: 0.01`（几乎不可见），视觉表现为白屏。
+**文件：`src/components/emotion-health/AssessmentCoachChat.tsx`**
 
-**2. DynamicOGMeta 中的异步请求可能抛出未捕获异常**
+修改初始化逻辑（`useEffect` 中的 `init` 函数）：
 
-`DynamicOGMeta` 组件内部调用 `usePageOG`（查询数据库）和 `useWechatShare`（调用边缘函数获取微信签名），如果这些请求在小程序环境中失败且未被妥善处理，可能导致渲染中断。
+1. 在创建新会话前，先查询是否存在 `status = 'active'` 且 `source = 'assessment'` 的未完成会话
+2. 如果找到，恢复 `sessionId`、`messages`、`currentStage`
+3. 如果没有，走原来的创建新会话流程
 
-**3. 键盘弹出暗示 AwakeningDrawer 可能被错误触发**
-
-键盘打开状态暗示某个输入框获得了焦点。可能是：
-- Drawer 被意外打开但内容未渲染
-- 上次的状态（如 localStorage 草稿恢复）导致 Drawer 自动打开
-
-### 修复方案
-
-**修复 1：为所有动画元素添加 CSS 兜底可见性**
-
-在所有使用 `initial={{ opacity: 0.01 }}` 的 motion 组件上，添加 CSS `animation-fill-mode` 兜底，确保即使 Framer Motion 未启动，元素也在短延迟后可见。
-
-涉及文件：
-- `src/components/awakening/AwakeningHeroCard.tsx`
-- `src/components/awakening/AwakeningEntryCard.tsx`
-- `src/pages/Awakening.tsx`（分类标题和底部金句的 motion.div）
-
-具体做法：给每个 motion 组件添加一个 CSS class，使用纯 CSS `@keyframes` 作为后备：
-
-```css
-/* 在 index.css 中添加 */
-@keyframes fallback-fade-in {
-  to { opacity: 1; }
-}
-.motion-fallback {
-  animation: fallback-fade-in 0.5s ease-out 1s forwards;
+```text
+init() {
+  1. 查询 emotion_coaching_sessions WHERE user_id = current_user AND status = 'active' AND source = 'assessment'
+  2. 如果存在 → 恢复 sessionId, messages, currentStage
+  3. 如果不存在 → 调用 createSession() 创建新会话
 }
 ```
 
-这样即使 JS 动画引擎失效，元素最迟在 1 秒后通过纯 CSS 变为可见。
+**文件：`src/pages/AssessmentCoachPage.tsx`**
 
-**修复 2：用 try-catch 包裹 DynamicOGMeta 相关逻辑**
+修改页面组件，支持从智能通知点击跳转时携带 `sessionId`：
+- 从 `location.state` 中读取 `sessionId`（如果通知带了的话）
+- 传递给 `AssessmentCoachChat` 组件
 
-在 `Awakening.tsx` 中用 React ErrorBoundary 或条件渲染包裹 `DynamicOGMeta`，防止 OG 配置加载失败导致整个页面崩溃。
+#### 第二部分：后端 - 添加恢复会话的 API
 
-```typescript
-// 安全渲染 OG Meta，失败不影响主内容
-try {
-  return <DynamicOGMeta pageKey="awakening" />;
-} catch {
-  return null;
-}
+**文件：`supabase/functions/assessment-emotion-coach/index.ts`**
+
+添加一个新的 action `resume_session`：
+- 接收 `sessionId`，返回该会话的 messages 和 current_stage
+- 验证会话属于当前用户且状态为 active
+
+#### 第三部分：离开页面时触发未完成对话通知
+
+**文件：`src/components/emotion-health/AssessmentCoachChat.tsx`**
+
+在组件中添加 `beforeunload` 和路由离开时的逻辑：
+- 当用户离开页面时，如果对话尚未完成（没有生成简报），调用 `generate-smart-notification` 触发一条"未完成对话"提醒
+
+**文件：`supabase/functions/generate-smart-notification/index.ts`**
+
+添加新的通知场景 `incomplete_emotion_session`：
+- 标题示例：「你的情绪觉察之旅还没结束哦 🌿」
+- 消息内容：AI 根据用户已聊到的阶段，生成个性化的回访提醒
+- action_type: `navigate`
+- action_data: `{ path: '/assessment-coach', sessionId: '...' }`
+- coach_type: `emotion`
+
+#### 第四部分：通知点击跳转恢复
+
+**文件：处理通知点击的组件**（需确认具体在哪个组件处理 action_type = 'navigate'）
+
+确保当用户点击 `incomplete_emotion_session` 类型的通知时，携带 `sessionId` 跳转到 `/assessment-coach` 页面。
+
+### 技术细节
+
+**数据库**：无需新增表或字段，`emotion_coaching_sessions` 已有所有必要字段：
+- `messages` (jsonb) - 完整对话历史
+- `current_stage` (integer) - 当前阶段 0-5
+- `status` (text) - active/completed
+- `metadata` (jsonb) - 包含 pattern 和 patternName（注：该列在 schema 中未显示，但代码中有使用）
+
+**前端恢复流程**：
+
+```text
+用户打开 /assessment-coach
+  ├── 查询 active 会话
+  │   ├── 找到 → 恢复对话（显示历史消息 + 当前阶段）
+  │   └── 未找到 → 创建新会话（原流程）
+  └── 用户离开（未完成）
+      └── 触发 incomplete_emotion_session 通知
 ```
 
-更好的做法是在 `usePageOG` 和 `useWechatShare` hooks 中确保所有异步错误被 catch。
+**通知场景提示词**：
 
-**修复 3：AwakeningDrawer 增加防御性检查**
-
-在 `AwakeningDrawer.tsx` 的 `loadDraft` useEffect 中，确保不会在 `dimension` 为 null 时执行恢复逻辑，避免意外状态。
-
-**修复 4：添加全局错误边界**
-
-在 Awakening 页面最外层包裹一个 ErrorBoundary 组件，捕获任何子组件的渲染错误，显示友好的降级 UI 而非白屏。
+```text
+incomplete_emotion_session:
+  "用户有一个未完成的情绪觉察对话，已进行到第{current_stage}阶段。
+   请温暖地提醒他们回来继续，强调已有的进展不会丢失。
+   语气轻松，不施压。"
+```
 
 ### 修改文件清单
 
 | 文件 | 改动 |
 |------|------|
-| `src/index.css` | 添加 `motion-fallback` CSS 动画兜底 |
-| `src/components/awakening/AwakeningHeroCard.tsx` | motion.div 添加 `motion-fallback` class |
-| `src/components/awakening/AwakeningEntryCard.tsx` | motion.div 添加 `motion-fallback` class |
-| `src/pages/Awakening.tsx` | 分类标题/金句的 motion.div 添加兜底 class；DynamicOGMeta 添加错误保护；添加 ErrorBoundary 包裹 |
-| `src/components/awakening/AwakeningBottomNav.tsx` | 底部导航动画按钮添加兜底 |
-| `src/components/awakening/AwakeningDrawer.tsx` | 草稿恢复增加防御性检查 |
+| `src/components/emotion-health/AssessmentCoachChat.tsx` | 添加恢复未完成会话逻辑 + 离开时触发通知 |
+| `src/pages/AssessmentCoachPage.tsx` | 支持从通知跳转时传入 sessionId |
+| `supabase/functions/assessment-emotion-coach/index.ts` | 添加 `resume_session` action |
+| `supabase/functions/generate-smart-notification/index.ts` | 添加 `incomplete_emotion_session` 场景 |
 
 ### 预期效果
 
-- 即使 Framer Motion 在小程序 WebView 中未启动，页面内容也会在 1 秒内通过纯 CSS 动画显示
-- 任何子组件的异步错误不会导致整个页面白屏
-- 草稿恢复不会意外打开 Drawer
+- 用户中途离开后，再次进入页面时自动恢复到上次对话位置
+- 离开未完成对话后，智能消息中会收到温暖的提醒
+- 点击通知可直接跳转回未完成的对话
+- 已完成的对话不会被恢复（只恢复 status = 'active' 的会话）
