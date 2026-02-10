@@ -1,109 +1,98 @@
 
 
-## 未完成对话恢复 + 智能提醒方案
+## 全教练体系同步：告别检测 + 未完成对话恢复
 
-### 问题分析
+### 当前状态
 
-目前 `AssessmentCoachChat` 组件中的对话状态（messages、sessionId、currentStage）仅存储在 React 的内存状态中。用户离开页面后，虽然后端 `emotion_coaching_sessions` 表已保存了 messages 和 current_stage，但前端没有恢复逻辑。
+**告别检测规则**已添加的教练（3个）：
+- emotion-coach
+- assessment-coach-chat
+- assessment-emotion-coach
 
-好消息是：**后端已经保存了所有必要数据**（messages、current_stage、status、metadata），只需要在前端添加恢复逻辑 + 后端添加通知场景。
+**尚未添加告别规则**的教练（5个）：
+- vibrant-life-sage-coach（有劲生活教练）- 有部分结束检测但缺少"不再追问"的强制规则
+- carnegie-coach（沟通教练）
+- gratitude-coach（感恩教练）
+- parent-emotion-coach（亲子教练）
+- wealth_coach_4_questions-coach（财富教练）
+
+**未完成对话恢复**：仅 `AssessmentCoachChat` 已实现，其他所有教练使用的 `useDynamicCoachChat` 钩子没有恢复逻辑。
+
+---
 
 ### 修改方案
 
-#### 第一部分：前端 - 恢复未完成对话
+#### 第一部分：为5个教练函数添加告别检测规则
 
-**文件：`src/components/emotion-health/AssessmentCoachChat.tsx`**
-
-修改初始化逻辑（`useEffect` 中的 `init` 函数）：
-
-1. 在创建新会话前，先查询是否存在 `status = 'active'` 且 `source = 'assessment'` 的未完成会话
-2. 如果找到，恢复 `sessionId`、`messages`、`currentStage`
-3. 如果没有，走原来的创建新会话流程
+在每个函数构建 `systemPrompt` 的位置，注入统一的告别规则：
 
 ```text
-init() {
-  1. 查询 emotion_coaching_sessions WHERE user_id = current_user AND status = 'active' AND source = 'assessment'
-  2. 如果存在 → 恢复 sessionId, messages, currentStage
-  3. 如果不存在 → 调用 createSession() 创建新会话
-}
+【最高优先级规则：结束对话检测】
+当用户表达结束对话意图时（包括但不限于："今天先聊到这"、"谢谢陪伴"、"再见"、"我先走了"、"下次再聊"、"好的，拜拜"、"不聊了"、"就到这吧"），你必须：
+1. 温暖简短地回应，肯定本次对话的收获
+2. 绝对不要再追问任何问题
+3. 回复2-3句即可
+4. 以温柔祝福结尾，如"照顾好自己哦"
 ```
 
-**文件：`src/pages/AssessmentCoachPage.tsx`**
+| 文件 | 注入位置 |
+|------|----------|
+| `supabase/functions/vibrant-life-sage-coach/index.ts` | 第369行 `systemPrompt` 拼接处，在 `conversationStyleGuide` 之后 |
+| `supabase/functions/carnegie-coach/index.ts` | 第310行 `systemPrompt` 拼接处 |
+| `supabase/functions/gratitude-coach/index.ts` | 第192行 `systemPrompt` 拼接处 |
+| `supabase/functions/parent-emotion-coach/index.ts` | 第435行 `systemPrompt` 拼接处，以及第575行 `continueSystemPrompt` 处 |
+| `supabase/functions/wealth_coach_4_questions-coach/index.ts` | 第769行标准模式 `systemPrompt` 拼接处 |
 
-修改页面组件，支持从智能通知点击跳转时携带 `sessionId`：
-- 从 `location.state` 中读取 `sessionId`（如果通知带了的话）
-- 传递给 `AssessmentCoachChat` 组件
+#### 第二部分：`useDynamicCoachChat` 添加未完成对话恢复
 
-#### 第二部分：后端 - 添加恢复会话的 API
+这是关键改动 -- 因为财富教练、亲子教练、感恩教练、有劲生活教练都通过 `DynamicCoach.tsx` 使用 `useDynamicCoachChat` 钩子。
 
-**文件：`supabase/functions/assessment-emotion-coach/index.ts`**
+**文件：`src/hooks/useDynamicCoachChat.ts`**
 
-添加一个新的 action `resume_session`：
-- 接收 `sessionId`，返回该会话的 messages 和 current_stage
-- 验证会话属于当前用户且状态为 active
+在 hook 初始化时添加恢复逻辑：
+1. 查询 `coaching_sessions`（或对应的会话表）中 `status = 'active'` 的未完成会话
+2. 如果找到，恢复 `messages` 和 `currentConversationId`
+3. 如果没有，走原来的创建新会话流程
+
+由于 `useDynamicCoachChat` 通过 `edgeFunctionName` 参数调用各教练的边缘函数，恢复后继续发消息时会自动使用正确的教练。
 
 #### 第三部分：离开页面时触发未完成对话通知
 
-**文件：`src/components/emotion-health/AssessmentCoachChat.tsx`**
+**文件：`src/hooks/useDynamicCoachChat.ts`**
 
-在组件中添加 `beforeunload` 和路由离开时的逻辑：
-- 当用户离开页面时，如果对话尚未完成（没有生成简报），调用 `generate-smart-notification` 触发一条"未完成对话"提醒
+添加组件卸载时的清理逻辑：
+- 当用户离开页面且对话未完成（没有生成简报），触发 `generate-smart-notification` 的 `incomplete_coach_session` 场景
+- 传入 `coachKey` 以区分不同教练的通知
 
 **文件：`supabase/functions/generate-smart-notification/index.ts`**
 
-添加新的通知场景 `incomplete_emotion_session`：
-- 标题示例：「你的情绪觉察之旅还没结束哦 🌿」
-- 消息内容：AI 根据用户已聊到的阶段，生成个性化的回访提醒
-- action_type: `navigate`
-- action_data: `{ path: '/assessment-coach', sessionId: '...' }`
-- coach_type: `emotion`
+扩展已有的 `incomplete_emotion_session` 场景为通用的 `incomplete_coach_session`：
+- 根据 `coachKey` 生成不同教练风格的提醒文案
+- `action_data` 包含正确的页面路由和 `sessionId`
 
-#### 第四部分：通知点击跳转恢复
+#### 第四部分：`DynamicCoach.tsx` 支持从通知跳转恢复
 
-**文件：处理通知点击的组件**（需确认具体在哪个组件处理 action_type = 'navigate'）
+**文件：`src/pages/DynamicCoach.tsx`**
 
-确保当用户点击 `incomplete_emotion_session` 类型的通知时，携带 `sessionId` 跳转到 `/assessment-coach` 页面。
+从 `location.state` 读取 `sessionId`，传递给 `useDynamicCoachChat` 以精确恢复指定会话。
 
-### 技术细节
-
-**数据库**：无需新增表或字段，`emotion_coaching_sessions` 已有所有必要字段：
-- `messages` (jsonb) - 完整对话历史
-- `current_stage` (integer) - 当前阶段 0-5
-- `status` (text) - active/completed
-- `metadata` (jsonb) - 包含 pattern 和 patternName（注：该列在 schema 中未显示，但代码中有使用）
-
-**前端恢复流程**：
-
-```text
-用户打开 /assessment-coach
-  ├── 查询 active 会话
-  │   ├── 找到 → 恢复对话（显示历史消息 + 当前阶段）
-  │   └── 未找到 → 创建新会话（原流程）
-  └── 用户离开（未完成）
-      └── 触发 incomplete_emotion_session 通知
-```
-
-**通知场景提示词**：
-
-```text
-incomplete_emotion_session:
-  "用户有一个未完成的情绪觉察对话，已进行到第{current_stage}阶段。
-   请温暖地提醒他们回来继续，强调已有的进展不会丢失。
-   语气轻松，不施压。"
-```
+---
 
 ### 修改文件清单
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/emotion-health/AssessmentCoachChat.tsx` | 添加恢复未完成会话逻辑 + 离开时触发通知 |
-| `src/pages/AssessmentCoachPage.tsx` | 支持从通知跳转时传入 sessionId |
-| `supabase/functions/assessment-emotion-coach/index.ts` | 添加 `resume_session` action |
-| `supabase/functions/generate-smart-notification/index.ts` | 添加 `incomplete_emotion_session` 场景 |
+| `supabase/functions/vibrant-life-sage-coach/index.ts` | 添加告别检测规则 |
+| `supabase/functions/carnegie-coach/index.ts` | 添加告别检测规则 |
+| `supabase/functions/gratitude-coach/index.ts` | 添加告别检测规则 |
+| `supabase/functions/parent-emotion-coach/index.ts` | 添加告别检测规则（两处） |
+| `supabase/functions/wealth_coach_4_questions-coach/index.ts` | 添加告别检测规则 |
+| `src/hooks/useDynamicCoachChat.ts` | 添加未完成会话恢复 + 离开时触发通知 |
+| `src/pages/DynamicCoach.tsx` | 支持从通知跳转传入 sessionId |
+| `supabase/functions/generate-smart-notification/index.ts` | 扩展为通用 `incomplete_coach_session` 场景 |
 
 ### 预期效果
 
-- 用户中途离开后，再次进入页面时自动恢复到上次对话位置
-- 离开未完成对话后，智能消息中会收到温暖的提醒
-- 点击通知可直接跳转回未完成的对话
-- 已完成的对话不会被恢复（只恢复 status = 'active' 的会话）
+- 所有 AI 教练在用户说"再见"后都只温暖告别，不再追问
+- 用户中途离开任何教练对话后，再次进入时自动恢复
+- 离开未完成对话后收到智能提醒，点击可直接恢复
