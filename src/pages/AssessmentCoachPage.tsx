@@ -12,10 +12,12 @@ export default function AssessmentCoachPage() {
     pattern?: PatternType;
     blockedDimension?: BlockedDimension;
     fromAssessment?: string;
+    sessionId?: string;
   } | null;
 
   const pattern = state?.pattern || 'exhaustion';
   const blockedDimension = state?.blockedDimension;
+  const resumeSessionId = state?.sessionId;
 
   const handleComplete = (action: string) => {
     if (action === 'camp') {
@@ -46,6 +48,7 @@ export default function AssessmentCoachPage() {
           pattern={pattern}
           blockedDimension={blockedDimension}
           onComplete={handleComplete}
+          resumeSessionId={resumeSessionId}
         />
       </main>
     </div>
