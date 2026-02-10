@@ -28,6 +28,7 @@ const IntroSectionCard: React.FC<IntroSectionCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
       style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+      className="motion-fallback"
     >
       <Card className={cn("p-4", variants[variant], className)}>
         {children}

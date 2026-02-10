@@ -9,7 +9,7 @@ const AwakeningHeroCard: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-      className="text-center space-y-1"
+      className="text-center space-y-1 motion-fallback"
     >
       <div className="flex items-center justify-center gap-2">
         <Sparkles className="h-5 w-5 text-amber-500" />
