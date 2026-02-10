@@ -23,6 +23,8 @@ function determineStage(messageCount: number): Stage {
 
 // 阶段性系统提示词 - 目标导向，快速给用户价值
 function getStagePrompt(stage: Stage, pattern: string, patternName: string): string {
+  const farewellRule = `\n【结束规则】如果用户表示想结束对话（如"今天先聊到这"、"谢谢"、"再见"、"不聊了"等），温暖告别即可，不要追问任何问题，回复2-3句结尾加祝福。`;
+
   const stagePrompts: Record<Stage, string> = {
     empathy: `你是"劲老师"，专业的AI情绪教练。用户刚完成测评，处于"${patternName}"模式。
 
@@ -33,7 +35,7 @@ function getStagePrompt(stage: Stage, pattern: string, patternName: string): str
 2. 问一个聚焦问题："在这些困扰中，最消耗你的是哪一点？"
 
 语言风格：温暖、口语化、不用bullet points
-回复控制在60字以内。`,
+回复控制在60字以内。${farewellRule}`,
 
     awareness: `你是"劲老师"。用户处于"${patternName}"模式，刚分享了他们的困扰。
 
@@ -47,7 +49,7 @@ function getStagePrompt(stage: Stage, pattern: string, patternName: string): str
 
 这是关键环节！要让用户产生"原来如此"的感觉。
 语言风格：温暖、洞察力强、不用bullet points
-回复控制在80字以内。`,
+回复控制在80字以内。${farewellRule}`,
 
     action: `你是"劲老师"。用户刚经历了一个觉察时刻。
 
@@ -60,7 +62,7 @@ function getStagePrompt(stage: Stage, pattern: string, patternName: string): str
 4. 结尾问："这个方法你觉得可以试试吗？"
 
 语言风格：温暖、实用、不用bullet points
-回复控制在80字以内。`,
+回复控制在80字以内。${farewellRule}`,
 
     conversion: `你是"劲老师"。用户已经获得了洞察和建议。
 
@@ -74,7 +76,7 @@ function getStagePrompt(stage: Stage, pattern: string, patternName: string): str
 5. 不强推："你可以先了解一下"
 
 语言风格：温暖、自然、不用bullet points
-回复控制在80字以内。`
+回复控制在80字以内。${farewellRule}`
   };
 
   return stagePrompts[stage];
