@@ -598,3 +598,15 @@ input:focus, textarea:focus, select:focus {
     scroll-behavior: auto !important;
   }
 }
+
+/* ========================================
+   Framer Motion 动画兜底 (微信小程序 WebView)
+   当 JS 动画引擎未启动时，纯 CSS 保证元素可见
+   ======================================== */
+@keyframes fallback-fade-in {
+  to { opacity: 1; }
+}
+
+.motion-fallback {
+  animation: fallback-fade-in 0.5s ease-out 1s forwards;
+}

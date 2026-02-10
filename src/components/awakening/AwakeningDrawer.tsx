@@ -62,18 +62,17 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
     }
   }, [value1, value2, detailedValue, selectedWords, inputMode, dimension, isOpen, saveDraft]);
 
-  // 打开抽屉时恢复草稿
+  // 打开抽屉时恢复草稿（仅当 dimension 有效且抽屉打开时）
   useEffect(() => {
-    if (dimension && isOpen) {
-      const draft = loadDraft();
-      if (draft) {
-        setValue1(draft.value1 || '');
-        setValue2(draft.value2 || '');
-        setDetailedValue(draft.detailedValue || '');
-        setSelectedWords(draft.selectedWords ? draft.selectedWords.split(',').filter(Boolean) : []);
-        if (draft.inputMode && ['quick', 'template', 'detailed'].includes(draft.inputMode)) {
-          setInputMode(draft.inputMode as InputMode);
-        }
+    if (!dimension || !isOpen) return;
+    const draft = loadDraft();
+    if (draft) {
+      setValue1(draft.value1 || '');
+      setValue2(draft.value2 || '');
+      setDetailedValue(draft.detailedValue || '');
+      setSelectedWords(draft.selectedWords ? draft.selectedWords.split(',').filter(Boolean) : []);
+      if (draft.inputMode && ['quick', 'template', 'detailed'].includes(draft.inputMode)) {
+        setInputMode(draft.inputMode as InputMode);
       }
     }
   }, [dimension?.id, isOpen, loadDraft]);

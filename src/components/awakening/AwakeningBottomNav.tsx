@@ -86,7 +86,7 @@ const AwakeningBottomNav: React.FC = () => {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate('/awakening-journal')}
-              className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
               <BookOpen className="w-5 h-5" />
               <span className="text-xs">日记</span>
@@ -99,7 +99,7 @@ const AwakeningBottomNav: React.FC = () => {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate('/awakening-system-intro')}
-              className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
               <Info className="w-5 h-5" />
               <span className="text-xs">关于</span>

@@ -43,7 +43,8 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
           "bg-gradient-to-br shadow-md",
           dimension.gradient,
           "min-h-[120px] flex flex-col justify-between",
-          "active:shadow-lg transition-shadow duration-150"
+          "active:shadow-lg transition-shadow duration-150",
+          "motion-fallback"
         )}
       >
         {/* 背景装饰 */}
@@ -82,7 +83,8 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
         "bg-gradient-to-br shadow-lg",
         dimension.gradient,
         "min-h-[100px] flex flex-col justify-between",
-        "active:shadow-xl transition-shadow duration-150"
+        "active:shadow-xl transition-shadow duration-150",
+        "motion-fallback"
       )}
     >
       {/* 背景装饰 */}

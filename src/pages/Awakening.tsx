@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
@@ -14,6 +14,49 @@ import AwakeningPainPointCard from "@/components/awakening/AwakeningPainPointCar
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+
+// 错误边界：防止子组件崩溃导致白屏
+class AwakeningErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[Awakening] ErrorBoundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-6">
+          <div className="text-center space-y-3">
+            <p className="text-lg font-medium text-foreground">页面加载出错</p>
+            <p className="text-sm text-muted-foreground">请刷新页面重试</p>
+            <Button onClick={() => window.location.reload()}>刷新页面</Button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// 安全渲染 OG Meta
+const SafeOGMeta: React.FC = () => {
+  try {
+    return <DynamicOGMeta pageKey="awakening" />;
+  } catch {
+    return null;
+  }
+};
 
 const Awakening: React.FC = () => {
   const navigate = useNavigate();
@@ -53,8 +96,8 @@ const Awakening: React.FC = () => {
   };
 
   return (
-    <>
-      <DynamicOGMeta pageKey="awakening" />
+    <AwakeningErrorBoundary>
+      <SafeOGMeta />
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
         {/* Header */}
@@ -92,7 +135,7 @@ const Awakening: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 motion-fallback"
               >
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
                 <span className="text-sm font-medium text-destructive/80 flex items-center gap-1">
@@ -120,7 +163,7 @@ const Awakening: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
                 style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 motion-fallback"
               >
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                 <span className="text-sm font-medium text-primary/80 flex items-center gap-1">
@@ -149,7 +192,7 @@ const Awakening: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             style={{ transform: 'translateZ(0)', willChange: 'opacity' }}
-            className="text-center text-xs text-muted-foreground pt-2"
+            className="text-center text-xs text-muted-foreground pt-2 motion-fallback"
           >
             <p>把平凡日常积累成个人成长的复利资产</p>
             <p className="mt-1">将碎片化时间冶炼成金 ✨</p>
@@ -162,7 +205,7 @@ const Awakening: React.FC = () => {
         {/* 输入抽屉 */}
         <AwakeningDrawer dimension={selectedDimension} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
       </div>
-    </>
+    </AwakeningErrorBoundary>
   );
 };
 
