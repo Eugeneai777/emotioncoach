@@ -1,48 +1,41 @@
 
 
-## 修复付费状态显示不正确的问题
+## 在订单管理中增加"按商品筛选"功能
 
-### 根因分析
+### 目标
 
-当前查询使用 `.limit(1).maybeSingle()` 检查用户是否有已支付订单。问题在于：多个用户有多条 `paid` 状态的订单，`maybeSingle()` 在某些情况下会因为底层匹配到多行而返回错误（即使有 `limit(1)`），导致 `paidOrderResult.data` 为 `null`，页面显示"未付费"。
+在现有订单表格中新增一个"商品"下拉筛选器，管理员选择某个商品后，表格只显示购买该商品的用户列表。
 
-### 解决方案
+### 改动内容
 
-将 `maybeSingle()` 替换为普通数组查询，检查数组是否非空来判断付费状态。
+**文件：`src/components/admin/OrdersTable.tsx`**
 
-### 技术改动
+1. **新增状态**：`packageFilter`，默认值 `"all"`
+2. **动态提取商品列表**：从已加载的订单数据中提取所有不重复的 `package_name`，作为下拉选项
+3. **新增筛选器 UI**：在现有"订单来源"和"订单状态"筛选器旁边增加"商品"下拉框
+4. **筛选逻辑**：在 `filteredOrders` 中增加 `packageFilter` 匹配条件，只显示 `status === 'paid'`（当选择具体商品时）
 
-文件：`src/components/admin/UserAccountsTable.tsx`
+### 筛选器设计
 
-**查询部分（第 58-64 行）**：
+| 筛选项 | 说明 |
+|--------|------|
+| 全部商品 | 默认，显示所有订单 |
+| 365会员 | 只显示购买 365 会员的用户 |
+| 尝鲜会员 | 只显示购买尝鲜会员的用户 |
+| 财富卡点测评 | 只显示购买该测评的用户 |
+| ...其他商品 | 动态从数据中提取 |
 
-```typescript
-// 修改前
-supabase
-  .from('orders')
-  .select('id, package_key')
-  .eq('user_id', account.user_id)
-  .eq('status', 'paid')
-  .limit(1)
-  .maybeSingle()
+### 技术细节
 
-// 修改后
-supabase
-  .from('orders')
-  .select('id')
-  .eq('user_id', account.user_id)
-  .eq('status', 'paid')
-  .limit(1)
+```text
+OrdersTable.tsx
+  +-- packageFilter state
+  +-- uniquePackages: 从 orders 中提取去重的 package_name 列表
+  +-- Select 下拉框（商品筛选）
+  +-- filteredOrders 增加 packageFilter 条件
 ```
 
-**数据映射部分（第 72 行）**：
+- 商品列表从已有数据动态生成，无需额外查询
+- 选中具体商品时，同时自动将状态筛选限定为"已支付"（`paid`），这样展示的就是该商品的购买名单
+- CSV 导出同样受筛选条件影响，可直接导出某商品的购买用户列表
 
-```typescript
-// 修改前
-paidOrder: paidOrderResult.data
-
-// 修改后
-paidOrder: paidOrderResult.data && paidOrderResult.data.length > 0
-```
-
-这样 `paidOrder` 变为布尔值，模板中 `account.paidOrder` 的判断逻辑不需要改动。
