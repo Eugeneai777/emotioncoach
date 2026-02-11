@@ -99,9 +99,19 @@ const NAV_GROUPS = [
       { key: "usage", label: "使用记录", path: "/admin/usage", icon: BarChart3 },
       { key: "activation-codes", label: "激活码管理", path: "/admin/activation-codes", icon: Key },
       { key: "funnel", label: "转化漏斗", path: "/admin/funnel", icon: TrendingUp },
-      { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
-      { key: "ops-monitor", label: "运营监控", path: "/admin/ops-monitor", icon: Activity },
       { key: "reports", label: "举报管理", path: "/admin/reports", icon: Flag }
+    ]
+  },
+  {
+    title: "系统安全",
+    icon: Activity,
+    defaultOpen: false,
+    items: [
+      { key: "api-monitor", label: "调用监控", path: "/admin/api-monitor", icon: Activity },
+      { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
+      { key: "user-anomaly", label: "用户异常监控", path: "/admin/user-anomaly", icon: Users },
+      { key: "stability", label: "稳定性监控", path: "/admin/stability", icon: RefreshCw },
+      { key: "risk-content", label: "风险内容监控", path: "/admin/risk-content", icon: Flag }
     ]
   },
   {
