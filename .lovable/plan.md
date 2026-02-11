@@ -1,96 +1,80 @@
 
+## 财富教练行动推荐定制化优化
 
-## 财富简报三大问题修复计划
+### 问题分析
 
-### 问题诊断
+当前系统提示词（第596-660行）虽然包含了个性化推荐规则（基于人物关系、情绪类型、信念类型、四穷类型），但实际效果仍然偏模板化。原因：
 
-经过代码分析，确认以下三个问题：
-
-**问题 1：对话完成后没有在聊天界面展示财富简报卡片**
-- 当前逻辑：AI 调用 `generate_wealth_briefing` 工具后，仅显示一条文字消息"正在生成财富日记..."和一个 toast 通知
-- 缺失：没有在聊天窗口内渲染生成后的简报摘要卡片（如行为层/情绪层/信念层/给予行动等核心内容）
-
-**问题 2：独立教练页面生成的简报在"财富简报"标签页不显示**
-- 从 `/coach/wealth_coach_4_questions` 独立页面对话时，`contextData.campId` 为空，生成的日记 `camp_id` 为 NULL
-- 查询逻辑 `useWealthJournalEntries` 第 87 行有 `.not('camp_id', 'is', null)` 过滤条件，排除了所有无训练营关联的简报
-- `WealthCampCheckIn` 页面的查询也使用 `.eq('camp_id', campId)` 过滤
-
-**问题 3：术语不统一，"财富日记"应统一为"财富简报"**
-- 全代码库约 86 处使用"财富日记"，需统一为"财富简报"
-
----
+1. **扩展选项库过于详细**（第660-700行列出了40+通用选项），AI 倾向于直接从中复制粘贴
+2. **3个选项固定为"语言给予/行动给予/祝福给予"分类**，导致推荐总是按套路出牌
+3. **缺少强制引用对话内容的约束**，AI 可以生成与对话无关的建议
 
 ### 修复方案
 
-#### 1. 聊天界面增加财富简报结果卡片
+修改 `supabase/functions/wealth_coach_4_questions-coach/index.ts` 中第6轮给予行动的提示词（约第596-700行），核心改动：
 
-创建 `src/components/wealth-camp/WealthBriefingResultCard.tsx`：
-- 展示四层结构摘要：行为卡点、情绪信号、信念转化、给予行动
-- 包含"查看详情"按钮跳转到简报详情页
-- 样式与财富教练主题（amber/orange）一致
+**1. 删除通用选项库**
+- 移除第660-700行的"扩展选项库"（语言给予、行动给予、祝福给予、创意给予的40+模板选项）
+- 避免 AI 偷懒直接复制通用选项
 
-修改 `src/hooks/useDynamicCoachChat.ts`：
-- 日记生成成功后，在聊天消息中追加一条包含简报数据的特殊消息（如 JSON 标记）
-- 或通过新增 state（如 `generatedJournalData`）将简报数据传回 UI 层
+**2. 强制基于对话生成行动**
+- 每个行动必须明确引用用户在对话中提到的具体人物、场景或事件
+- 格式要求：每个行动必须包含"因为你今天提到了[具体内容]"的关联说明
+- 行动必须具体到可立即执行（包含时间、对象、具体做什么）
 
-修改 `src/components/ChatMessage.tsx` 或 `CoachLayout`：
-- 检测简报生成完成后，在最后一条消息下方渲染 `WealthBriefingResultCard`
-
-#### 2. 修复简报列表查询逻辑
-
-修改 `src/hooks/useWealthJournalEntries.ts`（第 87 行）：
-- 移除 `.not('camp_id', 'is', null)` 过滤条件，或改为条件性过滤
-- 当不指定 campId 时，显示所有简报（含独立对话生成的）
-
-修改 `src/pages/WealthCampCheckIn.tsx`（第 239-244 行）：
-- 在"财富简报"标签页中，查询条件改为支持显示当前用户的所有简报，不仅限于当前 camp
-
-#### 3. 统一术语"财富日记"→"财富简报"
-
-涉及文件（约 12 个）：
-- `src/hooks/useDynamicCoachChat.ts` - toast 和日志文案
-- `src/pages/WealthCampCheckIn.tsx` - 页面标题和空状态文案
-- `src/pages/WealthJournalDetail.tsx` - 详情页标题
-- `src/components/wealth-camp/WealthJournalShareDialog.tsx` - 分享文件名
-- `src/components/wealth-camp/WealthCampShareCard.tsx` - 介绍文案
-- `src/components/wealth-camp/GraduationShareCard.tsx` - 毕业卡片
-- `src/config/shareCardsRegistry.ts` - 分享卡片标题
-- `src/hooks/useQuickMenuConfig.ts` - 快捷菜单标签
-- `src/hooks/usePaymentCallback.ts` - 注释
-- `src/pages/partner/CampGraduate.tsx` - 毕业页面
-
----
+**3. 改变3选项结构**
+- 从固定分类（语言/行动/祝福）改为按对话内容生成的3个递进行动：
+  - 选项1：最小行动（5分钟内可完成，与对话中最触动的点相关）
+  - 选项2：深度行动（今天内可完成，针对核心卡点的练习）
+  - 选项3：持续行动（本周可坚持，与信念转化直接相关）
 
 ### 技术细节
 
-#### 简报结果卡片实现方式
+修改边缘函数提示词，将第596-700行替换为：
 
-在 `useDynamicCoachChat` 中，日记生成成功后追加一条格式化消息到聊天流：
+```
+第6轮：给予行动 - 深度定制
 
-```text
-// 在 journalResult 成功后，替换当前的"正在生成..."消息为完成消息
-setMessages(prev => prev.map((msg, i) => 
-  i === prev.length - 1 && msg.content.includes('正在生成')
-    ? { ...msg, content: `📖 **财富简报已生成** (Day ${dayNumberToUse})\n\n**行为觉察**: ${briefingData.behavior_insight}\n**情绪信号**: ${briefingData.emotion_insight}\n**信念转化**: ${briefingData.belief_insight}\n**给予行动**: ${briefingData.giving_action}` }
-    : msg
-));
+【最高优先级规则】
+行动推荐必须100%来自本次对话内容，严禁使用通用模板！
+
+【生成步骤】
+1. 回顾用户在本次对话中提到的：
+   - 具体的人（谁？）
+   - 具体的场景（什么事？）
+   - 核心情绪（什么感受？）
+   - 新旧信念转换（从什么到什么？）
+
+2. 基于以上内容生成3个递进行动：
+
+格式：
+"太好了，{用户名}！
+
+今天你看见了很多，现在让我们把觉察变成行动。
+
+基于你刚才分享的经历，我为你定制了3个行动：
+
+1️⃣ 🌱 **现在就做**（5分钟）
+[必须直接引用对话中的具体人物或场景]
+例：你刚提到和{某人}的那件事让你感到{情绪}，
+现在就给TA发一条消息：'{具体内容}'
+
+2️⃣ 🔥 **今日挑战**
+[针对用户的核心卡点设计的练习]
+例：你发现自己有'{旧信念}'的模式，
+今天试试：当这个念头出现时，{具体替代行为}
+
+3️⃣ 🌊 **本周练习**
+[与信念转化直接相关的持续行动]
+例：为了强化'{新信念}'，这周每天{具体行动}
+
+你想选哪个？也可以告诉我你自己的想法～"
+
+【禁止事项】
+- 禁止推荐"给3个人点赞"、"默默祝福"等无具体对象的行动
+- 禁止推荐与对话内容无关的通用行动
+- 每个行动必须让用户一看就知道"这是为我量身定制的"
 ```
 
-#### 查询修复
-
-```typescript
-// useWealthJournalEntries.ts - 移除 camp_id 非空过滤
-let query = supabase
-  .from('wealth_journal_entries')
-  .select('*')
-  .eq('user_id', user.id)
-  .order('day_number', { ascending: true });
-
-if (campId) {
-  query = query.eq('camp_id', campId);
-}
-// 不再添加 .not('camp_id', 'is', null)
-```
-
-WealthCampCheckIn 的"财富简报"标签页也需要包含 `camp_id` 为空的记录（属于独立教练对话生成的简报）。
-
+### 涉及文件
+- `supabase/functions/wealth_coach_4_questions-coach/index.ts`（提示词修改，约第596-700行）
