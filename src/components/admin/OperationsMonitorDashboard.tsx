@@ -303,7 +303,7 @@ export default function OperationsMonitorDashboard() {
     icon: any; label: string; value: string | number; sub?: string; alert?: boolean; className?: string;
   }) => (
     <Card className={alert ? "border-destructive/50 bg-destructive/5" : className}>
-      <CardContent className="p-6">
+      <CardContent className="!p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
@@ -372,7 +372,7 @@ export default function OperationsMonitorDashboard() {
       {/* Row 1: Core Realtime Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <Card className={qpsLevel?.bg}>
-          <CardContent className="p-6">
+          <CardContent className="!p-6">
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">当前 QPS</p>
               <div className="flex items-center gap-2">
