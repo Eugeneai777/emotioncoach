@@ -2,15 +2,20 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Activity, AlertTriangle, TrendingUp, RefreshCw, Zap,
-  Shield, Phone, MessageSquare, Clock, Users
+  Shield, Phone, MessageSquare, Clock, Users, Settings, Ban, ShieldAlert, ChevronDown, ChevronUp
 } from "lucide-react";
 import { format, subHours, startOfDay, subMinutes } from "date-fns";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, AreaChart, Area
 } from "recharts";
+import { toast } from "sonner";
 
 // ========== Types ==========
 interface RealtimeMetrics {
@@ -27,6 +32,48 @@ interface RealtimeMetrics {
   errorRate: number;
   todayTotalCostCNY: number;
 }
+
+interface ThresholdConfig {
+  // Per-user per-minute threshold
+  userPerMinuteLimit: number;
+  // Per-user per-day threshold
+  userPerDayLimit: number;
+  // Total call spike multiplier (e.g. 3 = 3x normal)
+  totalSpikeMultiplier: number;
+  // QPS alert threshold
+  qpsAlertThreshold: number;
+  // Error rate threshold (%)
+  errorRateThreshold: number;
+  // Whether to auto-block
+  autoBlockEnabled: boolean;
+  // Block duration in minutes
+  blockDurationMinutes: number;
+}
+
+interface AnomalyAlert {
+  id: string;
+  type: "user_minute" | "user_day" | "total_spike" | "qps" | "error_rate";
+  severity: "warning" | "critical";
+  message: string;
+  detail: string;
+  userId?: string;
+  value: number;
+  threshold: number;
+  timestamp: Date;
+  autoBlocked: boolean;
+}
+
+const DEFAULT_THRESHOLDS: ThresholdConfig = {
+  userPerMinuteLimit: 30,
+  userPerDayLimit: 200,
+  totalSpikeMultiplier: 3,
+  qpsAlertThreshold: 5,
+  errorRateThreshold: 5,
+  autoBlockEnabled: false,
+  blockDurationMinutes: 60,
+};
+
+const THRESHOLD_STORAGE_KEY = "admin_anomaly_thresholds";
 
 interface HourlyData {
   hour: string;
@@ -59,7 +106,108 @@ export default function OperationsMonitorDashboard() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
+  // Threshold & anomaly state
+  const [thresholds, setThresholds] = useState<ThresholdConfig>(() => {
+    try {
+      const saved = localStorage.getItem(THRESHOLD_STORAGE_KEY);
+      return saved ? { ...DEFAULT_THRESHOLDS, ...JSON.parse(saved) } : DEFAULT_THRESHOLDS;
+    } catch { return DEFAULT_THRESHOLDS; }
+  });
+  const [showThresholdConfig, setShowThresholdConfig] = useState(false);
+  const [anomalyAlerts, setAnomalyAlerts] = useState<AnomalyAlert[]>([]);
+  const [previousHourCalls, setPreviousHourCalls] = useState<number | null>(null);
+
   const todayStart = startOfDay(new Date()).toISOString();
+
+  const saveThresholds = (newConfig: ThresholdConfig) => {
+    setThresholds(newConfig);
+    localStorage.setItem(THRESHOLD_STORAGE_KEY, JSON.stringify(newConfig));
+    toast.success("阈值配置已保存");
+  };
+
+  // Anomaly detection based on current data
+  const detectAnomalies = useCallback((
+    currentMetrics: RealtimeMetrics | null,
+    users: TopUser[],
+    hourly: HourlyData[],
+    config: ThresholdConfig
+  ) => {
+    const alerts: AnomalyAlert[] = [];
+    const now = new Date();
+
+    // 1. QPS threshold
+    if (currentMetrics && currentMetrics.currentQPS > config.qpsAlertThreshold) {
+      alerts.push({
+        id: `qps_${now.getTime()}`,
+        type: "qps",
+        severity: currentMetrics.currentQPS > config.qpsAlertThreshold * 2 ? "critical" : "warning",
+        message: `QPS 超过阈值: ${currentMetrics.currentQPS}/s`,
+        detail: `当前 QPS ${currentMetrics.currentQPS}/s 超过设定阈值 ${config.qpsAlertThreshold}/s`,
+        value: currentMetrics.currentQPS,
+        threshold: config.qpsAlertThreshold,
+        timestamp: now,
+        autoBlocked: false,
+      });
+    }
+
+    // 2. Per-user daily limit
+    users.forEach(user => {
+      if (user.callCount > config.userPerDayLimit) {
+        alerts.push({
+          id: `user_day_${user.userId}`,
+          type: "user_day",
+          severity: user.callCount > config.userPerDayLimit * 2 ? "critical" : "warning",
+          message: `用户 ${user.userId.slice(0, 8)}... 今日调用 ${user.callCount} 次`,
+          detail: `超过每日阈值 ${config.userPerDayLimit} 次，当前 ${user.callCount} 次`,
+          userId: user.userId,
+          value: user.callCount,
+          threshold: config.userPerDayLimit,
+          timestamp: now,
+          autoBlocked: config.autoBlockEnabled,
+        });
+      }
+    });
+
+    // 3. Total spike detection (compare current hour vs avg of previous hours)
+    if (hourly.length >= 3) {
+      const currentHourCalls = hourly[hourly.length - 1]?.calls || 0;
+      const prevHours = hourly.slice(Math.max(0, hourly.length - 7), hourly.length - 1);
+      const avgPrev = prevHours.length > 0
+        ? prevHours.reduce((s, h) => s + h.calls, 0) / prevHours.length
+        : 0;
+      
+      if (avgPrev > 0 && currentHourCalls > avgPrev * config.totalSpikeMultiplier) {
+        alerts.push({
+          id: `spike_${now.getTime()}`,
+          type: "total_spike",
+          severity: currentHourCalls > avgPrev * config.totalSpikeMultiplier * 2 ? "critical" : "warning",
+          message: `调用量暴增 ${(currentHourCalls / avgPrev).toFixed(1)}x`,
+          detail: `当前小时 ${currentHourCalls} 次 vs 前6小时均值 ${Math.round(avgPrev)} 次（阈值 ${config.totalSpikeMultiplier}x）`,
+          value: currentHourCalls,
+          threshold: Math.round(avgPrev * config.totalSpikeMultiplier),
+          timestamp: now,
+          autoBlocked: false,
+        });
+      }
+    }
+
+    // 4. Error rate
+    if (currentMetrics && currentMetrics.errorRate > config.errorRateThreshold) {
+      alerts.push({
+        id: `error_${now.getTime()}`,
+        type: "error_rate",
+        severity: currentMetrics.errorRate > config.errorRateThreshold * 2 ? "critical" : "warning",
+        message: `异常率 ${currentMetrics.errorRate}% 超过阈值`,
+        detail: `当前异常率 ${currentMetrics.errorRate}% 超过设定阈值 ${config.errorRateThreshold}%`,
+        value: currentMetrics.errorRate,
+        threshold: config.errorRateThreshold,
+        timestamp: now,
+        autoBlocked: false,
+      });
+    }
+
+    setAnomalyAlerts(alerts);
+  }, []);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -74,9 +222,15 @@ export default function OperationsMonitorDashboard() {
     setLoading(false);
   }, []);
 
+  // Run anomaly detection whenever data changes
+  useEffect(() => {
+    if (metrics) {
+      detectAnomalies(metrics, topUsers, hourlyData, thresholds);
+    }
+  }, [metrics, topUsers, hourlyData, thresholds, detectAnomalies]);
+
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Auto refresh every 30s
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(fetchAll, 30000);
@@ -334,6 +488,16 @@ export default function OperationsMonitorDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowThresholdConfig(!showThresholdConfig)}
+            className="gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            阈值配置
+            {showThresholdConfig ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </Button>
           <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
             <input
               type="checkbox"
@@ -354,19 +518,194 @@ export default function OperationsMonitorDashboard() {
         </div>
       </div>
 
-      {/* QPS Alert Banner */}
-      {metrics && metrics.currentQPS >= 5 && (
-        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/5">
-          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-destructive">
-              ⚠️ QPS 异常偏高: {metrics.currentQPS}/s
-            </p>
-            <p className="text-xs text-destructive/80">
-              当前每秒请求数超过警戒线，请检查是否存在恶意刷接口行为
-            </p>
-          </div>
-        </div>
+      {/* Threshold Configuration Panel */}
+      {showThresholdConfig && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              异常阈值配置
+              <Badge variant="outline" className="text-[10px] ml-2">本地存储</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="!p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <Label className="text-xs">单用户/分钟 调用上限</Label>
+                <Input
+                  type="number"
+                  value={thresholds.userPerMinuteLimit}
+                  onChange={(e) => saveThresholds({ ...thresholds, userPerMinuteLimit: Number(e.target.value) })}
+                  min={1}
+                />
+                <p className="text-[10px] text-muted-foreground">超过此值触发警告（次/分钟）</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">单用户/天 调用上限</Label>
+                <Input
+                  type="number"
+                  value={thresholds.userPerDayLimit}
+                  onChange={(e) => saveThresholds({ ...thresholds, userPerDayLimit: Number(e.target.value) })}
+                  min={1}
+                />
+                <p className="text-[10px] text-muted-foreground">超过此值触发警告（次/天）</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">总量暴增倍数阈值</Label>
+                <Input
+                  type="number"
+                  value={thresholds.totalSpikeMultiplier}
+                  onChange={(e) => saveThresholds({ ...thresholds, totalSpikeMultiplier: Number(e.target.value) })}
+                  min={1.5}
+                  step={0.5}
+                />
+                <p className="text-[10px] text-muted-foreground">当前小时 vs 前6h均值倍数</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">QPS 警戒阈值</Label>
+                <Input
+                  type="number"
+                  value={thresholds.qpsAlertThreshold}
+                  onChange={(e) => saveThresholds({ ...thresholds, qpsAlertThreshold: Number(e.target.value) })}
+                  min={1}
+                />
+                <p className="text-[10px] text-muted-foreground">超过此值触发 QPS 报警</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">异常率阈值 (%)</Label>
+                <Input
+                  type="number"
+                  value={thresholds.errorRateThreshold}
+                  onChange={(e) => saveThresholds({ ...thresholds, errorRateThreshold: Number(e.target.value) })}
+                  min={0.5}
+                  step={0.5}
+                />
+                <p className="text-[10px] text-muted-foreground">退款/补偿占比超过此值报警</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">封禁时长 (分钟)</Label>
+                <Input
+                  type="number"
+                  value={thresholds.blockDurationMinutes}
+                  onChange={(e) => saveThresholds({ ...thresholds, blockDurationMinutes: Number(e.target.value) })}
+                  min={5}
+                />
+                <p className="text-[10px] text-muted-foreground">自动封禁后持续时长</p>
+              </div>
+              <div className="space-y-2 col-span-1 md:col-span-2 flex items-center gap-4 pt-2">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={thresholds.autoBlockEnabled}
+                    onCheckedChange={(checked) => saveThresholds({ ...thresholds, autoBlockEnabled: checked })}
+                  />
+                  <div>
+                    <Label className="text-xs">自动封禁</Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      {thresholds.autoBlockEnabled
+                        ? "已开启：超过阈值自动拉黑并返回维护提示"
+                        : "已关闭：仅报警不自动封禁"
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t flex items-center justify-between">
+              <p className="text-[10px] text-muted-foreground">
+                提示：阈值修改即时生效，存储在本地浏览器中。如需持久化，请联系开发团队配置到数据库。
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveThresholds(DEFAULT_THRESHOLDS)}
+                className="text-xs"
+              >
+                恢复默认
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Anomaly Alerts Panel */}
+      {anomalyAlerts.length > 0 && (
+        <Card className="border-destructive/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-destructive" />
+              异常报警
+              <Badge variant="destructive" className="text-[10px] ml-1">
+                {anomalyAlerts.length} 条
+              </Badge>
+              {thresholds.autoBlockEnabled && (
+                <Badge variant="outline" className="text-[10px] ml-1 border-destructive/50 text-destructive">
+                  <Ban className="h-3 w-3 mr-1" />
+                  自动封禁已开启
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="!p-6">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {anomalyAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`flex items-start gap-3 p-3 rounded-lg border ${
+                    alert.severity === "critical"
+                      ? "border-destructive/50 bg-destructive/5"
+                      : "border-amber-500/30 bg-amber-50 dark:bg-amber-900/10"
+                  }`}
+                >
+                  {alert.severity === "critical" ? (
+                    <Ban className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs font-medium ${
+                        alert.severity === "critical" ? "text-destructive" : "text-amber-700 dark:text-amber-400"
+                      }`}>
+                        {alert.message}
+                      </span>
+                      <Badge
+                        variant={alert.severity === "critical" ? "destructive" : "secondary"}
+                        className="text-[9px] py-0"
+                      >
+                        {alert.severity === "critical" ? "严重" : "警告"}
+                      </Badge>
+                      {alert.type === "user_day" && (
+                        <Badge variant="outline" className="text-[9px] py-0">用户日限</Badge>
+                      )}
+                      {alert.type === "user_minute" && (
+                        <Badge variant="outline" className="text-[9px] py-0">用户分钟限</Badge>
+                      )}
+                      {alert.type === "total_spike" && (
+                        <Badge variant="outline" className="text-[9px] py-0">总量暴增</Badge>
+                      )}
+                      {alert.type === "qps" && (
+                        <Badge variant="outline" className="text-[9px] py-0">QPS</Badge>
+                      )}
+                      {alert.type === "error_rate" && (
+                        <Badge variant="outline" className="text-[9px] py-0">异常率</Badge>
+                      )}
+                      {alert.autoBlocked && (
+                        <Badge variant="destructive" className="text-[9px] py-0">
+                          <Ban className="h-2.5 w-2.5 mr-0.5" />
+                          已自动封禁
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{alert.detail}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                    {format(alert.timestamp, "HH:mm:ss")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Row 1: Core Realtime Metrics */}
