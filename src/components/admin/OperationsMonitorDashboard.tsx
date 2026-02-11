@@ -949,6 +949,96 @@ export default function OperationsMonitorDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Anomaly Event History List */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4" />
+            异常事件列表
+            {anomalyAlerts.length > 0 && (
+              <Badge variant="destructive" className="text-[10px] ml-1">{anomalyAlerts.length}</Badge>
+            )}
+            <Badge variant="outline" className="text-[10px] ml-auto">实时检测</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="!p-6">
+          {anomalyAlerts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <Shield className="h-10 w-10 mb-3 opacity-30" />
+              <p className="text-sm font-medium">当前无异常事件</p>
+              <p className="text-xs mt-1">系统每 30 秒自动检测一次</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {anomalyAlerts.map((alert) => {
+                const typeLabels: Record<string, string> = {
+                  user_minute: "用户高频",
+                  user_day: "用户超限",
+                  total_spike: "流量暴增",
+                  qps: "QPS 超限",
+                  error_rate: "异常率",
+                };
+                const typeIcons: Record<string, any> = {
+                  user_minute: Users,
+                  user_day: Users,
+                  total_spike: TrendingUp,
+                  qps: Zap,
+                  error_rate: AlertTriangle,
+                };
+                const AlertIcon = typeIcons[alert.type] || AlertTriangle;
+                return (
+                  <div
+                    key={alert.id}
+                    className={`flex items-start gap-3 p-3 rounded-lg border ${
+                      alert.severity === "critical"
+                        ? "bg-destructive/5 border-destructive/30"
+                        : "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
+                    }`}
+                  >
+                    <div className={`p-1.5 rounded-md mt-0.5 ${
+                      alert.severity === "critical" ? "bg-destructive/10" : "bg-amber-100 dark:bg-amber-900/30"
+                    }`}>
+                      <AlertIcon className={`h-4 w-4 ${
+                        alert.severity === "critical" ? "text-destructive" : "text-amber-600"
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge
+                          variant={alert.severity === "critical" ? "destructive" : "secondary"}
+                          className="text-[10px] py-0"
+                        >
+                          {alert.severity === "critical" ? "严重" : "警告"}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px] py-0">
+                          {typeLabels[alert.type] || alert.type}
+                        </Badge>
+                        {alert.autoBlocked && (
+                          <Badge className="text-[10px] py-0 bg-destructive/80 text-white">
+                            <Ban className="h-2.5 w-2.5 mr-0.5" />
+                            已自动拉黑
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium mt-1">{alert.message}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{alert.detail}</p>
+                      {alert.userId && (
+                        <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                          用户: {alert.userId.slice(0, 12)}...
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-1">
+                      {format(alert.timestamp, "HH:mm:ss")}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
