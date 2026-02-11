@@ -564,7 +564,7 @@ export const useDynamicCoachChat = (
             
             // 如果 AI 没有返回文本内容，添加默认完成消息
             if (!assistantMessage) {
-              assistantMessage = "✨ 好的，让我帮你整理今天的财富觉察，正在生成财富日记...";
+              assistantMessage = "✨ 好的，让我帮你整理今天的财富觉察，正在生成财富简报...";
               setMessages((prev) => [...prev, { role: "assistant", content: assistantMessage }]);
             }
             
