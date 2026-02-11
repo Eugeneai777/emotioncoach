@@ -7,12 +7,29 @@ import { getErrors, subscribe as subscribeFrontend, FrontendError } from "@/lib/
 import { getApiErrors, subscribeApiErrors, ApiError } from "@/lib/apiErrorTracker";
 import { getUxAnomalies, subscribeUxAnomalies, UxAnomaly } from "@/lib/uxAnomalyTracker";
 
+/** 错误详情项 */
+interface ErrorDetail {
+  source: '前端' | '接口' | '体验';
+  message: string;
+  timestamp: number;
+  url?: string;
+  statusCode?: number;
+  responseBody?: string;
+  userId?: string;
+  page?: string;
+  stack?: string;
+  modelName?: string;
+  scene?: string;
+  duration?: number;
+}
+
 /** 排行项 */
 interface RankItem {
   key: string;
   label: string;
   count: number;
   percentage: number;
+  details?: ErrorDetail[];
 }
 
 /** 将数组按 key 聚合并排名 */
@@ -62,6 +79,7 @@ export default function AnomalyAggregation() {
   const [feErrors, setFeErrors] = useState<FrontendError[]>(getErrors());
   const [apiErrors, setApiErrors] = useState<ApiError[]>(getApiErrors());
   const [uxAnomalies, setUxAnomalies] = useState<UxAnomaly[]>(getUxAnomalies());
+  const [expandedError, setExpandedError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub1 = subscribeFrontend(setFeErrors);
@@ -77,13 +95,41 @@ export default function AnomalyAggregation() {
 
   // ===== 错误排行 =====
   const topErrors = useMemo(() => {
-    // 合并前端 + 接口错误 message
-    const allMsgs = [
-      ...todayFe.map((e) => ({ msg: e.message.slice(0, 80), source: '前端' })),
-      ...todayApi.map((e) => ({ msg: e.message.slice(0, 80), source: '接口' })),
-      ...todayUx.map((e) => ({ msg: e.message.slice(0, 80), source: '体验' })),
+    const allItems: { msg: string; source: '前端' | '接口' | '体验'; detail: ErrorDetail }[] = [
+      ...todayFe.map((e) => ({
+        msg: e.message.slice(0, 80),
+        source: '前端' as const,
+        detail: { source: '前端' as const, message: e.message, timestamp: e.timestamp, stack: e.stack, page: e.page, userId: undefined, url: undefined, statusCode: undefined, responseBody: undefined, modelName: undefined, scene: undefined, duration: undefined },
+      })),
+      ...todayApi.map((e) => ({
+        msg: e.message.slice(0, 80),
+        source: '接口' as const,
+        detail: { source: '接口' as const, message: e.message, timestamp: e.timestamp, url: e.url, statusCode: e.statusCode, responseBody: e.responseBody, userId: e.userId, page: e.page, modelName: e.modelName, stack: undefined, scene: undefined, duration: undefined },
+      })),
+      ...todayUx.map((e) => ({
+        msg: e.message.slice(0, 80),
+        source: '体验' as const,
+        detail: { source: '体验' as const, message: e.message, timestamp: e.timestamp, userId: e.userId, scene: e.scene, duration: e.duration, url: undefined, statusCode: undefined, responseBody: undefined, page: undefined, stack: undefined, modelName: undefined },
+      })),
     ];
-    return rank(allMsgs, (i) => i.msg, (i) => `[${i.source}] ${i.msg}`, 8);
+    // Group by message key
+    const map = new Map<string, { count: number; label: string; details: ErrorDetail[] }>();
+    for (const item of allItems) {
+      const key = item.msg;
+      if (!key) continue;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count++;
+        existing.details.push(item.detail);
+      } else {
+        map.set(key, { count: 1, label: `[${item.source}] ${item.msg}`, details: [item.detail] });
+      }
+    }
+    const total = allItems.length || 1;
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, label: v.label, count: v.count, percentage: (v.count / total) * 100, details: v.details.sort((a, b) => b.timestamp - a.timestamp).slice(0, 20) }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
   }, [todayFe, todayApi, todayUx]);
 
   const topApiEndpoints = useMemo(() => {
@@ -210,19 +256,62 @@ export default function AnomalyAggregation() {
             {topErrors.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">今日暂无异常 🎉</p>
             ) : (
-              <div className="space-y-3">
-                {topErrors.map((item, idx) => (
-                  <div key={item.key} className="space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">#{idx + 1}</span>
-                        <span className="text-sm truncate">{item.label}</span>
+              <div className="space-y-2">
+                {topErrors.map((item, idx) => {
+                  const isExpanded = expandedError === item.key;
+                  return (
+                    <div key={item.key} className="space-y-1">
+                      <div
+                        className="flex items-center justify-between gap-2 cursor-pointer hover:bg-accent/50 rounded-md p-1.5 -mx-1.5 transition-colors"
+                        onClick={() => setExpandedError(isExpanded ? null : item.key)}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">#{idx + 1}</span>
+                          <span className="text-sm truncate">{item.label}</span>
+                        </div>
+                        <Badge variant="secondary" className="shrink-0">{item.count}次</Badge>
                       </div>
-                      <Badge variant="secondary" className="shrink-0">{item.count}次</Badge>
+                      <Progress value={item.percentage} className="h-1.5" />
+                      {isExpanded && item.details && (
+                        <div className="mt-2 ml-7 space-y-2 border-l-2 border-muted pl-3">
+                          {item.details.map((d, di) => (
+                            <div key={di} className="text-xs space-y-0.5 p-2 rounded bg-muted/50">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-[10px]">{d.source}</Badge>
+                                <span className="text-muted-foreground">
+                                  {new Date(d.timestamp).toLocaleString("zh-CN")}
+                                </span>
+                                {d.userId && <span className="text-muted-foreground">用户: {d.userId}</span>}
+                              </div>
+                              <p className="text-foreground break-all">{d.message}</p>
+                              {d.url && (
+                                <p className="text-muted-foreground break-all">
+                                  URL: {d.url} {d.statusCode ? `(${d.statusCode})` : ''}
+                                </p>
+                              )}
+                              {d.modelName && <p className="text-muted-foreground">模型: {d.modelName}</p>}
+                              {d.scene && <p className="text-muted-foreground">场景: {d.scene}</p>}
+                              {d.duration != null && <p className="text-muted-foreground">耗时: {(d.duration / 1000).toFixed(1)}s</p>}
+                              {d.responseBody && (
+                                <details className="mt-1">
+                                  <summary className="text-muted-foreground cursor-pointer hover:text-foreground">响应体</summary>
+                                  <pre className="mt-1 text-[10px] bg-muted p-1.5 rounded overflow-x-auto whitespace-pre-wrap break-all">{d.responseBody}</pre>
+                                </details>
+                              )}
+                              {d.stack && (
+                                <details className="mt-1">
+                                  <summary className="text-muted-foreground cursor-pointer hover:text-foreground">堆栈</summary>
+                                  <pre className="mt-1 text-[10px] bg-muted p-1.5 rounded overflow-x-auto whitespace-pre-wrap break-all">{d.stack}</pre>
+                                </details>
+                              )}
+                              {d.page && <p className="text-muted-foreground break-all">页面: {d.page}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <Progress value={item.percentage} className="h-1.5" />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
