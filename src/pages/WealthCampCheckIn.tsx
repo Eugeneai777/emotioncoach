@@ -518,7 +518,7 @@ ${reflection}`;
     >
       {/* Header - 使用统一的PageHeader，在此页面Home键会自动隐藏 */}
       <PageHeader 
-        title={`💰 我的财富日记 Day ${currentDay}/${camp.duration_days}`}
+        title={`💰 我的财富简报 Day ${currentDay}/${camp.duration_days}`}
         rightActions={
           <div className="text-right">
             <div className="text-lg font-bold text-amber-600">{camp.completed_days}</div>
@@ -929,8 +929,8 @@ ${reflection}`;
                 
                 {journalEntries.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
-                    <div className="text-muted-foreground">
-                      <p>还没有财富日记</p>
+                  <div className="text-muted-foreground">
+                      <p>还没有财富简报</p>
                       <p className="text-sm">完成财富梳理后自动生成</p>
                     </div>
                     <Button 

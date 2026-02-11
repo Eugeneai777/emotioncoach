@@ -82,8 +82,8 @@ export default function WealthJournalDetail() {
   if (!entry) {
     return (
       <div className="h-screen flex flex-col items-center justify-center p-4">
-        <p className="text-muted-foreground mb-4">日记不存在</p>
-        <Button onClick={() => navigate('/wealth-journal')}>返回日记列表</Button>
+        <p className="text-muted-foreground mb-4">简报不存在</p>
+        <Button onClick={() => navigate('/wealth-journal')}>返回简报列表</Button>
       </div>
     );
   }
@@ -130,7 +130,7 @@ export default function WealthJournalDetail() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-semibold">📖 财富日记 · Day {entry.day_number}</h1>
+            <h1 className="font-semibold">📖 财富简报 · Day {entry.day_number}</h1>
             <p className="text-xs text-muted-foreground">
               {format(new Date(entry.created_at), 'yyyy年M月d日 EEEE', { locale: zhCN })}
             </p>

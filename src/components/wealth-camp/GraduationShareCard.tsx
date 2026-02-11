@@ -126,7 +126,7 @@ const GraduationShareCard = forwardRef<HTMLDivElement, GraduationShareCardProps>
             </div>
             <div className="bg-white/5 rounded-lg p-2 text-center">
               <div className="text-xl font-bold text-violet-300">{journalCount}</div>
-              <div className="text-xs text-slate-400">财富日记</div>
+              <div className="text-xs text-slate-400">财富简报</div>
             </div>
             <div className="bg-white/5 rounded-lg p-2 text-center">
               <div className="text-xl font-bold text-orange-300">{totalPoints}</div>

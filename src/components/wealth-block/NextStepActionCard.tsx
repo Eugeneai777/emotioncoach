@@ -194,8 +194,8 @@ export function NextStepActionCard({
             <RefreshCw className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", isSaved ? "text-emerald-500" : "text-muted-foreground")} />
             <p className="text-[9px] sm:text-[11px] text-muted-foreground">
               {isSaved 
-                ? "✓ 测评数据已同步到财富日记 Day 0" 
-                : "保存后自动同步到财富日记"}
+                ? "✓ 测评数据已同步到财富简报 Day 0" 
+                : "保存后自动同步到财富简报"}
             </p>
           </div>
 

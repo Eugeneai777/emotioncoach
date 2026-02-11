@@ -86,9 +86,9 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
     <ShareDialogBase
       open={open}
       onOpenChange={onOpenChange}
-      title="分享日记卡片"
+      title="分享简报卡片"
       shareUrl={shareUrl}
-      fileName={`财富日记-Day${entry.day_number}.png`}
+      fileName={`财富简报-Day${entry.day_number}.png`}
       buttonGradient="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 text-white"
       exportCardRef={cardRef}
       cardReady={!isLoading}

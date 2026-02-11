@@ -553,9 +553,9 @@ export const useDynamicCoachChat = (
         try {
           const toolCall = toolCalls[0];
           
-          // 处理财富日记生成工具
-          if (toolCall?.function?.name === "generate_wealth_briefing") {
-            // 🛡️ 防重检查：如果本次对话已生成日记，跳过重复调用
+           // 处理财富简报生成工具
+           if (toolCall?.function?.name === "generate_wealth_briefing") {
+            // 🛡️ 防重检查：如果本次对话已生成简报，跳过重复调用
             if (journalGeneratedRef.current) {
               console.log('⚠️ [useDynamicCoachChat] 日记已生成，跳过重复调用');
               return;
@@ -564,7 +564,7 @@ export const useDynamicCoachChat = (
             
             // 如果 AI 没有返回文本内容，添加默认完成消息
             if (!assistantMessage) {
-              assistantMessage = "✨ 好的，让我帮你整理今天的财富觉察，正在生成财富日记...";
+              assistantMessage = "✨ 好的，让我帮你整理今天的财富觉察，正在生成财富简报...";
               setMessages((prev) => [...prev, { role: "assistant", content: assistantMessage }]);
             }
             
@@ -598,8 +598,24 @@ export const useDynamicCoachChat = (
                   dayNumber: dayNumberToUse 
                 });
                 
+                // 在聊天中替换"正在生成"消息为简报结果卡片
+                const resultContent = `📖 **财富简报已生成** (Day ${dayNumberToUse})\n\n` +
+                  (briefingData.behavior_insight ? `**🎯 行为觉察**: ${briefingData.behavior_insight}\n` : '') +
+                  (briefingData.emotion_insight ? `**💛 情绪信号**: ${briefingData.emotion_insight}\n` : '') +
+                  (briefingData.belief_insight ? `**🧠 信念转化**: ${briefingData.belief_insight}\n` : '') +
+                  (briefingData.giving_action ? `**🌱 给予行动**: ${briefingData.giving_action}\n` : '') +
+                  `\n✨ 简报已保存，可在「成长档案 → 财富简报」中查看`;
+                
+                setMessages((prev) => {
+                  const lastIdx = prev.length - 1;
+                  if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content.includes('正在生成')) {
+                    return prev.map((m, i) => i === lastIdx ? { ...m, content: resultContent } : m);
+                  }
+                  return [...prev, { role: 'assistant', content: resultContent }];
+                });
+                
                 toast({
-                  title: "📖 财富日记已生成",
+                  title: "📖 财富简报已生成",
                   description: `记录了 Day ${dayNumberToUse} 的财富觉察`,
                 });
                 
@@ -730,7 +746,7 @@ export const useDynamicCoachChat = (
                   });
                 }
               } else {
-                console.error('生成财富日记失败:', journalError);
+                console.error('生成财富简报失败:', journalError);
               }
             }
           }

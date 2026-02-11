@@ -50,7 +50,7 @@ const COMPLIANT_CARDS = [
   'GratitudeJournalShareDialog', // 感恩日记
   'EmotionButtonShareDialog', // 情绪急救弹窗
   'AliveCheckShareDialog',    // 安全打卡弹窗
-  'WealthJournalShareDialog', // 财富日记弹窗
+  'WealthJournalShareDialog', // 财富简报弹窗
 ];
 
 // 使用旧版 QRCode 直接调用的卡片 (需要关注)
