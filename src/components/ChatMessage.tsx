@@ -196,6 +196,9 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
             <div className="absolute -left-2 top-3 w-0 h-0 border-r-[8px] border-r-card border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent" />
           )}
           
+          {isWealthBriefingCard && briefingCardData ? (
+            <WealthBriefingResultCard data={briefingCardData} />
+          ) : (
           <div
             className={`relative rounded-2xl px-4 py-3 transition-all duration-300 ${
               isUser
