@@ -170,6 +170,7 @@ export function UserAccountsTable() {
                   <TableCell>
                     <Badge variant="outline">
                     {(account.subscription?.subscription_type === '365' || account.subscription?.subscription_type === 'member365') ? '365会员' 
+                       : account.subscription?.subscription_type === 'basic' ? '尝鲜会员'
                        : account.subscription?.subscription_type === 'custom' ? '自定义'
                        : '体验版'}
                     </Badge>
