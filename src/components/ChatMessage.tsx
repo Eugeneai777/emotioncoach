@@ -119,9 +119,20 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
     }
   };
   
+  // 检测财富简报卡片
+  const isWealthBriefingCard = content.startsWith('<!--WEALTH_BRIEFING_CARD-->');
+  let briefingCardData: any = null;
+  if (isWealthBriefingCard) {
+    try {
+      briefingCardData = JSON.parse(content.replace('<!--WEALTH_BRIEFING_CARD-->', ''));
+    } catch (e) {
+      // fallback to plain text
+    }
+  }
+
   // 检测是否包含编号选项（如 "1. 选项"、"1、选项" 或 "A. 选项"）
   const optionRegex = /^\s*([A-Da-d]|\d+)[.、]\s*(.+)$/gm;
-  const matches = Array.from(content.matchAll(optionRegex));
+  const matches = isWealthBriefingCard ? [] : Array.from(content.matchAll(optionRegex));
   
   // 检测单个"生成简报"或"分享"选项的特殊情况
   const isBriefingOnlyOption = matches.length === 1 && 
