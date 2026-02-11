@@ -17,6 +17,9 @@ import KnowledgeBaseManagement from "./KnowledgeBaseManagement";
 import CustomerServiceManagement from "./CustomerServiceManagement";
 import CostMonitorDashboard from "./CostMonitorDashboard";
 import OperationsMonitorDashboard from "./OperationsMonitorDashboard";
+import UserAnomalyMonitor from "./UserAnomalyMonitor";
+import StabilityMonitor from "./StabilityMonitor";
+import RiskContentMonitor from "./RiskContentMonitor";
 import { PartnerLevelManagement } from "./PartnerLevelManagement";
 import { HumanCoachesManagement } from "./human-coaches/HumanCoachesManagement";
 import AdminBloomPartnerDelivery from "./AdminBloomPartnerDelivery";
@@ -65,7 +68,10 @@ export function AdminLayout() {
               <Route path="activation-codes" element={<ActivationCodeManagement />} />
               <Route path="funnel" element={<ConversionFunnelDashboard />} />
               <Route path="cost-monitor" element={<CostMonitorDashboard />} />
-              <Route path="ops-monitor" element={<OperationsMonitorDashboard />} />
+              <Route path="api-monitor" element={<OperationsMonitorDashboard />} />
+              <Route path="user-anomaly" element={<UserAnomalyMonitor />} />
+              <Route path="stability" element={<StabilityMonitor />} />
+              <Route path="risk-content" element={<RiskContentMonitor />} />
               <Route path="reports" element={<ReportsManagement />} />
               <Route path="packages" element={<PackagesManagement />} />
               <Route path="partner-levels" element={<PartnerLevelManagement />} />
