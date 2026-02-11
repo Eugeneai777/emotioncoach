@@ -612,8 +612,15 @@ export const useDynamicCoachChat = (
                 
                 setMessages((prev) => {
                   // 查找最后一条包含"正在生成"的助手消息并替换
-                  const genIdx = prev.findLastIndex(m => m.role === 'assistant' && m.content.includes('正在生成'));
+                  let genIdx = -1;
+                  for (let i = prev.length - 1; i >= 0; i--) {
+                    if (prev[i].role === 'assistant' && prev[i].content.includes('正在生成')) {
+                      genIdx = i;
+                      break;
+                    }
+                  }
                   if (genIdx >= 0) {
+                    return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
                     return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
                   }
                   // 没找到"正在生成"消息，直接追加卡片
