@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { VideoRecommendations } from "./VideoRecommendations";
 import { CommunicationCourseRecommendations } from "./communication/CommunicationCourseRecommendations";
 import { CoachRecommendationCard } from "./coach/CoachRecommendationCard";
+import { WealthBriefingResultCard } from "./wealth-camp/WealthBriefingResultCard";
 import { useCommunicationCourseRecommendations } from "@/hooks/useCommunicationCourseRecommendations";
 import { supabase } from "@/integrations/supabase/client";
 import { deductVideoQuota } from "@/utils/videoQuotaUtils";
