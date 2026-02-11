@@ -37,32 +37,40 @@ export function UserAccountsTable() {
       // 并行获取所有关联数据
       const accountsWithDetails = await Promise.all(
         (accountsData || []).map(async (account) => {
-          const [profileResult, subscriptionResult, wechatResult] = await Promise.all([
-            supabase
-              .from('profiles')
-              .select('display_name, avatar_url, auth_provider, created_at, is_disabled, disabled_at, disabled_reason, deleted_at')
-              .eq('id', account.user_id)
-              .maybeSingle(),
-            supabase
-              .from('subscriptions')
-              .select('subscription_type, status')
-              .eq('user_id', account.user_id)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle(),
-            supabase
-              .from('wechat_user_mappings')
-              .select('nickname, subscribe_status, phone_number, avatar_url')
-              .eq('system_user_id', account.user_id)
-              .maybeSingle()
-          ]);
+            const [profileResult, subscriptionResult, wechatResult, paidOrderResult] = await Promise.all([
+              supabase
+                .from('profiles')
+                .select('display_name, avatar_url, auth_provider, created_at, is_disabled, disabled_at, disabled_reason, deleted_at')
+                .eq('id', account.user_id)
+                .maybeSingle(),
+              supabase
+                .from('subscriptions')
+                .select('subscription_type, status')
+                .eq('user_id', account.user_id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle(),
+              supabase
+                .from('wechat_user_mappings')
+                .select('nickname, subscribe_status, phone_number, avatar_url')
+                .eq('system_user_id', account.user_id)
+                .maybeSingle(),
+              supabase
+                .from('orders')
+                .select('id, package_key')
+                .eq('user_id', account.user_id)
+                .eq('status', 'paid')
+                .limit(1)
+                .maybeSingle()
+            ]);
 
-          return {
-            ...account,
-            profile: profileResult.data,
-            subscription: subscriptionResult.data,
-            wechat: wechatResult.data
-          };
+            return {
+              ...account,
+              profile: profileResult.data,
+              subscription: subscriptionResult.data,
+              wechat: wechatResult.data,
+              paidOrder: paidOrderResult.data
+            };
         })
       );
 
@@ -98,6 +106,7 @@ export function UserAccountsTable() {
               <TableHead className="w-[280px]">用户</TableHead>
               <TableHead className="w-[100px]">额度</TableHead>
               <TableHead className="w-[100px]">会员类型</TableHead>
+              <TableHead className="w-[80px]">付费</TableHead>
               <TableHead className="w-[120px]">过期时间</TableHead>
               <TableHead className="w-[80px]">状态</TableHead>
               <TableHead className="w-[60px]">操作</TableHead>
@@ -174,6 +183,19 @@ export function UserAccountsTable() {
                        : account.subscription?.subscription_type === 'custom' ? '自定义'
                        : '体验版'}
                     </Badge>
+                  </TableCell>
+
+                  {/* 付费状态 */}
+                  <TableCell>
+                    {account.paidOrder ? (
+                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        已付费
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        未付费
+                      </Badge>
+                    )}
                   </TableCell>
 
                   {/* 过期时间 */}
