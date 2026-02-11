@@ -403,27 +403,49 @@ export const useDynamicCoachChat = (
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 60000); // 60秒超时
+    }, 90000); // 90秒超时（微信小程序环境需要更长时间）
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("未登录");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${edgeFunctionName}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            messages: nextMessages,
-            mode: chatMode,
-          }),
-          signal: controller.signal,
+      // 带重试的 fetch 请求，应对微信 WebView 网络不稳定
+      const fetchWithRetry = async (retries = 2): Promise<Response> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            const resp = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${edgeFunctionName}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  messages: nextMessages,
+                  mode: chatMode,
+                }),
+                signal: controller.signal,
+              }
+            );
+            return resp;
+          } catch (fetchError: any) {
+            const isNetworkError = fetchError.message?.includes('Load failed') || 
+                                   fetchError.message?.includes('Failed to fetch') ||
+                                   fetchError.message?.includes('NetworkError') ||
+                                   fetchError.name === 'TypeError';
+            if (isNetworkError && attempt < retries) {
+              console.warn(`[Coach] 网络请求失败，${attempt + 1}/${retries} 次重试...`, fetchError.message);
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // 递增延迟
+              continue;
+            }
+            throw fetchError;
+          }
         }
-      );
+        throw new Error('网络请求失败');
+      };
+
+      const response = await fetchWithRetry();
 
       if (!response.ok) {
         if (response.status === 429) {
@@ -804,9 +826,18 @@ export const useDynamicCoachChat = (
       
       // 处理超时/中止错误
       const isAborted = error.name === 'AbortError' || error.message?.includes('abort');
-      const errorMessage = isAborted 
-        ? "请求超时，请检查网络后重试" 
-        : (error.message || "请稍后重试");
+      const isNetworkError = error.message?.includes('Load failed') || 
+                             error.message?.includes('Failed to fetch') ||
+                             error.message?.includes('NetworkError');
+      
+      let errorMessage: string;
+      if (isAborted) {
+        errorMessage = "请求超时，请检查网络后重试";
+      } else if (isNetworkError) {
+        errorMessage = "网络连接不稳定，请检查网络后重试";
+      } else {
+        errorMessage = error.message || "请稍后重试";
+      }
       
       toast({
         title: "发送失败",
