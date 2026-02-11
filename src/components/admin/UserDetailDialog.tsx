@@ -314,6 +314,8 @@ export function UserDetailDialog({
   // 获取 record_type 的中文名称
   const getRecordTypeName = (type: string) => {
     const typeMap: Record<string, string> = {
+      'conversation': '对话',
+      'compensation': '补偿',
       'deduction': '扣费',
       'refund': '退款',
       'recharge': '充值',
@@ -340,7 +342,28 @@ export function UserDetailDialog({
       'purchase': '购买套餐',
       'voice_chat': '语音通话',
       'refund_short_call': '短通话退款',
-      'refund_failed_call': '失败通话退款'
+      'refund_failed_call': '失败通话退款',
+      'generate_story_coach': '故事教练',
+      'analyze_parent_emotion_patterns': '亲子情绪分析',
+      'batch_gratitude_analysis': '感恩分析',
+      'system_refund': '系统退款',
+      'wealth_coach_session': '财富教练',
+      'mysql': '对话',
+      'web': '网页对话',
+      'video_recommendations': '视频推荐',
+      'analyze_tag_trends': '标签趋势分析',
+      'text_to_speech': '文字转语音',
+      'voice_to_text': '语音转文字',
+      'emotion_coach_session': '情绪教练',
+      'analyze_emotion_patterns': '情绪模式分析',
+      'parent_coach_session': '亲子教练',
+      'courses_page': '课程页面',
+      'generate_poster_image': '生成海报',
+      'communication_coach_session': '沟通教练',
+      'vibrant_life_coach_session': '有劲教练',
+      'generate_checkin_image': '生成打卡图',
+      'recommend_courses': '课程推荐',
+      'voice_chat_refund': '语音退款'
     };
     return sourceMap[source] || source;
   };
@@ -489,7 +512,7 @@ export function UserDetailDialog({
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-medium flex items-center gap-2">
                     <List className="h-4 w-4" />
-                    详细使用记录（最近100条）
+                    使用记录
                   </h4>
                 </div>
 
@@ -528,11 +551,6 @@ export function UserDetailDialog({
                                   <p className="text-xs text-muted-foreground">
                                     {format(new Date(record.created_at), 'yyyy-MM-dd HH:mm:ss')}
                                   </p>
-                                  {record.metadata && Object.keys(record.metadata).length > 0 && (
-                                    <p className="text-xs text-muted-foreground mt-1 max-w-[200px] truncate">
-                                      {JSON.stringify(record.metadata)}
-                                    </p>
-                                  )}
                                 </div>
                               </div>
                               <div className={`text-lg font-bold ${
