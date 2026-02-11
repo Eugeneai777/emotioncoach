@@ -207,6 +207,106 @@ serve(async (req) => {
           console.error('[CheckOrder] Failed to update order:', updateError);
         } else {
           console.log('[CheckOrder] Order updated to paid');
+
+          // === 新增：完整权益发放逻辑 ===
+          try {
+            // 查询完整订单信息
+            const { data: fullOrder } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('order_no', orderNo)
+              .single();
+
+            if (fullOrder && fullOrder.user_id) {
+              const pkgKey = fullOrder.package_key;
+
+              if (pkgKey.startsWith('camp-')) {
+                // 训练营处理
+                const campType = pkgKey.replace('camp-', '');
+                const { data: campTemplate } = await supabase
+                  .from('camp_templates')
+                  .select('camp_name')
+                  .eq('camp_type', campType)
+                  .maybeSingle();
+
+                await supabase.from('user_camp_purchases').insert({
+                  user_id: fullOrder.user_id,
+                  camp_type: campType,
+                  camp_name: campTemplate?.camp_name || fullOrder.product_name || '训练营',
+                  purchase_price: fullOrder.amount,
+                  payment_method: 'wechat',
+                  payment_status: 'completed',
+                  transaction_id: wechatResult.transaction_id,
+                  purchased_at: new Date().toISOString(),
+                  expires_at: null,
+                });
+                console.log('[CheckOrder] Camp purchase recorded:', campType);
+              } else {
+                // 非训练营：更新配额
+                const quotaMap: Record<string, number> = { basic: 50, member365: 1000, partner: 9999999 };
+                const quota = quotaMap[pkgKey] || 0;
+                if (quota > 0) {
+                  const { data: ua } = await supabase
+                    .from('user_accounts')
+                    .select('total_quota')
+                    .eq('user_id', fullOrder.user_id)
+                    .single();
+                  if (ua) {
+                    await supabase.from('user_accounts').update({
+                      total_quota: (ua.total_quota || 0) + quota,
+                      updated_at: new Date().toISOString(),
+                    }).eq('user_id', fullOrder.user_id);
+                    console.log('[CheckOrder] Quota updated:', fullOrder.user_id, '+', quota);
+                  }
+                }
+
+                // 写入 subscriptions
+                const { data: subPkg } = await supabase
+                  .from('packages')
+                  .select('id, duration_days, package_name')
+                  .eq('package_key', pkgKey)
+                  .maybeSingle();
+                if (subPkg) {
+                  const startDate = new Date();
+                  const endDate = new Date();
+                  endDate.setDate(endDate.getDate() + (subPkg.duration_days || 365));
+                  await supabase.from('subscriptions').upsert({
+                    user_id: fullOrder.user_id,
+                    package_id: subPkg.id,
+                    subscription_type: pkgKey,
+                    status: 'active',
+                    combo_name: subPkg.package_name,
+                    combo_amount: fullOrder.amount,
+                    start_date: startDate.toISOString(),
+                    end_date: endDate.toISOString(),
+                  }, { onConflict: 'user_id' });
+                  console.log('[CheckOrder] Subscription upserted:', fullOrder.user_id);
+                }
+              }
+
+              // 合伙人佣金处理
+              const { data: referral } = await supabase
+                .from('partner_referrals')
+                .select('id, partner_id')
+                .eq('referred_user_id', fullOrder.user_id)
+                .eq('level', 1)
+                .maybeSingle();
+              if (referral) {
+                const convStatus = pkgKey === 'partner' ? 'became_partner' : 'purchased_365';
+                await supabase.from('partner_referrals').update({
+                  conversion_status: convStatus,
+                  converted_at: new Date().toISOString(),
+                }).eq('id', referral.id);
+                try {
+                  await supabase.functions.invoke('calculate-commission', {
+                    body: { order_id: fullOrder.id, user_id: fullOrder.user_id, order_amount: fullOrder.amount, order_type: pkgKey },
+                  });
+                } catch (e) { console.error('[CheckOrder] Commission error:', e); }
+              }
+            }
+          } catch (benefitError) {
+            console.error('[CheckOrder] Benefit granting error:', benefitError);
+          }
         }
 
         return new Response(

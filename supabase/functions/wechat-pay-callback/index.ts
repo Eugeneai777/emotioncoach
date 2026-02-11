@@ -196,6 +196,45 @@ serve(async (req) => {
       }
     }
 
+    // === 新增：写入 subscriptions 表（非训练营订单） ===
+    if (!order.package_key.startsWith('camp-')) {
+      try {
+        const { data: pkg } = await supabase
+          .from('packages')
+          .select('id, duration_days, package_name')
+          .eq('package_key', order.package_key)
+          .maybeSingle();
+
+        if (pkg) {
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + (pkg.duration_days || 365));
+
+          const { error: subError } = await supabase
+            .from('subscriptions')
+            .upsert({
+              user_id: order.user_id,
+              package_id: pkg.id,
+              subscription_type: order.package_key,
+              status: 'active',
+              combo_name: pkg.package_name,
+              combo_amount: order.amount,
+              total_quota: packageQuotaMap[order.package_key] || 0,
+              start_date: startDate.toISOString(),
+              end_date: endDate.toISOString(),
+            }, { onConflict: 'user_id' });
+
+          if (subError) {
+            console.error('Upsert subscription error:', subError);
+          } else {
+            console.log('Subscription upserted:', order.user_id, order.package_key);
+          }
+        }
+      } catch (subErr) {
+        console.error('Subscription processing error:', subErr);
+      }
+    }
+
     // 如果是合伙人套餐，创建合伙人记录
     if (order.package_key === 'partner') {
       const { error: partnerError } = await supabase
