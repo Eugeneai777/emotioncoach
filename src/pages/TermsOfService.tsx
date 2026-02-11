@@ -36,6 +36,7 @@ const TermsOfService = () => {
             <li><strong>"账户"</strong>：指用户在本服务中注册的个人账户</li>
             <li><strong>"AI教练"</strong>：指本服务中基于人工智能技术提供的情绪辅导功能</li>
             <li><strong>"训练营"</strong>：指本服务提供的系统性情绪管理学习课程</li>
+            <li><strong>"第三方服务"</strong>：指为实现本服务功能而使用的第三方技术服务提供商，包括但不限于AI模型服务商、云计算服务商等</li>
           </ul>
 
           <h2 className="text-lg font-semibold mt-6">二、服务说明</h2>
@@ -134,6 +135,7 @@ const TermsOfService = () => {
             <li>AI教练的回复由人工智能算法生成，不代表专业心理咨询意见</li>
             <li>AI生成的内容可能存在不准确或不完整的情况</li>
             <li>AI教练不具备诊断或治疗任何心理疾病的能力</li>
+            <li>AI对话中产生的任何建议、分析或洞察均仅供个人参考，不应作为做出重大人生决定的唯一依据</li>
           </ul>
           <h3 className="text-base font-medium mt-4">7.2 使用限制</h3>
           <ul className="list-disc pl-5 space-y-1">
@@ -141,9 +143,19 @@ const TermsOfService = () => {
             <li>如遇紧急情况或危机状况，请立即联系专业急救服务或心理危机干预热线</li>
             <li>我们对AI生成内容的准确性、完整性不作任何保证</li>
           </ul>
-          <h3 className="text-base font-medium mt-4">7.3 数据使用</h3>
+          <h3 className="text-base font-medium mt-4">7.3 第三方AI服务</h3>
           <p>
-            为了持续改进AI服务质量，您与AI教练的对话内容可能被用于模型训练。我们将对此类数据进行严格的脱敏和匿名化处理，确保无法识别到个人。
+            本服务的AI功能依赖于第三方人工智能服务提供商的技术支持。您理解并同意：
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>您的对话内容将被传输至第三方AI服务提供商进行处理，以生成AI回复</li>
+            <li>我们已与第三方AI服务提供商签署数据处理协议，要求其对您的数据承担保密义务</li>
+            <li>第三方AI服务提供商可能因其系统故障、政策变更等原因影响本服务的可用性，此类情况不属于我们的违约行为</li>
+            <li>对于因第三方AI服务提供商原因导致的数据处理异常、服务中断或内容生成错误，我们将协助处理但不承担直接赔偿责任</li>
+          </ul>
+          <h3 className="text-base font-medium mt-4">7.4 数据使用</h3>
+          <p>
+            为了持续改进AI服务质量，您与AI教练的对话内容可能被用于模型训练。我们将对此类数据进行严格的脱敏和匿名化处理，确保无法识别到个人。您有权通过隐私设置或联系我们退出此项数据使用。
           </p>
 
           <h2 className="text-lg font-semibold mt-6">八、付费服务条款</h2>
@@ -184,7 +196,7 @@ const TermsOfService = () => {
           <h2 className="text-lg font-semibold mt-6">十一、免责声明</h2>
           <h3 className="text-base font-medium mt-4">11.1 服务提供</h3>
           <p>
-            本服务按"现状"提供，我们不对服务的持续性、及时性、安全性、准确性作出任何明示或暗示的保证。
+            本服务按"现状"和"可用性"提供，我们不对服务的持续性、及时性、安全性、准确性作出任何明示或暗示的保证，包括但不限于对适销性、特定用途适用性及不侵权的暗示保证。
           </p>
           <h3 className="text-base font-medium mt-4">11.2 AI建议</h3>
           <p>
@@ -193,6 +205,29 @@ const TermsOfService = () => {
           <h3 className="text-base font-medium mt-4">11.3 服务中断</h3>
           <p>
             我们将尽力确保本服务的持续性和稳定性，但不保证服务不会中断或出现错误。因不可抗力、系统维护等原因导致的服务中断，我们不承担责任。
+          </p>
+          <h3 className="text-base font-medium mt-4">11.4 数据安全</h3>
+          <p>
+            尽管我们采取了商业上合理的技术和管理措施保护您的个人信息安全，但互联网环境并非绝对安全。我们无法保证您的信息在通过互联网传输时的绝对安全性。因以下原因导致的信息泄露，我们将依法减轻或免除责任：
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>不可抗力事件（自然灾害、战争、政府行为等）</li>
+            <li>黑客攻击、计算机病毒侵入或发作，且我们已按行业标准采取合理防护措施</li>
+            <li>因用户自身原因导致的账户信息泄露（如密码保管不善、使用不安全网络等）</li>
+            <li>第三方服务提供商系统发生的安全事件</li>
+          </ul>
+          <h3 className="text-base font-medium mt-4">11.5 第三方服务免责</h3>
+          <p>
+            本服务依赖第三方技术服务提供商实现部分功能（包括但不限于AI模型服务、云计算服务、支付服务）。对于因第三方服务提供商原因导致的以下情况，我们不承担直接责任：
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>第三方服务中断或不可用</li>
+            <li>第三方AI模型生成的内容错误或偏差</li>
+            <li>第三方服务的政策或价格变更导致的服务调整</li>
+            <li>第三方服务商系统中发生的数据安全事件</li>
+          </ul>
+          <p>
+            但我们承诺将及时通知您相关变更，并尽力采取替代方案以减少对您的影响。
           </p>
 
           <h2 className="text-lg font-semibold mt-6">十二、赔偿与责任限制</h2>
