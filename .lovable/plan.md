@@ -1,41 +1,25 @@
 
 
-## 在订单管理中增加"按商品筛选"功能
+## 修复所有用户显示"未设置昵称"的问题
 
-### 目标
+### 根因
 
-在现有订单表格中新增一个"商品"下拉筛选器，管理员选择某个商品后，表格只显示购买该商品的用户列表。
+订单数据中存在 `user_id` 为 `null` 的记录。当前代码将所有订单的 `user_id`（包括 `null`）收集后传给 `.in()` 查询 profiles 表，PostgREST 收到 `null` 字符串后返回 400 错误（`invalid input syntax for type uuid: "null"`），导致 **整个 profiles 查询失败**，所有用户都显示"未设置昵称"。
 
-### 改动内容
+### 解决方案
 
-**文件：`src/components/admin/OrdersTable.tsx`**
+在构建 `userIds` 数组时过滤掉 `null` 值。
 
-1. **新增状态**：`packageFilter`，默认值 `"all"`
-2. **动态提取商品列表**：从已加载的订单数据中提取所有不重复的 `package_name`，作为下拉选项
-3. **新增筛选器 UI**：在现有"订单来源"和"订单状态"筛选器旁边增加"商品"下拉框
-4. **筛选逻辑**：在 `filteredOrders` 中增加 `packageFilter` 匹配条件，只显示 `status === 'paid'`（当选择具体商品时）
+### 技术改动
 
-### 筛选器设计
+**文件：`src/components/admin/OrdersTable.tsx`，第 77 行**
 
-| 筛选项 | 说明 |
-|--------|------|
-| 全部商品 | 默认，显示所有订单 |
-| 365会员 | 只显示购买 365 会员的用户 |
-| 尝鲜会员 | 只显示购买尝鲜会员的用户 |
-| 财富卡点测评 | 只显示购买该测评的用户 |
-| ...其他商品 | 动态从数据中提取 |
+```typescript
+// 修改前
+const userIds = [...new Set(allOrders.map(o => o.user_id))];
 
-### 技术细节
-
-```text
-OrdersTable.tsx
-  +-- packageFilter state
-  +-- uniquePackages: 从 orders 中提取去重的 package_name 列表
-  +-- Select 下拉框（商品筛选）
-  +-- filteredOrders 增加 packageFilter 条件
+// 修改后
+const userIds = [...new Set(allOrders.map(o => o.user_id).filter(Boolean))];
 ```
 
-- 商品列表从已有数据动态生成，无需额外查询
-- 选中具体商品时，同时自动将状态筛选限定为"已支付"（`paid`），这样展示的就是该商品的购买名单
-- CSV 导出同样受筛选条件影响，可直接导出某商品的购买用户列表
-
+一行改动即可修复。
