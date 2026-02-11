@@ -17,8 +17,13 @@ export default function UserAnomalyMonitor() {
         <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等</p>
       </div>
 
-      <Tabs defaultValue="user" className="w-full">
+      <Tabs defaultValue="aggregation" className="w-full">
         <TabsList>
+          <TabsTrigger value="aggregation" className="text-xs sm:text-sm">
+            <BarChart3 className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">聚合分析</span>
+            <span className="sm:hidden">聚合</span>
+          </TabsTrigger>
           <TabsTrigger value="user" className="text-xs sm:text-sm">
             <Users className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">用户异常</span>
@@ -38,11 +43,6 @@ export default function UserAnomalyMonitor() {
             <Activity className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">体验异常监控</span>
             <span className="sm:hidden">体验</span>
-          </TabsTrigger>
-          <TabsTrigger value="aggregation" className="text-xs sm:text-sm">
-            <BarChart3 className="h-3.5 w-3.5 mr-1" />
-            <span className="hidden sm:inline">聚合分析</span>
-            <span className="sm:hidden">聚合</span>
           </TabsTrigger>
         </TabsList>
 
