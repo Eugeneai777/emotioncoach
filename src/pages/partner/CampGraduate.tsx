@@ -365,7 +365,7 @@ export default function CampGraduate() {
                       </div>
                       <div className="bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
                         <p className="text-2xl font-bold">{graduationData.journalCount}</p>
-                        <p className="text-xs text-white/70 mt-1">财富日记</p>
+                        <p className="text-xs text-white/70 mt-1">财富简报</p>
                       </div>
                       <div className="bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
                         <p className="text-2xl font-bold">

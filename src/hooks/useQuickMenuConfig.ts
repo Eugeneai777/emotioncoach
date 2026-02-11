@@ -26,7 +26,7 @@ export const coachPages = [
   { path: '/parent-coach', label: '亲子教练', icon: 'Baby', color: 'bg-sky-500' },
   { path: '/coach/wealth_coach_4_questions', label: '财富教练', icon: 'Coins', color: 'bg-amber-500' },
   { path: '/coach/vibrant_life', label: '生活教练', icon: 'Sparkles', color: 'bg-violet-500' },
-  { path: '/wealth-camp-checkin', label: '财富日记', icon: 'BookOpen', color: 'bg-orange-500' },
+  { path: '/wealth-camp-checkin', label: '财富简报', icon: 'BookOpen', color: 'bg-orange-500' },
 ];
 
 // All available pages for custom slots

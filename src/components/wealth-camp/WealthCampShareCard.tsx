@@ -152,7 +152,7 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
             {[
               { icon: '🧘', text: '每日5分钟冥想 + AI教练梳理' },
               { icon: '📈', text: '3阶段进阶：共振→觉醒→升维' },
-              { icon: '📔', text: '财富日记追踪成长轨迹' },
+              { icon: '📔', text: '财富简报追踪成长轨迹' },
             ].map((item, index) => (
               <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '18px' }}>{item.icon}</span>

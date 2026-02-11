@@ -929,8 +929,8 @@ ${reflection}`;
                 
                 {journalEntries.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
-                    <div className="text-muted-foreground">
-                      <p>还没有财富日记</p>
+                  <div className="text-muted-foreground">
+                      <p>还没有财富简报</p>
                       <p className="text-sm">完成财富梳理后自动生成</p>
                     </div>
                     <Button 

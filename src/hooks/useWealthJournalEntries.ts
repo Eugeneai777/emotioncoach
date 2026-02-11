@@ -84,7 +84,6 @@ export function useWealthJournalEntries(options: UseWealthJournalEntriesOptions 
         .from('wealth_journal_entries')
         .select('*')
         .eq('user_id', user.id)
-        .not('camp_id', 'is', null)
         .order('day_number', { ascending: true });
 
       if (campId) {

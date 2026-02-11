@@ -130,7 +130,7 @@ export default function WealthJournalDetail() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-semibold">📖 财富日记 · Day {entry.day_number}</h1>
+            <h1 className="font-semibold">📖 财富简报 · Day {entry.day_number}</h1>
             <p className="text-xs text-muted-foreground">
               {format(new Date(entry.created_at), 'yyyy年M月d日 EEEE', { locale: zhCN })}
             </p>

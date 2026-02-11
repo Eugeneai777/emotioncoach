@@ -746,7 +746,7 @@ export const useDynamicCoachChat = (
                   });
                 }
               } else {
-                console.error('生成财富日记失败:', journalError);
+                console.error('生成财富简报失败:', journalError);
               }
             }
           }
