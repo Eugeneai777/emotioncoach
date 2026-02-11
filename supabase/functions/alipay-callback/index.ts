@@ -122,6 +122,44 @@ serve(async (req) => {
       // 检查是否已处理
       if (order.status === 'paid') {
         console.log('[AlipayCallback] Order already paid:', orderNo);
+
+        // 自愈逻辑：检查 subscription 是否存在，不存在则补建
+        if (order.user_id && order.package_key && !order.package_key.startsWith('camp-')) {
+          try {
+            const { data: existingSub } = await supabase
+              .from('subscriptions')
+              .select('id')
+              .eq('user_id', order.user_id)
+              .maybeSingle();
+
+            if (!existingSub) {
+              const { data: subPkg } = await supabase
+                .from('packages')
+                .select('id, duration_days, package_name')
+                .eq('package_key', order.package_key)
+                .maybeSingle();
+              if (subPkg) {
+                const startDate = new Date(order.paid_at || new Date());
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + (subPkg.duration_days || 365));
+                await supabase.from('subscriptions').upsert({
+                  user_id: order.user_id,
+                  package_id: subPkg.id,
+                  subscription_type: order.package_key,
+                  status: 'active',
+                  combo_name: subPkg.package_name,
+                  combo_amount: order.amount,
+                  start_date: startDate.toISOString(),
+                  end_date: endDate.toISOString(),
+                }, { onConflict: 'user_id' });
+                console.log('[AlipayCallback] Repaired missing subscription:', order.user_id);
+              }
+            }
+          } catch (repairErr) {
+            console.error('[AlipayCallback] Subscription repair error:', repairErr);
+          }
+        }
+
         return new Response('success', { headers: corsHeaders });
       }
 
