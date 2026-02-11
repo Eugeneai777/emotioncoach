@@ -945,7 +945,7 @@ ${reflection}`;
                   <BackfillMemoriesButton />
                 </div>
                 
-                {journalEntries.length === 0 ? (
+                {allJournalEntries.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
                   <div className="text-muted-foreground">
                       <p>还没有财富简报</p>
@@ -960,7 +960,7 @@ ${reflection}`;
                     </Button>
                   </div>
                 ) : (
-                  journalEntries.map((entry) => (
+                  allJournalEntries.map((entry) => (
                     <WealthJournalCard
                       key={entry.id}
                       entry={entry}
