@@ -2,6 +2,10 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { installErrorTracker } from "./lib/frontendErrorTracker";
+
+// Install global frontend error tracker
+installErrorTracker();
 
 // Auto-reload once when a dynamically imported chunk is missing (stale deploy)
 const RELOAD_KEY = "__chunk_reload";
