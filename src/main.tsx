@@ -3,9 +3,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { installErrorTracker } from "./lib/frontendErrorTracker";
+import { installApiErrorTracker } from "./lib/apiErrorTracker";
 
 // Install global frontend error tracker
 installErrorTracker();
+// Install API error tracker
+installApiErrorTracker();
 
 // Auto-reload once when a dynamically imported chunk is missing (stale deploy)
 const RELOAD_KEY = "__chunk_reload";
