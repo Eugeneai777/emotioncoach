@@ -12,6 +12,7 @@ import {
   BarChart3,
   DollarSign,
   Flag,
+  Activity,
   Package,
   CreditCard,
   RefreshCw,
@@ -99,6 +100,7 @@ const NAV_GROUPS = [
       { key: "activation-codes", label: "激活码管理", path: "/admin/activation-codes", icon: Key },
       { key: "funnel", label: "转化漏斗", path: "/admin/funnel", icon: TrendingUp },
       { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
+      { key: "ops-monitor", label: "运营监控", path: "/admin/ops-monitor", icon: Activity },
       { key: "reports", label: "举报管理", path: "/admin/reports", icon: Flag }
     ]
   },
