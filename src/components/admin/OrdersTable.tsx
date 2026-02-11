@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { format } from "date-fns";
+import { UserDetailDialog } from "./UserDetailDialog";
 import { Download } from "lucide-react";
 import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ export function OrdersTable() {
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [packageFilter, setPackageFilter] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<{ userId: string; userName: string; avatarUrl?: string } | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['admin-orders'],
@@ -245,7 +248,19 @@ export function OrdersTable() {
                 {order.order_id?.slice(0, 12) || order.id.slice(0, 8)}...
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => {
+                    if (order.user_id) {
+                      setSelectedUser({
+                        userId: order.user_id,
+                        userName: order.user_display_name || '未设置昵称',
+                        avatarUrl: order.user_avatar_url || undefined,
+                      });
+                      setDetailDialogOpen(true);
+                    }
+                  }}
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={order.user_avatar_url || undefined} />
                     <AvatarFallback className="text-xs">
@@ -271,6 +286,16 @@ export function OrdersTable() {
           ))}
         </TableBody>
       </Table>
+
+      {selectedUser && (
+        <UserDetailDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          userId={selectedUser.userId}
+          userName={selectedUser.userName}
+          avatarUrl={selectedUser.avatarUrl}
+        />
+      )}
     </div>
   );
 }
