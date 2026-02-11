@@ -344,6 +344,13 @@ export type Database = {
             referencedRelation: "human_coaches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "appointment_reviews_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       awakening_entries: {
@@ -513,6 +520,13 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_delivery_completions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
             referencedColumns: ["id"]
           },
           {
@@ -1122,6 +1136,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "camp_coach_assignments_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "camp_coach_assignments_purchase_id_fkey"
             columns: ["purchase_id"]
             isOneToOne: false
@@ -1348,6 +1369,13 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_delivery_reviews_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1766,6 +1794,13 @@ export type Database = {
             referencedRelation: "human_coaches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coach_certifications_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coach_price_tiers: {
@@ -1894,6 +1929,13 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_services_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2043,6 +2085,13 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settlements_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
             referencedColumns: ["id"]
           },
           {
@@ -2234,6 +2283,13 @@ export type Database = {
             referencedRelation: "human_coaches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coach_time_slots_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coaching_appointments: {
@@ -2321,6 +2377,13 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_appointments_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
             referencedColumns: ["id"]
           },
           {
@@ -8686,6 +8749,113 @@ export type Database = {
             columns: ["previous_assessment_id"]
             isOneToOne: false
             referencedRelation: "wealth_block_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      human_coaches_public: {
+        Row: {
+          avatar_url: string | null
+          badge_type: string | null
+          bio: string | null
+          case_studies: Json | null
+          created_at: string | null
+          display_order: number | null
+          education: string | null
+          experience_years: number | null
+          id: string | null
+          intro_video_url: string | null
+          is_accepting_new: boolean | null
+          is_verified: boolean | null
+          name: string | null
+          positive_rate: number | null
+          price_tier_id: string | null
+          price_tier_set_at: string | null
+          rating: number | null
+          rating_communication: number | null
+          rating_helpfulness: number | null
+          rating_professionalism: number | null
+          specialties: string[] | null
+          status: string | null
+          title: string | null
+          total_reviews: number | null
+          total_sessions: number | null
+          training_background: string | null
+          trust_level: number | null
+          updated_at: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge_type?: string | null
+          bio?: string | null
+          case_studies?: Json | null
+          created_at?: string | null
+          display_order?: number | null
+          education?: string | null
+          experience_years?: number | null
+          id?: string | null
+          intro_video_url?: string | null
+          is_accepting_new?: boolean | null
+          is_verified?: boolean | null
+          name?: string | null
+          positive_rate?: number | null
+          price_tier_id?: string | null
+          price_tier_set_at?: string | null
+          rating?: number | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_professionalism?: number | null
+          specialties?: string[] | null
+          status?: string | null
+          title?: string | null
+          total_reviews?: number | null
+          total_sessions?: number | null
+          training_background?: string | null
+          trust_level?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge_type?: string | null
+          bio?: string | null
+          case_studies?: Json | null
+          created_at?: string | null
+          display_order?: number | null
+          education?: string | null
+          experience_years?: number | null
+          id?: string | null
+          intro_video_url?: string | null
+          is_accepting_new?: boolean | null
+          is_verified?: boolean | null
+          name?: string | null
+          positive_rate?: number | null
+          price_tier_id?: string | null
+          price_tier_set_at?: string | null
+          rating?: number | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_professionalism?: number | null
+          specialties?: string[] | null
+          status?: string | null
+          title?: string | null
+          total_reviews?: number | null
+          total_sessions?: number | null
+          training_background?: string | null
+          trust_level?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "human_coaches_price_tier_id_fkey"
+            columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "coach_price_tiers"
             referencedColumns: ["id"]
           },
         ]

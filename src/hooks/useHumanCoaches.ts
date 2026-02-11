@@ -90,38 +90,38 @@ export interface ReviewQuickTag {
   display_order: number;
 }
 
-// 获取所有活跃教练
+// 获取所有活跃教练（使用安全视图，不含 phone 等敏感字段）
 export function useActiveHumanCoaches() {
   return useQuery({
     queryKey: ["human-coaches", "active"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("human_coaches")
+        .from("human_coaches_public" as any)
         .select("*")
         .eq("status", "active")
         .order("display_order", { ascending: true });
       
       if (error) throw error;
-      return data as HumanCoach[];
+      return data as unknown as HumanCoach[];
     },
     staleTime: 5 * 60 * 1000,
   });
 }
 
-// 获取单个教练详情
+// 获取单个教练详情（使用安全视图，不含 phone 等敏感字段）
 export function useHumanCoach(coachId: string | undefined) {
   return useQuery({
     queryKey: ["human-coach", coachId],
     queryFn: async () => {
       if (!coachId) return null;
       const { data, error } = await supabase
-        .from("human_coaches")
+        .from("human_coaches_public" as any)
         .select("*")
         .eq("id", coachId)
         .single();
       
       if (error) throw error;
-      return data as HumanCoach;
+      return data as unknown as HumanCoach;
     },
     enabled: !!coachId,
   });
