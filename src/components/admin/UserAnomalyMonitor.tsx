@@ -1,7 +1,8 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AlertTriangle, Bug } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi } from "lucide-react";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
+import ApiErrorMonitor from "./ApiErrorMonitor";
 
 export default function UserAnomalyMonitor() {
   return (
@@ -11,7 +12,7 @@ export default function UserAnomalyMonitor() {
           <Users className="h-6 w-6" />
           用户异常监控
         </h1>
-        <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常等</p>
+        <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等</p>
       </div>
 
       <Tabs defaultValue="user" className="w-full">
@@ -25,6 +26,11 @@ export default function UserAnomalyMonitor() {
             <Bug className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">前端异常监控</span>
             <span className="sm:hidden">前端</span>
+          </TabsTrigger>
+          <TabsTrigger value="api" className="text-xs sm:text-sm">
+            <Wifi className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">接口异常监控</span>
+            <span className="sm:hidden">接口</span>
           </TabsTrigger>
         </TabsList>
 
@@ -74,6 +80,10 @@ export default function UserAnomalyMonitor() {
 
         <TabsContent value="frontend">
           <FrontendErrorMonitor />
+        </TabsContent>
+
+        <TabsContent value="api">
+          <ApiErrorMonitor />
         </TabsContent>
       </Tabs>
     </div>
