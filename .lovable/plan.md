@@ -1,25 +1,23 @@
 
 
-## 管理后台增加"付费状态"列
+## 修复付费状态显示不正确的问题
 
-### 改动说明
+### 根因分析
 
-在用户列表表格中新增一列"付费"，通过查询 `orders` 表判断用户是否有过任何成功支付记录，并显示不同状态。
+当前查询使用 `.limit(1).maybeSingle()` 检查用户是否有已支付订单。问题在于：多个用户有多条 `paid` 状态的订单，`maybeSingle()` 在某些情况下会因为底层匹配到多行而返回错误（即使有 `limit(1)`），导致 `paidOrderResult.data` 为 `null`，页面显示"未付费"。
 
-### 显示逻辑
+### 解决方案
 
-| 情况 | 显示 |
-|------|------|
-| 有 paid 订单 | 绿色 Badge "已付费" |
-| 无 paid 订单 | 灰色 Badge "未付费" |
+将 `maybeSingle()` 替换为普通数组查询，检查数组是否非空来判断付费状态。
 
-### 技术实现
+### 技术改动
 
-#### 1. 数据查询层（queryFn 中）
+文件：`src/components/admin/UserAccountsTable.tsx`
 
-在现有的 `Promise.all` 中增加第四个并行查询，检查该用户是否有 `status = 'paid'` 的订单：
+**查询部分（第 58-64 行）**：
 
 ```typescript
+// 修改前
 supabase
   .from('orders')
   .select('id, package_key')
@@ -27,20 +25,24 @@ supabase
   .eq('status', 'paid')
   .limit(1)
   .maybeSingle()
+
+// 修改后
+supabase
+  .from('orders')
+  .select('id')
+  .eq('user_id', account.user_id)
+  .eq('status', 'paid')
+  .limit(1)
 ```
 
-将结果作为 `paidOrder` 字段附加到每条账户数据上。
+**数据映射部分（第 72 行）**：
 
-#### 2. 表格新增列
+```typescript
+// 修改前
+paidOrder: paidOrderResult.data
 
-在"会员类型"和"过期时间"之间插入"付费"列：
+// 修改后
+paidOrder: paidOrderResult.data && paidOrderResult.data.length > 0
+```
 
-- 表头：`<TableHead className="w-[80px]">付费</TableHead>`
-- 单元格：根据 `paidOrder` 是否存在显示对应 Badge
-
-#### 修改文件
-
-| 文件 | 改动 |
-|------|------|
-| `src/components/admin/UserAccountsTable.tsx` | 查询增加 orders 检查；表格增加"付费"列 |
-
+这样 `paidOrder` 变为布尔值，模板中 `account.paidOrder` 的判断逻辑不需要改动。
