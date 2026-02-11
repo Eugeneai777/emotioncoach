@@ -3,6 +3,7 @@ import { useCoachCall } from '@/hooks/useCoachCall';
 import { CoachCallUI } from './CoachCallUI';
 import { IncomingCallDialog } from './IncomingCallDialog';
 import { supabase } from '@/integrations/supabase/client';
+import { createUxTracker, trackUserCancel } from '@/lib/uxAnomalyTracker';
 
 interface CallerInfo {
   id: string;
@@ -56,9 +57,15 @@ export function CoachCallProvider({ children }: CoachCallProviderProps) {
   });
 
   const startCall = useCallback(async (calleeId: string, calleeName: string, appointmentId?: string) => {
+    const tracker = createUxTracker('human_coach_call', { calleeId });
     setRemoteName(calleeName);
     setRemoteAvatar(undefined);
-    await initiateCall(calleeId, appointmentId);
+    try {
+      await initiateCall(calleeId, appointmentId);
+      tracker.success();
+    } catch (e: any) {
+      tracker.fail(e?.message || '发起通话失败');
+    }
   }, [initiateCall]);
 
   const handleAnswer = useCallback(async () => {
@@ -72,6 +79,7 @@ export function CoachCallProvider({ children }: CoachCallProviderProps) {
 
   const handleReject = useCallback(async () => {
     if (incomingCaller && callState.callId) {
+      trackUserCancel('human_coach_call', '用户拒接真人来电');
       await rejectCall(callState.callId, incomingCaller.id);
       setIncomingCaller(null);
     }
