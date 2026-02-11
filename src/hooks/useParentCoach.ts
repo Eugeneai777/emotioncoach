@@ -114,21 +114,41 @@ export const useParentCoach = () => {
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parent-emotion-coach`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authSession?.access_token}`
-          },
-          body: JSON.stringify({
-            sessionId: session.id,
-            message,
-            action: 'chat'
-          })
+      // Fetch with retry for WeChat WebView stability
+      const fetchWithRetry = async (retries = 2): Promise<Response> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            return await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parent-emotion-coach`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${authSession?.access_token}`
+                },
+                body: JSON.stringify({
+                  sessionId: session.id,
+                  message,
+                  action: 'chat'
+                })
+              }
+            );
+          } catch (fetchError: any) {
+            const isNetworkError = fetchError.message?.includes('Load failed') || 
+                                   fetchError.message?.includes('Failed to fetch') ||
+                                   fetchError.name === 'TypeError';
+            if (isNetworkError && attempt < retries) {
+              console.warn(`[ParentCoach] 网络请求失败，重试 ${attempt + 1}/${retries}...`);
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+            throw fetchError;
+          }
         }
-      );
+        throw new Error('网络请求失败');
+      };
+
+      const response = await fetchWithRetry();
 
       if (!response.ok) {
         throw new Error('API request failed');

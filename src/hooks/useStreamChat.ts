@@ -428,18 +428,37 @@ ${data.growth_story}
         throw new Error("未登录");
       }
 
-      // Call emotion-coach function
-      const resp = await fetch(EMOTION_COACH_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ 
-          sessionId: emotionSession.id,
-          message: trimmedInput
-        }),
-      });
+      // Call emotion-coach function with retry for WeChat WebView stability
+      const fetchWithRetry = async (retries = 2): Promise<Response> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            return await fetch(EMOTION_COACH_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({ 
+                sessionId: emotionSession.id,
+                message: trimmedInput
+              }),
+            });
+          } catch (fetchError: any) {
+            const isNetworkError = fetchError.message?.includes('Load failed') || 
+                                   fetchError.message?.includes('Failed to fetch') ||
+                                   fetchError.name === 'TypeError';
+            if (isNetworkError && attempt < retries) {
+              console.warn(`[EmotionCoach] 网络请求失败，重试 ${attempt + 1}/${retries}...`);
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+            throw fetchError;
+          }
+        }
+        throw new Error('网络请求失败');
+      };
+
+      const resp = await fetchWithRetry();
 
       if (!resp.ok) {
         const errorData = await resp.json();

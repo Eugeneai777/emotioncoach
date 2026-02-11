@@ -314,24 +314,44 @@ ${data.growth_insight}
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("未登录");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/carnegie-coach`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            messages: [...messages, userMessage].map(m => ({
-              role: m.role,
-              content: m.content
-            })),
-            userDifficulty,
-            sessionId: currentSession?.id,
-          }),
+      // Fetch with retry for WeChat WebView stability
+      const fetchWithRetry = async (retries = 2): Promise<Response> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            return await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/carnegie-coach`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  messages: [...messages, userMessage].map(m => ({
+                    role: m.role,
+                    content: m.content
+                  })),
+                  userDifficulty,
+                  sessionId: currentSession?.id,
+                }),
+              }
+            );
+          } catch (fetchError: any) {
+            const isNetworkError = fetchError.message?.includes('Load failed') || 
+                                   fetchError.message?.includes('Failed to fetch') ||
+                                   fetchError.name === 'TypeError';
+            if (isNetworkError && attempt < retries) {
+              console.warn(`[CommCoach] 网络请求失败，重试 ${attempt + 1}/${retries}...`);
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+            throw fetchError;
+          }
         }
-      );
+        throw new Error('网络请求失败');
+      };
+
+      const response = await fetchWithRetry();
 
       if (!response.ok) {
         const errorData = await response.json();
