@@ -172,7 +172,42 @@ serve(async (req) => {
           }
         } catch (quotaError) {
           console.error('[AlipayCallback] Error updating user quota:', quotaError);
-          // 不影响回调响应，后续可以补单
+        }
+
+        // === 新增：写入 subscriptions 表 ===
+        try {
+          const { data: subPkg } = await supabase
+            .from('packages')
+            .select('id, duration_days, package_name')
+            .eq('package_key', order.package_key)
+            .maybeSingle();
+
+          if (subPkg && !order.package_key.startsWith('camp-')) {
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + (subPkg.duration_days || 365));
+
+            const { error: subError } = await supabase
+              .from('subscriptions')
+              .upsert({
+                user_id: order.user_id,
+                package_id: subPkg.id,
+                subscription_type: order.package_key,
+                status: 'active',
+                combo_name: subPkg.package_name,
+                combo_amount: order.amount,
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString(),
+              }, { onConflict: 'user_id' });
+
+            if (subError) {
+              console.error('[AlipayCallback] Upsert subscription error:', subError);
+            } else {
+              console.log('[AlipayCallback] Subscription upserted:', order.user_id);
+            }
+          }
+        } catch (subErr) {
+          console.error('[AlipayCallback] Subscription processing error:', subErr);
         }
       }
     }
