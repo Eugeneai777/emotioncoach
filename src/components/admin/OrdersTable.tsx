@@ -74,7 +74,7 @@ export function OrdersTable() {
       ];
 
       // 获取所有唯一用户ID
-      const userIds = [...new Set(allOrders.map(o => o.user_id))];
+      const userIds = [...new Set(allOrders.map(o => o.user_id).filter(Boolean))];
 
       // 批量查询 profiles 表
       const { data: profiles } = await supabase
