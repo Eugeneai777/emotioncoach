@@ -332,6 +332,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
             </div>
           )}
           </div>
+          )}
         </div>
         {/* Emotion Video Recommendations */}
         {showRecommendations && (
