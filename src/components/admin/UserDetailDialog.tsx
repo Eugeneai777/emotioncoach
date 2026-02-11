@@ -227,11 +227,12 @@ export function UserDetailDialog({
     queryFn: async () => {
       // 并行查询三个来源
       const [ordersResult, subscriptionsResult, campPurchasesResult] = await Promise.all([
-        // 微信/支付宝订单
+        // 微信/支付宝订单（仅已支付）
         supabase
           .from('orders')
           .select('id, order_no, package_name, amount, status, created_at, pay_type')
           .eq('user_id', userId)
+          .eq('status', 'paid')
           .order('created_at', { ascending: false })
           .limit(50),
         // 管理员充值
@@ -241,11 +242,12 @@ export function UserDetailDialog({
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(50),
-        // 训练营购买
+        // 训练营购买（仅已支付）
         supabase
           .from('user_camp_purchases')
           .select('id, camp_type, camp_name, purchase_price, payment_status, purchased_at')
           .eq('user_id', userId)
+          .eq('payment_status', 'paid')
           .order('purchased_at', { ascending: false })
           .limit(50)
       ]);
