@@ -82,8 +82,8 @@ export default function WealthJournalDetail() {
   if (!entry) {
     return (
       <div className="h-screen flex flex-col items-center justify-center p-4">
-        <p className="text-muted-foreground mb-4">日记不存在</p>
-        <Button onClick={() => navigate('/wealth-journal')}>返回日记列表</Button>
+        <p className="text-muted-foreground mb-4">简报不存在</p>
+        <Button onClick={() => navigate('/wealth-journal')}>返回简报列表</Button>
       </div>
     );
   }
