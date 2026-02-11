@@ -598,7 +598,7 @@ export const useDynamicCoachChat = (
                   dayNumber: dayNumberToUse 
                 });
                 
-                // 在聊天中替换"正在生成"消息为简报结果卡片（使用 JSON 标记便于 UI 识别渲染）
+                // 在聊天中追加简报结果卡片（使用 JSON 标记便于 UI 识别渲染）
                 const briefingCardData = {
                   __type: 'wealth_briefing_card',
                   dayNumber: dayNumberToUse,
@@ -611,10 +611,19 @@ export const useDynamicCoachChat = (
                 const resultContent = `<!--WEALTH_BRIEFING_CARD-->${JSON.stringify(briefingCardData)}`;
                 
                 setMessages((prev) => {
-                  const lastIdx = prev.length - 1;
-                  if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content.includes('正在生成')) {
-                    return prev.map((m, i) => i === lastIdx ? { ...m, content: resultContent } : m);
+                  // 查找最后一条包含"正在生成"的助手消息并替换
+                  let genIdx = -1;
+                  for (let i = prev.length - 1; i >= 0; i--) {
+                    if (prev[i].role === 'assistant' && prev[i].content.includes('正在生成')) {
+                      genIdx = i;
+                      break;
+                    }
                   }
+                  if (genIdx >= 0) {
+                    return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
+                    return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
+                  }
+                  // 没找到"正在生成"消息，直接追加卡片
                   return [...prev, { role: 'assistant', content: resultContent }];
                 });
                 
