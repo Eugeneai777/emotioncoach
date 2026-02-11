@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { VideoRecommendations } from "./VideoRecommendations";
 import { CommunicationCourseRecommendations } from "./communication/CommunicationCourseRecommendations";
 import { CoachRecommendationCard } from "./coach/CoachRecommendationCard";
+import { WealthBriefingResultCard } from "./wealth-camp/WealthBriefingResultCard";
 import { useCommunicationCourseRecommendations } from "@/hooks/useCommunicationCourseRecommendations";
 import { supabase } from "@/integrations/supabase/client";
 import { deductVideoQuota } from "@/utils/videoQuotaUtils";
@@ -118,9 +119,20 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
     }
   };
   
+  // 检测财富简报卡片
+  const isWealthBriefingCard = content.startsWith('<!--WEALTH_BRIEFING_CARD-->');
+  let briefingCardData: any = null;
+  if (isWealthBriefingCard) {
+    try {
+      briefingCardData = JSON.parse(content.replace('<!--WEALTH_BRIEFING_CARD-->', ''));
+    } catch (e) {
+      // fallback to plain text
+    }
+  }
+
   // 检测是否包含编号选项（如 "1. 选项"、"1、选项" 或 "A. 选项"）
   const optionRegex = /^\s*([A-Da-d]|\d+)[.、]\s*(.+)$/gm;
-  const matches = Array.from(content.matchAll(optionRegex));
+  const matches = isWealthBriefingCard ? [] : Array.from(content.matchAll(optionRegex));
   
   // 检测单个"生成简报"或"分享"选项的特殊情况
   const isBriefingOnlyOption = matches.length === 1 && 
@@ -184,6 +196,9 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
             <div className="absolute -left-2 top-3 w-0 h-0 border-r-[8px] border-r-card border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent" />
           )}
           
+          {isWealthBriefingCard && briefingCardData ? (
+            <WealthBriefingResultCard data={briefingCardData} />
+          ) : (
           <div
             className={`relative rounded-2xl px-4 py-3 transition-all duration-300 ${
               isUser
@@ -317,6 +332,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
             </div>
           )}
           </div>
+          )}
         </div>
         {/* Emotion Video Recommendations */}
         {showRecommendations && (

@@ -598,13 +598,17 @@ export const useDynamicCoachChat = (
                   dayNumber: dayNumberToUse 
                 });
                 
-                // 在聊天中替换"正在生成"消息为简报结果卡片
-                const resultContent = `📖 **财富简报已生成** (Day ${dayNumberToUse})\n\n` +
-                  (briefingData.behavior_insight ? `**🎯 行为觉察**: ${briefingData.behavior_insight}\n` : '') +
-                  (briefingData.emotion_insight ? `**💛 情绪信号**: ${briefingData.emotion_insight}\n` : '') +
-                  (briefingData.belief_insight ? `**🧠 信念转化**: ${briefingData.belief_insight}\n` : '') +
-                  (briefingData.giving_action ? `**🌱 给予行动**: ${briefingData.giving_action}\n` : '') +
-                  `\n✨ 简报已保存，可在「成长档案 → 财富简报」中查看`;
+                // 在聊天中替换"正在生成"消息为简报结果卡片（使用 JSON 标记便于 UI 识别渲染）
+                const briefingCardData = {
+                  __type: 'wealth_briefing_card',
+                  dayNumber: dayNumberToUse,
+                  journalId: journalResult.journal?.id,
+                  behavior_insight: briefingData.behavior_insight || '',
+                  emotion_insight: briefingData.emotion_insight || '',
+                  belief_insight: briefingData.belief_insight || '',
+                  giving_action: briefingData.giving_action || '',
+                };
+                const resultContent = `<!--WEALTH_BRIEFING_CARD-->${JSON.stringify(briefingCardData)}`;
                 
                 setMessages((prev) => {
                   const lastIdx = prev.length - 1;

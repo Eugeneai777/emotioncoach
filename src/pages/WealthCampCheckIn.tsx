@@ -229,7 +229,7 @@ export default function WealthCampCheckIn() {
 
   const displayMeditation = makeupDayNumber ? makeupMeditation : meditation;
 
-  // Fetch journal entries
+  // Fetch journal entries for current camp (used by journey tab, tasks, etc.)
   const { data: journalEntries = [] } = useQuery({
     queryKey: ['wealth-journal-entries', campId],
     queryFn: async () => {
@@ -247,6 +247,24 @@ export default function WealthCampCheckIn() {
       return data || [];
     },
     enabled: !!campId,
+  });
+
+  // Fetch ALL journal entries (including standalone ones without camp_id) for briefing tab
+  const { data: allJournalEntries = [] } = useQuery({
+    queryKey: ['wealth-journal-entries-all'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('wealth_journal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const { todayAction, todayEntryId, todayActionCompleted: journalActionCompleted } = useTodayWealthJournal(journalEntries, currentDay);
@@ -927,7 +945,7 @@ ${reflection}`;
                   <BackfillMemoriesButton />
                 </div>
                 
-                {journalEntries.length === 0 ? (
+                {allJournalEntries.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
                   <div className="text-muted-foreground">
                       <p>还没有财富简报</p>
@@ -942,7 +960,7 @@ ${reflection}`;
                     </Button>
                   </div>
                 ) : (
-                  journalEntries.map((entry) => (
+                  allJournalEntries.map((entry) => (
                     <WealthJournalCard
                       key={entry.id}
                       entry={entry}
