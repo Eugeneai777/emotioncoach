@@ -553,9 +553,9 @@ export const useDynamicCoachChat = (
         try {
           const toolCall = toolCalls[0];
           
-          // 处理财富日记生成工具
-          if (toolCall?.function?.name === "generate_wealth_briefing") {
-            // 🛡️ 防重检查：如果本次对话已生成日记，跳过重复调用
+           // 处理财富简报生成工具
+           if (toolCall?.function?.name === "generate_wealth_briefing") {
+            // 🛡️ 防重检查：如果本次对话已生成简报，跳过重复调用
             if (journalGeneratedRef.current) {
               console.log('⚠️ [useDynamicCoachChat] 日记已生成，跳过重复调用');
               return;

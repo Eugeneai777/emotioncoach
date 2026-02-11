@@ -68,7 +68,7 @@ function getRedirectRoute(packageKey: string, currentPath: string): string | nul
   // 训练营购买 → 对应训练营页面
   if (packageKey.startsWith('camp-')) {
     const campType = packageKey.replace('camp-', '');
-    // 财富觉醒训练营 → 财富日记打卡页
+    // 财富觉醒训练营 → 财富简报打卡页
     if (campType === 'wealth_block_21' || campType === 'wealth_block_7' || campType === 'wealth_block') {
       return '/wealth-camp-checkin';
     }

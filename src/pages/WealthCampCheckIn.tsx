@@ -518,7 +518,7 @@ ${reflection}`;
     >
       {/* Header - 使用统一的PageHeader，在此页面Home键会自动隐藏 */}
       <PageHeader 
-        title={`💰 我的财富日记 Day ${currentDay}/${camp.duration_days}`}
+        title={`💰 我的财富简报 Day ${currentDay}/${camp.duration_days}`}
         rightActions={
           <div className="text-right">
             <div className="text-lg font-bold text-amber-600">{camp.completed_days}</div>
