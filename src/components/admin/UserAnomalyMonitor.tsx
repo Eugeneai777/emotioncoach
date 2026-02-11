@@ -1,9 +1,10 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AlertTriangle, Bug, Wifi, Activity } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3 } from "lucide-react";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
 import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
+import AnomalyAggregation from "./AnomalyAggregation";
 
 export default function UserAnomalyMonitor() {
   return (
@@ -37,6 +38,11 @@ export default function UserAnomalyMonitor() {
             <Activity className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">体验异常监控</span>
             <span className="sm:hidden">体验</span>
+          </TabsTrigger>
+          <TabsTrigger value="aggregation" className="text-xs sm:text-sm">
+            <BarChart3 className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">聚合分析</span>
+            <span className="sm:hidden">聚合</span>
           </TabsTrigger>
         </TabsList>
 
@@ -94,6 +100,10 @@ export default function UserAnomalyMonitor() {
 
         <TabsContent value="ux">
           <UxAnomalyMonitor />
+        </TabsContent>
+
+        <TabsContent value="aggregation">
+          <AnomalyAggregation />
         </TabsContent>
       </Tabs>
     </div>
