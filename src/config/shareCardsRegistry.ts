@@ -59,12 +59,12 @@ const resultCards: ShareCardRegistryItem[] = [
   },
   {
     id: 'wealth-journal',
-    title: '财富日记',
+    title: '财富简报',
     category: 'result',
     emoji: '📔',
     type: 'result',
     componentName: 'WealthJournalShareCard',
-    description: '财富觉察日记分享',
+    description: '财富觉察简报分享',
   },
   {
     id: 'emotion-button',
