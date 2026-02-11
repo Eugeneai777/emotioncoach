@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X } from "lucide-react";
+import { createUxTracker } from "@/lib/uxAnomalyTracker";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   useUserEnrollment, 
@@ -44,7 +45,11 @@ export function EnrollButton({ session, className }: EnrollButtonProps) {
 
     if (session.is_free) {
       // 免费课程直接报名
-      enrollFree.mutate(session.id);
+      const tracker = createUxTracker('team_coaching_enroll', { sessionId: session.id });
+      enrollFree.mutate(session.id, {
+        onSuccess: () => tracker.success(),
+        onError: (e: any) => tracker.fail(e?.message || '报名失败'),
+      });
     } else {
       // 付费课程打开支付对话框
       setShowPayDialog(true);

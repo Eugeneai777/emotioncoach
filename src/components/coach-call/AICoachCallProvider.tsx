@@ -4,6 +4,7 @@ import { useAICoachIncomingCall, AICoachCall } from '@/hooks/useAICoachIncomingC
 import { AIIncomingCallDialog } from './AIIncomingCallDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { safeReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
+import { createUxTracker, trackUserCancel } from '@/lib/uxAnomalyTracker';
 interface AICoachCallContextValue {
   incomingCall: AICoachCall | null;
   isInAICall: boolean;
@@ -53,9 +54,11 @@ export function AICoachCallProvider({ children }: AICoachCallProviderProps) {
 
   const handleAnswer = useCallback(async () => {
     if (!incomingCall) return;
+    const tracker = createUxTracker('ai_coach_call', { callId: incomingCall.id });
 
     try {
       const { openingMessage, coachType } = await answerCall(incomingCall.id);
+      tracker.success();
 
       // 存储来电数据供语音页面使用
       setCurrentCallData({
@@ -81,13 +84,15 @@ export function AICoachCallProvider({ children }: AICoachCallProviderProps) {
           openingMessage,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      tracker.fail(error?.message || 'AI通话接听失败');
       console.error('[AICoachCall] Answer error:', error);
     }
   }, [incomingCall, answerCall, navigate]);
 
   const handleReject = useCallback(async () => {
     if (!incomingCall) return;
+    trackUserCancel('ai_coach_call', '用户拒接AI来电');
     // ✅ 取消时确保释放可能已被占用的会话锁（防止后台残留连接导致锁未释放）
     safeReleaseSessionLock();
     await rejectCall(incomingCall.id);
