@@ -57,11 +57,10 @@ export function UserAccountsTable() {
                 .maybeSingle(),
               supabase
                 .from('orders')
-                .select('id, package_key')
+                .select('id')
                 .eq('user_id', account.user_id)
                 .eq('status', 'paid')
                 .limit(1)
-                .maybeSingle()
             ]);
 
             return {
@@ -69,7 +68,7 @@ export function UserAccountsTable() {
               profile: profileResult.data,
               subscription: subscriptionResult.data,
               wechat: wechatResult.data,
-              paidOrder: paidOrderResult.data
+              paidOrder: paidOrderResult.data && paidOrderResult.data.length > 0
             };
         })
       );
