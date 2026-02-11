@@ -28,6 +28,7 @@ export function OrdersTable() {
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [packageFilter, setPackageFilter] = useState<string>("all");
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['admin-orders'],
@@ -95,6 +96,9 @@ export function OrdersTable() {
     }
   });
 
+  // 提取不重复的商品名称
+  const uniquePackages = [...new Set(orders?.map(o => o.package_name).filter(Boolean) as string[])].sort();
+
   const filteredOrders = orders?.filter(order => {
     const matchesSearch = 
       (order.user_id || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -103,9 +107,12 @@ export function OrdersTable() {
       order.package_name?.toLowerCase().includes(search.toLowerCase());
     
     const matchesSource = sourceFilter === 'all' || order.source === sourceFilter;
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+    const matchesStatus = packageFilter !== 'all' 
+      ? (order.status === 'paid' || order.status === 'active')
+      : (statusFilter === 'all' || order.status === statusFilter);
+    const matchesPackage = packageFilter === 'all' || order.package_name === packageFilter;
     
-    return matchesSearch && matchesSource && matchesStatus;
+    return matchesSearch && matchesSource && matchesStatus && matchesPackage;
   });
 
   const exportToCSV = () => {
@@ -179,7 +186,7 @@ export function OrdersTable() {
             <SelectItem value="admin_charge">管理员充值</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={setStatusFilter} disabled={packageFilter !== 'all'}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="订单状态" />
           </SelectTrigger>
@@ -189,6 +196,19 @@ export function OrdersTable() {
             <SelectItem value="active">已激活</SelectItem>
             <SelectItem value="pending">待支付</SelectItem>
             <SelectItem value="expired">已过期</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={packageFilter} onValueChange={setPackageFilter}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="商品筛选" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部商品</SelectItem>
+            {uniquePackages.map(pkg => (
+              <SelectItem key={pkg} value={pkg}>
+                {pkg === 'custom' ? '管理员充值' : pkg}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <div className="text-sm text-muted-foreground self-center">
