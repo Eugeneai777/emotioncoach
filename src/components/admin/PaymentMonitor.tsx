@@ -177,6 +177,29 @@ export default function PaymentMonitor() {
     return 'text-primary';
   };
 
+  const getFailureReasons = (order: any): string[] => {
+    const reasons: string[] = [];
+    
+    if (order.status === 'failed') {
+      // 分析失败原因
+      if (order.amount > 5000) {
+        reasons.push('金额超大：订单金额超过¥5000，可能被风控系统拦截');
+      }
+      reasons.push('支付渠道异常：请联系支付服务商确认');
+      reasons.push('用户操作中断：支付过程中用户关闭或返回');
+      
+      // 根据时间判断
+      const createdTime = new Date(order.created_at);
+      const now = new Date();
+      const diffHours = (now.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
+      if (diffHours > 24) {
+        reasons.push('订单已过期：超过24小时未支付，建议重新发起');
+      }
+    }
+    
+    return reasons.length > 0 ? reasons : ['未知原因'];
+  };
+
   return (
     <div className="space-y-6">
       {/* 时间范围选择 */}
