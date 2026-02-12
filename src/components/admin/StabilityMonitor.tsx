@@ -1006,54 +1006,26 @@ export default function StabilityMonitor() {
 
       <OverviewCards snapshot={snapshot} />
 
-      <Tabs defaultValue="successRate" className="w-full">
-        <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="successRate" className="gap-1"><Gauge className="h-3 w-3" />成功率</TabsTrigger>
-          <TabsTrigger value="responseTime" className="gap-1"><Timer className="h-3 w-3" />响应时间</TabsTrigger>
-          <TabsTrigger value="qps" className="gap-1"><Zap className="h-3 w-3" />QPS</TabsTrigger>
-          <TabsTrigger value="errors" className="gap-1">
-            <ShieldAlert className="h-3 w-3" />错误
+      <Tabs defaultValue="requests" className="w-full">
+        <TabsList className="h-auto gap-1">
+          <TabsTrigger value="requests" className="gap-1"><Activity className="h-3.5 w-3.5" />一、请求级监控</TabsTrigger>
+          <TabsTrigger value="health" className="gap-1">
+            <Gauge className="h-3.5 w-3.5" />二、核心健康指标
             {snapshot.healthMetrics.errors.totalErrors > 0 && (
               <Badge variant="destructive" className="text-xs ml-1">{snapshot.healthMetrics.errors.totalErrors}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="timeout" className="gap-1">
-            <Hourglass className="h-3 w-3" />超时
-            {snapshot.healthMetrics.timeout.timeoutCount > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1">{snapshot.healthMetrics.timeout.timeoutCount}</Badge>
-            )}
+          <TabsTrigger value="thirdparty" className="gap-1">
+            <Globe className="h-3.5 w-3.5" />三、第三方健康监控
           </TabsTrigger>
-          <TabsTrigger value="requests" className="gap-1">
-            <Activity className="h-3 w-3" />请求数据
-            {snapshot.requests.length > 0 && <Badge variant="secondary" className="text-xs ml-1">{snapshot.requests.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="thirdparty" className="gap-1"><Globe className="h-3 w-3" />第三方</TabsTrigger>
-          <TabsTrigger value="aiHealth" className="gap-1"><Bot className="h-3 w-3" />AI服务</TabsTrigger>
-          <TabsTrigger value="voiceHealth" className="gap-1"><Mic className="h-3 w-3" />语音服务</TabsTrigger>
-          <TabsTrigger value="depStatus" className="gap-1"><Shield className="h-3 w-3" />依赖状态</TabsTrigger>
-          <TabsTrigger value="system" className="gap-1"><Cpu className="h-3 w-3" />系统资源</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="successRate" className="mt-4">
-          <SuccessRatePanel hm={snapshot.healthMetrics} />
-        </TabsContent>
-        <TabsContent value="responseTime" className="mt-4">
-          <ResponseTimePanel hm={snapshot.healthMetrics} />
-        </TabsContent>
-        <TabsContent value="qps" className="mt-4">
-          <QpsPanel hm={snapshot.healthMetrics} />
-        </TabsContent>
-        <TabsContent value="errors" className="mt-4">
-          <ErrorPanel hm={snapshot.healthMetrics} />
-        </TabsContent>
-        <TabsContent value="timeout" className="mt-4">
-          <TimeoutPanel hm={snapshot.healthMetrics} />
-        </TabsContent>
-        <TabsContent value="requests" className="mt-4">
+        {/* 一、请求级监控：请求数据 + 第三方调用统计 + 系统资源 */}
+        <TabsContent value="requests" className="mt-4 space-y-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center justify-between">
-                <span>请求记录（最近 {snapshot.requests.length} 条）</span>
+                <span className="flex items-center gap-2"><Activity className="h-4 w-4" />请求记录（最近 {snapshot.requests.length} 条）</span>
                 {snapshot.summary.failedRequests > 0 && (
                   <Badge variant="destructive" className="text-xs"><XCircle className="h-3 w-3 mr-1" />{snapshot.summary.failedRequests} 个失败</Badge>
                 )}
@@ -1063,21 +1035,56 @@ export default function StabilityMonitor() {
               <RequestList requests={snapshot.requests.slice(0, 100)} />
             </CardContent>
           </Card>
+
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Globe className="h-4 w-4" />第三方调用统计</h3>
+            <ThirdPartyPanel stats={snapshot.thirdPartyStats} />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Cpu className="h-4 w-4" />系统资源</h3>
+            <SystemResourcePanel snapshot={snapshot} />
+          </div>
         </TabsContent>
-        <TabsContent value="thirdparty" className="mt-4">
-          <ThirdPartyPanel stats={snapshot.thirdPartyStats} />
+
+        {/* 二、核心健康指标：成功率 + 响应时间 + QPS + 错误 + 超时 */}
+        <TabsContent value="health" className="mt-4 space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Gauge className="h-4 w-4" />成功率监控</h3>
+            <SuccessRatePanel hm={snapshot.healthMetrics} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Timer className="h-4 w-4" />响应时间监控</h3>
+            <ResponseTimePanel hm={snapshot.healthMetrics} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Zap className="h-4 w-4" />QPS 监控</h3>
+            <QpsPanel hm={snapshot.healthMetrics} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldAlert className="h-4 w-4" />错误监控</h3>
+            <ErrorPanel hm={snapshot.healthMetrics} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Hourglass className="h-4 w-4" />超时监控</h3>
+            <TimeoutPanel hm={snapshot.healthMetrics} />
+          </div>
         </TabsContent>
-        <TabsContent value="aiHealth" className="mt-4">
-          <AiServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.ai} />
-        </TabsContent>
-        <TabsContent value="voiceHealth" className="mt-4">
-          <VoiceServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.voice} />
-        </TabsContent>
-        <TabsContent value="depStatus" className="mt-4">
-          <DependencyPanel dependencies={snapshot.healthMetrics.thirdPartyHealth.dependencies} />
-        </TabsContent>
-        <TabsContent value="system" className="mt-4">
-          <SystemResourcePanel snapshot={snapshot} />
+
+        {/* 三、第三方健康监控：AI服务 + 语音服务 + 依赖可用性 */}
+        <TabsContent value="thirdparty" className="mt-4 space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Bot className="h-4 w-4" />AI 服务健康面板</h3>
+            <AiServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.ai} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Mic className="h-4 w-4" />语音服务健康监控</h3>
+            <VoiceServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.voice} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Shield className="h-4 w-4" />依赖可用性状态</h3>
+            <DependencyPanel dependencies={snapshot.healthMetrics.thirdPartyHealth.dependencies} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
