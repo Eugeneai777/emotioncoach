@@ -146,12 +146,45 @@ export interface TimeoutMetrics {
   topTimeoutPaths: { path: string; count: number; avgDuration: number }[];
 }
 
+// ==================== 第三方健康监控 ====================
+
+export interface ServiceHealthPanel {
+  successRate: number;
+  avgDuration: number;
+  errorRate: number;
+  rateLimitCount: number;
+  timeoutCount: number;
+  totalCalls: number;
+  /** 峰值负载 (max QPS in window) */
+  peakLoad: number;
+  errorStats: Record<string, number>;
+}
+
+export type DependencyStatus = '正常' | '降级' | '异常' | '熔断中';
+
+export interface DependencyAvailability {
+  name: string;
+  status: DependencyStatus;
+  successRate: number;
+  avgResponseTime: number;
+  lastErrorTime: number | null;
+  totalCalls: number;
+  recentErrors: number;
+}
+
+export interface ThirdPartyHealth {
+  ai: ServiceHealthPanel;
+  voice: ServiceHealthPanel;
+  dependencies: DependencyAvailability[];
+}
+
 export interface HealthMetrics {
   successRate: SuccessRateMetrics;
   responseTime: ResponseTimeMetrics;
   qps: QpsMetrics;
   errors: ErrorMetrics;
   timeout: TimeoutMetrics;
+  thirdPartyHealth: ThirdPartyHealth;
 }
 
 // ==================== 工具函数 ====================
