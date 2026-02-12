@@ -7,7 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, CheckCircle, XCircle, Activity, Clock, Cpu,
   HardDrive, Wifi, AlertTriangle, BarChart3, Globe, Trash2,
-  Gauge, Timer, Zap, ShieldAlert, Hourglass,
+  Gauge, Timer, Zap, ShieldAlert, Hourglass, Bot, Mic, Shield,
+  CircleDot, TrendingDown, Ban,
 } from "lucide-react";
 import {
   getStabilitySnapshot,
@@ -17,6 +18,9 @@ import {
   type RequestRecord,
   type ThirdPartyStats,
   type HealthMetrics,
+  type ServiceHealthPanel,
+  type DependencyAvailability,
+  type DependencyStatus,
 } from "@/lib/stabilityDataCollector";
 
 function fmtTime(ts: number) {
@@ -615,6 +619,234 @@ function SystemResourcePanel({ snapshot }: { snapshot: StabilitySnapshot }) {
   );
 }
 
+// ==================== 9. AI 服务健康面板 ====================
+function AiServicePanel({ panel }: { panel: ServiceHealthPanel }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">AI 成功率</p>
+            <p className={`text-3xl font-bold ${rateColor(panel.successRate)}`}>{panel.successRate}%</p>
+            <Progress value={panel.successRate} className="mt-2 h-1.5" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">平均耗时</p>
+            <p className={`text-3xl font-bold ${panel.avgDuration > 5000 ? "text-red-600" : panel.avgDuration > 2000 ? "text-amber-600" : ""}`}>{fmtDuration(panel.avgDuration)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">错误率</p>
+            <p className={`text-3xl font-bold ${panel.errorRate > 5 ? "text-red-600" : panel.errorRate > 1 ? "text-amber-600" : "text-green-600"}`}>{panel.errorRate}%</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">限流次数</p>
+            <p className={`text-3xl font-bold ${panel.rateLimitCount > 0 ? "text-amber-600" : ""}`}>{panel.rateLimitCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">超时次数</p>
+            <p className={`text-3xl font-bold ${panel.timeoutCount > 0 ? "text-red-600" : ""}`}>{panel.timeoutCount}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">AI 调用概况</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div><p className="text-muted-foreground text-xs">总调用次数</p><p className="font-medium text-lg">{panel.totalCalls}</p></div>
+            <div><p className="text-muted-foreground text-xs">峰值负载</p><p className="font-medium text-lg">{panel.peakLoad} req/s</p></div>
+            <div>
+              <p className="text-muted-foreground text-xs">错误类型分布</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {Object.entries(panel.errorStats).length > 0 ? Object.entries(panel.errorStats).map(([type, count]) => (
+                  <Badge key={type} variant="outline" className="text-xs text-red-600 border-red-200">{type}: {count}</Badge>
+                )) : <span className="text-xs text-muted-foreground">无错误</span>}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {panel.totalCalls === 0 && (
+        <Card><CardContent className="!p-4"><p className="text-sm text-muted-foreground text-center py-4">🤖 暂无 AI 服务调用记录</p></CardContent></Card>
+      )}
+    </div>
+  );
+}
+
+// ==================== 10. 语音服务健康监控 ====================
+function VoiceServicePanel({ panel }: { panel: ServiceHealthPanel }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">成功率</p>
+            <p className={`text-3xl font-bold ${rateColor(panel.successRate)}`}>{panel.successRate}%</p>
+            <Progress value={panel.successRate} className="mt-2 h-1.5" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">处理耗时</p>
+            <p className={`text-3xl font-bold ${panel.avgDuration > 5000 ? "text-red-600" : panel.avgDuration > 2000 ? "text-amber-600" : ""}`}>{fmtDuration(panel.avgDuration)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">错误统计</p>
+            <p className={`text-3xl font-bold ${panel.errorRate > 5 ? "text-red-600" : panel.errorRate > 1 ? "text-amber-600" : "text-green-600"}`}>{panel.errorRate}%</p>
+            <p className="text-xs text-muted-foreground mt-1">{panel.totalCalls - Math.round(panel.totalCalls * panel.successRate / 100)} 次失败</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">峰值负载</p>
+            <p className="text-3xl font-bold">{panel.peakLoad}</p>
+            <p className="text-xs text-muted-foreground mt-1">req/s</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">总调用</p>
+            <p className="text-3xl font-bold">{panel.totalCalls}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {Object.keys(panel.errorStats).length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">错误类型分布</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {Object.entries(panel.errorStats).map(([type, count]) => (
+                <div key={type} className="flex items-center gap-3">
+                  <span className="text-sm w-28 text-muted-foreground">{type}</span>
+                  <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-red-400 rounded-full" style={{ width: `${panel.totalCalls > 0 ? (count / panel.totalCalls) * 100 : 0}%` }} />
+                  </div>
+                  <span className="text-sm font-medium w-12 text-right">{count}次</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {panel.totalCalls === 0 && (
+        <Card><CardContent className="!p-4"><p className="text-sm text-muted-foreground text-center py-4">🎙️ 暂无语音服务调用记录</p></CardContent></Card>
+      )}
+    </div>
+  );
+}
+
+// ==================== 11. 依赖可用性状态 ====================
+function statusIcon(status: DependencyStatus) {
+  switch (status) {
+    case '正常': return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case '降级': return <TrendingDown className="h-4 w-4 text-amber-500" />;
+    case '异常': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+    case '熔断中': return <Ban className="h-4 w-4 text-red-700" />;
+  }
+}
+
+function statusBgColor(status: DependencyStatus) {
+  switch (status) {
+    case '正常': return 'border-green-200 bg-green-50/50';
+    case '降级': return 'border-amber-200 bg-amber-50/50';
+    case '异常': return 'border-red-200 bg-red-50/50';
+    case '熔断中': return 'border-red-400 bg-red-100/50';
+  }
+}
+
+function statusBadgeVariant(status: DependencyStatus) {
+  switch (status) {
+    case '正常': return 'text-green-700 border-green-300 bg-green-50';
+    case '降级': return 'text-amber-700 border-amber-300 bg-amber-50';
+    case '异常': return 'text-red-600 border-red-300 bg-red-50';
+    case '熔断中': return 'text-red-800 border-red-500 bg-red-100';
+  }
+}
+
+function DependencyPanel({ dependencies }: { dependencies: DependencyAvailability[] }) {
+  const sorted = [...dependencies].sort((a, b) => {
+    const order: Record<DependencyStatus, number> = { '熔断中': 0, '异常': 1, '降级': 2, '正常': 3 };
+    return order[a.status] - order[b.status];
+  });
+
+  return (
+    <div className="space-y-4">
+      {/* Status overview */}
+      <div className="grid gap-4 md:grid-cols-4">
+        {(['正常', '降级', '异常', '熔断中'] as DependencyStatus[]).map((status) => {
+          const count = dependencies.filter((d) => d.status === status).length;
+          return (
+            <Card key={status} className={statusBgColor(status)}>
+              <CardContent className="!p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  {statusIcon(status)}
+                  <span className="text-sm font-medium">{status}</span>
+                </div>
+                <p className="text-3xl font-bold">{count}</p>
+                <p className="text-xs text-muted-foreground">个服务</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Detailed list */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">各依赖服务状态</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {sorted.map((dep) => (
+              <div key={dep.name} className={`flex items-center gap-4 p-3 rounded-lg border ${statusBgColor(dep.status)}`}>
+                <div className="flex items-center gap-2 w-36">
+                  {statusIcon(dep.status)}
+                  <span className="font-medium text-sm">{dep.name}</span>
+                </div>
+                <Badge variant="outline" className={`text-xs ${statusBadgeVariant(dep.status)}`}>
+                  {dep.status}
+                </Badge>
+                <div className="flex-1 grid grid-cols-4 gap-4 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">成功率</span>
+                    <p className={`font-medium ${rateColor(dep.successRate)}`}>{dep.successRate.toFixed(1)}%</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">平均耗时</span>
+                    <p className="font-medium">{fmtDuration(dep.avgResponseTime)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">总调用</span>
+                    <p className="font-medium">{dep.totalCalls}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">近5分钟错误</span>
+                    <p className={`font-medium ${dep.recentErrors > 0 ? "text-red-600" : ""}`}>{dep.recentErrors}</p>
+                  </div>
+                </div>
+                {dep.lastErrorTime && (
+                  <span className="text-xs text-muted-foreground">最后错误: {fmtTime(dep.lastErrorTime)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ==================== 主组件 ====================
 export default function StabilityMonitor() {
   const [snapshot, setSnapshot] = useState<StabilitySnapshot>(getStabilitySnapshot);
@@ -644,7 +876,7 @@ export default function StabilityMonitor() {
             <BarChart3 className="h-6 w-6" />
             稳定性监控
           </h1>
-          <p className="text-muted-foreground mt-1">核心健康指标 · 请求数据采集 · 第三方依赖 · 系统资源</p>
+          <p className="text-muted-foreground mt-1">核心健康指标 · AI/语音健康 · 依赖可用性 · 请求采集 · 系统资源</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAutoRefresh(!autoRefresh)}>
@@ -684,6 +916,9 @@ export default function StabilityMonitor() {
             {snapshot.requests.length > 0 && <Badge variant="secondary" className="text-xs ml-1">{snapshot.requests.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="thirdparty" className="gap-1"><Globe className="h-3 w-3" />第三方</TabsTrigger>
+          <TabsTrigger value="aiHealth" className="gap-1"><Bot className="h-3 w-3" />AI服务</TabsTrigger>
+          <TabsTrigger value="voiceHealth" className="gap-1"><Mic className="h-3 w-3" />语音服务</TabsTrigger>
+          <TabsTrigger value="depStatus" className="gap-1"><Shield className="h-3 w-3" />依赖状态</TabsTrigger>
           <TabsTrigger value="system" className="gap-1"><Cpu className="h-3 w-3" />系统资源</TabsTrigger>
         </TabsList>
 
@@ -719,6 +954,15 @@ export default function StabilityMonitor() {
         </TabsContent>
         <TabsContent value="thirdparty" className="mt-4">
           <ThirdPartyPanel stats={snapshot.thirdPartyStats} />
+        </TabsContent>
+        <TabsContent value="aiHealth" className="mt-4">
+          <AiServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.ai} />
+        </TabsContent>
+        <TabsContent value="voiceHealth" className="mt-4">
+          <VoiceServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.voice} />
+        </TabsContent>
+        <TabsContent value="depStatus" className="mt-4">
+          <DependencyPanel dependencies={snapshot.healthMetrics.thirdPartyHealth.dependencies} />
         </TabsContent>
         <TabsContent value="system" className="mt-4">
           <SystemResourcePanel snapshot={snapshot} />
