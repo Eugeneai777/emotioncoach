@@ -115,65 +115,74 @@ function OverviewCards({ snapshot }: { snapshot: StabilitySnapshot }) {
   const { summary, healthMetrics: hm } = snapshot;
   const statusOk = summary.successRate >= 99;
   const statusWarn = summary.successRate >= 95;
+  const overallDiag = diagnoseOverallHealth(
+    summary.successRate, hm.errors.totalErrors, hm.timeout.timeoutCount, hm.responseTime.p95,
+  );
 
   return (
-    <div className="grid gap-4 md:grid-cols-5">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">系统状态</CardTitle>
-          {statusOk ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertTriangle className="h-4 w-4 text-amber-500" />}
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${statusOk ? "text-green-600" : statusWarn ? "text-amber-600" : "text-red-600"}`}>
-            {statusOk ? "正常" : statusWarn ? "警告" : "异常"}
-          </div>
-          <p className="text-xs text-muted-foreground">今日成功率 {hm.successRate.today}%</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">系统状态</CardTitle>
+            {statusOk ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertTriangle className="h-4 w-4 text-amber-500" />}
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${statusOk ? "text-green-600" : statusWarn ? "text-amber-600" : "text-red-600"}`}>
+              {statusOk ? "正常" : statusWarn ? "警告" : "异常"}
+            </div>
+            <p className="text-xs text-muted-foreground">今日成功率 {hm.successRate.today}%</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">QPS</CardTitle>
-          <Zap className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{hm.qps.current}</div>
-          <p className="text-xs text-muted-foreground">峰值 {hm.qps.peakQps} · 1分钟均 {hm.qps.oneMinuteAvg}</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">QPS</CardTitle>
+            <Zap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hm.qps.current}</div>
+            <p className="text-xs text-muted-foreground">峰值 {hm.qps.peakQps} · 1分钟均 {hm.qps.oneMinuteAvg}</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">响应时间</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{fmtDuration(hm.responseTime.avg)}</div>
-          <p className="text-xs text-muted-foreground">P95 {fmtDuration(hm.responseTime.p95)} · P99 {fmtDuration(hm.responseTime.p99)}</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">响应时间</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{fmtDuration(hm.responseTime.avg)}</div>
+            <p className="text-xs text-muted-foreground">P95 {fmtDuration(hm.responseTime.p95)} · P99 {fmtDuration(hm.responseTime.p99)}</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">错误数</CardTitle>
-          <XCircle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${hm.errors.totalErrors > 0 ? "text-red-600" : ""}`}>{hm.errors.totalErrors}</div>
-          <p className="text-xs text-muted-foreground">错误率 {hm.errors.errorRate}%</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">错误数</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${hm.errors.totalErrors > 0 ? "text-red-600" : ""}`}>{hm.errors.totalErrors}</div>
+            <p className="text-xs text-muted-foreground">错误率 {hm.errors.errorRate}%</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">超时</CardTitle>
-          <Hourglass className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${hm.timeout.timeoutCount > 0 ? "text-amber-600" : ""}`}>{hm.timeout.timeoutCount}</div>
-          <p className="text-xs text-muted-foreground">超时比例 {hm.timeout.timeoutRatio}%</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">超时</CardTitle>
+            <Hourglass className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${hm.timeout.timeoutCount > 0 ? "text-amber-600" : ""}`}>{hm.timeout.timeoutCount}</div>
+            <p className="text-xs text-muted-foreground">超时比例 {hm.timeout.timeoutRatio}%</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {overallDiag.severity !== '轻微' && (
+        <DiagnosisCard diagnosis={overallDiag} context={`系统概况: 成功率${summary.successRate}%, 错误${hm.errors.totalErrors}个, 超时${hm.timeout.timeoutCount}次`} />
+      )}
     </div>
   );
 }
