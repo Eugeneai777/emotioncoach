@@ -58,6 +58,27 @@ export default function UxAnomalyMonitor() {
     });
   }, [anomalies, typeFilter, sceneFilter, search]);
 
+  const handleQuickFix = (a: UxAnomaly) => {
+    switch (a.type) {
+      case 'slow_request':
+        toast.info("修复建议：请求响应慢，建议检查服务端性能或增大超时时间");
+        break;
+      case 'user_cancel':
+        toast.info("修复建议：用户主动取消，建议优化加载速度或增加进度提示");
+        break;
+      case 'consecutive_fail':
+        toast.info(`修复建议：连续失败${a.failCount || '多'}次，建议检查该场景的服务状态`);
+        break;
+      case 'frequent_retry':
+        toast.info(`修复建议：频繁重试${a.retryCount || '多'}次，建议检查接口稳定性`);
+        break;
+    }
+    navigator.clipboard.writeText(
+      `体验异常: ${a.type}\n场景: ${a.sceneLabel}\n消息: ${a.message}\n用户: ${a.userId || '未知'}\n时间: ${new Date(a.timestamp).toLocaleString("zh-CN")}`
+    );
+    toast.success("已复制异常详情到剪贴板");
+  };
+
   const statCards = [
     { label: "请求超时", value: stats.slowRequestCount, icon: Clock, color: "text-amber-600" },
     { label: "用户取消", value: stats.cancelCount, icon: XCircle, color: "text-blue-600" },
