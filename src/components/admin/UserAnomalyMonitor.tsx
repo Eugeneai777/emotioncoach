@@ -1,10 +1,11 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3 } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard } from "lucide-react";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
 import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
 import AnomalyAggregation from "./AnomalyAggregation";
+import PaymentMonitor from "./PaymentMonitor";
 
 export default function UserAnomalyMonitor() {
   return (
@@ -28,6 +29,11 @@ export default function UserAnomalyMonitor() {
             <Users className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">用户异常</span>
             <span className="sm:hidden">用户</span>
+          </TabsTrigger>
+          <TabsTrigger value="payment" className="text-xs sm:text-sm">
+            <CreditCard className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">支付监控</span>
+            <span className="sm:hidden">支付</span>
           </TabsTrigger>
           <TabsTrigger value="frontend" className="text-xs sm:text-sm">
             <Bug className="h-3.5 w-3.5 mr-1" />
@@ -88,6 +94,10 @@ export default function UserAnomalyMonitor() {
               <p className="text-muted-foreground text-sm">暂无异常事件</p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="payment">
+          <PaymentMonitor />
         </TabsContent>
 
         <TabsContent value="frontend">
