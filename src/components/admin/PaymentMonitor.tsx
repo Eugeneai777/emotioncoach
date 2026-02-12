@@ -239,10 +239,10 @@ export default function PaymentMonitor() {
 
       {/* 异常检测 */}
       {paymentMetrics.anomalies.length > 0 && (
-        <Card className="border-yellow-200 bg-yellow-50/50">
+        <Card className="border-destructive/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertCircle className="h-4 w-4 text-destructive" />
               检测到异常
             </CardTitle>
           </CardHeader>
@@ -254,7 +254,7 @@ export default function PaymentMonitor() {
                   className={`p-3 rounded-lg border ${
                     anomaly.level === 'error'
                       ? 'border-destructive/50 bg-destructive/5'
-                      : 'border-yellow-200 bg-yellow-100/20'
+                      : 'border-yellow-500/30 bg-yellow-500/5'
                   }`}
                 >
                   <div className="flex items-start justify-between">
