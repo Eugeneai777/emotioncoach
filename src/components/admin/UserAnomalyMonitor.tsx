@@ -1,10 +1,11 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3 } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard } from "lucide-react";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
 import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
 import AnomalyAggregation from "./AnomalyAggregation";
+import PaymentMonitor from "./PaymentMonitor";
 
 export default function UserAnomalyMonitor() {
   return (
