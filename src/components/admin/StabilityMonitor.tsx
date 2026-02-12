@@ -71,6 +71,45 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
+// ==================== 诊断卡片组件 ====================
+function DiagnosisCard({ diagnosis, context }: { diagnosis: Diagnosis; context?: string }) {
+  if (!diagnosis.description || diagnosis.description === '请求正常') return null;
+
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+      <MessageSquareWarning className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className={`text-xs ${severityBadgeClass(diagnosis.severity)}`}>
+            {diagnosis.severity}
+          </Badge>
+          <p className="text-sm font-medium text-foreground">{diagnosis.description}</p>
+        </div>
+        {diagnosis.cause && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium">可能原因：</span>{diagnosis.cause}
+          </p>
+        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Lightbulb className="h-3 w-3 text-amber-500 shrink-0" />
+          <p className="text-xs text-muted-foreground flex-1">{diagnosis.suggestion}</p>
+          {diagnosis.canAutoFix && diagnosis.fixAction && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2.5 text-xs text-primary hover:text-primary shrink-0"
+              onClick={() => executeAutoFix(diagnosis.fixAction!, context)}
+            >
+              <Wrench className="h-3 w-3 mr-1" />
+              一键修复
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ==================== 概览卡片 ====================
 function OverviewCards({ snapshot }: { snapshot: StabilitySnapshot }) {
   const { summary, healthMetrics: hm } = snapshot;
