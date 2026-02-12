@@ -425,17 +425,36 @@ function ErrorPanel({ hm }: { hm: HealthMetrics }) {
         <Card>
           <CardHeader><CardTitle className="text-sm">最近错误列表</CardTitle></CardHeader>
           <CardContent>
-            <div className="space-y-1 max-h-[300px] overflow-y-auto">
-              {e.recentErrors.map((r) => (
-                <div key={r.requestId} className="flex items-center gap-2 text-xs py-1.5 border-b last:border-0">
-                  <span className="text-muted-foreground w-16">{fmtTime(r.timestamp)}</span>
-                  <Badge variant="outline" className="text-xs">{r.method}</Badge>
-                  <span className="flex-1 font-mono truncate">{r.path}</span>
-                  <Badge variant="outline" className="text-xs text-red-600 border-red-200">{r.errorType}</Badge>
-                  <span className="text-muted-foreground">{r.statusCode || "--"}</span>
-                  <span className="text-muted-foreground">{fmtDuration(r.totalDuration)}</span>
-                </div>
-              ))}
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {e.recentErrors.map((r) => {
+                const diag = diagnoseRequest(r);
+                return (
+                  <div key={r.requestId} className="space-y-1 border-b last:border-0 pb-2">
+                    <div className="flex items-center gap-2 text-xs py-1">
+                      <span className="text-muted-foreground w-16">{fmtTime(r.timestamp)}</span>
+                      <Badge variant="outline" className="text-xs">{r.method}</Badge>
+                      <span className="flex-1 font-mono truncate">{r.path}</span>
+                      <Badge variant="outline" className="text-xs text-red-600 border-red-200">{r.errorType}</Badge>
+                      <span className="text-muted-foreground">{r.statusCode || "--"}</span>
+                      <span className="text-muted-foreground">{fmtDuration(r.totalDuration)}</span>
+                    </div>
+                    <div className="flex items-start gap-2 ml-16 text-xs">
+                      <MessageSquareWarning className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                      <span className="text-muted-foreground flex-1">{diag.description}</span>
+                      {diag.canAutoFix && diag.fixAction && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-2 text-xs text-primary hover:text-primary shrink-0"
+                          onClick={() => executeAutoFix(diag.fixAction!, `${r.errorType} @ ${r.path}`)}
+                        >
+                          <Wrench className="h-2.5 w-2.5 mr-1" />修复
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
