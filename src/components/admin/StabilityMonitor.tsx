@@ -492,21 +492,35 @@ function TimeoutPanel({ hm }: { hm: HealthMetrics }) {
       </div>
 
       {to.topTimeoutPaths.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">超时接口排行</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {to.topTimeoutPaths.map((p, i) => (
-                <div key={p.path} className="flex items-center gap-3 text-sm">
-                  <Badge variant="outline" className="text-xs w-6 justify-center">{i + 1}</Badge>
-                  <span className="flex-1 font-mono truncate text-xs">{p.path}</span>
-                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">{p.count}次超时</Badge>
-                  <span className="text-xs text-muted-foreground">平均 {fmtDuration(p.avgDuration)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-3">
+          <DiagnosisCard
+            diagnosis={diagnoseErrorType('timeout', to.timeoutCount)}
+            context={`超时次数: ${to.timeoutCount}, 涉及 ${to.topTimeoutPaths.length} 个接口`}
+          />
+          <Card>
+            <CardHeader><CardTitle className="text-sm">超时接口排行</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {to.topTimeoutPaths.map((p, i) => (
+                  <div key={p.path} className="flex items-center gap-3 text-sm">
+                    <Badge variant="outline" className="text-xs w-6 justify-center">{i + 1}</Badge>
+                    <span className="flex-1 font-mono truncate text-xs">{p.path}</span>
+                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">{p.count}次超时</Badge>
+                    <span className="text-xs text-muted-foreground">平均 {fmtDuration(p.avgDuration)}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-2 text-xs text-primary shrink-0"
+                      onClick={() => executeAutoFix('increase_timeout', `超时接口: ${p.path}, ${p.count}次, 平均${fmtDuration(p.avgDuration)}`)}
+                    >
+                      <Wrench className="h-2.5 w-2.5 mr-1" />修复
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {to.topTimeoutPaths.length === 0 && (
