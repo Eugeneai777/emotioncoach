@@ -1031,6 +1031,9 @@ export default function StabilityMonitor() {
           <TabsTrigger value="thirdparty" className="gap-1">
             <Globe className="h-3.5 w-3.5" />第三方健康监控
           </TabsTrigger>
+          <TabsTrigger value="protection" className="gap-1">
+            <ShieldCheck className="h-3.5 w-3.5" />自动保护机制
+          </TabsTrigger>
         </TabsList>
 
         {/* 一、请求级监控：请求数据 + 第三方调用统计 + 系统资源 */}
