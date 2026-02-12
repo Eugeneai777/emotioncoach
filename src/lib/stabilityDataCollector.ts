@@ -84,6 +84,7 @@ export interface StabilitySnapshot {
   thirdPartyStats: ThirdPartyStats[];
   systemResources: SystemResources;
   summary: RequestSummary;
+  healthMetrics: HealthMetrics;
 }
 
 export interface RequestSummary {
@@ -95,6 +96,55 @@ export interface RequestSummary {
   p95Duration: number;
   errorDistribution: Record<string, number>;
   sourceDistribution: Record<string, number>;
+}
+
+// ==================== 核心健康指标 ====================
+
+export interface SuccessRateMetrics {
+  realtime: number;
+  oneMinute: number;
+  fiveMinutes: number;
+  oneHour: number;
+  today: number;
+}
+
+export interface ResponseTimeMetrics {
+  avg: number;
+  p95: number;
+  p99: number;
+  max: number;
+  timeoutRatio: number;
+}
+
+export interface QpsMetrics {
+  current: number;
+  oneMinuteAvg: number;
+  peakQps: number;
+  peakTime: number;
+  /** 最近60个采样点的 QPS 趋势 */
+  trend: { time: number; qps: number }[];
+}
+
+export interface ErrorMetrics {
+  totalErrors: number;
+  errorRate: number;
+  typeDistribution: { type: string; count: number; percent: number }[];
+  topErrorPaths: { path: string; count: number; lastTime: number }[];
+  recentErrors: RequestRecord[];
+}
+
+export interface TimeoutMetrics {
+  timeoutCount: number;
+  timeoutRatio: number;
+  topTimeoutPaths: { path: string; count: number; avgDuration: number }[];
+}
+
+export interface HealthMetrics {
+  successRate: SuccessRateMetrics;
+  responseTime: ResponseTimeMetrics;
+  qps: QpsMetrics;
+  errors: ErrorMetrics;
+  timeout: TimeoutMetrics;
 }
 
 // ==================== 工具函数 ====================
