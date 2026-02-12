@@ -318,7 +318,11 @@ export default function PaymentMonitor() {
               <TableBody>
                 {paymentMetrics.recentOrders.length > 0 ? (
                   paymentMetrics.recentOrders.map((order: any) => (
-                    <TableRow key={order.id}>
+                    <TableRow 
+                      key={order.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelectedOrder(order)}
+                    >
                       <TableCell className="text-xs font-mono">{order.id.slice(0, 8)}...</TableCell>
                       <TableCell className="text-xs font-mono">{order.user_id.slice(0, 8)}...</TableCell>
                       <TableCell className="font-medium">¥{order.amount?.toFixed(2) || '0.00'}</TableCell>
