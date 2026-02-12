@@ -76,6 +76,13 @@ let thirdPartyRecords: Map<string, RequestRecord[]> = new Map();
 let installed = false;
 let bootTime = Date.now();
 
+// QPS 追踪
+let qpsSamples: { time: number; count: number }[] = [];
+let peakQps = 0;
+let peakQpsTime = 0;
+let lastSampleTime = 0;
+let currentSecondCount = 0;
+
 type StabilityListener = (data: StabilitySnapshot) => void;
 let listeners: StabilityListener[] = [];
 
@@ -84,6 +91,7 @@ export interface StabilitySnapshot {
   thirdPartyStats: ThirdPartyStats[];
   systemResources: SystemResources;
   summary: RequestSummary;
+  healthMetrics: HealthMetrics;
 }
 
 export interface RequestSummary {
@@ -95,6 +103,55 @@ export interface RequestSummary {
   p95Duration: number;
   errorDistribution: Record<string, number>;
   sourceDistribution: Record<string, number>;
+}
+
+// ==================== 核心健康指标 ====================
+
+export interface SuccessRateMetrics {
+  realtime: number;
+  oneMinute: number;
+  fiveMinutes: number;
+  oneHour: number;
+  today: number;
+}
+
+export interface ResponseTimeMetrics {
+  avg: number;
+  p95: number;
+  p99: number;
+  max: number;
+  timeoutRatio: number;
+}
+
+export interface QpsMetrics {
+  current: number;
+  oneMinuteAvg: number;
+  peakQps: number;
+  peakTime: number;
+  /** 最近60个采样点的 QPS 趋势 */
+  trend: { time: number; qps: number }[];
+}
+
+export interface ErrorMetrics {
+  totalErrors: number;
+  errorRate: number;
+  typeDistribution: { type: string; count: number; percent: number }[];
+  topErrorPaths: { path: string; count: number; lastTime: number }[];
+  recentErrors: RequestRecord[];
+}
+
+export interface TimeoutMetrics {
+  timeoutCount: number;
+  timeoutRatio: number;
+  topTimeoutPaths: { path: string; count: number; avgDuration: number }[];
+}
+
+export interface HealthMetrics {
+  successRate: SuccessRateMetrics;
+  responseTime: ResponseTimeMetrics;
+  qps: QpsMetrics;
+  errors: ErrorMetrics;
+  timeout: TimeoutMetrics;
 }
 
 // ==================== 工具函数 ====================
@@ -177,6 +234,23 @@ function pushRecord(record: RequestRecord) {
   if (tpName) {
     const existing = thirdPartyRecords.get(tpName) || [];
     thirdPartyRecords.set(tpName, [record, ...existing].slice(0, 200));
+  }
+
+  // QPS 追踪
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (nowSec === lastSampleTime) {
+    currentSecondCount++;
+  } else {
+    if (lastSampleTime > 0) {
+      qpsSamples.push({ time: lastSampleTime * 1000, count: currentSecondCount });
+      if (currentSecondCount > peakQps) {
+        peakQps = currentSecondCount;
+        peakQpsTime = lastSampleTime * 1000;
+      }
+      qpsSamples = qpsSamples.slice(-120);
+    }
+    lastSampleTime = nowSec;
+    currentSecondCount = 1;
   }
 
   notifyListeners();
@@ -296,6 +370,125 @@ function computeRequestSummary(): RequestSummary {
   };
 }
 
+// ==================== 核心健康指标计算 ====================
+
+function filterByTime(records: RequestRecord[], ms: number): RequestRecord[] {
+  const cutoff = Date.now() - ms;
+  return records.filter((r) => r.timestamp >= cutoff);
+}
+
+function successRateOf(records: RequestRecord[]): number {
+  if (records.length === 0) return 100;
+  return Math.round((records.filter((r) => r.success).length / records.length) * 1000) / 10;
+}
+
+function percentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  const idx = Math.floor(sorted.length * p);
+  return sorted[Math.min(idx, sorted.length - 1)];
+}
+
+function computeHealthMetrics(): HealthMetrics {
+  const now = Date.now();
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const rt = filterByTime(requestRecords, 10000); // ~realtime 10s
+  const m1 = filterByTime(requestRecords, 60000);
+  const m5 = filterByTime(requestRecords, 300000);
+  const h1 = filterByTime(requestRecords, 3600000);
+  const today = requestRecords.filter((r) => r.timestamp >= todayStart.getTime());
+
+  // 成功率
+  const successRate: SuccessRateMetrics = {
+    realtime: successRateOf(rt),
+    oneMinute: successRateOf(m1),
+    fiveMinutes: successRateOf(m5),
+    oneHour: successRateOf(h1),
+    today: successRateOf(today),
+  };
+
+  // 响应时间
+  const allDurations = requestRecords.map((r) => r.totalDuration).sort((a, b) => a - b);
+  const timeoutRecords = requestRecords.filter((r) => r.errorType === 'timeout');
+  const responseTime: ResponseTimeMetrics = {
+    avg: allDurations.length > 0 ? Math.round(allDurations.reduce((s, d) => s + d, 0) / allDurations.length) : 0,
+    p95: percentile(allDurations, 0.95),
+    p99: percentile(allDurations, 0.99),
+    max: allDurations[allDurations.length - 1] || 0,
+    timeoutRatio: requestRecords.length > 0 ? Math.round((timeoutRecords.length / requestRecords.length) * 1000) / 10 : 0,
+  };
+
+  // QPS
+  const currentQps = currentSecondCount;
+  const m1Count = m1.length;
+  const oneMinuteAvg = Math.round((m1Count / 60) * 10) / 10;
+
+  // 趋势：聚合最近60个秒级采样
+  const trendPoints = qpsSamples.slice(-60).map((s) => ({ time: s.time, qps: s.count }));
+
+  const qps: QpsMetrics = {
+    current: currentQps,
+    oneMinuteAvg,
+    peakQps,
+    peakTime: peakQpsTime,
+    trend: trendPoints,
+  };
+
+  // 错误监控
+  const failed = requestRecords.filter((r) => !r.success);
+  const errorTypeMap: Record<string, number> = {};
+  const errorPathMap: Record<string, { count: number; lastTime: number }> = {};
+
+  failed.forEach((r) => {
+    const t = r.errorType || 'unknown';
+    errorTypeMap[t] = (errorTypeMap[t] || 0) + 1;
+    if (!errorPathMap[r.path]) {
+      errorPathMap[r.path] = { count: 0, lastTime: 0 };
+    }
+    errorPathMap[r.path].count++;
+    errorPathMap[r.path].lastTime = Math.max(errorPathMap[r.path].lastTime, r.timestamp);
+  });
+
+  const typeDistribution = Object.entries(errorTypeMap)
+    .map(([type, count]) => ({ type, count, percent: failed.length > 0 ? Math.round((count / failed.length) * 100) : 0 }))
+    .sort((a, b) => b.count - a.count);
+
+  const topErrorPaths = Object.entries(errorPathMap)
+    .map(([path, d]) => ({ path, count: d.count, lastTime: d.lastTime }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const errors: ErrorMetrics = {
+    totalErrors: failed.length,
+    errorRate: requestRecords.length > 0 ? Math.round((failed.length / requestRecords.length) * 1000) / 10 : 0,
+    typeDistribution,
+    topErrorPaths,
+    recentErrors: failed.slice(0, 20),
+  };
+
+  // 超时监控
+  const timeoutPathMap: Record<string, { count: number; totalDuration: number }> = {};
+  timeoutRecords.forEach((r) => {
+    if (!timeoutPathMap[r.path]) timeoutPathMap[r.path] = { count: 0, totalDuration: 0 };
+    timeoutPathMap[r.path].count++;
+    timeoutPathMap[r.path].totalDuration += r.totalDuration;
+  });
+
+  const topTimeoutPaths = Object.entries(timeoutPathMap)
+    .map(([path, d]) => ({ path, count: d.count, avgDuration: Math.round(d.totalDuration / d.count) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const timeout: TimeoutMetrics = {
+    timeoutCount: timeoutRecords.length,
+    timeoutRatio: requestRecords.length > 0 ? Math.round((timeoutRecords.length / requestRecords.length) * 1000) / 10 : 0,
+    topTimeoutPaths,
+  };
+
+  return { successRate, responseTime, qps, errors, timeout };
+}
+
 // ==================== 对外 API ====================
 
 export function getStabilitySnapshot(): StabilitySnapshot {
@@ -304,6 +497,7 @@ export function getStabilitySnapshot(): StabilitySnapshot {
     thirdPartyStats: computeThirdPartyStats(),
     systemResources: collectSystemResources(),
     summary: computeRequestSummary(),
+    healthMetrics: computeHealthMetrics(),
   };
 }
 
@@ -314,6 +508,11 @@ export function getRecentRequests(limit = 50): RequestRecord[] {
 export function clearStabilityData() {
   requestRecords = [];
   thirdPartyRecords = new Map();
+  qpsSamples = [];
+  peakQps = 0;
+  peakQpsTime = 0;
+  lastSampleTime = 0;
+  currentSecondCount = 0;
   bootTime = Date.now();
   notifyListeners();
 }
