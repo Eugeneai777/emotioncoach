@@ -1008,9 +1008,9 @@ export default function StabilityMonitor() {
 
       <Tabs defaultValue="requests" className="w-full">
         <TabsList className="h-auto gap-1">
-          <TabsTrigger value="requests" className="gap-1"><Activity className="h-3.5 w-3.5" />一、请求级监控</TabsTrigger>
+          <TabsTrigger value="requests" className="gap-1"><Activity className="h-3.5 w-3.5" />请求级监控</TabsTrigger>
           <TabsTrigger value="health" className="gap-1">
-            <Gauge className="h-3.5 w-3.5" />二、核心健康指标
+            <Gauge className="h-3.5 w-3.5" />核心健康指标
             {snapshot.healthMetrics.errors.totalErrors > 0 && (
               <Badge variant="destructive" className="text-xs ml-1">{snapshot.healthMetrics.errors.totalErrors}</Badge>
             )}
