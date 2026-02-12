@@ -380,18 +380,24 @@ function ErrorPanel({ hm }: { hm: HealthMetrics }) {
 
       {e.typeDistribution.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">错误类型分布</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">错误类型分布与诊断</CardTitle></CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {e.typeDistribution.map((t) => (
-                <div key={t.type} className="flex items-center gap-3">
-                  <span className="text-sm w-28 text-muted-foreground">{t.type}</span>
-                  <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-red-400 rounded-full" style={{ width: `${t.percent}%` }} />
+            <div className="space-y-3">
+              {e.typeDistribution.map((t) => {
+                const diag = diagnoseErrorType(t.type, t.count);
+                return (
+                  <div key={t.type} className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm w-28 text-muted-foreground">{t.type}</span>
+                      <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-red-400 rounded-full" style={{ width: `${t.percent}%` }} />
+                      </div>
+                      <span className="text-sm font-medium w-16 text-right">{t.count}次 ({t.percent}%)</span>
+                    </div>
+                    <DiagnosisCard diagnosis={diag} context={`错误类型: ${t.type}, 次数: ${t.count}`} />
                   </div>
-                  <span className="text-sm font-medium w-16 text-right">{t.count}次 ({t.percent}%)</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
