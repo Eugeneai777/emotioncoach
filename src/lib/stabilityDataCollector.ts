@@ -524,7 +524,7 @@ function computeThirdPartyHealth(): ThirdPartyHealth {
   return { ai, voice, dependencies };
 }
 
-
+function computeHealthMetrics(): HealthMetrics {
   const now = Date.now();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
