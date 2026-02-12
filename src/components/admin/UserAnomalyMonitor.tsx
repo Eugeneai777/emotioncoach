@@ -96,6 +96,10 @@ export default function UserAnomalyMonitor() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="payment">
+          <PaymentMonitor />
+        </TabsContent>
+
         <TabsContent value="frontend">
           <FrontendErrorMonitor />
         </TabsContent>
