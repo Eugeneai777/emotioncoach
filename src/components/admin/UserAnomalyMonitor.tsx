@@ -30,6 +30,11 @@ export default function UserAnomalyMonitor() {
             <span className="hidden sm:inline">用户异常</span>
             <span className="sm:hidden">用户</span>
           </TabsTrigger>
+          <TabsTrigger value="payment" className="text-xs sm:text-sm">
+            <CreditCard className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">支付监控</span>
+            <span className="sm:hidden">支付</span>
+          </TabsTrigger>
           <TabsTrigger value="frontend" className="text-xs sm:text-sm">
             <Bug className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">前端异常监控</span>
