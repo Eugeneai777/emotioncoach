@@ -1102,6 +1102,11 @@ export default function StabilityMonitor() {
             <DependencyPanel dependencies={snapshot.healthMetrics.thirdPartyHealth.dependencies} />
           </div>
         </TabsContent>
+
+        {/* 自动保护机制 */}
+        <TabsContent value="protection" className="mt-4 space-y-6">
+          <AutoProtectionPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
