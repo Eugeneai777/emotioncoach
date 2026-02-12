@@ -8,7 +8,7 @@ import {
   RefreshCw, CheckCircle, XCircle, Activity, Clock, Cpu,
   HardDrive, Wifi, AlertTriangle, BarChart3, Globe, Trash2,
   Gauge, Timer, Zap, ShieldAlert, Hourglass, Bot, Mic, Shield,
-  CircleDot, TrendingDown, Ban,
+  CircleDot, TrendingDown, Ban, Wrench, MessageSquareWarning, Lightbulb,
 } from "lucide-react";
 import {
   getStabilitySnapshot,
@@ -22,6 +22,15 @@ import {
   type DependencyAvailability,
   type DependencyStatus,
 } from "@/lib/stabilityDataCollector";
+import {
+  diagnoseErrorType,
+  diagnoseRequest,
+  diagnoseDependency,
+  diagnoseOverallHealth,
+  executeAutoFix,
+  severityBadgeClass,
+  type Diagnosis,
+} from "@/lib/stabilityDiagnosis";
 
 function fmtTime(ts: number) {
   if (!ts) return "--";
@@ -62,70 +71,118 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
+// ==================== 诊断卡片组件 ====================
+function DiagnosisCard({ diagnosis, context }: { diagnosis: Diagnosis; context?: string }) {
+  if (!diagnosis.description || diagnosis.description === '请求正常') return null;
+
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+      <MessageSquareWarning className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className={`text-xs ${severityBadgeClass(diagnosis.severity)}`}>
+            {diagnosis.severity}
+          </Badge>
+          <p className="text-sm font-medium text-foreground">{diagnosis.description}</p>
+        </div>
+        {diagnosis.cause && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium">可能原因：</span>{diagnosis.cause}
+          </p>
+        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Lightbulb className="h-3 w-3 text-amber-500 shrink-0" />
+          <p className="text-xs text-muted-foreground flex-1">{diagnosis.suggestion}</p>
+          {diagnosis.canAutoFix && diagnosis.fixAction && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2.5 text-xs text-primary hover:text-primary shrink-0"
+              onClick={() => executeAutoFix(diagnosis.fixAction!, context)}
+            >
+              <Wrench className="h-3 w-3 mr-1" />
+              一键修复
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ==================== 概览卡片 ====================
 function OverviewCards({ snapshot }: { snapshot: StabilitySnapshot }) {
   const { summary, healthMetrics: hm } = snapshot;
   const statusOk = summary.successRate >= 99;
   const statusWarn = summary.successRate >= 95;
+  const overallDiag = diagnoseOverallHealth(
+    summary.successRate, hm.errors.totalErrors, hm.timeout.timeoutCount, hm.responseTime.p95,
+  );
 
   return (
-    <div className="grid gap-4 md:grid-cols-5">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">系统状态</CardTitle>
-          {statusOk ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertTriangle className="h-4 w-4 text-amber-500" />}
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${statusOk ? "text-green-600" : statusWarn ? "text-amber-600" : "text-red-600"}`}>
-            {statusOk ? "正常" : statusWarn ? "警告" : "异常"}
-          </div>
-          <p className="text-xs text-muted-foreground">今日成功率 {hm.successRate.today}%</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">系统状态</CardTitle>
+            {statusOk ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertTriangle className="h-4 w-4 text-amber-500" />}
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${statusOk ? "text-green-600" : statusWarn ? "text-amber-600" : "text-red-600"}`}>
+              {statusOk ? "正常" : statusWarn ? "警告" : "异常"}
+            </div>
+            <p className="text-xs text-muted-foreground">今日成功率 {hm.successRate.today}%</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">QPS</CardTitle>
-          <Zap className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{hm.qps.current}</div>
-          <p className="text-xs text-muted-foreground">峰值 {hm.qps.peakQps} · 1分钟均 {hm.qps.oneMinuteAvg}</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">QPS</CardTitle>
+            <Zap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hm.qps.current}</div>
+            <p className="text-xs text-muted-foreground">峰值 {hm.qps.peakQps} · 1分钟均 {hm.qps.oneMinuteAvg}</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">响应时间</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{fmtDuration(hm.responseTime.avg)}</div>
-          <p className="text-xs text-muted-foreground">P95 {fmtDuration(hm.responseTime.p95)} · P99 {fmtDuration(hm.responseTime.p99)}</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">响应时间</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{fmtDuration(hm.responseTime.avg)}</div>
+            <p className="text-xs text-muted-foreground">P95 {fmtDuration(hm.responseTime.p95)} · P99 {fmtDuration(hm.responseTime.p99)}</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">错误数</CardTitle>
-          <XCircle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${hm.errors.totalErrors > 0 ? "text-red-600" : ""}`}>{hm.errors.totalErrors}</div>
-          <p className="text-xs text-muted-foreground">错误率 {hm.errors.errorRate}%</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">错误数</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${hm.errors.totalErrors > 0 ? "text-red-600" : ""}`}>{hm.errors.totalErrors}</div>
+            <p className="text-xs text-muted-foreground">错误率 {hm.errors.errorRate}%</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">超时</CardTitle>
-          <Hourglass className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${hm.timeout.timeoutCount > 0 ? "text-amber-600" : ""}`}>{hm.timeout.timeoutCount}</div>
-          <p className="text-xs text-muted-foreground">超时比例 {hm.timeout.timeoutRatio}%</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">超时</CardTitle>
+            <Hourglass className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${hm.timeout.timeoutCount > 0 ? "text-amber-600" : ""}`}>{hm.timeout.timeoutCount}</div>
+            <p className="text-xs text-muted-foreground">超时比例 {hm.timeout.timeoutRatio}%</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {overallDiag.severity !== '轻微' && (
+        <DiagnosisCard diagnosis={overallDiag} context={`系统概况: 成功率${summary.successRate}%, 错误${hm.errors.totalErrors}个, 超时${hm.timeout.timeoutCount}次`} />
+      )}
     </div>
   );
 }
@@ -323,18 +380,24 @@ function ErrorPanel({ hm }: { hm: HealthMetrics }) {
 
       {e.typeDistribution.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">错误类型分布</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">错误类型分布与诊断</CardTitle></CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {e.typeDistribution.map((t) => (
-                <div key={t.type} className="flex items-center gap-3">
-                  <span className="text-sm w-28 text-muted-foreground">{t.type}</span>
-                  <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-red-400 rounded-full" style={{ width: `${t.percent}%` }} />
+            <div className="space-y-3">
+              {e.typeDistribution.map((t) => {
+                const diag = diagnoseErrorType(t.type, t.count);
+                return (
+                  <div key={t.type} className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm w-28 text-muted-foreground">{t.type}</span>
+                      <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-red-400 rounded-full" style={{ width: `${t.percent}%` }} />
+                      </div>
+                      <span className="text-sm font-medium w-16 text-right">{t.count}次 ({t.percent}%)</span>
+                    </div>
+                    <DiagnosisCard diagnosis={diag} context={`错误类型: ${t.type}, 次数: ${t.count}`} />
                   </div>
-                  <span className="text-sm font-medium w-16 text-right">{t.count}次 ({t.percent}%)</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -362,17 +425,36 @@ function ErrorPanel({ hm }: { hm: HealthMetrics }) {
         <Card>
           <CardHeader><CardTitle className="text-sm">最近错误列表</CardTitle></CardHeader>
           <CardContent>
-            <div className="space-y-1 max-h-[300px] overflow-y-auto">
-              {e.recentErrors.map((r) => (
-                <div key={r.requestId} className="flex items-center gap-2 text-xs py-1.5 border-b last:border-0">
-                  <span className="text-muted-foreground w-16">{fmtTime(r.timestamp)}</span>
-                  <Badge variant="outline" className="text-xs">{r.method}</Badge>
-                  <span className="flex-1 font-mono truncate">{r.path}</span>
-                  <Badge variant="outline" className="text-xs text-red-600 border-red-200">{r.errorType}</Badge>
-                  <span className="text-muted-foreground">{r.statusCode || "--"}</span>
-                  <span className="text-muted-foreground">{fmtDuration(r.totalDuration)}</span>
-                </div>
-              ))}
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {e.recentErrors.map((r) => {
+                const diag = diagnoseRequest(r);
+                return (
+                  <div key={r.requestId} className="space-y-1 border-b last:border-0 pb-2">
+                    <div className="flex items-center gap-2 text-xs py-1">
+                      <span className="text-muted-foreground w-16">{fmtTime(r.timestamp)}</span>
+                      <Badge variant="outline" className="text-xs">{r.method}</Badge>
+                      <span className="flex-1 font-mono truncate">{r.path}</span>
+                      <Badge variant="outline" className="text-xs text-red-600 border-red-200">{r.errorType}</Badge>
+                      <span className="text-muted-foreground">{r.statusCode || "--"}</span>
+                      <span className="text-muted-foreground">{fmtDuration(r.totalDuration)}</span>
+                    </div>
+                    <div className="flex items-start gap-2 ml-16 text-xs">
+                      <MessageSquareWarning className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                      <span className="text-muted-foreground flex-1">{diag.description}</span>
+                      {diag.canAutoFix && diag.fixAction && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-2 text-xs text-primary hover:text-primary shrink-0"
+                          onClick={() => executeAutoFix(diag.fixAction!, `${r.errorType} @ ${r.path}`)}
+                        >
+                          <Wrench className="h-2.5 w-2.5 mr-1" />修复
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -410,21 +492,35 @@ function TimeoutPanel({ hm }: { hm: HealthMetrics }) {
       </div>
 
       {to.topTimeoutPaths.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">超时接口排行</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {to.topTimeoutPaths.map((p, i) => (
-                <div key={p.path} className="flex items-center gap-3 text-sm">
-                  <Badge variant="outline" className="text-xs w-6 justify-center">{i + 1}</Badge>
-                  <span className="flex-1 font-mono truncate text-xs">{p.path}</span>
-                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">{p.count}次超时</Badge>
-                  <span className="text-xs text-muted-foreground">平均 {fmtDuration(p.avgDuration)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-3">
+          <DiagnosisCard
+            diagnosis={diagnoseErrorType('timeout', to.timeoutCount)}
+            context={`超时次数: ${to.timeoutCount}, 涉及 ${to.topTimeoutPaths.length} 个接口`}
+          />
+          <Card>
+            <CardHeader><CardTitle className="text-sm">超时接口排行</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {to.topTimeoutPaths.map((p, i) => (
+                  <div key={p.path} className="flex items-center gap-3 text-sm">
+                    <Badge variant="outline" className="text-xs w-6 justify-center">{i + 1}</Badge>
+                    <span className="flex-1 font-mono truncate text-xs">{p.path}</span>
+                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">{p.count}次超时</Badge>
+                    <span className="text-xs text-muted-foreground">平均 {fmtDuration(p.avgDuration)}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-2 text-xs text-primary shrink-0"
+                      onClick={() => executeAutoFix('increase_timeout', `超时接口: ${p.path}, ${p.count}次, 平均${fmtDuration(p.avgDuration)}`)}
+                    >
+                      <Wrench className="h-2.5 w-2.5 mr-1" />修复
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {to.topTimeoutPaths.length === 0 && (
@@ -466,7 +562,7 @@ function RequestList({ requests }: { requests: RequestRecord[] }) {
             <StatusBadge success={r.success} />
           </div>
           {expanded === r.requestId && (
-            <div className="px-3 pb-2 ml-4 text-xs space-y-1 bg-muted/30 rounded mb-1 p-3">
+            <div className="px-3 pb-2 ml-4 text-xs space-y-2 bg-muted/30 rounded mb-1 p-3">
               <div className="grid grid-cols-2 gap-2">
                 <span className="text-muted-foreground">请求ID:</span><span className="font-mono">{r.requestId}</span>
                 <span className="text-muted-foreground">用户ID:</span><span>{r.userId || "--"}</span>
@@ -477,6 +573,14 @@ function RequestList({ requests }: { requests: RequestRecord[] }) {
                   <><span className="text-muted-foreground">第三方耗时:</span><span>{fmtDuration(r.thirdPartyDuration)}</span></>
                 )}
               </div>
+              {!r.success && (() => {
+                const diag = diagnoseRequest(r);
+                return (
+                  <div className="mt-2 pt-2 border-t border-border/50">
+                    <DiagnosisCard diagnosis={diag} context={`请求: ${r.method} ${r.path}\n错误: ${r.errorType}\n状态码: ${r.statusCode}\n耗时: ${fmtDuration(r.totalDuration)}`} />
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -808,38 +912,46 @@ function DependencyPanel({ dependencies }: { dependencies: DependencyAvailabilit
         <CardHeader><CardTitle className="text-sm">各依赖服务状态</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {sorted.map((dep) => (
-              <div key={dep.name} className={`flex items-center gap-4 p-3 rounded-lg border ${statusBgColor(dep.status)}`}>
-                <div className="flex items-center gap-2 w-36">
-                  {statusIcon(dep.status)}
-                  <span className="font-medium text-sm">{dep.name}</span>
+            {sorted.map((dep) => {
+              const diag = diagnoseDependency(dep.name, dep.status, dep.successRate, dep.recentErrors);
+              return (
+                <div key={dep.name} className="space-y-2">
+                  <div className={`flex items-center gap-4 p-3 rounded-lg border ${statusBgColor(dep.status)}`}>
+                    <div className="flex items-center gap-2 w-36">
+                      {statusIcon(dep.status)}
+                      <span className="font-medium text-sm">{dep.name}</span>
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${statusBadgeVariant(dep.status)}`}>
+                      {dep.status}
+                    </Badge>
+                    <div className="flex-1 grid grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">成功率</span>
+                        <p className={`font-medium ${rateColor(dep.successRate)}`}>{dep.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">平均耗时</span>
+                        <p className="font-medium">{fmtDuration(dep.avgResponseTime)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">总调用</span>
+                        <p className="font-medium">{dep.totalCalls}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">近5分钟错误</span>
+                        <p className={`font-medium ${dep.recentErrors > 0 ? "text-red-600" : ""}`}>{dep.recentErrors}</p>
+                      </div>
+                    </div>
+                    {dep.lastErrorTime && (
+                      <span className="text-xs text-muted-foreground">最后错误: {fmtTime(dep.lastErrorTime)}</span>
+                    )}
+                  </div>
+                  {dep.status !== '正常' && (
+                    <DiagnosisCard diagnosis={diag} context={`依赖: ${dep.name}, 状态: ${dep.status}, 成功率: ${dep.successRate.toFixed(1)}%`} />
+                  )}
                 </div>
-                <Badge variant="outline" className={`text-xs ${statusBadgeVariant(dep.status)}`}>
-                  {dep.status}
-                </Badge>
-                <div className="flex-1 grid grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">成功率</span>
-                    <p className={`font-medium ${rateColor(dep.successRate)}`}>{dep.successRate.toFixed(1)}%</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">平均耗时</span>
-                    <p className="font-medium">{fmtDuration(dep.avgResponseTime)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">总调用</span>
-                    <p className="font-medium">{dep.totalCalls}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">近5分钟错误</span>
-                    <p className={`font-medium ${dep.recentErrors > 0 ? "text-red-600" : ""}`}>{dep.recentErrors}</p>
-                  </div>
-                </div>
-                {dep.lastErrorTime && (
-                  <span className="text-xs text-muted-foreground">最后错误: {fmtTime(dep.lastErrorTime)}</span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
