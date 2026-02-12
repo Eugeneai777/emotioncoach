@@ -171,8 +171,8 @@ export default function PaymentMonitor() {
 
   const getStatusColor = (rate: number) => {
     if (rate > 60) return 'text-destructive';
-    if (rate > 30) return 'text-yellow-600';
-    return 'text-green-600';
+    if (rate > 30) return 'text-yellow-500';
+    return 'text-emerald-600';
   };
 
   return (
