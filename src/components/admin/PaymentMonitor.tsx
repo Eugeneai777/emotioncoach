@@ -20,6 +20,7 @@ interface PaymentAnomaly {
 
 export default function PaymentMonitor() {
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const { data: paymentMetrics, isLoading } = useQuery({
     queryKey: ['payment-monitor', timeRange],
