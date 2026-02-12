@@ -17,6 +17,9 @@ import {
   type RequestRecord,
   type ThirdPartyStats,
   type HealthMetrics,
+  type ServiceHealthPanel,
+  type DependencyAvailability,
+  type DependencyStatus,
 } from "@/lib/stabilityDataCollector";
 
 function fmtTime(ts: number) {
