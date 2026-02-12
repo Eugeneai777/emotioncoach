@@ -519,7 +519,10 @@ function computeHealthMetrics(): HealthMetrics {
     topTimeoutPaths,
   };
 
-  return { successRate, responseTime, qps, errors, timeout };
+  // 第三方健康监控
+  const thirdPartyHealth = computeThirdPartyHealth();
+
+  return { successRate, responseTime, qps, errors, timeout, thirdPartyHealth };
 }
 
 // ==================== 对外 API ====================
