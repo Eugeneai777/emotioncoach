@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, CheckCircle, XCircle, Activity, Clock, Cpu,
   HardDrive, Wifi, AlertTriangle, BarChart3, Globe, Trash2,
+  Gauge, Timer, Zap, ShieldAlert, Hourglass,
 } from "lucide-react";
 import {
   getStabilitySnapshot,
@@ -14,14 +16,23 @@ import {
   type StabilitySnapshot,
   type RequestRecord,
   type ThirdPartyStats,
+  type HealthMetrics,
 } from "@/lib/stabilityDataCollector";
 
 function fmtTime(ts: number) {
+  if (!ts) return "--";
   return new Date(ts).toLocaleTimeString("zh-CN", { hour12: false });
 }
 
 function fmtDuration(ms: number) {
+  if (ms === 0) return "0ms";
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+}
+
+function rateColor(rate: number) {
+  if (rate >= 99) return "text-green-600";
+  if (rate >= 95) return "text-amber-600";
+  return "text-red-600";
 }
 
 function StatusBadge({ success }: { success: boolean }) {
@@ -49,12 +60,12 @@ function SourceBadge({ source }: { source: string }) {
 
 // ==================== 概览卡片 ====================
 function OverviewCards({ snapshot }: { snapshot: StabilitySnapshot }) {
-  const { summary, systemResources: sys } = snapshot;
+  const { summary, healthMetrics: hm } = snapshot;
   const statusOk = summary.successRate >= 99;
   const statusWarn = summary.successRate >= 95;
 
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-5">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">系统状态</CardTitle>
@@ -64,46 +75,361 @@ function OverviewCards({ snapshot }: { snapshot: StabilitySnapshot }) {
           <div className={`text-2xl font-bold ${statusOk ? "text-green-600" : statusWarn ? "text-amber-600" : "text-red-600"}`}>
             {statusOk ? "正常" : statusWarn ? "警告" : "异常"}
           </div>
-          <p className="text-xs text-muted-foreground">成功率 {summary.successRate}%</p>
+          <p className="text-xs text-muted-foreground">今日成功率 {hm.successRate.today}%</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">请求统计</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">QPS</CardTitle>
+          <Zap className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{summary.totalRequests}</div>
-          <p className="text-xs text-muted-foreground">
-            成功 {summary.successRequests} / 失败 <span className="text-red-500">{summary.failedRequests}</span>
-          </p>
+          <div className="text-2xl font-bold">{hm.qps.current}</div>
+          <p className="text-xs text-muted-foreground">峰值 {hm.qps.peakQps} · 1分钟均 {hm.qps.oneMinuteAvg}</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">平均响应时间</CardTitle>
+          <CardTitle className="text-sm font-medium">响应时间</CardTitle>
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{fmtDuration(summary.avgDuration)}</div>
-          <p className="text-xs text-muted-foreground">P95: {fmtDuration(summary.p95Duration)}</p>
+          <div className="text-2xl font-bold">{fmtDuration(hm.responseTime.avg)}</div>
+          <p className="text-xs text-muted-foreground">P95 {fmtDuration(hm.responseTime.p95)} · P99 {fmtDuration(hm.responseTime.p99)}</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">系统资源</CardTitle>
-          <Cpu className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">错误数</CardTitle>
+          <XCircle className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{sys.cpuCores} 核</div>
-          <p className="text-xs text-muted-foreground">
-            {sys.memoryUsedMB !== null ? `内存 ${sys.memoryUsedMB}MB / ${sys.memoryLimitMB}MB` : "内存数据不可用"}
-          </p>
+          <div className={`text-2xl font-bold ${hm.errors.totalErrors > 0 ? "text-red-600" : ""}`}>{hm.errors.totalErrors}</div>
+          <p className="text-xs text-muted-foreground">错误率 {hm.errors.errorRate}%</p>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">超时</CardTitle>
+          <Hourglass className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-bold ${hm.timeout.timeoutCount > 0 ? "text-amber-600" : ""}`}>{hm.timeout.timeoutCount}</div>
+          <p className="text-xs text-muted-foreground">超时比例 {hm.timeout.timeoutRatio}%</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ==================== 4. 成功率监控 ====================
+function SuccessRatePanel({ hm }: { hm: HealthMetrics }) {
+  const sr = hm.successRate;
+  const items = [
+    { label: "实时成功率", value: sr.realtime, desc: "最近10秒" },
+    { label: "1分钟成功率", value: sr.oneMinute, desc: "最近60秒" },
+    { label: "5分钟成功率", value: sr.fiveMinutes, desc: "最近5分钟" },
+    { label: "1小时成功率", value: sr.oneHour, desc: "最近1小时" },
+    { label: "今日成功率", value: sr.today, desc: "今日零点起" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-5">
+        {items.map((item) => (
+          <Card key={item.label}>
+            <CardContent className="!p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+              <p className={`text-3xl font-bold ${rateColor(item.value)}`}>{item.value}%</p>
+              <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+              <Progress value={item.value} className="mt-2 h-1.5" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">阈值配置建议</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <span className="text-muted-foreground">正常: ≥ 99%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500" />
+              <span className="text-muted-foreground">警告: 95% ~ 99%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <span className="text-muted-foreground">异常: &lt; 95%</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ==================== 5. 响应时间监控 ====================
+function ResponseTimePanel({ hm }: { hm: HealthMetrics }) {
+  const rt = hm.responseTime;
+  const items = [
+    { label: "平均响应", value: rt.avg, icon: Clock },
+    { label: "P95 响应", value: rt.p95, icon: Timer },
+    { label: "P99 响应", value: rt.p99, icon: Timer },
+    { label: "最大响应", value: rt.max, icon: AlertTriangle },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-4">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const warn = item.value > 3000;
+          return (
+            <Card key={item.label}>
+              <CardContent className="!p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className={`h-4 w-4 ${warn ? "text-red-500" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+                <p className={`text-2xl font-bold ${warn ? "text-red-600" : ""}`}>{fmtDuration(item.value)}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card>
+        <CardContent className="!p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Hourglass className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium">超时比例</span>
+            </div>
+            <span className={`text-xl font-bold ${rt.timeoutRatio > 5 ? "text-red-600" : rt.timeoutRatio > 1 ? "text-amber-600" : "text-green-600"}`}>
+              {rt.timeoutRatio}%
+            </span>
+          </div>
+          <Progress value={Math.min(rt.timeoutRatio, 100)} className="mt-2 h-2" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ==================== 6. QPS 监控 ====================
+function QpsPanel({ hm }: { hm: HealthMetrics }) {
+  const q = hm.qps;
+  const maxTrend = Math.max(...q.trend.map((t) => t.qps), 1);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">当前 QPS</p>
+            <p className="text-3xl font-bold">{q.current}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">1分钟平均</p>
+            <p className="text-3xl font-bold">{q.oneMinuteAvg}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">峰值 QPS</p>
+            <p className="text-3xl font-bold text-amber-600">{q.peakQps}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">峰值时间</p>
+            <p className="text-lg font-bold">{fmtTime(q.peakTime)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">QPS 趋势（最近60秒采样）</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {q.trend.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">暂无趋势数据，操作页面后将自动采集</p>
+          ) : (
+            <div className="flex items-end gap-[2px] h-24">
+              {q.trend.map((point, i) => {
+                const h = Math.max((point.qps / maxTrend) * 100, 4);
+                return (
+                  <div
+                    key={i}
+                    className="flex-1 bg-primary/70 rounded-t hover:bg-primary transition-colors relative group"
+                    style={{ height: `${h}%` }}
+                  >
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] px-1 py-0.5 rounded hidden group-hover:block whitespace-nowrap z-10">
+                      {point.qps} req/s
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ==================== 7. 错误监控 ====================
+function ErrorPanel({ hm }: { hm: HealthMetrics }) {
+  const e = hm.errors;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">错误总数</p>
+            <p className={`text-3xl font-bold ${e.totalErrors > 0 ? "text-red-600" : ""}`}>{e.totalErrors}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">错误率</p>
+            <p className={`text-3xl font-bold ${e.errorRate > 5 ? "text-red-600" : e.errorRate > 1 ? "text-amber-600" : "text-green-600"}`}>{e.errorRate}%</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">错误类型数</p>
+            <p className="text-3xl font-bold">{e.typeDistribution.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {e.typeDistribution.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">错误类型分布</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {e.typeDistribution.map((t) => (
+                <div key={t.type} className="flex items-center gap-3">
+                  <span className="text-sm w-28 text-muted-foreground">{t.type}</span>
+                  <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-red-400 rounded-full" style={{ width: `${t.percent}%` }} />
+                  </div>
+                  <span className="text-sm font-medium w-16 text-right">{t.count}次 ({t.percent}%)</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {e.topErrorPaths.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Top 错误接口</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {e.topErrorPaths.map((p, i) => (
+                <div key={p.path} className="flex items-center gap-3 text-sm">
+                  <Badge variant="outline" className="text-xs w-6 justify-center">{i + 1}</Badge>
+                  <span className="flex-1 font-mono truncate text-xs">{p.path}</span>
+                  <Badge variant="destructive" className="text-xs">{p.count}次</Badge>
+                  <span className="text-xs text-muted-foreground w-20">{fmtTime(p.lastTime)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {e.recentErrors.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">最近错误列表</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+              {e.recentErrors.map((r) => (
+                <div key={r.requestId} className="flex items-center gap-2 text-xs py-1.5 border-b last:border-0">
+                  <span className="text-muted-foreground w-16">{fmtTime(r.timestamp)}</span>
+                  <Badge variant="outline" className="text-xs">{r.method}</Badge>
+                  <span className="flex-1 font-mono truncate">{r.path}</span>
+                  <Badge variant="outline" className="text-xs text-red-600 border-red-200">{r.errorType}</Badge>
+                  <span className="text-muted-foreground">{r.statusCode || "--"}</span>
+                  <span className="text-muted-foreground">{fmtDuration(r.totalDuration)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ==================== 8. 超时监控 ====================
+function TimeoutPanel({ hm }: { hm: HealthMetrics }) {
+  const to = hm.timeout;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">超时次数</p>
+            <p className={`text-3xl font-bold ${to.timeoutCount > 0 ? "text-amber-600" : ""}`}>{to.timeoutCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">超时比例</p>
+            <p className={`text-3xl font-bold ${to.timeoutRatio > 5 ? "text-red-600" : to.timeoutRatio > 1 ? "text-amber-600" : "text-green-600"}`}>{to.timeoutRatio}%</p>
+            <Progress value={Math.min(to.timeoutRatio * 10, 100)} className="mt-2 h-1.5" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="!p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">涉及接口数</p>
+            <p className="text-3xl font-bold">{to.topTimeoutPaths.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {to.topTimeoutPaths.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">超时接口排行</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {to.topTimeoutPaths.map((p, i) => (
+                <div key={p.path} className="flex items-center gap-3 text-sm">
+                  <Badge variant="outline" className="text-xs w-6 justify-center">{i + 1}</Badge>
+                  <span className="flex-1 font-mono truncate text-xs">{p.path}</span>
+                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">{p.count}次超时</Badge>
+                  <span className="text-xs text-muted-foreground">平均 {fmtDuration(p.avgDuration)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {to.topTimeoutPaths.length === 0 && (
+        <Card>
+          <CardContent className="!p-4">
+            <p className="text-sm text-muted-foreground text-center py-4">🎉 暂无超时记录</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -119,13 +445,7 @@ function RequestList({ requests }: { requests: RequestRecord[] }) {
   return (
     <div className="space-y-1 max-h-[500px] overflow-y-auto">
       <div className="grid grid-cols-[80px_60px_1fr_60px_70px_80px_60px] gap-2 px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-        <span>时间</span>
-        <span>方法</span>
-        <span>路径</span>
-        <span>来源</span>
-        <span>耗时</span>
-        <span>状态码</span>
-        <span>结果</span>
+        <span>时间</span><span>方法</span><span>路径</span><span>来源</span><span>耗时</span><span>状态码</span><span>结果</span>
       </div>
       {requests.map((r) => (
         <div key={r.requestId}>
@@ -137,9 +457,7 @@ function RequestList({ requests }: { requests: RequestRecord[] }) {
             <Badge variant="outline" className="text-xs w-fit">{r.method}</Badge>
             <span className="truncate font-mono text-foreground">{r.path}</span>
             <SourceBadge source={r.source} />
-            <span className={r.totalDuration > 3000 ? "text-red-500 font-medium" : "text-muted-foreground"}>
-              {fmtDuration(r.totalDuration)}
-            </span>
+            <span className={r.totalDuration > 3000 ? "text-red-500 font-medium" : "text-muted-foreground"}>{fmtDuration(r.totalDuration)}</span>
             <span>{r.statusCode || "--"}</span>
             <StatusBadge success={r.success} />
           </div>
@@ -186,38 +504,19 @@ function ThirdPartyPanel({ stats }: { stats: ThirdPartyStats[] }) {
                   成功率 {s.successRate.toFixed(1)}%
                 </Badge>
               </div>
-
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                <div>
-                  <p className="text-muted-foreground">总调用</p>
-                  <p className="font-medium text-lg">{s.totalCalls}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">平均响应</p>
-                  <p className="font-medium text-lg">{fmtDuration(s.avgResponseTime)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">最大响应</p>
-                  <p className="font-medium text-lg">{fmtDuration(s.maxResponseTime)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">超时次数</p>
-                  <p className={`font-medium text-lg ${s.timeoutCount > 0 ? "text-red-500" : ""}`}>{s.timeoutCount}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">限流次数</p>
-                  <p className={`font-medium text-lg ${s.rateLimitCount > 0 ? "text-amber-500" : ""}`}>{s.rateLimitCount}</p>
-                </div>
+                <div><p className="text-muted-foreground">总调用</p><p className="font-medium text-lg">{s.totalCalls}</p></div>
+                <div><p className="text-muted-foreground">平均响应</p><p className="font-medium text-lg">{fmtDuration(s.avgResponseTime)}</p></div>
+                <div><p className="text-muted-foreground">最大响应</p><p className="font-medium text-lg">{fmtDuration(s.maxResponseTime)}</p></div>
+                <div><p className="text-muted-foreground">超时次数</p><p className={`font-medium text-lg ${s.timeoutCount > 0 ? "text-red-500" : ""}`}>{s.timeoutCount}</p></div>
+                <div><p className="text-muted-foreground">限流次数</p><p className={`font-medium text-lg ${s.rateLimitCount > 0 ? "text-amber-500" : ""}`}>{s.rateLimitCount}</p></div>
               </div>
-
               {Object.keys(s.errorTypes).length > 0 && (
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-xs text-muted-foreground mb-1">错误类型分布</p>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(s.errorTypes).map(([type, count]) => (
-                      <Badge key={type} variant="outline" className="text-xs text-red-600 border-red-200">
-                        {type}: {count}
-                      </Badge>
+                      <Badge key={type} variant="outline" className="text-xs text-red-600 border-red-200">{type}: {count}</Badge>
                     ))}
                   </div>
                 </div>
@@ -248,7 +547,6 @@ function SystemResourcePanel({ snapshot }: { snapshot: StabilitySnapshot }) {
             <p className="text-xs text-muted-foreground">逻辑处理器核心数</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="!p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -257,15 +555,11 @@ function SystemResourcePanel({ snapshot }: { snapshot: StabilitySnapshot }) {
             </div>
             {sys.memoryUsedMB !== null ? (
               <>
-                <p className="text-2xl font-bold">
-                  {sys.memoryUsagePercent}%
-                </p>
+                <p className="text-2xl font-bold">{sys.memoryUsagePercent}%</p>
                 <p className="text-xs text-muted-foreground">{sys.memoryUsedMB}MB / {sys.memoryLimitMB}MB</p>
                 <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${
-                      (sys.memoryUsagePercent ?? 0) > 80 ? "bg-red-500" : (sys.memoryUsagePercent ?? 0) > 60 ? "bg-amber-500" : "bg-green-500"
-                    }`}
+                    className={`h-full rounded-full transition-all ${(sys.memoryUsagePercent ?? 0) > 80 ? "bg-red-500" : (sys.memoryUsagePercent ?? 0) > 60 ? "bg-amber-500" : "bg-green-500"}`}
                     style={{ width: `${sys.memoryUsagePercent ?? 0}%` }}
                   />
                 </div>
@@ -278,7 +572,6 @@ function SystemResourcePanel({ snapshot }: { snapshot: StabilitySnapshot }) {
             )}
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="!p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -290,11 +583,8 @@ function SystemResourcePanel({ snapshot }: { snapshot: StabilitySnapshot }) {
           </CardContent>
         </Card>
       </div>
-
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">运行概况</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-sm">运行概况</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
@@ -335,23 +625,16 @@ export default function StabilityMonitor() {
     return unsub;
   }, []);
 
-  // 定时刷新系统资源
   useEffect(() => {
     if (!autoRefresh) return;
     const timer = setInterval(() => {
       setSnapshot(getStabilitySnapshot());
-    }, 5000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [autoRefresh]);
 
-  const handleRefresh = useCallback(() => {
-    setSnapshot(getStabilitySnapshot());
-  }, []);
-
-  const handleClear = useCallback(() => {
-    clearStabilityData();
-    setSnapshot(getStabilitySnapshot());
-  }, []);
+  const handleRefresh = useCallback(() => setSnapshot(getStabilitySnapshot()), []);
+  const handleClear = useCallback(() => { clearStabilityData(); setSnapshot(getStabilitySnapshot()); }, []);
 
   return (
     <div className="space-y-6 !p-6">
@@ -361,58 +644,71 @@ export default function StabilityMonitor() {
             <BarChart3 className="h-6 w-6" />
             稳定性监控
           </h1>
-          <p className="text-muted-foreground mt-1">请求级数据采集 · 第三方依赖监控 · 系统资源采集</p>
+          <p className="text-muted-foreground mt-1">核心健康指标 · 请求数据采集 · 第三方依赖 · 系统资源</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAutoRefresh(!autoRefresh)}>
             <RefreshCw className={`h-3 w-3 mr-1 ${autoRefresh ? "animate-spin" : ""}`} />
-            {autoRefresh ? "自动刷新中" : "已暂停"}
+            {autoRefresh ? "自动刷新" : "已暂停"}
           </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="h-3 w-3 mr-1" />
-            手动刷新
+            <RefreshCw className="h-3 w-3 mr-1" />刷新
           </Button>
           <Button variant="outline" size="sm" onClick={handleClear}>
-            <Trash2 className="h-3 w-3 mr-1" />
-            清空
+            <Trash2 className="h-3 w-3 mr-1" />清空
           </Button>
         </div>
       </div>
 
       <OverviewCards snapshot={snapshot} />
 
-      <Tabs defaultValue="requests" className="w-full">
-        <TabsList>
+      <Tabs defaultValue="successRate" className="w-full">
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="successRate" className="gap-1"><Gauge className="h-3 w-3" />成功率</TabsTrigger>
+          <TabsTrigger value="responseTime" className="gap-1"><Timer className="h-3 w-3" />响应时间</TabsTrigger>
+          <TabsTrigger value="qps" className="gap-1"><Zap className="h-3 w-3" />QPS</TabsTrigger>
+          <TabsTrigger value="errors" className="gap-1">
+            <ShieldAlert className="h-3 w-3" />错误
+            {snapshot.healthMetrics.errors.totalErrors > 0 && (
+              <Badge variant="destructive" className="text-xs ml-1">{snapshot.healthMetrics.errors.totalErrors}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="timeout" className="gap-1">
+            <Hourglass className="h-3 w-3" />超时
+            {snapshot.healthMetrics.timeout.timeoutCount > 0 && (
+              <Badge variant="secondary" className="text-xs ml-1">{snapshot.healthMetrics.timeout.timeoutCount}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="requests" className="gap-1">
-            <Activity className="h-3 w-3" />
-            请求级数据
-            {snapshot.requests.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1">{snapshot.requests.length}</Badge>
-            )}
+            <Activity className="h-3 w-3" />请求数据
+            {snapshot.requests.length > 0 && <Badge variant="secondary" className="text-xs ml-1">{snapshot.requests.length}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="thirdparty" className="gap-1">
-            <Globe className="h-3 w-3" />
-            第三方依赖
-            {snapshot.thirdPartyStats.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-1">{snapshot.thirdPartyStats.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="system" className="gap-1">
-            <Cpu className="h-3 w-3" />
-            系统资源
-          </TabsTrigger>
+          <TabsTrigger value="thirdparty" className="gap-1"><Globe className="h-3 w-3" />第三方</TabsTrigger>
+          <TabsTrigger value="system" className="gap-1"><Cpu className="h-3 w-3" />系统资源</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="successRate" className="mt-4">
+          <SuccessRatePanel hm={snapshot.healthMetrics} />
+        </TabsContent>
+        <TabsContent value="responseTime" className="mt-4">
+          <ResponseTimePanel hm={snapshot.healthMetrics} />
+        </TabsContent>
+        <TabsContent value="qps" className="mt-4">
+          <QpsPanel hm={snapshot.healthMetrics} />
+        </TabsContent>
+        <TabsContent value="errors" className="mt-4">
+          <ErrorPanel hm={snapshot.healthMetrics} />
+        </TabsContent>
+        <TabsContent value="timeout" className="mt-4">
+          <TimeoutPanel hm={snapshot.healthMetrics} />
+        </TabsContent>
         <TabsContent value="requests" className="mt-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center justify-between">
                 <span>请求记录（最近 {snapshot.requests.length} 条）</span>
                 {snapshot.summary.failedRequests > 0 && (
-                  <Badge variant="destructive" className="text-xs">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    {snapshot.summary.failedRequests} 个失败
-                  </Badge>
+                  <Badge variant="destructive" className="text-xs"><XCircle className="h-3 w-3 mr-1" />{snapshot.summary.failedRequests} 个失败</Badge>
                 )}
               </CardTitle>
             </CardHeader>
@@ -421,11 +717,9 @@ export default function StabilityMonitor() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="thirdparty" className="mt-4">
           <ThirdPartyPanel stats={snapshot.thirdPartyStats} />
         </TabsContent>
-
         <TabsContent value="system" className="mt-4">
           <SystemResourcePanel snapshot={snapshot} />
         </TabsContent>
