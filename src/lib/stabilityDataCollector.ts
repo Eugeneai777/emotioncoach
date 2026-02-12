@@ -76,6 +76,13 @@ let thirdPartyRecords: Map<string, RequestRecord[]> = new Map();
 let installed = false;
 let bootTime = Date.now();
 
+// QPS 追踪
+let qpsSamples: { time: number; count: number }[] = [];
+let peakQps = 0;
+let peakQpsTime = 0;
+let lastSampleTime = 0;
+let currentSecondCount = 0;
+
 type StabilityListener = (data: StabilitySnapshot) => void;
 let listeners: StabilityListener[] = [];
 
