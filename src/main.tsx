@@ -4,11 +4,14 @@ import App from "./App.tsx";
 import "./index.css";
 import { installErrorTracker } from "./lib/frontendErrorTracker";
 import { installApiErrorTracker } from "./lib/apiErrorTracker";
+import { installStabilityCollector } from "./lib/stabilityDataCollector";
 
 // Install global frontend error tracker
 installErrorTracker();
 // Install API error tracker
 installApiErrorTracker();
+// Install stability data collector
+installStabilityCollector();
 
 // Auto-reload once when a dynamically imported chunk is missing (stale deploy)
 const RELOAD_KEY = "__chunk_reload";

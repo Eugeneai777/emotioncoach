@@ -1,0 +1,393 @@
+/**
+ * 稳定性监控 - 数据采集层
+ * 1. 请求级数据采集：ID、时间戳、用户、IP、路径、来源、状态、错误、耗时
+ * 2. 第三方依赖监控：成功率、响应时间、错误类型、超时、限流
+ * 3. 系统资源采集：CPU、内存、连接数
+ */
+
+// ==================== 请求级数据 ====================
+
+export interface RequestRecord {
+  requestId: string;
+  timestamp: number;
+  userId?: string;
+  ip: string;
+  path: string;
+  /** H5 / voice / api */
+  source: 'h5' | 'voice' | 'api' | 'unknown';
+  success: boolean;
+  errorCode?: number;
+  errorType?: string;
+  /** 总耗时 ms */
+  totalDuration: number;
+  /** 第三方耗时 ms（仅外部 API 调用） */
+  thirdPartyDuration?: number;
+  statusCode?: number;
+  method: string;
+}
+
+// ==================== 第三方依赖监控 ====================
+
+export interface ThirdPartyStats {
+  name: string;
+  totalCalls: number;
+  successCalls: number;
+  successRate: number;
+  avgResponseTime: number;
+  maxResponseTime: number;
+  errorTypes: Record<string, number>;
+  timeoutCount: number;
+  rateLimitCount: number;
+}
+
+// ==================== 系统资源 ====================
+
+export interface SystemResources {
+  /** 逻辑 CPU 核数 */
+  cpuCores: number;
+  /** JS 堆使用 MB（仅 Chrome） */
+  memoryUsedMB: number | null;
+  /** JS 堆上限 MB（仅 Chrome） */
+  memoryLimitMB: number | null;
+  /** 内存使用率 % */
+  memoryUsagePercent: number | null;
+  /** 当前活跃连接数（通过 PerformanceObserver 估算） */
+  activeConnections: number;
+  /** 页面运行时长 s */
+  uptimeSeconds: number;
+  /** 采集时间 */
+  timestamp: number;
+}
+
+// ==================== 内部存储 ====================
+
+const MAX_RECORDS = 1000;
+const THIRD_PARTY_HOSTS: Record<string, string> = {
+  'ai.gateway.lovable.dev': 'Lovable AI',
+  'api.openai.com': 'OpenAI',
+  'api.elevenlabs.io': 'ElevenLabs',
+  'api.weixin.qq.com': '微信API',
+  'api.unsplash.com': 'Unsplash',
+  'api.resend.com': 'Resend',
+};
+
+let requestRecords: RequestRecord[] = [];
+let thirdPartyRecords: Map<string, RequestRecord[]> = new Map();
+let installed = false;
+let bootTime = Date.now();
+
+type StabilityListener = (data: StabilitySnapshot) => void;
+let listeners: StabilityListener[] = [];
+
+export interface StabilitySnapshot {
+  requests: RequestRecord[];
+  thirdPartyStats: ThirdPartyStats[];
+  systemResources: SystemResources;
+  summary: RequestSummary;
+}
+
+export interface RequestSummary {
+  totalRequests: number;
+  successRequests: number;
+  failedRequests: number;
+  successRate: number;
+  avgDuration: number;
+  p95Duration: number;
+  errorDistribution: Record<string, number>;
+  sourceDistribution: Record<string, number>;
+}
+
+// ==================== 工具函数 ====================
+
+function genRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function detectSource(url: string, init?: RequestInit): RequestRecord['source'] {
+  if (url.includes('voice') || url.includes('speech') || url.includes('audio') || url.includes('whisper')) {
+    return 'voice';
+  }
+  if (url.includes('/functions/v1/') || url.includes('/rest/v1/')) {
+    return 'api';
+  }
+  return 'h5';
+}
+
+function extractPath(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.pathname.slice(0, 120);
+  } catch {
+    return url.slice(0, 120);
+  }
+}
+
+function getThirdPartyName(url: string): string | null {
+  try {
+    const hostname = new URL(url).hostname;
+    for (const [host, name] of Object.entries(THIRD_PARTY_HOSTS)) {
+      if (hostname.includes(host)) return name;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function extractUserId(): string | undefined {
+  try {
+    const raw = localStorage.getItem('sb-vlsuzskvykddwrxbmcbu-auth-token');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed?.user?.id?.slice(0, 8) || undefined;
+    }
+  } catch { /* ignore */ }
+  return undefined;
+}
+
+function classifyErrorType(status?: number, isTimeout?: boolean): string | undefined {
+  if (isTimeout) return 'timeout';
+  if (!status) return 'network_error';
+  if (status === 429) return 'rate_limit';
+  if (status === 401 || status === 403) return 'auth_error';
+  if (status >= 500) return 'server_error';
+  if (status >= 400) return 'client_error';
+  return undefined;
+}
+
+// ==================== 请求级采集（拦截 fetch） ====================
+
+function shouldSkip(url: string): boolean {
+  return (
+    url.includes('/@vite') ||
+    url.includes('/node_modules/') ||
+    url.endsWith('.js') ||
+    url.endsWith('.css') ||
+    url.endsWith('.png') ||
+    url.endsWith('.svg') ||
+    url.endsWith('.woff') ||
+    url.endsWith('.woff2') ||
+    url.endsWith('.ico') ||
+    url.includes('hot-update')
+  );
+}
+
+function pushRecord(record: RequestRecord) {
+  requestRecords = [record, ...requestRecords].slice(0, MAX_RECORDS);
+
+  const tpName = getThirdPartyName(record.path);
+  if (tpName) {
+    const existing = thirdPartyRecords.get(tpName) || [];
+    thirdPartyRecords.set(tpName, [record, ...existing].slice(0, 200));
+  }
+
+  notifyListeners();
+}
+
+function notifyListeners() {
+  const snapshot = getStabilitySnapshot();
+  listeners.forEach((fn) => fn(snapshot));
+}
+
+// ==================== 第三方统计计算 ====================
+
+function computeThirdPartyStats(): ThirdPartyStats[] {
+  const stats: ThirdPartyStats[] = [];
+
+  for (const [name, records] of thirdPartyRecords.entries()) {
+    if (records.length === 0) continue;
+
+    const successCalls = records.filter((r) => r.success).length;
+    const times = records.map((r) => r.totalDuration).sort((a, b) => a - b);
+    const avg = times.reduce((s, t) => s + t, 0) / times.length;
+
+    const errorTypes: Record<string, number> = {};
+    let timeoutCount = 0;
+    let rateLimitCount = 0;
+
+    records.forEach((r) => {
+      if (!r.success && r.errorType) {
+        errorTypes[r.errorType] = (errorTypes[r.errorType] || 0) + 1;
+        if (r.errorType === 'timeout') timeoutCount++;
+        if (r.errorType === 'rate_limit') rateLimitCount++;
+      }
+    });
+
+    stats.push({
+      name,
+      totalCalls: records.length,
+      successCalls,
+      successRate: records.length > 0 ? (successCalls / records.length) * 100 : 100,
+      avgResponseTime: Math.round(avg),
+      maxResponseTime: times[times.length - 1] || 0,
+      errorTypes,
+      timeoutCount,
+      rateLimitCount,
+    });
+  }
+
+  return stats.sort((a, b) => a.successRate - b.successRate);
+}
+
+// ==================== 系统资源采集 ====================
+
+function collectSystemResources(): SystemResources {
+  const perf = performance as any;
+  let memoryUsedMB: number | null = null;
+  let memoryLimitMB: number | null = null;
+  let memoryUsagePercent: number | null = null;
+
+  if (perf.memory) {
+    memoryUsedMB = Math.round(perf.memory.usedJSHeapSize / 1024 / 1024);
+    memoryLimitMB = Math.round(perf.memory.jsHeapSizeLimit / 1024 / 1024);
+    memoryUsagePercent = memoryLimitMB > 0 ? Math.round((memoryUsedMB / memoryLimitMB) * 100) : null;
+  }
+
+  // 估算活跃连接数（基于 PerformanceResourceTiming）
+  let activeConnections = 0;
+  try {
+    const entries = performance.getEntriesByType('resource');
+    const recent = entries.filter((e) => e.startTime > performance.now() - 60000);
+    const uniqueOrigins = new Set(recent.map((e) => {
+      try { return new URL((e as PerformanceResourceTiming).name).origin; } catch { return ''; }
+    }));
+    activeConnections = uniqueOrigins.size;
+  } catch { /* ignore */ }
+
+  return {
+    cpuCores: navigator.hardwareConcurrency || 0,
+    memoryUsedMB,
+    memoryLimitMB,
+    memoryUsagePercent,
+    activeConnections,
+    uptimeSeconds: Math.round((Date.now() - bootTime) / 1000),
+    timestamp: Date.now(),
+  };
+}
+
+// ==================== 请求汇总统计 ====================
+
+function computeRequestSummary(): RequestSummary {
+  const total = requestRecords.length;
+  const success = requestRecords.filter((r) => r.success).length;
+  const failed = total - success;
+
+  const durations = requestRecords.map((r) => r.totalDuration).sort((a, b) => a - b);
+  const avg = total > 0 ? Math.round(durations.reduce((s, d) => s + d, 0) / total) : 0;
+  const p95 = total > 0 ? durations[Math.floor(total * 0.95)] || 0 : 0;
+
+  const errorDist: Record<string, number> = {};
+  const sourceDist: Record<string, number> = {};
+
+  requestRecords.forEach((r) => {
+    sourceDist[r.source] = (sourceDist[r.source] || 0) + 1;
+    if (!r.success && r.errorType) {
+      errorDist[r.errorType] = (errorDist[r.errorType] || 0) + 1;
+    }
+  });
+
+  return {
+    totalRequests: total,
+    successRequests: success,
+    failedRequests: failed,
+    successRate: total > 0 ? Math.round((success / total) * 1000) / 10 : 100,
+    avgDuration: avg,
+    p95Duration: Math.round(p95),
+    errorDistribution: errorDist,
+    sourceDistribution: sourceDist,
+  };
+}
+
+// ==================== 对外 API ====================
+
+export function getStabilitySnapshot(): StabilitySnapshot {
+  return {
+    requests: requestRecords,
+    thirdPartyStats: computeThirdPartyStats(),
+    systemResources: collectSystemResources(),
+    summary: computeRequestSummary(),
+  };
+}
+
+export function getRecentRequests(limit = 50): RequestRecord[] {
+  return requestRecords.slice(0, limit);
+}
+
+export function clearStabilityData() {
+  requestRecords = [];
+  thirdPartyRecords = new Map();
+  bootTime = Date.now();
+  notifyListeners();
+}
+
+export function subscribeStability(fn: StabilityListener): () => void {
+  listeners.push(fn);
+  return () => {
+    listeners = listeners.filter((l) => l !== fn);
+  };
+}
+
+// ==================== 安装采集器 ====================
+
+export function installStabilityCollector() {
+  if (installed) return;
+  installed = true;
+  bootTime = Date.now();
+
+  const originalFetch = window.fetch;
+
+  window.fetch = async function (...args) {
+    const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request)?.url || '';
+    const init = args[1] as RequestInit | undefined;
+
+    if (shouldSkip(url)) {
+      return originalFetch.apply(this, args);
+    }
+
+    const requestId = genRequestId();
+    const method = init?.method || (args[0] as Request)?.method || 'GET';
+    const start = performance.now();
+
+    try {
+      const response = await originalFetch.apply(this, args);
+      const duration = Math.round(performance.now() - start);
+      const isSuccess = response.ok;
+      const errorType = isSuccess ? undefined : classifyErrorType(response.status, false);
+
+      pushRecord({
+        requestId,
+        timestamp: Date.now(),
+        userId: extractUserId(),
+        ip: 'client',
+        path: extractPath(url),
+        source: detectSource(url, init),
+        success: isSuccess,
+        errorCode: isSuccess ? undefined : response.status,
+        errorType,
+        totalDuration: duration,
+        thirdPartyDuration: getThirdPartyName(url) ? duration : undefined,
+        statusCode: response.status,
+        method: method.toUpperCase(),
+      });
+
+      return response;
+    } catch (err: any) {
+      const duration = Math.round(performance.now() - start);
+      const isTimeout = err?.name === 'AbortError';
+
+      pushRecord({
+        requestId,
+        timestamp: Date.now(),
+        userId: extractUserId(),
+        ip: 'client',
+        path: extractPath(url),
+        source: detectSource(url, init),
+        success: false,
+        errorType: classifyErrorType(undefined, isTimeout),
+        totalDuration: duration,
+        thirdPartyDuration: getThirdPartyName(url) ? duration : undefined,
+        method: method.toUpperCase(),
+      });
+
+      throw err;
+    }
+  };
+}
