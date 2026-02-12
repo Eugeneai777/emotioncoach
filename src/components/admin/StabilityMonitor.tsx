@@ -562,7 +562,7 @@ function RequestList({ requests }: { requests: RequestRecord[] }) {
             <StatusBadge success={r.success} />
           </div>
           {expanded === r.requestId && (
-            <div className="px-3 pb-2 ml-4 text-xs space-y-1 bg-muted/30 rounded mb-1 p-3">
+            <div className="px-3 pb-2 ml-4 text-xs space-y-2 bg-muted/30 rounded mb-1 p-3">
               <div className="grid grid-cols-2 gap-2">
                 <span className="text-muted-foreground">请求ID:</span><span className="font-mono">{r.requestId}</span>
                 <span className="text-muted-foreground">用户ID:</span><span>{r.userId || "--"}</span>
@@ -573,6 +573,14 @@ function RequestList({ requests }: { requests: RequestRecord[] }) {
                   <><span className="text-muted-foreground">第三方耗时:</span><span>{fmtDuration(r.thirdPartyDuration)}</span></>
                 )}
               </div>
+              {!r.success && (() => {
+                const diag = diagnoseRequest(r);
+                return (
+                  <div className="mt-2 pt-2 border-t border-border/50">
+                    <DiagnosisCard diagnosis={diag} context={`请求: ${r.method} ${r.path}\n错误: ${r.errorType}\n状态码: ${r.statusCode}\n耗时: ${fmtDuration(r.totalDuration)}`} />
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
