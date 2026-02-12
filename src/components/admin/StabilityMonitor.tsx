@@ -7,7 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, CheckCircle, XCircle, Activity, Clock, Cpu,
   HardDrive, Wifi, AlertTriangle, BarChart3, Globe, Trash2,
-  Gauge, Timer, Zap, ShieldAlert, Hourglass,
+  Gauge, Timer, Zap, ShieldAlert, Hourglass, Bot, Mic, Shield,
+  CircleDot, TrendingDown, Ban,
 } from "lucide-react";
 import {
   getStabilitySnapshot,
