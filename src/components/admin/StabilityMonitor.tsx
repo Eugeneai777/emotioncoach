@@ -8,7 +8,7 @@ import {
   RefreshCw, CheckCircle, XCircle, Activity, Clock, Cpu,
   HardDrive, Wifi, AlertTriangle, BarChart3, Globe, Trash2,
   Gauge, Timer, Zap, ShieldAlert, Hourglass, Bot, Mic, Shield,
-  CircleDot, TrendingDown, Ban,
+  CircleDot, TrendingDown, Ban, Wrench, MessageSquareWarning, Lightbulb,
 } from "lucide-react";
 import {
   getStabilitySnapshot,
@@ -22,6 +22,15 @@ import {
   type DependencyAvailability,
   type DependencyStatus,
 } from "@/lib/stabilityDataCollector";
+import {
+  diagnoseErrorType,
+  diagnoseRequest,
+  diagnoseDependency,
+  diagnoseOverallHealth,
+  executeAutoFix,
+  severityBadgeClass,
+  type Diagnosis,
+} from "@/lib/stabilityDiagnosis";
 
 function fmtTime(ts: number) {
   if (!ts) return "--";
