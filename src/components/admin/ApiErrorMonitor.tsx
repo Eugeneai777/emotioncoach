@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  AlertTriangle, Ban, Clock, Server, Globe, Wifi, Trash2, Search, ChevronDown, ChevronUp, Copy,
+  AlertTriangle, Ban, Clock, Server, Globe, Wifi, Trash2, Search, ChevronDown, ChevronUp, Copy, Wrench,
 } from "lucide-react";
 import {
   type ApiError,
