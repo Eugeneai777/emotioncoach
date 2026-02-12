@@ -421,7 +421,110 @@ function percentile(sorted: number[], p: number): number {
   return sorted[Math.min(idx, sorted.length - 1)];
 }
 
-function computeHealthMetrics(): HealthMetrics {
+// ==================== 第三方健康监控计算 ====================
+
+const AI_HOSTS = ['ai.gateway.lovable.dev', 'api.openai.com'];
+const VOICE_HOSTS = ['api.elevenlabs.io'];
+
+function isHostMatch(path: string, hosts: string[]): boolean {
+  return hosts.some((h) => path.includes(h));
+}
+
+function buildServicePanel(records: RequestRecord[]): ServiceHealthPanel {
+  if (records.length === 0) {
+    return { successRate: 100, avgDuration: 0, errorRate: 0, rateLimitCount: 0, timeoutCount: 0, totalCalls: 0, peakLoad: 0, errorStats: {} };
+  }
+  const success = records.filter((r) => r.success).length;
+  const durations = records.map((r) => r.totalDuration);
+  const avg = Math.round(durations.reduce((s, d) => s + d, 0) / durations.length);
+  const errorStats: Record<string, number> = {};
+  let rlCount = 0, toCount = 0;
+  records.forEach((r) => {
+    if (!r.success && r.errorType) {
+      errorStats[r.errorType] = (errorStats[r.errorType] || 0) + 1;
+      if (r.errorType === 'rate_limit') rlCount++;
+      if (r.errorType === 'timeout') toCount++;
+    }
+  });
+
+  // Estimate peak load: group by second, find max
+  const secBuckets: Record<number, number> = {};
+  records.forEach((r) => {
+    const sec = Math.floor(r.timestamp / 1000);
+    secBuckets[sec] = (secBuckets[sec] || 0) + 1;
+  });
+  const peakLoad = Math.max(...Object.values(secBuckets), 0);
+
+  return {
+    successRate: Math.round((success / records.length) * 1000) / 10,
+    avgDuration: avg,
+    errorRate: Math.round(((records.length - success) / records.length) * 1000) / 10,
+    rateLimitCount: rlCount,
+    timeoutCount: toCount,
+    totalCalls: records.length,
+    peakLoad,
+    errorStats,
+  };
+}
+
+function determineDependencyStatus(stats: ThirdPartyStats): DependencyStatus {
+  // 熔断：连续5次以上失败 或 成功率低于50%
+  if (stats.successRate < 50) return '熔断中';
+  // 异常：成功率低于90%
+  if (stats.successRate < 90) return '异常';
+  // 降级：成功率低于99% 或 有限流
+  if (stats.successRate < 99 || stats.rateLimitCount > 0) return '降级';
+  return '正常';
+}
+
+function computeThirdPartyHealth(): ThirdPartyHealth {
+  // Collect AI and voice records from all request records
+  const aiRecords = requestRecords.filter((r) => isHostMatch(r.path, AI_HOSTS) || r.source === 'api' && r.path.includes('chat'));
+  const voiceRecords = requestRecords.filter((r) => isHostMatch(r.path, VOICE_HOSTS) || r.source === 'voice');
+
+  const ai = buildServicePanel(aiRecords);
+  const voice = buildServicePanel(voiceRecords);
+
+  // Build dependency availability from thirdPartyStats
+  const tpStats = computeThirdPartyStats();
+  const dependencies: DependencyAvailability[] = tpStats.map((s) => {
+    const tpRecords = thirdPartyRecords.get(s.name) || [];
+    const failedRecords = tpRecords.filter((r) => !r.success);
+    const lastError = failedRecords.length > 0 ? Math.max(...failedRecords.map((r) => r.timestamp)) : null;
+    const recent5min = tpRecords.filter((r) => r.timestamp >= Date.now() - 300000);
+    const recentErrors = recent5min.filter((r) => !r.success).length;
+
+    return {
+      name: s.name,
+      status: determineDependencyStatus(s),
+      successRate: s.successRate,
+      avgResponseTime: s.avgResponseTime,
+      lastErrorTime: lastError,
+      totalCalls: s.totalCalls,
+      recentErrors,
+    };
+  });
+
+  // Also add entries for hosts that haven't been called yet
+  const existingNames = new Set(dependencies.map((d) => d.name));
+  Object.values(THIRD_PARTY_HOSTS).forEach((name) => {
+    if (!existingNames.has(name)) {
+      dependencies.push({
+        name,
+        status: '正常',
+        successRate: 100,
+        avgResponseTime: 0,
+        lastErrorTime: null,
+        totalCalls: 0,
+        recentErrors: 0,
+      });
+    }
+  });
+
+  return { ai, voice, dependencies };
+}
+
+
   const now = Date.now();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
