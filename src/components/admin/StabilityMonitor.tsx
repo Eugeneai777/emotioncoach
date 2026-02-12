@@ -876,7 +876,7 @@ export default function StabilityMonitor() {
             <BarChart3 className="h-6 w-6" />
             稳定性监控
           </h1>
-          <p className="text-muted-foreground mt-1">核心健康指标 · 请求数据采集 · 第三方依赖 · 系统资源</p>
+          <p className="text-muted-foreground mt-1">核心健康指标 · AI/语音健康 · 依赖可用性 · 请求采集 · 系统资源</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAutoRefresh(!autoRefresh)}>
