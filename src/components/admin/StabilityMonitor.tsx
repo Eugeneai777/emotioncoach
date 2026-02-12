@@ -33,6 +33,17 @@ import {
   severityBadgeClass,
   type Diagnosis,
 } from "@/lib/stabilityDiagnosis";
+import {
+  getProtectionStatus,
+  subscribeProtection,
+  toggleMaintenance,
+  toggleDegradation,
+  resetCircuitBreaker,
+  type ProtectionStatus,
+  type CircuitState,
+  type DegradationStrategy,
+  type ProtectionEvent,
+} from "@/lib/autoProtection";
 
 function fmtTime(ts: number) {
   if (!ts) return "--";
