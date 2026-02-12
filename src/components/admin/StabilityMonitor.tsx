@@ -916,6 +916,9 @@ export default function StabilityMonitor() {
             {snapshot.requests.length > 0 && <Badge variant="secondary" className="text-xs ml-1">{snapshot.requests.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="thirdparty" className="gap-1"><Globe className="h-3 w-3" />第三方</TabsTrigger>
+          <TabsTrigger value="aiHealth" className="gap-1"><Bot className="h-3 w-3" />AI服务</TabsTrigger>
+          <TabsTrigger value="voiceHealth" className="gap-1"><Mic className="h-3 w-3" />语音服务</TabsTrigger>
+          <TabsTrigger value="depStatus" className="gap-1"><Shield className="h-3 w-3" />依赖状态</TabsTrigger>
           <TabsTrigger value="system" className="gap-1"><Cpu className="h-3 w-3" />系统资源</TabsTrigger>
         </TabsList>
 
@@ -951,6 +954,15 @@ export default function StabilityMonitor() {
         </TabsContent>
         <TabsContent value="thirdparty" className="mt-4">
           <ThirdPartyPanel stats={snapshot.thirdPartyStats} />
+        </TabsContent>
+        <TabsContent value="aiHealth" className="mt-4">
+          <AiServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.ai} />
+        </TabsContent>
+        <TabsContent value="voiceHealth" className="mt-4">
+          <VoiceServicePanel panel={snapshot.healthMetrics.thirdPartyHealth.voice} />
+        </TabsContent>
+        <TabsContent value="depStatus" className="mt-4">
+          <DependencyPanel dependencies={snapshot.healthMetrics.thirdPartyHealth.dependencies} />
         </TabsContent>
         <TabsContent value="system" className="mt-4">
           <SystemResourcePanel snapshot={snapshot} />
