@@ -196,9 +196,20 @@ export default function UxAnomalyMonitor() {
                         )}
                       </div>
                       <p className="text-sm text-foreground break-all">{a.message}</p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {a.userId && <span>用户: {a.userId}</span>}
-                        <span>{new Date(a.timestamp).toLocaleString("zh-CN")}</span>
+                      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-3">
+                          {a.userId && <span>用户: {a.userId}</span>}
+                          <span>{new Date(a.timestamp).toLocaleString("zh-CN")}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-primary hover:text-primary shrink-0"
+                          onClick={() => handleQuickFix(a)}
+                        >
+                          <Wrench className="h-3 w-3 mr-1" />
+                          修复
+                        </Button>
                       </div>
                     </div>
                   </div>

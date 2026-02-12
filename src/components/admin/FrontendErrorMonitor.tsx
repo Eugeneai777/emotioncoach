@@ -218,6 +218,15 @@ export default function FrontendErrorMonitor() {
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                           {format(err.timestamp, "HH:mm:ss")}
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-primary hover:text-primary"
+                          onClick={(ev) => handleQuickFix(err, ev)}
+                        >
+                          <Wrench className="h-3 w-3 mr-1" />
+                          修复
+                        </Button>
                         {isExpanded ? (
                           <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
                         ) : (

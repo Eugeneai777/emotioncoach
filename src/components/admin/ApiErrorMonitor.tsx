@@ -244,6 +244,14 @@ export default function ApiErrorMonitor() {
                       <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => copyDetail(err)}>
                         <Copy className="h-3 w-3 mr-1" /> 复制
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs px-2 text-primary hover:text-primary"
+                        onClick={() => handleQuickFix(err)}
+                      >
+                        <Wrench className="h-3 w-3 mr-1" /> 修复
+                      </Button>
                     </div>
 
                     {isOpen && (
