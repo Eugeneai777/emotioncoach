@@ -73,6 +73,40 @@ export default function FrontendErrorMonitor() {
     navigator.clipboard.writeText(text);
   };
 
+  const handleQuickFix = (err: FrontendError, e: React.MouseEvent) => {
+    e.stopPropagation();
+    switch (err.type) {
+      case 'white_screen':
+        toast.info("修复建议：正在尝试重载页面...");
+        setTimeout(() => window.location.reload(), 1500);
+        break;
+      case 'resource_error':
+        toast.info("修复建议：尝试重新加载资源...");
+        if (err.resourceUrl) {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = err.resourceUrl;
+          document.head.appendChild(link);
+          toast.success("已触发资源预加载");
+        }
+        break;
+      case 'network_error':
+        toast.info("修复建议：请检查网络连接，或稍后重试该操作");
+        if (err.requestInfo) {
+          navigator.clipboard.writeText(err.requestInfo);
+          toast.success("已复制请求地址，可手动重试");
+        }
+        break;
+      case 'js_error':
+      case 'promise_rejection':
+        toast.info("修复建议：已复制错误详情，请提交给开发团队排查");
+        navigator.clipboard.writeText(
+          `错误: ${err.message}\n页面: ${err.page}\n堆栈: ${err.stack || '无'}`
+        );
+        break;
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 统计卡片 */}
