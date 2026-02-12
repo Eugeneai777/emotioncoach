@@ -360,6 +360,123 @@ export default function PaymentMonitor() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 订单详情对话框 */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>订单详情</DialogTitle>
+            <DialogDescription>订单ID: {selectedOrder?.id}</DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* 基本信息 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">订单金额</p>
+                  <p className="text-lg font-bold text-primary">¥{selectedOrder.amount?.toFixed(2) || '0.00'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">订单状态</p>
+                  <Badge
+                    variant={
+                      selectedOrder.status === 'paid'
+                        ? 'default'
+                        : selectedOrder.status === 'failed'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                    className="mt-1"
+                  >
+                    {selectedOrder.status === 'paid'
+                      ? '已支付'
+                      : selectedOrder.status === 'failed'
+                      ? '失败'
+                      : '待支付'}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">用户ID</p>
+                  <p className="text-sm font-mono mt-1">{selectedOrder.user_id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">创建时间</p>
+                  <p className="text-sm mt-1">{format(new Date(selectedOrder.created_at), 'yyyy-MM-dd HH:mm:ss')}</p>
+                </div>
+              </div>
+
+              {/* 失败原因分析 */}
+              {selectedOrder.status === 'failed' && (
+                <div className="p-4 border border-destructive/30 bg-destructive/5 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-destructive mb-3">失败原因分析</h4>
+                      <ul className="space-y-2">
+                        {getFailureReasons(selectedOrder).map((reason, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive mt-2 flex-shrink-0" />
+                            {reason}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 支付时间分析 */}
+              {selectedOrder.paid_at && (
+                <div>
+                  <h4 className="font-semibold mb-2">支付时间线</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">订单创建:</span>
+                      <span>{format(new Date(selectedOrder.created_at), 'yyyy-MM-dd HH:mm:ss')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">支付完成:</span>
+                      <span>{format(new Date(selectedOrder.paid_at), 'yyyy-MM-dd HH:mm:ss')}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-muted-foreground">完成耗时:</span>
+                      <span className="font-medium">
+                        {Math.round((new Date(selectedOrder.paid_at).getTime() - new Date(selectedOrder.created_at).getTime()) / 1000 / 60)} 分钟
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 操作建议 */}
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold text-sm mb-2">处理建议</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  {selectedOrder.status === 'failed' ? (
+                    <>
+                      <li>• 联系用户确认支付意愿</li>
+                      <li>• 检查支付渠道可用性</li>
+                      <li>• 如超过期限，建议清除后重新创建订单</li>
+                    </>
+                  ) : selectedOrder.status === 'pending' ? (
+                    <>
+                      <li>• 发送支付提醒给用户</li>
+                      <li>• 检查订单是否已过期</li>
+                      <li>• 确认支付渠道正常运行</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• 订单已成功支付</li>
+                      <li>• 检查后续履约流程</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
