@@ -1016,7 +1016,7 @@ export default function StabilityMonitor() {
             )}
           </TabsTrigger>
           <TabsTrigger value="thirdparty" className="gap-1">
-            <Globe className="h-3.5 w-3.5" />三、第三方健康监控
+            <Globe className="h-3.5 w-3.5" />第三方健康监控
           </TabsTrigger>
         </TabsList>
 
