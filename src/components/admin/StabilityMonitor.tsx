@@ -912,38 +912,46 @@ function DependencyPanel({ dependencies }: { dependencies: DependencyAvailabilit
         <CardHeader><CardTitle className="text-sm">各依赖服务状态</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {sorted.map((dep) => (
-              <div key={dep.name} className={`flex items-center gap-4 p-3 rounded-lg border ${statusBgColor(dep.status)}`}>
-                <div className="flex items-center gap-2 w-36">
-                  {statusIcon(dep.status)}
-                  <span className="font-medium text-sm">{dep.name}</span>
+            {sorted.map((dep) => {
+              const diag = diagnoseDependency(dep.name, dep.status, dep.successRate, dep.recentErrors);
+              return (
+                <div key={dep.name} className="space-y-2">
+                  <div className={`flex items-center gap-4 p-3 rounded-lg border ${statusBgColor(dep.status)}`}>
+                    <div className="flex items-center gap-2 w-36">
+                      {statusIcon(dep.status)}
+                      <span className="font-medium text-sm">{dep.name}</span>
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${statusBadgeVariant(dep.status)}`}>
+                      {dep.status}
+                    </Badge>
+                    <div className="flex-1 grid grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">成功率</span>
+                        <p className={`font-medium ${rateColor(dep.successRate)}`}>{dep.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">平均耗时</span>
+                        <p className="font-medium">{fmtDuration(dep.avgResponseTime)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">总调用</span>
+                        <p className="font-medium">{dep.totalCalls}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">近5分钟错误</span>
+                        <p className={`font-medium ${dep.recentErrors > 0 ? "text-red-600" : ""}`}>{dep.recentErrors}</p>
+                      </div>
+                    </div>
+                    {dep.lastErrorTime && (
+                      <span className="text-xs text-muted-foreground">最后错误: {fmtTime(dep.lastErrorTime)}</span>
+                    )}
+                  </div>
+                  {dep.status !== '正常' && (
+                    <DiagnosisCard diagnosis={diag} context={`依赖: ${dep.name}, 状态: ${dep.status}, 成功率: ${dep.successRate.toFixed(1)}%`} />
+                  )}
                 </div>
-                <Badge variant="outline" className={`text-xs ${statusBadgeVariant(dep.status)}`}>
-                  {dep.status}
-                </Badge>
-                <div className="flex-1 grid grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">成功率</span>
-                    <p className={`font-medium ${rateColor(dep.successRate)}`}>{dep.successRate.toFixed(1)}%</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">平均耗时</span>
-                    <p className="font-medium">{fmtDuration(dep.avgResponseTime)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">总调用</span>
-                    <p className="font-medium">{dep.totalCalls}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">近5分钟错误</span>
-                    <p className={`font-medium ${dep.recentErrors > 0 ? "text-red-600" : ""}`}>{dep.recentErrors}</p>
-                  </div>
-                </div>
-                {dep.lastErrorTime && (
-                  <span className="text-xs text-muted-foreground">最后错误: {fmtTime(dep.lastErrorTime)}</span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
