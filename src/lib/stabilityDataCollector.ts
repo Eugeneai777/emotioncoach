@@ -236,6 +236,23 @@ function pushRecord(record: RequestRecord) {
     thirdPartyRecords.set(tpName, [record, ...existing].slice(0, 200));
   }
 
+  // QPS 追踪
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (nowSec === lastSampleTime) {
+    currentSecondCount++;
+  } else {
+    if (lastSampleTime > 0) {
+      qpsSamples.push({ time: lastSampleTime * 1000, count: currentSecondCount });
+      if (currentSecondCount > peakQps) {
+        peakQps = currentSecondCount;
+        peakQpsTime = lastSampleTime * 1000;
+      }
+      qpsSamples = qpsSamples.slice(-120);
+    }
+    lastSampleTime = nowSec;
+    currentSecondCount = 1;
+  }
+
   notifyListeners();
 }
 
