@@ -4,11 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import {
   RefreshCw, CheckCircle, XCircle, Activity, Clock, Cpu,
   HardDrive, Wifi, AlertTriangle, BarChart3, Globe, Trash2,
   Gauge, Timer, Zap, ShieldAlert, Hourglass, Bot, Mic, Shield,
   CircleDot, TrendingDown, Ban, Wrench, MessageSquareWarning, Lightbulb,
+  ShieldCheck, Lock, Unlock, Power, PowerOff, RotateCcw, Pause, Play,
 } from "lucide-react";
 import {
   getStabilitySnapshot,
