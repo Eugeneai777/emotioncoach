@@ -972,6 +972,279 @@ function DependencyPanel({ dependencies }: { dependencies: DependencyAvailabilit
   );
 }
 
+// ==================== 自动保护面板 ====================
+
+function CircuitStateBadge({ state }: { state: CircuitState }) {
+  const map: Record<CircuitState, { label: string; cls: string }> = {
+    closed: { label: '关闭', cls: 'bg-green-50 text-green-700 border-green-200' },
+    open: { label: '熔断中', cls: 'bg-red-50 text-red-700 border-red-200' },
+    half_open: { label: '半开探测', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+  };
+  const { label, cls } = map[state];
+  return <Badge variant="outline" className={`text-xs ${cls}`}>{label}</Badge>;
+}
+
+function AutoProtectionPanel() {
+  const [status, setStatus] = useState<ProtectionStatus>(getProtectionStatus);
+
+  useEffect(() => {
+    const unsub = subscribeProtection(() => setStatus(getProtectionStatus()));
+    const timer = setInterval(() => setStatus(getProtectionStatus()), 3000);
+    return () => { unsub(); clearInterval(timer); };
+  }, []);
+
+  const { rateLimit, degradation, circuitBreakers: breakers, maintenance, events } = status;
+
+  const strategyLabels: Record<DegradationStrategy, string> = {
+    backup_model: '切换备用模型',
+    simplified_response: '简化响应模式',
+    cached_data: '返回缓存数据',
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 1. 自动限流 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Gauge className="h-4 w-4" /> 自动限流
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">全局 RPS 阈值</p>
+              <p className="text-lg font-bold text-foreground">{rateLimit.config.globalRps}</p>
+              <p className="text-xs text-muted-foreground">当前动态值: {rateLimit.state.currentGlobalRps}</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">已拦截请求</p>
+              <p className="text-lg font-bold text-destructive">{rateLimit.state.blockedCount}</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">动态调整</p>
+              <p className="text-lg font-bold text-foreground">{rateLimit.config.dynamicAdjust ? '开启' : '关闭'}</p>
+              <p className="text-xs text-muted-foreground">灵敏度: {(rateLimit.config.sensitivity * 100).toFixed(0)}%</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">接口限流规则</p>
+              <p className="text-lg font-bold text-foreground">{Object.keys(rateLimit.config.pathLimits).length}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">接口级限流配置</p>
+            {Object.entries(rateLimit.config.pathLimits).map(([path, rule]) => (
+              <div key={path} className="flex items-center justify-between text-xs p-2 rounded border bg-muted/20">
+                <code className="text-foreground">{path}</code>
+                <span className="text-muted-foreground">{rule.maxPerMinute} 次/分钟</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. 自动降级 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <span className="flex items-center gap-2"><TrendingDown className="h-4 w-4" /> 自动降级</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{degradation.state.active ? '降级中' : '正常'}</span>
+              <Switch checked={degradation.state.active} onCheckedChange={(v) => toggleDegradation(v)} />
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">错误率阈值</p>
+              <p className="text-lg font-bold text-foreground">{degradation.config.errorThreshold}%</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">延迟阈值</p>
+              <p className="text-lg font-bold text-foreground">{degradation.config.latencyThreshold}ms</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">降级次数</p>
+              <p className="text-lg font-bold text-foreground">{degradation.state.fallbackCount}</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
+              <p className="text-xs text-muted-foreground">缓存命中</p>
+              <p className="text-lg font-bold text-foreground">{degradation.state.cacheHitCount}</p>
+            </div>
+          </div>
+          {degradation.state.active && (
+            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 space-y-1">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <p className="text-sm font-medium text-amber-800">降级策略生效中</p>
+              </div>
+              <p className="text-xs text-amber-700">
+                策略: {degradation.state.strategy ? strategyLabels[degradation.state.strategy] : '—'} |
+                原因: {degradation.state.reason} | 备用模型: {degradation.config.backupModel}
+              </p>
+            </div>
+          )}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">降级策略说明</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="p-2 rounded border bg-muted/20 text-xs space-y-1">
+                <p className="font-medium text-foreground">🔄 切换备用模型</p>
+                <p className="text-muted-foreground">自动切换到 {degradation.config.backupModel}</p>
+              </div>
+              <div className="p-2 rounded border bg-muted/20 text-xs space-y-1">
+                <p className="font-medium text-foreground">📝 简化响应模式</p>
+                <p className="text-muted-foreground">返回预设模板响应，减少对 AI 服务的依赖</p>
+              </div>
+              <div className="p-2 rounded border bg-muted/20 text-xs space-y-1">
+                <p className="font-medium text-foreground">💾 返回缓存数据</p>
+                <p className="text-muted-foreground">优先使用缓存响应，TTL: {degradation.config.cacheTtl}s</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 3. 自动熔断 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Ban className="h-4 w-4" /> 自动熔断
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {breakers.size === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">暂无熔断器记录，系统将在检测到第三方服务异常时自动创建</p>
+          ) : (
+            <div className="space-y-3">
+              {Array.from(breakers.entries()).map(([target, { config, state }]) => (
+                <div key={target} className="p-3 rounded-lg border bg-muted/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CircuitStateBadge state={state.state} />
+                      <span className="text-sm font-medium text-foreground">{target}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => resetCircuitBreaker(target)}>
+                      <RotateCcw className="h-3 w-3 mr-1" />重置
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-xs">
+                    <div><span className="text-muted-foreground">成功: </span><span className="text-green-600 font-medium">{state.successCount}</span></div>
+                    <div><span className="text-muted-foreground">失败: </span><span className="text-red-600 font-medium">{state.failureCount}</span></div>
+                    <div><span className="text-muted-foreground">阈值: </span><span className="font-medium text-foreground">{config.successRateThreshold}%</span></div>
+                    <div><span className="text-muted-foreground">恢复: </span><span className="font-medium text-foreground">{config.recoveryTimeout}s</span></div>
+                  </div>
+                  {state.state === 'open' && state.openedAt && (
+                    <p className="text-xs text-red-600">熔断于 {new Date(state.openedAt).toLocaleTimeString('zh-CN', { hour12: false })}，将在 {config.recoveryTimeout}s 后尝试半开探测</p>
+                  )}
+                  {state.state === 'half_open' && (
+                    <p className="text-xs text-amber-600">半开探测中，连续成功 {state.consecutiveSuccesses}/{config.halfOpenMaxRequests} 次后恢复</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="p-2 rounded border bg-muted/20 text-xs space-y-1">
+            <p className="font-medium text-foreground">熔断恢复机制</p>
+            <p className="text-muted-foreground">成功率低于阈值自动熔断 → 等待恢复超时 → 进入半开探测 → 全部成功则恢复 / 任一失败则重新熔断</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 4. 自动维护模式 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              {maintenance.state.active ? <PowerOff className="h-4 w-4 text-red-500" /> : <Power className="h-4 w-4" />}
+              自动维护模式
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{maintenance.state.active ? '维护中' : '正常运行'}</span>
+              <Switch checked={maintenance.state.active} onCheckedChange={(v) => toggleMaintenance(v)} />
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {maintenance.state.active ? (
+            <div className="p-4 rounded-lg border border-red-200 bg-red-50 space-y-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <p className="text-sm font-bold text-red-800">系统维护中</p>
+              </div>
+              <p className="text-xs text-red-700">{maintenance.state.reason}</p>
+              <div className="flex items-center gap-4 text-xs text-red-700">
+                <span className="flex items-center gap-1"><Pause className="h-3 w-3" /> AI 调用已暂停</span>
+                {maintenance.state.enteredAt && (
+                  <span>进入时间: {new Date(maintenance.state.enteredAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-lg border border-green-200 bg-green-50">
+              <div className="flex items-center gap-2">
+                <Play className="h-4 w-4 text-green-600" />
+                <p className="text-sm font-medium text-green-800">系统正常运行中</p>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-2 rounded border bg-muted/20 text-xs space-y-1">
+              <p className="font-medium text-foreground">自动检测</p>
+              <p className="text-muted-foreground">{maintenance.config.autoDetect ? '开启' : '关闭'} — 连续 {maintenance.config.circuitBreakThreshold} 次熔断后自动进入</p>
+            </div>
+            <div className="p-2 rounded border bg-muted/20 text-xs space-y-1">
+              <p className="font-medium text-foreground">维护时行为</p>
+              <p className="text-muted-foreground">展示维护提示页面，暂停所有 AI 调用，等待服务恢复后自动退出</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 保护事件日志 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Activity className="h-4 w-4" /> 保护事件日志（最近 {Math.min(events.length, 20)} 条）
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {events.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">暂无保护事件</p>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {events.slice(0, 20).map((evt) => (
+                <div key={evt.id} className="flex items-start gap-2 text-xs p-2 rounded border bg-muted/20">
+                  <ProtectionEventIcon type={evt.type} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground">{evt.message}</p>
+                    <p className="text-muted-foreground mt-0.5">{new Date(evt.timestamp).toLocaleTimeString('zh-CN', { hour12: false })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ProtectionEventIcon({ type }: { type: ProtectionEvent['type'] }) {
+  switch (type) {
+    case 'rate_limit_triggered': return <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />;
+    case 'rate_limit_adjusted': return <Gauge className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />;
+    case 'degradation_activated': return <TrendingDown className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />;
+    case 'degradation_deactivated': return <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />;
+    case 'circuit_open': return <Ban className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />;
+    case 'circuit_half_open': return <Unlock className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />;
+    case 'circuit_closed': return <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />;
+    case 'maintenance_entered': return <PowerOff className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />;
+    case 'maintenance_exited': return <Power className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />;
+    default: return <Activity className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />;
+  }
+}
+
 // ==================== 主组件 ====================
 export default function StabilityMonitor() {
   const [snapshot, setSnapshot] = useState<StabilitySnapshot>(getStabilitySnapshot);
