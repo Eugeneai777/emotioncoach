@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  AlertTriangle, Ban, Clock, Server, Globe, Wifi, Trash2, Search, ChevronDown, ChevronUp, Copy,
+  AlertTriangle, Ban, Clock, Server, Globe, Wifi, Trash2, Search, ChevronDown, ChevronUp, Copy, Wrench,
 } from "lucide-react";
 import {
   type ApiError,
@@ -69,6 +69,35 @@ export default function ApiErrorMonitor() {
     const text = JSON.stringify(e, null, 2);
     navigator.clipboard.writeText(text);
     toast.success("已复制到剪贴板");
+  };
+
+  const handleQuickFix = (err: ApiError) => {
+    switch (err.errorType) {
+      case 'rate_limit':
+        toast.info("修复建议：触发了限流，建议等待 1 分钟后重试，或检查调用频率设置");
+        break;
+      case 'server_error':
+        toast.info("修复建议：服务端错误，已复制请求详情用于排查");
+        navigator.clipboard.writeText(
+          `接口: ${err.method} ${err.url}\n状态码: ${err.statusCode}\n错误: ${err.message}\n响应: ${err.responseBody || '无'}`
+        );
+        break;
+      case 'timeout':
+        toast.info("修复建议：请求超时，建议检查网络或增大超时阈值");
+        break;
+      case 'third_party':
+        toast.info("修复建议：第三方 API 异常，已复制详情。建议检查 API 密钥和配额");
+        navigator.clipboard.writeText(
+          `第三方接口: ${err.url}\n模型: ${err.modelName || '无'}\n错误: ${err.message}\n响应: ${err.responseBody || '无'}`
+        );
+        break;
+      case 'network_fail':
+        toast.info("修复建议：网络连接失败，请检查服务器状态和网络连接");
+        break;
+      default:
+        toast.info("修复建议：已复制错误详情，请提交给开发团队");
+        navigator.clipboard.writeText(JSON.stringify(err, null, 2));
+    }
   };
 
   return (
@@ -214,6 +243,14 @@ export default function ApiErrorMonitor() {
                       </Button>
                       <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => copyDetail(err)}>
                         <Copy className="h-3 w-3 mr-1" /> 复制
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs px-2 text-primary hover:text-primary"
+                        onClick={() => handleQuickFix(err)}
+                      >
+                        <Wrench className="h-3 w-3 mr-1" /> 修复
                       </Button>
                     </div>
 

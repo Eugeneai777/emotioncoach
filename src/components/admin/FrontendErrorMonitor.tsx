@@ -15,7 +15,9 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
+  Wrench,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   type FrontendError,
   getErrors,
@@ -69,6 +71,40 @@ export default function FrontendErrorMonitor() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleQuickFix = (err: FrontendError, e: React.MouseEvent) => {
+    e.stopPropagation();
+    switch (err.type) {
+      case 'white_screen':
+        toast.info("修复建议：正在尝试重载页面...");
+        setTimeout(() => window.location.reload(), 1500);
+        break;
+      case 'resource_error':
+        toast.info("修复建议：尝试重新加载资源...");
+        if (err.resourceUrl) {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = err.resourceUrl;
+          document.head.appendChild(link);
+          toast.success("已触发资源预加载");
+        }
+        break;
+      case 'network_error':
+        toast.info("修复建议：请检查网络连接，或稍后重试该操作");
+        if (err.requestInfo) {
+          navigator.clipboard.writeText(err.requestInfo);
+          toast.success("已复制请求地址，可手动重试");
+        }
+        break;
+      case 'js_error':
+      case 'promise_rejection':
+        toast.info("修复建议：已复制错误详情，请提交给开发团队排查");
+        navigator.clipboard.writeText(
+          `错误: ${err.message}\n页面: ${err.page}\n堆栈: ${err.stack || '无'}`
+        );
+        break;
+    }
   };
 
   return (
@@ -182,6 +218,15 @@ export default function FrontendErrorMonitor() {
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                           {format(err.timestamp, "HH:mm:ss")}
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-primary hover:text-primary"
+                          onClick={(ev) => handleQuickFix(err, ev)}
+                        >
+                          <Wrench className="h-3 w-3 mr-1" />
+                          修复
+                        </Button>
                         {isExpanded ? (
                           <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
                         ) : (
