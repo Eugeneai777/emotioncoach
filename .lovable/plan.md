@@ -1,62 +1,103 @@
 
-# 行业合伙人体系重构计划
 
-## 背景
+# 行业合伙人飞轮完整升级 — 自定义产品包 + Landing Page + 自由漏斗步骤 + 数据隔离
 
-行业合伙人与有劲/绽放合伙人在本质上不同：
-- 行业合伙人是**公司/机构**，不需要关联用户账号
-- 他们带入流量，可打造**自己的产品包**，有独立分成
-- 他们带入的用户可以继续成为有劲或绽放合伙人
+## 目标
 
-当前问题：`partners` 表的 `user_id` 字段是 `NOT NULL` 且有唯一约束（`partners_user_id_key`），导致无法创建不关联用户的行业合伙人。
+让每个行业合伙人（如知乐）可以：
+1. 管理自己的产品包，配置外部落地页链接
+2. 为每个 Campaign 设定专属外部 Landing Page
+3. **自由定义漏斗步骤**（不限6步，可以是3步、5步、8步，步骤名称和事件 key 都可自定义）
+4. 只看到自己 Campaign 下的转化数据
+
+## 数据库现状
+
+- `campaigns` 表：无 `landing_page_url`、无 `custom_funnel_steps`
+- `partner_products` 表：无 `landing_page_url`
+- `conversion_events` 表：有 `event_type`（text）和 `campaign_id`，已支持按 campaign 过滤
+
+---
 
 ## 实施步骤
 
 ### 第一步：数据库迁移
 
-1. **`user_id` 改为可选** — 行业合伙人不需要用户账号
-2. **唯一约束调整** — 将 `partners_user_id_key` 替换为部分唯一索引（仅对非空 `user_id` 生效）
-3. **外键约束调整** — 移除现有外键，重新添加允许 NULL 的外键
-4. **新增行业合伙人专属字段**：
-   - `custom_product_packages` (JSONB) — 自定义产品包配置
-   - `traffic_source` (TEXT) — 流量来源描述
-   - `settlement_cycle` (TEXT) — 结算周期（月结/季结等）
+为 `campaigns` 表新增：
 
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `landing_page_url` | TEXT | 外部落地页 URL |
+| `custom_funnel_steps` | JSONB | 自定义漏斗步骤数组，不限步数 |
+
+为 `partner_products` 表新增：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `landing_page_url` | TEXT | 产品专属外部落地页 |
+
+`custom_funnel_steps` 结构（数组长度不限）：
 ```text
-迁移 SQL 概要:
-- ALTER TABLE partners ALTER COLUMN user_id DROP NOT NULL
-- DROP CONSTRAINT partners_user_id_key
-- CREATE UNIQUE INDEX partners_user_id_unique ON partners(user_id) WHERE user_id IS NOT NULL
-- 新增 custom_product_packages, traffic_source, settlement_cycle 字段
+[
+  {"key": "page_view", "label": "落地页访问"},
+  {"key": "click", "label": "点击CTA"},
+  {"key": "complete_test", "label": "完成测评"},
+  {"key": "payment", "label": "成交"}
+]
 ```
 
-### 第二步：前端创建逻辑修改
+合伙人可以自由增删步骤，每个步骤由 `key`（对应 `conversion_events.event_type`）和 `label`（显示名称）组成。
 
-修改 `IndustryPartnerManagement.tsx`：
-- 创建行业合伙人时 **不传 `user_id`**（设为 NULL）
-- 新增产品包配置表单（可选）
-- 新增流量来源、结算周期字段
-- 移除获取当前管理员 ID 作为 `user_id` 的逻辑
+### 第二步：PartnerProducts 增强
 
-### 第三步：行业合伙人归因机制
+修改 `src/components/partner/PartnerProducts.tsx`：
+- 表单新增「落地页 URL」输入框，提示填写外部网站链接
+- 表格新增落地页列（可点击跳转，带外链图标）
 
-行业合伙人的推广码（IND-XXXXXX）工作方式：
-- 用户通过行业合伙人的推广链接进入平台
-- 在 `partner_referrals` 表中记录归因关系
-- 这些用户后续可以独立成为有劲或绽放合伙人
-- 行业合伙人从其带入用户的消费中获得分成
+### 第三步：PartnerCampaigns 增强
 
-### 技术细节
+修改 `src/components/partner/PartnerCampaigns.tsx`：
+- 表单新增「落地页 URL」输入框（外部链接）
+- 新增「漏斗步骤配置」区域：
+  - 提供几个常用预设模板可一键填充（如"标准6步"、"简化3步"）
+  - 动态添加/删除步骤行，每行包含 `key`（事件标识）和 `label`（显示名称）
+  - 可拖拽排序或上下移动
+  - 无固定步骤数上限
+- 新增「关联产品」下拉
 
-| 改动项 | 文件/位置 | 说明 |
-|--------|-----------|------|
-| 数据库迁移 | partners 表 | user_id 可选、唯一索引调整、新增字段 |
-| 创建逻辑 | IndustryPartnerManagement.tsx | user_id 设为 null，新增表单字段 |
-| 类型定义 | IndustryPartner 接口 | user_id 改为可选，新增字段类型 |
-| RLS 策略 | partners 表 | 确保 admin 可操作 user_id 为 null 的记录 |
+### 第四步：PartnerFlywheel 完整重构
 
-### 注意事项
+修改 `src/components/partner/PartnerFlywheel.tsx`：
 
-- 现有的有劲/绽放合伙人数据不受影响（它们的 `user_id` 不为空，部分唯一索引照常生效）
-- `process-referral` 边缘函数需要适配行业合伙人（`user_id` 可能为 null 时的防自推荐逻辑）
-- 佣金结算流程中，行业合伙人的佣金直接按 `custom_commission_rate_l1` 计算，无二级佣金
+**UI 重构为 Tabs 布局：**
+- Tab 1「漏斗分析」
+- Tab 2「Campaign 管理」（嵌入增强后的 PartnerCampaigns）
+- Tab 3「产品包」（嵌入增强后的 PartnerProducts）
+
+**漏斗分析 Tab 功能：**
+- Campaign 下拉筛选器（全部 / 单个 Campaign）
+- **动态漏斗图**：根据选中 Campaign 的 `custom_funnel_steps` 渲染任意步数的梯形漏斗
+  - 查询 `conversion_events` 按该合伙人的 `campaign_id` 过滤
+  - 按每个步骤的 `key` 统计事件数
+  - 计算相邻步骤间的环节转化率
+  - 漏斗图高度和颜色梯度自动适配步骤数量
+- 统计卡片（曝光、成交、收入、ROI）
+- AI 最弱环节诊断（转化率最低的环节）
+- 「AI 策略分析」按钮：调用 `flywheel-ai-analysis` 边缘函数，传 `partner_id`
+
+### 数据隔离
+
+已由现有架构保证：
+- `campaigns.partner_id` 筛选自己的活动
+- `conversion_events.campaign_id` 筛选自己活动的事件
+- `partner_products.partner_id` 筛选自己的产品
+- 合伙人永远看不到其他合伙人或全平台的数据
+
+### 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| 数据库迁移 | `campaigns` +2字段，`partner_products` +1字段 |
+| `src/components/partner/PartnerProducts.tsx` | 新增落地页 URL 字段 |
+| `src/components/partner/PartnerCampaigns.tsx` | 新增落地页 URL、动态漏斗步骤配置器、关联产品下拉 |
+| `src/components/partner/PartnerFlywheel.tsx` | Tabs 布局 + 动态漏斗图 + AI 诊断 + AI 策略分析 |
+
