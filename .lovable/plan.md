@@ -1,97 +1,62 @@
 
 
-# 确保合伙人手机号可匹配 — 多路径兼容方案
+# 绽放合伙人付费页面 — 添加邀请码/兑换码入口
 
-## 问题本质
+## 当前状况
 
-绽放合伙人名单是以「姓名 + 手机号」导入的，自动匹配依赖 `profiles.phone` 字段。但用户有两条注册路径：
+- 53 条绽放合伙人邀请全部为 `pending`（无人成功领取）
+- 三层自动匹配机制已部署（邀请链接 claim、手机号匹配、登录静默检查），但大部分用户通过微信注册，`profiles.phone` 为空，自动匹配无法触发
+- 用户直接进入测评/训练营页面时，仍看到 ¥9.9 和 ¥299 的支付要求
 
-```text
-路径 A：手机号注册 → profiles.phone 已填 → 可以匹配 (OK)
-路径 B：微信登录注册 → profiles.phone 为空 → 无法匹配 (问题所在)
-```
+## 解决方案
 
-大部分绽放合伙人通过微信注册，所以手机号字段为空，自动匹配失效。
+在 **AssessmentPayDialog**（¥9.9 测评支付弹窗）和 **WealthCampIntro**（¥299 训练营页面）中增加「我有邀请码」入口，让合伙人可以直接输入 `BLOOM-XXXX` 邀请码，跳过支付并自动开通权益。
 
-## 解决方案：三层保障
+同时修复 `auto-claim-bloom-invitation` 边缘函数中的 `getClaims` 调用（改用更可靠的 `getUser`），确保自动匹配在所有环境下稳定工作。
 
-### 第一层：邀请链接直接携带邀请码（已有，优化体验）
+## 实现步骤
 
-当前邀请链接 `/invite/BLOOM-XXXX` 已经可以直接 claim。问题是用户微信登录后没有自动回到邀请页。
+### 步骤 1：修复边缘函数认证方式
 
-**优化**：在 `PartnerInvitePage` 跳转微信登录时，确保 `pending_partner_invite` 保存在 localStorage，并在微信回调（`WeChatOAuthCallback`）中自动执行 claim。这条路径**不依赖手机号**，直接用邀请码匹配。
+修改 `supabase/functions/auto-claim-bloom-invitation/index.ts`：
 
-**现状检查**：代码中 `WeChatOAuthCallback.tsx` 已有 `pending_partner_invite` 处理逻辑，但 `PartnerInvitePage` 跳转到 `/auth` 而非微信授权。需要修复跳转路径，确保微信环境下直接走微信 OAuth。
+- 将 `userClient.auth.getClaims(token)` 替换为 `userClient.auth.getUser()`
+- 用 `user.id` 获取 userId，与 `claim-partner-invitation` 和 `redeem-camp-activation-code` 保持一致
+- 同步修复 `supabase/functions/claim-partner-invitation/index.ts` 中的相同问题
 
-### 第二层：微信注册后强制补充手机号（新增）
+### 步骤 2：AssessmentPayDialog 添加邀请码入口
 
-对于没有通过邀请链接注册的微信用户，在首次登录后**引导补充手机号**：
+修改 `src/components/wealth-block/AssessmentPayDialog.tsx`：
 
-- 在 `wechat-oauth-process` 注册新用户后，返回 `isNewUser: true`
-- 前端已有逻辑：新用户跳转到 `/wechat-auth?mode=follow`
-- 在关注页或 onboarding 流程中，增加一个「请输入手机号」步骤，提示文案：**「输入您购课时使用的手机号，系统将自动为您开通合伙人权益」**
-- 手机号保存到 `profiles.phone` 后，立即触发 `auto-claim-bloom-invitation`
+- 在支付弹窗中增加「我有邀请码」按钮/链接
+- 点击后展示输入框，用户输入邀请码后调用 `claim-partner-invitation` 函数
+- 领取成功后自动关闭弹窗并触发 `onSuccess` 回调
+- 仅在 `packageKey` 为 `wealth_block_assessment` 时显示此入口（避免在其他产品中出现）
 
-### 第三层：后端函数 — 手机号自动匹配（新增）
+### 步骤 3：WealthCampIntro 添加邀请码入口
 
-创建 `auto-claim-bloom-invitation` 边缘函数：
+修改 `src/pages/WealthCampIntro.tsx`：
 
-- 用户保存手机号时自动调用
-- 也在每次登录时静默检查一次
-- 用 `profiles.phone` 匹配 `partner_invitations.invitee_phone`
-- 匹配成功 → 自动执行 claim 逻辑（复用现有权益发放代码）
+- 在购买按钮旁边或下方添加「我有邀请码」入口
+- 输入邀请码后调用 `claim-partner-invitation`
+- 成功后刷新购买状态（`refetchPurchase`），页面自动切换为已购买状态
 
-## 具体实施步骤
+### 步骤 4：同步修复 claim-partner-invitation 认证
 
-### 步骤 1：创建 `auto-claim-bloom-invitation` 边缘函数
+修改 `supabase/functions/claim-partner-invitation/index.ts`：
 
-新建 `supabase/functions/auto-claim-bloom-invitation/index.ts`：
-
-- 从 Authorization header 获取 user_id
-- 查询 `profiles` 获取 phone
-- 如果 phone 为空，直接返回 `{ matched: false }`
-- 用手机号后 11 位匹配 `partner_invitations`（status='pending', partner_type='bloom'）
-- 匹配成功 → 执行与 `claim-partner-invitation` 相同的权益发放逻辑
-- 幂等：已是合伙人则返回 `{ already_partner: true }`
-
-### 步骤 2：优化邀请页微信登录跳转
-
-修改 `src/pages/PartnerInvitePage.tsx`：
-
-- 检测微信环境（navigator.userAgent 包含 MicroMessenger）
-- 微信环境下，点击「领取」按钮直接跳转微信 OAuth 授权，而非 `/auth` 页面
-- 确保 `pending_partner_invite` 在 localStorage 中正确设置
-
-### 步骤 3：手机号补充引导
-
-修改 `src/components/profile/PhoneNumberManager.tsx` 或新建专门组件：
-
-- 在保存手机号成功后，自动调用 `auto-claim-bloom-invitation`
-- 如果自动领取成功，弹出 toast 提示「恭喜，已自动开通绽放合伙人权益！」
-
-### 步骤 4：登录后静默检查
-
-修改 `src/hooks/useAuth.tsx`：
-
-- 在 `SIGNED_IN` 事件中，使用 sessionStorage 防重复，静默调用 `auto-claim-bloom-invitation`
-- 无 UI 干扰，后台完成
+- 与步骤 1 相同，将 `getClaims` 替换为 `getUser`
 
 ## 涉及文件
 
 | 文件 | 改动 |
 |------|------|
-| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 新建：手机号自动匹配并发放权益 |
-| `src/pages/PartnerInvitePage.tsx` | 修改：微信环境下正确跳转 OAuth |
-| `src/components/profile/PhoneNumberManager.tsx` | 修改：保存手机号后触发自动匹配 |
-| `src/hooks/useAuth.tsx` | 修改：登录后静默调用自动匹配 |
+| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 修复：getClaims → getUser |
+| `supabase/functions/claim-partner-invitation/index.ts` | 修复：getClaims → getUser |
+| `src/components/wealth-block/AssessmentPayDialog.tsx` | 新增：邀请码输入入口 |
+| `src/pages/WealthCampIntro.tsx` | 新增：邀请码输入入口 |
 
-## 用户体验流程
+## 用户体验
 
-```text
-路径 A（最优）：收到邀请链接 → 点击 → 微信登录 → 自动 claim → 权益到账
-路径 B（补救）：微信注册 → 补充手机号 → 自动匹配 → 权益到账
-路径 C（兜底）：任何时候登录 → 后台静默检查 → 如有匹配 → 权益到账
-```
-
-三层保障确保无论用户通过哪条路径注册，只要手机号与导入名单匹配，都能自动获得绽放合伙人权益。
+合伙人进入测评或训练营页面 → 看到支付弹窗 → 点击「我有邀请码」→ 输入 BLOOM-XXXX → 系统自动开通合伙人身份 + 免费权益 → 继续使用
 
