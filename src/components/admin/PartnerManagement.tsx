@@ -9,6 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Plus, Search, Flame, Gem, Zap } from "lucide-react";
 import { AddPartnerDialog } from "./AddPartnerDialog";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { AdminFilterBar } from "./shared/AdminFilterBar";
+import { AdminStatCard } from "./shared/AdminStatCard";
 import { format, differenceInDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
@@ -172,171 +175,147 @@ export function PartnerManagement() {
   }
 
   return (
-    <div className="space-y-4">
+    <AdminPageLayout
+      title="💪 有劲合伙人管理"
+      description={`共 ${partners.length} 位有劲合伙人`}
+      actions={
+        <Button onClick={() => setShowAddDialog(true)} className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
+          <Plus className="w-4 h-4" />
+          添加有劲合伙人
+        </Button>
+      }
+    >
       {/* 等级统计卡片 */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {Object.entries(LEVEL_CONFIG).map(([level, config]) => {
           const Icon = config.icon;
           return (
-            <Card 
-              key={level} 
-              className={`cursor-pointer transition-all hover:scale-105 ${levelFilter === level ? 'ring-2 ring-orange-500' : ''}`}
+            <div
+              key={level}
+              className={`cursor-pointer transition-all hover:scale-[1.02] ${levelFilter === level ? 'ring-2 ring-orange-500 rounded-xl' : ''}`}
               onClick={() => setLevelFilter(levelFilter === level ? 'all' : level)}
             >
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-gradient-to-r ${config.gradient}`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">{level} {config.name}</div>
-                    <div className="text-2xl font-bold">{levelStats[level as keyof typeof levelStats]} 人</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <AdminStatCard
+                label={`${level} ${config.name}`}
+                value={`${levelStats[level as keyof typeof levelStats]} 人`}
+                icon={Icon}
+                accent={`bg-gradient-to-r ${config.gradient} text-white`}
+              />
+            </div>
           );
         })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                💪 有劲合伙人管理
-              </CardTitle>
-              <CardDescription>
-                共 {partners.length} 位有劲合伙人
-              </CardDescription>
-            </div>
-            <Button onClick={() => setShowAddDialog(true)} className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
-              <Plus className="w-4 h-4" />
-              添加有劲合伙人
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Filters */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索推广码或用户名..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="等级筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部等级</SelectItem>
-                <SelectItem value="L1">L1 初级</SelectItem>
-                <SelectItem value="L2">L2 高级</SelectItem>
-                <SelectItem value="L3">L3 钻石</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="active">活跃</SelectItem>
-                <SelectItem value="suspended">已暂停</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Filters */}
+      <AdminFilterBar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="搜索推广码或用户名..."
+        totalCount={filteredPartners.length}
+      >
+        <Select value={levelFilter} onValueChange={setLevelFilter}>
+          <SelectTrigger className="w-[130px] h-9 text-sm"><SelectValue placeholder="等级筛选" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部等级</SelectItem>
+            <SelectItem value="L1">L1 初级</SelectItem>
+            <SelectItem value="L2">L2 高级</SelectItem>
+            <SelectItem value="L3">L3 钻石</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[130px] h-9 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="active">活跃</SelectItem>
+            <SelectItem value="suspended">已暂停</SelectItem>
+          </SelectContent>
+        </Select>
+      </AdminFilterBar>
 
-          {/* Table */}
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
+      {/* Table */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>用户</TableHead>
+                <TableHead>推广码</TableHead>
+                <TableHead>等级</TableHead>
+                <TableHead>佣金比例</TableHead>
+                <TableHead className="text-right">预购数量</TableHead>
+                <TableHead>有效期</TableHead>
+                <TableHead className="text-right">总收益</TableHead>
+                <TableHead className="text-right">推荐</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead>操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPartners.length === 0 ? (
                 <TableRow>
-                  <TableHead>用户</TableHead>
-                  <TableHead>推广码</TableHead>
-                  <TableHead>等级</TableHead>
-                  <TableHead>佣金比例</TableHead>
-                  <TableHead className="text-right">预购数量</TableHead>
-                  <TableHead>有效期</TableHead>
-                  <TableHead className="text-right">总收益</TableHead>
-                  <TableHead className="text-right">推荐</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>操作</TableHead>
+                  <TableCell colSpan={10} className="text-center text-muted-foreground">
+                    没有找到有劲合伙人
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPartners.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground">
-                      没有找到有劲合伙人
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredPartners.map((partner) => {
-                    const expiryStatus = getExpiryStatus(partner.prepurchase_expires_at);
-                    return (
-                      <TableRow key={partner.id}>
-                        <TableCell className="font-medium">
-                          {partner.profiles?.display_name || '未知用户'}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {partner.partner_code}
-                        </TableCell>
-                        <TableCell>
-                          <LevelBadge level={partner.partner_level || 'L1'} />
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {(partner.commission_rate_l1 * 100).toFixed(0)}% / {(partner.commission_rate_l2 * 100).toFixed(0)}%
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {partner.prepurchase_count || 0}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={expiryStatus.variant}>
-                            {expiryStatus.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          ¥{partner.total_earnings.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {partner.total_referrals}/{partner.total_l2_referrals}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={partner.status === 'active' ? 'default' : 'secondary'}>
-                            {partner.status === 'active' ? '活跃' : '已暂停'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleStatus(partner.id, partner.status)}
-                          >
-                            {partner.status === 'active' ? '暂停' : '启用'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              ) : (
+                filteredPartners.map((partner) => {
+                  const expiryStatus = getExpiryStatus(partner.prepurchase_expires_at);
+                  return (
+                    <TableRow key={partner.id}>
+                      <TableCell className="font-medium">
+                        {partner.profiles?.display_name || '未知用户'}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {partner.partner_code}
+                      </TableCell>
+                      <TableCell>
+                        <LevelBadge level={partner.partner_level || 'L1'} />
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {(partner.commission_rate_l1 * 100).toFixed(0)}% / {(partner.commission_rate_l2 * 100).toFixed(0)}%
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {partner.prepurchase_count || 0}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={expiryStatus.variant}>
+                          {expiryStatus.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        ¥{partner.total_earnings.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {partner.total_referrals}/{partner.total_l2_referrals}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={partner.status === 'active' ? 'default' : 'secondary'}>
+                          {partner.status === 'active' ? '活跃' : '已暂停'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(partner.id, partner.status)}
+                        >
+                          {partner.status === 'active' ? '暂停' : '启用'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
       <AddPartnerDialog 
         open={showAddDialog} 
         onOpenChange={setShowAddDialog}
         onSuccess={fetchPartners}
       />
-    </div>
+    </AdminPageLayout>
   );
 }

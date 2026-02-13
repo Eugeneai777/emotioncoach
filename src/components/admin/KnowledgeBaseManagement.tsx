@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Search, Database, BookOpen, Users, Tent, Package, Star } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { AdminStatCard } from "./shared/AdminStatCard";
 import KnowledgeBaseMatrix from "./KnowledgeBaseMatrix";
 import KnowledgeDocEditor from "./KnowledgeDocEditor";
 import {
@@ -305,87 +307,24 @@ export default function KnowledgeBaseManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">知识库管理</h2>
-          <p className="text-muted-foreground">管理AI客服的知识库内容</p>
-        </div>
+    <AdminPageLayout
+      title="知识库管理"
+      description="管理AI客服的知识库内容"
+      actions={
         <Button onClick={loadData} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
           刷新
         </Button>
-      </div>
-
+      }
+    >
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Database className="w-8 h-8 text-primary" />
-              <div>
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">总文档</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-blue-500" />
-              <div>
-                <div className="text-2xl font-bold">{stats.coachCount}</div>
-                <div className="text-sm text-muted-foreground">教练</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Tent className="w-8 h-8 text-purple-500" />
-              <div>
-                <div className="text-2xl font-bold">{stats.campCount}</div>
-                <div className="text-sm text-muted-foreground">训练营</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-orange-500" />
-              <div>
-                <div className="text-2xl font-bold">{stats.packageCount}</div>
-                <div className="text-sm text-muted-foreground">套餐</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Star className="w-8 h-8 text-amber-500" />
-              <div>
-                <div className="text-2xl font-bold">{stats.partnerCount}</div>
-                <div className="text-sm text-muted-foreground">合伙人</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-green-500" />
-              <div>
-                <div className="text-2xl font-bold">{stats.activeCount}</div>
-                <div className="text-sm text-muted-foreground">已启用</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <AdminStatCard label="总文档" value={stats.total} icon={Database} />
+        <AdminStatCard label="教练" value={stats.coachCount} icon={BookOpen} accent="bg-blue-500/10 text-blue-600" />
+        <AdminStatCard label="训练营" value={stats.campCount} icon={Tent} accent="bg-purple-500/10 text-purple-600" />
+        <AdminStatCard label="套餐" value={stats.packageCount} icon={Package} accent="bg-orange-500/10 text-orange-600" />
+        <AdminStatCard label="合伙人" value={stats.partnerCount} icon={Star} accent="bg-amber-500/10 text-amber-600" />
+        <AdminStatCard label="已启用" value={stats.activeCount} icon={Users} accent="bg-green-500/10 text-green-600" />
       </div>
 
       {/* Tabs */}
@@ -569,6 +508,6 @@ export default function KnowledgeBaseManagement() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminPageLayout>
   );
 }

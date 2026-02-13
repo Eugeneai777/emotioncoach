@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
 import { CoachFeatureMatrix } from "./CoachFeatureMatrix";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
 import {
   useCoachTemplates,
   useCreateCoachTemplate,
@@ -188,14 +189,15 @@ export function CoachTemplatesManagement() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">教练模板管理</h2>
+    <AdminPageLayout
+      title="教练模板管理"
+      actions={
         <Button onClick={() => setIsAICreatorOpen(true)}>
           <Sparkles className="h-4 w-4 mr-2" />
           AI智能创建
         </Button>
-      </div>
+      }
+    >
 
       {/* Feature Statistics */}
       <Card>
@@ -557,6 +559,6 @@ export function CoachTemplatesManagement() {
         onOpenChange={setIsAICreatorOpen}
         onTemplateCreated={handleAITemplateCreated}
       />
-    </div>
+    </AdminPageLayout>
   );
 }
