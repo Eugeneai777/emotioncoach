@@ -21,6 +21,7 @@ type AppRole = Database['public']['Enums']['app_role'];
 
 const ROLE_CONFIG: { role: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
   { role: 'admin', label: '管理员', description: '拥有后台管理全部权限', icon: <ShieldCheck className="h-4 w-4 text-red-500" /> },
+  { role: 'content_admin', label: '内容管理员', description: '仅可管理内容和举报，无法查看用户、订单、财务等', icon: <Shield className="h-4 w-4 text-orange-500" /> },
   { role: 'user', label: '普通用户', description: '标准用户权限', icon: <User className="h-4 w-4 text-blue-500" /> },
 ];
 
