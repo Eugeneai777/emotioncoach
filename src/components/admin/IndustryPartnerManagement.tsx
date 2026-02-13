@@ -20,13 +20,16 @@ interface IndustryPartner {
   partner_type: string;
   total_referrals: number;
   created_at: string;
-  user_id: string;
+  user_id: string | null;
   company_name: string | null;
   contact_person: string | null;
   contact_phone: string | null;
   cooperation_note: string | null;
   custom_commission_rate_l1: number | null;
   custom_commission_rate_l2: number | null;
+  traffic_source: string | null;
+  settlement_cycle: string | null;
+  custom_product_packages: any | null;
   nickname?: string;
 }
 
@@ -54,6 +57,8 @@ export default function IndustryPartnerManagement() {
     contact_phone: "",
     cooperation_note: "",
     commission_l1: "0.20",
+    traffic_source: "",
+    settlement_cycle: "monthly",
   });
 
   useEffect(() => {
@@ -65,7 +70,7 @@ export default function IndustryPartnerManagement() {
     try {
       const { data, error } = await supabase
         .from("partners")
-        .select("id, partner_code, status, partner_type, total_referrals, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2")
+        .select("id, partner_code, status, partner_type, total_referrals, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2, traffic_source, settlement_cycle, custom_product_packages")
         .eq("partner_type", "industry")
         .order("created_at", { ascending: false });
 
@@ -107,14 +112,13 @@ export default function IndustryPartnerManagement() {
 
     setCreating(true);
     try {
-      // Get current admin user id to use as placeholder user_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("未登录");
 
       const partnerCode = generatePartnerCode();
 
       const { error } = await supabase.from("partners").insert({
-        user_id: user.id,
+        user_id: null,
         partner_code: partnerCode,
         partner_type: "industry",
         partner_level: "L1",
@@ -130,6 +134,8 @@ export default function IndustryPartnerManagement() {
         custom_commission_rate_l2: 0,
         commission_rate_l1: parseFloat(form.commission_l1) || 0.20,
         commission_rate_l2: 0,
+        traffic_source: form.traffic_source.trim() || null,
+        settlement_cycle: form.settlement_cycle || "monthly",
       } as any);
 
       if (error) throw error;
@@ -142,6 +148,8 @@ export default function IndustryPartnerManagement() {
         contact_phone: "",
         cooperation_note: "",
         commission_l1: "0.20",
+        traffic_source: "",
+        settlement_cycle: "monthly",
       });
       fetchPartners();
     } catch (err: any) {
@@ -259,6 +267,26 @@ export default function IndustryPartnerManagement() {
                   placeholder="0.20 = 20%"
                 />
                 <p className="text-xs text-muted-foreground mt-1">{(parseFloat(form.commission_l1) * 100 || 0).toFixed(0)}%</p>
+              </div>
+              <div>
+                <Label>流量来源</Label>
+                <Input
+                  value={form.traffic_source}
+                  onChange={(e) => setForm((f) => ({ ...f, traffic_source: e.target.value }))}
+                  placeholder="例如: 微信公众号、线下门店"
+                />
+              </div>
+              <div>
+                <Label>结算周期</Label>
+                <select
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2.5 text-base"
+                  value={form.settlement_cycle}
+                  onChange={(e) => setForm((f) => ({ ...f, settlement_cycle: e.target.value }))}
+                >
+                  <option value="monthly">月结</option>
+                  <option value="quarterly">季结</option>
+                  <option value="yearly">年结</option>
+                </select>
               </div>
               <div>
                 <Label>合作备注</Label>

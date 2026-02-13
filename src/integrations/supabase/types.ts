@@ -5836,6 +5836,7 @@ export type Database = {
           created_at: string
           custom_commission_rate_l1: number | null
           custom_commission_rate_l2: number | null
+          custom_product_packages: Json | null
           default_entry_price: number | null
           default_entry_type: string | null
           default_product_type: string | null
@@ -5849,6 +5850,7 @@ export type Database = {
           prepurchase_count: number | null
           prepurchase_expires_at: string | null
           selected_experience_packages: string[] | null
+          settlement_cycle: string | null
           source: string
           source_admin_id: string | null
           source_note: string | null
@@ -5857,8 +5859,9 @@ export type Database = {
           total_earnings: number
           total_l2_referrals: number
           total_referrals: number
+          traffic_source: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           wecom_group_name: string | null
           wecom_group_qrcode_url: string | null
           withdrawn_amount: number
@@ -5874,6 +5877,7 @@ export type Database = {
           created_at?: string
           custom_commission_rate_l1?: number | null
           custom_commission_rate_l2?: number | null
+          custom_product_packages?: Json | null
           default_entry_price?: number | null
           default_entry_type?: string | null
           default_product_type?: string | null
@@ -5887,6 +5891,7 @@ export type Database = {
           prepurchase_count?: number | null
           prepurchase_expires_at?: string | null
           selected_experience_packages?: string[] | null
+          settlement_cycle?: string | null
           source?: string
           source_admin_id?: string | null
           source_note?: string | null
@@ -5895,8 +5900,9 @@ export type Database = {
           total_earnings?: number
           total_l2_referrals?: number
           total_referrals?: number
+          traffic_source?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           wecom_group_name?: string | null
           wecom_group_qrcode_url?: string | null
           withdrawn_amount?: number
@@ -5912,6 +5918,7 @@ export type Database = {
           created_at?: string
           custom_commission_rate_l1?: number | null
           custom_commission_rate_l2?: number | null
+          custom_product_packages?: Json | null
           default_entry_price?: number | null
           default_entry_type?: string | null
           default_product_type?: string | null
@@ -5925,6 +5932,7 @@ export type Database = {
           prepurchase_count?: number | null
           prepurchase_expires_at?: string | null
           selected_experience_packages?: string[] | null
+          settlement_cycle?: string | null
           source?: string
           source_admin_id?: string | null
           source_note?: string | null
@@ -5933,8 +5941,9 @@ export type Database = {
           total_earnings?: number
           total_l2_referrals?: number
           total_referrals?: number
+          traffic_source?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           wecom_group_name?: string | null
           wecom_group_qrcode_url?: string | null
           withdrawn_amount?: number
