@@ -1,36 +1,62 @@
 
+# 行业合伙人体系重构计划
 
-# 侧边栏合伙人分组重构
+## 背景
 
-## 目标
+行业合伙人与有劲/绽放合伙人在本质上不同：
+- 行业合伙人是**公司/机构**，不需要关联用户账号
+- 他们带入流量，可打造**自己的产品包**，有独立分成
+- 他们带入的用户可以继续成为有劲或绽放合伙人
 
-将"有劲合伙人"、"绽放合伙人"和"行业合作伙伴"统一归入一个新的"合伙人"分组，并将"行业合作伙伴"重命名为"行业合伙人"。
+当前问题：`partners` 表的 `user_id` 字段是 `NOT NULL` 且有唯一约束（`partners_user_id_key`），导致无法创建不关联用户的行业合伙人。
 
-## 具体变更
+## 实施步骤
 
-### 修改 `src/components/admin/AdminSidebar.tsx`
+### 第一步：数据库迁移
 
-**当前结构：**
-- "用户与订单" 分组下包含：用户账户、订单管理、有劲合伙人、行业合作伙伴
-- "绽放合伙人" 是独立分组，包含：绽放邀请管理、合伙人交付、单营交付等
+1. **`user_id` 改为可选** — 行业合伙人不需要用户账号
+2. **唯一约束调整** — 将 `partners_user_id_key` 替换为部分唯一索引（仅对非空 `user_id` 生效）
+3. **外键约束调整** — 移除现有外键，重新添加允许 NULL 的外键
+4. **新增行业合伙人专属字段**：
+   - `custom_product_packages` (JSONB) — 自定义产品包配置
+   - `traffic_source` (TEXT) — 流量来源描述
+   - `settlement_cycle` (TEXT) — 结算周期（月结/季结等）
 
-**调整后结构：**
+```text
+迁移 SQL 概要:
+- ALTER TABLE partners ALTER COLUMN user_id DROP NOT NULL
+- DROP CONSTRAINT partners_user_id_key
+- CREATE UNIQUE INDEX partners_user_id_unique ON partners(user_id) WHERE user_id IS NOT NULL
+- 新增 custom_product_packages, traffic_source, settlement_cycle 字段
+```
 
-1. **"用户与订单"分组**：移除"有劲合伙人"和"行业合作伙伴"，只保留"用户账户"和"订单管理"
+### 第二步：前端创建逻辑修改
 
-2. **新建"合伙人"分组**（位于"用户与订单"之后、"内容管理"之前），包含：
-   - 有劲合伙人 → /admin/partners
-   - 绽放邀请管理 → /admin/bloom-invitations
-   - 合伙人交付 → /admin/bloom-delivery
-   - 单营交付 → /admin/bloom-single
-   - 绽放利润核算 → /admin/bloom-profit
-   - 绽放月度利润 → /admin/bloom-monthly
-   - 绽放月度现金流 → /admin/bloom-cashflow
-   - 行业合伙人 → /admin/industry-partners（重命名）
+修改 `IndustryPartnerManagement.tsx`：
+- 创建行业合伙人时 **不传 `user_id`**（设为 NULL）
+- 新增产品包配置表单（可选）
+- 新增流量来源、结算周期字段
+- 移除获取当前管理员 ID 作为 `user_id` 的逻辑
 
-3. **删除原"绽放合伙人"独立分组**
+### 第三步：行业合伙人归因机制
 
-### 修改文件
+行业合伙人的推广码（IND-XXXXXX）工作方式：
+- 用户通过行业合伙人的推广链接进入平台
+- 在 `partner_referrals` 表中记录归因关系
+- 这些用户后续可以独立成为有劲或绽放合伙人
+- 行业合伙人从其带入用户的消费中获得分成
 
-仅需修改 `src/components/admin/AdminSidebar.tsx` 中的 `NAV_GROUPS` 数组配置。
+### 技术细节
 
+| 改动项 | 文件/位置 | 说明 |
+|--------|-----------|------|
+| 数据库迁移 | partners 表 | user_id 可选、唯一索引调整、新增字段 |
+| 创建逻辑 | IndustryPartnerManagement.tsx | user_id 设为 null，新增表单字段 |
+| 类型定义 | IndustryPartner 接口 | user_id 改为可选，新增字段类型 |
+| RLS 策略 | partners 表 | 确保 admin 可操作 user_id 为 null 的记录 |
+
+### 注意事项
+
+- 现有的有劲/绽放合伙人数据不受影响（它们的 `user_id` 不为空，部分唯一索引照常生效）
+- `process-referral` 边缘函数需要适配行业合伙人（`user_id` 可能为 null 时的防自推荐逻辑）
+- 佣金结算流程中，行业合伙人的佣金直接按 `custom_commission_rate_l1` 计算，无二级佣金
