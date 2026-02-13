@@ -34,6 +34,7 @@ import { BloomPartnerInvitations } from "./BloomPartnerInvitations";
 import { ActivationCodeManagement } from "./ActivationCodeManagement";
 import { ExperiencePackageManagement } from "./ExperiencePackageManagement";
 import CommunityPostsManagement from "./CommunityPostsManagement";
+import ContentAdminDashboard from "./ContentAdminDashboard";
 export type AdminRole = 'admin' | 'content_admin';
 
 interface AdminLayoutProps {
@@ -43,11 +44,6 @@ interface AdminLayoutProps {
 export function AdminLayout({ userRole }: AdminLayoutProps) {
   const location = useLocation();
   const isContentAdmin = userRole === 'content_admin';
-
-  // content_admin 访问 /admin 首页时重定向到社区动态
-  if (isContentAdmin && location.pathname === '/admin') {
-    return <Navigate to="/admin/community-posts" replace />;
-  }
 
   return (
     <SidebarProvider>
@@ -90,6 +86,10 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="share-cards" element={<ShareCardsAdmin />} />
                   <Route path="experience-items" element={<ExperiencePackageManagement />} />
                 </>
+              )}
+              {/* content_admin 专属首页 */}
+              {isContentAdmin && (
+                <Route index element={<ContentAdminDashboard />} />
               )}
               {/* 内容管理 - admin 和 content_admin 均可访问 */}
               <Route path="coaches" element={<CoachTemplatesManagement />} />
