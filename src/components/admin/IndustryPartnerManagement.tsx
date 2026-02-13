@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Loader2, Network, Plus, Building2 } from "lucide-react";
-import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
+import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AdminStatCard } from "./shared/AdminStatCard";
@@ -207,7 +207,7 @@ export default function IndustryPartnerManagement() {
             <p className="text-sm text-muted-foreground">合作备注：{selectedPartner.cooperation_note}</p>
           </div>
         )}
-        <PartnerFlywheel partnerId={selectedPartnerId} />
+        <FlywheelGrowthSystem partnerId={selectedPartnerId} />
       </AdminPageLayout>
     );
   }
