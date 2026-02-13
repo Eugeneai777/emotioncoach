@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 防止自推荐
-    if (partner.user_id === referred_user_id) {
+    // 防止自推荐（行业合伙人 user_id 为 null，跳过此检查）
+    if (partner.user_id && partner.user_id === referred_user_id) {
       return new Response(
         JSON.stringify({ error: 'Cannot refer yourself' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -109,12 +109,12 @@ Deno.serve(async (req) => {
       .update({ total_referrals: partner.total_referrals + 1 })
       .eq('id', partner.id);
 
-    // 5. 查找推荐人的上级（二级）
-    const { data: parentReferral } = await supabase
+    // 5. 查找推荐人的上级（二级）— 行业合伙人无 user_id，无二级关系
+    const parentReferral = partner.user_id ? (await supabase
       .from('partner_referrals')
       .select('partner_id, partners(*)')
       .eq('referred_user_id', partner.user_id)
-      .single();
+      .single()).data : null;
 
     if (parentReferral && parentReferral.partners) {
       // 创建二级推荐关系
