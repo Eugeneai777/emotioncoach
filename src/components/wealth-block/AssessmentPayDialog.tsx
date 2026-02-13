@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, QrCode, Smartphone, Copy, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle, QrCode, Smartphone, Copy, ExternalLink, Gift } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import QRCode from "qrcode";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
@@ -76,6 +77,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 🆕 轮询超时状态
   const [pollingTimeout, setPollingTimeout] = useState<boolean>(false);
   const [isForceChecking, setIsForceChecking] = useState<boolean>(false);
+  // 🆕 邀请码入口
+  const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [isClaimingInvite, setIsClaimingInvite] = useState(false);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
@@ -878,6 +883,34 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     }
   };
 
+  // 🆕 邀请码领取
+  const handleClaimInviteCode = async () => {
+    if (!inviteCode.trim() || isClaimingInvite) return;
+    setIsClaimingInvite(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("claim-partner-invitation", {
+        body: { invite_code: inviteCode.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      if (data?.success) {
+        toast.success(data.message || "邀请码领取成功！");
+        if (userId) {
+          onSuccess(userId);
+          onOpenChange(false);
+        }
+      }
+    } catch (err: any) {
+      console.error("[AssessmentPay] Claim invite error:", err);
+      toast.error(err?.message || "领取失败，请重试");
+    } finally {
+      setIsClaimingInvite(false);
+    }
+  };
+
   const stopPolling = () => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
@@ -1153,6 +1186,41 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             <div className="text-center py-8">
               <p className="text-red-500 mb-4">{errorMessage}</p>
               <Button onClick={createOrder}>重试</Button>
+            </div>
+          )}
+
+          {/* 🆕 邀请码入口 - 仅 wealth_block_assessment */}
+          {packageKey === 'wealth_block_assessment' && userId && status !== 'registering' && status !== 'paid' && (
+            <div className="border-t pt-3 mt-2">
+              {!showInviteCodeInput ? (
+                <button
+                  onClick={() => setShowInviteCodeInput(true)}
+                  className="flex items-center justify-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                >
+                  <Gift className="w-3.5 h-3.5" />
+                  我有邀请码
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground text-center">输入绽放合伙人邀请码</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="BLOOM-XXXX"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                      className="h-9 text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleClaimInviteCode}
+                      disabled={!inviteCode.trim() || isClaimingInvite}
+                      className="h-9 px-4 whitespace-nowrap"
+                    >
+                      {isClaimingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : '领取'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
