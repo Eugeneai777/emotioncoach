@@ -53,8 +53,7 @@ export default function IndustryPartnerManagement() {
     contact_person: "",
     contact_phone: "",
     cooperation_note: "",
-    commission_l1: "0.30",
-    commission_l2: "0.10",
+    commission_l1: "0.20",
   });
 
   useEffect(() => {
@@ -127,10 +126,10 @@ export default function IndustryPartnerManagement() {
         contact_person: form.contact_person.trim() || null,
         contact_phone: form.contact_phone.trim() || null,
         cooperation_note: form.cooperation_note.trim() || null,
-        custom_commission_rate_l1: parseFloat(form.commission_l1) || 0.30,
-        custom_commission_rate_l2: parseFloat(form.commission_l2) || 0.10,
-        commission_rate_l1: parseFloat(form.commission_l1) || 0.30,
-        commission_rate_l2: parseFloat(form.commission_l2) || 0.10,
+        custom_commission_rate_l1: parseFloat(form.commission_l1) || 0.20,
+        custom_commission_rate_l2: 0,
+        commission_rate_l1: parseFloat(form.commission_l1) || 0.20,
+        commission_rate_l2: 0,
       } as any);
 
       if (error) throw error;
@@ -142,8 +141,7 @@ export default function IndustryPartnerManagement() {
         contact_person: "",
         contact_phone: "",
         cooperation_note: "",
-        commission_l1: "0.30",
-        commission_l2: "0.10",
+        commission_l1: "0.20",
       });
       fetchPartners();
     } catch (err: any) {
@@ -249,33 +247,18 @@ export default function IndustryPartnerManagement() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>一级佣金比例</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="1"
-                    value={form.commission_l1}
-                    onChange={(e) => setForm((f) => ({ ...f, commission_l1: e.target.value }))}
-                    placeholder="0.30 = 30%"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">{(parseFloat(form.commission_l1) * 100 || 0).toFixed(0)}%</p>
-                </div>
-                <div>
-                  <Label>二级佣金比例</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="1"
-                    value={form.commission_l2}
-                    onChange={(e) => setForm((f) => ({ ...f, commission_l2: e.target.value }))}
-                    placeholder="0.10 = 10%"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">{(parseFloat(form.commission_l2) * 100 || 0).toFixed(0)}%</p>
-                </div>
+              <div>
+                <Label>佣金比例</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={form.commission_l1}
+                  onChange={(e) => setForm((f) => ({ ...f, commission_l1: e.target.value }))}
+                  placeholder="0.20 = 20%"
+                />
+                <p className="text-xs text-muted-foreground mt-1">{(parseFloat(form.commission_l1) * 100 || 0).toFixed(0)}%</p>
               </div>
               <div>
                 <Label>合作备注</Label>
@@ -339,7 +322,7 @@ export default function IndustryPartnerManagement() {
                 <TableHead>合伙人编码</TableHead>
                 <TableHead>联系人</TableHead>
                 <TableHead>一级佣金</TableHead>
-                <TableHead>二级佣金</TableHead>
+                
                 <TableHead className="text-right">推荐用户</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>操作</TableHead>
@@ -352,7 +335,7 @@ export default function IndustryPartnerManagement() {
                   <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
                   <TableCell>{p.contact_person || "-"}</TableCell>
                   <TableCell>{((p.custom_commission_rate_l1 ?? 0.30) * 100).toFixed(0)}%</TableCell>
-                  <TableCell>{((p.custom_commission_rate_l2 ?? 0.10) * 100).toFixed(0)}%</TableCell>
+                  
                   <TableCell className="text-right">{p.total_referrals}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
