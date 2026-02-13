@@ -1,82 +1,53 @@
 
-
-# 社区动态置顶与管理功能
+# 个人主页直接编辑昵称和头像
 
 ## 概述
-为管理员增加社区动态(帖子)的置顶和删除能力，包括数据库字段扩展、管理后台界面、以及社区前端展示置顶帖的逻辑。
+在用户个人主页的信息卡片区域增加"就地编辑"能力，点击头像可直接上传新头像，点击昵称可直接修改，无需跳转设置页面。
 
 ---
 
-## 1. 数据库变更
+## 修改文件
 
-在 `community_posts` 表新增两个字段：
+**`src/pages/UserProfile.tsx`**
 
-- `is_pinned` (boolean, 默认 false) -- 是否置顶
-- `pinned_at` (timestamp, 可空) -- 置顶时间，用于多条置顶帖排序
+### 1. 新增状态和逻辑
+- 添加 `isEditingName` 状态控制昵称编辑模式
+- 添加 `editName` 状态存储编辑中的昵称
+- 添加 `isUploadingAvatar` 状态控制头像上传状态
+- 添加隐藏的 `<input type="file">` 和 `fileInputRef`
+- 添加 `handleAvatarUpload` 函数：选择图片 -> 压缩 -> 上传到 `community-images` 存储桶 -> 更新 `profiles` 表 -> 刷新本地状态
+- 添加 `handleNameSave` 函数：更新 `profiles` 表的 `display_name` 字段
+
+### 2. 头像区域改造（仅自己的主页）
+- 头像上添加半透明遮罩层，悬停时显示相机图标，点击触发文件选择
+- 上传中显示 loading 动画
+- 复用已有的图片压缩逻辑（参考 `AvatarUploader` 组件）
+
+### 3. 昵称区域改造（仅自己的主页）
+- 昵称旁显示小编辑图标（Pencil），点击进入编辑模式
+- 编辑模式下昵称变为 Input 输入框 + 确认/取消按钮
+- 点击确认保存到数据库，点击取消恢复原值
+
+### 4. 保留"编辑资料"按钮
+- 顶部的"编辑资料"按钮保留，用于编辑更多字段（签名、心情等）
 
 ---
 
-## 2. 新增管理后台页面：社区动态管理
+## 交互流程
 
-在"内容管理"菜单组下新增 **"社区动态"** 菜单项，路由 `/admin/community-posts`。
+```text
+头像编辑:
+  点击头像 -> 弹出文件选择 -> 压缩图片 -> 上传存储桶 -> 更新数据库 -> 刷新页面显示
 
-页面功能：
-- **帖子列表表格**：显示标题/内容摘要、作者、类型、发布时间、点赞数、评论数、置顶状态
-- **筛选**：按类型(story/checkin等)、置顶状态筛选
-- **操作按钮**：
-  - **置顶 / 取消置顶**：切换 `is_pinned` 和 `pinned_at`
-  - **删除帖子**：确认弹窗后删除
-- 置顶帖用醒目标记(如图钉图标 + 背景色)区分
-
----
-
-## 3. 社区前端适配
-
-修改 `src/pages/Community.tsx` 中的查询逻辑：
-- 查询时按 `is_pinned DESC, pinned_at DESC NULLS LAST, created_at DESC` 排序
-- 置顶帖在瀑布流顶部展示，卡片上显示"置顶"角标
-
-修改 `src/components/community/WaterfallPostCard.tsx`：
-- 当 `is_pinned === true` 时，卡片左上角显示小图钉标记
+昵称编辑:
+  点击编辑图标 -> 输入框出现 -> 输入新昵称 -> 点击确认 -> 更新数据库 -> 刷新显示
+```
 
 ---
 
 ## 技术细节
 
-### 涉及文件
-
-| 操作 | 文件 |
-|------|------|
-| 数据库迁移 | 新增 `is_pinned`, `pinned_at` 字段 |
-| 新建 | `src/components/admin/CommunityPostsManagement.tsx` |
-| 编辑 | `src/components/admin/AdminSidebar.tsx` (加菜单) |
-| 编辑 | `src/pages/Admin.tsx` (加路由) |
-| 编辑 | `src/pages/Community.tsx` (排序逻辑) |
-| 编辑 | `src/components/community/WaterfallPostCard.tsx` (置顶角标) |
-
-### 管理组件核心逻辑
-
-```text
-CommunityPostsManagement
-  +-- 搜索框 + 筛选(类型/置顶状态)
-  +-- Table
-  |     +-- 内容摘要 | 作者 | 类型 | 点赞 | 评论 | 置顶状态 | 操作
-  |     +-- 操作: [置顶/取消置顶] [删除]
-  +-- 删除确认 AlertDialog
-```
-
-### 置顶/取消置顶 SQL 逻辑
-
-```text
-置顶: UPDATE community_posts SET is_pinned = true, pinned_at = now() WHERE id = ?
-取消: UPDATE community_posts SET is_pinned = false, pinned_at = null WHERE id = ?
-```
-
-### 社区查询排序调整
-
-```text
-.order('is_pinned', { ascending: false })
-.order('pinned_at', { ascending: false, nullsFirst: false })
-.order('created_at', { ascending: false })
-```
-
+- 图片压缩复用与 `AvatarUploader` 相同的 canvas 缩放逻辑（400x400, JPEG 0.85 质量）
+- 上传路径：`avatars/{timestamp}.{ext}`，存储桶 `community-images`（已存在且公开）
+- 仅当 `isOwnProfile === true` 时才显示编辑交互
+- 新增导入：`Pencil`, `Check`, `X`, `Camera`, `Loader2` 图标；`Input` 组件；`useToast`
