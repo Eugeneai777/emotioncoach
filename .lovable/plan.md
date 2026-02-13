@@ -1,48 +1,36 @@
 
 
-# 管理后台新增"行业合作伙伴"入口
+# 侧边栏合伙人分组重构
 
 ## 目标
 
-在管理后台侧边栏"用户与订单"分组中，"有劲合伙人"下方新增"行业合作伙伴"菜单项，链接到一个新的管理页面，用于查看和管理所有行业合作伙伴的飞轮数据、Campaign 和产品包。
+将"有劲合伙人"、"绽放合伙人"和"行业合作伙伴"统一归入一个新的"合伙人"分组，并将"行业合作伙伴"重命名为"行业合伙人"。
 
-## 实施内容
+## 具体变更
 
-### 1. 新建管理页面组件
+### 修改 `src/components/admin/AdminSidebar.tsx`
 
-新建 `src/components/admin/IndustryPartnerManagement.tsx`，内容包括：
-- **合作伙伴列表**：从 partners 表读取所有合作伙伴，展示名称、推荐用户数、Campaign 数、产品包数
-- **点击进入详情**：选中某个合作伙伴后，展示该合伙伙伴的：
-  - 飞轮统计卡片（曝光、测评完成、成交、ROI）
-  - Campaign 列表（筛选 partner_id）
-  - 产品包列表（筛选 partner_id）
-- 复用已有的 `PartnerFlywheel` 组件逻辑
+**当前结构：**
+- "用户与订单" 分组下包含：用户账户、订单管理、有劲合伙人、行业合作伙伴
+- "绽放合伙人" 是独立分组，包含：绽放邀请管理、合伙人交付、单营交付等
 
-### 2. 侧边栏新增菜单项
+**调整后结构：**
 
-在 `AdminSidebar.tsx` 的"用户与订单"分组中，"有劲合伙人"下方添加：
+1. **"用户与订单"分组**：移除"有劲合伙人"和"行业合作伙伴"，只保留"用户账户"和"订单管理"
 
-| 菜单项 | 路径 | 图标 |
-|--------|------|------|
-| 行业合作伙伴 | /admin/industry-partners | Network |
+2. **新建"合伙人"分组**（位于"用户与订单"之后、"内容管理"之前），包含：
+   - 有劲合伙人 → /admin/partners
+   - 绽放邀请管理 → /admin/bloom-invitations
+   - 合伙人交付 → /admin/bloom-delivery
+   - 单营交付 → /admin/bloom-single
+   - 绽放利润核算 → /admin/bloom-profit
+   - 绽放月度利润 → /admin/bloom-monthly
+   - 绽放月度现金流 → /admin/bloom-cashflow
+   - 行业合伙人 → /admin/industry-partners（重命名）
 
-### 3. 路由注册
+3. **删除原"绽放合伙人"独立分组**
 
-在 `AdminLayout.tsx` 中新增路由：
-```text
-<Route path="industry-partners" element={<IndustryPartnerManagement />} />
-```
+### 修改文件
 
-### 技术细节
-
-- 页面使用 AdminPageLayout 共享组件保持布局一致
-- 合作伙伴列表使用表格展示，支持搜索筛选
-- 选中合伙伙伴后以内嵌面板展示其飞轮数据，直接复用 PartnerFlywheel 组件（传入对应 partnerId）
-- 管理员可在此页面总览所有行业合伙伙伴的数据表现
-
-### 修改文件清单
-
-1. **新建** `src/components/admin/IndustryPartnerManagement.tsx`
-2. **修改** `src/components/admin/AdminSidebar.tsx` — 添加菜单项
-3. **修改** `src/components/admin/AdminLayout.tsx` — 添加路由
+仅需修改 `src/components/admin/AdminSidebar.tsx` 中的 `NAV_GROUPS` 数组配置。
 
