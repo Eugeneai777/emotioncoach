@@ -101,6 +101,21 @@ export function PhoneNumberManager() {
         title: "保存成功",
         description: phone ? "手机号已更新" : "手机号已移除",
       });
+
+      // 保存手机号后自动检查绽放合伙人匹配
+      if (phone) {
+        try {
+          const { data } = await supabase.functions.invoke('auto-claim-bloom-invitation');
+          if (data?.matched && data?.success) {
+            toast({
+              title: "🎉 恭喜！",
+              description: "已自动为您开通绽放合伙人权益",
+            });
+          }
+        } catch (err) {
+          console.error('Auto-claim after phone save failed:', err);
+        }
+      }
     } catch (error) {
       console.error("Error saving phone:", error);
       toast({
