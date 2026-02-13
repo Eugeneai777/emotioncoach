@@ -8,9 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Megaphone } from "lucide-react";
+import { Plus, Pencil, Trash2, Megaphone, X, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+interface FunnelStep {
+  key: string;
+  label: string;
+}
 
 interface Campaign {
   id: string;
@@ -19,6 +24,8 @@ interface Campaign {
   target_audience: string | null;
   media_channel: string | null;
   landing_product: string | null;
+  landing_page_url: string | null;
+  custom_funnel_steps: FunnelStep[] | null;
   promotion_cost: number;
   start_date: string | null;
   end_date: string | null;
@@ -31,6 +38,28 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   active: { label: "进行中", variant: "default" },
   paused: { label: "已暂停", variant: "outline" },
   completed: { label: "已完成", variant: "destructive" },
+};
+
+const FUNNEL_PRESETS: Record<string, FunnelStep[]> = {
+  standard6: [
+    { key: "page_view", label: "落地页访问" },
+    { key: "click", label: "点击CTA" },
+    { key: "complete_test", label: "测评完成" },
+    { key: "ai_round_5", label: "AI>=5轮" },
+    { key: "consult_click", label: "咨询点击" },
+    { key: "payment", label: "成交" },
+  ],
+  simple3: [
+    { key: "page_view", label: "访问" },
+    { key: "complete_test", label: "测评完成" },
+    { key: "payment", label: "成交" },
+  ],
+  ecommerce4: [
+    { key: "page_view", label: "浏览" },
+    { key: "add_cart", label: "加购" },
+    { key: "checkout", label: "下单" },
+    { key: "payment", label: "付款" },
+  ],
 };
 
 interface PartnerCampaignsProps {
@@ -48,10 +77,12 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
     target_audience: "",
     media_channel: "",
     landing_product: "",
+    landing_page_url: "",
     promotion_cost: 0,
     start_date: "",
     end_date: "",
     status: "draft",
+    funnel_steps: [] as FunnelStep[],
   });
 
   useEffect(() => { fetchCampaigns(); }, [partnerId]);
@@ -69,7 +100,7 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", traffic_source: "", target_audience: "", media_channel: "", landing_product: "", promotion_cost: 0, start_date: "", end_date: "", status: "draft" });
+    setForm({ name: "", traffic_source: "", target_audience: "", media_channel: "", landing_product: "", landing_page_url: "", promotion_cost: 0, start_date: "", end_date: "", status: "draft", funnel_steps: [] });
     setDialogOpen(true);
   };
 
@@ -81,10 +112,12 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
       target_audience: c.target_audience || "",
       media_channel: c.media_channel || "",
       landing_product: c.landing_product || "",
+      landing_page_url: c.landing_page_url || "",
       promotion_cost: c.promotion_cost || 0,
       start_date: c.start_date || "",
       end_date: c.end_date || "",
       status: c.status,
+      funnel_steps: c.custom_funnel_steps || [],
     });
     setDialogOpen(true);
   };
@@ -98,10 +131,12 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
       target_audience: form.target_audience || null,
       media_channel: form.media_channel || null,
       landing_product: form.landing_product || null,
+      landing_page_url: form.landing_page_url.trim() || null,
       promotion_cost: form.promotion_cost,
       start_date: form.start_date || null,
       end_date: form.end_date || null,
       status: form.status,
+      custom_funnel_steps: form.funnel_steps.length > 0 ? form.funnel_steps : null,
     };
 
     if (editing) {
@@ -125,6 +160,37 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
     fetchCampaigns();
   };
 
+  // Funnel step management
+  const addStep = () => {
+    setForm(f => ({ ...f, funnel_steps: [...f.funnel_steps, { key: "", label: "" }] }));
+  };
+
+  const removeStep = (idx: number) => {
+    setForm(f => ({ ...f, funnel_steps: f.funnel_steps.filter((_, i) => i !== idx) }));
+  };
+
+  const updateStep = (idx: number, field: "key" | "label", value: string) => {
+    setForm(f => ({
+      ...f,
+      funnel_steps: f.funnel_steps.map((s, i) => i === idx ? { ...s, [field]: value } : s),
+    }));
+  };
+
+  const moveStep = (idx: number, dir: -1 | 1) => {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= form.funnel_steps.length) return;
+    setForm(f => {
+      const steps = [...f.funnel_steps];
+      [steps[idx], steps[newIdx]] = [steps[newIdx], steps[idx]];
+      return { ...f, funnel_steps: steps };
+    });
+  };
+
+  const applyPreset = (preset: string) => {
+    const steps = FUNNEL_PRESETS[preset];
+    if (steps) setForm(f => ({ ...f, funnel_steps: [...steps] }));
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -142,6 +208,7 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
                 <TableHead>活动名称</TableHead>
                 <TableHead>流量来源</TableHead>
                 <TableHead>推广成本</TableHead>
+                <TableHead>漏斗步骤</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>开始日期</TableHead>
                 <TableHead>操作</TableHead>
@@ -149,14 +216,19 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">加载中...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">加载中...</TableCell></TableRow>
               ) : campaigns.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">暂无活动</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">暂无活动</TableCell></TableRow>
               ) : campaigns.map(c => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell>{c.traffic_source || "-"}</TableCell>
                   <TableCell>¥{(c.promotion_cost || 0).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {c.custom_funnel_steps && c.custom_funnel_steps.length > 0 ? (
+                      <span className="text-xs text-muted-foreground">{c.custom_funnel_steps.length}步</span>
+                    ) : <span className="text-xs text-muted-foreground">未设</span>}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={STATUS_MAP[c.status]?.variant || "secondary"}>
                       {STATUS_MAP[c.status]?.label || c.status}
@@ -177,7 +249,7 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
       </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "编辑活动" : "新建活动"}</DialogTitle>
           </DialogHeader>
@@ -191,6 +263,7 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
               <div><Label>目标人群</Label><Input value={form.target_audience} onChange={e => setForm(f => ({ ...f, target_audience: e.target.value }))} /></div>
               <div><Label>引流产品</Label><Input value={form.landing_product} onChange={e => setForm(f => ({ ...f, landing_product: e.target.value }))} /></div>
             </div>
+            <div><Label>落地页 URL</Label><Input value={form.landing_page_url} onChange={e => setForm(f => ({ ...f, landing_page_url: e.target.value }))} placeholder="https://example.com/landing" /></div>
             <div className="grid grid-cols-3 gap-3">
               <div><Label>推广成本</Label><Input type="number" value={form.promotion_cost} onChange={e => setForm(f => ({ ...f, promotion_cost: Number(e.target.value) }))} /></div>
               <div><Label>开始日期</Label><Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} /></div>
@@ -208,6 +281,31 @@ export function PartnerCampaigns({ partnerId }: PartnerCampaignsProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* 自定义漏斗步骤 */}
+            <div className="border rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">漏斗步骤配置</Label>
+                <div className="flex gap-1">
+                  <Button type="button" variant="outline" size="sm" className="text-xs h-7" onClick={() => applyPreset("standard6")}>标准6步</Button>
+                  <Button type="button" variant="outline" size="sm" className="text-xs h-7" onClick={() => applyPreset("simple3")}>简化3步</Button>
+                  <Button type="button" variant="outline" size="sm" className="text-xs h-7" onClick={() => applyPreset("ecommerce4")}>电商4步</Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">自定义转化漏斗的每个步骤。key 对应事件标识，名称用于展示。</p>
+              {form.funnel_steps.map((step, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-5 shrink-0">{idx + 1}</span>
+                  <Input className="flex-1 h-8 text-sm" placeholder="事件key" value={step.key} onChange={e => updateStep(idx, "key", e.target.value)} />
+                  <Input className="flex-1 h-8 text-sm" placeholder="显示名称" value={step.label} onChange={e => updateStep(idx, "label", e.target.value)} />
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveStep(idx, -1)} disabled={idx === 0}><ArrowUp className="h-3 w-3" /></Button>
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveStep(idx, 1)} disabled={idx === form.funnel_steps.length - 1}><ArrowDown className="h-3 w-3" /></Button>
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeStep(idx)}><X className="h-3 w-3 text-destructive" /></Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={addStep} className="w-full"><Plus className="h-3 w-3 mr-1" />添加步骤</Button>
+            </div>
+
             <Button onClick={handleSave}>{editing ? "保存修改" : "创建活动"}</Button>
           </div>
         </DialogContent>
