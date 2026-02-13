@@ -1,63 +1,74 @@
 
-
-# 新增"内容管理员"角色并授权张艳
+# 为内容管理员定制专属仪表板
 
 ## 概述
-创建一个权限受限的"内容管理员"角色，仅允许访问内容管理相关功能（社区动态、举报管理等），不能查看仪表板、用户账户、订单、财务等页面。
+为 `content_admin` 角色创建一个专属的内容管理仪表板，展示内容相关的统计数据（社区动态、举报、教练模板、课程等），替代当前直接跳转到社区动态页面的行为。同时优化社区动态管理页面的体验。
 
 ---
 
-## 改动范围
+## 改动内容
 
-### 1. 数据库变更
+### 1. 新建内容管理员仪表板组件
 
-- 在 `app_role` 枚举中添加 `content_admin` 值
-- 为张艳分配角色：`user_id = 'e8e9081d-...'`, `role = 'content_admin'`
-- 在 `community_posts` 表上为 `content_admin` 添加 SELECT / UPDATE / DELETE 策略
+**新文件**: `src/components/admin/ContentAdminDashboard.tsx`
 
-### 2. 前端代码变更
+展示以下统计卡片：
+- 社区动态总数 / 今日新增
+- 置顶帖数量
+- 待审核举报数
+- 教练模板数量
+- 训练营模板数量
+- 视频课程数量
 
-**`src/pages/Admin.tsx`**
-- 权限检查：允许 `admin` 或 `content_admin` 角色进入后台
-- 将用户角色传递给 `AdminLayout`
+下方区域：
+- 待处理举报提醒（带跳转链接）
+- 最近社区动态列表（最新5条，快速预览）
+- 快速操作入口（管理社区动态、查看举报、管理教练模板等）
+
+### 2. 修改路由和侧边栏
 
 **`src/components/admin/AdminLayout.tsx`**
-- 接收用户角色，根据角色过滤路由
-- `content_admin` 仅可访问内容管理和举报管理相关路由
-- `content_admin` 的默认首页改为 `/admin/community-posts`（而非仪表板）
+- `content_admin` 访问 `/admin` 时不再重定向，改为显示 `ContentAdminDashboard`
+- 为 `content_admin` 注册 index 路由
 
 **`src/components/admin/AdminSidebar.tsx`**
-- 接收用户角色，按角色过滤侧边栏分组
-- `content_admin` 仅显示：
-  - 内容管理（教练模板、真人教练、训练营、视频课程、知识库、生活馆工具、社区动态）
-  - 举报管理
-- 隐藏：概览仪表板、用户与订单、绽放合伙人、运营数据（除举报）、系统安全、系统配置
+- 在 `content_admin` 的导航分组中增加"概览"入口，指向 `/admin`
 
----
+### 3. 优化社区动态管理页面
 
-## 权限矩阵
-
-```text
-功能区域           | admin | content_admin
--------------------|-------|-------------
-概览仪表板         |  Yes  |  No
-用户账户/订单      |  Yes  |  No
-合伙人管理         |  Yes  |  No
-内容管理（全部）   |  Yes  |  Yes
-举报管理           |  Yes  |  Yes
-运营数据（其他）   |  Yes  |  No
-系统安全           |  Yes  |  No
-系统配置           |  Yes  |  No
-```
+**`src/components/admin/CommunityPostsManagement.tsx`**
+- 顶部增加统计摘要卡片（总帖数、今日新增、置顶数、总互动量）
+- 增加可见性筛选（公开/仅关注者/私密）
+- 表格增加可见性列显示
 
 ---
 
 ## 技术细节
 
-- 数据库：`ALTER TYPE app_role ADD VALUE 'content_admin'`
-- `Admin.tsx`：查询改为 `.in('role', ['admin', 'content_admin'])`，记录具体角色并传给 `AdminLayout`
-- `AdminLayout`：`content_admin` 角色访问 `/admin` 时重定向到 `/admin/community-posts`，仅注册白名单路由
-- `AdminSidebar`：每个导航分组增加 `roles` 字段标注允许访问的角色列表，侧边栏根据当前角色过滤显示
-- `community_posts` RLS：添加 `has_role(auth.uid(), 'content_admin')` 策略
-- 张艳 user_id：`e8e9081d-51d6-4506-a0a6-8b2f6bcf7093`
+### ContentAdminDashboard 数据查询
+使用 `@tanstack/react-query` 分别查询：
+- `community_posts`: 总数、今日新增、置顶数
+- `post_reports`: 待审核数
+- `coach_templates` / `camp_templates` / `video_courses`: 各自总数
+- `community_posts` 最近5条：用于"最新动态"列表
 
+### 路由变更
+```text
+AdminLayout.tsx:
+  - 移除 content_admin 的重定向逻辑
+  - 添加: <Route index element={<ContentAdminDashboard />} /> (在 content_admin 路由块中)
+
+AdminSidebar.tsx:
+  - 概览分组 roles 改为 ['admin', 'content_admin']
+  - content_admin 的概览项指向 /admin，label 改为"内容概览"
+  - 或新增一个 content_admin 专属概览分组
+```
+
+### 社区动态页面优化
+在现有表格上方添加4个统计卡片，使用与 AdminDashboard 相同的 StatCard 样式：
+- 总帖数
+- 今日新增
+- 置顶帖数
+- 总互动（点赞+评论总和）
+
+增加 visibility 筛选下拉框和表格列。
