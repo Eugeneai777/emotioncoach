@@ -1,123 +1,174 @@
 
 
-# 管理后台整体设计与排版优化
+# 有劲AI · 转化飞轮中控台 — 实施方案
 
-## 当前问题分析
+## 概述
 
-通过审查代码，发现管理后台存在以下设计与排版问题：
-
-1. **页面结构不统一**：部分页面有标题区域，部分没有；有的用 Card 包裹，有的直接用 div
-2. **表格不可横向滚动**：多个页面的表格缺少 `overflow-x-auto` 和 `min-w` 设置，导致窄屏下内容被压缩
-3. **筛选区风格不统一**：搜索框、下拉筛选的高度、间距各页面不同
-4. **统计卡片风格各异**：AdminDashboard、ContentAdminDashboard、CommunityPostsManagement 各自定义了不同风格的 StatCard
-5. **间距与排版不一致**：有的页面用 `space-y-6`，有的用 `space-y-4`，padding 不统一
+在现有管理后台（/admin）中新增"转化飞轮"模块，复用已有的 `conversion_events`、`orders`、`partners` 表，仅新建 `campaigns` 和 `ab_tests` 两张表。通过 Lovable AI 实现智能分析功能。
 
 ---
 
-## 优化方案
+## 一、数据库变更
 
-### 1. 创建统一的管理页面布局组件
+### 新建表 1：campaigns（推广活动）
 
-**新文件**: `src/components/admin/shared/AdminPageLayout.tsx`
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | uuid PK | 活动ID |
+| name | text | 活动名称 |
+| traffic_source | text | 流量来源（微信/抖音/小红书等） |
+| target_audience | text | 目标人群 |
+| media_channel | text | 媒体渠道 |
+| landing_product | text | 引流产品 |
+| promotion_cost | numeric | 推广成本 |
+| start_date | date | 开始日期 |
+| end_date | date | 结束日期 |
+| status | text | draft/active/paused/completed |
+| created_at / updated_at | timestamptz | 时间戳 |
 
-提供统一的页面标题区域（标题 + 描述 + 右侧操作按钮）和内容区域包裹，确保所有管理页面有一致的上下间距和排版。
+### 新建表 2：ab_tests（AB测试）
 
-### 2. 创建统一的统计卡片组件
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | uuid PK | 测试ID |
+| campaign_id | uuid FK | 关联活动 |
+| title_a | text | 标题A |
+| title_b | text | 标题B |
+| clicks_a | integer | A点击数 |
+| clicks_b | integer | B点击数 |
+| winner | text | 优胜版本(a/b/pending) |
+| ai_suggestion | text | AI生成的优化建议 |
+| status | text | running/completed |
+| created_at | timestamptz | 时间戳 |
 
-**新文件**: `src/components/admin/shared/AdminStatCard.tsx`
+### 扩展现有表
 
-统一 StatCard 的视觉样式：左侧带颜色图标区 + 右侧数值/标签，所有仪表板页面共用。替代当前 AdminDashboard、ContentAdminDashboard、CommunityPostsManagement 中各自内联定义的 StatCard。
+- `conversion_events`：新增 `campaign_id` 字段（可选，用于归因到具体活动）
 
-### 3. 创建统一的筛选栏组件
+### 复用现有表（不改动）
 
-**新文件**: `src/components/admin/shared/AdminFilterBar.tsx`
-
-统一搜索框 + 筛选下拉的布局样式（高度 h-9、间距 gap-2、响应式换行），提供 slot 模式供各页面放入自定义筛选器。
-
-### 4. 创建统一的数据表格容器
-
-**新文件**: `src/components/admin/shared/AdminTableContainer.tsx`
-
-包含 `border rounded-lg overflow-hidden` 外层 + `overflow-x-auto` 内层 + 可配置的 `min-w`，确保所有表格页面都能横向滚动。
-
-### 5. 逐页应用统一组件
-
-对以下页面进行改造（引入上述共享组件）：
-
-- **CommunityPostsManagement.tsx** - 使用 AdminPageLayout + AdminStatCard + AdminFilterBar + AdminTableContainer
-- **ContentAdminDashboard.tsx** - 使用 AdminPageLayout + AdminStatCard
-- **AdminDashboard.tsx** - 使用 AdminPageLayout + AdminStatCard
-- **UserAccountsTable.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
-- **OrdersTable.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
-- **PartnerManagement.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
-- **VideoCoursesManagement.tsx** - 使用 AdminPageLayout + AdminTableContainer
-- **KnowledgeBaseManagement.tsx** - 使用 AdminPageLayout
-- **CoachTemplatesManagement.tsx** - 使用 AdminPageLayout
-- **PackagesManagement.tsx** - 使用 AdminPageLayout + AdminTableContainer
-- **ReportsManagement.tsx** - 使用 AdminPageLayout + AdminTableContainer
-- **ActivationCodeManagement.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
-
-### 6. AdminLayout 主框架微调
-
-- 确保 `main` 区域使用 `overflow-auto` 支持双向滚动
-- 统一内容区 padding 为 `p-6`
+- `orders`：已有金额、用户、产品、合伙人ID等字段
+- `partners`：已有邀请人数、成交、收入、分成等字段
+- `profiles`：用户基础信息
+- `user_camp_purchases`：训练营购买记录
 
 ---
 
-## 技术细节
+## 二、管理后台导航
 
-### AdminPageLayout 结构
-
-```text
-+--------------------------------------------------+
-| 标题                              [操作按钮区域]  |
-| 描述文字                                          |
-+--------------------------------------------------+
-| {children}                                        |
-+--------------------------------------------------+
-```
-
-Props: `title`, `description`, `actions` (ReactNode), `children`
-
-### AdminStatCard 统一风格
+在 AdminSidebar 中新增"转化飞轮"分组：
 
 ```text
-+--[图标]--+--数值标签--+
-|  彩色底   |  123       |
-|  图标     |  标题      |
-+-----------+------------+
+转化飞轮
+  ├── 飞轮总览        /admin/flywheel
+  ├── Campaign实验室   /admin/flywheel-campaigns
+  ├── 漏斗行为追踪     /admin/flywheel-funnel
+  ├── 收入与ROI       /admin/flywheel-revenue
+  ├── 裂变追踪        /admin/flywheel-referral
+  └── AI策略中心      /admin/flywheel-ai
 ```
 
-Props: `label`, `value`, `icon`, `accent?`, `loading?`, `href?`, `subtitle?`
+---
 
-### AdminFilterBar 结构
+## 三、6个页面功能设计
+
+### 页面1：飞轮总览 Dashboard
+
+- 顶部4个统计卡片：今日曝光、今日测评完成、今日成交金额、总ROI
+- 中部：实时漏斗图（曝光 -> 点击 -> 测评完成 -> AI>=5轮 -> 咨询 -> 成交）
+- 底部：AI一句话诊断（调用 Lovable AI 生成）
+- 数据来源：聚合 `conversion_events` + `orders` 表
+
+### 页面2：Campaign实验室
+
+- CRUD管理推广活动（campaigns 表）
+- 每个 Campaign 展示关联的漏斗数据和ROI
+- 支持按状态筛选、按时间排序
+- 集成 AB 测试创建入口
+
+### 页面3：漏斗行为追踪
+
+- 基于现有 `ConversionAnalytics` 组件扩展
+- 增加 Campaign 维度筛选
+- 自动计算：点击率、测评完成率、咨询率、成交率
+- 支持按日/周/月查看趋势
+
+### 页面4：收入与ROI分析
+
+- 从 `orders` 表聚合收入数据
+- 按 Campaign 分组显示 ROI = 总收入 / 推广成本
+- LTV 计算 = 单用户平均收入
+- 产品转化排名图表
+
+### 页面5：裂变追踪
+
+- 复用现有 `partners` 表数据
+- 合伙人贡献排名表格
+- 裂变链路可视化（邀请 -> 注册 -> 成交）
+- 分成统计
+
+### 页面6：AI策略中心
+
+- "生成分析"按钮触发 Edge Function
+- Edge Function 读取最近7天的漏斗数据 + 订单数据
+- 调用 Lovable AI（google/gemini-3-flash-preview）生成：
+  - 最弱环节识别
+  - 最优流量来源
+  - 3个优化建议
+  - 2个AB测试方向
+  - 价格/产品结构建议
+  - 下周增长预测
+- 结果以卡片形式展示，支持历史记录查看
+
+---
+
+## 四、Edge Function
+
+### `flywheel-ai-analysis`
+
+- 从数据库读取7天内 conversion_events、orders、campaigns 数据
+- 组装成结构化 prompt
+- 调用 Lovable AI Gateway（https://ai.gateway.lovable.dev/v1/chat/completions）
+- 使用 tool calling 提取结构化输出（最弱环节、建议列表等）
+- 返回 JSON 给前端渲染
+
+---
+
+## 五、共振指数（高级功能）
+
+在 Dashboard 中增加共振指数计算：
 
 ```text
-[搜索框..............] [筛选1 v] [筛选2 v]  共 N 条
+共振指数 = AI对话轮数 x 测评完成度 x 情绪深度评分
 ```
 
-Props: `searchValue`, `onSearchChange`, `searchPlaceholder`, `children` (筛选器 slot), `totalCount?`
+从 `usage_records`（对话轮数）+ `conversion_events`（测评完成度）聚合计算，用于用户分层预测。
 
-### AdminTableContainer
+---
 
-```text
-<div className="border rounded-lg overflow-hidden">
-  <div className="overflow-x-auto">
-    <table className="w-full text-sm" style={{ minWidth }}>
-      ...
-    </table>
-  </div>
-</div>
-```
+## 六、自动报告
 
-Props: `minWidth?` (默认 800px), `children`
+- 在 AI 策略中心增加"生成周报"功能
+- 调用同一个 Edge Function，prompt 切换为周报模式
+- 输出：漏斗分析、合伙人排名、产品转化排名、策略建议
+- 以 Markdown 格式渲染，支持复制
 
-### 改造优先级
+---
 
-1. 先创建 4 个共享组件
-2. 改造 CommunityPostsManagement（当前页面）
-3. 改造两个 Dashboard
-4. 逐步改造其余表格页面
+## 七、权限控制
 
-所有改造保持功能和数据逻辑不变，仅替换布局容器和视觉组件。
+- 仅 `admin` 角色可访问全部飞轮页面
+- 复用现有 AdminLayout 的角色校验逻辑
+- 合伙人通过现有的 `/partner` 页面查看自己的数据（已有功能）
+
+---
+
+## 八、实施步骤
+
+1. 创建 `campaigns` 和 `ab_tests` 数据库表 + RLS 策略
+2. 扩展 `conversion_events` 表增加 `campaign_id` 字段
+3. 创建 `flywheel-ai-analysis` Edge Function
+4. 创建6个页面组件（使用统一的 AdminPageLayout 等共享组件）
+5. 更新 AdminSidebar 和 AdminLayout 路由
+6. 集成 AI 分析和周报生成功能
 
