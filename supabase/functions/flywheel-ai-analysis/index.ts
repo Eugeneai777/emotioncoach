@@ -42,33 +42,73 @@ serve(async (req) => {
       .limit(1);
 
     if (!roleData || roleData.length === 0) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: corsHeaders });
+      // Check if user is a partner (for partner-level access)
+      const { data: partnerData } = await serviceClient
+        .from("partners")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .limit(1);
+
+      const isPartner = partnerData && partnerData.length > 0;
+      if (!isPartner) {
+        return new Response(JSON.stringify({ error: "Access denied" }), { status: 403, headers: corsHeaders });
+      }
     }
 
-    const { mode } = await req.json();
+    const isAdmin = roleData && roleData.length > 0;
+    const { mode, partner_id } = await req.json();
+
+    // If partner is calling, force filter to their own data
+    let effectivePartnerId = partner_id;
+    if (!isAdmin) {
+      const { data: myPartner } = await serviceClient
+        .from("partners")
+        .select("id")
+        .eq("user_id", userId)
+        .limit(1);
+      effectivePartnerId = myPartner?.[0]?.id;
+    }
 
     // Fetch 7-day data
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+    // Build campaign query with optional partner filter
+    let campaignQuery = serviceClient
+      .from("campaigns")
+      .select("*")
+      .eq("status", "active");
+    if (effectivePartnerId) {
+      campaignQuery = campaignQuery.eq("partner_id", effectivePartnerId);
+    }
+
+    let eventsQuery = serviceClient
+      .from("conversion_events")
+      .select("event_type, created_at, campaign_id")
+      .gte("created_at", sevenDaysAgo);
+
     const [eventsRes, ordersRes, campaignsRes] = await Promise.all([
-      serviceClient
-        .from("conversion_events")
-        .select("event_type, created_at, campaign_id")
-        .gte("created_at", sevenDaysAgo),
+      eventsQuery,
       serviceClient
         .from("orders")
         .select("amount, status, created_at, package_name")
         .gte("created_at", sevenDaysAgo)
         .eq("status", "paid"),
-      serviceClient
-        .from("campaigns")
-        .select("*")
-        .eq("status", "active"),
+      campaignQuery,
     ]);
 
-    const events = eventsRes.data || [];
-    const orders = ordersRes.data || [];
     const campaigns = campaignsRes.data || [];
+    const campaignIds = campaigns.map((c: any) => c.id);
+    
+    // Filter events to partner's campaigns if applicable
+    let events = eventsRes.data || [];
+    if (effectivePartnerId && campaignIds.length > 0) {
+      events = events.filter((e: any) => campaignIds.includes(e.campaign_id));
+    } else if (effectivePartnerId && campaignIds.length === 0) {
+      events = [];
+    }
+    
+    const orders = ordersRes.data || [];
 
     // Calculate funnel stats
     const funnelStats = {

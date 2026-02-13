@@ -1698,6 +1698,7 @@ export type Database = {
           landing_product: string | null
           media_channel: string | null
           name: string
+          partner_id: string | null
           promotion_cost: number | null
           start_date: string | null
           status: string
@@ -1712,6 +1713,7 @@ export type Database = {
           landing_product?: string | null
           media_channel?: string | null
           name: string
+          partner_id?: string | null
           promotion_cost?: number | null
           start_date?: string | null
           status?: string
@@ -1726,6 +1728,7 @@ export type Database = {
           landing_product?: string | null
           media_channel?: string | null
           name?: string
+          partner_id?: string | null
           promotion_cost?: number | null
           start_date?: string | null
           status?: string
@@ -1733,7 +1736,15 @@ export type Database = {
           traffic_source?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coach_call_signals: {
         Row: {
@@ -5651,6 +5662,50 @@ export type Database = {
             columns: ["partner_level_rule_id"]
             isOneToOne: false
             referencedRelation: "partner_level_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_products: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          partner_id: string
+          price: number
+          product_key: string
+          product_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          partner_id: string
+          price?: number
+          product_key: string
+          product_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          partner_id?: string
+          price?: number
+          product_key?: string
+          product_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_products_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
