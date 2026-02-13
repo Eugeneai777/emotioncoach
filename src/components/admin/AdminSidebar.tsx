@@ -27,7 +27,8 @@ import {
   Share2,
   Tent,
   Key,
-  Gift
+  Gift,
+  MessageSquare
 } from "lucide-react";
 import {
   Sidebar,
@@ -88,7 +89,8 @@ const NAV_GROUPS = [
       { key: "camps", label: "训练营管理", path: "/admin/camps", icon: Tent },
       { key: "videos", label: "视频课程", path: "/admin/videos", icon: Video },
       { key: "knowledge", label: "知识库", path: "/admin/knowledge", icon: BookOpen },
-      { key: "tools", label: "生活馆工具", path: "/admin/tools", icon: Wrench }
+      { key: "tools", label: "生活馆工具", path: "/admin/tools", icon: Wrench },
+      { key: "community-posts", label: "社区动态", path: "/admin/community-posts", icon: MessageSquare }
     ]
   },
   {

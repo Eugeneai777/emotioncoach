@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Lock, Users } from "lucide-react";
+import { Heart, Lock, Users, Pin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useCallback, memo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,7 @@ interface WaterfallPostCardProps {
     };
     author_display_name?: string | null;
     author_avatar_url?: string | null;
+    is_pinned?: boolean;
   };
   isLiked?: boolean;
   onCardClick?: (postId: string) => void;
@@ -146,9 +147,16 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
 
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-200 group mb-4 touch-manipulation bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/40 hover:bg-white/90 dark:hover:bg-gray-800/70 shadow-sm hover:shadow-teal-100/50 dark:hover:shadow-teal-900/30"
+      className="relative overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-200 group mb-4 touch-manipulation bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/40 hover:bg-white/90 dark:hover:bg-gray-800/70 shadow-sm hover:shadow-teal-100/50 dark:hover:shadow-teal-900/30"
       onClick={handleClick}
     >
+      {/* 置顶标记 */}
+      {post.is_pinned && (
+        <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 bg-primary/90 text-primary-foreground px-1.5 py-0.5 rounded-full text-[10px] font-medium shadow-sm">
+          <Pin className="h-3 w-3" />
+          <span>置顶</span>
+        </div>
+      )}
       {/* 图片区域 - 使用渐进式加载组件 */}
       {coverImage ? (
         <div className="relative w-full overflow-hidden">

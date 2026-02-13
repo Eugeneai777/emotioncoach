@@ -103,6 +103,8 @@ const Community = () => {
         .from("community_posts")
         .select("*")
         .eq("visibility", "public")
+        .order("is_pinned", { ascending: false })
+        .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(50);
 

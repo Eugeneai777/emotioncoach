@@ -22,6 +22,7 @@ import CostMonitorDashboard from "@/components/admin/CostMonitorDashboard";
 import ConversionAnalytics from "@/components/admin/ConversionAnalytics";
 import OGPreviewManagement from "@/components/admin/OGPreviewManagement";
 import { BloomPartnerInvitations } from "@/components/admin/BloomPartnerInvitations";
+import CommunityPostsManagement from "@/components/admin/CommunityPostsManagement";
 
 function AdminRoutes() {
   return (
@@ -45,6 +46,7 @@ function AdminRoutes() {
       <Route path="sync" element={<SyncStatusDashboard />} />
       <Route path="service" element={<CustomerServiceManagement />} />
       <Route path="og-preview" element={<OGPreviewManagement />} />
+      <Route path="community-posts" element={<CommunityPostsManagement />} />
     </Routes>
   );
 }
