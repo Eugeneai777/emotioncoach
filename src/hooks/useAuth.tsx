@@ -14,6 +14,21 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // 登录时静默检查绽放合伙人自动匹配
+        if (event === 'SIGNED_IN' && session?.user) {
+          const key = `bloom_auto_claim_checked_${session.user.id}`;
+          if (!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, '1');
+            supabase.functions.invoke('auto-claim-bloom-invitation').then(({ data }) => {
+              if (data?.matched && data?.success) {
+                console.log('Auto-claimed bloom partner invitation');
+              }
+            }).catch(err => {
+              console.error('Auto-claim check failed:', err);
+            });
+          }
+        }
       }
     );
 

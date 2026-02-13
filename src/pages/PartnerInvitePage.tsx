@@ -74,10 +74,24 @@ export default function PartnerInvitePage() {
     checkInvitation();
   }, [code]);
 
+  const isWeChatBrowser = () => /MicroMessenger/i.test(navigator.userAgent);
+
   const handleClaim = async () => {
     if (!user) {
-      // Store invite code and redirect to auth
+      // Store invite code for post-login claim
       localStorage.setItem('pending_partner_invite', code?.toUpperCase() || '');
+      
+      if (isWeChatBrowser()) {
+        // 微信环境下直接走微信 OAuth
+        const redirectUri = encodeURIComponent(`${window.location.origin}/wechat-oauth-callback`);
+        const state = `login_${Date.now()}`;
+        const appId = import.meta.env.VITE_WECHAT_APP_ID || '';
+        if (appId) {
+          window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
+          return;
+        }
+      }
+      
       navigate('/auth?redirect=/invite/' + code);
       return;
     }
