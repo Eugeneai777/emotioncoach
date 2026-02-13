@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
-import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles, Home } from "lucide-react";
+import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles, Home, BarChart3 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import { PartnerStats } from "@/components/partner/PartnerStats";
@@ -16,6 +16,7 @@ import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
 import { BloomYoujinBenefitsCard } from "@/components/partner/BloomYoujinBenefitsCard";
+import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -221,10 +222,11 @@ export default function Partner() {
 
             {/* Tabs */}
             <Tabs defaultValue="referrals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsList className="grid w-full grid-cols-4 h-auto">
             <ResponsiveTabsTrigger value="referrals" label="推荐列表" shortLabel="推荐" icon={<Users className="w-4 h-4" />} />
             <ResponsiveTabsTrigger value="commissions" label="佣金明细" shortLabel="佣金" icon={<TrendingUp className="w-4 h-4" />} />
             <ResponsiveTabsTrigger value="withdrawal" label="提现申请" shortLabel="提现" icon={<Wallet className="w-4 h-4" />} />
+            <ResponsiveTabsTrigger value="flywheel" label="数据飞轮" shortLabel="飞轮" icon={<BarChart3 className="w-4 h-4" />} />
           </TabsList>
 
           <TabsContent value="referrals">
@@ -237,6 +239,10 @@ export default function Partner() {
 
                 <TabsContent value="withdrawal">
                   <WithdrawalForm partner={partner} />
+                </TabsContent>
+
+                <TabsContent value="flywheel">
+                  <PartnerFlywheel partnerId={partner.id} />
                 </TabsContent>
               </Tabs>
             </>
