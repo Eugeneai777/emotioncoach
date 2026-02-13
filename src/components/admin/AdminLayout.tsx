@@ -35,6 +35,12 @@ import { ActivationCodeManagement } from "./ActivationCodeManagement";
 import { ExperiencePackageManagement } from "./ExperiencePackageManagement";
 import CommunityPostsManagement from "./CommunityPostsManagement";
 import ContentAdminDashboard from "./ContentAdminDashboard";
+import FlywheelDashboard from "./flywheel/FlywheelDashboard";
+import FlywheelCampaigns from "./flywheel/FlywheelCampaigns";
+import FlywheelFunnel from "./flywheel/FlywheelFunnel";
+import FlywheelRevenue from "./flywheel/FlywheelRevenue";
+import FlywheelReferral from "./flywheel/FlywheelReferral";
+import FlywheelAIStrategy from "./flywheel/FlywheelAIStrategy";
 export type AdminRole = 'admin' | 'content_admin';
 
 interface AdminLayoutProps {
@@ -85,6 +91,12 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="og-preview" element={<OGPreviewManagement />} />
                   <Route path="share-cards" element={<ShareCardsAdmin />} />
                   <Route path="experience-items" element={<ExperiencePackageManagement />} />
+                  <Route path="flywheel" element={<FlywheelDashboard />} />
+                  <Route path="flywheel-campaigns" element={<FlywheelCampaigns />} />
+                  <Route path="flywheel-funnel" element={<FlywheelFunnel />} />
+                  <Route path="flywheel-revenue" element={<FlywheelRevenue />} />
+                  <Route path="flywheel-referral" element={<FlywheelReferral />} />
+                  <Route path="flywheel-ai" element={<FlywheelAIStrategy />} />
                 </>
               )}
               {/* content_admin 专属首页 */}

@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_tests: {
+        Row: {
+          ai_suggestion: string | null
+          campaign_id: string
+          clicks_a: number
+          clicks_b: number
+          created_at: string
+          id: string
+          status: string
+          title_a: string
+          title_b: string
+          winner: string
+        }
+        Insert: {
+          ai_suggestion?: string | null
+          campaign_id: string
+          clicks_a?: number
+          clicks_b?: number
+          created_at?: string
+          id?: string
+          status?: string
+          title_a: string
+          title_b: string
+          winner?: string
+        }
+        Update: {
+          ai_suggestion?: string | null
+          campaign_id?: string
+          clicks_a?: number
+          clicks_b?: number
+          created_at?: string
+          id?: string
+          status?: string
+          title_a?: string
+          title_b?: string
+          winner?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_tests_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_coach_calls: {
         Row: {
           call_status: string
@@ -1643,6 +1690,51 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          landing_product: string | null
+          media_channel: string | null
+          name: string
+          promotion_cost: number | null
+          start_date: string | null
+          status: string
+          target_audience: string | null
+          traffic_source: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          landing_product?: string | null
+          media_channel?: string | null
+          name: string
+          promotion_cost?: number | null
+          start_date?: string | null
+          status?: string
+          target_audience?: string | null
+          traffic_source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          landing_product?: string | null
+          media_channel?: string | null
+          name?: string
+          promotion_cost?: number | null
+          start_date?: string | null
+          status?: string
+          target_audience?: string | null
+          traffic_source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coach_call_signals: {
         Row: {
           call_id: string | null
@@ -2914,6 +3006,7 @@ export type Database = {
       }
       conversion_events: {
         Row: {
+          campaign_id: string | null
           created_at: string | null
           event_type: string
           feature_key: string
@@ -2923,6 +3016,7 @@ export type Database = {
           visitor_id: string | null
         }
         Insert: {
+          campaign_id?: string | null
           created_at?: string | null
           event_type: string
           feature_key: string
@@ -2932,6 +3026,7 @@ export type Database = {
           visitor_id?: string | null
         }
         Update: {
+          campaign_id?: string | null
           created_at?: string | null
           event_type?: string
           feature_key?: string
@@ -2940,7 +3035,15 @@ export type Database = {
           user_id?: string | null
           visitor_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversion_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cost_alert_settings: {
         Row: {
