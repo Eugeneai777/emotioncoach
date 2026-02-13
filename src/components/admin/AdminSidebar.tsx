@@ -82,12 +82,14 @@ const NAV_GROUPS = [
     roles: ['admin'] as AdminRole[],
     items: [
       { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake },
-      { key: "bloom-invitations", label: "绽放邀请管理", path: "/admin/bloom-invitations", icon: Mail },
-      { key: "bloom-delivery", label: "合伙人交付", path: "/admin/bloom-delivery", icon: Package },
-      { key: "bloom-single", label: "单营交付", path: "/admin/bloom-single", icon: Flower2 },
-      { key: "bloom-profit", label: "绽放利润核算", path: "/admin/bloom-profit", icon: DollarSign },
-      { key: "bloom-monthly", label: "绽放月度利润", path: "/admin/bloom-monthly", icon: TrendingUp },
-      { key: "bloom-cashflow", label: "绽放月度现金流", path: "/admin/bloom-cashflow", icon: Wallet },
+      { key: "bloom", label: "绽放合伙人", path: "", icon: Flower2, children: [
+        { key: "bloom-invitations", label: "绽放邀请管理", path: "/admin/bloom-invitations", icon: Mail },
+        { key: "bloom-delivery", label: "合伙人交付", path: "/admin/bloom-delivery", icon: Package },
+        { key: "bloom-single", label: "单营交付", path: "/admin/bloom-single", icon: Flower2 },
+        { key: "bloom-profit", label: "绽放利润核算", path: "/admin/bloom-profit", icon: DollarSign },
+        { key: "bloom-monthly", label: "绽放月度利润", path: "/admin/bloom-monthly", icon: TrendingUp },
+        { key: "bloom-cashflow", label: "绽放月度现金流", path: "/admin/bloom-cashflow", icon: Wallet },
+      ]},
       { key: "industry-partners", label: "行业合伙人", path: "/admin/industry-partners", icon: Network }
     ]
   },
@@ -188,6 +190,8 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
     return initial;
   });
 
+  const [openSubGroups, setOpenSubGroups] = useState<Record<string, boolean>>({});
+
   const isActive = (path: string) => {
     if (path === "/admin") {
       return location.pathname === "/admin";
@@ -197,6 +201,10 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
 
   const toggleGroup = (title: string) => {
     setOpenGroups(prev => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  const toggleSubGroup = (key: string) => {
+    setOpenSubGroups(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -244,21 +252,70 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {group.items.map((item) => (
-                      <SidebarMenuItem key={item.key}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive(item.path)}
-                          className={cn(
-                            "w-full",
-                            isActive(item.path) && "bg-primary/10 text-primary font-medium"
-                          )}
+                      'children' in item && item.children ? (
+                        <Collapsible
+                          key={item.key}
+                          open={openSubGroups[item.key] ?? item.children.some(c => isActive(c.path))}
+                          onOpenChange={() => toggleSubGroup(item.key)}
                         >
-                          <Link to={item.path} className="flex items-center gap-3">
-                            <item.icon className="h-4 w-4" />
-                            {!collapsed && <span>{item.label}</span>}
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton
+                                className={cn(
+                                  "w-full cursor-pointer",
+                                  item.children.some(c => isActive(c.path)) && "text-primary font-medium"
+                                )}
+                              >
+                                <div className="flex items-center gap-3 w-full">
+                                  <item.icon className="h-4 w-4" />
+                                  {!collapsed && <span>{item.label}</span>}
+                                  {!collapsed && (
+                                    <ChevronDown className={cn(
+                                      "h-3 w-3 ml-auto transition-transform",
+                                      (openSubGroups[item.key] ?? item.children.some(c => isActive(c.path))) && "rotate-180"
+                                    )} />
+                                  )}
+                                </div>
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                          </SidebarMenuItem>
+                          <CollapsibleContent>
+                            {item.children.map((child) => (
+                              <SidebarMenuItem key={child.key}>
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={isActive(child.path)}
+                                  className={cn(
+                                    "w-full pl-7",
+                                    isActive(child.path) && "bg-primary/10 text-primary font-medium"
+                                  )}
+                                >
+                                  <Link to={child.path} className="flex items-center gap-3">
+                                    <child.icon className="h-4 w-4" />
+                                    {!collapsed && <span>{child.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ) : (
+                        <SidebarMenuItem key={item.key}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive(item.path)}
+                            className={cn(
+                              "w-full",
+                              isActive(item.path) && "bg-primary/10 text-primary font-medium"
+                            )}
+                          >
+                            <Link to={item.path} className="flex items-center gap-3">
+                              <item.icon className="h-4 w-4" />
+                              {!collapsed && <span>{item.label}</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
                     ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
