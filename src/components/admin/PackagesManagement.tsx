@@ -471,7 +471,7 @@ export function PackagesManagement() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>有劲会员套餐列表</CardTitle>
+                <CardTitle>有劲合伙人套餐列表</CardTitle>
                 <CardDescription>点击设置按钮配置套餐包含的功能权益</CardDescription>
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
