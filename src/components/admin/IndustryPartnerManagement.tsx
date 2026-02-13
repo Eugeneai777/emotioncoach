@@ -4,10 +4,16 @@ import { AdminPageLayout } from "./shared/AdminPageLayout";
 import { AdminFilterBar } from "./shared/AdminFilterBar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Network } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Loader2, Network, Plus, Building2 } from "lucide-react";
 import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { AdminStatCard } from "./shared/AdminStatCard";
 
-interface PartnerRow {
+interface IndustryPartner {
   id: string;
   partner_code: string;
   status: string;
@@ -15,14 +21,41 @@ interface PartnerRow {
   total_referrals: number;
   created_at: string;
   user_id: string;
+  company_name: string | null;
+  contact_person: string | null;
+  contact_phone: string | null;
+  cooperation_note: string | null;
+  custom_commission_rate_l1: number | null;
+  custom_commission_rate_l2: number | null;
   nickname?: string;
 }
 
+function generatePartnerCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "IND-";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export default function IndustryPartnerManagement() {
-  const [partners, setPartners] = useState<PartnerRow[]>([]);
+  const [partners, setPartners] = useState<IndustryPartner[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // Form state
+  const [form, setForm] = useState({
+    company_name: "",
+    contact_person: "",
+    contact_phone: "",
+    cooperation_note: "",
+    commission_l1: "0.30",
+    commission_l2: "0.10",
+  });
 
   useEffect(() => {
     fetchPartners();
@@ -33,13 +66,13 @@ export default function IndustryPartnerManagement() {
     try {
       const { data, error } = await supabase
         .from("partners")
-        .select("id, partner_code, status, partner_type, total_referrals, created_at, user_id")
+        .select("id, partner_code, status, partner_type, total_referrals, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2")
+        .eq("partner_type", "industry")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // fetch nicknames from profiles
-      const userIds = (data || []).map((p) => p.user_id);
+      const userIds = (data || []).map((p) => p.user_id).filter(Boolean);
       let nicknameMap: Record<string, string> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
@@ -56,21 +89,77 @@ export default function IndustryPartnerManagement() {
       setPartners(
         (data || []).map((p) => ({
           ...p,
-          nickname: nicknameMap[p.user_id] || p.partner_code,
+          nickname: nicknameMap[p.user_id] || "",
         }))
       );
     } catch (err) {
       console.error("fetchPartners error:", err);
+      toast.error("加载行业合伙人列表失败");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!form.company_name.trim()) {
+      toast.error("请填写公司/机构名称");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      // Get current admin user id to use as placeholder user_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("未登录");
+
+      const partnerCode = generatePartnerCode();
+
+      const { error } = await supabase.from("partners").insert({
+        user_id: user.id,
+        partner_code: partnerCode,
+        partner_type: "industry",
+        partner_level: "L1",
+        status: "active",
+        source: "admin",
+        source_admin_id: user.id,
+        source_note: `行业合伙人: ${form.company_name}`,
+        company_name: form.company_name.trim(),
+        contact_person: form.contact_person.trim() || null,
+        contact_phone: form.contact_phone.trim() || null,
+        cooperation_note: form.cooperation_note.trim() || null,
+        custom_commission_rate_l1: parseFloat(form.commission_l1) || 0.30,
+        custom_commission_rate_l2: parseFloat(form.commission_l2) || 0.10,
+        commission_rate_l1: parseFloat(form.commission_l1) || 0.30,
+        commission_rate_l2: parseFloat(form.commission_l2) || 0.10,
+      } as any);
+
+      if (error) throw error;
+
+      toast.success("行业合伙人创建成功");
+      setDialogOpen(false);
+      setForm({
+        company_name: "",
+        contact_person: "",
+        contact_phone: "",
+        cooperation_note: "",
+        commission_l1: "0.30",
+        commission_l2: "0.10",
+      });
+      fetchPartners();
+    } catch (err: any) {
+      console.error("create error:", err);
+      toast.error("创建失败: " + (err.message || "未知错误"));
+    } finally {
+      setCreating(false);
     }
   };
 
   const filtered = partners.filter((p) => {
     const q = search.toLowerCase();
     return (
+      (p.company_name || "").toLowerCase().includes(q) ||
       p.partner_code.toLowerCase().includes(q) ||
-      (p.nickname || "").toLowerCase().includes(q)
+      (p.contact_person || "").toLowerCase().includes(q)
     );
   });
 
@@ -79,7 +168,7 @@ export default function IndustryPartnerManagement() {
   if (selectedPartnerId && selectedPartner) {
     return (
       <AdminPageLayout
-        title={`行业合作伙伴 — ${selectedPartner.nickname || selectedPartner.partner_code}`}
+        title={`行业合伙人 — ${selectedPartner.company_name || selectedPartner.partner_code}`}
         actions={
           <Button variant="outline" size="sm" onClick={() => setSelectedPartnerId(null)}>
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -87,17 +176,153 @@ export default function IndustryPartnerManagement() {
           </Button>
         }
       >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <AdminStatCard
+            label="公司名称"
+            value={selectedPartner.company_name || "-"}
+            icon={Building2}
+            accent="bg-primary/10 text-primary"
+          />
+          <AdminStatCard
+            label="一级佣金"
+            value={`${((selectedPartner.custom_commission_rate_l1 ?? 0.30) * 100).toFixed(0)}%`}
+            icon={Network}
+            accent="bg-emerald-50 text-emerald-600"
+          />
+          <AdminStatCard
+            label="推荐用户数"
+            value={selectedPartner.total_referrals}
+            icon={Network}
+            accent="bg-blue-50 text-blue-600"
+          />
+        </div>
+        {selectedPartner.cooperation_note && (
+          <div className="bg-muted/50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-muted-foreground">合作备注：{selectedPartner.cooperation_note}</p>
+          </div>
+        )}
         <PartnerFlywheel partnerId={selectedPartnerId} />
       </AdminPageLayout>
     );
   }
 
   return (
-    <AdminPageLayout title="行业合作伙伴" description="查看所有合作伙伴的飞轮数据、Campaign 与产品包">
+    <AdminPageLayout
+      title="行业合伙人"
+      description="管理 B2B 渠道合作伙伴，配置独立佣金与 Campaign"
+      actions={
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              新建行业合伙人
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>新建行业合伙人</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>公司/机构名称 *</Label>
+                <Input
+                  value={form.company_name}
+                  onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))}
+                  placeholder="例如: XX心理咨询中心"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>联系人</Label>
+                  <Input
+                    value={form.contact_person}
+                    onChange={(e) => setForm((f) => ({ ...f, contact_person: e.target.value }))}
+                    placeholder="姓名"
+                  />
+                </div>
+                <div>
+                  <Label>联系电话</Label>
+                  <Input
+                    value={form.contact_phone}
+                    onChange={(e) => setForm((f) => ({ ...f, contact_phone: e.target.value }))}
+                    placeholder="手机号"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>一级佣金比例</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={form.commission_l1}
+                    onChange={(e) => setForm((f) => ({ ...f, commission_l1: e.target.value }))}
+                    placeholder="0.30 = 30%"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{(parseFloat(form.commission_l1) * 100 || 0).toFixed(0)}%</p>
+                </div>
+                <div>
+                  <Label>二级佣金比例</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={form.commission_l2}
+                    onChange={(e) => setForm((f) => ({ ...f, commission_l2: e.target.value }))}
+                    placeholder="0.10 = 10%"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{(parseFloat(form.commission_l2) * 100 || 0).toFixed(0)}%</p>
+                </div>
+              </div>
+              <div>
+                <Label>合作备注</Label>
+                <Textarea
+                  value={form.cooperation_note}
+                  onChange={(e) => setForm((f) => ({ ...f, cooperation_note: e.target.value }))}
+                  placeholder="合作协议、特殊条款等"
+                  rows={3}
+                />
+              </div>
+              <Button onClick={handleCreate} disabled={creating} className="w-full">
+                {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                创建
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      }
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <AdminStatCard
+          label="行业合伙人总数"
+          value={partners.length}
+          icon={Building2}
+          accent="bg-primary/10 text-primary"
+          loading={loading}
+        />
+        <AdminStatCard
+          label="活跃合伙人"
+          value={partners.filter((p) => p.status === "active").length}
+          icon={Network}
+          accent="bg-emerald-50 text-emerald-600"
+          loading={loading}
+        />
+        <AdminStatCard
+          label="总推荐用户"
+          value={partners.reduce((sum, p) => sum + (p.total_referrals || 0), 0)}
+          icon={Network}
+          accent="bg-blue-50 text-blue-600"
+          loading={loading}
+        />
+      </div>
+
       <AdminFilterBar
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="搜索合伙人编码或昵称…"
+        searchPlaceholder="搜索公司名称、编码或联系人…"
         totalCount={filtered.length}
       />
 
@@ -110,22 +335,32 @@ export default function IndustryPartnerManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>昵称</TableHead>
+                <TableHead>公司/机构</TableHead>
                 <TableHead>合伙人编码</TableHead>
-                <TableHead>类型</TableHead>
-                <TableHead>状态</TableHead>
+                <TableHead>联系人</TableHead>
+                <TableHead>一级佣金</TableHead>
+                <TableHead>二级佣金</TableHead>
                 <TableHead className="text-right">推荐用户</TableHead>
+                <TableHead>状态</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.nickname || "-"}</TableCell>
-                  <TableCell>{p.partner_code}</TableCell>
-                  <TableCell>{p.partner_type}</TableCell>
-                  <TableCell>{p.status}</TableCell>
+                  <TableCell className="font-medium">{p.company_name || "-"}</TableCell>
+                  <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
+                  <TableCell>{p.contact_person || "-"}</TableCell>
+                  <TableCell>{((p.custom_commission_rate_l1 ?? 0.30) * 100).toFixed(0)}%</TableCell>
+                  <TableCell>{((p.custom_commission_rate_l2 ?? 0.10) * 100).toFixed(0)}%</TableCell>
                   <TableCell className="text-right">{p.total_referrals}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      p.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {p.status === "active" ? "活跃" : p.status}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => setSelectedPartnerId(p.id)}>
                       <Network className="h-4 w-4 mr-1" />
@@ -136,8 +371,8 @@ export default function IndustryPartnerManagement() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    暂无合作伙伴数据
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    暂无行业合伙人，点击右上角"新建"添加
                   </TableCell>
                 </TableRow>
               )}

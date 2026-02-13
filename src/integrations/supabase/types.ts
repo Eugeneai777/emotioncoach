@@ -5829,7 +5829,13 @@ export type Database = {
           available_balance: number
           commission_rate_l1: number
           commission_rate_l2: number
+          company_name: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          cooperation_note: string | null
           created_at: string
+          custom_commission_rate_l1: number | null
+          custom_commission_rate_l2: number | null
           default_entry_price: number | null
           default_entry_type: string | null
           default_product_type: string | null
@@ -5861,7 +5867,13 @@ export type Database = {
           available_balance?: number
           commission_rate_l1?: number
           commission_rate_l2?: number
+          company_name?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          cooperation_note?: string | null
           created_at?: string
+          custom_commission_rate_l1?: number | null
+          custom_commission_rate_l2?: number | null
           default_entry_price?: number | null
           default_entry_type?: string | null
           default_product_type?: string | null
@@ -5893,7 +5905,13 @@ export type Database = {
           available_balance?: number
           commission_rate_l1?: number
           commission_rate_l2?: number
+          company_name?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          cooperation_note?: string | null
           created_at?: string
+          custom_commission_rate_l1?: number | null
+          custom_commission_rate_l2?: number | null
           default_entry_price?: number | null
           default_entry_type?: string | null
           default_product_type?: string | null
