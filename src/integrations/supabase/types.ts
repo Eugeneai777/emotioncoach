@@ -1693,8 +1693,10 @@ export type Database = {
       campaigns: {
         Row: {
           created_at: string
+          custom_funnel_steps: Json | null
           end_date: string | null
           id: string
+          landing_page_url: string | null
           landing_product: string | null
           media_channel: string | null
           name: string
@@ -1708,8 +1710,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_funnel_steps?: Json | null
           end_date?: string | null
           id?: string
+          landing_page_url?: string | null
           landing_product?: string | null
           media_channel?: string | null
           name: string
@@ -1723,8 +1727,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_funnel_steps?: Json | null
           end_date?: string | null
           id?: string
+          landing_page_url?: string | null
           landing_product?: string | null
           media_channel?: string | null
           name?: string
@@ -5672,6 +5678,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          landing_page_url: string | null
           partner_id: string
           price: number
           product_key: string
@@ -5683,6 +5690,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          landing_page_url?: string | null
           partner_id: string
           price?: number
           product_key: string
@@ -5694,6 +5702,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          landing_page_url?: string | null
           partner_id?: string
           price?: number
           product_key?: string

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface PartnerProduct {
@@ -17,6 +17,7 @@ interface PartnerProduct {
   product_key: string;
   price: number;
   description: string | null;
+  landing_page_url: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -35,6 +36,7 @@ export function PartnerProducts({ partnerId }: PartnerProductsProps) {
     product_key: "",
     price: 0,
     description: "",
+    landing_page_url: "",
     is_active: true,
   });
 
@@ -53,7 +55,7 @@ export function PartnerProducts({ partnerId }: PartnerProductsProps) {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ product_name: "", product_key: "", price: 0, description: "", is_active: true });
+    setForm({ product_name: "", product_key: "", price: 0, description: "", landing_page_url: "", is_active: true });
     setDialogOpen(true);
   };
 
@@ -64,6 +66,7 @@ export function PartnerProducts({ partnerId }: PartnerProductsProps) {
       product_key: p.product_key,
       price: p.price,
       description: p.description || "",
+      landing_page_url: p.landing_page_url || "",
       is_active: p.is_active,
     });
     setDialogOpen(true);
@@ -80,6 +83,7 @@ export function PartnerProducts({ partnerId }: PartnerProductsProps) {
       product_key: form.product_key.trim(),
       price: form.price,
       description: form.description || null,
+      landing_page_url: form.landing_page_url.trim() || null,
       is_active: form.is_active,
     };
 
@@ -121,20 +125,28 @@ export function PartnerProducts({ partnerId }: PartnerProductsProps) {
                 <TableHead>产品名称</TableHead>
                 <TableHead>标识</TableHead>
                 <TableHead>价格</TableHead>
+                <TableHead>落地页</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">加载中...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">加载中...</TableCell></TableRow>
               ) : products.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">暂无产品，点击"添加产品"开始配置</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">暂无产品，点击"添加产品"开始配置</TableCell></TableRow>
               ) : products.map(p => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.product_name}</TableCell>
                   <TableCell className="font-mono text-xs">{p.product_key}</TableCell>
                   <TableCell>¥{p.price.toLocaleString()}</TableCell>
+                  <TableCell>
+                    {p.landing_page_url ? (
+                      <a href={p.landing_page_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                        链接 <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : <span className="text-muted-foreground text-xs">-</span>}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={p.is_active ? "default" : "secondary"}>
                       {p.is_active ? "启用" : "停用"}
@@ -162,6 +174,7 @@ export function PartnerProducts({ partnerId }: PartnerProductsProps) {
             <div><Label>产品名称 *</Label><Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} placeholder="如：知乐胶囊·身心评估套餐" /></div>
             <div><Label>产品标识 *</Label><Input value={form.product_key} onChange={e => setForm(f => ({ ...f, product_key: e.target.value }))} placeholder="如：zhile_assessment" /></div>
             <div><Label>价格（元）</Label><Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} /></div>
+            <div><Label>落地页 URL</Label><Input value={form.landing_page_url} onChange={e => setForm(f => ({ ...f, landing_page_url: e.target.value }))} placeholder="https://zhile.com/assessment" /></div>
             <div><Label>描述</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
             <Button onClick={handleSave}>{editing ? "保存" : "创建"}</Button>
           </div>
