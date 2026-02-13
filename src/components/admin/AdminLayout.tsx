@@ -54,7 +54,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
             <SidebarTrigger className="-ml-2" />
           </header>
           <main 
-            className="flex-1 overflow-y-auto overscroll-contain p-6"
+            className="flex-1 overflow-auto overscroll-contain p-6"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <Routes>
