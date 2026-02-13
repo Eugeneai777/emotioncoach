@@ -33,6 +33,7 @@ import ShareCardsAdmin from "@/pages/admin/ShareCardsAdmin";
 import { BloomPartnerInvitations } from "./BloomPartnerInvitations";
 import { ActivationCodeManagement } from "./ActivationCodeManagement";
 import { ExperiencePackageManagement } from "./ExperiencePackageManagement";
+import CommunityPostsManagement from "./CommunityPostsManagement";
 
 export function AdminLayout() {
   return (
@@ -80,6 +81,7 @@ export function AdminLayout() {
               <Route path="og-preview" element={<OGPreviewManagement />} />
               <Route path="share-cards" element={<ShareCardsAdmin />} />
               <Route path="experience-items" element={<ExperiencePackageManagement />} />
+              <Route path="community-posts" element={<CommunityPostsManagement />} />
             </Routes>
           </main>
         </SidebarInset>
