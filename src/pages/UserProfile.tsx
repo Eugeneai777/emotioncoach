@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageCircle, Settings, User, Bell } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Heart, MessageCircle, Settings, User, Bell, Pencil, Check, X, Camera, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { VideoLearningProfile } from "@/components/VideoLearningProfile";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserProfileData {
   display_name: string | null;
@@ -64,10 +66,40 @@ interface UserAchievement {
   earned_at: string;
 }
 
+// 压缩图片到 400x400
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      const maxSize = 400;
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
+      } else {
+        if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => { blob ? resolve(blob) : reject(new Error("压缩失败")); },
+        "image/jpeg",
+        0.85
+      );
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [posts, setPosts] = useState<UserPost[]>([]);
@@ -75,9 +107,68 @@ const UserProfile = () => {
   const [comments, setComments] = useState<UserComment[]>([]);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [totalLikes, setTotalLikes] = useState(0);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = !userId || session?.user?.id === userId;
   const displayUserId = userId || session?.user?.id;
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !session?.user?.id) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "请选择图片文件", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "图片大小不能超过5MB", variant: "destructive" });
+      return;
+    }
+    setIsUploadingAvatar(true);
+    try {
+      const compressed = await compressImage(file);
+      const fileExt = file.name.split(".").pop();
+      const filePath = `avatars/avatar-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("community-images")
+        .upload(filePath, compressed, { cacheControl: "3600", upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("community-images").getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl;
+      await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", session.user.id);
+      setProfile((prev) => prev ? { ...prev, avatar_url: publicUrl } : prev);
+      toast({ title: "头像更新成功" });
+    } catch (error) {
+      console.error("头像上传失败:", error);
+      toast({ title: "上传失败，请稍后重试", variant: "destructive" });
+    } finally {
+      setIsUploadingAvatar(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleNameSave = async () => {
+    if (!session?.user?.id || !editName.trim()) return;
+    setIsSavingName(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: editName.trim() })
+        .eq("id", session.user.id);
+      if (error) throw error;
+      setProfile((prev) => prev ? { ...prev, display_name: editName.trim() } : prev);
+      setIsEditingName(false);
+      toast({ title: "昵称更新成功" });
+    } catch (error) {
+      console.error("昵称更新失败:", error);
+      toast({ title: "更新失败，请稍后重试", variant: "destructive" });
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   useEffect(() => {
     if (!displayUserId) {
@@ -219,21 +310,72 @@ const UserProfile = () => {
           <CardContent className="relative pt-0 pb-6">
             {/* 头像 */}
             <div className="flex flex-col items-center -mt-12 mb-4">
-              <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
-                {profile?.avatar_url ? (
-                  <AvatarImage src={profile.avatar_url} alt={displayName} />
-                ) : null}
-                <AvatarFallback className="text-2xl bg-gradient-to-br from-teal-400 to-cyan-500 text-white">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                  {profile?.avatar_url ? (
+                    <AvatarImage src={profile.avatar_url} alt={displayName} />
+                  ) : null}
+                  <AvatarFallback className="text-2xl bg-gradient-to-br from-teal-400 to-cyan-500 text-white">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+                    style={isUploadingAvatar ? { opacity: 1 } : undefined}
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
             </div>
 
             {/* 用户名和签名 */}
             <div className="text-center mb-4">
-              <h1 className="text-xl font-bold text-foreground mb-1">
-                {displayName}
-              </h1>
+              {isEditingName ? (
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="max-w-[200px] text-center"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === "Enter") handleNameSave(); if (e.key === "Escape") setIsEditingName(false); }}
+                  />
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleNameSave} disabled={isSavingName}>
+                    {isSavingName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-600" />}
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setIsEditingName(false)} disabled={isSavingName}>
+                    <X className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <h1 className="text-xl font-bold text-foreground">
+                    {displayName}
+                  </h1>
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => { setEditName(profile?.display_name || ""); setIsEditingName(true); }}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
               {profile?.bio ? (
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   {profile.bio}
