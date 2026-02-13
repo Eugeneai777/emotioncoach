@@ -1,49 +1,47 @@
 
 
-# 端到端测试：绽放合伙人邀请码兑换流程
+## 将手机号注册设为默认方式
 
-## 测试准备
+### 当前状态
 
-1. 通过数据库迁移插入一条测试邀请记录：
-   - 邀请码：`BLOOM-TEST99`
-   - 状态：`pending`
+- `Auth.tsx`（登录/注册页）：已经默认为手机号模式，无需改动。
+- `QuickRegisterStep.tsx`（支付后注册弹窗）：当前逻辑是微信浏览器内默认"微信授权"，PC 端默认"微信扫码"，只有移动端非微信才默认"手机号注册"。
 
-2. 使用预览环境中已登录的账号进行测试
+### 改动内容
 
-## 测试步骤
+**文件：`src/components/onboarding/QuickRegisterStep.tsx`**
 
-### 测试 1：在财富测评页面兑换邀请码
-1. 导航到 `/wealth-block-assessment`
-2. 触发支付弹窗（AssessmentPayDialog）
-3. 点击「我有邀请码」
-4. 输入 `BLOOM-TEST99`
-5. 验证：
-   - 兑换成功提示
-   - 弹窗关闭
-   - 页面显示"继续测评"而非支付按钮
+1. **修改默认模式逻辑**（`getDefaultMode` 函数，约第 58-66 行）：
+   - 将所有环境的默认模式改为 `'phone'`（手机号注册）
+   - 仅在微信小程序内保留 `'wechat'` 作为默认（因为小程序有一键登录能力）
 
-### 测试 2：验证训练营页面自动识别
-1. 导航到 `/wealth-camp-intro`
-2. 验证：
-   - 页面底部不再显示 ¥299 购买按钮
-   - 而是显示「开始训练营」按钮（因为步骤 1 已同时开通训练营权益）
+2. **调整 Tab 顺序**（约第 587-622 行）：
+   - 将"手机号注册"移到第一个位置
+   - "微信授权/扫码"移到第二个位置
+   - "已有账号"保持第三个位置
+   - 与截图中的布局一致，但手机号注册优先
 
-### 测试 3：验证后端数据
-- 检查 `partners` 表是否创建了合伙人记录
-- 检查 `orders` 表是否有 ¥0 的测评订单
-- 检查 `user_camp_purchases` 表是否有训练营记录
-- 检查邀请码状态是否变为 `claimed`
+### 技术细节
 
-### 测试 4：清理测试数据
-- 删除测试产生的 partner、order、camp_purchase 记录
-- 删除或重置测试邀请码
+```typescript
+// 修改前
+const getDefaultMode = (): RegisterMode => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isWechat = /micromessenger/i.test(ua);
+  const isMobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
+  if (isWechat) return 'wechat';
+  if (isMobile) return 'phone';
+  return 'wechat';
+};
 
-## 技术要点
+// 修改后
+const getDefaultMode = (): RegisterMode => {
+  // 小程序环境保留微信一键登录
+  if (isWeChatMiniProgram()) return 'wechat';
+  // 其他所有环境默认手机号注册
+  return 'phone';
+};
+```
 
-| 步骤 | 工具 |
-|------|------|
-| 插入测试邀请码 | 数据库迁移 |
-| UI 交互测试 | 浏览器工具 |
-| 数据验证 | 数据库查询 |
-| 清理 | 数据库迁移 |
+Tab 顺序从「微信授权 | 手机号注册 | 已有账号」改为「手机号注册 | 微信授权 | 已有账号」。
 
