@@ -1,103 +1,97 @@
 
 
-# 行业合伙人飞轮完整升级 — 自定义产品包 + Landing Page + 自由漏斗步骤 + 数据隔离
+# 确保合伙人手机号可匹配 — 多路径兼容方案
 
-## 目标
+## 问题本质
 
-让每个行业合伙人（如知乐）可以：
-1. 管理自己的产品包，配置外部落地页链接
-2. 为每个 Campaign 设定专属外部 Landing Page
-3. **自由定义漏斗步骤**（不限6步，可以是3步、5步、8步，步骤名称和事件 key 都可自定义）
-4. 只看到自己 Campaign 下的转化数据
+绽放合伙人名单是以「姓名 + 手机号」导入的，自动匹配依赖 `profiles.phone` 字段。但用户有两条注册路径：
 
-## 数据库现状
-
-- `campaigns` 表：无 `landing_page_url`、无 `custom_funnel_steps`
-- `partner_products` 表：无 `landing_page_url`
-- `conversion_events` 表：有 `event_type`（text）和 `campaign_id`，已支持按 campaign 过滤
-
----
-
-## 实施步骤
-
-### 第一步：数据库迁移
-
-为 `campaigns` 表新增：
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `landing_page_url` | TEXT | 外部落地页 URL |
-| `custom_funnel_steps` | JSONB | 自定义漏斗步骤数组，不限步数 |
-
-为 `partner_products` 表新增：
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `landing_page_url` | TEXT | 产品专属外部落地页 |
-
-`custom_funnel_steps` 结构（数组长度不限）：
 ```text
-[
-  {"key": "page_view", "label": "落地页访问"},
-  {"key": "click", "label": "点击CTA"},
-  {"key": "complete_test", "label": "完成测评"},
-  {"key": "payment", "label": "成交"}
-]
+路径 A：手机号注册 → profiles.phone 已填 → 可以匹配 (OK)
+路径 B：微信登录注册 → profiles.phone 为空 → 无法匹配 (问题所在)
 ```
 
-合伙人可以自由增删步骤，每个步骤由 `key`（对应 `conversion_events.event_type`）和 `label`（显示名称）组成。
+大部分绽放合伙人通过微信注册，所以手机号字段为空，自动匹配失效。
 
-### 第二步：PartnerProducts 增强
+## 解决方案：三层保障
 
-修改 `src/components/partner/PartnerProducts.tsx`：
-- 表单新增「落地页 URL」输入框，提示填写外部网站链接
-- 表格新增落地页列（可点击跳转，带外链图标）
+### 第一层：邀请链接直接携带邀请码（已有，优化体验）
 
-### 第三步：PartnerCampaigns 增强
+当前邀请链接 `/invite/BLOOM-XXXX` 已经可以直接 claim。问题是用户微信登录后没有自动回到邀请页。
 
-修改 `src/components/partner/PartnerCampaigns.tsx`：
-- 表单新增「落地页 URL」输入框（外部链接）
-- 新增「漏斗步骤配置」区域：
-  - 提供几个常用预设模板可一键填充（如"标准6步"、"简化3步"）
-  - 动态添加/删除步骤行，每行包含 `key`（事件标识）和 `label`（显示名称）
-  - 可拖拽排序或上下移动
-  - 无固定步骤数上限
-- 新增「关联产品」下拉
+**优化**：在 `PartnerInvitePage` 跳转微信登录时，确保 `pending_partner_invite` 保存在 localStorage，并在微信回调（`WeChatOAuthCallback`）中自动执行 claim。这条路径**不依赖手机号**，直接用邀请码匹配。
 
-### 第四步：PartnerFlywheel 完整重构
+**现状检查**：代码中 `WeChatOAuthCallback.tsx` 已有 `pending_partner_invite` 处理逻辑，但 `PartnerInvitePage` 跳转到 `/auth` 而非微信授权。需要修复跳转路径，确保微信环境下直接走微信 OAuth。
 
-修改 `src/components/partner/PartnerFlywheel.tsx`：
+### 第二层：微信注册后强制补充手机号（新增）
 
-**UI 重构为 Tabs 布局：**
-- Tab 1「漏斗分析」
-- Tab 2「Campaign 管理」（嵌入增强后的 PartnerCampaigns）
-- Tab 3「产品包」（嵌入增强后的 PartnerProducts）
+对于没有通过邀请链接注册的微信用户，在首次登录后**引导补充手机号**：
 
-**漏斗分析 Tab 功能：**
-- Campaign 下拉筛选器（全部 / 单个 Campaign）
-- **动态漏斗图**：根据选中 Campaign 的 `custom_funnel_steps` 渲染任意步数的梯形漏斗
-  - 查询 `conversion_events` 按该合伙人的 `campaign_id` 过滤
-  - 按每个步骤的 `key` 统计事件数
-  - 计算相邻步骤间的环节转化率
-  - 漏斗图高度和颜色梯度自动适配步骤数量
-- 统计卡片（曝光、成交、收入、ROI）
-- AI 最弱环节诊断（转化率最低的环节）
-- 「AI 策略分析」按钮：调用 `flywheel-ai-analysis` 边缘函数，传 `partner_id`
+- 在 `wechat-oauth-process` 注册新用户后，返回 `isNewUser: true`
+- 前端已有逻辑：新用户跳转到 `/wechat-auth?mode=follow`
+- 在关注页或 onboarding 流程中，增加一个「请输入手机号」步骤，提示文案：**「输入您购课时使用的手机号，系统将自动为您开通合伙人权益」**
+- 手机号保存到 `profiles.phone` 后，立即触发 `auto-claim-bloom-invitation`
 
-### 数据隔离
+### 第三层：后端函数 — 手机号自动匹配（新增）
 
-已由现有架构保证：
-- `campaigns.partner_id` 筛选自己的活动
-- `conversion_events.campaign_id` 筛选自己活动的事件
-- `partner_products.partner_id` 筛选自己的产品
-- 合伙人永远看不到其他合伙人或全平台的数据
+创建 `auto-claim-bloom-invitation` 边缘函数：
 
-### 涉及文件
+- 用户保存手机号时自动调用
+- 也在每次登录时静默检查一次
+- 用 `profiles.phone` 匹配 `partner_invitations.invitee_phone`
+- 匹配成功 → 自动执行 claim 逻辑（复用现有权益发放代码）
+
+## 具体实施步骤
+
+### 步骤 1：创建 `auto-claim-bloom-invitation` 边缘函数
+
+新建 `supabase/functions/auto-claim-bloom-invitation/index.ts`：
+
+- 从 Authorization header 获取 user_id
+- 查询 `profiles` 获取 phone
+- 如果 phone 为空，直接返回 `{ matched: false }`
+- 用手机号后 11 位匹配 `partner_invitations`（status='pending', partner_type='bloom'）
+- 匹配成功 → 执行与 `claim-partner-invitation` 相同的权益发放逻辑
+- 幂等：已是合伙人则返回 `{ already_partner: true }`
+
+### 步骤 2：优化邀请页微信登录跳转
+
+修改 `src/pages/PartnerInvitePage.tsx`：
+
+- 检测微信环境（navigator.userAgent 包含 MicroMessenger）
+- 微信环境下，点击「领取」按钮直接跳转微信 OAuth 授权，而非 `/auth` 页面
+- 确保 `pending_partner_invite` 在 localStorage 中正确设置
+
+### 步骤 3：手机号补充引导
+
+修改 `src/components/profile/PhoneNumberManager.tsx` 或新建专门组件：
+
+- 在保存手机号成功后，自动调用 `auto-claim-bloom-invitation`
+- 如果自动领取成功，弹出 toast 提示「恭喜，已自动开通绽放合伙人权益！」
+
+### 步骤 4：登录后静默检查
+
+修改 `src/hooks/useAuth.tsx`：
+
+- 在 `SIGNED_IN` 事件中，使用 sessionStorage 防重复，静默调用 `auto-claim-bloom-invitation`
+- 无 UI 干扰，后台完成
+
+## 涉及文件
 
 | 文件 | 改动 |
 |------|------|
-| 数据库迁移 | `campaigns` +2字段，`partner_products` +1字段 |
-| `src/components/partner/PartnerProducts.tsx` | 新增落地页 URL 字段 |
-| `src/components/partner/PartnerCampaigns.tsx` | 新增落地页 URL、动态漏斗步骤配置器、关联产品下拉 |
-| `src/components/partner/PartnerFlywheel.tsx` | Tabs 布局 + 动态漏斗图 + AI 诊断 + AI 策略分析 |
+| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 新建：手机号自动匹配并发放权益 |
+| `src/pages/PartnerInvitePage.tsx` | 修改：微信环境下正确跳转 OAuth |
+| `src/components/profile/PhoneNumberManager.tsx` | 修改：保存手机号后触发自动匹配 |
+| `src/hooks/useAuth.tsx` | 修改：登录后静默调用自动匹配 |
+
+## 用户体验流程
+
+```text
+路径 A（最优）：收到邀请链接 → 点击 → 微信登录 → 自动 claim → 权益到账
+路径 B（补救）：微信注册 → 补充手机号 → 自动匹配 → 权益到账
+路径 C（兜底）：任何时候登录 → 后台静默检查 → 如有匹配 → 权益到账
+```
+
+三层保障确保无论用户通过哪条路径注册，只要手机号与导入名单匹配，都能自动获得绽放合伙人权益。
 
