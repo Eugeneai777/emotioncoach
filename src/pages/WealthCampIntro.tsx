@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap, Home } from "lucide-react";
+import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap, Home, Loader2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { AIThreeLocksCardLight } from "@/components/wealth-block/AIThreeLocksCardLight";
 import { LivingProfileCard } from "@/components/wealth-block/LivingProfileCard";
 import { AIMoatAnimation } from "@/components/wealth-block/AIMoatAnimation";
+import { Input } from "@/components/ui/input";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
@@ -22,6 +23,9 @@ const WealthCampIntro = () => {
   const queryClient = useQueryClient();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [isClaimingInvite, setIsClaimingInvite] = useState(false);
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
   
   // 检查用户是否已购买训练营
@@ -510,6 +514,51 @@ const WealthCampIntro = () => {
               >
                 ¥299 开启财富觉醒训练营
               </Button>
+              {!showInviteCodeInput ? (
+                <button
+                  onClick={() => setShowInviteCodeInput(true)}
+                  className="flex items-center justify-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                >
+                  <Gift className="w-3.5 h-3.5" />
+                  我有邀请码
+                </button>
+              ) : (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    placeholder="输入邀请码 BLOOM-XXXX"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    className="h-9 text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      if (!inviteCode.trim() || isClaimingInvite) return;
+                      setIsClaimingInvite(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("claim-partner-invitation", {
+                          body: { invite_code: inviteCode.trim() },
+                        });
+                        if (error) throw error;
+                        if (data?.error) { toast.error(data.error); return; }
+                        if (data?.success) {
+                          toast.success(data.message || "邀请码领取成功！");
+                          refetchPurchase();
+                          queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_7'] });
+                        }
+                      } catch (err: any) {
+                        toast.error(err?.message || "领取失败，请重试");
+                      } finally {
+                        setIsClaimingInvite(false);
+                      }
+                    }}
+                    disabled={!inviteCode.trim() || isClaimingInvite}
+                    className="h-9 px-4 whitespace-nowrap"
+                  >
+                    {isClaimingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : '领取'}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
