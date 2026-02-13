@@ -5,25 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import {
-  MessageSquare,
-  Flag,
-  GraduationCap,
-  Tent,
-  Video,
-  Pin,
-  AlertCircle,
-  Plus,
-  ArrowUpRight,
-  BookOpen,
-  Wrench,
-} from "lucide-react";
+import { MessageSquare, Flag, GraduationCap, Tent, Video, Pin, AlertCircle, Plus, ArrowUpRight } from "lucide-react";
 import { format } from "date-fns";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { AdminStatCard } from "./shared/AdminStatCard";
 
 export default function ContentAdminDashboard() {
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // 社区动态统计
   const { data: postStats, isLoading: loadingPosts } = useQuery({
     queryKey: ["content-admin-post-stats"],
     queryFn: async () => {
@@ -32,27 +21,18 @@ export default function ContentAdminDashboard() {
         supabase.from("community_posts").select("*", { count: "exact", head: true }).gte("created_at", today),
         supabase.from("community_posts").select("*", { count: "exact", head: true }).eq("is_pinned", true),
       ]);
-      return {
-        total: totalRes.count || 0,
-        today: todayRes.count || 0,
-        pinned: pinnedRes.count || 0,
-      };
+      return { total: totalRes.count || 0, today: todayRes.count || 0, pinned: pinnedRes.count || 0 };
     },
   });
 
-  // 待审核举报
   const { data: pendingReports, isLoading: loadingReports } = useQuery({
     queryKey: ["content-admin-pending-reports"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("post_reports")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
+      const { count } = await supabase.from("post_reports").select("*", { count: "exact", head: true }).eq("status", "pending");
       return count || 0;
     },
   });
 
-  // 内容模板统计
   const { data: templateStats, isLoading: loadingTemplates } = useQuery({
     queryKey: ["content-admin-template-stats"],
     queryFn: async () => {
@@ -61,15 +41,10 @@ export default function ContentAdminDashboard() {
         supabase.from("camp_templates").select("*", { count: "exact", head: true }),
         supabase.from("video_courses").select("*", { count: "exact", head: true }),
       ]);
-      return {
-        coaches: coachRes.count || 0,
-        camps: campRes.count || 0,
-        videos: videoRes.count || 0,
-      };
+      return { coaches: coachRes.count || 0, camps: campRes.count || 0, videos: videoRes.count || 0 };
     },
   });
 
-  // 最近5条社区动态
   const { data: recentPosts, isLoading: loadingRecent } = useQuery({
     queryKey: ["content-admin-recent-posts"],
     queryFn: async () => {
@@ -86,88 +61,16 @@ export default function ContentAdminDashboard() {
     story: "故事", checkin: "打卡", achievement: "成就", reflection: "反思", share: "分享",
   };
 
-  const StatCard = ({ title, value, icon: Icon, loading, href, subtitle }: {
-    title: string; value: number | string; icon: React.ElementType; loading: boolean; href?: string; subtitle?: string;
-  }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <>
-            <div className="text-2xl font-bold">{value}</div>
-            {subtitle && (
-              <div className="flex items-center text-xs mt-1 text-muted-foreground">
-                <span>{subtitle}</span>
-              </div>
-            )}
-            {href && (
-              <Link to={href} className="text-xs text-primary hover:underline mt-2 inline-block">
-                查看详情 →
-              </Link>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">内容管理概览</h1>
-        <p className="text-muted-foreground">管理社区动态、教练模板、课程等内容</p>
-      </div>
-
+    <AdminPageLayout title="内容管理概览" description="管理社区动态、教练模板、课程等内容">
       {/* 统计卡片 */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="社区动态"
-          value={postStats?.total || 0}
-          subtitle={`今日新增 ${postStats?.today || 0} 条`}
-          icon={MessageSquare}
-          loading={loadingPosts}
-          href="/admin/community-posts"
-        />
-        <StatCard
-          title="置顶帖"
-          value={postStats?.pinned || 0}
-          icon={Pin}
-          loading={loadingPosts}
-          href="/admin/community-posts"
-        />
-        <StatCard
-          title="待审核举报"
-          value={pendingReports || 0}
-          icon={Flag}
-          loading={loadingReports}
-          href="/admin/reports"
-        />
-        <StatCard
-          title="教练模板"
-          value={templateStats?.coaches || 0}
-          icon={GraduationCap}
-          loading={loadingTemplates}
-          href="/admin/coaches"
-        />
-        <StatCard
-          title="训练营模板"
-          value={templateStats?.camps || 0}
-          icon={Tent}
-          loading={loadingTemplates}
-          href="/admin/camps"
-        />
-        <StatCard
-          title="视频课程"
-          value={templateStats?.videos || 0}
-          icon={Video}
-          loading={loadingTemplates}
-          href="/admin/videos"
-        />
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+        <AdminStatCard label="社区动态" value={postStats?.total || 0} subtitle={`今日新增 ${postStats?.today || 0} 条`} icon={MessageSquare} loading={loadingPosts} href="/admin/community-posts" />
+        <AdminStatCard label="置顶帖" value={postStats?.pinned || 0} icon={Pin} accent="bg-amber-500/10 text-amber-600" loading={loadingPosts} href="/admin/community-posts" />
+        <AdminStatCard label="待审核举报" value={pendingReports || 0} icon={Flag} accent="bg-red-500/10 text-red-600" loading={loadingReports} href="/admin/reports" />
+        <AdminStatCard label="教练模板" value={templateStats?.coaches || 0} icon={GraduationCap} accent="bg-blue-500/10 text-blue-600" loading={loadingTemplates} href="/admin/coaches" />
+        <AdminStatCard label="训练营模板" value={templateStats?.camps || 0} icon={Tent} accent="bg-green-500/10 text-green-600" loading={loadingTemplates} href="/admin/camps" />
+        <AdminStatCard label="视频课程" value={templateStats?.videos || 0} icon={Video} accent="bg-purple-500/10 text-purple-600" loading={loadingTemplates} href="/admin/videos" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -184,10 +87,7 @@ export default function ContentAdminDashboard() {
             {loadingReports ? (
               <Skeleton className="h-12 w-full" />
             ) : (
-              <Link
-                to="/admin/reports"
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
+              <Link to="/admin/reports" className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <Flag className="h-4 w-4 text-red-500" />
                   <span>待审核举报</span>
@@ -210,28 +110,16 @@ export default function ContentAdminDashboard() {
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" asChild className="h-auto py-3 flex-col gap-1">
-                <Link to="/admin/community-posts">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="text-xs">社区动态</span>
-                </Link>
+                <Link to="/admin/community-posts"><MessageSquare className="h-4 w-4" /><span className="text-xs">社区动态</span></Link>
               </Button>
               <Button variant="outline" asChild className="h-auto py-3 flex-col gap-1">
-                <Link to="/admin/reports">
-                  <Flag className="h-4 w-4" />
-                  <span className="text-xs">举报管理</span>
-                </Link>
+                <Link to="/admin/reports"><Flag className="h-4 w-4" /><span className="text-xs">举报管理</span></Link>
               </Button>
               <Button variant="outline" asChild className="h-auto py-3 flex-col gap-1">
-                <Link to="/admin/coaches">
-                  <GraduationCap className="h-4 w-4" />
-                  <span className="text-xs">教练模板</span>
-                </Link>
+                <Link to="/admin/coaches"><GraduationCap className="h-4 w-4" /><span className="text-xs">教练模板</span></Link>
               </Button>
               <Button variant="outline" asChild className="h-auto py-3 flex-col gap-1">
-                <Link to="/admin/videos">
-                  <Video className="h-4 w-4" />
-                  <span className="text-xs">视频课程</span>
-                </Link>
+                <Link to="/admin/videos"><Video className="h-4 w-4" /><span className="text-xs">视频课程</span></Link>
               </Button>
             </div>
           </CardContent>
@@ -246,10 +134,7 @@ export default function ContentAdminDashboard() {
             <CardDescription>最新发布的5条动态</CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/community-posts">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              查看全部
-            </Link>
+            <Link to="/admin/community-posts"><ArrowUpRight className="h-4 w-4 mr-1" />查看全部</Link>
           </Button>
         </CardHeader>
         <CardContent>
@@ -263,12 +148,8 @@ export default function ContentAdminDashboard() {
                 <div key={post.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {post.is_pinned && <Pin className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
-                    <span className="truncate text-sm">
-                      {(post.title || post.content || "无内容").slice(0, 50)}
-                    </span>
-                    <Badge variant="secondary" className="text-xs flex-shrink-0">
-                      {typeLabel[post.post_type] || post.post_type}
-                    </Badge>
+                    <span className="truncate text-sm">{(post.title || post.content || "无内容").slice(0, 50)}</span>
+                    <Badge variant="secondary" className="text-xs flex-shrink-0">{typeLabel[post.post_type] || post.post_type}</Badge>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0 ml-3">
                     <span>👍 {post.likes_count}</span>
@@ -283,6 +164,6 @@ export default function ContentAdminDashboard() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AdminPageLayout>
   );
 }

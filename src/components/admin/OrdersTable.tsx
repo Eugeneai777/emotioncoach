@@ -11,6 +11,8 @@ import { UserDetailDialog } from "./UserDetailDialog";
 import { Download } from "lucide-react";
 import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { AdminFilterBar } from "./shared/AdminFilterBar";
 
 interface UnifiedOrder {
   id: string;
@@ -170,18 +172,24 @@ export function OrdersTable() {
   if (isLoading) return <div>加载中...</div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        <Input
-          placeholder="搜索用户ID、订单ID或套餐名..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
+    <AdminPageLayout
+      title="订单管理"
+      description="查看所有订单记录"
+      actions={
+        <Button variant="outline" size="sm" onClick={exportToCSV} disabled={!filteredOrders?.length} className="gap-2">
+          <Download className="w-4 h-4" />
+          导出 CSV
+        </Button>
+      }
+    >
+      <AdminFilterBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="搜索用户ID、订单ID或套餐名..."
+        totalCount={filteredOrders?.length}
+      >
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="订单来源" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[120px] h-9 text-sm"><SelectValue placeholder="订单来源" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部来源</SelectItem>
             <SelectItem value="wechat_pay">微信支付</SelectItem>
@@ -190,9 +198,7 @@ export function OrdersTable() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter} disabled={packageFilter !== 'all'}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="订单状态" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[120px] h-9 text-sm"><SelectValue placeholder="订单状态" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部状态</SelectItem>
             <SelectItem value="paid">已支付</SelectItem>
@@ -202,33 +208,18 @@ export function OrdersTable() {
           </SelectContent>
         </Select>
         <Select value={packageFilter} onValueChange={setPackageFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="商品筛选" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9 text-sm"><SelectValue placeholder="商品筛选" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部商品</SelectItem>
             {uniquePackages.map(pkg => (
-              <SelectItem key={pkg} value={pkg}>
-                {pkg === 'custom' ? '管理员充值' : pkg}
-              </SelectItem>
+              <SelectItem key={pkg} value={pkg}>{pkg === 'custom' ? '管理员充值' : pkg}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <div className="text-sm text-muted-foreground self-center">
-          共 {filteredOrders?.length || 0} 条订单
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={exportToCSV}
-          disabled={!filteredOrders?.length}
-          className="gap-2 ml-auto"
-        >
-          <Download className="w-4 h-4" />
-          导出 CSV
-        </Button>
-      </div>
+      </AdminFilterBar>
 
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -286,6 +277,8 @@ export function OrdersTable() {
           ))}
         </TableBody>
       </Table>
+        </div>
+      </div>
 
       {selectedUser && (
         <UserDetailDialog
@@ -296,6 +289,6 @@ export function OrdersTable() {
           avatarUrl={selectedUser.avatarUrl}
         />
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

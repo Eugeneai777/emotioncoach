@@ -10,6 +10,8 @@ import { RechargeDialog } from "./RechargeDialog";
 import { UserActionMenu } from "./UserActionMenu";
 import { UserDetailDialog } from "./UserDetailDialog";
 import { Ban } from "lucide-react";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { AdminFilterBar } from "./shared/AdminFilterBar";
 
 export function UserAccountsTable() {
   const [search, setSearch] = useState("");
@@ -90,15 +92,16 @@ export function UserAccountsTable() {
   if (isLoading) return <div>加载中...</div>;
 
   return (
-    <div className="space-y-4">
-      <Input
-        placeholder="搜索用户名/微信昵称/ID..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
+    <AdminPageLayout title="用户管理" description="查看和管理所有用户账户">
+      <AdminFilterBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="搜索用户名/微信昵称/ID..."
+        totalCount={filteredAccounts?.length}
       />
 
-      <div className="rounded-md border">
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -239,6 +242,7 @@ export function UserAccountsTable() {
             })}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {selectedUser && (
@@ -261,6 +265,6 @@ export function UserAccountsTable() {
           />
         </>
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

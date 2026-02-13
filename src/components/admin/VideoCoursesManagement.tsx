@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, Upload, FileText, CheckCircle, XCircle } from "lucide-react";
+import { AdminPageLayout } from "./shared/AdminPageLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -495,15 +496,12 @@ export const VideoCoursesManagement = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <AdminPageLayout
+      title="视频课程管理"
+      description={`共 ${courses.length} 个课程`}
+    >
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">视频课程管理</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              共 {courses.length} 个课程
-            </p>
-          </div>
           
           <div className="flex gap-2">
             <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -906,6 +904,6 @@ export const VideoCoursesManagement = () => {
           </Table>
         </div>
       </Card>
-    </div>
+    </AdminPageLayout>
   );
 };
