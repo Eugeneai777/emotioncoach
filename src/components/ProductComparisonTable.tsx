@@ -226,7 +226,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     return <Tools99Grid onPurchase={onPurchase} />;
   }
 
-  // 有劲会员 - 尝鲜会员 + 365会员对比表
+  // 有劲合伙人 - 尝鲜会员 + 365会员对比表
   if (category === 'youjin-member') {
     const features = youjinFeatures;
     const categories = Array.from(new Set(features.map(f => f.category)));
