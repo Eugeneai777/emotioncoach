@@ -1,0 +1,2 @@
+ALTER TABLE public.partners DROP CONSTRAINT partners_partner_type_check;
+ALTER TABLE public.partners ADD CONSTRAINT partners_partner_type_check CHECK (partner_type = ANY (ARRAY['youjin'::text, 'bloom'::text, 'industry'::text]));
