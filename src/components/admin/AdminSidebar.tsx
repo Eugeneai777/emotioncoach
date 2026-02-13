@@ -54,7 +54,7 @@ const NAV_GROUPS = [
     title: "概览",
     icon: LayoutDashboard,
     defaultOpen: true,
-    roles: ['admin'] as AdminRole[],
+    roles: ['admin', 'content_admin'] as AdminRole[],
     items: [
       { key: "dashboard", label: "概览仪表板", path: "/admin", icon: LayoutDashboard }
     ]

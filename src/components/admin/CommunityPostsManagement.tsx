@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pin, PinOff, Trash2, Search, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Pin, PinOff, Trash2, Search, RefreshCw, MessageSquare, TrendingUp, Heart } from "lucide-react";
 import { format } from "date-fns";
 
 interface CommunityPost {
@@ -37,8 +40,31 @@ export default function CommunityPostsManagement() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [pinFilter, setPinFilter] = useState("all");
+  const [visibilityFilter, setVisibilityFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<CommunityPost | null>(null);
   const { toast } = useToast();
+
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  // 统计数据
+  const { data: stats, isLoading: loadingStats } = useQuery({
+    queryKey: ["community-posts-stats"],
+    queryFn: async () => {
+      const [totalRes, todayRes, pinnedRes, interactionRes] = await Promise.all([
+        supabase.from("community_posts").select("*", { count: "exact", head: true }),
+        supabase.from("community_posts").select("*", { count: "exact", head: true }).gte("created_at", today),
+        supabase.from("community_posts").select("*", { count: "exact", head: true }).eq("is_pinned", true),
+        supabase.from("community_posts").select("likes_count, comments_count"),
+      ]);
+      const interactions = interactionRes.data?.reduce((sum, p) => sum + (p.likes_count || 0) + (p.comments_count || 0), 0) || 0;
+      return {
+        total: totalRes.count || 0,
+        today: todayRes.count || 0,
+        pinned: pinnedRes.count || 0,
+        interactions,
+      };
+    },
+  });
 
   const loadPosts = async () => {
     setLoading(true);
@@ -53,6 +79,7 @@ export default function CommunityPostsManagement() {
       if (typeFilter !== "all") query = query.eq("post_type", typeFilter);
       if (pinFilter === "pinned") query = query.eq("is_pinned", true);
       if (pinFilter === "unpinned") query = query.eq("is_pinned", false);
+      if (visibilityFilter !== "all") query = query.eq("visibility", visibilityFilter);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -77,7 +104,7 @@ export default function CommunityPostsManagement() {
     }
   };
 
-  useEffect(() => { loadPosts(); }, [typeFilter, pinFilter]);
+  useEffect(() => { loadPosts(); }, [typeFilter, pinFilter, visibilityFilter]);
 
   const togglePin = async (post: CommunityPost) => {
     const newPinned = !post.is_pinned;
@@ -114,6 +141,10 @@ export default function CommunityPostsManagement() {
     return text.length > 40 ? text.slice(0, 40) + "…" : text;
   };
 
+  const visibilityLabel: Record<string, string> = {
+    public: "公开", followers: "仅关注者", private: "私密",
+  };
+
   const typeLabel: Record<string, string> = {
     story: "故事", checkin: "打卡", achievement: "成就", reflection: "反思", share: "分享",
   };
@@ -132,6 +163,45 @@ export default function CommunityPostsManagement() {
         <Button variant="outline" size="sm" onClick={loadPosts} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> 刷新
         </Button>
+      </div>
+      {/* 统计卡片 */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">总帖数</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            {loadingStats ? <Skeleton className="h-7 w-16" /> : <div className="text-2xl font-bold">{stats?.total || 0}</div>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">今日新增</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            {loadingStats ? <Skeleton className="h-7 w-16" /> : <div className="text-2xl font-bold">{stats?.today || 0}</div>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">置顶帖</CardTitle>
+            <Pin className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            {loadingStats ? <Skeleton className="h-7 w-16" /> : <div className="text-2xl font-bold">{stats?.pinned || 0}</div>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">总互动</CardTitle>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            {loadingStats ? <Skeleton className="h-7 w-16" /> : <div className="text-2xl font-bold">{(stats?.interactions || 0).toLocaleString()}</div>}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -159,6 +229,15 @@ export default function CommunityPostsManagement() {
             <SelectItem value="unpinned">未置顶</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+          <SelectTrigger className="w-[130px]"><SelectValue placeholder="可见性" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部可见性</SelectItem>
+            <SelectItem value="public">公开</SelectItem>
+            <SelectItem value="followers">仅关注者</SelectItem>
+            <SelectItem value="private">私密</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -172,6 +251,7 @@ export default function CommunityPostsManagement() {
               <TableHead className="text-center">👍</TableHead>
               <TableHead className="text-center">💬</TableHead>
               <TableHead>发布时间</TableHead>
+              <TableHead>可见性</TableHead>
               <TableHead>状态</TableHead>
               <TableHead className="text-right">操作</TableHead>
             </TableRow>
@@ -179,7 +259,7 @@ export default function CommunityPostsManagement() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {loading ? "加载中…" : "暂无数据"}
                 </TableCell>
               </TableRow>
@@ -201,6 +281,11 @@ export default function CommunityPostsManagement() {
                 <TableCell className="text-center text-sm">{post.comments_count}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {format(new Date(post.created_at), "MM-dd HH:mm")}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="text-xs">
+                    {visibilityLabel[post.visibility] || post.visibility}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   {post.is_pinned ? (
