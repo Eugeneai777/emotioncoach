@@ -47,11 +47,14 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 
+import type { AdminRole } from "./AdminLayout";
+
 const NAV_GROUPS = [
   {
     title: "概览",
     icon: LayoutDashboard,
     defaultOpen: true,
+    roles: ['admin'] as AdminRole[],
     items: [
       { key: "dashboard", label: "概览仪表板", path: "/admin", icon: LayoutDashboard }
     ]
@@ -60,6 +63,7 @@ const NAV_GROUPS = [
     title: "用户与订单",
     icon: Users,
     defaultOpen: true,
+    roles: ['admin'] as AdminRole[],
     items: [
       { key: "users", label: "用户账户", path: "/admin/users", icon: Users },
       { key: "orders", label: "订单管理", path: "/admin/orders", icon: ShoppingCart },
@@ -70,6 +74,7 @@ const NAV_GROUPS = [
     title: "绽放合伙人",
     icon: Flower2,
     defaultOpen: true,
+    roles: ['admin'] as AdminRole[],
     items: [
       { key: "bloom-invitations", label: "绽放邀请管理", path: "/admin/bloom-invitations", icon: Mail },
       { key: "bloom-delivery", label: "合伙人交付", path: "/admin/bloom-delivery", icon: Package },
@@ -83,6 +88,7 @@ const NAV_GROUPS = [
     title: "内容管理",
     icon: BookOpen,
     defaultOpen: false,
+    roles: ['admin', 'content_admin'] as AdminRole[],
     items: [
       { key: "coaches", label: "教练模板", path: "/admin/coaches", icon: GraduationCap },
       { key: "human-coaches", label: "真人教练", path: "/admin/human-coaches", icon: UserCheck },
@@ -97,6 +103,7 @@ const NAV_GROUPS = [
     title: "运营数据",
     icon: BarChart3,
     defaultOpen: false,
+    roles: ['admin'] as AdminRole[],
     items: [
       { key: "usage", label: "使用记录", path: "/admin/usage", icon: BarChart3 },
       { key: "activation-codes", label: "激活码管理", path: "/admin/activation-codes", icon: Key },
@@ -105,9 +112,19 @@ const NAV_GROUPS = [
     ]
   },
   {
+    title: "举报管理",
+    icon: Flag,
+    defaultOpen: false,
+    roles: ['content_admin'] as AdminRole[],
+    items: [
+      { key: "reports", label: "举报管理", path: "/admin/reports", icon: Flag }
+    ]
+  },
+  {
     title: "系统安全",
     icon: Activity,
     defaultOpen: false,
+    roles: ['admin'] as AdminRole[],
     items: [
       { key: "api-monitor", label: "调用监控", path: "/admin/api-monitor", icon: Activity },
       { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
@@ -120,6 +137,7 @@ const NAV_GROUPS = [
     title: "系统配置",
     icon: Package,
     defaultOpen: false,
+    roles: ['admin'] as AdminRole[],
     items: [
       { key: "packages", label: "套餐权益", path: "/admin/packages", icon: Package },
       { key: "partner-levels", label: "合伙人等级", path: "/admin/partner-levels", icon: Handshake },
@@ -132,7 +150,11 @@ const NAV_GROUPS = [
   }
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  userRole: AdminRole;
+}
+
+export function AdminSidebar({ userRole }: AdminSidebarProps) {
   const location = useLocation();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -173,7 +195,7 @@ export function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4">
-        {NAV_GROUPS.map((group) => (
+        {NAV_GROUPS.filter(group => group.roles.includes(userRole)).map((group) => (
           <Collapsible
             key={group.title}
             open={openGroups[group.title]}

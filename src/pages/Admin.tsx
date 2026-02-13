@@ -51,10 +51,12 @@ function AdminRoutes() {
   );
 }
 
+import type { AdminRole } from "@/components/admin/AdminLayout";
+
 export default function Admin() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<AdminRole | null>(null);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -68,15 +70,16 @@ export default function Admin() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+        .in('role', ['admin', 'content_admin']);
 
-      if (!roles) {
+      if (!roles || roles.length === 0) {
         navigate("/");
         return;
       }
 
-      setIsAdmin(true);
+      // admin 优先
+      const hasAdmin = roles.some(r => r.role === 'admin');
+      setUserRole(hasAdmin ? 'admin' : 'content_admin');
       setChecking(false);
     };
 
@@ -89,9 +92,9 @@ export default function Admin() {
     return <div className="flex items-center justify-center h-screen">加载中...</div>;
   }
 
-  if (!isAdmin) {
+  if (!userRole) {
     return null;
   }
 
-  return <AdminLayout />;
+  return <AdminLayout userRole={userRole} />;
 }
