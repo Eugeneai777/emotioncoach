@@ -5532,6 +5532,74 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_landing_pages: {
+        Row: {
+          ai_conversation: Json | null
+          channel: string | null
+          content_a: Json | null
+          content_b: Json | null
+          created_at: string
+          id: string
+          landing_url: string | null
+          level: string
+          matched_product: string | null
+          pain_points: string[] | null
+          partner_id: string
+          selected_version: string | null
+          status: string
+          target_audience: string | null
+          topics: string[] | null
+          updated_at: string
+          volume: string | null
+        }
+        Insert: {
+          ai_conversation?: Json | null
+          channel?: string | null
+          content_a?: Json | null
+          content_b?: Json | null
+          created_at?: string
+          id?: string
+          landing_url?: string | null
+          level: string
+          matched_product?: string | null
+          pain_points?: string[] | null
+          partner_id: string
+          selected_version?: string | null
+          status?: string
+          target_audience?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          volume?: string | null
+        }
+        Update: {
+          ai_conversation?: Json | null
+          channel?: string | null
+          content_a?: Json | null
+          content_b?: Json | null
+          created_at?: string
+          id?: string
+          landing_url?: string | null
+          level?: string
+          matched_product?: string | null
+          pain_points?: string[] | null
+          partner_id?: string
+          selected_version?: string | null
+          status?: string
+          target_audience?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          volume?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_landing_pages_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_level_rules: {
         Row: {
           benefits: Json | null

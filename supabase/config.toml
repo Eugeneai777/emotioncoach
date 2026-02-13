@@ -436,3 +436,6 @@ verify_jwt = false
 
 [functions.auto-claim-bloom-invitation]
 verify_jwt = false
+
+[functions.flywheel-landing-page-ai]
+verify_jwt = false
