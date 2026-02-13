@@ -1,62 +1,49 @@
 
 
-# 绽放合伙人付费页面 — 添加邀请码/兑换码入口
+# 端到端测试：绽放合伙人邀请码兑换流程
 
-## 当前状况
+## 测试准备
 
-- 53 条绽放合伙人邀请全部为 `pending`（无人成功领取）
-- 三层自动匹配机制已部署（邀请链接 claim、手机号匹配、登录静默检查），但大部分用户通过微信注册，`profiles.phone` 为空，自动匹配无法触发
-- 用户直接进入测评/训练营页面时，仍看到 ¥9.9 和 ¥299 的支付要求
+1. 通过数据库迁移插入一条测试邀请记录：
+   - 邀请码：`BLOOM-TEST99`
+   - 状态：`pending`
 
-## 解决方案
+2. 使用预览环境中已登录的账号进行测试
 
-在 **AssessmentPayDialog**（¥9.9 测评支付弹窗）和 **WealthCampIntro**（¥299 训练营页面）中增加「我有邀请码」入口，让合伙人可以直接输入 `BLOOM-XXXX` 邀请码，跳过支付并自动开通权益。
+## 测试步骤
 
-同时修复 `auto-claim-bloom-invitation` 边缘函数中的 `getClaims` 调用（改用更可靠的 `getUser`），确保自动匹配在所有环境下稳定工作。
+### 测试 1：在财富测评页面兑换邀请码
+1. 导航到 `/wealth-block-assessment`
+2. 触发支付弹窗（AssessmentPayDialog）
+3. 点击「我有邀请码」
+4. 输入 `BLOOM-TEST99`
+5. 验证：
+   - 兑换成功提示
+   - 弹窗关闭
+   - 页面显示"继续测评"而非支付按钮
 
-## 实现步骤
+### 测试 2：验证训练营页面自动识别
+1. 导航到 `/wealth-camp-intro`
+2. 验证：
+   - 页面底部不再显示 ¥299 购买按钮
+   - 而是显示「开始训练营」按钮（因为步骤 1 已同时开通训练营权益）
 
-### 步骤 1：修复边缘函数认证方式
+### 测试 3：验证后端数据
+- 检查 `partners` 表是否创建了合伙人记录
+- 检查 `orders` 表是否有 ¥0 的测评订单
+- 检查 `user_camp_purchases` 表是否有训练营记录
+- 检查邀请码状态是否变为 `claimed`
 
-修改 `supabase/functions/auto-claim-bloom-invitation/index.ts`：
+### 测试 4：清理测试数据
+- 删除测试产生的 partner、order、camp_purchase 记录
+- 删除或重置测试邀请码
 
-- 将 `userClient.auth.getClaims(token)` 替换为 `userClient.auth.getUser()`
-- 用 `user.id` 获取 userId，与 `claim-partner-invitation` 和 `redeem-camp-activation-code` 保持一致
-- 同步修复 `supabase/functions/claim-partner-invitation/index.ts` 中的相同问题
+## 技术要点
 
-### 步骤 2：AssessmentPayDialog 添加邀请码入口
-
-修改 `src/components/wealth-block/AssessmentPayDialog.tsx`：
-
-- 在支付弹窗中增加「我有邀请码」按钮/链接
-- 点击后展示输入框，用户输入邀请码后调用 `claim-partner-invitation` 函数
-- 领取成功后自动关闭弹窗并触发 `onSuccess` 回调
-- 仅在 `packageKey` 为 `wealth_block_assessment` 时显示此入口（避免在其他产品中出现）
-
-### 步骤 3：WealthCampIntro 添加邀请码入口
-
-修改 `src/pages/WealthCampIntro.tsx`：
-
-- 在购买按钮旁边或下方添加「我有邀请码」入口
-- 输入邀请码后调用 `claim-partner-invitation`
-- 成功后刷新购买状态（`refetchPurchase`），页面自动切换为已购买状态
-
-### 步骤 4：同步修复 claim-partner-invitation 认证
-
-修改 `supabase/functions/claim-partner-invitation/index.ts`：
-
-- 与步骤 1 相同，将 `getClaims` 替换为 `getUser`
-
-## 涉及文件
-
-| 文件 | 改动 |
+| 步骤 | 工具 |
 |------|------|
-| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 修复：getClaims → getUser |
-| `supabase/functions/claim-partner-invitation/index.ts` | 修复：getClaims → getUser |
-| `src/components/wealth-block/AssessmentPayDialog.tsx` | 新增：邀请码输入入口 |
-| `src/pages/WealthCampIntro.tsx` | 新增：邀请码输入入口 |
-
-## 用户体验
-
-合伙人进入测评或训练营页面 → 看到支付弹窗 → 点击「我有邀请码」→ 输入 BLOOM-XXXX → 系统自动开通合伙人身份 + 免费权益 → 继续使用
+| 插入测试邀请码 | 数据库迁移 |
+| UI 交互测试 | 浏览器工具 |
+| 数据验证 | 数据库查询 |
+| 清理 | 数据库迁移 |
 
