@@ -120,15 +120,6 @@ serve(async (req) => {
       );
     }
 
-    // Get user profile for display name
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('display_name')
-      .eq('id', userId)
-      .maybeSingle();
-
-    const displayName = profile?.display_name || invitation.invitee_name || '绽放合伙人';
-
     // Generate partner code
     const partnerCode = `BP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
@@ -139,12 +130,11 @@ serve(async (req) => {
         user_id: userId,
         partner_type: 'bloom',
         partner_level: 'L0',
-        partner_name: displayName,
         partner_code: partnerCode,
         commission_rate_l1: 0.30,
         commission_rate_l2: 0.10,
         status: 'active',
-        approved_at: new Date().toISOString(),
+        source: 'manual',
       })
       .select()
       .single();
