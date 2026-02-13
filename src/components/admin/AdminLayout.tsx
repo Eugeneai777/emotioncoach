@@ -21,6 +21,7 @@ import UserAnomalyMonitor from "./UserAnomalyMonitor";
 import StabilityMonitor from "./StabilityMonitor";
 import RiskContentMonitor from "./RiskContentMonitor";
 import { PartnerLevelManagement } from "./PartnerLevelManagement";
+import IndustryPartnerManagement from "./IndustryPartnerManagement";
 import { HumanCoachesManagement } from "./human-coaches/HumanCoachesManagement";
 import AdminBloomPartnerDelivery from "./AdminBloomPartnerDelivery";
 import AdminBloomPartnerProfit from "./AdminBloomPartnerProfit";
@@ -70,6 +71,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="users" element={<UserAccountsTable />} />
                   <Route path="orders" element={<OrdersTable />} />
                   <Route path="partners" element={<PartnerManagement />} />
+                  <Route path="industry-partners" element={<IndustryPartnerManagement />} />
                   <Route path="bloom-invitations" element={<BloomPartnerInvitations />} />
                   <Route path="bloom-delivery" element={<AdminBloomPartnerDelivery />} />
                   <Route path="bloom-single" element={<AdminBloomSingleDelivery />} />

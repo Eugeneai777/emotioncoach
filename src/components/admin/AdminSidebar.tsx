@@ -73,7 +73,8 @@ const NAV_GROUPS = [
     items: [
       { key: "users", label: "用户账户", path: "/admin/users", icon: Users },
       { key: "orders", label: "订单管理", path: "/admin/orders", icon: ShoppingCart },
-      { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake }
+      { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake },
+      { key: "industry-partners", label: "行业合作伙伴", path: "/admin/industry-partners", icon: Network }
     ]
   },
   {
