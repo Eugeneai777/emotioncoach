@@ -72,23 +72,23 @@ const NAV_GROUPS = [
     roles: ['admin'] as AdminRole[],
     items: [
       { key: "users", label: "用户账户", path: "/admin/users", icon: Users },
-      { key: "orders", label: "订单管理", path: "/admin/orders", icon: ShoppingCart },
-      { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake },
-      { key: "industry-partners", label: "行业合作伙伴", path: "/admin/industry-partners", icon: Network }
+      { key: "orders", label: "订单管理", path: "/admin/orders", icon: ShoppingCart }
     ]
   },
   {
-    title: "绽放合伙人",
-    icon: Flower2,
+    title: "合伙人",
+    icon: Handshake,
     defaultOpen: true,
     roles: ['admin'] as AdminRole[],
     items: [
+      { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake },
       { key: "bloom-invitations", label: "绽放邀请管理", path: "/admin/bloom-invitations", icon: Mail },
       { key: "bloom-delivery", label: "合伙人交付", path: "/admin/bloom-delivery", icon: Package },
       { key: "bloom-single", label: "单营交付", path: "/admin/bloom-single", icon: Flower2 },
       { key: "bloom-profit", label: "绽放利润核算", path: "/admin/bloom-profit", icon: DollarSign },
       { key: "bloom-monthly", label: "绽放月度利润", path: "/admin/bloom-monthly", icon: TrendingUp },
-      { key: "bloom-cashflow", label: "绽放月度现金流", path: "/admin/bloom-cashflow", icon: Wallet }
+      { key: "bloom-cashflow", label: "绽放月度现金流", path: "/admin/bloom-cashflow", icon: Wallet },
+      { key: "industry-partners", label: "行业合伙人", path: "/admin/industry-partners", icon: Network }
     ]
   },
   {
