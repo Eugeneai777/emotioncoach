@@ -1,74 +1,123 @@
 
-# 为内容管理员定制专属仪表板
 
-## 概述
-为 `content_admin` 角色创建一个专属的内容管理仪表板，展示内容相关的统计数据（社区动态、举报、教练模板、课程等），替代当前直接跳转到社区动态页面的行为。同时优化社区动态管理页面的体验。
+# 管理后台整体设计与排版优化
+
+## 当前问题分析
+
+通过审查代码，发现管理后台存在以下设计与排版问题：
+
+1. **页面结构不统一**：部分页面有标题区域，部分没有；有的用 Card 包裹，有的直接用 div
+2. **表格不可横向滚动**：多个页面的表格缺少 `overflow-x-auto` 和 `min-w` 设置，导致窄屏下内容被压缩
+3. **筛选区风格不统一**：搜索框、下拉筛选的高度、间距各页面不同
+4. **统计卡片风格各异**：AdminDashboard、ContentAdminDashboard、CommunityPostsManagement 各自定义了不同风格的 StatCard
+5. **间距与排版不一致**：有的页面用 `space-y-6`，有的用 `space-y-4`，padding 不统一
 
 ---
 
-## 改动内容
+## 优化方案
 
-### 1. 新建内容管理员仪表板组件
+### 1. 创建统一的管理页面布局组件
 
-**新文件**: `src/components/admin/ContentAdminDashboard.tsx`
+**新文件**: `src/components/admin/shared/AdminPageLayout.tsx`
 
-展示以下统计卡片：
-- 社区动态总数 / 今日新增
-- 置顶帖数量
-- 待审核举报数
-- 教练模板数量
-- 训练营模板数量
-- 视频课程数量
+提供统一的页面标题区域（标题 + 描述 + 右侧操作按钮）和内容区域包裹，确保所有管理页面有一致的上下间距和排版。
 
-下方区域：
-- 待处理举报提醒（带跳转链接）
-- 最近社区动态列表（最新5条，快速预览）
-- 快速操作入口（管理社区动态、查看举报、管理教练模板等）
+### 2. 创建统一的统计卡片组件
 
-### 2. 修改路由和侧边栏
+**新文件**: `src/components/admin/shared/AdminStatCard.tsx`
 
-**`src/components/admin/AdminLayout.tsx`**
-- `content_admin` 访问 `/admin` 时不再重定向，改为显示 `ContentAdminDashboard`
-- 为 `content_admin` 注册 index 路由
+统一 StatCard 的视觉样式：左侧带颜色图标区 + 右侧数值/标签，所有仪表板页面共用。替代当前 AdminDashboard、ContentAdminDashboard、CommunityPostsManagement 中各自内联定义的 StatCard。
 
-**`src/components/admin/AdminSidebar.tsx`**
-- 在 `content_admin` 的导航分组中增加"概览"入口，指向 `/admin`
+### 3. 创建统一的筛选栏组件
 
-### 3. 优化社区动态管理页面
+**新文件**: `src/components/admin/shared/AdminFilterBar.tsx`
 
-**`src/components/admin/CommunityPostsManagement.tsx`**
-- 顶部增加统计摘要卡片（总帖数、今日新增、置顶数、总互动量）
-- 增加可见性筛选（公开/仅关注者/私密）
-- 表格增加可见性列显示
+统一搜索框 + 筛选下拉的布局样式（高度 h-9、间距 gap-2、响应式换行），提供 slot 模式供各页面放入自定义筛选器。
+
+### 4. 创建统一的数据表格容器
+
+**新文件**: `src/components/admin/shared/AdminTableContainer.tsx`
+
+包含 `border rounded-lg overflow-hidden` 外层 + `overflow-x-auto` 内层 + 可配置的 `min-w`，确保所有表格页面都能横向滚动。
+
+### 5. 逐页应用统一组件
+
+对以下页面进行改造（引入上述共享组件）：
+
+- **CommunityPostsManagement.tsx** - 使用 AdminPageLayout + AdminStatCard + AdminFilterBar + AdminTableContainer
+- **ContentAdminDashboard.tsx** - 使用 AdminPageLayout + AdminStatCard
+- **AdminDashboard.tsx** - 使用 AdminPageLayout + AdminStatCard
+- **UserAccountsTable.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
+- **OrdersTable.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
+- **PartnerManagement.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
+- **VideoCoursesManagement.tsx** - 使用 AdminPageLayout + AdminTableContainer
+- **KnowledgeBaseManagement.tsx** - 使用 AdminPageLayout
+- **CoachTemplatesManagement.tsx** - 使用 AdminPageLayout
+- **PackagesManagement.tsx** - 使用 AdminPageLayout + AdminTableContainer
+- **ReportsManagement.tsx** - 使用 AdminPageLayout + AdminTableContainer
+- **ActivationCodeManagement.tsx** - 使用 AdminPageLayout + AdminFilterBar + AdminTableContainer
+
+### 6. AdminLayout 主框架微调
+
+- 确保 `main` 区域使用 `overflow-auto` 支持双向滚动
+- 统一内容区 padding 为 `p-6`
 
 ---
 
 ## 技术细节
 
-### ContentAdminDashboard 数据查询
-使用 `@tanstack/react-query` 分别查询：
-- `community_posts`: 总数、今日新增、置顶数
-- `post_reports`: 待审核数
-- `coach_templates` / `camp_templates` / `video_courses`: 各自总数
-- `community_posts` 最近5条：用于"最新动态"列表
+### AdminPageLayout 结构
 
-### 路由变更
 ```text
-AdminLayout.tsx:
-  - 移除 content_admin 的重定向逻辑
-  - 添加: <Route index element={<ContentAdminDashboard />} /> (在 content_admin 路由块中)
-
-AdminSidebar.tsx:
-  - 概览分组 roles 改为 ['admin', 'content_admin']
-  - content_admin 的概览项指向 /admin，label 改为"内容概览"
-  - 或新增一个 content_admin 专属概览分组
++--------------------------------------------------+
+| 标题                              [操作按钮区域]  |
+| 描述文字                                          |
++--------------------------------------------------+
+| {children}                                        |
++--------------------------------------------------+
 ```
 
-### 社区动态页面优化
-在现有表格上方添加4个统计卡片，使用与 AdminDashboard 相同的 StatCard 样式：
-- 总帖数
-- 今日新增
-- 置顶帖数
-- 总互动（点赞+评论总和）
+Props: `title`, `description`, `actions` (ReactNode), `children`
 
-增加 visibility 筛选下拉框和表格列。
+### AdminStatCard 统一风格
+
+```text
++--[图标]--+--数值标签--+
+|  彩色底   |  123       |
+|  图标     |  标题      |
++-----------+------------+
+```
+
+Props: `label`, `value`, `icon`, `accent?`, `loading?`, `href?`, `subtitle?`
+
+### AdminFilterBar 结构
+
+```text
+[搜索框..............] [筛选1 v] [筛选2 v]  共 N 条
+```
+
+Props: `searchValue`, `onSearchChange`, `searchPlaceholder`, `children` (筛选器 slot), `totalCount?`
+
+### AdminTableContainer
+
+```text
+<div className="border rounded-lg overflow-hidden">
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm" style={{ minWidth }}>
+      ...
+    </table>
+  </div>
+</div>
+```
+
+Props: `minWidth?` (默认 800px), `children`
+
+### 改造优先级
+
+1. 先创建 4 个共享组件
+2. 改造 CommunityPostsManagement（当前页面）
+3. 改造两个 Dashboard
+4. 逐步改造其余表格页面
+
+所有改造保持功能和数据逻辑不变，仅替换布局容器和视觉组件。
+
