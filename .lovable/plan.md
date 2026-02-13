@@ -1,174 +1,148 @@
 
 
-# 有劲AI · 转化飞轮中控台 — 实施方案
+# 行业合作伙伴（B2B）专属飞轮系统
 
-## 概述
+## 需求理解
 
-在现有管理后台（/admin）中新增"转化飞轮"模块，复用已有的 `conversion_events`、`orders`、`partners` 表，仅新建 `campaigns` 和 `ab_tests` 两张表。通过 Lovable AI 实现智能分析功能。
+这不是普通的分销合伙人，而是**行业级 B2B 合作伙伴**（如知乐胶囊），他们需要：
+- 独立创建和管理自己的 Campaign
+- 打包自己的专属产品组合
+- 只看到自己带来的流量和转化数据
+- 独立调整自己的转化闭环策略
+- 拥有自己的漏斗分析和 AI 诊断
 
 ---
 
-## 一、数据库变更
+## 数据库变更
 
-### 新建表 1：campaigns（推广活动）
+### 1. campaigns 表增加 partner_id
+
+将 Campaign 归属到具体合作伙伴，管理员创建的（partner_id = null）为平台级活动。
+
+### 2. 新建 partner_products 表
+
+记录每个行业合伙人的专属产品包配置：
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | uuid PK | 活动ID |
-| name | text | 活动名称 |
-| traffic_source | text | 流量来源（微信/抖音/小红书等） |
-| target_audience | text | 目标人群 |
-| media_channel | text | 媒体渠道 |
-| landing_product | text | 引流产品 |
-| promotion_cost | numeric | 推广成本 |
-| start_date | date | 开始日期 |
-| end_date | date | 结束日期 |
-| status | text | draft/active/paused/completed |
-| created_at / updated_at | timestamptz | 时间戳 |
+| id | uuid PK | 记录ID |
+| partner_id | uuid FK | 关联 partners.id |
+| product_name | text | 产品名称（如"知乐胶囊·身心评估套餐"） |
+| product_key | text | 产品标识 |
+| price | numeric | 定价 |
+| description | text | 产品描述 |
+| is_active | boolean | 是否启用 |
+| created_at | timestamptz | 创建时间 |
 
-### 新建表 2：ab_tests（AB测试）
+### 3. RLS 策略
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | uuid PK | 测试ID |
-| campaign_id | uuid FK | 关联活动 |
-| title_a | text | 标题A |
-| title_b | text | 标题B |
-| clicks_a | integer | A点击数 |
-| clicks_b | integer | B点击数 |
-| winner | text | 优胜版本(a/b/pending) |
-| ai_suggestion | text | AI生成的优化建议 |
-| status | text | running/completed |
-| created_at | timestamptz | 时间戳 |
-
-### 扩展现有表
-
-- `conversion_events`：新增 `campaign_id` 字段（可选，用于归因到具体活动）
-
-### 复用现有表（不改动）
-
-- `orders`：已有金额、用户、产品、合伙人ID等字段
-- `partners`：已有邀请人数、成交、收入、分成等字段
-- `profiles`：用户基础信息
-- `user_camp_purchases`：训练营购买记录
+- 管理员：可读写所有 campaigns 和 partner_products
+- 行业合伙伙伴（authenticated）：只能读写 partner_id 匹配自己的 campaigns 和 partner_products
+- conversion_events 和 orders：通过 campaign_id 间接实现数据隔离
 
 ---
 
-## 二、管理后台导航
+## 前端变更
 
-在 AdminSidebar 中新增"转化飞轮"分组：
+### 1. 合伙人端：新增"我的飞轮"页面
+
+在 Partner 页面中为行业合伙伙伴新增独立的飞轮面板 `PartnerFlywheel.tsx`，包含：
+
+- **统计卡片**：我的曝光、我的测评完成、我的成交额、我的 ROI
+- **我的漏斗**：仅展示该合伙伙伴 Campaign 下的 conversion_events 数据
+- **我的活动管理**：CRUD 自己的 Campaign（复用 FlywheelCampaigns 的表单逻辑）
+- **我的产品包**：管理自己的专属产品组合
+- **AI 诊断**：基于自己数据的一句话诊断
+
+数据过滤逻辑：
 
 ```text
-转化飞轮
-  ├── 飞轮总览        /admin/flywheel
-  ├── Campaign实验室   /admin/flywheel-campaigns
-  ├── 漏斗行为追踪     /admin/flywheel-funnel
-  ├── 收入与ROI       /admin/flywheel-revenue
-  ├── 裂变追踪        /admin/flywheel-referral
-  └── AI策略中心      /admin/flywheel-ai
+1. 获取当前用户的 partner_id
+2. 查询 campaigns WHERE partner_id = 我的partner_id
+3. 获取这些 campaign 的 id 列表
+4. 用 campaign_id IN (我的campaign列表) 过滤 conversion_events
+5. 用关联的 user_id 过滤 orders
 ```
 
----
+### 2. 管理端：Campaign 增加合伙伙伴关联
 
-## 三、6个页面功能设计
+在 FlywheelCampaigns 创建/编辑对话框中新增"所属合作伙伴"下拉选择器：
+- 数据来源为 partners 表
+- 可选为空（平台级活动）
+- 表格中增加"合作伙伴"列
 
-### 页面1：飞轮总览 Dashboard
+### 3. 管理端：合伙伙伴产品包管理
 
-- 顶部4个统计卡片：今日曝光、今日测评完成、今日成交金额、总ROI
-- 中部：实时漏斗图（曝光 -> 点击 -> 测评完成 -> AI>=5轮 -> 咨询 -> 成交）
-- 底部：AI一句话诊断（调用 Lovable AI 生成）
-- 数据来源：聚合 `conversion_events` + `orders` 表
+在管理后台新增产品包管理入口，支持为每个行业合伙伙伴配置专属产品。
 
-### 页面2：Campaign实验室
+### 4. 路由集成
 
-- CRUD管理推广活动（campaigns 表）
-- 每个 Campaign 展示关联的漏斗数据和ROI
-- 支持按状态筛选、按时间排序
-- 集成 AB 测试创建入口
-
-### 页面3：漏斗行为追踪
-
-- 基于现有 `ConversionAnalytics` 组件扩展
-- 增加 Campaign 维度筛选
-- 自动计算：点击率、测评完成率、咨询率、成交率
-- 支持按日/周/月查看趋势
-
-### 页面4：收入与ROI分析
-
-- 从 `orders` 表聚合收入数据
-- 按 Campaign 分组显示 ROI = 总收入 / 推广成本
-- LTV 计算 = 单用户平均收入
-- 产品转化排名图表
-
-### 页面5：裂变追踪
-
-- 复用现有 `partners` 表数据
-- 合伙人贡献排名表格
-- 裂变链路可视化（邀请 -> 注册 -> 成交）
-- 分成统计
-
-### 页面6：AI策略中心
-
-- "生成分析"按钮触发 Edge Function
-- Edge Function 读取最近7天的漏斗数据 + 订单数据
-- 调用 Lovable AI（google/gemini-3-flash-preview）生成：
-  - 最弱环节识别
-  - 最优流量来源
-  - 3个优化建议
-  - 2个AB测试方向
-  - 价格/产品结构建议
-  - 下周增长预测
-- 结果以卡片形式展示，支持历史记录查看
+- `/partner` 页面的 Tabs 中增加"数据飞轮"标签页（仅对有 campaign 的行业合作伙伴显示）
+- 或在 YoujinPartnerDashboard 中增加飞轮入口按钮
 
 ---
 
-## 四、Edge Function
+## 技术细节
 
-### `flywheel-ai-analysis`
-
-- 从数据库读取7天内 conversion_events、orders、campaigns 数据
-- 组装成结构化 prompt
-- 调用 Lovable AI Gateway（https://ai.gateway.lovable.dev/v1/chat/completions）
-- 使用 tool calling 提取结构化输出（最弱环节、建议列表等）
-- 返回 JSON 给前端渲染
-
----
-
-## 五、共振指数（高级功能）
-
-在 Dashboard 中增加共振指数计算：
+### 数据隔离机制
 
 ```text
-共振指数 = AI对话轮数 x 测评完成度 x 情绪深度评分
+合伙伙伴视角:
+  campaigns (WHERE partner_id = 我) 
+    └── conversion_events (WHERE campaign_id IN 我的campaigns)
+        └── 漏斗统计（仅我的数据）
+    └── orders (WHERE campaign_id 关联或 user_id 通过 referral 关联)
+        └── 收入/ROI（仅我的数据）
+
+管理员视角:
+  campaigns (全部，含筛选)
+    └── 全局漏斗 + 按合伙伙伴分组查看
 ```
 
-从 `usage_records`（对话轮数）+ `conversion_events`（测评完成度）聚合计算，用于用户分层预测。
+### RLS 策略设计
+
+```text
+-- campaigns: 合伙伙伴只能操作自己的
+CREATE POLICY "Partners manage own campaigns"
+  ON campaigns FOR ALL TO authenticated
+  USING (
+    partner_id IN (SELECT id FROM partners WHERE user_id = auth.uid())
+    OR public.has_role(auth.uid(), 'admin')
+  );
+
+-- partner_products: 合伙伙伴只能操作自己的产品
+CREATE POLICY "Partners manage own products"
+  ON partner_products FOR ALL TO authenticated
+  USING (
+    partner_id IN (SELECT id FROM partners WHERE user_id = auth.uid())
+    OR public.has_role(auth.uid(), 'admin')
+  );
+```
+
+### Edge Function 更新
+
+`flywheel-ai-analysis` 增加 partner_id 参数支持，当合伙伙伴调用时只分析该合伙伙伴的数据。
 
 ---
 
-## 六、自动报告
+## 新增/修改文件清单
 
-- 在 AI 策略中心增加"生成周报"功能
-- 调用同一个 Edge Function，prompt 切换为周报模式
-- 输出：漏斗分析、合伙人排名、产品转化排名、策略建议
-- 以 Markdown 格式渲染，支持复制
-
----
-
-## 七、权限控制
-
-- 仅 `admin` 角色可访问全部飞轮页面
-- 复用现有 AdminLayout 的角色校验逻辑
-- 合伙人通过现有的 `/partner` 页面查看自己的数据（已有功能）
+1. **数据库迁移**：campaigns 增加 partner_id，新建 partner_products 表 + RLS
+2. **新文件** `src/components/partner/PartnerFlywheel.tsx` — 合伙伙伴专属飞轮面板
+3. **新文件** `src/components/partner/PartnerCampaigns.tsx` — 合伙伙伴 Campaign 管理
+4. **新文件** `src/components/partner/PartnerProducts.tsx` — 合伙伙伴产品包管理
+5. **修改** `src/components/admin/flywheel/FlywheelCampaigns.tsx` — 增加合作伙伴选择器
+6. **修改** `src/pages/Partner.tsx` — 增加飞轮 Tab 入口
+7. **修改** `supabase/functions/flywheel-ai-analysis/index.ts` — 支持 partner_id 过滤
+8. **修改** campaigns 表现有 RLS 策略 — 适配合伙伙伴访问
 
 ---
 
-## 八、实施步骤
+## 实施顺序
 
-1. 创建 `campaigns` 和 `ab_tests` 数据库表 + RLS 策略
-2. 扩展 `conversion_events` 表增加 `campaign_id` 字段
-3. 创建 `flywheel-ai-analysis` Edge Function
-4. 创建6个页面组件（使用统一的 AdminPageLayout 等共享组件）
-5. 更新 AdminSidebar 和 AdminLayout 路由
-6. 集成 AI 分析和周报生成功能
+1. 数据库迁移：campaigns 增加 partner_id + 新建 partner_products + 调整 RLS
+2. 管理端 FlywheelCampaigns 增加合伙伙伴关联字段
+3. 创建合伙伙伴专属飞轮组件（PartnerFlywheel + PartnerCampaigns + PartnerProducts）
+4. Partner 页面集成飞轮 Tab
+5. Edge Function 增加 partner 维度数据过滤
 
