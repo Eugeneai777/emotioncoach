@@ -1,0 +1,2 @@
+ALTER TABLE public.partners DROP CONSTRAINT partners_source_check;
+ALTER TABLE public.partners ADD CONSTRAINT partners_source_check CHECK (source = ANY (ARRAY['organic'::text, 'referral'::text, 'campaign'::text, 'admin'::text, 'manual'::text]));
