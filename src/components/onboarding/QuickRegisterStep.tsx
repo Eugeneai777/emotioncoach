@@ -54,15 +54,12 @@ function isValidPhone(phone: string): boolean {
   return /^\d{5,15}$/.test(phone);
 }
 
-// 根据环境智能选择默认注册模式
+// 根据环境智能选择默认注册模式 — 手机号优先
 const getDefaultMode = (): RegisterMode => {
-  const ua = navigator.userAgent.toLowerCase();
-  const isWechat = /micromessenger/i.test(ua);
-  const isMobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
-  
-  if (isWechat) return 'wechat';  // 微信内 → 微信一键注册
-  if (isMobile) return 'phone';   // 移动端非微信 → 手机号注册更方便
-  return 'wechat';                // PC端 → 微信扫码
+  // 小程序环境保留微信一键登录
+  if (isWeChatMiniProgram()) return 'wechat';
+  // 其他所有环境默认手机号注册
+  return 'phone';
 };
 
 export function QuickRegisterStep({
@@ -585,18 +582,7 @@ export function QuickRegisterStep({
 
       {/* 注册方式切换 - 移动端紧凑布局 */}
       <div className="flex rounded-lg border p-0.5 sm:p-1 bg-muted/30">
-        {/* 微信浏览器内显示"微信授权"，其他环境显示"微信扫码" */}
-        <button
-          onClick={() => setRegisterMode('wechat')}
-          className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-            registerMode === 'wechat'
-              ? 'bg-background shadow-sm text-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
-          {isMiniProgram ? '一键登录' : (isWechat ? '微信授权' : '微信扫码')}
-        </button>
+        {/* 手机号注册 - 第一位 */}
         <button
           onClick={() => setRegisterMode('phone')}
           className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
@@ -608,6 +594,19 @@ export function QuickRegisterStep({
           <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
           手机号注册
         </button>
+        {/* 微信授权/扫码 - 第二位 */}
+        <button
+          onClick={() => setRegisterMode('wechat')}
+          className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+            registerMode === 'wechat'
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
+          {isMiniProgram ? '一键登录' : (isWechat ? '微信授权' : '微信扫码')}
+        </button>
+        {/* 已有账号 - 第三位 */}
         <button
           onClick={() => setRegisterMode('login')}
           className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
