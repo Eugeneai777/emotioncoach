@@ -28,7 +28,13 @@ import {
   Tent,
   Key,
   Gift,
-  MessageSquare
+  MessageSquare,
+  Zap,
+  FlaskConical,
+  Filter,
+  PieChart,
+  Network,
+  Brain
 } from "lucide-react";
 import {
   Sidebar,
@@ -97,6 +103,20 @@ const NAV_GROUPS = [
       { key: "knowledge", label: "知识库", path: "/admin/knowledge", icon: BookOpen },
       { key: "tools", label: "生活馆工具", path: "/admin/tools", icon: Wrench },
       { key: "community-posts", label: "社区动态", path: "/admin/community-posts", icon: MessageSquare }
+    ]
+  },
+  {
+    title: "转化飞轮",
+    icon: Zap,
+    defaultOpen: false,
+    roles: ['admin'] as AdminRole[],
+    items: [
+      { key: "flywheel", label: "飞轮总览", path: "/admin/flywheel", icon: Zap },
+      { key: "flywheel-campaigns", label: "Campaign实验室", path: "/admin/flywheel-campaigns", icon: FlaskConical },
+      { key: "flywheel-funnel", label: "漏斗行为追踪", path: "/admin/flywheel-funnel", icon: Filter },
+      { key: "flywheel-revenue", label: "收入与ROI", path: "/admin/flywheel-revenue", icon: PieChart },
+      { key: "flywheel-referral", label: "裂变追踪", path: "/admin/flywheel-referral", icon: Network },
+      { key: "flywheel-ai", label: "AI策略中心", path: "/admin/flywheel-ai", icon: Brain }
     ]
   },
   {
