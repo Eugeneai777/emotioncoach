@@ -2737,7 +2737,9 @@ export type Database = {
           image_urls: string[] | null
           insight: string | null
           is_anonymous: boolean | null
+          is_pinned: boolean
           likes_count: number | null
+          pinned_at: string | null
           post_type: string
           shares_count: number | null
           title: string | null
@@ -2761,7 +2763,9 @@ export type Database = {
           image_urls?: string[] | null
           insight?: string | null
           is_anonymous?: boolean | null
+          is_pinned?: boolean
           likes_count?: number | null
+          pinned_at?: string | null
           post_type: string
           shares_count?: number | null
           title?: string | null
@@ -2785,7 +2789,9 @@ export type Database = {
           image_urls?: string[] | null
           insight?: string | null
           is_anonymous?: boolean | null
+          is_pinned?: boolean
           likes_count?: number | null
+          pinned_at?: string | null
           post_type?: string
           shares_count?: number | null
           title?: string | null
