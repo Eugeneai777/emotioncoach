@@ -242,7 +242,7 @@ export default function CommunityPostsManagement() {
 
       {/* Table */}
       <div className="border rounded-lg overflow-x-auto">
-        <Table>
+        <Table className="min-w-[900px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[280px]">内容摘要</TableHead>
