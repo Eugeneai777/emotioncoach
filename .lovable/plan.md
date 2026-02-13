@@ -1,53 +1,63 @@
 
-# 个人主页直接编辑昵称和头像
+
+# 新增"内容管理员"角色并授权张艳
 
 ## 概述
-在用户个人主页的信息卡片区域增加"就地编辑"能力，点击头像可直接上传新头像，点击昵称可直接修改，无需跳转设置页面。
+创建一个权限受限的"内容管理员"角色，仅允许访问内容管理相关功能（社区动态、举报管理等），不能查看仪表板、用户账户、订单、财务等页面。
 
 ---
 
-## 修改文件
+## 改动范围
 
-**`src/pages/UserProfile.tsx`**
+### 1. 数据库变更
 
-### 1. 新增状态和逻辑
-- 添加 `isEditingName` 状态控制昵称编辑模式
-- 添加 `editName` 状态存储编辑中的昵称
-- 添加 `isUploadingAvatar` 状态控制头像上传状态
-- 添加隐藏的 `<input type="file">` 和 `fileInputRef`
-- 添加 `handleAvatarUpload` 函数：选择图片 -> 压缩 -> 上传到 `community-images` 存储桶 -> 更新 `profiles` 表 -> 刷新本地状态
-- 添加 `handleNameSave` 函数：更新 `profiles` 表的 `display_name` 字段
+- 在 `app_role` 枚举中添加 `content_admin` 值
+- 为张艳分配角色：`user_id = 'e8e9081d-...'`, `role = 'content_admin'`
+- 在 `community_posts` 表上为 `content_admin` 添加 SELECT / UPDATE / DELETE 策略
 
-### 2. 头像区域改造（仅自己的主页）
-- 头像上添加半透明遮罩层，悬停时显示相机图标，点击触发文件选择
-- 上传中显示 loading 动画
-- 复用已有的图片压缩逻辑（参考 `AvatarUploader` 组件）
+### 2. 前端代码变更
 
-### 3. 昵称区域改造（仅自己的主页）
-- 昵称旁显示小编辑图标（Pencil），点击进入编辑模式
-- 编辑模式下昵称变为 Input 输入框 + 确认/取消按钮
-- 点击确认保存到数据库，点击取消恢复原值
+**`src/pages/Admin.tsx`**
+- 权限检查：允许 `admin` 或 `content_admin` 角色进入后台
+- 将用户角色传递给 `AdminLayout`
 
-### 4. 保留"编辑资料"按钮
-- 顶部的"编辑资料"按钮保留，用于编辑更多字段（签名、心情等）
+**`src/components/admin/AdminLayout.tsx`**
+- 接收用户角色，根据角色过滤路由
+- `content_admin` 仅可访问内容管理和举报管理相关路由
+- `content_admin` 的默认首页改为 `/admin/community-posts`（而非仪表板）
+
+**`src/components/admin/AdminSidebar.tsx`**
+- 接收用户角色，按角色过滤侧边栏分组
+- `content_admin` 仅显示：
+  - 内容管理（教练模板、真人教练、训练营、视频课程、知识库、生活馆工具、社区动态）
+  - 举报管理
+- 隐藏：概览仪表板、用户与订单、绽放合伙人、运营数据（除举报）、系统安全、系统配置
 
 ---
 
-## 交互流程
+## 权限矩阵
 
 ```text
-头像编辑:
-  点击头像 -> 弹出文件选择 -> 压缩图片 -> 上传存储桶 -> 更新数据库 -> 刷新页面显示
-
-昵称编辑:
-  点击编辑图标 -> 输入框出现 -> 输入新昵称 -> 点击确认 -> 更新数据库 -> 刷新显示
+功能区域           | admin | content_admin
+-------------------|-------|-------------
+概览仪表板         |  Yes  |  No
+用户账户/订单      |  Yes  |  No
+合伙人管理         |  Yes  |  No
+内容管理（全部）   |  Yes  |  Yes
+举报管理           |  Yes  |  Yes
+运营数据（其他）   |  Yes  |  No
+系统安全           |  Yes  |  No
+系统配置           |  Yes  |  No
 ```
 
 ---
 
 ## 技术细节
 
-- 图片压缩复用与 `AvatarUploader` 相同的 canvas 缩放逻辑（400x400, JPEG 0.85 质量）
-- 上传路径：`avatars/{timestamp}.{ext}`，存储桶 `community-images`（已存在且公开）
-- 仅当 `isOwnProfile === true` 时才显示编辑交互
-- 新增导入：`Pencil`, `Check`, `X`, `Camera`, `Loader2` 图标；`Input` 组件；`useToast`
+- 数据库：`ALTER TYPE app_role ADD VALUE 'content_admin'`
+- `Admin.tsx`：查询改为 `.in('role', ['admin', 'content_admin'])`，记录具体角色并传给 `AdminLayout`
+- `AdminLayout`：`content_admin` 角色访问 `/admin` 时重定向到 `/admin/community-posts`，仅注册白名单路由
+- `AdminSidebar`：每个导航分组增加 `roles` 字段标注允许访问的角色列表，侧边栏根据当前角色过滤显示
+- `community_posts` RLS：添加 `has_role(auth.uid(), 'content_admin')` 策略
+- 张艳 user_id：`e8e9081d-51d6-4506-a0a6-8b2f6bcf7093`
+
