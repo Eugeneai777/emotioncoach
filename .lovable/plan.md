@@ -1,148 +1,48 @@
 
 
-# 行业合作伙伴（B2B）专属飞轮系统
+# 管理后台新增"行业合作伙伴"入口
 
-## 需求理解
+## 目标
 
-这不是普通的分销合伙人，而是**行业级 B2B 合作伙伴**（如知乐胶囊），他们需要：
-- 独立创建和管理自己的 Campaign
-- 打包自己的专属产品组合
-- 只看到自己带来的流量和转化数据
-- 独立调整自己的转化闭环策略
-- 拥有自己的漏斗分析和 AI 诊断
+在管理后台侧边栏"用户与订单"分组中，"有劲合伙人"下方新增"行业合作伙伴"菜单项，链接到一个新的管理页面，用于查看和管理所有行业合作伙伴的飞轮数据、Campaign 和产品包。
 
----
+## 实施内容
 
-## 数据库变更
+### 1. 新建管理页面组件
 
-### 1. campaigns 表增加 partner_id
+新建 `src/components/admin/IndustryPartnerManagement.tsx`，内容包括：
+- **合作伙伴列表**：从 partners 表读取所有合作伙伴，展示名称、推荐用户数、Campaign 数、产品包数
+- **点击进入详情**：选中某个合作伙伴后，展示该合伙伙伴的：
+  - 飞轮统计卡片（曝光、测评完成、成交、ROI）
+  - Campaign 列表（筛选 partner_id）
+  - 产品包列表（筛选 partner_id）
+- 复用已有的 `PartnerFlywheel` 组件逻辑
 
-将 Campaign 归属到具体合作伙伴，管理员创建的（partner_id = null）为平台级活动。
+### 2. 侧边栏新增菜单项
 
-### 2. 新建 partner_products 表
+在 `AdminSidebar.tsx` 的"用户与订单"分组中，"有劲合伙人"下方添加：
 
-记录每个行业合伙人的专属产品包配置：
+| 菜单项 | 路径 | 图标 |
+|--------|------|------|
+| 行业合作伙伴 | /admin/industry-partners | Network |
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | uuid PK | 记录ID |
-| partner_id | uuid FK | 关联 partners.id |
-| product_name | text | 产品名称（如"知乐胶囊·身心评估套餐"） |
-| product_key | text | 产品标识 |
-| price | numeric | 定价 |
-| description | text | 产品描述 |
-| is_active | boolean | 是否启用 |
-| created_at | timestamptz | 创建时间 |
+### 3. 路由注册
 
-### 3. RLS 策略
-
-- 管理员：可读写所有 campaigns 和 partner_products
-- 行业合伙伙伴（authenticated）：只能读写 partner_id 匹配自己的 campaigns 和 partner_products
-- conversion_events 和 orders：通过 campaign_id 间接实现数据隔离
-
----
-
-## 前端变更
-
-### 1. 合伙人端：新增"我的飞轮"页面
-
-在 Partner 页面中为行业合伙伙伴新增独立的飞轮面板 `PartnerFlywheel.tsx`，包含：
-
-- **统计卡片**：我的曝光、我的测评完成、我的成交额、我的 ROI
-- **我的漏斗**：仅展示该合伙伙伴 Campaign 下的 conversion_events 数据
-- **我的活动管理**：CRUD 自己的 Campaign（复用 FlywheelCampaigns 的表单逻辑）
-- **我的产品包**：管理自己的专属产品组合
-- **AI 诊断**：基于自己数据的一句话诊断
-
-数据过滤逻辑：
-
+在 `AdminLayout.tsx` 中新增路由：
 ```text
-1. 获取当前用户的 partner_id
-2. 查询 campaigns WHERE partner_id = 我的partner_id
-3. 获取这些 campaign 的 id 列表
-4. 用 campaign_id IN (我的campaign列表) 过滤 conversion_events
-5. 用关联的 user_id 过滤 orders
+<Route path="industry-partners" element={<IndustryPartnerManagement />} />
 ```
 
-### 2. 管理端：Campaign 增加合伙伙伴关联
+### 技术细节
 
-在 FlywheelCampaigns 创建/编辑对话框中新增"所属合作伙伴"下拉选择器：
-- 数据来源为 partners 表
-- 可选为空（平台级活动）
-- 表格中增加"合作伙伴"列
+- 页面使用 AdminPageLayout 共享组件保持布局一致
+- 合作伙伴列表使用表格展示，支持搜索筛选
+- 选中合伙伙伴后以内嵌面板展示其飞轮数据，直接复用 PartnerFlywheel 组件（传入对应 partnerId）
+- 管理员可在此页面总览所有行业合伙伙伴的数据表现
 
-### 3. 管理端：合伙伙伴产品包管理
+### 修改文件清单
 
-在管理后台新增产品包管理入口，支持为每个行业合伙伙伴配置专属产品。
-
-### 4. 路由集成
-
-- `/partner` 页面的 Tabs 中增加"数据飞轮"标签页（仅对有 campaign 的行业合作伙伴显示）
-- 或在 YoujinPartnerDashboard 中增加飞轮入口按钮
-
----
-
-## 技术细节
-
-### 数据隔离机制
-
-```text
-合伙伙伴视角:
-  campaigns (WHERE partner_id = 我) 
-    └── conversion_events (WHERE campaign_id IN 我的campaigns)
-        └── 漏斗统计（仅我的数据）
-    └── orders (WHERE campaign_id 关联或 user_id 通过 referral 关联)
-        └── 收入/ROI（仅我的数据）
-
-管理员视角:
-  campaigns (全部，含筛选)
-    └── 全局漏斗 + 按合伙伙伴分组查看
-```
-
-### RLS 策略设计
-
-```text
--- campaigns: 合伙伙伴只能操作自己的
-CREATE POLICY "Partners manage own campaigns"
-  ON campaigns FOR ALL TO authenticated
-  USING (
-    partner_id IN (SELECT id FROM partners WHERE user_id = auth.uid())
-    OR public.has_role(auth.uid(), 'admin')
-  );
-
--- partner_products: 合伙伙伴只能操作自己的产品
-CREATE POLICY "Partners manage own products"
-  ON partner_products FOR ALL TO authenticated
-  USING (
-    partner_id IN (SELECT id FROM partners WHERE user_id = auth.uid())
-    OR public.has_role(auth.uid(), 'admin')
-  );
-```
-
-### Edge Function 更新
-
-`flywheel-ai-analysis` 增加 partner_id 参数支持，当合伙伙伴调用时只分析该合伙伙伴的数据。
-
----
-
-## 新增/修改文件清单
-
-1. **数据库迁移**：campaigns 增加 partner_id，新建 partner_products 表 + RLS
-2. **新文件** `src/components/partner/PartnerFlywheel.tsx` — 合伙伙伴专属飞轮面板
-3. **新文件** `src/components/partner/PartnerCampaigns.tsx` — 合伙伙伴 Campaign 管理
-4. **新文件** `src/components/partner/PartnerProducts.tsx` — 合伙伙伴产品包管理
-5. **修改** `src/components/admin/flywheel/FlywheelCampaigns.tsx` — 增加合作伙伴选择器
-6. **修改** `src/pages/Partner.tsx` — 增加飞轮 Tab 入口
-7. **修改** `supabase/functions/flywheel-ai-analysis/index.ts` — 支持 partner_id 过滤
-8. **修改** campaigns 表现有 RLS 策略 — 适配合伙伙伴访问
-
----
-
-## 实施顺序
-
-1. 数据库迁移：campaigns 增加 partner_id + 新建 partner_products + 调整 RLS
-2. 管理端 FlywheelCampaigns 增加合伙伙伴关联字段
-3. 创建合伙伙伴专属飞轮组件（PartnerFlywheel + PartnerCampaigns + PartnerProducts）
-4. Partner 页面集成飞轮 Tab
-5. Edge Function 增加 partner 维度数据过滤
+1. **新建** `src/components/admin/IndustryPartnerManagement.tsx`
+2. **修改** `src/components/admin/AdminSidebar.tsx` — 添加菜单项
+3. **修改** `src/components/admin/AdminLayout.tsx` — 添加路由
 
