@@ -2,6 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Flower2, Target, Sparkles, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const benefits = [
   {
@@ -36,6 +39,7 @@ const benefits = [
 const BloomPartnerIntro = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { showTour, completeTour } = usePageTour('bloom_partner_intro');
 
   const handleCardClick = (path: string) => {
     if (user) {
@@ -117,6 +121,13 @@ const BloomPartnerIntro = () => {
           );
         })}
       </div>
+
+      <PageTour
+        open={showTour}
+        onComplete={completeTour}
+        steps={pageTourConfig.bloom_partner_intro}
+        pageTitle="绽放合伙人"
+      />
     </div>
   );
 };
