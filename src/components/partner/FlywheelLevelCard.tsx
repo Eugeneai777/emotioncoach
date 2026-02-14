@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Sparkles, Eye, Users, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PartnerLandingPageList } from "./PartnerLandingPageList";
 
 export interface FlywheelLevel {
   level: string;
@@ -21,6 +22,7 @@ interface FlywheelLevelCardProps {
   upgradeRate?: number | null;
   isLast: boolean;
   onOpenWizard: (level: string) => void;
+  partnerId: string;
 }
 
 const COLOR_MAP: Record<string, { border: string; bg: string; text: string; icon: string }> = {
@@ -30,7 +32,7 @@ const COLOR_MAP: Record<string, { border: string; bg: string; text: string; icon
   amber: { border: "border-l-amber-500", bg: "bg-amber-50", text: "text-amber-700", icon: "bg-amber-100 text-amber-600" },
 };
 
-export function FlywheelLevelCard({ levelConfig, stats, upgradeRate, isLast, onOpenWizard }: FlywheelLevelCardProps) {
+export function FlywheelLevelCard({ levelConfig, stats, upgradeRate, isLast, onOpenWizard, partnerId }: FlywheelLevelCardProps) {
   const [open, setOpen] = useState(false);
   const colors = COLOR_MAP[levelConfig.color] || COLOR_MAP.blue;
 
@@ -118,6 +120,9 @@ export function FlywheelLevelCard({ levelConfig, stats, upgradeRate, isLast, onO
               <Sparkles className="w-4 h-4 mr-1" />
               AI 定制落地页
             </Button>
+
+            {/* Saved Landing Pages */}
+            <PartnerLandingPageList partnerId={partnerId} level={levelConfig.level} />
           </div>
         </CollapsibleContent>
       </Collapsible>
