@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronRight, Eye, ShoppingCart } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PartnerLandingPageListProps {
@@ -108,34 +108,27 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
       {pages.map((page) => {
         const content = getSelectedContent(page);
         const m = metrics[page.id] || { views: 0, purchases: 0 };
+        const d = new Date(page.created_at);
+        const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
         return (
           <div
             key={page.id}
-            className="flex items-center gap-2 p-2.5 rounded-lg border border-border cursor-pointer hover:bg-accent/50 transition-colors"
+            className="flex items-center gap-2 p-2 rounded-lg border border-border cursor-pointer hover:bg-accent/50 transition-colors text-xs"
             onClick={() => navigate(`/partner/landing-page/${page.id}`)}
           >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{content?.title || "无标题"}</p>
-              <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                <span className="truncate max-w-[80px]">{page.target_audience || "—"}</span>
-                <span className="flex items-center gap-0.5 shrink-0">
-                  <Eye className="w-3 h-3" />
-                  <span>{m.views}</span>
-                </span>
-                <span className="flex items-center gap-0.5 shrink-0">
-                  <ShoppingCart className="w-3 h-3" />
-                  <span>{m.purchases}</span>
-                </span>
-                <span className="shrink-0">{new Date(page.created_at).toLocaleDateString("zh-CN")}</span>
-              </div>
-            </div>
+            <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
+            <span className="text-muted-foreground shrink-0">投放 0</span>
+            <span className="text-muted-foreground shrink-0">观看 {m.views}</span>
+            <span className="text-muted-foreground shrink-0">购买 {m.purchases}</span>
+            <span className="text-muted-foreground shrink-0">¥0</span>
+            <span className="text-muted-foreground shrink-0">{dateStr}</span>
             <div className={cn(
-              "text-xs px-1.5 py-0.5 rounded shrink-0",
+              "px-1.5 py-0.5 rounded shrink-0",
               page.status === "published" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
             )}>
               {page.status === "published" ? "已发布" : "草稿"}
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           </div>
         );
       })}
