@@ -1,92 +1,119 @@
 
 
-# 修复绽放邀请码兑换页面错误
+# 修复财富教练打卡页面 5 个问题
 
-## 问题根因
+## 问题清单
 
-通过调试发现，点击"立即成为绽放合伙人"按钮后，`claim-partner-invitation` 返回 **400 错误**，具体错误信息为：
-
-**"您已是其他类型的合伙人"**
-
-当前登录用户已经是 **有劲合伙人（youjin partner）**，而 `claim-partner-invitation` 函数中的逻辑不允许已有其他类型合伙人身份的用户再领取绽放邀请。
-
-此外，前端代码没有正确提取和显示后端返回的具体错误信息，而是显示了通用的"领取失败，请稍后重试"。
-
-## 需要修复的两个问题
-
-### 问题 1：前端未正确显示错误信息
-
-`PartnerInvitePage.tsx` 中的 `handleClaim` 函数在 `supabase.functions.invoke` 返回非 2xx 状态时，错误信息被放入 `error` 对象中。当前代码直接 `throw error`，在 catch 中显示通用信息，没有提取后端返回的具体错误文案。
-
-**修复方案**：从 `FunctionsHttpError` 中提取 response body，显示后端返回的具体错误信息。
-
-### 问题 2：已有其他类型合伙人无法领取绽放邀请
-
-当前 `claim-partner-invitation` 函数在发现用户已是非 bloom 类型合伙人时直接拒绝。但业务上，有劲合伙人转为绽放合伙人应该是被允许的（绽放是更高级别的合伙类型）。
-
-**修复方案**：修改 `claim-partner-invitation` 中的逻辑，当用户已是 youjin 合伙人时，将其升级为 bloom 合伙人（更新 partner_type），而不是直接拒绝。同时在 `auto-claim-bloom-invitation` 中做相同修改。
+| # | 操作路径 | 问题 | 根因 |
+|---|---------|------|------|
+| 1 | 教练对话 Tab → 对话内容 | 显示代码（原始 Markdown） | `ChatMessage.tsx` 的 `cleanMarkdown` 函数只移除了 `**` 和 `*`，未处理代码块（````）、标题（`#`）、列表（`-`）等 Markdown 语法 |
+| 2 | 教练对话 Tab → 语音按钮 | 无法输入语音 | `VoiceInputButton` 在微信环境下 `getUserMedia` 不可用时仅弹提示；需检查 `voice-to-text` 边缘函数是否正常部署 |
+| 3 | 复制链接按钮 | "链接已复制" 提示一直显示不消失 | `use-toast.ts` 中 `TOAST_REMOVE_DELAY = 1000000`（约 16 分钟），且 `WealthCampInviteCard` 未设置 toast 的 `duration` 参数 |
+| 4 | 好友打开复制的链接 | 显示"无效链接，缺少合伙人信息" | 邀请链接 `/wealth-camp-intro?ref=${userId}` 中的 `ref` 是用户 ID 而非合伙人代码。好友在 `WealthCampIntro` 页面点购买后可能跳转到 `PayEntry.tsx`，该页面将 `ref` 当作合伙人代码解析失败 |
+| 5 | 重新冥想按钮 | 跳转到 AI 教练对话页面 | 需要进一步确认：`handleRedoMeditation` 代码逻辑正确（设置 `activeTab('today')`），可能是 `meditationCompleted` 状态重置后触发了意外的副作用或页面重新渲染 |
 
 ---
 
-## 技术细节
+## 修复方案
 
-### 1. PartnerInvitePage.tsx - 改进错误处理
+### 修复 1：ChatMessage 显示代码问题
 
-修改 `handleClaim` 函数的 catch 块，从 `FunctionsHttpError` 中读取具体错误信息：
+**文件**: `src/components/ChatMessage.tsx`
 
-```typescript
-} catch (err: any) {
-  console.error('Claim error:', err);
-  // 尝试从 FunctionsHttpError 提取后端错误信息
-  let errorMessage = "领取失败，请稍后重试";
-  if (err?.context?.body) {
-    try {
-      const body = typeof err.context.body === 'string' 
-        ? JSON.parse(err.context.body) 
-        : err.context.body;
-      if (body?.error) errorMessage = body.error;
-    } catch {}
-  } else if (err?.message) {
-    errorMessage = err.message;
-  }
-  toast.error(errorMessage);
-}
-```
-
-### 2. claim-partner-invitation/index.ts - 支持合伙人类型升级
-
-将"您已是其他类型的合伙人"拒绝逻辑改为升级逻辑：
+增强 `cleanMarkdown` 函数，处理更多 Markdown 语法：
 
 ```typescript
-if (existingPartner) {
-  if (existingPartner.partner_type === 'bloom') {
-    return Response(JSON.stringify({ success: true, message: '您已经是绽放合伙人', already_partner: true }));
-  }
-  // 升级：将 youjin 合伙人升级为 bloom
-  await adminClient
-    .from('partners')
-    .update({
-      partner_type: 'bloom',
-      partner_level: 'L0',
-      commission_rate_l1: 0.30,
-      commission_rate_l2: 0.10,
-      source: 'manual',
-      updated_at: new Date().toISOString(),
+const cleanMarkdown = (text: string): string => {
+  return text
+    // 移除代码块 ```...```
+    .replace(/```[\s\S]*?```/g, (match) => {
+      // 提取代码块内容（去掉语言标识和围栏）
+      const content = match.replace(/```\w*\n?/g, '').trim();
+      return content;
     })
-    .eq('id', existingPartner.id);
-  // 继续执行后续的权益发放逻辑（bloom_partner_orders、orders、user_camp_purchases）
-}
+    // 移除行内代码 `code`
+    .replace(/`([^`]+)`/g, '$1')
+    // 移除标题 # ## ###
+    .replace(/^#{1,6}\s+/gm, '')
+    // 移除粗体 **text**
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    // 移除斜体 *text*
+    .replace(/\*([^*]+)\*/g, '$1')
+    // 移除剩余 *
+    .replace(/\*/g, '');
+};
 ```
 
-### 3. auto-claim-bloom-invitation/index.ts - 同步修改
+### 修复 2：语音输入问题
 
-与 claim-partner-invitation 保持一致的升级逻辑，确保自动匹配时也支持合伙人类型升级。
+**文件**: `src/components/coach/VoiceInputButton.tsx`
 
-### 修改文件清单
+当前代码逻辑在微信环境检测正确，问题可能在 `voice-to-text` 边缘函数。需要：
+- 检查 `voice-to-text` 函数日志确认是否正常运行
+- 在非微信浏览器中确认是否也无法录音
+- 如果是权限问题，添加更明确的错误提示
 
-| 文件 | 改动内容 |
-|------|----------|
-| `src/pages/PartnerInvitePage.tsx` | 改进错误处理，显示后端具体错误信息 |
-| `supabase/functions/claim-partner-invitation/index.ts` | 支持 youjin 到 bloom 的合伙人升级 |
-| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 同步支持合伙人类型升级 |
+### 修复 3：Toast 提示不消失
+
+**文件**: `src/components/wealth-camp/WealthCampInviteCard.tsx`
+
+在 toast 调用中显式添加 `duration` 参数：
+
+```typescript
+toast({
+  title: "链接已复制",
+  description: "分享给好友一起突破财富卡点",
+  duration: 2000, // 2秒后自动消失
+});
+```
+
+同时考虑全局修复 `use-toast.ts` 中的 `TOAST_REMOVE_DELAY`，将默认值从 `1000000` 改为合理的 `5000`（5秒）。
+
+### 修复 4：邀请链接无效
+
+**文件**: `src/components/wealth-camp/WealthCampInviteCard.tsx`
+
+问题在于 `ref=${userId}` 使用的是用户 ID（UUID），而非合伙人推广码。当好友通过此链接到达 `WealthCampIntro` 页面后，后续的购买流程会将 `ref` 视为合伙人代码传给 `PayEntry`/`Claim`，导致解析失败。
+
+修复方案：
+- 查询当前用户是否有合伙人记录，若有则使用 `partner_code` 作为 `ref`
+- 若无合伙人记录，生成一个不带 `ref` 参数的纯分享链接（或使用用户 ID 但在接收端兼容处理）
+
+```typescript
+// 优先使用合伙人推广码，无合伙人记录时不带 ref 参数
+const inviteUrl = partnerInfo?.code
+  ? `${getPromotionDomain()}/wealth-camp-intro?ref=${partnerInfo.code}`
+  : `${getPromotionDomain()}/wealth-camp-intro`;
+```
+
+### 修复 5：重新冥想跳转问题
+
+**文件**: `src/pages/WealthCampCheckIn.tsx`
+
+`handleRedoMeditation` 的逻辑看起来正确，但可能存在状态竞态：
+
+```typescript
+const handleRedoMeditation = () => {
+  setMeditationCompleted(false);
+  setActiveTab('today');
+  // ...
+};
+```
+
+当 `meditationCompleted` 被设为 false 后，可能触发某些 `useEffect` 导致意外导航。需要：
+- 添加日志确认实际执行路径
+- 检查是否有 `useEffect` 监听 `meditationCompleted` 变化后执行了导航
+- 如果是因为组件重渲染导致的跳转，使用 `useCallback` 和稳定引用避免竞态
+
+---
+
+## 修改文件清单
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/ChatMessage.tsx` | 增强 `cleanMarkdown` 处理代码块、标题等 |
+| `src/components/wealth-camp/WealthCampInviteCard.tsx` | toast 添加 duration；修复邀请链接使用合伙人代码 |
+| `src/hooks/use-toast.ts` | 将全局 `TOAST_REMOVE_DELAY` 从 1000000 改为 5000 |
+| `src/pages/WealthCampCheckIn.tsx` | 排查重新冥想跳转问题，添加防护逻辑 |
+| `src/components/coach/VoiceInputButton.tsx` | 检查并改进语音录制错误处理 |
 
