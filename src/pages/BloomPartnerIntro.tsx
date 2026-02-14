@@ -62,14 +62,38 @@ const BloomPartnerIntro = () => {
         </p>
       </div>
 
+      {/* Auth Status - Above Cards */}
+      <div className="px-4 pb-4 max-w-md mx-auto">
+        {!loading && !user && (
+          <div className="rounded-2xl bg-gradient-to-r from-rose-100 to-pink-100 border border-rose-200/60 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-rose-700">
+              <LogIn className="w-4 h-4" />
+              <span className="text-sm font-medium">请先登录后体验全部权益</span>
+            </div>
+            <Button
+              onClick={handleLogin}
+              className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 hover:opacity-90 text-white border-0"
+            >
+              <LogIn className="w-4 h-4 mr-1.5" />
+              手机号登录
+            </Button>
+          </div>
+        )}
+        {!loading && user && (
+          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/60 p-3 text-center">
+            <span className="text-sm text-emerald-700 font-medium">✅ 已登录，点击下方卡片即可进入</span>
+          </div>
+        )}
+      </div>
+
       {/* Benefit Cards */}
-      <div className="px-4 pb-6 space-y-4 max-w-md mx-auto">
+      <div className="px-4 pb-12 space-y-4 max-w-md mx-auto">
         {benefits.map((item) => {
           const Icon = item.icon;
           return (
             <div
               key={item.title}
-              className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-white/60 shadow-sm overflow-hidden`}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/60 shadow-sm overflow-hidden"
             >
               <div className={`bg-gradient-to-r ${item.bgGradient} p-4 pb-3`}>
                 <div className="flex items-center gap-3">
@@ -92,28 +116,6 @@ const BloomPartnerIntro = () => {
             </div>
           );
         })}
-      </div>
-
-      {/* Bottom Auth Section */}
-      <div className="px-4 pb-12 max-w-md mx-auto">
-        {!loading && !user && (
-          <div className="text-center space-y-3">
-            <p className="text-xs text-muted-foreground">登录后即可体验全部权益</p>
-            <Button
-              variant="outline"
-              onClick={handleLogin}
-              className="rounded-xl w-full"
-            >
-              <LogIn className="w-4 h-4 mr-1.5" />
-              手机号登录
-            </Button>
-          </div>
-        )}
-        {!loading && user && (
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">已登录，点击上方卡片即可进入</p>
-          </div>
-        )}
       </div>
     </div>
   );
