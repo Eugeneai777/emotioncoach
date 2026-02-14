@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Eye, Users, DollarSign, Megaphone, Sparkles, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Loader2, Eye, Users, DollarSign, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
@@ -186,75 +186,55 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">🔄</span>
-        <h2 className="text-lg font-bold">有劲AI · 四级增长飞轮</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-lg font-bold">有劲飞轮</h2>
+        <p className="text-sm text-muted-foreground">
+          {totalStats.campaigns} 个活跃活动 · 总投放 ¥{totalStats.spend.toLocaleString()}
+        </p>
       </div>
 
-      {/* Summary stats - 5 cards */}
-      <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-        <Card>
-          <CardContent className="p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <FileText className="w-4 h-4 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">活跃活动</p>
-              <p className="text-lg font-bold">{totalStats.campaigns}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <Megaphone className="w-4 h-4 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">总投放</p>
-              <p className="text-lg font-bold">¥{totalStats.spend.toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 3 core metric cards */}
+      <div className="grid grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                <Eye className="w-4 h-4 text-accent-foreground" />
-              </div>
+              <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">总触达</p>
-                <p className="text-lg font-bold">{totalStats.reach.toLocaleString()}</p>
-                <GrowthIndicator value={totalStats.reachGrowth} />
+                <p className="text-xs text-muted-foreground">触达</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold">{totalStats.reach.toLocaleString()}</p>
+                  <GrowthIndicator value={totalStats.reachGrowth} />
+                </div>
               </div>
             </div>
             <MiniSparkline data={dailyData.reach} color="hsl(var(--primary))" />
           </CardContent>
         </Card>
-        <Card className="col-span-1">
+        <Card>
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                <Users className="w-4 h-4 text-accent-foreground" />
-              </div>
+              <Users className="w-4 h-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">总转化</p>
-                <p className="text-lg font-bold">{totalStats.conversions.toLocaleString()}</p>
-                <GrowthIndicator value={totalStats.conversionGrowth} />
+                <p className="text-xs text-muted-foreground">转化</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold">{totalStats.conversions.toLocaleString()}</p>
+                  <GrowthIndicator value={totalStats.conversionGrowth} />
+                </div>
               </div>
             </div>
             <MiniSparkline data={dailyData.conversions} color="hsl(var(--primary))" />
           </CardContent>
         </Card>
-        <Card className="col-span-1">
+        <Card>
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                <DollarSign className="w-4 h-4 text-accent-foreground" />
-              </div>
+              <DollarSign className="w-4 h-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">总收入</p>
-                <p className="text-lg font-bold">¥{totalStats.revenue.toLocaleString()}</p>
-                <GrowthIndicator value={totalStats.revenueGrowth} />
+                <p className="text-xs text-muted-foreground">收入</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold">¥{totalStats.revenue.toLocaleString()}</p>
+                  <GrowthIndicator value={totalStats.revenueGrowth} />
+                </div>
               </div>
             </div>
             <MiniSparkline data={dailyData.revenue} color="hsl(var(--primary))" />
@@ -278,28 +258,13 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
         {FLYWHEEL_LEVELS.map((level) => {
           const stats = levelStats[level.level] || { reach: 0, conversions: 0, revenue: 0, conversionRate: 0 };
           return (
-            <TabsContent key={level.level} value={level.level} className="space-y-4 mt-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{level.icon}</span>
-                <div>
-                  <h3 className="font-semibold text-sm">{level.name}</h3>
-                  <p className="text-xs text-muted-foreground">{level.description} · {level.priceRange}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold">{stats.reach}</p>
-                  <p className="text-xs text-muted-foreground">触达</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold">{stats.conversions}</p>
-                  <p className="text-xs text-muted-foreground">转化</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold">¥{stats.revenue.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">收入</p>
-                </div>
+            <TabsContent key={level.level} value={level.level} className="space-y-3 mt-3">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span>触达 <strong className="text-foreground">{stats.reach}</strong></span>
+                <span>·</span>
+                <span>转化 <strong className="text-foreground">{stats.conversions}</strong></span>
+                <span>·</span>
+                <span>收入 <strong className="text-foreground">¥{stats.revenue.toLocaleString()}</strong></span>
               </div>
 
               <Button

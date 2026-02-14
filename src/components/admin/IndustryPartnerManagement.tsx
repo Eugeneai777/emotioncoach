@@ -350,7 +350,7 @@ export default function IndustryPartnerManagement() {
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => setSelectedPartnerId(p.id)}>
                       <Network className="h-4 w-4 mr-1" />
-                      飞轮详情
+                      查看飞轮
                     </Button>
                   </TableCell>
                 </TableRow>
