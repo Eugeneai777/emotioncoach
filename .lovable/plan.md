@@ -1,54 +1,52 @@
 
 
-# 批量注册绽放合伙人账号（手机号直接注册 + 财富教练为主页）
+# 支持国外手机号注册
 
-## 概述
+## 问题
 
-用手机号直接创建账号（不生成占位邮箱），密码统一 `123456`，登录后自动跳转到财富教练打卡页面。
+当前批量注册逻辑将所有手机号统一加 `+86` 前缀，导致像 `610-909-8999`（美国号码）这样的海外手机号无法正确注册。
 
-## 变更点
+## 方案
 
-### 1. 新建 Edge Function: `supabase/functions/batch-register-bloom-partners/index.ts`
+### 1. 修改手动添加邀请表单
 
-**核心逻辑**：
+在 `BloomPartnerInvitations.tsx` 的手动添加对话框中新增"区号"下拉选择：
+- 默认 `+86`（中国）
+- 可选 `+1`（美国/加拿大）、`+852`（香港）、`+886`（台湾）、`+65`（新加坡）等常用区号
+- 区号存入 `partner_invitations` 表的新字段 `invitee_phone_country_code`
+
+### 2. 数据库新增字段
+
+在 `partner_invitations` 表添加：
 
 ```text
-1. 查询所有 status='pending' 的 bloom 邀请
-2. 对每条邀请：
-   a. 提取手机号，标准化为纯数字
-   b. 调用 auth.admin.createUser({ phone: '+86' + digits, password: '123456', phone_confirm: true })
-      - 不使用邮箱，直接用手机号注册
-   c. 更新 profiles 表：display_name, phone, phone_country_code, auth_provider='phone', preferred_coach='wealth'
-      - preferred_coach='wealth' 确保登录后自动跳转财富教练页面
-   d. 创建 partners 记录（bloom 类型，L0 级别）
-   e. 创建 bloom_partner_orders 记录
-   f. 创建 orders 记录（财富卡点测评，0元已付）
-   g. 创建 user_camp_purchases 记录（7天财富训练营）
-   h. 更新邀请状态为 claimed
-3. 已存在手机号的用户跳过创建，仍尝试发放未发放的权益
-4. 返回统计：{ success, skipped, failed, details }
+invitee_phone_country_code TEXT DEFAULT '+86'
 ```
 
-**登录后跳转逻辑**（已有，无需修改）：
+### 3. 修改批量导入 CSV
 
-现有 `Auth.tsx` 中已实现：当 `profiles.preferred_coach = 'wealth'` 且有活跃训练营时，登录后自动跳转到 `/wealth-camp-checkin`。Edge Function 设置 `preferred_coach: 'wealth'` 即可。
+`BloomPartnerBatchImport` 组件支持第三列可选区号：
+- CSV 格式变为：`姓名,手机号,区号（可选）`
+- 未填区号时默认 `+86`
 
-**用户登录方式**：
+### 4. 修改 Edge Function `batch-register-bloom-partners`
 
-用户使用手机号 + 密码 `123456` 在现有登录页面（手机号模式）登录即可，无需任何登录页修改。
+- 从邀请记录读取 `invitee_phone_country_code`（默认 `+86`）
+- 注册时使用正确区号：`auth.admin.createUser({ phone: countryCode + digits })`
+- 写入 profiles 时同步正确的 `phone_country_code`
+- 手机号标准化逻辑调整：国内号码取后 11 位，国外号码保留完整数字
 
-### 2. 修改 `src/components/admin/BloomPartnerInvitations.tsx`
+### 5. 修改 `auto-claim-bloom-invitation` 函数
 
-在标题栏旁新增"一键注册并发放权益"按钮：
-- 仅当有 pending 邀请时启用
-- 点击弹出 AlertDialog 确认（显示待处理数量）
-- 确认后调用 edge function，按钮显示加载状态
-- 完成后 toast 显示结果统计，自动刷新列表
+匹配逻辑需考虑区号，避免跨国号码误匹配。
 
 ## 修改文件清单
 
 | 文件 | 操作 | 内容 |
 |------|------|------|
-| `supabase/functions/batch-register-bloom-partners/index.ts` | 新建 | 批量手机号注册 + 权益发放 |
-| `src/components/admin/BloomPartnerInvitations.tsx` | 修改 | 添加"一键注册"按钮 + 确认对话框 |
+| 数据库迁移 | 新增 | `partner_invitations` 表添加 `invitee_phone_country_code` 字段 |
+| `src/components/admin/BloomPartnerInvitations.tsx` | 修改 | 手动添加表单增加区号选择 |
+| `src/components/admin/BloomPartnerBatchImport.tsx` | 修改 | CSV 支持第三列区号 |
+| `supabase/functions/batch-register-bloom-partners/index.ts` | 修改 | 使用邀请记录中的区号注册 |
+| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 修改 | 匹配时考虑区号 |
 
