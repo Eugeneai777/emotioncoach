@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Flower2, Target, Sparkles, LogIn } from "lucide-react";
+import { Flower2, Target, Sparkles, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
@@ -38,7 +38,7 @@ const benefits = [
 
 const BloomPartnerIntro = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { showTour, completeTour } = usePageTour('bloom_partner_intro');
 
   const handleCardClick = (path: string) => {
@@ -50,7 +50,7 @@ const BloomPartnerIntro = () => {
   };
 
   const handleLogin = () => {
-    navigate("/auth?mode=phone_only");
+    navigate("/auth?mode=phone_only&redirect=%2Fbloom-partner-intro");
   };
 
   return (
@@ -84,8 +84,12 @@ const BloomPartnerIntro = () => {
           </div>
         )}
         {!loading && user && (
-          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/60 p-3 text-center">
+          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/60 p-3 flex items-center justify-between">
             <span className="text-sm text-emerald-700 font-medium">✅ 已登录，点击下方卡片即可进入</span>
+            <button onClick={signOut} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <LogOut className="w-3.5 h-3.5" />
+              退出登录
+            </button>
           </div>
         )}
       </div>
