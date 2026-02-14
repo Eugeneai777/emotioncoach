@@ -182,31 +182,6 @@ export default function IndustryPartnerManagement() {
           </Button>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <AdminStatCard
-            label="公司名称"
-            value={selectedPartner.company_name || "-"}
-            icon={Building2}
-            accent="bg-primary/10 text-primary"
-          />
-          <AdminStatCard
-            label="一级佣金"
-            value={`${((selectedPartner.custom_commission_rate_l1 ?? 0.30) * 100).toFixed(0)}%`}
-            icon={Network}
-            accent="bg-emerald-50 text-emerald-600"
-          />
-          <AdminStatCard
-            label="推荐用户数"
-            value={selectedPartner.total_referrals}
-            icon={Network}
-            accent="bg-blue-50 text-blue-600"
-          />
-        </div>
-        {selectedPartner.cooperation_note && (
-          <div className="bg-muted/50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-muted-foreground">合作备注：{selectedPartner.cooperation_note}</p>
-          </div>
-        )}
         <FlywheelGrowthSystem partnerId={selectedPartnerId} />
       </AdminPageLayout>
     );
