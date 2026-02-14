@@ -1,64 +1,32 @@
 
 
-## AI 定制落地页输入改为下拉菜单 + 支持自定义输入
+## CTA 按钮跳转逻辑优化
 
-### 改动范围
+### 目标
+根据落地页的 `matched_product` 字段，将 CTA 按钮跳转到对应的 Lite 产品页面，并携带合伙人推荐参数。
 
-仅修改 `src/components/partner/AILandingPageWizard.tsx` 的 Step 0（输入人群信息）。
+### 产品路由映射表
 
-### 交互设计
+| 产品关键词 | 跳转路径 |
+|-----------|---------|
+| 财富 | `/wealth-assessment-lite` |
+| 情绪健康 | `/emotion-health-lite` |
+| SCL-90 / 心理 | `/scl90-lite` |
+| 死了吗 | `/alive-check-lite` |
+| 觉察日记 / 觉察 | `/awakening-lite` |
+| 情绪按钮 / 情绪SOS | `/emotion-button-lite` |
+| 默认（无匹配） | `/introduction` |
 
-每个字段都采用 **下拉选择 + 自定义输入** 的混合模式：选项列表底部始终有一个"自定义输入"选项，选中后切换为文本框让用户自由填写。
+### 实现方式
 
-```text
-目标人群：   [下拉] 35+女性 / 青少年&家长 / 中年男性 / 📝 自定义...
-关注点：     [下拉，级联] 根据人群动态显示 / 📝 自定义...
-痛点话题：   [多选下拉，级联] 根据人群+关注点显示，可勾选多个 / 📝 自定义...
-投放渠道：   [下拉] 微信公众号 / 朋友圈 / 抖音 / 小红书 / 线下 / 📝 自定义...
-预计投放量： [下拉] 1000以下 / 1000-5000 / 5000-10000 / 10000+ / 📝 自定义...
-```
+修改 `src/pages/LandingPage.tsx` 中的 CTA `onClick` 逻辑：
 
-### 级联数据（来自附件截图）
+1. 创建一个关键词到路径的映射数组（按优先级排列）
+2. 遍历映射表，用 `matched_product` 字段进行关键词匹配
+3. 匹配成功则跳转对应 Lite 页面，未匹配则跳转 `/introduction`
+4. 所有链接附加 `?ref=partnerId` 参数以保留合伙人归因
 
-**35+女性：**
-- 职场压力：工作家庭两头烧 / 35+隐形歧视 / 能力陷阱突破天花板
-- 自我成长：内耗太多 / 活成别人期待的样子 / 想改变又迈不出第一步
-- 睡眠问题：失眠焦虑 / 半夜醒来 / 安眠药依赖
-- 亲子沟通：孩子不愿说话 / 吼完孩子后悔 / 青春期叛逆
+### 技术细节
 
-**青少年 & 家长：**
-- 学习问题：一写作业就磨蹭 / 考试焦虑 / 厌学情绪
-- 情绪管理：孩子情绪失控 / 动不动就哭 / 社交退缩
-- 睡眠科普：晚上不肯睡 / 睡眠不足影响发育 / 噩梦频繁
-- 亲子关系：说什么都不听 / 手机依赖 / 二胎矛盾
-
-**中年男性：**
-- 亲子关系：不知道怎么跟孩子聊天 / 孩子只找妈妈 / 爸爸角色缺失
-- 夫妻关系：无话可说 / 争吵冷战 / 中年危机
-- 经济相关：收入焦虑 / 职业转型 / 投资失利后心态崩塌
-
-### 技术方案
-
-1. 在组件顶部新增 `AUDIENCE_DATA` 常量存放完整级联数据
-2. 新增 `CHANNEL_OPTIONS` 和 `VOLUME_OPTIONS` 常量
-3. 为每个字段实现"Select + 自定义"模式：
-   - Select 值为 `"__custom__"` 时显示 Input 文本框
-   - 否则直接用选中的预设值
-4. 痛点话题使用 Popover + Checkbox 列表实现多选，底部额外提供自定义 Input
-5. 级联逻辑：切换人群时重置关注点和痛点；切换关注点时重置痛点
-6. 最终提交时将自定义输入值与预设选中值合并
-
-### 状态变更
-
-```typescript
-// 新增状态
-const [isCustomAudience, setIsCustomAudience] = useState(false);
-const [isCustomChannel, setIsCustomChannel] = useState(false);
-const [isCustomVolume, setIsCustomVolume] = useState(false);
-const [selectedFocus, setSelectedFocus] = useState("");       // 关注点（新增字段）
-const [selectedPainPoints, setSelectedPainPoints] = useState<string[]>([]); // 多选痛点
-const [customPainPoint, setCustomPainPoint] = useState("");   // 自定义痛点输入
-```
-
-当用户从下拉选择预设项时直接赋值；选择"自定义"时切换为文本输入框，用户可自由填写。两种模式的值统一写入现有的 `targetAudience`、`painPoints`、`channel`、`volume` 状态，后续逻辑无需改动。
+当前数据库中 `matched_product` 的值示例为 `"情绪健康测评 / 职场压力卡点测评"`（可能包含多个产品名称），因此使用 `includes()` 关键词匹配而非精确匹配。映射数组按特异性从高到低排列，确保 "情绪健康" 优先于 "情绪按钮" 等模糊匹配。
 
