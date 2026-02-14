@@ -1,24 +1,52 @@
 
-## CSV 导出与表格优化
+
+## 绽放合伙人完成测评后登录跳转财富教练页
+
+### 需求
+绽放合伙人**完成财富卡点测评后**，每次登录自动跳转到 `/coach/wealth_coach_4_questions`。未完成测评的合伙人保持原有跳转逻辑。
+
+### 判断条件
+需要同时满足两个条件：
+1. 用户是活跃绽放合伙人（`partners` 表中 `partner_type = 'bloom'` 且 `status = 'active'`）
+2. 用户已完成财富卡点测评（`orders` 表中有 `package_key = 'wealth_block_assessment'` 且 `status = 'paid'` 的记录）
 
 ### 改动内容
 
-**文件：`src/components/admin/BloomPartnerInvitations.tsx`**
+**文件：`src/pages/Auth.tsx`**（第 219-233 行）
 
-1. **CSV 导出改动**（第 391-403 行）：
-   - 链接改为 `https://wechat.eugenewe.net/bloom-partner-intro`（固定，不含邀请码路径）
-   - 新增"登录名"列（手机号带区号格式）和"密码"列（固定显示 `123456`）
-   - 移除"金额"、"创建时间"、"领取时间"列
-   - 新增"账号类型"列，显示"旧批次"/"新注册"/"已有账号"等
+在 `preferred_coach === 'wealth'` 分支中，在检查活跃训练营**之前**，先检查是否是已完成测评的绽放合伙人：
 
-   CSV 表头变为：`邀请码,姓名,手机号,登录名,密码,邀请链接,状态,账号类型`
+```text
+if preferred_coach === 'wealth':
+  1. 查 partners 表：是否是活跃绽放合伙人
+  2. 查 orders 表：是否已完成财富卡点测评（paid 订单）
+  3. 两者都满足 -> 跳转 /coach/wealth_coach_4_questions
+  4. 否则 -> 保持原逻辑（检查活跃训练营 / 教练介绍页）
+```
 
-2. **账号类型映射逻辑**：
-   - `batch` -> 旧批次
-   - `batch_new` -> 新注册
-   - `batch_existing` -> 已有账号
-   - `admin` -> 管理员
-   - `self` -> 自行领取
-   - 其他 -> 空
+具体代码（插入到第 219 行 `if (profile?.preferred_coach === 'wealth')` 之后）：
 
-3. 邀请链接统一使用 `getPromotionDomain()` + `/bloom-partner-intro` 路径
+```typescript
+// 检查是否是已完成测评的绽放合伙人
+const [{ data: bloomPartner }, { data: assessmentOrder }] = await Promise.all([
+  supabase.from('partners').select('id')
+    .eq('user_id', session.user.id)
+    .eq('partner_type', 'bloom')
+    .eq('status', 'active')
+    .maybeSingle(),
+  supabase.from('orders').select('id')
+    .eq('user_id', session.user.id)
+    .eq('package_key', 'wealth_block_assessment')
+    .eq('status', 'paid')
+    .maybeSingle()
+]);
+
+if (bloomPartner && assessmentOrder) {
+  targetRedirect = "/coach/wealth_coach_4_questions";
+} else {
+  // 原有训练营检查逻辑保持不变
+}
+```
+
+改动量：约 15 行代码，仅修改 `Auth.tsx` 一个文件。使用 `Promise.all` 并行查询避免增加延迟。
+
