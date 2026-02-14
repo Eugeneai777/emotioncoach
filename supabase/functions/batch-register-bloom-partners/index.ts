@@ -6,9 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const normalizePhone = (phone: string): string => {
+const normalizePhone = (phone: string, countryCode: string = '+86'): string => {
   const digits = phone.replace(/\D/g, '');
-  return digits.length >= 11 ? digits.slice(-11) : digits;
+  // For Chinese numbers, take last 11 digits; for international, keep all digits
+  if (countryCode === '+86') {
+    return digits.length >= 11 ? digits.slice(-11) : digits;
+  }
+  return digits;
 };
 
 serve(async (req) => {
@@ -80,14 +84,17 @@ serve(async (req) => {
       const rawPhone = inv.invitee_phone || '';
 
       try {
+        // Read country code from invitation record
+        const countryCode = inv.invitee_phone_country_code || '+86';
+
         // Validate phone
-        const phone = normalizePhone(rawPhone);
+        const phone = normalizePhone(rawPhone, countryCode);
         if (phone.length < 5) {
           results.push({ name, phone: rawPhone, status: 'skipped', reason: '手机号无效' });
           continue;
         }
 
-        const phoneWithCode = `+86${phone}`;
+        const phoneWithCode = `${countryCode}${phone}`;
 
         // Try to create user with phone directly
         let userId: string;
@@ -125,7 +132,7 @@ serve(async (req) => {
         await adminClient.from('profiles').update({
           display_name: inv.invitee_name || undefined,
           phone: phone,
-          phone_country_code: '+86',
+          phone_country_code: countryCode,
           auth_provider: 'phone',
           preferred_coach: 'wealth',
         }).eq('id', userId);

@@ -42,6 +42,7 @@ export function BloomPartnerInvitations() {
   const [singleName, setSingleName] = useState("");
   const [singlePhone, setSinglePhone] = useState("");
   const [singleAmount, setSingleAmount] = useState("19800");
+  const [singleCountryCode, setSingleCountryCode] = useState("+86");
   const [isAddingSingle, setIsAddingSingle] = useState(false);
 
   const { data: invitations, isLoading, refetch } = useQuery({
@@ -150,6 +151,7 @@ export function BloomPartnerInvitations() {
         partner_type: 'bloom',
         invitee_name: name,
         invitee_phone: phone,
+        invitee_phone_country_code: singleCountryCode,
         order_amount: amount,
         status: 'pending',
         created_by: user.id,
@@ -226,11 +228,29 @@ export function BloomPartnerInvitations() {
                 </div>
                 <div className="space-y-2">
                   <Label>手机号 *</Label>
-                  <Input
-                    placeholder="输入手机号"
-                    value={singlePhone}
-                    onChange={(e) => setSinglePhone(e.target.value)}
-                  />
+                  <div className="flex gap-2">
+                    <Select value={singleCountryCode} onValueChange={setSingleCountryCode}>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                        <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                        <SelectItem value="+852">🇭🇰 +852</SelectItem>
+                        <SelectItem value="+886">🇹🇼 +886</SelectItem>
+                        <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                        <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                        <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                        <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      placeholder="输入手机号"
+                      value={singlePhone}
+                      onChange={(e) => setSinglePhone(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>订单金额（元）</Label>
