@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
 import { useTermsAgreement } from "@/hooks/useTermsAgreement";
 import {
@@ -400,7 +401,7 @@ const Auth = () => {
         
         toast({
           title: "注册成功",
-          description: "欢迎来到情绪梳理教练 🌿",
+          description: "欢迎来到有劲AI 🌿",
         });
       }
     } catch (error: any) {
@@ -418,9 +419,10 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-3 md:px-4 py-4">
       <div className="w-full max-w-md space-y-6 md:space-y-8 animate-in fade-in-50 duration-700">
         <div className="text-center space-y-1.5 md:space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">情绪梳理教练</h1>
+          <BrandLogo size="lg" className="justify-center" />
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">有劲AI</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            {isLogin ? "欢迎回来" : "开始你的情绪梳理之旅"}
+            {isLogin ? "欢迎回来" : "开始你的成长之旅"}
           </p>
         </div>
 
