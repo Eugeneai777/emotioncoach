@@ -33,7 +33,7 @@ const benefits = [
   },
   {
     step: 3,
-    title: "绽放合伙人",
+    title: "成为合伙人",
     icon: Flower2,
     description: "三大训练营 + 1对1教练辅导 + 分销佣金",
     buttonText: "了解绽放合伙人",
