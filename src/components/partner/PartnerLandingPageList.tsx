@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +26,7 @@ interface LandingPage {
 }
 
 export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageListProps) {
+  const navigate = useNavigate();
   const [pages, setPages] = useState<LandingPage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,8 +70,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
   };
 
   const handleOpenPreview = (id: string) => {
-    const url = `${window.location.origin}/lp/${id}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    navigate(`/lp/${id}`);
   };
 
   const getSelectedContent = (page: LandingPage) => {
