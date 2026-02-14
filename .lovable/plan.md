@@ -1,28 +1,19 @@
 
 
-# 认证页品牌更新 + 登录切换优化
+# 修复：默认显示"已有账号？点击登录"
 
-## 变更内容
+## 问题原因
+绽放合伙人页面跳转到认证页时，URL 中包含 `default_login=true` 参数，导致页面默认进入登录模式，底部显示"还没有账号？点击注册"。
 
-### 1. 标题品牌替换
-将 Auth 页面顶部的"情绪梳理教练"替换为 BrandLogo 组件 + "有劲AI" 文字，与品牌统一。
+实际期望是：默认进入注册模式，底部显示"已有账号？点击登录"。
 
-### 2. 注册成功提示更新
-将注册成功 toast 中的"欢迎来到情绪梳理教练"改为"欢迎来到有劲AI"。
+## 修改内容
 
-### 3. 确保"已有账号登录"选项在 phone_only 模式下可见
-当前切换按钮已存在，但在 phone_only 模式下需确认其正常显示并保持清晰可见。
+### 文件：`src/pages/BloomPartnerIntro.tsx`
 
-## 技术细节
+| 位置 | 当前 | 改为 |
+|------|------|------|
+| 第 44 行（卡片跳转） | `/auth?mode=phone_only&default_login=true&redirect=...` | `/auth?mode=phone_only&redirect=...` |
+| 第 49 行（登录按钮） | `/auth?mode=phone_only&default_login=true` | `/auth?mode=phone_only` |
 
-### 文件修改：`src/pages/Auth.tsx`
-
-| 位置 | 当前内容 | 改为 |
-|------|----------|------|
-| 第 421 行标题 | `情绪梳理教练` | 使用 `BrandLogo` 组件（size='lg'），下方显示"有劲AI" |
-| 第 423 行副标题 | `开始你的情绪梳理之旅` | `开始你的成长之旅` |
-| 第 403 行 toast | `欢迎来到情绪梳理教练` | `欢迎来到有劲AI` |
-| 导入区 | 无 BrandLogo | 添加 `import { BrandLogo } from "@/components/brand/BrandLogo"` |
-
-标题区域改为居中显示 BrandLogo 图标 + "有劲AI" 文字，替代纯文字标题。
-
+移除 `default_login=true` 参数后，`phone_only` 模式下 `isLogin` 默认为 `false`（注册模式），底部就会正确显示"已有账号？点击登录"。
