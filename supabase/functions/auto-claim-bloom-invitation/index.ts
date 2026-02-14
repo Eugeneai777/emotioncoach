@@ -46,11 +46,28 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
+    // Track whether we're upgrading an existing partner
+    let existingPartnerId: string | null = null;
+
     if (existingPartner) {
-      return new Response(
-        JSON.stringify({ matched: false, already_partner: true }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (existingPartner.partner_type === 'bloom') {
+        return new Response(
+          JSON.stringify({ matched: false, already_partner: true }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      // Upgrade: update existing partner to bloom type
+      await adminClient
+        .from('partners')
+        .update({
+          partner_type: 'bloom',
+          partner_level: 'L0',
+          commission_rate_l1: 0.30,
+          commission_rate_l2: 0.10,
+          source: 'manual',
+        })
+        .eq('id', existingPartner.id);
+      existingPartnerId = existingPartner.id;
     }
 
     // Get user phone from profiles
@@ -116,30 +133,43 @@ serve(async (req) => {
       );
     }
 
-    const partnerCode = `BP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+    let partnerId: string;
+    let partnerCode: string;
 
-    // Create partner record
-    const { data: partner, error: partnerError } = await adminClient
-      .from('partners')
-      .insert({
-        user_id: userId,
-        partner_type: 'bloom',
-        partner_level: 'L0',
-        partner_code: partnerCode,
-        commission_rate_l1: 0.30,
-        commission_rate_l2: 0.10,
-        status: 'active',
-        source: 'manual',
-      })
-      .select()
-      .single();
+    if (existingPartnerId) {
+      partnerId = existingPartnerId;
+      const { data: upgraded } = await adminClient
+        .from('partners')
+        .select('partner_code')
+        .eq('id', existingPartnerId)
+        .single();
+      partnerCode = upgraded?.partner_code || '';
+    } else {
+      partnerCode = `BP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
-    if (partnerError) {
-      console.error('Failed to create partner:', partnerError);
-      return new Response(
-        JSON.stringify({ error: '创建合伙人记录失败' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const { data: partner, error: partnerError } = await adminClient
+        .from('partners')
+        .insert({
+          user_id: userId,
+          partner_type: 'bloom',
+          partner_level: 'L0',
+          partner_code: partnerCode,
+          commission_rate_l1: 0.30,
+          commission_rate_l2: 0.10,
+          status: 'active',
+          source: 'manual',
+        })
+        .select()
+        .single();
+
+      if (partnerError) {
+        console.error('Failed to create partner:', partnerError);
+        return new Response(
+          JSON.stringify({ error: '创建合伙人记录失败' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      partnerId = partner.id;
     }
 
     // Create bloom_partner_orders record
@@ -147,7 +177,7 @@ serve(async (req) => {
       .from('bloom_partner_orders')
       .insert({
         user_id: userId,
-        partner_id: partner.id,
+        partner_id: partnerId,
         order_amount: matchedInvitation.order_amount || 19800,
         delivery_status: 'pending',
         emotion_status: 'pending',
@@ -157,7 +187,9 @@ serve(async (req) => {
 
     if (orderError) {
       console.error('Failed to create bloom order:', orderError);
-      await adminClient.from('partners').delete().eq('id', partner.id);
+      if (!existingPartnerId) {
+        await adminClient.from('partners').delete().eq('id', partnerId);
+      }
       return new Response(
         JSON.stringify({ error: '创建订单记录失败' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -197,14 +229,14 @@ serve(async (req) => {
       payment_status: 'completed',
     });
 
-    console.log(`Auto-claimed bloom invitation for user ${userId}, phone match: ${userPhoneNorm}, invitation: ${matchedInvitation.invite_code}`);
+    console.log(`Auto-claimed bloom invitation for user ${userId}, phone match: ${userPhoneNorm}, invitation: ${matchedInvitation.invite_code}${existingPartnerId ? ' (upgraded from youjin)' : ''}`);
 
     return new Response(
       JSON.stringify({
         matched: true,
         success: true,
-        message: '恭喜您成为绽放合伙人！',
-        partner_id: partner.id,
+        message: existingPartnerId ? '恭喜您升级为绽放合伙人！' : '恭喜您成为绽放合伙人！',
+        partner_id: partnerId,
         partner_code: partnerCode,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

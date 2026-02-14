@@ -101,8 +101,10 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
+    // Track whether we're upgrading an existing partner
+    let existingPartnerId: string | null = null;
+
     if (existingPartner) {
-      // If already a bloom partner, return success
       if (existingPartner.partner_type === 'bloom') {
         return new Response(
           JSON.stringify({ 
@@ -113,38 +115,59 @@ serve(async (req) => {
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      // If youjin partner, could upgrade - for now just return error
-      return new Response(
-        JSON.stringify({ error: '您已是其他类型的合伙人' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Upgrade: update existing partner to bloom type
+      await adminClient
+        .from('partners')
+        .update({
+          partner_type: 'bloom',
+          partner_level: 'L0',
+          commission_rate_l1: 0.30,
+          commission_rate_l2: 0.10,
+          source: 'manual',
+        })
+        .eq('id', existingPartner.id);
+      existingPartnerId = existingPartner.id;
     }
 
-    // Generate partner code
-    const partnerCode = `BP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+    let partnerId: string;
+    let partnerCode: string;
 
-    // Create partner record
-    const { data: partner, error: partnerError } = await adminClient
-      .from('partners')
-      .insert({
-        user_id: userId,
-        partner_type: 'bloom',
-        partner_level: 'L0',
-        partner_code: partnerCode,
-        commission_rate_l1: 0.30,
-        commission_rate_l2: 0.10,
-        status: 'active',
-        source: 'manual',
-      })
-      .select()
-      .single();
+    if (existingPartnerId) {
+      // Use existing partner (upgraded)
+      partnerId = existingPartnerId;
+      const { data: upgraded } = await adminClient
+        .from('partners')
+        .select('partner_code')
+        .eq('id', existingPartnerId)
+        .single();
+      partnerCode = upgraded?.partner_code || '';
+    } else {
+      // Generate partner code and create new partner
+      partnerCode = `BP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
-    if (partnerError) {
-      console.error('Failed to create partner:', partnerError);
-      return new Response(
-        JSON.stringify({ error: '创建合伙人记录失败' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const { data: partner, error: partnerError } = await adminClient
+        .from('partners')
+        .insert({
+          user_id: userId,
+          partner_type: 'bloom',
+          partner_level: 'L0',
+          partner_code: partnerCode,
+          commission_rate_l1: 0.30,
+          commission_rate_l2: 0.10,
+          status: 'active',
+          source: 'manual',
+        })
+        .select()
+        .single();
+
+      if (partnerError) {
+        console.error('Failed to create partner:', partnerError);
+        return new Response(
+          JSON.stringify({ error: '创建合伙人记录失败' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      partnerId = partner.id;
     }
 
     // Create bloom_partner_orders record for delivery tracking
@@ -152,7 +175,7 @@ serve(async (req) => {
       .from('bloom_partner_orders')
       .insert({
         user_id: userId,
-        partner_id: partner.id,
+        partner_id: partnerId,
         order_amount: invitation.order_amount || 19800,
         delivery_status: 'pending',
         emotion_status: 'pending',
@@ -162,8 +185,9 @@ serve(async (req) => {
 
     if (orderError) {
       console.error('Failed to create bloom order:', orderError);
-      // Rollback partner creation
-      await adminClient.from('partners').delete().eq('id', partner.id);
+      if (!existingPartnerId) {
+        await adminClient.from('partners').delete().eq('id', partnerId);
+      }
       return new Response(
         JSON.stringify({ error: '创建订单记录失败' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -193,7 +217,7 @@ serve(async (req) => {
       product_name: '财富卡点测评（绽放合伙人权益）',
     });
 
-    // Grant 21-day wealth awakening camp benefit
+    // Grant 7-day wealth camp benefit
     await adminClient.from('user_camp_purchases').insert({
       user_id: userId,
       camp_type: 'wealth_block_7',
@@ -203,13 +227,13 @@ serve(async (req) => {
       payment_status: 'completed',
     });
 
-    console.log(`Partner invitation claimed: ${invite_code} by user ${userId}, benefits granted`);
+    console.log(`Partner invitation claimed: ${invite_code} by user ${userId}, benefits granted${existingPartnerId ? ' (upgraded from youjin)' : ''}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: '恭喜您成为绽放合伙人！',
-        partner_id: partner.id,
+        message: existingPartnerId ? '恭喜您升级为绽放合伙人！' : '恭喜您成为绽放合伙人！',
+        partner_id: partnerId,
         partner_code: partnerCode,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
