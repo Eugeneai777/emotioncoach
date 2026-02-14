@@ -1,41 +1,24 @@
 
+## CSV 导出与表格优化
 
-# 批量注册简化 - 只建账号，邀请码保持 pending
+### 改动内容
 
-## 问题
+**文件：`src/components/admin/BloomPartnerInvitations.tsx`**
 
-当前 `batch-register-bloom-partners` 在批量注册时同时完成了权益发放和邀请码标记为 `claimed`，导致用户无法再通过输入邀请码来兑换。
+1. **CSV 导出改动**（第 391-403 行）：
+   - 链接改为 `https://wechat.eugenewe.net/bloom-partner-intro`（固定，不含邀请码路径）
+   - 新增"登录名"列（手机号带区号格式）和"密码"列（固定显示 `123456`）
+   - 移除"金额"、"创建时间"、"领取时间"列
+   - 新增"账号类型"列，显示"旧批次"/"新注册"/"已有账号"等
 
-## 改动
+   CSV 表头变为：`邀请码,姓名,手机号,登录名,密码,邀请链接,状态,账号类型`
 
-**文件：`supabase/functions/batch-register-bloom-partners/index.ts`**
+2. **账号类型映射逻辑**：
+   - `batch` -> 旧批次
+   - `batch_new` -> 新注册
+   - `batch_existing` -> 已有账号
+   - `admin` -> 管理员
+   - `self` -> 自行领取
+   - 其他 -> 空
 
-删除第 168-282 行的以下逻辑：
-- 创建/升级合伙人记录（partners 表）
-- 创建 bloom_partner_orders 记录
-- 发放财富测评订单（orders 表）
-- 发放 7 天训练营（user_camp_purchases 表）
-- 将邀请状态改为 `claimed`
-
-保留第 82-166 行的核心逻辑：
-- 创建用户账号（密码 123456）
-- 更新 profiles（姓名、手机号、must_change_password）
-
-### 技术细节
-
-将第 168-285 行替换为：
-
-```typescript
-        results.push({ name, phone: rawPhone, status: 'success' });
-        console.log(`Batch registered account: ${name} (${phone}), invitation stays pending for user to claim`);
-```
-
-### 流程变化
-
-```text
-改动前：批量注册 → 建账号 + 发权益 + 标记claimed → 用户输入邀请码 → 失败
-改动后：批量注册 → 只建账号（邀请码 pending） → 用户输入邀请码 → 兑换成功
-```
-
-用户通过 `claim-partner-invitation` 函数兑换时，会自动完成合伙人身份、财富测评、训练营的全部权益发放。
-
+3. 邀请链接统一使用 `getPromotionDomain()` + `/bloom-partner-intro` 路径
