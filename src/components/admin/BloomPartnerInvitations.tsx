@@ -134,7 +134,13 @@ export function BloomPartnerInvitations() {
     setIsBatchRegistering(true);
     setBatchDialogOpen(false);
     try {
-      const { data, error } = await supabase.functions.invoke('batch-register-bloom-partners');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+      const { data, error } = await supabase.functions.invoke('batch-register-bloom-partners', {
+        body: {},
+        signal: controller.signal as any,
+      });
+      clearTimeout(timeoutId);
       if (error) throw error;
       const result = data as { success: number; skipped: number; failed: number; details: any[] };
       toast.success(
