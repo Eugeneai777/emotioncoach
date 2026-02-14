@@ -1,77 +1,74 @@
 
-# 批量注册用户状态显示优化
 
-## 问题
+# 首次登录修改密码 + 全用户改密码功能
 
-截图中的7个用户是通过"一键注册并发放权益"批量处理的已有用户，虽然 `claimed_by` 有值，但并非用户自行领取，而是系统自动匹配并发放的。当前显示为绿色"已领取"，与用户主动领取的无法区分。
+## 现状分析
 
-## 当前状态分类
+系统已有完整的密码修改功能，位于 `src/components/profile/AccountCredentials.tsx`，用户可在个人资料页面修改密码。
 
-| 场景 | status | claimed_by | 当前显示 |
-|------|--------|------------|----------|
-| 用户自行领取 | claimed | 有值 | 已领取（绿色） |
-| 管理员手动设置 | claimed | NULL | 管理员（紫色） |
-| 批量注册处理 | claimed | 有值 | 已领取（绿色）-- 无法区分 |
+需要解决的是：**批量注册的用户（默认密码 123456）首次登录后强制修改密码**。
 
 ## 方案
 
-在 `partner_invitations` 表新增 `claimed_source` 字段，标记领取来源：
+### 1. 数据库：profiles 表新增字段
 
-- `self` - 用户自行领取
-- `batch` - 批量注册系统处理  
-- `admin` - 管理员手动操作
-
-### 修改内容
-
-**1. 数据库迁移**
-
-在 `partner_invitations` 表新增 `claimed_source` 列：
+在 `profiles` 表新增 `must_change_password` 布尔字段（默认 false）：
 
 ```sql
-ALTER TABLE public.partner_invitations 
-ADD COLUMN claimed_source text DEFAULT 'self';
+ALTER TABLE public.profiles 
+ADD COLUMN must_change_password boolean DEFAULT false;
 
--- 将现有管理员操作的记录标记
-UPDATE public.partner_invitations 
-SET claimed_source = 'admin' 
-WHERE status = 'claimed' AND claimed_by IS NULL;
-
--- 将批量注册的7条记录标记
-UPDATE public.partner_invitations 
-SET claimed_source = 'batch' 
-WHERE invite_code IN ('BLOOM-MX42','BLOOM-TZ44','BLOOM-FQ45','BLOOM-DZ47','BLOOM-ED49','BLOOM-LQ51','BLOOM-MM53');
+-- 标记已有的批量注册用户
+UPDATE public.profiles 
+SET must_change_password = true 
+WHERE id IN (
+  SELECT claimed_by FROM public.partner_invitations 
+  WHERE claimed_source = 'batch' AND claimed_by IS NOT NULL
+);
 ```
 
-**2. Edge Function 修改**
+### 2. Edge Function：批量注册时标记
 
-`supabase/functions/batch-register-bloom-partners/index.ts`：更新邀请状态时增加 `claimed_source: 'batch'`：
+修改 `batch-register-bloom-partners/index.ts`，新注册用户创建 profile 时设置 `must_change_password: true`。
 
-```typescript
-await adminClient.from('partner_invitations').update({
-  status: 'claimed',
-  claimed_by: userId,
-  claimed_at: new Date().toISOString(),
-  claimed_source: 'batch',
-}).eq('id', inv.id);
-```
+### 3. 前端：登录后拦截
 
-**3. 前端显示修改**
+修改 `src/pages/Auth.tsx` 登录成功后的跳转逻辑：
 
-`src/components/admin/BloomPartnerInvitations.tsx`：
+- 登录成功时查询 `profiles.must_change_password`
+- 如果为 true，跳转到 `/change-password` 而非原目标页面
 
-- 修改 `getStatusBadge` 函数，根据 `claimed_source` 区分显示：
-  - `batch` -> 蓝色 Badge "系统注册"
-  - `admin` -> 紫色 Badge "管理员"（替代当前 claimed_by 为空的判断）
-  - `self` -> 绿色 Badge "已领取"
+### 4. 新建强制修改密码页面
 
-- 领取时间列对应显示"系统注册"或"管理员操作"
+创建 `src/pages/ChangePassword.tsx`：
 
-### 最终显示效果
+- 复用现有密码修改逻辑（`supabase.auth.updateUser({ password })`）
+- 修改成功后更新 `profiles.must_change_password = false`
+- 然后跳转到原目标页面
+- 页面不可跳过（无返回/关闭按钮）
 
-| 场景 | Badge | 颜色 |
-|------|-------|------|
-| 用户自行领取 | 已领取 | 绿色 |
-| 批量注册处理 | 系统注册 | 蓝色 |
-| 管理员手动 | 管理员 | 紫色 |
-| 待领取 | 待领取 | 黄色 |
-| 不需领取 | 不需领取 | 灰色 |
+### 5. 路由守卫
+
+在 `App.tsx` 添加路由，确保 `must_change_password = true` 的用户无法访问其他页面。
+
+## 修改文件清单
+
+| 文件 | 修改内容 |
+|------|----------|
+| 数据库迁移 | profiles 新增 must_change_password 字段 |
+| `supabase/functions/batch-register-bloom-partners/index.ts` | 新注册用户标记 must_change_password |
+| `src/pages/Auth.tsx` | 登录后检查并跳转 |
+| `src/pages/ChangePassword.tsx` | 新建强制修改密码页面 |
+| `src/App.tsx` | 添加 /change-password 路由 |
+
+## 用户体验流程
+
+1. 管理员批量注册用户（密码 123456）
+2. 用户用手机号 + 123456 登录
+3. 系统检测到 `must_change_password = true`
+4. 自动跳转到修改密码页面（不可跳过）
+5. 用户设置新密码后正常使用
+6. 已有账号的用户不受影响（字段默认 false）
+
+现有的"账号与密码"设置（AccountCredentials）继续作为所有用户日常修改密码的入口，无需改动。
+
