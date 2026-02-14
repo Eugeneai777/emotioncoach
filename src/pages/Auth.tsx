@@ -51,7 +51,8 @@ function isValidPhone(phone: string): boolean {
 const Auth = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const isPhoneOnly = searchParams.get('mode') === 'phone_only';
-  const [isLogin, setIsLogin] = useState(isPhoneOnly ? false : true);
+  const defaultLogin = searchParams.get('default_login') === 'true';
+  const [isLogin, setIsLogin] = useState(isPhoneOnly ? (defaultLogin ? true : false) : true);
   const [authMode, setAuthMode] = useState<'phone' | 'email'>('phone');
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+86");
