@@ -107,7 +107,10 @@ export function BloomPartnerInvitations() {
     refetch();
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, claimedBy: string | null) => {
+    if (status === 'claimed' && !claimedBy) {
+      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">管理员</Badge>;
+    }
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">待领取</Badge>;
@@ -414,12 +417,12 @@ export function BloomPartnerInvitations() {
                     <TableCell className="font-mono text-sm">{inv.invite_code}</TableCell>
                     <TableCell>{inv.invitee_name || '-'}</TableCell>
                     <TableCell>{inv.invitee_phone || '-'}</TableCell>
-                    <TableCell>{getStatusBadge(inv.status)}</TableCell>
+                    <TableCell>{getStatusBadge(inv.status, inv.claimed_by)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(inv.created_at), 'MM-dd HH:mm')}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {inv.claimed_at ? format(new Date(inv.claimed_at), 'MM-dd HH:mm') : '-'}
+                      {inv.claimed_at ? format(new Date(inv.claimed_at), 'MM-dd HH:mm') : (inv.status === 'claimed' ? '管理员操作' : '-')}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
