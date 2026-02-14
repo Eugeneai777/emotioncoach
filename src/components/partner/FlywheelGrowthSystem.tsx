@@ -186,8 +186,7 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-bold">有劲飞轮</h2>
+      <div className="flex items-center justify-end mb-1">
         <p className="text-sm text-muted-foreground">
           {totalStats.campaigns} 个活跃活动 · 总投放 ¥{totalStats.spend.toLocaleString()}
         </p>
