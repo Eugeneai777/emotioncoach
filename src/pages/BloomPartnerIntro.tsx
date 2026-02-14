@@ -8,15 +8,6 @@ import { pageTourConfig } from "@/config/pageTourConfig";
 
 const benefits = [
   {
-    title: "绽放合伙人",
-    icon: Flower2,
-    description: "三大训练营 + 1对1教练辅导 + 分销佣金",
-    buttonText: "了解绽放合伙人",
-    path: "/partner",
-    gradient: "from-rose-500 to-pink-500",
-    bgGradient: "from-rose-50 to-pink-50",
-  },
-  {
     title: "财富卡点测评",
     icon: Target,
     description: "30道深度测评，找到你的潜意识财富信念卡点",
@@ -33,6 +24,15 @@ const benefits = [
     path: "/wealth-camp-intro",
     gradient: "from-violet-500 to-purple-500",
     bgGradient: "from-violet-50 to-purple-50",
+  },
+  {
+    title: "绽放合伙人",
+    icon: Flower2,
+    description: "三大训练营 + 1对1教练辅导 + 分销佣金",
+    buttonText: "了解绽放合伙人",
+    path: "/partner",
+    gradient: "from-rose-500 to-pink-500",
+    bgGradient: "from-rose-50 to-pink-50",
   },
 ];
 
