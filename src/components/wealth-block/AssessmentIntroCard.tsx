@@ -207,27 +207,6 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
             </motion.p>
           </div>
           
-          {/* 首屏CTA按钮 */}
-          <Button
-            onClick={handlePayClick}
-            disabled={isLoading}
-            size="lg"
-            className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2 disabled:opacity-70"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                加载中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                {hasPurchased ? '继续测评' : '¥9.9 开始测评'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-          
           {/* 已有账号登录入口 */}
           {!isLoggedIn && (
             <button
@@ -237,13 +216,6 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
               <LogIn className="w-4 h-4" />
               已有账号？点击登录
             </button>
-          )}
-          
-          {/* 已登录用户欢迎信息 */}
-          {isLoggedIn && !hasPurchased && (
-            <p className="text-center text-xs text-muted-foreground mt-2">
-              欢迎回来！点击上方按钮开始测评
-            </p>
           )}
         </div>
       </Card>
