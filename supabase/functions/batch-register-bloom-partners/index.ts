@@ -275,6 +275,7 @@ serve(async (req) => {
           status: 'claimed',
           claimed_by: userId,
           claimed_at: new Date().toISOString(),
+          claimed_source: 'batch',
         }).eq('id', inv.id);
 
         results.push({ name, phone: rawPhone, status: 'success' });

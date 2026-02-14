@@ -28,6 +28,7 @@ interface Invitation {
   status: string;
   claimed_by: string | null;
   claimed_at: string | null;
+  claimed_source: string | null;
   expires_at: string | null;
   created_at: string;
   notes: string | null;
@@ -107,15 +108,19 @@ export function BloomPartnerInvitations() {
     refetch();
   };
 
-  const getStatusBadge = (status: string, claimedBy: string | null) => {
-    if (status === 'claimed' && !claimedBy) {
-      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">管理员</Badge>;
+  const getStatusBadge = (status: string, claimedSource: string | null) => {
+    if (status === 'claimed') {
+      if (claimedSource === 'batch') {
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">系统注册</Badge>;
+      }
+      if (claimedSource === 'admin') {
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">管理员</Badge>;
+      }
+      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">已领取</Badge>;
     }
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">待领取</Badge>;
-      case 'claimed':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">已领取</Badge>;
       case 'expired':
         return <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">已过期</Badge>;
       case 'skipped':
@@ -417,12 +422,16 @@ export function BloomPartnerInvitations() {
                     <TableCell className="font-mono text-sm">{inv.invite_code}</TableCell>
                     <TableCell>{inv.invitee_name || '-'}</TableCell>
                     <TableCell>{inv.invitee_phone || '-'}</TableCell>
-                    <TableCell>{getStatusBadge(inv.status, inv.claimed_by)}</TableCell>
+                    <TableCell>{getStatusBadge(inv.status, inv.claimed_source)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(inv.created_at), 'MM-dd HH:mm')}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {inv.claimed_at ? format(new Date(inv.claimed_at), 'MM-dd HH:mm') : (inv.status === 'claimed' ? '管理员操作' : '-')}
+                      {inv.claimed_at 
+                        ? format(new Date(inv.claimed_at), 'MM-dd HH:mm') 
+                        : (inv.status === 'claimed' 
+                          ? (inv.claimed_source === 'batch' ? '系统注册' : '管理员操作') 
+                          : '-')}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
