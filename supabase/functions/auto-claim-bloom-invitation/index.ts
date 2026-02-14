@@ -84,13 +84,17 @@ serve(async (req) => {
       );
     }
 
-    // Normalize phone: extract last 11 digits
-    const normalizePhone = (p: string): string => {
+    // Normalize phone based on country code
+    const normalizePhone = (p: string, countryCode: string = '+86'): string => {
       const digits = p.replace(/\D/g, '');
-      return digits.length >= 11 ? digits.slice(-11) : digits;
+      if (countryCode === '+86') {
+        return digits.length >= 11 ? digits.slice(-11) : digits;
+      }
+      return digits;
     };
 
-    const userPhoneNorm = normalizePhone(profile.phone);
+    const userCountryCode = profile.phone_country_code || '+86';
+    const userPhoneNorm = normalizePhone(profile.phone, userCountryCode);
 
     // Find matching pending bloom invitation
     const { data: invitations } = await adminClient
@@ -106,10 +110,13 @@ serve(async (req) => {
       );
     }
 
-    // Match by normalized phone
+    // Match by normalized phone + country code
     const matchedInvitation = invitations.find(inv => {
       if (!inv.invitee_phone) return false;
-      return normalizePhone(inv.invitee_phone) === userPhoneNorm;
+      const invCountryCode = inv.invitee_phone_country_code || '+86';
+      // Only match if country codes are the same
+      if (invCountryCode !== userCountryCode) return false;
+      return normalizePhone(inv.invitee_phone, invCountryCode) === userPhoneNorm;
     });
 
     if (!matchedInvitation) {

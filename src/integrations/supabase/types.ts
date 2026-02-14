@@ -5492,6 +5492,7 @@ export type Database = {
           invite_code: string
           invitee_name: string | null
           invitee_phone: string | null
+          invitee_phone_country_code: string | null
           notes: string | null
           order_amount: number
           partner_type: string
@@ -5508,6 +5509,7 @@ export type Database = {
           invite_code: string
           invitee_name?: string | null
           invitee_phone?: string | null
+          invitee_phone_country_code?: string | null
           notes?: string | null
           order_amount?: number
           partner_type?: string
@@ -5524,6 +5526,7 @@ export type Database = {
           invite_code?: string
           invitee_name?: string | null
           invitee_phone?: string | null
+          invitee_phone_country_code?: string | null
           notes?: string | null
           order_amount?: number
           partner_type?: string

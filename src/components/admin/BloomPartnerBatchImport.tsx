@@ -34,9 +34,9 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
     return code;
   };
 
-  const parseCSV = (content: string): Array<{ name: string; phone: string; notes?: string }> => {
+  const parseCSV = (content: string): Array<{ name: string; phone: string; countryCode?: string; notes?: string }> => {
     const lines = content.trim().split('\n');
-    const results: Array<{ name: string; phone: string; notes?: string }> = [];
+    const results: Array<{ name: string; phone: string; countryCode?: string; notes?: string }> = [];
     const errors: string[] = [];
     
     for (let i = 0; i < lines.length; i++) {
@@ -65,11 +65,24 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
         errors.push(`第${i + 1}行「${name}」手机号格式不正确`);
         continue;
       }
+
+      // 第三列：检测是否为区号（以+开头），否则视为备注
+      const col3 = parts[2]?.trim() || '';
+      let countryCode: string | undefined;
+      let notes: string | undefined;
+      
+      if (col3.startsWith('+') && /^\+\d{1,4}$/.test(col3)) {
+        countryCode = col3;
+        notes = parts[3]?.trim() || undefined;
+      } else {
+        notes = col3 || undefined;
+      }
       
       results.push({
         name,
         phone,
-        notes: parts[2]?.trim() || undefined,
+        countryCode,
+        notes,
       });
     }
     
@@ -126,6 +139,7 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
             partner_type: 'bloom',
             invitee_name: item.name,
             invitee_phone: item.phone,
+            invitee_phone_country_code: item.countryCode || '+86',
             order_amount: amount,
             status: 'pending',
             created_by: user.id,
@@ -211,7 +225,7 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
                 CSV 格式说明
               </div>
               <p className="text-sm text-muted-foreground">
-                每行一条记录，格式：姓名（必填）,手机号（必填）,备注（可选）
+                每行一条记录，格式：姓名（必填）,手机号（必填）,区号（可选，如+1）,备注（可选）
               </p>
               <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                 <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
@@ -219,9 +233,9 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
               </div>
               <pre className="text-xs bg-background p-2 rounded">
 {`张艳,13800138001
-Angela安安,13800138002
+Angela安安,6109098999,+1
 李四,13800138003
-王五,13800138004,线下招募`}
+王五,13800138004,+86,线下招募`}
               </pre>
             </div>
 

@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_invitations ADD COLUMN IF NOT EXISTS invitee_phone_country_code TEXT DEFAULT '+86';
