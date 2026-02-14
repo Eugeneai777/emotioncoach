@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type SortKey = "date" | "views" | "purchases" | "spend";
 
 interface PartnerLandingPageListProps {
   partnerId: string;
@@ -25,6 +27,8 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
   const [pages, setPages] = useState<LandingPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<Record<string, { views: number; purchases: number }>>({});
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortAsc, setSortAsc] = useState(false);
 
   useEffect(() => {
     fetchPages();
@@ -86,6 +90,31 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
     return page.selected_version === "a" ? page.content_a : page.content_b;
   };
 
+  const sortedPages = useMemo(() => {
+    return [...pages].sort((a, b) => {
+      let valA: number, valB: number;
+      const mA = metrics[a.id] || { views: 0, purchases: 0 };
+      const mB = metrics[b.id] || { views: 0, purchases: 0 };
+      switch (sortKey) {
+        case "views": valA = mA.views; valB = mB.views; break;
+        case "purchases": valA = mA.purchases; valB = mB.purchases; break;
+        case "spend": valA = 0; valB = 0; break;
+        default: valA = new Date(a.created_at).getTime(); valB = new Date(b.created_at).getTime();
+      }
+      return sortAsc ? valA - valB : valB - valA;
+    });
+  }, [pages, metrics, sortKey, sortAsc]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(false); }
+  };
+
+  const SortIcon = ({ k }: { k: SortKey }) => {
+    if (sortKey !== k) return null;
+    return sortAsc ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-3">
@@ -103,9 +132,20 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <p className="text-xs font-medium text-muted-foreground">推广活动 ({pages.length})</p>
-      {pages.map((page) => {
+      {/* Sortable header */}
+      <div className="flex items-center gap-2 px-2 py-1 text-[10px] text-muted-foreground select-none">
+        <span className="shrink-0 w-10 cursor-pointer hover:text-foreground" onClick={() => toggleSort("date")}>日期 <SortIcon k="date" /></span>
+        <span className="flex-1">标题</span>
+        <span className="shrink-0 w-10 text-center">投放</span>
+        <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("views")}>观看 <SortIcon k="views" /></span>
+        <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("purchases")}>购买 <SortIcon k="purchases" /></span>
+        <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("spend")}>金额 <SortIcon k="spend" /></span>
+        <span className="shrink-0 w-10"></span>
+        <span className="shrink-0 w-3.5"></span>
+      </div>
+      {sortedPages.map((page) => {
         const content = getSelectedContent(page);
         const m = metrics[page.id] || { views: 0, purchases: 0 };
         const d = new Date(page.created_at);
@@ -116,14 +156,14 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
             className="flex items-center gap-2 p-2 rounded-lg border border-border cursor-pointer hover:bg-accent/50 transition-colors text-xs"
             onClick={() => navigate(`/partner/landing-page/${page.id}`)}
           >
+            <span className="text-muted-foreground shrink-0 w-10">{dateStr}</span>
             <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
-            <span className="text-muted-foreground shrink-0">投放 0</span>
-            <span className="text-muted-foreground shrink-0">观看 {m.views}</span>
-            <span className="text-muted-foreground shrink-0">购买 {m.purchases}</span>
-            <span className="text-muted-foreground shrink-0">¥0</span>
-            <span className="text-muted-foreground shrink-0">{dateStr}</span>
+            <span className="text-muted-foreground shrink-0 w-10 text-center">0</span>
+            <span className="text-muted-foreground shrink-0 w-10 text-center">{m.views}</span>
+            <span className="text-muted-foreground shrink-0 w-10 text-center">{m.purchases}</span>
+            <span className="text-muted-foreground shrink-0 w-10 text-center">¥0</span>
             <div className={cn(
-              "px-1.5 py-0.5 rounded shrink-0",
+              "px-1.5 py-0.5 rounded shrink-0 w-10 text-center text-[10px]",
               page.status === "published" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
             )}>
               {page.status === "published" ? "已发布" : "草稿"}
