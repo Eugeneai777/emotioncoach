@@ -216,6 +216,7 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
               upgradeRate={upgradeRate}
               isLast={idx === FLYWHEEL_LEVELS.length - 1}
               onOpenWizard={handleOpenWizard}
+              partnerId={partnerId}
             />
           );
         })}
