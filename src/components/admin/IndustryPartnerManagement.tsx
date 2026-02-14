@@ -174,7 +174,7 @@ export default function IndustryPartnerManagement() {
   if (selectedPartnerId && selectedPartner) {
     return (
       <AdminPageLayout
-        title={`行业合伙人 — ${selectedPartner.company_name || selectedPartner.partner_code}`}
+        title={`有劲飞轮 · ${selectedPartner.company_name || selectedPartner.partner_code}胶囊`}
         actions={
           <Button variant="outline" size="sm" onClick={() => setSelectedPartnerId(null)}>
             <ArrowLeft className="h-4 w-4 mr-1" />
