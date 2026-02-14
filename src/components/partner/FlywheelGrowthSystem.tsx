@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { AILandingPageWizard } from "./AILandingPageWizard";
 import { PartnerLandingPageList } from "./PartnerLandingPageList";
+import { MiniSparkline } from "./MiniSparkline";
 
 interface LevelConfig {
   level: string;
@@ -58,6 +59,9 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
     campaigns: 0, spend: 0, reach: 0, conversions: 0, revenue: 0,
     reachGrowth: 0, conversionGrowth: 0, revenueGrowth: 0,
   });
+  const [dailyData, setDailyData] = useState<{ reach: number[]; conversions: number[]; revenue: number[] }>({
+    reach: [], conversions: [], revenue: [],
+  });
   const [levelStats, setLevelStats] = useState<Record<string, { reach: number; conversions: number; revenue: number; conversionRate: number }>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardLevel, setWizardLevel] = useState("L1");
@@ -87,12 +91,11 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
       const totalCost = campaigns.reduce((s: number, c: any) => s + (Number(c.promotion_cost) || 0), 0);
       const activeCampaigns = (activePagesRes.data || []).length;
 
-      // Fetch events for both periods
       let currentEvents: any[] = [];
       let prevEvents: any[] = [];
       if (campaignIds.length > 0) {
         const [currRes, prevRes] = await Promise.all([
-          supabase.from("conversion_events" as any).select("event_type").in("campaign_id", campaignIds).gte("created_at", sevenDaysAgo),
+          supabase.from("conversion_events" as any).select("event_type, created_at").in("campaign_id", campaignIds).gte("created_at", sevenDaysAgo),
           supabase.from("conversion_events" as any).select("event_type").in("campaign_id", campaignIds).gte("created_at", fourteenDaysAgo).lt("created_at", sevenDaysAgo),
         ]);
         currentEvents = currRes.data || [];
@@ -102,12 +105,14 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
       const userIds = (referralsRes.data || []).map((r: any) => r.referred_user_id).filter(Boolean);
       let currentRevenue = 0;
       let prevRevenue = 0;
+      let revenueEvents: any[] = [];
       if (userIds.length > 0) {
         const [currOrders, prevOrders] = await Promise.all([
-          supabase.from("orders" as any).select("amount").in("user_id", userIds).eq("status", "paid").gte("created_at", sevenDaysAgo),
+          supabase.from("orders" as any).select("amount, created_at").in("user_id", userIds).eq("status", "paid").gte("created_at", sevenDaysAgo),
           supabase.from("orders" as any).select("amount").in("user_id", userIds).eq("status", "paid").gte("created_at", fourteenDaysAgo).lt("created_at", sevenDaysAgo),
         ]);
-        currentRevenue = (currOrders.data || []).reduce((s: number, o: any) => s + (Number(o.amount) || 0), 0);
+        revenueEvents = currOrders.data || [];
+        currentRevenue = revenueEvents.reduce((s: number, o: any) => s + (Number(o.amount) || 0), 0);
         prevRevenue = (prevOrders.data || []).reduce((s: number, o: any) => s + (Number(o.amount) || 0), 0);
       }
 
@@ -118,6 +123,25 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
 
       const curr = countMetrics(currentEvents);
       const prev = countMetrics(prevEvents);
+
+      // Build daily sparkline data (7 days)
+      const dailyReach = new Array(7).fill(0);
+      const dailyConversions = new Array(7).fill(0);
+      const dailyRevenue = new Array(7).fill(0);
+      
+      currentEvents.forEach((e: any) => {
+        if (!e.created_at) return;
+        const dayIndex = 6 - Math.min(6, Math.floor((now - new Date(e.created_at).getTime()) / (24 * 60 * 60 * 1000)));
+        if (e.event_type === "page_view" || e.event_type === "click") dailyReach[dayIndex]++;
+        if (e.event_type === "payment" || e.event_type === "complete_test") dailyConversions[dayIndex]++;
+      });
+      revenueEvents.forEach((o: any) => {
+        if (!o.created_at) return;
+        const dayIndex = 6 - Math.min(6, Math.floor((now - new Date(o.created_at).getTime()) / (24 * 60 * 60 * 1000)));
+        dailyRevenue[dayIndex] += Number(o.amount) || 0;
+      });
+
+      setDailyData({ reach: dailyReach, conversions: dailyConversions, revenue: dailyRevenue });
 
       setTotalStats({
         campaigns: activeCampaigns,
@@ -192,39 +216,48 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <Eye className="w-4 h-4 text-accent-foreground" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                <Eye className="w-4 h-4 text-accent-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">总触达</p>
+                <p className="text-lg font-bold">{totalStats.reach.toLocaleString()}</p>
+                <GrowthIndicator value={totalStats.reachGrowth} />
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">总触达</p>
-              <p className="text-lg font-bold">{totalStats.reach.toLocaleString()}</p>
-              <GrowthIndicator value={totalStats.reachGrowth} />
-            </div>
+            <MiniSparkline data={dailyData.reach} color="hsl(var(--primary))" />
           </CardContent>
         </Card>
         <Card className="col-span-1">
-          <CardContent className="p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <Users className="w-4 h-4 text-accent-foreground" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4 text-accent-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">总转化</p>
+                <p className="text-lg font-bold">{totalStats.conversions.toLocaleString()}</p>
+                <GrowthIndicator value={totalStats.conversionGrowth} />
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">总转化</p>
-              <p className="text-lg font-bold">{totalStats.conversions.toLocaleString()}</p>
-              <GrowthIndicator value={totalStats.conversionGrowth} />
-            </div>
+            <MiniSparkline data={dailyData.conversions} color="hsl(var(--primary))" />
           </CardContent>
         </Card>
         <Card className="col-span-1">
-          <CardContent className="p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-accent-foreground" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                <DollarSign className="w-4 h-4 text-accent-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">总收入</p>
+                <p className="text-lg font-bold">¥{totalStats.revenue.toLocaleString()}</p>
+                <GrowthIndicator value={totalStats.revenueGrowth} />
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">总收入</p>
-              <p className="text-lg font-bold">¥{totalStats.revenue.toLocaleString()}</p>
-              <GrowthIndicator value={totalStats.revenueGrowth} />
-            </div>
+            <MiniSparkline data={dailyData.revenue} color="hsl(var(--primary))" />
           </CardContent>
         </Card>
       </div>

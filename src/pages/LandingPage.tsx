@@ -3,7 +3,9 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, Award, Users } from "lucide-react";
+import { Loader2, Shield, Award, Users, Star } from "lucide-react";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { Helmet } from "react-helmet";
 
 interface LandingContent {
   title: string;
@@ -72,7 +74,6 @@ export default function LandingPage() {
     }
   };
 
-  // Track page view once after data loads
   useEffect(() => {
     if (!loading && content && !tracked.current) {
       tracked.current = true;
@@ -117,37 +118,56 @@ export default function LandingPage() {
     );
   }
 
-  // Generate a pseudo participant count based on page id
   const participantCount = 1200 + (id ? id.charCodeAt(0) * 13 + id.charCodeAt(1) * 7 : 0);
+  const ogTitle = content.title.slice(0, 58);
+  const ogDescription = content.subtitle.slice(0, 155);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background relative overflow-hidden">
+      {/* SEO & OG Meta */}
+      <Helmet>
+        <title>{ogTitle} - 有劲AI</title>
+        <meta name="description" content={ogDescription} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://wechat.eugenewe.net/lp/${id}`} />
+        <meta property="og:image" content="https://wechat.eugenewe.net/logo-youjin-ai.png" />
+        <meta property="og:site_name" content="有劲AI" />
+        <link rel="canonical" href={`https://wechat.eugenewe.net/lp/${id}`} />
+      </Helmet>
+
       {/* Decorative glow elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl -translate-y-1/2 pointer-events-none" />
       <div className="absolute top-40 right-0 w-[200px] h-[200px] bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute bottom-20 left-0 w-[150px] h-[150px] bg-primary/5 rounded-full blur-2xl pointer-events-none" />
 
       {/* Hero Section */}
-      <div className="relative px-6 pt-16 pb-10 text-center space-y-4 max-w-lg mx-auto animate-fade-in">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+      <header className="relative px-6 pt-16 pb-10 text-center space-y-4 max-w-lg mx-auto animate-fade-in">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
           {content.title}
         </h1>
-        <p className="text-base text-muted-foreground leading-relaxed">
+        <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
           {content.subtitle}
         </p>
-      </div>
+      </header>
 
       {/* Selling Points */}
-      <div className="relative px-6 pb-6 max-w-lg mx-auto">
-        <div className="bg-card rounded-2xl p-6 shadow-sm space-y-4 border border-border">
+      <main className="relative px-6 pb-6 max-w-lg mx-auto">
+        <div className="bg-card rounded-2xl p-6 shadow-md space-y-4 border border-border/50 backdrop-blur-sm">
           {product && (
-            <Badge variant="secondary" className="text-xs font-medium">
+            <Badge variant="secondary" className="text-xs font-semibold px-3 py-1">
               {product}
             </Badge>
           )}
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {content.selling_points?.map((point, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+              <li
+                key={i}
+                className="flex items-start gap-3 animate-fade-in"
+                style={{ animationDelay: `${i * 120}ms` }}
+              >
+                <span className="mt-0.5 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
                   ✓
                 </span>
                 <span className="text-sm text-foreground leading-relaxed">{point}</span>
@@ -155,30 +175,39 @@ export default function LandingPage() {
             ))}
           </ul>
         </div>
-      </div>
+      </main>
 
       {/* Social Proof */}
-      <div className="relative px-6 pb-6 max-w-lg mx-auto">
-        <div className="flex items-center justify-center gap-6 text-muted-foreground">
+      <section className="relative px-6 pb-6 max-w-lg mx-auto">
+        <div className="flex items-center justify-center gap-5 text-muted-foreground py-2">
           <div className="flex items-center gap-1.5 text-xs">
             <Users className="w-4 h-4 text-primary" />
-            <span>已有 <strong className="text-foreground">{participantCount.toLocaleString()}</strong> 人参与</span>
+            <span>已有 <strong className="text-foreground font-semibold">{participantCount.toLocaleString()}</strong> 人参与</span>
           </div>
+          <div className="w-px h-4 bg-border" />
           <div className="flex items-center gap-1.5 text-xs">
             <Shield className="w-4 h-4 text-primary" />
             <span>安全保障</span>
           </div>
+          <div className="w-px h-4 bg-border" />
           <div className="flex items-center gap-1.5 text-xs">
             <Award className="w-4 h-4 text-primary" />
             <span>专业认证</span>
           </div>
         </div>
-      </div>
+        {/* Star rating */}
+        <div className="flex items-center justify-center gap-1 mt-1">
+          {[1,2,3,4,5].map(i => (
+            <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+          ))}
+          <span className="text-xs text-muted-foreground ml-1">4.9 / 5.0</span>
+        </div>
+      </section>
 
       {/* CTA Section */}
-      <div className="relative px-6 pb-16 max-w-lg mx-auto space-y-3">
+      <section className="relative px-6 pb-16 max-w-lg mx-auto space-y-3">
         <Button
-          className="w-full h-12 text-base font-semibold rounded-xl shadow-lg animate-pulse-slow"
+          className="w-full h-14 text-lg font-bold rounded-xl shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 animate-pulse-slow"
           size="lg"
           onClick={handleCTA}
         >
@@ -188,12 +217,12 @@ export default function LandingPage() {
           <p className="text-xs text-center text-muted-foreground">{content.cta_subtext}</p>
         )}
         <p className="text-xs text-center text-primary/70 font-medium">🔥 限时优惠中，立即行动</p>
-      </div>
+      </section>
 
       {/* Footer */}
-      <div className="text-center pb-8">
+      <footer className="text-center pb-8">
         <p className="text-xs text-muted-foreground">Powered by 有劲AI</p>
-      </div>
+      </footer>
     </div>
   );
 }
