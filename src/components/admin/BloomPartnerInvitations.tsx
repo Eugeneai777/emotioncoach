@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Check, Search, RefreshCw, Send, Download } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Copy, Check, Search, RefreshCw, Send, Download, UserPlus, Loader2 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -33,6 +34,8 @@ export function BloomPartnerInvitations() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [isBatchRegistering, setIsBatchRegistering] = useState(false);
+  const [batchDialogOpen, setBatchDialogOpen] = useState(false);
 
   const { data: invitations, isLoading, refetch } = useQuery({
     queryKey: ['partner-invitations', statusFilter],
@@ -91,11 +94,62 @@ export function BloomPartnerInvitations() {
     expired: invitations?.filter(i => i.status === 'expired').length || 0,
   };
 
+  const handleBatchRegister = async () => {
+    setIsBatchRegistering(true);
+    setBatchDialogOpen(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('batch-register-bloom-partners');
+      if (error) throw error;
+
+      const result = data as { success: number; skipped: number; failed: number; details: any[] };
+      toast.success(
+        `批量注册完成：成功 ${result.success} 个，跳过 ${result.skipped} 个，失败 ${result.failed} 个`,
+        { duration: 5000 }
+      );
+      refetch();
+    } catch (err) {
+      console.error('Batch register error:', err);
+      toast.error('批量注册失败：' + (err instanceof Error ? err.message : '未知错误'));
+    } finally {
+      setIsBatchRegistering(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">绽放合伙人邀请管理</h2>
-        <BloomPartnerBatchImport onSuccess={() => refetch()} />
+        <div className="flex items-center gap-2">
+          {stats.pending > 0 && (
+            <AlertDialog open={batchDialogOpen} onOpenChange={setBatchDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="default" disabled={isBatchRegistering}>
+                  {isBatchRegistering ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <UserPlus className="h-4 w-4 mr-1" />
+                  )}
+                  {isBatchRegistering ? '注册中...' : '一键注册并发放权益'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>确认批量注册</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    将为 <strong>{stats.pending}</strong> 条待处理邀请自动注册账号（手机号 + 密码 123456）并发放绽放合伙人权益（财富卡点测评 + 7天财富训练营）。
+                    <br /><br />
+                    已存在的手机号将跳过注册但仍会补发权益。此操作不可撤销。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleBatchRegister}>确认注册</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <BloomPartnerBatchImport onSuccess={() => refetch()} />
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
