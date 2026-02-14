@@ -111,13 +111,20 @@ export default function LandingPage() {
           className="w-full h-12 text-base font-semibold rounded-xl shadow-lg" 
           size="lg"
           onClick={() => {
-            // Route to appropriate product page based on matched_product
             const refParam = partnerId ? `?ref=${partnerId}` : '';
-            if (product?.includes('测评')) {
-              navigate(`/wealth-block${refParam}`);
-            } else {
-              navigate(`/introduction${refParam}`);
-            }
+            const productRoutes: [string[], string][] = [
+              [['情绪健康'], '/emotion-health-lite'],
+              [['SCL-90', '心理'], '/scl90-lite'],
+              [['死了吗'], '/alive-check-lite'],
+              [['觉察日记', '觉察'], '/awakening-lite'],
+              [['情绪按钮', '情绪SOS'], '/emotion-button-lite'],
+              [['财富'], '/wealth-assessment-lite'],
+            ];
+            const matched = productRoutes.find(([keywords]) =>
+              keywords.some(k => product?.includes(k))
+            );
+            const path = matched ? matched[1] : '/introduction';
+            window.location.href = `https://wechat.eugenewe.net${path}${refParam}`;
           }}
         >
           {content.cta_text}
