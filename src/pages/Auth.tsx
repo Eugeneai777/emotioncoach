@@ -203,9 +203,16 @@ const Auth = () => {
           try {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('preferred_coach')
+              .select('preferred_coach, must_change_password')
               .eq('id', session.user.id)
               .single();
+
+            // 检查是否需要强制修改密码
+            if ((profile as any)?.must_change_password === true) {
+              localStorage.setItem('change_password_redirect', targetRedirect !== '/' ? targetRedirect : '');
+              navigate('/change-password', { replace: true });
+              return;
+            }
             
             if (profile?.preferred_coach === 'wealth') {
               // 检查是否有活跃的财富训练营
@@ -235,6 +242,22 @@ const Auth = () => {
             console.log('获取用户偏好失败，跳转默认首页:', error);
             targetRedirect = "/";
           }
+        }
+
+        // 如果有 savedRedirect，也检查是否需要强制改密码
+        if (savedRedirect) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('must_change_password')
+              .eq('id', session.user.id)
+              .single();
+            if ((profile as any)?.must_change_password === true) {
+              localStorage.setItem('change_password_redirect', targetRedirect);
+              navigate('/change-password', { replace: true });
+              return;
+            }
+          } catch {}
         }
 
         // 如果是新注册用户，显示关注公众号引导

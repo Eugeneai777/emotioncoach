@@ -29,6 +29,7 @@ const WeChatAuth = lazyRetry(() => import("./pages/WeChatAuth"));
 const WeChatOAuthCallback = lazyRetry(() => import("./pages/WeChatOAuthCallback"));
 const DynamicCoach = lazyRetry(() => import("./pages/DynamicCoach"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
+const ChangePassword = lazyRetry(() => import("./pages/ChangePassword"));
 
 // 历史和社区
 const History = lazyRetry(() => import("./pages/History"));
@@ -349,6 +350,7 @@ const App = () => (
               <Route path="/invite/:code" element={<PartnerInvitePage />} />
               <Route path="/partner/landing-page/:id" element={<PartnerLandingPageDetail />} />
               <Route path="/lp/:id" element={<LandingPage />} />
+              <Route path="/change-password" element={<ChangePassword />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
