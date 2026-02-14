@@ -24,6 +24,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
   const navigate = useNavigate();
   const [pages, setPages] = useState<LandingPage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<Record<string, { views: number; purchases: number }>>({});
 
   useEffect(() => {
     fetchPages();
@@ -39,11 +40,45 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
         .eq("level", level)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      setPages((data as any) || []);
+      const pageList = (data as any) || [];
+      setPages(pageList);
+
+      // Fetch real metrics
+      if (pageList.length > 0) {
+        fetchMetrics(pageList.map((p: LandingPage) => p.id));
+      }
     } catch (err) {
       console.error("Fetch landing pages error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMetrics = async (pageIds: string[]) => {
+    try {
+      const { data: events } = await supabase
+        .from("conversion_events" as any)
+        .select("event_type, metadata")
+        .eq("feature_key", "landing_page");
+
+      if (!events) return;
+
+      const result: Record<string, { views: number; purchases: number }> = {};
+      pageIds.forEach(id => { result[id] = { views: 0, purchases: 0 }; });
+
+      (events as any[]).forEach((e) => {
+        const lpId = e.metadata?.landing_page_id;
+        if (!lpId || !result[lpId]) return;
+        if (e.event_type === "page_view" || e.event_type === "click") {
+          result[lpId].views++;
+        } else if (e.event_type === "payment") {
+          result[lpId].purchases++;
+        }
+      });
+
+      setMetrics(result);
+    } catch (err) {
+      console.error("Fetch metrics error:", err);
     }
   };
 
@@ -72,6 +107,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
       <p className="text-xs font-medium text-muted-foreground">推广活动 ({pages.length})</p>
       {pages.map((page) => {
         const content = getSelectedContent(page);
+        const m = metrics[page.id] || { views: 0, purchases: 0 };
         return (
           <div
             key={page.id}
@@ -84,11 +120,11 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
                 <span className="truncate max-w-[80px]">{page.target_audience || "—"}</span>
                 <span className="flex items-center gap-0.5 shrink-0">
                   <Eye className="w-3 h-3" />
-                  <span>0</span>
+                  <span>{m.views}</span>
                 </span>
                 <span className="flex items-center gap-0.5 shrink-0">
                   <ShoppingCart className="w-3 h-3" />
-                  <span>0</span>
+                  <span>{m.purchases}</span>
                 </span>
                 <span className="shrink-0">{new Date(page.created_at).toLocaleDateString("zh-CN")}</span>
               </div>

@@ -232,6 +232,10 @@ export default {
             opacity: "1",
           },
         },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.85", transform: "scale(1.02)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -247,6 +251,7 @@ export default {
         "aurora": "aurora 6s ease-in-out infinite",
         "snowfall": "snowfall 8s linear infinite",
         "sun-glow": "sun-glow 4s ease-in-out infinite",
+        "pulse-slow": "pulse-slow 2.5s ease-in-out infinite",
       },
     },
   },
