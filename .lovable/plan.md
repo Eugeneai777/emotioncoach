@@ -1,50 +1,73 @@
 
+## 为默认密码用户发送智能通知提醒修改密码
 
-## 优化无图帖子卡片：去掉空白占位区域
+### 方案
 
-### 问题
-没有图片的帖子显示了一个 `h-40`（160px）的渐变色占位区域，里面只有一个小 emoji，导致大量空白，视觉效果差。
+两步实现：立即通知现有 8 位用户 + 自动通知未来新用户。
 
-### 改动方案
+### 1. 立即通知现有用户（SQL 插入）
 
-**文件：`src/components/community/WaterfallPostCard.tsx`**
+对 `profiles` 表中 `must_change_password = true` 的 8 位用户，插入一条智能通知到 `smart_notifications`：
 
-将无图帖子的大面积渐变占位区域替换为紧凑的纯文字布局：
-
-- 移除 `h-40` 的渐变背景占位区域
-- 无图时直接显示标题/内容文字，不再显示 emoji 占位
-- 如果有教练空间标签，改为在文字区域内显示（而非浮在图片上）
-- 无图帖子的内容区域可以展示更多文字行数（从 `line-clamp-2` 增加到 `line-clamp-4`），让纯文字帖更有内容感
-
-### 改动前后对比
-
-```text
-改动前（无图帖子）：
-+------------------+
-|                  |
-|     🌸 (h-40)   |   <-- 大面积空白
-|                  |
-+------------------+
-| 标题文字          |
-| 用户  ♡          |
-+------------------+
-
-改动后（无图帖子）：
-+------------------+
-| [教练标签]        |
-| 标题文字（多行）   |
-| 内容预览...       |
-| 用户  ♡          |
-+------------------+
+```sql
+INSERT INTO smart_notifications (user_id, notification_type, scenario, title, message, icon, action_text, action_type, action_data, priority, coach_type)
+SELECT 
+  id,
+  'reminder',
+  'security_password_change',
+  '🔒 安全提醒：请修改默认密码',
+  '您的账号当前使用的是初始密码 123456，存在安全风险。为了保护您的账号安全，请尽快修改密码。',
+  'Bell',
+  '立即修改密码',
+  'navigate',
+  '{"path": "/change-password"}'::jsonb,
+  5,
+  'general'
+FROM profiles
+WHERE must_change_password = true;
 ```
 
-### 技术细节
+- `priority = 5`：高优先级，卡片会显示"重要"标签
+- `action_type = 'navigate'` + `action_data.path = '/change-password'`：点击按钮直接跳转修改密码页
+- `notification_type = 'reminder'`：使用橙色提醒样式
 
-在 `WaterfallPostCard.tsx` 中：
+### 2. 自动通知未来用户（数据库触发器）
 
-1. **第 155-170 行**：将无图的 `else` 分支从渲染 `h-40` 渐变 div 改为 `null`（不渲染任何占位）
-2. **第 173 行内容区域**：无图时增加 padding-top，并将教练空间标签移到文字区域内显示
-3. **标题行数**：无图时改为 `line-clamp-4`，有图保持 `line-clamp-2`
+在 `profiles` 表上创建触发器，当 `must_change_password` 被设为 `true` 时（如批量注册新绽放合伙人），自动插入通知：
 
-改动量：约 15-20 行，仅修改一个文件。
+```sql
+CREATE OR REPLACE FUNCTION notify_must_change_password()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.must_change_password = true 
+     AND (OLD IS NULL OR OLD.must_change_password IS DISTINCT FROM true) THEN
+    INSERT INTO smart_notifications (
+      user_id, notification_type, scenario, title, message,
+      icon, action_text, action_type, action_data, priority, coach_type
+    ) VALUES (
+      NEW.id, 'reminder', 'security_password_change',
+      '🔒 安全提醒：请修改默认密码',
+      '您的账号当前使用的是初始密码 123456，存在安全风险。为了保护您的账号安全，请尽快修改密码。',
+      'Bell', '立即修改密码', 'navigate',
+      '{"path": "/change-password"}'::jsonb, 5, 'general'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
 
+CREATE TRIGGER trg_notify_must_change_password
+  AFTER INSERT OR UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_must_change_password();
+```
+
+### 改动总结
+
+- **SQL 数据操作**：为现有 8 位用户插入通知（使用 insert 工具）
+- **数据库迁移**：创建触发器函数 + 触发器（使用 migration 工具）
+- **无前端改动**：通知卡片已支持 `navigate` 类型跳转到 `/change-password`，无需修改任何前端代码
