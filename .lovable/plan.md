@@ -1,32 +1,34 @@
 
 
-## CTA 按钮跳转逻辑优化
+## 推广活动列表优化：点击进入详情页
 
-### 目标
-根据落地页的 `matched_product` 字段，将 CTA 按钮跳转到对应的 Lite 产品页面，并携带合伙人推荐参数。
+### 改动概览
 
-### 产品路由映射表
+将推广活动列表简化为可点击的列表项，移除"复制链接"和"预览"按钮。点击活动卡片后进入详情/编辑页面，在详情页提供复制链接、预览和删除等操作。
 
-| 产品关键词 | 跳转路径 |
-|-----------|---------|
-| 财富 | `/wealth-assessment-lite` |
-| 情绪健康 | `/emotion-health-lite` |
-| SCL-90 / 心理 | `/scl90-lite` |
-| 死了吗 | `/alive-check-lite` |
-| 觉察日记 / 觉察 | `/awakening-lite` |
-| 情绪按钮 / 情绪SOS | `/emotion-button-lite` |
-| 默认（无匹配） | `/introduction` |
+### 具体改动
 
-### 实现方式
+**1. PartnerLandingPageList.tsx - 简化列表项**
+- 移除每条记录下方的"复制链接"、"预览"、"删除"按钮
+- 整行改为可点击，点击后导航到详情页 `/partner/landing-page/:id`
+- 列表项只显示：标题、受众、渠道、日期、状态标签、右侧箭头图标
+- 标题从"已保存落地页"改为"推广活动"
 
-修改 `src/pages/LandingPage.tsx` 中的 CTA `onClick` 逻辑：
+**2. 新建 PartnerLandingPageDetail.tsx 详情/编辑页面**
+- 路径：`/partner/landing-page/:id`
+- 页面内容：
+  - 顶部返回按钮
+  - 落地页标题、受众、渠道、创建日期、状态
+  - 落地页内容预览（标题、副标题、卖点列表、CTA 文案）
+  - 操作区域：复制链接、预览（导航到 /lp/:id）、删除
+- 从 `partner_landing_pages` 表按 id 获取数据
 
-1. 创建一个关键词到路径的映射数组（按优先级排列）
-2. 遍历映射表，用 `matched_product` 字段进行关键词匹配
-3. 匹配成功则跳转对应 Lite 页面，未匹配则跳转 `/introduction`
-4. 所有链接附加 `?ref=partnerId` 参数以保留合伙人归因
+**3. 路由注册**
+- 在 App.tsx 中添加 `/partner/landing-page/:id` 路由
 
 ### 技术细节
 
-当前数据库中 `matched_product` 的值示例为 `"情绪健康测评 / 职场压力卡点测评"`（可能包含多个产品名称），因此使用 `includes()` 关键词匹配而非精确匹配。映射数组按特异性从高到低排列，确保 "情绪健康" 优先于 "情绪按钮" 等模糊匹配。
-
+- 列表项使用 `cursor-pointer hover:bg-accent/50` 样式提示可点击
+- 详情页使用 `useParams` 获取 id，`useNavigate` 实现返回和预览导航
+- 复制链接仍使用 `getPromotionDomain()` 生成生产域名 URL
+- 删除后自动返回上一页
