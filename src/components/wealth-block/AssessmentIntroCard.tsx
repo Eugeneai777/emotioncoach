@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain, Loader2 } from "lucide-react";
 import { AIComparisonCard } from "./AIComparisonCard";
+import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
 import { AssessmentFlowCard } from "./AssessmentFlowCard";
 import { AssessmentPreviewCard } from "./AssessmentPreviewCard";
 
@@ -577,6 +578,11 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
             </span>
           </Button>
           
+          {/* 邀请码兑换入口 - 已登录未购买用户 */}
+          {isLoggedIn && !hasPurchased && (
+            <BloomInviteCodeEntry variant="card" onSuccess={onStart} />
+          )}
+
           {/* 底部登录入口 */}
           {!isLoggedIn && (
             <button
