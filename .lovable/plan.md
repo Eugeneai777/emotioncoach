@@ -1,44 +1,50 @@
 
 
-# 修复：管理员无法手动改变邀请状态
+# 邀请状态区分：用户领取 vs 管理员操作
 
-## 问题分析
+## 问题
 
-经过全面排查，代码逻辑、数据库 RLS 策略、用户权限均正确。最可能的原因是 **DropdownMenuItem 的 onClick 事件冒泡问题**：点击菜单项时，事件向上冒泡导致下拉菜单提前关闭，onClick 回调未能正常执行。
+当前所有 `claimed` 状态的邀请都显示为"已领取"，无法区分是用户自行领取还是管理员手动设置权益的情况。
 
-## 排查结果
+## 方案
 
-| 检查项 | 状态 |
-|--------|------|
-| RLS 策略（admin ALL） | 正常 |
-| 用户 admin 角色 | 已确认 |
-| TypeScript 类型（status: string） | 兼容 |
-| DropdownMenu UI 代码 | 存在事件冒泡隐患 |
+修改 `BloomPartnerInvitations.tsx` 中的状态显示逻辑：
 
-## 修复方案
+- **已领取**（绿色）：`status = 'claimed'` 且 `claimed_by` 不为空（用户自行领取）
+- **管理员**（紫色）：`status = 'claimed'` 且 `claimed_by` 为空（管理员手动处理）
 
-在 `BloomPartnerInvitations.tsx` 中，为所有 DropdownMenuItem 的 onClick 添加 `e.stopPropagation()`，防止事件冒泡导致菜单过早关闭：
-
-- 复制邀请链接按钮
-- 所有状态切换按钮
+同时在"领取时间"列，管理员手动处理的记录显示"管理员操作"而非空白。
 
 ## 技术细节
 
 修改文件：`src/components/admin/BloomPartnerInvitations.tsx`
 
-将：
+1. 修改 `getStatusBadge` 函数，增加 `claimed_by` 参数：
+
 ```tsx
-<DropdownMenuItem onClick={() => handleCopyLink(inv.invite_code)}>
-```
-改为：
-```tsx
-<DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopyLink(inv.invite_code); }}>
+const getStatusBadge = (status: string, claimedBy: string | null) => {
+  if (status === 'claimed' && !claimedBy) {
+    return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">管理员</Badge>;
+  }
+  // ... 其余不变
+};
 ```
 
-同样修改状态切换按钮：
+2. 调用处传入 `claimed_by`：
+
 ```tsx
-<DropdownMenuItem key={s.value} onClick={(e) => { e.stopPropagation(); handleStatusUpdate(inv.id, s.value); }}>
+<TableCell>{getStatusBadge(inv.status, inv.claimed_by)}</TableCell>
 ```
 
-仅修改一个文件中的两处 onClick 调用。
+3. 领取时间列增加管理员标识：
+
+```tsx
+<TableCell>
+  {inv.claimed_at 
+    ? format(new Date(inv.claimed_at), 'MM-dd HH:mm') 
+    : (inv.status === 'claimed' ? '管理员操作' : '-')}
+</TableCell>
+```
+
+仅修改一个文件中的三处。
 
