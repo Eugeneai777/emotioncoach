@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flower2, Target, Sparkles, LogIn, LogOut, Loader2 } from "lucide-react";
+import { Flower2, Target, Sparkles, LogIn, LogOut, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
@@ -147,6 +147,17 @@ const BloomPartnerIntro = () => {
                     <Icon className="w-5 h-5 text-white" />
                   </div>
                   <h3 className="font-semibold text-foreground">{item.title}</h3>
+                  {item.path === '/wealth-block' && user && (
+                    purchaseRecord ? (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <CheckCircle className="w-3 h-3" />已解锁
+                      </span>
+                    ) : (
+                      <span className="ml-auto text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        需付费¥9.9
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
               <div className="px-4 pb-4 pt-2">
