@@ -24,8 +24,20 @@ serve(async (req) => {
       });
     }
 
-    // Delete Gene's duplicate Auth user
+    // First try to remove identities, then delete user
     const geneUserId = '460ae18d-0c93-444c-befb-a2942f38221f';
+    
+    // List and delete user identities first
+    const { data: userData } = await adminClient.auth.admin.getUserById(geneUserId);
+    console.log('User data:', JSON.stringify(userData));
+    
+    if (userData?.user?.identities) {
+      for (const identity of userData.user.identities) {
+        console.log(`Deleting identity: ${identity.id}, provider: ${identity.provider}`);
+        await adminClient.auth.admin.deleteUser(geneUserId, true); // soft delete first
+      }
+    }
+    
     const { error } = await adminClient.auth.admin.deleteUser(geneUserId);
     
     if (error) {
