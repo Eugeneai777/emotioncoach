@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 const benefits = [
   {
+    step: 1,
     title: "财富卡点测评",
     icon: Target,
     description: "30道深度测评，找到你的潜意识财富信念卡点",
@@ -21,6 +22,7 @@ const benefits = [
     bgGradient: "from-amber-50 to-orange-50",
   },
   {
+    step: 2,
     title: "财富觉醒训练营",
     icon: Sparkles,
     description: "7天系统训练 + 每日冥想 + AI教练陪伴",
@@ -30,6 +32,7 @@ const benefits = [
     bgGradient: "from-violet-50 to-purple-50",
   },
   {
+    step: 3,
     title: "绽放合伙人",
     icon: Flower2,
     description: "三大训练营 + 1对1教练辅导 + 分销佣金",
@@ -98,10 +101,7 @@ const BloomPartnerIntro = () => {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg mb-4">
           <Flower2 className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">绽放合伙人</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm tracking-widest">
-          共振 · 觉醒 · 升维
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">财富觉醒 3 部曲</h1>
       </div>
 
       {/* Auth Status - Above Cards */}
@@ -143,8 +143,13 @@ const BloomPartnerIntro = () => {
             >
               <div className={`bg-gradient-to-r ${item.bgGradient} p-4 pb-3`}>
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-sm`}>
-                    <Icon className="w-5 h-5 text-white" />
+                  <div className="relative">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-sm`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className={`absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-gradient-to-br ${item.gradient} text-white text-[10px] font-bold flex items-center justify-center shadow ring-2 ring-white`}>
+                      {item.step}
+                    </span>
                   </div>
                   <h3 className="font-semibold text-foreground">{item.title}</h3>
                   {item.path === '/wealth-block' && user && (
