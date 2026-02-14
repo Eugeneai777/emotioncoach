@@ -37,6 +37,7 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
   const parseCSV = (content: string): Array<{ name: string; phone: string; notes?: string }> => {
     const lines = content.trim().split('\n');
     const results: Array<{ name: string; phone: string; notes?: string }> = [];
+    const errors: string[] = [];
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -48,14 +49,35 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
       }
       
       const parts = line.split(/[,，\t]/).map(p => p.trim());
-      // 支持只有姓名的导入（1列即可）
-      if (parts.length >= 1 && parts[0].trim()) {
-        results.push({
-          name: parts[0].trim(),
-          phone: parts[1]?.trim() || '',  // 手机号可选
-          notes: parts[2]?.trim() || undefined,
-        });
+      const name = parts[0]?.trim();
+      const phone = parts[1]?.trim() || '';
+      
+      if (!name) continue;
+      
+      // 手机号必填校验
+      if (!phone) {
+        errors.push(`第${i + 1}行「${name}」缺少手机号`);
+        continue;
       }
+      
+      // 手机号格式校验（5-15位数字）
+      if (!/^\d{5,15}$/.test(phone)) {
+        errors.push(`第${i + 1}行「${name}」手机号格式不正确`);
+        continue;
+      }
+      
+      results.push({
+        name,
+        phone,
+        notes: parts[2]?.trim() || undefined,
+      });
+    }
+    
+    if (errors.length > 0) {
+      toast.error(`${errors.length}条数据校验失败`, {
+        description: errors.slice(0, 3).join('；') + (errors.length > 3 ? `…等${errors.length}条` : ''),
+        duration: 6000,
+      });
     }
     
     return results;
@@ -189,16 +211,17 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
                 CSV 格式说明
               </div>
               <p className="text-sm text-muted-foreground">
-                每行一条记录，格式：姓名（必填）,手机号（可选）,备注（可选）
+                每行一条记录，格式：姓名（必填）,手机号（必填）,备注（可选）
               </p>
-              <p className="text-xs text-muted-foreground">
-                💡 支持只粘贴姓名列表，每行一个姓名
-              </p>
+              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>手机号用于自动匹配用户账号，请务必填写</span>
+              </div>
               <pre className="text-xs bg-background p-2 rounded">
-{`张艳
-Angela安安
-李四,13800138002
-王五,,线下招募`}
+{`张艳,13800138001
+Angela安安,13800138002
+李四,13800138003
+王五,13800138004,线下招募`}
               </pre>
             </div>
 
@@ -215,7 +238,7 @@ Angela安安
             <div className="space-y-2">
               <Label>或直接粘贴数据</Label>
               <Textarea
-                placeholder="每行一个姓名，或：姓名,手机号,备注"
+                placeholder="姓名,手机号（每行一条）"
                 value={csvContent}
                 onChange={(e) => setCsvContent(e.target.value)}
                 rows={6}
