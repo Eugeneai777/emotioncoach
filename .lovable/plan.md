@@ -1,23 +1,33 @@
 
 
-# 直接设定张艳和海慧为绽放合伙人
+# 邀请列表状态手动调整功能
 
-无需走邀请码领取流程，直接在数据库中创建所需记录。
+## 需求
+在邀请列表的每一行"操作"列中，增加一个下拉菜单，允许管理员手动修改邀请状态，包括新增一个"不需领取"状态选项。
 
-## 操作内容
+## 改动内容
 
-### 张艳 (e8e9081d-51d6-4506-a0a6-8b2f6bcf7093)
+### 1. 数据库：新增状态值支持
+- `partner_invitations.status` 当前支持 `pending`、`claimed`、`expired`
+- 新增 `skipped` 状态值，表示"不需领取"
+- 无需 migration（status 字段为 text 类型，直接支持新值）
 
-1. 创建 `partners` 记录：bloom 类型、L0 级别、active 状态、30%/10% 佣金
-2. 创建 `bloom_partner_orders` 记录（19800元）
-3. 发放 7天财富训练营权益（`user_camp_purchases`）
-4. 财富测评已有，跳过
+### 2. BloomPartnerInvitations.tsx 改动
 
-### 海慧 (9da3e936-f632-45aa-b1d8-67729d2ab8ab)
+**操作列增强**：将每行的操作区域从单一"复制链接"按钮改为包含状态切换的下拉菜单（DropdownMenu），提供以下选项：
+- 复制邀请链接（仅 pending 状态显示）
+- 设为"待领取"（pending）
+- 设为"已领取"（claimed）
+- 设为"已过期"（expired）
+- 设为"不需领取"（skipped）-- 新增
 
-同上，创建相同的 3 条记录。
+**状态变更逻辑**：点击后通过 `supabase.from('partner_invitations').update({ status }).eq('id', inv.id)` 直接更新，成功后刷新列表。
 
-## 技术细节
+**Badge 和筛选器同步更新**：
+- `getStatusBadge` 新增 `skipped` 的蓝灰色 Badge 显示"不需领取"
+- 状态筛选下拉框新增"不需领取"选项
+- 统计卡片新增"不需领取"计数
 
-共 6 条 INSERT 语句，不涉及代码改动，不涉及邀请码表操作。
+### 3. 涉及文件
+- `src/components/admin/BloomPartnerInvitations.tsx`（唯一需修改的文件）
 
