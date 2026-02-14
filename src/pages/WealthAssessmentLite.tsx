@@ -9,6 +9,7 @@ import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
+import { BloomInviteCodeEntry } from "@/components/wealth-block/BloomInviteCodeEntry";
 
 type PageState = "questions" | "result";
 
@@ -75,12 +76,25 @@ export default function WealthAssessmentLitePage() {
       
       {/* 测评页 */}
       {pageState === "questions" && (
-        <WealthBlockQuestions 
-          onComplete={handleComplete} 
-          onExit={handleExit}
-          skipStartScreen={true}
-          showFooterInfo={!hasPurchased}
-        />
+        <div>
+          {/* 绽放邀请码入口 - 未购买时在测评页顶部显示 */}
+          {!hasPurchased && user && (
+            <div className="px-4 pt-3">
+              <BloomInviteCodeEntry
+                variant="card"
+                onSuccess={() => {
+                  refetchPurchase();
+                }}
+              />
+            </div>
+          )}
+          <WealthBlockQuestions 
+            onComplete={handleComplete} 
+            onExit={handleExit}
+            skipStartScreen={true}
+            showFooterInfo={!hasPurchased}
+          />
+        </div>
       )}
       
       {/* 结果页 */}

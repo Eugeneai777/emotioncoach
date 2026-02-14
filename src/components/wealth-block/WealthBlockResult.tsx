@@ -52,6 +52,7 @@ import { LayerTransitionHint } from "./LayerTransitionHint";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
 import { NextStepActionCard } from "./NextStepActionCard";
+import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
@@ -676,6 +677,18 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         isLoadingAI={isLoadingAI}
         onViewDetails={() => navigate('/wealth-camp-intro')}
       />
+
+      {/* 绽放邀请码入口 - 未购买时显示 */}
+      {!hasPurchased && (
+        <BloomInviteCodeEntry
+          variant="card"
+          onSuccess={() => {
+            refetchPurchase();
+            queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_7'] });
+            queryClient.invalidateQueries({ queryKey: ['assessment-purchase'] });
+          }}
+        />
+      )}
 
       {/* 分享和重测按钮 */}
       <motion.div
