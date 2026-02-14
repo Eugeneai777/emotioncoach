@@ -107,17 +107,43 @@ serve(async (req) => {
 
         if (createError) {
           // User might already exist
-          if (createError.message?.includes('already been registered') || createError.message?.includes('duplicate') || createError.message?.includes('already exists')) {
-            // Find existing user by phone
-            const { data: { users: existingUsers } } = await adminClient.auth.admin.listUsers();
-            const existingUser = existingUsers?.find(u => u.phone === phoneWithCode);
+          const isAlreadyRegistered = createError.message?.includes('already registered') || 
+            createError.message?.includes('duplicate') || 
+            createError.message?.includes('already exists') ||
+            (createError as any).code === 'phone_exists';
+          
+          if (isAlreadyRegistered) {
+            // Find existing user by phone in profiles table
+            const { data: existingProfile } = await adminClient
+              .from('profiles')
+              .select('id')
+              .eq('phone', phone)
+              .eq('phone_country_code', countryCode)
+              .limit(1)
+              .maybeSingle();
 
-            if (existingUser) {
-              userId = existingUser.id;
-              // Still try to grant benefits below
+            if (existingProfile) {
+              userId = existingProfile.id;
+              console.log(`Found existing user for ${phone}: ${userId}`);
             } else {
-              results.push({ name, phone: rawPhone, status: 'skipped', reason: '手机号已注册但无法匹配用户' });
-              continue;
+              // Fallback: try listUsers with pagination
+              let found = false;
+              let page = 1;
+              while (!found && page <= 10) {
+                const { data: { users } } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+                if (!users || users.length === 0) break;
+                const match = users.find(u => u.phone === phoneWithCode);
+                if (match) {
+                  userId = match.id;
+                  found = true;
+                  console.log(`Found existing user via auth for ${phone}: ${userId}`);
+                }
+                page++;
+              }
+              if (!found) {
+                results.push({ name, phone: rawPhone, status: 'failed', reason: '手机号已注册但无法匹配用户' });
+                continue;
+              }
             }
           } else {
             console.error(`Failed to create user for ${phone}:`, createError);
