@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flower2, Target, Sparkles, LogIn, LogOut } from "lucide-react";
+import { Flower2, Target, Sparkles, LogIn, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { supabase } from "@/integrations/supabase/client";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { toast } from "sonner";
 
 const benefits = [
   {
@@ -40,8 +44,42 @@ const BloomPartnerIntro = () => {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
   const { showTour, completeTour } = usePageTour('bloom_partner_intro');
+  const { data: purchaseRecord, refetch: refetchPurchase } = useAssessmentPurchase();
+  const [claiming, setClaiming] = useState(false);
+
+  const handleWealthBlockClick = async () => {
+    if (!user) {
+      navigate(`/auth?mode=phone_only&redirect=${encodeURIComponent('/wealth-block')}`);
+      return;
+    }
+
+    // Already purchased → go directly
+    if (purchaseRecord) {
+      navigate('/wealth-block');
+      return;
+    }
+
+    // Try auto-claim bloom invitation
+    setClaiming(true);
+    try {
+      const { data } = await supabase.functions.invoke('auto-claim-bloom-invitation');
+      if (data?.matched && data?.success) {
+        toast.success(data.message || '邀请码已自动兑换，权益已激活！');
+        await refetchPurchase();
+      }
+    } catch (err) {
+      console.error('Auto-claim failed:', err);
+    } finally {
+      setClaiming(false);
+    }
+    navigate('/wealth-block');
+  };
 
   const handleCardClick = (path: string) => {
+    if (path === '/wealth-block') {
+      handleWealthBlockClick();
+      return;
+    }
     if (user) {
       navigate(path);
     } else {
@@ -116,9 +154,13 @@ const BloomPartnerIntro = () => {
                 <Button
                   onClick={() => handleCardClick(item.path)}
                   className={`w-full rounded-xl bg-gradient-to-r ${item.gradient} hover:opacity-90 text-white border-0`}
-                  disabled={loading}
+                  disabled={loading || (item.path === '/wealth-block' && claiming)}
                 >
-                  {item.buttonText}
+                  {item.path === '/wealth-block' && claiming ? (
+                    <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />检查权益中...</>
+                  ) : (
+                    item.buttonText
+                  )}
                 </Button>
               </div>
             </div>
