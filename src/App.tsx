@@ -102,6 +102,7 @@ const YoujinPartnerPlan = lazyRetry(() => import("./pages/YoujinPartnerPlan"));
 const PromoGuide = lazyRetry(() => import("./pages/partner/PromoGuide"));
 const CampGraduate = lazyRetry(() => import("./pages/partner/CampGraduate"));
 const PartnerInvitePage = lazyRetry(() => import("./pages/PartnerInvitePage"));
+const BloomPartnerIntro = lazyRetry(() => import("./pages/BloomPartnerIntro"));
 const LandingPage = lazyRetry(() => import("./pages/LandingPage"));
 const PartnerLandingPageDetail = lazyRetry(() => import("./components/partner/PartnerLandingPageDetail"));
 
@@ -348,6 +349,7 @@ const App = () => (
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/growth-path" element={<GrowthSupportPath />} />
               <Route path="/invite/:code" element={<PartnerInvitePage />} />
+              <Route path="/bloom-partner-intro" element={<BloomPartnerIntro />} />
               <Route path="/partner/landing-page/:id" element={<PartnerLandingPageDetail />} />
               <Route path="/lp/:id" element={<LandingPage />} />
               <Route path="/change-password" element={<ChangePassword />} />
