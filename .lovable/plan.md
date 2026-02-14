@@ -1,41 +1,42 @@
 
-# 让邀请码兑换入口更显眼
 
-## 问题分析
+# 简化邀请码卡片 - 直接显示输入框
 
-当前 `BloomInviteCodeEntry` 组件只出现在两个位置：
-- 测评结果页底部（WealthBlockResult）
-- Lite 测评结果页（WealthAssessmentLite）
+## 改动
 
-但用户最先看到的 **AssessmentIntroCard（测评介绍/付费页）** 上完全没有邀请码入口。已登录但未购买的用户只看到 "9.9 开始测评" 按钮，很容易忽略邀请码功能。
+**文件：`src/components/wealth-block/BloomInviteCodeEntry.tsx`**
 
-## 方案
+将 card 变体从折叠/展开两步交互改为直接显示：
 
-在 `AssessmentIntroCard` 的底部定价模块（Section 9）中，紧接 CTA 按钮下方，为已登录但未购买的用户插入一个醒目的 `BloomInviteCodeEntry` 卡片（card 变体）。
+- 移除 `expanded` 状态逻辑（card 变体不再需要）
+- 直接显示标题"我有邀请码"+ 输入框 + 领取按钮，无需点击展开
+- 保留简洁的玫瑰色边框样式
 
-### 具体改动
+最终效果：
 
-**文件：`src/components/wealth-block/AssessmentIntroCard.tsx`**
-
-1. 导入 `BloomInviteCodeEntry` 组件
-2. 在定价模块的 CTA 按钮与底部版权文字之间，增加条件渲染：
-   - 条件：`isLoggedIn && !hasPurchased`
-   - 内容：`<BloomInviteCodeEntry variant="card" onSuccess={onStart} />`
-3. 这样已登录未购买的用户会在付费按钮正下方看到一个带渐变边框、Gift 图标的邀请码入口卡片，非常醒目
+```text
+┌──────────────────────────────────┐
+│ 🎁 我有邀请码                    │
+│ [请输入邀请码__________] [领取]  │
+└──────────────────────────────────┘
+```
 
 ### 技术细节
 
-在 `AssessmentIntroCard` 组件约第 578 行（CTA 按钮之后）插入：
+card 变体的 JSX 替换为：
 
 ```tsx
-{isLoggedIn && !hasPurchased && (
-  <BloomInviteCodeEntry variant="card" onSuccess={onStart} />
-)}
+<div className="rounded-xl border border-rose-200 dark:border-rose-800/40 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30 p-3 sm:p-4 space-y-2.5">
+  <div className="flex items-center gap-2">
+    <Gift className="w-4 h-4 text-rose-500" />
+    <p className="text-sm font-medium">我有邀请码</p>
+  </div>
+  <div className="flex gap-2">
+    <Input placeholder="请输入邀请码" ... />
+    <Button onClick={handleClaim} ...>领取</Button>
+  </div>
+</div>
 ```
 
-同时需要在文件顶部添加导入：
-```tsx
-import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
-```
+只改一个文件，改动很小。
 
-只修改一个文件，改动量很小。邀请码卡片自带玫瑰色渐变背景和 Gift 图标，在定价区域中会非常显眼。
