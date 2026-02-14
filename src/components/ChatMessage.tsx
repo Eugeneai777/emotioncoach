@@ -44,6 +44,19 @@ const getAvatarGradient = (color?: string) => {
 // 清理 Markdown 格式符号
 const cleanMarkdown = (text: string): string => {
   return text
+    // 移除代码块 ```...``` → 提取内容
+    .replace(/```[\s\S]*?```/g, (match) => {
+      const content = match.replace(/```\w*\n?/g, '').trim();
+      return content;
+    })
+    // 移除行内代码 `code` → code
+    .replace(/`([^`]+)`/g, '$1')
+    // 移除标题 # ## ### 等
+    .replace(/^#{1,6}\s+/gm, '')
+    // 移除无序列表标记 - 或 *（行首）
+    .replace(/^\s*[-*]\s+/gm, '• ')
+    // 移除有序列表标记（但保留选项编号格式）
+    // .replace(/^\s*\d+\.\s+/gm, '')
     // 移除粗体 **text** → text
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     // 移除斜体 *text* → text
