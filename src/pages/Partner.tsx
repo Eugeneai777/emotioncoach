@@ -11,6 +11,7 @@ import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkl
 import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import { PartnerStats } from "@/components/partner/PartnerStats";
+import { BloomOverviewCard } from "@/components/partner/BloomOverviewCard";
 import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
@@ -62,12 +63,20 @@ export default function Partner() {
 
   return (
     <div 
-      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50"
+      className={`h-screen overflow-y-auto overscroll-contain bg-gradient-to-br ${
+        partner?.partner_type === 'bloom' 
+          ? 'from-purple-50 via-pink-50 to-purple-50' 
+          : 'from-orange-50 via-amber-50 to-orange-50'
+      }`}
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <DynamicOGMeta pageKey="partner" />
       <PageHeader 
-        title="合伙人中心"
+        title={
+          partner?.partner_type === 'youjin' ? '有劲合伙人中心' 
+          : partner?.partner_type === 'bloom' ? '绽放合伙人中心' 
+          : '合伙人中心'
+        }
         rightActions={
           isPartner && (
             <Button
@@ -77,7 +86,7 @@ export default function Partner() {
               className="gap-2"
             >
               <Gift className="w-4 h-4" />
-              权益
+              {partner?.partner_type === 'youjin' ? '有劲权益' : '绽放权益'}
             </Button>
           )
         }
@@ -186,8 +195,8 @@ export default function Partner() {
               <YoujinPartnerDashboard partner={partner} />
             ) : (
               <>
-                {/* 绽放合伙人面板（原有内容） */}
-                <PartnerStats partner={partner} />
+                {/* 绽放合伙人品牌概览卡片 */}
+                <BloomOverviewCard partner={partner} />
                 
                 {/* 绽放合伙人的有劲推广权益 */}
                 <BloomYoujinBenefitsCard partner={partner} />
