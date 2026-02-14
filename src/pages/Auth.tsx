@@ -456,9 +456,6 @@ const Auth = () => {
                   maxLength={50}
                   className="rounded-xl text-sm"
                 />
-                <p className="text-[10px] md:text-xs text-muted-foreground">
-                  这个名称将在复盘报告中使用
-                </p>
               </div>
             )}
 
