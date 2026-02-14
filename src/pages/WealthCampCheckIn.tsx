@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -330,7 +330,10 @@ export default function WealthCampCheckIn() {
     if (journalEntries.length > 0 && camp) {
       const todayEntry = journalEntries.find(e => e.day_number === currentDay);
       if (todayEntry) {
-        setMeditationCompleted(todayEntry.meditation_completed || false);
+        // 如果用户正在重新冥想，不要从DB覆盖回true
+        if (!isRedoingMeditationRef.current) {
+          setMeditationCompleted(todayEntry.meditation_completed || false);
+        }
         setCoachingCompleted(!!todayEntry.behavior_block);
         setSavedReflection(todayEntry.meditation_reflection || '');
         setShareCompleted((todayEntry as any).share_completed || hasSharedPost);
@@ -352,7 +355,11 @@ export default function WealthCampCheckIn() {
     }
   }, [journalEntries, camp, currentDay, hasSharedPost]);
 
+  // 使用 ref 标记重新冥想状态，防止 useEffect 从 DB 覆盖回 true
+  const isRedoingMeditationRef = useRef(false);
+  
   const handleRedoMeditation = () => {
+    isRedoingMeditationRef.current = true;
     setMeditationCompleted(false);
     // 切换到今日任务 Tab 并滚动到冥想播放器
     setActiveTab('today');
@@ -382,6 +389,7 @@ export default function WealthCampCheckIn() {
         setMakeupReflection(reflection);
         setMakeupMeditationDone(true);
       } else {
+        isRedoingMeditationRef.current = false; // 重新冥想完成，恢复正常同步
         setMeditationCompleted(true);
         setSavedReflection(reflection);
       }

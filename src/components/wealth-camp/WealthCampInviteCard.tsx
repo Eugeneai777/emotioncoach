@@ -45,8 +45,10 @@ export function WealthCampInviteCard({
     preloadUserData();
   }, [preloadUserData]);
 
-  // 使用 wealth-camp-intro 路由，避免 Claim.tsx 的合伙人参数校验
-  const inviteUrl = `${getPromotionDomain()}/wealth-camp-intro?ref=${userId}`;
+  // 优先使用合伙人推广码，无合伙人记录时不带 ref 参数
+  const inviteUrl = partnerInfo?.partnerCode
+    ? `${getPromotionDomain()}/wealth-camp-intro?ref=${partnerInfo.partnerCode}`
+    : `${getPromotionDomain()}/wealth-camp-intro`;
 
   const handleCopyLink = async () => {
     try {
