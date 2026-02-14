@@ -53,12 +53,12 @@ const Auth = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const isPhoneOnly = searchParams.get('mode') === 'phone_only';
   const defaultLogin = searchParams.get('default_login') === 'true';
-  const [isLogin, setIsLogin] = useState(isPhoneOnly ? (defaultLogin ? true : false) : true);
+  const [isLogin, setIsLogin] = useState(isPhoneOnly ? true : true);
   const [authMode, setAuthMode] = useState<'phone' | 'email'>('phone');
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+86");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(isPhoneOnly ? "123456" : "");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const { isAgreed: agreedTerms, setAgreed: setAgreedTerms } = useTermsAgreement();
@@ -420,9 +420,11 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-6 md:space-y-8 animate-in fade-in-50 duration-700">
         <div className="text-center space-y-1.5 md:space-y-2">
           <BrandLogo size="lg" className="justify-center" />
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">有劲AI</h1>
+          {!isPhoneOnly && (
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">有劲AI</h1>
+          )}
           <p className="text-sm md:text-base text-muted-foreground">
-            {isLogin ? "欢迎回来" : "开始你的成长之旅"}
+            {isPhoneOnly ? "登录领取绽放合伙人权益" : (isLogin ? "欢迎回来" : "开始你的成长之旅")}
           </p>
         </div>
 
@@ -430,7 +432,7 @@ const Auth = () => {
           {isPhoneOnly && (
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-center">
               <p className="text-sm text-rose-700">
-                🌸 请使用手机号注册，以便系统自动为您发放绽放合伙人权益
+                🌸 请使用手机号登录，以便系统自动为您发放绽放合伙人权益
               </p>
             </div>
           )}
