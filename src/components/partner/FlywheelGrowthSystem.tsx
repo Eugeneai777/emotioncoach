@@ -1,53 +1,55 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Eye, Users, DollarSign, TrendingUp } from "lucide-react";
+import { Loader2, Eye, Users, DollarSign, TrendingUp, Sparkles } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { FlywheelLevelCard, type FlywheelLevel } from "./FlywheelLevelCard";
+import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { AILandingPageWizard } from "./AILandingPageWizard";
 import { AIActivityAnalysis } from "./AIActivityAnalysis";
 import { PartnerCampaigns } from "./PartnerCampaigns";
 import { PartnerProducts } from "./PartnerProducts";
+import { PartnerLandingPageList } from "./PartnerLandingPageList";
 import { cn } from "@/lib/utils";
 
-const FLYWHEEL_LEVELS: FlywheelLevel[] = [
+interface LevelConfig {
+  level: string;
+  name: string;
+  icon: string;
+  description: string;
+  priceRange: string;
+}
+
+const FLYWHEEL_LEVELS: LevelConfig[] = [
   {
     level: "L1",
     name: "测评 & 工具",
     icon: "📊",
     description: "低门槛引流，获取用户数据",
-    products: ["情绪健康测评", "SCL-90", "财富卡点测评"],
     priceRange: "免费~¥9.9",
-    color: "blue",
   },
   {
     level: "L2",
     name: "有劲训练营",
     icon: "🏋️",
     description: "深度体验，建立信任",
-    products: ["21天情绪日记训练营", "财富觉醒训练营", "青少年困境突破营"],
     priceRange: "¥299",
-    color: "emerald",
   },
   {
     level: "L3",
     name: "绽放训练营",
     icon: "🌸",
     description: "高价值转化，深度服务",
-    products: ["绽放合伙人体系"],
     priceRange: "更高价位",
-    color: "purple",
   },
   {
     level: "L4",
     name: "有劲合伙人",
     icon: "💎",
     description: "裂变增长，长期分成",
-    products: ["初级合伙人", "高级合伙人", "钻石合伙人"],
     priceRange: "¥792~¥4950",
-    color: "amber",
   },
 ];
 
@@ -114,7 +116,6 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
         roi: totalCost > 0 ? (revenue / totalCost).toFixed(2) : "N/A",
       });
 
-      // Mock per-level stats (distribute proportionally for now)
       const levels = ["L1", "L2", "L3", "L4"];
       const ratios = [0.5, 0.25, 0.15, 0.1];
       const stats: Record<string, any> = {};
@@ -201,26 +202,65 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
         </Card>
       </div>
 
-      {/* Four-level flywheel */}
-      <div className="space-y-0">
-        {FLYWHEEL_LEVELS.map((level, idx) => {
-          const stats = levelStats[level.level] || { reach: 0, conversions: 0, revenue: 0, conversionRate: 0 };
-          const nextStats = idx < FLYWHEEL_LEVELS.length - 1 ? levelStats[FLYWHEEL_LEVELS[idx + 1].level] : null;
-          const upgradeRate = stats.conversions > 0 && nextStats ? (nextStats.reach / stats.conversions) * 100 : null;
-
-          return (
-            <FlywheelLevelCard
+      {/* Four-level flywheel as Tabs */}
+      <Tabs defaultValue="L1" className="w-full">
+        <TabsList className="w-full grid grid-cols-4">
+          {FLYWHEEL_LEVELS.map((level) => (
+            <ResponsiveTabsTrigger
               key={level.level}
-              levelConfig={level}
-              stats={stats}
-              upgradeRate={upgradeRate}
-              isLast={idx === FLYWHEEL_LEVELS.length - 1}
-              onOpenWizard={handleOpenWizard}
-              partnerId={partnerId}
+              value={level.level}
+              label={`${level.icon} ${level.name}`}
+              shortLabel={level.level}
             />
+          ))}
+        </TabsList>
+
+        {FLYWHEEL_LEVELS.map((level) => {
+          const stats = levelStats[level.level] || { reach: 0, conversions: 0, revenue: 0, conversionRate: 0 };
+          return (
+            <TabsContent key={level.level} value={level.level} className="space-y-4 mt-4">
+              {/* Level description */}
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{level.icon}</span>
+                <div>
+                  <h3 className="font-semibold text-sm">{level.name}</h3>
+                  <p className="text-xs text-muted-foreground">{level.description} · {level.priceRange}</p>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold">{stats.reach}</p>
+                  <p className="text-xs text-muted-foreground">触达</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold">{stats.conversions}</p>
+                  <p className="text-xs text-muted-foreground">转化</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold">¥{stats.revenue.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">收入</p>
+                </div>
+              </div>
+
+              {/* AI Landing Page Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => handleOpenWizard(level.level)}
+              >
+                <Sparkles className="w-4 h-4 mr-1" />
+                AI 定制落地页
+              </Button>
+
+              {/* Campaign list */}
+              <PartnerLandingPageList partnerId={partnerId} level={level.level} />
+            </TabsContent>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* Bottom collapsible sections */}
       <div className="space-y-2 pt-4 border-t">

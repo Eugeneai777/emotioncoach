@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, Eye, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PartnerLandingPageListProps {
@@ -12,7 +12,6 @@ interface PartnerLandingPageListProps {
 interface LandingPage {
   id: string;
   target_audience: string | null;
-  matched_product: string | null;
   selected_version: string | null;
   content_a: any;
   content_b: any;
@@ -35,7 +34,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
     try {
       const { data, error } = await supabase
         .from("partner_landing_pages" as any)
-        .select("id, target_audience, matched_product, selected_version, content_a, content_b, channel, status, created_at")
+        .select("id, target_audience, selected_version, content_a, content_b, channel, status, created_at")
         .eq("partner_id", partnerId)
         .eq("level", level)
         .order("created_at", { ascending: false });
@@ -81,12 +80,17 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{content?.title || "无标题"}</p>
-              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
-                <span>{page.target_audience || "—"}</span>
-                <span>·</span>
-                <span>{page.channel || "—"}</span>
-                <span>·</span>
-                <span>{new Date(page.created_at).toLocaleDateString("zh-CN")}</span>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                <span className="truncate max-w-[80px]">{page.target_audience || "—"}</span>
+                <span className="flex items-center gap-0.5 shrink-0">
+                  <Eye className="w-3 h-3" />
+                  <span>0</span>
+                </span>
+                <span className="flex items-center gap-0.5 shrink-0">
+                  <ShoppingCart className="w-3 h-3" />
+                  <span>0</span>
+                </span>
+                <span className="shrink-0">{new Date(page.created_at).toLocaleDateString("zh-CN")}</span>
               </div>
             </div>
             <div className={cn(
