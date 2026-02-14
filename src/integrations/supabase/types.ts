@@ -6224,6 +6224,7 @@ export type Database = {
           last_reminder_shown: string | null
           last_seen_at: string | null
           mood_status: string | null
+          must_change_password: boolean | null
           notification_frequency: string | null
           phone: string | null
           phone_country_code: string | null
@@ -6287,6 +6288,7 @@ export type Database = {
           last_reminder_shown?: string | null
           last_seen_at?: string | null
           mood_status?: string | null
+          must_change_password?: boolean | null
           notification_frequency?: string | null
           phone?: string | null
           phone_country_code?: string | null
@@ -6350,6 +6352,7 @@ export type Database = {
           last_reminder_shown?: string | null
           last_seen_at?: string | null
           mood_status?: string | null
+          must_change_password?: boolean | null
           notification_frequency?: string | null
           phone?: string | null
           phone_country_code?: string | null

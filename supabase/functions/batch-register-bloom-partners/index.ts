@@ -154,13 +154,15 @@ serve(async (req) => {
           userId = newUser.user.id;
         }
 
-        // Update profiles
+        // Update profiles (mark must_change_password for newly created users)
+        const isNewlyCreated = !createError;
         await adminClient.from('profiles').update({
           display_name: inv.invitee_name || undefined,
           phone: phone,
           phone_country_code: countryCode,
           auth_provider: 'phone',
           preferred_coach: 'wealth',
+          ...(isNewlyCreated ? { must_change_password: true } : {}),
         }).eq('id', userId);
 
         // Check existing partner
