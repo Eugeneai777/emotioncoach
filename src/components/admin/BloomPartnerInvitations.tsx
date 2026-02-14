@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Copy, Check, Search, RefreshCw, Send, Download, UserPlus, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Copy, Check, Search, RefreshCw, Download, UserPlus, Loader2, Plus } from "lucide-react";
 import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -36,6 +38,11 @@ export function BloomPartnerInvitations() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isBatchRegistering, setIsBatchRegistering] = useState(false);
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [singleName, setSingleName] = useState("");
+  const [singlePhone, setSinglePhone] = useState("");
+  const [singleAmount, setSingleAmount] = useState("19800");
+  const [isAddingSingle, setIsAddingSingle] = useState(false);
 
   const { data: invitations, isLoading, refetch } = useQuery({
     queryKey: ['partner-invitations', statusFilter],
@@ -100,7 +107,6 @@ export function BloomPartnerInvitations() {
     try {
       const { data, error } = await supabase.functions.invoke('batch-register-bloom-partners');
       if (error) throw error;
-
       const result = data as { success: number; skipped: number; failed: number; details: any[] };
       toast.success(
         `批量注册完成：成功 ${result.success} 个，跳过 ${result.skipped} 个，失败 ${result.failed} 个`,
@@ -112,6 +118,55 @@ export function BloomPartnerInvitations() {
       toast.error('批量注册失败：' + (err instanceof Error ? err.message : '未知错误'));
     } finally {
       setIsBatchRegistering(false);
+    }
+  };
+
+  const handleAddSingle = async () => {
+    const name = singleName.trim();
+    const phone = singlePhone.trim();
+    if (!name || !phone) {
+      toast.error('请填写姓名和手机号');
+      return;
+    }
+    if (!/^\d{5,15}$/.test(phone)) {
+      toast.error('手机号格式不正确（5-15位数字）');
+      return;
+    }
+
+    setIsAddingSingle(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('请先登录'); return; }
+
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = 'BLOOM';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      const amount = parseFloat(singleAmount) || 19800;
+      const { error } = await supabase.from('partner_invitations').insert({
+        invite_code: code,
+        partner_type: 'bloom',
+        invitee_name: name,
+        invitee_phone: phone,
+        order_amount: amount,
+        status: 'pending',
+        created_by: user.id,
+      });
+
+      if (error) throw error;
+
+      toast.success(`已添加邀请：${name}（${code}）`);
+      setSingleName('');
+      setSinglePhone('');
+      setAddDialogOpen(false);
+      refetch();
+    } catch (err) {
+      console.error('Add single invitation error:', err);
+      toast.error('添加失败：' + (err instanceof Error ? err.message : '未知错误'));
+    } finally {
+      setIsAddingSingle(false);
     }
   };
 
@@ -148,6 +203,54 @@ export function BloomPartnerInvitations() {
               </AlertDialogContent>
             </AlertDialog>
           )}
+
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-1" />
+                添加邀请
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>添加单条邀请</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>姓名 *</Label>
+                  <Input
+                    placeholder="输入姓名"
+                    value={singleName}
+                    onChange={(e) => setSingleName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>手机号 *</Label>
+                  <Input
+                    placeholder="输入手机号"
+                    value={singlePhone}
+                    onChange={(e) => setSinglePhone(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>订单金额（元）</Label>
+                  <Input
+                    type="number"
+                    placeholder="19800"
+                    value={singleAmount}
+                    onChange={(e) => setSingleAmount(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setAddDialogOpen(false)}>取消</Button>
+                  <Button onClick={handleAddSingle} disabled={isAddingSingle}>
+                    {isAddingSingle ? '添加中...' : '确认添加'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <BloomPartnerBatchImport onSuccess={() => refetch()} />
         </div>
       </div>
