@@ -96,36 +96,37 @@ serve(async (req) => {
 
         const phoneWithCode = `${countryCode}${phone}`;
 
-        // Try to create user with phone directly
         let userId: string;
+        let isNewlyCreated = false;
 
-        const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-          phone: phoneWithCode,
-          password: '123456',
-          phone_confirm: true,
-        });
+        // ===== PRE-CHECK: Query profiles table FIRST to find existing user =====
+        const { data: existingProfile } = await adminClient
+          .from('profiles')
+          .select('id')
+          .eq('phone', phone)
+          .eq('phone_country_code', countryCode)
+          .limit(1);
 
-        if (createError) {
-          // User might already exist
-          const isAlreadyRegistered = createError.message?.includes('already registered') || 
-            createError.message?.includes('duplicate') || 
-            createError.message?.includes('already exists') ||
-            (createError as any).code === 'phone_exists';
-          
-          if (isAlreadyRegistered) {
-            // Find existing user by phone in profiles table
-            const { data: existingProfile } = await adminClient
-              .from('profiles')
-              .select('id')
-              .eq('phone', phone)
-              .eq('phone_country_code', countryCode)
-              .limit(1)
-              .maybeSingle();
+        if (existingProfile && existingProfile.length > 0) {
+          // User already exists (registered via placeholder email or phone)
+          userId = existingProfile[0].id;
+          console.log(`Pre-check: found existing user in profiles for ${phone}: ${userId}`);
+        } else {
+          // No existing profile found, try to create new Auth user
+          const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+            phone: phoneWithCode,
+            password: '123456',
+            phone_confirm: true,
+          });
 
-            if (existingProfile) {
-              userId = existingProfile.id;
-              console.log(`Found existing user for ${phone}: ${userId}`);
-            } else {
+          if (createError) {
+            // User might exist in Auth but not in profiles (edge case)
+            const isAlreadyRegistered = createError.message?.includes('already registered') || 
+              createError.message?.includes('duplicate') || 
+              createError.message?.includes('already exists') ||
+              (createError as any).code === 'phone_exists';
+            
+            if (isAlreadyRegistered) {
               // Fallback: try listUsers with pagination
               let found = false;
               let page = 1;
@@ -144,18 +145,18 @@ serve(async (req) => {
                 results.push({ name, phone: rawPhone, status: 'failed', reason: '手机号已注册但无法匹配用户' });
                 continue;
               }
+            } else {
+              console.error(`Failed to create user for ${phone}:`, createError);
+              results.push({ name, phone: rawPhone, status: 'failed', reason: createError.message });
+              continue;
             }
           } else {
-            console.error(`Failed to create user for ${phone}:`, createError);
-            results.push({ name, phone: rawPhone, status: 'failed', reason: createError.message });
-            continue;
+            userId = newUser.user.id;
+            isNewlyCreated = true;
           }
-        } else {
-          userId = newUser.user.id;
         }
 
-        // Update profiles (mark must_change_password for newly created users)
-        const isNewlyCreated = !createError;
+        // Update profiles (mark must_change_password for newly created users only)
         await adminClient.from('profiles').update({
           display_name: inv.invitee_name || undefined,
           phone: phone,
