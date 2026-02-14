@@ -117,9 +117,20 @@ export default function PartnerInvitePage() {
         navigate('/partner');
       }, 1500);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Claim error:', err);
-      toast.error("领取失败，请稍后重试");
+      let errorMessage = "领取失败，请稍后重试";
+      if (err?.context?.body) {
+        try {
+          const body = typeof err.context.body === 'string' 
+            ? JSON.parse(err.context.body) 
+            : err.context.body;
+          if (body?.error) errorMessage = body.error;
+        } catch {}
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setClaiming(false);
     }
