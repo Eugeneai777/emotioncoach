@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocation } from "react-router-dom";
 
 const ONBOARDING_KEY = 'global_onboarding_completed';
 
@@ -58,17 +59,32 @@ const steps: OnboardingStep[] = [
   }
 ];
 
+const LITE_ROUTES = [
+  '/wealth-assessment-lite',
+  '/emotion-health-lite',
+  '/scl90-lite',
+  '/alive-check-lite',
+  '/awakening-lite',
+  '/emotion-button-lite',
+];
+
 export const GlobalOnboarding = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasChecked, setHasChecked] = useState(false);
+
+  const isLiteRoute = LITE_ROUTES.some(r => location.pathname.startsWith(r));
 
   useEffect(() => {
     // 检查是否需要显示引导
     const checkOnboardingStatus = async () => {
       if (hasChecked) return;
       setHasChecked(true);
+
+      // 不在 Lite 页面显示引导
+      if (isLiteRoute) return;
 
       // 先检查 localStorage
       const localCompleted = localStorage.getItem(ONBOARDING_KEY);
