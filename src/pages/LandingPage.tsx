@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -14,8 +14,10 @@ interface LandingContent {
 
 export default function LandingPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [content, setContent] = useState<LandingContent | null>(null);
   const [product, setProduct] = useState<string | null>(null);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -28,7 +30,7 @@ export default function LandingPage() {
     try {
       const { data, error } = await supabase
         .from("partner_landing_pages" as any)
-        .select("content_a, content_b, selected_version, matched_product, target_audience")
+        .select("content_a, content_b, selected_version, matched_product, target_audience, partner_id")
         .eq("id", id)
         .limit(1);
 
@@ -42,6 +44,7 @@ export default function LandingPage() {
       const selectedContent = page.selected_version === "a" ? page.content_a : page.content_b;
       setContent(selectedContent);
       setProduct(page.matched_product);
+      setPartnerId(page.partner_id);
     } catch (err) {
       console.error("Fetch landing page error:", err);
       setNotFound(true);
@@ -104,7 +107,19 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <div className="px-6 pb-16 max-w-lg mx-auto space-y-3">
-        <Button className="w-full h-12 text-base font-semibold rounded-xl shadow-lg" size="lg">
+        <Button 
+          className="w-full h-12 text-base font-semibold rounded-xl shadow-lg" 
+          size="lg"
+          onClick={() => {
+            // Route to appropriate product page based on matched_product
+            const refParam = partnerId ? `?ref=${partnerId}` : '';
+            if (product?.includes('测评')) {
+              navigate(`/wealth-block${refParam}`);
+            } else {
+              navigate(`/introduction${refParam}`);
+            }
+          }}
+        >
           {content.cta_text}
         </Button>
         {content.cta_subtext && (
