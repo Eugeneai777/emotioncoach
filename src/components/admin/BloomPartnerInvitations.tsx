@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Copy, Check, Search, RefreshCw, Download, UserPlus, Loader2, Plus } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Copy, Check, Search, RefreshCw, Download, UserPlus, Loader2, Plus, MoreHorizontal } from "lucide-react";
 import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -31,6 +32,17 @@ interface Invitation {
   created_at: string;
   notes: string | null;
 }
+
+const STATUS_OPTIONS = [
+  { value: 'pending', label: '待领取' },
+  { value: 'claimed', label: '已领取' },
+  { value: 'expired', label: '已过期' },
+  { value: 'skipped', label: '不需领取' },
+] as const;
+
+const STATUS_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  STATUS_OPTIONS.map(s => [s.value, s.label])
+);
 
 export function BloomPartnerInvitations() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -82,6 +94,19 @@ export function BloomPartnerInvitations() {
     toast.success("邀请链接已复制");
   };
 
+  const handleStatusUpdate = async (id: string, newStatus: string) => {
+    const { error } = await supabase
+      .from('partner_invitations')
+      .update({ status: newStatus } as any)
+      .eq('id', id);
+    if (error) {
+      toast.error('状态更新失败：' + error.message);
+      return;
+    }
+    toast.success(`状态已更新为「${STATUS_LABEL_MAP[newStatus] || newStatus}」`);
+    refetch();
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -90,6 +115,8 @@ export function BloomPartnerInvitations() {
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">已领取</Badge>;
       case 'expired':
         return <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">已过期</Badge>;
+      case 'skipped':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">不需领取</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -100,6 +127,7 @@ export function BloomPartnerInvitations() {
     pending: invitations?.filter(i => i.status === 'pending').length || 0,
     claimed: invitations?.filter(i => i.status === 'claimed').length || 0,
     expired: invitations?.filter(i => i.status === 'expired').length || 0,
+    skipped: invitations?.filter(i => i.status === 'skipped').length || 0,
   };
 
   const handleBatchRegister = async () => {
@@ -275,7 +303,7 @@ export function BloomPartnerInvitations() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -300,6 +328,12 @@ export function BloomPartnerInvitations() {
             <div className="text-sm text-muted-foreground">已过期</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">{stats.skipped}</div>
+            <div className="text-sm text-muted-foreground">不需领取</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -322,9 +356,9 @@ export function BloomPartnerInvitations() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="pending">待领取</SelectItem>
-                  <SelectItem value="claimed">已领取</SelectItem>
-                  <SelectItem value="expired">已过期</SelectItem>
+                  {STATUS_OPTIONS.map(s => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={() => {
@@ -332,7 +366,7 @@ export function BloomPartnerInvitations() {
                 const header = '邀请码,姓名,手机号,邀请链接,金额,状态,创建时间,领取时间\n';
                 const rows = filteredInvitations.map(inv => {
                   const link = `${getPromotionDomain()}/invite/${inv.invite_code}`;
-                  const status = inv.status === 'pending' ? '待领取' : inv.status === 'claimed' ? '已领取' : '已过期';
+                  const status = STATUS_LABEL_MAP[inv.status] || inv.status;
                   const claimedAt = inv.claimed_at ? format(new Date(inv.claimed_at), 'yyyy-MM-dd HH:mm') : '';
                   return `${inv.invite_code},${inv.invitee_name || ''},${inv.invitee_phone || ''},${link},${inv.order_amount},${status},${format(new Date(inv.created_at), 'yyyy-MM-dd HH:mm')},${claimedAt}`;
                 }).join('\n');
@@ -382,19 +416,29 @@ export function BloomPartnerInvitations() {
                       {inv.claimed_at ? format(new Date(inv.claimed_at), 'MM-dd HH:mm') : '-'}
                     </TableCell>
                     <TableCell className="text-right">
-                      {inv.status === 'pending' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyLink(inv.invite_code)}
-                        >
-                          {copiedCode === inv.invite_code ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {inv.status === 'pending' && (
+                            <>
+                              <DropdownMenuItem onClick={() => handleCopyLink(inv.invite_code)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                复制邀请链接
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
                           )}
-                        </Button>
-                      )}
+                          {STATUS_OPTIONS.filter(s => s.value !== inv.status).map(s => (
+                            <DropdownMenuItem key={s.value} onClick={() => handleStatusUpdate(inv.id, s.value)}>
+                              设为「{s.label}」
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
