@@ -425,7 +425,7 @@ export function BloomPartnerInvitations() {
                         <DropdownMenuContent align="end">
                           {inv.status === 'pending' && (
                             <>
-                              <DropdownMenuItem onClick={() => handleCopyLink(inv.invite_code)}>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopyLink(inv.invite_code); }}>
                                 <Copy className="h-4 w-4 mr-2" />
                                 复制邀请链接
                               </DropdownMenuItem>
@@ -433,7 +433,7 @@ export function BloomPartnerInvitations() {
                             </>
                           )}
                           {STATUS_OPTIONS.filter(s => s.value !== inv.status).map(s => (
-                            <DropdownMenuItem key={s.value} onClick={() => handleStatusUpdate(inv.id, s.value)}>
+                            <DropdownMenuItem key={s.value} onClick={(e) => { e.stopPropagation(); handleStatusUpdate(inv.id, s.value); }}>
                               设为「{s.label}」
                             </DropdownMenuItem>
                           ))}
