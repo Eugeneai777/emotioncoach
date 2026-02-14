@@ -217,19 +217,37 @@ const Auth = () => {
             }
             
             if (profile?.preferred_coach === 'wealth') {
-              // 检查是否有活跃的财富训练营
-              const { data: activeCamp } = await supabase
-                .from('training_camps')
-                .select('id')
-                .eq('user_id', session.user.id)
-                .in('camp_type', ['wealth_block_7', 'wealth_block_21', 'wealth_awakening_21'])
-                .eq('status', 'active')
-                .maybeSingle();
-              
-              if (activeCamp) {
-                targetRedirect = "/wealth-camp-checkin";
+              // 检查是否是已完成测评的绽放合伙人
+              const [{ data: bloomPartner }, { data: assessmentOrder }] = await Promise.all([
+                supabase.from('partners').select('id')
+                  .eq('user_id', session.user.id)
+                  .eq('partner_type', 'bloom')
+                  .eq('status', 'active')
+                  .maybeSingle(),
+                supabase.from('orders').select('id')
+                  .eq('user_id', session.user.id)
+                  .eq('package_key', 'wealth_block_assessment')
+                  .eq('status', 'paid')
+                  .maybeSingle()
+              ]);
+
+              if (bloomPartner && assessmentOrder) {
+                targetRedirect = "/coach/wealth_coach_4_questions";
               } else {
-                targetRedirect = "/wealth-coach-intro";
+                // 检查是否有活跃的财富训练营
+                const { data: activeCamp } = await supabase
+                  .from('training_camps')
+                  .select('id')
+                  .eq('user_id', session.user.id)
+                  .in('camp_type', ['wealth_block_7', 'wealth_block_21', 'wealth_awakening_21'])
+                  .eq('status', 'active')
+                  .maybeSingle();
+                
+                if (activeCamp) {
+                  targetRedirect = "/wealth-camp-checkin";
+                } else {
+                  targetRedirect = "/wealth-coach-intro";
+                }
               }
             } else if (profile?.preferred_coach === 'emotion') {
               targetRedirect = "/";
