@@ -1,74 +1,43 @@
 
 
-# 首次登录修改密码 + 全用户改密码功能
+# 绽放合伙人介绍页 — 更新方案
 
-## 现状分析
+## 页面设计
 
-系统已有完整的密码修改功能，位于 `src/components/profile/AccountCredentials.tsx`，用户可在个人资料页面修改密码。
+### 顶部
+- 绽放花朵图标
+- 标题：**绽放合伙人**
+- 副标题：**共振 · 觉醒 · 升维**
 
-需要解决的是：**批量注册的用户（默认密码 123456）首次登录后强制修改密码**。
+### 3个权益卡片（需登录才能进入）
+| 权益 | 图标 | 描述 | 按钮 | 跳转 |
+|------|------|------|------|------|
+| 绽放合伙人 | Flower2 | 三大训练营 + 1对1教练 + 分销佣金 | 了解绽放合伙人 | `/partner` |
+| 财富卡点测评 | Target | 30道深度测评，找到财富信念卡点 | 进入财富卡点测评 | `/wealth-block` |
+| 财富觉醒训练营 | Sparkles | 7天系统训练 + 冥想 + AI教练 | 进入财富觉醒训练营 | `/wealth-camp-intro` |
 
-## 方案
+### 登录逻辑
+- **已登录用户**：点击卡片按钮直接跳转对应页面
+- **未登录用户**：点击任意卡片按钮跳转到 `/auth?mode=phone_only&redirect=目标路径`
+  - Auth 页面在 `phone_only` 模式下隐藏微信、邮箱登录选项，仅显示手机号+密码
+  - 默认为登录模式（而非注册），方便已有账号用户
+  - 新批量注册用户（密码123456）登录后自动跳转改密码页面（已有逻辑）
+- 底部显示登录提示文案和按钮
 
-### 1. 数据库：profiles 表新增字段
+## 技术细节
 
-在 `profiles` 表新增 `must_change_password` 布尔字段（默认 false）：
+### 修改文件
 
-```sql
-ALTER TABLE public.profiles 
-ADD COLUMN must_change_password boolean DEFAULT false;
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/pages/BloomPartnerIntro.tsx` | 新建 | 落地页组件 |
+| `src/App.tsx` | 编辑 | 添加 `/bloom-partner-intro` 路由 |
+| `src/pages/Auth.tsx` | 编辑 | `phone_only` 模式下默认为登录模式（当前默认注册），以适配已有账号用户 |
 
--- 标记已有的批量注册用户
-UPDATE public.profiles 
-SET must_change_password = true 
-WHERE id IN (
-  SELECT claimed_by FROM public.partner_invitations 
-  WHERE claimed_source = 'batch' AND claimed_by IS NOT NULL
-);
-```
+### Auth.tsx 调整
+当前 `phone_only` 模式强制默认注册 (`isLogin = false`)。需要改为：新增一个 URL 参数 `default_login=true` 控制默认模式，让从介绍页跳转过来的用户默认看到登录界面，同时保留注册切换入口。
 
-### 2. Edge Function：批量注册时标记
-
-修改 `batch-register-bloom-partners/index.ts`，新注册用户创建 profile 时设置 `must_change_password: true`。
-
-### 3. 前端：登录后拦截
-
-修改 `src/pages/Auth.tsx` 登录成功后的跳转逻辑：
-
-- 登录成功时查询 `profiles.must_change_password`
-- 如果为 true，跳转到 `/change-password` 而非原目标页面
-
-### 4. 新建强制修改密码页面
-
-创建 `src/pages/ChangePassword.tsx`：
-
-- 复用现有密码修改逻辑（`supabase.auth.updateUser({ password })`）
-- 修改成功后更新 `profiles.must_change_password = false`
-- 然后跳转到原目标页面
-- 页面不可跳过（无返回/关闭按钮）
-
-### 5. 路由守卫
-
-在 `App.tsx` 添加路由，确保 `must_change_password = true` 的用户无法访问其他页面。
-
-## 修改文件清单
-
-| 文件 | 修改内容 |
-|------|----------|
-| 数据库迁移 | profiles 新增 must_change_password 字段 |
-| `supabase/functions/batch-register-bloom-partners/index.ts` | 新注册用户标记 must_change_password |
-| `src/pages/Auth.tsx` | 登录后检查并跳转 |
-| `src/pages/ChangePassword.tsx` | 新建强制修改密码页面 |
-| `src/App.tsx` | 添加 /change-password 路由 |
-
-## 用户体验流程
-
-1. 管理员批量注册用户（密码 123456）
-2. 用户用手机号 + 123456 登录
-3. 系统检测到 `must_change_password = true`
-4. 自动跳转到修改密码页面（不可跳过）
-5. 用户设置新密码后正常使用
-6. 已有账号的用户不受影响（字段默认 false）
-
-现有的"账号与密码"设置（AccountCredentials）继续作为所有用户日常修改密码的入口，无需改动。
+### 路由
+- `/bloom-partner-intro` — 公开访问，无需认证
+- 支持 `?ref=partnerCode` 自动归因（GlobalRefTracker 已覆盖）
 
