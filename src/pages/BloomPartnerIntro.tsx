@@ -41,12 +41,12 @@ const BloomPartnerIntro = () => {
     if (user) {
       navigate(path);
     } else {
-      navigate(`/auth?mode=phone_only&default_login=true&redirect=${encodeURIComponent(path)}`);
+      navigate(`/auth?mode=phone_only&redirect=${encodeURIComponent(path)}`);
     }
   };
 
   const handleLogin = () => {
-    navigate("/auth?mode=phone_only&default_login=true");
+    navigate("/auth?mode=phone_only");
   };
 
   return (
