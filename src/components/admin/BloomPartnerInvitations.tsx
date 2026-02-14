@@ -23,6 +23,7 @@ interface Invitation {
   invite_code: string;
   partner_type: string;
   invitee_name: string | null;
+  invitee_phone_country_code: string | null;
   invitee_phone: string | null;
   order_amount: number;
   status: string;
@@ -390,12 +391,15 @@ export function BloomPartnerInvitations() {
               </Select>
               <Button variant="outline" size="sm" onClick={() => {
                 if (!filteredInvitations?.length) return;
-                const header = '邀请码,姓名,手机号,邀请链接,金额,状态,创建时间,领取时间\n';
+                const header = '邀请码,姓名,手机号,登录名,密码,邀请链接,状态,账号类型\n';
+                const sourceMap: Record<string, string> = { batch: '旧批次', batch_new: '新注册', batch_existing: '已有账号', admin: '管理员', self: '自行领取' };
                 const rows = filteredInvitations.map(inv => {
-                  const link = `${getPromotionDomain()}/invite/${inv.invite_code}`;
+                  const link = `${getPromotionDomain()}/bloom-partner-intro`;
                   const status = STATUS_LABEL_MAP[inv.status] || inv.status;
-                  const claimedAt = inv.claimed_at ? format(new Date(inv.claimed_at), 'yyyy-MM-dd HH:mm') : '';
-                  return `${inv.invite_code},${inv.invitee_name || ''},${inv.invitee_phone || ''},${link},${inv.order_amount},${status},${format(new Date(inv.created_at), 'yyyy-MM-dd HH:mm')},${claimedAt}`;
+                  const countryCode = inv.invitee_phone_country_code || '+86';
+                  const loginName = inv.invitee_phone ? `${countryCode}${inv.invitee_phone}` : '';
+                  const accountType = sourceMap[inv.claimed_source as string] || '';
+                  return `${inv.invite_code},${inv.invitee_name || ''},${inv.invitee_phone || ''},${loginName},123456,${link},${status},${accountType}`;
                 }).join('\n');
                 const bom = '\uFEFF';
                 const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8' });
