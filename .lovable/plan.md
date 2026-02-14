@@ -1,36 +1,17 @@
 
 
-## 推广活动列表排序功能 + 日期前置
+## 标题合并：有劲飞轮 · 知乐胶囊
 
 ### 改动内容
 
-**1. 日期移到最前面**
+**1. 页面标题更新 (`IndustryPartnerManagement.tsx`)**
+- 第 177 行：将 `行业合伙人 — ${selectedPartner.company_name}` 改为 `有劲飞轮 · ${selectedPartner.company_name}胶囊`
+- 例如知乐合伙人会显示为："有劲飞轮 · 知乐胶囊"
 
-当前列顺序：`标题 | 投放 | 观看 | 购买 | 金额 | 日期 | 状态`
+**2. 去掉飞轮系统内部重复标题 (`FlywheelGrowthSystem.tsx`)**
+- 第 190 行：移除 "有劲飞轮" 的 `<h2>` 标题，因为已经合并到页面顶部标题中
+- 保留活跃活动数和总投放金额的摘要信息
 
-改为：`日期 | 标题 | 投放 | 观看 | 购买 | 金额 | 状态`
-
-**2. 添加点击排序功能**
-
-在列表顶部增加一行表头，每个数据列可点击排序（升序/降序切换）：
-
-```text
-日期↓  标题  投放  观看  购买  金额
-2/14   测评落地页   0   4   0   ¥0   [草稿] >
-2/13   训练营推广   2   12  3   ¥299 [已发布] >
-```
-
-- 默认按日期降序（最新在前，与当前一致）
-- 点击任意列头切换排序方向
-- 当前排序列显示箭头指示器（`↑` / `↓`）
-
-### 技术细节
-
-**文件修改**：`src/components/partner/PartnerLandingPageList.tsx`
-
-- 新增 `sortKey` 状态（`"date" | "views" | "purchases" | "spend"`），默认 `"date"`
-- 新增 `sortAsc` 状态，默认 `false`（降序）
-- 在 `pages.map()` 前用 `useMemo` 对 pages + metrics 联合排序
-- 在列表项上方添加一行可点击的表头标签
-- 日期列 `<span>` 移到标题前面
-
+### 涉及文件
+- `src/components/admin/IndustryPartnerManagement.tsx`
+- `src/components/partner/FlywheelGrowthSystem.tsx`
