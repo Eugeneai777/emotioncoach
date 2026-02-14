@@ -102,6 +102,7 @@ const PromoGuide = lazyRetry(() => import("./pages/partner/PromoGuide"));
 const CampGraduate = lazyRetry(() => import("./pages/partner/CampGraduate"));
 const PartnerInvitePage = lazyRetry(() => import("./pages/PartnerInvitePage"));
 const LandingPage = lazyRetry(() => import("./pages/LandingPage"));
+const PartnerLandingPageDetail = lazyRetry(() => import("./components/partner/PartnerLandingPageDetail"));
 
 // 故事教练
 const StoryCoach = lazyRetry(() => import("./pages/StoryCoach"));
@@ -344,6 +345,7 @@ const App = () => (
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/growth-path" element={<GrowthSupportPath />} />
               <Route path="/invite/:code" element={<PartnerInvitePage />} />
+              <Route path="/partner/landing-page/:id" element={<PartnerLandingPageDetail />} />
               <Route path="/lp/:id" element={<LandingPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
