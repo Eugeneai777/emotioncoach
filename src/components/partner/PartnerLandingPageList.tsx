@@ -68,8 +68,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
   };
 
   const handleOpenPreview = (id: string) => {
-    const url = `${getPromotionDomain()}/lp/${id}`;
-    window.open(url, "_blank");
+    window.open(`/lp/${id}`, "_blank");
   };
 
   const getSelectedContent = (page: LandingPage) => {
