@@ -65,14 +65,14 @@ const BloomPartnerIntro = () => {
       {/* Auth Status - Above Cards */}
       <div className="px-4 pb-4 max-w-md mx-auto">
         {!loading && !user && (
-          <div className="rounded-2xl bg-gradient-to-r from-rose-100 to-pink-100 border border-rose-200/60 p-4 space-y-3">
-            <div className="flex items-center gap-2 text-rose-700">
+          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-blue-700">
               <LogIn className="w-4 h-4" />
               <span className="text-sm font-medium">请先登录后体验全部权益</span>
             </div>
             <Button
               onClick={handleLogin}
-              className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 hover:opacity-90 text-white border-0"
+              className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:opacity-90 text-white border-0"
             >
               <LogIn className="w-4 h-4 mr-1.5" />
               手机号登录
