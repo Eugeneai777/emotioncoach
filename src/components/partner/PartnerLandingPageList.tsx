@@ -68,7 +68,8 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
   };
 
   const handleOpenPreview = (id: string) => {
-    window.open(`/lp/${id}`, "_blank");
+    const url = `${window.location.origin}/lp/${id}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const getSelectedContent = (page: LandingPage) => {
