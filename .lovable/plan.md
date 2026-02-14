@@ -1,52 +1,50 @@
 
 
-## 绽放合伙人完成测评后登录跳转财富教练页
+## 优化无图帖子卡片：去掉空白占位区域
 
-### 需求
-绽放合伙人**完成财富卡点测评后**，每次登录自动跳转到 `/coach/wealth_coach_4_questions`。未完成测评的合伙人保持原有跳转逻辑。
+### 问题
+没有图片的帖子显示了一个 `h-40`（160px）的渐变色占位区域，里面只有一个小 emoji，导致大量空白，视觉效果差。
 
-### 判断条件
-需要同时满足两个条件：
-1. 用户是活跃绽放合伙人（`partners` 表中 `partner_type = 'bloom'` 且 `status = 'active'`）
-2. 用户已完成财富卡点测评（`orders` 表中有 `package_key = 'wealth_block_assessment'` 且 `status = 'paid'` 的记录）
+### 改动方案
 
-### 改动内容
+**文件：`src/components/community/WaterfallPostCard.tsx`**
 
-**文件：`src/pages/Auth.tsx`**（第 219-233 行）
+将无图帖子的大面积渐变占位区域替换为紧凑的纯文字布局：
 
-在 `preferred_coach === 'wealth'` 分支中，在检查活跃训练营**之前**，先检查是否是已完成测评的绽放合伙人：
+- 移除 `h-40` 的渐变背景占位区域
+- 无图时直接显示标题/内容文字，不再显示 emoji 占位
+- 如果有教练空间标签，改为在文字区域内显示（而非浮在图片上）
+- 无图帖子的内容区域可以展示更多文字行数（从 `line-clamp-2` 增加到 `line-clamp-4`），让纯文字帖更有内容感
+
+### 改动前后对比
 
 ```text
-if preferred_coach === 'wealth':
-  1. 查 partners 表：是否是活跃绽放合伙人
-  2. 查 orders 表：是否已完成财富卡点测评（paid 订单）
-  3. 两者都满足 -> 跳转 /coach/wealth_coach_4_questions
-  4. 否则 -> 保持原逻辑（检查活跃训练营 / 教练介绍页）
+改动前（无图帖子）：
++------------------+
+|                  |
+|     🌸 (h-40)   |   <-- 大面积空白
+|                  |
++------------------+
+| 标题文字          |
+| 用户  ♡          |
++------------------+
+
+改动后（无图帖子）：
++------------------+
+| [教练标签]        |
+| 标题文字（多行）   |
+| 内容预览...       |
+| 用户  ♡          |
++------------------+
 ```
 
-具体代码（插入到第 219 行 `if (profile?.preferred_coach === 'wealth')` 之后）：
+### 技术细节
 
-```typescript
-// 检查是否是已完成测评的绽放合伙人
-const [{ data: bloomPartner }, { data: assessmentOrder }] = await Promise.all([
-  supabase.from('partners').select('id')
-    .eq('user_id', session.user.id)
-    .eq('partner_type', 'bloom')
-    .eq('status', 'active')
-    .maybeSingle(),
-  supabase.from('orders').select('id')
-    .eq('user_id', session.user.id)
-    .eq('package_key', 'wealth_block_assessment')
-    .eq('status', 'paid')
-    .maybeSingle()
-]);
+在 `WaterfallPostCard.tsx` 中：
 
-if (bloomPartner && assessmentOrder) {
-  targetRedirect = "/coach/wealth_coach_4_questions";
-} else {
-  // 原有训练营检查逻辑保持不变
-}
-```
+1. **第 155-170 行**：将无图的 `else` 分支从渲染 `h-40` 渐变 div 改为 `null`（不渲染任何占位）
+2. **第 173 行内容区域**：无图时增加 padding-top，并将教练空间标签移到文字区域内显示
+3. **标题行数**：无图时改为 `line-clamp-4`，有图保持 `line-clamp-2`
 
-改动量：约 15 行代码，仅修改 `Auth.tsx` 一个文件。使用 `Promise.all` 并行查询避免增加延迟。
+改动量：约 15-20 行，仅修改一个文件。
 
