@@ -92,7 +92,7 @@ export default function PartnerInvitePage() {
         }
       }
       
-      navigate('/auth?redirect=/invite/' + code);
+      navigate('/auth?redirect=/invite/' + code + '&mode=phone_only');
       return;
     }
 
