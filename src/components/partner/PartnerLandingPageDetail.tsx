@@ -44,6 +44,18 @@ export default function PartnerLandingPageDetail() {
     fetchPage();
   }, [id]);
 
+  // Press Enter to go back when not editing
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !editing) {
+        e.preventDefault();
+        navigate(-1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editing, navigate]);
+
   const fetchPage = async () => {
     setLoading(true);
     try {
