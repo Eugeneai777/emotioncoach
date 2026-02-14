@@ -272,12 +272,13 @@ serve(async (req) => {
           });
         }
 
-        // Mark invitation as claimed
+        // Mark invitation as claimed (distinguish new vs existing account)
+        const claimedSource = createError ? 'batch_existing' : 'batch_new';
         await adminClient.from('partner_invitations').update({
           status: 'claimed',
           claimed_by: userId,
           claimed_at: new Date().toISOString(),
-          claimed_source: 'batch',
+          claimed_source: claimedSource,
         }).eq('id', inv.id);
 
         results.push({ name, phone: rawPhone, status: 'success' });
