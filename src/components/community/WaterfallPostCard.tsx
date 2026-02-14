@@ -177,30 +177,24 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
             </div>
           )}
         </div>
-      ) : (
-        <div className="relative w-full h-40 bg-gradient-to-br from-teal-100/60 via-cyan-100/40 to-blue-100/60 dark:from-teal-900/30 dark:via-cyan-900/20 dark:to-blue-900/30 flex items-center justify-center">
-          <span className="text-4xl opacity-60">
-            {post.post_type === 'story' ? '🌸' : 
-             post.post_type === 'checkin' ? '📅' :
-             post.post_type === 'achievement' ? '🏆' :
-             post.post_type === 'reflection' ? '💭' : '✨'}
-          </span>
-          {/* 无图帖子也显示教练空间标签 */}
-          {coachSpace && (
-            <div className={cn(
-              "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium z-10",
-              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/80 dark:bg-gray-800/80",
-              coachSpace.colorClass
-            )}>
-              <span>{coachSpace.emoji}</span>
-              <span>{coachSpace.shortName}</span>
-            </div>
-          )}
-        </div>
-      )}
+      ) : null}
       {/* 标题区域 */}
-      <div className="p-3">
-        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-relaxed flex items-start gap-1">
+      <div className={cn("p-3", !coverImage && "pt-4")}>
+        {/* 无图帖子在文字区域显示教练空间标签 */}
+        {!coverImage && coachSpace && (
+          <div className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mb-2",
+            "backdrop-blur-md shadow-sm bg-white/80 dark:bg-gray-800/80",
+            coachSpace.colorClass
+          )}>
+            <span>{coachSpace.emoji}</span>
+            <span>{coachSpace.shortName}</span>
+          </div>
+        )}
+        <h3 className={cn(
+          "text-sm font-medium text-foreground mb-2 leading-relaxed flex items-start gap-1",
+          coverImage ? "line-clamp-2" : "line-clamp-4"
+        )}>
           {post.visibility === 'private' && <Lock className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />}
           {post.visibility === 'followers_only' && <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />}
           {displayTitle}
