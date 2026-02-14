@@ -1,62 +1,92 @@
 
 
-# 绽放合伙人批量注册强制手机号方案
+# 修复绽放邀请码兑换页面错误
 
-## 问题
+## 问题根因
 
-当绽放合伙人通过邀请链接（`/invite/:code`）跳转到注册页面（`/auth`）时，用户可以选择邮箱或微信注册。但自动匹配逻辑依赖 `profiles.phone` 字段，如果用户不用手机号注册，系统无法自动匹配邀请并发放权益。
+通过调试发现，点击"立即成为绽放合伙人"按钮后，`claim-partner-invitation` 返回 **400 错误**，具体错误信息为：
 
-## 方案
+**"您已是其他类型的合伙人"**
 
-通过 URL 参数传递"强制手机注册"标志，在 Auth 页面检测到该标志时：
-- 隐藏邮箱登录切换入口
-- 隐藏微信注册按钮
-- 默认锁定为手机号注册模式
-- 仅保留手机号注册/登录 + 登录切换
+当前登录用户已经是 **有劲合伙人（youjin partner）**，而 `claim-partner-invitation` 函数中的逻辑不允许已有其他类型合伙人身份的用户再领取绽放邀请。
 
-## 具体改动
+此外，前端代码没有正确提取和显示后端返回的具体错误信息，而是显示了通用的"领取失败，请稍后重试"。
 
-### 1. PartnerInvitePage.tsx
-- 修改跳转 URL，从 `/auth?redirect=/invite/{code}` 改为 `/auth?redirect=/invite/{code}&mode=phone_only`
+## 需要修复的两个问题
 
-### 2. Auth.tsx
-- 读取 URL 参数 `mode=phone_only`
-- 当 `mode=phone_only` 时：
-  - 强制 `authMode` 为 `'phone'`，不允许切换到邮箱模式
-  - 隐藏"之前用邮箱注册？"切换按钮
-  - 隐藏"使用微信注册/登录"按钮
-  - 默认显示注册表单（`isLogin = false`）
-  - 页面顶部添加提示文案："请使用手机号注册，以便系统自动为您发放绽放合伙人权益"
+### 问题 1：前端未正确显示错误信息
+
+`PartnerInvitePage.tsx` 中的 `handleClaim` 函数在 `supabase.functions.invoke` 返回非 2xx 状态时，错误信息被放入 `error` 对象中。当前代码直接 `throw error`，在 catch 中显示通用信息，没有提取后端返回的具体错误文案。
+
+**修复方案**：从 `FunctionsHttpError` 中提取 response body，显示后端返回的具体错误信息。
+
+### 问题 2：已有其他类型合伙人无法领取绽放邀请
+
+当前 `claim-partner-invitation` 函数在发现用户已是非 bloom 类型合伙人时直接拒绝。但业务上，有劲合伙人转为绽放合伙人应该是被允许的（绽放是更高级别的合伙类型）。
+
+**修复方案**：修改 `claim-partner-invitation` 中的逻辑，当用户已是 youjin 合伙人时，将其升级为 bloom 合伙人（更新 partner_type），而不是直接拒绝。同时在 `auto-claim-bloom-invitation` 中做相同修改。
 
 ---
 
-### 技术细节
+## 技术细节
 
-**PartnerInvitePage.tsx** - 第 95 行修改：
+### 1. PartnerInvitePage.tsx - 改进错误处理
+
+修改 `handleClaim` 函数的 catch 块，从 `FunctionsHttpError` 中读取具体错误信息：
+
 ```typescript
-// 之前
-navigate('/auth?redirect=/invite/' + code);
-// 之后
-navigate('/auth?redirect=/invite/' + code + '&mode=phone_only');
-```
-
-**Auth.tsx** - 核心变更：
-```typescript
-// 读取 URL 参数
-const urlParams = new URLSearchParams(window.location.search);
-const forcePhoneOnly = urlParams.get('mode') === 'phone_only';
-
-// 强制手机模式
-if (forcePhoneOnly) {
-  setAuthMode('phone');
-  setIsLogin(false); // 默认注册
+} catch (err: any) {
+  console.error('Claim error:', err);
+  // 尝试从 FunctionsHttpError 提取后端错误信息
+  let errorMessage = "领取失败，请稍后重试";
+  if (err?.context?.body) {
+    try {
+      const body = typeof err.context.body === 'string' 
+        ? JSON.parse(err.context.body) 
+        : err.context.body;
+      if (body?.error) errorMessage = body.error;
+    } catch {}
+  } else if (err?.message) {
+    errorMessage = err.message;
+  }
+  toast.error(errorMessage);
 }
 ```
 
-UI 条件隐藏：
-- 邮箱切换按钮：`{!forcePhoneOnly && authMode === 'phone' && (...)}`
-- 微信登录按钮：`{!forcePhoneOnly && (...)}`
-- 添加提示横幅：当 `forcePhoneOnly` 时显示"请使用手机号注册以领取绽放合伙人权益"
+### 2. claim-partner-invitation/index.ts - 支持合伙人类型升级
 
-**影响范围**：仅影响从邀请链接跳转来的注册流程，不影响正常用户的注册登录体验。
+将"您已是其他类型的合伙人"拒绝逻辑改为升级逻辑：
+
+```typescript
+if (existingPartner) {
+  if (existingPartner.partner_type === 'bloom') {
+    return Response(JSON.stringify({ success: true, message: '您已经是绽放合伙人', already_partner: true }));
+  }
+  // 升级：将 youjin 合伙人升级为 bloom
+  await adminClient
+    .from('partners')
+    .update({
+      partner_type: 'bloom',
+      partner_level: 'L0',
+      commission_rate_l1: 0.30,
+      commission_rate_l2: 0.10,
+      source: 'manual',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', existingPartner.id);
+  // 继续执行后续的权益发放逻辑（bloom_partner_orders、orders、user_camp_purchases）
+}
+```
+
+### 3. auto-claim-bloom-invitation/index.ts - 同步修改
+
+与 claim-partner-invitation 保持一致的升级逻辑，确保自动匹配时也支持合伙人类型升级。
+
+### 修改文件清单
+
+| 文件 | 改动内容 |
+|------|----------|
+| `src/pages/PartnerInvitePage.tsx` | 改进错误处理，显示后端具体错误信息 |
+| `supabase/functions/claim-partner-invitation/index.ts` | 支持 youjin 到 bloom 的合伙人升级 |
+| `supabase/functions/auto-claim-bloom-invitation/index.ts` | 同步支持合伙人类型升级 |
 
