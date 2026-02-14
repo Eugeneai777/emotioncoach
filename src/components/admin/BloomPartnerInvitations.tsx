@@ -342,7 +342,6 @@ export function BloomPartnerInvitations() {
                   <TableHead>邀请码</TableHead>
                   <TableHead>姓名</TableHead>
                   <TableHead>手机号</TableHead>
-                  <TableHead>金额</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>领取时间</TableHead>
@@ -355,7 +354,6 @@ export function BloomPartnerInvitations() {
                     <TableCell className="font-mono text-sm">{inv.invite_code}</TableCell>
                     <TableCell>{inv.invitee_name || '-'}</TableCell>
                     <TableCell>{inv.invitee_phone || '-'}</TableCell>
-                    <TableCell>¥{inv.order_amount.toLocaleString()}</TableCell>
                     <TableCell>{getStatusBadge(inv.status)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(inv.created_at), 'MM-dd HH:mm')}
