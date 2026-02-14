@@ -110,7 +110,7 @@ export function BloomPartnerInvitations() {
 
   const getStatusBadge = (status: string, claimedSource: string | null) => {
     if (status === 'claimed') {
-      if (claimedSource === 'batch') {
+      if (claimedSource === 'batch' || claimedSource === 'batch_new' || claimedSource === 'batch_existing') {
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">系统注册</Badge>;
       }
       if (claimedSource === 'admin') {
@@ -128,6 +128,19 @@ export function BloomPartnerInvitations() {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const getAccountTypeBadge = (claimedSource: string | null) => {
+    if (claimedSource === 'batch_new') {
+      return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">新注册</Badge>;
+    }
+    if (claimedSource === 'batch_existing') {
+      return <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">已有账号</Badge>;
+    }
+    if (claimedSource === 'batch') {
+      return <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">旧批次</Badge>;
+    }
+    return <span className="text-muted-foreground">-</span>;
   };
 
   const stats = {
@@ -410,6 +423,7 @@ export function BloomPartnerInvitations() {
                   <TableHead>邀请码</TableHead>
                   <TableHead>姓名</TableHead>
                   <TableHead>手机号</TableHead>
+                  <TableHead>账号类型</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>领取时间</TableHead>
@@ -422,6 +436,7 @@ export function BloomPartnerInvitations() {
                     <TableCell className="font-mono text-sm">{inv.invite_code}</TableCell>
                     <TableCell>{inv.invitee_name || '-'}</TableCell>
                     <TableCell>{inv.invitee_phone || '-'}</TableCell>
+                    <TableCell>{getAccountTypeBadge(inv.claimed_source)}</TableCell>
                     <TableCell>{getStatusBadge(inv.status, inv.claimed_source)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(inv.created_at), 'MM-dd HH:mm')}
