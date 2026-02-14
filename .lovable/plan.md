@@ -1,73 +1,54 @@
 
-## 为默认密码用户发送智能通知提醒修改密码
 
-### 方案
+## 清理重复账号 + 修复批量注册函数
 
-两步实现：立即通知现有 8 位用户 + 自动通知未来新用户。
+### 1. 清理重复的 Gene 账号（460ae18d）
 
-### 1. 立即通知现有用户（SQL 插入）
+通过 SQL 删除该账号在 `smart_notifications` 和 `profiles` 表中的记录，并通过修改 `batch-register-bloom-partners` 函数增加一个一次性清理逻辑（调用 Auth Admin API 删除该 Auth 用户）。
 
-对 `profiles` 表中 `must_change_password = true` 的 8 位用户，插入一条智能通知到 `smart_notifications`：
-
+**数据操作（insert 工具）：**
 ```sql
-INSERT INTO smart_notifications (user_id, notification_type, scenario, title, message, icon, action_text, action_type, action_data, priority, coach_type)
-SELECT 
-  id,
-  'reminder',
-  'security_password_change',
-  '🔒 安全提醒：请修改默认密码',
-  '您的账号当前使用的是初始密码 123456，存在安全风险。为了保护您的账号安全，请尽快修改密码。',
-  'Bell',
-  '立即修改密码',
-  'navigate',
-  '{"path": "/change-password"}'::jsonb,
-  5,
-  'general'
-FROM profiles
-WHERE must_change_password = true;
+DELETE FROM smart_notifications WHERE user_id = '460ae18d-...';
+DELETE FROM profiles WHERE id = '460ae18d-...';
 ```
 
-- `priority = 5`：高优先级，卡片会显示"重要"标签
-- `action_type = 'navigate'` + `action_data.path = '/change-password'`：点击按钮直接跳转修改密码页
-- `notification_type = 'reminder'`：使用橙色提醒样式
+Auth 用户需通过 Edge Function 的 `adminClient.auth.admin.deleteUser('460ae18d-...')` 删除——可以写一个临时调用或在现有函数中处理。
 
-### 2. 自动通知未来用户（数据库触发器）
+### 2. 为劲哥账号补发密码修改通知
 
-在 `profiles` 表上创建触发器，当 `must_change_password` 被设为 `true` 时（如批量注册新绽放合伙人），自动插入通知：
+劲哥账号（105e990c）目前 `must_change_password = false`。如果该账号密码也是默认的，需要：
+- 将 `must_change_password` 设为 `true`（触发器会自动发送通知）
+- 或直接插入一条通知
 
-```sql
-CREATE OR REPLACE FUNCTION notify_must_change_password()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-BEGIN
-  IF NEW.must_change_password = true 
-     AND (OLD IS NULL OR OLD.must_change_password IS DISTINCT FROM true) THEN
-    INSERT INTO smart_notifications (
-      user_id, notification_type, scenario, title, message,
-      icon, action_text, action_type, action_data, priority, coach_type
-    ) VALUES (
-      NEW.id, 'reminder', 'security_password_change',
-      '🔒 安全提醒：请修改默认密码',
-      '您的账号当前使用的是初始密码 123456，存在安全风险。为了保护您的账号安全，请尽快修改密码。',
-      'Bell', '立即修改密码', 'navigate',
-      '{"path": "/change-password"}'::jsonb, 5, 'general'
-    );
-  END IF;
-  RETURN NEW;
-END;
-$$;
+由于劲哥账号是自行注册的老账号（非批量注册），密码由用户自己设定，大概率不需要改密提醒。**跳过此步。**
 
-CREATE TRIGGER trg_notify_must_change_password
-  AFTER INSERT OR UPDATE ON profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION notify_must_change_password();
+### 3. 修复 batch-register-bloom-partners 函数（核心）
+
+**文件：** `supabase/functions/batch-register-bloom-partners/index.ts`
+
+在 `for` 循环中，将 profiles 表预检查提到 `createUser` 之前：
+
+```text
+当前流程：
+  createUser(phone) --> 创建失败才查 profiles
+
+修复后流程：
+  1. 先查 profiles 表 (phone + phone_country_code)
+  2. 找到 --> 直接用该 userId，跳过 createUser
+  3. 未找到 --> 再调用 createUser，后续逻辑不变
 ```
 
-### 改动总结
+这样无论用户是通过占位邮箱注册还是直接手机号注册，都能正确匹配到已有账号，避免重复创建。
 
-- **SQL 数据操作**：为现有 8 位用户插入通知（使用 insert 工具）
-- **数据库迁移**：创建触发器函数 + 触发器（使用 migration 工具）
-- **无前端改动**：通知卡片已支持 `navigate` 类型跳转到 `/change-password`，无需修改任何前端代码
+### 4. 排查其他重复账号
+
+运行 SQL 查询，检查是否有其他手机号也被批量注册创建了重复账号，一并清理。
+
+### 改动清单
+
+| 类型 | 内容 |
+|------|------|
+| 数据清理 | 删除 Gene 账号的 notifications、profile、auth 记录 |
+| Edge Function | 修改 `batch-register-bloom-partners/index.ts`，增加 profiles 预检查 |
+| 排查 | SQL 查询重复手机号账号 |
+
