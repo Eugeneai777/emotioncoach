@@ -6,6 +6,7 @@ import { usePartner } from "@/hooks/usePartner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles, Home, BarChart3 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -197,37 +198,44 @@ export default function Partner() {
               <>
                 {/* 绽放合伙人品牌概览卡片 */}
                 <BloomOverviewCard partner={partner} />
-                
+
+                {/* 推广码区域 — 紫粉色系，紧跟绽放概览 */}
+                <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-purple-800">
+                      <Share2 className="w-5 h-5 text-purple-500" />
+                      我的推广码
+                    </CardTitle>
+                    <CardDescription>
+                      分享您的专属推广码或链接，邀请好友加入
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-3">
+                      <div className="flex-1 px-4 py-3 bg-white/80 rounded-lg border border-purple-100 font-mono text-lg font-bold text-purple-700">
+                        {partner.partner_code}
+                      </div>
+                      <Button onClick={handleCopyCode} variant="outline" className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50">
+                        <Copy className="w-4 h-4" />
+                        复制
+                      </Button>
+                    </div>
+                    <Button onClick={handleCopyLink} className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                      <Share2 className="w-4 h-4" />
+                      复制推广链接
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* 附赠权益分隔线 */}
+                <div className="flex items-center gap-3 py-1">
+                  <Separator className="flex-1" />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">💪 附赠权益</span>
+                  <Separator className="flex-1" />
+                </div>
+
                 {/* 绽放合伙人的有劲推广权益 */}
                 <BloomYoujinBenefitsCard partner={partner} />
-
-            {/* 推广码区域 */}
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Share2 className="w-5 h-5" />
-                  我的推广码
-                </CardTitle>
-                <CardDescription>
-                  分享您的专属推广码或链接，邀请好友加入
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-1 px-4 py-3 bg-background rounded-lg border font-mono text-lg font-bold">
-                    {partner.partner_code}
-                  </div>
-                  <Button onClick={handleCopyCode} variant="outline" className="gap-2">
-                    <Copy className="w-4 h-4" />
-                    复制
-                  </Button>
-                </div>
-                <Button onClick={handleCopyLink} className="w-full gap-2">
-                  <Share2 className="w-4 h-4" />
-                  复制推广链接
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Tabs */}
             <Tabs defaultValue="referrals" className="space-y-6">
