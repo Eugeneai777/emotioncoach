@@ -5,7 +5,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePageOG } from "@/hooks/usePageOG";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight, Home, Mic } from "lucide-react";
+import { ArrowLeft, RotateCcw, History, TrendingUp, Share2, Sparkles, ChevronRight, Home, Mic } from "lucide-react";
 import { AssessmentVoiceCoach } from "@/components/wealth-block/AssessmentVoiceCoach";
 import { AIInsightData } from "@/components/wealth-block/AIInsightCard";
 import PageHeader from "@/components/PageHeader";
@@ -834,8 +834,8 @@ export default function WealthBlockAssessmentPage() {
                       ? "text-amber-600" 
                       : "text-muted-foreground hover:text-amber-500"}`}
                 >
-                  <ClipboardList className={`w-5 h-5 transition-transform ${activeTab === "assessment" ? "scale-110" : ""}`} />
-                  <span className="text-[11px] font-semibold leading-tight">开始测评</span>
+                  <RotateCcw className={`w-5 h-5 transition-transform ${activeTab === "assessment" ? "scale-110" : ""}`} />
+                  <span className="text-[11px] font-semibold leading-tight">重新测评</span>
                 </button>
 
                 {/* 中间 - 凸出的教练解说 FAB */}
