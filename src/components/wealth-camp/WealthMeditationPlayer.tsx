@@ -544,7 +544,7 @@ export function WealthMeditationPlayer({
 
         {/* Reflection Section */}
         <AnimatePresence>
-          {(showReflection || hasListened) && (
+          
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -617,7 +617,7 @@ export function WealthMeditationPlayer({
                 </Button>
               </div>
             </motion.div>
-          )}
+          
         </AnimatePresence>
       </CardContent>
     </Card>
