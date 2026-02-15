@@ -1,39 +1,34 @@
 
-## 将所有财富教练相关路径统一指向 `/coach/wealth_coach_4_questions`
 
-### 需要修改的文件和位置
+## 让 `/coach/wealth_coach_4_questions` 只显示介绍内容
 
-**1. `src/components/SmartHomeRedirect.tsx`（首页智能跳转）**
-- 第 68 行：`/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
-- 第 70 行：`/wealth-camp-checkin` → `/coach/wealth_coach_4_questions`
-- 第 72 行：`/wealth-coach-intro` → `/coach/wealth_coach_4_questions`
-- 效果：所有 wealth 用户（无论合伙人、训练营还是新用户）首页都跳转到同一个页面
+### 修改方案
 
-**2. `src/pages/Auth.tsx`（登录后跳转）**
-- 第 228 行：`/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
-- 第 240 行：`/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
-- 第 242 行：`/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
-- 效果：财富用户登录后统一跳转到 `/coach/wealth_coach_4_questions`
+**文件 1：`src/pages/DynamicCoach.tsx`**
 
-**3. `src/pages/WealthCoachIntro.tsx`（介绍页"开始"按钮）**
-- 第 31 行：`/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
-- 第 33 行：returnTo 从 `/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
+在渲染 `CoachLayout` 时，当 `coachKey === 'wealth_coach_4_questions'` 时：
+- `messages` 传空数组 `[]`
+- `isLoading` 传 `false`
+- `input` 传空字符串
+- `onInputChange` 传空函数
+- `onSend` 传空函数
+- 新增 `hideInput: true` 隐藏输入框
+- 在 `CoachEmptyState` 中添加"开始对话"按钮（通过 `chatEntryRoute` prop）
 
-**4. `src/pages/WealthBlockAssessment.tsx`（测评页返回按钮）**
-- 第 681 行：backTo 从 `/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
-- 第 688 行：navigate 目标从 `/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
+Hook 仍然被调用（React 规则不允许条件调用），但返回值不使用。
 
-**5. `src/pages/WealthCampCheckIn.tsx`（训练营页面跳转按钮）**
-- 第 854 行：`/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
+**文件 2：`src/components/coach/CoachLayout.tsx`**
 
-**6. `src/components/coach-call/AICoachCallProvider.tsx`（语音通话结束后跳转）**
-- 第 42 行：wealth 映射从 `/wealth-coach-chat` → `/coach/wealth_coach_4_questions`
+- 新增可选 prop `hideInput?: boolean` 和 `chatEntryRoute?: string`
+- 当 `hideInput` 为 true 时，不渲染底部 `CoachInputFooter`
+- 将 `chatEntryRoute` 传递给 `CoachEmptyState`
 
-**7. `src/hooks/useQuickMenuConfig.ts`（快捷菜单）**
-- 第 27 行已经是 `/coach/wealth_coach_4_questions`，无需修改
-- 第 76-77 行：旧路径重定向目标从 `/coach/wealth_coach_4_questions` 确认保持不变
+**文件 3：`src/components/coach/CoachEmptyState.tsx`**
 
-### 不修改的部分
-- `/wealth-coach-chat` 路由本身保留在 `App.tsx` 中，页面仍可直接访问
-- `/wealth-camp-checkin`、`/wealth-coach-intro` 等独立页面保持不动，只是不再作为自动跳转目标
-- `ogConfig.ts` 中的 SEO 配置保持不变
+- 新增可选 prop `chatEntryRoute?: string`
+- 当提供该 prop 时，在介绍内容底部显示一个"开始对话"按钮，点击跳转到 `/wealth-coach-chat`
+
+### 最终效果
+- `/coach/wealth_coach_4_questions`：只显示介绍内容 + "开始对话"按钮，无输入框，不恢复对话
+- `/wealth-coach-chat`：完整对话页面，包含会话恢复功能
+
