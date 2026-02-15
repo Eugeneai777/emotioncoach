@@ -39,7 +39,7 @@ const COACH_ROUTES: Record<string, string> = {
   parent_emotion: '/parent-coach',
   gratitude: '/coach/gratitude',
   story: '/story-coach',
-  wealth: '/wealth-coach-chat',
+  wealth: '/coach/wealth_coach_4_questions',
   course_recommendation: '/coach/vibrant_life_sage',
 };
 

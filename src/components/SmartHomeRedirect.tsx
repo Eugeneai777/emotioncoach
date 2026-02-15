@@ -64,13 +64,8 @@ const SmartHomeRedirect = () => {
             triggerAssessmentReminder(user.id);
           }
 
-          if (isActivePartner && hasPaidAssessment) {
-            setTargetPath("/wealth-coach-chat");
-          } else if (hasActiveCamp) {
-            setTargetPath("/wealth-camp-checkin");
-          } else {
-            setTargetPath("/wealth-coach-intro");
-          }
+          // 所有 wealth 用户统一跳转到财富教练页面
+          setTargetPath("/coach/wealth_coach_4_questions");
         } else {
           setTargetPath(DEFAULT_COACH);
         }
