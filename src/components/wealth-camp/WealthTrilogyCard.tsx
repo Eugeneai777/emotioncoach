@@ -14,7 +14,7 @@ const trilogySteps = [
   {
     step: 1,
     emoji: "🔍",
-    title: "检测",
+    title: "觉察",
     subtitle: "财富卡点测评",
     description: "30道题深度分析，找出隐藏的财富障碍",
     icon: ClipboardCheck,
