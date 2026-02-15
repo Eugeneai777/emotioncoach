@@ -1,63 +1,61 @@
 
 
-## 修复：财富简报已生成但对话显示未完成
+## 优化未完成对话逻辑，确保不产生误判
 
-### 问题根因分析
+### 发现的问题
 
-经过代码审查，发现两个关键 Bug：
+上一次修复已解决了简报卡片持久化和恢复判断的核心问题。但经过进一步审查，发现两个残留隐患：
 
-**Bug 1：简报卡片消息未持久化到数据库**
+**问题 1：`resetConversation` 没有重置 `briefingGeneratedRef`**
 
-在 `useDynamicCoachChat.ts` 第 842-844 行，只保存了 AI 的文本回复（`assistantMessage`），但简报卡片内容（`<!--WEALTH_BRIEFING_CARD-->...`）是在第 613-628 行通过 `setMessages` 添加到本地状态的，并没有调用 `saveMessage` 保存到数据库。因此：
-- 当时在聊天中能看到简报卡片（因为是本地 state）
-- 刷新页面或重新打开后，简报卡片消息丢失（因为数据库里没有）
+当用户完成一次对话（简报已生成，`briefingGeneratedRef.current = true`），然后点击"新对话"时，`resetConversation` 函数清空了消息、对话 ID 等状态，但没有将 `briefingGeneratedRef.current` 重置为 `false`。这意味着：
+- 新对话中如果用户中途离开，系统不会触发"未完成对话"通知（因为 ref 仍为 true）
+- 新对话的简报生成可能受到影响
 
-**Bug 2：恢复逻辑判断不完整**
+**问题 2：恢复对话时未同步 `briefingGeneratedRef`**
 
-在第 198-210 行的恢复逻辑中，系统通过查 `briefingTableName` 表来判断对话是否已完成。但财富教练的简报存储在 `wealth_coach_4_questions_briefings` 表中，而实际生成流程走的是 `generate-wealth-journal` Edge Function，简报数据存到了不同的表。这导致恢复逻辑查不到已有简报，误判为"对话未完成"，不断尝试恢复。
-
-**Bug 3：第 624 行有重复代码**
-
-```typescript
-return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
-return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m); // 重复行
-```
+当系统恢复一个已有消息但尚未生成简报的对话时，`briefingGeneratedRef.current` 保持默认值 `false`，这是正确的。但如果恢复的对话消息中已经包含简报卡片标记（理论上被前面的检查拦截了，但为防御性考虑），应该同步设置 ref。
 
 ### 修复方案
 
 **文件：`src/hooks/useDynamicCoachChat.ts`**
 
-1. **持久化简报卡片消息**：在第 628 行简报卡片添加到本地 state 之后，调用 `saveMessage(convId, "assistant", resultContent)` 将其保存到数据库，确保刷新后仍能看到。
+1. **`resetConversation` 中重置 ref**：在第 898-908 行的 `resetConversation` 函数中，添加 `briefingGeneratedRef.current = false;`
 
-2. **修复恢复逻辑**：在恢复判断中（第 198-210 行），除了检查 `briefingTableName` 表，还额外检查 `messages` 表中是否存在包含 `<!--WEALTH_BRIEFING_CARD-->` 标记的消息。如果找到，说明对话已完成，跳过恢复。
-
-3. **删除第 624 行的重复代码**。
+2. **恢复对话时检查已有简报标记**：在第 225-235 行的恢复逻辑中，检查加载的消息是否包含 `<!--WEALTH_BRIEFING_CARD-->` 标记，如果有则设置 `briefingGeneratedRef.current = true`，防止离开时误发"未完成对话"通知。
 
 ### 技术细节
 
-#### 修改 1：保存简报卡片到数据库（约第 628 行后）
+#### 修改 1：重置 ref（约第 900 行）
 
 ```typescript
-// 现有代码：setMessages 添加卡片到本地 state
-// 新增：将卡片消息也保存到数据库
-await saveMessage(convId, "assistant", resultContent);
+const resetConversation = useCallback(() => {
+  setMessages([]);
+  messagesRef.current = [];
+  setCurrentConversationId(null);
+  setLastBriefingId(null);
+  setCoachRecommendation(null);
+  setVideoRecommendation(null);
+  setToolRecommendation(null);
+  setEmotionButtonRecommendation(null);
+  setCampRecommendation(null);
+  briefingGeneratedRef.current = false; // 新增
+}, []);
 ```
 
-#### 修改 2：增强恢复判断逻辑（约第 198-210 行）
+#### 修改 2：恢复时同步 ref（约第 233 行后）
 
 ```typescript
-// 除了检查 briefingTableName 表，还检查消息中是否包含简报卡片标记
-const { data: briefingMessages } = await supabase
-  .from('messages')
-  .select('id')
-  .eq('conversation_id', recentConv.id)
-  .like('content', '%<!--WEALTH_BRIEFING_CARD-->%')
-  .limit(1);
+setMessages(loadedMessages);
+messagesRef.current = loadedMessages;
 
-if (briefingMessages && briefingMessages.length > 0) {
-  return; // 已有简报卡片，对话已完成
+// 检查恢复的消息中是否已有简报卡片，同步 ref 状态
+const hasBriefingCard = loadedMessages.some(m => m.content.includes('<!--WEALTH_BRIEFING_CARD-->'));
+if (hasBriefingCard) {
+  briefingGeneratedRef.current = true;
 }
+
+setIsRecovering(false);
 ```
 
-#### 修改 3：删除第 624 行重复的 return 语句
-
+这两处修改确保 `briefingGeneratedRef` 在所有场景下与实际状态保持一致，避免误触发通知或阻碍新对话的简报生成。
