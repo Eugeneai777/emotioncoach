@@ -133,9 +133,8 @@ export default function Claim() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // 不再跳转，显示 loading 状态提示用户先购买套餐
-        setStatus('no-partner');
-        setMessage("请先购买套餐后再领取");
+        // 未登录用户：跳转到登录页，登录后自动返回领取
+        navigate(`/auth?redirect=/claim?partner=${partnerId}${posterId ? `&poster=${posterId}` : ''}`);
         return;
       }
 
