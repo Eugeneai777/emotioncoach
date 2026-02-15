@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Target, Sparkles, MessageCircle, CheckCircle, ArrowRight, Gift } from 'lucide-react';
+import { MapPin, Target, Sparkles, ArrowRight } from 'lucide-react';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
@@ -39,45 +39,6 @@ const beliefOutcomes: Record<string, string> = {
   heart: '植入"我有力量创造"的新信念，替换受害者程序',
 };
 
-// 每日4步流程配置
-const dailySteps = [
-  {
-    step: 1,
-    icon: Sparkles,
-    title: '财富觉察冥想',
-    time: '5分钟',
-    description: '觉察情绪根源',
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-100 dark:bg-violet-900/30',
-  },
-  {
-    step: 2,
-    icon: MessageCircle,
-    title: '教练对话',
-    time: '5分钟',
-    description: '针对你的卡点定制突破',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-  },
-  {
-    step: 3,
-    icon: CheckCircle,
-    title: '打卡分享',
-    time: '1句话',
-    description: '真实本身就是训练',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
-  },
-  {
-    step: 4,
-    icon: Gift,
-    title: '邀请练习',
-    time: '可选',
-    description: '照见内在反应',
-    color: 'text-rose-600',
-    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
-  },
-];
 
 // Pattern key normalization
 const patternKeyMap: Record<string, string> = {
@@ -242,39 +203,6 @@ export function AwakeningJourneyPreview({
             <p className="text-sm text-muted-foreground leading-relaxed">
               不是教你快速赚钱，而是<span className="text-amber-600 dark:text-amber-400 font-medium">每天帮你看见卡住的位置</span>，陪你迈出一个不消耗自己的小进步。
             </p>
-          </div>
-
-          {/* 每日4步流程 */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-              💡 每天做4件事，只需15分钟：
-            </h4>
-            
-            <div className="grid grid-cols-2 gap-2">
-              {dailySteps.map((step, index) => (
-                <motion.div
-                  key={step.step}
-                  initial={{ opacity: 0.01, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.08 }}
-                  style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                  className="relative p-2 sm:p-2.5 pt-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
-                >
-                  <div className="absolute -top-1.5 left-2 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                    {step.step}
-                  </div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className={cn("p-1 rounded-md", step.bgColor)}>
-                      <step.icon className={cn("w-3 h-3", step.color)} />
-                    </div>
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 bg-muted/50 rounded text-muted-foreground">
-                      {step.time}
-                    </span>
-                  </div>
-                  <div className="font-semibold text-xs text-foreground leading-tight">{step.title}</div>
-                </motion.div>
-              ))}
-            </div>
           </div>
 
           {/* 7天后的收获 - 个性化三维度 */}
