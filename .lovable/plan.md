@@ -1,65 +1,72 @@
 
 
-## 优化推广指南页面 + 修复推广链接错误
+## 财富觉醒 3 部曲 — 显示打卡/完成状态
 
-### 背景
+### 目标
 
-当前 `/partner/promo-guide` 页面内容过于简略，缺少以下关键信息：
-1. **名额包含什么** - 用户不清楚每个名额能给对方什么权益
-2. **如何分享推广** - 缺乏具体操作步骤指引
-3. **推广链接的目的** - 没有解释链接点击后会发生什么
-4. **点击链接报错** - 需要排查并修复链接点击时的错误
+在 `WealthTrilogyCard`（教练页面中的三部曲卡片）和 `BloomPartnerIntro`（独立介绍页）中，为每个步骤显示完成状态标签，让用户清楚知道自己走到了哪一步。
 
-### 修改内容
+### 状态判断逻辑
 
-#### 1. 重写 `src/pages/partner/PromoGuide.tsx`
+| 步骤 | 数据来源 | 状态 |
+|------|----------|------|
+| Step 1: 财富卡点测评 | `wealth_block_assessments` 表是否有记录 | 已完成 / 未开始 |
+| Step 2: 财富觉醒训练营 | `training_camps` 表的 `status` 和 `milestone_21_completed` | 已毕业 / 进行中（Day X） / 未开始 |
+| Step 3: 成为合伙人 | `youjin_partners` 表是否有记录 | 已加入 / 未开始 |
 
-将页面重构为 4 个清晰的内容板块：
+### 需要修改的文件
 
-**板块一：名额权益说明**
-- 标题："每个名额 = 一份体验套餐"
-- 从 `useExperiencePackageItems` hook 动态获取体验包内容（与推广中心一致）
-- 列出 4 项权益：尝鲜会员 50 点、情绪健康测评 1 次、SCL-90 测评 1 次、财富卡点测评 1 次
-- 说明：每分发一个用户，消耗你的 1 个名额
+#### 1. 新建 `src/hooks/useTrilogyProgress.ts`
 
-**板块二：推广链接的目的**
-- 标题："推广链接做什么？"
-- 解释两种模式：
-  - 免费模式：用户点击链接 -> 注册/登录 -> 免费领取体验包 -> 成为你的学员
-  - 付费模式：用户点击链接 -> 注册/登录 -> 支付 9.9 元 -> 领取体验包 -> 9.9 元归你
-- 用简洁的流程图展示
+创建统一的 hook，查询三个步骤的完成状态：
 
-**板块三：如何分享推广（操作步骤）**
-- 标题："3 步开始推广"
-- 步骤 1：在合伙人中心选择入口方式（免费/付费）
-- 步骤 2：复制推广链接 或 下载二维码 或 生成海报
-- 步骤 3：分享到朋友圈、微信群等场景
-- 保留原有的适合场景展示
+```typescript
+export function useTrilogyProgress() {
+  // 查询 wealth_block_assessments（是否有记录 = 测评完成）
+  // 查询 training_camps（最新一条，取 status/current_day/milestone_21_completed）
+  // 查询 youjin_partners（是否有记录 = 已加入合伙人）
+  return {
+    assessment: { completed: boolean },
+    camp: { status: 'not_started' | 'active' | 'completed', currentDay?: number },
+    partner: { joined: boolean }
+  }
+}
+```
 
-**板块四：使用建议**
-- 保留现有的新手/进阶/高级策略建议
+#### 2. 修改 `src/components/wealth-camp/WealthTrilogyCard.tsx`
 
-#### 2. 修复推广链接错误
+- 引入 `useTrilogyProgress`
+- 在每个步骤卡片右上角显示状态标签：
+  - 已完成：绿色 `✅ 已完成` / `✅ 已毕业` / `✅ 已加入`
+  - 进行中：蓝色 `📍 Day X`
+  - 未开始：不显示标签（保持干净）
 
-经过测试，`/claim` 页面在用户已登录时正常工作。错误可能发生在：
-- **未登录场景**：`/claim` 页面会重定向到 `/auth`，但在生产环境（微信内）可能存在 OAuth 回跳问题
-- **自领取场景**：合伙人点击自己的推广链接会返回"不能领取自己的推广福利"错误
+#### 3. 修改 `src/pages/BloomPartnerIntro.tsx`
 
-修复方案：
-- 在 `/claim` 页面的错误状态中，显示更友好的错误提示信息，区分不同错误类型
-- 对"不能领取自己的推广福利"显示专门的提示卡片（而非通用错误红色界面）
-- 对"已经领取过"显示"你已领取"的友好状态
+- 同样引入 `useTrilogyProgress`
+- 在已有的卡片布局中，为 Step 2 和 Step 3 也添加状态标签（Step 1 已有 `已解锁/需付费` 逻辑，保留并增强）
+- 状态标签样式与现有的 `已解锁` 标签保持一致
+
+### 状态标签设计
+
+```text
+Step 1 (测评):
+  - 已完成测评 → 绿色标签 "✅ 已完成"
+  - 已购买未测评 → 蓝色标签 "已解锁"（保留现有逻辑）
+  - 未购买 → 琥珀色标签 "需付费 ¥9.9"（保留现有逻辑）
+
+Step 2 (训练营):
+  - milestone_21_completed = true → 绿色标签 "🎓 已毕业"
+  - status = 'active' → 蓝色标签 "📍 Day {currentDay}"
+  - 无记录 → 不显示
+
+Step 3 (合伙人):
+  - 有 youjin_partners 记录 → 绿色标签 "✅ 已加入"
+  - 无记录 → 不显示
+```
 
 ### 技术细节
 
-**PromoGuide.tsx 改动：**
-- 引入 `useExperiencePackageItems` hook 动态获取体验包内容
-- 新增 4 个 Card 组件对应 4 个板块
-- 保持现有的返回按钮、分享按钮和 CTA 按钮
-
-**Claim.tsx 改动：**
-- 根据错误 message 关键词（"自己"、"已经领取"）显示不同 UI 状态
-- 自领取错误：显示蓝色提示卡片 + "这是你自己的推广链接，分享给朋友即可"
-- 已领取错误：显示绿色成功卡片 + "你已经领取过此体验包"
-- 其他错误：保持现有红色错误样式
-
+- `useTrilogyProgress` 使用 `useQuery` 进行 3 个并行查询，`enabled: !!user`（未登录不查询）
+- 查询轻量化：只 select 必要字段，每个查询 limit 1
+- WealthTrilogyCard 和 BloomPartnerIntro 共用同一个 hook，确保状态一致
