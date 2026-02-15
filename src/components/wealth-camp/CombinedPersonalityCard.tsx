@@ -215,6 +215,9 @@ export function CombinedPersonalityCard({
   const handleNavigateToTask = (taskKey: 'meditation' | 'coaching' | 'challenge' | 'share') => {
     if (onNavigateToTask) {
       onNavigateToTask(taskKey);
+    } else {
+      // Fallback: navigate to the daily tasks tab when used standalone (e.g., archive tab)
+      navigate('/wealth-camp-checkin?tab=daily');
     }
   };
 
