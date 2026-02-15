@@ -1,18 +1,42 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, validateServiceRole } from '../_shared/auth.ts';
+import { corsHeaders } from '../_shared/auth.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate that this is an internal service call
-  const authError = validateServiceRole(req);
-  if (authError) return authError;
+  // Validate user JWT
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
-  console.log('🔄 sync-wealth-profile 被调用');
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+  // Create client with user's auth context for validation
+  const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims) {
+    console.warn('Invalid JWT provided');
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const authenticatedUserId = claimsData.claims.sub;
+  console.log('🔄 sync-wealth-profile 被调用, userId:', authenticatedUserId);
 
   try {
     const body = await req.json();
@@ -20,8 +44,17 @@ serve(async (req) => {
     
     const { user_id, assessment_result } = body;
 
-    if (!user_id || !assessment_result) {
-      console.error('❌ 缺少必填字段:', { user_id: !!user_id, assessment_result: !!assessment_result });
+    // Ensure the user can only sync their own profile
+    if (!user_id || user_id !== authenticatedUserId) {
+      console.error('❌ user_id 不匹配或缺失');
+      return new Response(JSON.stringify({ error: 'Forbidden: user_id mismatch' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!assessment_result) {
+      console.error('❌ 缺少 assessment_result');
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -30,8 +63,9 @@ serve(async (req) => {
     
     console.log('✅ 参数验证通过:', { user_id, assessment_result });
 
+    // Use service role client for writing data
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
+      supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
