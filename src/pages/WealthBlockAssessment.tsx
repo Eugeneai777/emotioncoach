@@ -5,7 +5,9 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePageOG } from "@/hooks/usePageOG";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight, Home } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight, Home, Mic } from "lucide-react";
+import { AssessmentVoiceCoach } from "@/components/wealth-block/AssessmentVoiceCoach";
+import { AIInsightData } from "@/components/wealth-block/AIInsightCard";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -816,10 +818,10 @@ export default function WealthBlockAssessmentPage() {
           {/* 底部固定Tab导航 */}
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-t border-amber-200/50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
             <div className="container max-w-sm sm:max-w-lg mx-auto px-3 py-2">
-              <TabsList className="w-full h-11 sm:h-12 bg-white/80 rounded-xl shadow-inner">
+              <TabsList className="w-full h-11 sm:h-12 bg-white/80 rounded-xl shadow-inner grid grid-cols-3 gap-1">
                 <TabsTrigger 
                   value="assessment" 
-                  className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
+                  className="gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
                              data-[state=active]:bg-gradient-to-r 
                              data-[state=active]:from-amber-500 
                              data-[state=active]:to-orange-500 
@@ -829,9 +831,25 @@ export default function WealthBlockAssessmentPage() {
                   <ClipboardList className="w-4 h-4" />
                   开始测评
                 </TabsTrigger>
+
+                {/* 教练解说按钮 - 仅在有结果时显示 */}
+                {showResult && currentResult ? (
+                  <AssessmentVoiceCoach
+                    result={currentResult}
+                    aiInsight={null}
+                    healthScore={Math.round(
+                      ((5 - currentResult.behaviorScore) / 4 * 33) +
+                      ((5 - currentResult.emotionScore) / 4 * 33) +
+                      ((5 - currentResult.beliefScore) / 4 * 34)
+                    )}
+                  />
+                ) : (
+                  <div />
+                )}
+
                 <TabsTrigger 
                   value="history" 
-                  className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
+                  className="gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
                              data-[state=active]:bg-gradient-to-r 
                              data-[state=active]:from-amber-500 
                              data-[state=active]:to-orange-500 
