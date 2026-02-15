@@ -1,23 +1,17 @@
 
 
-## 让历史记录卡片始终展开
+## 修改"AI教练"按钮跳转目标
 
 ### 当前行为
-每张历史记录卡片默认是折叠的，点击后才展开显示三层得分和操作按钮。
+点击"AI教练"按钮后跳转到教练空间页面（`/coach-space`）。
 
 ### 修改方案
 
-**修改文件：`src/components/wealth-block/WealthBlockHistory.tsx`**
+**修改文件：`src/pages/WealthBlockAssessment.tsx`**
 
-1. 移除折叠/展开的状态管理（`expandedId`），让所有卡片始终显示详情内容
-2. 移除卡片头部的点击展开逻辑和展开/收起箭头按钮
-3. 移除 `AnimatePresence` 动画包裹，直接渲染详情区域
-4. 保留卡片头部的基本信息展示样式不变
+将按钮的 `onClick` 跳转路径从 `/coach-space` 改为 `/coach/wealth_coach_4_questions`，让用户直接进入财富教练对话页面。
 
-### 技术细节
-
-- 删除 `expandedId` 状态和相关的 `isExpanded` 判断
-- 移除头部区域的 `cursor-pointer`、`onClick`、`hover:bg-muted/50` 交互样式
-- 移除右侧的 `ChevronDown`/`ChevronUp` 切换按钮
-- 详情区域（三层得分 + 操作按钮）直接渲染，不再用条件判断包裹
-
+仅需修改一行代码：
+```
+onClick={() => navigate("/coach/wealth_coach_4_questions"))
+```
