@@ -67,9 +67,9 @@ const SmartHomeRedirect = () => {
           if (isActivePartner && hasPaidAssessment) {
             setTargetPath("/wealth-coach-chat");
           } else if (hasActiveCamp) {
-            setTargetPath("/wealth-coach-chat");
+            setTargetPath("/wealth-camp-checkin");
           } else {
-            setTargetPath("/wealth-coach-chat");
+            setTargetPath("/wealth-coach-intro");
           }
         } else {
           setTargetPath(DEFAULT_COACH);
