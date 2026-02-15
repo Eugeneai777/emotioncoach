@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ClipboardCheck, Tent, Handshake, ChevronRight, ArrowRight, ChevronDown, CheckCircle, GraduationCap, MapPin } from "lucide-react";
@@ -89,6 +89,10 @@ function StepStatusBadge({ step, progress }: { step: number; progress: ReturnTyp
 export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) => {
   const navigate = useNavigate();
   const progress = useTrilogyProgress();
+  const collapsibleRef = useRef<HTMLDivElement>(null);
+  const [step2Highlight, setStep2Highlight] = useState(false);
+  
+  const shouldShowReminder = progress.assessment.completed && progress.camp.status === 'not_started';
   
   // 从 localStorage 读取初始状态，默认折叠
   const getInitialState = () => {
@@ -104,6 +108,26 @@ export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) =>
   const handleExpandChange = (expanded: boolean) => {
     setIsExpanded(expanded);
     localStorage.setItem(STORAGE_KEY, String(expanded));
+    if (expanded && shouldShowReminder) {
+      setStep2Highlight(true);
+    }
+  };
+
+  // 展开后 Step 2 高亮 2 秒后淡出
+  useEffect(() => {
+    if (step2Highlight) {
+      const timer = setTimeout(() => setStep2Highlight(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step2Highlight]);
+
+  const handleReminderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isExpanded) {
+      handleExpandChange(true);
+    } else {
+      navigate("/wealth-camp-intro");
+    }
   };
 
   const handleMoreInfo = (e: React.MouseEvent) => {
@@ -118,18 +142,29 @@ export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) =>
           {/* Header */}
           <div className="flex items-center justify-between">
             <CollapsibleTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer flex-1">
-                <h3 className="font-medium flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-300">
+              <div className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                <h3 className="font-medium flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-300 shrink-0">
                   <span className="text-sm">💰</span>
                   财富觉醒 3 部曲
                 </h3>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 text-amber-400 ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 text-amber-400 shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                {/* Animated reminder badge */}
+                {shouldShowReminder && (
+                  <motion.span
+                    onClick={handleReminderClick}
+                    className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded-full cursor-pointer whitespace-nowrap border border-amber-300/50 dark:border-amber-700/50"
+                    animate={{ scale: [1, 1.06, 1], opacity: [0.85, 1, 0.85] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    测评已完成，开启下一步 ✨
+                  </motion.span>
+                )}
               </div>
             </CollapsibleTrigger>
             <span 
               role="button" 
               onClick={handleMoreInfo}
-              className="text-xs text-amber-600/80 dark:text-amber-400/80 hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer"
+              className="text-xs text-amber-600/80 dark:text-amber-400/80 hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer shrink-0 ml-2"
             >
               了解更多 →
             </span>
@@ -153,7 +188,7 @@ export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) =>
                     onClick={() => navigate(step.route)}
                   >
                     <Card
-                      className={`relative bg-gradient-to-br ${step.bgGradient} backdrop-blur border ${step.borderColor} overflow-hidden cursor-pointer transition-all hover:shadow-md`}
+                      className={`relative bg-gradient-to-br ${step.bgGradient} backdrop-blur border ${step.borderColor} overflow-hidden cursor-pointer transition-all hover:shadow-md ${step.step === 2 && step2Highlight ? 'ring-2 ring-amber-400 dark:ring-amber-500 transition-[box-shadow] duration-500' : ''}`}
                     >
                       {step.badge && (
                         <div className={`absolute top-0 right-0 px-2 py-0.5 bg-gradient-to-r ${step.gradient} text-white text-[10px] font-medium rounded-bl-lg`}>
@@ -199,7 +234,7 @@ export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) =>
                     className="h-full"
                   >
                     <Card
-                      className={`h-full bg-gradient-to-br ${step.bgGradient} backdrop-blur border ${step.borderColor} overflow-hidden cursor-pointer transition-all hover:shadow-lg`}
+                      className={`h-full bg-gradient-to-br ${step.bgGradient} backdrop-blur border ${step.borderColor} overflow-hidden cursor-pointer transition-all hover:shadow-lg ${step.step === 2 && step2Highlight ? 'ring-2 ring-amber-400 dark:ring-amber-500 transition-[box-shadow] duration-500' : ''}`}
                     >
                       {step.badge && (
                         <div className={`absolute top-0 right-0 px-2 py-0.5 bg-gradient-to-r ${step.gradient} text-white text-[10px] font-medium rounded-bl-lg`}>
