@@ -209,6 +209,19 @@ export const useDynamicCoachChat = (
         }
       }
 
+      // 额外检查：消息中是否已包含简报卡片标记（财富教练等使用工具调用生成简报的场景）
+      const { data: briefingCardMessages } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', recentConv.id)
+        .like('content', '%<!--WEALTH_BRIEFING_CARD-->%')
+        .limit(1);
+
+      if (briefingCardMessages && briefingCardMessages.length > 0) {
+        // 已有简报卡片消息，对话已完成，不需要恢复
+        return;
+      }
+
       // 恢复对话
       console.log('🔄 [useDynamicCoachChat] 恢复未完成对话:', recentConv.id);
       setIsRecovering(true);
@@ -621,12 +634,17 @@ export const useDynamicCoachChat = (
                   }
                   if (genIdx >= 0) {
                     return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
-                    return prev.map((m, i) => i === genIdx ? { ...m, content: resultContent } : m);
                   }
                   // 没找到"正在生成"消息，直接追加卡片
                   return [...prev, { role: 'assistant', content: resultContent }];
                 });
                 
+                // 持久化简报卡片消息到数据库，确保刷新后仍可见
+                if (convId) {
+                  const finalContent = `<!--WEALTH_BRIEFING_CARD-->${JSON.stringify(briefingCardData)}`;
+                  await saveMessage(convId, "assistant", finalContent);
+                }
+
                 toast({
                   title: "📖 财富简报已生成",
                   description: `记录了 Day ${dayNumberToUse} 的财富觉察`,
