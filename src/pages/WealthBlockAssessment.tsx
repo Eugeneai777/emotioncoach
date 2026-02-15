@@ -817,8 +817,22 @@ export default function WealthBlockAssessmentPage() {
           </TabsContent>
           {/* 底部固定Tab导航 */}
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-t border-amber-200/50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
-            <div className="container max-w-sm sm:max-w-lg mx-auto px-3 py-2">
-              <TabsList className="w-full h-11 sm:h-12 bg-white/80 rounded-xl shadow-inner grid grid-cols-3 gap-1">
+            <div className="container max-w-sm sm:max-w-lg mx-auto px-3 py-2 relative">
+              {/* 中间凸出的教练解说 FAB 按钮 */}
+              {showResult && currentResult && (
+                <div className="absolute left-1/2 -translate-x-1/2 -top-10 z-20">
+                  <AssessmentVoiceCoach
+                    result={currentResult}
+                    aiInsight={null}
+                    healthScore={Math.round(
+                      ((5 - currentResult.behaviorScore) / 4 * 33) +
+                      ((5 - currentResult.emotionScore) / 4 * 33) +
+                      ((5 - currentResult.beliefScore) / 4 * 34)
+                    )}
+                  />
+                </div>
+              )}
+              <TabsList className="w-full h-11 sm:h-12 bg-white/80 rounded-xl shadow-inner grid grid-cols-2 gap-1">
                 <TabsTrigger 
                   value="assessment" 
                   className="gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
@@ -831,21 +845,6 @@ export default function WealthBlockAssessmentPage() {
                   <ClipboardList className="w-4 h-4" />
                   开始测评
                 </TabsTrigger>
-
-                {/* 教练解说按钮 - 仅在有结果时显示 */}
-                {showResult && currentResult ? (
-                  <AssessmentVoiceCoach
-                    result={currentResult}
-                    aiInsight={null}
-                    healthScore={Math.round(
-                      ((5 - currentResult.behaviorScore) / 4 * 33) +
-                      ((5 - currentResult.emotionScore) / 4 * 33) +
-                      ((5 - currentResult.beliefScore) / 4 * 34)
-                    )}
-                  />
-                ) : (
-                  <div />
-                )}
 
                 <TabsTrigger 
                   value="history" 
