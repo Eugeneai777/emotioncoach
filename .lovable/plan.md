@@ -1,64 +1,75 @@
 
 
-## 优化"财富旅程"页面 — 减少层级、去除重复
+## 精简"我的财富觉醒之旅"卡片
 
-### 问题分析
+### 当前问题
 
-当前"成长档案"Tab 结构过于复杂，存在 **三层嵌套 Tabs**：
-
-```text
-主 Tabs (今日任务 / 教练对话 / 成长档案)
-  └─ 成长档案 Tab
-       ├─ AwakeningDashboard (日历/进度)
-       └─ 嵌套 Tabs (财富旅程 / 财富简报)
-            └─ 财富旅程 Tab (AwakeningArchiveTab)
-                 ├─ 毕业证书卡片
-                 ├─ GameProgressCard (游戏化进度)
-                 ├─ CompactAchievementGrid (成就徽章)
-                 ├─ GrowthHighlightsCard (成长亮点)
-                 ├─ 又一层嵌套 Tabs (曲线/时间轴/对比/周报)
-                 └─ CombinedPersonalityCard
-```
-
-**核心问题**：
-- 3 层 Tab 嵌套，用户迷失在层级中
-- GameProgressCard 与 AwakeningDashboard 展示重复的进度信息
-- GrowthHighlightsCard 的数据与 GameProgressCard 高度重叠
-- 4 个数据可视化子 Tab 使用频率低，增加认知负担
-
-### 优化方案：扁平化为线性卡片流
-
-将"财富旅程"从多层 Tab 改为单页线性滚动，合并重复内容，保留核心价值：
+卡片包含 **7 层信息**，互相重复且目标分散：
 
 ```text
-成长档案 Tab (优化后)
-  ├─ AwakeningDashboard (日历 — 保留)
-  ├─ 嵌套 Tabs (财富旅程 / 财富简报 — 保留二级结构)
-  │    └─ 财富旅程 (AwakeningArchiveTab — 简化内容)
-  │         ├─ 毕业证书 (仅毕业用户可见 — 保留)
-  │         ├─ GameProgressCard (保留，去掉与Dashboard重复的字段)
-  │         ├─ 成长曲线 WealthProgressChart (直接展示，不再套Tab)
-  │         ├─ CompactAchievementGrid (保留)
-  │         └─ CombinedPersonalityCard (保留)
-  │
-  └─ 财富简报 Tab — 保留不变
+1. 标题 + 标签（成长+0, 目标80+）
+2. 四段式觉醒状态条 (AwakeningStatusBar)
+3. 觉醒起点 vs 当前觉醒（大数字对比）
+4. 等级图标轨道（6个等级 icon）
+5. "距 Lv.2 还需 90 积分" 文字
+6. GoalCarousel 标题（目标 · 4个待完成）
+7. 4 张目标卡片
 ```
 
-**具体删减**：
-1. **移除 GrowthHighlightsCard** — 其"连续天数/觉醒变化/行动完成率"与 GameProgressCard 和 Dashboard 重复
-2. **移除 4-Tab 数据可视化区域** — 将"成长曲线"(WealthProgressChart) 直接作为独立卡片展示；移除"时间轴"(JournalTimelineView)、"周报"(WeeklyComparisonChart)、"测评对比"(GrowthComparisonCard) 这三个低频子 Tab
-3. **调整排列顺序** — 毕业证书 > 游戏进度 > 成长曲线 > 成就徽章 > 财富人格
+**重复点**：
+- "目标 80+" 标签 与 GoalCarousel 中的"高度觉醒"卡片重复
+- AwakeningStatusBar 的"距高度觉醒还差15分" 与 GoalCarousel 的"还差15分"重复
+- 等级轨道的"距 Lv.2 还需 90 积分" 与 GoalCarousel 的"Lv.2 还差90积分"重复
+- 觉醒起点 vs 当前觉醒 与 AwakeningStatusBar 都在展示当前分数
+
+### 优化方案：三区块精简布局
+
+将 7 层压缩为 **3 个清晰区块**：
+
+```text
+优化后结构：
+1. 核心数据区：当前觉醒分 + 成长变化（一眼看到核心状态）
+2. 等级进度区：当前等级 + 下一目标（简化的等级条）
+3. 移除 GoalCarousel（目标信息已整合到上方）
+```
 
 ### 技术细节
 
-**修改文件：`src/components/wealth-camp/AwakeningArchiveTab.tsx`**
+**修改文件：`src/components/wealth-camp/GameProgressCard.tsx`**
 
-1. 移除导入：`GrowthHighlightsCard`、`WeeklyComparisonChart`、`GrowthComparisonCard`、`JournalTimelineView`、`Tabs/TabsList/TabsTrigger/TabsContent`（内层的）
-2. 移除相关的计算变量：`awakeningChange`、`actionCompletionRate`、`beliefsCount`、`givingActionsCount`
-3. 将 `WealthProgressChart` 从 Tab 内提取为独立 `Card` 展示
-4. 删除整个 4-Tab 数据可视化区域，替换为单一曲线卡片
-5. 删除 `GrowthHighlightsCard` 组件调用
-6. 保留：毕业证书、GameProgressCard、CompactAchievementGrid、CombinedPersonalityCard
+1. **移除 AwakeningStatusBar**：四段式进度条信息量大但难以快速理解，用简单的觉醒分数 + 状态 badge 替代
+2. **移除"觉醒起点 vs 当前觉醒"对比区**：起点信息价值低（用户已知），只保留当前觉醒分和成长变化值
+3. **移除 GoalCarousel 及其子组件**：4 张目标卡片与等级轨道文字提示重复
+4. **移除标签区**（"成长+0"、"目标80+"）：整合到核心数据区
+5. **保留等级图标轨道**：但简化样式，减少动画
 
-预计代码行数从 ~260 行减少到 ~120 行，组件导入从 12 个减少到 7 个。
+**简化后布局**：
+
+```text
+┌─────────────────────────────────────┐
+│ 🎮 我的财富觉醒之旅            (i) │
+│                                     │
+│   🟡 稳步觉醒                      │
+│   65 分  (成长 +0)                  │
+│   距高度觉醒还差 15 分              │
+│                                     │
+│ 🌱──🌿──🌻──⭐──🌟──👑           │
+│        ↑ 当前                       │
+│   距 Lv.2 觉察学徒 还需 90 积分    │
+└─────────────────────────────────────┘
+```
+
+**删除的组件/导入**：
+- `GoalCarousel` 组件调用及导入
+- `AwakeningStatusBar` 组件调用及导入
+- "觉醒起点 vs 当前觉醒" 整个对比区块
+- 标签区（badges）
+
+**保留**：
+- 等级图标轨道（核心游戏化元素）
+- 距下一等级文字提示
+- AwakeningRulesDialog（规则说明弹窗）
+- 加载/空状态处理
+
+预计代码从 ~420 行减少到 ~200 行，视觉信息层从 7 层减少到 3 层。
 
