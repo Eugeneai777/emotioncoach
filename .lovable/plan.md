@@ -1,60 +1,42 @@
 
+## 问题诊断
 
-## 实施提醒方案：已购买但未完成财富卡点测评
+Lisa (BLOOM-LS23) 的数据库记录完全正确：
+- 邀请码已兑换（status: claimed）
+- 订单已支付（status: paid, amount: 0）
+- 只有一个账号，不存在重复账号问题
 
-### 变更清单
+**根本原因**：`BloomPartnerIntro.tsx` 页面在判断是否显示"需付费¥9.9"标签时，没有处理数据加载中（isLoading）的状态。当 `useAssessmentPurchase` 查询尚未返回结果时，`purchaseRecord` 为 `undefined`，代码直接进入"需付费"分支。在微信内嵌浏览器等网络较慢的环境中，这个加载窗口可能持续数秒，用户会看到错误的付费提示。
 
-**1. 新建 Edge Function: `supabase/functions/batch-trigger-assessment-reminder/index.ts`**
+## 修复方案
 
-参照 `batch-trigger-profile-completion` 的模式：
+### 1. 修改 BloomPartnerIntro.tsx 的状态标签逻辑
 
-- 使用 `validateCronSecret` 鉴权
-- 用 service_role 查询"已购买测评但未完成"的用户：
-  - 从 `orders` 表找 `package_key='wealth_block_assessment'` 且 `status='paid'` 的用户
-  - 排除 `wealth_block_assessments` 表中已有记录的用户
-- 3 天去重窗口：检查 `smart_notifications` 中 `scenario='assessment_incomplete_reminder'` 是否已在 3 天内发送过
-- 调用 `generate-smart-notification` 生成个性化通知：
-  - scenario: `assessment_incomplete_reminder`
-  - context 包含购买时间等信息
-  - coach_type: `wealth`
+从 `useAssessmentPurchase` 中解构 `isLoading` 状态，在数据加载中时：
+- 不显示"需付费¥9.9"标签（或显示一个加载占位符）
+- 避免给用户造成需要付费的误导
 
-**2. 修改 `src/components/SmartHomeRedirect.tsx`**
+### 2. 具体代码变更
 
-在 wealth 用户分支中增加即时提醒逻辑：
+**文件**: `src/pages/BloomPartnerIntro.tsx`
 
-- 当 `hasPaidAssessment = true` 时，额外查询 `wealth_block_assessments` 表
-- 如果没有完成记录，通过 localStorage 日级去重后，调用 `generate-smart-notification` 触发即时通知
-- 不影响现有的路由跳转逻辑
+- 第 51 行：从 `useAssessmentPurchase()` 中额外解构 `isLoading`
+- 第 157-170 行：在条件判断中增加加载状态处理：
+  - 如果 `isLoading` 为 true，显示一个小的加载指示器（如 `Loader2` 图标）或不显示任何标签
+  - 只有在加载完成且 `purchaseRecord` 为空时，才显示"需付费¥9.9"
 
-**3. 更新 `supabase/config.toml`**
+---
 
-添加新函数配置：
-```toml
-[functions.batch-trigger-assessment-reminder]
-verify_jwt = false
+### 技术细节
+
+修改前逻辑：
+```
+user存在 → 已完成? → 已解锁? → 显示"需付费"
 ```
 
-### 通知内容
-
-| 字段 | 值 |
-|---|---|
-| scenario | `assessment_incomplete_reminder` |
-| notification_type | `reminder` |
-| 标题方向 | "你的财富卡点测评还在等你" |
-| action_type | `navigate` |
-| action_data | `{"path": "/wealth-block"}` |
-| coach_type | `wealth` |
-| priority | 4 |
-
-### Cron 调度
-
-需要通过 SQL 设置每天上午 10:00 (北京时间 = UTC 02:00) 执行一次：
-
-```sql
-SELECT cron.schedule(
-  'batch-assessment-reminder-daily',
-  '0 2 * * *',
-  $$ SELECT net.http_post(...) $$
-);
+修改后逻辑：
+```
+user存在 → 已完成? → 已解锁? → 加载中? → 显示"需付费"
 ```
 
+这样可以确保在数据尚未返回时不会误导用户，同时不影响真正需要付费的用户看到正确提示。
