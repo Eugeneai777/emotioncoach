@@ -1,34 +1,66 @@
 
-## 替换"AI教练"按钮为"财富教练"按钮
 
-### 修改文件
-**`src/pages/WealthBlockAssessment.tsx`** 第 685-699 行
+## 将财富教练对话功能独立到新页面 `/wealth-coach-chat`
 
-### 具体改动
-- 去除当前的"AI教练"按钮
-- 替换为"财富教练"按钮，保持相同样式，链接指向 `/coach/wealth_coach_4_questions`
-- 按钮文字从"AI教练"改为"财富教练"
-- 图标和跳转链接保持不变
+### 概述
+把 `/coach/wealth_coach_4_questions` 页面改为**仅显示介绍内容**（步骤卡片、训练营等），不再包含对话功能。对话功能移到全新的独立页面 `/wealth-coach-chat`。
+
+### 修改内容
+
+**1. 新建页面 `src/pages/WealthCoachChat.tsx`**
+- 创建一个独立的财富教练对话页面
+- 复用现有的 `CoachLayout` 组件，但跳过空状态介绍（`skipEmptyState`）
+- 使用与 `DynamicCoach.tsx` 中财富教练相同的聊天逻辑（`useDynamicCoachChat`、`useCoachTemplate` 等）
+- 页面打开即显示对话输入框，可以直接开始对话
+
+**2. 修改 `src/App.tsx`**
+- 添加新路由：`/wealth-coach-chat` 指向 `WealthCoachChat` 组件
+
+**3. 修改 `src/pages/DynamicCoach.tsx`**
+- 当 `coachKey === 'wealth_coach_4_questions'` 时，不渲染对话功能
+- 只显示 `CoachEmptyState`（介绍视图），并在介绍页中添加一个按钮跳转到 `/wealth-coach-chat`
+
+**4. 更新各处跳转链接**
+- `src/pages/WealthBlockAssessment.tsx`：「财富教练」按钮改为跳转到 `/wealth-coach-chat`
+- `src/pages/Auth.tsx`：登录后财富用户的跳转目标改为 `/wealth-coach-chat`
+- `src/components/coach-call/AICoachCallProvider.tsx`：wealth 映射改为 `/wealth-coach-chat`
+- `src/pages/WealthCoachIntro.tsx`：「开始」按钮改为跳转到 `/wealth-coach-chat`
+- `src/pages/WealthCampCheckIn.tsx`：相关跳转改为 `/wealth-coach-chat`
+- 其他引用 `/coach/wealth_coach_4_questions` 作为对话入口的地方
 
 ### 技术细节
 
-将第 685-699 行替换为：
+新页面 `WealthCoachChat.tsx` 核心结构：
 ```tsx
-{/* 财富教练入口按钮 */}
-<Button
-  variant="ghost"
-  onClick={() => navigate("/coach/wealth_coach_4_questions")}
-  className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
-             bg-gradient-to-r from-amber-400 to-orange-400 
-             hover:from-amber-500 hover:to-orange-500 
-             text-white shadow-md hover:shadow-lg 
-             transition-all duration-200 hover:scale-[1.02]
-             flex items-center justify-center gap-1.5 sm:gap-2"
->
-  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-  <span className="text-xs sm:text-sm font-medium">财富教练</span>
-  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-</Button>
+const WealthCoachChat = () => {
+  const coachKey = "wealth_coach_4_questions";
+  const { data: template } = useCoachTemplate(coachKey);
+  // 复用 useDynamicCoachChat hook
+  // 渲染 CoachLayout，跳过 EmptyState
+  return (
+    <CoachLayout
+      {...templateProps}
+      skipEmptyState={true}
+      messages={messages}
+      // ... 其他 props
+    />
+  );
+};
 ```
 
-仅改动按钮注释和显示文字，其余样式、图标、跳转路径均不变。
+`CoachLayout.tsx` 新增 `skipEmptyState` prop：
+```tsx
+// 接口新增
+skipEmptyState?: boolean;
+
+// 条件渲染修改
+(messages.length === 0 && !skipEmptyState) 
+  ? <CoachEmptyState ... /> 
+  : <ChatMessages />
+```
+
+### 最终效果
+- `/coach/wealth_coach_4_questions`：仅显示介绍内容（步骤、训练营信息），不含对话
+- `/wealth-coach-chat`：纯对话页面，打开即可开始聊天
+- 所有需要进入对话的按钮都跳转到 `/wealth-coach-chat`
+
