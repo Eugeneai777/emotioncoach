@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Share2, Users, TrendingUp, Wallet, Gift, Sparkles } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
-import { BloomOverviewCard } from "@/components/partner/BloomOverviewCard";
+import { getPartnerLevel } from "@/config/partnerLevels";
 import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
@@ -187,11 +187,12 @@ export default function Partner() {
               <YoujinPartnerDashboard partner={partner} />
             ) : (
               <>
-                {/* 1. 身份卡片 */}
-                <BloomOverviewCard partner={partner} />
-
-                {/* 2. 飞轮概览 — 两种身份通用 */}
-                <MyFlywheelOverview partnerId={partner.id} />
+                {/* 飞轮概览（含身份标识）— 置顶 */}
+                <MyFlywheelOverview
+                  partnerId={partner.id}
+                  partnerType={partner.partner_type as 'bloom' | 'youjin'}
+                  partnerLevel={partner.partner_level}
+                />
 
                 {/* 3. 统一 Tabs: 推广 | 学员 | 收益 */}
                 <Tabs defaultValue="promote" className="space-y-6">

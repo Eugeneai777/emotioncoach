@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowRight } from "lucide-react";
+import { getPartnerLevel } from "@/config/partnerLevels";
 
 interface MyFlywheelOverviewProps {
   partnerId: string;
+  partnerType?: 'bloom' | 'youjin';
+  partnerLevel?: string;
 }
 
 interface LevelData {
@@ -22,7 +25,7 @@ const LEVEL_2_KEYS = ['member365', 'emotion_button', 'camp-wealth_block_7', 'wea
 const LEVEL_3_KEYS = ['bloom_identity_camp', 'awakening_system'];
 const LEVEL_4_KEYS = ['youjin_partner_l1', 'youjin_partner_l2'];
 
-export function MyFlywheelOverview({ partnerId }: MyFlywheelOverviewProps) {
+export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyFlywheelOverviewProps) {
   const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<LevelData[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
@@ -161,10 +164,28 @@ export function MyFlywheelOverview({ partnerId }: MyFlywheelOverviewProps) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-4 space-y-4">
-        {/* Title */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🎯</span>
-          <h3 className="font-bold text-base">我的飞轮</h3>
+        {/* Title with identity badge */}
+        <div className="flex items-center justify-between">
+          {partnerType && (() => {
+            const level = getPartnerLevel(partnerType, partnerLevel || '');
+            if (!level) return null;
+            const isBloom = partnerType === 'bloom';
+            const commissionLabel = isBloom
+              ? `${(level.commissionRateL1 * 100).toFixed(0)}%+${(level.commissionRateL2 * 100).toFixed(0)}%`
+              : `${(level.commissionRateL1 * 100).toFixed(0)}%${level.commissionRateL2 > 0 ? `+${(level.commissionRateL2 * 100).toFixed(0)}%` : ''}`;
+            return (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${level.gradient}`}>
+                <span>{level.icon}</span>
+                <span>{level.name}</span>
+                <span className="opacity-80">·</span>
+                <span>{commissionLabel}</span>
+              </div>
+            );
+          })()}
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg">🎯</span>
+            <h3 className="font-bold text-base">我的飞轮</h3>
+          </div>
         </div>
 
         {/* 4-Level Funnel */}
