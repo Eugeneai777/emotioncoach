@@ -204,11 +204,11 @@ export const questions = [
 ];
 
 export const scoreLabels = [
-  { value: 1, label: "没有" },
-  { value: 2, label: "很轻" },
-  { value: 3, label: "中等" },
-  { value: 4, label: "偏重" },
-  { value: 5, label: "严重" },
+  { value: 1, label: "从不" },
+  { value: 2, label: "偶尔" },
+  { value: 3, label: "有时" },
+  { value: 4, label: "经常" },
+  { value: 5, label: "总是" },
 ];
 
 export type BlockLayer = "behavior" | "emotion" | "belief";
