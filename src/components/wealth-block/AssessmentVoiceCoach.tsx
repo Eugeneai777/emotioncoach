@@ -14,6 +14,7 @@ interface AssessmentVoiceCoachProps {
   result: AssessmentResult;
   aiInsight: AIInsightData | null;
   healthScore: number;
+  disabled?: boolean;
 }
 
 const FREE_SESSION_LIMIT = 2;
@@ -26,7 +27,7 @@ const MEMBER_365_PACKAGE = {
   quota: 1000
 };
 
-export function AssessmentVoiceCoach({ result, aiInsight, healthScore }: AssessmentVoiceCoachProps) {
+export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled = false }: AssessmentVoiceCoachProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [showVoiceChat, setShowVoiceChat] = useState(false);
@@ -85,6 +86,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore }: Assessm
   };
 
   const handleClick = () => {
+    if (disabled) return;
     if (isLimitReached) {
       setShowPayDialog(true);
       return;
@@ -105,19 +107,26 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore }: Assessm
     <>
       <button
         onClick={handleClick}
-        className="relative flex flex-col items-center justify-center w-[68px] h-[68px] rounded-full
-                   bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-xl
-                   active:scale-[0.93] transition-all duration-200 z-10"
+        disabled={disabled}
+        className={`relative flex flex-col items-center justify-center w-[72px] h-[72px] rounded-full
+                   shadow-xl active:scale-[0.93] transition-all duration-200 z-10
+                   ${disabled 
+                     ? "bg-muted text-muted-foreground cursor-not-allowed" 
+                     : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}
       >
-        {/* 呼吸光晕 */}
-        <span className="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping" />
-        <span className="absolute -inset-1.5 rounded-full bg-red-400/20 animate-pulse" />
+        {/* 呼吸光晕 - 仅在非禁用时显示 */}
+        {!disabled && (
+          <>
+            <span className="absolute -inset-1 rounded-full bg-red-400 opacity-40 animate-ping" />
+            <span className="absolute -inset-2.5 rounded-full bg-red-400/20 animate-pulse" />
+          </>
+        )}
         <ButtonIcon className="w-5 h-5 relative z-10" />
         <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
-          {isLimitReached ? '升级' : '教练'}
+          {disabled ? '教练' : isLimitReached ? '升级' : '教练'}
         </span>
         <span className="relative z-10 text-[10px] font-bold leading-tight">
-          {isLimitReached ? '解锁' : hasFreeRemaining ? '解说' : '解说'}
+          {disabled ? '解说' : isLimitReached ? '解锁' : hasFreeRemaining ? '解说' : '解说'}
         </span>
       </button>
 
