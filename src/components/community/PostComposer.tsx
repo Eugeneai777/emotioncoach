@@ -93,6 +93,9 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
         description: "你的分享已发布到社区",
       });
 
+      // 清除推荐缓存，确保社区刷新时能看到新帖
+      sessionStorage.removeItem('community_recommendation_cache');
+
       // 重置表单
       setTitle("");
       setContent("");

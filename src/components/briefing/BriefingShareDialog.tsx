@@ -210,6 +210,12 @@ const BriefingShareDialog = ({
         description: "你的简报已分享到社区 🎉",
       });
 
+      // 清除推荐缓存，确保社区刷新时能看到新帖
+      sessionStorage.removeItem('community_recommendation_cache');
+
+      // 通知社区组件刷新
+      window.dispatchEvent(new CustomEvent('post-updated'));
+
       onOpenChange(false);
       
       setTimeout(() => {

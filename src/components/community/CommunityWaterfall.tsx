@@ -304,7 +304,28 @@ const CommunityWaterfall = () => {
       else {
         // 如果使用推荐且是第一页
         if (useRecommendation && pageNum === 0 && filter === 'all') {
-          const recommendedIds = await loadRecommendedPosts();
+          let recommendedIds = await loadRecommendedPosts();
+          
+          // 混入用户自己最近24小时的帖子，避免推荐缓存遮蔽新帖
+          if (recommendedIds && recommendedIds.length > 0 && session?.user) {
+            try {
+              const { data: myRecentPosts } = await supabase
+                .from('community_posts')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                .order('created_at', { ascending: false })
+                .limit(3);
+
+              if (myRecentPosts?.length) {
+                const myIds = myRecentPosts.map(p => p.id);
+                recommendedIds = [...new Set([...myIds, ...recommendedIds])];
+              }
+            } catch (e) {
+              console.error('Failed to load user recent posts:', e);
+            }
+          }
+          
           if (recommendedIds && recommendedIds.length > 0) {
             query = query
               .in('id', recommendedIds)
