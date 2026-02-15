@@ -314,12 +314,14 @@ const DynamicCoach = () => {
       historyLabel={template.history_label || '我的日记'}
       historyLabelShort={template.history_label_short || '日记'}
       currentCoachKey={coachKey}
-      messages={messages}
-      isLoading={isLoading}
-      input={input}
-      onInputChange={setInput}
-      onSend={handleSend}
-      onNewConversation={handleNewConversation}
+      messages={isWealthCoach ? [] : messages}
+      isLoading={isWealthCoach ? false : isLoading}
+      input={isWealthCoach ? '' : input}
+      onInputChange={isWealthCoach ? () => {} : setInput}
+      onSend={isWealthCoach ? () => {} : handleSend}
+      onNewConversation={isWealthCoach ? undefined : handleNewConversation}
+      hideInput={isWealthCoach}
+      chatEntryRoute={isWealthCoach ? '/wealth-coach-chat' : undefined}
       onOptionClick={optionClickHandler}
       onOptionSelect={optionSelectHandler}
       placeholder={template.placeholder || '分享你的想法...'}

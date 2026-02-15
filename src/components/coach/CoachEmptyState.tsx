@@ -1,4 +1,5 @@
 import { ReactNode, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -42,6 +43,7 @@ interface CoachEmptyStateProps {
   campRecommendation?: ReactNode;
   enableCollapse?: boolean;
   voiceChatCTA?: ReactNode;
+  chatEntryRoute?: string;
 }
 
 export const CoachEmptyState = ({
@@ -65,7 +67,8 @@ export const CoachEmptyState = ({
   showDailyReminder = false,
   campRecommendation,
   enableCollapse = false,
-  voiceChatCTA
+  voiceChatCTA,
+  chatEntryRoute
 }: CoachEmptyStateProps) => {
   const navigate = useNavigate();
   const storageKey = 'coach_steps_collapsed';
@@ -244,6 +247,18 @@ export const CoachEmptyState = ({
 
       {/* Extra Content */}
       {extraContent}
+
+      {/* Chat Entry Button for intro-only mode */}
+      {chatEntryRoute && (
+        <div className="flex justify-center pt-4 pb-6">
+          <Button
+            onClick={() => navigate(chatEntryRoute)}
+            className={`rounded-full px-8 py-3 text-base font-medium bg-gradient-to-r ${gradient} text-white shadow-lg hover:shadow-xl active:scale-95 transition-all`}
+          >
+            开始对话 →
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
