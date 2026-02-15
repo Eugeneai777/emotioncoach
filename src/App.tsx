@@ -11,6 +11,7 @@ import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 import { UserPresenceTracker } from "./hooks/useUserPresence";
 import { lazyRetry } from "./utils/lazyRetry";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
+const SmartHomeRedirect = lazyRetry(() => import("./components/SmartHomeRedirect"));
 // 页面加载状态组件
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -238,7 +239,7 @@ const App = () => (
           <ChunkErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<Navigate to="/coach/vibrant_life_sage" replace />} />
+              <Route path="/" element={<SmartHomeRedirect />} />
               <Route path="/emotion-coach" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/wechat-auth" element={<WeChatAuth />} />
