@@ -194,7 +194,50 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
             </motion.div>
           )}
 
-          {/* 区块2：等级图标轨道 */}
+          {/* 区块2：7天训练营目标 */}
+          {(() => {
+            const campGoal = awakeningLevels[3]; // Lv.4 信念转化者, 700分
+            const totalPoints = progress.total_points;
+            const goalProgress = Math.min(100, Math.round((totalPoints / campGoal.minPoints) * 100));
+            const isAchieved = totalPoints >= campGoal.minPoints;
+            
+            return (
+              <motion.div
+                className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 space-y-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.35 }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-300">
+                    🎯 7天目标：<span className="text-amber-400 font-medium">{campGoal.icon} Lv.{campGoal.level} {campGoal.name}</span>
+                  </span>
+                  {isAchieved ? (
+                    <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-0.5">
+                      <Check className="h-3 w-3" /> 已达成
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-400 font-medium">{totalPoints}/{campGoal.minPoints} 积分</span>
+                  )}
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
+                  <motion.div
+                    className={cn(
+                      "h-full rounded-full",
+                      isAchieved 
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-400" 
+                        : "bg-gradient-to-r from-amber-500 to-orange-400"
+                    )}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${goalProgress}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
+                  />
+                </div>
+              </motion.div>
+            );
+          })()}
+
+          {/* 区块3：等级图标轨道 */}
           <TooltipProvider>
             <div className="space-y-2">
               <div className="relative flex justify-between items-center px-1 sm:px-2">
