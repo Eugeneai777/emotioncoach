@@ -666,23 +666,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
-      {/* 统一行动区：合并CTA */}
-      <NextStepActionCard
-        isSaved={isSaved || false}
-        isSaving={isSaving}
-        hasPurchased={hasPurchased}
-        awakeningStart={100 - healthScore}
-        day7Target={Math.min(100 - healthScore + 20, 95)}
-        onSave={onSave}
-        onPurchase={() => setShowPayDialog(true)}
-        onStartCamp={() => setShowStartDialog(true)}
-        dominantPoor={result.dominantPoor}
-        dominantEmotion={result.dominantEmotionBlock}
-        dominantBelief={result.dominantBeliefBlock}
-        aiInsight={aiInsight}
-        isLoadingAI={isLoadingAI}
-        onViewDetails={() => navigate('/wealth-camp-intro')}
-      />
+
 
       {/* 绽放邀请码入口 - 未购买时显示 */}
       {!hasPurchased && (
