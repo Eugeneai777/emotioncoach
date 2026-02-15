@@ -214,7 +214,7 @@ export default function TeenVoiceChat({
       await pc.setLocalDescription(offer);
 
       // Connect to OpenAI Realtime API
-      const model = 'gpt-4o-mini-realtime-preview-2024-12-17';
+      const model = 'gpt-4o-mini-realtime-preview';
       const sdpResponse = await fetch(`${realtimeUrl}?model=${model}`, {
         method: 'POST',
         body: offer.sdp,
