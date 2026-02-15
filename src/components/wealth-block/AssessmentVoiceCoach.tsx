@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AssessmentVoiceCoachProps {
-  result: AssessmentResult;
+  result: AssessmentResult | null;
   aiInsight: AIInsightData | null;
   healthScore: number;
   disabled?: boolean;
@@ -71,7 +71,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
   const hasFreeRemaining = sessionCount < FREE_SESSION_LIMIT;
 
   // 构建传递给 edge function 的测评数据
-  const assessmentData = {
+  const assessmentData = result ? {
     healthScore,
     patternName: patternInfo[result.reactionPattern]?.name || '未知',
     dominantPoor: fourPoorInfo[result.dominantPoor]?.name || '未知',
@@ -83,7 +83,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
     rootCauseAnalysis: aiInsight?.rootCauseAnalysis || '',
     mirrorStatement: aiInsight?.mirrorStatement || '',
     coreStuckPoint: aiInsight?.coreStuckPoint || '',
-  };
+  } : null;
 
   const handleClick = () => {
     if (disabled) return;
