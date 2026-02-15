@@ -398,7 +398,7 @@ export const CoachLayout = ({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           style={{
-            paddingBottom: `${getContentPaddingBottom()}px`,
+            paddingBottom: `${chatEntryRoute ? Math.max(getContentPaddingBottom(), 96) : getContentPaddingBottom()}px`,
             ...(onRefresh && {
               transform: `translateY(${pullDistance}px)`,
               transition: isPulling ? 'none' : 'transform 0.3s ease-out'
