@@ -225,7 +225,7 @@ const Auth = () => {
               ]);
 
               if (bloomPartner && assessmentOrder) {
-                targetRedirect = "/coach/wealth_coach_4_questions";
+                targetRedirect = "/wealth-coach-intro";
               } else {
                 // 检查是否有活跃的财富训练营
                 const { data: activeCamp } = await supabase
