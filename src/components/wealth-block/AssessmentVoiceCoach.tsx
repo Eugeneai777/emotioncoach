@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Crown } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -67,8 +66,8 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore }: Assessm
 
   if (!user) return null;
 
-  const remainingSessions = Math.max(0, FREE_SESSION_LIMIT - sessionCount);
   const isLimitReached = sessionCount >= FREE_SESSION_LIMIT && !isMember365;
+  const hasFreeRemaining = sessionCount < FREE_SESSION_LIMIT;
 
   // 构建传递给 edge function 的测评数据
   const assessmentData = {
@@ -93,65 +92,26 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore }: Assessm
     setShowVoiceChat(true);
   };
 
+  // 按钮文字逻辑
+  const buttonLabel = isLimitReached
+    ? '升级解锁'
+    : hasFreeRemaining
+      ? '教练解说（免费）'
+      : '教练解说';
+
+  const ButtonIcon = isLimitReached ? Crown : Mic;
+
   return (
     <>
-      {/* 底部居中圆形浮动按钮 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center pb-[calc(16px+env(safe-area-inset-bottom))] pt-3 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 20 }}
-          className="flex flex-col items-center pointer-events-auto"
-        >
-          {/* 圆形按钮 */}
-          <button
-            onClick={handleClick}
-            className="relative group focus:outline-none touch-manipulation"
-            aria-label="教练解说"
-          >
-            {/* 外圈呼吸光晕 */}
-            <div className={`absolute inset-[-16px] rounded-full animate-pulse opacity-30 ${
-              isLimitReached
-                ? 'bg-gradient-to-r from-violet-400 to-fuchsia-400'
-                : 'bg-gradient-to-r from-amber-400 to-rose-400'
-            }`} />
-            <div className={`absolute inset-[-8px] rounded-full animate-ping opacity-20 ${
-              isLimitReached
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500'
-                : 'bg-gradient-to-r from-amber-500 to-rose-500'
-            }`} style={{ animationDuration: '2s' }} />
-
-            {/* 主按钮 */}
-            <div className={`relative w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all duration-200 ${
-              isLimitReached
-                ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 shadow-purple-500/40'
-                : 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 shadow-orange-500/40'
-            }`}>
-              {isLimitReached ? (
-                <Crown className="w-7 h-7 text-white" />
-              ) : (
-                <Mic className="w-7 h-7 text-white" />
-              )}
-            </div>
-          </button>
-
-          {/* 按钮下方文字 */}
-          <p className="mt-2 text-sm font-semibold text-foreground">
-            {isLimitReached ? '升级继续对话' : '教练解说（免费）'}
-          </p>
-
-          {/* 状态提示 */}
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {isMember365 ? (
-              '🎖️ 365会员 · 无限对话'
-            ) : isLimitReached ? (
-              '升级解锁无限对话'
-            ) : (
-              `💎 还剩 ${remainingSessions}/${FREE_SESSION_LIMIT} 次免费体验`
-            )}
-          </p>
-        </motion.div>
-      </div>
+      <button
+        onClick={handleClick}
+        className="flex-1 flex items-center justify-center gap-1.5 h-full rounded-lg text-xs sm:text-sm font-medium
+                   bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-md
+                   active:scale-[0.97] transition-all duration-200"
+      >
+        <ButtonIcon className="w-4 h-4" />
+        {buttonLabel}
+      </button>
 
       {showVoiceChat && (
         <CoachVoiceChat
