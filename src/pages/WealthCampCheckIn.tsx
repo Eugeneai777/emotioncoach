@@ -11,7 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { WealthMeditationPlayer } from '@/components/wealth-camp/WealthMeditationPlayer';
 import { WealthJournalCard } from '@/components/wealth-camp/WealthJournalCard';
-import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteCard';
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
 import { WealthCoachEmbedded } from '@/components/wealth-camp/WealthCoachEmbedded';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
@@ -20,13 +19,10 @@ import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDia
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
-import { UnifiedTaskCenter, UserMode } from '@/components/wealth-camp/UnifiedTaskCenter';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
 import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
-import { PartnerConversionCard } from '@/components/wealth-camp/PartnerConversionCard';
-import { NextGoalsRow } from '@/components/wealth-camp/NextGoalsRow';
-import { GapReminderCard } from '@/components/wealth-camp/GapReminderCard';
+import { WaterfallSteps } from '@/components/wealth-camp/WaterfallSteps';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -100,8 +96,6 @@ export default function WealthCampCheckIn() {
     }
   }, [userCampMode]);
   
-  // Determine UserMode for TodayTaskHub
-  const taskHubMode: UserMode = userCampMode === 'partner' ? 'partner' : userCampMode === 'graduate' ? 'graduate' : 'active';
   const isPostCampMode = userCampMode === 'graduate' || userCampMode === 'partner';
   
   // Fetch camp data
@@ -635,129 +629,39 @@ ${reflection}`;
               )}
             </AnimatePresence>
 
-            {/* ========== 根据用户模式差异化排序卡片 ========== */}
-            
-            {/* Active 模式：仪表盘 → 任务清单 → 冥想 → AI建议 → 邀请 */}
-            {/* Graduate 模式：仪表盘 → 任务清单 → 每日挑战 → 合伙人转化 → 冥想 → AI建议 → 邀请 */}
-            {/* Partner 模式：仪表盘 → 任务清单 → 每日挑战 → 冥想 → AI建议 → 邀请 */}
-
-            {/* 1. 觉醒仪表盘 - 所有模式都优先显示 */}
-            {!makeupDayNumber && (
-              <AwakeningDashboard
-                currentDay={currentDay}
-                totalDays={camp.duration_days || 7}
-                completedDays={completedDays}
-                makeupDays={makeupDays}
-                streak={streak}
-                onMakeupClick={(dayNumber) => {
-                  setMakeupMeditationDone(false);
-                  setMakeupReflection('');
-                  setMakeupDayNumber(dayNumber);
-                  toast({
-                    title: `开始补打 Day ${dayNumber}`,
-                    description: "完成冥想和教练梳理后即可补卡",
-                  });
-                }}
-                activeMakeupDay={makeupDayNumber}
-                justCompletedDay={lastCompletedMakeupDay}
-                userMode={userCampMode}
-                postGraduationCheckIns={postGraduationCheckIns}
-                cycleRound={cycleRound}
-                cycleDayInRound={cycleDayInRound}
-                cycleMeditationDay={cycleMeditationDay}
-                daysSinceLastCheckIn={daysSinceLastCheckIn}
-                daysSinceGraduation={userCampMode !== 'active' ? Math.max(0, currentDay - 7) : 0}
-                cycleWeek={cycleWeek}
-                postCampCheckinDates={postCampCheckinDates}
-              />
-            )}
-              
-            {/* 断档提醒卡片 - 只在毕业后且有间断时显示 */}
-            {!makeupDayNumber && isPostCampMode && daysSinceLastCheckIn > 1 && (
-              <GapReminderCard
-                daysSinceLastCheckIn={daysSinceLastCheckIn}
-                cycleRound={cycleRound}
-                cycleDayInRound={cycleDayInRound}
-                onContinueClick={scrollToMeditation}
-              />
-            )}
-
-            {/* 2. 统一任务中心 - 包含所有任务和挑战 */}
-            {!makeupDayNumber && (
-              <UnifiedTaskCenter
-                meditationCompleted={meditationCompleted}
-                coachingCompleted={coachingCompleted}
-                shareCompleted={shareCompleted}
-                inviteCompleted={inviteCompleted}
-                actionCompleted={journalActionCompleted}
-                hasAction={!!todayAction}
-                onMeditationClick={scrollToMeditation}
-                onCoachingClick={handleStartCoaching}
-                onShareClick={() => {
-                  trackShare('journal', 'clicked', false, { day_number: currentDay });
-                  setShowShareDialog(true);
-                }}
-                onInviteClick={() => setShowInviteDialog(true)}
-                onActionClick={() => {
-                  if (todayEntryId && todayAction) {
-                    setSelectedPendingAction({
-                      action: todayAction,
-                      entryId: todayEntryId,
-                      dayNumber: currentDay
-                    });
-                    setShowActionDialog(true);
-                  }
-                }}
-                onGraduationClick={() => {
-                  if (campSummary) {
-                    navigate(`/partner/graduate?campId=${campId}`);
-                  } else {
-                    generateSummary();
-                    toast({ title: '正在生成毕业报告...' });
-                  }
-                }}
-                userMode={taskHubMode}
-                cycleWeek={cycleWeek}
-                cycleMeditationDay={cycleMeditationDay}
-                currentDay={currentDay}
-                hasGraduationReport={!!campSummary}
-                graduationReportViewed={false}
-                campId={campId}
-                focusAreas={focusAreas}
-                reminderBeliefs={reminderBeliefs?.map(b => b.belief_text) || []}
-                weekNumber={weekNumber}
-                onChallengeCompleted={() => setChallengeCompleted(true)}
-              />
-            )}
-
-            {/* 🎯 目标卡片 - 紧随任务清单 */}
-            {!makeupDayNumber && (
-              <NextGoalsRow />
-            )}
-
-            {/* ===== Graduate 模式：合伙人转化卡片 ===== */}
-            {userCampMode === 'graduate' && !makeupDayNumber && (
-              <PartnerConversionCard variant="full" />
-            )}
-
-            {/* 3. 冥想播放器 - Active模式在第3位，Graduate/Partner模式在挑战后 */}
-            <div id="meditation-player">
-              {displayMeditation && (
-                <WealthMeditationPlayer
-                  dayNumber={displayDay}
-                  title={displayMeditation.title}
-                  description={displayMeditation.description}
-                  audioUrl={displayMeditation.audio_url}
-                  durationSeconds={displayMeditation.duration_seconds}
-                  reflectionPrompts={displayMeditation.reflection_prompts as string[] || []}
-                  onComplete={handleMeditationComplete}
-                  isCompleted={makeupDayNumber ? false : meditationCompleted}
-                  savedReflection={makeupDayNumber ? '' : savedReflection}
-                  onRedo={handleRedoMeditation}
-                  onStartCoaching={handleStartCoaching}
-                />
-              )}
-            </div>
+            {/* 4 部曲瀑布流 */}
+            <WaterfallSteps
+              meditationCompleted={makeupDayNumber ? makeupMeditationDone : meditationCompleted}
+              coachingCompleted={makeupDayNumber ? false : coachingCompleted}
+              shareCompleted={shareCompleted}
+              inviteCompleted={inviteCompleted}
+              onCoachingClick={handleStartCoaching}
+              onShareClick={() => {
+                trackShare('journal', 'clicked', false, { day_number: currentDay });
+                setShowShareDialog(true);
+              }}
+              onInviteClick={() => setShowInviteDialog(true)}
+              isMakeupMode={!!makeupDayNumber}
+              meditationPlayer={
+                <div id="meditation-player">
+                  {displayMeditation && (
+                    <WealthMeditationPlayer
+                      dayNumber={displayDay}
+                      title={displayMeditation.title}
+                      description={displayMeditation.description}
+                      audioUrl={displayMeditation.audio_url}
+                      durationSeconds={displayMeditation.duration_seconds}
+                      reflectionPrompts={displayMeditation.reflection_prompts as string[] || []}
+                      onComplete={handleMeditationComplete}
+                      isCompleted={makeupDayNumber ? false : meditationCompleted}
+                      savedReflection={makeupDayNumber ? '' : savedReflection}
+                      onRedo={handleRedoMeditation}
+                      onStartCoaching={handleStartCoaching}
+                    />
+                  )}
+                </div>
+              }
+            />
 
             {/* 补卡模式：冥想完成后显示教练对话 */}
             <AnimatePresence>
@@ -806,19 +710,6 @@ ${reflection}`;
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* AI 建议已整合到 UnifiedChallengeCenter */}
-
-            {/* 5. 邀请好友 */}
-            {!makeupDayNumber && userId && (
-              <div id="invite-card">
-                <WealthCampInviteCard
-                  campId={campId}
-                  dayNumber={currentDay}
-                  userId={userId}
-                />
-              </div>
-            )}
           </TabsContent>
 
           {/* 教练对话 Tab */}
@@ -886,7 +777,37 @@ ${reflection}`;
 
           {/* 成长档案 Tab - 合并原 archive 和 journal */}
           <TabsContent value="archive" className="mt-6 space-y-4">
-            {/* 冥想库入口 - 始终可见 */}
+            {/* 觉醒仪表盘 - 从今日任务移至此处 */}
+            <AwakeningDashboard
+              currentDay={currentDay}
+              totalDays={camp.duration_days || 7}
+              completedDays={completedDays}
+              makeupDays={makeupDays}
+              streak={streak}
+              onMakeupClick={(dayNumber) => {
+                setMakeupMeditationDone(false);
+                setMakeupReflection('');
+                setMakeupDayNumber(dayNumber);
+                setActiveTab('today');
+                toast({
+                  title: `开始补打 Day ${dayNumber}`,
+                  description: "完成冥想和教练梳理后即可补卡",
+                });
+              }}
+              activeMakeupDay={makeupDayNumber}
+              justCompletedDay={lastCompletedMakeupDay}
+              userMode={userCampMode}
+              postGraduationCheckIns={postGraduationCheckIns}
+              cycleRound={cycleRound}
+              cycleDayInRound={cycleDayInRound}
+              cycleMeditationDay={cycleMeditationDay}
+              daysSinceLastCheckIn={daysSinceLastCheckIn}
+              daysSinceGraduation={userCampMode !== 'active' ? Math.max(0, currentDay - 7) : 0}
+              cycleWeek={cycleWeek}
+              postCampCheckinDates={postCampCheckinDates}
+            />
+
+            {/* 冥想库入口 */}
             <Button
               variant="outline"
               onClick={() => navigate('/meditation-library')}
