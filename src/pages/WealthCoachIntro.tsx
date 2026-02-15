@@ -28,9 +28,9 @@ const WealthCoachIntro = () => {
 
   const handleGetStarted = () => {
     if (user) {
-      navigate("/coach/wealth_coach_4_questions");
+      navigate("/wealth-coach-chat");
     } else {
-      navigate("/auth", { state: { returnTo: "/coach/wealth_coach_4_questions" } });
+      navigate("/auth", { state: { returnTo: "/wealth-coach-chat" } });
     }
   };
 

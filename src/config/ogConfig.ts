@@ -105,6 +105,7 @@ export const pathToKeyMap: Record<string, string> = {
   '/gratitude-journal-intro': 'gratitudeJournal',
   '/gratitude-journal': 'gratitudeHistory',
   '/coach/wealth_coach_4_questions': 'coach_wealth_coach_4_questions',
+  '/wealth-coach-chat': 'coach_wealth_coach_4_questions',
   '/coach/vibrant_life_sage': 'coach_vibrant_life_sage',
   '/coach/emotion': 'coach_emotion',
   '/coach/emotion_coach': 'coach_emotion_coach',

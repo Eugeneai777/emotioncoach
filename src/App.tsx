@@ -163,6 +163,7 @@ const MeditationLibrary = lazyRetry(() => import("./pages/MeditationLibrary"));
 const WealthJournal = lazyRetry(() => import("./pages/WealthJournal"));
 const WealthJournalDetail = lazyRetry(() => import("./pages/WealthJournalDetail"));
 const WealthCoachIntro = lazyRetry(() => import("./pages/WealthCoachIntro"));
+const WealthCoachChat = lazyRetry(() => import("./pages/WealthCoachChat"));
 const ShareInvite = lazyRetry(() => import("./pages/ShareInvite"));
 const WealthCampIntro = lazyRetry(() => import("./pages/WealthCampIntro"));
 const WealthAwakeningProgress = lazyRetry(() => import("./pages/WealthAwakeningProgress"));
@@ -339,6 +340,7 @@ const App = () => (
               <Route path="/wealth-journal" element={<WealthJournal />} />
               <Route path="/wealth-journal/:entryId" element={<WealthJournalDetail />} />
               <Route path="/wealth-coach-intro" element={<WealthCoachIntro />} />
+              <Route path="/wealth-coach-chat" element={<WealthCoachChat />} />
               <Route path="/share-invite" element={<ShareInvite />} />
               <Route path="/wealth-camp-intro" element={<WealthCampIntro />} />
               <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
