@@ -17,7 +17,7 @@ interface AssessmentVoiceCoachProps {
   disabled?: boolean;
 }
 
-const FREE_SESSION_LIMIT = 2;
+const FREE_SESSION_LIMIT = 5;
 const COACH_KEY = '财富觉醒教练';
 
 const MEMBER_365_PACKAGE = {
