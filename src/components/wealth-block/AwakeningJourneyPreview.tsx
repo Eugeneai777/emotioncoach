@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Target, Eye, Heart, Brain, Sparkles, MessageCircle, CheckCircle, ArrowRight, Gift } from 'lucide-react';
+import { MapPin, Target, Sparkles, MessageCircle, CheckCircle, ArrowRight, Gift } from 'lucide-react';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
@@ -9,9 +9,6 @@ import { useNavigate } from 'react-router-dom';
 
 interface AwakeningJourneyPreviewProps {
   healthScore: number;
-  behaviorScore: number;
-  emotionScore: number;
-  beliefScore: number;
   dominantPoor?: PoorTypeKey;
   hasPurchased?: boolean;
   onPurchase?: () => void;
@@ -90,9 +87,6 @@ const testimonials: Record<PoorTypeKey, { quote: string; name: string; growth: s
 
 export function AwakeningJourneyPreview({ 
   healthScore, 
-  behaviorScore, 
-  emotionScore, 
-  beliefScore,
   dominantPoor,
   hasPurchased,
   onPurchase,
@@ -107,21 +101,6 @@ export function AwakeningJourneyPreview({
   // 毕业目标：至少比7天目标高5分，且不低于85
   const graduateTarget = Math.max(day7Target + 5, 85);
   
-  // 三层觉醒百分比计算 (0-50分 -> 0-100%觉醒)
-  const getAwakeningPercent = (score: number, max: number = 50) => {
-    return Math.round(100 - (score / max * 100));
-  };
-  
-  const behaviorAwakening = getAwakeningPercent(behaviorScore);
-  const emotionAwakening = getAwakeningPercent(emotionScore);
-  const beliefAwakening = getAwakeningPercent(beliefScore);
-
-  const layers = [
-    { name: '行为', icon: Eye, color: 'bg-amber-500', bgColor: 'bg-amber-100', value: behaviorAwakening },
-    { name: '情绪', icon: Heart, color: 'bg-pink-500', bgColor: 'bg-pink-100', value: emotionAwakening },
-    { name: '信念', icon: Brain, color: 'bg-violet-500', bgColor: 'bg-violet-100', value: beliefAwakening },
-  ];
-
   // 获取个性化卡点名称
   const poorConfig = dominantPoor ? fourPoorRichConfig[dominantPoor] : null;
   const poorName = poorConfig?.poorName || '财富卡点';
@@ -209,27 +188,6 @@ export function AwakeningJourneyPreview({
                 <div className="text-sm text-muted-foreground/60 mt-1">高觉醒</div>
               </div>
             </div>
-          </div>
-
-          {/* 三层基线 - 进度条 */}
-          <div className="space-y-3">
-            {layers.map((layer) => (
-              <div key={layer.name} className="flex items-center gap-2.5">
-                <div className={cn("p-1.5 rounded-lg", layer.bgColor, "dark:bg-opacity-30")}>
-                  <layer.icon className="w-4 h-4 text-foreground/70" />
-                </div>
-                <span className="text-sm font-medium text-muted-foreground w-10">{layer.name}</span>
-                <div className="flex-1 h-2.5 bg-muted/30 rounded-full overflow-hidden">
-                  <motion.div
-                    className={cn("h-full rounded-full", layer.color)}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${layer.value}%` }}
-                    transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
-                  />
-                </div>
-                <span className="text-sm font-semibold text-foreground/70 w-12 text-right">{layer.value}%</span>
-              </div>
-            ))}
           </div>
 
           {/* 分隔线 */}
