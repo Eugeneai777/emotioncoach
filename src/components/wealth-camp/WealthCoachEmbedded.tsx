@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, RotateCcw } from "lucide-react";
+import { Loader2, RotateCcw, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -191,18 +191,25 @@ export const WealthCoachEmbedded = ({
               meditationTitle={meditationTitle}
             />
           ) : messages.length === 0 && !isLoading ? (
-            <div className="text-center py-12 text-muted-foreground space-y-4">
-              <p>准备开始教练梳理...</p>
+            <div className="flex flex-col items-center justify-center py-16 space-y-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
+                <MessageSquare className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-base font-medium text-foreground">准备好梳理今天的冥想体验了吗？</p>
+                <p className="text-sm text-muted-foreground">教练将引导你回顾和反思</p>
+              </div>
               <Button
-                size="sm"
-                variant="outline"
+                size="lg"
                 onClick={() => {
                   const msg = initialMessage || `【Day ${dayNumber}】请帮我梳理财富卡点`;
                   console.log('[WealthCoachEmbedded] 手动发送:', msg.slice(0, 50));
                   sendMessage(msg);
                 }}
+                className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 text-base px-8 animate-pulse"
               >
-                开始对话
+                <MessageSquare className="w-5 h-5" />
+                开始教练梳理
               </Button>
             </div>
           ) : (
