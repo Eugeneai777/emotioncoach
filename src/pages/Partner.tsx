@@ -20,9 +20,6 @@ import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 
-import { toast } from "sonner";
-import { Copy } from "lucide-react";
-import { getPromotionDomain } from "@/utils/partnerQRUtils";
 
 export default function Partner() {
   const navigate = useNavigate();
@@ -35,20 +32,6 @@ export default function Partner() {
     }
   }, [user, authLoading, navigate]);
 
-  const handleCopyCode = () => {
-    if (partner) {
-      navigator.clipboard.writeText(partner.partner_code);
-      toast.success("推广码已复制");
-    }
-  };
-
-  const handleCopyLink = () => {
-    if (partner) {
-      const link = `${getPromotionDomain()}/?ref=${partner.partner_code}`;
-      navigator.clipboard.writeText(link);
-      toast.success("推广链接已复制");
-    }
-  };
 
   if (authLoading || partnerLoading) {
     return (
@@ -204,31 +187,6 @@ export default function Partner() {
 
                   {/* 推广 Tab */}
                   <TabsContent value="promote" className="space-y-4">
-                    {/* 推广码 */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Share2 className="w-4 h-4 text-purple-500" />
-                          我的推广码
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex gap-3">
-                          <div className="flex-1 px-4 py-3 bg-muted rounded-lg font-mono text-lg font-bold">
-                            {partner.partner_code}
-                          </div>
-                          <Button onClick={handleCopyCode} variant="outline" className="gap-2">
-                            <Copy className="w-4 h-4" />
-                            复制
-                          </Button>
-                        </div>
-                        <Button onClick={handleCopyLink} className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-                          <Share2 className="w-4 h-4" />
-                          复制推广链接
-                        </Button>
-                      </CardContent>
-                    </Card>
-
                     {/* 推广入口设置 */}
                     <EntryTypeSelector
                       partnerId={partner.id}
