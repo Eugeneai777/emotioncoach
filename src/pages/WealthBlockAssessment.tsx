@@ -682,7 +682,7 @@ export default function WealthBlockAssessmentPage() {
         className="bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 border-b border-amber-200/50"
         rightActions={
           <div className="flex items-center gap-1">
-            {/* AI教练专区入口按钮 */}
+            {/* 财富教练入口按钮 */}
             <Button
               variant="ghost"
               onClick={() => navigate("/coach/wealth_coach_4_questions")}
@@ -694,7 +694,7 @@ export default function WealthBlockAssessmentPage() {
                          flex items-center justify-center gap-1.5 sm:gap-2"
             >
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-medium">AI教练</span>
+              <span className="text-xs sm:text-sm font-medium">财富教练</span>
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
             
