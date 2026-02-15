@@ -1,47 +1,28 @@
 
 
-## 合并卡片 — 移除 BloomOverviewCard，飞轮置顶
+## 去除推广码卡片，整合为"我的推广中心"
 
-### 重复分析
+### 改动
 
-| 数据 | BloomOverviewCard | MyFlywheelOverview | 重复？ |
-|------|-------------------|-------------------|--------|
-| 累计收益 | 有 | 有（总收益） | 重复 |
-| 可提现 | 有 | 有 | 重复 |
-| 直推人数 | 有 | 有（Level 1 人数） | 重复 |
-| 二级人数 | 有 | 无 | 独有 |
-| 身份/佣金 | 有 | 无 | 独有 |
-| 提现按钮 | 有 | 无 | 收益Tab已有 |
+推广 Tab 中"我的推广码"卡片（第 208-230 行）与"固定推广链接"卡片功能完全重叠——都是给用户一个链接去分享。推广码本身对用户无意义，用户只需要一个可复制的链接和二维码。
 
-### 改动方案
+**删除"我的推广码"整个 Card（第 207-230 行）**，同时删除相关的 `handleCopyCode` 和 `handleCopyLink` 逻辑。
 
-**移除 BloomOverviewCard**，将其独有信息合并到 MyFlywheelOverview 的标题栏中。
-
-#### MyFlywheelOverview 改后布局
-
-```text
-+------------------------------------------+
-| 🦋 绽放合伙人 · 30%+10%    🎯 我的飞轮   |
-|                                          |
-| [1 测评] → [2 有劲] → [3 绽放] → [4 合伙人]|
-|  23人      5人       2人       1人       |
-|  ¥227     ¥1,495    ¥xxx     ¥4,950     |
-|    21%→     40%→      50%→               |
-|                                          |
-| 总收益 ¥8,672  可提现 ¥3,200              |
-+------------------------------------------+
-```
-
-标题行左侧显示身份标签（含品牌色），右侧保留"我的飞轮"标题。一张卡片搞定所有信息。
+推广 Tab 改后只保留两个组件：
+1. `EntryTypeSelector` — 选择免费/付费入口
+2. `FixedPromoLinkCard` — 推广链接 + 复制/二维码/海报
 
 ### 技术细节
 
-**修改文件 1：** `src/components/partner/MyFlywheelOverview.tsx`
-- 新增 props：`partnerType?: string`（'bloom' | 'youjin'）、`partnerLevel?: string`
-- 标题行改为两端布局：左侧身份标签（如 `🦋 绽放合伙人 · 30%+10%`），右侧 `🎯 我的飞轮`
-- 身份标签根据 partnerType 显示不同品牌色（绽放紫粉/有劲橙黄）
+**修改文件：`src/pages/Partner.tsx`**
+- 删除第 207-230 行的推广码 Card 区块
+- 删除 `handleCopyCode` 和 `handleCopyLink` 函数（搜索后确认是否还有其他地方引用）
+- 移除不再需要的 `Copy` 图标 import（如果仅此处使用）
 
-**修改文件 2：** `src/pages/Partner.tsx`
-- 第 191 行：移除 `<BloomOverviewCard partner={partner} />`
-- 第 194 行：给 MyFlywheelOverview 传入 `partnerType={partner.partner_type}` 和 `partnerLevel={partner.partner_level}`
-- 移除第 11 行的 BloomOverviewCard import
+改后推广 Tab 结构：
+```text
+推广 Tab
+├── EntryTypeSelector（入口方式 + 体验包内容）
+└── FixedPromoLinkCard（推广链接 + 操作按钮）
+```
+
