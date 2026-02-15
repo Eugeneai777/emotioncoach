@@ -439,6 +439,7 @@ export class RealtimeChat {
   private tokenEndpoint: string;
   private mode: string;
   private scenario?: string;
+  private extraBody?: Record<string, any>;
   private localStream: MediaStream | null = null;
   private isDisconnected: boolean = false;
   
@@ -460,11 +461,13 @@ export class RealtimeChat {
     private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void,
     tokenEndpoint: string = 'realtime-token',
     mode: string = 'general',
-    scenario?: string
+    scenario?: string,
+    extraBody?: Record<string, any>
   ) {
     this.tokenEndpoint = tokenEndpoint;
     this.mode = mode;
     this.scenario = scenario;
+    this.extraBody = extraBody;
   }
 
   // 🔧 iOS Safari / 微信小程序 音频解锁
@@ -603,7 +606,7 @@ export class RealtimeChat {
         this.localStream = prewarmedStream;
         
         const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint, {
-          body: { mode: this.mode, scenario: this.scenario }
+          body: { mode: this.mode, scenario: this.scenario, ...this.extraBody }
         });
         console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms', 'mode:', this.mode, 'scenario:', this.scenario);
         
@@ -614,7 +617,7 @@ export class RealtimeChat {
       } else {
         // 并行执行 token 获取和麦克风权限请求
         const [tokenResult, micResult] = await Promise.all([
-          supabase.functions.invoke(this.tokenEndpoint, { body: { mode: this.mode, scenario: this.scenario } }).then(result => {
+          supabase.functions.invoke(this.tokenEndpoint, { body: { mode: this.mode, scenario: this.scenario, ...this.extraBody } }).then(result => {
             console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms', 'mode:', this.mode, 'scenario:', this.scenario);
             return result;
           }),

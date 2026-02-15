@@ -53,6 +53,7 @@ import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
 import { NextStepActionCard } from "./NextStepActionCard";
 import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
+import { AssessmentVoiceCoach } from "./AssessmentVoiceCoach";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
@@ -236,6 +237,15 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         emotionScore={result.emotionScore}
         beliefScore={result.beliefScore}
       />
+
+      {/* 语音解说教练入口 - 仅在 AI 分析完成后显示 */}
+      {!isLoadingAI && (
+        <AssessmentVoiceCoach
+          result={result}
+          aiInsight={aiInsight}
+          healthScore={healthScore}
+        />
+      )}
 
       {/* 觉醒起点 + 目标锚点卡片 */}
       <AwakeningJourneyPreview

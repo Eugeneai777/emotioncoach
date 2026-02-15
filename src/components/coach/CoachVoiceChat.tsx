@@ -52,6 +52,7 @@ interface CoachVoiceChatProps {
   isIncomingCall?: boolean;        // 是否是AI来电（被动接入）
   aiCallId?: string;               // ai_coach_calls 记录ID
   openingMessage?: string;         // AI预设开场白
+  extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -74,7 +75,8 @@ export const CoachVoiceChat = ({
   onBriefingSaved,
   isIncomingCall = false,
   aiCallId,
-  openingMessage
+  openingMessage,
+  extraBody
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -1177,7 +1179,7 @@ export const CoachVoiceChat = ({
         
         // 使用 emotion-realtime-token 端点
         const emotionTokenEndpoint = 'emotion-realtime-token';
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, emotionTokenEndpoint, mode, scenario);
+        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, emotionTokenEndpoint, mode, scenario, extraBody);
         chatRef.current = chat;
         
         try {
@@ -1211,7 +1213,8 @@ export const CoachVoiceChat = ({
           onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
           tokenEndpoint: 'emotion-realtime-token',
           mode,
-          scenario
+          scenario,
+          extraBody
         });
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
@@ -1230,7 +1233,8 @@ export const CoachVoiceChat = ({
           onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
           tokenEndpoint,
           mode,
-          scenario
+          scenario,
+          extraBody
         });
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
@@ -1274,7 +1278,8 @@ export const CoachVoiceChat = ({
               onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
               tokenEndpoint,
               mode,
-              scenario
+              scenario,
+              extraBody
             });
             chatRef.current = miniProgramClient;
             await miniProgramClient.connect();
@@ -1287,7 +1292,7 @@ export const CoachVoiceChat = ({
         }
         
         updateConnectionPhase('establishing');
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario);
+        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody);
         chatRef.current = chat;
         
         try {
@@ -1347,7 +1352,8 @@ export const CoachVoiceChat = ({
               })),
               tokenEndpoint,
               mode,
-              scenario
+              scenario,
+              extraBody
             });
             chatRef.current = miniProgramClient;
             await miniProgramClient.connect();

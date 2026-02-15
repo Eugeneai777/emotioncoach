@@ -20,6 +20,7 @@ export interface MiniProgramAudioConfig {
   tokenEndpoint: string;
   mode: string;
   scenario?: string; // 场景名称，如 "睡不着觉"
+  extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
 }
 
 interface AudioChunk {
@@ -212,7 +213,8 @@ export class MiniProgramAudioClient {
       const { data, error } = await supabase.functions.invoke(this.config.tokenEndpoint, {
         body: { 
           mode: this.config.mode,
-          scenario: this.config.scenario 
+          scenario: this.config.scenario,
+          ...this.config.extraBody
         },
       });
 
