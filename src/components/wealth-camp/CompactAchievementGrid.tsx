@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Share2, ChevronRight, Sparkles, Target, ChevronDown, Eye, Medal } from 'lucide-react';
+import { Share2, Sparkles, ChevronDown } from 'lucide-react';
 import { useAchievementProgress, AchievementProgressNode } from '@/hooks/useAchievementProgress';
 import WealthInviteCardDialog from './WealthInviteCardDialog';
 import {
@@ -239,91 +239,7 @@ export function CompactAchievementGrid({ className }: CompactAchievementGridProp
         </div>
       </div>
 
-      <CardContent className="p-2.5 space-y-2">
-        {/* 🎯 四路径目标卡片 - 单行4列 */}
-        <div className="grid grid-cols-4 gap-1.5">
-          {paths.map((path, index) => (
-            <motion.div
-              key={path.key}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={cn(
-                "p-1.5 rounded-lg border text-center",
-                path.nextAchievement 
-                  ? [path.theme.bgActive, path.theme.border]
-                  : "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
-              )}
-            >
-              {path.nextAchievement ? (
-                <>
-                  {/* 成就图标 */}
-                  <motion.span 
-                    className="text-base block"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                  >
-                    {path.nextAchievement.icon}
-                  </motion.span>
-                  
-                  {/* 成就名称 */}
-                  <p className="text-[9px] font-medium truncate mt-0.5 leading-tight">
-                    {path.nextAchievement.name}
-                  </p>
-                  
-                  {/* 进度条 */}
-                  <div className="mt-1">
-                    <div className="h-1 bg-white/50 dark:bg-slate-900/50 rounded-full overflow-hidden">
-                      <motion.div
-                        className={cn("h-full bg-gradient-to-r", path.theme.gradient)}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${path.nextAchievement.progress}%` }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                      />
-                    </div>
-                    <p className={cn("text-[8px] font-semibold mt-0.5", path.theme.text)}>
-                      {path.nextAchievement.remainingText}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                /* 已完成状态 */
-                <div className="py-1">
-                  <motion.span 
-                    className="text-base block"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
-                  >
-                    🎉
-                  </motion.span>
-                  <span className="text-[8px] font-medium text-emerald-600 dark:text-emerald-400">
-                    已完成
-                  </span>
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        {/* 分享按钮 */}
-        <Button
-          onClick={() => setShowShareDialog(true)}
-          className={cn(
-            "w-full h-auto py-3 px-4",
-            "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500",
-            "hover:from-amber-600 hover:via-orange-600 hover:to-rose-600",
-            "text-white shadow-md hover:shadow-lg transition-all"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <Share2 className="w-4 h-4" />
-            <div className="text-left">
-              <p className="font-semibold text-sm">分享我的成就之路</p>
-              <p className="text-[10px] opacity-80">生成专属海报，记录你的成长历程</p>
-            </div>
-          </div>
-        </Button>
-
+      <CardContent className="p-2.5 space-y-1">
         {/* 四条路径 - 简化展示 */}
         <TooltipProvider delayDuration={100}>
           {paths.map((path) => {
@@ -425,7 +341,20 @@ export function CompactAchievementGrid({ className }: CompactAchievementGridProp
           })}
         </TooltipProvider>
 
-        {/* 全部完成庆祝 */}
+        {/* 分享按钮 - 精简版 */}
+        <div className="flex justify-center pt-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); setShowShareDialog(true); }}
+            className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            分享成就海报
+          </Button>
+        </div>
+
+
         {totalEarned === totalCount && totalCount > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
