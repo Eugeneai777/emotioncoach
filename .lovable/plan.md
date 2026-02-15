@@ -1,17 +1,14 @@
 
 
-## 修改"AI教练"按钮跳转目标
-
-### 当前行为
-点击"AI教练"按钮后跳转到教练空间页面（`/coach-space`）。
+## 修改财富教练首页跳转目标
 
 ### 修改方案
 
-**修改文件：`src/pages/WealthBlockAssessment.tsx`**
+**修改文件：`src/components/SmartHomeRedirect.tsx`**
 
-将按钮的 `onClick` 跳转路径从 `/coach-space` 改为 `/coach/wealth_coach_4_questions`，让用户直接进入财富教练对话页面。
+将财富教练用户的所有跳转路径统一改为 `/wealth-coach-intro`（财富教练介绍页），不再根据合伙人状态或训练营状态跳转到对话页。
 
-仅需修改一行代码：
-```
-onClick={() => navigate("/coach/wealth_coach_4_questions"))
-```
+具体改动：
+- 第 63 行和第 70 行的 `/coach/wealth_coach_4_questions` 都改为 `/wealth-coach-intro`
+- 这样无论用户是活跃合伙人、有训练营还是普通用户，只要 `preferred_coach` 是 `wealth`，都会进入介绍页
+
