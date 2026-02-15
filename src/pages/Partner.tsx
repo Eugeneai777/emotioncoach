@@ -13,8 +13,7 @@ import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
-import { EntryTypeSelector } from "@/components/partner/EntryTypeSelector";
-import { FixedPromoLinkCard } from "@/components/partner/FixedPromoLinkCard";
+import { PromotionHub } from "@/components/partner/PromotionHub";
 import { MyFlywheelOverview } from "@/components/partner/MyFlywheelOverview";
 import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -187,18 +186,10 @@ export default function Partner() {
 
                   {/* 推广 Tab */}
                   <TabsContent value="promote" className="space-y-4">
-                    {/* 推广入口设置 */}
-                    <EntryTypeSelector
+                    <PromotionHub
                       partnerId={partner.id}
                       currentEntryType={partner.default_entry_type || 'free'}
                       prepurchaseCount={partner.prepurchase_count || 100}
-                    />
-
-                    {/* 固定推广链接 */}
-                    <FixedPromoLinkCard
-                      partnerId={partner.id}
-                      entryType={(partner.default_entry_type as 'free' | 'paid') || 'free'}
-                      productType="trial_member"
                     />
                   </TabsContent>
 
