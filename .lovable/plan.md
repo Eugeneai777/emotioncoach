@@ -1,37 +1,44 @@
 
+## 修复语音连接 + 优化测评结果页
 
-## 升级 Realtime 语音模型到 GA 正式版
+### 问题 1：语音连接失败
 
-### 变更内容
+**根因**：`wealth-assessment-realtime-token` 函数在 `config.toml` 中配置了 `verify_jwt = true`，而项目采用 signing-keys 认证体系，需要设置为 `verify_jwt = false`（与其他所有函数一致），由代码层面手动验证 JWT。
 
-将所有文件中的 `gpt-4o-mini-realtime-preview-2024-12-17` 替换为 `gpt-4o-mini-realtime-preview`（OpenAI GA 正式版模型名称）。
+**修复方案**：
+- 修改 `supabase/config.toml` 中 `wealth-assessment-realtime-token` 的 `verify_jwt` 为 `false`
+- 重新部署该边缘函数
 
-> 注意：OpenAI 的 GA 正式版模型 ID 为 `gpt-4o-mini-realtime-preview`，而非 `gpt-realtime-mini`。`gpt-realtime-mini` 尚未在 Realtime Sessions API 中正式发布。实际可用的稳定版本为去掉日期后缀的 `gpt-4o-mini-realtime-preview`，它会自动指向最新的稳定版本。
+### 问题 2：结果页优化
 
-### 涉及文件（10 个文件）
+当前结果页包含大量模块导致页面冗长，优化方案：
 
-| 文件 | 类型 | 说明 |
-|------|------|------|
-| `supabase/functions/realtime-token/index.ts` | Edge Function | 小劲客服语音 |
-| `supabase/functions/emotion-realtime-token/index.ts` | Edge Function | 情绪教练语音 |
-| `supabase/functions/vibrant-life-realtime-token/index.ts` | Edge Function | 有劲生活教练语音 |
-| `supabase/functions/wealth-assessment-realtime-token/index.ts` | Edge Function | 财富测评教练语音 |
-| `supabase/functions/teen-realtime-token/index.ts` | Edge Function | 青少年教练语音 |
-| `supabase/functions/miniprogram-voice-relay/index.ts` | Edge Function | 小程序 WebSocket 中继 |
-| `supabase/functions/log-api-cost/index.ts` | Edge Function | API 成本记录 |
-| `src/utils/RealtimeAudio.ts` | 前端 | WebRTC 连接 |
-| `src/utils/apiCostTracker.ts` | 前端 | 成本追踪工具 |
-| `src/components/teen/TeenVoiceChat.tsx` | 前端 | 青少年语音组件 |
+1. **语音教练按钮上移并固定**：将 `AssessmentVoiceCoach` 按钮改为吸底固定（`fixed bottom`），确保用户随时可见，无需滚动寻找
+2. **默认折叠深度分析**：三层深度分析（行为层/情绪层/信念层）已默认折叠，保持现状即可
+3. **AI 分析摘要化**：将 AI 深度分析卡片改为默认显示精简摘要（核心卡点 + 镜像陈述），点击展开查看完整分析
+4. **移除冗余间距**：减少各卡片间的装饰性分隔符和空白
 
-### 具体变更
+### 涉及文件
 
-每个文件中，将模型字符串 `"gpt-4o-mini-realtime-preview-2024-12-17"` 统一替换为 `"gpt-4o-mini-realtime-preview"`。
+| 文件 | 变更 |
+|------|------|
+| `supabase/config.toml` | `verify_jwt = true` 改为 `false` |
+| `src/components/wealth-block/AssessmentVoiceCoach.tsx` | 改为吸底固定布局 |
+| `src/components/wealth-block/WealthBlockResult.tsx` | 优化布局间距，移除冗余装饰 |
 
-对于 `apiCostTracker.ts` 和 `log-api-cost/index.ts` 中的 MODEL_COSTS 对象，同时更新 key 名称，并保留旧 key 作为兼容（避免历史日志查询报错）。
+### 技术细节
 
-### 收益
+**吸底语音按钮**：
+```text
++-----------------------------+
+|  健康仪表盘                  |
+|  觉醒旅程预览               |
+|  财富反应模式（简化）         |
+|  三层分析（折叠）            |
+|  ...                        |
++-----------------------------+
+| [固定底部] 和 AI 教练聊测评  |
++-----------------------------+
+```
 
-- 自动跟随 OpenAI 最新稳定版本，无需手动跟踪日期后缀
-- 获得 cached input 折扣（$0.30/M vs $2.50/M）
-- GA 版本更稳定，减少 preview 版本的潜在问题
-
+按钮使用 `fixed bottom-0` 定位 + `safe-area-inset-bottom` 适配，并调整页面底部 padding 避免内容遮挡。
