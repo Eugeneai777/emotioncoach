@@ -1,46 +1,14 @@
 
-## 教练解说改为凸出式大圆形按钮（FAB风格）
 
-将中间的"教练解说"从与左右并排的普通按钮，改为从底部Tab栏**向上凸出**的大圆形按钮，类似微信/抖音底部导航栏中间的凸起按钮。
-
-### 视觉效果
-
-```text
-              ┌─────────┐
-              │  教练    │  ← 圆形按钮凸出Tab栏上方
-              │  解说    │  ← 文字分两行
-              └─────────┘
-┌──────────────┐         ┌──────────────┐
-│  开始测评     │         │   历史记录    │
-└──────────────┘         └──────────────┘
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-- 圆形红色渐变大按钮，直径约 64-70px，向上凸出约 20px
-- 带呼吸光晕动画（红色外圈脉冲）
-- 文字分两行："教练" + "解说"，白色粗体
-- Mic 图标在文字上方
+## 去掉结果页"重新测评"按钮
 
 ### 修改内容
 
-**文件1：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+**文件：`src/components/wealth-block/WealthBlockResult.tsx`**
 
-- 将按钮改为圆形样式：`w-16 h-16 rounded-full`
-- 红色渐变背景 + 白色文字
-- Mic 图标 + 文字纵向排列，文字分两行显示
-- 添加外圈呼吸动画：一个 `absolute` 的红色圆圈用 `animate-ping` 或 `animate-pulse` 实现
-- 移除 `flex-1` 等并排布局属性，改为绝对或相对定位
+- 删除第 691-698 行的"重新测评"按钮（`<Button variant="ghost">` + `RotateCcw` 图标）
+- 清理不再使用的 `RotateCcw` import（如果该文件中无其他引用）
+- `onRetake` prop 保留不删（因为 `WealthAssessmentLite.tsx` 等其他页面仍在使用该组件并传入 `onRetake`），但可将其改为可选 `onRetake?: () => void`
 
-**文件2：`src/pages/WealthBlockAssessment.tsx`**
+用户想重新测评时，通过底部 Tab 栏的"开始测评"即可触发，无需在结果页重复放置按钮。
 
-- 底部Tab栏从 `grid-cols-3` 改为 `grid-cols-2`，左右各一个Tab
-- 中间的教练按钮改为**绝对定位**，从Tab栏底部向上凸出
-- 用 `relative` 容器包裹底部栏，中间按钮用 `absolute left-1/2 -translate-x-1/2 -top-8` 凸出
-- 没有结果时中间区域不显示按钮
-
-### 技术细节
-
-- 底部栏容器加 `relative`，中间按钮 `absolute` 定位凸出
-- 呼吸动画使用 Tailwind `animate-ping` + 低透明度的红色圆圈层
-- 按钮内部纵向排列：Mic图标 → "教练" → "解说"（或"免费"标注）
-- 凸出区域需要处理点击穿透，确保按钮可点击
