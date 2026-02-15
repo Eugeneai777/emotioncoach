@@ -135,6 +135,12 @@ interface CoachLayoutProps {
   
   // Skip empty state and show chat directly
   skipEmptyState?: boolean;
+  
+  // Hide input footer (intro-only mode)
+  hideInput?: boolean;
+  
+  // Chat entry route for intro-only mode
+  chatEntryRoute?: string;
 }
 
 export const CoachLayout = ({
@@ -200,7 +206,9 @@ export const CoachLayout = ({
   customFooter,
   voiceChatCTA,
   loadingPlaceholder,
-  skipEmptyState = false
+  skipEmptyState = false,
+  hideInput = false,
+  chatEntryRoute
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -424,6 +432,7 @@ export const CoachLayout = ({
                 campRecommendation={campRecommendation}
                 enableCollapse={enableStepsCollapse}
                 voiceChatCTA={voiceChatCTA}
+                chatEntryRoute={chatEntryRoute}
               />
             ) : (
               <div className="space-y-4">
@@ -500,7 +509,7 @@ export const CoachLayout = ({
         )}
 
         {/* Footer Input */}
-        {customFooter ? customFooter : (
+        {hideInput ? null : customFooter ? customFooter : (
           <CoachInputFooter
             ref={textareaRef}
             input={input}
