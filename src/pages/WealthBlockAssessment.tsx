@@ -838,19 +838,20 @@ export default function WealthBlockAssessmentPage() {
                   <span className="text-[11px] font-semibold leading-tight">重新测评</span>
                 </button>
 
-                {/* 中间 - 凸出的教练解说 FAB */}
-                <div className="relative -top-4 flex flex-col items-center">
-                  <AssessmentVoiceCoach
-                    result={currentResult!}
-                    aiInsight={null}
-                    healthScore={currentResult ? Math.round(
-                      ((5 - currentResult.behaviorScore) / 4 * 33) +
-                      ((5 - currentResult.emotionScore) / 4 * 33) +
-                      ((5 - currentResult.beliefScore) / 4 * 34)
-                    ) : 0}
-                    disabled={!showResult || !currentResult}
-                  />
-                </div>
+                {/* 中间 - 凸出的教练解说 FAB（仅结果页显示） */}
+                {showResult && currentResult && (
+                  <div className="relative -top-4 flex flex-col items-center">
+                    <AssessmentVoiceCoach
+                      result={currentResult}
+                      aiInsight={null}
+                      healthScore={Math.round(
+                        ((5 - currentResult.behaviorScore) / 4 * 33) +
+                        ((5 - currentResult.emotionScore) / 4 * 33) +
+                        ((5 - currentResult.beliefScore) / 4 * 34)
+                      )}
+                    />
+                  </div>
+                )}
 
                 {/* 右侧 - 历史记录 */}
                 <button
