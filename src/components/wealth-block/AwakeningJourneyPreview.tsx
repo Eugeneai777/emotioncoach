@@ -10,9 +10,34 @@ import { useNavigate } from 'react-router-dom';
 interface AwakeningJourneyPreviewProps {
   healthScore: number;
   dominantPoor?: PoorTypeKey;
+  reactionPattern?: string;
   hasPurchased?: boolean;
   onPurchase?: () => void;
 }
+
+// 行为维度收获（按卡点类型）
+const behaviorOutcomes: Record<string, string> = {
+  mouth: '从"嘴穷"到"嘴富"，学会用丰盛语言表达自己的价值',
+  hand: '从"手穷"到"手富"，建立给予-接收的自然流动感',
+  eye: '从"眼穷"到"眼富"，打开感恩视角看见身边的富足',
+  heart: '从"心穷"到"心富"，从受害者模式切换到创造者模式',
+};
+
+// 情绪维度收获（按反应模式）
+const emotionOutcomes: Record<string, string> = {
+  chase: '减少追逐式焦虑，建立与金钱的从容关系',
+  avoid: '重建安全感，面对财富话题不再退缩',
+  trauma: '调节神经系统，财富话题不再触发身心反应',
+  harmony: '巩固情绪稳定，向丰盛型状态自然进化',
+};
+
+// 信念维度收获（按卡点类型）
+const beliefOutcomes: Record<string, string> = {
+  mouth: '植入"我值得被看见"的新信念，替换自我贬低程序',
+  hand: '植入"给予即丰盛"的新信念，替换紧握匮乏程序',
+  eye: '植入"我已拥有很多"的新信念，替换比较不足程序',
+  heart: '植入"我有力量创造"的新信念，替换受害者程序',
+};
 
 // 每日4步流程配置
 const dailySteps = [
@@ -54,12 +79,11 @@ const dailySteps = [
   },
 ];
 
-// 7天后的收获
-const sevenDayOutcomes = [
-  '清晰看见自己的财富卡点类型',
-  '一套可持续的每日觉察习惯',
-  'AI记录的个人成长档案',
-];
+// Pattern key normalization
+const patternKeyMap: Record<string, string> = {
+  chasing: 'chase', avoiding: 'avoid', freezing: 'trauma', pleasing: 'chase',
+  chase: 'chase', avoid: 'avoid', trauma: 'trauma', harmony: 'harmony',
+};
 
 // 用户见证数据（按卡点类型匹配）
 const testimonials: Record<PoorTypeKey, { quote: string; name: string; growth: string }> = {
@@ -88,6 +112,7 @@ const testimonials: Record<PoorTypeKey, { quote: string; name: string; growth: s
 export function AwakeningJourneyPreview({ 
   healthScore, 
   dominantPoor,
+  reactionPattern,
   hasPurchased,
   onPurchase,
 }: AwakeningJourneyPreviewProps) {
@@ -107,6 +132,15 @@ export function AwakeningJourneyPreview({
 
   // 获取匹配的见证
   const testimonial = dominantPoor ? testimonials[dominantPoor] : testimonials.mouth;
+
+  // 生成个性化三维收获
+  const poorKey = dominantPoor || 'mouth';
+  const normalizedPattern = patternKeyMap[reactionPattern || ''] || 'harmony';
+  const personalizedOutcomes = [
+    { emoji: '🎯', label: '行为突破', text: behaviorOutcomes[poorKey] || behaviorOutcomes.mouth },
+    { emoji: '💭', label: '情绪松绑', text: emotionOutcomes[normalizedPattern] || emotionOutcomes.harmony },
+    { emoji: '💡', label: '信念升级', text: beliefOutcomes[poorKey] || beliefOutcomes.mouth },
+  ];
 
   return (
     <motion.div
@@ -243,21 +277,24 @@ export function AwakeningJourneyPreview({
             </div>
           </div>
 
-          {/* 7天后的收获 */}
-          <div className="space-y-2">
+          {/* 7天后的收获 - 个性化三维度 */}
+          <div className="space-y-2.5">
             <h4 className="font-bold text-sm text-foreground">✨ 7天后，你会得到：</h4>
-            <div className="grid grid-cols-1 gap-1.5">
-              {sevenDayOutcomes.map((item, i) => (
+            <div className="grid grid-cols-1 gap-2">
+              {personalizedOutcomes.map((item, i) => (
                 <motion.div 
                   key={i} 
                   initial={{ opacity: 0.01, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7 + i * 0.1 }}
+                  transition={{ delay: 0.7 + i * 0.12 }}
                   style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                  className="flex items-start gap-2.5 p-2.5 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
                 >
-                  <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                  <span>{item}</span>
+                  <span className="text-lg leading-none mt-0.5">{item.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{item.label}</span>
+                    <p className="text-sm text-foreground/80 leading-snug mt-0.5">{item.text}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>

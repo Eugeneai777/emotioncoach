@@ -659,6 +659,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       <AwakeningJourneyPreview
         healthScore={healthScore}
         dominantPoor={result.dominantPoor as 'mouth' | 'hand' | 'eye' | 'heart'}
+        reactionPattern={result.reactionPattern}
         hasPurchased={hasPurchased}
         onPurchase={() => setShowPayDialog(true)}
       />
