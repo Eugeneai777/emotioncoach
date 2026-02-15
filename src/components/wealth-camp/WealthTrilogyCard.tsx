@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardCheck, Tent, Handshake, ChevronRight, ArrowRight, ChevronDown } from "lucide-react";
+import { ClipboardCheck, Tent, Handshake, ChevronRight, ArrowRight, ChevronDown, CheckCircle, GraduationCap, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useTrilogyProgress } from "@/hooks/useTrilogyProgress";
 
 interface WealthTrilogyCardProps {
   className?: string;
@@ -51,8 +52,43 @@ const trilogySteps = [
 
 const STORAGE_KEY = "wealth_trilogy_collapsed";
 
+function StepStatusBadge({ step, progress }: { step: number; progress: ReturnType<typeof useTrilogyProgress> }) {
+  if (step === 1 && progress.assessment.completed) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">
+        <CheckCircle className="w-3 h-3" />已完成
+      </span>
+    );
+  }
+  if (step === 2) {
+    if (progress.camp.status === 'completed') {
+      return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">
+          <GraduationCap className="w-3 h-3" />已毕业
+        </span>
+      );
+    }
+    if (progress.camp.status === 'active') {
+      return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
+          <MapPin className="w-3 h-3" />Day {progress.camp.currentDay}
+        </span>
+      );
+    }
+  }
+  if (step === 3 && progress.partner.joined) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">
+        <CheckCircle className="w-3 h-3" />已加入
+      </span>
+    );
+  }
+  return null;
+}
+
 export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) => {
   const navigate = useNavigate();
+  const progress = useTrilogyProgress();
   
   // 从 localStorage 读取初始状态，默认折叠
   const getInitialState = () => {
@@ -138,6 +174,7 @@ export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) =>
                               Step {step.step}
                             </span>
                             <span className="text-sm font-semibold text-foreground">{step.title}</span>
+                            <StepStatusBadge step={step.step} progress={progress} />
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-1">{step.description}</p>
                         </div>
@@ -177,9 +214,12 @@ export const WealthTrilogyCard = ({ className = "" }: WealthTrilogyCardProps) =>
                             <span className="text-lg">{step.emoji}</span>
                           </div>
                           <div>
-                            <span className={`text-xs font-bold bg-gradient-to-r ${step.gradient} bg-clip-text text-transparent`}>
-                              Step {step.step}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-xs font-bold bg-gradient-to-r ${step.gradient} bg-clip-text text-transparent`}>
+                                Step {step.step}
+                              </span>
+                              <StepStatusBadge step={step.step} progress={progress} />
+                            </div>
                             <h4 className="text-base font-bold text-foreground">{step.title}</h4>
                           </div>
                         </div>

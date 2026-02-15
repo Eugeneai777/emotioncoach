@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flower2, Target, Sparkles, LogIn, LogOut, Loader2, CheckCircle } from "lucide-react";
+import { Flower2, Target, Sparkles, LogIn, LogOut, Loader2, CheckCircle, GraduationCap, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { useTrilogyProgress } from "@/hooks/useTrilogyProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -48,6 +49,7 @@ const BloomPartnerIntro = () => {
   const { user, loading, signOut } = useAuth();
   const { showTour, completeTour } = usePageTour('bloom_partner_intro');
   const { data: purchaseRecord, refetch: refetchPurchase } = useAssessmentPurchase();
+  const progress = useTrilogyProgress();
   const [claiming, setClaiming] = useState(false);
 
   const handleWealthBlockClick = async () => {
@@ -153,7 +155,11 @@ const BloomPartnerIntro = () => {
                   </div>
                   <h3 className="font-semibold text-foreground">{item.title}</h3>
                   {item.path === '/wealth-block' && user && (
-                    purchaseRecord ? (
+                    progress.assessment.completed ? (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <CheckCircle className="w-3 h-3" />已完成
+                      </span>
+                    ) : purchaseRecord ? (
                       <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                         <CheckCircle className="w-3 h-3" />已解锁
                       </span>
@@ -162,6 +168,22 @@ const BloomPartnerIntro = () => {
                         需付费¥9.9
                       </span>
                     )
+                  )}
+                  {item.path === '/wealth-camp-intro' && user && (
+                    progress.camp.status === 'completed' ? (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <GraduationCap className="w-3 h-3" />已毕业
+                      </span>
+                    ) : progress.camp.status === 'active' ? (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                        <MapPin className="w-3 h-3" />Day {progress.camp.currentDay}
+                      </span>
+                    ) : null
+                  )}
+                  {item.path === '/partner' && user && progress.partner.joined && (
+                    <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <CheckCircle className="w-3 h-3" />已加入
+                    </span>
                   )}
                 </div>
               </div>
