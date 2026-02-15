@@ -94,6 +94,17 @@ serve(async (req) => {
       );
     }
 
+    // 从规则表动态获取有劲L1的预购名额
+    const { data: l1Rule } = await adminClient
+      .from('partner_level_rules')
+      .select('min_prepurchase')
+      .eq('partner_type', 'youjin')
+      .eq('level_name', 'L1')
+      .eq('is_active', true)
+      .single();
+
+    const l1PrepurchaseCount = l1Rule?.min_prepurchase ?? 100;
+
     // Check if user is already a partner
     const { data: existingPartner } = await adminClient
       .from('partners')
@@ -123,7 +134,7 @@ serve(async (req) => {
           partner_level: 'L0',
           commission_rate_l1: 0.30,
           commission_rate_l2: 0.10,
-          prepurchase_count: 100,
+          prepurchase_count: l1PrepurchaseCount,
           source: 'manual',
         })
         .eq('id', existingPartner.id);
@@ -155,7 +166,7 @@ serve(async (req) => {
           partner_code: partnerCode,
           commission_rate_l1: 0.30,
           commission_rate_l2: 0.10,
-          prepurchase_count: 100,
+          prepurchase_count: l1PrepurchaseCount,
           status: 'active',
           source: 'manual',
         })

@@ -48,7 +48,7 @@ export function BloomYoujinBenefitsCard({ partner }: BloomYoujinBenefitsCardProp
               <span className="text-sm font-medium">体验包</span>
             </div>
             <p className="text-lg font-bold text-orange-600">
-              {partner.prepurchase_count || 100}
+              {partner.prepurchase_count ?? 0}
             </p>
             <p className="text-xs text-muted-foreground">可分发名额</p>
           </div>
@@ -58,7 +58,7 @@ export function BloomYoujinBenefitsCard({ partner }: BloomYoujinBenefitsCardProp
         <EntryTypeSelector 
           partnerId={partner.id}
           currentEntryType={partner.default_entry_type || 'free'}
-          prepurchaseCount={partner.prepurchase_count || 100}
+          prepurchaseCount={partner.prepurchase_count ?? 0}
           onUpdate={() => setRefreshKey(k => k + 1)}
         />
 
