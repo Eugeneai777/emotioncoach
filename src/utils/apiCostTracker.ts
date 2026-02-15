@@ -9,7 +9,8 @@ export const MODEL_COSTS: Record<string, { input?: number; output?: number; imag
   // OpenAI Realtime API (audio tokens): $40/M input, $80/M output → per 1K: $0.04 input, $0.08 output
   'gpt-4o-realtime-preview-2024-12-17': { input: 0.04, output: 0.08 },
   // OpenAI Realtime Mini API (audio tokens): $10/M input, $20/M output → per 1K: $0.01 input, $0.02 output
-  'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 },
+  'gpt-4o-mini-realtime-preview': { input: 0.01, output: 0.02 },
+  'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 }, // 兼容历史日志
   'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
   'gpt-4o': { input: 0.005, output: 0.015 },
 };
@@ -193,8 +194,8 @@ export function estimateVoiceCost(
 }
 
 // 估算实时语音成本 (基于 token 定价) - 默认使用 mini 模型
-export function estimateRealtimeCost(minutes: number, model: string = 'gpt-4o-mini-realtime-preview-2024-12-17'): { usd: number; cny: number; inputTokens: number; outputTokens: number } {
-  const costs = MODEL_COSTS[model] || MODEL_COSTS['gpt-4o-mini-realtime-preview-2024-12-17'];
+export function estimateRealtimeCost(minutes: number, model: string = 'gpt-4o-mini-realtime-preview'): { usd: number; cny: number; inputTokens: number; outputTokens: number } {
+  const costs = MODEL_COSTS[model] || MODEL_COSTS['gpt-4o-mini-realtime-preview'];
   const inputTokens = Math.round(minutes * REALTIME_TOKENS_PER_MINUTE.input);
   const outputTokens = Math.round(minutes * REALTIME_TOKENS_PER_MINUTE.output);
   
@@ -225,7 +226,7 @@ export const FEATURE_COST_ESTIMATES: Record<string, { model: string; avgTokens?:
   'voice_clone': { model: 'elevenlabs_clone', fixedCost: 0.30 },
   
   // 实时语音 (基于 token 估算, 每分钟约 9000 tokens) - 使用 mini 模型降本
-  'realtime_voice': { model: 'gpt-4o-mini-realtime-preview-2024-12-17', avgTokens: { input: 4500, output: 4500 } },
+  'realtime_voice': { model: 'gpt-4o-mini-realtime-preview', avgTokens: { input: 4500, output: 4500 } },
 };
 
 // 功能名称映射

@@ -17,7 +17,8 @@ const MODEL_COSTS: Record<string, { input?: number; output?: number; image?: num
   // OpenAI Realtime API (audio tokens): $40/M input, $80/M output → per 1K: $0.04 input, $0.08 output
   'gpt-4o-realtime-preview-2024-12-17': { input: 0.04, output: 0.08 },
   // OpenAI Realtime Mini API (audio tokens): $10/M input, $20/M output → per 1K: $0.01 input, $0.02 output
-  'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 },
+  'gpt-4o-mini-realtime-preview': { input: 0.01, output: 0.02 },
+  'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 }, // 兼容历史日志
   'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
   'gpt-4o': { input: 0.005, output: 0.015 },
 };

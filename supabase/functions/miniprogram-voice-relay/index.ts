@@ -10,7 +10,7 @@
 import { corsHeaders } from '../_shared/cors.ts';
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-const OPENAI_REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17';
+const OPENAI_REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview';
 
 // 音频格式配置
 const AUDIO_CONFIG = {

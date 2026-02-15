@@ -133,7 +133,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini-realtime-preview-2024-12-17",
+        model: "gpt-4o-mini-realtime-preview",
         voice: "shimmer",
         instructions: `你是小星，${teenName}的AI朋友。100%保密，不说教不评判。
 

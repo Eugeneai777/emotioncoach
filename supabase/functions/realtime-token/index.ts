@@ -62,7 +62,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini-realtime-preview-2024-12-17",
+        model: "gpt-4o-mini-realtime-preview",
         voice: "echo",
         instructions: `【我是谁】我是小劲，劲老师的AI助手。我帮用户了解有劲AI的功能、解答问题、介绍会员。
 
