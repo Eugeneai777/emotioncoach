@@ -250,8 +250,8 @@ export const CoachEmptyState = ({
 
       {/* Fixed bottom CTA for intro-only mode */}
       {chatEntryRoute && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-background via-background/95 to-transparent">
-          <div className="max-w-md mx-auto space-y-2">
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+          <div className="max-w-md mx-auto space-y-2 pointer-events-auto">
             <p className="text-center text-sm text-muted-foreground">
               专属财富教练，为你量身定制
             </p>
