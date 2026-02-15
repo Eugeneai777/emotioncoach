@@ -1,21 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WealthProgressChart } from './WealthProgressChart';
-import { GrowthHighlightsCard } from './GrowthHighlightsCard';
 import { GameProgressCard } from './GameProgressCard';
 import { CompactAchievementGrid } from './CompactAchievementGrid';
-import { WeeklyComparisonChart } from './WeeklyComparisonChart';
-import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { CombinedPersonalityCard } from './CombinedPersonalityCard';
-import { JournalTimelineView } from './JournalTimelineView';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { useCampSummary } from '@/hooks/useCampSummary';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Trophy, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -38,49 +31,14 @@ interface AwakeningArchiveTabProps {
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
   const navigate = useNavigate();
-  const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg, isLoading: entriesLoading } = useWealthJournalEntries({ campId });
-  // IMPORTANT: Pass campId to ensure consistent cache key across all components
+  const { stats, entries: fullEntries, isLoading: entriesLoading } = useWealthJournalEntries({ campId });
   const { baseline } = useAssessmentBaseline(campId);
-  // Get authoritative current awakening from progress (same as GameProgressCard)
   const { progress } = useAwakeningProgress();
-  // Get graduation report data
   const { summary: campSummary } = useCampSummary(campId || null, false);
 
-  // Fetch camp data for calendar
-  const { data: camp } = useQuery({
-    queryKey: ['wealth-camp-for-archive', campId],
-    queryFn: async () => {
-      if (!campId) return null;
-      const { data, error } = await supabase
-        .from('training_camps')
-        .select('start_date, duration_days, check_in_dates')
-        .eq('id', campId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!campId,
-  });
-
-  // Fetch user profile for summary display
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile-for-summary'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', user.id)
-        .single();
-      return data;
-    },
-  });
-
-  // 优先使用 fullEntries（来自 hook），如果为空则 fallback 到传入的 entries
   const displayEntries = fullEntries.length > 0 ? fullEntries : entries;
+  const consecutiveDays = stats?.totalDays || 0;
 
-  // 加载状态
   if (entriesLoading) {
     return (
       <div className="text-center py-12">
@@ -100,24 +58,9 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
     );
   }
 
-  // Calculate stats for highlights
-  const consecutiveDays = stats?.totalDays || 0;
-  const beliefsCount = stats?.uniqueNewBeliefs?.length || 0;
-  const givingActionsCount = stats?.givingActions?.length || 0;
-  
-  // Calculate awakening change: current_awakening - baseline (same as GameProgressCard)
-  const awakeningChange = progress?.current_awakening && baseline?.awakeningStart != null
-    ? progress.current_awakening - baseline.awakeningStart
-    : 0;
-  
-  // Action completion rate (simplified)
-  const actionCompletionRate = givingActionsCount > 0 
-    ? Math.min(100, Math.round((givingActionsCount / consecutiveDays) * 100)) 
-    : 0;
-
   return (
     <div className="space-y-4">
-      {/* 毕业成就卡片 - 仅当已生成报告时显示 */}
+      {/* 毕业成就卡片 */}
       {campSummary && (
         <Card className="shadow-sm overflow-hidden border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50/50">
           <CardContent className="p-4">
@@ -154,109 +97,40 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         </Card>
       )}
 
-      {/* 我的财富觉醒之旅 - 游戏化进度卡片 */}
+      {/* 游戏化进度卡片 */}
       <GameProgressCard currentDayNumber={currentDay} streak={consecutiveDays} />
 
-      {/* 成就徽章墙 - 紧凑多彩网格 */}
-      <CompactAchievementGrid />
-
-      {/* 成长亮点 - 横向滚动 */}
-      <GrowthHighlightsCard
-        consecutiveDays={consecutiveDays}
-        awakeningChange={awakeningChange}
-        beliefsCount={beliefsCount}
-        actionCompletionRate={actionCompletionRate}
-        givingActionsCount={givingActionsCount}
-        peakAwakening={peakIndex}
-      />
-
-      {/* 第二层：成长可视化 - Tab切换 */}
+      {/* 成长曲线 - 直接展示 */}
       <Card className="shadow-sm">
-        <Tabs defaultValue="chart" className="w-full">
-          <CardHeader className="pb-0 pt-3 px-3">
-            <TabsList className="grid w-full grid-cols-4 h-9">
-              <TabsTrigger value="chart" className="text-xs">📈 曲线</TabsTrigger>
-              <TabsTrigger value="timeline" className="text-xs">📅 时间轴</TabsTrigger>
-              <TabsTrigger value="assessment" className="text-xs">🔄 对比</TabsTrigger>
-              <TabsTrigger value="weekly" className="text-xs">📊 周报</TabsTrigger>
-            </TabsList>
-          </CardHeader>
-          <CardContent className="p-3 pt-3">
-            {/* 成长曲线 */}
-            <TabsContent value="chart" className="mt-0">
-              <WealthProgressChart 
-                entries={fullEntries.map(e => ({
-                  day_number: e.day_number,
-                  behavior_score: e.behavior_score ?? null,
-                  emotion_score: e.emotion_score ?? null,
-                  belief_score: e.belief_score ?? null,
-                  created_at: e.created_at,
-                }))} 
-                embedded={true}
-                baseline={baseline ? {
-                  behavior_score: baseline.behavior_score,
-                  emotion_score: baseline.emotion_score,
-                  belief_score: baseline.belief_score,
-                } : null}
-              />
-            </TabsContent>
-
-            {/* 历史日记时间轴 */}
-            <TabsContent value="timeline" className="mt-0">
-              <JournalTimelineView 
-                entries={fullEntries.map(e => ({
-                  id: e.id,
-                  day_number: e.day_number,
-                  behavior_score: e.behavior_score ?? null,
-                  emotion_score: e.emotion_score ?? null,
-                  belief_score: e.belief_score ?? null,
-                  behavior_block: (e.behavior_block as string) || null,
-                  emotion_need: (e.emotion_need as string) || null,
-                  new_belief: e.new_belief || null,
-                  giving_action: e.giving_action || null,
-                  personal_awakening: e.personal_awakening as any,
-                  created_at: e.created_at,
-                }))} 
-                baseline={baseline ? {
-                  behavior_score: baseline.behavior_score,
-                  emotion_score: baseline.emotion_score,
-                  belief_score: baseline.belief_score,
-                  awakeningStart: baseline.awakeningStart,
-                } : null}
-                className="border-0 shadow-none"
-              />
-            </TabsContent>
-
-            {/* 周维度对比 */}
-            <TabsContent value="weekly" className="mt-0">
-              <WeeklyComparisonChart entries={entries} className="border-0 shadow-none" />
-            </TabsContent>
-
-            {/* 测评对比 - Before/After */}
-            <TabsContent value="assessment" className="mt-0">
-              <GrowthComparisonCard
-                campId={campId}
-                currentDay={currentDay}
-                avgBehavior={stats?.avgBehavior || '0.0'}
-                avgEmotion={stats?.avgEmotion || '0.0'}
-                avgBelief={stats?.avgBelief || '0.0'}
-                dominantBehavior={typeof stats?.dominantBehavior === 'object' ? stats.dominantBehavior.name : stats?.dominantBehavior}
-                dominantEmotion={typeof stats?.dominantEmotion === 'object' ? stats.dominantEmotion.name : stats?.dominantEmotion}
-                dominantBelief={typeof stats?.dominantBelief === 'object' ? stats.dominantBelief.name : stats?.dominantBelief}
-                currentAwakeningIndex={progress?.current_awakening}
-                embedded={true}
-              />
-            </TabsContent>
-          </CardContent>
-        </Tabs>
+        <CardHeader className="pb-0 pt-3 px-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+            <span>📈</span> 成长曲线
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 pt-2">
+          <WealthProgressChart 
+            entries={fullEntries.map(e => ({
+              day_number: e.day_number,
+              behavior_score: e.behavior_score ?? null,
+              emotion_score: e.emotion_score ?? null,
+              belief_score: e.belief_score ?? null,
+              created_at: e.created_at,
+            }))} 
+            embedded={true}
+            baseline={baseline ? {
+              behavior_score: baseline.behavior_score,
+              emotion_score: baseline.emotion_score,
+              belief_score: baseline.belief_score,
+            } : null}
+          />
+        </CardContent>
       </Card>
 
-      {/* 第三层：成长印记 - 可折叠卡片组 */}
-      <div className="space-y-3">
-        {/* 财富人格 - 合并四穷+反应模式，默认折叠 */}
-        <CombinedPersonalityCard campId={campId} currentDay={currentDay} />
+      {/* 成就徽章墙 */}
+      <CompactAchievementGrid />
 
-      </div>
+      {/* 财富人格 */}
+      <CombinedPersonalityCard campId={campId} currentDay={currentDay} />
     </div>
   );
 }
