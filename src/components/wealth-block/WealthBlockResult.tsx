@@ -230,7 +230,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(var(--accent)/0.4),transparent_50%)]" />
       </div>
       
-      {/* 健康度仪表盘 - 视觉冲击力升级 */}
+      {/* 1. 健康度仪表盘 */}
       <EnhancedHealthGauge
         healthScore={healthScore}
         behaviorScore={result.behaviorScore}
@@ -238,30 +238,10 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         beliefScore={result.beliefScore}
       />
 
-      {/* 语音解说教练入口 - 仅在 AI 分析完成后显示 */}
-      {!isLoadingAI && (
-        <AssessmentVoiceCoach
-          result={result}
-          aiInsight={aiInsight}
-          healthScore={healthScore}
-        />
-      )}
-
-      {/* 觉醒起点 + 目标锚点卡片 */}
-      <AwakeningJourneyPreview
-        healthScore={healthScore}
-        behaviorScore={result.behaviorScore}
-        emotionScore={result.emotionScore}
-        beliefScore={result.beliefScore}
-        dominantPoor={result.dominantPoor as 'mouth' | 'hand' | 'eye' | 'heart'}
-        hasPurchased={hasPurchased}
-        onPurchase={() => setShowPayDialog(true)}
-      />
-
       {/* 简洁分隔 */}
       <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-      {/* 财富反应模式结果卡片 - 移动端优化 */}
+      {/* 2. 财富反应模式结果卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -314,7 +294,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </Card>
       </motion.div>
 
-      {/* 三层深度分析标题 + 展开/收起按钮 - 移动端优化 */}
+      {/* 3. 三层深度分析标题 + 展开/收起按钮 */}
       <div className="flex items-center justify-between py-1.5 sm:py-2">
         <div>
           <h3 className="text-base sm:text-lg font-bold text-foreground">📊 三层深度诊断</h3>
@@ -666,9 +646,27 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
+      {/* 4. 语音解说教练入口 - 仅在 AI 分析完成后显示 */}
+      {!isLoadingAI && (
+        <AssessmentVoiceCoach
+          result={result}
+          aiInsight={aiInsight}
+          healthScore={healthScore}
+        />
+      )}
 
+      {/* 5. 觉醒起点 + 目标锚点卡片 */}
+      <AwakeningJourneyPreview
+        healthScore={healthScore}
+        behaviorScore={result.behaviorScore}
+        emotionScore={result.emotionScore}
+        beliefScore={result.beliefScore}
+        dominantPoor={result.dominantPoor as 'mouth' | 'hand' | 'eye' | 'heart'}
+        hasPurchased={hasPurchased}
+        onPurchase={() => setShowPayDialog(true)}
+      />
 
-      {/* 绽放邀请码入口 - 未购买时显示 */}
+      {/* 6. 绽放邀请码入口 - 未购买时显示 */}
       {!hasPurchased && (
         <BloomInviteCodeEntry
           variant="card"
