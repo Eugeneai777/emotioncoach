@@ -248,12 +248,12 @@ export const CoachEmptyState = ({
       {/* Extra Content */}
       {extraContent}
 
-      {/* Chat Entry Button for intro-only mode */}
+      {/* Fixed bottom CTA for intro-only mode */}
       {chatEntryRoute && (
-        <div className="flex justify-center pt-4 pb-6">
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 bg-gradient-to-t from-background via-background/95 to-transparent">
           <Button
             onClick={() => navigate(chatEntryRoute)}
-            className={`rounded-full px-8 py-3 text-base font-medium bg-gradient-to-r ${gradient} text-white shadow-lg hover:shadow-xl active:scale-95 transition-all`}
+            className="w-full h-14 rounded-full text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_8px_30px_rgba(245,158,11,0.4)] hover:shadow-[0_8px_40px_rgba(245,158,11,0.5)] active:scale-[0.97] transition-all duration-200"
           >
             开始对话 →
           </Button>
