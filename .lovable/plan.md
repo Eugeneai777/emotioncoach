@@ -1,18 +1,34 @@
 
+## 替换"AI教练"按钮为"财富教练"按钮
 
-## 将所有财富教练跳转统一到 `/coach/wealth_coach_4_questions`
+### 修改文件
+**`src/pages/WealthBlockAssessment.tsx`** 第 685-699 行
 
-### 需要修改的位置
+### 具体改动
+- 去除当前的"AI教练"按钮
+- 替换为"财富教练"按钮，保持相同样式，链接指向 `/coach/wealth_coach_4_questions`
+- 按钮文字从"AI教练"改为"财富教练"
+- 图标和跳转链接保持不变
 
-**1. `src/components/SmartHomeRedirect.tsx`（首页智能跳转）**
-- 第 68、70、72 行：将 `/wealth-coach-intro` 全部改为 `/coach/wealth_coach_4_questions`
+### 技术细节
 
-**2. `src/pages/Auth.tsx`（登录后跳转）**
-- 第 228 行：`/wealth-coach-intro` 改为 `/coach/wealth_coach_4_questions`（活跃合伙人+已购测评）
-- 第 240 行：`/wealth-camp-checkin` 改为 `/coach/wealth_coach_4_questions`（有活跃训练营）
-- 第 242 行：`/wealth-coach-intro` 改为 `/coach/wealth_coach_4_questions`（普通财富用户）
+将第 685-699 行替换为：
+```tsx
+{/* 财富教练入口按钮 */}
+<Button
+  variant="ghost"
+  onClick={() => navigate("/coach/wealth_coach_4_questions")}
+  className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
+             bg-gradient-to-r from-amber-400 to-orange-400 
+             hover:from-amber-500 hover:to-orange-500 
+             text-white shadow-md hover:shadow-lg 
+             transition-all duration-200 hover:scale-[1.02]
+             flex items-center justify-center gap-1.5 sm:gap-2"
+>
+  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+  <span className="text-xs sm:text-sm font-medium">财富教练</span>
+  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+</Button>
+```
 
-### 结果
-
-无论用户从首页进入还是登录后跳转，只要 `preferred_coach` 是 `wealth`，都会直接进入对话页 `/coach/wealth_coach_4_questions`。
-
+仅改动按钮注释和显示文字，其余样式、图标、跳转路径均不变。
