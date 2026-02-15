@@ -105,12 +105,20 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore }: Assessm
     <>
       <button
         onClick={handleClick}
-        className="flex-1 flex items-center justify-center gap-1.5 h-full rounded-lg text-xs sm:text-sm font-medium
-                   bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-md
-                   active:scale-[0.97] transition-all duration-200"
+        className="relative flex flex-col items-center justify-center w-[68px] h-[68px] rounded-full
+                   bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-xl
+                   active:scale-[0.93] transition-all duration-200 z-10"
       >
-        <ButtonIcon className="w-4 h-4" />
-        {buttonLabel}
+        {/* 呼吸光晕 */}
+        <span className="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping" />
+        <span className="absolute -inset-1.5 rounded-full bg-red-400/20 animate-pulse" />
+        <ButtonIcon className="w-5 h-5 relative z-10" />
+        <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
+          {isLimitReached ? '升级' : '教练'}
+        </span>
+        <span className="relative z-10 text-[10px] font-bold leading-tight">
+          {isLimitReached ? '解锁' : hasFreeRemaining ? '解说' : '解说'}
+        </span>
       </button>
 
       {showVoiceChat && (
