@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { CheckCircle2, Circle, Calendar, Flame, TrendingUp } from "lucide-react";
+import { CheckCircle2, Circle, Calendar, Flame, TrendingUp, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format, parseISO, differenceInDays } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { differenceInDays } from "date-fns";
 import { getTodayInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TrainingCampCardProps {
   camp: TrainingCamp;
@@ -57,16 +58,27 @@ const getThemeColors = (campType: string) => {
 export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const colors = getThemeColors(camp.camp_type);
   const navigate = useNavigate();
+  const isWealthCamp = camp.camp_type?.includes('wealth');
   
+  // Fetch baseline for wealth camp graduation goal
+  const { data: awakeningProgress } = useQuery({
+    queryKey: ['camp-card-awakening', camp.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('user_awakening_progress')
+        .select('baseline_awakening')
+        .eq('user_id', camp.user_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isWealthCamp,
+  });
+
   const today = getTodayInBeijing();
-  
   const hasCheckedInToday = camp.check_in_dates.includes(today);
   const progressPercent = (camp.completed_days / camp.duration_days) * 100;
   
-  // 动态计算当前是第几天（从1开始显示）
-  const calculatedCurrentDay = Math.max(1,
-    getDaysSinceStart(camp.start_date) + 1
-  );
+  const calculatedCurrentDay = Math.max(1, getDaysSinceStart(camp.start_date) + 1);
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
   
   // Calculate streak
@@ -86,9 +98,6 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   }
 
   const getMilestones = () => {
-    // 财富训练营是7天，里程碑为 Day 1 / Day 3 / Day 7
-    const isWealthCamp = camp.camp_type?.includes('wealth');
-    
     if (isWealthCamp) {
       return [
         { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
@@ -96,8 +105,6 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         { icon: "🏆", label: "毕业", reached: camp.milestone_7_reached, position: 100 }
       ];
     }
-    
-    // 其他21天训练营
     return [
       { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
       { icon: "⭐", label: "一周", reached: camp.milestone_7_reached, position: (7 / camp.duration_days) * 100 },
@@ -105,6 +112,10 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
       { icon: "🏆", label: "毕业", reached: camp.milestone_21_completed, position: 100 }
     ];
   };
+
+  const milestones = getMilestones();
+  const baselineScore = awakeningProgress?.baseline_awakening;
+  const graduationTarget = baselineScore ? Math.min(baselineScore + 20, 95) : null;
 
   return (
     <Card className={`p-5 bg-gradient-to-br ${colors.cardBg} ${colors.borderColor} shadow-sm hover:shadow-md transition-all`}>
@@ -138,31 +149,41 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         )}
       </div>
 
-      {/* Milestone Progress - Unified Design */}
+      {/* Milestone Timeline + Progress Bar */}
       <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
-          {getMilestones().map((m, i) => (
-            <div key={i} className="flex flex-col items-center">
-              <span className={`text-lg transition-all duration-300 ${m.reached ? 'scale-110' : 'opacity-40 grayscale'}`}>
-                {m.icon}
-              </span>
-              <span className={`text-[10px] mt-1 ${m.reached ? `${colors.accentColor} font-medium` : 'text-muted-foreground'}`}>
-                {m.label}
-              </span>
-            </div>
-          ))}
+        <div className="relative px-2">
+          {/* Milestone icons aligned to progress bar */}
+          <div className="flex justify-between mb-1.5">
+            {milestones.map((m, i) => (
+              <div key={i} className="flex flex-col items-center" style={{ width: milestones.length <= 3 ? '33%' : '25%' }}>
+                <span className={`text-base transition-all duration-300 ${m.reached ? 'scale-110' : 'opacity-30'}`}>
+                  {m.icon}
+                </span>
+                <span className={`text-[10px] leading-tight ${m.reached ? `${colors.accentColor} font-medium` : 'text-muted-foreground'}`}>
+                  {m.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Progress value={progressPercent} className={`h-2 ${colors.progressBg}`} />
         </div>
-        <Progress value={progressPercent} className={`h-2 ${colors.progressBg}`} />
         <div className="text-center text-xs text-muted-foreground mt-2">
           已完成 <span className={`font-semibold ${colors.accentColor}`}>{camp.completed_days}</span>/{camp.duration_days} 天 ({Math.round(progressPercent)}%)
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Graduation Goal (wealth camp only) */}
+      {isWealthCamp && graduationTarget && (
+        <div className={`mb-4 flex items-center gap-2 text-sm ${colors.accentColor}`}>
+          <Target className="h-4 w-4 shrink-0" />
+          <span>毕业目标：觉醒分达到 <strong>{graduationTarget}</strong> 分</span>
+        </div>
+      )}
+
+      {/* Action Buttons - equal width */}
       <div className="flex gap-2">
         <Button 
           onClick={() => {
-            // 财富训练营使用专属打卡页
             if (camp.camp_type === 'wealth_block_7' || camp.camp_type === 'wealth_block_21') {
               navigate('/wealth-camp-checkin');
             } else {
@@ -177,16 +198,14 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         </Button>
         <Button 
           variant="outline"
-          size="sm"
           onClick={() => {
-            // 财富训练营使用专属介绍页
             if (camp.camp_type === 'wealth_block_7' || camp.camp_type === 'wealth_block_21') {
               navigate('/wealth-camp-intro');
             } else {
               navigate(`/camp-intro/${camp.camp_type}`);
             }
           }}
-          className={colors.outlineButton}
+          className={`flex-1 ${colors.outlineButton}`}
         >
           <TrendingUp className="h-4 w-4 mr-1" />
           介绍
