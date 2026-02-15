@@ -250,14 +250,11 @@ export const CoachEmptyState = ({
 
       {/* Fixed bottom CTA for intro-only mode */}
       {chatEntryRoute && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
-          <div className="max-w-md mx-auto space-y-2 pointer-events-auto">
-            <p className="text-center text-sm text-muted-foreground">
-              专属财富教练，为你量身定制
-            </p>
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+          <div className="max-w-md mx-auto pointer-events-auto">
             <Button
               onClick={() => navigate(chatEntryRoute)}
-              className="w-full h-14 rounded-full text-base font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_8px_30px_rgba(245,158,11,0.35)] hover:shadow-[0_8px_40px_rgba(245,158,11,0.5)] active:scale-[0.97] transition-all duration-200 gap-2"
+              className="w-full h-12 rounded-full text-base font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_8px_30px_rgba(245,158,11,0.35)] hover:shadow-[0_8px_40px_rgba(245,158,11,0.5)] active:scale-[0.97] transition-all duration-200 gap-2"
             >
               <MessageCircle className="w-5 h-5" />
               与财富教练开始对话
