@@ -123,6 +123,7 @@ serve(async (req) => {
           partner_level: 'L0',
           commission_rate_l1: 0.30,
           commission_rate_l2: 0.10,
+          prepurchase_count: 100,
           source: 'manual',
         })
         .eq('id', existingPartner.id);
@@ -154,6 +155,7 @@ serve(async (req) => {
           partner_code: partnerCode,
           commission_rate_l1: 0.30,
           commission_rate_l2: 0.10,
+          prepurchase_count: 100,
           status: 'active',
           source: 'manual',
         })
