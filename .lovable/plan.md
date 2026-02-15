@@ -1,61 +1,77 @@
 
 
-## 优化未完成对话逻辑，确保不产生误判
+## 修复：用户发布动态后在社区不显示
 
-### 发现的问题
+### 问题根因
 
-上一次修复已解决了简报卡片持久化和恢复判断的核心问题。但经过进一步审查，发现两个残留隐患：
+经过代码分析，发现有 **两个核心原因** 导致用户发布的动态在社区不显示：
 
-**问题 1：`resetConversation` 没有重置 `briefingGeneratedRef`**
+### 原因 1：推荐缓存遮蔽新帖子
 
-当用户完成一次对话（简报已生成，`briefingGeneratedRef.current = true`），然后点击"新对话"时，`resetConversation` 函数清空了消息、对话 ID 等状态，但没有将 `briefingGeneratedRef.current` 重置为 `false`。这意味着：
-- 新对话中如果用户中途离开，系统不会触发"未完成对话"通知（因为 ref 仍为 true）
-- 新对话的简报生成可能受到影响
+社区"发现"页首次加载时，走的是推荐逻辑（`recommend-posts` 函数），结果会缓存 2 分钟。查询条件是 `.in('id', recommendedIds)`，**只显示推荐列表里的帖子**。用户刚发布的新帖子不在推荐列表中，自然看不到。
 
-**问题 2：恢复对话时未同步 `briefingGeneratedRef`**
+```text
+用户发帖 --> 查看社区 --> 命中缓存 --> 缓存里没有新帖 --> 看不到
+```
 
-当系统恢复一个已有消息但尚未生成简报的对话时，`briefingGeneratedRef.current` 保持默认值 `false`，这是正确的。但如果恢复的对话消息中已经包含简报卡片标记（理论上被前面的检查拦截了，但为防御性考虑），应该同步设置 ref。
+### 原因 2：分享简报后没有触发社区刷新
+
+从 `BriefingShareDialog`（简报分享对话框）发布帖子后，没有派发 `post-updated` 事件来通知 `CommunityWaterfall` 组件刷新数据。
 
 ### 修复方案
 
-**文件：`src/hooks/useDynamicCoachChat.ts`**
+**文件 1：`src/components/briefing/BriefingShareDialog.tsx`**
 
-1. **`resetConversation` 中重置 ref**：在第 898-908 行的 `resetConversation` 函数中，添加 `briefingGeneratedRef.current = false;`
-
-2. **恢复对话时检查已有简报标记**：在第 225-235 行的恢复逻辑中，检查加载的消息是否包含 `<!--WEALTH_BRIEFING_CARD-->` 标记，如果有则设置 `briefingGeneratedRef.current = true`，防止离开时误发"未完成对话"通知。
-
-### 技术细节
-
-#### 修改 1：重置 ref（约第 900 行）
+在分享成功后，派发 `post-updated` 事件并清除推荐缓存：
 
 ```typescript
-const resetConversation = useCallback(() => {
-  setMessages([]);
-  messagesRef.current = [];
-  setCurrentConversationId(null);
-  setLastBriefingId(null);
-  setCoachRecommendation(null);
-  setVideoRecommendation(null);
-  setToolRecommendation(null);
-  setEmotionButtonRecommendation(null);
-  setCampRecommendation(null);
-  briefingGeneratedRef.current = false; // 新增
-}, []);
+// 分享成功后
+toast({ title: "分享成功" });
+
+// 清除推荐缓存，确保社区刷新时能看到新帖
+sessionStorage.removeItem('community_recommendation_cache');
+
+// 通知社区组件刷新
+window.dispatchEvent(new CustomEvent('post-updated'));
 ```
 
-#### 修改 2：恢复时同步 ref（约第 233 行后）
+**文件 2：`src/components/community/CommunityWaterfall.tsx`**
+
+修改 `loadPosts` 中"发现"页的推荐逻辑，确保始终混入用户自己最新的帖子：
+
+在推荐模式下（第 306-316 行），获取推荐帖子后，额外查询当前用户最近 24 小时内发布的帖子，合并到结果中。这样即使推荐列表没有用户的新帖，用户也能在"发现"页看到自己的内容。
 
 ```typescript
-setMessages(loadedMessages);
-messagesRef.current = loadedMessages;
+// 在推荐结果返回后，补充用户自己最近的帖子
+if (session?.user && recommendedIds) {
+  const { data: myRecentPosts } = await supabase
+    .from('community_posts')
+    .select('id')
+    .eq('user_id', session.user.id)
+    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: false })
+    .limit(3);
 
-// 检查恢复的消息中是否已有简报卡片，同步 ref 状态
-const hasBriefingCard = loadedMessages.some(m => m.content.includes('<!--WEALTH_BRIEFING_CARD-->'));
-if (hasBriefingCard) {
-  briefingGeneratedRef.current = true;
+  if (myRecentPosts?.length) {
+    const myIds = myRecentPosts.map(p => p.id);
+    recommendedIds = [...new Set([...myIds, ...recommendedIds])];
+  }
 }
-
-setIsRecovering(false);
 ```
 
-这两处修改确保 `briefingGeneratedRef` 在所有场景下与实际状态保持一致，避免误触发通知或阻碍新对话的简报生成。
+**文件 3：`src/components/community/PostComposer.tsx`**
+
+在发布成功后同样清除推荐缓存：
+
+```typescript
+// 发布成功后
+sessionStorage.removeItem('community_recommendation_cache');
+```
+
+### 总结
+
+三处修改确保：
+1. 发布后立即清除推荐缓存，下次加载获取最新推荐
+2. 发布后触发社区刷新事件
+3. "发现"页始终包含用户自己最近 24 小时的帖子，不受推荐算法遮蔽
+
