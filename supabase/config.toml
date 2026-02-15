@@ -445,3 +445,6 @@ verify_jwt = false
 
 [functions.batch-register-bloom-partners]
 verify_jwt = false
+
+[functions.wealth-assessment-realtime-token]
+verify_jwt = true
