@@ -815,55 +815,63 @@ export default function WealthBlockAssessmentPage() {
               )}
             </motion.div>
           </TabsContent>
-          {/* 底部固定Tab导航 */}
+          {/* 底部固定一体化导航栏 */}
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-t border-amber-200/50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
-            <div className="container max-w-sm sm:max-w-lg mx-auto px-3 py-2 relative">
-              {/* 中间凸出的教练解说 FAB 按钮 */}
-              {showResult && currentResult && (
-                <div className="absolute left-1/2 -translate-x-1/2 -top-10 z-20">
+            <div className="container max-w-sm sm:max-w-lg mx-auto px-1 relative">
+              {/* 隐藏的 TabsList 保持 Radix Tabs 状态同步 */}
+              <TabsList className="hidden">
+                <TabsTrigger value="assessment">开始测评</TabsTrigger>
+                <TabsTrigger value="history">历史记录</TabsTrigger>
+              </TabsList>
+
+              {/* 自定义3栏导航 */}
+              <div className="flex items-end justify-around pt-1 pb-2">
+                {/* 左侧 - 开始测评 */}
+                <button
+                  onClick={() => setActiveTab("assessment")}
+                  className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-4 rounded-xl transition-all duration-200 min-w-[72px]
+                    ${activeTab === "assessment" 
+                      ? "text-amber-600" 
+                      : "text-muted-foreground hover:text-amber-500"}`}
+                >
+                  <ClipboardList className={`w-5 h-5 transition-transform ${activeTab === "assessment" ? "scale-110" : ""}`} />
+                  <span className="text-[11px] font-semibold leading-tight">开始测评</span>
+                </button>
+
+                {/* 中间 - 凸出的教练解说 FAB */}
+                <div className="relative -top-5 flex flex-col items-center">
                   <AssessmentVoiceCoach
-                    result={currentResult}
+                    result={currentResult!}
                     aiInsight={null}
-                    healthScore={Math.round(
+                    healthScore={currentResult ? Math.round(
                       ((5 - currentResult.behaviorScore) / 4 * 33) +
                       ((5 - currentResult.emotionScore) / 4 * 33) +
                       ((5 - currentResult.beliefScore) / 4 * 34)
-                    )}
+                    ) : 0}
+                    disabled={!showResult || !currentResult}
                   />
+                  <span className={`text-[10px] font-semibold mt-0.5 ${showResult && currentResult ? "text-red-500" : "text-muted-foreground"}`}>
+                    教练解说
+                  </span>
                 </div>
-              )}
-              <TabsList className="w-full h-11 sm:h-12 bg-white/80 rounded-xl shadow-inner grid grid-cols-2 gap-1">
-                <TabsTrigger 
-                  value="assessment" 
-                  className="gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
-                             data-[state=active]:bg-gradient-to-r 
-                             data-[state=active]:from-amber-500 
-                             data-[state=active]:to-orange-500 
-                             data-[state=active]:text-white 
-                             data-[state=active]:shadow-md"
-                >
-                  <ClipboardList className="w-4 h-4" />
-                  开始测评
-                </TabsTrigger>
 
-                <TabsTrigger 
-                  value="history" 
-                  className="gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
-                             data-[state=active]:bg-gradient-to-r 
-                             data-[state=active]:from-amber-500 
-                             data-[state=active]:to-orange-500 
-                             data-[state=active]:text-white 
-                             data-[state=active]:shadow-md"
+                {/* 右侧 - 历史记录 */}
+                <button
+                  onClick={() => setActiveTab("history")}
+                  className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-4 rounded-xl transition-all duration-200 min-w-[72px] relative
+                    ${activeTab === "history" 
+                      ? "text-amber-600" 
+                      : "text-muted-foreground hover:text-amber-500"}`}
                 >
-                  <History className="w-4 h-4" />
-                  历史记录
+                  <History className={`w-5 h-5 transition-transform ${activeTab === "history" ? "scale-110" : ""}`} />
+                  <span className="text-[11px] font-semibold leading-tight">历史记录</span>
                   {historyRecords.length > 0 && (
-                    <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+                    <span className="absolute -top-0.5 right-2 bg-red-500 text-white text-[9px] min-w-[16px] h-4 flex items-center justify-center px-1 rounded-full">
                       {historyRecords.length}
                     </span>
                   )}
-                </TabsTrigger>
-              </TabsList>
+                </button>
+              </div>
             </div>
           </div>
         </Tabs>
