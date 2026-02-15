@@ -807,17 +807,6 @@ ${reflection}`;
               postCampCheckinDates={postCampCheckinDates}
             />
 
-            {/* 冥想库入口 */}
-            <Button
-              variant="outline"
-              onClick={() => navigate('/meditation-library')}
-              className="w-full justify-center gap-2 py-5 text-amber-700 border-amber-300 bg-amber-50/50 hover:bg-amber-100"
-            >
-              <span className="text-xl">🧘</span>
-              <span className="font-medium">冥想音频库</span>
-              <span className="text-xs text-muted-foreground ml-1">随时聆听全部 7 天冥想</span>
-            </Button>
-
             <Tabs defaultValue="awakening" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="awakening">财富旅程</TabsTrigger>
