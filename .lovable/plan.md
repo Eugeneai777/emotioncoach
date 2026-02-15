@@ -1,44 +1,65 @@
 
 
-## 修正绽放合伙人名额逻辑：从L1权益规则动态获取
+## 优化推广指南页面 + 修复推广链接错误
 
-### 核心问题
+### 背景
 
-当前 `claim-partner-invitation` 中 `prepurchase_count: 100` 是硬编码值。正确逻辑应该是：绽放合伙人同享有劲L1权益，100名额来源于 `partner_level_rules` 表中 L1 的 `min_prepurchase` 字段。
+当前 `/partner/promo-guide` 页面内容过于简略，缺少以下关键信息：
+1. **名额包含什么** - 用户不清楚每个名额能给对方什么权益
+2. **如何分享推广** - 缺乏具体操作步骤指引
+3. **推广链接的目的** - 没有解释链接点击后会发生什么
+4. **点击链接报错** - 需要排查并修复链接点击时的错误
 
-### 需要修改的文件
+### 修改内容
 
-#### 1. `supabase/functions/claim-partner-invitation/index.ts`
-- 在创建/升级合伙人之前，先从 `partner_level_rules` 表查询有劲L1的 `min_prepurchase` 值
-- 用查询结果替代硬编码的 `100`
-- 升级路径（existingPartner）和新建路径都使用同一个动态值
+#### 1. 重写 `src/pages/partner/PromoGuide.tsx`
 
-#### 2. `supabase/functions/auto-claim-bloom-invitation/index.ts`
-- 同样的逻辑：查询L1规则获取 `min_prepurchase`
-- 升级路径（第60-69行）补充 `prepurchase_count` 字段
-- 新建路径（第157-168行）补充 `prepurchase_count` 字段
+将页面重构为 4 个清晰的内容板块：
 
-#### 3. `src/components/partner/BloomYoujinBenefitsCard.tsx`（第51行和第61行）
-- 将 `partner.prepurchase_count || 100` 改为 `partner.prepurchase_count ?? 0`
-- 与 Partner.tsx 中已修复的逻辑保持一致，不再用硬编码兜底
+**板块一：名额权益说明**
+- 标题："每个名额 = 一份体验套餐"
+- 从 `useExperiencePackageItems` hook 动态获取体验包内容（与推广中心一致）
+- 列出 4 项权益：尝鲜会员 50 点、情绪健康测评 1 次、SCL-90 测评 1 次、财富卡点测评 1 次
+- 说明：每分发一个用户，消耗你的 1 个名额
+
+**板块二：推广链接的目的**
+- 标题："推广链接做什么？"
+- 解释两种模式：
+  - 免费模式：用户点击链接 -> 注册/登录 -> 免费领取体验包 -> 成为你的学员
+  - 付费模式：用户点击链接 -> 注册/登录 -> 支付 9.9 元 -> 领取体验包 -> 9.9 元归你
+- 用简洁的流程图展示
+
+**板块三：如何分享推广（操作步骤）**
+- 标题："3 步开始推广"
+- 步骤 1：在合伙人中心选择入口方式（免费/付费）
+- 步骤 2：复制推广链接 或 下载二维码 或 生成海报
+- 步骤 3：分享到朋友圈、微信群等场景
+- 保留原有的适合场景展示
+
+**板块四：使用建议**
+- 保留现有的新手/进阶/高级策略建议
+
+#### 2. 修复推广链接错误
+
+经过测试，`/claim` 页面在用户已登录时正常工作。错误可能发生在：
+- **未登录场景**：`/claim` 页面会重定向到 `/auth`，但在生产环境（微信内）可能存在 OAuth 回跳问题
+- **自领取场景**：合伙人点击自己的推广链接会返回"不能领取自己的推广福利"错误
+
+修复方案：
+- 在 `/claim` 页面的错误状态中，显示更友好的错误提示信息，区分不同错误类型
+- 对"不能领取自己的推广福利"显示专门的提示卡片（而非通用错误红色界面）
+- 对"已经领取过"显示"你已领取"的友好状态
 
 ### 技术细节
 
-两个 Edge Function 中新增的查询逻辑：
+**PromoGuide.tsx 改动：**
+- 引入 `useExperiencePackageItems` hook 动态获取体验包内容
+- 新增 4 个 Card 组件对应 4 个板块
+- 保持现有的返回按钮、分享按钮和 CTA 按钮
 
-```typescript
-// 从规则表动态获取有劲L1的预购名额
-const { data: l1Rule } = await adminClient
-  .from('partner_level_rules')
-  .select('min_prepurchase')
-  .eq('partner_type', 'youjin')
-  .eq('level_name', 'L1')
-  .eq('is_active', true)
-  .single();
+**Claim.tsx 改动：**
+- 根据错误 message 关键词（"自己"、"已经领取"）显示不同 UI 状态
+- 自领取错误：显示蓝色提示卡片 + "这是你自己的推广链接，分享给朋友即可"
+- 已领取错误：显示绿色成功卡片 + "你已经领取过此体验包"
+- 其他错误：保持现有红色错误样式
 
-const l1PrepurchaseCount = l1Rule?.min_prepurchase ?? 100; // 安全兜底
-```
-
-然后在 insert/update 中使用 `prepurchase_count: l1PrepurchaseCount`。
-
-这样，如果将来L1名额从100调整为其他数值，绽放合伙人的名额也会自动同步。
