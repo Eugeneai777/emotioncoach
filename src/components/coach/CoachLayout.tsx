@@ -132,6 +132,9 @@ interface CoachLayoutProps {
   
   // Loading placeholder for custom loading states (e.g., meditation analysis)
   loadingPlaceholder?: ReactNode;
+  
+  // Skip empty state and show chat directly
+  skipEmptyState?: boolean;
 }
 
 export const CoachLayout = ({
@@ -196,7 +199,8 @@ export const CoachLayout = ({
   enableStepsCollapse = false,
   customFooter,
   voiceChatCTA,
-  loadingPlaceholder
+  loadingPlaceholder,
+  skipEmptyState = false
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -397,7 +401,7 @@ export const CoachLayout = ({
             {/* 显示自定义加载占位符（如冥想分析引导） */}
             {messages.length === 0 && isLoading && loadingPlaceholder ? (
               loadingPlaceholder
-            ) : messages.length === 0 ? (
+            ) : messages.length === 0 && !skipEmptyState ? (
               <CoachEmptyState
                 emoji={emoji}
                 title={title}

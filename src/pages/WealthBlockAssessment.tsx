@@ -678,14 +678,14 @@ export default function WealthBlockAssessmentPage() {
       {/* 导航栏 - 使用统一的PageHeader组件 */}
       <PageHeader 
         title=""
-        backTo="/coach/wealth_coach_4_questions"
+        backTo="/wealth-coach-chat"
         className="bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 border-b border-amber-200/50"
         rightActions={
           <div className="flex items-center gap-1">
             {/* 财富教练入口按钮 */}
             <Button
               variant="ghost"
-              onClick={() => navigate("/coach/wealth_coach_4_questions")}
+              onClick={() => navigate("/wealth-coach-chat")}
               className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
                          bg-gradient-to-r from-amber-400 to-orange-400 
                          hover:from-amber-500 hover:to-orange-500 
