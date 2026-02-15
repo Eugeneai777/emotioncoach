@@ -171,48 +171,6 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             <p className="text-slate-400 text-sm mt-2">{zone.description}</p>
           </motion.div>
 
-          {/* Three Layer Breakdown - 移动端竖向堆叠 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            {layers.map((layer, idx) => (
-              <motion.div
-                key={layer.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 + idx * 0.1 }}
-                className="relative group"
-              >
-                <div className="bg-slate-800/80 rounded-xl p-3 border border-slate-700/50 transition-all group-hover:border-slate-600 group-hover:bg-slate-800">
-                  {/* 移动端横向布局 */}
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{layer.emoji}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-slate-400 text-xs">{layer.name}层</span>
-                        <div className={cn(
-                          "text-base font-bold tabular-nums",
-                          layer.score / layer.max <= 0.4 ? "text-emerald-400" :
-                          layer.score / layer.max <= 0.7 ? "text-amber-400" : "text-rose-400"
-                        )}>
-                          {layer.score}
-                          <span className="text-slate-500 text-xs font-normal">/{layer.max}</span>
-                        </div>
-                      </div>
-                      {/* Progress bar 全宽 */}
-                      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <motion.div
-                          className={cn("h-full rounded-full bg-gradient-to-r", layer.color)}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(layer.score / layer.max) * 100}%` }}
-                          transition={{ duration: 0.8, delay: 1 + idx * 0.1 }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
           {/* Zone Legend - 紧凑版 */}
           <div className="flex justify-center gap-1 flex-wrap text-[10px]">
             {healthZones.map((z, i) => (
