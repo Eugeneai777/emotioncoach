@@ -1,34 +1,29 @@
 
 
-## 让 `/coach/wealth_coach_4_questions` 只显示介绍内容
+## 将"开始对话"按钮固定在底部并重新设计
 
 ### 修改方案
 
-**文件 1：`src/pages/DynamicCoach.tsx`**
+**文件：`src/components/coach/CoachEmptyState.tsx`**
 
-在渲染 `CoachLayout` 时，当 `coachKey === 'wealth_coach_4_questions'` 时：
-- `messages` 传空数组 `[]`
-- `isLoading` 传 `false`
-- `input` 传空字符串
-- `onInputChange` 传空函数
-- `onSend` 传空函数
-- 新增 `hideInput: true` 隐藏输入框
-- 在 `CoachEmptyState` 中添加"开始对话"按钮（通过 `chatEntryRoute` prop）
+将当前的内联按钮改为固定在底部的浮动按钮：
 
-Hook 仍然被调用（React 规则不允许条件调用），但返回值不使用。
+- 移除现有的 `chatEntryRoute` 按钮区域（底部 `flex justify-center` 部分）
+- 改用 `fixed bottom-0` 定位，始终显示在页面底部
+- 按钮重新设计：更大、更醒目的圆角胶囊按钮，带有amber渐变和阴影效果
+- 添加安全区域适配（`safe-area-inset-bottom`）
 
-**文件 2：`src/components/coach/CoachLayout.tsx`**
+**文件：`src/components/coach/CoachLayout.tsx`**
 
-- 新增可选 prop `hideInput?: boolean` 和 `chatEntryRoute?: string`
-- 当 `hideInput` 为 true 时，不渲染底部 `CoachInputFooter`
-- 将 `chatEntryRoute` 传递给 `CoachEmptyState`
+- 当 `chatEntryRoute` 存在时，为主内容区底部添加额外 padding，防止内容被固定按钮遮挡
 
-**文件 3：`src/components/coach/CoachEmptyState.tsx`**
+### 按钮设计
 
-- 新增可选 prop `chatEntryRoute?: string`
-- 当提供该 prop 时，在介绍内容底部显示一个"开始对话"按钮，点击跳转到 `/wealth-coach-chat`
-
-### 最终效果
-- `/coach/wealth_coach_4_questions`：只显示介绍内容 + "开始对话"按钮，无输入框，不恢复对话
-- `/wealth-coach-chat`：完整对话页面，包含会话恢复功能
+- 固定在屏幕底部居中
+- 宽度较大（接近全屏宽度，两侧留边距）
+- amber/orange 渐变背景（与财富教练主题一致）
+- 大圆角（pill shape）
+- 白色文字 + 箭头
+- 较大的阴影效果
+- 点击时缩放反馈
 
