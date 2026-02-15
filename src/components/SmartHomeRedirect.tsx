@@ -59,6 +59,11 @@ const SmartHomeRedirect = () => {
           const hasPaidAssessment = !!assessmentRes.data;
           const hasActiveCamp = !!campRes.data;
 
+          // 已购买测评但未完成：触发即时提醒
+          if (hasPaidAssessment) {
+            triggerAssessmentReminder(user.id);
+          }
+
           if (isActivePartner && hasPaidAssessment) {
             setTargetPath("/coach/wealth_coach_4_questions");
           } else if (hasActiveCamp) {
@@ -91,5 +96,45 @@ const SmartHomeRedirect = () => {
 
   return <Navigate to={targetPath} replace />;
 };
+
+/**
+ * 检查用户是否已完成测评，如未完成则触发即时通知提醒
+ * 使用 localStorage 做日级去重
+ */
+async function triggerAssessmentReminder(userId: string) {
+  try {
+    // localStorage 日级去重
+    const todayKey = `assessment_reminder_${new Date().toISOString().slice(0, 10)}`;
+    if (localStorage.getItem(todayKey)) return;
+
+    // 检查是否已完成测评
+    const { data: assessments } = await supabase
+      .from("wealth_block_assessments")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1);
+
+    if (assessments && assessments.length > 0) return; // 已完成，无需提醒
+
+    // 标记今天已触发
+    localStorage.setItem(todayKey, "1");
+
+    // 触发智能通知
+    await supabase.functions.invoke("generate-smart-notification", {
+      body: {
+        scenario: "assessment_incomplete_reminder",
+        context: {
+          user_id: userId,
+          action_path: "/wealth-block",
+          coach_type: "wealth",
+        },
+      },
+    });
+
+    console.log("[SmartHomeRedirect] 已触发测评未完成提醒");
+  } catch (err) {
+    console.error("[SmartHomeRedirect] 触发测评提醒失败:", err);
+  }
+}
 
 export default SmartHomeRedirect;

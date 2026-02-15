@@ -404,6 +404,9 @@ verify_jwt = false
 [functions.batch-check-alive-status]
 verify_jwt = false
 
+[functions.batch-trigger-assessment-reminder]
+verify_jwt = false
+
 [functions.send-alive-check-alert]
 verify_jwt = false
 
