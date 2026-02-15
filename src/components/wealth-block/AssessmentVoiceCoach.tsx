@@ -108,7 +108,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
       <button
         onClick={handleClick}
         disabled={disabled}
-        className={`relative flex flex-col items-center justify-center w-[72px] h-[72px] rounded-full
+        className={`relative flex flex-col items-center justify-center w-20 h-20 rounded-full
                    shadow-xl active:scale-[0.93] transition-all duration-200 z-10
                    ${disabled 
                      ? "bg-muted text-muted-foreground cursor-not-allowed" 
@@ -117,16 +117,13 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
         {/* 呼吸光晕 - 仅在非禁用时显示 */}
         {!disabled && (
           <>
-            <span className="absolute -inset-1 rounded-full bg-red-400 opacity-40 animate-ping" />
-            <span className="absolute -inset-2.5 rounded-full bg-red-400/20 animate-pulse" />
+            <span className="absolute -inset-1.5 rounded-full bg-red-400 opacity-40 animate-ping" />
+            <span className="absolute -inset-3 rounded-full bg-red-400/20 animate-pulse" />
           </>
         )}
-        <ButtonIcon className="w-5 h-5 relative z-10" />
+        <ButtonIcon className="w-6 h-6 relative z-10" />
         <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
-          {disabled ? '教练' : isLimitReached ? '升级' : '教练'}
-        </span>
-        <span className="relative z-10 text-[10px] font-bold leading-tight">
-          {disabled ? '解说' : isLimitReached ? '解锁' : hasFreeRemaining ? '解说' : '解说'}
+          {disabled ? '教练解说' : isLimitReached ? '升级解锁' : '教练解说'}
         </span>
       </button>
 

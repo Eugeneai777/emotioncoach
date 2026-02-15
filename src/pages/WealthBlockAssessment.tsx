@@ -825,7 +825,7 @@ export default function WealthBlockAssessmentPage() {
               </TabsList>
 
               {/* 自定义3栏导航 */}
-              <div className="flex items-end justify-around pt-1 pb-2">
+              <div className="flex items-end justify-around pt-1 pb-1">
                 {/* 左侧 - 开始测评 */}
                 <button
                   onClick={() => setActiveTab("assessment")}
@@ -839,7 +839,7 @@ export default function WealthBlockAssessmentPage() {
                 </button>
 
                 {/* 中间 - 凸出的教练解说 FAB */}
-                <div className="relative -top-5 flex flex-col items-center">
+                <div className="relative -top-3 flex flex-col items-center">
                   <AssessmentVoiceCoach
                     result={currentResult!}
                     aiInsight={null}
@@ -850,9 +850,6 @@ export default function WealthBlockAssessmentPage() {
                     ) : 0}
                     disabled={!showResult || !currentResult}
                   />
-                  <span className={`text-[10px] font-semibold mt-0.5 ${showResult && currentResult ? "text-red-500" : "text-muted-foreground"}`}>
-                    教练解说
-                  </span>
                 </div>
 
                 {/* 右侧 - 历史记录 */}
