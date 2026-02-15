@@ -98,8 +98,6 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
   }
 
   const currentState = getAwakeningState(progress.current_awakening);
-  const nextState = awakeningStates.find(s => s.minScore > progress.current_awakening);
-  const pointsToNextState = nextState ? nextState.minScore - progress.current_awakening : 0;
 
   // 计算等级进度线的位置
   const getLevelTrackProgress = () => {
@@ -171,55 +169,39 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
             </div>
           </motion.div>
 
-          {/* 距下一觉醒状态提示 */}
-          {nextState && (
-            <motion.div 
-              className="text-xs text-slate-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              距 <span className={`font-medium ${nextState.color}`}>{nextState.emoji} {nextState.label}</span> 还差 
-              <span className="text-amber-400 font-bold mx-0.5">{pointsToNextState}</span>分
-            </motion.div>
-          )}
-          {!nextState && (
-            <motion.div 
-              className="text-xs text-emerald-400 font-medium"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              🎉 已达成高度觉醒
-            </motion.div>
-          )}
-
-          {/* 区块2：7天训练营目标 */}
+          {/* 区块2：7天觉醒目标（个性化） */}
           {(() => {
-            const campGoal = awakeningLevels[3]; // Lv.4 信念转化者, 700分
-            const totalPoints = progress.total_points;
-            const goalProgress = Math.min(100, Math.round((totalPoints / campGoal.minPoints) * 100));
-            const isAchieved = totalPoints >= campGoal.minPoints;
+            const baselineScore = progress.baseline_awakening;
+            const currentScore = progress.current_awakening;
+            const day7Target = Math.min(baselineScore + 20, 95);
+            const range = day7Target - baselineScore;
+            const gained = currentScore - baselineScore;
+            const goalProgress = range > 0 ? Math.min(100, Math.round((gained / range) * 100)) : 100;
+            const isAchieved = currentScore >= day7Target;
+            const remaining = day7Target - currentScore;
             
             return (
               <motion.div
                 className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 space-y-2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.35 }}
+                transition={{ delay: 0.3 }}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-300">
-                    🎯 7天目标：<span className="text-amber-400 font-medium">{campGoal.icon} Lv.{campGoal.level} {campGoal.name}</span>
+                    🎯 7天觉醒目标：<span className="text-amber-400 font-bold">{day7Target} 分</span>
                   </span>
                   {isAchieved ? (
                     <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-0.5">
                       <Check className="h-3 w-3" /> 已达成
                     </span>
                   ) : (
-                    <span className="text-[10px] text-amber-400 font-medium">{totalPoints}/{campGoal.minPoints} 积分</span>
+                    <span className="text-[10px] text-slate-400">
+                      起点 <span className="text-slate-300 font-medium">{baselineScore}</span>
+                    </span>
                   )}
                 </div>
+                
                 <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
                   <motion.div
                     className={cn(
@@ -232,6 +214,16 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                     animate={{ width: `${goalProgress}%` }}
                     transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
                   />
+                </div>
+
+                <div className="text-[10px]">
+                  {isAchieved ? (
+                    <span className="text-emerald-400 font-medium">🎉 已达成 7 天觉醒目标！</span>
+                  ) : (
+                    <span className="text-slate-400">
+                      距目标还差 <span className="text-amber-400 font-bold">{remaining}</span> 分
+                    </span>
+                  )}
                 </div>
               </motion.div>
             );
