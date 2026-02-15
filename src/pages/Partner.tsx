@@ -189,7 +189,7 @@ export default function Partner() {
                     <PromotionHub
                       partnerId={partner.id}
                       currentEntryType={partner.default_entry_type || 'free'}
-                      prepurchaseCount={partner.prepurchase_count || 100}
+                      prepurchaseCount={partner.prepurchase_count ?? 0}
                     />
                   </TabsContent>
 
