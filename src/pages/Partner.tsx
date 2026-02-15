@@ -64,20 +64,12 @@ export default function Partner() {
 
   return (
     <div 
-      className={`h-screen overflow-y-auto overscroll-contain bg-gradient-to-br ${
-        partner?.partner_type === 'bloom' 
-          ? 'from-purple-50 via-pink-50 to-purple-50' 
-          : 'from-orange-50 via-amber-50 to-orange-50'
-      }`}
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-slate-50 via-white to-slate-50"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <DynamicOGMeta pageKey="partner" />
       <PageHeader 
-        title={
-          partner?.partner_type === 'youjin' ? '有劲合伙人中心' 
-          : partner?.partner_type === 'bloom' ? '绽放合伙人中心' 
-          : '合伙人中心'
-        }
+        title="合伙人中心"
         rightActions={
           isPartner && (
             <Button
@@ -87,7 +79,7 @@ export default function Partner() {
               className="gap-2"
             >
               <Gift className="w-4 h-4" />
-              {partner?.partner_type === 'youjin' ? '有劲权益' : '绽放权益'}
+              我的权益
             </Button>
           )
         }
