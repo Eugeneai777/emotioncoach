@@ -417,7 +417,11 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                 {/* 顶部信息栏：进度提示 + 百分比 */}
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-sm text-muted-foreground">
-                    即将获取专业的分析报告
+                    {progress < 30
+                      ? "即将获取专业的分析报告"
+                      : progress < 70
+                        ? "完成后可免费获得专业教练解说 🎙️"
+                        : "马上就好！报告+免费教练解说等你 🎁"}
                   </span>
                   <span className="text-xl font-semibold text-amber-600">
                     {Math.round(progress)}%
