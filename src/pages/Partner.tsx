@@ -1,26 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePartner } from "@/hooks/usePartner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
-import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles, Home, BarChart3 } from "lucide-react";
+import { Share2, Users, TrendingUp, Wallet, Gift, Sparkles } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
-import { toast } from "sonner";
-import { PartnerStats } from "@/components/partner/PartnerStats";
 import { BloomOverviewCard } from "@/components/partner/BloomOverviewCard";
 import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
-import { BloomYoujinBenefitsCard } from "@/components/partner/BloomYoujinBenefitsCard";
+import { EntryTypeSelector } from "@/components/partner/EntryTypeSelector";
+import { FixedPromoLinkCard } from "@/components/partner/FixedPromoLinkCard";
+import { MyFlywheelOverview } from "@/components/partner/MyFlywheelOverview";
 import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
+
+import { toast } from "sonner";
+import { Copy } from "lucide-react";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
 
 export default function Partner() {
@@ -34,20 +35,18 @@ export default function Partner() {
     }
   }, [user, authLoading, navigate]);
 
-  // Removed forced redirect - allow non-partners to view benefits
+  const handleCopyCode = () => {
+    if (partner) {
+      navigator.clipboard.writeText(partner.partner_code);
+      toast.success("推广码已复制");
+    }
+  };
 
   const handleCopyLink = () => {
     if (partner) {
       const link = `${getPromotionDomain()}/?ref=${partner.partner_code}`;
       navigator.clipboard.writeText(link);
       toast.success("推广链接已复制");
-    }
-  };
-
-  const handleCopyCode = () => {
-    if (partner) {
-      navigator.clipboard.writeText(partner.partner_code);
-      toast.success("推广码已复制");
     }
   };
 
@@ -62,6 +61,9 @@ export default function Partner() {
     );
   }
 
+  const isBloom = partner?.partner_type === 'bloom';
+  const pageTitle = isBloom ? "绽放合伙人中心" : (partner?.partner_type === 'youjin' ? "有劲合伙人中心" : "合伙人中心");
+
   return (
     <div 
       className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-slate-50 via-white to-slate-50"
@@ -69,7 +71,7 @@ export default function Partner() {
     >
       <DynamicOGMeta pageKey="partner" />
       <PageHeader 
-        title="合伙人中心"
+        title={pageTitle}
         rightActions={
           isPartner && (
             <Button
@@ -90,13 +92,11 @@ export default function Partner() {
         {/* Non-Partner View - 双合伙人介绍 */}
         {!isPartner && (
           <div className="space-y-8">
-            {/* 标题区域 */}
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">选择适合您的合伙人计划</h2>
               <p className="text-muted-foreground">两种模式，各有优势，根据您的需求选择</p>
             </div>
 
-            {/* 双卡片对比 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* 有劲合伙人卡片 */}
               <Card className="border-2 hover:border-orange-500/50 transition-all cursor-pointer"
@@ -155,7 +155,6 @@ export default function Partner() {
               </Card>
             </div>
 
-            {/* 对比表格 - 使用响应式组件 */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg">两种合伙人有什么区别？</CardTitle>
@@ -180,7 +179,7 @@ export default function Partner() {
           </div>
         )}
 
-        {/* Partner View */}
+        {/* Partner View — Unified Layout */}
         {isPartner && partner && (
           <>
             {/* 根据合伙人类型显示不同面板 */}
@@ -188,74 +187,76 @@ export default function Partner() {
               <YoujinPartnerDashboard partner={partner} />
             ) : (
               <>
-                {/* 绽放合伙人品牌概览卡片 */}
+                {/* 1. 身份卡片 */}
                 <BloomOverviewCard partner={partner} />
 
-                {/* 推广码区域 — 紫粉色系，紧跟绽放概览 */}
-                <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-purple-800">
-                      <Share2 className="w-5 h-5 text-purple-500" />
-                      我的推广码
-                    </CardTitle>
-                    <CardDescription>
-                      分享您的专属推广码或链接，邀请好友加入
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex gap-3">
-                      <div className="flex-1 px-4 py-3 bg-white/80 rounded-lg border border-purple-100 font-mono text-lg font-bold text-purple-700">
-                        {partner.partner_code}
-                      </div>
-                      <Button onClick={handleCopyCode} variant="outline" className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50">
-                        <Copy className="w-4 h-4" />
-                        复制
-                      </Button>
-                    </div>
-                    <Button onClick={handleCopyLink} className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-                      <Share2 className="w-4 h-4" />
-                      复制推广链接
-                    </Button>
-                  </CardContent>
-                </Card>
+                {/* 2. 飞轮概览 — 两种身份通用 */}
+                <MyFlywheelOverview partnerId={partner.id} />
 
-                {/* 附赠权益分隔线 */}
-                <div className="flex items-center gap-3 py-1">
-                  <Separator className="flex-1" />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">💪 附赠权益</span>
-                  <Separator className="flex-1" />
-                </div>
+                {/* 3. 统一 Tabs: 推广 | 学员 | 收益 */}
+                <Tabs defaultValue="promote" className="space-y-6">
+                  <TabsList className="grid w-full grid-cols-3 h-auto">
+                    <ResponsiveTabsTrigger value="promote" label="推广" shortLabel="推广" icon={<Share2 className="w-4 h-4" />} />
+                    <ResponsiveTabsTrigger value="students" label="学员" shortLabel="学员" icon={<Users className="w-4 h-4" />} />
+                    <ResponsiveTabsTrigger value="earnings" label="收益" shortLabel="收益" icon={<Wallet className="w-4 h-4" />} />
+                  </TabsList>
 
-                {/* 绽放合伙人的有劲推广权益 */}
-                <BloomYoujinBenefitsCard partner={partner} />
+                  {/* 推广 Tab */}
+                  <TabsContent value="promote" className="space-y-4">
+                    {/* 推广码 */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Share2 className="w-4 h-4 text-purple-500" />
+                          我的推广码
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex gap-3">
+                          <div className="flex-1 px-4 py-3 bg-muted rounded-lg font-mono text-lg font-bold">
+                            {partner.partner_code}
+                          </div>
+                          <Button onClick={handleCopyCode} variant="outline" className="gap-2">
+                            <Copy className="w-4 h-4" />
+                            复制
+                          </Button>
+                        </div>
+                        <Button onClick={handleCopyLink} className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                          <Share2 className="w-4 h-4" />
+                          复制推广链接
+                        </Button>
+                      </CardContent>
+                    </Card>
 
-            {/* Tabs */}
-            <Tabs defaultValue="referrals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-auto">
-            <ResponsiveTabsTrigger value="referrals" label="推荐列表" shortLabel="推荐" icon={<Users className="w-4 h-4" />} />
-            <ResponsiveTabsTrigger value="commissions" label="佣金明细" shortLabel="佣金" icon={<TrendingUp className="w-4 h-4" />} />
-            <ResponsiveTabsTrigger value="withdrawal" label="提现申请" shortLabel="提现" icon={<Wallet className="w-4 h-4" />} />
-            <ResponsiveTabsTrigger value="flywheel" label="数据飞轮" shortLabel="飞轮" icon={<BarChart3 className="w-4 h-4" />} />
-          </TabsList>
+                    {/* 推广入口设置 */}
+                    <EntryTypeSelector
+                      partnerId={partner.id}
+                      currentEntryType={partner.default_entry_type || 'free'}
+                      prepurchaseCount={partner.prepurchase_count || 100}
+                    />
 
-          <TabsContent value="referrals">
-            <ReferralList partnerId={partner.id} />
-          </TabsContent>
+                    {/* 固定推广链接 */}
+                    <FixedPromoLinkCard
+                      partnerId={partner.id}
+                      entryType={(partner.default_entry_type as 'free' | 'paid') || 'free'}
+                      productType="trial_member"
+                    />
+                  </TabsContent>
 
-          <TabsContent value="commissions">
-            <CommissionHistory partnerId={partner.id} />
-          </TabsContent>
+                  {/* 学员 Tab */}
+                  <TabsContent value="students" className="space-y-4">
+                    <ReferralList partnerId={partner.id} />
+                  </TabsContent>
 
-                <TabsContent value="withdrawal">
-                  <WithdrawalForm partner={partner} />
-                </TabsContent>
-
-                <TabsContent value="flywheel">
-                  <PartnerFlywheel partnerId={partner.id} />
-                </TabsContent>
-              </Tabs>
-            </>
-          )}
+                  {/* 收益 Tab */}
+                  <TabsContent value="earnings" className="space-y-4">
+                    <CommissionHistory partnerId={partner.id} />
+                    <WithdrawalForm partner={partner} />
+                    <PartnerFlywheel partnerId={partner.id} />
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
           </>
         )}
       </div>
