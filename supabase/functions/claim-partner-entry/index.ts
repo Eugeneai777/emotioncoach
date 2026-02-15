@@ -61,11 +61,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Prevent self-referral
+    // Prevent self-referral — return 200 so frontend can parse message
     if (partner.user_id === user.id) {
       return new Response(
         JSON.stringify({ success: false, message: '不能领取自己的推广福利' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     if (!partner.prepurchase_count || partner.prepurchase_count < 1) {
       return new Response(
         JSON.stringify({ success: false, message: '合伙人体验名额已用完' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     if (existingReferral) {
       return new Response(
         JSON.stringify({ success: false, message: '你已经领取过了' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
