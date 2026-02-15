@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, Sparkles, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Target, Heart, Brain, Share2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
@@ -59,7 +59,7 @@ interface WealthBlockResultProps {
   result: AssessmentResult;
   followUpInsights?: FollowUpAnswer[];
   deepFollowUpAnswers?: DeepFollowUpAnswer[];
-  onRetake: () => void;
+  onRetake?: () => void;
   onSave?: () => void;
   isSaving?: boolean;
   isSaved?: boolean;
@@ -688,14 +688,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           }
         />
         
-        <Button 
-          variant="ghost" 
-          className="w-full text-muted-foreground"
-          onClick={onRetake}
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          重新测评
-        </Button>
         
         {/* 微信支付对话框 */}
         <UnifiedPayDialog
