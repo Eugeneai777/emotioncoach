@@ -1,26 +1,15 @@
 
 
-## 重新排列页面布局
+## 去除三层基线进度条
 
-将"三层深度诊断"移到"财富反应模式"卡片下方，同时将"财富反应模式"也移到健康度仪表盘下方，形成连贯的诊断区域。
-
-### 调整后的页面顺序
-
-```text
-1. 财富心理健康度仪表盘
-2. 财富反应模式卡片（从当前位置上移）
-3. 三层深度诊断（紧跟反应模式）
-4. 语音教练入口
-5. 觉醒旅程预览
-6. 绽放邀请码入口
-```
+从"财富觉醒起点"卡片中删除行为/情绪/信念三条进度条。
 
 ### 具体操作
 
-**文件**：`src/components/wealth-block/WealthBlockResult.tsx`
+**文件**：`src/components/wealth-block/AwakeningJourneyPreview.tsx`
 
-1. 将"分隔线 + 财富反应模式"代码块（第 261-315 行）从当前位置剪切，插入到健康度仪表盘（第 239 行）之后
-2. 将"三层深度诊断标题 + 手风琴"代码块（第 317-667 行）从当前位置剪切，插入到反应模式卡片之后
-3. 语音教练入口和觉醒旅程预览保持不变，自然排到诊断区域之后
+1. 删除第 214-233 行的"三层基线 - 进度条"代码块
+2. 清理不再使用的变量（`layers`, `getAwakeningPercent`, `behaviorAwakening`, `emotionAwakening`, `beliefAwakening`，第 110-123 行）
+3. 清理不再需要的 props（`behaviorScore`, `emotionScore`, `beliefScore`）和对应的 interface 定义
+4. 更新 `WealthBlockResult.tsx` 中调用处，移除传入的三个 score props
 
-只涉及代码位置移动，不修改任何组件内容或逻辑。
