@@ -46,29 +46,6 @@ const patternKeyMap: Record<string, string> = {
   chase: 'chase', avoid: 'avoid', trauma: 'trauma', harmony: 'harmony',
 };
 
-// 用户见证数据（按卡点类型匹配）
-const testimonials: Record<PoorTypeKey, { quote: string; name: string; growth: string }> = {
-  mouth: {
-    quote: '终于敢主动谈价格了，不再觉得开口要钱很丢人',
-    name: '小米',
-    growth: '+28',
-  },
-  hand: {
-    quote: '从舍不得花钱到懂得投资自己，心态完全不一样了',
-    name: '阿杰',
-    growth: '+35',
-  },
-  eye: {
-    quote: '开始看到别人的价值，人际关系明显变好了',
-    name: '晓晓',
-    growth: '+32',
-  },
-  heart: {
-    quote: '不再觉得自己是受害者，找到了内心的力量',
-    name: '小雨',
-    growth: '+30',
-  },
-};
 
 export function AwakeningJourneyPreview({ 
   healthScore, 
@@ -90,9 +67,6 @@ export function AwakeningJourneyPreview({
   // 获取个性化卡点名称
   const poorConfig = dominantPoor ? fourPoorRichConfig[dominantPoor] : null;
   const poorName = poorConfig?.poorName || '财富卡点';
-
-  // 获取匹配的见证
-  const testimonial = dominantPoor ? testimonials[dominantPoor] : testimonials.mouth;
 
   // 生成个性化三维收获
   const poorKey = dominantPoor || 'mouth';
@@ -228,54 +202,41 @@ export function AwakeningJourneyPreview({
             </div>
           </div>
 
-          {/* 简化的用户见证 */}
-          <motion.div
-            initial={{ opacity: 0.01 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="flex items-center gap-2 p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-lg text-sm"
-          >
-            <span className="text-amber-500">📈</span>
-            <span className="text-muted-foreground truncate flex-1">"{testimonial.quote.slice(0, 20)}..."</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">{testimonial.growth}</span>
-          </motion.div>
-
-          {/* 双按钮 CTA 区域 */}
+          {/* CTA 区域 */}
           <motion.div
             initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0 }}
+            transition={{ delay: 0.9 }}
             style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="flex flex-col sm:flex-row gap-2.5"
+            className="flex flex-col gap-2.5"
           >
-            {/* 了解详情按钮 */}
-            <Button
-              variant="outline"
-              onClick={() => navigate('/wealth-camp-intro')}
-              className="h-12 sm:flex-1 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 font-semibold text-sm"
-            >
-              了解详情
-            </Button>
-            
-            {/* 购买/开始按钮 */}
+            {/* 主按钮 - 购买/开始 */}
             {hasPurchased ? (
               <Button
                 onClick={onPurchase}
-                className="h-12 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
+                className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-amber-500/30 text-base rounded-xl"
               >
                 开始训练营
-                <ArrowRight className="w-4 h-4 ml-1.5" />
+                <ArrowRight className="w-5 h-5 ml-1.5" />
               </Button>
             ) : (
               <Button
                 onClick={onPurchase}
-                className="h-12 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
+                className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-amber-500/30 text-base rounded-xl"
               >
                 ¥299 立即加入
-                <ArrowRight className="w-4 h-4 ml-1.5" />
+                <ArrowRight className="w-5 h-5 ml-1.5" />
               </Button>
             )}
+
+            {/* 次要按钮 - 了解详情 */}
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/wealth-camp-intro')}
+              className="h-10 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 text-sm"
+            >
+              了解详情 →
+            </Button>
           </motion.div>
         </CardContent>
       </Card>
