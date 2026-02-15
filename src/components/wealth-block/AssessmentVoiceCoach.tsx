@@ -105,27 +105,33 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
 
   return (
     <>
-      <button
-        onClick={handleClick}
-        disabled={disabled}
-        className={`relative flex flex-col items-center justify-center w-20 h-20 rounded-full
-                   shadow-xl active:scale-[0.93] transition-all duration-200 z-10
-                   ${disabled 
-                     ? "bg-muted text-muted-foreground cursor-not-allowed" 
-                     : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}
-      >
-        {/* 呼吸光晕 - 仅在非禁用时显示 */}
-        {!disabled && (
-          <>
-            <span className="absolute -inset-1.5 rounded-full bg-red-400 opacity-40 animate-ping" />
-            <span className="absolute -inset-3 rounded-full bg-red-400/20 animate-pulse" />
-          </>
+      <div className="flex flex-col items-center">
+        <button
+          onClick={handleClick}
+          disabled={disabled}
+          className={`relative flex flex-col items-center justify-center w-20 h-20 rounded-full
+                     shadow-xl active:scale-[0.93] transition-all duration-200 z-10
+                     ${disabled 
+                       ? "bg-muted text-muted-foreground cursor-not-allowed" 
+                       : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}
+        >
+          {!disabled && (
+            <>
+              <span className="absolute -inset-1.5 rounded-full bg-red-400 opacity-40 animate-ping" />
+              <span className="absolute -inset-3 rounded-full bg-red-400/20 animate-pulse" />
+            </>
+          )}
+          <ButtonIcon className="w-6 h-6 relative z-10" />
+          <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
+            {disabled ? '教练解说' : isLimitReached ? '升级解锁' : '教练解说'}
+          </span>
+        </button>
+        {hasFreeRemaining && !disabled && (
+          <span className="mt-1 px-1.5 py-0.5 bg-green-500 text-white text-[9px] font-bold rounded-full leading-none">
+            免费
+          </span>
         )}
-        <ButtonIcon className="w-6 h-6 relative z-10" />
-        <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
-          {disabled ? '教练解说' : isLimitReached ? '升级解锁' : '教练解说'}
-        </span>
-      </button>
+      </div>
 
       {showVoiceChat && (
         <CoachVoiceChat
