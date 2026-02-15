@@ -47,6 +47,13 @@ export default function WealthCampCheckIn() {
   const normalizedTab = tabFromUrl === 'journal' ? 'archive' : tabFromUrl;
   const [activeTab, setActiveTab] = useState(normalizedTab || 'today');
   
+  // Sync tab state when URL search params change (e.g., navigate from archive to today)
+  useEffect(() => {
+    if (normalizedTab && normalizedTab !== activeTab) {
+      setActiveTab(normalizedTab);
+    }
+  }, [normalizedTab]);
+  
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);

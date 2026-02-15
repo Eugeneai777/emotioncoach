@@ -217,7 +217,7 @@ export function CombinedPersonalityCard({
       onNavigateToTask(taskKey);
     } else {
       // Fallback: navigate to the daily tasks tab when used standalone (e.g., archive tab)
-      navigate('/wealth-camp-checkin?tab=daily');
+      navigate('/wealth-camp-checkin?tab=today');
     }
   };
 
