@@ -224,24 +224,8 @@ const Auth = () => {
                   .maybeSingle()
               ]);
 
-              if (bloomPartner && assessmentOrder) {
-                targetRedirect = "/wealth-coach-chat";
-              } else {
-                // 检查是否有活跃的财富训练营
-                const { data: activeCamp } = await supabase
-                  .from('training_camps')
-                  .select('id')
-                  .eq('user_id', session.user.id)
-                  .in('camp_type', ['wealth_block_7', 'wealth_block_21', 'wealth_awakening_21'])
-                  .eq('status', 'active')
-                  .maybeSingle();
-                
-                if (activeCamp) {
-                  targetRedirect = "/wealth-coach-chat";
-                } else {
-                  targetRedirect = "/wealth-coach-chat";
-                }
-              }
+              // 所有财富用户统一跳转
+              targetRedirect = "/coach/wealth_coach_4_questions";
             } else if (profile?.preferred_coach === 'emotion') {
               targetRedirect = "/";
             } else if (profile?.preferred_coach === 'communication') {

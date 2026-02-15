@@ -851,7 +851,7 @@ ${reflection}`;
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate('/wealth-coach-chat')}
+                      onClick={() => navigate('/coach/wealth_coach_4_questions')}
                       className="text-violet-600 border-violet-200 hover:bg-violet-50"
                     >
                       <MessageCircle className="w-4 h-4 mr-1.5" />
