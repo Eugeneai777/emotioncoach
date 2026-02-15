@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Target, Heart, Brain, ChevronDown, ChevronUp, Trash2, Calendar, TrendingUp } from "lucide-react";
+import { Target, Heart, Brain, Trash2, Calendar, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -61,7 +61,6 @@ interface WealthBlockHistoryProps {
 }
 
 export function WealthBlockHistory({ records, isLoading, onDelete, onViewDetail }: WealthBlockHistoryProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -102,8 +101,6 @@ export function WealthBlockHistory({ records, isLoading, onDelete, onViewDetail 
             const dominant = blockInfo[record.dominant_block];
             const pattern = patternInfo[record.reaction_pattern];
             const Icon = iconMap[record.dominant_block];
-            const isExpanded = expandedId === record.id;
-
             return (
               <motion.div
                 key={record.id}
@@ -115,10 +112,7 @@ export function WealthBlockHistory({ records, isLoading, onDelete, onViewDetail 
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">
                     {/* 主要信息 */}
-                    <div 
-                      className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => setExpandedId(isExpanded ? null : record.id)}
-                    >
+                    <div className="p-4">
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           "p-2 rounded-lg bg-gradient-to-br",
@@ -146,79 +140,61 @@ export function WealthBlockHistory({ records, isLoading, onDelete, onViewDetail 
                           </div>
                         </div>
 
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
                       </div>
                     </div>
 
-                    {/* 展开详情 */}
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <div className="px-4 pb-4 pt-2 border-t space-y-4">
-                            {/* 三层得分 */}
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium">三层卡点得分</p>
-                              <div className="space-y-2">
-                                {[
-                                  { label: '行为层', score: record.behavior_score, color: 'bg-blue-500' },
-                                  { label: '情绪层', score: record.emotion_score, color: 'bg-pink-500' },
-                                  { label: '信念层', score: record.belief_score, color: 'bg-purple-500' },
-                                ].map(item => (
-                                  <div key={item.label} className="flex items-center gap-3">
-                                    <span className="text-xs text-muted-foreground w-12">{item.label}</span>
-                                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                                      <div 
-                                        className={cn("h-full rounded-full", item.color)}
-                                        style={{ width: `${(item.score / 50) * 100}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-xs font-medium w-10 text-right">{item.score}/50</span>
-                                  </div>
-                                ))}
+                    {/* 详情 */}
+                    <div className="px-4 pb-4 pt-2 border-t space-y-4">
+                      {/* 三层得分 */}
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">三层卡点得分</p>
+                        <div className="space-y-2">
+                          {[
+                            { label: '行为层', score: record.behavior_score, color: 'bg-blue-500' },
+                            { label: '情绪层', score: record.emotion_score, color: 'bg-pink-500' },
+                            { label: '信念层', score: record.belief_score, color: 'bg-purple-500' },
+                          ].map(item => (
+                            <div key={item.label} className="flex items-center gap-3">
+                              <span className="text-xs text-muted-foreground w-12">{item.label}</span>
+                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className={cn("h-full rounded-full", item.color)}
+                                  style={{ width: `${(item.score / 50) * 100}%` }}
+                                />
                               </div>
+                              <span className="text-xs font-medium w-10 text-right">{item.score}/50</span>
                             </div>
+                          ))}
+                        </div>
+                      </div>
 
-                            {/* 操作按钮 */}
-                            <div className="flex gap-2">
-                              {onViewDetail && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="flex-1"
-                                  onClick={() => onViewDetail(record)}
-                                >
-                                  查看详情
-                                </Button>
-                              )}
-                              {onDelete && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteId(record.id);
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                      {/* 操作按钮 */}
+                      <div className="flex gap-2">
+                        {onViewDetail && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => onViewDetail(record)}
+                          >
+                            查看详情
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(record.id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
