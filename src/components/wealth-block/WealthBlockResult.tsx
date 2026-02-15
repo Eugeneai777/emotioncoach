@@ -258,12 +258,8 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         onPurchase={() => setShowPayDialog(true)}
       />
 
-      {/* 分隔装饰 */}
-      <div className="flex items-center gap-3 sm:gap-4 py-1 sm:py-2">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        <span className="text-[10px] sm:text-xs text-muted-foreground">✧</span>
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-      </div>
+      {/* 简洁分隔 */}
+      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       {/* 财富反应模式结果卡片 - 移动端优化 */}
       <motion.div
