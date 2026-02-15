@@ -232,6 +232,13 @@ export const useDynamicCoachChat = (
       }));
       setMessages(loadedMessages);
       messagesRef.current = loadedMessages;
+
+      // 检查恢复的消息中是否已有简报卡片，同步 ref 状态
+      const hasBriefingCard = loadedMessages.some(m => m.content.includes('<!--WEALTH_BRIEFING_CARD-->'));
+      if (hasBriefingCard) {
+        briefingGeneratedRef.current = true;
+      }
+
       setIsRecovering(false);
     } catch (error) {
       console.error('恢复对话失败:', error);
@@ -905,6 +912,7 @@ export const useDynamicCoachChat = (
     setToolRecommendation(null);
     setEmotionButtonRecommendation(null);
     setCampRecommendation(null);
+    briefingGeneratedRef.current = false;
   }, []);
 
   // 🔔 离开页面时触发未完成对话通知
