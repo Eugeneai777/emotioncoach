@@ -109,7 +109,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
         <button
           onClick={handleClick}
           disabled={disabled}
-          className={`relative flex flex-col items-center justify-center w-20 h-20 rounded-full
+          className={`relative flex flex-col items-center justify-center w-24 h-24 rounded-full
                      shadow-xl active:scale-[0.93] transition-all duration-200 z-10
                      ${disabled 
                        ? "bg-muted text-muted-foreground cursor-not-allowed" 
@@ -125,12 +125,12 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
           <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
             {disabled ? '教练解说' : isLimitReached ? '升级解锁' : '教练解说'}
           </span>
+          {hasFreeRemaining && !disabled && (
+            <span className="relative z-10 mt-0.5 px-1.5 py-0.5 bg-green-500 text-white text-[8px] font-bold rounded-full leading-none">
+              免费
+            </span>
+          )}
         </button>
-        {hasFreeRemaining && !disabled && (
-          <span className="mt-1 px-1.5 py-0.5 bg-green-500 text-white text-[9px] font-bold rounded-full leading-none">
-            免费
-          </span>
-        )}
       </div>
 
       {showVoiceChat && (

@@ -825,10 +825,10 @@ export default function WealthBlockAssessmentPage() {
               </TabsList>
 
               {/* 自定义3栏导航 */}
-              <div className="flex items-end justify-around pt-1 pb-1">
+              <div className="flex items-end justify-around pt-0.5 pb-0.5">
                 {/* 左侧 - 开始测评 */}
                 <button
-                  onClick={() => setActiveTab("assessment")}
+                  onClick={() => { setActiveTab("assessment"); setShowIntro(true); }}
                   className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-4 rounded-xl transition-all duration-200 min-w-[72px]
                     ${activeTab === "assessment" 
                       ? "text-amber-600" 
@@ -839,7 +839,7 @@ export default function WealthBlockAssessmentPage() {
                 </button>
 
                 {/* 中间 - 凸出的教练解说 FAB */}
-                <div className="relative -top-3 flex flex-col items-center">
+                <div className="relative -top-4 flex flex-col items-center">
                   <AssessmentVoiceCoach
                     result={currentResult!}
                     aiInsight={null}
