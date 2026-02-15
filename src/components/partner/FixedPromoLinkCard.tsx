@@ -73,8 +73,7 @@ export function FixedPromoLinkCard({ partnerId, entryType, productType = 'trial_
             <Link2 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <span className={isWealthAssessment ? 'text-purple-800' : 'text-teal-800'}>固定推广链接</span>
-            <span className={`text-xs ml-2 font-normal ${isWealthAssessment ? 'text-purple-600' : 'text-teal-600'}`}>推荐</span>
+            <span className={isWealthAssessment ? 'text-purple-800' : 'text-teal-800'}>我的推广中心</span>
           </div>
         </CardTitle>
       </CardHeader>
