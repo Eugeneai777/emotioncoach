@@ -48,7 +48,7 @@ const BloomPartnerIntro = () => {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
   const { showTour, completeTour } = usePageTour('bloom_partner_intro');
-  const { data: purchaseRecord, refetch: refetchPurchase } = useAssessmentPurchase();
+  const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useAssessmentPurchase();
   const progress = useTrilogyProgress();
   const [claiming, setClaiming] = useState(false);
 
@@ -158,6 +158,10 @@ const BloomPartnerIntro = () => {
                     progress.assessment.completed ? (
                       <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                         <CheckCircle className="w-3 h-3" />已完成
+                      </span>
+                    ) : purchaseLoading ? (
+                      <span className="ml-auto">
+                        <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
                       </span>
                     ) : purchaseRecord ? (
                       <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
