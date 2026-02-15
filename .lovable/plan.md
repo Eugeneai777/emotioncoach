@@ -1,58 +1,60 @@
 
 
-## 修复刷新页面跳转问题
+## 实施提醒方案：已购买但未完成财富卡点测评
 
-### 问题分析
+### 变更清单
 
-当前根路由 `/` 硬编码跳转到有劲AI教练：
-```tsx
-<Route path="/" element={<Navigate to="/coach/vibrant_life_sage" replace />} />
+**1. 新建 Edge Function: `supabase/functions/batch-trigger-assessment-reminder/index.ts`**
+
+参照 `batch-trigger-profile-completion` 的模式：
+
+- 使用 `validateCronSecret` 鉴权
+- 用 service_role 查询"已购买测评但未完成"的用户：
+  - 从 `orders` 表找 `package_key='wealth_block_assessment'` 且 `status='paid'` 的用户
+  - 排除 `wealth_block_assessments` 表中已有记录的用户
+- 3 天去重窗口：检查 `smart_notifications` 中 `scenario='assessment_incomplete_reminder'` 是否已在 3 天内发送过
+- 调用 `generate-smart-notification` 生成个性化通知：
+  - scenario: `assessment_incomplete_reminder`
+  - context 包含购买时间等信息
+  - coach_type: `wealth`
+
+**2. 修改 `src/components/SmartHomeRedirect.tsx`**
+
+在 wealth 用户分支中增加即时提醒逻辑：
+
+- 当 `hasPaidAssessment = true` 时，额外查询 `wealth_block_assessments` 表
+- 如果没有完成记录，通过 localStorage 日级去重后，调用 `generate-smart-notification` 触发即时通知
+- 不影响现有的路由跳转逻辑
+
+**3. 更新 `supabase/config.toml`**
+
+添加新函数配置：
+```toml
+[functions.batch-trigger-assessment-reminder]
+verify_jwt = false
 ```
 
-当页面刷新时，如果任何逻辑导致用户被重定向到 `/`（例如 auth 状态重新初始化、SPA 回退等），都会强制跳转到有劲AI教练，而非用户之前所在的页面。
+### 通知内容
 
-### 解决方案
+| 字段 | 值 |
+|---|---|
+| scenario | `assessment_incomplete_reminder` |
+| notification_type | `reminder` |
+| 标题方向 | "你的财富卡点测评还在等你" |
+| action_type | `navigate` |
+| action_data | `{"path": "/wealth-block"}` |
+| coach_type | `wealth` |
+| priority | 4 |
 
-**1. 创建智能首页重定向组件 `src/components/SmartHomeRedirect.tsx`**
+### Cron 调度
 
-替代硬编码的 `Navigate to="/coach/vibrant_life_sage"`，新组件会：
-- 检查用户是否已登录
-- 已登录用户：根据 `profiles.preferred_coach` 字段跳转到对应教练页
-  - `wealth` → `/coach/wealth_coach_4_questions`（如果是活跃绽放合伙人+已付费测评）或 `/wealth-coach-intro`
-  - `emotion` → `/coach/vibrant_life_sage`（默认情绪教练）
-  - 其他 → `/coach/vibrant_life_sage`
-- 未登录用户：默认跳转到 `/coach/vibrant_life_sage`（保持当前行为）
-- 加载中显示 loading 状态，避免闪烁
+需要通过 SQL 设置每天上午 10:00 (北京时间 = UTC 02:00) 执行一次：
 
-**2. 修改 `src/App.tsx`**
-
-将根路由从：
-```tsx
-<Route path="/" element={<Navigate to="/coach/vibrant_life_sage" replace />} />
+```sql
+SELECT cron.schedule(
+  'batch-assessment-reminder-daily',
+  '0 2 * * *',
+  $$ SELECT net.http_post(...) $$
+);
 ```
-改为：
-```tsx
-<Route path="/" element={<SmartHomeRedirect />} />
-```
-
-### 技术细节
-
-SmartHomeRedirect 组件逻辑：
-
-```text
-用户访问 /
-  |
-  ├── 未登录 → /coach/vibrant_life_sage
-  |
-  └── 已登录 → 查询 preferred_coach
-        |
-        ├── wealth → 检查合伙人+测评状态
-        |     ├── 活跃合伙人+已付费测评 → /coach/wealth_coach_4_questions
-        |     ├── 有活跃训练营 → /wealth-camp-checkin
-        |     └── 其他 → /wealth-coach-intro
-        |
-        └── 其他/null → /coach/vibrant_life_sage
-```
-
-这样即使刷新时触发了 `/` 路由，用户也会被智能引导到正确的教练页面，而非总是跳到有劲AI教练。
 
