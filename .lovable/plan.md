@@ -1,14 +1,53 @@
 
 
-## 去掉结果页"重新测评"按钮
+## 底部导航栏整体一体化设计
+
+将底部的"开始测评"、"教练解说"、"历史记录"三个元素合并为一个统一的底部导航栏设计，教练解说按钮更大更突出，与底栏融为一体。
+
+### 目标效果
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+│                                         │
+│  ┌─────────┐    ╔═══════╗   ┌─────────┐ │
+│  │ 开始测评 │    ║ 教练  ║   │历史记录 │ │
+│  │   📋    │    ║ 解说  ║   │  📜     │ │
+│  └─────────┘    ║  🎤  ║   └─────────┘ │
+│                 ╚═══════╝               │
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                     ↑
+              凸出的圆形大按钮
+              带呼吸红色光晕
+```
+
+- 底部导航栏采用3栏布局，中间留空给凸出按钮
+- 左右两个Tab变成独立的导航按钮（图标+文字纵向排列）
+- 中间教练按钮直径增大到 72px，从导航栏向上凸出
+- 整个导航栏使用统一的背景和边框，视觉上融为一体
+- 教练按钮始终显示（有结果时为红色可点击，无结果时为灰色禁用态）
 
 ### 修改内容
 
-**文件：`src/components/wealth-block/WealthBlockResult.tsx`**
+**文件：`src/pages/WealthBlockAssessment.tsx`**（底部导航区域，约 818-867 行）
 
-- 删除第 691-698 行的"重新测评"按钮（`<Button variant="ghost">` + `RotateCcw` 图标）
-- 清理不再使用的 `RotateCcw` import（如果该文件中无其他引用）
-- `onRetake` prop 保留不删（因为 `WealthAssessmentLite.tsx` 等其他页面仍在使用该组件并传入 `onRetake`），但可将其改为可选 `onRetake?: () => void`
+1. **移除 TabsList/TabsTrigger**：不再使用 Radix Tabs 组件作为底部UI，改用自定义导航栏
+2. **3栏布局**：`flex items-end justify-around`，左右为普通导航项，中间为凸出FAB
+3. **左侧"开始测评"**：纵向排列图标+文字，点击时 `setActiveTab("assessment")`
+4. **右侧"历史记录"**：纵向排列图标+文字+角标，点击时 `setActiveTab("history")`
+5. **中间教练按钮**：从 `AssessmentVoiceCoach` 组件渲染，增大到 72px，向上凸出约 24px
+6. **保留 Tabs 的 `value` 和 `onValueChange`** 控制内容切换，只是底部UI改为自定义
 
-用户想重新测评时，通过底部 Tab 栏的"开始测评"即可触发，无需在结果页重复放置按钮。
+**文件：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+
+1. 按钮直径从 68px 增大到 **72px**（`w-[72px] h-[72px]`）
+2. 无结果时显示灰色禁用态（新增 `disabled` prop）
+3. 呼吸动画光晕范围加大
+
+### 技术细节
+
+- 底部导航栏仍用 `fixed bottom-0` 定位
+- Tabs 组件的 `TabsList` 从 DOM 中移除（使用 `hidden`），通过 `onValueChange` + `setActiveTab` 手动控制 Tab 切换
+- 中间凸出按钮用 `relative -top-6` 或 `mb-4` 实现视觉凸出
+- 左右导航项加 `active` 状态高亮（当前激活Tab对应项显示渐变色文字）
+- 整个导航栏背景统一，用 `border-t` + `shadow` 与内容区分隔
 
