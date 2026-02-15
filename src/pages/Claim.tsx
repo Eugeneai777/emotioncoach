@@ -3,18 +3,20 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles } from "lucide-react";
+import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles, Info, Share2 } from "lucide-react";
 import { toast } from "sonner";
+
+type ClaimStatus = 'loading' | 'success' | 'error' | 'no-partner' | 'self-claim' | 'already-claimed';
 
 export default function Claim() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const partnerId = searchParams.get("partner");
   const posterId = searchParams.get("poster");
-  const type = searchParams.get("type"); // wealth_camp for camp invites
-  const ref = searchParams.get("ref"); // inviter user id for camp invites
+  const type = searchParams.get("type");
+  const ref = searchParams.get("ref");
   
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no-partner'>('loading');
+  const [status, setStatus] = useState<ClaimStatus>('loading');
   const [message, setMessage] = useState("");
   const [quotaAmount, setQuotaAmount] = useState(50);
   const [durationDays, setDurationDays] = useState(365);
@@ -48,7 +50,6 @@ export default function Claim() {
   // Handle camp invite referral
   const processCampInvite = async (userId: string, inviterUserId: string) => {
     try {
-      // Check if already referred
       const { data: existing } = await supabase
         .from('camp_invite_referrals')
         .select('id')
@@ -57,19 +58,10 @@ export default function Claim() {
         .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
         .maybeSingle();
 
-      if (existing) {
-        console.log('Camp invite referral already exists');
-        return;
-      }
+      if (existing) return;
+      if (userId === inviterUserId) return;
 
-      // Prevent self-referral
-      if (userId === inviterUserId) {
-        console.log('Cannot refer yourself');
-        return;
-      }
-
-      // Create referral record
-      const { error } = await supabase
+      await supabase
         .from('camp_invite_referrals')
         .insert({
           inviter_user_id: inviterUserId,
@@ -77,49 +69,33 @@ export default function Claim() {
           camp_type: 'wealth_block_7',
           status: 'pending',
         });
-
-      if (error) {
-        console.error('Failed to create camp invite referral:', error);
-      } else {
-        console.log('Camp invite referral created successfully');
-      }
     } catch (e) {
       console.error('Error processing camp invite:', e);
     }
   };
 
   useEffect(() => {
-    // Handle camp invite type
     if (type === 'wealth_camp' && ref) {
       handleCampInvite();
       return;
     }
-    
-    // Handle partner claim
     if (!partnerId) {
       setStatus('no-partner');
       setMessage("缺少合伙人信息");
       return;
     }
-    
     claimEntry();
   }, [partnerId, type, ref]);
 
   const handleCampInvite = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
-        // Not logged in, redirect to camp intro with referral stored
         localStorage.setItem('camp_invite_ref', ref!);
         navigate('/wealth-camp-intro');
         return;
       }
-
-      // Process the referral
       await processCampInvite(user.id, ref!);
-      
-      // Redirect to camp intro
       navigate('/wealth-camp-intro');
     } catch (error) {
       console.error('Error handling camp invite:', error);
@@ -129,16 +105,13 @@ export default function Claim() {
 
   const claimEntry = async () => {
     try {
-      // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // 未登录用户：跳转到登录页，登录后自动返回领取
         navigate(`/auth?redirect=/claim?partner=${partnerId}${posterId ? `&poster=${posterId}` : ''}`);
         return;
       }
 
-      // Call edge function to process free claim
       const { data, error } = await supabase.functions.invoke('claim-partner-entry', {
         body: { partner_id: partnerId }
       });
@@ -152,22 +125,31 @@ export default function Claim() {
         setMessage(data.message || "领取成功！");
         toast.success("🎉 领取成功！");
       } else {
-        setStatus('error');
-        setMessage(data.message || "领取失败");
+        // Distinguish error types by message keywords
+        const msg = data.message || "领取失败";
+        if (msg.includes("自己")) {
+          setStatus('self-claim');
+          setMessage(msg);
+        } else if (msg.includes("已经领取") || msg.includes("已领取")) {
+          setStatus('already-claimed');
+          setMessage(msg);
+        } else {
+          setStatus('error');
+          setMessage(msg);
+        }
       }
     } catch (error: any) {
       console.error("Claim error:", error);
-      setStatus('error');
-      setMessage(error.message || "领取失败，请稍后重试");
+      const msg = error.message || "领取失败，请稍后重试";
+      if (msg.includes("自己")) {
+        setStatus('self-claim');
+      } else if (msg.includes("已经领取") || msg.includes("已领取")) {
+        setStatus('already-claimed');
+      } else {
+        setStatus('error');
+      }
+      setMessage(msg);
     }
-  };
-
-  const handleStartJourney = () => {
-    navigate('/camps');
-  };
-
-  const handleGoHome = () => {
-    navigate('/');
   };
 
   return (
@@ -187,6 +169,22 @@ export default function Claim() {
                   <CheckCircle className="w-10 h-10 text-white" />
                 </div>
                 <span className="text-xl text-teal-700">🎉 已获得体验套餐！</span>
+              </>
+            )}
+            {status === 'self-claim' && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Share2 className="w-10 h-10 text-blue-500" />
+                </div>
+                <span className="text-xl text-blue-700">这是你的推广链接</span>
+              </>
+            )}
+            {status === 'already-claimed' && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10 text-white" />
+                </div>
+                <span className="text-xl text-teal-700">已领取过</span>
               </>
             )}
             {status === 'error' && (
@@ -211,7 +209,6 @@ export default function Claim() {
           {status === 'success' && (
             <>
               <div className="text-center space-y-4">
-                {/* Package benefits */}
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-center gap-2 text-lg font-bold text-teal-600">
                     <Sparkles className="w-5 h-5" />
@@ -236,24 +233,72 @@ export default function Claim() {
                     </div>
                   </div>
                 </div>
-                
-                <p className="text-muted-foreground">
-                  现在就开始你的情绪梳理之旅吧！
-                </p>
+                <p className="text-muted-foreground">现在就开始你的情绪梳理之旅吧！</p>
               </div>
-              
               <div className="space-y-3">
-                <Button 
-                  onClick={handleStartJourney}
+                <Button
+                  onClick={() => navigate('/camps')}
                   className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
                 >
                   🏕️ 开始免费训练营
                 </Button>
-                <Button 
-                  onClick={handleGoHome}
-                  variant="outline"
-                  className="w-full"
+                <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+                  进入首页
+                </Button>
+              </div>
+            </>
+          )}
+
+          {status === 'self-claim' && (
+            <>
+              <div className="text-center space-y-3">
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center justify-center gap-2 text-blue-600 mb-2">
+                    <Info className="w-5 h-5" />
+                    <span className="font-medium">温馨提示</span>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    这是你自己的推广链接，无法自己领取哦～
+                  </p>
+                  <p className="text-sm text-blue-600 mt-2">
+                    把链接分享给朋友，他们就能领取你的体验套餐！
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Button
+                  onClick={() => navigate('/partner')}
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
                 >
+                  去合伙人中心分享
+                </Button>
+                <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+                  返回首页
+                </Button>
+              </div>
+            </>
+          )}
+
+          {status === 'already-claimed' && (
+            <>
+              <div className="text-center space-y-3">
+                <div className="bg-teal-50 rounded-xl p-4">
+                  <p className="text-sm text-teal-700">
+                    你已经领取过体验套餐，无需重复领取 🎉
+                  </p>
+                  <p className="text-sm text-teal-600 mt-2">
+                    快去体验各种工具吧！
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Button
+                  onClick={() => navigate('/camps')}
+                  className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                >
+                  🏕️ 进入训练营
+                </Button>
+                <Button onClick={() => navigate('/')} variant="outline" className="w-full">
                   进入首页
                 </Button>
               </div>
@@ -263,11 +308,7 @@ export default function Claim() {
           {(status === 'error' || status === 'no-partner') && (
             <>
               <p className="text-center text-muted-foreground">{message}</p>
-              <Button 
-                onClick={handleGoHome}
-                className="w-full"
-                variant="outline"
-              >
+              <Button onClick={() => navigate('/')} className="w-full" variant="outline">
                 返回首页
               </Button>
             </>
