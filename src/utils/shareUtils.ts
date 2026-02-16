@@ -45,8 +45,10 @@ export const getShareEnvironment = (): ShareEnvironment => {
  * iOS (including WeChat H5) will use native navigator.share for system share panel.
  */
 export const shouldUseImagePreview = (): boolean => {
-  const { isMiniProgram } = getShareEnvironment();
-  return isMiniProgram;
+  const { isMiniProgram, isWeChat } = getShareEnvironment();
+  // 微信环境（H5 和小程序）都使用图片预览
+  // 因为微信的 navigator.share() 不可靠
+  return isWeChat || isMiniProgram;
 };
 
 /**
@@ -111,11 +113,18 @@ export const handleShareWithFallback = async (
   filename: string,
   options: ShareOptions = {}
 ): Promise<ShareResult> => {
-  const { isIOS, isMiniProgram, isAndroid } = getShareEnvironment();
+  const { isIOS, isMiniProgram, isAndroid, isWeChat } = getShareEnvironment();
   const file = new File([blob], filename, { type: 'image/png' });
   
   // Mini Program environment: Always use image preview (no Web Share API support)
   if (isMiniProgram) {
+    const blobUrl = URL.createObjectURL(blob);
+    options.onShowPreview?.(blobUrl);
+    return { success: true, method: 'preview', blobUrl };
+  }
+  
+  // WeChat H5: Skip navigator.share (unreliable), show image preview
+  if (isWeChat && !isMiniProgram) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
     return { success: true, method: 'preview', blobUrl };
