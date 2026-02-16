@@ -7,6 +7,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const THEME_PINYIN: Record<string, string> = {
+  "觉醒": "juexing",
+  "发财": "facai",
+  "回血": "huixue",
+  "看见": "kanjian",
+  "破局": "poju",
+  "翻身": "fanshen",
+  "出发": "chufa",
+};
+
 const THEME_PROMPTS: Record<string, string> = {
   "觉醒": "A majestic horse awakening from thick golden mist, its eyes glowing with brilliant golden light, dawn breaking behind it with rays of gold piercing through darkness. Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. No text, no letters, no numbers, no characters whatsoever. Suitable for social media cover image.",
   "发财": "A powerful horse galloping over a sea of golden coins and gold ingots (yuanbao), splashing gold everywhere, surrounded by auspicious red clouds (祥云). Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. No text, no letters, no numbers, no characters whatsoever. Suitable for social media cover image.",
@@ -83,7 +93,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const fileName = `xiaohongshu/mashang-${theme}-${Date.now()}.png`;
+    const fileName = `xiaohongshu/mashang-${THEME_PINYIN[theme] || theme}-${Date.now()}.png`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("community-images")
       .upload(fileName, binaryData, { contentType: "image/png", upsert: false });
