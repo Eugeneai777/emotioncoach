@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, ChevronRight, Sparkles } from "lucide-react";
+import { MessageCircle, X, ChevronRight, Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -31,12 +31,17 @@ export function FollowUpDialog({
 }: FollowUpDialogProps) {
   const [customAnswer, setCustomAnswer] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleOptionClick = (option: string) => {
     if (option === "其他" || option === "其他...") {
       setShowCustomInput(true);
     } else {
-      onAnswer(option);
+      setSelectedOption(option);
+      setTimeout(() => {
+        onAnswer(option);
+        setSelectedOption(null);
+      }, 600);
     }
   };
 
@@ -51,6 +56,7 @@ export function FollowUpDialog({
   const handleSkip = () => {
     setCustomAnswer("");
     setShowCustomInput(false);
+    setSelectedOption(null);
     onSkip();
   };
 
@@ -112,6 +118,11 @@ export function FollowUpDialog({
                 </p>
               )}
 
+              {/* 点击即回答提示 */}
+              {!showCustomInput && (
+                <p className="mb-2 text-xs text-muted-foreground/70">👆 点击选项即为回答</p>
+              )}
+
               {/* 快速选项 - 移动端滚动优化 */}
               {!showCustomInput ? (
                 <div className="flex flex-wrap gap-2 max-h-[30vh] overflow-y-auto pb-1">
@@ -121,9 +132,25 @@ export function FollowUpDialog({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleOptionClick(option)}
-                      className="rounded-full border border-border bg-background px-4 py-2 text-sm transition-colors hover:border-primary hover:bg-primary/5"
+                      disabled={selectedOption !== null}
+                      className={`rounded-full border px-4 py-2 text-sm transition-all ${
+                        selectedOption === option
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border bg-background hover:border-primary hover:bg-primary/5"
+                      } ${selectedOption !== null && selectedOption !== option ? "opacity-50" : ""}`}
                     >
-                      {option}
+                      <span className="flex items-center gap-1.5">
+                        {selectedOption === option && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                          >
+                            <Check className="h-3.5 w-3.5 text-primary" />
+                          </motion.span>
+                        )}
+                        {option}
+                      </span>
                     </motion.button>
                   ))}
                 </div>

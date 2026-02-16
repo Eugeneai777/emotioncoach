@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, ChevronRight, Loader2, MessageCircle } from "lucide-react";
+import { Sparkles, ChevronRight, Loader2, MessageCircle, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DeepFollowUp {
@@ -36,6 +36,7 @@ export function DeepFollowUpDialog({
   const [answers, setAnswers] = useState<DeepFollowUpAnswer[]>([]);
   const [customInput, setCustomInput] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const currentQuestion = followUps[currentIndex];
   const isLastQuestion = currentIndex === followUps.length - 1;
@@ -47,22 +48,27 @@ export function DeepFollowUpDialog({
       return;
     }
 
-    const newAnswer: DeepFollowUpAnswer = {
-      question: currentQuestion.question,
-      answer: option,
-      targetBlock: currentQuestion.targetBlock
-    };
+    setSelectedOption(option);
 
-    const updatedAnswers = [...answers, newAnswer];
-    setAnswers(updatedAnswers);
-    setShowCustomInput(false);
-    setCustomInput("");
+    setTimeout(() => {
+      const newAnswer: DeepFollowUpAnswer = {
+        question: currentQuestion.question,
+        answer: option,
+        targetBlock: currentQuestion.targetBlock
+      };
 
-    if (isLastQuestion) {
-      onComplete(updatedAnswers);
-    } else {
-      setCurrentIndex(prev => prev + 1);
-    }
+      const updatedAnswers = [...answers, newAnswer];
+      setAnswers(updatedAnswers);
+      setShowCustomInput(false);
+      setCustomInput("");
+      setSelectedOption(null);
+
+      if (isLastQuestion) {
+        onComplete(updatedAnswers);
+      } else {
+        setCurrentIndex(prev => prev + 1);
+      }
+    }, 600);
   };
 
   const handleCustomSubmit = () => {
@@ -193,6 +199,11 @@ export function DeepFollowUpDialog({
                   </p>
                 </div>
 
+                {/* 点击即回答提示 */}
+                {!showCustomInput && (
+                  <p className="pl-11 text-xs text-muted-foreground/70">👆 点击选项即为回答</p>
+                )}
+
                 {/* Options */}
                 <div className="space-y-2 pl-11 max-h-[35vh] overflow-y-auto">
                   {currentQuestion.options.map((option, index) => (
@@ -203,15 +214,29 @@ export function DeepFollowUpDialog({
                       transition={{ delay: index * 0.05 }}
                       style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                       onClick={() => handleSelectOption(option)}
+                      disabled={selectedOption !== null}
                       className={cn(
                         "w-full text-left px-4 py-3 rounded-xl border-2 transition-all",
-                        "hover:border-violet-300 hover:bg-violet-50",
+                        selectedOption === option
+                          ? "border-violet-500 bg-violet-50 dark:bg-violet-900/30"
+                          : "hover:border-violet-300 hover:bg-violet-50",
+                        selectedOption !== null && selectedOption !== option && "opacity-50",
                         "active:scale-[0.98]"
                       )}
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-sm">{option}</span>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        {selectedOption === option ? (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                          >
+                            <Check className="w-4 h-4 text-violet-600" />
+                          </motion.span>
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
                     </motion.button>
                   ))}
