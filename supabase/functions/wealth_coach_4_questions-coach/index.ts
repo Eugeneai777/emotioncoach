@@ -46,35 +46,53 @@ serve(async (req) => {
     // 新会话时扣费（只有一条用户消息时）
     const userMessageCount = messages.filter((m: any) => m.role === 'user').length;
     if (userMessageCount === 1) {
-      try {
-        const deductResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deduct-quota`, {
-          method: 'POST',
-          headers: {
-            'Authorization': req.headers.get('Authorization')!,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            feature_key: 'wealth_coach_4_questions',
-            source: 'wealth_coach_session',
-            metadata: { user_id: user.id }
-          })
-        });
-        
-        if (deductResponse.ok) {
-          const result = await deductResponse.json();
-          console.log(`✅ 财富教练会话扣费: ${result.cost} 点, 剩余: ${result.remaining_quota}`);
-        } else {
-          const error = await deductResponse.json();
-          console.error('❌ 财富教练扣费失败:', error);
-          if (deductResponse.status === 400) {
-            return new Response(JSON.stringify({ error: '余额不足，请充值后继续使用' }), {
-              status: 402,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
+      // 检查用户是否已购买财富训练营（已购买则免扣费）
+      const adminClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      const { data: campPurchase } = await adminClient
+        .from('user_camp_purchases')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('camp_type', 'wealth_block_7')
+        .limit(1);
+
+      const hasCampAccess = campPurchase && campPurchase.length > 0;
+
+      if (hasCampAccess) {
+        console.log(`✅ 训练营用户 ${user.id} 免扣费`);
+      } else {
+        try {
+          const deductResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deduct-quota`, {
+            method: 'POST',
+            headers: {
+              'Authorization': req.headers.get('Authorization')!,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              feature_key: 'wealth_coach_4_questions',
+              source: 'wealth_coach_session',
+              metadata: { user_id: user.id }
+            })
+          });
+          
+          if (deductResponse.ok) {
+            const result = await deductResponse.json();
+            console.log(`✅ 财富教练会话扣费: ${result.cost} 点, 剩余: ${result.remaining_quota}`);
+          } else {
+            const error = await deductResponse.json();
+            console.error('❌ 财富教练扣费失败:', error);
+            if (deductResponse.status === 400) {
+              return new Response(JSON.stringify({ error: '余额不足，请充值后继续使用' }), {
+                status: 402,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
           }
+        } catch (error) {
+          console.error('❌ 财富教练扣费请求失败:', error);
         }
-      } catch (error) {
-        console.error('❌ 财富教练扣费请求失败:', error);
       }
     }
 
