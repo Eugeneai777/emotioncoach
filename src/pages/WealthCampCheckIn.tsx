@@ -853,7 +853,7 @@ ${reflection}`;
             <Tabs defaultValue="awakening" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="awakening">财富旅程</TabsTrigger>
-                <TabsTrigger value="briefing">财富日记</TabsTrigger>
+                <TabsTrigger value="briefing">财富简报</TabsTrigger>
               </TabsList>
 
               <TabsContent value="awakening">
@@ -899,7 +899,7 @@ ${reflection}`;
                 {mergedBriefings.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
                   <div className="text-muted-foreground">
-                      <p>还没有财富日记</p>
+                      <p>还没有财富简报</p>
                       <p className="text-sm">完成财富梳理后自动生成</p>
                     </div>
                     <Button 
