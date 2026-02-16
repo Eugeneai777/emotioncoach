@@ -215,7 +215,6 @@ export const createHiddenWrapper = (): HTMLDivElement => {
     pointer-events: none !important;
     z-index: -99999 !important;
     background: transparent !important;
-    contain: strict !important;
     will-change: contents !important;
   `;
   return wrapper;
