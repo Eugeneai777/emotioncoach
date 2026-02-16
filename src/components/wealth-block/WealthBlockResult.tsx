@@ -725,21 +725,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           }
         />
 
-        <Button
-          className="w-full h-12 bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-700 hover:to-amber-600 text-white shadow-lg text-sm"
-          onClick={() => setShowXhsShare(true)}
-        >
-          <BookImage className="w-5 h-5 mr-2" />
-          生成小红书分享卡片
-        </Button>
-
-        <XiaohongshuShareDialog
-          open={showXhsShare}
-          onOpenChange={setShowXhsShare}
-          healthScore={healthScore}
-          reactionPattern={result.reactionPattern}
-          dominantPoor={result.dominantPoor}
-        />
 
 
         {/* 微信支付对话框 */}
