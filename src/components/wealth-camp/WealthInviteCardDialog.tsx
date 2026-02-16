@@ -318,8 +318,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         fileName={`${activeTab === 'value' ? '财富测评价值卡' : activeTab === 'camp' ? '7天财富训练营邀请卡' : '财富觉醒成就墙'}.png`}
         shareTitle="财富觉醒训练营"
         shareText="邀请你一起突破财富卡点"
-        previewHeight={activeTab === 'achievement' ? 360 : 340}
-        previewScale={0.55}
+        previewHeight={activeTab === 'achievement' ? 360 : 400}
+        previewScale={0.5}
         abovePreview={tabSelector}
         previewCard={renderCard(false)}
         exportCard={renderCard(true)}
