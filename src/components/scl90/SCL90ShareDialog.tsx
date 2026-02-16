@@ -186,23 +186,6 @@ export function SCL90ShareDialog({
             </div>
           </div>
 
-          {/* Hidden Export Card (full size) */}
-          <div 
-            className="absolute"
-            style={{ 
-              left: "-9999px", 
-              top: "-9999px",
-              pointerEvents: "none",
-            }}
-          >
-            <SCL90ShareCard
-              ref={exportCardRef}
-              result={result}
-              userName={userName}
-              avatarUrl={avatarUrl}
-            />
-          </div>
-
           {/* Generate Button */}
           <div className="flex gap-2">
             <Button
@@ -232,6 +215,23 @@ export function SCL90ShareDialog({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden Export Card - outside Dialog so it persists when Dialog closes on iOS */}
+      <div 
+        className="fixed"
+        style={{ 
+          left: "-9999px", 
+          top: "-9999px",
+          pointerEvents: "none",
+        }}
+      >
+        <SCL90ShareCard
+          ref={exportCardRef}
+          result={result}
+          userName={userName}
+          avatarUrl={avatarUrl}
+        />
+      </div>
 
       {/* Full-screen Image Preview */}
       <ShareImagePreview
