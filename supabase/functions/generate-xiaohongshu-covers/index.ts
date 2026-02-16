@@ -17,15 +17,32 @@ const THEME_PINYIN: Record<string, string> = {
   "出发": "chufa",
 };
 
-const THEME_PROMPTS: Record<string, string> = {
-  "觉醒": "A clean, bold Chinese social media poster in 3:4 portrait aspect ratio. Deep dark red or black gradient background, minimal and uncluttered — no complex illustrations or busy patterns. The entire focus is on powerful typography. Layout from top to bottom: First line in medium golden text: \"除夕夜，别人在数红包\" (New Year's Eve, others are counting red envelopes). Second line in medium golden text: \"你在想：为什么我总赚不到钱？\" (You're thinking: why can't I ever make money?). Then a dramatic large title \"马上觉醒\" in massive bold calligraphic strokes, golden color with glowing effect, taking up the central area. Subtle gold sparkles or light rays emanating from the text. Chinese New Year premium feel with red and gold color scheme. The text IS the design — clean, impactful, scroll-stopping.",
-  "发财": "A powerful horse galloping over a sea of golden coins and gold ingots (yuanbao), splashing gold everywhere, surrounded by auspicious red clouds (祥云). Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. Display the large Chinese text \"马上发财\" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.",
-  "回血": "A magnificent horse leaping upward from a deep valley, its wounds transforming into streams of golden light, phoenix-like rebirth energy surrounding it. Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. Display the large Chinese text \"马上回血\" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.",
-  "看见": "A wise horse standing on a mountain peak overlooking vast landscape, a mystical third eye on its forehead emitting golden light beams, seeing through everything. Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. Display the large Chinese text \"马上看见\" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.",
-  "破局": "A mighty horse breaking through golden chains and walls, fragments and debris flying everywhere with explosive force, pure power and determination. Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. Display the large Chinese text \"马上破局\" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.",
-  "翻身": "A heroic horse leaping from a deep abyss toward the sky, red and gold auspicious clouds (祥云) supporting it from below, a dramatic reversal pose mid-air. Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. Display the large Chinese text \"马上翻身\" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.",
-  "出发": "A determined horse standing at a starting line facing a magnificent sunrise, red silk ribbons flowing in the wind, ready to charge forward. Chinese red and gold color palette, dark crimson and black accents. Guochao (国潮) illustration style, grand and powerful composition. 3:4 portrait aspect ratio. Display the large Chinese text \"马上出发\" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.",
+// Style variations to ensure each regeneration looks different
+const STYLE_VARIATIONS = [
+  { bg: "deep black gradient background with subtle red glow at edges", textStyle: "massive bold calligraphic strokes in pure gold with outer glow", layout: "centered vertically, text stacked with generous spacing", extra: "minimal gold particle dust floating" },
+  { bg: "rich dark crimson to black diagonal gradient", textStyle: "elegant serif-style Chinese typography in warm amber-gold with shadow", layout: "text aligned left with dramatic negative space on right", extra: "single thin gold horizontal line as divider between lines" },
+  { bg: "solid matte black background", textStyle: "bold sans-serif modern Chinese font in bright gold with red accent shadow", layout: "text bottom-heavy, large title at bottom, supporting text at top", extra: "geometric gold corner accents, very minimal" },
+  { bg: "dark red textured background like aged paper or silk fabric", textStyle: "traditional brush calligraphy style in metallic gold ink", layout: "vertical text layout (top to bottom, right to left) traditional Chinese style", extra: "subtle red seal stamp in corner" },
+  { bg: "gradient from deep navy blue at top to dark red at bottom", textStyle: "thick blocky modern Chinese font in gradient gold-to-white", layout: "centered with title oversized taking 60% of canvas, subtitle small above", extra: "soft bokeh light circles in gold" },
+  { bg: "pure deep red background, no gradient, clean and bold", textStyle: "white text for subtitle, massive gold text for main title with 3D emboss effect", layout: "top-aligned subtitle cluster, center-dominant main title", extra: "subtle cloud pattern watermark in slightly lighter red" },
+];
+
+const THEME_COPY: Record<string, { subtitle: string; title: string }> = {
+  "觉醒": { subtitle: "除夕夜，别人在数红包\\n你在想：为什么我总赚不到钱？", title: "马上觉醒" },
+  "发财": { subtitle: "同样的24小时\\n为什么别人越来越有钱？", title: "马上发财" },
+  "回血": { subtitle: "亏过的钱、错过的机会\\n都是蜕变前的代价", title: "马上回血" },
+  "看见": { subtitle: "你不是缺能力\\n你只是还没看见卡住你的那堵墙", title: "马上看见" },
+  "破局": { subtitle: "一直在努力，一直没突破？\\n问题不在勤奋，在认知", title: "马上破局" },
+  "翻身": { subtitle: "人生低谷不可怕\\n可怕的是在低谷里躺平", title: "马上翻身" },
+  "出发": { subtitle: "想了一百次不如迈出第一步\\n新的一年，不再等了", title: "马上出发" },
 };
+
+function buildPrompt(theme: string): string {
+  const copy = THEME_COPY[theme];
+  const style = STYLE_VARIATIONS[Math.floor(Math.random() * STYLE_VARIATIONS.length)];
+  
+  return `A clean, bold Chinese social media poster in 3:4 portrait aspect ratio. ${style.bg}. Minimal and uncluttered — no complex illustrations, no horses, no busy patterns. The entire focus is on powerful typography. ${style.layout}. The supporting text reads: "${copy.subtitle}". The main dramatic large title is "${copy.title}" in ${style.textStyle}, taking up major visual space. ${style.extra}. Chinese New Year premium feel. The text IS the design — clean, impactful, scroll-stopping. No cartoon characters, no animals, no objects — ONLY text and background.`;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,9 +52,9 @@ serve(async (req) => {
   try {
     const { theme } = await req.json();
 
-    if (!theme || !THEME_PROMPTS[theme]) {
+    if (!theme || !THEME_COPY[theme]) {
       return new Response(
-        JSON.stringify({ error: `无效主题，可选: ${Object.keys(THEME_PROMPTS).join(", ")}` }),
+        JSON.stringify({ error: `无效主题，可选: ${Object.keys(THEME_COPY).join(", ")}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -45,8 +62,8 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const prompt = THEME_PROMPTS[theme];
-    console.log(`生成小红书封面: 马上${theme}`);
+    const prompt = buildPrompt(theme);
+    console.log(`生成小红书封面: 马上${theme}, prompt长度: ${prompt.length}`);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
