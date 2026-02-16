@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Target, Sparkles, ArrowRight, TrendingUp } from 'lucide-react';
+import { ArrowRight, TrendingUp, Check } from 'lucide-react';
 import { getAwakeningColor, getAwakeningZone } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
@@ -15,7 +15,6 @@ interface AwakeningJourneyPreviewProps {
   onPurchase?: () => void;
 }
 
-// 行为维度收获（按卡点类型）
 const behaviorOutcomes: Record<string, string> = {
   mouth: '从"嘴穷"到"嘴富"，学会用丰盛语言表达自己的价值',
   hand: '从"手穷"到"手富"，建立给予-接收的自然流动感',
@@ -23,7 +22,6 @@ const behaviorOutcomes: Record<string, string> = {
   heart: '从"心穷"到"心富"，从受害者模式切换到创造者模式',
 };
 
-// 情绪维度收获（按反应模式）
 const emotionOutcomes: Record<string, string> = {
   chase: '减少追逐式焦虑，建立与金钱的从容关系',
   avoid: '重建安全感，面对财富话题不再退缩',
@@ -31,7 +29,6 @@ const emotionOutcomes: Record<string, string> = {
   harmony: '巩固情绪稳定，向丰盛型状态自然进化',
 };
 
-// 信念维度收获（按卡点类型）
 const beliefOutcomes: Record<string, string> = {
   mouth: '植入"我值得被看见"的新信念，替换自我贬低程序',
   hand: '植入"给予即丰盛"的新信念，替换紧握匮乏程序',
@@ -39,13 +36,18 @@ const beliefOutcomes: Record<string, string> = {
   heart: '植入"我有力量创造"的新信念，替换受害者程序',
 };
 
-
-// Pattern key normalization
 const patternKeyMap: Record<string, string> = {
   chasing: 'chase', avoiding: 'avoid', freezing: 'trauma', pleasing: 'chase',
   chase: 'chase', avoid: 'avoid', trauma: 'trauma', harmony: 'harmony',
 };
 
+const valueItems = [
+  { text: '7天AI教练1对1对话', value: '¥700+' },
+  { text: '每日定制冥想音频', value: '' },
+  { text: '个性化财富简报', value: '' },
+  { text: '成长轨迹全记录', value: '' },
+  { text: '专属觉醒画像对比', value: '' },
+];
 
 export function AwakeningJourneyPreview({ 
   healthScore, 
@@ -55,20 +57,11 @@ export function AwakeningJourneyPreview({
   onPurchase,
 }: AwakeningJourneyPreviewProps) {
   const navigate = useNavigate();
-  // 觉醒起点 = 100 - 卡点分数
   const awakeningStart = 100 - healthScore;
-  
-  // 7天目标：起点 + 15~25（取中位数20）
   const day7Target = Math.min(awakeningStart + 20, 95);
   
-  // 毕业目标：至少比7天目标高5分，且不低于85
-  const graduateTarget = Math.max(day7Target + 5, 85);
-  
-  // 获取个性化卡点名称
   const poorConfig = dominantPoor ? fourPoorRichConfig[dominantPoor] : null;
-  const poorName = poorConfig?.poorName || '财富卡点';
 
-  // 动态觉醒区间描述
   const currentZone = getAwakeningZone(awakeningStart);
   const targetZone = getAwakeningZone(day7Target);
   const day7ValueDesc = currentZone.label !== targetZone.label
@@ -78,7 +71,6 @@ export function AwakeningJourneyPreview({
     ? `你的「${poorConfig.poorName}」模式正在消耗你的财富能量`
     : '你的财富卡点正在消耗你的能量';
 
-  // 生成个性化三维收获
   const poorKey = dominantPoor || 'mouth';
   const normalizedPattern = patternKeyMap[reactionPattern || ''] || 'harmony';
   const personalizedOutcomes = [
@@ -95,30 +87,29 @@ export function AwakeningJourneyPreview({
       style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-rose-50/40 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-rose-950/10">
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          {/* 头部 */}
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-full bg-amber-100 dark:bg-amber-900/50">
-              <MapPin className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-foreground text-base sm:text-lg">📍 你的财富觉醒起点</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">测评已为你定位起点</p>
-            </div>
+        <CardContent className="p-4 sm:p-6 space-y-5">
+          
+          {/* 1. 标题区 — 制造紧迫感 */}
+          <div className="text-center space-y-2">
+            <h3 className="text-lg sm:text-xl font-bold text-foreground leading-tight">
+              你的觉醒刚开始，<br/>别让它停在这里
+            </h3>
+            <p className="text-base text-amber-700 dark:text-amber-300 font-medium">
+              ⚡ {painPointText}
+            </p>
           </div>
 
-          {/* 觉醒旅程：移动端两行布局 */}
-          <div className="space-y-3">
-            {/* 第一行：突出起点 */}
+          {/* 2. 起点分数区 — 简化 */}
+          <div className="space-y-2">
             <motion.div 
-              className="relative bg-white dark:bg-white/10 rounded-2xl p-5 sm:p-6 text-center border-2 border-amber-400 dark:border-amber-500 shadow-lg"
+              className="relative bg-white dark:bg-white/10 rounded-2xl p-5 text-center border-2 border-amber-400 dark:border-amber-500 shadow-lg"
               animate={{ 
                 boxShadow: ['0 0 0 0 rgba(251, 191, 36, 0)', '0 0 0 10px rgba(251, 191, 36, 0.15)', '0 0 0 0 rgba(251, 191, 36, 0)']
               }}
               transition={{ duration: 2.5, repeat: Infinity }}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-amber-500 text-white text-sm font-bold rounded-full shadow whitespace-nowrap">
-                🎯 现在 · Day 0
+                🎯 你的觉醒起点
               </div>
               <motion.div 
                 className="text-5xl sm:text-6xl font-bold tabular-nums mt-2"
@@ -141,78 +132,44 @@ export function AwakeningJourneyPreview({
               >
                 {awakeningStart}
               </motion.div>
-              <div className="text-base text-muted-foreground font-semibold mt-2">你的觉醒起点</div>
             </motion.div>
             
-            {/* 第二行：目标并排 */}
-            {/* 上升箭头动画 */}
-            <div className="flex justify-center -my-1">
+            {/* 上升箭头 + 7天目标一行文字 */}
+            <div className="flex items-center justify-center gap-2 py-1">
               <motion.div
-                animate={{ y: [0, -6, 0], opacity: [0.5, 1, 0.5] }}
+                animate={{ y: [0, -4, 0], opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
-                className="text-emerald-500 font-bold text-lg"
               >
-                <TrendingUp className="w-5 h-5" />
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
               </motion.div>
-            </div>
-
-            <div className="flex items-stretch gap-3">
-              {/* 7天目标 - 增强视觉 */}
-              <motion.div 
-                className="relative flex-1 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl p-4 text-center border-2 border-emerald-400 dark:border-emerald-500/60 shadow-md"
-                animate={{
-                  boxShadow: ['0 0 0 0 rgba(16, 185, 129, 0)', '0 0 0 6px rgba(16, 185, 129, 0.15)', '0 0 0 0 rgba(16, 185, 129, 0)']
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full whitespace-nowrap shadow">
-                  🚀 7天后
-                </div>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{day7Target}+</div>
-                <div className="text-xs text-emerald-700/80 dark:text-emerald-300/80 mt-1 font-medium leading-snug">{day7ValueDesc}</div>
-              </motion.div>
-              
-              {/* 毕业目标 */}
-              <div className="relative flex-1 bg-white/40 dark:bg-white/5 rounded-xl p-4 text-center border border-dashed border-violet-400/60 dark:border-violet-600/30">
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-violet-500/70 text-white text-xs font-medium rounded-full whitespace-nowrap">
-                  毕业
-                </div>
-                <div className="flex items-center justify-center gap-1.5 mt-2">
-                  <Target className="w-4 h-4 text-violet-400" />
-                  <span className="text-2xl font-bold text-violet-500/70">{graduateTarget}+</span>
-                </div>
-                <div className="text-xs text-violet-600/70 dark:text-violet-300/60 mt-1 font-medium">财富能量畅通</div>
-              </div>
+              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                7天后目标：{day7Target}+ → {day7ValueDesc}
+              </span>
             </div>
           </div>
 
           {/* 分隔线 */}
-          <div className="flex items-center gap-3 py-2">
+          <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
-            <span className="text-xs text-amber-500">✦</span>
+            <span className="text-sm text-amber-500">✦</span>
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
           </div>
 
-          {/* 训练营概览 */}
-          <div className="p-4 bg-white/70 dark:bg-white/10 rounded-xl border border-amber-200/50 dark:border-amber-700/30">
-            <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1.5 xs:gap-2 mb-2">
-              <span className="text-base font-bold text-foreground">财富觉醒训练营</span>
-              <span className="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-sm font-bold rounded-full w-fit shadow-sm">
-                7天 · 每天15分钟
-              </span>
-            </div>
-            <p className="text-sm text-amber-700 dark:text-amber-300 font-medium mb-1.5">
-              ⚡ {painPointText}
-            </p>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              不是教你快速赚钱，而是<span className="text-amber-600 dark:text-amber-400 font-medium">每天帮你看见卡住的位置</span>，陪你迈出一个不消耗自己的小进步。
+          {/* 3. 训练营标题区 — 放大突出 */}
+          <div className="text-center space-y-2">
+            <h4 className="text-xl font-bold text-foreground">财富觉醒训练营</h4>
+            <span className="inline-block px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-base font-bold rounded-full shadow-md">
+              7天 · 每天15分钟
+            </span>
+            <p className="text-base text-amber-700 dark:text-amber-300 font-semibold">
+              每天15分钟，AI教练1对1带你突破
             </p>
           </div>
 
-          {/* 7天后的收获 - 个性化三维度 */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-sm text-foreground">✨ 7天后，你会得到：</h4>
-            <div className="grid grid-cols-1 gap-2">
+          {/* 4. 收获区 — 放大字号 + 卡片化 */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-base text-foreground">✨ 7天后，你会得到：</h4>
+            <div className="grid grid-cols-1 gap-2.5">
               {personalizedOutcomes.map((item, i) => (
                 <motion.div 
                   key={i} 
@@ -220,46 +177,82 @@ export function AwakeningJourneyPreview({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + i * 0.12 }}
                   style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                  className="flex items-start gap-2.5 p-2.5 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
+                  className="flex items-start gap-3 p-3 bg-white/70 dark:bg-white/5 rounded-xl border-l-4 border-amber-400 dark:border-amber-500 shadow-sm"
                 >
-                  <span className="text-lg leading-none mt-0.5">{item.emoji}</span>
+                  <span className="text-2xl leading-none mt-0.5">{item.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{item.label}</span>
-                    <p className="text-sm text-foreground/80 leading-snug mt-0.5">{item.text}</p>
+                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{item.label}</span>
+                    <p className="text-base text-foreground/80 leading-snug mt-0.5">{item.text}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
 
-          {/* CTA 区域 */}
+          {/* 5. 你将获得清单 — 物超所值 */}
+          <div className="p-4 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl border border-emerald-200/60 dark:border-emerald-700/30 space-y-2.5">
+            <h4 className="text-base font-bold text-foreground">📦 包含内容：</h4>
+            <div className="space-y-2">
+              {valueItems.map((item, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <span className="text-base text-foreground/90 flex-1">{item.text}</span>
+                  {item.value && (
+                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{item.value}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-700/30 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">总价值</span>
+              <span className="text-base font-bold text-muted-foreground line-through">¥700+</span>
+            </div>
+          </div>
+
+          {/* 6. CTA 区 — 强化转化 */}
           <motion.div
             initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
             style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="flex flex-col gap-2.5"
+            className="flex flex-col items-center gap-3"
           >
-            {/* 主按钮 - 购买/开始 */}
+            {/* 社会证明 */}
+            <p className="text-sm text-muted-foreground">
+              已有 <span className="font-bold text-amber-600 dark:text-amber-400">2,847</span> 人加入
+            </p>
+
+            {/* 价格锚定 + 按钮 */}
             {hasPurchased ? (
               <Button
                 onClick={onPurchase}
-                className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-amber-500/30 text-base rounded-xl"
+                className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-amber-500/30 text-lg rounded-xl"
               >
                 开始训练营
                 <ArrowRight className="w-5 h-5 ml-1.5" />
               </Button>
             ) : (
-              <Button
-                onClick={onPurchase}
-                className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-amber-500/30 text-base rounded-xl"
-              >
-                ¥299 立即加入
-                <ArrowRight className="w-5 h-5 ml-1.5" />
-              </Button>
+              <div className="w-full space-y-2">
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-lg text-muted-foreground line-through">¥700+</span>
+                  <span className="text-3xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
+                </div>
+                <Button
+                  onClick={onPurchase}
+                  className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-amber-500/30 text-lg rounded-xl"
+                >
+                  ¥299 开启我的7天蜕变
+                  <ArrowRight className="w-5 h-5 ml-1.5" />
+                </Button>
+              </div>
             )}
 
-            {/* 次要按钮 - 了解详情 */}
+            {/* 零风险微文案 */}
+            <p className="text-xs text-muted-foreground">不满意随时退出 · 零风险</p>
+
+            {/* 了解详情 */}
             <Button
               variant="ghost"
               onClick={() => navigate('/wealth-camp-intro')}
@@ -273,3 +266,4 @@ export function AwakeningJourneyPreview({
     </motion.div>
   );
 }
+
