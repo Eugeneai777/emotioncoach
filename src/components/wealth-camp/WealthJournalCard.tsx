@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { ChevronRight, Star, Tent } from 'lucide-react';
+import { ChevronRight, Mic, Star, Tent } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,7 @@ interface WealthJournalEntry {
   belief_type?: string;
   action_suggestion?: string;
   camp_id?: string | null;
+  session_id?: string | null;
   created_at: string;
 }
 
@@ -73,6 +74,7 @@ function ScoreStars({ score }: { score?: number }) {
 
 export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
   const hasCamp = !!entry.camp_id;
+  const isVoice = !!entry.session_id;
   const hasBlockTypes = entry.behavior_type || entry.emotion_type || entry.belief_type;
 
   return (
@@ -98,6 +100,12 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
               <span className="text-xs text-muted-foreground">
                 {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}
               </span>
+              {isVoice && (
+                <Badge variant="secondary" className="text-xs bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
+                  <Mic className="w-3 h-3 mr-1" />
+                  语音
+                </Badge>
+              )}
               {hasCamp && (
                 <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
                   <Tent className="w-3 h-3 mr-1" />
