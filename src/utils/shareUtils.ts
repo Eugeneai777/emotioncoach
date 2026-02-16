@@ -45,10 +45,10 @@ export const getShareEnvironment = (): ShareEnvironment => {
  * iOS (including WeChat H5) will use native navigator.share for system share panel.
  */
 export const shouldUseImagePreview = (): boolean => {
-  const { isMiniProgram, isWeChat } = getShareEnvironment();
-  // 微信环境（H5 和小程序）都使用图片预览
-  // 因为微信的 navigator.share() 不可靠
-  return isWeChat || isMiniProgram;
+  const { isMiniProgram, isWeChat, isIOS } = getShareEnvironment();
+  // iOS 和微信环境都使用图片预览
+  // iOS Safari 的 navigator.share() 调微信时不可靠
+  return isWeChat || isMiniProgram || isIOS;
 };
 
 /**
@@ -130,24 +130,11 @@ export const handleShareWithFallback = async (
     return { success: true, method: 'preview', blobUrl };
   }
   
-  // iOS (including WeChat H5): Try native share first for system share panel
-  if (isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({
-        files: [file],
-        title: options.title || filename,
-        text: options.text,
-      });
-      return { success: true, method: 'webshare' };
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') {
-        return { success: false, method: 'webshare', cancelled: true };
-      }
-      // Fall back to image preview if share fails
-      const blobUrl = URL.createObjectURL(blob);
-      options.onShowPreview?.(blobUrl);
-      return { success: true, method: 'preview', blobUrl };
-    }
+  // iOS: Skip unreliable navigator.share, show image preview
+  if (isIOS) {
+    const blobUrl = URL.createObjectURL(blob);
+    options.onShowPreview?.(blobUrl);
+    return { success: true, method: 'preview', blobUrl };
   }
   
   // Android: Try Web Share API first
