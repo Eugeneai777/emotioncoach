@@ -66,6 +66,7 @@ const LITE_ROUTES = [
   '/alive-check-lite',
   '/awakening-lite',
   '/emotion-button-lite',
+  '/wealth-block',
 ];
 
 export const GlobalOnboarding = () => {
