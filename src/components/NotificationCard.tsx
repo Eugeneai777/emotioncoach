@@ -124,9 +124,17 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
     onClick();
     
     if (notification.action_type === 'navigate' && notification.action_data?.path) {
-      // 传递 action_data 中的额外数据作为路由 state
       const { path, ...routeState } = notification.action_data;
-      navigate(path, { state: Object.keys(routeState).length > 0 ? routeState : undefined });
+      const currentPath = window.location.pathname;
+      const state = Object.keys(routeState).length > 0 ? routeState : undefined;
+      
+      if (currentPath === path || currentPath.endsWith(path)) {
+        // 已在目标页面：replace + 强制刷新以触发会话恢复
+        navigate(path, { state, replace: true });
+        window.location.reload();
+      } else {
+        navigate(path, { state });
+      }
     }
   };
 
