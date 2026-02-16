@@ -420,8 +420,8 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                     {progress < 30
                       ? "即将获取专业的分析报告"
                       : progress < 70
-                        ? "完成后可免费获得专业教练解说 🎙️"
-                        : "马上就好！报告+免费教练解说等你 🎁"}
+                        ? "完成后可免费获得专业AI教练解说 🎙️"
+                        : "马上就好！报告+免费AI教练解说等你 🎁"}
                   </span>
                   <span className="text-xl font-semibold text-amber-600">
                     {Math.round(progress)}%
