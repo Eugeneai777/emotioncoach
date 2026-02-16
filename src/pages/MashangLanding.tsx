@@ -21,16 +21,24 @@ const sellingPoints = [
   { icon: Sparkles, title: "7 天见喜", desc: "每天 15 分钟，好运看得见" },
 ];
 
-// Firework sparkle positions
+// Floating wealth, stars & celebration decorations
 const sparkles = [
-  { left: "8%", top: "12%", delay: "0s", size: "text-xs" },
-  { left: "92%", top: "8%", delay: "0.5s", size: "text-sm" },
-  { left: "15%", top: "35%", delay: "1.2s", size: "text-xs" },
-  { left: "85%", top: "30%", delay: "0.8s", size: "text-xs" },
-  { left: "5%", top: "55%", delay: "1.5s", size: "text-sm" },
-  { left: "95%", top: "60%", delay: "0.3s", size: "text-xs" },
-  { left: "20%", top: "80%", delay: "2s", size: "text-xs" },
-  { left: "80%", top: "85%", delay: "1s", size: "text-xs" },
+  { left: "6%", top: "10%", delay: "0s", size: "text-sm", emoji: "💰", anim: "animate-float" },
+  { left: "92%", top: "6%", delay: "0.5s", size: "text-base", emoji: "✨", anim: "animate-twinkle" },
+  { left: "14%", top: "25%", delay: "1.2s", size: "text-xs", emoji: "🪙", anim: "animate-float" },
+  { left: "88%", top: "22%", delay: "0.8s", size: "text-sm", emoji: "🌟", anim: "animate-twinkle" },
+  { left: "4%", top: "42%", delay: "1.5s", size: "text-sm", emoji: "💎", anim: "animate-float" },
+  { left: "96%", top: "48%", delay: "0.3s", size: "text-xs", emoji: "⭐", anim: "animate-twinkle" },
+  { left: "10%", top: "58%", delay: "2s", size: "text-xs", emoji: "🧧", anim: "animate-float" },
+  { left: "90%", top: "55%", delay: "1s", size: "text-sm", emoji: "💵", anim: "animate-float" },
+  { left: "18%", top: "72%", delay: "0.7s", size: "text-xs", emoji: "🎉", anim: "animate-twinkle" },
+  { left: "82%", top: "75%", delay: "1.8s", size: "text-sm", emoji: "💰", anim: "animate-float" },
+  { left: "50%", top: "5%", delay: "2.2s", size: "text-xs", emoji: "🌟", anim: "animate-twinkle" },
+  { left: "30%", top: "88%", delay: "0.4s", size: "text-sm", emoji: "🎊", anim: "animate-float" },
+  { left: "70%", top: "90%", delay: "1.3s", size: "text-xs", emoji: "🪙", anim: "animate-twinkle" },
+  { left: "3%", top: "85%", delay: "2.5s", size: "text-sm", emoji: "✨", anim: "animate-twinkle" },
+  { left: "97%", top: "35%", delay: "1.6s", size: "text-xs", emoji: "💎", anim: "animate-float" },
+  { left: "45%", top: "95%", delay: "0.9s", size: "text-xs", emoji: "⭐", anim: "animate-twinkle" },
 ];
 
 export default function MashangLanding() {
@@ -42,25 +50,29 @@ export default function MashangLanding() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-amber-950 text-white overflow-x-hidden relative">
-      {/* Floating firework sparkles background */}
+      {/* Floating wealth + stars + celebration background */}
       {sparkles.map((s, i) => (
         <div
           key={i}
-          className={`fixed ${s.size} text-amber-300/40 animate-twinkle pointer-events-none z-0`}
-          style={{ left: s.left, top: s.top, animationDelay: s.delay }}
+          className={`fixed ${s.size} ${s.anim} pointer-events-none z-0`}
+          style={{ left: s.left, top: s.top, animationDelay: s.delay, opacity: 0.2 + (i % 4) * 0.1 }}
         >
-          ✦
+          {s.emoji}
         </div>
       ))}
 
       {/* Hero */}
       <section className="relative pt-12 pb-8 px-4 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.18),transparent_60%)]" />
+        {/* Gold particle overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_1px_at_20%_30%,_rgba(251,191,36,0.4),transparent),radial-gradient(circle_1px_at_60%_20%,_rgba(251,191,36,0.3),transparent),radial-gradient(circle_1px_at_80%_50%,_rgba(251,191,36,0.35),transparent),radial-gradient(circle_1px_at_40%_70%,_rgba(251,191,36,0.25),transparent)]" />
 
-        {/* Floating lanterns */}
+        {/* Floating lanterns + wealth decorations */}
         <div className="absolute top-6 left-4 text-2xl animate-float opacity-70" style={{ animationDelay: "0s" }}>🏮</div>
         <div className="absolute top-10 right-4 text-xl animate-float opacity-60" style={{ animationDelay: "1.5s" }}>🏮</div>
         <div className="absolute top-20 left-12 text-sm animate-float opacity-40" style={{ animationDelay: "3s" }}>🏮</div>
+        <div className="absolute top-16 right-14 text-sm animate-float opacity-30" style={{ animationDelay: "2s" }}>💰</div>
+        <div className="absolute top-8 left-1/3 text-xs animate-twinkle opacity-35" style={{ animationDelay: "1s" }}>🪙</div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -208,6 +220,14 @@ export default function MashangLanding() {
           </div>
         </ResponsiveContainer>
       </section>
+
+      {/* Rising wealth decorations above bottom CTA */}
+      <div className="relative pointer-events-none overflow-hidden h-8">
+        <div className="absolute left-[15%] bottom-0 text-sm animate-float opacity-30" style={{ animationDelay: "0s" }}>💰</div>
+        <div className="absolute left-[40%] bottom-0 text-xs animate-float opacity-25" style={{ animationDelay: "0.6s" }}>✨</div>
+        <div className="absolute left-[65%] bottom-0 text-sm animate-float opacity-30" style={{ animationDelay: "1.2s" }}>🪙</div>
+        <div className="absolute left-[85%] bottom-0 text-xs animate-float opacity-20" style={{ animationDelay: "1.8s" }}>🌟</div>
+      </div>
 
       {/* Bottom CTA */}
       <section className="px-4 pb-12">
