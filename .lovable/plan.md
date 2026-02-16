@@ -1,53 +1,69 @@
 
+## 将财富语音教练对话记录保存到财富日记
 
-## 强化财富语音教练的训练营转化引导
+### 问题分析
 
-### 当前问题
+当前 `CoachVoiceChat` 组件在通话结束时（`recordSession` 函数），只将对话记录保存到通用的 `vibrant_life_sage_briefings` 表和 `voice_chat_sessions` 表。当使用财富语音教练（`tokenEndpoint="wealth-assessment-realtime-token"`）时，对话内容不会保存到 `wealth_journal_entries`（财富日记表），导致语音对话的觉察内容无法在"成长曲线"和"觉醒档案"中体现。
 
-现在的提示词策略偏"被动"——知识库标注了"不主动推销"，阶段五要求"自然过渡，不要像推销"，严格规则里甚至写了"绝不使用销售话术"。这导致教练在对话中很少主动提及训练营，转化率低。
+### 方案
 
-### 调整策略
-
-将对话定位从"顺带提一下训练营"调整为"整个对话的终极目标就是让用户认识到训练营的价值"。但方式不是硬推，而是通过"痛点放大 + 解决方案锁定"的心理路径，让用户自己得出"我需要训练营"的结论。
-
-### 具体修改（1 个文件）
-
-**文件：`supabase/functions/wealth-assessment-realtime-token/index.ts`**
-
-在 `buildWealthCoachInstructions` 函数中调整以下内容：
-
-#### 1. 修改对话总目标（第 205 行附近）
-- 现在："只有真正理解了他们的痛点和需求，才能给出有温度的回应"
-- 改为：明确整个对话的终极目标是引导用户加入训练营，倾听和共情是手段而非目的
-
-#### 2. 加速对话节奏（阶段二、三合并压缩）
-- 现在 5 个阶段太慢，用户可能聊 2-3 轮就离开
-- 调整为 3 个核心阶段：
-  - 阶段一（1 轮）：快速倾听 + 锁定痛点
-  - 阶段二（1-2 轮）：共情 + 测评关联 + 放大痛点（"如果不改变会怎样"）
-  - 阶段三（每轮都尝试）：训练营作为解决方案自然植入
-
-#### 3. 修改阶段五（训练营引导）为贯穿策略
-- 从第 2 轮对话开始，每轮回复都要找机会埋下训练营的种子
-- 具体技巧：
-  - "你说的这个问题，其实训练营第 X 天的冥想就是专门针对这个的"
-  - "这种模式要改变，光靠一次对话不够，需要持续 7 天的练习"
-  - "我在训练营里会每天陪你做觉察，跟今天这样的对话"
-
-#### 4. 修改知识库标注
-- 现在："当用户提问时自然引用，不主动推销"
-- 改为："主动结合用户痛点引用，每轮对话至少关联一个训练营价值点"
-
-#### 5. 调整严格规则
-- 移除"绝不使用销售话术"（过度限制）
-- 保留"不制造虚假紧迫感"
-- 新增"每轮回复结尾，优先用引导训练营的问题收尾"
+在 `CoachVoiceChat` 的 `recordSession` 函数中，检测是否为财富教练通话（通过 `tokenEndpoint` 或 `featureKey` 判断）。如果是，则在通话结束后额外调用 `generate-wealth-journal` Edge Function，将语音对话的 transcript 传入，由 AI 提取行为/情绪/信念卡点并生成财富日记条目。
 
 ### 技术变更
 
 | 文件 | 修改内容 |
 |------|---------|
-| `supabase/functions/wealth-assessment-realtime-token/index.ts` | 重写 `buildWealthCoachInstructions` 中的对话策略部分，将 5 阶段压缩为 3 阶段，强化训练营转化目标，调整知识库引用策略和规则约束 |
+| `src/components/coach/CoachVoiceChat.tsx` | 在 `recordSession` 函数中（约第 649-719 行的简报生成逻辑之后），增加财富教练专属的日记生成逻辑 |
 
-改动范围：1 个文件，约 60-80 行提示词文本的重写。
+#### 具体修改：`recordSession` 函数
 
+在现有的 `vibrant_life_sage_briefings` 保存逻辑之后，增加以下判断：
+
+```text
+// 现有逻辑结束后...
+
+// 财富教练专属：将语音对话保存到财富日记
+if (tokenEndpoint === 'wealth-assessment-realtime-token' && transcriptContent.length > 50) {
+  try {
+    // 构建对话历史格式（generate-wealth-journal 需要的格式）
+    const conversationHistory = [
+      ...userTranscript.split('\n').filter(Boolean).map(t => ({ role: 'user', content: t })),
+      ...transcript.split('\n').filter(Boolean).map(t => ({ role: 'assistant', content: t })),
+    ];
+
+    // 获取当前训练营信息（如有）
+    const { data: campData } = await supabase
+      .from('wealth_camp_members')
+      .select('camp_id, current_day')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    await supabase.functions.invoke('generate-wealth-journal', {
+      body: {
+        user_id: user.id,
+        camp_id: campData?.camp_id || null,
+        day_number: campData?.current_day || 1,
+        conversation_history: conversationHistory,
+        source: 'voice_coach'  // 标记来源为语音教练
+      }
+    });
+
+    console.log('[VoiceChat] 财富日记已从语音对话生成');
+  } catch (journalError) {
+    console.error('[VoiceChat] 财富日记生成失败:', journalError);
+  }
+}
+```
+
+#### `generate-wealth-journal` Edge Function
+
+该函数已经支持从 `conversation_history` 中提取卡点信息（第 98-153 行），无需修改。当 `briefing_data` 为空但 `conversation_history` 存在时，它会自动调用 AI 提取行为/情绪/信念卡点并评分。
+
+### 效果
+
+- 用户与财富语音教练通话结束后，系统自动将对话内容分析并保存到财富日记
+- 在"觉醒档案"的成长曲线、成就徽章等模块中能看到语音对话产生的数据
+- 不影响现有的通用语音教练逻辑（通过 `tokenEndpoint` 判断，仅财富教练触发）
+- `generate-wealth-journal` 已有去重机制，不会产生重复日记
