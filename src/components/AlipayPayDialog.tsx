@@ -6,7 +6,7 @@ import { Loader2, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 
 interface PackageInfo {
@@ -24,10 +24,11 @@ interface AlipayPayDialogProps {
   returnUrl?: string;
 }
 
-type PaymentStatus = 'idle' | 'loading' | 'redirecting' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
+type PaymentStatus = 'idle' | 'loading' | 'redirecting' | 'ready' | 'polling' | 'success' | 'guest_success' | 'failed' | 'expired';
 
 export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl }: AlipayPayDialogProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [payUrl, setPayUrl] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
@@ -126,6 +127,20 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const isPaid = await checkOrderStatus(orderNumber);
       if (isPaid) {
         clearTimers();
+        
+        // 未登录用户：存储订单号，显示引导登录界面
+        if (!user) {
+          localStorage.setItem('pending_claim_order', orderNumber);
+          setStatus('guest_success');
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+          toast.success('支付成功！请登录以激活权益');
+          return;
+        }
+        
         setStatus('success');
         confetti({
           particleCount: 100,
@@ -142,7 +157,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // 创建订单
   const createOrder = async () => {
-    if (!packageInfo || !user) return;
+    if (!packageInfo) return;
 
     if (needsTerms && !agreedTerms) {
       toast.error('请先阅读并同意服务条款和隐私政策');
@@ -161,7 +176,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user.id,
+          userId: user?.id || 'guest',
           returnUrl: redirectUrl,
         },
       });
@@ -228,7 +243,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // 自动创建订单（不需要条款的直接创建，需要条款的等待用户确认后创建）
   useEffect(() => {
-    if (open && packageInfo && user && !orderCreatedRef.current && status === 'idle') {
+    if (open && packageInfo && !orderCreatedRef.current && status === 'idle') {
       // 如果不需要条款，直接创建订单
       if (!needsTerms) {
         orderCreatedRef.current = true;
@@ -240,7 +255,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         createOrder();
       }
     }
-  }, [open, packageInfo, user, status, agreedTerms, needsTerms]);
+  }, [open, packageInfo, status, agreedTerms, needsTerms]);
 
   // 关闭时重置
   useEffect(() => {
@@ -361,6 +376,24 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               <CheckCircle className="w-12 h-12 text-green-500" />
               <p className="text-lg font-medium">支付成功！</p>
               <p className="text-sm text-muted-foreground">感谢您的购买</p>
+            </div>
+          )}
+
+          {/* 游客支付成功 - 引导登录 */}
+          {status === 'guest_success' && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <CheckCircle className="w-12 h-12 text-green-500" />
+              <p className="text-lg font-medium">支付成功！</p>
+              <p className="text-sm text-muted-foreground text-center">请登录或注册以激活您的权益</p>
+              <Button
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate('/auth');
+                }}
+                className="w-full mt-2"
+              >
+                登录 / 注册
+              </Button>
             </div>
           )}
 

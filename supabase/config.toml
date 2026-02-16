@@ -448,3 +448,6 @@ verify_jwt = false
 
 [functions.wealth-assessment-realtime-token]
 verify_jwt = false
+
+[functions.claim-guest-order]
+verify_jwt = false

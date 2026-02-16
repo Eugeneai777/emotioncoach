@@ -28,6 +28,25 @@ export const useAuth = () => {
               console.error('Auto-claim check failed:', err);
             });
           }
+
+          // 检查是否有待认领的游客订单
+          const pendingOrderNo = localStorage.getItem('pending_claim_order');
+          if (pendingOrderNo) {
+            localStorage.removeItem('pending_claim_order');
+            console.log('[useAuth] Claiming guest order:', pendingOrderNo);
+            supabase.functions.invoke('claim-guest-order', {
+              body: { orderNo: pendingOrderNo },
+            }).then(({ data, error }) => {
+              if (error) {
+                console.error('[useAuth] Claim guest order failed:', error);
+              } else if (data?.success) {
+                console.log('[useAuth] Guest order claimed successfully:', data.message);
+                // 可以在此触发页面刷新或重新获取用户数据
+              }
+            }).catch(err => {
+              console.error('[useAuth] Claim guest order error:', err);
+            });
+          }
         }
       }
     );
