@@ -1,48 +1,15 @@
 
 
-## 统一分数体系：以觉醒指数为标准
+## 去除三层觉醒度百分比区域
 
-### 当前问题
+移除 `EnhancedHealthGauge.tsx` 中第 139-152 行的 "Layer Awakening Percentages" 部分（行为/情绪/信念 觉醒度 XX%），同时清理不再使用的 `layers` 数组定义和相关 import（`layerScoreToAwakeningPercent`、`getAwakeningTextColor`）。
 
-页面上有两套矛盾的分数体系：
-- **顶部仪表盘**（EnhancedHealthGauge）：显示 **35分**，"分数越低越健康"（卡点分数）
-- **底部觉醒起点**（AwakeningJourneyPreview）：显示 **65分**，"分数越高越好"（觉醒指数 = 100 - 卡点分数）
-
-用户看到同一份测评出现两个不同的数字，非常困惑。
-
-### 修改方案
-
-将顶部仪表盘改为**觉醒指数**体系（0-100，分数越高越好），与底部觉醒起点完全统一。
-
-### 具体修改
+### 技术细节
 
 **文件：`src/components/wealth-block/EnhancedHealthGauge.tsx`**
 
-1. 将 `healthScore`（卡点分数）转换为觉醒指数：`awakeningScore = 100 - healthScore`
-2. 修改标题：`财富心理健康度` → `财富觉醒指数`
-3. 修改分数区间（反转为越高越好）：
-   - 80-100 🟢 高度觉醒 → 财富能量畅通
-   - 60-79 🟡 稳步觉醒 → 持续突破中
-   - 40-59 🟠 初步觉醒 → 开始看见改变
-   - 0-39 🔴 觉醒起步 → 刚刚开始
-4. 仪表盘颜色逻辑反转：高分 = 绿色，低分 = 红色
-5. 底部提示改为：`分数越高 = 越觉醒`
-6. 三层得分也转为觉醒视角（显示 `觉醒度 XX%` 而非 `卡点 XX/50`）
+- 删除第 139-152 行的三层觉醒度显示区块
+- 删除第 30-34 行的 `layers` 数组定义
+- 如果 `layerScoreToAwakeningPercent` 和 `getAwakeningTextColor` 仅在此处使用，从 import 中移除
+- Props 中的 `behaviorScore`、`emotionScore`、`beliefScore` 可保留（其他组件可能传入），但不再在此组件内使用
 
-**文件：`src/components/wealth-block/HealthScoreDashboard.tsx`**（如有使用）
-
-同步修改，使用觉醒指数体系。
-
-### 修改后效果
-
-用户测评卡点分数 35 时：
-- 顶部仪表盘显示：**觉醒指数 65**（高分 = 好）
-- 底部觉醒起点显示：**65**（高分 = 好）
-- 两个数字完全一致，含义统一
-
-### 修改文件清单
-
-| 文件 | 修改内容 |
-|------|---------|
-| `src/components/wealth-block/EnhancedHealthGauge.tsx` | 转为觉醒指数体系：反转分数、反转颜色、修改标题和区间标签 |
-| `src/components/wealth-block/HealthScoreDashboard.tsx` | 同步转为觉醒指数体系 |
