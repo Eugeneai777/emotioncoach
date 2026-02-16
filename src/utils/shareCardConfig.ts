@@ -225,7 +225,6 @@ export const prepareClonedElement = (
   cloned.style.minWidth = `${originalWidth}px`;
   cloned.style.visibility = 'visible';
   cloned.style.opacity = '1';
-  cloned.style.background = 'transparent';
   // 添加 GPU 加速
   cloned.style.willChange = 'transform';
   cloned.style.backfaceVisibility = 'hidden';
@@ -384,12 +383,24 @@ export const generateCanvas = async (
           
           forceChineseFonts(element);
           
-          // 递归处理子元素：移除动画 + 强制字体
+          // 递归处理子元素：移除动画 + 强制字体 + 修复渐变文字
           element.querySelectorAll('*').forEach((child: Element) => {
             if (child instanceof HTMLElement) {
               child.style.animation = 'none';
               child.style.transition = 'none';
               forceChineseFonts(child);
+              
+              // 修复 bg-clip-text 渐变文字：html2canvas 不支持此特性
+              const computed = getComputedStyle(child);
+              const bgClip = computed.getPropertyValue('-webkit-background-clip') || computed.getPropertyValue('background-clip');
+              if (bgClip === 'text') {
+                // 降级为纯色文字
+                child.style.webkitBackgroundClip = 'border-box';
+                child.style.backgroundClip = 'border-box';
+                child.style.color = '#fbbf24'; // amber-400 fallback
+                child.style.webkitTextFillColor = '#fbbf24';
+                child.style.background = 'none';
+              }
             }
           });
         },
