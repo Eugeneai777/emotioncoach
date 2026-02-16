@@ -1,74 +1,108 @@
 
 
-# 彻底重构分享图片预览 - 全设备可靠方案
+# 修复 iOS 分享：两处精准改动
 
-## 问题根因
+## 问题根因（经代码确认）
 
-当前 `ShareImagePreview` 组件使用：
-- 全屏黑色遮罩 (`bg-black/95`) — 在 iPad 大屏上造成"长黑屏"
-- 多层 `framer-motion` 动画 (`AnimatePresence`, `motion.div`) — 在 iPhone 13 的微信 WebView 中可能导致渲染卡顿、点击无响应
-- `willChange: 'transform, opacity'` 等 GPU 加速属性 — 在某些 iOS WebView 中反而造成黑屏闪烁
-- 图片用 `max-w-[90%] max-h-[80vh]` 约束 — 在 iPad 上卡片显得很小
+**iPhone 13 "闪跳无动作"**：`shareCardConfig.ts` 的 `getOptimalScale()` 没有 iOS 检测。iPhone 13 Safari 走的是 `return isLowEndDevice() ? 2.5 : 3`，但 iPhone 13 的 `hardwareConcurrency` 是 6 核，不算低端设备，所以用了 `scale: 3`。一张 340px 宽、800px+ 高的卡片，3x 后 canvas 约 1020x2400+ = 2,448,000 像素。iOS Safari canvas 限制约 16MP，虽然没超，但某些 iOS WebView 实际限制更低（约 4-8MP），导致 `html2canvas` 静默失败，`generateCardBlob` 返回 null，然后 `handleGenerateImage` 抛错只显示一个 toast "生成图片失败" 就结束了。
 
-## 新方案：简化为白底 Dialog 风格
+**iPad "长黑屏"**：`ShareDialogBase` 在生成图片期间，Radix Dialog 保持打开（`bg-black/80` 遮罩），用户看到的就是黑色遮罩 + 小小的 loading spinner。iPad 大屏上尤其明显。生成完成后才关闭 Dialog 打开 `ShareImagePreview`。
 
-完全移除 framer-motion 动画，使用纯 CSS + 简单 React 状态的白底模态框：
+## 修复方案（2 个文件，精准改动）
 
-### 核心改动 — `src/components/ui/share-image-preview.tsx`
+### 1. `src/utils/shareCardConfig.ts` — iOS 降至 2x
 
-完全重写组件：
+在 `getOptimalScale()` 中加入 iOS Safari 检测，强制使用 `scale: 2`：
 
-1. **白色/浅色背景** 替代 `bg-black/95`，避免"长黑屏"视觉
-2. **移除所有 framer-motion** 动画，使用简单的 CSS `transition` 实现淡入，避免 iOS WebView 渲染问题
-3. **图片居中且最大化** — 使用 `w-full` + `max-w-[420px]` 让卡片在所有设备上大小适中
-4. **简化交互**：
-   - 顶部关闭按钮（大触摸区域，44x44px 最小）
-   - 底部"长按保存"提示（微信/iOS）或"保存图片"按钮
-   - 移除 `onClick={onClose}` 容器点击关闭（防止误触）
-5. **触摸友好**：所有按钮使用 `min-h-[44px] min-w-[44px]` 满足 iOS 无障碍标准
-
-### 简化结构
-
-```
-+----------------------------------+
-|  [X 关闭]              [重新生成] |  <- 顶栏，浅色背景
-|                                  |
-|        +------------------+      |
-|        |                  |      |
-|        |    分享卡片图片    |      |  <- 白底居中，图片尽可能大
-|        |                  |      |
-|        +------------------+      |
-|                                  |
-|     👆 长按上方图片保存           |  <- 底部提示
-|     保存后可分享给好友            |
-+----------------------------------+
+```typescript
+const getOptimalScale = (): number => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isiOS = /iphone|ipad|ipod/.test(ua);
+  
+  // iOS Safari 对 canvas 尺寸有严格限制，统一用 2x
+  if (isiOS) {
+    return 2;
+  }
+  if (isWeChatBrowser()) {
+    return isLowEndDevice() ? 2 : 2.5;
+  }
+  return isLowEndDevice() ? 2.5 : 3;
+};
 ```
 
-### 关键技术细节
+同时在 `generateCanvas` 中增加空白 canvas 检测 — 如果生成的 canvas 像素全部为 0（透明/空白），自动用 `scale: 1.5` 重试一次：
 
-- 背景：`bg-white` (亮色模式) / `bg-gray-900` (暗色模式)
-- 图片容器：`flex items-center justify-center min-h-[60vh]`
-- 图片：`max-w-[420px] w-full rounded-2xl shadow-lg`
-- 动画：仅用 `transition-opacity duration-200` 替代 framer-motion
-- 关闭逻辑：仅通过按钮关闭，不依赖遮罩点击
-- iOS 长按支持：保留 `WebkitTouchCallout: 'default'`
+```typescript
+// 在 canvas 生成后、return 前加入：
+const ctx = canvas.getContext('2d');
+if (ctx) {
+  const sample = ctx.getImageData(0, 0, Math.min(canvas.width, 10), Math.min(canvas.height, 10));
+  const isBlank = sample.data.every(v => v === 0);
+  if (isBlank) {
+    console.warn('[shareCardConfig] Blank canvas detected, retrying with lower scale...');
+    // 递归重试一次，scale 降到 1.5
+    if (!options.forceScale) {
+      return generateCanvas(cardRef, { ...options, forceScale: 1.5 });
+    }
+  }
+}
+```
 
-### 不需要改动的文件
+### 2. `src/components/ui/share-dialog-base.tsx` — iOS 先关 Dialog 再生成
 
-- `shareUtils.ts` — iOS/微信检测逻辑已正确
-- `oneClickShare.ts` — 已正确拦截 iOS/微信
-- `share-dialog-base.tsx` — 调用方式不变
+在 `handleGenerateImage` 中，iOS 设备点击"生成"按钮时：
+1. **立即关闭 Dialog**（消除黑色遮罩）
+2. 显示 `toast.loading("正在生成图片...")`
+3. 在后台完成 `html2canvas` 生成
+4. 生成完成后打开 `ShareImagePreview`
+
+```typescript
+const handleGenerateImage = useCallback(async () => {
+  // ... existing ref check ...
+  
+  setIsGenerating(true);
+  
+  // iOS: 先关闭 Dialog 避免长黑屏，用 toast 显示进度
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let loadingToastId: string | number | undefined;
+  if (isiOS) {
+    onOpenChange(false); // 立即关闭 Dialog
+    loadingToastId = toast.loading('正在生成图片...');
+    await new Promise(r => setTimeout(r, 300)); // 等 Dialog 动画完成
+  }
+  
+  try {
+    // ... existing generation logic (blob or dataUrl) ...
+    
+    if (loadingToastId) toast.dismiss(loadingToastId);
+    // 打开 ShareImagePreview
+  } catch (error) {
+    if (loadingToastId) toast.dismiss(loadingToastId);
+    toast.error('生成图片失败，请重试');
+  } finally {
+    setIsGenerating(false);
+  }
+}, [...]);
+```
+
+### 不改动的文件
+
+- `share-image-preview.tsx` — 已经改好了（白底、无 framer-motion）
+- `shareUtils.ts` — iOS 检测逻辑已正确
+- `oneClickShare.ts` — iOS 拦截逻辑已正确
+- `WealthInviteCardDialog.tsx` — 调用方式不变
 
 ## 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `src/components/ui/share-image-preview.tsx` | 完全重写：移除 framer-motion，白底布局，简化交互，增大触摸区域 |
+| 文件 | 改动内容 |
+|------|----------|
+| `src/utils/shareCardConfig.ts` | `getOptimalScale()` 增加 iOS 检测（scale: 2）；`generateCanvas` 增加空白 canvas 检测和降级重试 |
+| `src/components/ui/share-dialog-base.tsx` | `handleGenerateImage` 在 iOS 设备上先关闭 Dialog 再异步生成图片 |
 
 ## 预期效果
 
-- iPhone 13：点击分享 → 白底预览页，图片居中，可长按保存，点击关闭按钮返回
-- iPad：同上，卡片占据合理宽度（max 420px），不会"找卡片"
-- 微信 H5：稳定显示，无黑屏闪烁
-- Android / 桌面：行为不变（Android 走 navigator.share，桌面走下载）
+- **iPhone 13**：点击"生成分享图片" → Dialog 立即关闭 → toast 显示"正在生成图片..." → 2x 分辨率稳定生成 → 白底预览页打开
+- **iPad**：同上流程，不再看到 Radix Dialog 的黑色遮罩
+- **如果 canvas 生成仍为空白**：自动降到 1.5x 重试，确保一定能生成
+- **Android / 桌面**：行为不变
 
