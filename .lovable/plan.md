@@ -1,77 +1,48 @@
 
 
-## 财富教练语音对话优化：免积分 + 提示词重写
+## 统一分数体系：以觉醒指数为标准
 
-### 两个修改点
+### 当前问题
 
-### 1. 取消积分扣费
+页面上有两套矛盾的分数体系：
+- **顶部仪表盘**（EnhancedHealthGauge）：显示 **35分**，"分数越低越健康"（卡点分数）
+- **底部觉醒起点**（AwakeningJourneyPreview）：显示 **65分**，"分数越高越好"（觉醒指数 = 100 - 卡点分数）
 
-当前 `CoachVoiceChat` 每分钟扣 8 积分（`deduct-quota`），对于财富觉醒教练的 5 次免费通话不应扣费。
+用户看到同一份测评出现两个不同的数字，非常困惑。
 
-**文件：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+### 修改方案
 
-给 `CoachVoiceChat` 传入 `featureKey=""` 或新增一个 `skipBilling` prop。更简洁的方案：将 `featureKey` 设为空字符串，`CoachVoiceChat` 内部在 `checkQuota` 和 `deductQuota` 流程中对空 featureKey 跳过扣费。
+将顶部仪表盘改为**觉醒指数**体系（0-100，分数越高越好），与底部觉醒起点完全统一。
 
-实际上更直接的做法：在 `CoachVoiceChat` 中增加 `skipBilling?: boolean` prop：
-- 当 `skipBilling=true` 时，跳过 `checkQuota`（直接返回 true）和 `deductQuota`（直接返回 true）
-- 不显示积分/余额相关 UI
+### 具体修改
 
-**文件：`src/components/coach/CoachVoiceChat.tsx`**
-- Props 增加 `skipBilling?: boolean`
-- `checkQuota` 函数开头：若 `skipBilling` 则直接设 `isCheckingQuota=false` 并返回 true
-- `deductQuota` 函数开头：若 `skipBilling` 则直接返回 true
-- 底部余额显示区域：若 `skipBilling` 则隐藏
+**文件：`src/components/wealth-block/EnhancedHealthGauge.tsx`**
 
-**文件：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
-- 传入 `skipBilling={true}`
+1. 将 `healthScore`（卡点分数）转换为觉醒指数：`awakeningScore = 100 - healthScore`
+2. 修改标题：`财富心理健康度` → `财富觉醒指数`
+3. 修改分数区间（反转为越高越好）：
+   - 80-100 🟢 高度觉醒 → 财富能量畅通
+   - 60-79 🟡 稳步觉醒 → 持续突破中
+   - 40-59 🟠 初步觉醒 → 开始看见改变
+   - 0-39 🔴 觉醒起步 → 刚刚开始
+4. 仪表盘颜色逻辑反转：高分 = 绿色，低分 = 红色
+5. 底部提示改为：`分数越高 = 越觉醒`
+6. 三层得分也转为觉醒视角（显示 `觉醒度 XX%` 而非 `卡点 XX/50`）
 
-### 2. 重写提示词：更共情、先了解需求
+**文件：`src/components/wealth-block/HealthScoreDashboard.tsx`**（如有使用）
 
-**文件：`supabase/functions/wealth-assessment-realtime-token/index.ts`**
+同步修改，使用觉醒指数体系。
 
-重写 `buildWealthCoachInstructions` 函数，核心变化：
+### 修改后效果
 
-- **开场**：不再直接讲解测评结果，而是先好奇地询问用户"是什么让你想做这个测评？最近在财富上有什么困惑或烦恼？"
-- **倾听阶段**：深入了解用户的需求和痛点，追问具体场景和感受
-- **共情连接**：将用户分享的困惑与测评结果自然关联，给予充分的同理心和鼓励
-- **启发引导**：提供有温度和启发性的回应，帮用户看见改变的可能性
-- **自然转化**：在充分共情和建立信任后，自然引导用户了解训练营
-
-新的对话流程：
-
-```text
-第1轮 - 好奇倾听：
-  "你好呀！我是劲老师💎 很开心你做了这个财富卡点测评。
-   我很好奇，是什么让你想来做这个测评呢？
-   最近在财富或者金钱方面，有什么困扰你的事情吗？"
-
-第2轮 - 深入了解：
-  基于用户分享，追问具体场景和感受
-  "能跟我多说说吗？比如最近有没有什么具体的事让你特别焦虑/纠结？"
-
-第3轮 - 共情 + 测评关联：
-  将用户的痛点与测评数据关联
-  "你说的这些，我特别能理解...其实你的测评结果也印证了这一点..."
-  给予鼓励："能意识到这些，本身就是很大的一步"
-
-第4轮 - 启发洞察：
-  帮用户看见模式背后的根因
-  提供有温度的解读，让用户感到"被看见"
-
-第5轮 - 训练营引导：
-  自然过渡到训练营作为持续成长的路径
-```
-
-核心原则修改：
-- 删除固定的开场白脚本，改为灵活的引导框架
-- 强调"先倾听、再共情、后引导"的顺序
-- 每轮回复更简短（2-3句），更多留空间给用户
-- 语气更温暖、更像朋友聊天
+用户测评卡点分数 35 时：
+- 顶部仪表盘显示：**觉醒指数 65**（高分 = 好）
+- 底部觉醒起点显示：**65**（高分 = 好）
+- 两个数字完全一致，含义统一
 
 ### 修改文件清单
 
 | 文件 | 修改内容 |
 |------|---------|
-| `src/components/coach/CoachVoiceChat.tsx` | 增加 `skipBilling` prop，跳过积分检查和扣费 |
-| `src/components/wealth-block/AssessmentVoiceCoach.tsx` | 传入 `skipBilling={true}` |
-| `supabase/functions/wealth-assessment-realtime-token/index.ts` | 重写提示词：先了解需求、更共情、再关联测评、自然引导训练营 |
+| `src/components/wealth-block/EnhancedHealthGauge.tsx` | 转为觉醒指数体系：反转分数、反转颜色、修改标题和区间标签 |
+| `src/components/wealth-block/HealthScoreDashboard.tsx` | 同步转为觉醒指数体系 |
