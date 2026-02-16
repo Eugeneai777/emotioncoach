@@ -274,11 +274,11 @@ export function ShareDialogBase({
           {/* Preview Area */}
           <div className="p-4 bg-muted/30">
             <div 
-              className="flex justify-center overflow-hidden"
+              className="flex justify-center items-start overflow-hidden"
               style={{ height: `${previewHeight}px` }}
             >
               <div 
-                className="origin-top"
+                className="origin-top shrink-0"
                 style={{ transform: `scale(${previewScale})` }}
               >
                 {skeleton && !cardReady && skeleton}
@@ -289,7 +289,7 @@ export function ShareDialogBase({
             </div>
 
             {/* Hidden Export Card */}
-            <div className="fixed -left-[9999px] top-0 pointer-events-none" style={{ visibility: 'hidden' }}>
+            <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true">
               {exportCard}
             </div>
           </div>
