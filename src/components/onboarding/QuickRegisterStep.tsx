@@ -357,6 +357,19 @@ export function QuickRegisterStep({
 
     setIsLoading(true);
     try {
+      // 注册前检查手机号是否已存在
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone', phone)
+        .eq('phone_country_code', countryCode)
+        .is('deleted_at', null)
+        .limit(1);
+      
+      if (existingProfiles && existingProfiles.length > 0) {
+        throw new Error('该手机号已注册，请直接登录');
+      }
+
       // 使用 Supabase Auth 注册
       const { data, error } = await supabase.auth.signUp({
         email: placeholderEmail,
