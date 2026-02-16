@@ -1,77 +1,80 @@
 
 
-## 修复：用户发布动态后在社区不显示
+## 修复：社区动态在不同页面显示不一致
 
 ### 问题根因
 
-经过代码分析，发现有 **两个核心原因** 导致用户发布的动态在社区不显示：
+经代码分析，发现 `CommunityWaterfall.tsx` 的数据库查询缺少关键字段和排序逻辑：
 
-### 原因 1：推荐缓存遮蔽新帖子
+### 问题 1：查询未包含 `is_pinned`、`pinned_at`、`visibility` 字段
 
-社区"发现"页首次加载时，走的是推荐逻辑（`recommend-posts` 函数），结果会缓存 2 分钟。查询条件是 `.in('id', recommendedIds)`，**只显示推荐列表里的帖子**。用户刚发布的新帖子不在推荐列表中，自然看不到。
-
-```text
-用户发帖 --> 查看社区 --> 命中缓存 --> 缓存里没有新帖 --> 看不到
+当前的 SELECT 语句（第 204-212 行）：
 ```
+id, user_id, post_type, title, content, image_urls, emotion_theme,
+is_anonymous, likes_count, created_at, camp_id
+```
+缺少了 `is_pinned`、`pinned_at` 和 `visibility`，导致：
+- 置顶帖子无法正确标记和显示置顶徽章
+- 隐私可见性标识（锁头图标）无法正常展示
+- 卡片组件中的 `post.is_pinned` 和 `post.visibility` 始终为 undefined
 
-### 原因 2：分享简报后没有触发社区刷新
+### 问题 2：没有置顶优先排序
 
-从 `BriefingShareDialog`（简报分享对话框）发布帖子后，没有派发 `post-updated` 事件来通知 `CommunityWaterfall` 组件刷新数据。
+所有查询路径（发现、关注、同频、故事）都只按 `created_at` 降序排序，没有按 `is_pinned DESC, pinned_at DESC` 优先排列。不同时间加载可能因为推荐缓存差异，导致置顶帖子位置不一致。
 
 ### 修复方案
 
-**文件 1：`src/components/briefing/BriefingShareDialog.tsx`**
+**文件：`src/components/community/CommunityWaterfall.tsx`**
 
-在分享成功后，派发 `post-updated` 事件并清除推荐缓存：
+#### 修改 1：补充查询字段（第 204-212 行）
+
+在 SELECT 中添加 `is_pinned, pinned_at, visibility`：
 
 ```typescript
-// 分享成功后
-toast({ title: "分享成功" });
-
-// 清除推荐缓存，确保社区刷新时能看到新帖
-sessionStorage.removeItem('community_recommendation_cache');
-
-// 通知社区组件刷新
-window.dispatchEvent(new CustomEvent('post-updated'));
+let query = supabase
+  .from('community_posts')
+  .select(`
+    id, user_id, post_type, title, content, image_urls, emotion_theme,
+    is_anonymous, likes_count, created_at, camp_id,
+    is_pinned, pinned_at, visibility,
+    training_camps!camp_id (
+      camp_type,
+      camp_name,
+      template_id
+    )
+  `);
 ```
 
-**文件 2：`src/components/community/CommunityWaterfall.tsx`**
+#### 修改 2：所有排序路径加入置顶优先
 
-修改 `loadPosts` 中"发现"页的推荐逻辑，确保始终混入用户自己最新的帖子：
+在每个 filter 分支的排序逻辑中，将 `.order('created_at', { ascending: false })` 改为先按 `is_pinned` 降序、再按 `pinned_at` 降序、最后按 `created_at` 降序。涉及以下位置：
 
-在推荐模式下（第 306-316 行），获取推荐帖子后，额外查询当前用户最近 24 小时内发布的帖子，合并到结果中。这样即使推荐列表没有用户的新帖，用户也能在"发现"页看到自己的内容。
+- 关注筛选（约第 241 行）
+- 同频筛选（约第 280 行）
+- 故事筛选（约第 293 行）
+- 其他类型筛选（约第 300 行）
+- 发现-推荐模式（约第 332 行）
+- 发现-普通模式（约第 335、339 行）
+
+每处改为：
+```typescript
+.order('is_pinned', { ascending: false, nullsFirst: false })
+.order('pinned_at', { ascending: false, nullsFirst: false })
+.order('created_at', { ascending: false })
+```
+
+#### 修改 3：Post 接口补充字段
+
+在 Post 接口（第 13-30 行）添加缺失字段：
 
 ```typescript
-// 在推荐结果返回后，补充用户自己最近的帖子
-if (session?.user && recommendedIds) {
-  const { data: myRecentPosts } = await supabase
-    .from('community_posts')
-    .select('id')
-    .eq('user_id', session.user.id)
-    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-    .order('created_at', { ascending: false })
-    .limit(3);
-
-  if (myRecentPosts?.length) {
-    const myIds = myRecentPosts.map(p => p.id);
-    recommendedIds = [...new Set([...myIds, ...recommendedIds])];
-  }
+interface Post {
+  // ... 现有字段
+  is_pinned?: boolean;
+  pinned_at?: string;
+  visibility?: string;
 }
 ```
 
-**文件 3：`src/components/community/PostComposer.tsx`**
-
-在发布成功后同样清除推荐缓存：
-
-```typescript
-// 发布成功后
-sessionStorage.removeItem('community_recommendation_cache');
-```
-
-### 总结
-
-三处修改确保：
-1. 发布后立即清除推荐缓存，下次加载获取最新推荐
-2. 发布后触发社区刷新事件
-3. "发现"页始终包含用户自己最近 24 小时的帖子，不受推荐算法遮蔽
+这些修改确保所有页面（主页和教练空间）使用同一组件时，都能拿到完整的帖子数据，置顶帖子始终排在最前面，显示结果一致。
 
