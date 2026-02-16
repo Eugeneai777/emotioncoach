@@ -47,10 +47,10 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
 
   // Legend font sizes (small to large)
   const legendSizes = [
-    "text-[9px]",
-    "text-[10px]",
-    "text-[11px]",
-    "text-[12px] font-medium",
+    "text-xs",
+    "text-[13px]",
+    "text-sm",
+    "text-[15px] font-semibold",
   ];
 
   return (
@@ -205,7 +205,7 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
 
           {/* Tip */}
           <div className="mt-3 text-center">
-            <p className="text-slate-500 text-[10px]">
+            <p className="text-slate-500 text-xs">
               分数<span className="text-emerald-400">↑</span>=越觉醒
               <span className="mx-2">·</span>
               分数<span className="text-rose-400">↓</span>=需关注
