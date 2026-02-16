@@ -304,10 +304,6 @@ export function ShareDialogBase({
               </div>
             </div>
 
-            {/* Hidden Export Card */}
-            <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true">
-              {exportCard}
-            </div>
           </div>
 
           {/* Action Buttons */}
@@ -355,6 +351,11 @@ export function ShareDialogBase({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden Export Card - outside Dialog so it persists when Dialog closes on iOS */}
+      <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true">
+        {exportCard}
+      </div>
 
       {/* Full-screen Image Preview */}
       <ShareImagePreview
