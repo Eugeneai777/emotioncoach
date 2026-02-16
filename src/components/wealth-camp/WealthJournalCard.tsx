@@ -93,9 +93,9 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
           <div className="flex-1 min-w-0">
             {/* Header */}
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="text-lg">📖</span>
+              <span className="text-lg">{isVoice ? '🎙️' : '📖'}</span>
               <span className="font-medium text-amber-800 dark:text-amber-200">
-                Day {entry.day_number}
+                {isVoice ? '语音梳理' : `Day ${entry.day_number}`}
               </span>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}
