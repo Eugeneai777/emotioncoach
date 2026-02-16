@@ -191,41 +191,61 @@ serve(async (req) => {
     const prompt = buildPrompt(theme, customText, styleName);
     console.log(`生成小红书封面: ${theme}, 风格: ${styleName || '随机'}, prompt长度: ${prompt.length}`);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-pro-image-preview",
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
-      }),
-    });
+    // Try generation with retry and model fallback
+    const models = ["google/gemini-3-pro-image-preview", "google/gemini-2.5-flash-image"];
+    let imageBase64: string | undefined;
+    
+    for (const model of models) {
+      console.log(`尝试模型: ${model}`);
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("AI API 错误:", aiResponse.status, errorText);
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "AI服务繁忙，请稍后重试" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error(`AI API 错误 (${model}):`, aiResponse.status, errorText);
+        if (aiResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "AI服务繁忙，请稍后重试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (aiResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "AI额度不足" }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        continue; // Try next model
       }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI额度不足" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+
+      const aiData = await aiResponse.json();
+      
+      // Check for inline errors in choices
+      const choiceError = aiData.choices?.[0]?.error?.message;
+      if (choiceError) {
+        console.error(`模型 ${model} 返回内联错误: ${choiceError}`);
+        continue; // Try next model
       }
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      
+      imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (imageBase64) {
+        console.log(`模型 ${model} 生成成功`);
+        break;
+      }
+      
+      console.error(`模型 ${model} 无图片数据:`, JSON.stringify(aiData).slice(0, 300));
     }
 
-    const aiData = await aiResponse.json();
-    const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
     if (!imageBase64) {
-      console.error("No image in response:", JSON.stringify(aiData).slice(0, 200));
-      throw new Error("AI 响应中没有图片数据");
+      throw new Error("所有模型均未能生成图片，请重试");
     }
 
     // Upload to storage
