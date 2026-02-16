@@ -451,3 +451,6 @@ verify_jwt = false
 
 [functions.claim-guest-order]
 verify_jwt = false
+
+[functions.generate-xiaohongshu-covers]
+verify_jwt = false
