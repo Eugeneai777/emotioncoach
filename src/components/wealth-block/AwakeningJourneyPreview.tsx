@@ -99,8 +99,9 @@ export function AwakeningJourneyPreview({
             </p>
           </div>
 
-          {/* 2. 起点分数区 — 简化 */}
-          <div className="space-y-2">
+          {/* 2. 起点分数区 — 三卡片布局 */}
+          <div className="space-y-3">
+            {/* 当前分数卡片 */}
             <motion.div 
               className="relative bg-white dark:bg-white/10 rounded-2xl p-5 text-center border-2 border-amber-400 dark:border-amber-500 shadow-lg"
               animate={{ 
@@ -109,7 +110,7 @@ export function AwakeningJourneyPreview({
               transition={{ duration: 2.5, repeat: Infinity }}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-amber-500 text-white text-sm font-bold rounded-full shadow whitespace-nowrap">
-                🎯 你的觉醒起点
+                现在 · Day 0
               </div>
               <motion.div 
                 className="text-5xl sm:text-6xl font-bold tabular-nums mt-2"
@@ -132,19 +133,46 @@ export function AwakeningJourneyPreview({
               >
                 {awakeningStart}
               </motion.div>
+              <p className="text-sm text-muted-foreground mt-1">你的觉醒起点</p>
             </motion.div>
-            
-            {/* 上升箭头 + 7天目标一行文字 */}
-            <div className="flex items-center justify-center gap-2 py-1">
+
+            {/* 上升箭头 */}
+            <div className="flex justify-center py-1">
               <motion.div
                 animate={{ y: [0, -4, 0], opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
-                <TrendingUp className="w-5 h-5 text-emerald-500" />
+                <TrendingUp className="w-6 h-6 text-emerald-500" />
               </motion.div>
-              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                7天后目标：{day7Target}+ → {day7ValueDesc}
-              </span>
+            </div>
+
+            {/* 7天后 + 毕业 并排卡片 */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* 7天后目标 */}
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 rounded-xl p-3 border-2 border-emerald-400 dark:border-emerald-500 text-center space-y-1.5">
+                <span className="inline-block px-3 py-1 bg-emerald-500 text-white text-sm font-bold rounded-full">
+                  🚀 7天后
+                </span>
+                <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {day7Target}+
+                </div>
+                <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80 leading-snug">
+                  {day7ValueDesc}
+                </p>
+              </div>
+
+              {/* 毕业目标 */}
+              <div className="bg-violet-50/80 dark:bg-violet-950/30 rounded-xl p-3 border-2 border-dashed border-violet-400 dark:border-violet-500 text-center space-y-1.5">
+                <span className="inline-block px-3 py-1 bg-violet-500 text-white text-sm font-bold rounded-full">
+                  🎓 毕业
+                </span>
+                <div className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+                  ◎ 85+
+                </div>
+                <p className="text-sm text-violet-700/80 dark:text-violet-300/80 leading-snug">
+                  财富能量畅通
+                </p>
+              </div>
             </div>
           </div>
 
