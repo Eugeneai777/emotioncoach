@@ -141,6 +141,18 @@ export function ShareDialogBase({
     }
   }, [shareUrl]);
 
+  const waitForRef = useCallback(async (ref: RefObject<HTMLDivElement>, maxWaitMs = 2000): Promise<boolean> => {
+    if (ref.current) return true;
+    const interval = 100;
+    let elapsed = 0;
+    while (elapsed < maxWaitMs) {
+      await new Promise(r => setTimeout(r, interval));
+      elapsed += interval;
+      if (ref.current) return true;
+    }
+    return false;
+  }, []);
+
   const handleGenerateImage = useCallback(async () => {
     if (onGenerate) {
       await onGenerate();
@@ -148,8 +160,13 @@ export function ShareDialogBase({
     }
 
     if (!exportCardRef.current) {
-      toast.error("卡片未加载完成");
-      return;
+      console.warn("[ShareDialogBase] exportCardRef is null, waiting...");
+      const ready = await waitForRef(exportCardRef);
+      if (!ready) {
+        console.error("[ShareDialogBase] exportCardRef still null after waiting");
+        toast.error("卡片未加载完成，请稍后重试");
+        return;
+      }
     }
 
     setIsGenerating(true);
@@ -216,6 +233,7 @@ export function ShareDialogBase({
     shareTitle,
     shareText,
     onOpenChange,
+    waitForRef,
   ]);
 
   const handleClosePreview = useCallback(() => {
@@ -271,7 +289,7 @@ export function ShareDialogBase({
             </div>
 
             {/* Hidden Export Card */}
-            <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
+            <div className="fixed -left-[9999px] top-0 pointer-events-none" style={{ visibility: 'hidden' }}>
               {exportCard}
             </div>
           </div>
