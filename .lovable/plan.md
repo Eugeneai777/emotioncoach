@@ -1,65 +1,54 @@
 
 
-## 修复：Safari 中连接一直转圈
+## 让财富智能语音教练深度了解产品文档
 
-### 问题根因
+### 目标
 
-Safari 支持 WebRTC，所以系统选择了 WebRTC 直连 OpenAI 的路径。但由于网络环境限制（中国大陆），对 `api.openai.com` 的 SDP 请求会失败。
+将 `/wealth-camp-intro`、`/wealth-coach-intro`、`/wealth-block` 三个页面的核心内容提炼为结构化的知识库，注入到语音教练的系统提示词中，使其能够准确、自然地回答用户关于训练营、教练体系和测评的问题。
 
-关键问题在于：**WebRTC 连接失败后的 WebSocket 降级条件太严格**。
+### 方案
 
-当前代码（CoachVoiceChat.tsx 第 1324-1328 行）只在以下条件下降级到 WebSocket：
-- `errorType === 'region_blocked'`
-- `errorType === 'forbidden'`
-- `statusCode === 403`
-- 错误信息包含 `'403'` 或 `'unsupported_country'`
+修改 `supabase/functions/wealth-assessment-realtime-token/index.ts` 中的 `buildWealthCoachInstructions` 函数，在提示词中增加一个 `【产品知识库】` 段落，包含以下三部分精炼内容：
 
-但在 Safari 中，对 OpenAI 的 fetch 请求可能因为 DNS 解析失败、网络超时或 CORS 错误而直接抛出 `TypeError: Failed to fetch`，这种错误不会匹配上述任何条件，导致直接进入通用错误处理，显示"连接失败"而不是降级到 WebSocket。
+#### 1. 财富卡点测评（/wealth-block）
+- 30道题，覆盖行为层、情绪层、信念层三层诊断
+- 四种反应模式：和谐型、追逐型、逃避型、创伤型
+- 四穷类型：嘴穷、手穷、眼穷、心穷
+- 情绪卡点：金钱焦虑、匮乏恐惧、比较自卑、羞耻厌恶、消费内疚
+- 信念卡点：匮乏感、线性思维、金钱污名、不配得感、关系恐惧
+- AI 深度分析生成个性化报告
+- 价格：9.9 元
 
-### 修复方案
+#### 2. 财富觉醒训练营（/wealth-camp-intro）
+- 7 天，每天 15 分钟
+- 每日四件事：财富觉察冥想（5-8 分钟）、财富教练对话（5 分钟）、打卡分享（1 句话）、邀请一个人（可选）
+- 邀请的 3 个核心原则（分享入口、对自己诚实、照见卡点）
+- 不想邀请时教练的价值（看清恐惧、清晰信念、设计最小行动）
+- AI 三重锁定护城河
+- 适合人群：不排斥赚钱但排斥推销自己、感觉卡住、希望不违背价值观的路径、想要长期改变
+- 价格：299 元（原价 399）
+- 有劲合伙人身份：价值的连接者
 
-**文件：`src/components/coach/CoachVoiceChat.tsx`**
+#### 3. 财富教练体系（/wealth-coach-intro）
+- 财富觉醒 3 部曲：觉察（测评）→ 突破（训练营）→ 发展（合伙人）
+- 五层同频系统：
+  - 行为层：简化为每天邀请 1 人（BJ Fogg 行为模型）
+  - 情绪层：识别与松动恐惧/匮乏/控制（哈佛商学院研究）
+  - 信念层：通过小验证让新信念自然成立（认知重塑）
+  - 身份层（关键层）：成为有劲合伙人，价值入口的连接者
+  - 结构层：通过分成计划让价值被系统记录与回馈
 
-扩大 WebRTC 失败时自动降级到 WebSocket 的条件范围。将目前仅针对"地区封锁"的降级逻辑改为：**所有 WebRTC 连接失败都尝试降级到 WebSocket**。
+### 提示词注入策略
 
-理由：WebSocket relay 是一个可靠的备用通道，无论 WebRTC 因何原因失败（地区限制、DNS 失败、Safari 兼容问题、网络超时等），都应该尝试 WebSocket。
+- 将知识库放在 `【产品知识库】` 段落中，标注"当用户提问时自然引用，不主动推销"
+- 在对话策略的"阶段五 · 训练营引导"中增加引用知识库的提示
+- 保持总 token 量可控（约增加 600-800 字）
 
-具体修改（约第 1320-1366 行）：
+### 技术变更
 
-```text
-修改前：
-  catch (webrtcError) {
-    // 只在 region_blocked / forbidden / 403 时降级
-    const isRegionBlocked = ...;
-    if (isRegionBlocked) {
-      // 降级到 WebSocket
-    }
-    throw webrtcError;  // 其他错误直接抛出
-  }
+| 文件 | 修改 |
+|------|------|
+| `supabase/functions/wealth-assessment-realtime-token/index.ts` | 在 `buildWealthCoachInstructions` 函数中增加 `【产品知识库】` 段落，包含三个页面的核心内容摘要 |
 
-修改后：
-  catch (webrtcError) {
-    // 所有 WebRTC 失败都尝试降级到 WebSocket
-    console.log('[VoiceChat] WebRTC failed, falling back to WebSocket relay...');
-    toast({ title: "正在切换通道", description: "正在使用备用语音通道..." });
-    // 清理 WebRTC 连接
-    chat.disconnect();
-    chatRef.current = null;
-    // 切换到 WebSocket relay 模式
-    // ...（复用现有降级代码）
-  }
-```
-
-### 变更文件
-
-| 文件 | 修改内容 |
-|------|---------|
-| `src/components/coach/CoachVoiceChat.tsx` | WebRTC catch 块中，移除 `isRegionBlocked` 条件判断，所有 WebRTC 失败都降级到 WebSocket relay |
-
-### 修复后效果
-
-- Safari 用户：WebRTC 连接失败 -> 自动降级到 WebSocket relay -> 正常通话
-- Chrome 用户（可直连 OpenAI）：行为不变，WebRTC 成功则直接使用
-- Chrome 用户（被封锁）：行为改善，任何 WebRTC 失败都会快速降级
-- 微信小程序：不受影响，本来就直接走 WebSocket
+改动范围小：仅修改 1 个文件中的 1 个函数，增加约 60-80 行提示词文本。
 
