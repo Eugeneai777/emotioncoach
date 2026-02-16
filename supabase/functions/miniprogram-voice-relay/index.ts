@@ -377,6 +377,14 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         }));
         break;
 
+      case 'response.audio.interrupted':
+        // AI 音频被用户打断 → 通知客户端停止播放
+        console.log('[Relay] Audio interrupted by user speech');
+        clientSocket.send(JSON.stringify({
+          type: 'response_interrupted',
+        }));
+        break;
+
       default:
         // 其他事件可按需转发
         // console.log('[Relay] Unhandled OpenAI event:', message.type);

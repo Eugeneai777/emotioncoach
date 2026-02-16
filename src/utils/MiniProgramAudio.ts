@@ -500,6 +500,20 @@ export class MiniProgramAudioClient {
           this.updateStatus('error');
           break;
 
+        case 'speech_started':
+          // 用户开始说话 → 立即停止 AI 音频播放（实现打断）
+          console.log('[MiniProgramAudio] Speech started - interrupting playback');
+          this.stopAudioPlayback();
+          this.config.onMessage(message);
+          break;
+
+        case 'response_interrupted':
+          // AI 响应被打断 → 清空剩余音频
+          console.log('[MiniProgramAudio] Response interrupted - clearing audio');
+          this.stopAudioPlayback();
+          this.config.onMessage(message);
+          break;
+
         case 'pong':
           // 🔧 心跳响应 - 计算延迟并重置 missedPongs
           this.lastPongTime = Date.now();
