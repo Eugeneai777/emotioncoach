@@ -170,32 +170,47 @@ export function ShareDialogBase({
     }
 
     setIsGenerating(true);
+
+    // iOS: 立即关闭 Dialog 避免长黑屏遮罩，用 toast 显示进度
+    const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    let loadingToastId: string | number | undefined;
+    if (isiOS) {
+      onOpenChange(false); // 立即关闭 Dialog
+      loadingToastId = toast.loading('正在生成图片...');
+      await new Promise(r => setTimeout(r, 300)); // 等 Dialog 动画完成
+    }
+
     try {
       if (useDataUrl) {
-        // Use data URL approach (for some platforms)
         const dataUrl = await generateCardDataUrl(exportCardRef, {
           isWeChat,
           skipImageWait: false,
         });
         
         if (dataUrl) {
-          onOpenChange(false);
+          if (loadingToastId) toast.dismiss(loadingToastId);
+          if (!isiOS) onOpenChange(false);
           setPreviewUrl(dataUrl);
           setShowPreview(true);
+        } else {
+          if (loadingToastId) toast.dismiss(loadingToastId);
+          toast.error("生成图片失败，请重试");
         }
       } else {
-        // Use blob approach (standard)
         const blob = await generateCardBlob(exportCardRef, { isWeChat });
         if (!blob) {
+          if (loadingToastId) toast.dismiss(loadingToastId);
           throw new Error("Failed to generate image");
         }
 
         if (showImagePreview) {
           const imageUrl = URL.createObjectURL(blob);
-          onOpenChange(false);
+          if (loadingToastId) toast.dismiss(loadingToastId);
+          if (!isiOS) onOpenChange(false);
           setPreviewUrl(imageUrl);
           setShowPreview(true);
         } else {
+          if (loadingToastId) toast.dismiss(loadingToastId);
           const result = await handleShareWithFallback(blob, fileName, {
             title: shareTitle,
             text: shareText,
@@ -219,6 +234,7 @@ export function ShareDialogBase({
       }
     } catch (error) {
       console.error("Generate share image error:", error);
+      if (loadingToastId) toast.dismiss(loadingToastId);
       toast.error("生成图片失败，请重试");
     } finally {
       setIsGenerating(false);
