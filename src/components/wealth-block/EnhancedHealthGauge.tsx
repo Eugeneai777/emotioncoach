@@ -1,54 +1,36 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { 
+  awakeningZones, 
+  getAwakeningZone, 
+  getAwakeningColor, 
+  getAwakeningTextColor,
+  layerScoreToAwakeningPercent 
+} from "@/config/wealthStyleConfig";
 
 interface EnhancedHealthGaugeProps {
-  healthScore: number;
+  healthScore: number; // Block score 0-100 (higher = more blocked)
   behaviorScore: number;
   emotionScore: number;
   beliefScore: number;
 }
 
-const healthZones = [
-  { range: [0, 40], label: "和谐健康", emoji: "🟢", color: "emerald", description: "与财富关系顺畅" },
-  { range: [41, 70], label: "需要关注", emoji: "🟡", color: "amber", description: "存在一些卡点" },
-  { range: [71, 85], label: "需要调整", emoji: "🟠", color: "orange", description: "建议系统调整" },
-  { range: [86, 100], label: "高风险区", emoji: "🔴", color: "rose", description: "需要专业陪伴" },
-];
-
-const getHealthZone = (score: number) => {
-  return healthZones.find(zone => score >= zone.range[0] && score <= zone.range[1]) || healthZones[0];
-};
-
 export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, beliefScore }: EnhancedHealthGaugeProps) {
-  const zone = getHealthZone(healthScore);
-  const invertedScore = 100 - healthScore; // For display as "health" rather than "blockage"
+  // Convert block score to awakening index (higher = better)
+  const awakeningScore = 100 - healthScore;
+  const zone = getAwakeningZone(awakeningScore);
   
   // Calculate arc parameters
   const radius = 80;
   const strokeWidth = 12;
-  const circumference = Math.PI * radius; // Half circle
-  const progress = (healthScore / 100) * circumference;
+  const circumference = Math.PI * radius;
   
   const layers = [
-    { name: "行为", score: behaviorScore, max: 50, emoji: "🚶", color: "from-amber-400 to-orange-500" },
+    { name: "行为", score: behaviorScore, max: 50, emoji: "🎯", color: "from-amber-400 to-orange-500" },
     { name: "情绪", score: emotionScore, max: 50, emoji: "💭", color: "from-pink-400 to-rose-500" },
     { name: "信念", score: beliefScore, max: 50, emoji: "💡", color: "from-violet-400 to-purple-500" },
   ];
-
-  const getScoreColor = (score: number) => {
-    if (score <= 40) return "text-emerald-500";
-    if (score <= 70) return "text-amber-500";
-    if (score <= 85) return "text-orange-500";
-    return "text-rose-500";
-  };
-
-  const getGaugeColor = (score: number) => {
-    if (score <= 40) return "#10b981";
-    if (score <= 70) return "#f59e0b";
-    if (score <= 85) return "#f97316";
-    return "#f43f5e";
-  };
 
   return (
     <motion.div
@@ -61,12 +43,12 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
           {/* Header */}
           <div className="text-center mb-3">
             <h2 className="text-white font-bold text-lg sm:text-xl flex items-center justify-center gap-2">
-              <span className="text-2xl">💰</span>
-              财富心理健康度
+              <span className="text-2xl">✨</span>
+              财富觉醒指数
             </h2>
           </div>
 
-          {/* Gauge Display - Responsive */}
+          {/* Gauge Display */}
           <div className="relative flex justify-center py-2 sm:py-4">
             <svg 
               className="w-[160px] h-[96px] sm:w-[200px] sm:h-[120px] md:w-[240px] md:h-[144px]" 
@@ -82,29 +64,15 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 strokeLinecap="round"
               />
               
-              {/* Zone colors (background segments) */}
-              <defs>
-                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="40%" stopColor="#10b981" />
-                  <stop offset="40%" stopColor="#f59e0b" />
-                  <stop offset="70%" stopColor="#f59e0b" />
-                  <stop offset="70%" stopColor="#f97316" />
-                  <stop offset="85%" stopColor="#f97316" />
-                  <stop offset="85%" stopColor="#f43f5e" />
-                  <stop offset="100%" stopColor="#f43f5e" />
-                </linearGradient>
-              </defs>
-              
               {/* Progress arc */}
               <motion.path
                 d="M 20 100 A 80 80 0 0 1 180 100"
                 fill="none"
-                stroke={getGaugeColor(healthScore)}
+                stroke={getAwakeningColor(awakeningScore)}
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 initial={{ pathLength: 0 }}
-                animate={{ pathLength: healthScore / 100 }}
+                animate={{ pathLength: awakeningScore / 100 }}
                 transition={{ duration: 1.2, ease: "easeOut" }}
                 style={{ 
                   strokeDasharray: circumference,
@@ -115,7 +83,7 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
               {/* Needle */}
               <motion.g
                 initial={{ rotate: -90 }}
-                animate={{ rotate: -90 + (healthScore / 100) * 180 }}
+                animate={{ rotate: -90 + (awakeningScore / 100) * 180 }}
                 transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
                 style={{ transformOrigin: "100px 100px" }}
               >
@@ -129,35 +97,32 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                   strokeLinecap="round"
                 />
                 <circle cx="100" cy="100" r="8" fill="white" />
-                <circle cx="100" cy="100" r="4" fill={getGaugeColor(healthScore)} />
+                <circle cx="100" cy="100" r="4" fill={getAwakeningColor(awakeningScore)} />
               </motion.g>
               
               {/* Scale labels */}
               <text x="15" y="115" fill="rgba(255,255,255,0.5)" fontSize="10">0</text>
               <text x="178" y="115" fill="rgba(255,255,255,0.5)" fontSize="10">100</text>
             </svg>
-            
           </div>
 
-          {/* Score + Zone Status - 合并显示，避免重叠 */}
+          {/* Score + Zone Status */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             className="text-center mb-6"
           >
-            {/* 分数显示 - 移到仪表盘下方 */}
             <div className="mb-3">
               <span 
-                className={cn("text-4xl sm:text-5xl font-bold tabular-nums", getScoreColor(healthScore))}
+                className={cn("text-4xl sm:text-5xl font-bold tabular-nums", getAwakeningTextColor(awakeningScore))}
                 style={{ textShadow: '0 0 20px currentColor' }}
               >
-                {healthScore}
+                {awakeningScore}
               </span>
               <span className="text-lg text-slate-400 ml-1">分</span>
             </div>
             
-            {/* Zone 徽章 */}
             <div className={cn(
               "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold",
               zone.color === "emerald" && "bg-emerald-500/20 text-emerald-400",
@@ -171,9 +136,24 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             <p className="text-slate-400 text-sm mt-2">{zone.description}</p>
           </motion.div>
 
-          {/* Zone Legend - 紧凑版 */}
+          {/* Layer Awakening Percentages */}
+          <div className="space-y-2 mb-4">
+            {layers.map((layer, i) => {
+              const awakeningPercent = layerScoreToAwakeningPercent(layer.score, layer.max);
+              return (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">{layer.emoji} {layer.name}</span>
+                  <span className={cn("font-medium", getAwakeningTextColor(awakeningPercent))}>
+                    觉醒度 {awakeningPercent}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Zone Legend */}
           <div className="flex justify-center gap-1 flex-wrap text-[10px]">
-            {healthZones.map((z, i) => (
+            {awakeningZones.map((z, i) => (
               <div 
                 key={i} 
                 className={cn(
@@ -187,12 +167,12 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             ))}
           </div>
 
-          {/* Tip - 精简版 */}
+          {/* Tip */}
           <div className="mt-3 text-center">
             <p className="text-slate-500 text-[10px]">
-              分数<span className="text-emerald-400">↓</span>=健康
+              分数<span className="text-emerald-400">↑</span>=越觉醒
               <span className="mx-2">·</span>
-              分数<span className="text-rose-400">↑</span>=需关注
+              分数<span className="text-rose-400">↓</span>=需关注
             </p>
           </div>
         </CardContent>
