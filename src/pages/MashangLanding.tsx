@@ -15,10 +15,10 @@ const themes = [
 ];
 
 const sellingPoints = [
-  { icon: Compass, title: "开运自测", desc: "3 分钟发现你的新年好运方向" },
-  { icon: Gift, title: "专属锦囊", desc: "为你量身定制的开运指南" },
-  { icon: Heart, title: "科学有据", desc: "融合心理学的正念方法" },
-  { icon: Sparkles, title: "7 天见喜", desc: "每天 15 分钟，好运看得见" },
+  { icon: Compass, title: "财富卡点诊断", desc: "3 分钟精准识别阻碍你财富增长的核心卡点" },
+  { icon: Gift, title: "专属破局方案", desc: "基于测评结果，为你定制财富突破路径" },
+  { icon: Heart, title: "心理学支撑", desc: "融合 ACT、正念等循证心理学方法" },
+  { icon: Sparkles, title: "7 天蜕变", desc: "每天 15 分钟，看见财富认知的真实改变" },
 ];
 
 // Floating wealth, stars & celebration decorations
@@ -93,8 +93,8 @@ export default function MashangLanding() {
             </span>
           </h1>
           <p className="text-red-200/70 text-sm max-w-xs mx-auto leading-relaxed">
-            新的一年，送自己一份开运好礼<br />
-            每天一个好运锦囊，开启红火新一年
+            新的一年，看清你的财富卡点<br />
+            7 天 AI 教练陪你打通财富好运
           </p>
         </motion.div>
 
@@ -113,10 +113,10 @@ export default function MashangLanding() {
             className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-red-950 shadow-lg shadow-amber-500/30 active:scale-[0.97]"
           >
             🧧
-            <span className="ml-1">领取新年开运测试</span>
+            <span className="ml-1">免费测一测你的财富卡点</span>
             <ArrowRight className="w-5 h-5 ml-1" />
           </Button>
-          <p className="text-center text-amber-300/50 text-xs mt-2">3 分钟 · 新春限时免费 · 即刻揭晓</p>
+          <p className="text-center text-amber-300/50 text-xs mt-2">3 分钟 · 新春限时免费 · 即刻出结果</p>
         </motion.div>
       </ResponsiveContainer>
 
@@ -171,7 +171,7 @@ export default function MashangLanding() {
       <section className="px-4 pb-8">
         <ResponsiveContainer size="sm">
           <h2 className="text-center text-lg font-bold text-amber-200 mb-5">
-            🧧 新春好运锦囊
+            🧧 新春献礼 · 财富开运测评
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {sellingPoints.map((sp, i) => (
@@ -200,11 +200,11 @@ export default function MashangLanding() {
             <p className="text-3xl font-black bg-gradient-to-r from-amber-300 to-yellow-200 bg-clip-text text-transparent">
               10,000+
             </p>
-            <p className="text-red-200/60 text-sm mt-1">朋友已领取新春好运测试</p>
+            <p className="text-red-200/60 text-sm mt-1">人已完成财富卡点测评</p>
             <div className="flex justify-center gap-6 mt-4 text-xs text-red-200/50">
               <div>
                 <p className="text-xl font-bold text-amber-300">92%</p>
-                <p>觉得很准</p>
+                <p>认为诊断精准</p>
               </div>
               <div className="w-px bg-amber-500/20" />
               <div>
@@ -214,7 +214,7 @@ export default function MashangLanding() {
               <div className="w-px bg-amber-500/20" />
               <div>
                 <p className="text-xl font-bold text-amber-300">20+</p>
-                <p>好运提升</p>
+                <p>财富认知提升</p>
               </div>
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function MashangLanding() {
               className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-red-950 shadow-lg shadow-amber-500/30 active:scale-[0.97]"
             >
               <Sparkles className="w-5 h-5 mr-1" />
-              开启我的好运年
+              立即开启财富测评
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
             <p className="text-center text-amber-300/40 text-xs mt-3">
