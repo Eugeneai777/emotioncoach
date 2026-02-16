@@ -113,10 +113,10 @@ export default function MashangLanding() {
             className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-red-950 shadow-lg shadow-amber-500/30 active:scale-[0.97]"
           >
             🧧
-            <span className="ml-1">免费测一测你的财富卡点</span>
+            <span className="ml-1">测一测你的财富卡点</span>
             <ArrowRight className="w-5 h-5 ml-1" />
           </Button>
-          <p className="text-center text-amber-300/50 text-xs mt-2">3 分钟 · 新春限时免费 · 即刻出结果</p>
+          <p className="text-center text-amber-300/50 text-xs mt-2">3 分钟 · 新春特惠 ¥9.9 · 即刻出结果</p>
         </motion.div>
       </ResponsiveContainer>
 
