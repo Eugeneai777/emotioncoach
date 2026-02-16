@@ -1,24 +1,36 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Brain, Shield, TrendingUp, Zap, ArrowRight, Star } from "lucide-react";
+import { Sparkles, Brain, Shield, TrendingUp, Zap, ArrowRight, Star, Gift, Heart, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer } from "@/components/ui/responsive-container";
 
 const themes = [
-  { day: 1, title: "马上觉醒", emoji: "🌅", desc: "唤醒沉睡的财富意识，看清卡点根源" },
-  { day: 2, title: "马上发财", emoji: "💰", desc: "重塑金钱信念，打通财富能量通道" },
-  { day: 3, title: "马上回血", emoji: "🔥", desc: "修复情绪内耗，恢复行动力" },
-  { day: 4, title: "马上看见", emoji: "👁️", desc: "洞察潜意识模式，发现隐藏资源" },
-  { day: 5, title: "马上破局", emoji: "⚡", desc: "突破限制性信念，打碎旧有框架" },
-  { day: 6, title: "马上翻身", emoji: "🚀", desc: "重建财富自信，逆转困局思维" },
-  { day: 7, title: "马上出发", emoji: "🎯", desc: "锁定行动方向，开启全新征程" },
+  { day: 1, title: "马上觉醒", emoji: "🌅", desc: "新年第一天，唤醒心中的力量与希望" },
+  { day: 2, title: "马上发财", emoji: "🧧", desc: "财神送福，开启新年财运通道" },
+  { day: 3, title: "马上回血", emoji: "🔥", desc: "满血复活，新年新气象" },
+  { day: 4, title: "马上看见", emoji: "🏮", desc: "擦亮双眼，看见新一年的无限可能" },
+  { day: 5, title: "马上破局", emoji: "🎆", desc: "辞旧迎新，迎接全新机遇" },
+  { day: 6, title: "马上翻身", emoji: "🎊", desc: "否极泰来，好运翻倍到来" },
+  { day: 7, title: "马上出发", emoji: "🎯", desc: "新春启程，一路繁花似锦" },
 ];
 
 const sellingPoints = [
-  { icon: Brain, title: "AI 深度诊断", desc: "3 分钟精准识别你的财富卡点类型" },
-  { icon: Sparkles, title: "个性化教练", desc: "基于测评结果定制专属觉醒方案" },
-  { icon: Shield, title: "心理学支撑", desc: "融合 ACT / 认知行为疗法核心理论" },
-  { icon: TrendingUp, title: "7 天可见变化", desc: "每天 15 分钟，觉醒指数平均提升 20+" },
+  { icon: Compass, title: "开运自测", desc: "3 分钟发现你的新年好运方向" },
+  { icon: Gift, title: "专属锦囊", desc: "为你量身定制的开运指南" },
+  { icon: Heart, title: "科学有据", desc: "融合心理学的正念方法" },
+  { icon: Sparkles, title: "7 天见喜", desc: "每天 15 分钟，好运看得见" },
+];
+
+// Firework sparkle positions
+const sparkles = [
+  { left: "8%", top: "12%", delay: "0s", size: "text-xs" },
+  { left: "92%", top: "8%", delay: "0.5s", size: "text-sm" },
+  { left: "15%", top: "35%", delay: "1.2s", size: "text-xs" },
+  { left: "85%", top: "30%", delay: "0.8s", size: "text-xs" },
+  { left: "5%", top: "55%", delay: "1.5s", size: "text-sm" },
+  { left: "95%", top: "60%", delay: "0.3s", size: "text-xs" },
+  { left: "20%", top: "80%", delay: "2s", size: "text-xs" },
+  { left: "80%", top: "85%", delay: "1s", size: "text-xs" },
 ];
 
 export default function MashangLanding() {
@@ -29,10 +41,27 @@ export default function MashangLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-amber-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-amber-950 text-white overflow-x-hidden relative">
+      {/* Floating firework sparkles background */}
+      {sparkles.map((s, i) => (
+        <div
+          key={i}
+          className={`fixed ${s.size} text-amber-300/40 animate-twinkle pointer-events-none z-0`}
+          style={{ left: s.left, top: s.top, animationDelay: s.delay }}
+        >
+          ✦
+        </div>
+      ))}
+
       {/* Hero */}
       <section className="relative pt-12 pb-8 px-4 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.15),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.18),transparent_60%)]" />
+
+        {/* Floating lanterns */}
+        <div className="absolute top-6 left-4 text-2xl animate-float opacity-70" style={{ animationDelay: "0s" }}>🏮</div>
+        <div className="absolute top-10 right-4 text-xl animate-float opacity-60" style={{ animationDelay: "1.5s" }}>🏮</div>
+        <div className="absolute top-20 left-12 text-sm animate-float opacity-40" style={{ animationDelay: "3s" }}>🏮</div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -40,24 +69,23 @@ export default function MashangLanding() {
           className="relative z-10"
         >
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-medium mb-4">
-            <Star className="w-3 h-3" /> 2025 春节限定
+            🧧 2026 新春献礼
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-3">
-            <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
-              马上觉醒
+          <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-3">
+            <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-lg">
+              马上好运
             </span>
             <br />
-            <span className="text-xl sm:text-2xl font-bold text-red-100/90">
-              7天财富能量重启计划
+            <span className="text-lg sm:text-xl font-bold text-red-100/90 mt-1 block">
+              新春开运 · 7天好运加持
             </span>
           </h1>
           <p className="text-red-200/70 text-sm max-w-xs mx-auto leading-relaxed">
-            AI 教练 × 心理学 × 财富觉醒<br />
-            每天 15 分钟，打通你的财富卡点
+            新的一年，送自己一份开运好礼<br />
+            每天一个好运锦囊，开启红火新一年
           </p>
         </motion.div>
 
-        {/* Decorative horse silhouette hint */}
         <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-16 bg-gradient-to-t from-red-900 to-transparent" />
       </section>
 
@@ -72,19 +100,26 @@ export default function MashangLanding() {
             onClick={handleCTA}
             className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-red-950 shadow-lg shadow-amber-500/30 active:scale-[0.97]"
           >
-            <Zap className="w-5 h-5 mr-1" />
-            免费测一测你的财富卡点
+            🧧
+            <span className="ml-1">领取新年开运测试</span>
             <ArrowRight className="w-5 h-5 ml-1" />
           </Button>
-          <p className="text-center text-amber-300/50 text-xs mt-2">3 分钟 · 完全免费 · 即刻出结果</p>
+          <p className="text-center text-amber-300/50 text-xs mt-2">3 分钟 · 新春限时免费 · 即刻揭晓</p>
         </motion.div>
       </ResponsiveContainer>
+
+      {/* Auspicious cloud divider */}
+      <div className="flex justify-center items-center gap-3 mb-2 opacity-30">
+        <div className="h-px w-12 bg-gradient-to-r from-transparent to-amber-400" />
+        <span className="text-amber-400 text-xs">☁︎ ☁︎ ☁︎</span>
+        <div className="h-px w-12 bg-gradient-to-l from-transparent to-amber-400" />
+      </div>
 
       {/* 7-Day Journey */}
       <section className="px-4 pb-8">
         <ResponsiveContainer size="sm">
           <h2 className="text-center text-lg font-bold text-amber-200 mb-5">
-            🐴 7 天·马上系列旅程
+            🏮 新春七天 · 好运马上来
           </h2>
           <div className="space-y-3">
             {themes.map((t, i) => (
@@ -95,8 +130,10 @@ export default function MashangLanding() {
                 transition={{ delay: 0.1 * i + 0.4 }}
                 className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-amber-500/10 backdrop-blur-sm"
               >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center text-lg font-black text-white shadow-md">
-                  {t.day}
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center text-lg font-black text-white shadow-md relative overflow-hidden">
+                  {/* Subtle cloud texture overlay */}
+                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_30%,_white_1px,transparent_1px),radial-gradient(circle_at_70%_70%,_white_1px,transparent_1px)] bg-[length:6px_6px]" />
+                  <span className="relative z-10">{t.day}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -111,11 +148,18 @@ export default function MashangLanding() {
         </ResponsiveContainer>
       </section>
 
-      {/* AI Coach Selling Points */}
+      {/* Auspicious cloud divider */}
+      <div className="flex justify-center items-center gap-3 mb-2 opacity-30">
+        <div className="h-px w-12 bg-gradient-to-r from-transparent to-amber-400" />
+        <span className="text-amber-400 text-xs">☁︎ ☁︎ ☁︎</span>
+        <div className="h-px w-12 bg-gradient-to-l from-transparent to-amber-400" />
+      </div>
+
+      {/* Selling Points as "New Year Gift" */}
       <section className="px-4 pb-8">
         <ResponsiveContainer size="sm">
           <h2 className="text-center text-lg font-bold text-amber-200 mb-5">
-            ✨ 为什么选择 AI 教练？
+            🧧 新春好运锦囊
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {sellingPoints.map((sp, i) => (
@@ -144,11 +188,11 @@ export default function MashangLanding() {
             <p className="text-3xl font-black bg-gradient-to-r from-amber-300 to-yellow-200 bg-clip-text text-transparent">
               10,000+
             </p>
-            <p className="text-red-200/60 text-sm mt-1">用户已完成财富卡点测评</p>
+            <p className="text-red-200/60 text-sm mt-1">朋友已领取新春好运测试</p>
             <div className="flex justify-center gap-6 mt-4 text-xs text-red-200/50">
               <div>
                 <p className="text-xl font-bold text-amber-300">92%</p>
-                <p>认为精准</p>
+                <p>觉得很准</p>
               </div>
               <div className="w-px bg-amber-500/20" />
               <div>
@@ -158,7 +202,7 @@ export default function MashangLanding() {
               <div className="w-px bg-amber-500/20" />
               <div>
                 <p className="text-xl font-bold text-amber-300">20+</p>
-                <p>觉醒提升</p>
+                <p>好运提升</p>
               </div>
             </div>
           </div>
@@ -177,12 +221,12 @@ export default function MashangLanding() {
               onClick={handleCTA}
               className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-red-950 shadow-lg shadow-amber-500/30 active:scale-[0.97]"
             >
-              <Zap className="w-5 h-5 mr-1" />
-              立即开始测评
+              <Sparkles className="w-5 h-5 mr-1" />
+              开启我的好运年
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
             <p className="text-center text-amber-300/40 text-xs mt-3">
-              Powered by 有劲AI · 春节限时开放
+              有劲AI · 2026 新春献礼 🧧
             </p>
           </motion.div>
         </ResponsiveContainer>
