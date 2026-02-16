@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Target, Sparkles, ArrowRight } from 'lucide-react';
-import { getAwakeningColor } from '@/config/wealthStyleConfig';
+import { MapPin, Target, Sparkles, ArrowRight, TrendingUp } from 'lucide-react';
+import { getAwakeningColor, getAwakeningZone } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
 import { useNavigate } from 'react-router-dom';
@@ -67,6 +67,16 @@ export function AwakeningJourneyPreview({
   // 获取个性化卡点名称
   const poorConfig = dominantPoor ? fourPoorRichConfig[dominantPoor] : null;
   const poorName = poorConfig?.poorName || '财富卡点';
+
+  // 动态觉醒区间描述
+  const currentZone = getAwakeningZone(awakeningStart);
+  const targetZone = getAwakeningZone(day7Target);
+  const day7ValueDesc = currentZone.label !== targetZone.label
+    ? `从"${currentZone.label}"突破到"${targetZone.label}"`
+    : `巩固"${targetZone.label}"状态`;
+  const painPointText = poorConfig
+    ? `你的「${poorConfig.poorName}」模式正在消耗你的财富能量`
+    : '你的财富卡点正在消耗你的能量';
 
   // 生成个性化三维收获
   const poorKey = dominantPoor || 'mouth';
@@ -135,15 +145,32 @@ export function AwakeningJourneyPreview({
             </motion.div>
             
             {/* 第二行：目标并排 */}
+            {/* 上升箭头动画 */}
+            <div className="flex justify-center -my-1">
+              <motion.div
+                animate={{ y: [0, -6, 0], opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="text-emerald-500 font-bold text-lg"
+              >
+                <TrendingUp className="w-5 h-5" />
+              </motion.div>
+            </div>
+
             <div className="flex items-stretch gap-3">
-              {/* 7天目标 */}
-              <div className="relative flex-1 bg-white/50 dark:bg-white/5 rounded-xl p-4 text-center border border-dashed border-emerald-400 dark:border-emerald-600/50">
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500/80 text-white text-xs font-medium rounded-full whitespace-nowrap">
-                  7天后
+              {/* 7天目标 - 增强视觉 */}
+              <motion.div 
+                className="relative flex-1 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl p-4 text-center border-2 border-emerald-400 dark:border-emerald-500/60 shadow-md"
+                animate={{
+                  boxShadow: ['0 0 0 0 rgba(16, 185, 129, 0)', '0 0 0 6px rgba(16, 185, 129, 0.15)', '0 0 0 0 rgba(16, 185, 129, 0)']
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full whitespace-nowrap shadow">
+                  🚀 7天后
                 </div>
-                <div className="text-2xl font-bold text-emerald-600/80 mt-2">{day7Target}+</div>
-                <div className="text-sm text-muted-foreground/70 mt-1">短期目标</div>
-              </div>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{day7Target}+</div>
+                <div className="text-xs text-emerald-700/80 dark:text-emerald-300/80 mt-1 font-medium leading-snug">{day7ValueDesc}</div>
+              </motion.div>
               
               {/* 毕业目标 */}
               <div className="relative flex-1 bg-white/40 dark:bg-white/5 rounded-xl p-4 text-center border border-dashed border-violet-400/60 dark:border-violet-600/30">
@@ -154,7 +181,7 @@ export function AwakeningJourneyPreview({
                   <Target className="w-4 h-4 text-violet-400" />
                   <span className="text-2xl font-bold text-violet-500/70">{graduateTarget}+</span>
                 </div>
-                <div className="text-sm text-muted-foreground/60 mt-1">高觉醒</div>
+                <div className="text-xs text-violet-600/70 dark:text-violet-300/60 mt-1 font-medium">财富能量畅通</div>
               </div>
             </div>
           </div>
@@ -170,10 +197,13 @@ export function AwakeningJourneyPreview({
           <div className="p-4 bg-white/70 dark:bg-white/10 rounded-xl border border-amber-200/50 dark:border-amber-700/30">
             <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1.5 xs:gap-2 mb-2">
               <span className="text-base font-bold text-foreground">财富觉醒训练营</span>
-              <span className="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full w-fit">
+              <span className="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-sm font-bold rounded-full w-fit shadow-sm">
                 7天 · 每天15分钟
               </span>
             </div>
+            <p className="text-sm text-amber-700 dark:text-amber-300 font-medium mb-1.5">
+              ⚡ {painPointText}
+            </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               不是教你快速赚钱，而是<span className="text-amber-600 dark:text-amber-400 font-medium">每天帮你看见卡住的位置</span>，陪你迈出一个不消耗自己的小进步。
             </p>
