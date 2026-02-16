@@ -17,31 +17,122 @@ const THEME_PINYIN: Record<string, string> = {
   "出发": "chufa",
 };
 
-// Style variations to ensure each regeneration looks different
-const STYLE_VARIATIONS = [
-  { bg: "deep black gradient background with subtle red glow at edges", textStyle: "massive bold calligraphic strokes in pure gold with outer glow", layout: "centered vertically, text stacked with generous spacing", extra: "minimal gold particle dust floating" },
-  { bg: "rich dark crimson to black diagonal gradient", textStyle: "elegant serif-style Chinese typography in warm amber-gold with shadow", layout: "text aligned left with dramatic negative space on right", extra: "single thin gold horizontal line as divider between lines" },
-  { bg: "solid matte black background", textStyle: "bold sans-serif modern Chinese font in bright gold with red accent shadow", layout: "text bottom-heavy, large title at bottom, supporting text at top", extra: "geometric gold corner accents, very minimal" },
-  { bg: "dark red textured background like aged paper or silk fabric", textStyle: "traditional brush calligraphy style in metallic gold ink", layout: "vertical text layout (top to bottom, right to left) traditional Chinese style", extra: "subtle red seal stamp in corner" },
-  { bg: "gradient from deep navy blue at top to dark red at bottom", textStyle: "thick blocky modern Chinese font in gradient gold-to-white", layout: "centered with title oversized taking 60% of canvas, subtitle small above", extra: "soft bokeh light circles in gold" },
-  { bg: "pure deep red background, no gradient, clean and bold", textStyle: "white text for subtitle, massive gold text for main title with 3D emboss effect", layout: "top-aligned subtitle cluster, center-dominant main title", extra: "subtle cloud pattern watermark in slightly lighter red" },
+// 小红书爆款封面设计公式：大字报 + 情绪冲击 + 对比反差 + 留白呼吸感
+// 每次重新生成随机组合不同风格
+const XHS_STYLES = [
+  {
+    name: "暗黑大字报",
+    bg: "Pure solid black background, completely clean with no textures or patterns",
+    titleStyle: "超大号加粗无衬线中文字体，纯白色，字号占画面宽度80%，字间距紧凑",
+    subtitleStyle: "小号浅灰色文字，行间距大，呼吸感强",
+    accent: "标题中1-2个关键字用亮红色(#FF2442)高亮",
+    composition: "标题居中偏上，副标题在下方1/3处，大量留白"
+  },
+  {
+    name: "红底白字冲击",
+    bg: "Solid deep red background (#CC0000), flat and clean, no gradient",
+    titleStyle: "超大号加粗中文字体，纯白色，粗体，占画面宽度85%",
+    subtitleStyle: "小号淡粉色文字，简洁排列",
+    accent: "标题下方一条细白线作为分隔",
+    composition: "标题垂直居中，副标题紧贴标题下方，上下大量留白"
+  },
+  {
+    name: "奶油温柔风",
+    bg: "Warm cream/beige solid background (#FFF5E6), soft and clean",
+    titleStyle: "大号深棕色(#3D2B1F)加粗圆体中文字，温暖有力",
+    subtitleStyle: "中号浅棕色文字，手写感",
+    accent: "关键词用暖橙色(#FF6B35)标注，像荧光笔划重点的效果",
+    composition: "文字左对齐，右侧大量留白，标题占左侧60%宽度"
+  },
+  {
+    name: "深蓝高级感",
+    bg: "Deep navy blue solid background (#0A1628), premium and clean",
+    titleStyle: "大号金色(#D4AF37)加粗衬线中文字，质感高级",
+    subtitleStyle: "小号浅蓝灰色文字，优雅间距",
+    accent: "标题字带微弱金色光晕",
+    composition: "标题居中，上方有小号英文或数字装饰，整体对称"
+  },
+  {
+    name: "荧光撞色",
+    bg: "Solid black background, completely dark",
+    titleStyle: "超大号荧光绿色(#00FF88)加粗无衬线字体，视觉冲击力极强",
+    subtitleStyle: "白色小号文字",
+    accent: "个别关键字用荧光黄(#FFFF00)突出",
+    composition: "标题斜放约5度倾斜，打破规则感，副标题水平排列在底部"
+  },
+  {
+    name: "极简黑白",
+    bg: "Pure white background, nothing else",
+    titleStyle: "超大号纯黑加粗字体，占画面70%面积，震撼有力",
+    subtitleStyle: "极小号灰色文字，与巨大标题形成强烈大小对比",
+    accent: "无任何彩色，纯黑白灰",
+    composition: "标题充满画面中央，副标题缩在右下角，极致对比"
+  },
 ];
 
-const THEME_COPY: Record<string, { subtitle: string; title: string }> = {
-  "觉醒": { subtitle: "除夕夜，别人在数红包\\n你在想：为什么我总赚不到钱？", title: "马上觉醒" },
-  "发财": { subtitle: "同样的24小时\\n为什么别人越来越有钱？", title: "马上发财" },
-  "回血": { subtitle: "亏过的钱、错过的机会\\n都是蜕变前的代价", title: "马上回血" },
-  "看见": { subtitle: "你不是缺能力\\n你只是还没看见卡住你的那堵墙", title: "马上看见" },
-  "破局": { subtitle: "一直在努力，一直没突破？\\n问题不在勤奋，在认知", title: "马上破局" },
-  "翻身": { subtitle: "人生低谷不可怕\\n可怕的是在低谷里躺平", title: "马上翻身" },
-  "出发": { subtitle: "想了一百次不如迈出第一步\\n新的一年，不再等了", title: "马上出发" },
+const THEME_COPY: Record<string, { hook: string; title: string; bottom: string }> = {
+  "觉醒": { 
+    hook: "除夕夜 别人在数红包", 
+    title: "你还在想\n为什么我总赚不到钱？", 
+    bottom: "马上觉醒" 
+  },
+  "发财": { 
+    hook: "同样24小时", 
+    title: "为什么别人越来越有钱\n你却越来越焦虑？", 
+    bottom: "马上发财" 
+  },
+  "回血": { 
+    hook: "亏过的钱 错过的人", 
+    title: "都是你\n蜕变前的代价", 
+    bottom: "马上回血" 
+  },
+  "看见": { 
+    hook: "你不是缺能力", 
+    title: "你只是没看见\n卡住你的那堵墙", 
+    bottom: "马上看见" 
+  },
+  "破局": { 
+    hook: "一直努力 一直没突破？", 
+    title: "问题不在勤奋\n在认知", 
+    bottom: "马上破局" 
+  },
+  "翻身": { 
+    hook: "人生低谷不可怕", 
+    title: "可怕的是\n在低谷里躺平", 
+    bottom: "马上翻身" 
+  },
+  "出发": { 
+    hook: "想了一百次", 
+    title: "不如\n迈出第一步", 
+    bottom: "马上出发" 
+  },
 };
 
 function buildPrompt(theme: string): string {
   const copy = THEME_COPY[theme];
-  const style = STYLE_VARIATIONS[Math.floor(Math.random() * STYLE_VARIATIONS.length)];
+  const style = XHS_STYLES[Math.floor(Math.random() * XHS_STYLES.length)];
   
-  return `A clean, bold Chinese social media poster in 3:4 portrait aspect ratio. ${style.bg}. Minimal and uncluttered — no complex illustrations, no horses, no busy patterns. The entire focus is on powerful typography. ${style.layout}. The supporting text reads: "${copy.subtitle}". The main dramatic large title is "${copy.title}" in ${style.textStyle}, taking up major visual space. ${style.extra}. Chinese New Year premium feel. The text IS the design — clean, impactful, scroll-stopping. No cartoon characters, no animals, no objects — ONLY text and background.`;
+  return `Design a viral Xiaohongshu (小红书) cover image. 3:4 portrait ratio (1080x1440px).
+
+DESIGN STYLE: "${style.name}"
+- Background: ${style.bg}
+- Main title: ${style.titleStyle}
+- Subtitle: ${style.subtitleStyle}  
+- Color accent: ${style.accent}
+- Layout: ${style.composition}
+
+TEXT CONTENT (must render ALL text accurately in Chinese):
+- Top hook line (small): "${copy.hook}"
+- Main title (HUGE, dominant): "${copy.title}"
+- Bottom tag (medium, bold): "${copy.bottom}"
+
+CRITICAL RULES:
+1. TEXT IS EVERYTHING. The image is purely typographic — no illustrations, no photos, no icons, no decorative elements, no animals, no people.
+2. The main title must be MASSIVE — it should dominate 50-70% of the visual space.
+3. Strong contrast between text and background for instant readability.
+4. Clean breathing space — generous margins and line spacing.
+5. This must look like a top-performing Xiaohongshu text poster that makes people STOP scrolling.
+6. Render all Chinese characters precisely and clearly.`;
 }
 
 serve(async (req) => {
