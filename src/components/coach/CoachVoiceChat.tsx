@@ -1318,52 +1318,41 @@ export const CoachVoiceChat = ({
             }, 500);
           }
         } catch (webrtcError: any) {
-          console.error('[VoiceChat] WebRTC connection failed:', webrtcError);
+          console.error('[VoiceChat] WebRTC connection failed, falling back to WebSocket relay:', webrtcError);
           
-          // 🔧 检查是否是地区限制或 403 错误，自动降级到 WebSocket
-          const isRegionBlocked = webrtcError.errorType === 'region_blocked' || 
-                                  webrtcError.errorType === 'forbidden' ||
-                                  webrtcError.statusCode === 403 ||
-                                  webrtcError.message?.includes('403') ||
-                                  webrtcError.message?.includes('unsupported_country');
+          // 🔧 所有 WebRTC 失败都自动降级到 WebSocket relay
+          // 包括：地区限制、DNS 失败、Safari 兼容问题、网络超时、CORS 错误等
+          toast({
+            title: "正在切换通道",
+            description: "正在使用备用语音通道...",
+          });
           
-          if (isRegionBlocked) {
-            console.log('[VoiceChat] WebRTC blocked by region, falling back to WebSocket relay...');
-            toast({
-              title: "正在切换通道",
-              description: "检测到网络限制，正在使用备用语音通道...",
-            });
-            
-            // 清理 WebRTC 连接
-            chat.disconnect();
-            chatRef.current = null;
-            
-            // 切换到 WebSocket relay 模式
-            setUseMiniProgramMode(true);
-            const miniProgramClient = new MiniProgramAudioClient({
-              onMessage: handleVoiceMessage,
-              onStatusChange: handleStatusChange,
-              onTranscript: handleTranscript,
-              onUsageUpdate: (usage) => setApiUsage(prev => ({
-                inputTokens: prev.inputTokens + usage.input_tokens,
-                outputTokens: prev.outputTokens + usage.output_tokens
-              })),
-              tokenEndpoint,
-              mode,
-              scenario,
-              extraBody
-            });
-            chatRef.current = miniProgramClient;
-            await miniProgramClient.connect();
-            updateConnectionPhase('connected');
-            stopConnectionTimer();
-            startMonitoring();
-            miniProgramClient.startRecording();
-            return;
-          }
+          // 清理 WebRTC 连接
+          try { chat.disconnect(); } catch (e) { /* ignore cleanup errors */ }
+          chatRef.current = null;
           
-          // 其他错误，向上抛出
-          throw webrtcError;
+          // 切换到 WebSocket relay 模式
+          setUseMiniProgramMode(true);
+          const miniProgramClient = new MiniProgramAudioClient({
+            onMessage: handleVoiceMessage,
+            onStatusChange: handleStatusChange,
+            onTranscript: handleTranscript,
+            onUsageUpdate: (usage) => setApiUsage(prev => ({
+              inputTokens: prev.inputTokens + usage.input_tokens,
+              outputTokens: prev.outputTokens + usage.output_tokens
+            })),
+            tokenEndpoint,
+            mode,
+            scenario,
+            extraBody
+          });
+          chatRef.current = miniProgramClient;
+          await miniProgramClient.connect();
+          updateConnectionPhase('connected');
+          stopConnectionTimer();
+          startMonitoring();
+          miniProgramClient.startRecording();
+          return;
         }
       } else {
         // 环境不支持语音通话 - 退还预扣点数
