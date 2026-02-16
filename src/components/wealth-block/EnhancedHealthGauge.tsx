@@ -9,22 +9,49 @@ import {
 } from "@/config/wealthStyleConfig";
 
 interface EnhancedHealthGaugeProps {
-  healthScore: number; // Block score 0-100 (higher = more blocked)
+  healthScore: number;
   behaviorScore: number;
   emotionScore: number;
   beliefScore: number;
 }
 
+// Arc segment config: each zone maps to a portion of the 180° semicircle
+const arcSegments = [
+  { startPct: 0,   endPct: 39,  color: "#f43f5e" }, // rose
+  { startPct: 39,  endPct: 59,  color: "#f97316" }, // orange
+  { startPct: 59,  endPct: 79,  color: "#f59e0b" }, // amber
+  { startPct: 79,  endPct: 100, color: "#10b981" }, // emerald
+];
+
+function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  const startRad = (startAngle * Math.PI) / 180;
+  const endRad = (endAngle * Math.PI) / 180;
+  const x1 = cx + r * Math.cos(startRad);
+  const y1 = cy - r * Math.sin(startRad);
+  const x2 = cx + r * Math.cos(endRad);
+  const y2 = cy - r * Math.sin(endRad);
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 0 ${x2} ${y2}`;
+}
+
+// Convert percentage (0-100) to angle on semicircle (180° to 0°, left to right)
+function pctToAngle(pct: number) {
+  return 180 - (pct / 100) * 180;
+}
+
 export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, beliefScore }: EnhancedHealthGaugeProps) {
-  // Convert block score to awakening index (higher = better)
   const awakeningScore = 100 - healthScore;
   const zone = getAwakeningZone(awakeningScore);
   
-  // Calculate arc parameters
-  const radius = 80;
-  const strokeWidth = 12;
-  const circumference = Math.PI * radius;
-  
+  const cx = 100, cy = 100, radius = 80, strokeWidth = 12;
+
+  // Legend font sizes (small to large)
+  const legendSizes = [
+    "text-[9px]",
+    "text-[10px]",
+    "text-[11px]",
+    "text-[12px] font-medium",
+  ];
 
   return (
     <motion.div
@@ -49,30 +76,64 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
               viewBox="0 0 200 120"
               preserveAspectRatio="xMidYMid meet"
             >
-              {/* Background arc */}
-              <path
-                d="M 20 100 A 80 80 0 0 1 180 100"
-                fill="none"
-                stroke="rgba(255,255,255,0.1)"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-              />
-              
-              {/* Progress arc */}
-              <motion.path
-                d="M 20 100 A 80 80 0 0 1 180 100"
-                fill="none"
-                stroke={getAwakeningColor(awakeningScore)}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: awakeningScore / 100 }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-                style={{ 
-                  strokeDasharray: circumference,
-                  strokeDashoffset: 0
-                }}
-              />
+              {/* Background arc segments (dim colors) */}
+              {arcSegments.map((seg, i) => (
+                <path
+                  key={`bg-${i}`}
+                  d={describeArc(cx, cy, radius, pctToAngle(seg.endPct), pctToAngle(seg.startPct))}
+                  fill="none"
+                  stroke={seg.color}
+                  strokeOpacity={0.15}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="butt"
+                />
+              ))}
+
+              {/* Progress arc segments (solid, clipped to awakeningScore) */}
+              {arcSegments.map((seg, i) => {
+                // Only render if progress reaches into this segment
+                if (awakeningScore <= seg.startPct) return null;
+                const fillEnd = Math.min(awakeningScore, seg.endPct);
+                return (
+                  <motion.path
+                    key={`prog-${i}`}
+                    d={describeArc(cx, cy, radius, pctToAngle(fillEnd), pctToAngle(seg.startPct))}
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="butt"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.2 + i * 0.15 }}
+                  />
+                );
+              })}
+
+              {/* Round caps at start and progress end */}
+              {(() => {
+                const startAngle = pctToAngle(0);
+                const startRad = (startAngle * Math.PI) / 180;
+                const sx = cx + radius * Math.cos(startRad);
+                const sy = cy - radius * Math.sin(startRad);
+                
+                const endAngle = pctToAngle(awakeningScore);
+                const endRad = (endAngle * Math.PI) / 180;
+                const ex = cx + radius * Math.cos(endRad);
+                const ey = cy - radius * Math.sin(endRad);
+                
+                return (
+                  <>
+                    <circle cx={sx} cy={sy} r={strokeWidth / 2} fill={arcSegments[0].color} opacity={0.15} />
+                    <motion.circle 
+                      cx={ex} cy={ey} r={strokeWidth / 2} 
+                      fill={getAwakeningColor(awakeningScore)}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5, delay: 0.8 }}
+                    />
+                  </>
+                );
+              })()}
               
               {/* Needle */}
               <motion.g
@@ -82,13 +143,8 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 style={{ transformOrigin: "100px 100px" }}
               >
                 <line
-                  x1="100"
-                  y1="100"
-                  x2="100"
-                  y2="35"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
+                  x1="100" y1="100" x2="100" y2="35"
+                  stroke="white" strokeWidth="3" strokeLinecap="round"
                 />
                 <circle cx="100" cy="100" r="8" fill="white" />
                 <circle cx="100" cy="100" r="4" fill={getAwakeningColor(awakeningScore)} />
@@ -130,14 +186,14 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             <p className="text-slate-400 text-sm mt-2">{zone.description}</p>
           </motion.div>
 
-
-          {/* Zone Legend */}
-          <div className="flex justify-center gap-1 flex-wrap text-[10px]">
+          {/* Zone Legend - graduated sizes */}
+          <div className="flex justify-center items-end gap-1.5 flex-wrap">
             {awakeningZones.map((z, i) => (
               <div 
                 key={i} 
                 className={cn(
-                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full",
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full transition-all",
+                  legendSizes[i],
                   zone.range[0] === z.range[0] ? "bg-slate-700" : "bg-transparent"
                 )}
               >
