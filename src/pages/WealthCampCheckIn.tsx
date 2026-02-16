@@ -866,7 +866,7 @@ ${reflection}`;
 
               <TabsContent value="briefing" className="space-y-4">
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -883,15 +883,6 @@ ${reflection}`;
                     >
                       <Target className="w-4 h-4 mr-1.5" />
                       财富测评
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/coach/wealth_coach_4_questions')}
-                      className="text-violet-600 border-violet-200 hover:bg-violet-50 w-full"
-                    >
-                      <MessageCircle className="w-4 h-4 mr-1.5" />
-                      教练对话
                     </Button>
                     <Button
                       variant="outline"
