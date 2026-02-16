@@ -88,7 +88,7 @@ const RightColumnComponent = memo(({
 ));
 RightColumnComponent.displayName = 'RightColumn';
 
-const CommunityWaterfall = () => {
+const CommunityWaterfall = ({ disableRecommendation = false }: { disableRecommendation?: boolean }) => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
@@ -315,7 +315,7 @@ const CommunityWaterfall = () => {
       // 发现：全部或使用推荐
       else {
         // 如果使用推荐且是第一页
-        if (useRecommendation && pageNum === 0 && filter === 'all') {
+        if (useRecommendation && !disableRecommendation && pageNum === 0 && filter === 'all') {
           let recommendedIds = await loadRecommendedPosts();
           
           // 混入用户自己最近24小时的帖子，避免推荐缓存遮蔽新帖
