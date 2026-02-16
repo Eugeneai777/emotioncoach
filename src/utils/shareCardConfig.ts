@@ -32,8 +32,17 @@ const isWeChatBrowser = (): boolean => {
   return /micromessenger/i.test(navigator.userAgent);
 };
 
+/** 检测 iOS 设备 */
+const isIOSDevice = (): boolean => {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+};
+
 /** 获取最优分辨率倍数 */
 const getOptimalScale = (): number => {
+  // iOS Safari 对 canvas 尺寸有严格限制（某些 WebView 低至 4-8MP），统一用 2x
+  if (isIOSDevice()) {
+    return 2;
+  }
   if (isWeChatBrowser()) {
     // 微信环境：低端设备用 2x，否则 2.5x
     return isLowEndDevice() ? 2 : 2.5;
@@ -427,6 +436,24 @@ export const generateCanvas = async (
       // 性能监控日志
       if (elapsed > 3000) {
         console.warn('[shareCardConfig] Slow generation:', elapsed + 'ms');
+      }
+
+      // 空白 canvas 检测：如果生成的图像全透明，自动降级重试
+      const ctx = canvas.getContext('2d');
+      if (ctx && !forceScale) {
+        try {
+          const sampleW = Math.min(canvas.width, 10);
+          const sampleH = Math.min(canvas.height, 10);
+          const sample = ctx.getImageData(0, 0, sampleW, sampleH);
+          const isBlank = sample.data.every(v => v === 0);
+          if (isBlank) {
+            console.warn('[shareCardConfig] Blank canvas detected, retrying with scale 1.5...');
+            return generateCanvas(cardRef, { ...options, forceScale: 1.5 });
+          }
+        } catch (e) {
+          // getImageData may throw on tainted canvas, ignore
+          debug && console.warn('[shareCardConfig] Canvas sample check failed:', e);
+        }
       }
       
       return canvas;
