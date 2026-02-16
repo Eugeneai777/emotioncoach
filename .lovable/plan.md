@@ -1,80 +1,66 @@
 
 
-## 修复：社区动态在不同页面显示不一致
+## 修复：财富教练主页社区与有劲社区显示不一致
 
 ### 问题根因
 
-经代码分析，发现 `CommunityWaterfall.tsx` 的数据库查询缺少关键字段和排序逻辑：
+财富教练主页和有劲社区（`/community`）都使用同一个 `CommunityWaterfall` 组件，但每次组件挂载时都是独立的实例，各自重新加载数据。差异来自 **推荐系统的随机性**：
 
-### 问题 1：查询未包含 `is_pinned`、`pinned_at`、`visibility` 字段
+1. `recommend-posts` 边缘函数每次调用可能返回不同的推荐帖子列表
+2. `sessionStorage` 缓存只有 2 分钟有效期，两个页面前后访问时缓存可能已过期
+3. 缓存过期后重新调用推荐函数，得到不同结果，导致两个页面显示不同帖子
 
-当前的 SELECT 语句（第 204-212 行）：
+```text
+访问有劲社区 --> 调用推荐 --> 缓存结果A --> 显示帖子集A
+  (2分钟后)
+访问财富教练 --> 缓存过期 --> 重新推荐 --> 缓存结果B --> 显示帖子集B（不同！）
 ```
-id, user_id, post_type, title, content, image_urls, emotion_theme,
-is_anonymous, likes_count, created_at, camp_id
-```
-缺少了 `is_pinned`、`pinned_at` 和 `visibility`，导致：
-- 置顶帖子无法正确标记和显示置顶徽章
-- 隐私可见性标识（锁头图标）无法正常展示
-- 卡片组件中的 `post.is_pinned` 和 `post.visibility` 始终为 undefined
-
-### 问题 2：没有置顶优先排序
-
-所有查询路径（发现、关注、同频、故事）都只按 `created_at` 降序排序，没有按 `is_pinned DESC, pinned_at DESC` 优先排列。不同时间加载可能因为推荐缓存差异，导致置顶帖子位置不一致。
 
 ### 修复方案
 
+将推荐缓存时间延长，并且在教练空间内嵌社区中跳过推荐逻辑，统一按时间排序显示，确保与主社区非推荐模式一致。
+
+**文件：`src/components/coach/CoachCommunity.tsx`**
+
+给 `CommunityWaterfall` 传入一个新 prop `disableRecommendation={true}`，让教练主页内嵌的社区瀑布流不走推荐，直接按时间排序：
+
+```typescript
+import CommunityWaterfall from "@/components/community/CommunityWaterfall";
+
+export const CoachCommunity = () => {
+  return (
+    <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+      <CommunityWaterfall disableRecommendation />
+    </div>
+  );
+};
+```
+
 **文件：`src/components/community/CommunityWaterfall.tsx`**
 
-#### 修改 1：补充查询字段（第 204-212 行）
-
-在 SELECT 中添加 `is_pinned, pinned_at, visibility`：
-
-```typescript
-let query = supabase
-  .from('community_posts')
-  .select(`
-    id, user_id, post_type, title, content, image_urls, emotion_theme,
-    is_anonymous, likes_count, created_at, camp_id,
-    is_pinned, pinned_at, visibility,
-    training_camps!camp_id (
-      camp_type,
-      camp_name,
-      template_id
-    )
-  `);
-```
-
-#### 修改 2：所有排序路径加入置顶优先
-
-在每个 filter 分支的排序逻辑中，将 `.order('created_at', { ascending: false })` 改为先按 `is_pinned` 降序、再按 `pinned_at` 降序、最后按 `created_at` 降序。涉及以下位置：
-
-- 关注筛选（约第 241 行）
-- 同频筛选（约第 280 行）
-- 故事筛选（约第 293 行）
-- 其他类型筛选（约第 300 行）
-- 发现-推荐模式（约第 332 行）
-- 发现-普通模式（约第 335、339 行）
-
-每处改为：
-```typescript
-.order('is_pinned', { ascending: false, nullsFirst: false })
-.order('pinned_at', { ascending: false, nullsFirst: false })
-.order('created_at', { ascending: false })
-```
-
-#### 修改 3：Post 接口补充字段
-
-在 Post 接口（第 13-30 行）添加缺失字段：
+1. 组件增加可选 prop `disableRecommendation?: boolean`
+2. 在 `loadPosts` 的"发现"分支中，当 `disableRecommendation` 为 `true` 时，跳过推荐逻辑，直接使用时间排序查询（与非推荐模式相同）
 
 ```typescript
-interface Post {
-  // ... 现有字段
-  is_pinned?: boolean;
-  pinned_at?: string;
-  visibility?: string;
+// 组件签名
+interface CommunityWaterfallProps {
+  disableRecommendation?: boolean;
 }
+
+const CommunityWaterfall = ({ disableRecommendation = false }: CommunityWaterfallProps) => {
+  // ...
+  
+  // 在"发现"分支中：
+  if (useRecommendation && !disableRecommendation && pageNum === 0 && filter === 'all') {
+    // 走推荐逻辑...
+  } else {
+    // 走时间排序...
+  }
+};
 ```
 
-这些修改确保所有页面（主页和教练空间）使用同一组件时，都能拿到完整的帖子数据，置顶帖子始终排在最前面，显示结果一致。
+这样确保：
+- 主社区页面（`/community`）继续使用推荐算法
+- 教练空间内嵌社区统一按时间+置顶排序，与主社区的"非推荐"视图一致
+- 两个页面显示相同的帖子顺序，不再有差异
 
