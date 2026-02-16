@@ -6,6 +6,7 @@ import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { AssessmentResult, patternInfo, fourPoorInfo, emotionBlockInfo, beliefBlockInfo } from "./wealthBlockData";
 import { AIInsightData } from "./AIInsightCard";
+import { PostCallAdvisorDialog } from "./PostCallAdvisorDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
   const { toast } = useToast();
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showPostCallDialog, setShowPostCallDialog] = useState(false);
 
   // 查询已使用次数
   const { data: sessionCount = 0 } = useQuery({
@@ -135,7 +137,10 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
 
       {showVoiceChat && (
         <CoachVoiceChat
-          onClose={() => setShowVoiceChat(false)}
+          onClose={() => {
+            setShowVoiceChat(false);
+            setShowPostCallDialog(true);
+          }}
           coachEmoji="💎"
           coachTitle="财富觉醒教练"
           primaryColor="amber"
@@ -157,6 +162,15 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
           toast({ title: "🎉 升级成功", description: "现在可以无限次对话了" });
         }}
       />
+
+      {result && (
+        <PostCallAdvisorDialog
+          open={showPostCallDialog}
+          onOpenChange={setShowPostCallDialog}
+          reactionPattern={result.reactionPattern}
+          dominantPoor={result.dominantPoor}
+        />
+      )}
     </>
   );
 }
