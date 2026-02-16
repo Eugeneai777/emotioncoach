@@ -1,78 +1,65 @@
 
 
-## 修复：微信小程序中无法打断对方说话
+## 修复：Safari 中连接一直转圈
 
 ### 问题根因
 
-在 WebRTC 模式（Chrome）下，OpenAI Realtime API 自动处理打断：当 VAD 检测到用户说话时，OpenAI 会立即停止音频输出，客户端的 WebRTC 连接也会自动切换。
+Safari 支持 WebRTC，所以系统选择了 WebRTC 直连 OpenAI 的路径。但由于网络环境限制（中国大陆），对 `api.openai.com` 的 SDP 请求会失败。
 
-但在 WebSocket 中继模式（微信小程序）下，打断需要**手动实现**，因为音频播放是客户端自己管理的（队列 + 逐段播放）。目前有两个关键缺失：
+关键问题在于：**WebRTC 连接失败后的 WebSocket 降级条件太严格**。
 
-1. **客户端收到 `speech_started` 后没有停止播放**：relay 已经转发了 `speech_started` 事件，但客户端的 `handleServerMessage` 将其归入 `default` 分支，仅传递给回调，没有清空音频队列或停止当前播放。
+当前代码（CoachVoiceChat.tsx 第 1324-1328 行）只在以下条件下降级到 WebSocket：
+- `errorType === 'region_blocked'`
+- `errorType === 'forbidden'`
+- `statusCode === 403`
+- 错误信息包含 `'403'` 或 `'unsupported_country'`
 
-2. **relay 没有转发 `response.audio.interrupted` 事件**：当用户打断 AI 说话时，OpenAI 发送此事件通知客户端停止播放剩余音频。relay 的 `handleOpenAIMessage` 没有处理此事件（被默认忽略）。
+但在 Safari 中，对 OpenAI 的 fetch 请求可能因为 DNS 解析失败、网络超时或 CORS 错误而直接抛出 `TypeError: Failed to fetch`，这种错误不会匹配上述任何条件，导致直接进入通用错误处理，显示"连接失败"而不是降级到 WebSocket。
 
 ### 修复方案
 
-#### 文件 1：`src/utils/MiniProgramAudio.ts`
+**文件：`src/components/coach/CoachVoiceChat.tsx`**
 
-在 `handleServerMessage` 的 `switch` 中增加对 `speech_started` 的处理：
+扩大 WebRTC 失败时自动降级到 WebSocket 的条件范围。将目前仅针对"地区封锁"的降级逻辑改为：**所有 WebRTC 连接失败都尝试降级到 WebSocket**。
 
-- 收到 `speech_started` 时，立即调用 `stopAudioPlayback()`（清空队列 + 停止当前播放）
-- 同样处理 `response_interrupted` 事件
+理由：WebSocket relay 是一个可靠的备用通道，无论 WebRTC 因何原因失败（地区限制、DNS 失败、Safari 兼容问题、网络超时等），都应该尝试 WebSocket。
 
-```text
-case 'speech_started':
-  // 用户开始说话 → 立即停止 AI 音频播放（实现打断）
-  this.stopAudioPlayback();
-  this.config.onMessage(message);
-  break;
-
-case 'response_interrupted':
-  // AI 响应被打断 → 清空剩余音频
-  this.stopAudioPlayback();
-  this.config.onMessage(message);
-  break;
-```
-
-#### 文件 2：`supabase/functions/miniprogram-voice-relay/index.ts`
-
-在 `handleOpenAIMessage` 中增加对以下 OpenAI 事件的转发：
-
-- `response.audio.interrupted`：通知客户端 AI 的音频输出已被打断
-- `input_audio_buffer.committed`：确认音频缓冲区已提交（可选）
+具体修改（约第 1320-1366 行）：
 
 ```text
-case 'response.audio.interrupted':
-  // AI 音频被用户打断
-  clientSocket.send(JSON.stringify({
-    type: 'response_interrupted',
-  }));
-  break;
+修改前：
+  catch (webrtcError) {
+    // 只在 region_blocked / forbidden / 403 时降级
+    const isRegionBlocked = ...;
+    if (isRegionBlocked) {
+      // 降级到 WebSocket
+    }
+    throw webrtcError;  // 其他错误直接抛出
+  }
+
+修改后：
+  catch (webrtcError) {
+    // 所有 WebRTC 失败都尝试降级到 WebSocket
+    console.log('[VoiceChat] WebRTC failed, falling back to WebSocket relay...');
+    toast({ title: "正在切换通道", description: "正在使用备用语音通道..." });
+    // 清理 WebRTC 连接
+    chat.disconnect();
+    chatRef.current = null;
+    // 切换到 WebSocket relay 模式
+    // ...（复用现有降级代码）
+  }
 ```
 
-### 修复后的打断流程
-
-```text
-用户说话（AI正在播放音频）
-  → 麦克风持续发送 audio_input 到 relay
-  → relay 转发到 OpenAI
-  → OpenAI VAD 检测到用户语音
-  → OpenAI 发送 input_audio_buffer.speech_started
-  → relay 转发 speech_started 给客户端
-  → 客户端收到 → stopAudioPlayback()（清空队列+停止播放） ✅
-  → OpenAI 发送 response.audio.interrupted
-  → relay 转发 response_interrupted 给客户端
-  → 客户端再次确认清空 ✅
-  → OpenAI 处理用户新的语音输入并生成新回复
-```
-
-### 具体代码变更
+### 变更文件
 
 | 文件 | 修改内容 |
 |------|---------|
-| `src/utils/MiniProgramAudio.ts` | `handleServerMessage` 增加 `speech_started` 和 `response_interrupted` 的处理，调用 `stopAudioPlayback()` |
-| `miniprogram-voice-relay/index.ts` | `handleOpenAIMessage` 增加 `response.audio.interrupted` 事件的转发 |
+| `src/components/coach/CoachVoiceChat.tsx` | WebRTC catch 块中，移除 `isRegionBlocked` 条件判断，所有 WebRTC 失败都降级到 WebSocket relay |
 
-改动量很小，每个文件约增加 5-10 行。
+### 修复后效果
+
+- Safari 用户：WebRTC 连接失败 -> 自动降级到 WebSocket relay -> 正常通话
+- Chrome 用户（可直连 OpenAI）：行为不变，WebRTC 成功则直接使用
+- Chrome 用户（被封锁）：行为改善，任何 WebRTC 失败都会快速降级
+- 微信小程序：不受影响，本来就直接走 WebSocket
 
