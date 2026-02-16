@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveContainer } from "@/components/ui/responsive-container";
 
 const themes = [
-  { day: 1, title: "马上觉醒", emoji: "🌅", desc: "新年第一天，唤醒心中的力量与希望" },
-  { day: 2, title: "马上发财", emoji: "🧧", desc: "财神送福，开启新年财运通道" },
-  { day: 3, title: "马上回血", emoji: "🔥", desc: "满血复活，新年新气象" },
-  { day: 4, title: "马上看见", emoji: "🏮", desc: "擦亮双眼，看见新一年的无限可能" },
-  { day: 5, title: "马上破局", emoji: "🎆", desc: "辞旧迎新，迎接全新机遇" },
-  { day: 6, title: "马上翻身", emoji: "🎊", desc: "否极泰来，好运翻倍到来" },
-  { day: 7, title: "马上出发", emoji: "🎯", desc: "新春启程，一路繁花似锦" },
+  { day: 1, dateLabel: "除夕", title: "马上觉醒", emoji: "🧨", desc: "辞旧迎新，点燃新年第一把火" },
+  { day: 2, dateLabel: "初一", title: "马上发财", emoji: "🧧", desc: "开门迎财神，新年财运滚滚来" },
+  { day: 3, dateLabel: "初二", title: "马上回血", emoji: "🏠", desc: "回娘家，满血复活好状态" },
+  { day: 4, dateLabel: "初三", title: "马上看见", emoji: "🏮", desc: "小年朝，静心看见新的可能" },
+  { day: 5, dateLabel: "初四", title: "马上破局", emoji: "🎆", desc: "迎灶神，破旧局开新篇" },
+  { day: 6, dateLabel: "初五", title: "马上翻身", emoji: "🎊", desc: "破五迎财，否极泰来好运翻倍" },
+  { day: 7, dateLabel: "初六", title: "马上出发", emoji: "🎯", desc: "开市大吉，新春启程一路生花" },
 ];
 
 const sellingPoints = [
@@ -119,7 +119,7 @@ export default function MashangLanding() {
       <section className="px-4 pb-8">
         <ResponsiveContainer size="sm">
           <h2 className="text-center text-lg font-bold text-amber-200 mb-5">
-            🏮 新春七天 · 好运马上来
+            🏮 除夕到初六 · 好运马上来
           </h2>
           <div className="space-y-3">
             {themes.map((t, i) => (
@@ -133,7 +133,7 @@ export default function MashangLanding() {
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center text-lg font-black text-white shadow-md relative overflow-hidden">
                   {/* Subtle cloud texture overlay */}
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_30%,_white_1px,transparent_1px),radial-gradient(circle_at_70%_70%,_white_1px,transparent_1px)] bg-[length:6px_6px]" />
-                  <span className="relative z-10">{t.day}</span>
+                  <span className="relative z-10 text-xs">{t.dateLabel}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
