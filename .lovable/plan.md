@@ -1,42 +1,52 @@
 
+# 彻底修复分享卡片下载显示问题 — 全量 Inline Style 方案
 
-# 修复分享卡片保存后文字和背景消失的问题
+## 为什么这个问题反复出现
 
-## 问题根因
+html2canvas 在生成图片时会克隆 DOM 到一个离屏容器中渲染。Tailwind CSS 的类名依赖于样式表的计算，在克隆环境中经常丢失或计算错误。每次修补 shareCardConfig.ts 的渲染逻辑只是治标，卡片组件本身用 Tailwind 写样式才是根本原因。
 
-在 `src/utils/shareCardConfig.ts` 的 `prepareClonedElement` 函数中，第 228 行：
+对比项目中两张卡片：
+- WealthCampShareCard（橙色）：100% inline style — 稳定
+- AssessmentValueShareCard（紫色）：Tailwind 类名 — 反复出错
 
-```
-cloned.style.background = 'transparent';
-```
+## 方案：一劳永逸
 
-这行代码会覆盖卡片自身的背景样式（无论是内联 gradient 还是 Tailwind 渐变类），导致：
-- 卡片背景变成白色/透明
-- 白色文字在白色背景上不可见
-- 所有视觉层次丢失
+将 `AssessmentValueShareCard.tsx` 的所有 Tailwind 类名替换为 inline style，与 WealthCampShareCard 保持一致。这样 html2canvas 直接读取元素上的 style 属性，不再依赖 CSS 样式表计算。
 
-第二个问题：`AchievementShareCard` 使用了 `bg-clip-text text-transparent` 实现渐变文字效果，html2canvas 无法正确渲染此 CSS 特性，导致文字完全透明。
+## 具体改动
 
-## 修复方案
+### 文件：`src/components/wealth-block/AssessmentValueShareCard.tsx`
 
-### 1. `src/utils/shareCardConfig.ts` — prepareClonedElement
+全量重写样式，所有视觉属性使用 inline style：
 
-- 删除 `cloned.style.background = 'transparent'` 这一行，保留卡片原有的背景样式
+1. **根容器**：`className="w-[320px] rounded-2xl overflow-hidden shadow-2xl"` 改为 `style={{ width: '320px', borderRadius: '16px', overflow: 'hidden' }}`（保留已有的 background gradient inline style）
 
-### 2. `src/utils/shareCardConfig.ts` — onclone 回调
+2. **布局**：所有 `flex`、`items-center`、`gap-*`、`justify-between` 改为对应的 `display: 'flex'`、`alignItems: 'center'`、`gap: 'Xpx'`
 
-- 在 onclone 中检测所有使用 `bg-clip-text` 或 `-webkit-background-clip: text` 的元素
-- 将它们的 `color` 改为对应的可见颜色（如 amber-400），移除 `background-clip` 和 `text-transparent`
-- 这样渐变文字会降级为纯色文字，但至少可见
+3. **间距**：所有 `p-5`、`mb-4`、`space-y-3` 改为 `padding`、`marginBottom`、`gap`
 
-### 具体改动
+4. **颜色与透明度**：
+   - `text-white/90` 改为 `color: 'rgba(255,255,255,0.9)'`
+   - `text-amber-300/80` 改为 `color: 'rgba(252,211,77,0.8)'`
+   - `bg-white/10` 改为 `background: 'rgba(255,255,255,0.1)'`
+   - `bg-amber-500/30` 改为 `background: 'rgba(245,158,11,0.3)'`
+   - `border-amber-400/50` 改为 `border: '2px solid rgba(251,191,35,0.5)'`
 
-**文件 1**: `src/utils/shareCardConfig.ts`
+5. **CTA 区域渐变**：`bg-gradient-to-r from-amber-500/20 to-orange-500/20` 改为 `background: 'linear-gradient(to right, rgba(245,158,11,0.2), rgba(249,115,22,0.2))'`
 
-1. `prepareClonedElement` 中移除 `background: transparent`
-2. `onclone` 回调中增加对 `background-clip: text` 元素的处理，将其降级为纯色文字
+6. **Footer**：`bg-black/30` 改为 `background: 'rgba(0,0,0,0.3)'`
 
-预期效果：
-- 卡片背景正常显示（渐变色）
-- 所有文字可见
-- 渐变文字降级为纯色但仍然可读
+7. **文字样式**：所有 `text-sm`、`text-xs`、`font-bold`、`text-center` 改为 `fontSize`、`fontWeight`、`textAlign`
+
+8. **移除 `backdrop-blur-sm`**：html2canvas 不支持 backdrop-filter，直接删除
+
+### 不需要改动的文件
+
+- `shareCardConfig.ts` — 之前的 onclone 修复保留作为兜底，但不再需要依赖它
+- `WealthCampShareCard.tsx` — 已经是 inline style，无需改动
+
+## 预期效果
+
+- 所有分享卡片下载后背景、文字、布局完全正确
+- 不再依赖 html2canvas 对 Tailwind 类名的解析
+- 与 WealthCampShareCard 保持统一的编码规范，后续维护更简单
