@@ -132,7 +132,8 @@ CRITICAL RULES:
 3. Strong contrast between text and background for instant readability.
 4. Clean breathing space — generous margins and line spacing.
 5. This must look like a top-performing Xiaohongshu text poster that makes people STOP scrolling.
-6. Render all Chinese characters precisely and clearly.`;
+6. Render all Chinese characters precisely and clearly.
+7. ABSOLUTELY DO NOT add any text that is not listed above. No extra words, no slogans, no dates, no times, no course names, no watermarks, no "今晚8点", no "财富觉醒课", no additional Chinese or English text whatsoever. ONLY render the exact 3 text elements specified above (hook, title, bottom tag) and NOTHING ELSE.`;
 }
 
 serve(async (req) => {
