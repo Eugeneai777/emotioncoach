@@ -268,6 +268,41 @@ export default function WealthCampCheckIn() {
     },
   });
 
+  // Fetch wealth coach 4-questions briefings (text coach conversations)
+  const { data: wealthCoachBriefings = [] } = useQuery({
+    queryKey: ['wealth-coach-briefings-all'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('wealth_coach_4_questions_briefings')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Merge all briefing sources into a unified list sorted by date
+  const mergedBriefings = useMemo(() => {
+    const journalItems = allJournalEntries.map((entry: any) => ({
+      ...entry,
+      _source: 'journal' as const,
+      _sortDate: entry.created_at,
+    }));
+    const coachItems = wealthCoachBriefings.map((b: any) => ({
+      ...b,
+      _source: 'coach_briefing' as const,
+      _sortDate: b.created_at,
+    }));
+    return [...journalItems, ...coachItems].sort(
+      (a, b) => new Date(b._sortDate).getTime() - new Date(a._sortDate).getTime()
+    );
+  }, [allJournalEntries, wealthCoachBriefings]);
+
   const { todayAction, todayEntryId, todayActionCompleted: journalActionCompleted } = useTodayWealthJournal(journalEntries, currentDay);
 
   // Fetch user ID
@@ -870,7 +905,7 @@ ${reflection}`;
                   <BackfillMemoriesButton />
                 </div>
                 
-                {allJournalEntries.length === 0 ? (
+                {mergedBriefings.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
                   <div className="text-muted-foreground">
                       <p>还没有财富简报</p>
@@ -885,13 +920,45 @@ ${reflection}`;
                     </Button>
                   </div>
                 ) : (
-                  allJournalEntries.map((entry) => (
-                    <WealthJournalCard
-                      key={entry.id}
-                      entry={entry}
-                      onClick={() => navigate(`/wealth-journal/${entry.id}`)}
-                    />
-                  ))
+                  mergedBriefings.map((item: any) => {
+                    if (item._source === 'coach_briefing') {
+                      return (
+                        <Card key={`cb-${item.id}`} className="overflow-hidden border-violet-200/60 dark:border-violet-800/40 bg-gradient-to-br from-violet-50/50 to-purple-50/30 dark:from-violet-950/20 dark:to-purple-950/10">
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">💬</span>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 font-medium">教练对话</span>
+                              <span className="text-xs text-muted-foreground ml-auto">
+                                {new Date(item.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            {item.behavior_insight && (
+                              <p className="text-sm text-foreground mb-1">🎯 {item.behavior_insight}</p>
+                            )}
+                            {item.emotion_insight && (
+                              <p className="text-sm text-foreground mb-1">💛 {item.emotion_insight}</p>
+                            )}
+                            {item.belief_insight && (
+                              <p className="text-sm text-foreground mb-1">💡 {item.belief_insight}</p>
+                            )}
+                            {item.giving_action && (
+                              <p className="text-sm text-foreground">🎁 {item.giving_action}</p>
+                            )}
+                            {!item.behavior_insight && !item.emotion_insight && item.summary && (
+                              <p className="text-sm text-muted-foreground">{item.summary}</p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                    return (
+                      <WealthJournalCard
+                        key={item.id}
+                        entry={item}
+                        onClick={() => navigate(`/wealth-journal/${item.id}`)}
+                      />
+                    );
+                  })
                 )}
               </TabsContent>
             </Tabs>
