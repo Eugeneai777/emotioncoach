@@ -816,7 +816,7 @@ export default function WealthBlockAssessmentPage() {
             </motion.div>
           </TabsContent>
           {/* 底部固定一体化导航栏 */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-t border-amber-200/50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
+          <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-t border-gray-100 shadow-[0_-2px_20px_rgba(0,0,0,0.04)] pb-[env(safe-area-inset-bottom)]">
             <div className="container max-w-sm sm:max-w-lg mx-auto px-1 relative">
               {/* 隐藏的 TabsList 保持 Radix Tabs 状态同步 */}
               <TabsList className="hidden">
@@ -825,22 +825,25 @@ export default function WealthBlockAssessmentPage() {
               </TabsList>
 
               {/* 自定义3栏导航 */}
-              <div className="flex items-end justify-around pt-0.5 pb-0.5">
+              <div className="flex items-end justify-around pt-0.5 pb-1">
                 {/* 左侧 - 开始测评 */}
                 <button
                   onClick={() => { setActiveTab("assessment"); setShowResult(false); setCurrentResult(null); setShowIntro(true); window.scrollTo(0, 0); }}
-                  className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-4 rounded-xl transition-all duration-200 min-w-[72px]
+                  className={`flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 min-w-[72px]
                     ${activeTab === "assessment" 
-                      ? "text-amber-600" 
-                      : "text-muted-foreground hover:text-amber-500"}`}
+                      ? "text-rose-600" 
+                      : "text-gray-400 hover:text-gray-600"}`}
                 >
-                  <RotateCcw className={`w-5 h-5 transition-transform ${activeTab === "assessment" ? "scale-110" : ""}`} />
-                  <span className="text-[11px] font-semibold leading-tight">重新测评</span>
+                  <RotateCcw className={`w-[18px] h-[18px] transition-all duration-200 ${activeTab === "assessment" ? "stroke-[2.5px]" : "stroke-[1.5px]"}`} />
+                  <span className={`text-[10px] leading-tight tracking-wide ${activeTab === "assessment" ? "font-bold" : "font-medium"}`}>重新测评</span>
+                  {activeTab === "assessment" && (
+                    <span className="w-1 h-1 rounded-full bg-rose-500 mt-0.5" />
+                  )}
                 </button>
 
                 {/* 中间 - 凸出的教练解说 FAB（仅结果页显示） */}
                 {showResult && currentResult && (
-                  <div className="relative -top-4 flex flex-col items-center">
+                  <div className="relative -top-5 flex flex-col items-center">
                     <AssessmentVoiceCoach
                       result={currentResult}
                       aiInsight={null}
@@ -856,17 +859,18 @@ export default function WealthBlockAssessmentPage() {
                 {/* 右侧 - 历史记录 */}
                 <button
                   onClick={() => setActiveTab("history")}
-                  className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-4 rounded-xl transition-all duration-200 min-w-[72px] relative
+                  className={`flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 min-w-[72px] relative
                     ${activeTab === "history" 
-                      ? "text-amber-600" 
-                      : "text-muted-foreground hover:text-amber-500"}`}
+                      ? "text-rose-600" 
+                      : "text-gray-400 hover:text-gray-600"}`}
                 >
-                  <History className={`w-5 h-5 transition-transform ${activeTab === "history" ? "scale-110" : ""}`} />
-                  <span className="text-[11px] font-semibold leading-tight">历史记录</span>
+                  <History className={`w-[18px] h-[18px] transition-all duration-200 ${activeTab === "history" ? "stroke-[2.5px]" : "stroke-[1.5px]"}`} />
+                  <span className={`text-[10px] leading-tight tracking-wide ${activeTab === "history" ? "font-bold" : "font-medium"}`}>历史记录</span>
+                  {activeTab === "history" && (
+                    <span className="w-1 h-1 rounded-full bg-rose-500 mt-0.5" />
+                  )}
                   {historyRecords.length > 0 && (
-                    <span className="absolute -top-0.5 right-2 bg-red-500 text-white text-[9px] min-w-[16px] h-4 flex items-center justify-center px-1 rounded-full">
-                      {historyRecords.length}
-                    </span>
+                    <span className="absolute top-1 right-3 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
                   )}
                 </button>
               </div>
