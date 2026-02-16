@@ -112,7 +112,6 @@ const THEME_COPY: Record<string, { hook: string; title: string; bottom: string }
 const STYLE_NAMES = XHS_STYLES.map(s => s.name);
 
 function buildPrompt(theme: string, customText?: { hook?: string; title?: string; bottom?: string }, styleName?: string): string {
-  // Use custom text or fall back to theme defaults
   const defaultCopy = THEME_COPY[theme] || { hook: "", title: "", bottom: "" };
   const copy = {
     hook: customText?.hook || defaultCopy.hook,
@@ -120,36 +119,32 @@ function buildPrompt(theme: string, customText?: { hook?: string; title?: string
     bottom: customText?.bottom || defaultCopy.bottom,
   };
   
-  // Use specified style or random
   let style;
   if (styleName) {
     style = XHS_STYLES.find(s => s.name === styleName) || XHS_STYLES[Math.floor(Math.random() * XHS_STYLES.length)];
   } else {
     style = XHS_STYLES[Math.floor(Math.random() * XHS_STYLES.length)];
   }
+
+  // Combine all text elements into one description
+  const allText = [copy.hook, copy.title.replace(/\n/g, ' '), copy.bottom].filter(Boolean).join('、');
   
-  return `Design a viral Xiaohongshu (小红书) cover image. 3:4 portrait ratio (1080x1440px).
+  return `你是一位小红书爆款海报设计大师。请设计一张3:4竖版（1080x1440px）的小红书爆款封面图。
 
-DESIGN STYLE: "${style.name}"
-- Background: ${style.bg}
-- Main title: ${style.titleStyle}
-- Subtitle: ${style.subtitleStyle}  
-- Color accent: ${style.accent}
-- Layout: ${style.composition}
+设计风格参考："${style.name}"
+- 背景: ${style.bg}
+- 配色: ${style.accent}
 
-TEXT CONTENT (must render ALL text accurately in Chinese):
-- Top hook line (small): "${copy.hook}"
-- Main title (HUGE, dominant): "${copy.title}"
-- Bottom tag (medium, bold): "${copy.bottom}"
+需要呈现的文案内容：${allText}
 
-CRITICAL RULES:
-1. TEXT IS EVERYTHING. The image is purely typographic — no illustrations, no photos, no icons, no decorative elements, no animals, no people.
-2. The main title must be MASSIVE — it should dominate 50-70% of the visual space.
-3. Strong contrast between text and background for instant readability.
-4. Clean breathing space — generous margins and line spacing.
-5. This must look like a top-performing Xiaohongshu text poster that makes people STOP scrolling.
-6. Render all Chinese characters precisely and clearly.
-7. ABSOLUTELY DO NOT add any text that is not listed above. No extra words, no slogans, no dates, no times, no course names, no watermarks, no additional Chinese or English text whatsoever. ONLY render the exact 3 text elements specified above (hook, title, bottom tag) and NOTHING ELSE.`;
+请像小红书上那些10万+点赞的爆款封面一样来设计这张海报。你可以自由决定排版、字体大小、文字层次、留白和构图方式。关键是让人看到的第一眼就想点进来。
+
+要求：
+- 纯文字排版设计，不要任何插图、照片、人物、图标或装饰元素
+- 主要文案要大、要醒目、要有冲击力
+- 文字层次分明，有呼吸感
+- 只使用我提供的文案内容，不要自己添加任何额外的文字（包括日期、时间、课程名、水印等）
+- 所有中文字符必须清晰准确`;
 }
 
 serve(async (req) => {
