@@ -277,8 +277,6 @@ export function AwakeningJourneyPreview({
               </div>
             )}
 
-            {/* 零风险微文案 */}
-            <p className="text-xs text-muted-foreground">不满意随时退出 · 零风险</p>
 
             {/* 了解详情 */}
             <Button
