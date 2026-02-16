@@ -1,48 +1,66 @@
 
 
-# 训练营分数与目标区改为卡片式布局
+# 修复微信H5分享闪退问题
 
-## 当前状态
+## 问题根因
 
-起点分数区被简化为：大号分数 + 一行文字"7天后目标：65+ → 从'初步觉醒'突破到'稳步觉醒'"。用户希望恢复为截图中的三卡片布局（起点 + 7天后 + 毕业），让信息更直观。
+当用户在微信浏览器（H5）中点击"分享我的AI测评报告"后：
 
-## 改动方案
+1. `ShareDialogBase.handleGenerateImage` 被调用
+2. `shouldUseImagePreview()` 只对小程序返回 true，微信H5返回 false
+3. 进入 `handleShareWithFallback`，检测到 iOS + `navigator.share` 可用
+4. 调用 `navigator.share()` — 但微信的 WebKit 实现有缺陷，share sheet 闪现后立刻关闭
+5. `navigator.share()` 可能立刻 resolve（未真正完成分享），或抛出非 AbortError 的异常
 
-### 文件：`src/components/wealth-block/AwakeningJourneyPreview.tsx`
+代码注释已经指出了这个问题：*"WeChat's navigator.share() API is unreliable - it may resolve immediately"*，但实际逻辑并未针对微信H5跳过 `navigator.share`。
 
-将第 102-149 行的"起点分数区"替换为三段式卡片布局：
+## 修复方案
 
-#### 第一张卡片：当前分数（居中大卡）
-- 顶部标签：`现在 · Day 0`（圆角标签，amber 背景）
-- 中间：大号觉醒指数分数（保留脉冲动画）
-- 底部文字：`你的觉醒起点`
-- 白色圆角卡片 + amber 边框
+### 文件：`src/utils/shareUtils.ts`
 
-#### 上升箭头
-- 保留现有的 `TrendingUp` 动画箭头，居中显示
+修改 `shouldUseImagePreview()` 函数，让微信H5也返回 true：
 
-#### 第二行：两张并排卡片
-- **左卡 - 7天后目标**：
-  - 顶部绿色标签 `🚀 7天后`
-  - 大号数字 `{day7Target}+`（绿色）
-  - 描述文字 `{day7ValueDesc}`（如"从'初步觉醒'突破到'稳步觉醒'"）
-  - 绿色实线边框 + 浅绿背景
-  
-- **右卡 - 毕业目标**：
-  - 顶部紫色标签 `毕业`
-  - 大号数字 `◎ 85+`（紫色）
-  - 描述文字 `财富能量畅通`
-  - 紫色虚线边框 + 浅紫背景
+```typescript
+export const shouldUseImagePreview = (): boolean => {
+  const { isMiniProgram, isWeChat } = getShareEnvironment();
+  // 微信环境（H5 和小程序）都使用图片预览
+  // 因为微信的 navigator.share() 不可靠
+  return isWeChat || isMiniProgram;
+};
+```
 
-### 技术细节
+### 影响范围
 
-- 使用 `grid grid-cols-2 gap-3` 布局两张并排卡片
-- 字号：标签 `text-sm font-bold`，分数 `text-3xl font-bold`，描述 `text-sm`
-- 移除当前的一行文字目标描述（第 137-148 行）
-- 毕业目标分数固定为 85+，描述固定为"财富能量畅通"（与 memory 标准一致）
+`shouldUseImagePreview` 被 `share-dialog-base.tsx` 使用（第 105 行）。改动后：
 
-### 不改动的部分
+- **微信H5**：跳过 `handleShareWithFallback`，直接生成图片并展示全屏预览（长按保存）
+- **微信小程序**：行为不变（已经是图片预览）
+- **iOS Safari / Android**：行为不变（继续用 `navigator.share()`）
+- **桌面浏览器**：行为不变
 
-- 标题区（第 92-100 行）保持不变
-- 训练营标题区、收获区、价值清单、CTA 区全部保持不变
+### 同时修复 `handleShareWithFallback` 中的微信检测
 
+作为双重保险，在 `handleShareWithFallback` 函数的 iOS 和 Android 分支中，增加微信环境的前置拦截。在函数开头（mini program 检测之后）添加：
+
+```typescript
+// WeChat H5: Skip navigator.share, show image preview
+if (isWeChat && !isMiniProgram) {
+  const blobUrl = URL.createObjectURL(blob);
+  options.onShowPreview?.(blobUrl);
+  return { success: true, method: 'preview', blobUrl };
+}
+```
+
+这样即使其他调用方直接使用 `handleShareWithFallback`（不经过 `ShareDialogBase`），也不会触发微信的不可靠 share API。
+
+## 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/utils/shareUtils.ts` | 1) `shouldUseImagePreview` 增加微信H5判断；2) `handleShareWithFallback` 增加微信H5前置拦截 |
+
+## 预期效果
+
+- 微信H5中点击分享 → 生成图片 → 全屏预览（提示"长按上方图片保存"）
+- 不再出现闪屏/闪退
+- 用户长按保存后可自行转发给微信好友
