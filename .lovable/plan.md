@@ -1,76 +1,78 @@
 
 
-## 修复：session_config 消息被静默丢弃
+## 修复：微信小程序中无法打断对方说话
 
 ### 问题根因
 
-relay 的 `clientSocket.onmessage`（第 188 行）有一个前置守卫：
+在 WebRTC 模式（Chrome）下，OpenAI Realtime API 自动处理打断：当 VAD 检测到用户说话时，OpenAI 会立即停止音频输出，客户端的 WebRTC 连接也会自动切换。
 
-```
-if (!isConnected || !openaiSocket) {
-  console.warn('[Relay] Received message but not connected to OpenAI');
-  return;  // <-- session_config 在这里被丢弃了
-}
-```
+但在 WebSocket 中继模式（微信小程序）下，打断需要**手动实现**，因为音频播放是客户端自己管理的（队列 + 逐段播放）。目前有两个关键缺失：
 
-时序问题：
-1. 客户端 WebSocket 连接成功 → 立即发送 `session_config`
-2. 此时 relay 正在异步连接 OpenAI，`isConnected = false`
-3. `session_config` 消息被守卫条件拦截并丢弃
-4. OpenAI 连接成功后等待 500ms，但 instructions 早已丢失 → fallback 到默认 prompt
+1. **客户端收到 `speech_started` 后没有停止播放**：relay 已经转发了 `speech_started` 事件，但客户端的 `handleServerMessage` 将其归入 `default` 分支，仅传递给回调，没有清空音频队列或停止当前播放。
 
-日志也印证了这一点：`[Relay] Using default prompt for mode: general`
+2. **relay 没有转发 `response.audio.interrupted` 事件**：当用户打断 AI 说话时，OpenAI 发送此事件通知客户端停止播放剩余音频。relay 的 `handleOpenAIMessage` 没有处理此事件（被默认忽略）。
 
 ### 修复方案
 
-**文件：`supabase/functions/miniprogram-voice-relay/index.ts`**
+#### 文件 1：`src/utils/MiniProgramAudio.ts`
 
-将 `session_config` 的处理逻辑从受守卫保护的 `switch` 中提取出来，放到守卫之前。`session_config` 不需要转发给 OpenAI，只是用来设置变量，所以不需要 `isConnected` 条件。
+在 `handleServerMessage` 的 `switch` 中增加对 `speech_started` 的处理：
 
-修改 `clientSocket.onmessage` 处理器（约第 187-250 行）：
+- 收到 `speech_started` 时，立即调用 `stopAudioPlayback()`（清空队列 + 停止当前播放）
+- 同样处理 `response_interrupted` 事件
 
-```
-clientSocket.onmessage = (event) => {
-  try {
-    const message = JSON.parse(event.data);
+```text
+case 'speech_started':
+  // 用户开始说话 → 立即停止 AI 音频播放（实现打断）
+  this.stopAudioPlayback();
+  this.config.onMessage(message);
+  break;
 
-    // session_config 必须在 OpenAI 连接前就能处理
-    if (message.type === 'session_config' && message.instructions) {
-      console.log('[Relay] Received client session_config with instructions');
-      clientInstructions = message.instructions;
-      if (instructionsResolve) {
-        instructionsResolve(message.instructions);
-        instructionsResolve = null;
-      }
-      return;
-    }
-
-    // 其他消息需要 OpenAI 连接就绪
-    if (!isConnected || !openaiSocket) {
-      console.warn('[Relay] Received message but not connected to OpenAI');
-      return;
-    }
-
-    // ... 原有的 switch 逻辑（去掉 session_config case）
-  }
-}
+case 'response_interrupted':
+  // AI 响应被打断 → 清空剩余音频
+  this.stopAudioPlayback();
+  this.config.onMessage(message);
+  break;
 ```
 
-同时更新 `ClientMessage` 接口（第 21-25 行）增加 `instructions` 字段：
+#### 文件 2：`supabase/functions/miniprogram-voice-relay/index.ts`
 
-```
-interface ClientMessage {
-  type: string;
-  audio?: string;
-  text?: string;
-  instructions?: string;  // 新增
-}
+在 `handleOpenAIMessage` 中增加对以下 OpenAI 事件的转发：
+
+- `response.audio.interrupted`：通知客户端 AI 的音频输出已被打断
+- `input_audio_buffer.committed`：确认音频缓冲区已提交（可选）
+
+```text
+case 'response.audio.interrupted':
+  // AI 音频被用户打断
+  clientSocket.send(JSON.stringify({
+    type: 'response_interrupted',
+  }));
+  break;
 ```
 
-### 影响范围
+### 修复后的打断流程
+
+```text
+用户说话（AI正在播放音频）
+  → 麦克风持续发送 audio_input 到 relay
+  → relay 转发到 OpenAI
+  → OpenAI VAD 检测到用户语音
+  → OpenAI 发送 input_audio_buffer.speech_started
+  → relay 转发 speech_started 给客户端
+  → 客户端收到 → stopAudioPlayback()（清空队列+停止播放） ✅
+  → OpenAI 发送 response.audio.interrupted
+  → relay 转发 response_interrupted 给客户端
+  → 客户端再次确认清空 ✅
+  → OpenAI 处理用户新的语音输入并生成新回复
+```
+
+### 具体代码变更
 
 | 文件 | 修改内容 |
 |------|---------|
-| `miniprogram-voice-relay/index.ts` | 将 `session_config` 处理提到守卫条件之前；`ClientMessage` 增加 `instructions` 字段 |
+| `src/utils/MiniProgramAudio.ts` | `handleServerMessage` 增加 `speech_started` 和 `response_interrupted` 的处理，调用 `stopAudioPlayback()` |
+| `miniprogram-voice-relay/index.ts` | `handleOpenAIMessage` 增加 `response.audio.interrupted` 事件的转发 |
 
-只修改一个文件，改动约 10 行。其他文件（token 端点、MiniProgramAudio.ts）无需改动，它们的逻辑是正确的。
+改动量很小，每个文件约增加 5-10 行。
+
