@@ -128,10 +128,21 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     if (!open) return;
     setIsLoadingUser(true);
 
+    // 超时兜底：最多 5 秒后强制结束 loading
+    const timeoutId = setTimeout(() => {
+      console.warn('[WealthInviteCardDialog] User info fetch timed out, showing default card.');
+      setIsLoadingUser(false);
+    }, 5000);
+
     const fetchUserInfo = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          // 未登录也显示卡片，使用默认数据
+          setIsLoadingUser(false);
+          clearTimeout(timeoutId);
+          return;
+        }
 
         // Profile
         const { data: profile } = await supabase
@@ -204,10 +215,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         console.error('[WealthInviteCardDialog] Failed to fetch user info:', err);
       } finally {
         setIsLoadingUser(false);
+        clearTimeout(timeoutId);
       }
     };
 
     fetchUserInfo();
+    return () => clearTimeout(timeoutId);
   }, [open, campId, propCurrentDay]);
 
   // ── Card rendering helpers ────────────────────────────────────
