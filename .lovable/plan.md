@@ -1,92 +1,81 @@
 
 
-# 优化训练营转化卡片 — 高转化重设计
+# 修复分享卡片下载显示问题
 
-## 当前问题
+## 问题分析
 
-从截图看，`AwakeningJourneyPreview` 组件存在以下转化障碍：
+从截图对比可以看出两个问题：
 
-1. **标题不够抓人** — "你的财富觉醒起点" 像数据报告，不像行动召唤
-2. **字太小** — 收获描述用 `text-xs`/`text-sm`，在手机上阅读困难
-3. **训练营信息弱** — "财富觉醒训练营" + "7天·每天15分钟" 徽章太小，缺乏冲击力
-4. **价值感不足** — 三个收获项（行为突破/情绪松绑/信念升级）用小字平铺，没有突出"物超所值"
-5. **缺少紧迫感** — 没有限时、名额等促转化元素
-6. **CTA 按钮** — 虽然大，但缺少价值锚定（只显示价格，没对比感）
+1. **预览区仍被裁剪** — 对话框中卡片预览没有完整显示（头像区域被截断）
+2. **导出图片渲染异常** — html2canvas 导出时，卡片的渐变背景和部分样式可能丢失
 
-## 重设计方案
+### 根因
 
-### 文件：`src/components/wealth-block/AwakeningJourneyPreview.tsx`
+**预览裁剪**：`share-dialog-base.tsx` 中预览容器使用 `overflow-hidden`，但缩放后的卡片可能因为 `transform` 的布局计算问题导致不完整显示。CSS `transform: scale()` 不会改变元素的布局尺寸，容器仍按原始尺寸计算，导致裁剪。
 
-#### 1. 标题区 — 制造紧迫感
+**导出渲染**：`WealthInviteCardDialog` 调用 `generateCardBlob` 时没有传入 `backgroundType`，默认为 `'transparent'`（`null`），导致 html2canvas 不设置背景色。虽然卡片本身有 inline gradient，但 html2canvas 在某些环境下可能无法正确捕获 `linear-gradient`。
 
-将 "你的财富觉醒起点" 改为更有冲击力的标题：
-- 主标题放大到 `text-lg font-bold`：**"你的觉醒刚开始，别让它停在这里"**
-- 副标题用痛点文案（已有的 painPointText），加大到 `text-base`
-- 移除 MapPin 图标和"测评已为你定位起点"小字
+## 修改方案
 
-#### 2. 起点分数区 — 简化，只保留当前分数
+### 1. 修复预览容器布局（share-dialog-base.tsx）
 
-- 保留大号觉醒指数分数 + 脉冲动画
-- 移除 7天目标 和 毕业目标 两个并排框（信息过载，分散注意力）
-- 改为一行文字："7天后目标：{day7Target}+ → {day7ValueDesc}"
+在预览区域的缩放容器上，用 `transformOrigin: 'top center'` 并添加 `align-items: flex-start`，确保卡片从顶部开始渲染而不被截断：
 
-#### 3. 训练营标题区 — 放大突出
-
-- "财富觉醒训练营" 字号从 `text-base` 提升到 `text-xl font-bold`
-- "7天·每天15分钟" 徽章尺寸放大，从 `text-sm` 改为 `text-base px-4 py-2`
-- 新增一行醒目文案：**"每天15分钟，AI教练1对1带你突破"**
-
-#### 4. 收获区 — 放大字号 + 卡片化
-
-- "7天后，你会得到" 标题从 `text-sm` 提升到 `text-base font-bold`
-- 三个收获项：
-  - emoji 放大到 `text-2xl`
-  - 标签从 `text-xs` 提升到 `text-sm font-bold`
-  - 描述从 `text-sm` 提升到 `text-base`
-  - 每项加更明显的背景色和左边框（类似高亮卡片）
-
-#### 5. 新增"你将获得"清单 — 体现物超所值
-
-在收获区下方新增一个包含具体内容的清单：
+```tsx
+{/* Preview Area */}
+<div className="p-4 bg-muted/30">
+  <div 
+    className="flex justify-center items-start overflow-hidden"
+    style={{ height: `${previewHeight}px` }}
+  >
+    <div 
+      className="origin-top shrink-0"
+      style={{ transform: `scale(${previewScale})` }}
+    >
+      ...
+    </div>
+  </div>
+</div>
 ```
-包含内容：
- 7天AI教练1对1对话（价值¥700+）
- 每日定制冥想音频
- 个性化财富简报
- 成长轨迹全记录
- 专属觉醒画像对比
+
+关键改动：
+- 添加 `items-start` — 确保缩放后的卡片从顶部对齐
+- 添加 `shrink-0` — 防止 flex 容器压缩卡片
+
+### 2. WealthInviteCardDialog 传入正确的导出配置
+
+在 `ShareDialogBase` 中，目前没有传递 `backgroundType` 给 `generateCardBlob`。需要根据 `activeTab` 动态设置背景色，确保导出图片有正确的背景：
+
+在 `WealthInviteCardDialog.tsx` 中，给 `ShareDialogBase` 添加 `useDataUrl` 或修改生成逻辑不是最直接的方式。更好的方式是确保 `share-dialog-base.tsx` 的 `generateCardBlob` 调用时检测卡片元素的 computed background 并传入。
+
+但实际上，由于卡片使用了 inline style 的 `linear-gradient`，html2canvas 应该能捕获它。问题更可能是 **导出卡片容器的 `visibility: hidden` 影响了渲染**。
+
+### 3. 修复导出卡片的隐藏方式（share-dialog-base.tsx）
+
+当前导出卡片用 `visibility: hidden` 隐藏。虽然 `generateCanvas` 的 `onclone` 会设置 visible，但 html2canvas 在**克隆前**读取某些样式可能受影响。
+
+将隐藏方式从 `visibility: hidden` 改为仅使用定位方式隐藏（已有 `fixed -left-[9999px]`），移除 `visibility: hidden`：
+
+```tsx
+{/* Hidden Export Card */}
+<div 
+  className="fixed -left-[9999px] top-0 pointer-events-none"
+  aria-hidden="true"
+>
+  {exportCard}
+</div>
 ```
-用绿色勾号列表，显示总价值 vs 实际价格的对比
 
-#### 6. CTA 区 — 强化转化
+## 涉及文件
 
-- 价格区：新增"价值 ¥700+" 划线价对比，突出 ¥299 的性价比
-- 社会证明："已有 2,847 人加入" 移到按钮上方
-- 按钮文案改为 **"¥299 开启我的7天蜕变"**
-- 按钮下方加一行微文案："不满意随时退出 · 零风险"
-
-#### 7. 字号总览（前 -> 后）
-
-| 元素 | 原字号 | 新字号 |
-|------|--------|--------|
-| 主标题 | text-base/text-lg | text-xl |
-| 痛点文案 | text-sm | text-base |
-| 训练营名 | text-base | text-xl |
-| 时间徽章 | text-sm | text-base |
-| 收获标题 | text-sm | text-base |
-| 收获标签 | text-xs | text-sm |
-| 收获描述 | text-sm | text-base |
-| CTA按钮 | text-base | text-lg |
-
-### 不改动的文件
-
-- `CampConversionCard.tsx` — 这是另一个独立的转化组件，保持不变
-- `CampPersonalizedCard.tsx` — 独立组件，不影响
-- `WealthBlockResult.tsx` — 组件调用方式不变
+| 文件 | 改动 |
+|------|------|
+| `src/components/ui/share-dialog-base.tsx` | 1) 预览容器加 `items-start` + `shrink-0`；2) 导出卡片移除 `visibility: hidden` |
+| `src/components/wealth-camp/WealthInviteCardDialog.tsx` | 无需改动 |
 
 ## 预期效果
 
-- 训练营信息视觉权重大幅提升，一眼就能看到核心价值
-- 字号整体放大 1-2 级，手机上阅读舒适
-- 价值锚定（¥700+ vs ¥299）让用户感觉物超所值
-- 社会证明 + 零风险承诺降低决策门槛
+- 预览区完整显示卡片（头像、标题、分数等全部可见）
+- 导出的图片保留完整的渐变背景和所有样式
+- 不影响其他使用 ShareDialogBase 的分享对话框
+
