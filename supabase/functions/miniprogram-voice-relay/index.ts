@@ -22,6 +22,7 @@ interface ClientMessage {
   type: string;
   audio?: string;
   text?: string;
+  instructions?: string;
 }
 
 Deno.serve(async (req) => {
@@ -185,27 +186,27 @@ Deno.serve(async (req) => {
 
   // 处理客户端消息
   clientSocket.onmessage = (event) => {
-    if (!isConnected || !openaiSocket) {
-      console.warn('[Relay] Received message but not connected to OpenAI');
-      return;
-    }
-
     try {
       const message: ClientMessage = JSON.parse(event.data);
 
-      switch (message.type) {
-        case 'session_config':
-          // 客户端发送的个性化 instructions
-          if (message.instructions) {
-            console.log('[Relay] Received client session_config with instructions');
-            clientInstructions = message.instructions;
-            if (instructionsResolve) {
-              instructionsResolve(message.instructions);
-              instructionsResolve = null;
-            }
-          }
-          break;
+      // session_config 必须在 OpenAI 连接前就能处理（不需要守卫）
+      if (message.type === 'session_config' && message.instructions) {
+        console.log('[Relay] Received client session_config with instructions');
+        clientInstructions = message.instructions;
+        if (instructionsResolve) {
+          instructionsResolve(message.instructions);
+          instructionsResolve = null;
+        }
+        return;
+      }
 
+      // 其他消息需要 OpenAI 连接就绪
+      if (!isConnected || !openaiSocket) {
+        console.warn('[Relay] Received message but not connected to OpenAI');
+        return;
+      }
+
+      switch (message.type) {
         case 'audio_input':
           // 转发音频数据到 OpenAI
           if (message.audio) {
