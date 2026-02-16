@@ -1,66 +1,81 @@
 
+# 修复分享卡片在 iPhone 13/iPad 上的"长黑屏"问题
 
-# 修复微信H5分享闪退问题
+## 问题分析
 
-## 问题根因
+当用户在 iOS Safari 上点击分享按钮后：
+1. 系统调用 `navigator.share()` 打开系统分享面板
+2. 用户选择"微信" → 微信打开 → 但分享可能失败（非 AbortError）
+3. 回到应用后，代码进入 fallback 路径，打开 `ShareImagePreview` 组件
+4. `ShareImagePreview` 是一个全屏 `bg-black/95` 遮罩，图片用 `max-h-[70vh]` 约束
 
-当用户在微信浏览器（H5）中点击"分享我的AI测评报告"后：
+在 iPad 等大屏设备上，320px 宽的卡片图片被缩小显示在巨大的黑色背景中，视觉上就是"非常长的黑屏需要找卡片"。
 
-1. `ShareDialogBase.handleGenerateImage` 被调用
-2. `shouldUseImagePreview()` 只对小程序返回 true，微信H5返回 false
-3. 进入 `handleShareWithFallback`，检测到 iOS + `navigator.share` 可用
-4. 调用 `navigator.share()` — 但微信的 WebKit 实现有缺陷，share sheet 闪现后立刻关闭
-5. `navigator.share()` 可能立刻 resolve（未真正完成分享），或抛出非 AbortError 的异常
-
-代码注释已经指出了这个问题：*"WeChat's navigator.share() API is unreliable - it may resolve immediately"*，但实际逻辑并未针对微信H5跳过 `navigator.share`。
+另一个可能：iOS Safari 的 `navigator.share()` 成功返回后，WeChat 内部处理分享时出现异常，但 Promise 已 resolve，用户看到的黑屏可能来自 WeChat 自身的渲染问题。
 
 ## 修复方案
 
-### 文件：`src/utils/shareUtils.ts`
+### 1. iOS Safari 也优先使用图片预览（跳过不可靠的 navigator.share）
 
-修改 `shouldUseImagePreview()` 函数，让微信H5也返回 true：
+**文件**: `src/utils/shareUtils.ts`
+
+修改 `shouldUseImagePreview()` 和 `handleShareWithFallback()`，让 iOS 设备也直接使用图片预览模式，因为：
+- iOS Safari 的 `navigator.share()` 调用微信时行为不可预测
+- 图片预览模式（长按保存）在所有 iOS 环境中都稳定工作
 
 ```typescript
 export const shouldUseImagePreview = (): boolean => {
-  const { isMiniProgram, isWeChat } = getShareEnvironment();
-  // 微信环境（H5 和小程序）都使用图片预览
-  // 因为微信的 navigator.share() 不可靠
-  return isWeChat || isMiniProgram;
+  const { isMiniProgram, isWeChat, isIOS } = getShareEnvironment();
+  // iOS 和微信环境都使用图片预览
+  // iOS Safari 的 navigator.share() 调微信时不可靠
+  return isWeChat || isMiniProgram || isIOS;
 };
 ```
 
-### 影响范围
+### 2. 优化 ShareImagePreview 在大屏上的显示
 
-`shouldUseImagePreview` 被 `share-dialog-base.tsx` 使用（第 105 行）。改动后：
+**文件**: `src/components/ui/share-image-preview.tsx`
 
-- **微信H5**：跳过 `handleShareWithFallback`，直接生成图片并展示全屏预览（长按保存）
-- **微信小程序**：行为不变（已经是图片预览）
-- **iOS Safari / Android**：行为不变（继续用 `navigator.share()`）
-- **桌面浏览器**：行为不变
+- 将图片 `max-h-[70vh]` 改为 `max-h-[80vh]`，让卡片占据更多屏幕空间
+- 在图片外层添加浅色半透明背景衬底，减少纯黑视觉感
+- 确保图片在 iPad 大屏上也居中且足够大
 
-### 同时修复 `handleShareWithFallback` 中的微信检测
-
-作为双重保险，在 `handleShareWithFallback` 函数的 iOS 和 Android 分支中，增加微信环境的前置拦截。在函数开头（mini program 检测之后）添加：
-
-```typescript
-// WeChat H5: Skip navigator.share, show image preview
-if (isWeChat && !isMiniProgram) {
-  const blobUrl = URL.createObjectURL(blob);
-  options.onShowPreview?.(blobUrl);
-  return { success: true, method: 'preview', blobUrl };
-}
+```tsx
+<img
+  src={imageUrl}
+  alt="分享卡片"
+  className={`max-w-[90%] max-h-[80vh] object-contain rounded-xl shadow-2xl ${
+    imageLoaded ? 'opacity-100' : 'opacity-0 absolute'
+  }`}
+/>
 ```
 
-这样即使其他调用方直接使用 `handleShareWithFallback`（不经过 `ShareDialogBase`），也不会触发微信的不可靠 share API。
+### 3. oneClickShare.ts 同步修复
+
+**文件**: `src/utils/oneClickShare.ts`
+
+在 iOS 分支之前添加 iOS 检测，跳过 `navigator.share()`：
+
+```typescript
+// iOS: Skip unreliable navigator.share, show image preview
+if (env.isIOS && !env.isWeChat) {
+  onProgress?.('preview');
+  onShowPreview?.(blobUrl);
+  onSuccess?.();
+  return true;
+}
+```
 
 ## 涉及文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/utils/shareUtils.ts` | 1) `shouldUseImagePreview` 增加微信H5判断；2) `handleShareWithFallback` 增加微信H5前置拦截 |
+| `src/utils/shareUtils.ts` | `shouldUseImagePreview` 增加 iOS 判断；`handleShareWithFallback` 增加 iOS 前置拦截 |
+| `src/components/ui/share-image-preview.tsx` | 图片约束从 70vh 改 80vh，宽度约束从 full 改 90%，优化大屏显示 |
+| `src/utils/oneClickShare.ts` | iOS 分支也跳过 navigator.share，使用图片预览 |
 
 ## 预期效果
 
-- 微信H5中点击分享 → 生成图片 → 全屏预览（提示"长按上方图片保存"）
-- 不再出现闪屏/闪退
-- 用户长按保存后可自行转发给微信好友
+- iPhone 13 / iPad 上点击分享 → 直接生成图片 → 全屏预览（提示"长按保存"）
+- 不再出现系统分享面板跳转微信后的闪退/黑屏
+- 图片在 iPad 大屏上居中显示，占据 80% 视口高度，不再"找卡片"
