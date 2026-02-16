@@ -17,6 +17,7 @@ import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompleti
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDialog';
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
+import { BackfillVoiceBriefingsButton } from '@/components/wealth-camp/BackfillVoiceBriefingsButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
@@ -903,6 +904,7 @@ ${reflection}`;
                     </Button>
                   </div>
                   <BackfillMemoriesButton />
+                  <BackfillVoiceBriefingsButton />
                 </div>
                 
                 {mergedBriefings.length === 0 ? (
