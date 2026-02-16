@@ -828,7 +828,7 @@ export default function WealthBlockAssessmentPage() {
               <div className="flex items-end justify-around pt-0.5 pb-0.5">
                 {/* 左侧 - 开始测评 */}
                 <button
-                  onClick={() => { setActiveTab("assessment"); setShowIntro(true); }}
+                  onClick={() => { setActiveTab("assessment"); setShowResult(false); setCurrentResult(null); setShowIntro(true); window.scrollTo(0, 0); }}
                   className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-4 rounded-xl transition-all duration-200 min-w-[72px]
                     ${activeTab === "assessment" 
                       ? "text-amber-600" 
