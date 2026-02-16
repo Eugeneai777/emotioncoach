@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { reactionPatternConfig, patternKeyMapping } from "@/config/reactionPatternConfig";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, Heart, Brain, Share2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
@@ -289,6 +290,33 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
               </h4>
               <p className="text-white/95 text-sm leading-relaxed">{pattern.suggestion}</p>
               <p className="text-white/80 text-xs mt-2 opacity-80">训练营重点：{pattern.trainingFocus}</p>
+            </div>
+
+            {/* 四种财富反应模式对比 */}
+            <div className="mt-4">
+              <h4 className="text-white/90 text-xs font-semibold mb-2 flex items-center gap-1">
+                📊 四种财富反应模式
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.values(reactionPatternConfig).map((p) => {
+                  const isActive = p.key === (patternKeyMapping[result.reactionPattern] || result.reactionPattern);
+                  return (
+                    <div
+                      key={p.key}
+                      className={`rounded-lg px-2.5 py-2 transition-all ${
+                        isActive
+                          ? 'bg-white/30 border border-white/50 text-sm font-bold text-white'
+                          : 'bg-white/10 text-xs text-white/70 opacity-60'
+                      }`}
+                    >
+                      <span>{p.emoji} {p.name}</span>
+                      <p className={`mt-0.5 leading-tight ${isActive ? 'text-xs text-white/90' : 'text-[10px] text-white/60'}`}>
+                        {p.tagline}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </Card>
