@@ -108,9 +108,25 @@ const THEME_COPY: Record<string, { hook: string; title: string; bottom: string }
   },
 };
 
-function buildPrompt(theme: string): string {
-  const copy = THEME_COPY[theme];
-  const style = XHS_STYLES[Math.floor(Math.random() * XHS_STYLES.length)];
+// Export style names for frontend reference
+const STYLE_NAMES = XHS_STYLES.map(s => s.name);
+
+function buildPrompt(theme: string, customText?: { hook?: string; title?: string; bottom?: string }, styleName?: string): string {
+  // Use custom text or fall back to theme defaults
+  const defaultCopy = THEME_COPY[theme] || { hook: "", title: "", bottom: "" };
+  const copy = {
+    hook: customText?.hook || defaultCopy.hook,
+    title: customText?.title || defaultCopy.title,
+    bottom: customText?.bottom || defaultCopy.bottom,
+  };
+  
+  // Use specified style or random
+  let style;
+  if (styleName) {
+    style = XHS_STYLES.find(s => s.name === styleName) || XHS_STYLES[Math.floor(Math.random() * XHS_STYLES.length)];
+  } else {
+    style = XHS_STYLES[Math.floor(Math.random() * XHS_STYLES.length)];
+  }
   
   return `Design a viral Xiaohongshu (小红书) cover image. 3:4 portrait ratio (1080x1440px).
 
@@ -133,7 +149,7 @@ CRITICAL RULES:
 4. Clean breathing space — generous margins and line spacing.
 5. This must look like a top-performing Xiaohongshu text poster that makes people STOP scrolling.
 6. Render all Chinese characters precisely and clearly.
-7. ABSOLUTELY DO NOT add any text that is not listed above. No extra words, no slogans, no dates, no times, no course names, no watermarks, no "今晚8点", no "财富觉醒课", no additional Chinese or English text whatsoever. ONLY render the exact 3 text elements specified above (hook, title, bottom tag) and NOTHING ELSE.`;
+7. ABSOLUTELY DO NOT add any text that is not listed above. No extra words, no slogans, no dates, no times, no course names, no watermarks, no additional Chinese or English text whatsoever. ONLY render the exact 3 text elements specified above (hook, title, bottom tag) and NOTHING ELSE.`;
 }
 
 serve(async (req) => {
@@ -142,11 +158,29 @@ serve(async (req) => {
   }
 
   try {
-    const { theme } = await req.json();
-
-    if (!theme || !THEME_COPY[theme]) {
+    const body = await req.json();
+    
+    // Support listing available styles
+    if (body.action === "list-styles") {
       return new Response(
-        JSON.stringify({ error: `无效主题，可选: ${Object.keys(THEME_COPY).join(", ")}` }),
+        JSON.stringify({ styles: STYLE_NAMES, themes: Object.keys(THEME_COPY) }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const { theme, customText, styleName } = body;
+
+    if (!theme) {
+      return new Response(
+        JSON.stringify({ error: "缺少主题参数" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Allow custom themes with custom text
+    if (!THEME_COPY[theme] && !customText) {
+      return new Response(
+        JSON.stringify({ error: `未知主题且未提供自定义文案，可选主题: ${Object.keys(THEME_COPY).join(", ")}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -154,8 +188,8 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const prompt = buildPrompt(theme);
-    console.log(`生成小红书封面: 马上${theme}, prompt长度: ${prompt.length}`);
+    const prompt = buildPrompt(theme, customText, styleName);
+    console.log(`生成小红书封面: ${theme}, 风格: ${styleName || '随机'}, prompt长度: ${prompt.length}`);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

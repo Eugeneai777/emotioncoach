@@ -4,10 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { AdminPageLayout } from "@/components/admin/shared/AdminPageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, ImageIcon, Loader2 } from "lucide-react";
+import { Download, ImageIcon, Loader2, Palette, Type, Shuffle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const THEMES = [
   { key: "觉醒", label: "马上觉醒", desc: "骏马觉醒，金光破晓" },
@@ -17,6 +21,16 @@ const THEMES = [
   { key: "破局", label: "马上破局", desc: "冲破锁链，碎片飞溅" },
   { key: "翻身", label: "马上翻身", desc: "深渊跃天，逆转姿态" },
   { key: "出发", label: "马上出发", desc: "面向日出，红带飘扬" },
+];
+
+const STYLES = [
+  { name: "随机", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
+  { name: "暗黑大字报", color: "bg-gray-900" },
+  { name: "红底白字冲击", color: "bg-red-700" },
+  { name: "奶油温柔风", color: "bg-amber-100" },
+  { name: "深蓝高级感", color: "bg-blue-950" },
+  { name: "荧光撞色", color: "bg-green-500" },
+  { name: "极简黑白", color: "bg-white border border-gray-300" },
 ];
 
 interface CoverResult {
@@ -30,8 +44,31 @@ export default function XiaohongshuCovers() {
   const [generating, setGenerating] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Custom text fields
+  const [selectedStyle, setSelectedStyle] = useState("随机");
+  const [customHook, setCustomHook] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+  const [customBottom, setCustomBottom] = useState("");
+
   const completedCount = Object.values(results).filter((r) => r.imageUrl).length;
   const progress = generating ? ((currentIndex) / THEMES.length) * 100 : (completedCount / THEMES.length) * 100;
+
+  const hasCustomText = customHook || customTitle || customBottom;
+
+  const buildRequestBody = (themeKey: string) => {
+    const body: Record<string, unknown> = { theme: themeKey };
+    if (hasCustomText) {
+      body.customText = {
+        ...(customHook && { hook: customHook }),
+        ...(customTitle && { title: customTitle }),
+        ...(customBottom && { bottom: customBottom }),
+      };
+    }
+    if (selectedStyle !== "随机") {
+      body.styleName = selectedStyle;
+    }
+    return body;
+  };
 
   const generateAll = async () => {
     setGenerating(true);
@@ -44,7 +81,7 @@ export default function XiaohongshuCovers() {
 
       try {
         const { data, error } = await supabase.functions.invoke("generate-xiaohongshu-covers", {
-          body: { theme: theme.key },
+          body: buildRequestBody(theme.key),
         });
 
         if (error) throw error;
@@ -56,7 +93,6 @@ export default function XiaohongshuCovers() {
         toast.error(`${theme.label}: ${msg}`);
       }
 
-      // Delay between requests to avoid rate limiting
       if (i < THEMES.length - 1) {
         await new Promise((r) => setTimeout(r, 3000));
       }
@@ -70,7 +106,7 @@ export default function XiaohongshuCovers() {
     setResults((prev) => ({ ...prev, [themeKey]: { loading: true } }));
     try {
       const { data, error } = await supabase.functions.invoke("generate-xiaohongshu-covers", {
-        body: { theme: themeKey },
+        body: buildRequestBody(themeKey),
       });
       if (error) throw error;
       setResults((prev) => ({ ...prev, [themeKey]: { imageUrl: data.imageUrl } }));
@@ -98,7 +134,7 @@ export default function XiaohongshuCovers() {
   return (
     <AdminPageLayout
       title="小红书封面生成器"
-      description="马上系列 · 红金马年配色 · 7张封面一键生成"
+      description="爆款大字报风格 · 6种设计风格 · 自定义文案"
       actions={
         <Button onClick={generateAll} disabled={generating} size="lg">
           {generating ? (
@@ -115,6 +151,80 @@ export default function XiaohongshuCovers() {
         </Button>
       }
     >
+      {/* Style & Text Controls */}
+      <Card className="p-4 space-y-4">
+        {/* Style Selector */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5 text-sm font-medium">
+            <Palette className="w-4 h-4" />
+            选择风格
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {STYLES.map((style) => (
+              <button
+                key={style.name}
+                onClick={() => setSelectedStyle(style.name)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2",
+                  selectedStyle === style.name
+                    ? "border-primary ring-2 ring-primary/20 scale-105"
+                    : "border-transparent hover:border-muted-foreground/30"
+                )}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className={cn("w-3 h-3 rounded-full inline-block", style.color)} />
+                  {style.name === "随机" && <Shuffle className="w-3 h-3" />}
+                  {style.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Text */}
+        <div className="space-y-3">
+          <Label className="flex items-center gap-1.5 text-sm font-medium">
+            <Type className="w-4 h-4" />
+            自定义文案 <span className="text-muted-foreground font-normal">(留空使用默认文案)</span>
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">顶部钩子句</Label>
+              <Input
+                placeholder="如：除夕夜 别人在数红包"
+                value={customHook}
+                onChange={(e) => setCustomHook(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">主标题（大字）</Label>
+              <Textarea
+                placeholder="如：为什么我总赚不到钱？&#10;用换行分隔多行"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                className="text-sm min-h-[60px]"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">底部标签</Label>
+              <Input
+                placeholder="如：马上觉醒"
+                value={customBottom}
+                onChange={(e) => setCustomBottom(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          {hasCustomText && (
+            <p className="text-xs text-amber-600 flex items-center gap-1">
+              ✨ 自定义文案已启用，所有生成将使用您填写的文字
+            </p>
+          )}
+        </div>
+      </Card>
+
       {generating && (
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">
