@@ -836,9 +836,6 @@ export default function WealthBlockAssessmentPage() {
                 >
                   <RotateCcw className={`w-[18px] h-[18px] transition-all duration-200 ${activeTab === "assessment" ? "stroke-[2.5px]" : "stroke-[1.5px]"}`} />
                   <span className={`text-[10px] leading-tight tracking-wide ${activeTab === "assessment" ? "font-bold" : "font-medium"}`}>重新测评</span>
-                  {activeTab === "assessment" && (
-                    <span className="w-1 h-1 rounded-full bg-rose-500 mt-0.5" />
-                  )}
                 </button>
 
                 {/* 中间 - 凸出的教练解说 FAB（仅结果页显示） */}
@@ -866,12 +863,6 @@ export default function WealthBlockAssessmentPage() {
                 >
                   <History className={`w-[18px] h-[18px] transition-all duration-200 ${activeTab === "history" ? "stroke-[2.5px]" : "stroke-[1.5px]"}`} />
                   <span className={`text-[10px] leading-tight tracking-wide ${activeTab === "history" ? "font-bold" : "font-medium"}`}>历史记录</span>
-                  {activeTab === "history" && (
-                    <span className="w-1 h-1 rounded-full bg-rose-500 mt-0.5" />
-                  )}
-                  {historyRecords.length > 0 && (
-                    <span className="absolute top-1 right-3 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-                  )}
                 </button>
               </div>
             </div>
