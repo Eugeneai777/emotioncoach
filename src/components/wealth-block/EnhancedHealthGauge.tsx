@@ -5,8 +5,7 @@ import {
   awakeningZones, 
   getAwakeningZone, 
   getAwakeningColor, 
-  getAwakeningTextColor,
-  layerScoreToAwakeningPercent 
+  getAwakeningTextColor 
 } from "@/config/wealthStyleConfig";
 
 interface EnhancedHealthGaugeProps {
@@ -26,11 +25,6 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
   const strokeWidth = 12;
   const circumference = Math.PI * radius;
   
-  const layers = [
-    { name: "行为", score: behaviorScore, max: 50, emoji: "🎯", color: "from-amber-400 to-orange-500" },
-    { name: "情绪", score: emotionScore, max: 50, emoji: "💭", color: "from-pink-400 to-rose-500" },
-    { name: "信念", score: beliefScore, max: 50, emoji: "💡", color: "from-violet-400 to-purple-500" },
-  ];
 
   return (
     <motion.div
@@ -136,20 +130,6 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             <p className="text-slate-400 text-sm mt-2">{zone.description}</p>
           </motion.div>
 
-          {/* Layer Awakening Percentages */}
-          <div className="space-y-2 mb-4">
-            {layers.map((layer, i) => {
-              const awakeningPercent = layerScoreToAwakeningPercent(layer.score, layer.max);
-              return (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-300">{layer.emoji} {layer.name}</span>
-                  <span className={cn("font-medium", getAwakeningTextColor(awakeningPercent))}>
-                    觉醒度 {awakeningPercent}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
 
           {/* Zone Legend */}
           <div className="flex justify-center gap-1 flex-wrap text-[10px]">
