@@ -208,6 +208,9 @@ export class MiniProgramAudioClient {
 
   // ==================== Private Methods ====================
 
+  // 存储 token 端点返回的个性化 instructions
+  private cachedInstructions: string | null = null;
+
   private async getEphemeralToken(): Promise<string | null> {
     try {
       const { data, error } = await supabase.functions.invoke(this.config.tokenEndpoint, {
@@ -221,6 +224,12 @@ export class MiniProgramAudioClient {
       if (error) {
         console.error('[MiniProgramAudio] Token error:', error);
         return null;
+      }
+
+      // 保存个性化 instructions（如果 token 端点返回了）
+      if (data?.instructions) {
+        this.cachedInstructions = data.instructions;
+        console.log('[MiniProgramAudio] Saved personalized instructions from token endpoint');
       }
 
       return data?.client_secret?.value || null;
@@ -255,6 +264,16 @@ export class MiniProgramAudioClient {
       this.ws.onopen = () => {
         clearTimeout(timeout);
         console.log('[MiniProgramAudio] WebSocket connected');
+
+        // 如果有个性化 instructions，立即发送给 relay
+        if (this.cachedInstructions && this.ws) {
+          console.log('[MiniProgramAudio] Sending session_config with personalized instructions');
+          this.ws.send(JSON.stringify({
+            type: 'session_config',
+            instructions: this.cachedInstructions,
+          }));
+        }
+
         resolve();
       };
 

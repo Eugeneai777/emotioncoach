@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
   let openaiSocket: WebSocket | null = null;
   let isConnected = false;
   let healthCheckInterval: ReturnType<typeof setInterval> | null = null;
+  let clientInstructions: string | null = null;
+  let instructionsResolve: ((value: string | null) => void) | null = null;
 
   // 🔧 定期检查 OpenAI 连接健康状态
   const startHealthCheck = () => {
@@ -108,31 +110,49 @@ Deno.serve(async (req) => {
         'openai-beta.realtime-v1',
       ]);
 
-      openaiSocket.onopen = () => {
+      openaiSocket.onopen = async () => {
         console.log('[Relay] Connected to OpenAI');
         isConnected = true;
         startHealthCheck(); // 🔧 启动健康检查
+
+        // 等待客户端发送 session_config 消息（最多 500ms）
+        let finalInstructions = getSystemPrompt(mode);
+        if (!clientInstructions) {
+          const waitedInstructions = await Promise.race([
+            new Promise<string | null>((resolve) => {
+              instructionsResolve = resolve;
+            }),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
+          ]);
+          if (waitedInstructions) {
+            finalInstructions = waitedInstructions;
+            console.log('[Relay] Using client-provided instructions');
+          } else {
+            console.log('[Relay] Using default prompt for mode:', mode);
+          }
+        } else {
+          finalInstructions = clientInstructions;
+          console.log('[Relay] Using pre-received client instructions');
+        }
 
         // 发送会话配置
         const sessionConfig = {
           type: 'session.update',
           session: {
             modalities: ['text', 'audio'],
-            instructions: getSystemPrompt(mode),
-            voice: mode === 'teen' ? 'shimmer' : 'echo', // 统一语音：青少年用 shimmer，其他用 echo
+            instructions: finalInstructions,
+            voice: mode === 'teen' ? 'shimmer' : 'echo',
             input_audio_format: AUDIO_CONFIG.format,
             output_audio_format: AUDIO_CONFIG.format,
-            // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度
-            // 避免 AI 说话说到一半被截断
             max_response_output_tokens: "inf",
             input_audio_transcription: {
               model: 'whisper-1',
             },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.6, // 提高阈值，减少背景噪音捕捉
-              prefix_padding_ms: 200, // 减少前缀填充，与 WebRTC 一致
-              silence_duration_ms: 1200, // 增加静默时长，与 WebRTC 一致，减少语音被截断
+              threshold: 0.6,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 1200,
             },
           },
         };
@@ -174,6 +194,18 @@ Deno.serve(async (req) => {
       const message: ClientMessage = JSON.parse(event.data);
 
       switch (message.type) {
+        case 'session_config':
+          // 客户端发送的个性化 instructions
+          if (message.instructions) {
+            console.log('[Relay] Received client session_config with instructions');
+            clientInstructions = message.instructions;
+            if (instructionsResolve) {
+              instructionsResolve(message.instructions);
+              instructionsResolve = null;
+            }
+          }
+          break;
+
         case 'audio_input':
           // 转发音频数据到 OpenAI
           if (message.audio) {
