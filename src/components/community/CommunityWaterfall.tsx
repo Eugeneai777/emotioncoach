@@ -25,6 +25,9 @@ interface Post {
   camp_type?: string;
   camp_name?: string;
   template_id?: string;
+  is_pinned?: boolean;
+  pinned_at?: string;
+  visibility?: string;
   author_display_name?: string | null;
   author_avatar_url?: string | null;
 }
@@ -204,6 +207,7 @@ const CommunityWaterfall = () => {
         .select(`
           id, user_id, post_type, title, content, image_urls, emotion_theme, 
           is_anonymous, likes_count, created_at, camp_id,
+          is_pinned, pinned_at, visibility,
           training_camps!camp_id (
             camp_type,
             camp_name,
@@ -238,6 +242,8 @@ const CommunityWaterfall = () => {
 
         query = query
           .in('user_id', followingIds)
+          .order('is_pinned', { ascending: false, nullsFirst: false })
+          .order('pinned_at', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
@@ -277,6 +283,8 @@ const CommunityWaterfall = () => {
         query = query
           .in('emotion_theme', userThemes)
           .neq('user_id', session.user.id)
+          .order('is_pinned', { ascending: false, nullsFirst: false })
+          .order('pinned_at', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
@@ -290,6 +298,8 @@ const CommunityWaterfall = () => {
         }
         
         query = query
+          .order('is_pinned', { ascending: false, nullsFirst: false })
+          .order('pinned_at', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
@@ -297,6 +307,8 @@ const CommunityWaterfall = () => {
       else if (filter !== 'all' && filter !== 'following' && filter !== 'resonance') {
         query = query
           .eq('post_type', filter)
+          .order('is_pinned', { ascending: false, nullsFirst: false })
+          .order('pinned_at', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
@@ -329,14 +341,22 @@ const CommunityWaterfall = () => {
           if (recommendedIds && recommendedIds.length > 0) {
             query = query
               .in('id', recommendedIds)
+              .order('is_pinned', { ascending: false, nullsFirst: false })
+              .order('pinned_at', { ascending: false, nullsFirst: false })
               .order('created_at', { ascending: false })
               .limit(POSTS_PER_PAGE);
           } else {
-            query = query.order('created_at', { ascending: false })
+            query = query
+              .order('is_pinned', { ascending: false, nullsFirst: false })
+              .order('pinned_at', { ascending: false, nullsFirst: false })
+              .order('created_at', { ascending: false })
               .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
           }
         } else {
-          query = query.order('created_at', { ascending: false })
+          query = query
+            .order('is_pinned', { ascending: false, nullsFirst: false })
+            .order('pinned_at', { ascending: false, nullsFirst: false })
+            .order('created_at', { ascending: false })
             .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
         }
       }
