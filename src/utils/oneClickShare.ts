@@ -120,6 +120,15 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
       return true;
     }
 
+    // 2. WeChat H5: Skip unreliable navigator.share, show image preview
+    if (env.isWeChat && !env.isMiniProgram) {
+      console.log('[oneClickShare] WeChat H5 - showing preview (skip unreliable navigator.share)');
+      onProgress?.('preview');
+      onShowPreview?.(blobUrl);
+      onSuccess?.();
+      return true;
+    }
+
     // 2. iOS (including WeChat H5): Prioritize native share
     if (env.isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
       console.log('[oneClickShare] iOS - trying navigator.share');
