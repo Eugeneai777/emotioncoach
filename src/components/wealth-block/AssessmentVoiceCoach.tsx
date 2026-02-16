@@ -144,6 +144,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
           featureKey="realtime_voice_wealth_assessment"
           extraBody={{ assessmentData }}
           maxDurationOverride={null}
+          skipBilling={true}
         />
       )}
 

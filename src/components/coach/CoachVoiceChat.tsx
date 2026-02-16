@@ -54,6 +54,7 @@ interface CoachVoiceChatProps {
   openingMessage?: string;         // AI预设开场白
   extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
   maxDurationOverride?: number | null; // undefined=走默认逻辑, null=不限时, number=指定分钟数
+  skipBilling?: boolean; // 跳过积分检查和扣费（如财富教练免费5次）
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -78,7 +79,8 @@ export const CoachVoiceChat = ({
   aiCallId,
   openingMessage,
   extraBody,
-  maxDurationOverride
+  maxDurationOverride,
+  skipBilling = false
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -436,6 +438,10 @@ export const CoachVoiceChat = ({
 
   // 检查余额
   const checkQuota = async (): Promise<boolean | 'show_pay'> => {
+    if (skipBilling) {
+      setIsCheckingQuota(false);
+      return true;
+    }
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -553,6 +559,8 @@ export const CoachVoiceChat = ({
 
   // 扣费函数 - 兼容旧接口，内部使用重试逻辑
   const deductQuota = async (minute: number): Promise<boolean> => {
+    if (skipBilling) return true;
+    
     // 防止重复扣同一分钟
     if (minute <= lastBilledMinuteRef.current) {
       console.log(`Minute ${minute} already billed, skipping`);
@@ -1683,6 +1691,7 @@ export const CoachVoiceChat = ({
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (status !== 'connected') return;
+    if (skipBilling) return; // 跳过计费
 
     const currentMinute = Math.floor(duration / 60) + 1; // 第几分钟
     
@@ -1775,10 +1784,11 @@ export const CoachVoiceChat = ({
         isDeductingRef.current = false;
       }
     });
-  }, [duration, status, maxDurationMinutes]);
+  }, [duration, status, maxDurationMinutes, skipBilling]);
 
   // 低余额警告 - 增强提示
   useEffect(() => {
+    if (skipBilling) return; // 跳过计费时不显示余额警告
     if (remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 2 && remainingQuota >= POINTS_PER_MINUTE) {
       toast({
         title: "⚠️ 余额即将不足",
@@ -1786,7 +1796,7 @@ export const CoachVoiceChat = ({
         duration: 8000,  // 延长显示时间
       });
     }
-  }, [remainingQuota]);
+  }, [remainingQuota, skipBilling]);
 
   // 更新活动时间 - 当有语音活动时重置计时器
   useEffect(() => {
@@ -2466,7 +2476,10 @@ export const CoachVoiceChat = ({
       {/* 提示 */}
       <div className="absolute bottom-24 left-0 right-0 text-center">
         <p className="text-white/40 text-xs">
-          💡 直接说话即可 · {POINTS_PER_MINUTE}点/分钟 · {maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}
+          {skipBilling
+            ? `💡 直接说话即可 · 免费体验 · ${maxDurationMinutes === null ? '不限时' : `最长${maxDurationMinutes}分钟`}`
+            : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟 · ${maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}`
+          }
         </p>
       </div>
 
