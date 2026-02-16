@@ -7,7 +7,7 @@ import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy } 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
@@ -43,7 +43,7 @@ interface WechatPayDialogProps {
   openId?: string;
 }
 
-type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
+type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'guest_success' | 'failed' | 'expired';
 
 // 从 URL 中获取支付 openId（注意：小程序优先使用 mp_openid）
 const getPaymentOpenIdFromUrl = (): string | undefined => {
@@ -105,6 +105,7 @@ const getPaymentAuthCode = (): string | undefined => {
 
 export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -683,7 +684,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // JSAPI 失败后降级到扫码支付
   const fallbackToNativePayment = async (existingOrderNo: string) => {
-    if (!packageInfo || !user) return;
+    if (!packageInfo) return;
     
     console.log('[Payment] Falling back to native payment for order:', existingOrderNo);
     toast.info('正在切换为扫码支付...');
@@ -694,7 +695,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user.id,
+          userId: user?.id || 'guest',
           payType: 'native',
           existingOrderNo,
         },
@@ -732,7 +733,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // 创建订单
   const createOrder = async () => {
-    if (!packageInfo || !user) return;
+    if (!packageInfo) return;
 
     // 仅合伙人套餐验证条款
     if (needsTerms && !agreedTerms) {
@@ -774,7 +775,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user.id,
+          userId: user?.id || 'guest',
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
           isMiniProgram: isMiniProgram,
@@ -944,6 +945,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         if (data.status === 'paid') {
           clearTimers();
           clearPendingOrderCache();
+          
+          // 未登录用户：存储订单号，显示引导登录界面
+          if (!user) {
+            localStorage.setItem('pending_claim_order', data.orderNo || orderNo);
+            setStatus('guest_success');
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+            });
+            toast.success('支付成功！请登录以激活权益');
+            return;
+          }
+          
           setStatus('success');
           
           // 庆祝动画
@@ -1030,6 +1045,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         if (data?.status === 'paid') {
           clearTimers();
           clearPendingOrderCache();
+
+          // 未登录用户：存储订单号，显示引导登录界面
+          if (!user) {
+            localStorage.setItem('pending_claim_order', pendingOrderNo);
+            setStatus('guest_success');
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+            });
+            toast.success('支付成功！请登录以激活权益');
+            return;
+          }
+
           setStatus('success');
 
           confetti({
@@ -1132,14 +1161,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     if (shouldWaitForOpenId && !openIdResolved) return;
 
     // 无需条款 或 已同意条款时，自动创建订单
-    if (open && packageInfo && user && (!needsTerms || agreedTerms) && !orderCreatedRef.current) {
+    if (open && packageInfo && (!needsTerms || agreedTerms) && !orderCreatedRef.current) {
       orderCreatedRef.current = true;
       createOrder();
     }
     return () => {
       clearTimers();
     };
-  }, [open, packageInfo, user, agreedTerms, needsTerms, shouldWaitForOpenId, openIdResolved, isPaymentCallbackScene]);
+  }, [open, packageInfo, agreedTerms, needsTerms, shouldWaitForOpenId, openIdResolved, isPaymentCallbackScene]);
 
   // 关闭对话框时重置
   useEffect(() => {
@@ -1264,6 +1293,23 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               <div className="flex flex-col items-center gap-2 text-green-500">
                 <CheckCircle className="h-16 w-16" />
                 <span className="font-medium">支付成功</span>
+              </div>
+            )}
+
+            {status === 'guest_success' && (
+              <div className="flex flex-col items-center gap-3 text-green-500">
+                <CheckCircle className="h-16 w-16" />
+                <span className="font-medium">支付成功！</span>
+                <p className="text-sm text-muted-foreground text-center">请登录或注册以激活您的权益</p>
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate('/auth');
+                  }}
+                  className="w-full mt-2"
+                >
+                  登录 / 注册
+                </Button>
               </div>
             )}
 
