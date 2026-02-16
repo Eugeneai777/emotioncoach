@@ -853,7 +853,7 @@ ${reflection}`;
             <Tabs defaultValue="awakening" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="awakening">财富旅程</TabsTrigger>
-                <TabsTrigger value="briefing">财富简报</TabsTrigger>
+                <TabsTrigger value="briefing">财富日记</TabsTrigger>
               </TabsList>
 
               <TabsContent value="awakening">
@@ -865,13 +865,13 @@ ${reflection}`;
               </TabsContent>
 
               <TabsContent value="briefing" className="space-y-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => navigate('/meditation-library')}
-                      className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                      className="text-amber-600 border-amber-200 hover:bg-amber-50 w-full"
                     >
                       🧘 冥想库
                     </Button>
@@ -879,7 +879,7 @@ ${reflection}`;
                       variant="outline"
                       size="sm"
                       onClick={() => navigate('/wealth-block')}
-                      className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                      className="text-amber-600 border-amber-200 hover:bg-amber-50 w-full"
                     >
                       <Target className="w-4 h-4 mr-1.5" />
                       财富测评
@@ -888,7 +888,7 @@ ${reflection}`;
                       variant="outline"
                       size="sm"
                       onClick={() => navigate('/coach/wealth_coach_4_questions')}
-                      className="text-violet-600 border-violet-200 hover:bg-violet-50"
+                      className="text-violet-600 border-violet-200 hover:bg-violet-50 w-full"
                     >
                       <MessageCircle className="w-4 h-4 mr-1.5" />
                       教练对话
@@ -897,20 +897,22 @@ ${reflection}`;
                       variant="outline"
                       size="sm"
                       onClick={() => setShowInviteDialog(true)}
-                      className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                      className="text-rose-600 border-rose-200 hover:bg-rose-50 w-full"
                     >
                       <Share2 className="w-4 h-4 mr-1.5" />
                       分享邀请
                     </Button>
                   </div>
-                  <BackfillMemoriesButton />
-                  <BackfillVoiceBriefingsButton />
+                  <div className="grid grid-cols-2 gap-2">
+                    <BackfillMemoriesButton />
+                    <BackfillVoiceBriefingsButton />
+                  </div>
                 </div>
                 
                 {mergedBriefings.length === 0 ? (
                   <div className="text-center py-12 space-y-4">
                   <div className="text-muted-foreground">
-                      <p>还没有财富简报</p>
+                      <p>还没有财富日记</p>
                       <p className="text-sm">完成财富梳理后自动生成</p>
                     </div>
                     <Button 
