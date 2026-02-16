@@ -2,11 +2,12 @@ import { motion } from "framer-motion";
 import { reactionPatternConfig, patternKeyMapping } from "@/config/reactionPatternConfig";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Target, Heart, Brain, Share2, Sparkles, ChevronDown, ChevronUp, BookImage } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+import { XiaohongshuShareDialog } from "./XiaohongshuShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
@@ -89,6 +90,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
 
   // 控制三层展开状态 - 默认全部折叠
   const [openLayers, setOpenLayers] = useState<string[]>([]);
+  const [showXhsShare, setShowXhsShare] = useState(false);
 
   const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
   const healthScore = calculateHealthScore(totalScore);
@@ -722,8 +724,24 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </Button>
           }
         />
-        
-        
+
+        <Button
+          className="w-full h-12 bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-700 hover:to-amber-600 text-white shadow-lg text-sm"
+          onClick={() => setShowXhsShare(true)}
+        >
+          <BookImage className="w-5 h-5 mr-2" />
+          生成小红书分享卡片
+        </Button>
+
+        <XiaohongshuShareDialog
+          open={showXhsShare}
+          onOpenChange={setShowXhsShare}
+          healthScore={healthScore}
+          reactionPattern={result.reactionPattern}
+          dominantPoor={result.dominantPoor}
+        />
+
+
         {/* 微信支付对话框 */}
         <UnifiedPayDialog
           open={showPayDialog}
