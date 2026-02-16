@@ -1,62 +1,42 @@
 
 
-# 修复分享卡片加载不出来的问题
+# 修复分享卡片保存后文字和背景消失的问题
 
-## 问题分析
+## 问题根因
 
-分享卡片停留在骨架屏（loading skeleton）状态，无法显示实际内容。
+在 `src/utils/shareCardConfig.ts` 的 `prepareClonedElement` 函数中，第 228 行：
 
-根本原因在 `WealthInviteCardDialog.tsx` 的用户数据加载逻辑中：
+```
+cloned.style.background = 'transparent';
+```
 
-1. 弹窗打开时，`isLoadingUser` 设为 `true`，触发骨架屏显示
-2. `fetchUserInfo` 函数调用 `supabase.auth.getUser()` 获取用户信息
-3. 在微信 WebView 环境下，如果用户未登录或 auth 请求挂起/超时，`getUser()` 可能长时间无响应
-4. 虽然有 `finally` 块来设置 `setIsLoadingUser(false)`，但如果请求本身卡住，`finally` 也无法执行
-5. 结果：卡片永远停留在 skeleton 状态
+这行代码会覆盖卡片自身的背景样式（无论是内联 gradient 还是 Tailwind 渐变类），导致：
+- 卡片背景变成白色/透明
+- 白色文字在白色背景上不可见
+- 所有视觉层次丢失
 
-## 修改方案
+第二个问题：`AchievementShareCard` 使用了 `bg-clip-text text-transparent` 实现渐变文字效果，html2canvas 无法正确渲染此 CSS 特性，导致文字完全透明。
 
-### 文件：`src/components/wealth-camp/WealthInviteCardDialog.tsx`
+## 修复方案
 
-1. **添加超时保护**：给整个 `fetchUserInfo` 加一个 5 秒超时，超时后强制结束 loading 状态，显示默认数据的卡片
+### 1. `src/utils/shareCardConfig.ts` — prepareClonedElement
 
-2. **未登录时显示默认卡片**：当用户未登录时，不阻止卡片渲染，而是使用默认占位数据（默认头像、默认名称"财富探索者"、默认分数）
+- 删除 `cloned.style.background = 'transparent'` 这一行，保留卡片原有的背景样式
 
-3. **加 loading 超时兜底**：在 `useEffect` 中加一个独立的 setTimeout，无论 fetch 结果如何，最多 6 秒后强制 `setIsLoadingUser(false)`
+### 2. `src/utils/shareCardConfig.ts` — onclone 回调
+
+- 在 onclone 中检测所有使用 `bg-clip-text` 或 `-webkit-background-clip: text` 的元素
+- 将它们的 `color` 改为对应的可见颜色（如 amber-400），移除 `background-clip` 和 `text-transparent`
+- 这样渐变文字会降级为纯色文字，但至少可见
 
 ### 具体改动
 
-```typescript
-// 在 fetchUserInfo 的 useEffect 中添加超时兜底
-useEffect(() => {
-  if (!open) return;
-  setIsLoadingUser(true);
+**文件 1**: `src/utils/shareCardConfig.ts`
 
-  // 超时兜底：最多 5 秒后强制结束 loading
-  const timeoutId = setTimeout(() => {
-    setIsLoadingUser(false);
-  }, 5000);
+1. `prepareClonedElement` 中移除 `background: transparent`
+2. `onclone` 回调中增加对 `background-clip: text` 元素的处理，将其降级为纯色文字
 
-  const fetchUserInfo = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        // 未登录也显示卡片，使用默认数据
-        setIsLoadingUser(false);
-        return;
-      }
-      // ... 其余逻辑不变
-    } catch (err) {
-      console.error('[WealthInviteCardDialog] Failed to fetch user info:', err);
-    } finally {
-      setIsLoadingUser(false);
-      clearTimeout(timeoutId);
-    }
-  };
-
-  fetchUserInfo();
-  return () => clearTimeout(timeoutId);
-}, [open, campId, propCurrentDay]);
-```
-
-这样即使在微信环境下请求卡住，卡片也能在 5 秒后正常显示。
+预期效果：
+- 卡片背景正常显示（渐变色）
+- 所有文字可见
+- 渐变文字降级为纯色但仍然可读
