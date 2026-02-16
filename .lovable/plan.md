@@ -1,15 +1,37 @@
 
 
-## 去除三层觉醒度百分比区域
+## 优化仪表盘设计：多色弧形 + 渐变字号
 
-移除 `EnhancedHealthGauge.tsx` 中第 139-152 行的 "Layer Awakening Percentages" 部分（行为/情绪/信念 觉醒度 XX%），同时清理不再使用的 `layers` 数组定义和相关 import（`layerScoreToAwakeningPercent`、`getAwakeningTextColor`）。
+### 两个改进点
 
-### 技术细节
+### 1. 弧形分段多色
 
-**文件：`src/components/wealth-block/EnhancedHealthGauge.tsx`**
+当前弧形只有一种颜色。改为将半圆弧分成 4 段，每段对应一个觉醒区间，用不同颜色暗示阶段：
 
-- 删除第 139-152 行的三层觉醒度显示区块
-- 删除第 30-34 行的 `layers` 数组定义
-- 如果 `layerScoreToAwakeningPercent` 和 `getAwakeningTextColor` 仅在此处使用，从 import 中移除
-- Props 中的 `behaviorScore`、`emotionScore`、`beliefScore` 可保留（其他组件可能传入），但不再在此组件内使用
+```text
+左(0-39 红) → (40-59 橙) → (60-79 黄) → 右(80-100 绿)
+```
+
+- 背景弧：4 段分别用对应颜色的低透明度（opacity 0.15）绘制
+- 进度弧：指针扫过的部分用对应段的实色填充
+- 每段用独立的 `<path>` 绘制，通过计算弧度角来分割
+
+**技术实现**：用 4 条独立的 SVG `<path>` 替代当前单条弧线，每条路径覆盖对应角度范围（0-39% = 70.2度, 40-59% = 36度, 60-79% = 36度, 80-100% = 37.8度）。进度条则用 clip 或 strokeDashoffset 控制填充到当前分数位置。
+
+### 2. 区间图例字号从小到大
+
+底部图例（🔴0-39 🟠40-59 🟡60-79 🟢80-100）改为渐变字号：
+
+- 🔴 0-39：`text-[9px]`
+- 🟠 40-59：`text-[10px]`
+- 🟡 60-79：`text-[11px]`
+- 🟢 80-100：`text-[12px]` + `font-medium`
+
+视觉上暗示"从低到高、从弱到强"的递进感。当前所在区间仍高亮背景。
+
+### 修改文件
+
+| 文件 | 修改内容 |
+|------|---------|
+| `src/components/wealth-block/EnhancedHealthGauge.tsx` | 1) SVG 弧形改为 4 段分色（红/橙/黄/绿），背景半透明 + 进度实色；2) 底部图例字号递增（9px→12px） |
 
