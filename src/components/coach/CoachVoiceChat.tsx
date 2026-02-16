@@ -53,6 +53,7 @@ interface CoachVoiceChatProps {
   aiCallId?: string;               // ai_coach_calls 记录ID
   openingMessage?: string;         // AI预设开场白
   extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
+  maxDurationOverride?: number | null; // undefined=走默认逻辑, null=不限时, number=指定分钟数
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -76,7 +77,8 @@ export const CoachVoiceChat = ({
   isIncomingCall = false,
   aiCallId,
   openingMessage,
-  extraBody
+  extraBody,
+  maxDurationOverride
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -1667,8 +1669,12 @@ export const CoachVoiceChat = ({
   useEffect(() => {
     const loadDurationLimit = async () => {
       setIsLoadingDuration(true);
-      const maxDuration = await getMaxDurationForUser();
-      setMaxDurationMinutes(maxDuration);
+      if (maxDurationOverride !== undefined) {
+        setMaxDurationMinutes(maxDurationOverride);
+      } else {
+        const maxDuration = await getMaxDurationForUser();
+        setMaxDurationMinutes(maxDuration);
+      }
       setIsLoadingDuration(false);
     };
     loadDurationLimit();
