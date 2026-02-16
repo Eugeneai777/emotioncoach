@@ -1,54 +1,44 @@
 
 
-# 修复小红书封面生成器
+# 修改AI提示词，让封面直接生成中文文字
 
-## 问题原因
-
-Edge Function 日志显示错误：
-```
-StorageApiError: Invalid key: xiaohongshu/mashang-觉醒-1771224179013.png
-```
-
-Supabase Storage 不支持中文字符作为文件名。图片由 AI 成功生成，但在上传到存储桶时因文件名包含中文而失败。
-
-## 修复方案
-
-修改 `supabase/functions/generate-xiaohongshu-covers/index.ts`，将文件名中的中文主题替换为拼音：
-
-| 中文 | 拼音 |
-|------|------|
-| 觉醒 | juexing |
-| 发财 | facai |
-| 回血 | huixue |
-| 看见 | kanjian |
-| 破局 | poju |
-| 翻身 | fanshen |
-| 出发 | chufa |
-
-## 具体改动
+## 改动内容
 
 仅修改一个文件：`supabase/functions/generate-xiaohongshu-covers/index.ts`
 
-1. 添加一个中文到拼音的映射表：
-```typescript
-const THEME_PINYIN: Record<string, string> = {
-  "觉醒": "juexing",
-  "发财": "facai",
-  "回血": "huixue",
-  "看见": "kanjian",
-  "破局": "poju",
-  "翻身": "fanshen",
-  "出发": "chufa",
-};
+修改 `THEME_PROMPTS` 中的7个提示词，将每个提示词中的：
+- 删除 "No text, no letters, no numbers, no characters whatsoever."
+- 添加明确的中文文字渲染指令，要求在画面中央或顶部醒目位置渲染对应的"马上XX"四个大字
+
+## 具体改动
+
+将每个主题的 prompt 末尾从：
+
+```
+... No text, no letters, no numbers, no characters whatsoever. Suitable for social media cover image.
 ```
 
-2. 将文件名生成行从：
-```typescript
-const fileName = `xiaohongshu/mashang-${theme}-${Date.now()}.png`;
+改为类似：
+
 ```
-改为：
-```typescript
-const fileName = `xiaohongshu/mashang-${THEME_PINYIN[theme] || theme}-${Date.now()}.png`;
+... Display the large Chinese text "马上觉醒" prominently in the center of the image using bold calligraphic style with golden strokes and red outline. The text should be the focal point. Suitable for social media cover image.
 ```
 
-无需修改前端代码或其他文件。
+每个主题对应自己的文字：
+- 觉醒 -> "马上觉醒"
+- 发财 -> "马上发财"
+- 回血 -> "马上回血"
+- 看见 -> "马上看见"
+- 破局 -> "马上破局"
+- 翻身 -> "马上翻身"
+- 出发 -> "马上出发"
+
+## 风险提示
+
+AI 生成中文文字可能出现以下情况：
+- 笔画变形或缺失
+- 字体不够美观
+- 文字位置不理想
+
+如果效果不理想，后续可以切换为 HTML/CSS 叠加方案作为备选。
+
