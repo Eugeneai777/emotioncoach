@@ -100,8 +100,8 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
   const buttonLabel = isLimitReached
     ? '升级解锁'
     : hasFreeRemaining
-      ? '教练解说（免费）'
-      : '教练解说';
+      ? 'AI教练解说（免费）'
+      : 'AI教练解说';
 
   const ButtonIcon = isLimitReached ? Crown : Mic;
 
@@ -125,7 +125,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
           )}
           <ButtonIcon className="w-6 h-6 relative z-10" />
           <span className="relative z-10 text-[10px] font-bold leading-tight mt-0.5">
-            {disabled ? '教练解说' : isLimitReached ? '升级解锁' : '教练解说'}
+            {disabled ? 'AI教练解说' : isLimitReached ? '升级解锁' : 'AI教练解说'}
           </span>
           {hasFreeRemaining && !disabled && (
             <span className="relative z-10 mt-0.5 px-1.5 py-0.5 bg-green-500 text-white text-[8px] font-bold rounded-full leading-none">
