@@ -455,6 +455,9 @@ export class RealtimeChat {
   private lastDataChannelActivity: number = 0;
   private activityCheckInterval: ReturnType<typeof setInterval> | null = null;
 
+  // 🔧 Safari 兼容：支持接收预获取的 MediaStream，跳过内部 getUserMedia
+  private preAcquiredStream: MediaStream | null = null;
+
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
@@ -462,12 +465,14 @@ export class RealtimeChat {
     tokenEndpoint: string = 'realtime-token',
     mode: string = 'general',
     scenario?: string,
-    extraBody?: Record<string, any>
+    extraBody?: Record<string, any>,
+    preAcquiredStream?: MediaStream | null
   ) {
     this.tokenEndpoint = tokenEndpoint;
     this.mode = mode;
     this.scenario = scenario;
     this.extraBody = extraBody;
+    this.preAcquiredStream = preAcquiredStream || null;
   }
 
   // 🔧 iOS Safari / 微信小程序 音频解锁
@@ -596,8 +601,8 @@ export class RealtimeChat {
       let EPHEMERAL_KEY: string;
       let realtimeApiUrl: string;
 
-      // 🚀 优化2：尝试使用预热的麦克风流
-      const prewarmedStream = getOrRequestMicStream();
+      // 🚀 优化2：优先使用预获取的麦克风流（Safari 兼容），其次尝试预热流
+      const prewarmedStream = this.preAcquiredStream || getOrRequestMicStream();
 
       if (cachedConfig && prewarmedStream) {
         // 最快路径：配置已缓存 + 麦克风已预热，只需获取新 token

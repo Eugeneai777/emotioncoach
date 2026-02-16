@@ -1023,45 +1023,69 @@ export const CoachVoiceChat = ({
       currentAssistantDeltaRef.current = '';
       completedTranscriptRef.current = '';
 
-      // 🔧 微信/小程序：在任何 await 之前先触发一次麦克风权限请求
+      // 🔧 所有平台（含Safari）：在任何其他 await 之前，立即在用户手势上下文中请求麦克风
+      // Safari 严格要求 getUserMedia 在用户点击同步调用链中触发
+      updateConnectionPhase('requesting_mic');
+      let preAcquiredStream: MediaStream | null = null;
+      try {
+        if (platformInfo.platform === 'miniprogram' && typeof window.wx?.authorize === 'function') {
+          await new Promise<void>((resolve, reject) => {
+            window.wx?.authorize?.({
+              scope: 'scope.record',
+              success: () => resolve(),
+              fail: (err: any) => reject(err),
+            });
+          });
+        }
+
+        // 🔧 关键：在用户手势上下文中请求麦克风，保留 stream 供后续 WebRTC 复用
+        if (navigator.mediaDevices?.getUserMedia) {
+          preAcquiredStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          });
+        }
+
+        // 🔧 Safari AudioContext 解锁
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const tempCtx = new AudioCtx();
+            await tempCtx.resume();
+            const osc = tempCtx.createOscillator();
+            const g = tempCtx.createGain();
+            g.gain.value = 0;
+            osc.connect(g);
+            g.connect(tempCtx.destination);
+            osc.start(0);
+            osc.stop(0.001);
+            setTimeout(() => tempCtx.close(), 100);
+            console.log('[VoiceChat] ✅ AudioContext unlocked in user gesture');
+          }
+        } catch (e) {
+          console.warn('[VoiceChat] AudioContext unlock skipped:', e);
+        }
+
+        console.log('[VoiceChat] ✅ Mic preflight done, stream:', !!preAcquiredStream);
+      } catch (permError: any) {
+        console.error('[VoiceChat] ❌ Mic permission preflight failed:', permError);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const tip = (isIOS || isSafari)
+          ? '请在 Safari 设置中允许访问麦克风后再试'
+          : /micromessenger/i.test(navigator.userAgent)
+            ? '请在微信设置中允许访问麦克风后再试'
+            : '请允许浏览器访问麦克风后再试';
+        toast({ title: '无法使用麦克风', description: tip, variant: 'destructive' });
+        setStatus('error');
+        isInitializingRef.current = false;
+        stopConnectionTimer();
+        releaseLock();
+        setTimeout(onClose, 800);
+        return;
+      }
       // iOS 微信 WKWebView 经常要求 getUserMedia 必须发生在“用户点击”同步上下文中，
       // 否则会出现：不弹授权框 + 一直连接中。
-      if (platformInfo.platform === 'wechat-browser' || platformInfo.platform === 'miniprogram') {
-        updateConnectionPhase('requesting_mic');
-        try {
-          // 小程序优先用 authorize 预热（若可用）
-          if (platformInfo.platform === 'miniprogram' && typeof window.wx?.authorize === 'function') {
-            await new Promise<void>((resolve, reject) => {
-              window.wx?.authorize?.({
-                scope: 'scope.record',
-                success: () => resolve(),
-                fail: (err: any) => reject(err),
-              });
-            });
-          }
-
-          // H5/WebView 走 getUserMedia 预热
-          if (navigator.mediaDevices?.getUserMedia) {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach((t) => t.stop());
-          }
-
-          console.log('[VoiceChat] ✅ Mic permission preflight done');
-        } catch (permError: any) {
-          console.error('[VoiceChat] ❌ Mic permission preflight failed:', permError);
-          toast({
-            title: '无法使用麦克风',
-            description: '请在微信设置中允许访问麦克风后再试',
-            variant: 'destructive',
-          });
-          setStatus('error');
-          isInitializingRef.current = false;
-          stopConnectionTimer();
-          releaseLock();
-          setTimeout(onClose, 800);
-          return;
-        }
-      }
+      // (removed: old wechat-only mic preflight - now handled above for all platforms)
 
       if (isStale()) {
         isInitializingRef.current = false;
@@ -1189,7 +1213,7 @@ export const CoachVoiceChat = ({
         
         // 使用 emotion-realtime-token 端点
         const emotionTokenEndpoint = 'emotion-realtime-token';
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, emotionTokenEndpoint, mode, scenario, extraBody);
+        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, emotionTokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
         chatRef.current = chat;
         
         try {
@@ -1264,45 +1288,9 @@ export const CoachVoiceChat = ({
         console.log('[VoiceChat] Using WebRTC direct connection mode');
         setUseMiniProgramMode(false);
         
-        // 🔧 微信浏览器：先请求麦克风权限，避免权限弹框阻塞 WebRTC 连接导致超时
-        if (platformInfo.platform === 'wechat-browser') {
-          console.log('[VoiceChat] WeChat Browser: requesting microphone permission first...');
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            // 权限获取成功后立即释放，后续 WebRTC 连接会重新获取
-            stream.getTracks().forEach(track => track.stop());
-            console.log('[VoiceChat] WeChat Browser: microphone permission granted');
-          } catch (permError: any) {
-            console.error('[VoiceChat] WeChat Browser: microphone permission denied:', permError);
-            if (permError.name === 'NotAllowedError' || permError.name === 'PermissionDeniedError') {
-              throw new Error('麦克风权限被拒绝，请在设置中允许访问麦克风');
-            }
-            // 权限获取失败，尝试降级到 WebSocket
-            console.log('[VoiceChat] WeChat Browser: falling back to WebSocket relay...');
-            updateConnectionPhase('establishing');
-            setUseMiniProgramMode(true);
-            const miniProgramClient = new MiniProgramAudioClient({
-              onMessage: handleVoiceMessage,
-              onStatusChange: handleStatusChange,
-              onTranscript: handleTranscript,
-              onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
-              tokenEndpoint,
-              mode,
-              scenario,
-              extraBody
-            });
-            chatRef.current = miniProgramClient;
-            await miniProgramClient.connect();
-            updateConnectionPhase('connected');
-            stopConnectionTimer();
-            startMonitoring();
-            miniProgramClient.startRecording();
-            return;
-          }
-        }
-        
+        // 🔧 麦克风权限已在 startCall 开头统一获取（preAcquiredStream），无需重复请求
         updateConnectionPhase('establishing');
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody);
+        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
         chatRef.current = chat;
         
         try {
