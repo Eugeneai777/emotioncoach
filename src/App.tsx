@@ -104,6 +104,7 @@ const PromoGuide = lazyRetry(() => import("./pages/partner/PromoGuide"));
 const CampGraduate = lazyRetry(() => import("./pages/partner/CampGraduate"));
 const PartnerInvitePage = lazyRetry(() => import("./pages/PartnerInvitePage"));
 const XiaohongshuCovers = lazyRetry(() => import("./pages/XiaohongshuCovers"));
+const MashangLanding = lazyRetry(() => import("./pages/MashangLanding"));
 const BloomPartnerIntro = lazyRetry(() => import("./pages/BloomPartnerIntro"));
 const LandingPage = lazyRetry(() => import("./pages/LandingPage"));
 const PartnerLandingPageDetail = lazyRetry(() => import("./components/partner/PartnerLandingPageDetail"));
@@ -358,6 +359,7 @@ const App = () => (
               <Route path="/lp/:id" element={<LandingPage />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
+              <Route path="/mashang" element={<MashangLanding />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
