@@ -1,52 +1,37 @@
 
-# 彻底修复分享卡片下载显示问题 — 全量 Inline Style 方案
 
-## 为什么这个问题反复出现
+# 修复分享卡片预览显示被裁剪的问题
 
-html2canvas 在生成图片时会克隆 DOM 到一个离屏容器中渲染。Tailwind CSS 的类名依赖于样式表的计算，在克隆环境中经常丢失或计算错误。每次修补 shareCardConfig.ts 的渲染逻辑只是治标，卡片组件本身用 Tailwind 写样式才是根本原因。
+## 问题分析
 
-对比项目中两张卡片：
-- WealthCampShareCard（橙色）：100% inline style — 稳定
-- AssessmentValueShareCard（紫色）：Tailwind 类名 — 反复出错
+从截图看，卡片在对话框中的**预览区域**被裁剪了——头像和用户名部分不可见，只从"财富卡点测评"标题开始显示。
 
-## 方案：一劳永逸
+原因是 `WealthInviteCardDialog` 中设置了：
+- `previewHeight={340}` — 预览容器高度为 340px
+- `previewScale={0.55}` — 卡片缩放到 55%
 
-将 `AssessmentValueShareCard.tsx` 的所有 Tailwind 类名替换为 inline style，与 WealthCampShareCard 保持一致。这样 html2canvas 直接读取元素上的 style 属性，不再依赖 CSS 样式表计算。
+卡片实际高度约 600px，缩放后约 330px，理论上刚好能放下。但 `ShareDialogBase` 的预览容器使用了 `overflow: hidden`，加上 `origin-top` 的缩放方式，如果卡片实际高度超出预期，顶部不会被裁剪，但底部可能溢出。
 
-## 具体改动
+不过从截图看是**顶部被裁剪**，可能是容器内对齐方式的问题，或者卡片高度在有内容时超出了预设值。
 
-### 文件：`src/components/wealth-block/AssessmentValueShareCard.tsx`
+## 修改方案
 
-全量重写样式，所有视觉属性使用 inline style：
+### 文件：`src/components/wealth-camp/WealthInviteCardDialog.tsx`
 
-1. **根容器**：`className="w-[320px] rounded-2xl overflow-hidden shadow-2xl"` 改为 `style={{ width: '320px', borderRadius: '16px', overflow: 'hidden' }}`（保留已有的 background gradient inline style）
+1. 增大 `previewHeight` 从 `340` 到 `400`，给卡片更充足的显示空间
+2. 调整 `previewScale` 从 `0.55` 到 `0.5`，让卡片缩小一点以完整显示
 
-2. **布局**：所有 `flex`、`items-center`、`gap-*`、`justify-between` 改为对应的 `display: 'flex'`、`alignItems: 'center'`、`gap: 'Xpx'`
+改动位置（约第 321 行）：
+```
+previewHeight={activeTab === 'achievement' ? 360 : 400}
+previewScale={0.5}
+```
 
-3. **间距**：所有 `p-5`、`mb-4`、`space-y-3` 改为 `padding`、`marginBottom`、`gap`
+### 文件：`src/components/ui/share-dialog-base.tsx`（可选）
 
-4. **颜色与透明度**：
-   - `text-white/90` 改为 `color: 'rgba(255,255,255,0.9)'`
-   - `text-amber-300/80` 改为 `color: 'rgba(252,211,77,0.8)'`
-   - `bg-white/10` 改为 `background: 'rgba(255,255,255,0.1)'`
-   - `bg-amber-500/30` 改为 `background: 'rgba(245,158,11,0.3)'`
-   - `border-amber-400/50` 改为 `border: '2px solid rgba(251,191,35,0.5)'`
-
-5. **CTA 区域渐变**：`bg-gradient-to-r from-amber-500/20 to-orange-500/20` 改为 `background: 'linear-gradient(to right, rgba(245,158,11,0.2), rgba(249,115,22,0.2))'`
-
-6. **Footer**：`bg-black/30` 改为 `background: 'rgba(0,0,0,0.3)'`
-
-7. **文字样式**：所有 `text-sm`、`text-xs`、`font-bold`、`text-center` 改为 `fontSize`、`fontWeight`、`textAlign`
-
-8. **移除 `backdrop-blur-sm`**：html2canvas 不支持 backdrop-filter，直接删除
-
-### 不需要改动的文件
-
-- `shareCardConfig.ts` — 之前的 onclone 修复保留作为兜底，但不再需要依赖它
-- `WealthCampShareCard.tsx` — 已经是 inline style，无需改动
+如果上述调整不够，可以将预览容器的 `overflow: hidden` 改为 `overflow: auto`，允许用户滚动查看完整卡片。但通常增大高度和减小缩放就足够了。
 
 ## 预期效果
 
-- 所有分享卡片下载后背景、文字、布局完全正确
-- 不再依赖 html2canvas 对 Tailwind 类名的解析
-- 与 WealthCampShareCard 保持统一的编码规范，后续维护更简单
+- 预览区域能完整显示卡片的所有内容（头像、标题、分数、CTA、二维码等）
+- 不再有顶部或底部被裁剪的情况
