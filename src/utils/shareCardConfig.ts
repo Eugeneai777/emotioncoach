@@ -277,11 +277,11 @@ export interface GenerateCanvasOptions {
  * @param options - 生成选项
  * @returns Canvas 元素或 null
  */
-export const generateCanvas = async (
+/** Internal implementation without queue (used for retry to avoid deadlock) */
+const generateCanvasInternal = async (
   cardRef: React.RefObject<HTMLDivElement | null>,
   options: GenerateCanvasOptions = {}
 ): Promise<HTMLCanvasElement | null> => {
-  return queueRender(async () => {
     const {
       backgroundType = 'transparent',
       backgroundColor: customBg,
@@ -448,7 +448,8 @@ export const generateCanvas = async (
           const isBlank = sample.data.every(v => v === 0);
           if (isBlank) {
             console.warn('[shareCardConfig] Blank canvas detected, retrying with scale 1.5...');
-            return generateCanvas(cardRef, { ...options, forceScale: 1.5 });
+            // Bypass queue to avoid deadlock (we're already inside a queued task)
+            return generateCanvasInternal(cardRef, { ...options, forceScale: 1.5 });
           }
         } catch (e) {
           // getImageData may throw on tainted canvas, ignore
@@ -470,7 +471,14 @@ export const generateCanvas = async (
         });
       }
     }
-  });
+};
+
+/** Queue-wrapped public API */
+export const generateCanvas = async (
+  cardRef: React.RefObject<HTMLDivElement | null>,
+  options: GenerateCanvasOptions = {}
+): Promise<HTMLCanvasElement | null> => {
+  return queueRender(() => generateCanvasInternal(cardRef, options));
 };
 
 /** Canvas 转 Blob - 优化版 */
