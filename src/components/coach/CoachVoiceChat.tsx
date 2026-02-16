@@ -2480,7 +2480,7 @@ export const CoachVoiceChat = ({
           size="lg"
           className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
         >
-          <PhoneOff className="w-6 h-6" />
+          <Phone className="w-6 h-6" />
         </Button>
       </div>
 
