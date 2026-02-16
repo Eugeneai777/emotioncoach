@@ -903,10 +903,6 @@ ${reflection}`;
                       分享邀请
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <BackfillMemoriesButton />
-                    <BackfillVoiceBriefingsButton />
-                  </div>
                 </div>
                 
                 {mergedBriefings.length === 0 ? (
