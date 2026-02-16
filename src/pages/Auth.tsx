@@ -334,10 +334,29 @@ const Auth = () => {
           description: "欢迎回来 🌿",
         });
       } else {
-        // 注册时验证用户名称
+      // 注册时验证用户名称
         if (!displayName.trim()) {
           toast({
             title: "请输入用户名称",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // 注册前检查手机号是否已存在
+        const { data: existingProfiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('phone', phone)
+          .eq('phone_country_code', countryCode)
+          .is('deleted_at', null)
+          .limit(1);
+        
+        if (existingProfiles && existingProfiles.length > 0) {
+          toast({
+            title: "该手机号已注册",
+            description: "请切换到登录模式",
             variant: "destructive",
           });
           setLoading(false);
