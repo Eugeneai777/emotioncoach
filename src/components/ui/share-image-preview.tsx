@@ -216,7 +216,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
               <img
                 src={imageUrl}
                 alt="分享卡片"
-                className={`max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl ${
+                className={`max-w-[90%] max-h-[80vh] object-contain rounded-xl shadow-2xl ${
                   imageLoaded ? 'opacity-100' : 'opacity-0 absolute'
                 }`}
                 style={{ 

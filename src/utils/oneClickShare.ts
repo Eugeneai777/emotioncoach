@@ -129,34 +129,13 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
       return true;
     }
 
-    // 2. iOS (including WeChat H5): Prioritize native share
-    if (env.isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
-      console.log('[oneClickShare] iOS - trying navigator.share');
-      try {
-        onProgress?.('sharing');
-        await navigator.share({
-          files: [file],
-          title: cardName,
-          text: '邀请你一起突破财富卡点',
-        });
-        console.log('[oneClickShare] iOS share successful');
-        onProgress?.('done');
-        onSuccess?.();
-        URL.revokeObjectURL(blobUrl);
-        return true;
-      } catch (shareError) {
-        console.log('[oneClickShare] iOS share failed:', (shareError as Error).name);
-        if ((shareError as Error).name === 'AbortError') {
-          URL.revokeObjectURL(blobUrl);
-          return false;
-        }
-        // Fall back to image preview
-        console.log('[oneClickShare] Falling back to preview');
-        onProgress?.('preview');
-        onShowPreview?.(blobUrl);
-        onSuccess?.();
-        return true;
-      }
+    // 2. iOS: Skip unreliable navigator.share, show image preview
+    if (env.isIOS) {
+      console.log('[oneClickShare] iOS - showing preview (skip unreliable navigator.share)');
+      onProgress?.('preview');
+      onShowPreview?.(blobUrl);
+      onSuccess?.();
+      return true;
     }
 
     // 3. Android (including WeChat H5): Try native share
