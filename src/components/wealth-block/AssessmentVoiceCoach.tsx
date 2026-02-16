@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Mic, Crown } from "lucide-react";
+import { Mic, Crown, FileText, Target, MessageCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/useAuth";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
@@ -133,6 +134,29 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
             </span>
           )}
         </button>
+
+
+        {/* 价值标签 */}
+        {!disabled && (
+          <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+            {[
+              { icon: FileText, label: '深度解读报告' },
+              { icon: Target, label: '个性化建议' },
+              { icon: MessageCircle, label: '实时语音互动' },
+            ].map((item, i) => (
+              <motion.span
+                key={item.label}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.15, duration: 0.35 }}
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[10px] font-medium"
+              >
+                <item.icon className="w-3 h-3" />
+                {item.label}
+              </motion.span>
+            ))}
+          </div>
+        )}
       </div>
 
       {showVoiceChat && (
