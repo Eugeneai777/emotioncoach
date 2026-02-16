@@ -718,6 +718,40 @@ export const CoachVoiceChat = ({
         console.log('[VoiceChat] ⚠️ Short conversation, saved simple briefing');
       }
       
+      // 财富教练专属：将语音对话保存到财富日记
+      if (tokenEndpoint === 'wealth-assessment-realtime-token' && transcriptContent && transcriptContent.length > 50) {
+        try {
+          const conversationHistory = [
+            ...userTranscript.split('\n').filter(Boolean).map(t => ({ role: 'user' as const, content: t })),
+            ...transcript.split('\n').filter(Boolean).map(t => ({ role: 'assistant' as const, content: t })),
+          ];
+
+          const { data: campData } = await supabase
+            .from('training_camps')
+            .select('id, current_day')
+            .eq('user_id', user.id)
+            .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          await supabase.functions.invoke('generate-wealth-journal', {
+            body: {
+              user_id: user.id,
+              camp_id: campData?.id || null,
+              day_number: campData?.current_day || 1,
+              conversation_history: conversationHistory,
+              source: 'voice_coach'
+            }
+          });
+
+          console.log('[VoiceChat] 财富日记已从语音对话生成');
+        } catch (journalError) {
+          console.error('[VoiceChat] 财富日记生成失败:', journalError);
+        }
+      }
+
       console.log('Voice chat session recorded with API cost tracking');
     } catch (error) {
       console.error('Record session error:', error);
