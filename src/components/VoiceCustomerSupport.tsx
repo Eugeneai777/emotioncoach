@@ -248,7 +248,7 @@ const VoiceCustomerSupport: React.FC<VoiceCustomerSupportProps> = ({ onClose }) 
             {isProcessing ? (
               <Loader2 className="w-6 h-6 animate-spin" />
             ) : isRecording ? (
-              <MicOff className="w-6 h-6" />
+              <Mic className="w-6 h-6" />
             ) : (
               <Mic className="w-6 h-6" />
             )}
