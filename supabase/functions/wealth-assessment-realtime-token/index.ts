@@ -160,6 +160,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       ...data,
+      instructions,
       realtime_url: realtimeProxyUrl,
       mode: 'wealth_assessment',
       session_info: {
