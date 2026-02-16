@@ -54,6 +54,7 @@ import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
 import { NextStepActionCard } from "./NextStepActionCard";
 import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
+import { WealthAdvisorQRCard } from "./WealthAdvisorQRCard";
 
 
 interface WealthBlockResultProps {
@@ -683,6 +684,12 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         reactionPattern={result.reactionPattern}
         hasPurchased={hasPurchased}
         onPurchase={() => setShowPayDialog(true)}
+      />
+
+      {/* 5.5 财富觉醒顾问二维码卡片 */}
+      <WealthAdvisorQRCard
+        reactionPattern={result.reactionPattern}
+        dominantPoor={result.dominantPoor}
       />
 
       {/* 6. 绽放邀请码入口 - 未购买时显示 */}
