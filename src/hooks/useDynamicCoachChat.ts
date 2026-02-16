@@ -915,14 +915,17 @@ export const useDynamicCoachChat = (
     briefingGeneratedRef.current = false;
   }, []);
 
-  // 🔔 离开页面时触发未完成对话通知
+  // 🔔 离开页面时触发未完成对话通知（带去重保护）
   useEffect(() => {
     return () => {
-      // 组件卸载时检查是否有未完成的对话
       const currentMessages = messagesRef.current;
       const convId = currentConversationId;
       if (currentMessages.length >= 2 && convId && !briefingGeneratedRef.current) {
-        // 异步触发通知，不阻塞卸载
+        // 去重：同一会话只触发一次通知
+        const notifiedKey = `incomplete_notified_${convId}`;
+        if (sessionStorage.getItem(notifiedKey)) return;
+        sessionStorage.setItem(notifiedKey, '1');
+
         supabase.functions.invoke('generate-smart-notification', {
           body: {
             scenario: 'incomplete_coach_session',
