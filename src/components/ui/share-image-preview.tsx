@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { X, RotateCw, Download, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 interface ShareImagePreviewProps {
@@ -20,53 +19,38 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   isRegenerating = false,
 }) => {
   const [imageSaved, setImageSaved] = useState(false);
-  const [showTip, setShowTip] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-  // Detect environment
   const isWeChat = typeof navigator !== 'undefined' && 
     navigator.userAgent.toLowerCase().includes('micromessenger');
   const isIOS = typeof navigator !== 'undefined' && 
     /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
 
-  // Comprehensive scroll lock cleanup helper
-  const cleanupScrollLocks = useCallback(() => {
-    document.body.removeAttribute('data-scroll-locked');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.body.style.marginRight = '';
-    document.body.style.position = '';
-  }, []);
-
-  // Prevent body scroll when preview is open
+  // Fade-in on open
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = 'hidden';
       setImageSaved(false);
-      setShowTip(true);
       setImageLoaded(false);
       setImageError(false);
+      // Trigger CSS transition after mount
+      requestAnimationFrame(() => setVisible(true));
+      document.body.style.overflow = 'hidden';
       return () => {
-        // Clean up all scroll locks comprehensively on close
-        cleanupScrollLocks();
+        document.body.style.overflow = '';
+        document.body.removeAttribute('data-scroll-locked');
+        document.body.style.paddingRight = '';
+        document.body.style.marginRight = '';
+        document.body.style.position = '';
       };
+    } else {
+      setVisible(false);
     }
-  }, [open, cleanupScrollLocks]);
+  }, [open]);
 
-  // Auto-hide tip after delay on all platforms
-  useEffect(() => {
-    if (open && showTip && imageLoaded) {
-      const delay = (isWeChat || isIOS) ? 2000 : 2000;
-      const timer = setTimeout(() => setShowTip(false), delay);
-      return () => clearTimeout(timer);
-    }
-  }, [open, showTip, isWeChat, isIOS, imageLoaded]);
-
-  // Handle download for non-WeChat environments
   const handleDownload = useCallback(async () => {
     if (!imageUrl) return;
-    
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -78,7 +62,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
       setImageSaved(true);
       toast.success('图片已保存');
     } catch (error) {
@@ -87,230 +70,125 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     }
   }, [imageUrl]);
 
-  // Handle image load
-  const handleImageLoad = useCallback(() => {
-    console.log('[ShareImagePreview] Image loaded successfully');
-    setImageLoaded(true);
-    setImageError(false);
-  }, []);
-
-  // Handle image error
-  const handleImageError = useCallback(() => {
-    console.error('[ShareImagePreview] Image failed to load');
-    setImageError(true);
-    setImageLoaded(false);
-  }, []);
-
   if (!open || !imageUrl) return null;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0.01 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0.01 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[9999] bg-black/95 flex flex-col"
-          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+    <div
+      className="fixed inset-0 z-[9999] flex flex-col bg-background transition-opacity duration-200"
+      style={{ opacity: visible ? 1 : 0 }}
+    >
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b border-border shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="min-h-[44px] min-w-[44px]"
         >
-          {/* Header */}
-          <motion.div 
-            initial={{ y: -20, opacity: 0.01 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="flex items-center justify-between p-3 sm:p-4 text-white shrink-0 safe-area-top"
-          >
+          <X className="h-5 w-5" />
+        </Button>
+
+        <div className="flex items-center gap-1">
+          {imageSaved && (
+            <span className="flex items-center gap-1 text-primary text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              已保存
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          {!isWeChat && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/20 h-10 w-10 rounded-full"
+              onClick={handleDownload}
+              className="min-h-[44px] min-w-[44px]"
             >
-              <X className="h-5 w-5" />
+              <Download className="h-5 w-5" />
             </Button>
-            
-            <div className="flex items-center gap-2">
-              {imageSaved && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="flex items-center gap-1 text-emerald-400 text-sm"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>已保存</span>
-                </motion.div>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {!isWeChat && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleDownload}
-                  className="text-white hover:bg-white/20 h-10 w-10 rounded-full"
-                >
-                  <Download className="h-5 w-5" />
-                </Button>
-              )}
-              {onRegenerate && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onRegenerate}
-                  disabled={isRegenerating}
-                  className="text-white hover:bg-white/20 h-10 w-10 rounded-full"
-                >
-                  <RotateCw className={`h-5 w-5 ${isRegenerating ? 'animate-spin' : ''}`} />
-                </Button>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Image Container */}
-          <div 
-            className="flex-1 flex items-center justify-center p-4 overflow-auto min-h-0"
-            onClick={onClose}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0.01 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 25 }}
-              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-              className="relative max-w-full max-h-full"
-              onClick={(e) => e.stopPropagation()}
+          )}
+          {onRegenerate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              className="min-h-[44px] min-w-[44px]"
             >
-              {/* Loading state */}
-              {!imageLoaded && !imageError && (
-                <div className="flex flex-col items-center justify-center p-8">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full"
-                  />
-                  <p className="text-white/60 text-sm mt-3">加载中...</p>
-                </div>
-              )}
+              <RotateCw className={`h-5 w-5 ${isRegenerating ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
+        </div>
+      </div>
 
-              {/* Error state */}
-              {imageError && (
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <span className="text-4xl mb-3">😕</span>
-                  <p className="text-white text-base mb-2">图片加载失败</p>
-                  <p className="text-white/60 text-sm mb-4">请点击重新生成</p>
-                  {onRegenerate && (
-                    <Button
-                      onClick={onRegenerate}
-                      disabled={isRegenerating}
-                      className="bg-white/20 hover:bg-white/30 text-white"
-                    >
-                      <RotateCw className={`h-4 w-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
-                      重新生成
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              <img
-                src={imageUrl}
-                alt="分享卡片"
-                className={`max-w-[90%] max-h-[80vh] object-contain rounded-xl shadow-2xl ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0 absolute'
-                }`}
-                style={{ 
-                  touchAction: 'pinch-zoom',
-                  WebkitUserSelect: 'none',
-                  userSelect: 'none',
-                  WebkitTouchCallout: 'default', // Enable long-press menu on iOS
-                }}
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-                onTouchStart={() => setShowTip(false)} // Hide tip when user starts interacting
-                onContextMenu={(e) => {
-                  // Allow context menu for saving
-                  e.stopPropagation();
-                }}
-              />
-            </motion.div>
+      {/* Image area */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-auto min-h-0">
+        {/* Loading */}
+        {!imageLoaded && !imageError && (
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+            <p className="text-muted-foreground text-sm">加载中...</p>
           </div>
+        )}
 
-          {/* Bottom Guidance */}
-          <motion.div
-            initial={{ y: 20, opacity: 0.01 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="shrink-0 pb-safe"
-            style={{ 
-              transform: 'translateZ(0)', 
-              willChange: 'transform, opacity',
-              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' 
-            }}
-          >
-            <div className="flex flex-col items-center gap-3 px-4">
-              <AnimatePresence>
-                {showTip && (isWeChat || isIOS) && (
-                  <motion.div 
-                    initial={{ scale: 0.95, opacity: 0.01 }}
-                    animate={{ 
-                      scale: [1, 1.02, 1],
-                      opacity: 1,
-                      boxShadow: [
-                        '0 0 0 0 rgba(16,185,129,0.3)',
-                        '0 0 0 8px rgba(16,185,129,0)',
-                        '0 0 0 0 rgba(16,185,129,0)'
-                      ]
-                    }}
-                    exit={{ 
-                      opacity: 0, 
-                      y: 20,
-                      transition: { duration: 0.3 }
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                    className="flex items-center justify-center gap-4 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20 w-full max-w-sm"
-                  >
-                    <motion.div
-                      animate={{ 
-                        scale: [1, 1.15, 1],
-                        rotate: [0, -5, 5, 0]
-                      }}
-                      transition={{ 
-                        duration: 1.5, 
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                      className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0"
-                    >
-                      <span className="text-2xl">👆</span>
-                    </motion.div>
-                    <div className="text-left">
-                      <p className="text-white font-semibold text-base">长按上方图片保存</p>
-                      <p className="text-white/70 text-sm mt-0.5">保存后可分享给好友或发朋友圈</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {!(isWeChat || isIOS) && (
-                <Button
-                  onClick={handleDownload}
-                  className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white rounded-full px-8 py-3 h-auto gap-2 text-base font-medium"
-                >
-                  <Download className="h-5 w-5" />
-                  保存图片
-                </Button>
-              )}
+        {/* Error */}
+        {imageError && (
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="text-4xl">😕</span>
+            <p className="text-foreground text-base">图片加载失败</p>
+            <p className="text-muted-foreground text-sm">请点击重新生成</p>
+            {onRegenerate && (
+              <Button onClick={onRegenerate} disabled={isRegenerating} variant="secondary">
+                <RotateCw className={`h-4 w-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+                重新生成
+              </Button>
+            )}
+          </div>
+        )}
+
+        <img
+          src={imageUrl}
+          alt="分享卡片"
+          className={`max-w-[420px] w-full rounded-2xl shadow-lg transition-opacity duration-200 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
+          }`}
+          style={{
+            touchAction: 'pinch-zoom',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTouchCallout: 'default',
+          }}
+          onLoad={() => { setImageLoaded(true); setImageError(false); }}
+          onError={() => { setImageError(true); setImageLoaded(false); }}
+          onContextMenu={(e) => e.stopPropagation()}
+        />
+      </div>
+
+      {/* Bottom guidance */}
+      <div
+        className="shrink-0 flex flex-col items-center gap-3 px-4 pb-6"
+        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+      >
+        {(isWeChat || isIOS) ? (
+          <div className="flex items-center gap-3 bg-muted rounded-2xl px-5 py-3 max-w-sm w-full">
+            <span className="text-2xl shrink-0">👆</span>
+            <div>
+              <p className="text-foreground font-medium text-sm">长按上方图片保存</p>
+              <p className="text-muted-foreground text-xs mt-0.5">保存后可分享给好友或发朋友圈</p>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </div>
+        ) : (
+          <Button
+            onClick={handleDownload}
+            className="rounded-full px-8 h-12 gap-2 text-base font-medium"
+          >
+            <Download className="h-5 w-5" />
+            保存图片
+          </Button>
+        )}
+      </div>
+    </div>
   );
 };
 
