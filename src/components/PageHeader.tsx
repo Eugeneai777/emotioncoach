@@ -50,7 +50,7 @@ const PageHeader = ({
             <img
               src={logoImage}
               alt="有劲AI"
-              className="w-14 h-14 rounded-full object-cover"
+              className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"
             />
           </div>
 
