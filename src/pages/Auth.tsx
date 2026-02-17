@@ -564,22 +564,17 @@ const Auth = () => {
               </div>
             )}
 
-            <div className="flex items-start gap-2 mt-3">
+            <div className="flex items-center gap-2 mt-3">
               <Checkbox
                 id="terms"
                 checked={agreedTerms}
                 onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-                className="mt-0.5"
               />
-              <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+              <label htmlFor="terms" className="text-xs text-muted-foreground whitespace-nowrap cursor-pointer">
                 继续即表示您同意
-                <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
-                  服务条款
-                </Link>
+                <Link to="/terms" target="_blank" className="text-primary hover:underline">服务条款</Link>
                 和
-                <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
-                  隐私政策
-                </Link>
+                <Link to="/privacy" target="_blank" className="text-primary hover:underline">隐私政策</Link>
               </label>
             </div>
           </form>
