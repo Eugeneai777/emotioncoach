@@ -1,55 +1,48 @@
 
 
-## 问题诊断
-
-截图显示：在微信小程序中，财富卡点测评支付弹窗卡在加载动画（spinner），无法进入支付流程。
+## 有劲生活馆未登录看不到内容的原因和修复方案
 
 ### 根本原因
 
-在小程序 WebView 环境下，代码陷入了**无限循环**：
+`energy_studio_tools` 表的 RLS（行级安全）策略只允许 `authenticated`（已登录用户）读取数据：
 
-1. 弹窗打开 → `status = "idle"`
-2. `fetchUserOpenId` 执行 → 小程序中没有 `mp_openid`（URL 和 sessionStorage 都没有） → 设置 `openIdResolved = true`
-3. useEffect 触发 `createOrder()`
-4. `createOrder()` 检测到是小程序且 `!userOpenId` → 调用 `requestMiniProgramOpenId()`（postMessage 不会实时回复）→ **重置 `status = "idle"`** → return
-5. useEffect 再次触发（因为 `status` 又变回 `idle`）→ 回到步骤 3
-
-结果：弹窗永远显示 spinner，无法进入支付。
-
-### 关键代码位置
-
-```text
-// 第 476-481 行：死循环的根源
-if (!userOpenId) {
-  requestMiniProgramOpenId();   // postMessage 不会实时返回
-  setStatus("idle");            // 重置状态 → 触发 useEffect 重新调用
-  return;                       // 永远不会继续
-}
+```
+策略名：所有用户可查看启用的工具
+角色：authenticated  -- 问题在这里，排除了匿名用户
+条件：is_available = true
 ```
 
-## 修复方案
+未登录用户使用的是 `anon` 角色，该策略不覆盖 `anon`，所以查询返回 0 行数据，页面虽然加载了，但工具列表为空——看起来就是"什么都看不到"。
 
-在小程序环境中，当无法获取 `mp_openid` 时，**降级为扫码支付（native QR code）** 而不是无限循环等待。
+### 修复方案
 
-### 修改文件
+**1. 修改 RLS 策略（数据库迁移）**
 
-**`src/components/wealth-block/AssessmentPayDialog.tsx`**
+为 `energy_studio_tools` 表添加一条允许匿名用户读取已启用工具的策略：
 
-修改 `createOrder` 中小程序分支的逻辑（第 471-481 行）：
-
-```typescript
-if (isMiniProgram) {
-  console.log("[Payment] MiniProgram detected, openId:", userOpenId ? "present" : "missing");
-
-  if (!userOpenId) {
-    // 无法获取 mp_openid，降级为扫码支付
-    console.warn("[Payment] MiniProgram: no mp_openid, falling back to native QR");
-    selectedPayType = "native";
-  } else {
-    selectedPayType = "miniprogram";
-  }
-}
+```sql
+CREATE POLICY "匿名用户可查看启用的工具"
+  ON public.energy_studio_tools
+  FOR SELECT
+  TO anon
+  USING (is_available = true);
 ```
 
-这样当小程序中没有 openId 时，会生成微信扫码二维码让用户完成支付，而不是无限等待。
+这样未登录用户也能看到所有可用工具卡片。
+
+**2. 排查其他相关表**
+
+有劲生活馆页面还引用了以下表，需要逐一检查它们的 RLS 策略是否也限制了 `anon` 访问：
+- `og_configurations`（OG 元数据）
+- `user_quick_menu_config`（快捷菜单，属于个人数据，可不开放）
+
+**3. 无需修改代码**
+
+`EnergyStudio.tsx` 页面代码本身没有任何登录跳转逻辑，问题纯粹是数据库权限层面的。修改 RLS 策略即可解决。
+
+### 影响范围
+
+- 仅涉及一条 RLS 策略的新增
+- 不影响已有的 `authenticated` 策略
+- `energy_studio_tools` 表中只有展示性数据（工具名称、描述、图标等），不含敏感信息，开放给匿名用户是安全的
 
