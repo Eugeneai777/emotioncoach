@@ -1,83 +1,97 @@
 
 
-# 优化 CoachHeader 顶部布局 - 防止手机端和微信小程序挤压
+# 修复 iPad/iPhone 13 分享卡片"长白屏"和底部显示异常
 
-## 问题分析
+## 问题根因
 
-从截图可以看到，当前 CoachHeader 在手机端存在以下问题：
-- Logo 尺寸过大（56px / w-14 h-14），占据大量横向空间
-- 右侧导航项（教练、生活馆、日记、套餐、觉醒、通知）过多，全部挤在一行
-- 微信小程序 WebView 顶部还有原生导航栏，进一步压缩可用空间
-- 各元素之间间距不足，触摸区域可能重叠
+从截图和代码分析，问题出在两个环节：
 
-## 优化方案
+1. **隐藏卡片定位导致 iOS 尺寸计算错误**：导出卡片使用 `fixed -left-[9999px]` 定位在屏幕外，iOS Safari 对屏幕外元素的 `scrollWidth`/`scrollHeight` 计算不准确，导致 html2canvas 捕获了错误的区域大小（多出白色空间）。
 
-### 1. 缩小 Logo 尺寸（移动端适配）
+2. **html2canvas 在 iOS 上捕获多余内容**：`generateCanvas` 依赖 `scrollHeight` 来确定渲染高度，iOS 返回的值偏大，导致生成的图片底部出现大面积白屏。底部的"AI教练解说"按钮等页面元素也可能被意外捕获。
 
-将 Logo 从固定 56px 改为响应式尺寸：
-- 手机端：36px（w-9 h-9）
-- 平板/桌面端：保持 48px（md:w-12 md:h-12）
-
-### 2. 精简右侧导航项
-
-将"套餐"和"觉醒"两个图标按钮合并到汉堡菜单中，减少右侧元素数量。优化后右侧仅保留：
-- 教练空间（下拉）
-- 生活馆
-- 日记按钮（渐变高亮）
-- 通知中心
-
-### 3. 缩小按钮尺寸
-
-- 移动端按钮高度从 `h-10 min-h-[44px]` 调整为 `h-8`（保留 44px 的触摸区域通过 padding 实现）
-- 图标从 `w-4 h-4` 缩小到移动端 `w-3.5 h-3.5`
-
-### 4. 同步优化 PageHeader
-
-PageHeader 的 Logo 也采用相同的响应式尺寸策略。
-
----
-
-## 技术细节
+## 修复方案
 
 ### 修改文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/coach/CoachHeader.tsx` | Logo 响应式尺寸、移除套餐/觉醒按钮组、缩小按钮 |
-| `src/components/PageHeader.tsx` | Logo 响应式尺寸 |
-| `src/config/hamburgerMenuConfig.ts` | 新增"觉察"菜单项 |
+| `src/components/ui/share-dialog-base.tsx` | 改进隐藏卡片的 CSS 定位方式 |
+| `src/utils/shareCardConfig.ts` | iOS 环境下使用显式尺寸、裁剪多余白边 |
 
-### CoachHeader 关键改动
+### 1. 修复隐藏卡片定位（share-dialog-base.tsx）
 
-1. Logo 改为响应式：`className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"`
-2. 删除"套餐 & 觉醒按钮组"（第260-279行），这两个入口已在汉堡菜单中存在（packages）或新增（awakening）
-3. 按钮统一使用 `h-8 px-1.5 md:px-3` 减少横向占用
-4. 汉堡菜单按钮缩小为 `h-8 w-8`
-
-### hamburgerMenuConfig 改动
-
-在菜单配置中新增"觉察"项：
-```typescript
-{ id: 'awakening', label: '觉察', icon: Lightbulb, path: '/awakening' }
-```
-
-### PageHeader 改动
-
-Logo 同步改为响应式：`className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"`
-
-### 优化后的布局结构
+将 `fixed -left-[9999px]` 改为 `visibility:hidden` + `overflow:hidden` + `height:0` 的方式隐藏：
 
 ```text
-手机端（<640px）:
-+-----------------------------------------------+
-| [Logo 36px] [☰] | [教练 v] [生活馆] [日记] [🔔] |
-+-----------------------------------------------+
+当前（有问题）:
+  fixed -left-[9999px] top-0
 
-桌面端（>=768px）:
-+----------------------------------------------------------+
-| [Logo 48px] [☰] [返回主页] | [教练空间 v] [有劲生活馆] [日记] [🛍️💡] [🔔] |
-+----------------------------------------------------------+
+改为:
+  position: absolute
+  overflow: hidden
+  height: 0
+  visibility: hidden (仅作用于外层容器)
+  内部卡片保持 visibility: visible + position: absolute
 ```
 
-手机端通过缩小 Logo + 移除两个图标按钮，可释放约 80px 横向空间，从根本上解决挤压问题。
+这样卡片虽然在隐藏容器中，但其 DOM 布局计算仍然正确，iOS 不会返回错误的尺寸。
+
+### 2. iOS 显式尺寸传递（shareCardConfig.ts）
+
+在 `generateCanvasInternal` 中增加 iOS 特殊处理：
+- 检测元素是否有显式的 inline `width` 样式（如 `320px`），优先使用该值而非 `scrollWidth`
+- 对最终 canvas 进行白边裁剪检测：如果底部超过 20% 区域为纯色/空白，自动裁剪
+
+### 3. onclone 回调加固
+
+在 `onclone` 中为 iOS 强制设置 `overflow: hidden` 和 `maxHeight`，防止克隆后的元素在 iframe 中撑开多余高度。
+
+### 技术细节
+
+```text
+share-dialog-base.tsx 隐藏容器改动:
+
+<div 
+  style={{
+    position: 'absolute',
+    overflow: 'hidden', 
+    height: 0,
+    width: 0,
+    pointerEvents: 'none',
+  }}
+  aria-hidden="true"
+>
+  <div style={{ 
+    position: 'absolute',
+    visibility: 'visible',
+    top: 0,
+    left: 0,
+  }}>
+    {exportCard}
+  </div>
+</div>
+```
+
+```text
+shareCardConfig.ts 关键改动:
+
+1. 解析 inline width:
+   const inlineWidth = originalElement.style.width 
+     ? parseInt(originalElement.style.width) 
+     : null;
+   const elementWidth = explicitWidth || inlineWidth || scrollWidth;
+
+2. iOS canvas 底部白边裁剪:
+   if (isIOSDevice() && canvas) {
+     const trimmed = trimBottomWhitespace(canvas, bgColor);
+     if (trimmed) return trimmed;
+   }
+
+3. onclone 中限制高度:
+   if (isIOSDevice()) {
+     element.style.overflow = 'hidden';
+     element.style.maxHeight = elementHeight + 'px';
+   }
+```
 
