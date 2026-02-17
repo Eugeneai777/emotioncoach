@@ -1,70 +1,67 @@
 
 
-# 全网去除新手引导方案
+# 全页面顶部左上角添加有劲AI Logo
 
-## 涉及的引导系统
-
-应用中有 **3 套独立的新手引导系统**，需要全部移除：
-
-### 1. GlobalOnboarding（全局弹窗引导）
-- **文件**: `src/components/GlobalOnboarding.tsx`
-- **调用位置**: `src/App.tsx` 第 240 行
-- 进入应用时弹出的 3 步引导弹窗
-
-### 2. PageTour（页面级引导）
-- **组件**: `src/components/PageTour.tsx`
-- **Hook**: `src/hooks/usePageTour.ts`
-- **配置**: `src/config/pageTourConfig.ts`
-- **使用页面**（共 13 个）：
-  - `ParentCoach.tsx`
-  - `Community.tsx`
-  - `VibrantLifeHistory.tsx`
-  - `HumanCoachDetail.tsx`
-  - `HumanCoaches.tsx`
-  - `BloomPartnerIntro.tsx`
-  - `Packages.tsx`
-  - `AliveCheck.tsx`
-  - `EnergyStudio.tsx`
-  - `GratitudeHistory.tsx`
-  - 以及其他使用 `usePageTour` 的页面
-
-### 3. WelcomeOnboarding（欢迎弹窗）
-- **文件**: `src/components/WelcomeOnboarding.tsx`
-- 需要查找其调用位置并移除
+## 概述
+在两个全局 Header 组件中统一添加有劲AI Logo，点击跳转到财富教练首页 `/`。不使用浮动按钮，而是固定集成在现有顶部导航栏的左上角位置。
 
 ---
 
-## 修改清单
+## 方案：修改两个 Header 组件
 
-### 第一步：移除 GlobalOnboarding
-| 文件 | 操作 |
+应用中所有页面的顶部导航由两个组件控制：
+
+1. **`PageHeader`**（用于 16+ 个子页面：设置、套餐、教练空间、训练营等）
+2. **`CoachHeader`**（用于首页及所有教练对话页面）
+
+只需修改这两个组件，即可覆盖全部页面。
+
+---
+
+## 具体改动
+
+### 1. 修改 `src/components/PageHeader.tsx`
+
+- 在左侧区域（返回按钮之前）添加有劲AI Logo
+- Logo 使用已有的 `src/assets/logo-youjin-ai.png`，尺寸 28px 圆形
+- 点击 Logo 跳转到 `/`（财富教练首页）
+- 如果当前已在首页，Logo 不可点击（避免重复导航）
+- Logo 始终显示，不受 `showBack` 等参数影响
+
+布局变化：
+```
+之前: [返回] -------- [标题] -------- [右侧操作]
+之后: [Logo] [返回] -- [标题] -------- [右侧操作]
+```
+
+### 2. 修改 `src/components/coach/CoachHeader.tsx`
+
+- 在汉堡菜单按钮之前添加有劲AI Logo
+- 同样 28px 圆形，点击跳转到 `/`
+- 当前在首页时不做导航
+
+布局变化：
+```
+之前: [菜单] [返回主页] -- [教练空间] [生活馆] [历史] [套餐/觉察] [通知]
+之后: [Logo] [菜单] [返回主页] -- [教练空间] [生活馆] [历史] [套餐/觉察] [通知]
+```
+
+---
+
+## 技术细节
+
+### 修改文件
+| 文件 | 改动 |
 |------|------|
-| `src/App.tsx` | 删除 `GlobalOnboarding` 的 import 和 `<GlobalOnboarding />` 渲染 |
+| `src/components/PageHeader.tsx` | 左侧添加 Logo 图片按钮 |
+| `src/components/coach/CoachHeader.tsx` | 左侧添加 Logo 图片按钮 |
 
-### 第二步：移除所有 PageTour 引用（13+ 个页面）
-在每个使用页面中：
-- 删除 `import { PageTour }` 和 `import { usePageTour }` 和 `import { pageTourConfig }`
-- 删除 `const { showTour, completeTour } = usePageTour(...)` 调用
-- 删除 `<PageTour ... />` JSX 渲染
+### 不新建文件
+直接在两个 Header 组件中 import logo 图片并渲染，无需创建新组件。
 
-涉及页面：`ParentCoach`, `Community`, `VibrantLifeHistory`, `HumanCoachDetail`, `HumanCoaches`, `BloomPartnerIntro`, `Packages`, `AliveCheck`, `EnergyStudio`, `GratitudeHistory` 等
+### Logo 样式
+- 使用 `src/assets/logo-youjin-ai.png`（项目中已有）
+- 28px 圆形，`rounded-full object-cover`
+- 点击时 `active:scale-95` 过渡动画
+- 外层用 `cursor-pointer` 包裹，语义化为导航按钮
 
-### 第三步：移除 WelcomeOnboarding 引用
-- 找到调用 `WelcomeOnboarding` 的页面，删除相关引用
-
-### 第四步：清理（可选但推荐）
-以下文件不再被引用，可以保留但不会被使用：
-- `src/components/GlobalOnboarding.tsx`
-- `src/components/PageTour.tsx`
-- `src/components/WelcomeOnboarding.tsx`
-- `src/hooks/usePageTour.ts`
-- `src/config/pageTourConfig.ts`
-
-> 注意：`IntakeOnboardingDialog` 和 `ParentOnboardingGuide` 是业务功能组件（亲子问卷引导和训练营推荐），不属于"新手引导"范畴，将保留不动。
-
----
-
-## 技术要点
-- 纯删除操作，不涉及新增代码
-- 不影响任何业务功能
-- `page_tour_progress` 数据库表保留（历史数据），仅移除前端调用
