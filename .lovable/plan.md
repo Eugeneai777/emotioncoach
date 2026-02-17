@@ -1,89 +1,70 @@
 
 
-# 财富卡点测评介绍页 - 视觉与排版优化方案
+# 全网去除新手引导方案
 
-## 当前问题分析
-页面内容完整但视觉偏平淡，缺少层次感和吸引力：
-- Hero 区缺少视觉冲击力，纯白背景过于单调
-- 各模块之间视觉节奏雷同（白底+浅色边框卡片重复出现）
-- 痛点区、维度区、成果区等都使用了类似的列表/卡片样式，缺乏变化
-- 缺少装饰性视觉元素（光效、渐变背景、分隔线等）
-- 定价模块不够突出，缺少紧迫感设计
-- 整体配色偏保守，缺少大胆的视觉对比
+## 涉及的引导系统
 
-## 优化方案
+应用中有 **3 套独立的新手引导系统**，需要全部移除：
 
-### 1. Hero 区域升级
-- 添加深色渐变背景（slate-900 到 violet-950），白色文字
-- 增加装饰性光球和粒子效果（CSS blur 圆形）
-- 社会证明数字加大加粗，配动态计数视觉
-- CTA 按钮加呼吸脉冲动画（animate-pulse ring）
-- 增加信任标签行（安全加密 / 8分钟 / 权威背书）
+### 1. GlobalOnboarding（全局弹窗引导）
+- **文件**: `src/components/GlobalOnboarding.tsx`
+- **调用位置**: `src/App.tsx` 第 240 行
+- 进入应用时弹出的 3 步引导弹窗
 
-### 2. 痛点区增加情绪感
-- 左侧添加红色竖条装饰线，强化"警示"感
-- 底部损失提示改为醒目的渐变警告卡片（非纯文字）
-- 每条痛点增加序号圆圈标识，增加结构感
+### 2. PageTour（页面级引导）
+- **组件**: `src/components/PageTour.tsx`
+- **Hook**: `src/hooks/usePageTour.ts`
+- **配置**: `src/config/pageTourConfig.ts`
+- **使用页面**（共 13 个）：
+  - `ParentCoach.tsx`
+  - `Community.tsx`
+  - `VibrantLifeHistory.tsx`
+  - `HumanCoachDetail.tsx`
+  - `HumanCoaches.tsx`
+  - `BloomPartnerIntro.tsx`
+  - `Packages.tsx`
+  - `AliveCheck.tsx`
+  - `EnergyStudio.tsx`
+  - `GratitudeHistory.tsx`
+  - 以及其他使用 `usePageTour` 的页面
 
-### 3. 财富卡点解释区改为深色背景段落
-- 使用 violet 深色渐变背景，与 Hero 形成呼应
-- 数据卡片改为半透明毛玻璃样式（白色半透明边框）
-- 形成"浅-深-浅-深"的视觉节奏
-
-### 4. 四大维度改为更丰富的卡片
-- 每张卡片增加渐变图标背景圆
-- 增加细微的 hover/tap 互动效果
-- 底部增加连接线暗示"它们相互关联"
-
-### 5. 三层剥离法改为纵向时间轴
-- 三张卡片改为上下排列 + 左侧竖线连接
-- 每层标注数字（Layer 1/2/3）
-- 更清晰地表达"逐层深入"的概念
-
-### 6. AI 对比区增加视觉对比
-- 左列（传统测评）用灰色暗淡风格 + 删除线
-- 右列（AI 测评）用发光渐变边框 + 高亮效果
-- 顶部加 VS 分隔标识
-
-### 7. 测评成果改为 2x2+1 网格布局
-- 前四项改为 2x2 网格（更紧凑）
-- 第五项独占一行（突出 AI 追问特色）
-- 增加渐变背景装饰
-
-### 8. AI 教练和顾问区（已有独立组件，微调即可）
-- VoiceCoachSection: 对话气泡增加打字机效果样式
-- AdvisorValueSection: 保持不变（已有深色渐变设计）
-
-### 9. 定价模块大幅升级
-- 增加"限时"倒计时视觉暗示（闪烁的火焰图标）
-- 原价增加更醒目的删除线
-- 价值清单改为两列布局，更紧凑
-- 增加底部对比文案："少喝一杯奶茶，找到卡住你的根源"
-- 添加脉冲动画 CTA 按钮
-
-### 10. 底部固定 CTA 栏增强
-- 添加微妙的上方阴影和毛玻璃效果
-- 按钮增加闪光动画效果
-- 左侧显示价格信息（原价 + 现价）
+### 3. WelcomeOnboarding（欢迎弹窗）
+- **文件**: `src/components/WelcomeOnboarding.tsx`
+- 需要查找其调用位置并移除
 
 ---
 
-## 技术细节
+## 修改清单
 
-### 修改文件
-| 文件 | 改动范围 |
-|------|---------|
-| `src/pages/WealthBlockIntro.tsx` | 重写所有内联 Section 组件的样式和布局 |
-| `src/components/wealth-block/intro/VoiceCoachSection.tsx` | 微调对话气泡样式 |
+### 第一步：移除 GlobalOnboarding
+| 文件 | 操作 |
+|------|------|
+| `src/App.tsx` | 删除 `GlobalOnboarding` 的 import 和 `<GlobalOnboarding />` 渲染 |
 
-### 不修改的文件
-- `AdvisorValueSection.tsx` - 已有深色渐变设计，保持不变
-- `AssessmentFAQ.tsx` - FAQ 功能性组件，保持简洁即可
+### 第二步：移除所有 PageTour 引用（13+ 个页面）
+在每个使用页面中：
+- 删除 `import { PageTour }` 和 `import { usePageTour }` 和 `import { pageTourConfig }`
+- 删除 `const { showTour, completeTour } = usePageTour(...)` 调用
+- 删除 `<PageTour ... />` JSX 渲染
 
-### 技术要点
-- 使用 CSS 渐变和 blur 实现装饰光效，不引入额外图片资源
-- 利用 Tailwind 的 `backdrop-blur`、`bg-gradient-to-*`、`shadow-*` 组合实现毛玻璃和发光效果
-- 动画继续使用 `framer-motion`，保持与项目一致
-- 移动端优先，所有视觉效果在小屏幕上不会造成性能问题
-- 通过交替使用深色/浅色背景段落，打破视觉单调感
+涉及页面：`ParentCoach`, `Community`, `VibrantLifeHistory`, `HumanCoachDetail`, `HumanCoaches`, `BloomPartnerIntro`, `Packages`, `AliveCheck`, `EnergyStudio`, `GratitudeHistory` 等
 
+### 第三步：移除 WelcomeOnboarding 引用
+- 找到调用 `WelcomeOnboarding` 的页面，删除相关引用
+
+### 第四步：清理（可选但推荐）
+以下文件不再被引用，可以保留但不会被使用：
+- `src/components/GlobalOnboarding.tsx`
+- `src/components/PageTour.tsx`
+- `src/components/WelcomeOnboarding.tsx`
+- `src/hooks/usePageTour.ts`
+- `src/config/pageTourConfig.ts`
+
+> 注意：`IntakeOnboardingDialog` 和 `ParentOnboardingGuide` 是业务功能组件（亲子问卷引导和训练营推荐），不属于"新手引导"范畴，将保留不动。
+
+---
+
+## 技术要点
+- 纯删除操作，不涉及新增代码
+- 不影响任何业务功能
+- `page_tour_progress` 数据库表保留（历史数据），仅移除前端调用
