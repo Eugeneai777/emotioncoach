@@ -225,9 +225,9 @@ const CampList = () => {
         </div>
       </header>
 
-      <main className="container max-w-6xl mx-auto px-4 py-12">
+      <main className="container max-w-6xl mx-auto px-4 py-6 sm:py-12">
         {/* Hero Section with Stats */}
-        <section className="relative text-center space-y-8 mb-12 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+        <section className="relative text-center space-y-4 sm:space-y-8 mb-6 sm:mb-12 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
           {/* Decorative Background */}
           <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
@@ -244,13 +244,13 @@ const CampList = () => {
               选择你的成长之旅
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               专业导师陪伴，社群共同成长，科学系统的学习路径
             </p>
           </div>
 
           {/* Global Stats */}
-          <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-teal-50/80 to-cyan-50/60 border-teal-200/50 dark:from-teal-950/30 dark:to-cyan-950/20 dark:border-teal-800/30">
               <div className="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">{stats.total.camps}</div>
               <div className="text-xs sm:text-sm text-muted-foreground mt-1">训练营总数</div>
@@ -268,7 +268,7 @@ const CampList = () => {
 
         {/* Tabs with Enhanced Design */}
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-10 h-auto p-2 
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-4 sm:mb-10 h-auto p-2 
             bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-200/30
             dark:bg-teal-950/30 dark:border-teal-800/30">
             {campCategories.map(category => {
@@ -307,7 +307,7 @@ const CampList = () => {
           </TabsList>
 
           {/* Category Description and Filters */}
-          <div className="mb-8 space-y-4 animate-in fade-in-50 duration-500">
+          <div className="mb-4 sm:mb-8 space-y-4 animate-in fade-in-50 duration-500">
             <div className="text-center space-y-2">
               <p className="text-muted-foreground text-base sm:text-lg">{currentCategory.description}</p>
             </div>
@@ -338,7 +338,7 @@ const CampList = () => {
           {/* Training Camps Grid */}
           <TabsContent value={activeCategory} className="mt-0">
             {filteredAndSortedCamps.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8 items-stretch">
                 {filteredAndSortedCamps.map((camp, index) => (
                   <CampTemplateCard
                     key={camp.id}

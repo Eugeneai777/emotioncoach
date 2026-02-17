@@ -72,7 +72,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
       style={{ animationDelay: `${index * 150}ms` }}
     >
       {/* 封面背景 - 保留各训练营特色渐变 */}
-      <div className={`relative h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
+      <div className={`relative h-28 sm:h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
         
         {/* 绽放系列装饰图案 */}
@@ -116,20 +116,20 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
             </div>
           )}
         </div>
-        <div className="absolute bottom-3 left-3 text-6xl filter drop-shadow-lg">
+        <div className="absolute bottom-3 left-3 text-4xl sm:text-6xl filter drop-shadow-lg">
           {camp.icon}
         </div>
       </div>
       
-      <CardHeader className="relative z-10 pt-4">
+      <CardHeader className="relative z-10 pt-3">
         <CardTitle className="text-xl line-clamp-1 text-teal-800 dark:text-teal-200">{camp.camp_name}</CardTitle>
         <CardDescription className="text-sm line-clamp-2 min-h-[2.5rem] text-teal-600/80 dark:text-teal-400/80">
           {camp.camp_subtitle}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="relative z-10 space-y-4 flex-1">
-        <p className="text-muted-foreground leading-relaxed line-clamp-2 min-h-[3rem]">{camp.description}</p>
+      <CardContent className="relative z-10 space-y-2 sm:space-y-4 flex-1">
+        <p className="text-muted-foreground leading-relaxed line-clamp-2 min-h-0 sm:min-h-[3rem]">{camp.description}</p>
         
         <div className="flex flex-wrap gap-2">
           <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
