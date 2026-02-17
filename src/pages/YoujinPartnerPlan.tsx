@@ -584,7 +584,7 @@ const YoujinPartnerPlan = () => {
 
                   <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
                     <CardContent className="p-5 text-center">
-                      <p className="text-xl font-bold">7款可分成产品 × 三大场景 = 多元收益来源</p>
+                      <p className="text-base sm:text-xl font-bold">7款可分成产品 × 三大场景 = 多元收益来源</p>
                     </CardContent>
                   </Card>
                 </div>

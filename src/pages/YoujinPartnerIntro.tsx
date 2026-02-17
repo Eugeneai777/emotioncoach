@@ -288,9 +288,8 @@ export default function YoujinPartnerIntro() {
                   <span className="text-2xl">💎</span>
                   <div>
                     <p className="font-medium text-teal-800">一步到位更划算！</p>
-                    <p className="text-sm text-teal-600">
-                      直接购买钻石：¥4,950 | 先买初级再升级：¥792 + ¥4,950 = ¥5,742
-                    </p>
+                     <p className="text-sm text-teal-600">直接买钻石：¥4,950</p>
+                     <p className="text-sm text-teal-600">先买初级再升：¥792 + ¥4,950 = ¥5,742</p>
                   </div>
                 </div>
               </CardContent>
@@ -310,7 +309,7 @@ export default function YoujinPartnerIntro() {
                   onClick={() => handlePurchase(level.level)}
                 >
                   <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center justify-between">
+                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex items-center gap-3">
                         <span className="text-4xl">{level.icon}</span>
                         <div>
@@ -329,7 +328,7 @@ export default function YoujinPartnerIntro() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
+                     <div className="flex flex-wrap gap-2">
                       <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium">
                         全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
                       </span>

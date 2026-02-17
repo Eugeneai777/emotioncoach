@@ -169,7 +169,7 @@ export function PartnerEarningsComparison() {
           </div>
           
           {/* ROI 计算 */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground pt-1">
             <span>多投入 ¥{formatMoney(PRICE_DIFF)}</span>
             <ArrowRight className="w-3 h-3" />
             <span className="font-bold text-orange-600 dark:text-orange-400">多赚 ¥{formatMoney(EARNINGS_DIFF)}</span>
