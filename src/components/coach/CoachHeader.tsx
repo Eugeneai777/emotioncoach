@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target, LogIn, Lightbulb } from "lucide-react";
+import logoImage from "@/assets/logo-youjin-ai.png";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
   DropdownMenu,
@@ -116,6 +117,21 @@ export const CoachHeader = ({
         <div className="flex items-center justify-between gap-2">
           {/* Left side */}
           <div className="flex items-center gap-1 md:gap-2">
+            {/* 有劲AI Logo */}
+            <div
+              onClick={() => {
+                const isHome = location.pathname === '/';
+                if (!isHome) navigate('/');
+              }}
+              className={`flex-shrink-0 ${location.pathname === '/' ? '' : 'cursor-pointer active:scale-95 transition-transform'}`}
+            >
+              <img
+                src={logoImage}
+                alt="有劲AI"
+                className="w-7 h-7 rounded-full object-cover"
+              />
+            </div>
+
             {/* Hamburger menu dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

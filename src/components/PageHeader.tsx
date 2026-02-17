@@ -1,6 +1,7 @@
 import { ArrowLeft, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import logoImage from '@/assets/logo-youjin-ai.png';
 
 interface PageHeaderProps {
   title?: string;
@@ -41,6 +42,18 @@ const PageHeader = ({
     <header className={`sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 ${className}`}>
       <div className="flex items-center justify-between h-12 px-4">
         <div className="flex items-center gap-1">
+          {/* 有劲AI Logo */}
+          <div
+            onClick={() => !isHomePage && navigate('/')}
+            className={`flex-shrink-0 ${isHomePage ? '' : 'cursor-pointer active:scale-95 transition-transform'}`}
+          >
+            <img
+              src={logoImage}
+              alt="有劲AI"
+              className="w-7 h-7 rounded-full object-cover"
+            />
+          </div>
+
           {/* 返回按钮 */}
           {showBack && !isHomePage && (
             <Button
