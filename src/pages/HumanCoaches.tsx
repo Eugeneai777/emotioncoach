@@ -9,9 +9,6 @@ import { HumanCoachCard } from "@/components/human-coach/HumanCoachCard";
 import { CoachRecommendations } from "@/components/human-coach/CoachRecommendations";
 import { useActiveHumanCoaches } from "@/hooks/useHumanCoaches";
 import { useCoachProfile } from "@/hooks/useCoachDashboard";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 const SPECIALTIES = [
@@ -28,7 +25,7 @@ export default function HumanCoaches() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("全部");
-  const { showTour, completeTour } = usePageTour('human_coaches');
+  
   
   const { data: coaches = [], isLoading } = useActiveHumanCoaches();
   const { data: coachProfile } = useCoachProfile();
@@ -48,11 +45,6 @@ export default function HumanCoaches() {
   return (
     <>
       <DynamicOGMeta pageKey="humanCoaches" />
-      <PageTour
-        steps={pageTourConfig.human_coaches}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">

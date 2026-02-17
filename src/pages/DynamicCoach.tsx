@@ -24,9 +24,6 @@ import { useWeChatBindStatus } from "@/hooks/useWeChatBindStatus";
 import { triggerFollowReminder } from "@/hooks/useFollowReminder";
 import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
 import { Badge } from "@/components/ui/badge";
 
@@ -59,13 +56,6 @@ const DynamicCoach = () => {
   // 微信绑定状态（用于关键时刻提示）
   const { isBound, isEmailUser } = useWeChatBindStatus();
   
-  // 根据教练类型选择引导配置
-  const tourKey = coachKey === 'vibrant_life_sage' 
-    ? 'vibrant_life_coach' 
-    : coachKey === 'gratitude_coach'
-      ? 'gratitude_coach'
-      : null;
-  const { showTour, completeTour } = usePageTour(tourKey || '');
   
   // 智能生成 coachType：如果 coach_key 已经包含 _coach 后缀则直接使用，否则拼接
   const getCoachTypeForNotifications = (coachKey: string | undefined, isLoading: boolean) => {
@@ -287,13 +277,6 @@ const DynamicCoach = () => {
   return (
     <>
       <DynamicOGMeta pageKey={`coach_${coachKey}`} />
-      {tourKey && pageTourConfig[tourKey] && (
-        <PageTour
-          steps={pageTourConfig[tourKey]}
-          open={showTour}
-          onComplete={completeTour}
-        />
-      )}
       <CoachLayout
       emoji={template.emoji}
       title={template.title}

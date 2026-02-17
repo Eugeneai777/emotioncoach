@@ -9,9 +9,6 @@ import PageHeader from "@/components/PageHeader";
 import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { categories, getCategoryConfig } from "@/config/energyStudioTools";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { cn } from "@/lib/utils";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MindfulnessPractice } from "@/components/tools/MindfulnessPractice";
@@ -55,7 +52,7 @@ const EnergyStudio = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { showTour, completeTour } = usePageTour('energy_studio');
+  
   const [activeCategory, setActiveCategory] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
@@ -254,12 +251,6 @@ const EnergyStudio = () => {
         )}
       </main>
 
-      <PageTour 
-        open={showTour} 
-        onComplete={completeTour} 
-        steps={pageTourConfig.energy_studio} 
-        pageTitle="有劲生活馆" 
-      />
     </div>
   );
 };

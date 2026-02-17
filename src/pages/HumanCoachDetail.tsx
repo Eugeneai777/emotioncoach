@@ -21,9 +21,6 @@ import {
   useCoachReviews,
   CoachService
 } from "@/hooks/useHumanCoaches";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 export default function HumanCoachDetail() {
@@ -33,7 +30,7 @@ export default function HumanCoachDetail() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<CoachService | undefined>();
   const [isCurrentUserCoach, setIsCurrentUserCoach] = useState(false);
-  const { showTour, completeTour } = usePageTour('human_coach_detail');
+  
   const { startCall, isInCall } = useCoachCallContext();
   
   const { data: coach, isLoading: loadingCoach } = useHumanCoach(id);
@@ -102,11 +99,6 @@ export default function HumanCoachDetail() {
   
   return (
     <>
-      <PageTour
-        steps={pageTourConfig.human_coach_detail}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">

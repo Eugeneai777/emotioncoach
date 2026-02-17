@@ -22,9 +22,6 @@ import type { CampTemplate } from "@/types/trainingCamp";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 const campCategories = [
@@ -49,7 +46,7 @@ const campCategories = [
 const CampList = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showTour, completeTour } = usePageTour('camp_list');
+  
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [sortBy, setSortBy] = useState<'popular' | 'duration' | 'newest'>('popular');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -191,11 +188,6 @@ const CampList = () => {
 
   return (
     <>
-      <PageTour
-        steps={pageTourConfig.camp_list}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <div 
         className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10"
         style={{ WebkitOverflowScrolling: 'touch' }}

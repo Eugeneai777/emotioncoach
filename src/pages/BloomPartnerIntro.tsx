@@ -6,9 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { useTrilogyProgress } from "@/hooks/useTrilogyProgress";
 import { supabase } from "@/integrations/supabase/client";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { toast } from "sonner";
 
 const benefits = [
@@ -47,7 +44,7 @@ const benefits = [
 const BloomPartnerIntro = () => {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
-  const { showTour, completeTour } = usePageTour('bloom_partner_intro');
+  
   const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useAssessmentPurchase();
   const progress = useTrilogyProgress();
   const [claiming, setClaiming] = useState(false);
@@ -210,12 +207,6 @@ const BloomPartnerIntro = () => {
         })}
       </div>
 
-      <PageTour
-        open={showTour}
-        onComplete={completeTour}
-        steps={pageTourConfig.bloom_partner_intro}
-        pageTitle="绽放合伙人"
-      />
     </div>
   );
 };
