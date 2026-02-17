@@ -177,7 +177,8 @@ export function ShareDialogBase({
     if (isiOS) {
       onOpenChange(false); // 立即关闭 Dialog
       loadingToastId = toast.loading('正在生成图片...');
-      await new Promise(r => setTimeout(r, 300)); // 等 Dialog 动画完成
+      // 等待两帧确保 Dialog 关闭动画和 toast 都渲染完成
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     }
 
     try {

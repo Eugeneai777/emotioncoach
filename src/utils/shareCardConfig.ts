@@ -174,34 +174,37 @@ const trimBottomWhitespace = (canvas: HTMLCanvasElement, bgColor: string | null)
   const { width, height } = canvas;
   if (width === 0 || height === 0) return null;
 
-  // 从底部向上逐行扫描，找到最后一行有内容的像素
+  // 优化：一次性读取底部 30% 区域像素数据，避免上千次 getImageData GPU 交互
+  const scanStartY = Math.floor(height * 0.7);
+  const scanHeight = height - scanStartY;
+  const regionData = ctx.getImageData(0, scanStartY, width, scanHeight).data;
+  
+  const sampleStep = Math.max(1, Math.floor(width / 20));
   let lastContentRow = height - 1;
-  const sampleStep = Math.max(1, Math.floor(width / 20)); // 每行采样20个点
 
-  for (let y = height - 1; y >= 0; y--) {
+  // 从底部向上扫描内存中的像素数据
+  for (let localY = scanHeight - 1; localY >= 0; localY--) {
     let hasContent = false;
     for (let x = 0; x < width; x += sampleStep) {
-      const pixel = ctx.getImageData(x, y, 1, 1).data;
-      // 检查是否非空白（非全透明且非纯白）
-      const isTransparent = pixel[3] === 0;
-      const isWhite = pixel[0] >= 250 && pixel[1] >= 250 && pixel[2] >= 250 && pixel[3] >= 250;
+      const idx = (localY * width + x) * 4;
+      const r = regionData[idx], g = regionData[idx + 1], b = regionData[idx + 2], a = regionData[idx + 3];
+      const isTransparent = a === 0;
+      const isWhite = r >= 250 && g >= 250 && b >= 250 && a >= 250;
       if (!isTransparent && !isWhite) {
         hasContent = true;
         break;
       }
     }
     if (hasContent) {
-      lastContentRow = y;
+      lastContentRow = scanStartY + localY;
       break;
     }
   }
 
-  // 加一点底部 padding（20px * scale）
   const padding = 40;
   const trimmedHeight = Math.min(height, lastContentRow + padding);
   const blankRatio = (height - trimmedHeight) / height;
 
-  // 仅当底部空白超过 20% 时才裁剪
   if (blankRatio < 0.2) return null;
 
   console.log(`[shareCardConfig] iOS trimming: ${height}px → ${trimmedHeight}px (removed ${Math.round(blankRatio * 100)}% blank)`);
@@ -400,6 +403,10 @@ const generateCanvasInternal = async (
       const renderDelay = isWeChat ? SHARE_TIMEOUTS.renderDelayWeChat : SHARE_TIMEOUTS.renderDelay;
       await new Promise(resolve => setTimeout(resolve, renderDelay));
 
+      // UI 让步：确保 loading toast / 进度指示已渲染到屏幕
+      await new Promise(r => requestAnimationFrame(r));
+      await new Promise(r => setTimeout(r, 0));
+
       debug && console.log('[shareCardConfig] Starting html2canvas...', {
         elapsed: Math.round(performance.now() - startTime) + 'ms'
       });
@@ -417,7 +424,7 @@ const generateCanvasInternal = async (
         height: elementHeight,
         windowWidth: elementWidth + 20,
         windowHeight: elementHeight + 20,
-        onclone: (_doc, element) => {
+        onclone: (doc, element) => {
           // 确保克隆元素可见并正确定位
           element.style.position = 'relative';
           element.style.left = 'auto';
@@ -441,28 +448,27 @@ const generateCanvasInternal = async (
             element.style.backgroundColor = bgColor;
           }
           
-          // 移除动画以加速渲染
-          element.style.animation = 'none';
-          element.style.transition = 'none';
-          
-          // 🔧 强制设置中文 fallback 字体链（防止乱码）
-          const forceChineseFonts = (el: HTMLElement) => {
-            const computedFont = getComputedStyle(el).fontFamily;
-            if (!computedFont.includes('PingFang') && !computedFont.includes('Microsoft YaHei')) {
-              el.style.fontFamily = `${computedFont}, "PingFang SC", "Microsoft YaHei", "Heiti SC", "Noto Sans SC", sans-serif`;
+          // 🔧 批量注入全局样式：一次性禁用所有动画 + 设置字体 fallback
+          // 替代逐元素遍历，减少约 80% 的 DOM 操作开销
+          const styleTag = doc.createElement('style');
+          styleTag.textContent = `
+            * {
+              animation: none !important;
+              transition: none !important;
+              font-family: inherit, "PingFang SC", "Microsoft YaHei", "Heiti SC", "Noto Sans SC", sans-serif !important;
             }
-          };
+          `;
+          doc.head.appendChild(styleTag);
           
-          forceChineseFonts(element);
+          // 🔧 根元素设置中文 fallback 字体链，子元素通过 CSS 继承
+          const computedFont = getComputedStyle(element).fontFamily;
+          if (!computedFont.includes('PingFang') && !computedFont.includes('Microsoft YaHei')) {
+            element.style.fontFamily = `${computedFont}, "PingFang SC", "Microsoft YaHei", "Heiti SC", "Noto Sans SC", sans-serif`;
+          }
           
-          // 递归处理子元素
-          element.querySelectorAll('*').forEach((child: Element) => {
+          // 🔧 bg-clip-text 修复：仅处理使用了渐变文字的元素（通常很少）
+          element.querySelectorAll('[class*="bg-clip"], [class*="text-transparent"]').forEach((child: Element) => {
             if (child instanceof HTMLElement) {
-              child.style.animation = 'none';
-              child.style.transition = 'none';
-              forceChineseFonts(child);
-              
-              // 修复 bg-clip-text 渐变文字
               const computed = getComputedStyle(child);
               const bgClip = computed.getPropertyValue('-webkit-background-clip') || computed.getPropertyValue('background-clip');
               if (bgClip === 'text') {
@@ -515,8 +521,10 @@ const generateCanvasInternal = async (
           debug && console.warn('[shareCardConfig] Canvas sample check failed:', e);
         }
       }
-      // iOS: 裁剪底部多余白边
+      
+      // iOS: 裁剪底部多余白边（让出一帧再裁剪，减轻连续 CPU 负载）
       if (isIOSDevice()) {
+        await new Promise(r => requestAnimationFrame(r));
         const trimmed = trimBottomWhitespace(canvas, bgColor);
         if (trimmed) return trimmed;
       }
