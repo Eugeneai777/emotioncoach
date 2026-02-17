@@ -1,108 +1,105 @@
 
 
-# 修复 iOS 分享：两处精准改动
+# 全新财富卡点测评介绍页
 
-## 问题根因（经代码确认）
+## 概述
+创建一个全新的独立页面 `/wealth-block-intro`，作为财富卡点测评的完整介绍与营销落地页。该页面不修改现有的 `AssessmentIntroCard`，而是一个独立的、信息丰富的长页面。
 
-**iPhone 13 "闪跳无动作"**：`shareCardConfig.ts` 的 `getOptimalScale()` 没有 iOS 检测。iPhone 13 Safari 走的是 `return isLowEndDevice() ? 2.5 : 3`，但 iPhone 13 的 `hardwareConcurrency` 是 6 核，不算低端设备，所以用了 `scale: 3`。一张 340px 宽、800px+ 高的卡片，3x 后 canvas 约 1020x2400+ = 2,448,000 像素。iOS Safari canvas 限制约 16MP，虽然没超，但某些 iOS WebView 实际限制更低（约 4-8MP），导致 `html2canvas` 静默失败，`generateCardBlob` 返回 null，然后 `handleGenerateImage` 抛错只显示一个 toast "生成图片失败" 就结束了。
+---
 
-**iPad "长黑屏"**：`ShareDialogBase` 在生成图片期间，Radix Dialog 保持打开（`bg-black/80` 遮罩），用户看到的就是黑色遮罩 + 小小的 loading spinner。iPad 大屏上尤其明显。生成完成后才关闭 Dialog 打开 `ShareImagePreview`。
+## 页面结构（从上到下）
 
-## 修复方案（2 个文件，精准改动）
+### 1. Hero 区域
+- 品牌标识 + "财富卡点测评"标题
+- 核心痛点文案："赚钱好像被隐形刹车卡住了"
+- 社会证明："12,847 人已找到答案"
+- 主 CTA 按钮："立即开始测评"
 
-### 1. `src/utils/shareCardConfig.ts` — iOS 降至 2x
+### 2. 痛点共鸣区
+- 5 个常见财富困境（工资见底、嫉妒别人、不敢推销自己等）
+- 损失规避提示："如果不解决，可能继续原地踏步 3-5 年"
 
-在 `getOptimalScale()` 中加入 iOS Safari 检测，强制使用 `scale: 2`：
+### 3. 什么是财富卡点
+- 简洁说明潜意识中的隐性财富障碍
+- 权威数据支撑（中科院、哈佛商学院、2024调研）
 
-```typescript
-const getOptimalScale = (): number => {
-  const ua = navigator.userAgent.toLowerCase();
-  const isiOS = /iphone|ipad|ipod/.test(ua);
-  
-  // iOS Safari 对 canvas 尺寸有严格限制，统一用 2x
-  if (isiOS) {
-    return 2;
-  }
-  if (isWeChatBrowser()) {
-    return isLowEndDevice() ? 2 : 2.5;
-  }
-  return isLowEndDevice() ? 2.5 : 3;
-};
-```
+### 4. 测评四大维度
+- 思维穷、情绪穷、行为穷、关系穷
+- 2x2 网格布局，每个维度有图标和简要说明
 
-同时在 `generateCanvas` 中增加空白 canvas 检测 — 如果生成的 canvas 像素全部为 0（透明/空白），自动用 `scale: 1.5` 重试一次：
+### 5. 测评结构 - 三层剥离法
+- 行为层 / 情绪层 / 信念层
+- 简洁的三列卡片展示（不用 SVG 洋葱图，保持轻量）
 
-```typescript
-// 在 canvas 生成后、return 前加入：
-const ctx = canvas.getContext('2d');
-if (ctx) {
-  const sample = ctx.getImageData(0, 0, Math.min(canvas.width, 10), Math.min(canvas.height, 10));
-  const isBlank = sample.data.every(v => v === 0);
-  if (isBlank) {
-    console.warn('[shareCardConfig] Blank canvas detected, retrying with lower scale...');
-    // 递归重试一次，scale 降到 1.5
-    if (!options.forceScale) {
-      return generateCanvas(cardRef, { ...options, forceScale: 1.5 });
-    }
-  }
-}
-```
+### 6. AI 智能追问对比
+- 复用 `AIComparisonCard` 的内容逻辑，但以内联方式展示
+- 传统测评 vs AI 测评的差异
 
-### 2. `src/components/ui/share-dialog-base.tsx` — iOS 先关 Dialog 再生成
+### 7. 你将获得（测评成果）
+- 四穷雷达图 + 觉醒指数仪表盘
+- 人格故事解读 + 个性化突破建议
+- AI 智能追问深度分析
 
-在 `handleGenerateImage` 中，iOS 设备点击"生成"按钮时：
-1. **立即关闭 Dialog**（消除黑色遮罩）
-2. 显示 `toast.loading("正在生成图片...")`
-3. 在后台完成 `html2canvas` 生成
-4. 生成完成后打开 `ShareImagePreview`
+### 8. AI 智能财富教练语音功能（重点新模块）
+- 标题："测完不是结束，AI 教练帮你突破"
+- 三大价值点：
+  - 深度解读：逐条解析你的测评结果
+  - 个性建议：基于你的独特模式给出定制路径
+  - 语音互动：像真人教练一样 1 对 1 语音对话
+- 模拟对话气泡（展示教练会说的话示例）
+- 底部标注："完成测评后免费体验"
 
-```typescript
-const handleGenerateImage = useCallback(async () => {
-  // ... existing ref check ...
-  
-  setIsGenerating(true);
-  
-  // iOS: 先关闭 Dialog 避免长黑屏，用 toast 显示进度
-  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  let loadingToastId: string | number | undefined;
-  if (isiOS) {
-    onOpenChange(false); // 立即关闭 Dialog
-    loadingToastId = toast.loading('正在生成图片...');
-    await new Promise(r => setTimeout(r, 300)); // 等 Dialog 动画完成
-  }
-  
-  try {
-    // ... existing generation logic (blob or dataUrl) ...
-    
-    if (loadingToastId) toast.dismiss(loadingToastId);
-    // 打开 ShareImagePreview
-  } catch (error) {
-    if (loadingToastId) toast.dismiss(loadingToastId);
-    toast.error('生成图片失败，请重试');
-  } finally {
-    setIsGenerating(false);
-  }
-}, [...]);
-```
+### 9. 觉醒顾问价值展示（重点新模块）
+- 深色渐变背景卡片（与结果页 `PostCallAdvisorDialog` 风格一致）
+- 标题："专属觉醒顾问，陪你走出卡点"
+- 两大核心权益：
+  - 7 天定制觉醒路径
+  - 1 对 1 随时觉醒对话（不限次数）
+- 社会证明 + "完成测评后即可免费领取"
 
-### 不改动的文件
+### 10. 定价模块
+- 9.9 元限时价
+- 包含内容清单
+- CTA 按钮跳转到测评页 `/wealth-block`
 
-- `share-image-preview.tsx` — 已经改好了（白底、无 framer-motion）
-- `shareUtils.ts` — iOS 检测逻辑已正确
-- `oneClickShare.ts` — iOS 拦截逻辑已正确
-- `WealthInviteCardDialog.tsx` — 调用方式不变
+### 11. 10 条 FAQ
+使用 Accordion 组件，内容如下：
+1. 这个测评适合什么人？
+2. 测评需要多长时间？
+3. AI 智能追问是什么？
+4. 测评结果准确吗？
+5. AI 语音教练是怎么工作的？
+6. 觉醒顾问能帮我什么？
+7. 我的测评数据安全吗？
+8. 可以重复测评吗？
+9. 9.9 元包含什么？
+10. 付款后多久可以开始？
 
-## 涉及文件
+### 12. 底部 CTA
+- 固定底部按钮栏："立即开始测评 ¥9.9"
+- 跳转到 `/wealth-block`
 
-| 文件 | 改动内容 |
-|------|----------|
-| `src/utils/shareCardConfig.ts` | `getOptimalScale()` 增加 iOS 检测（scale: 2）；`generateCanvas` 增加空白 canvas 检测和降级重试 |
-| `src/components/ui/share-dialog-base.tsx` | `handleGenerateImage` 在 iOS 设备上先关闭 Dialog 再异步生成图片 |
+---
 
-## 预期效果
+## 技术细节
 
-- **iPhone 13**：点击"生成分享图片" → Dialog 立即关闭 → toast 显示"正在生成图片..." → 2x 分辨率稳定生成 → 白底预览页打开
-- **iPad**：同上流程，不再看到 Radix Dialog 的黑色遮罩
-- **如果 canvas 生成仍为空白**：自动降到 1.5x 重试，确保一定能生成
-- **Android / 桌面**：行为不变
+### 新建文件
+| 文件 | 说明 |
+|------|------|
+| `src/pages/WealthBlockIntro.tsx` | 新页面主组件，包含所有区块 |
+| `src/components/wealth-block/intro/VoiceCoachSection.tsx` | AI 教练语音功能介绍区块 |
+| `src/components/wealth-block/intro/AdvisorValueSection.tsx` | 觉醒顾问价值展示区块 |
+| `src/components/wealth-block/intro/AssessmentFAQ.tsx` | 10 条 FAQ（Accordion） |
 
+### 修改文件
+| 文件 | 改动 |
+|------|------|
+| `src/App.tsx` | 新增路由 `/wealth-block-intro` 指向 `WealthBlockIntro` |
+
+### 技术要点
+- 使用 `framer-motion` 做滚动入场动画，与项目现有风格一致
+- FAQ 使用已有的 `@radix-ui/react-accordion` 组件
+- 颜色体系：教练用 rose/pink，顾问用 amber/violet 深色渐变，FAQ 用中性色
+- 移动端优先设计，所有间距和字号适配小屏
+- 底部固定 CTA 按钮使用 `fixed bottom-0` 定位
+- 页面纯展示，不含支付逻辑，CTA 统一跳转到 `/wealth-block` 由现有流程处理
