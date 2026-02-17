@@ -319,21 +319,13 @@ const generateCanvasInternal = async (
       ? customBg 
       : CARD_BACKGROUND_COLORS[backgroundType];
 
-    // 创建隐藏容器
-    const wrapper = createHiddenWrapper();
-    const clonedElement = originalElement.cloneNode(true) as HTMLElement;
-    prepareClonedElement(clonedElement, elementWidth);
-
-    wrapper.appendChild(clonedElement);
-    document.body.appendChild(wrapper);
-
     try {
       // 🔧 等待字体加载完成（解决中文乱码问题）
       if (document.fonts && typeof document.fonts.ready !== 'undefined') {
         try {
           await Promise.race([
             document.fonts.ready,
-            new Promise(resolve => setTimeout(resolve, 3000)) // 3秒超时
+            new Promise(resolve => setTimeout(resolve, 3000))
           ]);
           debug && console.log('[shareCardConfig] Fonts ready');
         } catch (e) {
@@ -344,10 +336,10 @@ const generateCanvasInternal = async (
       // 等待图片加载（可跳过）
       if (!skipImageWait) {
         const imageTimeout = isWeChat ? SHARE_TIMEOUTS.imageLoadWeChat : SHARE_TIMEOUTS.imageLoad;
-        await waitForImages(clonedElement, imageTimeout);
+        await waitForImages(originalElement, imageTimeout);
       }
 
-      // 渲染稳定延迟（缩短）
+      // 渲染稳定延迟
       const renderDelay = isWeChat ? SHARE_TIMEOUTS.renderDelayWeChat : SHARE_TIMEOUTS.renderDelay;
       await new Promise(resolve => setTimeout(resolve, renderDelay));
 
@@ -355,22 +347,30 @@ const generateCanvasInternal = async (
         elapsed: Math.round(performance.now() - startTime) + 'ms'
       });
 
-      // 构建 html2canvas 配置 - 优化版
+      // 构建 html2canvas 配置
+      // 直接传原始元素给 html2canvas，让它自己处理克隆
+      // 避免手动克隆后 html2canvas 在 cloned iframe 中找不到元素
       const canvasOptions: Partial<Html2CanvasOptions> = {
         ...SHARE_CARD_CONFIG,
-        scale, // 使用自适应分辨率
+        scale,
         backgroundColor: bgColor,
         logging: debug,
         imageTimeout: isWeChat ? SHARE_TIMEOUTS.imageLoadWeChat : SHARE_TIMEOUTS.imageLoad,
         width: elementWidth,
         height: elementHeight,
-        // 减少 window 尺寸以降低内存占用
         windowWidth: elementWidth + 20,
         windowHeight: elementHeight + 20,
         onclone: (_doc, element) => {
+          // 确保克隆元素可见并正确定位
+          element.style.position = 'relative';
+          element.style.left = 'auto';
+          element.style.top = 'auto';
           element.style.transform = 'none';
           element.style.visibility = 'visible';
           element.style.opacity = '1';
+          element.style.margin = '0';
+          element.style.width = `${elementWidth}px`;
+          element.style.minWidth = `${elementWidth}px`;
           
           // Force background color on cloned element
           if (bgColor) {
@@ -391,21 +391,20 @@ const generateCanvasInternal = async (
           
           forceChineseFonts(element);
           
-          // 递归处理子元素：移除动画 + 强制字体 + 修复渐变文字
+          // 递归处理子元素
           element.querySelectorAll('*').forEach((child: Element) => {
             if (child instanceof HTMLElement) {
               child.style.animation = 'none';
               child.style.transition = 'none';
               forceChineseFonts(child);
               
-              // 修复 bg-clip-text 渐变文字：html2canvas 不支持此特性
+              // 修复 bg-clip-text 渐变文字
               const computed = getComputedStyle(child);
               const bgClip = computed.getPropertyValue('-webkit-background-clip') || computed.getPropertyValue('background-clip');
               if (bgClip === 'text') {
-                // 降级为纯色文字
                 child.style.webkitBackgroundClip = 'border-box';
                 child.style.backgroundClip = 'border-box';
-                child.style.color = '#fbbf24'; // amber-400 fallback
+                child.style.color = '#fbbf24';
                 child.style.webkitTextFillColor = '#fbbf24';
                 child.style.background = 'none';
               }
@@ -420,7 +419,7 @@ const generateCanvasInternal = async (
         : SHARE_TIMEOUTS.canvasGeneration;
         
       const canvas = await Promise.race([
-        html2canvas(clonedElement, canvasOptions),
+        html2canvas(originalElement, canvasOptions),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('图片生成超时，请重试')), generationTimeout)
         )
@@ -432,12 +431,11 @@ const generateCanvasInternal = async (
         elapsed: elapsed + 'ms'
       });
       
-      // 性能监控日志
       if (elapsed > 3000) {
         console.warn('[shareCardConfig] Slow generation:', elapsed + 'ms');
       }
 
-      // 空白 canvas 检测：如果生成的图像全透明，自动降级重试
+      // 空白 canvas 检测
       const ctx = canvas.getContext('2d');
       if (ctx && !forceScale) {
         try {
@@ -447,28 +445,18 @@ const generateCanvasInternal = async (
           const isBlank = sample.data.every(v => v === 0);
           if (isBlank) {
             console.warn('[shareCardConfig] Blank canvas detected, retrying with scale 1.5...');
-            // Bypass queue to avoid deadlock (we're already inside a queued task)
             return generateCanvasInternal(cardRef, { ...options, forceScale: 1.5 });
           }
         } catch (e) {
-          // getImageData may throw on tainted canvas, ignore
           debug && console.warn('[shareCardConfig] Canvas sample check failed:', e);
         }
       }
       
       return canvas;
 
-    } finally {
-      // 清理渲染容器
-      if (wrapper.parentNode) {
-        // 延迟移除，让浏览器完成渲染
-        requestAnimationFrame(() => {
-          wrapper.innerHTML = '';
-          if (wrapper.parentNode) {
-            document.body.removeChild(wrapper);
-          }
-        });
-      }
+    } catch (e) {
+      console.error('[shareCardConfig] Generation failed:', e);
+      return null;
     }
 };
 
