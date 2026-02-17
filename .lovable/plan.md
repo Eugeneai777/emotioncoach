@@ -1,37 +1,64 @@
 
+## Problem
 
-# 清理 Lisa 重复账号
+"小为"(15228901521) sees a bloom partner invite code dialog when visiting the wealth camp page because:
 
-## 操作内容
+1. The `BloomInvitePrompt` component is globally mounted in `App.tsx` and triggers for ALL logged-in users
+2. The `check-pending-bloom-invite` edge function checks if there are ANY pending bloom invitations in the entire system (currently 4 exist)
+3. Since 小为 is not a bloom partner, the system shows her the invite code prompt — even though none of the 4 pending invitations are actually for her
 
-保留旧账号 `4b450663`（含合伙人身份、订单、邀请码），软删除新账号 `314a9dde`。
+This is a false positive: the prompt should only appear for users who actually have a matching invitation.
 
-### 步骤
+## Solution
 
-1. **软删除新账号 Profile**：设置 `deleted_at`、`is_disabled = true`、清空 `phone` 字段（防止登录冲突）
-2. **删除新账号 Auth 用户**：通过 edge function 调用 admin API 删除 `314a9dde` 的 auth.users 记录，彻底阻止登录
+Update the `check-pending-bloom-invite` edge function to perform a **phone-number match** instead of a generic count. Only return `hasPending: true` if there is a pending bloom invitation whose phone number matches the current user's phone.
 
-### 需要执行的 SQL（通过 edge function）
+### Changes
 
-对 profiles 表：
-```text
-UPDATE profiles SET
-  deleted_at = now(),
-  is_disabled = true,
-  disabled_at = now(),
-  disabled_reason = '重复账号清理，权益已保留在主账号',
-  phone = null
-WHERE id = '314a9dde-3b7f-46f0-a2bf-5248ee36c046';
+**1. Edge function: `supabase/functions/check-pending-bloom-invite/index.ts`**
+
+Replace the generic "count all pending invitations" query with logic that:
+- Fetches the user's phone and country code from `profiles`
+- If the user has no phone on file, return `hasPending: false`
+- Query `partner_invitations` for pending bloom invitations and match by normalized phone + country code (reusing the same normalization logic from `auto-claim-bloom-invitation`)
+- Only return `hasPending: true` if a match is found
+
+**2. No frontend changes needed** — the `BloomInvitePrompt` component already handles `hasPending: false` correctly by not showing the dialog.
+
+### Technical Detail
+
+Current problematic query in the edge function:
+```typescript
+// BEFORE: checks if ANY pending bloom invitation exists globally
+const { count } = await adminClient
+  .from('partner_invitations')
+  .select('id', { count: 'exact', head: true })
+  .eq('status', 'pending')
+  .eq('partner_type', 'bloom');
 ```
 
-对 auth.users：通过现有的 `cleanup-duplicate-user` edge function 删除该 auth 用户（需修改函数使其接受动态 user ID 而非硬编码）。
+Will be replaced with phone-matched logic:
+```typescript
+// AFTER: only match invitations for this specific user's phone
+const { data: profile } = await adminClient
+  .from('profiles')
+  .select('phone, phone_country_code')
+  .eq('id', user.id)
+  .maybeSingle();
 
-### 实现方式
+if (!profile?.phone) {
+  return { hasPending: false };
+}
 
-修改 `supabase/functions/cleanup-duplicate-user/index.ts`，使其接受请求体中的 `userId` 参数，而非硬编码 ID。然后通过该函数删除新账号的 auth 记录。
+// Fetch pending bloom invitations and match by normalized phone
+const { data: invitations } = await adminClient
+  .from('partner_invitations')
+  .select('invitee_phone, invitee_phone_country_code')
+  .eq('status', 'pending')
+  .eq('partner_type', 'bloom');
 
-### 注意事项
+// Normalize and compare phone numbers (same logic as auto-claim)
+const hasPending = invitations?.some(inv => /* phone match */);
+```
 
-- Lisa 之后需要用手机号 `15109251240` + 密码 `123456` 登录旧账号
-- 登录后需要修改密码（`must_change_password = true`）
-
+This ensures only users with an actual pending invitation for their phone number will see the prompt.
