@@ -240,7 +240,7 @@ const CampList = () => {
               专业成长训练营
             </Badge>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent leading-tight">
               选择你的成长之旅
             </h1>
             
@@ -309,7 +309,7 @@ const CampList = () => {
           {/* Category Description and Filters */}
           <div className="mb-8 space-y-4 animate-in fade-in-50 duration-500">
             <div className="text-center space-y-2">
-              <p className="text-muted-foreground text-lg">{currentCategory.description}</p>
+              <p className="text-muted-foreground text-base sm:text-lg">{currentCategory.description}</p>
             </div>
 
             {/* Filter and Sort */}
