@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } from "lucide-react";
+import logoImage from "@/assets/logo-youjin-ai.png";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
@@ -159,10 +160,15 @@ const CampList = () => {
       >
         <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-200/30">
           <div className="container max-w-6xl mx-auto px-4 py-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
-              <ArrowLeft className="w-4 h-4" />
-              返回
-            </Button>
+            <div className="flex items-center gap-1">
+              <div onClick={() => navigate('/')} className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform">
+                <img src={logoImage} alt="有劲AI" className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover" />
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
+                <ArrowLeft className="w-4 h-4" />
+                返回
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -197,11 +203,15 @@ const CampList = () => {
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
-                <ArrowLeft className="w-4 h-4" />
-                返回
-              </Button>
-              
+              <div className="flex items-center gap-1">
+                <div onClick={() => navigate('/')} className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform">
+                  <img src={logoImage} alt="有劲AI" className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover" />
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
+                  <ArrowLeft className="w-4 h-4" />
+                  返回
+                </Button>
+              </div>
               {/* Breadcrumb */}
               <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
                 <Home className="w-4 h-4" />

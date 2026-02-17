@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Users, Sparkles, ShoppingCart } from "lucide-react";
+import logoImage from "@/assets/logo-youjin-ai.png";
 import { productCategories } from "@/config/productCategories";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -53,10 +54,15 @@ export default function PartnerTypeSelector() {
       <div className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="space-y-4">
-          <Button variant="ghost" onClick={() => navigate("/")} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            返回首页
-          </Button>
+          <div className="flex items-center gap-1">
+            <div onClick={() => navigate('/')} className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform">
+              <img src={logoImage} alt="有劲AI" className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover" />
+            </div>
+            <Button variant="ghost" onClick={() => navigate("/")} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              返回首页
+            </Button>
+          </div>
           
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold">选择合伙人类型</h1>

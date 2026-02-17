@@ -17,6 +17,7 @@ import {
   BookOpen,
   User
 } from "lucide-react";
+import logoImage from "@/assets/logo-youjin-ai.png";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PersonalCourseZone } from "@/components/courses/PersonalCourseZone";
@@ -228,15 +229,23 @@ const Courses = () => {
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
         <div className="container max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/energy-studio")}
-              className="gap-2 hover:bg-background/80"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回
-            </Button>
+            <div className="flex items-center gap-1">
+              <div
+                onClick={() => navigate('/')}
+                className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
+              >
+                <img src={logoImage} alt="有劲AI" className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover" />
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/energy-studio")}
+                className="gap-2 hover:bg-background/80"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                返回
+              </Button>
+            </div>
             <div className="flex-1 text-center">
               <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
                 线上课程
