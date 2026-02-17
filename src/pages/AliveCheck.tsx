@@ -3,13 +3,10 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AliveCheck as AliveCheckComponent } from "@/components/tools/AliveCheck";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 
 const AliveCheck = () => {
   const navigate = useNavigate();
-  const { showTour, completeTour } = usePageTour('alive_check');
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50">
@@ -48,12 +45,6 @@ const AliveCheck = () => {
         <AliveCheckComponent />
       </div>
 
-      <PageTour 
-        open={showTour} 
-        onComplete={completeTour} 
-        steps={pageTourConfig.alive_check || []} 
-        pageTitle="死了吗" 
-      />
     </div>
   );
 };

@@ -185,7 +185,7 @@ const BloomPartnerTerms = lazyRetry(() => import("./pages/BloomPartnerTerms"));
 const FloatingVoiceButton = lazyRetry(() => import("./components/FloatingVoiceButton"));
 const FloatingQuickMenu = lazyRetry(() => import("./components/FloatingQuickMenu").then(m => ({ default: m.FloatingQuickMenu })));
 const FollowWechatReminder = lazyRetry(() => import("./components/FollowWechatReminder").then(m => ({ default: m.FollowWechatReminder })));
-const GlobalOnboarding = lazyRetry(() => import("./components/GlobalOnboarding").then(m => ({ default: m.GlobalOnboarding })));
+
 const BloomInvitePrompt = lazyRetry(() => import("./components/BloomInvitePrompt").then(m => ({ default: m.BloomInvitePrompt })));
 
 const queryClient = new QueryClient();
@@ -237,7 +237,6 @@ const App = () => (
             <FloatingVoiceButton />
             <FloatingQuickMenu />
             <FollowWechatReminder />
-            <GlobalOnboarding />
             <BloomInvitePrompt />
           </Suspense>
           <ChunkErrorBoundary>

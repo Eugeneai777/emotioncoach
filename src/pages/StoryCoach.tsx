@@ -12,9 +12,6 @@ import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { toast } from "sonner";
 import { Send, BookOpen, ChevronDown, RotateCcw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const HERO_JOURNEY_STAGES = [
@@ -55,7 +52,7 @@ export default function StoryCoach() {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
-  const { showTour, completeTour } = usePageTour('story_coach');
+  
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const isMobile = useIsMobile();
@@ -153,11 +150,6 @@ export default function StoryCoach() {
   return (
     <>
       <DynamicOGMeta pageKey="storyCoach" />
-      <PageTour
-        steps={pageTourConfig.story_coach}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <div className="min-h-screen bg-background flex flex-col">
       {/* Header - 使用共享的 CoachHeader 组件 */}
       <CoachHeader

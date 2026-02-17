@@ -18,9 +18,6 @@ import { useLocalGratitude } from "@/hooks/useLocalGratitude";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OfflineStatusBanner } from "@/components/gratitude/OfflineStatusBanner";
 import { toast } from "@/hooks/use-toast";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 interface GratitudeEntry {
@@ -35,7 +32,7 @@ const GratitudeHistory = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isOnline = useOnlineStatus();
-  const { showTour, completeTour } = usePageTour('gratitude_journal');
+  
   const [dbEntries, setDbEntries] = useState<GratitudeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -334,7 +331,7 @@ const GratitudeHistory = () => {
         entryCount={localEntries.length}
         isRequired={purchaseRequired}
       />
-      <PageTour open={showTour} onComplete={completeTour} steps={pageTourConfig.gratitude_journal} pageTitle="感恩日记" />
+      
     </div>
     </>
   );

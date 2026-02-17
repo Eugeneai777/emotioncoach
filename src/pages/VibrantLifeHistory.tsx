@@ -11,9 +11,6 @@ import { zhCN } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -58,7 +55,7 @@ const VibrantLifeHistory = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [showNoEmailDialog, setShowNoEmailDialog] = useState(false);
-  const { showTour, completeTour } = usePageTour('vibrant_life_history');
+  
 
   const { data: briefings, isLoading } = useQuery({
     queryKey: ["vibrant-life-history"],
@@ -147,11 +144,6 @@ const VibrantLifeHistory = () => {
   return (
     <>
       <DynamicOGMeta pageKey="vibrantLifeHistory" />
-      <PageTour
-        steps={pageTourConfig.vibrant_life_history}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <div 
         className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-rose-50 via-red-50 to-background pb-[env(safe-area-inset-bottom)]"
         style={{ WebkitOverflowScrolling: 'touch' }}

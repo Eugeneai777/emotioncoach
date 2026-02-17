@@ -4,7 +4,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { ChatEmotionIntensityPrompt } from "@/components/ChatEmotionIntensityPrompt";
 import { EmotionAlert } from "@/components/EmotionAlert";
-import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
+
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
@@ -34,9 +34,6 @@ import { EmotionVoiceCallCTA } from "@/components/emotion-coach/EmotionVoiceCall
 import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionVoiceBriefingPreview";
 import { VoiceTypeSelector } from "@/components/emotion-coach/VoiceTypeSelector";
 import { getSavedVoiceType, DEFAULT_VOICE_TYPE } from "@/config/voiceTypeConfig";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 // WeChatBindOnboarding removed - now only triggers at key moments
 // Build refresh marker: 2026-01-30
 
@@ -44,14 +41,14 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const partnerId = searchParams.get('partner');
-  const { showTour, completeTour } = usePageTour('index');
+  
   
   // AI 来电状态 - 从 navigation state 获取
   const incomingCallState = location.state as { isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string } | null;
   
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  
   const [showIntensitySelector, setShowIntensitySelector] = useState(false);
   const [showIntensityReminder, setShowIntensityReminder] = useState(false);
   const [selectedIntensity, setSelectedIntensity] = useState<number | null>(null);
@@ -131,7 +128,6 @@ const Index = () => {
   // 不再强制跳转，允许游客浏览
   useEffect(() => {
     if (user) {
-      checkOnboarding();
       loadActiveCamp();
     }
   }, [user, authLoading]);
@@ -293,34 +289,6 @@ const Index = () => {
     }
   };
 
-  const checkOnboarding = async () => {
-    if (!user) return;
-    try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("has_seen_onboarding")
-        .eq("id", user.id)
-        .single();
-      if (data && !data.has_seen_onboarding) {
-        setShowOnboarding(true);
-      }
-    } catch (error) {
-      console.error("Error checking onboarding:", error);
-    }
-  };
-
-  const handleOnboardingComplete = async () => {
-    if (!user) return;
-    try {
-      await supabase
-        .from("profiles")
-        .update({ has_seen_onboarding: true })
-        .eq("id", user.id);
-      setShowOnboarding(false);
-    } catch (error) {
-      console.error("Error updating onboarding status:", error);
-    }
-  };
 
   useEffect(() => {
     if (user && messages.length === 0) {
@@ -603,11 +571,6 @@ const Index = () => {
 
   return (
     <>
-      <PageTour
-        steps={pageTourConfig.index}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <PurchaseOnboardingDialog
         open={showPurchaseDialog}
         onOpenChange={setShowPurchaseDialog}
@@ -615,7 +578,7 @@ const Index = () => {
         triggerFeature={triggerFeature}
         onSuccess={handlePurchaseSuccess}
       />
-      <WelcomeOnboarding open={showOnboarding} onComplete={handleOnboardingComplete} />
+      
       <StartCampDialog
         open={showStartCamp}
         onOpenChange={setShowStartCamp}

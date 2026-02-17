@@ -8,9 +8,6 @@ import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { AlipayPayDialog } from "@/components/AlipayPayDialog";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { PageTour } from "@/components/PageTour";
-import { usePageTour } from "@/hooks/usePageTour";
-import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
@@ -32,7 +29,7 @@ export default function Packages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { showTour, completeTour } = usePageTour('packages');
+  
   
   // 两级导航状态
   const [activeBrand, setActiveBrand] = useState<BrandId>('youjin');
@@ -160,11 +157,6 @@ export default function Packages() {
   return (
     <>
       <DynamicOGMeta pageKey="packages" />
-      <PageTour
-        steps={pageTourConfig.packages}
-        open={showTour}
-        onComplete={completeTour}
-      />
       <div 
         className="h-screen overflow-y-auto overscroll-contain bg-background"
         style={{ WebkitOverflowScrolling: 'touch' }}
