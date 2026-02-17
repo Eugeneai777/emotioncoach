@@ -1209,20 +1209,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
           {/* 服务条款同意 - 仅合伙人套餐显示 */}
           {status === 'idle' && needsTerms && (
-            <div className="flex items-start gap-2 w-full">
+            <div className="flex items-center gap-2 w-full">
               <Checkbox
                 id="pay-terms"
                 checked={agreedTerms}
                 onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-                className="mt-0.5"
               />
-              <label htmlFor="pay-terms" className="text-xs text-muted-foreground leading-relaxed">
+              <label htmlFor="pay-terms" className="text-xs text-muted-foreground leading-relaxed whitespace-nowrap">
                 我已阅读并同意
-                <Link to={getTermsLink()} target="_blank" className="text-primary hover:underline mx-0.5">
+                <Link to={getTermsLink()} target="_blank" className="text-primary hover:underline">
                   {getTermsName()}
                 </Link>
                 和
-                <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                <Link to="/privacy" target="_blank" className="text-primary hover:underline">
                   《隐私政策》
                 </Link>
               </label>

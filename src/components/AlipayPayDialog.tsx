@@ -297,14 +297,13 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           {/* 条款确认 - 需要条款且尚未同意时显示 */}
           {needsTerms && status === 'idle' && !agreedTerms && (
             <div className="space-y-4">
-              <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
                 <Checkbox
                   id="terms"
                   checked={agreedTerms}
                   onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-                  className="mt-0.5"
                 />
-                <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
+                <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
                   我已阅读并同意{' '}
                   <Link to={getTermsLink()} className="text-primary underline" target="_blank">
                     {getTermsName()}
