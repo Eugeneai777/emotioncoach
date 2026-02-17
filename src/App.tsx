@@ -156,6 +156,7 @@ const AwakeningJournal = lazyRetry(() => import("./pages/AwakeningJournal"));
 const TransformationFlow = lazyRetry(() => import("./pages/TransformationFlow"));
 
 // 财富教练
+const WealthBlockIntro = lazyRetry(() => import("./pages/WealthBlockIntro"));
 const WealthBlockAssessment = lazyRetry(() => import("./pages/WealthBlockAssessment"));
 const WealthAssessmentLite = lazyRetry(() => import("./pages/WealthAssessmentLite"));
 const WealthBlockActivate = lazyRetry(() => import("./pages/WealthBlockActivate"));
@@ -333,6 +334,7 @@ const App = () => (
               <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
               <Route path="/awakening-journal" element={<AwakeningJournal />} />
               <Route path="/transformation-flow" element={<TransformationFlow />} />
+              <Route path="/wealth-block-intro" element={<WealthBlockIntro />} />
               <Route path="/wealth-block" element={<WealthBlockAssessment />} />
               <Route path="/wealth-block-activate" element={<WealthBlockActivate />} />
               <Route path="/wealth-camp-activate" element={<WealthCampActivate />} />
