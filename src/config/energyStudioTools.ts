@@ -13,7 +13,7 @@ export interface ToolConfig {
 
 // 分类配置
 export interface CategoryConfig {
-  id: "emotion" | "exploration" | "management";
+  id: "emotion" | "exploration" | "management" | "store";
   name: string;
   description: string;
   emoji: string;
@@ -41,6 +41,13 @@ export const categories: CategoryConfig[] = [
     description: "优化生活习惯，提升生活质量",
     emoji: "🧡",
     tabGradient: "from-orange-500 to-yellow-500"
+  },
+  {
+    id: "store",
+    name: "健康商城",
+    description: "精选健康好物，一键购买",
+    emoji: "🛒",
+    tabGradient: "from-rose-500 to-red-500"
   }
 ];
 

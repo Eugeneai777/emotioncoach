@@ -28,6 +28,7 @@ import { AliveCheck } from "@/components/tools/AliveCheck";
 
 import EmotionSOSPreviewCard from "@/components/tools/EmotionSOSPreviewCard";
 import { MobileCard } from "@/components/ui/mobile-card";
+import { HealthStoreGrid } from "@/components/store/HealthStoreGrid";
 
 interface ToolCard {
   id: string;
@@ -53,7 +54,7 @@ const EnergyStudio = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  const [activeCategory, setActiveCategory] = useState<"emotion" | "exploration" | "management">("emotion");
+  const [activeCategory, setActiveCategory] = useState<"emotion" | "exploration" | "management" | "store">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
   // 根据 URL hash 跳转
@@ -209,44 +210,51 @@ const EnergyStudio = () => {
               {getCategoryDescription(activeCategory)}
             </p>
 
-            {/* 情绪🆘按钮预览卡片 */}
-            {activeCategory === "emotion" && (
-              <EmotionSOSPreviewCard />
-            )}
+            {/* 健康商城 */}
+            {activeCategory === "store" ? (
+              <HealthStoreGrid />
+            ) : (
+              <>
+                {/* 情绪🆘按钮预览卡片 */}
+                {activeCategory === "emotion" && (
+                  <EmotionSOSPreviewCard />
+                )}
 
-            {/* 工具列表 - 紧凑卡片 */}
-            <div className="space-y-2">
-              {filteredTools.map((tool, index) => (
-                <MobileCard
-                  key={tool.id}
-                  interactive
-                  className={cn(
-                    "animate-fade-in",
-                    tool.tool_id === 'declaration' && "ring-1 ring-primary/30"
-                  )}
-                  style={{ animationDelay: `${index * 30}ms` }}
-                  onClick={() => handleToolClick(tool.tool_id)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${tool.gradient} text-white`}>
-                      {getIcon(tool.icon_name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium">{tool.title}</span>
-                        {tool.tool_id === 'declaration' && (
-                          <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                            推荐
-                          </span>
-                        )}
+                {/* 工具列表 - 紧凑卡片 */}
+                <div className="space-y-2">
+                  {filteredTools.map((tool, index) => (
+                    <MobileCard
+                      key={tool.id}
+                      interactive
+                      className={cn(
+                        "animate-fade-in",
+                        tool.tool_id === 'declaration' && "ring-1 ring-primary/30"
+                      )}
+                      style={{ animationDelay: `${index * 30}ms` }}
+                      onClick={() => handleToolClick(tool.tool_id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-br ${tool.gradient} text-white`}>
+                          {getIcon(tool.icon_name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-medium">{tool.title}</span>
+                            {tool.tool_id === 'declaration' && (
+                              <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                                推荐
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{tool.description}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{tool.description}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  </div>
-                </MobileCard>
-              ))}
-            </div>
+                    </MobileCard>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </main>
