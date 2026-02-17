@@ -1,48 +1,43 @@
 
 
-## 有劲生活馆未登录看不到内容的原因和修复方案
+## 小程序登录优先设定为手机登录
 
-### 根本原因
+### 当前状态
 
-`energy_studio_tools` 表的 RLS（行级安全）策略只允许 `authenticated`（已登录用户）读取数据：
+目前小程序环境中有两个登录入口的默认模式不一致：
 
-```
-策略名：所有用户可查看启用的工具
-角色：authenticated  -- 问题在这里，排除了匿名用户
-条件：is_available = true
-```
+| 入口 | 文件 | 当前默认模式 |
+|------|------|-------------|
+| 主登录页 Auth.tsx | `src/pages/Auth.tsx` | 手机号（已正确） |
+| 快速注册弹窗 QuickRegisterStep | `src/components/onboarding/QuickRegisterStep.tsx` | 微信一键登录 |
 
-未登录用户使用的是 `anon` 角色，该策略不覆盖 `anon`，所以查询返回 0 行数据，页面虽然加载了，但工具列表为空——看起来就是"什么都看不到"。
-
-### 修复方案
-
-**1. 修改 RLS 策略（数据库迁移）**
-
-为 `energy_studio_tools` 表添加一条允许匿名用户读取已启用工具的策略：
-
-```sql
-CREATE POLICY "匿名用户可查看启用的工具"
-  ON public.energy_studio_tools
-  FOR SELECT
-  TO anon
-  USING (is_available = true);
+`QuickRegisterStep.tsx` 第 58-63 行：
+```typescript
+const getDefaultMode = (): RegisterMode => {
+  // 小程序环境保留微信一键登录
+  if (isWeChatMiniProgram()) return 'wechat';  // <-- 这里需要改
+  // 其他所有环境默认手机号注册
+  return 'phone';
+};
 ```
 
-这样未登录用户也能看到所有可用工具卡片。
+### 修改方案
 
-**2. 排查其他相关表**
+**修改 `src/components/onboarding/QuickRegisterStep.tsx`**
 
-有劲生活馆页面还引用了以下表，需要逐一检查它们的 RLS 策略是否也限制了 `anon` 访问：
-- `og_configurations`（OG 元数据）
-- `user_quick_menu_config`（快捷菜单，属于个人数据，可不开放）
+将 `getDefaultMode` 函数统一返回 `'phone'`，不再为小程序环境特殊处理：
 
-**3. 无需修改代码**
-
-`EnergyStudio.tsx` 页面代码本身没有任何登录跳转逻辑，问题纯粹是数据库权限层面的。修改 RLS 策略即可解决。
+```typescript
+const getDefaultMode = (): RegisterMode => {
+  // 所有环境统一默认手机号注册（包括小程序）
+  return 'phone';
+};
+```
 
 ### 影响范围
 
-- 仅涉及一条 RLS 策略的新增
-- 不影响已有的 `authenticated` 策略
-- `energy_studio_tools` 表中只有展示性数据（工具名称、描述、图标等），不含敏感信息，开放给匿名用户是安全的
+- 仅修改 1 个文件中的 1 个函数
+- Auth.tsx 主登录页已经默认手机号模式，无需修改
+- 用户仍然可以手动切换到微信登录模式，只是默认展示手机号登录
+- 不影响支付流程中的小程序 openid 缓存逻辑
 
