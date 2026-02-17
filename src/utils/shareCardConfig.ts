@@ -162,6 +162,59 @@ if (typeof window !== 'undefined') {
   }
 }
 
+/** 
+ * 裁剪 canvas 底部多余白边（iOS 专用）
+ * 从底部向上扫描，找到最后一行非空白像素，裁剪掉多余部分
+ * 仅当底部空白超过总高度 20% 时才裁剪
+ */
+const trimBottomWhitespace = (canvas: HTMLCanvasElement, bgColor: string | null): HTMLCanvasElement | null => {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const { width, height } = canvas;
+  if (width === 0 || height === 0) return null;
+
+  // 从底部向上逐行扫描，找到最后一行有内容的像素
+  let lastContentRow = height - 1;
+  const sampleStep = Math.max(1, Math.floor(width / 20)); // 每行采样20个点
+
+  for (let y = height - 1; y >= 0; y--) {
+    let hasContent = false;
+    for (let x = 0; x < width; x += sampleStep) {
+      const pixel = ctx.getImageData(x, y, 1, 1).data;
+      // 检查是否非空白（非全透明且非纯白）
+      const isTransparent = pixel[3] === 0;
+      const isWhite = pixel[0] >= 250 && pixel[1] >= 250 && pixel[2] >= 250 && pixel[3] >= 250;
+      if (!isTransparent && !isWhite) {
+        hasContent = true;
+        break;
+      }
+    }
+    if (hasContent) {
+      lastContentRow = y;
+      break;
+    }
+  }
+
+  // 加一点底部 padding（20px * scale）
+  const padding = 40;
+  const trimmedHeight = Math.min(height, lastContentRow + padding);
+  const blankRatio = (height - trimmedHeight) / height;
+
+  // 仅当底部空白超过 20% 时才裁剪
+  if (blankRatio < 0.2) return null;
+
+  console.log(`[shareCardConfig] iOS trimming: ${height}px → ${trimmedHeight}px (removed ${Math.round(blankRatio * 100)}% blank)`);
+
+  const trimmedCanvas = document.createElement('canvas');
+  trimmedCanvas.width = width;
+  trimmedCanvas.height = trimmedHeight;
+  const trimmedCtx = trimmedCanvas.getContext('2d');
+  if (!trimmedCtx) return null;
+  trimmedCtx.drawImage(canvas, 0, 0, width, trimmedHeight, 0, 0, width, trimmedHeight);
+  return trimmedCanvas;
+};
+
 // ============= 辅助函数 =============
 
 /** 等待元素内所有图片加载完成 - 优化版 */
@@ -209,13 +262,13 @@ export const createHiddenWrapper = (): HTMLDivElement => {
   const wrapper = document.createElement('div');
   wrapper.id = 'share-card-render-wrapper';
   wrapper.style.cssText = `
-    position: fixed !important;
-    left: -99999px !important;
-    top: -99999px !important;
+    position: absolute !important;
+    overflow: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
     pointer-events: none !important;
     z-index: -99999 !important;
     background: transparent !important;
-    will-change: contents !important;
   `;
   return wrapper;
 };
@@ -299,8 +352,12 @@ const generateCanvasInternal = async (
 
     const startTime = performance.now();
     const originalElement = cardRef.current;
-    const elementWidth = explicitWidth || originalElement.scrollWidth || originalElement.offsetWidth;
-    const elementHeight = explicitHeight || originalElement.scrollHeight || originalElement.offsetHeight;
+    // iOS: prefer explicit inline width/height over scrollWidth/scrollHeight
+    // because iOS Safari miscalculates scroll dimensions for off-screen elements
+    const inlineWidth = originalElement.style.width ? parseInt(originalElement.style.width, 10) : null;
+    const inlineHeight = originalElement.style.height ? parseInt(originalElement.style.height, 10) : null;
+    const elementWidth = explicitWidth || (inlineWidth && !isNaN(inlineWidth) ? inlineWidth : null) || originalElement.scrollWidth || originalElement.offsetWidth;
+    const elementHeight = explicitHeight || (inlineHeight && !isNaN(inlineHeight) ? inlineHeight : null) || originalElement.scrollHeight || originalElement.offsetHeight;
 
     // 自适应分辨率
     const scale = forceScale ?? getOptimalScale();
@@ -371,6 +428,13 @@ const generateCanvasInternal = async (
           element.style.margin = '0';
           element.style.width = `${elementWidth}px`;
           element.style.minWidth = `${elementWidth}px`;
+          
+          // iOS: 限制高度防止克隆后撑开多余区域
+          if (isIOSDevice()) {
+            element.style.overflow = 'hidden';
+            element.style.maxHeight = `${elementHeight}px`;
+            element.style.height = `${elementHeight}px`;
+          }
           
           // Force background color on cloned element
           if (bgColor) {
@@ -450,6 +514,11 @@ const generateCanvasInternal = async (
         } catch (e) {
           debug && console.warn('[shareCardConfig] Canvas sample check failed:', e);
         }
+      }
+      // iOS: 裁剪底部多余白边
+      if (isIOSDevice()) {
+        const trimmed = trimBottomWhitespace(canvas, bgColor);
+        if (trimmed) return trimmed;
       }
       
       return canvas;
