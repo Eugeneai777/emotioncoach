@@ -23,9 +23,9 @@ const values = [
 ];
 
 const chatBubbles = [
-  { role: "coach" as const, text: "你刚才提到'不敢要高薪'，这背后可能藏着一个核心信念——'我不配'。我们一起来看看它是怎么形成的…" },
+  { role: "coach" as const, text: "你刚才提到「不敢要高薪」，这背后可能藏着一个核心信念——「我不配」。我们一起来看看它是怎么形成的…" },
   { role: "user" as const, text: "好像确实是这样，小时候妈妈总说不要太贪心…" },
-  { role: "coach" as const, text: "这就是你的'心穷'卡点来源。接下来我给你一个具体的突破练习，每天只需要 5 分钟…" },
+  { role: "coach" as const, text: "这就是你的「心穷」卡点来源。接下来我给你一个具体的突破练习，每天只需要 5 分钟…" },
 ];
 
 export function VoiceCoachSection() {
@@ -46,7 +46,7 @@ export function VoiceCoachSection() {
           测完不是结束，AI 教练帮你突破
         </h2>
         <p className="text-sm text-slate-500">
-          不只告诉你"卡在哪"，更陪你"走出来"
+          不只告诉你「卡在哪」，更陪你「走出来」
         </p>
       </motion.div>
 
@@ -61,7 +61,7 @@ export function VoiceCoachSection() {
             transition={{ delay: idx * 0.1 }}
             className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm"
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0`}>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 shadow-md`}>
               <item.icon className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -96,8 +96,8 @@ export function VoiceCoachSection() {
               <div
                 className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
                   bubble.role === "coach"
-                    ? "bg-white text-slate-700 border border-slate-200 rounded-tl-sm"
-                    : "bg-rose-500 text-white rounded-tr-sm"
+                    ? "bg-white text-slate-700 border border-slate-200 rounded-tl-sm shadow-sm"
+                    : "bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-tr-sm shadow-md"
                 }`}
               >
                 {bubble.text}
