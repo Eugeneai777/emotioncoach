@@ -53,14 +53,44 @@ serve(async (req) => {
       );
     }
 
-    // Check if there are ANY pending bloom invitations at all
-    const { count } = await adminClient
+    // Get user's phone from profiles
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('phone, phone_country_code')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile?.phone) {
+      return new Response(
+        JSON.stringify({ hasPending: false, reason: 'no_phone' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const normalizePhone = (p: string, countryCode: string = '+86'): string => {
+      const digits = p.replace(/\D/g, '');
+      if (countryCode === '+86') {
+        return digits.length >= 11 ? digits.slice(-11) : digits;
+      }
+      return digits;
+    };
+
+    const userCountryCode = profile.phone_country_code || '+86';
+    const userPhoneNorm = normalizePhone(profile.phone, userCountryCode);
+
+    // Fetch pending bloom invitations and match by phone
+    const { data: invitations } = await adminClient
       .from('partner_invitations')
-      .select('id', { count: 'exact', head: true })
+      .select('invitee_phone, invitee_phone_country_code')
       .eq('status', 'pending')
       .eq('partner_type', 'bloom');
 
-    const hasPending = (count ?? 0) > 0;
+    const hasPending = (invitations ?? []).some(inv => {
+      if (!inv.invitee_phone) return false;
+      const invCountryCode = inv.invitee_phone_country_code || '+86';
+      if (invCountryCode !== userCountryCode) return false;
+      return normalizePhone(inv.invitee_phone, invCountryCode) === userPhoneNorm;
+    });
 
     return new Response(
       JSON.stringify({ hasPending }),
