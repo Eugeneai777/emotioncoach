@@ -353,8 +353,25 @@ export function ShareDialogBase({
       </Dialog>
 
       {/* Hidden Export Card - outside Dialog so it persists when Dialog closes on iOS */}
-      <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true">
-        {exportCard}
+      {/* Use overflow:hidden + height:0 instead of negative offset to fix iOS scrollHeight miscalculation */}
+      <div 
+        style={{
+          position: 'absolute',
+          overflow: 'hidden',
+          height: 0,
+          width: 0,
+          pointerEvents: 'none',
+        }}
+        aria-hidden="true"
+      >
+        <div style={{
+          position: 'absolute',
+          visibility: 'visible',
+          top: 0,
+          left: 0,
+        }}>
+          {exportCard}
+        </div>
       </div>
 
       {/* Full-screen Image Preview */}
