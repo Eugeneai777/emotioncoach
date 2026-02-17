@@ -1,67 +1,71 @@
 
 
-## 全站手机端文字换行问题修复
+## 手机端文字换行问题修复（第二批）
 
-### 排查结果
+从截图中发现以下 4 处文字换行/挤压问题：
 
-经过全站扫描，发现以下位置在手机端（375px宽度）存在文字被迫换行或挤压的问题：
+### 问题清单
 
-### 需要修复的位置
-
-| # | 文件 | 行号 | 问题描述 |
+| # | 页面 | 问题 | 截图对应 |
 |---|------|------|---------|
-| 1 | `PartnerEarningsComparison.tsx` | 172-178 | ROI计算行：5个元素挤在一个flex行中（"多投入 ¥1,733" → "多赚 ¥4,100" = "回报率 237%"），手机端必定换行且断裂 |
-| 2 | `YoujinPartnerIntro.tsx` | 291-292 | 省钱提示文字过长："直接购买钻石：¥4,950 \| 先买初级再升级：¥792 + ¥4,950 = ¥5,742"，在手机端会断行显示不整齐 |
-| 3 | `YoujinPartnerIntro.tsx` | 328 | 等级卡片价格行："100份体验包 · 1年有效" 和 ¥xxx 在 flex justify-between 中，价格区域被挤压 |
-| 4 | `YoujinPartnerIntro.tsx` | 332-340 | 佣金标签行：两个 badge（"全产品 50% 佣金" + "二级 12% 佣金"）在 flex gap-3 中可能换行 |
-| 5 | `YoujinPartnerPlan.tsx` | 587 | "7款可分成产品 × 三大场景 = 多元收益来源" 使用 text-xl font-bold，手机端会换行 |
+| 1 | 有劲生活馆（EnergyStudio） | 4宫格快捷入口中"教练空间"和"学习课程"各换两行显示 | IMG_9045 |
+| 2 | 线上课程（Courses） | 标题"线上课程"用 `text-3xl`，在与返回按钮同行 flex 布局中被挤压换行为"线上课\n程" | IMG_9046 |
+| 3 | 训练营列表（CampList） | 大标题"选择你的成长之旅" 用 `text-4xl`，手机端"旅"字被挤到第二行 | IMG_9047 |
+| 4 | 训练营列表（CampList） | 分类描述"培养每日成长习惯，积累点滴进步" 换行，"步"字掉到第二行 | IMG_9048 |
 
 ### 修改方案
 
-**1. `PartnerEarningsComparison.tsx`（第172-178行）**
-将ROI计算从单行flex改为两行居中堆叠：
-```tsx
-// 之前：5个元素挤在一行
-<div className="flex items-center justify-center gap-2 text-xs ...">
+**1. `src/pages/EnergyStudio.tsx`（第183行）**
 
-// 之后：改为flex-wrap或分两行
-<div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs ...">
-```
+快捷入口标签 4 个字挤在窄格中换行。给 label 加 `whitespace-nowrap` 并略缩字号：
 
-**2. `YoujinPartnerIntro.tsx`（第291-292行）**
-将省钱对比拆为两行显示：
 ```tsx
 // 之前
-直接购买钻石：¥4,950 | 先买初级再升级：¥792 + ¥4,950 = ¥5,742
+<span className="text-xs font-medium">{entry.label}</span>
 
-// 之后：用<br/>或两个<p>分行
-<p>直接买钻石：¥4,950</p>
-<p>先买初级再升：¥792+¥4,950=¥5,742</p>
+// 之后
+<span className="text-[11px] font-medium whitespace-nowrap">{entry.label}</span>
 ```
 
-**3. `YoujinPartnerIntro.tsx`（第313-329行）**  
-等级卡片头部在手机端需要改为上下布局而非左右flex：
+**2. `src/pages/Courses.tsx`（第241行）**
+
+标题 `text-3xl` 在手机端太大，与左右元素挤在一行。改为响应式字号：
+
 ```tsx
-// 将 flex items-center justify-between 改为 flex flex-col 在小屏
-<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+// 之前
+<h1 className="text-3xl font-bold ...">线上课程</h1>
+
+// 之后
+<h1 className="text-2xl sm:text-3xl font-bold ...">线上课程</h1>
 ```
 
-**4. `YoujinPartnerIntro.tsx`（第332-340行）**
-佣金标签添加 `flex-wrap`：
+**3. `src/pages/CampList.tsx`（第243行）**
+
+"选择你的成长之旅" 标题 `text-4xl` 在手机端一行放不下。缩小手机端字号：
+
 ```tsx
-<div className="flex flex-wrap gap-2">
+// 之前
+<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold ... leading-tight">
+
+// 之后
+<h1 className="text-3xl md:text-5xl lg:text-6xl font-bold ... leading-tight">
 ```
 
-**5. `YoujinPartnerPlan.tsx`（第587行）**
-缩短文案或减小字号：
+**4. `src/pages/CampList.tsx`（第312行）**
+
+分类描述 `text-lg` 在手机端偏大，导致"步"字换行。改为响应式字号：
+
 ```tsx
-// text-xl → text-base sm:text-xl
-<p className="text-base sm:text-xl font-bold">
+// 之前
+<p className="text-muted-foreground text-lg">{currentCategory.description}</p>
+
+// 之后
+<p className="text-muted-foreground text-base sm:text-lg">{currentCategory.description}</p>
 ```
 
 ### 涉及文件
 
-- `src/components/partner/PartnerEarningsComparison.tsx` -- ROI行改为允许换行
-- `src/pages/YoujinPartnerIntro.tsx` -- 省钱提示拆行、卡片布局响应式、佣金标签flex-wrap
-- `src/pages/YoujinPartnerPlan.tsx` -- 标题字号响应式
+- `src/pages/EnergyStudio.tsx` -- 快捷入口标签防换行
+- `src/pages/Courses.tsx` -- 标题响应式字号
+- `src/pages/CampList.tsx` -- 大标题和描述文字响应式字号
 
