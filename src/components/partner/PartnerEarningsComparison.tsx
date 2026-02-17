@@ -117,14 +117,14 @@ export function PartnerEarningsComparison() {
               
               {/* 收益明细 */}
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">一级收益</span>
-                  <span className="font-medium">¥{formatMoney(data.l1Earnings)}</span>
+                <div className="text-center">
+                  <div className="text-muted-foreground whitespace-nowrap">一级收益</div>
+                  <div className="font-medium">¥{formatMoney(data.l1Earnings)}</div>
                 </div>
                 {data.l2Earnings > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">二级收益</span>
-                    <span className="font-medium text-orange-600 dark:text-orange-400">¥{formatMoney(data.l2Earnings)}</span>
+                  <div className="text-center">
+                    <div className="text-muted-foreground whitespace-nowrap">二级收益</div>
+                    <div className="font-medium text-orange-600 dark:text-orange-400">¥{formatMoney(data.l2Earnings)}</div>
                   </div>
                 )}
               </div>
