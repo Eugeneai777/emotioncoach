@@ -324,20 +324,19 @@ export default function WeChatAuth() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-start gap-2">
+            <div className="flex items-center gap-2">
               <Checkbox
                 id="wechat-auth-terms"
                 checked={agreedTerms}
                 onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-                className="mt-0.5"
               />
-              <label htmlFor="wechat-auth-terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+              <label htmlFor="wechat-auth-terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer whitespace-nowrap">
                 我已阅读并同意
-                <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                <Link to="/terms" target="_blank" className="text-primary hover:underline">
                   服务条款
                 </Link>
                 和
-                <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                <Link to="/privacy" target="_blank" className="text-primary hover:underline">
                   隐私政策
                 </Link>
               </label>

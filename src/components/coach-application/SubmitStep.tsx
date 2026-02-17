@@ -151,7 +151,7 @@ export function SubmitStep({
       </Card>
 
       {/* Agreement */}
-      <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+      <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
         <Checkbox
           id="agreement"
           checked={agreed}
