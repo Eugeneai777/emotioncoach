@@ -56,9 +56,7 @@ function isValidPhone(phone: string): boolean {
 
 // 根据环境智能选择默认注册模式 — 手机号优先
 const getDefaultMode = (): RegisterMode => {
-  // 小程序环境保留微信一键登录
-  if (isWeChatMiniProgram()) return 'wechat';
-  // 其他所有环境默认手机号注册
+  // 所有环境统一默认手机号注册（包括小程序）
   return 'phone';
 };
 
