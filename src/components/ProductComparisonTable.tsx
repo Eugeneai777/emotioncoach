@@ -171,7 +171,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <div className="text-center space-y-3">
             <span className="text-4xl">🌟</span>
             <h3 className="text-xl font-bold">真人教练1对1咨询</h3>
-            <p className="text-sm text-muted-foreground">预充值享优惠，余额可用于预约所有教练服务</p>
+            <p className="text-sm text-muted-foreground whitespace-nowrap">预充值享优惠，余额可预约所有教练</p>
             
             <div className="flex flex-wrap justify-center gap-1.5 text-xs">
               <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">💬 1对1咨询</span>
