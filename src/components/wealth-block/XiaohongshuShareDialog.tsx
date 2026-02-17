@@ -5,6 +5,9 @@ import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { generateServerShareCard } from '@/utils/serverShareCard';
+import { toast } from 'sonner';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 
 interface XiaohongshuShareDialogProps {
   open: boolean;
@@ -72,23 +75,63 @@ export function XiaohongshuShareDialog({
     <ShareCardSkeleton />
   );
 
+  // Server-side generation handler
+  const handleServerGenerate = async () => {
+    const blob = await generateServerShareCard({
+      healthScore,
+      reactionPattern,
+      displayName: userInfo.displayName,
+      avatarUrl: userInfo.avatarUrl,
+      partnerCode: partnerInfo?.partnerCode,
+      dominantPoor,
+    });
+
+    if (blob) {
+      const imageUrl = URL.createObjectURL(blob);
+      onOpenChange(false);
+      // Show preview with the server-generated image
+      setServerPreviewUrl(imageUrl);
+      setShowServerPreview(true);
+    } else {
+      toast.error('图片生成失败，请重试');
+    }
+  };
+
+  const [serverPreviewUrl, setServerPreviewUrl] = useState<string | null>(null);
+  const [showServerPreview, setShowServerPreview] = useState(false);
+
+  const handleCloseServerPreview = () => {
+    setShowServerPreview(false);
+    if (serverPreviewUrl) URL.revokeObjectURL(serverPreviewUrl);
+    setServerPreviewUrl(null);
+  };
+
   return (
-    <ShareDialogBase
-      open={open}
-      onOpenChange={onOpenChange}
-      title="生成小红书分享卡片"
-      description="红金马年配色 · 长按保存发小红书"
-      shareUrl={shareUrl}
-      fileName="xiaohongshu-wealth-card.png"
-      shareTitle="我的AI财富觉醒报告"
-      shareText="马年第一步：看见你的财富盲区 🐴✨"
-      exportCardRef={exportRef}
-      previewCard={card}
-      exportCard={card}
-      cardReady={loaded}
-      skeleton={<ShareCardSkeleton />}
-      footerHint="长按保存图片 → 打开小红书发布"
-      buttonGradient="bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-700 hover:to-amber-600"
-    />
+    <>
+      <ShareDialogBase
+        open={open}
+        onOpenChange={onOpenChange}
+        title="生成小红书分享卡片"
+        description="服务端渲染 · 长按保存发小红书"
+        shareUrl={shareUrl}
+        fileName="xiaohongshu-wealth-card.png"
+        shareTitle="我的AI财富觉醒报告"
+        shareText="马年第一步：看见你的财富盲区 🐴✨"
+        exportCardRef={exportRef}
+        previewCard={card}
+        exportCard={card}
+        cardReady={loaded}
+        skeleton={<ShareCardSkeleton />}
+        footerHint="长按保存图片 → 打开小红书发布"
+        buttonGradient="bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-700 hover:to-amber-600"
+        onGenerate={handleServerGenerate}
+      />
+
+      <ShareImagePreview
+        open={showServerPreview}
+        onClose={handleCloseServerPreview}
+        imageUrl={serverPreviewUrl}
+      />
+    </>
   );
 }
