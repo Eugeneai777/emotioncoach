@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { CheckCircle2, Circle, Calendar, Flame, TrendingUp, Target } from "lucide-react";
+import { CheckCircle2, Circle, Calendar, Flame, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { differenceInDays } from "date-fns";
 import { getTodayInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
@@ -188,8 +188,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
       {/* Graduation Goal (wealth camp only) */}
       {isWealthCamp && graduationTarget && (
         <div className={`mb-3 flex items-center gap-2 text-sm px-3 py-2 rounded-xl ${colors.goalBg}`}>
-          <Target className={`h-4 w-4 shrink-0 ${colors.accentColor}`} />
-          <span className={colors.accentColor}>🎯 毕业目标：觉醒分达到 <strong className="text-base">{graduationTarget}</strong> 分</span>
+          <span className="text-amber-900 dark:text-amber-100">🎯 毕业目标：觉醒分达到 <strong className="text-lg font-extrabold text-amber-700 dark:text-amber-300">{graduationTarget}</strong> 分</span>
         </div>
       )}
 
