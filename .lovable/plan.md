@@ -1,14 +1,17 @@
 
 
-# 修复 iPad/iPhone 13 分享卡片"长白屏"和底部显示异常
+# 修复 iPad/iPhone 生成分享卡片时屏幕卡顿问题
 
 ## 问题根因
 
-从截图和代码分析，问题出在两个环节：
+`html2canvas` 是纯客户端渲染库，在主线程上执行以下操作，全部会阻塞 UI：
 
-1. **隐藏卡片定位导致 iOS 尺寸计算错误**：导出卡片使用 `fixed -left-[9999px]` 定位在屏幕外，iOS Safari 对屏幕外元素的 `scrollWidth`/`scrollHeight` 计算不准确，导致 html2canvas 捕获了错误的区域大小（多出白色空间）。
+1. **DOM 克隆 + 样式计算**：`onclone` 回调中使用 `querySelectorAll('*')` 遍历所有子元素，逐个设置样式
+2. **Canvas 像素渲染**：2x 缩放下生成大面积 Canvas（如 640x1600 像素），CPU 密集
+3. **iOS 白边裁剪**：`trimBottomWhitespace` 逐行扫描像素数据，用 `getImageData` 频繁读取显存
+4. **前置等待叠加**：字体加载（最多 3s）+ 图片加载 + 100ms 渲染延迟
 
-2. **html2canvas 在 iOS 上捕获多余内容**：`generateCanvas` 依赖 `scrollHeight` 来确定渲染高度，iOS 返回的值偏大，导致生成的图片底部出现大面积白屏。底部的"AI教练解说"按钮等页面元素也可能被意外捕获。
+在 iPad/iPhone 上，Safari 单线程模型让这些操作直接冻结页面交互。
 
 ## 修复方案
 
@@ -16,82 +19,92 @@
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/ui/share-dialog-base.tsx` | 改进隐藏卡片的 CSS 定位方式 |
-| `src/utils/shareCardConfig.ts` | iOS 环境下使用显式尺寸、裁剪多余白边 |
+| `src/utils/shareCardConfig.ts` | 优化 onclone 性能、改进白边裁剪算法、添加 UI 让步机制 |
+| `src/components/ui/share-dialog-base.tsx` | iOS 上先关闭 Dialog 再等一帧后开始生成 |
 
-### 1. 修复隐藏卡片定位（share-dialog-base.tsx）
+### 1. 优化 onclone 子元素遍历（shareCardConfig.ts）
 
-将 `fixed -left-[9999px]` 改为 `visibility:hidden` + `overflow:hidden` + `height:0` 的方式隐藏：
+当前：`querySelectorAll('*')` 遍历所有子元素并逐个设置样式和检查 `bg-clip-text`。对于复杂卡片可能有数百个元素。
 
-```text
-当前（有问题）:
-  fixed -left-[9999px] top-0
-
-改为:
-  position: absolute
-  overflow: hidden
-  height: 0
-  visibility: hidden (仅作用于外层容器)
-  内部卡片保持 visibility: visible + position: absolute
-```
-
-这样卡片虽然在隐藏容器中，但其 DOM 布局计算仍然正确，iOS 不会返回错误的尺寸。
-
-### 2. iOS 显式尺寸传递（shareCardConfig.ts）
-
-在 `generateCanvasInternal` 中增加 iOS 特殊处理：
-- 检测元素是否有显式的 inline `width` 样式（如 `320px`），优先使用该值而非 `scrollWidth`
-- 对最终 canvas 进行白边裁剪检测：如果底部超过 20% 区域为纯色/空白，自动裁剪
-
-### 3. onclone 回调加固
-
-在 `onclone` 中为 iOS 强制设置 `overflow: hidden` 和 `maxHeight`，防止克隆后的元素在 iframe 中撑开多余高度。
-
-### 技术细节
+优化：
+- 仅对有 `background-clip: text` 的元素做修复（用更高效的 CSS 类选择器）
+- 批量设置动画禁用：通过向克隆元素注入一个 `<style>` 标签替代逐元素设置
+- 字体 fallback 仅设置根元素，CSS 继承自动传递给子元素
 
 ```text
-share-dialog-base.tsx 隐藏容器改动:
+优化前 (逐元素):
+  element.querySelectorAll('*').forEach(child => {
+    child.style.animation = 'none';
+    child.style.transition = 'none';
+    forceChineseFonts(child);      // 逐个设置字体
+    // 检查 bgClip...
+  });
 
-<div 
-  style={{
-    position: 'absolute',
-    overflow: 'hidden', 
-    height: 0,
-    width: 0,
-    pointerEvents: 'none',
-  }}
-  aria-hidden="true"
->
-  <div style={{ 
-    position: 'absolute',
-    visibility: 'visible',
-    top: 0,
-    left: 0,
-  }}>
-    {exportCard}
-  </div>
-</div>
+优化后 (批量):
+  // 注入全局样式，一次性禁用所有动画和设置字体
+  const styleTag = doc.createElement('style');
+  styleTag.textContent = '* { animation: none !important; transition: none !important; }';
+  doc.head.appendChild(styleTag);
+  
+  // 字体只设根元素，子元素自动继承
+  forceChineseFonts(element);
+  
+  // bg-clip-text 修复：仅处理使用了渐变文字的元素（通常很少）
+  element.querySelectorAll('[class*="bg-clip"], [class*="text-transparent"]').forEach(...)
 ```
+
+### 2. 优化白边裁剪算法（shareCardConfig.ts）
+
+当前：逐行调用 `getImageData(x, y, 1, 1)` 采样，每行 20 次 GPU 读取，总计可能上千次。
+
+优化：一次性读取底部 30% 区域的像素数据，在内存中遍历，减少 GPU 交互到 1 次。
 
 ```text
-shareCardConfig.ts 关键改动:
+优化前:
+  for y from bottom to top:
+    for x in samples:
+      ctx.getImageData(x, y, 1, 1)  // 每次都是 GPU 交互
 
-1. 解析 inline width:
-   const inlineWidth = originalElement.style.width 
-     ? parseInt(originalElement.style.width) 
-     : null;
-   const elementWidth = explicitWidth || inlineWidth || scrollWidth;
-
-2. iOS canvas 底部白边裁剪:
-   if (isIOSDevice() && canvas) {
-     const trimmed = trimBottomWhitespace(canvas, bgColor);
-     if (trimmed) return trimmed;
-   }
-
-3. onclone 中限制高度:
-   if (isIOSDevice()) {
-     element.style.overflow = 'hidden';
-     element.style.maxHeight = elementHeight + 'px';
-   }
+优化后:
+  const bottomRegion = ctx.getImageData(0, height * 0.7, width, height * 0.3);
+  // 在内存中遍历 bottomRegion.data 数组
 ```
+
+### 3. 添加 UI 让步机制（shareCardConfig.ts）
+
+在 html2canvas 调用前后插入 `requestAnimationFrame` + 微任务让步，让浏览器有机会更新 UI：
+
+```text
+// 生成前让出一帧，确保 loading toast 显示出来
+await new Promise(r => requestAnimationFrame(r));
+await new Promise(r => setTimeout(r, 0));
+
+// 调用 html2canvas
+const canvas = await html2canvas(...);
+
+// 裁剪前再让出一帧
+await new Promise(r => requestAnimationFrame(r));
+```
+
+### 4. iOS Dialog 关闭时机优化（share-dialog-base.tsx）
+
+当前已有 iOS 先关闭 Dialog 的逻辑，但 300ms 等待可能不够。优化为：
+- 使用 `requestAnimationFrame` 等待实际帧渲染完成，而非固定延迟
+- 确保 toast 提示已经渲染到屏幕上
+
+```text
+if (isiOS) {
+  onOpenChange(false);
+  loadingToastId = toast.loading('正在生成图片...');
+  // 等待两帧确保 Dialog 关闭动画和 toast 都渲染完成
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+}
+```
+
+### 预期效果
+
+- onclone 优化：减少约 80% 的子元素遍历开销
+- 白边裁剪优化：GPU 读取从上千次降到 1 次
+- UI 让步：用户看到 loading 提示后才开始卡顿，感知卡顿时间缩短
+- 总体：iOS 上的感知冻结时间应从 2-3 秒降至 1 秒左右
 
