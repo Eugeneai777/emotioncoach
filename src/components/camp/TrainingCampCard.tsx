@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { CheckCircle2, Circle, Calendar, Flame, TrendingUp } from "lucide-react";
+import { CheckCircle2, Calendar, Flame, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { differenceInDays } from "date-fns";
 import { getTodayInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
@@ -15,49 +15,57 @@ interface TrainingCampCardProps {
 }
 
 const getThemeColors = (campType: string) => {
-  // 亲子/青少年训练营 - 紫粉色系
   if (campType.includes('parent') || campType.includes('teen')) {
     return {
-      cardBg: 'from-purple-50/80 via-pink-50/50 to-rose-50/30 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-rose-950/10',
-      borderColor: 'border-purple-200/40 dark:border-purple-800/30',
+      cardBg: 'bg-white/90 dark:bg-gray-900/80',
+      leftBorder: 'border-l-purple-400',
+      borderColor: 'border-purple-300/70 dark:border-purple-700/50',
+      shadowColor: 'shadow-purple-100/50',
       titleColor: 'text-purple-800 dark:text-purple-200',
       accentColor: 'text-purple-600 dark:text-purple-400',
-      mutedAccent: 'text-purple-600/50 dark:text-purple-400/50',
       progressBg: 'bg-purple-100/50 dark:bg-purple-900/30',
       progressFill: 'from-purple-400 to-pink-500',
       buttonGradient: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-sm',
       outlineButton: 'text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-400 dark:text-purple-400 dark:border-purple-700 dark:hover:bg-purple-900/30',
       goalBg: 'bg-purple-50/60 dark:bg-purple-900/20',
       statusBg: 'bg-purple-100/60 dark:bg-purple-900/30',
+      dotReached: 'bg-purple-400',
+      dotUnreached: 'bg-purple-200/50 dark:bg-purple-700/30',
     };
   }
   if (campType.includes('wealth')) {
     return {
-      cardBg: 'from-amber-50/80 via-orange-50/50 to-yellow-50/30 dark:from-amber-950/20 dark:via-orange-950/10 dark:to-yellow-950/10',
-      borderColor: 'border-amber-200/40 dark:border-amber-800/30',
+      cardBg: 'bg-white/90 dark:bg-gray-900/80',
+      leftBorder: 'border-l-amber-400',
+      borderColor: 'border-amber-300/70 dark:border-amber-700/50',
+      shadowColor: 'shadow-amber-100/50',
       titleColor: 'text-amber-800 dark:text-amber-200',
       accentColor: 'text-amber-600 dark:text-amber-400',
-      mutedAccent: 'text-amber-600/50 dark:text-amber-400/50',
       progressBg: 'bg-amber-100/50 dark:bg-amber-900/30',
       progressFill: 'from-amber-400 to-orange-500',
       buttonGradient: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-sm',
       outlineButton: 'text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-400 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/30',
       goalBg: 'bg-amber-50/60 dark:bg-amber-900/20',
       statusBg: 'bg-amber-100/60 dark:bg-amber-900/30',
+      dotReached: 'bg-amber-400',
+      dotUnreached: 'bg-amber-200/50 dark:bg-amber-700/30',
     };
   }
   return {
-    cardBg: 'from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10',
-    borderColor: 'border-teal-200/40 dark:border-teal-800/30',
+    cardBg: 'bg-white/90 dark:bg-gray-900/80',
+    leftBorder: 'border-l-teal-400',
+    borderColor: 'border-teal-300/70 dark:border-teal-700/50',
+    shadowColor: 'shadow-teal-100/50',
     titleColor: 'text-teal-800 dark:text-teal-200',
     accentColor: 'text-teal-600 dark:text-teal-400',
-    mutedAccent: 'text-teal-600/50 dark:text-teal-400/50',
     progressBg: 'bg-teal-100/50 dark:bg-teal-900/30',
     progressFill: 'from-teal-400 to-cyan-500',
     buttonGradient: 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-sm',
     outlineButton: 'text-teal-600 border-teal-200 hover:bg-teal-50 hover:border-teal-400 dark:text-teal-400 dark:border-teal-700 dark:hover:bg-teal-900/30',
     goalBg: 'bg-teal-50/60 dark:bg-teal-900/20',
     statusBg: 'bg-teal-100/60 dark:bg-teal-900/30',
+    dotReached: 'bg-teal-400',
+    dotUnreached: 'bg-teal-200/50 dark:bg-teal-700/30',
   };
 };
 
@@ -104,16 +112,16 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const getMilestones = () => {
     if (isWealthCamp) {
       return [
-        { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
-        { icon: "⭐", label: "中期", reached: camp.completed_days >= 3, position: 43 },
-        { icon: "🏆", label: "毕业", reached: camp.milestone_7_reached, position: 100 }
+        { reached: camp.completed_days >= 1, position: 0 },
+        { reached: camp.completed_days >= 3, position: 43 },
+        { reached: camp.milestone_7_reached, position: 100 },
       ];
     }
     return [
-      { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
-      { icon: "⭐", label: "一周", reached: camp.milestone_7_reached, position: (7 / camp.duration_days) * 100 },
-      { icon: "🌟", label: "半程", reached: camp.milestone_14_reached, position: (14 / camp.duration_days) * 100 },
-      { icon: "🏆", label: "毕业", reached: camp.milestone_21_completed, position: 100 }
+      { reached: camp.completed_days >= 1, position: 0 },
+      { reached: camp.milestone_7_reached, position: (7 / camp.duration_days) * 100 },
+      { reached: camp.milestone_14_reached, position: (14 / camp.duration_days) * 100 },
+      { reached: camp.milestone_21_completed, position: 100 },
     ];
   };
 
@@ -122,9 +130,9 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const graduationTarget = baselineScore ? Math.min(baselineScore + 20, 95) : null;
 
   return (
-    <Card className={`p-4 bg-gradient-to-br ${colors.cardBg} ${colors.borderColor} rounded-2xl shadow-sm hover:shadow-md transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]`}>
-      {/* Header - 合并标题、状态、连续天数为单行 */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
+    <Card className={`p-4 ${colors.cardBg} ${colors.borderColor} border-l-4 ${colors.leftBorder} rounded-2xl shadow-md ${colors.shadowColor} hover:shadow-lg transition-all`}>
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-2.5 flex-wrap">
         <h3 className={`text-sm sm:text-base font-semibold flex items-center gap-1.5 ${colors.titleColor}`}>
           🏕️ <span className="truncate max-w-[120px] sm:max-w-none">{camp.camp_name}</span>
         </h3>
@@ -150,49 +158,41 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         )}
       </div>
 
-      {/* Milestone Timeline + Progress Bar */}
-      <div className="mb-3">
+      {/* Progress Bar with inline milestone dots */}
+      <div className="mb-2.5">
         <div className="relative px-1">
-          <div className="flex justify-between mb-1">
-            {milestones.map((m, i) => (
-              <div key={i} className="flex flex-col items-center" style={{ width: milestones.length <= 3 ? '33%' : '25%' }}>
-                <div className={`relative flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${
-                  m.reached 
-                    ? `${colors.statusBg} shadow-[0_0_8px_rgba(0,0,0,0.08)]` 
-                    : 'bg-muted/30'
-                }`}>
-                  <span className={`text-sm ${m.reached ? 'scale-110' : 'opacity-40 grayscale'}`}>
-                    {m.icon}
-                  </span>
-                </div>
-                <span className={`text-[10px] leading-tight mt-0.5 ${m.reached ? `${colors.accentColor} font-semibold` : 'text-muted-foreground/60'}`}>
-                  {m.label}
-                </span>
-              </div>
-            ))}
-          </div>
-          {/* 渐变进度条 */}
-          <div className={`relative h-2 w-full overflow-hidden rounded-full ${colors.progressBg}`}>
+          <div className={`relative h-2.5 w-full overflow-visible rounded-full ${colors.progressBg}`}>
             <div 
               className={`h-full rounded-full bg-gradient-to-r ${colors.progressFill} transition-all duration-500`}
               style={{ width: `${progressPercent}%` }}
             />
+            {/* Milestone dots on the progress bar */}
+            {milestones.map((m, i) => (
+              <div
+                key={i}
+                className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 transition-all ${
+                  m.reached ? colors.dotReached : colors.dotUnreached
+                }`}
+                style={{ left: `calc(${m.position}% - 6px)` }}
+              />
+            ))}
           </div>
         </div>
-        <div className="text-center text-xs text-muted-foreground mt-1.5">
-          已完成 <span className={`font-bold text-sm ${colors.accentColor}`}>{camp.completed_days}</span>/{camp.duration_days} 天
-          <span className={`ml-1 font-bold ${colors.accentColor}`}>({Math.round(progressPercent)}%)</span>
+        {/* Combined progress + graduation goal */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mt-1.5 px-1">
+          <span>
+            已完成 <span className={`font-bold text-sm ${colors.accentColor}`}>{camp.completed_days}</span>/{camp.duration_days}天
+            <span className={`ml-1 font-bold ${colors.accentColor}`}>({Math.round(progressPercent)}%)</span>
+          </span>
+          {isWealthCamp && graduationTarget && (
+            <span className="text-amber-700 dark:text-amber-300 text-xs">
+              🎯 目标 <strong className="text-sm font-extrabold">{graduationTarget}</strong>分
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Graduation Goal (wealth camp only) */}
-      {isWealthCamp && graduationTarget && (
-        <div className={`mb-3 flex items-center gap-2 text-sm px-3 py-2 rounded-xl ${colors.goalBg}`}>
-          <span className="text-amber-900 dark:text-amber-100">🎯 毕业目标：觉醒分达到 <strong className="text-lg font-extrabold text-amber-700 dark:text-amber-300">{graduationTarget}</strong> 分</span>
-        </div>
-      )}
-
-      {/* Action Buttons */}
+      {/* Action Buttons - primary takes 70% */}
       <div className="flex gap-2">
         <Button 
           onClick={() => {
@@ -202,7 +202,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
               navigate(`/camp-checkin/${camp.id}`);
             }
           }}
-          className={`flex-1 h-10 rounded-xl ${hasCheckedInToday ? '' : colors.buttonGradient}`}
+          className={`flex-[2] h-10 rounded-xl ${hasCheckedInToday ? '' : colors.buttonGradient}`}
           variant={hasCheckedInToday ? 'outline' : 'default'}
         >
           <Calendar className="h-4 w-4 mr-1.5" />
