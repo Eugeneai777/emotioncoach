@@ -128,7 +128,7 @@ export const CoachHeader = ({
               <img
                 src={logoImage}
                 alt="有劲AI"
-                className="w-14 h-14 rounded-full object-cover"
+                className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"
               />
             </div>
 
@@ -138,7 +138,7 @@ export const CoachHeader = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 min-h-[44px] min-w-[44px]"
+                  className="h-8 w-8 min-h-[44px] min-w-[44px]"
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
@@ -180,7 +180,7 @@ export const CoachHeader = ({
                 variant="ghost"
                 size="sm"
                 onClick={onRestart}
-                className={`gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 active:scale-95 transition-all font-medium ${getRestartButtonClass(primaryColor)}`}
+                className={`gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 active:scale-95 transition-all font-medium ${getRestartButtonClass(primaryColor)}`}
               >
                 <RotateCcw className="w-4 h-4" />
                 <span className="hidden sm:inline">返回主页</span>
@@ -196,9 +196,9 @@ export const CoachHeader = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+                  className="gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
                 >
-                  <Target className="w-4 h-4" />
+                  <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span className="hidden sm:inline">教练空间</span>
               <span className="sm:hidden">教练</span>
                   <ChevronDown className="w-3 h-3" />
@@ -236,9 +236,9 @@ export const CoachHeader = ({
               size="sm"
               variant="ghost"
               onClick={() => navigate("/energy-studio")}
-              className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span className="hidden sm:inline font-medium">有劲生活馆</span>
               <span className="sm:hidden font-medium">生活馆</span>
             </Button>
@@ -248,7 +248,7 @@ export const CoachHeader = ({
               <Button
                 size="sm"
                 onClick={() => navigate(historyRoute)}
-                className={`gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 bg-gradient-to-r ${getGradientClass(primaryColor)} text-white shadow-md hover:shadow-lg active:scale-95 transition-all font-semibold border-0`}
+                className={`gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 bg-gradient-to-r ${getGradientClass(primaryColor)} text-white shadow-md hover:shadow-lg active:scale-95 transition-all font-semibold border-0`}
               >
                 <History className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">{historyLabel}</span>
@@ -256,13 +256,13 @@ export const CoachHeader = ({
               </Button>
             )}
 
-            {/* 套餐 & 觉醒 按钮组 */}
-            <div className="flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5">
+            {/* 套餐 & 觉醒 - 仅桌面端显示，移动端已移入汉堡菜单 */}
+            <div className="hidden md:flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/packages")}
-                className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
                 title="套餐"
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -271,7 +271,7 @@ export const CoachHeader = ({
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/awakening")}
-                className="h-9 w-9 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-md group"
+                className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-md group"
                 title="觉察"
               >
                 <Lightbulb className="w-4 h-4 animate-[pulse_3s_ease-in-out_infinite] group-hover:animate-none group-hover:scale-110 transition-transform" />
