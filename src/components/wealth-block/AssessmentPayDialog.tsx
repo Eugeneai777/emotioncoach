@@ -472,15 +472,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         // 小程序 WebView：使用专门的 miniprogram 支付类型
         console.log("[Payment] MiniProgram detected, openId:", userOpenId ? "present" : "missing");
 
-        // 如果没有 openId，静默请求（小程序环境不显示消息）
         if (!userOpenId) {
-          console.warn("[Payment] MiniProgram requires mp_openid URL parameter");
-          requestMiniProgramOpenId();
-          setStatus("idle");
-          return;
+          // 无法获取 mp_openid，降级为扫码支付
+          console.warn("[Payment] MiniProgram: no mp_openid, falling back to native QR");
+          selectedPayType = "native";
+        } else {
+          selectedPayType = "miniprogram";
         }
-
-        selectedPayType = "miniprogram";
       } else if (isWechat && !!userOpenId) {
         // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
         console.log("[Payment] WeChat browser with openId, using jsapi");
