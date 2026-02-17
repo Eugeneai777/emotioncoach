@@ -4495,6 +4495,51 @@ export type Database = {
         }
         Relationships: []
       }
+      health_store_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          mini_program_path: string | null
+          original_price: number | null
+          price: number
+          product_name: string
+          tags: string[] | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          mini_program_path?: string | null
+          original_price?: number | null
+          price: number
+          product_name: string
+          tags?: string[] | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          mini_program_path?: string | null
+          original_price?: number | null
+          price?: number
+          product_name?: string
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
       human_coaches: {
         Row: {
           admin_note: string | null
