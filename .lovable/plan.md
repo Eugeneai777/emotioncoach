@@ -1,82 +1,104 @@
 
 
-## 训练营卡片设计优化 — 增强对比度 & 紧凑布局
+## 在有劲生活馆新增「健康商城」分类
 
-### 问题分析
+### 目标
 
-从截图可以看到，财富觉醒训练营卡片的背景色（amber-50/orange-50 渐变）与页面背景色几乎完全相同，导致卡片"隐身"在页面中，缺乏视觉层次。
+在有劲生活馆（/energy-studio）新增第四个分类 Tab —— 「健康商城」，展示知乐荟商城的商品卡片，用户点击后直接跳转到对应小程序商品页购买。
 
-| 问题 | 原因 |
-|------|------|
-| 卡片与背景颜色融为一体 | 页面背景 `amber-50/orange-50`，卡片背景也是 `amber-50/orange-50` |
-| 里程碑图标区占用过多垂直空间 | 3个里程碑图标+标签+进度条，共占约60px |
-| 毕业目标行视觉松散 | 单独一行只有一句话，留白过多 |
-| 两个按钮等宽，"介绍"不常用却占一半宽度 | 按钮分配不合理 |
-
-### 修改方案
-
-**文件：`src/components/camp/TrainingCampCard.tsx`**
-
-#### 1. 卡片背景增强对比度
-
-将卡片背景从低透明度的浅色改为白色基底 + 更明显的边框和阴影：
+### 方案概述
 
 ```text
-之前：bg-gradient-to-br from-amber-50/80 via-orange-50/50 to-yellow-50/30
-      border-amber-200/40
-
-之后：bg-white/90 dark:bg-gray-900/80
-      border-amber-300/70 dark:border-amber-700/50
-      shadow-md shadow-amber-100/50
-      (左侧彩色边条) border-l-4 border-l-amber-400
+有劲生活馆
+├── 💜 情绪工具（已有）
+├── 💚 自我探索（已有）
+├── 🧡 生活管理（已有）
+└── 🛒 健康商城（新增）
+    ├── 商品卡片列表（图片 + 名称 + 价格 + 简介）
+    └── 点击 → 跳转小程序商品页
 ```
 
-这样卡片通过白色底色与页面暖色背景形成鲜明对比，同时左侧彩色边条保留主题色调。
+### 技术方案
 
-#### 2. 精简里程碑区域
+#### 1. 数据库：新建 `health_store_products` 表
 
-将里程碑图标从独立行压缩为进度条上方的内联小圆点，减少约30px垂直空间：
+存储商品展示信息和小程序跳转路径：
 
-- 移除里程碑图标下方的文字标签
-- 将进度条和完成天数合并为一行
-- 毕业目标与进度信息合并到同一行
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | uuid | 主键 |
+| product_name | text | 商品名称 |
+| description | text | 简短描述 |
+| price | numeric | 价格（元） |
+| original_price | numeric | 原价（划线价，可选） |
+| image_url | text | 商品图片 URL |
+| mini_program_path | text | 小程序商品页路径，如 `/pages/goods/detail?id=xxx` |
+| category | text | 商品分类（如"营养补充"、"健康食品"） |
+| display_order | int | 排序 |
+| is_available | boolean | 是否上架 |
+| tags | text[] | 标签（如"热销"、"新品"） |
+| created_at | timestamptz | 创建时间 |
 
-#### 3. 紧凑化按钮区
+RLS 策略：所有人可读（公开商品展示），仅管理员可写。
 
-"立即打卡"按钮占70%宽度（主操作），"介绍"按钮缩小为图标按钮或30%宽度。
+#### 2. 分类配置扩展
 
-#### 4. 同步更新其他主题色
+**文件：`src/config/energyStudioTools.ts`**
 
-对 teal（默认）和 purple（亲子）主题也同步应用白色基底 + 左边条设计，保持一致性。
+新增第四个分类：
 
-### 具体代码变更
+```text
+{
+  id: "store",
+  name: "健康商城",
+  description: "精选健康好物，一键购买",
+  emoji: "🛒",
+  tabGradient: "from-rose-500 to-red-500"
+}
+```
 
-`src/components/camp/TrainingCampCard.tsx`:
+`activeCategory` 类型扩展为 `"emotion" | "exploration" | "management" | "store"`。
 
-1. `getThemeColors` 函数：
-   - `cardBg` 统一改为 `bg-white/90 dark:bg-gray-900/80`
-   - 新增 `leftBorder` 属性（如 `border-l-amber-400`）
-   - `borderColor` 透明度从 `/40` 提升到 `/70`
+#### 3. 商城展示组件
 
-2. 卡片根 Card 组件：
-   - 添加 `border-l-4` + 对应主题的左边条颜色
-   - 提升 `shadow` 级别到 `shadow-md`
+**文件：`src/components/store/HealthStoreGrid.tsx`（新建）**
 
-3. 里程碑区域：
-   - 精简为进度条 + 里程碑小圆点（无文字标签）
-   - 进度信息和毕业目标合并
+- 从 `health_store_products` 表查询上架商品
+- 按分类展示，2列网格布局
+- 每个卡片包含：商品图片、名称、价格（含划线价）、标签徽章
+- 点击跳转逻辑：
+  - **小程序环境**：调用 `wx.miniProgram.navigateTo({ url: product.mini_program_path })`
+  - **非小程序环境**：展示提示弹窗"请在微信中打开小程序购买"，或复制小程序链接 `#小程序://知乐荟商城/2yvmnaZMamGx1gf`
 
-4. 按钮区域：
-   - 主按钮 `flex-[2]`，次按钮 `flex-1`
+#### 4. 主页面集成
+
+**文件：`src/pages/EnergyStudio.tsx`**
+
+- 分类 Tab 新增"健康商城"
+- 当 `activeCategory === "store"` 时，渲染 `<HealthStoreGrid />` 替代工具卡片列表
+- 工具列表仍保持原逻辑不变
 
 ### 涉及文件
 
-- `src/components/camp/TrainingCampCard.tsx`
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| 数据库迁移 | 新建 | 创建 `health_store_products` 表 + RLS |
+| `src/config/energyStudioTools.ts` | 修改 | 新增 "store" 分类配置 |
+| `src/pages/EnergyStudio.tsx` | 修改 | 集成商城分类和组件 |
+| `src/components/store/HealthStoreGrid.tsx` | 新建 | 商品网格展示 + 小程序跳转 |
 
-### 预期效果
+### 跳转逻辑细节
 
-- 卡片通过白色底色在暖色页面背景上清晰突出
-- 左侧彩色边条保留主题感，同时增强视觉识别
-- 整体高度减少约25%，信息更紧凑
-- 主操作按钮更突出
+```text
+用户点击商品卡片
+  ├── 检测 isWeChatMiniProgram()
+  │   ├── true → wx.miniProgram.navigateTo({ url: mini_program_path })
+  │   └── false → 检测 isWeChatBrowser()
+  │       ├── true → 尝试通过 wx-open-launch-weapp 标签打开小程序
+  │       └── false → 显示 Dialog 提示"请在微信中扫码购买" + 二维码
+```
+
+### 管理后台
+
+商品管理通过直接操作数据库表完成（后续可在 /admin 新增商品管理页面）。初期可通过 Cloud 后台直接添加商品数据。
 
