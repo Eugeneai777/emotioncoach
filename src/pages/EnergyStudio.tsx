@@ -180,7 +180,7 @@ const EnergyStudio = () => {
                   <div className={`w-10 h-10 mx-auto rounded-xl bg-gradient-to-br ${entry.gradient} flex items-center justify-center mb-1.5`}>
                     <span className="text-lg">{entry.emoji}</span>
                   </div>
-                  <span className="text-xs font-medium">{entry.label}</span>
+                  <span className="text-[11px] font-medium whitespace-nowrap">{entry.label}</span>
                 </MobileCard>
               ))}
             </div>

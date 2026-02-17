@@ -238,7 +238,7 @@ const Courses = () => {
               返回
             </Button>
             <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
                 线上课程
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
