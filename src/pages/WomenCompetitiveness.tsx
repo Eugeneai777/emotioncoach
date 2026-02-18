@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CompetitivenessQuestions } from "@/components/women-competitiveness/CompetitivenessQuestions";
 import { CompetitivenessResult } from "@/components/women-competitiveness/CompetitivenessResult";
 import { CompetitivenessHistory } from "@/components/women-competitiveness/CompetitivenessHistory";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { CompetitivenessResult as ResultType, FollowUpAnswer, CompetitivenessCategory } from "@/components/women-competitiveness/competitivenessData";
 
 type Phase = "questions" | "result" | "history";
@@ -70,10 +71,13 @@ export default function WomenCompetitiveness() {
   }
 
   return (
-    <CompetitivenessQuestions
-      onComplete={handleComplete}
-      onExit={() => navigate(-1)}
-      onHistory={() => setPhase("history")}
-    />
+    <>
+      <DynamicOGMeta pageKey="womenCompetitiveness" />
+      <CompetitivenessQuestions
+        onComplete={handleComplete}
+        onExit={() => navigate(-1)}
+        onHistory={() => setPhase("history")}
+      />
+    </>
   );
 }

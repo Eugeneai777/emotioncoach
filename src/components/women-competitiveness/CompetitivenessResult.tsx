@@ -1,8 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, Share2 } from "lucide-react";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { executeOneClickShare } from "@/utils/oneClickShare";
+import ShareImagePreview from "@/components/ui/share-image-preview";
+import CompetitivenessShareCard from "./CompetitivenessShareCard";
 import {
   RadarChart,
   PolarGrid,
@@ -72,6 +76,9 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
   const [isLoadingAI, setIsLoadingAI] = useState(true);
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 0: true });
   const [assessmentId, setAssessmentId] = useState<string | null>(existingId || null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   const level = levelInfo[result.level];
   const strongest = categoryInfo[result.strongestCategory];
@@ -172,9 +179,37 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
     setOpenSections(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
+  const handleShare = async () => {
+    if (isSharing || !shareCardRef.current) return;
+    setIsSharing(true);
+    await executeOneClickShare({
+      cardRef: shareCardRef,
+      cardName: '竞争力测评报告',
+      onShowPreview: (url) => setSharePreviewUrl(url),
+      onSuccess: () => toast.success('分享卡片已生成'),
+      onError: (err) => toast.error(err),
+    });
+    setIsSharing(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 pb-safe">
-      <PageHeader title="竞争力报告" showBack={true} backTo={undefined} />
+      <DynamicOGMeta pageKey="womenCompetitiveness" />
+      <PageHeader
+        title="竞争力报告"
+        showBack={true}
+        rightActions={
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleShare}
+            disabled={isSharing}
+            className="active:scale-95 transition-transform"
+          >
+            <Share2 className="w-5 h-5" />
+          </Button>
+        }
+      />
       <div className="max-w-lg mx-auto space-y-4 p-4">
 
         {/* 竞争力等级卡片 — 增强版 */}
@@ -432,6 +467,29 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
           </Card>
         </motion.div>
       </div>
+
+      {/* 隐藏的分享卡片 */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <CompetitivenessShareCard
+          ref={shareCardRef}
+          totalScore={result.totalScore}
+          level={result.level}
+          categoryScores={result.categoryScores}
+          strongestCategory={result.strongestCategory}
+          weakestCategory={result.weakestCategory}
+          displayName={user?.user_metadata?.display_name || user?.email?.split('@')[0]}
+          avatarUrl={user?.user_metadata?.avatar_url}
+        />
+      </div>
+
+      {/* 分享图片预览 */}
+      <ShareImagePreview
+        open={!!sharePreviewUrl}
+        onClose={() => setSharePreviewUrl(null)}
+        imageUrl={sharePreviewUrl}
+        onRegenerate={handleShare}
+        isRegenerating={isSharing}
+      />
     </div>
   );
 }
