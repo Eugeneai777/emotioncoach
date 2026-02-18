@@ -95,6 +95,91 @@ serve(async (req) => {
       });
     }
 
+    // === suggest_bundle mode ===
+    if (type === "suggest_bundle") {
+      const { keyword, availableProducts } = body;
+      if (!keyword || !availableProducts?.length) {
+        return new Response(JSON.stringify({ error: "缺少场景关键词或可选产品列表" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const productListStr = availableProducts.map((p: any, i: number) =>
+        `${i + 1}. ${p.name}（¥${p.price}）${p.description ? ' - ' + p.description : ''}`
+      ).join('\n');
+
+      const suggestResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: "你是有劲 AI 健康生活馆的产品组合顾问。你需要根据用户输入的目标场景或人群关键词，从可选产品列表中推荐最合适的 3-5 个产品组成组合包。推荐时要考虑产品之间的协同效应和互补性，确保组合对目标人群有最大价值。同时给出一个有吸引力的组合包名称建议。"
+            },
+            {
+              role: "user",
+              content: `目标场景/人群关键词：${keyword}\n\n可选产品列表：\n${productListStr}\n\n请从中推荐最合适的产品组合。`
+            }
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "recommend_bundle",
+                description: "根据场景关键词推荐产品组合",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    bundle_name: { type: "string", description: "推荐的组合包名称，4-12个字" },
+                    recommended_indices: {
+                      type: "array",
+                      items: { type: "integer", description: "推荐产品在列表中的序号（从1开始）" },
+                      description: "推荐的产品序号列表，3-5个",
+                    },
+                    reason: { type: "string", description: "推荐理由，100-200字，说明为什么这些产品适合该场景" },
+                  },
+                  required: ["bundle_name", "recommended_indices", "reason"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "recommend_bundle" } },
+        }),
+      });
+
+      if (!suggestResponse.ok) {
+        const errText = await suggestResponse.text();
+        console.error("AI suggest error:", suggestResponse.status, errText);
+        if (suggestResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "AI 请求过于频繁，请稍后重试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (suggestResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "AI 额度不足，请充值后重试" }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error("AI 推荐失败");
+      }
+
+      const suggestData = await suggestResponse.json();
+      const suggestToolCall = suggestData.choices?.[0]?.message?.tool_calls?.[0];
+      if (!suggestToolCall) throw new Error("AI 未返回结构化推荐");
+
+      const suggestion = JSON.parse(suggestToolCall.function.arguments);
+      return new Response(JSON.stringify(suggestion), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // === Default: generate bundle content + image ===
     const { bundleName, products } = body;
     if (!bundleName || !products?.length) {
@@ -166,9 +251,24 @@ serve(async (req) => {
 
     const aiContent = JSON.parse(toolCall.function.arguments);
 
-    // Step 2: Generate cover image
-    const productKeywords = products.slice(0, 5).map((p: any) => p.name).join('、');
-    const imagePrompt = `为产品组合包"${bundleName}"设计一张专业精美的商品主图。产品包含：${productKeywords}。风格要求：现代简约、健康温暖、专业可信赖。使用柔和的渐变色背景，中间放置组合包名称的艺术字体。整体感觉高端大气，适合健康与个人成长领域。16:9横版比例。`;
+    // Step 2: Generate cover image with brand-aligned prompt
+    const productKeywords = products.slice(0, 3).map((p: any) => p.name).join('、');
+    const imagePrompt = `设计一张1:1正方形（1080x1080px）的产品组合包主图。
+
+要求：
+- 品牌名称：有劲 AI 健康生活馆
+- 组合包名称：「${bundleName}」
+- 包含产品关键词：${productKeywords}
+
+设计规范：
+- 背景：使用 teal 到 emerald 的柔和渐变色（#0D9488 到 #10B981），搭配温暖的米白或浅金色点缀
+- 中央：用优雅的中文艺术字体展示组合包名称「${bundleName}」，字体颜色为白色或浅金色
+- 底部留出 20% 空白区域（用于 UI 叠加价格和标题）
+- 装饰：使用简约的几何图形（圆形、弧线）和柔和的光晕效果，不使用真实照片
+- 整体风格：圆润温暖、专业简约、高端大气
+- 不要出现任何真实物品照片，纯色块+文字排版+抽象装饰
+
+这是一张用于健康电商平台的商品卡片主图，需要在手机上清晰可见。`;
 
     let coverImageUrl: string | null = null;
 
@@ -180,7 +280,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: imagePrompt }],
           modalities: ["image", "text"],
         }),
