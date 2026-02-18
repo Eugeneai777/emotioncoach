@@ -155,6 +155,9 @@ const AwakeningSystemIntro = lazyRetry(() => import("./pages/AwakeningSystemIntr
 const AwakeningJournal = lazyRetry(() => import("./pages/AwakeningJournal"));
 const TransformationFlow = lazyRetry(() => import("./pages/TransformationFlow"));
 
+// 女性竞争力测评
+const WomenCompetitiveness = lazyRetry(() => import("./pages/WomenCompetitiveness"));
+
 // 财富教练
 const WealthBlockIntro = lazyRetry(() => import("./pages/WealthBlockIntro"));
 const WealthBlockAssessment = lazyRetry(() => import("./pages/WealthBlockAssessment"));
@@ -361,6 +364,7 @@ const App = () => (
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
+              <Route path="/women-competitiveness" element={<WomenCompetitiveness />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
