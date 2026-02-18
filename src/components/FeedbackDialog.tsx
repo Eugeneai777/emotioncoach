@@ -51,12 +51,24 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
 
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get user id with timeout to prevent hanging in WeChat webview
+      let userId: string | null = null;
+      try {
+        const userPromise = supabase.auth.getUser();
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), 3000)
+        );
+        const { data: { user } } = await Promise.race([userPromise, timeoutPromise]);
+        userId = user?.id || null;
+      } catch {
+        // If getUser fails or times out, proceed without user_id
+        console.warn("Failed to get user, submitting feedback without user_id");
+      }
       
       const { error } = await supabase
         .from("user_feedback")
         .insert({
-          user_id: user?.id || null,
+          user_id: userId,
           feedback_type: "suggestion",
           content: content.trim(),
           contact_info: contactInfo.trim() || null,
