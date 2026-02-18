@@ -65,9 +65,8 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [publishBundle, setPublishBundle] = useState<ProductBundle | null>(null);
-  const [suggestKeyword, setSuggestKeyword] = useState("");
+  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
   const [suggesting, setSuggesting] = useState(false);
-  const [suggestionReason, setSuggestionReason] = useState<string | null>(null);
 
   // Load packages
   const { data: packages, isLoading: packagesLoading } = usePackages();
@@ -161,42 +160,24 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
 
   const totalPrice = selectedProducts.reduce((s, p) => s + p.price, 0);
 
-  const handleAISuggest = async () => {
-    if (!suggestKeyword.trim()) { toast.error("请输入场景或人群关键词"); return; }
-    if (allProducts.length === 0) { toast.error("暂无可选产品"); return; }
+  const handleAISuggestName = async () => {
+    if (selectedProducts.length === 0) { toast.error("请先选择产品"); return; }
     setSuggesting(true);
-    setSuggestionReason(null);
+    setNameSuggestions([]);
     try {
       const { data, error } = await supabase.functions.invoke("ai-generate-bundle", {
         body: {
-          type: "suggest_bundle",
-          keyword: suggestKeyword.trim(),
-          availableProducts: allProducts.map((p) => ({
-            name: p.name, price: p.price, description: p.description || "",
-          })),
+          type: "optimize_name",
+          currentName: bundleName.trim() || "产品组合包",
+          products: selectedProducts.map((p) => ({ name: p.name, price: p.price })),
         },
       });
       if (error) throw error;
       if (data.error) throw new Error(data.error);
-
-      // Apply recommendations
-      const indices: number[] = data.recommended_indices || [];
-      const recommended = indices
-        .map((i: number) => allProducts[i - 1])
-        .filter(Boolean);
-
-      if (recommended.length > 0) {
-        setSelectedProducts(recommended);
-        toast.success(`AI 推荐了 ${recommended.length} 个产品`);
-      }
-      if (data.bundle_name) {
-        setBundleName(data.bundle_name);
-      }
-      if (data.reason) {
-        setSuggestionReason(data.reason);
-      }
+      setNameSuggestions(data.suggestions || []);
+      toast.success("AI 名称建议已生成");
     } catch (err: any) {
-      toast.error("AI 推荐失败: " + (err.message || "未知错误"));
+      toast.error("AI 建议失败: " + (err.message || "未知错误"));
     } finally {
       setSuggesting(false);
     }
@@ -319,8 +300,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setSelectedProducts([]);
     setAiContent(null);
     setEditingId(null);
-    setSuggestKeyword("");
-    setSuggestionReason(null);
+    setNameSuggestions([]);
   };
 
   const isLoading = packagesLoading || storeLoading || partnerLoading;
@@ -428,42 +408,34 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
             <DialogTitle>{editingId ? "编辑组合包" : "创建产品组合包"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* AI Suggest Section */}
-            <div className="border border-dashed border-primary/30 rounded-lg p-3 bg-primary/5 space-y-2">
-              <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
-                <Lightbulb className="h-4 w-4" />
-                AI 智能推荐组合
-              </div>
-              <p className="text-xs text-muted-foreground">输入目标场景或人群关键词，AI 将从所有产品中推荐最佳组合</p>
+            <div>
+              <Label>组合包名称 *</Label>
               <div className="flex gap-2">
-                <Input
-                  value={suggestKeyword}
-                  onChange={(e) => setSuggestKeyword(e.target.value)}
-                  placeholder="例如：职场压力、情绪管理、身心健康"
-                  className="flex-1"
-                  onKeyDown={(e) => { if (e.key === "Enter") handleAISuggest(); }}
-                />
+                <Input value={bundleName} onChange={(e) => setBundleName(e.target.value)} placeholder="例如：知乐身心健康套餐" className="flex-1" />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleAISuggest}
-                  disabled={suggesting || !suggestKeyword.trim()}
-                  className="whitespace-nowrap"
+                  onClick={handleAISuggestName}
+                  disabled={suggesting || selectedProducts.length === 0}
+                  className="whitespace-nowrap shrink-0"
                 >
-                  {suggesting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
-                  {suggesting ? "推荐中…" : "AI 推荐"}
+                  {suggesting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Lightbulb className="h-4 w-4 mr-1" />}
+                  {suggesting ? "生成中…" : "AI 取名"}
                 </Button>
               </div>
-              {suggestionReason && (
-                <div className="text-xs text-muted-foreground bg-background rounded p-2 border">
-                  <span className="font-medium">推荐理由：</span>{suggestionReason}
+              {nameSuggestions.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {nameSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setBundleName(s); setNameSuggestions([]); }}
+                      className="block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-accent transition-colors border"
+                    >
+                      {s}
+                    </button>
+                  ))}
                 </div>
               )}
-            </div>
-
-            <div>
-              <Label>组合包名称 *</Label>
-              <Input value={bundleName} onChange={(e) => setBundleName(e.target.value)} placeholder="例如：知乐身心健康套餐" />
             </div>
             <div>
               <Label>选择产品（已选 {selectedProducts.length} 个，合计 ¥{totalPrice.toFixed(2)}）</Label>
