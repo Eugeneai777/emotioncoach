@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Play, Lock, Sparkles, History } from "lucide-react";
-import logoImage from "@/assets/logo-youjin-ai.png";
+import PageHeader from "@/components/PageHeader";
 
 interface CompetitivenessStartScreenProps {
   onStart: () => void;
@@ -21,26 +21,16 @@ export function CompetitivenessStartScreen({ onStart, onBack, onHistory }: Compe
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 flex flex-col items-center relative">
-      {/* Logo + 返回 header */}
-      <div className="w-full sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="flex items-center justify-between h-12 px-4">
-          <div className="flex items-center gap-1">
-            <div
-              onClick={onBack}
-              className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
-            >
-              <img src={logoImage} alt="有劲AI" className="w-9 h-9 rounded-full object-cover" />
-            </div>
-          </div>
-          <div />
-          {onHistory && (
+      <PageHeader
+        rightActions={
+          onHistory ? (
             <Button variant="ghost" size="sm" onClick={onHistory} className="text-muted-foreground">
               <History className="w-4 h-4 mr-1" />
               历史记录
             </Button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
