@@ -113,9 +113,15 @@ serve(async (req) => {
           console.log(`Pre-check: found existing user in profiles for ${phone}: ${userId}`);
         } else {
           // No existing profile found, try to create new Auth user
+          // Use placeholder email so user can login via email/password flow
+          const codeNoPlus = countryCode.replace('+', '');
+          const placeholderEmail = `phone_${codeNoPlus}${phone}@youjin.app`;
+          
           const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+            email: placeholderEmail,
             phone: phoneWithCode,
             password: '123456',
+            email_confirm: true,
             phone_confirm: true,
           });
 
@@ -133,7 +139,7 @@ serve(async (req) => {
               while (!found && page <= 10) {
                 const { data: { users } } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
                 if (!users || users.length === 0) break;
-                const match = users.find(u => u.phone === phoneWithCode);
+                const match = users.find(u => u.phone === phoneWithCode || u.email === placeholderEmail);
                 if (match) {
                   userId = match.id;
                   found = true;
@@ -153,6 +159,24 @@ serve(async (req) => {
           } else {
             userId = newUser.user.id;
             isNewlyCreated = true;
+          }
+        }
+
+        // For existing users without email, backfill placeholder email
+        if (!isNewlyCreated) {
+          try {
+            const { data: { user: existingAuthUser } } = await adminClient.auth.admin.getUserById(userId!);
+            if (existingAuthUser && !existingAuthUser.email) {
+              const codeNoPlus = countryCode.replace('+', '');
+              const placeholderEmail = `phone_${codeNoPlus}${phone}@youjin.app`;
+              await adminClient.auth.admin.updateUserById(userId!, {
+                email: placeholderEmail,
+                email_confirm: true,
+              });
+              console.log(`Backfilled placeholder email for ${phone}: ${placeholderEmail}`);
+            }
+          } catch (e) {
+            console.error(`Failed to backfill email for ${phone}:`, e);
           }
         }
 
