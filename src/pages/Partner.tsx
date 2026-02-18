@@ -11,6 +11,7 @@ import PageHeader from "@/components/PageHeader";
 import { getPartnerLevel } from "@/config/partnerLevels";
 import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
+import { StoreCommissionProducts } from "@/components/partner/StoreCommissionProducts";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
 import { PromotionHub } from "@/components/partner/PromotionHub";
@@ -200,6 +201,7 @@ export default function Partner() {
 
                   {/* 收益 Tab */}
                   <TabsContent value="earnings" className="space-y-4">
+                    <StoreCommissionProducts partnerType={partner.partner_type} />
                     <CommissionHistory partnerId={partner.id} />
                     <WithdrawalForm partner={partner} />
                     <PartnerFlywheel partnerId={partner.id} />

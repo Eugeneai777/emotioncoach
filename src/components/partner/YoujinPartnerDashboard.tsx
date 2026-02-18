@@ -17,6 +17,7 @@ import { ConversionAlerts } from "./ConversionAlerts";
 import { ConversionGuide } from "./ConversionGuide";
 import { PartnerAnalytics } from "./PartnerAnalytics";
 import { CommissionHistory } from "./CommissionHistory";
+import { StoreCommissionProducts } from "./StoreCommissionProducts";
 import { WithdrawalForm } from "./WithdrawalForm";
 import { PartnerOverviewCard } from "./PartnerOverviewCard";
 import { PartnerQuickActions } from "./PartnerQuickActions";
@@ -311,6 +312,9 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         <TabsContent value="earnings" className="space-y-4 mt-4">
           {/* 数据分析 */}
           <PartnerAnalytics partnerId={partner.id} />
+          
+           {/* 分成商品 */}
+          <StoreCommissionProducts partnerType="youjin" />
           
           {/* 佣金明细 */}
           <CommissionHistory partnerId={partner.id} />
