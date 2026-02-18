@@ -350,9 +350,6 @@ export function QuickRegisterStep({
       return;
     }
 
-    // 生成占位邮箱
-    const placeholderEmail = generatePhoneEmail(countryCode, phone);
-
     setIsLoading(true);
     try {
       // 注册前检查手机号是否已存在（使用 RPC 函数绕过 RLS）
@@ -365,12 +362,12 @@ export function QuickRegisterStep({
         throw new Error('该手机号已注册，请直接登录');
       }
 
-      // 使用 Supabase Auth 注册
+      // 使用原生手机号注册
+      const phoneWithCode = `${countryCode}${phone}`;
       const { data, error } = await supabase.auth.signUp({
-        email: placeholderEmail,
+        phone: phoneWithCode,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
           data: { display_name: nickname || undefined }
         }
       });
@@ -422,29 +419,27 @@ export function QuickRegisterStep({
       return;
     }
 
-    // 生成占位邮箱
-    const placeholderEmail = generatePhoneEmail(countryCode, phone);
-
     setIsLoading(true);
     try {
-      // 先尝试占位邮箱登录
+      // 优先使用原生手机号登录
+      const phoneWithCode = `${countryCode}${phone}`;
       let loginData = null;
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: placeholderEmail,
+        phone: phoneWithCode,
         password,
       });
 
       if (error) {
-        // 兜底：原生手机号登录（批量注册用户可能只有 phone 没有占位邮箱）
-        const phoneWithCode = `${countryCode}${phone}`;
-        const { data: phoneData, error: phoneError } = await supabase.auth.signInWithPassword({
-          phone: phoneWithCode,
+        // 兜底：老用户可能只有占位邮箱
+        const placeholderEmail = generatePhoneEmail(countryCode, phone);
+        const { data: emailData, error: emailError } = await supabase.auth.signInWithPassword({
+          email: placeholderEmail,
           password,
         });
-        if (phoneError) {
+        if (emailError) {
           throw new Error('手机号或密码错误');
         }
-        loginData = phoneData;
+        loginData = emailData;
       } else {
         loginData = data;
       }
