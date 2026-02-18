@@ -463,3 +463,6 @@ verify_jwt = false
 
 [functions.settle-store-commission]
 verify_jwt = false
+
+[functions.analyze-competitiveness]
+verify_jwt = false
