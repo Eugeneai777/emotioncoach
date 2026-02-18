@@ -460,3 +460,6 @@ verify_jwt = false
 
 [functions.notify-store-order]
 verify_jwt = false
+
+[functions.settle-store-commission]
+verify_jwt = false

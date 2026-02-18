@@ -138,6 +138,20 @@ export function HealthStoreGrid() {
         // Non-blocking
       }
 
+      // Settle commissions for partner types
+      try {
+        await supabase.functions.invoke("settle-store-commission", {
+          body: {
+            order_no: orderNo,
+            product_id: selectedProduct.id,
+            order_amount: selectedProduct.price,
+            buyer_id: user.id,
+          },
+        });
+      } catch {
+        // Non-blocking
+      }
+
       toast.success("购买成功！卖家将尽快发货");
     } catch (err) {
       console.error("Post-payment error:", err);
