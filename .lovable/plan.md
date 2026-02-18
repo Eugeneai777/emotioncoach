@@ -1,35 +1,54 @@
 
 
-# 优化文案展示：让 AI 生成的内容更易阅读和编辑
+# 在组合包编辑中添加 AI 主图生成功能
 
-## 当前问题
+## 功能概述
 
-从截图可以看到，AI 已成功生成了四段高质量文案，但展示效果不佳：
-- Textarea 高度固定为 2 行（`rows={2}`），大段文案被截断需要滚动
-- 纯文本框样式，无法直观感受"电商详情页"的最终效果
-- 编辑体验差，用户需要在小框中滚动阅读
+在组合包创建/编辑对话框中，新增"AI 生成主图"按钮，使用 Nano banana 模型（`google/gemini-2.5-flash-image`）根据产品名称和文案内容自动生成电商风格的产品主图。生成后的图片上传至 `partner-assets` 存储桶，URL 保存到组合包的 `cover_image_url` 字段。
 
 ## 改动方案
 
-### 文件：`src/components/admin/industry-partners/PartnerProductBundles.tsx`
+### 1. Edge Function: `supabase/functions/ai-generate-bundle/index.ts`
 
-#### 1. 增大 Textarea 显示区域
-- 将 `rows={2}` 改为 `rows={4}`，让更多文案内容直接可见
-- 添加 `min-h-[100px]` 确保最小高度足够展示内容
+新增 `type: "generate_cover_image"` 处理分支：
 
-#### 2. 增加"预览/编辑"双模式切换
-- 默认展示为**预览模式**：使用格式化的文本展示（非输入框），更像电商详情页
-- 点击"编辑"按钮或点击文案区域切换为**编辑模式**：显示 Textarea 可修改
-- 在预览模式下，文案以完整段落形式展示，带有适当的行高和字体大小
+- 接收 `bundleName`、`products`、`aiContent` 参数
+- 调用 `google/gemini-2.5-flash-image` 模型，带 `modalities: ["image", "text"]`
+- Prompt 指示生成：简洁的中文电商主图，健康/养生风格，品牌绿色调
+- 从返回的 `images[0].image_url.url` 取 base64 数据
+- 解码 base64 后上传到 `partner-assets` 存储桶（文件名用 UUID 避免中文问题）
+- 返回公开 URL
 
-#### 3. 视觉优化
-- 预览模式下每个板块使用更大的内边距和更优的排版（`text-sm leading-relaxed`）
-- 添加"点击编辑"提示，引导用户知道内容可修改
-- AI 生成后自动进入预览模式，让用户先看到完整效果
+### 2. 前端: `src/components/admin/industry-partners/PartnerProductBundles.tsx`
 
-### 改动范围
+在文案区域下方、保存按钮上方，添加主图区域：
+
+- 新增状态：`generatingImage`（加载中标志）
+- 展示区域：
+  - 如果已有 `cover_image_url`，显示图片预览
+  - 显示"AI 生成主图"按钮，点击调用 edge function
+- 生成后自动更新 `coverImageUrl` 状态
+- 保存组合包时将 `cover_image_url` 一并写入
+
+### 3. 上架时使用主图
+
+`BundlePublishPreview.tsx` 中，如果 `bundle.cover_image_url` 存在，商城卡片预览和实际上架都使用该图片替代默认渐变背景。
+
+## 技术细节
 
 | 文件 | 改动 |
 |------|------|
-| `PartnerProductBundles.tsx` 第 474-520 行 | 增加预览/编辑模式切换，增大 Textarea 行数，优化排版样式 |
+| `supabase/functions/ai-generate-bundle/index.ts` | 新增 `generate_cover_image` 分支，调用 Nano banana 生成图片并上传存储桶 |
+| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 新增主图预览区 + AI 生成按钮 + `generatingImage` 状态 |
+| `src/components/admin/industry-partners/BundlePublishPreview.tsx` | 卡片预览区优先使用 `cover_image_url` 展示真实主图 |
+
+## 数据流
+
+1. 用户点击"AI 生成主图"
+2. 前端调用 `ai-generate-bundle`，`type: "generate_cover_image"`
+3. Edge Function 调用 Gemini 图片模型生成 base64 图片
+4. Edge Function 将图片上传到 `partner-assets` 存储桶
+5. 返回公开 URL，前端展示预览
+6. 保存时写入组合包的 `cover_image_url`
+7. 上架时自动使用该图片作为商城商品主图
 
