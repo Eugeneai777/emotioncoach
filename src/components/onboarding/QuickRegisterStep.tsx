@@ -427,24 +427,34 @@ export function QuickRegisterStep({
 
     setIsLoading(true);
     try {
+      // 先尝试占位邮箱登录
+      let loginData = null;
       const { data, error } = await supabase.auth.signInWithPassword({
         email: placeholderEmail,
         password,
       });
 
       if (error) {
-        if (error.message?.includes('Invalid login credentials')) {
+        // 兜底：原生手机号登录（批量注册用户可能只有 phone 没有占位邮箱）
+        const phoneWithCode = `${countryCode}${phone}`;
+        const { data: phoneData, error: phoneError } = await supabase.auth.signInWithPassword({
+          phone: phoneWithCode,
+          password,
+        });
+        if (phoneError) {
           throw new Error('手机号或密码错误');
         }
-        throw error;
+        loginData = phoneData;
+      } else {
+        loginData = data;
       }
-      if (!data.user) throw new Error('登录失败');
+      if (!loginData?.user) throw new Error('登录失败');
 
       // 绑定订单到用户
-      await bindOrderToUser(data.user.id);
+      await bindOrderToUser(loginData.user.id);
 
       toast.success('登录成功！');
-      onSuccess(data.user.id);
+      onSuccess(loginData.user.id);
     } catch (error: any) {
       console.error('Phone login error:', error);
       toast.error(error.message || '登录失败，请重试');
