@@ -1,46 +1,35 @@
 
 
-# 修复文案编辑并升级为电商风格展示
+# 优化文案展示：让 AI 生成的内容更易阅读和编辑
 
-## 问题
+## 当前问题
 
-1. **编辑失败 Bug**：当 `aiContent` 为 `null` 时（AI 未生成前），四个 Textarea 的 `onChange` 回调执行 `{ ...prev!, field: value }` 会因展开 `null` 而失败，导致无法手动输入
-2. **展示风格单调**：当前文案区域是纯 Label + Textarea，缺乏电商感，用户难以直观感受最终效果
+从截图可以看到，AI 已成功生成了四段高质量文案，但展示效果不佳：
+- Textarea 高度固定为 2 行（`rows={2}`），大段文案被截断需要滚动
+- 纯文本框样式，无法直观感受"电商详情页"的最终效果
+- 编辑体验差，用户需要在小框中滚动阅读
 
 ## 改动方案
 
 ### 文件：`src/components/admin/industry-partners/PartnerProductBundles.tsx`
 
-#### 1. 修复 onChange null 处理（第 476-488 行）
+#### 1. 增大 Textarea 显示区域
+- 将 `rows={2}` 改为 `rows={4}`，让更多文案内容直接可见
+- 添加 `min-h-[100px]` 确保最小高度足够展示内容
 
-四个 Textarea 的 onChange 统一改为安全处理模式：
+#### 2. 增加"预览/编辑"双模式切换
+- 默认展示为**预览模式**：使用格式化的文本展示（非输入框），更像电商详情页
+- 点击"编辑"按钮或点击文案区域切换为**编辑模式**：显示 Textarea 可修改
+- 在预览模式下，文案以完整段落形式展示，带有适当的行高和字体大小
 
-```typescript
-onChange={(e) => setAiContent((prev) => ({
-  target_audience: prev?.target_audience || "",
-  pain_points: prev?.pain_points || "",
-  solution: prev?.solution || "",
-  expected_results: prev?.expected_results || "",
-  target_audience: e.target.value,  // 覆盖对应字段
-}))}
-```
-
-每个字段都先从 `prev` 安全取值（fallback 空字符串），再覆盖当前编辑的字段。
-
-#### 2. 升级电商风格展示（第 474-489 行）
-
-将四个 Textarea 区域改为带图标、带背景色的电商风格卡片布局：
-
-- 每个板块用带颜色的小卡片包裹（浅色背景 + 左侧彩色边框）
-- 标题使用 emoji + 粗体标签，如 "🎯 适合谁"、"💢 解决什么问题"
-- AI 生成后文案自动填入，用户可直接在 Textarea 中修改
-- 未生成时显示引导性 placeholder
-
-视觉效果类似 `BundlePublishPreview.tsx` 中已实现的电商文案编辑区。
+#### 3. 视觉优化
+- 预览模式下每个板块使用更大的内边距和更优的排版（`text-sm leading-relaxed`）
+- 添加"点击编辑"提示，引导用户知道内容可修改
+- AI 生成后自动进入预览模式，让用户先看到完整效果
 
 ### 改动范围
 
-| 文件 | 行 | 改动 |
-|------|-----|------|
-| `PartnerProductBundles.tsx` | 474-489 | 修复 null bug + 升级电商风格 UI |
+| 文件 | 改动 |
+|------|------|
+| `PartnerProductBundles.tsx` 第 474-520 行 | 增加预览/编辑模式切换，增大 Textarea 行数，优化排版样式 |
 
