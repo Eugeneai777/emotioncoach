@@ -9383,6 +9383,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      check_phone_exists: {
+        Args: { p_country_code?: string; p_phone: string }
+        Returns: boolean
+      }
       cleanup_expired_wechat_login_scenes: { Args: never; Returns: undefined }
       confirm_coach_settlement: {
         Args: { p_amount: number; p_coach_id: string }

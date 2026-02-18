@@ -355,16 +355,13 @@ export function QuickRegisterStep({
 
     setIsLoading(true);
     try {
-      // 注册前检查手机号是否已存在
-      const { data: existingProfiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('phone', phone)
-        .eq('phone_country_code', countryCode)
-        .is('deleted_at', null)
-        .limit(1);
+      // 注册前检查手机号是否已存在（使用 RPC 函数绕过 RLS）
+      const { data: phoneExists } = await supabase.rpc('check_phone_exists', {
+        p_phone: phone,
+        p_country_code: countryCode,
+      });
       
-      if (existingProfiles && existingProfiles.length > 0) {
+      if (phoneExists) {
         throw new Error('该手机号已注册，请直接登录');
       }
 
