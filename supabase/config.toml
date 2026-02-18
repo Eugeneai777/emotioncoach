@@ -455,5 +455,8 @@ verify_jwt = false
 [functions.generate-xiaohongshu-covers]
 verify_jwt = false
 
+[functions.ai-extract-product]
+verify_jwt = false
+
 [functions.notify-store-order]
 verify_jwt = false
