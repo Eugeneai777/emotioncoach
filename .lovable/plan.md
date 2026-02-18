@@ -1,45 +1,47 @@
 
+# 将安安账号A权益复制到账号B
 
-# 修复建议提交反馈问题
+## 现状确认
 
-## 问题分析
+| | 账号A（微信登录） | 账号B（手机号登录） |
+|---|---|---|
+| **User ID** | `05c77e39-f142-4b4d-abfe-aef9cefc09c9` | `53916953-7f3e-4400-8b59-d64ed790f2a6` |
+| **昵称** | Angela安安 | 安安 |
+| **手机号** | 无 | 13528467591 |
+| **合伙人** | 绽放合伙人 (active) | 无 |
+| **测评订单** | 已开通 (paid) | 无 |
+| **训练营** | 7天财富突破 | 无 |
+| **交付记录** | bloom_partner_orders 存在 | 无 |
 
-1. **提交后无反馈**：FeedbackDialog 提交成功/失败后仅使用 toast 通知。在微信内嵌浏览器中，toast 提示可能被遮挡或不显示，用户感觉"没有反应"。
-2. **查看位置**：已提交的建议可在管理后台 `/admin` -> 客服管理 -> "用户建议" tab 查看。
+## 操作计划
 
-## 修复方案
+为账号B（`53916953-...`）插入以下 4 条记录，复制账号A的权益：
 
-### 1. 增强提交反馈体验
+### 1. 创建合伙人身份（partners 表）
+- partner_type: bloom
+- partner_level: L0
+- status: active
+- partner_code: 自动生成新编码
+- prepurchase_count: 100
+- commission_rate_l1: 0.30, commission_rate_l2: 0.10
+- 其他配置与账号A一致
 
-在 FeedbackDialog 中增加提交成功状态展示，不再仅依赖 toast：
+### 2. 创建测评订单（orders 表）
+- package_key: wealth_block_assessment
+- package_name: 财富卡点测评（绽放合伙人权益）
+- amount: 0, status: paid
+- order_type: partner_benefit
 
-- 添加 `isSuccess` 状态
-- 提交成功后，Dialog 内容切换为成功界面（绿色对勾 + "提交成功"文字 + 关闭按钮）
-- 保留 toast 作为辅助通知
-- 2 秒后自动关闭 Dialog
+### 3. 创建训练营购买记录（user_camp_purchases 表）
+- camp_type: wealth_block_7
+- camp_name: 7天财富突破训练营
+- payment_method: partner_benefit
+- payment_status: completed
+- purchase_price: 0
 
-### 2. 修改文件
+### 4. 创建交付跟踪记录（bloom_partner_orders 表）
+- 关联新创建的 partner_id
+- order_amount: 19800
+- delivery_status: pending
 
-**src/components/FeedbackDialog.tsx**:
-- 新增 `isSuccess` state
-- 提交成功后设置 `isSuccess = true`，展示成功界面
-- 在 `onOpenChange` 中重置 `isSuccess`
-- 成功界面包含：绿色圆形对勾图标、"提交成功"标题、"感谢您的宝贵建议"副标题、关闭按钮
-- 添加 2 秒自动关闭的 `setTimeout`
-
-### 3. 技术细节
-
-```text
-提交流程（改进后）:
-  用户点击"提交建议"
-    |
-    ├── 成功 → Dialog 内切换为成功界面
-    |         → 2秒后自动关闭
-    |         → toast 辅助提示
-    |
-    └── 失败 → Dialog 内显示红色错误提示
-              → toast 辅助提示
-```
-
-这样即使 toast 在微信中不显示，用户也能在 Dialog 内看到明确的成功反馈。
-
+账号A数据保持不变，两个账号将独立拥有相同权益。不涉及任何代码修改。
