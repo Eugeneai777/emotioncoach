@@ -1,61 +1,85 @@
 
-# 优化竞争力测评报告结果页
+# 优化竞争力测评：雷达图修复 + 历史记录 + Logo
 
-## 问题分析
-当前报告存在以下不足：
-1. **分数含义不清** — 用户看到"43分"不知道代表什么水平
-2. **阶段解释不够** — "觉醒期"只有一句话描述，不够直观
-3. **缺少目标感** — 没有告诉用户下一个阶段是什么、差多少分
-4. **缺少行动方向** — 结果页本身没有给出"我该做什么"的引导
-5. **AI解读太长** — 一大段文字缺乏结构化展示，阅读体验差
+## 问题1：雷达图比例不正确
 
-## 优化方案
+当前 `RadarChart` 缺少 `PolarRadiusAxis`，导致坐标轴域值不固定，图形比例失真。
 
-### 1. 增强等级卡片 — 解释"43分=觉醒期"意味着什么
-在顶部等级卡片中增加：
-- **分数段标尺**：可视化展示 0-100 分被分成4个区间（蛰伏 0-40 / 觉醒 41-60 / 绽放 61-80 / 引领 81-100），用户的分数用指示器标注
-- **当前阶段详细解读**：2-3句话说明这个阶段的核心特征
-- **下一阶段目标**：显示"距离绽放期还差18分"，给予方向感
+**修复方案**（`CompetitivenessResult.tsx`）：
+- 添加 `PolarRadiusAxis` 并设置 `domain={[0, 100]}`，确保5个维度在0-100范围内等比展示
+- 添加 `Tooltip` 显示具体分值
 
-### 2. 新增"四个阶段全览"卡片
-在等级卡片下方新增一个卡片，用4个色块展示所有阶段：
-- 蛰伏期（0-40）：特征关键词 + 一句话描述
-- 觉醒期（41-60）：特征关键词 + 一句话描述（当前阶段高亮）
-- 绽放期（61-80）：特征关键词 + 一句话描述
-- 引领期（81-100）：特征关键词 + 一句话描述
+## 问题2：保留历史测评记录
 
-让用户一目了然自己在哪个位置，以及每个阶段代表什么。
+当前测评结果只在前端内存中，刷新即丢失。需要新建数据库表存储历史记录。
 
-### 3. 新增"突破方向"卡片
-在优势/短板卡片下方，雷达图前，增加一个简洁的行动引导卡片：
-- **你的目标**：从觉醒期迈向绽放期
-- **核心突破点**：基于最弱维度给出1句话方向
-- **最大优势**：基于最强维度给出1句话鼓励
+**数据库**：新建 `competitiveness_assessments` 表
+- `id` (uuid, PK)
+- `user_id` (uuid, 引用 profiles.id)
+- `total_score` (integer)
+- `level` (text)
+- `category_scores` (jsonb) — 5维度分数
+- `strongest_category` (text)
+- `weakest_category` (text)
+- `answers` (jsonb) — 原始答案
+- `follow_up_insights` (jsonb) — AI追问回答
+- `ai_analysis` (text) — AI解读内容缓存
+- `created_at` (timestamptz)
+- RLS策略：用户只能读写自己的记录
 
-### 4. AI解读分段折叠展示
-将AI长文本改为分段折叠（Accordion）展示：
-- 默认展开第一段"竞争力画像"
-- 其余段落（隐藏优势、突破口、行动建议、写给你的话）折叠，点击展开
-- 每段有清晰的标题和图标
+**前端改动**：
+- `CompetitivenessResult.tsx`：测评完成后自动保存结果到数据库；AI解读生成后更新 `ai_analysis` 字段
+- `CompetitivenessQuestions.tsx`：在开始页增加"历史记录"入口，查询并展示过往测评列表（日期 + 分数 + 等级），点击可查看历史报告
+- `WomenCompetitiveness.tsx`：增加 `history` phase，支持查看历史记录详情
 
-### 5. 丰富 levelInfo 数据
-给每个阶段增加更多描述字段：
-- `characteristics`：3-4个特征关键词
-- `nextLevel`：下一阶段的key
-- `nextLevelTip`：进阶提示语
+## 问题3：左上角统一加入Logo
 
-## 技术改动
+当前结果页和答题页没有使用 `PageHeader` 组件。
 
-### 文件1：`competitivenessData.ts`
-- 在 `levelInfo` 中增加 `characteristics`（特征关键词数组）、`scoreRange`（分数区间文字）、`nextLevel`、`nextLevelTip` 字段
+**修复方案**：
+- `CompetitivenessResult.tsx`：顶部替换当前的"重新测评"按钮为 `PageHeader` 组件（含Logo + 返回按钮）
+- `CompetitivenessQuestions.tsx`：顶部加入 `PageHeader`（含Logo + 退出按钮）
+- `CompetitivenessStartScreen.tsx`：顶部加入 `PageHeader`（含Logo）
 
-### 文件2：`CompetitivenessResult.tsx`
-- 增加分数段标尺组件（4段彩色进度条 + 当前位置指示器）
-- 增加"四阶段全览"卡片
-- 增加"突破方向"卡片
-- AI解读区域改为 Accordion 分段折叠（按 `##` 标题拆分 markdown）
-- 显示"距离下一阶段还差 X 分"
+## 技术细节
 
-### 文件3：`analyze-competitiveness/index.ts`（Edge Function）
-- 在 prompt 中明确要求每个段落用 `##` 分隔，控制每段不超过150字
-- 增加"简洁有力，避免冗长"的指令
+### 新建数据库表 SQL
+```sql
+CREATE TABLE competitiveness_assessments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  total_score integer NOT NULL,
+  level text NOT NULL,
+  category_scores jsonb NOT NULL,
+  strongest_category text NOT NULL,
+  weakest_category text NOT NULL,
+  answers jsonb NOT NULL DEFAULT '{}',
+  follow_up_insights jsonb,
+  ai_analysis text,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE competitiveness_assessments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users read own assessments"
+  ON competitiveness_assessments FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users insert own assessments"
+  ON competitiveness_assessments FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users update own assessments"
+  ON competitiveness_assessments FOR UPDATE
+  USING (auth.uid() = user_id);
+```
+
+### 修改文件清单
+
+| 文件 | 改动 |
+|------|------|
+| `CompetitivenessResult.tsx` | 修复雷达图（加 PolarRadiusAxis）；加 PageHeader；保存结果到数据库；AI解读完成后更新记录 |
+| `CompetitivenessQuestions.tsx` | 加 PageHeader 替代自定义顶栏 |
+| `CompetitivenessStartScreen.tsx` | 加 PageHeader；加"历史记录"按钮 |
+| `WomenCompetitiveness.tsx` | 增加 history phase；支持从历史记录加载旧报告 |
+| 新建 `CompetitivenessHistory.tsx` | 历史记录列表组件（日期、分数、等级，点击查看详情） |
