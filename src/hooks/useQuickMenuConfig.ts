@@ -67,6 +67,7 @@ export const defaultConfig: QuickMenuConfig = {
 export const useQuickMenuConfig = () => {
   const { user } = useAuth();
   const [config, setConfig] = useState<QuickMenuConfig>(defaultConfig);
+  const [homePage, setHomePage] = useState<string>('/');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -123,6 +124,9 @@ export const useQuickMenuConfig = () => {
               customSlot3: (data as any).custom_slot_3 as MenuItemConfig || defaultConfig.customSlot3,
             });
             setConfig(dbConfig);
+            if ((data as any).home_page_path) {
+              setHomePage((data as any).home_page_path);
+            }
             // Also update localStorage for offline access
             localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(dbConfig));
           } else {
@@ -251,6 +255,7 @@ export const useQuickMenuConfig = () => {
 
   return {
     config,
+    homePage,
     isLoaded,
     isSyncing,
     saveConfig,
