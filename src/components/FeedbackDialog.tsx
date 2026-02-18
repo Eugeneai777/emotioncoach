@@ -60,7 +60,6 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
           feedback_type: "suggestion",
           content: content.trim(),
           contact_info: contactInfo.trim() || null,
-          page_url: window.location.pathname,
         });
 
       if (error) throw error;
