@@ -106,6 +106,10 @@ export const levelInfo: Record<CompetitivenessLevel, {
   gradient: string;
   description: string;
   encouragement: string;
+  characteristics: string[];
+  scoreRange: string;
+  nextLevel: CompetitivenessLevel | null;
+  nextLevelTip: string;
 }> = {
   dormant: {
     name: "蛰伏期",
@@ -114,6 +118,10 @@ export const levelInfo: Record<CompetitivenessLevel, {
     gradient: "from-slate-400 to-slate-500",
     description: "你正处于力量积蓄的阶段，内在的潜力还未被完全唤醒",
     encouragement: "每一颗种子都在等待属于它的春天，你的绽放只是时间问题",
+    characteristics: ["安全感优先", "习惯等待", "潜力未释放", "需要被看见"],
+    scoreRange: "0-40分",
+    nextLevel: "awakening",
+    nextLevelTip: "开始觉察自己的优势，尝试在一个小领域表达自己",
   },
   awakening: {
     name: "觉醒期",
@@ -122,6 +130,10 @@ export const levelInfo: Record<CompetitivenessLevel, {
     gradient: "from-emerald-400 to-green-500",
     description: "你已经意识到了自己的力量，正在突破的路上",
     encouragement: "觉醒是最难的一步，你已经迈出来了",
+    characteristics: ["开始觉察", "渴望改变", "行动试探", "信心待建"],
+    scoreRange: "41-60分",
+    nextLevel: "blooming",
+    nextLevelTip: "把觉察变成持续行动，聚焦最弱维度重点突破",
   },
   blooming: {
     name: "绽放期",
@@ -130,6 +142,10 @@ export const levelInfo: Record<CompetitivenessLevel, {
     gradient: "from-pink-400 to-rose-500",
     description: "你在多个维度展现出了强劲的竞争力",
     encouragement: "你正在用自己的方式重新定义35+的可能性",
+    characteristics: ["多维均衡", "自信表达", "主动掌控", "影响他人"],
+    scoreRange: "61-80分",
+    nextLevel: "leading",
+    nextLevelTip: "开始输出你的经验，帮助更多人，成为引领者",
   },
   leading: {
     name: "引领期",
@@ -138,6 +154,10 @@ export const levelInfo: Record<CompetitivenessLevel, {
     gradient: "from-amber-400 to-yellow-500",
     description: "你是同龄人中的标杆，在各维度都展现出卓越能力",
     encouragement: "你不只是在竞争，你在引领一种全新的人生范式",
+    characteristics: ["全维领先", "标杆影响", "持续进化", "引领趋势"],
+    scoreRange: "81-100分",
+    nextLevel: null,
+    nextLevelTip: "保持进化，将你的经验转化为更大的社会影响力",
   },
 };
 
