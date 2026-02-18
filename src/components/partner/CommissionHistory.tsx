@@ -71,7 +71,8 @@ export function CommissionHistory({ partnerId }: CommissionHistoryProps) {
     const names: Record<string, string> = {
       basic: '尝鲜会员',
       member365: '365会员',
-      partner: '合伙人套餐'
+      partner: '合伙人套餐',
+      store_product: '商城商品'
     };
     return names[type] || type;
   };
