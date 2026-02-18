@@ -466,3 +466,6 @@ verify_jwt = false
 
 [functions.analyze-competitiveness]
 verify_jwt = false
+
+[functions.ai-generate-bundle]
+verify_jwt = false
