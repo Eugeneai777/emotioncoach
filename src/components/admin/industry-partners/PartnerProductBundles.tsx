@@ -70,6 +70,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const [suggesting, setSuggesting] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [polishingField, setPolishingField] = useState<string | null>(null);
 
   // Load packages
   const { data: packages, isLoading: packagesLoading } = usePackages();
@@ -311,6 +312,39 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     }
   };
 
+  const handlePolishCopy = async (field: string) => {
+    const currentText = aiContent?.[field as keyof typeof aiContent] || "";
+    if (!currentText.trim()) { toast.error("该板块暂无文案，请先生成或手动输入"); return; }
+    setPolishingField(field);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-generate-bundle", {
+        body: {
+          type: "polish_copy",
+          field,
+          currentText,
+          bundleName: bundleName.trim(),
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      if (data.refinedText) {
+        setAiContent((prev) => ({
+          target_audience: prev?.target_audience || "",
+          pain_points: prev?.pain_points || "",
+          solution: prev?.solution || "",
+          expected_results: prev?.expected_results || "",
+          [field]: data.refinedText,
+        }));
+        setEditingCopyField(null);
+        toast.success("AI 润色完成");
+      }
+    } catch (err: any) {
+      toast.error("AI 润色失败: " + (err.message || "未知错误"));
+    } finally {
+      setPolishingField(null);
+    }
+  };
+
   const handleEdit = (bundle: ProductBundle) => {
     setEditingId(bundle.id);
     setBundleName(bundle.name);
@@ -528,13 +562,24 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
                     <div className="flex items-center justify-between mb-1.5">
                       <Label className={`text-xs font-bold ${labelClass} block`}>{label}</Label>
                       {value && (
-                        <button
-                          type="button"
-                          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={() => setEditingCopyField(isEditing ? null : key)}
-                        >
-                          {isEditing ? "完成" : "✏️ 编辑"}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => setEditingCopyField(isEditing ? null : key)}
+                          >
+                            {isEditing ? "完成" : "✏️ 编辑"}
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                            onClick={() => handlePolishCopy(key)}
+                            disabled={polishingField === key}
+                          >
+                            <Sparkles className={`h-3 w-3 ${polishingField === key ? "animate-spin" : ""}`} />
+                            {polishingField === key ? "润色中…" : "AI 润色"}
+                          </button>
+                        </div>
                       )}
                     </div>
                     {isEditing || !value ? (
