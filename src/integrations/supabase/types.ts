@@ -2932,6 +2932,56 @@ export type Database = {
           },
         ]
       }
+      competitiveness_assessments: {
+        Row: {
+          ai_analysis: string | null
+          answers: Json
+          category_scores: Json
+          created_at: string | null
+          follow_up_insights: Json | null
+          id: string
+          level: string
+          strongest_category: string
+          total_score: number
+          user_id: string
+          weakest_category: string
+        }
+        Insert: {
+          ai_analysis?: string | null
+          answers?: Json
+          category_scores: Json
+          created_at?: string | null
+          follow_up_insights?: Json | null
+          id?: string
+          level: string
+          strongest_category: string
+          total_score: number
+          user_id: string
+          weakest_category: string
+        }
+        Update: {
+          ai_analysis?: string | null
+          answers?: Json
+          category_scores?: Json
+          created_at?: string | null
+          follow_up_insights?: Json | null
+          id?: string
+          level?: string
+          strongest_category?: string
+          total_score?: number
+          user_id?: string
+          weakest_category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitiveness_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_logs: {
         Row: {
           contact_id: string
