@@ -34,13 +34,33 @@ const SECTION_META: Record<string, { icon: string; bg: string }> = {
   '你将收获': { icon: '🌟', bg: 'bg-green-50 dark:bg-green-950/30' },
 };
 
+function smartSplitContent(lines: string[]): string[] {
+  const result: string[] = [];
+  for (const line of lines) {
+    // 已经是要点格式或短文本，保持原样
+    if (/^[✅•]/.test(line) || line.length <= 80) {
+      result.push(line);
+    } else {
+      // 长文本按句号拆分
+      const sentences = line.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
+      if (sentences.length > 1) {
+        sentences.forEach(s => result.push(s));
+      } else {
+        result.push(line);
+      }
+    }
+  }
+  return result;
+}
+
 function parseDescription(text: string) {
   if (!text.includes('###')) return null;
   const parts = text.split(/^###\s*/m).filter(Boolean);
   return parts.map(part => {
     const [firstLine, ...rest] = part.trim().split('\n');
     const title = firstLine.trim();
-    const content = rest.map(l => l.trim()).filter(Boolean);
+    const rawContent = rest.map(l => l.trim()).filter(Boolean);
+    const content = smartSplitContent(rawContent);
     const meta = Object.entries(SECTION_META).find(([k]) => title.includes(k));
     return {
       title,
@@ -104,19 +124,19 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
               const sections = parseDescription(product.description);
               if (!sections) return <p className="text-sm text-muted-foreground">{product.description}</p>;
               return (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {sections.map((sec, i) => (
-                    <div key={i} className="rounded-lg overflow-hidden border">
-                      <div className={`px-3 py-1.5 text-sm font-medium ${sec.bg}`}>
+                    <div key={i} className="rounded-xl overflow-hidden border">
+                      <div className={`px-4 py-2 text-base font-semibold ${sec.bg}`}>
                         {sec.icon} {sec.title}
                       </div>
-                      <div className="px-3 py-2 space-y-1">
+                      <div className="px-4 py-3 space-y-2">
                         {sec.content.map((line, j) => {
                           const isBullet = /^[✅•]/.test(line);
                           return isBullet ? (
-                            <p key={j} className="text-sm text-foreground/80 pl-1">{line}</p>
+                            <p key={j} className="text-sm text-foreground/80 pl-1 leading-relaxed">{line}</p>
                           ) : (
-                            <p key={j} className="text-sm text-muted-foreground">{line}</p>
+                            <p key={j} className="text-sm text-muted-foreground leading-relaxed" style={{ textIndent: '2em' }}>{line}</p>
                           );
                         })}
                       </div>

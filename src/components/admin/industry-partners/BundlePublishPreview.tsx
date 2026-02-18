@@ -64,12 +64,21 @@ export function BundlePublishPreview({
   const price = bundle.total_price;
   const originalPrice = Math.round(bundle.total_price * 1.3);
 
+  // 格式规范化：如果文本是大段文字（无换行或✅），按句号拆分并加✅前缀
+  const normalizeContent = (text: string): string => {
+    if (!text || text.includes('✅') || text.includes('\n')) return text;
+    // 长文本按句号拆分为要点
+    const sentences = text.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
+    if (sentences.length <= 1) return text;
+    return sentences.map(s => `✅ ${s}`).join('\n');
+  };
+
   const buildDescription = () => {
     const sections = [
-      audience && `### 适合谁\n${audience}`,
-      painPoints && `### 解决什么问题\n${painPoints}`,
-      solution && `### 我们如何帮你\n${solution}`,
-      results && `### 你将收获\n${results}`,
+      audience && `### 适合谁\n${normalizeContent(audience)}`,
+      painPoints && `### 解决什么问题\n${normalizeContent(painPoints)}`,
+      solution && `### 我们如何帮你\n${normalizeContent(solution)}`,
+      results && `### 你将收获\n${normalizeContent(results)}`,
     ].filter(Boolean);
     return sections.join("\n\n");
   };
