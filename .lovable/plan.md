@@ -1,102 +1,51 @@
 
 
-# 修复批量注册流程 - 防止占位邮箱缺失
+# 从源头到展示全链路优化排版
 
-## 问题根因
+## 问题分析
 
-`batch-register-bloom-partners` 函数在第 165-181 行已有 backfill 逻辑，但存在两个缺陷：
+当前排版问题不仅是展示层的问题，而是整个链路都缺少排版规范：
 
-1. **冲突静默吞没**：当占位邮箱已被另一个重复 auth 账号占用时，`updateUserById` 抛出唯一约束冲突错误，被 `catch` 捕获后仅打印日志，不做任何修复。
-2. **缺少冲突解决**：没有尝试查找并清理占用该邮箱的重复账号。
+1. **AI 生成阶段**：`ai-generate-bundle` 的 prompt 只要求"80-150字"，没有格式要求，AI 返回大段密集文字
+2. **润色阶段**：`polish_copy` 模式同样没有格式约束
+3. **发布阶段**：`buildDescription` 直接拼接原文，无格式处理
+4. **展示阶段**：`ProductDetailDialog` 的 `parseDescription` 按换行符拆分，但 AI 生成的文本通常没有合理换行
 
-## 修复方案
+## 修改方案（3 个文件）
 
-修改 `supabase/functions/batch-register-bloom-partners/index.ts` 中的 backfill 逻辑（约第 165-181 行），增加冲突检测与自动解决：
+### 1. AI 生成 prompt 优化（`supabase/functions/ai-generate-bundle/index.ts`）
 
-### 改动内容
+修改默认生成模式（约第 372 行）的 system prompt，要求 AI 输出结构化格式：
 
-将现有的简单 backfill try/catch 替换为更健壮的逻辑：
+- 每个板块用 4-6 条要点表达，每条以 `✅` 开头
+- 每条控制在 15-25 字
+- 不要写成大段文字
 
-```
-// For existing users without email, backfill placeholder email
-if (!isNewlyCreated) {
-  try {
-    const { data: { user: existingAuthUser } } = 
-      await adminClient.auth.admin.getUserById(userId!);
-    
-    if (existingAuthUser && !existingAuthUser.email) {
-      const codeNoPlus = countryCode.replace('+', '');
-      const placeholderEmail = `phone_${codeNoPlus}${phone}@youjin.app`;
-      
-      const { error: updateErr } = await adminClient.auth.admin.updateUserById(userId!, {
-        email: placeholderEmail,
-        email_confirm: true,
-      });
-      
-      if (updateErr) {
-        // 邮箱被另一个 auth 账号占用 -> 查找并删除重复账号
-        if (updateErr.message?.includes('duplicate') || 
-            updateErr.message?.includes('already') ||
-            updateErr.message?.includes('unique')) {
-          
-          // 分页搜索占用该邮箱的重复账号
-          let duplicateId: string | null = null;
-          let page = 1;
-          while (!duplicateId && page <= 10) {
-            const { data: { users } } = 
-              await adminClient.auth.admin.listUsers({ page, perPage: 500 });
-            if (!users || users.length === 0) break;
-            const dup = users.find(u => 
-              u.email === placeholderEmail && u.id !== userId!
-            );
-            if (dup) duplicateId = dup.id;
-            page++;
-          }
-          
-          if (duplicateId) {
-            // 软删除重复账号的 profile
-            await adminClient.from('profiles').update({
-              deleted_at: new Date().toISOString(),
-              is_disabled: true,
-              phone: null,
-              disabled_reason: '重复账号清理-空壳账号(批量注册自动)',
-            }).eq('id', duplicateId);
-            
-            // 删除重复的 auth 账号
-            await adminClient.auth.admin.deleteUser(duplicateId);
-            
-            // 重试写入占位邮箱
-            await adminClient.auth.admin.updateUserById(userId!, {
-              email: placeholderEmail,
-              email_confirm: true,
-            });
-            console.log(`Auto-resolved duplicate: deleted ${duplicateId}, backfilled email for ${phone}`);
-          } else {
-            console.error(`Email conflict for ${phone} but duplicate not found`);
-          }
-        } else {
-          console.error(`Failed to backfill email for ${phone}:`, updateErr);
-        }
-      } else {
-        console.log(`Backfilled placeholder email for ${phone}: ${placeholderEmail}`);
-      }
-    }
-  } catch (e) {
-    console.error(`Failed to backfill email for ${phone}:`, e);
-  }
-}
-```
+同时修改 `polish_copy` 模式（约第 200-212 行）的 prompt：
+- 要求润色后输出为 4-6 条 `✅` 开头的要点
+- 保持每条 15-25 字
 
-## 改动范围
+### 2. 发布时格式保障（`src/components/admin/industry-partners/BundlePublishPreview.tsx`）
 
-- **仅修改一个文件**：`supabase/functions/batch-register-bloom-partners/index.ts`
-- **改动位置**：第 165-181 行的 backfill 逻辑块
-- **无破坏性变更**：只增强了错误处理，正常流程不受影响
+修改 `buildDescription` 函数（约第 67-75 行），在拼接前对每段文案做格式规范化：
+- 如果文本不包含换行或 `✅`，则按句号拆分并添加 `✅` 前缀
+- 确保写入数据库的 description 始终是结构化格式
+
+### 3. 展示层优化（`src/components/store/ProductDetailDialog.tsx`）
+
+修改 `parseDescription` 函数和渲染逻辑（约第 42-126 行）：
+- 长文本（超过 80 字且无换行）按句号智能拆分为多段
+- 区块标题字号从 `text-sm` 改为 `text-base font-semibold`
+- 区块内边距从 `px-3 py-2` 增加到 `px-4 py-3`
+- 内容行距设为 `leading-relaxed`
+- 有 `✅` 前缀的行保持原样，普通文本添加首行缩进（`text-indent: 2em`）
+- 区块间距从 `space-y-2.5` 调整为 `space-y-3`
+- 圆角从 `rounded-lg` 改为 `rounded-xl`
 
 ## 效果
 
-未来批量注册时，如果遇到已有手机账号但缺少邮箱的情况：
-- 正常情况：直接写入占位邮箱（与现有逻辑一致）
-- 冲突情况：自动查找并清理占用邮箱的重复 auth 账号，然后重试写入
-- 彻底杜绝"有手机号无邮箱"的问题再次发生
+- **新生成的组合产品**：AI 直接输出结构化要点，排版天然清晰
+- **润色后的文案**：同样保持结构化格式
+- **已有的长文本**：展示层自动按句号拆分，向下兼容
+- **整个链路统一**：从生成到展示，排版标准一致
 
