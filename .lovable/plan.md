@@ -1,37 +1,46 @@
 
 
-# 去除 AI 主图生成，仅保留文案生成
+# 修复文案编辑并升级为电商风格展示
 
 ## 问题
 
-AI 主图生成（调用 `google/gemini-3-pro-image-preview`）不稳定，经常失败导致整个 AI 生成流程报错。主图生成不是核心需求，文案才是关键。
+1. **编辑失败 Bug**：当 `aiContent` 为 `null` 时（AI 未生成前），四个 Textarea 的 `onChange` 回调执行 `{ ...prev!, field: value }` 会因展开 `null` 而失败，导致无法手动输入
+2. **展示风格单调**：当前文案区域是纯 Label + Textarea，缺乏电商感，用户难以直观感受最终效果
 
 ## 改动方案
 
-### 1. 边缘函数：移除图片生成逻辑
+### 文件：`src/components/admin/industry-partners/PartnerProductBundles.tsx`
 
-**文件：** `supabase/functions/ai-generate-bundle/index.ts`
+#### 1. 修复 onChange null 处理（第 476-488 行）
 
-- 删除第 254-325 行的整段图片生成代码（imagePrompt 构建、调用 gemini image API、上传 storage）
-- 返回值中 `cover_image_url` 固定为 `null`
-- 保留文案生成和其他模式（optimize_name、suggest_bundle）不变
+四个 Textarea 的 onChange 统一改为安全处理模式：
 
-### 2. 前端：移除主图相关状态和展示
+```typescript
+onChange={(e) => setAiContent((prev) => ({
+  target_audience: prev?.target_audience || "",
+  pain_points: prev?.pain_points || "",
+  solution: prev?.solution || "",
+  expected_results: prev?.expected_results || "",
+  target_audience: e.target.value,  // 覆盖对应字段
+}))}
+```
 
-**文件：** `src/components/admin/industry-partners/PartnerProductBundles.tsx`
+每个字段都先从 `prev` 安全取值（fallback 空字符串），再覆盖当前编辑的字段。
 
-- 移除 `coverImageUrl` / `setCoverImageUrl` 状态
-- `handleAIGenerate` 回调中删除 `cover_image_url` 的处理和 toast
-- `handleSave` 中 `cover_image_url` 固定为 `null`
-- 编辑恢复（`handleEdit`）中移除 `setCoverImageUrl`
-- 卡片列表中移除 `bundle.cover_image_url` 的图片展示
+#### 2. 升级电商风格展示（第 474-489 行）
 
-**文件：** `src/components/admin/industry-partners/BundlePublishPreview.tsx`
+将四个 Textarea 区域改为带图标、带背景色的电商风格卡片布局：
 
-- 卡片预览中移除主图展示，使用纯色渐变背景替代（与品牌色一致）
-- 上架写入数据库时 `image_url` 和 `detail_images` 设为空或使用默认占位图
+- 每个板块用带颜色的小卡片包裹（浅色背景 + 左侧彩色边框）
+- 标题使用 emoji + 粗体标签，如 "🎯 适合谁"、"💢 解决什么问题"
+- AI 生成后文案自动填入，用户可直接在 Textarea 中修改
+- 未生成时显示引导性 placeholder
 
-### 3. Bundle 类型定义
+视觉效果类似 `BundlePublishPreview.tsx` 中已实现的电商文案编辑区。
 
-两个文件中的 `ProductBundle` 接口保留 `cover_image_url` 字段（设为可选 `string | null`），避免破坏已保存数据的兼容性。
+### 改动范围
+
+| 文件 | 行 | 改动 |
+|------|-----|------|
+| `PartnerProductBundles.tsx` | 474-489 | 修复 null bug + 升级电商风格 UI |
 
