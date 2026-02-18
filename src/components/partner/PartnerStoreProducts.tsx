@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, Package, Pencil, Trash2, ImagePlus, Sparkles, Link, Image } from "lucide-react";
+import { Plus, Loader2, Package, Pencil, Trash2, ImagePlus, Sparkles, Link, Image, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 interface PartnerStoreProductsProps {
@@ -328,38 +329,93 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {products.map((p: any) => (
-            <Card key={p.id} className={!p.is_available ? "opacity-60" : ""}>
-              <CardContent className="p-3 flex gap-3">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.product_name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Package className="w-6 h-6 text-muted-foreground/30" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {products.map((p: any) => {
+            const hasDiscount = p.original_price && p.original_price > p.price;
+            const discountRate = hasDiscount ? Math.round((1 - p.price / p.original_price) * 100) : 0;
+            return (
+              <Card
+                key={p.id}
+                className={`overflow-hidden border-l-4 ${
+                  p.is_available ? "border-l-primary" : "border-l-muted-foreground/30 opacity-60"
+                }`}
+              >
+                <CardContent className="p-4 space-y-3">
+                  {/* Top: Image + Info */}
+                  <div className="flex gap-3">
+                    {p.image_url ? (
+                      <img src={p.image_url} alt={p.product_name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Package className="w-8 h-8 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-semibold truncate flex-1">{p.product_name}</h4>
+                        <Badge
+                          variant={p.is_available ? "default" : "secondary"}
+                          className={`text-[10px] px-1.5 py-0 shrink-0 ${p.is_available ? "bg-green-500 hover:bg-green-600" : ""}`}
+                        >
+                          {p.is_available ? "上架" : "下架"}
+                        </Badge>
+                      </div>
+                      {/* Price */}
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-base font-bold text-destructive">¥{p.price}</span>
+                        {hasDiscount && (
+                          <>
+                            <span className="text-xs text-muted-foreground line-through">¥{p.original_price}</span>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 text-destructive border-destructive/30">
+                              -{discountRate}%
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                      {/* Sales */}
+                      <p className="text-[11px] text-muted-foreground">销量 {p.sales_count || 0}</p>
+                    </div>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-medium truncate">{p.product_name}</h4>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.is_available ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"}`}>
-                      {p.is_available ? "上架" : "下架"}
-                    </span>
+
+                  {/* Tags: category + commission */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {p.category && (
+                      <Badge variant="secondary" className="text-[10px] font-normal">
+                        <Tag className="h-2.5 w-2.5 mr-0.5" />
+                        {p.category}
+                      </Badge>
+                    )}
+                    {p.tags?.length > 0 && p.tags.slice(0, 3).map((tag: string, i: number) => (
+                      <Badge key={i} variant="outline" className="text-[10px] font-normal">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {p.youjin_commission_enabled && (
+                      <Badge className="text-[10px] px-1.5 py-0 bg-amber-500/90 hover:bg-amber-500">
+                        有劲分成 {Math.round((p.youjin_commission_rate || 0) * 100)}%
+                      </Badge>
+                    )}
+                    {p.bloom_commission_enabled && (
+                      <Badge className="text-[10px] px-1.5 py-0 bg-violet-500/90 hover:bg-violet-500">
+                        绽放分成 {Math.round((p.bloom_commission_rate || 0) * 100)}%
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-sm font-bold text-destructive">¥{p.price}</p>
-                  <p className="text-[11px] text-muted-foreground">销量 {p.sales_count || 0}</p>
-                  <div className="flex gap-1 mt-1">
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-1 pt-1 border-t">
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => openEdit(p)}>
                       <Pencil className="w-3 h-3 mr-1" /> 编辑
                     </Button>
+                    <div className="flex-1" />
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => deleteMutation.mutate(p.id)}>
                       <Trash2 className="w-3 h-3 mr-1" /> 删除
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
