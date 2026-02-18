@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart, TrendingUp, Loader2, BarChart3, AlertTriangle, Sparkles } from "lucide-react";
 import { PartnerCampaigns } from "./PartnerCampaigns";
 import { PartnerProducts } from "./PartnerProducts";
+import { PartnerStoreProducts } from "./PartnerStoreProducts";
+import { PartnerStoreOrders } from "./PartnerStoreOrders";
 import { toast } from "sonner";
 
 interface PartnerFlywheelProps {
@@ -177,10 +179,12 @@ export function PartnerFlywheel({ partnerId }: PartnerFlywheelProps) {
 
   return (
     <Tabs defaultValue="funnel" className="space-y-4">
-      <TabsList>
+      <TabsList className="flex-wrap">
         <TabsTrigger value="funnel">漏斗分析</TabsTrigger>
         <TabsTrigger value="campaigns">Campaign 管理</TabsTrigger>
         <TabsTrigger value="products">产品包</TabsTrigger>
+        <TabsTrigger value="store">商城商品</TabsTrigger>
+        <TabsTrigger value="orders">商城订单</TabsTrigger>
       </TabsList>
 
       <TabsContent value="funnel" className="space-y-4">
@@ -320,6 +324,14 @@ export function PartnerFlywheel({ partnerId }: PartnerFlywheelProps) {
 
       <TabsContent value="products">
         <PartnerProducts partnerId={partnerId} />
+      </TabsContent>
+
+      <TabsContent value="store">
+        <PartnerStoreProducts partnerId={partnerId} />
+      </TabsContent>
+
+      <TabsContent value="orders">
+        <PartnerStoreOrders partnerId={partnerId} />
       </TabsContent>
     </Tabs>
   );

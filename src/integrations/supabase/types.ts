@@ -4498,47 +4498,73 @@ export type Database = {
       health_store_products: {
         Row: {
           category: string | null
+          contact_info: string | null
           created_at: string
           description: string | null
+          detail_images: string[] | null
           display_order: number | null
           id: string
           image_url: string | null
           is_available: boolean | null
           mini_program_path: string | null
           original_price: number | null
+          partner_id: string | null
           price: number
           product_name: string
+          sales_count: number
+          shipping_info: string | null
+          stock: number
           tags: string[] | null
         }
         Insert: {
           category?: string | null
+          contact_info?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: string[] | null
           display_order?: number | null
           id?: string
           image_url?: string | null
           is_available?: boolean | null
           mini_program_path?: string | null
           original_price?: number | null
+          partner_id?: string | null
           price: number
           product_name: string
+          sales_count?: number
+          shipping_info?: string | null
+          stock?: number
           tags?: string[] | null
         }
         Update: {
           category?: string | null
+          contact_info?: string | null
           created_at?: string
           description?: string | null
+          detail_images?: string[] | null
           display_order?: number | null
           id?: string
           image_url?: string | null
           is_available?: boolean | null
           mini_program_path?: string | null
           original_price?: number | null
+          partner_id?: string | null
           price?: number
           product_name?: string
+          sales_count?: number
+          shipping_info?: string | null
+          stock?: number
           tags?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "health_store_products_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       human_coaches: {
         Row: {
@@ -6794,6 +6820,87 @@ export type Database = {
           verified_at?: string | null
         }
         Relationships: []
+      }
+      store_orders: {
+        Row: {
+          buyer_address: string | null
+          buyer_id: string
+          buyer_name: string | null
+          buyer_phone: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          order_no: string
+          paid_at: string | null
+          partner_id: string | null
+          payment_order_id: string | null
+          price: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+          shipped_at: string | null
+          status: string
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          buyer_address?: string | null
+          buyer_id: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          order_no: string
+          paid_at?: string | null
+          partner_id?: string | null
+          payment_order_id?: string | null
+          price: number
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buyer_address?: string | null
+          buyer_id?: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          order_no?: string
+          paid_at?: string | null
+          partner_id?: string | null
+          payment_order_id?: string | null
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "health_store_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {

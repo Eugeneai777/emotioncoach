@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from "@/utils/platform";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, ExternalLink, Copy, Check } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-
-const MINI_PROGRAM_LINK = "#小程序://知乐荟商城/2yvmnaZMamGx1gf";
+import { ProductDetailDialog } from "./ProductDetailDialog";
+import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 
 interface Product {
   id: string;
@@ -22,11 +19,20 @@ interface Product {
   mini_program_path: string | null;
   category: string | null;
   tags: string[] | null;
+  shipping_info: string | null;
+  stock: number;
+  sales_count: number;
+  partner_id: string | null;
 }
 
 export function HealthStoreGrid() {
-  const [showDialog, setShowDialog] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [payPackage, setPayPackage] = useState<{ key: string; name: string; price: number } | null>(null);
+  const [pendingCheckoutInfo, setPendingCheckoutInfo] = useState<CheckoutInfo | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["health-store-products"],
@@ -41,26 +47,104 @@ export function HealthStoreGrid() {
     },
   });
 
-  const handleProductClick = async (product: Product) => {
-    if (isWeChatMiniProgram() && product.mini_program_path) {
-      const ready = await waitForWxMiniProgramReady();
-      if (ready && window.wx?.miniProgram?.navigateTo) {
-        window.wx.miniProgram.navigateTo({ url: product.mini_program_path });
-        return;
-      }
-    }
-    // Non-miniprogram: show dialog
-    setShowDialog(true);
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setDetailOpen(true);
   };
 
-  const handleCopyLink = async () => {
+  const handleBuy = (product: Product) => {
+    setDetailOpen(false);
+    setSelectedProduct(product);
+    setCheckoutOpen(true);
+  };
+
+  const handleCheckoutConfirm = async (info: CheckoutInfo) => {
+    if (!selectedProduct) return;
+    setCheckoutLoading(true);
+
     try {
-      await navigator.clipboard.writeText(MINI_PROGRAM_LINK);
-      setCopied(true);
-      toast.success("已复制小程序链接");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("复制失败，请手动复制");
+      // Check auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("请先登录后再购买");
+        setCheckoutLoading(false);
+        return;
+      }
+
+      // Store checkout info for after payment
+      setPendingCheckoutInfo(info);
+
+      // Open payment dialog
+      setPayPackage({
+        key: `store_product_${selectedProduct.id}`,
+        name: selectedProduct.product_name,
+        price: selectedProduct.price,
+      });
+      setCheckoutOpen(false);
+      setPayOpen(true);
+    } catch (err: any) {
+      toast.error("操作失败: " + (err.message || "未知错误"));
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handlePaySuccess = async () => {
+    if (!selectedProduct || !pendingCheckoutInfo) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Generate order number
+      const orderNo = `SO${Date.now()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+      const { error } = await supabase
+        .from("store_orders" as any)
+        .insert({
+          order_no: orderNo,
+          buyer_id: user.id,
+          product_id: selectedProduct.id,
+          partner_id: selectedProduct.partner_id,
+          product_name: selectedProduct.product_name,
+          price: selectedProduct.price,
+          quantity: 1,
+          status: "paid",
+          buyer_name: pendingCheckoutInfo.buyerName,
+          buyer_phone: pendingCheckoutInfo.buyerPhone,
+          buyer_address: pendingCheckoutInfo.buyerAddress,
+          paid_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error("Create store order error:", error);
+      }
+
+      // Notify partner via edge function
+      try {
+        await supabase.functions.invoke("notify-store-order", {
+          body: {
+            orderNo,
+            productName: selectedProduct.product_name,
+            price: selectedProduct.price,
+            partnerId: selectedProduct.partner_id,
+            buyerName: pendingCheckoutInfo.buyerName,
+            buyerPhone: pendingCheckoutInfo.buyerPhone,
+            buyerAddress: pendingCheckoutInfo.buyerAddress,
+          },
+        });
+      } catch {
+        // Non-blocking
+      }
+
+      toast.success("购买成功！卖家将尽快发货");
+    } catch (err) {
+      console.error("Post-payment error:", err);
+    } finally {
+      setPayOpen(false);
+      setSelectedProduct(null);
+      setPendingCheckoutInfo(null);
+      setPayPackage(null);
     }
   };
 
@@ -151,31 +235,33 @@ export function HealthStoreGrid() {
         ))}
       </div>
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
-              前往知乐荟商城
-            </DialogTitle>
-            <DialogDescription>
-              请在微信中打开小程序购买商品
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <p className="text-sm text-muted-foreground">
-              复制以下链接，在微信聊天中发送并点击即可打开小程序：
-            </p>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm break-all">
-              <span className="flex-1 font-mono text-xs">{MINI_PROGRAM_LINK}</span>
-            </div>
-            <Button onClick={handleCopyLink} className="w-full gap-2">
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? "已复制" : "复制链接"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Product Detail Dialog */}
+      <ProductDetailDialog
+        product={selectedProduct}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onBuy={handleBuy}
+      />
+
+      {/* Checkout Form */}
+      {selectedProduct && (
+        <CheckoutForm
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          productName={selectedProduct.product_name}
+          price={selectedProduct.price}
+          onConfirm={handleCheckoutConfirm}
+          loading={checkoutLoading}
+        />
+      )}
+
+      {/* Payment Dialog */}
+      <UnifiedPayDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        packageInfo={payPackage}
+        onSuccess={handlePaySuccess}
+      />
     </>
   );
 }
