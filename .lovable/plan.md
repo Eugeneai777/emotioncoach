@@ -1,131 +1,95 @@
 
-# 行业合伙人产品组合包 + AI 智能生成
 
-## 概要
+# 产品组合包上架为商城商品卡片
 
-在行业合伙人管理页面新增"产品组合包"功能，让管理员可以从三个来源选取产品进行组合：
-1. **有劲系列产品**（packages 表中的 9.9 元工具、训练营、会员等）
-2. **绽放系列产品**（绽放训练营、教练认证、绽放合伙人等）
-3. **健康商城商品**（health_store_products 表中该合伙人的自有商品）
+## 方案概述
 
-选好产品后，点击"AI 智能生成"，自动产出四大板块描述 + 商品主图：
-1. 目标人群
-2. 解决痛点
-3. 如何解决和提供价值
-4. 可以看到什么结果和收获
+组合包创建完成后，在管理界面增加"上架到商城"功能，将组合包作为一个新商品写入 `health_store_products` 表。上架前可预览最终商品卡片效果，产品名称也支持 AI 优化。
 
-同时调用 AI 图片生成接口制作产品包主图。
+**上架位置：健康商城（有劲生活馆）**
 
----
+理由：
+- 商城已有完整的商品卡片、详情页、结算、支付、订单、佣金分成流程
+- 组合包上架后自动继承所有现有能力（分类、标签、库存、分成等）
+- 用户端无需任何改动即可看到新商品
 
 ## 用户操作流程
 
 ```text
-进入行业合伙人详情 -> 新增 Tab "产品组合包"
-  -> 点击"创建组合包"
-  -> 填写组合包名称
-  -> 下拉多选：有劲产品 / 绽放产品 / 商城商品
-  -> 点击"AI 智能生成"
-  -> AI 自动填充：目标人群、痛点、价值、收获
-  -> AI 自动生成主图
-  -> 管理员可手动微调
-  -> 保存到 custom_product_packages
+创建/编辑组合包 -> AI 生成文案和主图
+  -> 点击"上架到商城"
+  -> 弹出预览卡片（模拟真实商城卡片样式）
+  -> 可点"AI 优化名称"精炼产品名
+  -> 可微调价格、分类、标签
+  -> 确认上架 -> 写入 health_store_products
+  -> 商城立即可见
 ```
 
----
+## 技术改动
 
-## 技术方案
+### 1. 前端：PartnerProductBundles.tsx
 
-### 1. 数据存储
+在每个组合包卡片上新增"上架到商城"按钮，以及新增两个 Dialog：
 
-使用 partners 表已有的 `custom_product_packages` (JSON) 字段存储，结构如下：
+**a) 预览 + 上架 Dialog**
+- 左侧：模拟商城卡片样式预览（主图 + 名称 + 价格 + 标签）
+- 右侧/下方：可编辑字段
+  - 产品名称（带"AI 优化"按钮，调用边缘函数生成更具吸引力的名称）
+  - 价格（默认为组合包 total_price）
+  - 原价（可选，用于显示划线价）
+  - 分类（下拉选择）
+  - 标签（输入）
+  - 库存（默认 -1 = 无限）
+- 描述：自动拼接 AI 四板块内容
+- 详情图：主图 + 组合包内各产品图
+- 确认后 INSERT 到 `health_store_products`，关联 `partner_id`
 
-```text
-custom_product_packages: [
-  {
-    id: "uuid",
-    name: "知乐身心健康套餐",
-    products: [
-      { source: "package", key: "emotion_health_assessment", name: "情绪健康测评", price: 9.9 },
-      { source: "package", key: "member365", name: "365会员", price: 365 },
-      { source: "store", id: "xxx", name: "知乐胶囊", price: 389 }
-    ],
-    total_price: 763.9,
-    ai_content: {
-      target_audience: "...",
-      pain_points: "...",
-      solution: "...",
-      expected_results: "..."
-    },
-    cover_image_url: "https://...",
-    created_at: "2026-02-18T..."
-  }
-]
-```
+**b) AI 名称优化**
+- 复用现有 `ai-generate-bundle` 边缘函数，新增一个 `optimize_name` 模式
+- 传入当前名称和产品列表，返回 3 个优化建议供选择
 
-不需要新建数据库表，复用现有 JSON 字段即可。
+### 2. 边缘函数：ai-generate-bundle/index.ts
 
-### 2. 新增前端组件
+新增 `type: "optimize_name"` 分支：
+- 接收：当前名称 + 产品列表
+- 返回：3 个优化后的名称建议
+- 使用 tool calling 结构化输出
 
-**`src/components/admin/industry-partners/PartnerProductBundles.tsx`**
+### 3. 已上架状态追踪
 
-核心功能：
-- 显示已创建的组合包列表（卡片形式，含主图、名称、产品数、总价）
-- "创建组合包"按钮打开 Dialog
-- Dialog 内容：
-  - 组合包名称输入框
-  - **多选下拉**：分组展示所有可选产品
-    - 有劲系列：尝鲜会员、情绪健康测评、SCL-90、财富卡点、训练营、365会员等
-    - 绽放系列：身份/情感/生命绽放营、教练认证、绽放合伙人
-    - 商城商品：该合伙人在 health_store_products 中的商品
-  - "AI 智能生成"按钮
-  - 四个文本区域（目标人群 / 痛点 / 价值 / 收获）
-  - 主图预览区
-  - 保存 / 取消按钮
+在组合包 JSON 结构中新增 `published_product_id` 字段：
+- 上架成功后记录 `health_store_products` 表中的商品 ID
+- 卡片上显示"已上架"状态标识
+- 支持"下架"操作（将商品 `is_available` 设为 false）
 
-### 3. 新增边缘函数
-
-**`supabase/functions/ai-generate-bundle/index.ts`**
-
-接收：
-- 组合包名称
-- 已选产品列表（名称 + 价格 + 描述）
-
-返回（通过 tool calling 结构化输出）：
-- target_audience: 目标人群描述
-- pain_points: 解决痛点
-- solution: 如何解决和提供价值
-- expected_results: 可以看到什么结果和收获
-
-同时调用 `google/gemini-2.5-flash-image` 生成产品包主图，上传到 partner-assets 存储桶，返回 URL。
-
-### 4. 集成到行业合伙人详情页
-
-在 `IndustryPartnerManagement.tsx` 的 Tabs 中新增一个 "产品组合包" Tab：
-
-```text
-飞轮分析 | 商城商品 | 商城订单 | 产品组合包（新增）
-```
-
-### 5. 文件清单
+## 文件清单
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 新建 | 组合包管理主组件 |
-| `supabase/functions/ai-generate-bundle/index.ts` | 新建 | AI 生成四板块内容 + 主图 |
-| `src/components/admin/IndustryPartnerManagement.tsx` | 修改 | 添加"产品组合包" Tab |
-| `supabase/config.toml` | 修改 | 注册新边缘函数（自动处理） |
+| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 修改 | 增加上架按钮、预览 Dialog、AI 名称优化 |
+| `src/components/admin/industry-partners/BundlePublishPreview.tsx` | 新建 | 上架预览组件（模拟商城卡片 + 编辑表单） |
+| `supabase/functions/ai-generate-bundle/index.ts` | 修改 | 新增 optimize_name 分支 |
 
-### 6. AI 主图生成流程
+## 预览卡片设计
 
-1. 边缘函数收到产品列表后，先用 `google/gemini-3-flash-preview` 生成文案
-2. 然后用 `google/gemini-2.5-flash-image` 生成主图，Prompt 包含组合包名称和产品关键词
-3. 从返回的 base64 数据解码并上传到 `partner-assets` 存储桶
-4. 返回公开 URL 给前端
+预览区域模拟真实商城卡片样式：
+- 圆角卡片，主图占上半部分（1:1 比例）
+- 下方显示名称（2 行截断）、描述（1 行截断）、价格（红色粗体）+ 原价划线
+- 标签 Badge 行
+- 底部模拟"立即购买"按钮
 
-### 7. 产品数据加载
+这样管理员上架前就能看到用户端的真实效果。
 
-前端组件启动时并行加载：
-- `packages` 表（is_active = true）获取所有有劲/绽放产品
-- `health_store_products` 表（partner_id = 当前合伙人，is_available = true）获取商城商品
-- 合并为分组下拉选项
+## 组合包 JSON 结构更新
+
+```text
+{
+  id: "uuid",
+  name: "知乐身心健康套餐",
+  products: [...],
+  ai_content: {...},
+  cover_image_url: "...",
+  published_product_id: "uuid" | null,  // 新增：关联商城商品 ID
+  created_at: "..."
+}
+```
