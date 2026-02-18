@@ -180,7 +180,96 @@ serve(async (req) => {
       });
     }
 
-    // === Default: generate bundle content + image ===
+    // === generate_cover_image mode ===
+    if (type === "generate_cover_image") {
+      const { bundleName: imgBundleName, products: imgProducts, aiContent: imgAiContent } = body;
+      if (!imgBundleName) {
+        return new Response(JSON.stringify({ error: "缺少组合包名称" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const productNames = (imgProducts || []).map((p: any) => p.name).join('、');
+      const audienceSnippet = imgAiContent?.target_audience?.slice(0, 60) || "";
+
+      const imagePrompt = `生成一张简洁精美的中文电商产品主图。
+要求：
+- 产品名称"${imgBundleName}"要以醒目的中文大字展示在图片中央
+- 健康养生风格，使用品牌绿色调（翡翠绿/蓝绿渐变）
+- 简洁专业的背景，可包含轻微的植物或自然元素装饰
+- 底部可以有小字副标题：${audienceSnippet || productNames}
+- 整体风格：现代、干净、高端感
+- 图片比例 1:1，适合电商商城展示
+- 不要出现真实人物照片`;
+
+      console.log("Generating cover image for:", imgBundleName);
+
+      const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: imagePrompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!imgResponse.ok) {
+        const errText = await imgResponse.text();
+        console.error("AI image generation error:", imgResponse.status, errText);
+        if (imgResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "AI 请求过于频繁，请稍后重试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (imgResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "AI 额度不足，请充值后重试" }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error("AI 主图生成失败");
+      }
+
+      const imgData = await imgResponse.json();
+      const imageBase64 = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!imageBase64) {
+        console.error("No image in AI response:", JSON.stringify(imgData).slice(0, 500));
+        throw new Error("AI 未返回图片数据");
+      }
+
+      // Upload to partner-assets bucket
+      const base64Data = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
+      const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+      const fileName = `bundle-cover-${crypto.randomUUID()}.png`;
+      const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+        .from("partner-assets")
+        .upload(fileName, binaryData, { contentType: "image/png", upsert: false });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error("图片上传失败");
+      }
+
+      const { data: { publicUrl } } = supabaseAdmin.storage
+        .from("partner-assets")
+        .getPublicUrl(uploadData.path);
+
+      console.log("Cover image uploaded:", publicUrl);
+
+      return new Response(JSON.stringify({ cover_image_url: publicUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // === Default: generate bundle content ===
     const { bundleName, products } = body;
     if (!bundleName || !products?.length) {
       return new Response(JSON.stringify({ error: "缺少组合包名称或产品列表" }), {

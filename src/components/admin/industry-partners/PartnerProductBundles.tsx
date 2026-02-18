@@ -68,6 +68,8 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const [publishBundle, setPublishBundle] = useState<ProductBundle | null>(null);
   const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
   const [suggesting, setSuggesting] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [generatingImage, setGeneratingImage] = useState(false);
 
   // Load packages
   const { data: packages, isLoading: packagesLoading } = usePackages();
@@ -229,7 +231,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         })),
         total_price: totalPrice,
         ai_content: aiContent,
-        cover_image_url: null,
+        cover_image_url: coverImageUrl,
         published_product_id: editingId ? bundles.find((b) => b.id === editingId)?.published_product_id : null,
         created_at: editingId
           ? bundles.find((b) => b.id === editingId)?.created_at || new Date().toISOString()
@@ -284,10 +286,36 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setPublishBundle(null);
   };
 
+  const handleGenerateCoverImage = async () => {
+    if (!bundleName.trim()) { toast.error("请先填写组合包名称"); return; }
+    setGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-generate-bundle", {
+        body: {
+          type: "generate_cover_image",
+          bundleName: bundleName.trim(),
+          products: selectedProducts.map((p) => ({ name: p.name, price: p.price })),
+          aiContent,
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      if (data.cover_image_url) {
+        setCoverImageUrl(data.cover_image_url);
+        toast.success("主图生成成功！");
+      }
+    } catch (err: any) {
+      toast.error("主图生成失败: " + (err.message || "未知错误"));
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
   const handleEdit = (bundle: ProductBundle) => {
     setEditingId(bundle.id);
     setBundleName(bundle.name);
     setAiContent(bundle.ai_content);
+    setCoverImageUrl(bundle.cover_image_url || null);
     const restored: SelectableProduct[] = bundle.products.map((p) => ({
       ...p,
       group: p.source === "store" ? "商城商品" : "有劲系列",
@@ -300,6 +328,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setBundleName("");
     setSelectedProducts([]);
     setAiContent(null);
+    setCoverImageUrl(null);
     setEditingId(null);
     setNameSuggestions([]);
   };
@@ -536,6 +565,33 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
                 );
               })}
             </div>
+
+            {/* Cover Image Section */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">商品主图</Label>
+              {coverImageUrl && (
+                <div className="relative rounded-lg overflow-hidden border">
+                  <img src={coverImageUrl} alt="组合包主图" className="w-full aspect-square object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setCoverImageUrl(null)}
+                    className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-background transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleGenerateCoverImage}
+                disabled={generatingImage || !bundleName.trim()}
+                className="w-full"
+              >
+                {generatingImage ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                {generatingImage ? "AI 生成主图中…" : coverImageUrl ? "重新生成主图" : "AI 生成主图"}
+              </Button>
+            </div>
+
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1">
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
