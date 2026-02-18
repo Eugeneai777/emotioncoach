@@ -165,15 +165,61 @@ serve(async (req) => {
         // For existing users without email, backfill placeholder email
         if (!isNewlyCreated) {
           try {
-            const { data: { user: existingAuthUser } } = await adminClient.auth.admin.getUserById(userId!);
+            const { data: { user: existingAuthUser } } = 
+              await adminClient.auth.admin.getUserById(userId!);
+            
             if (existingAuthUser && !existingAuthUser.email) {
               const codeNoPlus = countryCode.replace('+', '');
               const placeholderEmail = `phone_${codeNoPlus}${phone}@youjin.app`;
-              await adminClient.auth.admin.updateUserById(userId!, {
+              
+              const { error: updateErr } = await adminClient.auth.admin.updateUserById(userId!, {
                 email: placeholderEmail,
                 email_confirm: true,
               });
-              console.log(`Backfilled placeholder email for ${phone}: ${placeholderEmail}`);
+              
+              if (updateErr) {
+                // 邮箱被另一个 auth 账号占用 -> 查找并删除重复账号
+                if (updateErr.message?.includes('duplicate') || 
+                    updateErr.message?.includes('already') ||
+                    updateErr.message?.includes('unique')) {
+                  
+                  let duplicateId: string | null = null;
+                  let page = 1;
+                  while (!duplicateId && page <= 10) {
+                    const { data: { users } } = 
+                      await adminClient.auth.admin.listUsers({ page, perPage: 500 });
+                    if (!users || users.length === 0) break;
+                    const dup = users.find(u => 
+                      u.email === placeholderEmail && u.id !== userId!
+                    );
+                    if (dup) duplicateId = dup.id;
+                    page++;
+                  }
+                  
+                  if (duplicateId) {
+                    await adminClient.from('profiles').update({
+                      deleted_at: new Date().toISOString(),
+                      is_disabled: true,
+                      phone: null,
+                      disabled_reason: '重复账号清理-空壳账号(批量注册自动)',
+                    }).eq('id', duplicateId);
+                    
+                    await adminClient.auth.admin.deleteUser(duplicateId);
+                    
+                    await adminClient.auth.admin.updateUserById(userId!, {
+                      email: placeholderEmail,
+                      email_confirm: true,
+                    });
+                    console.log(`Auto-resolved duplicate: deleted ${duplicateId}, backfilled email for ${phone}`);
+                  } else {
+                    console.error(`Email conflict for ${phone} but duplicate not found`);
+                  }
+                } else {
+                  console.error(`Failed to backfill email for ${phone}:`, updateErr);
+                }
+              } else {
+                console.log(`Backfilled placeholder email for ${phone}: ${placeholderEmail}`);
+              }
             }
           } catch (e) {
             console.error(`Failed to backfill email for ${phone}:`, e);
