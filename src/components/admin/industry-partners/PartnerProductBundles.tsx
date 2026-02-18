@@ -49,14 +49,11 @@ interface SelectableProduct {
   group: string;
 }
 
-// Bloom product definitions (not in packages table)
-const BLOOM_PRODUCTS: SelectableProduct[] = [
-  { source: "package", key: "bloom_identity", name: "身份绽放训练营", price: 2980, group: "绽放系列" },
-  { source: "package", key: "bloom_emotion", name: "情感绽放训练营", price: 2980, group: "绽放系列" },
-  { source: "package", key: "bloom_life", name: "生命绽放训练营", price: 2980, group: "绽放系列" },
-  { source: "package", key: "bloom_coach_cert", name: "绽放教练认证", price: 9800, group: "绽放系列" },
-  { source: "package", key: "bloom_partner", name: "绽放合伙人", price: 19800, group: "绽放系列" },
-];
+// Package keys that belong to Bloom series
+const BLOOM_PACKAGE_KEYS = new Set([
+  "bloom_identity_camp", "bloom_emotion_camp", "bloom_life_camp",
+  "bloom_coach_cert", "bloom_partner",
+]);
 
 export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const queryClient = useQueryClient();
@@ -115,16 +112,16 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const allProducts: SelectableProduct[] = useMemo(() => {
     const items: SelectableProduct[] = [];
     (packages || []).forEach((p) => {
+      const isBloom = BLOOM_PACKAGE_KEYS.has(p.package_key);
       items.push({
         source: "package",
         key: p.package_key,
         name: p.package_name,
         price: p.price,
         description: p.description || undefined,
-        group: "有劲系列",
+        group: isBloom ? "绽放系列" : "有劲系列",
       });
     });
-    items.push(...BLOOM_PRODUCTS);
     (storeProducts || []).forEach((p: any) => {
       items.push({
         source: "store",
