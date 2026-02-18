@@ -251,82 +251,9 @@ serve(async (req) => {
 
     const aiContent = JSON.parse(toolCall.function.arguments);
 
-    // Step 2: Generate cover image with brand-aligned prompt
-    const productKeywords = products.slice(0, 3).map((p: any) => p.name).join('、');
-    const imagePrompt = `设计一张1:1正方形（1080x1080px）的产品组合包主图。
-
-要求：
-- 品牌名称：有劲 AI 健康生活馆
-- 组合包名称：「${bundleName}」
-- 包含产品关键词：${productKeywords}
-
-设计规范：
-- 背景：使用 teal 到 emerald 的柔和渐变色（#0D9488 到 #10B981），搭配温暖的米白或浅金色点缀
-- 中央：用优雅的中文艺术字体展示组合包名称「${bundleName}」，字体颜色为白色或浅金色
-- 底部留出 20% 空白区域（用于 UI 叠加价格和标题）
-- 装饰：使用简约的几何图形（圆形、弧线）和柔和的光晕效果，不使用真实照片
-- 整体风格：圆润温暖、专业简约、高端大气
-- 不要出现任何真实物品照片，纯色块+文字排版+抽象装饰
-
-这是一张用于健康电商平台的商品卡片主图，需要在手机上清晰可见。`;
-
-    let coverImageUrl: string | null = null;
-
-    try {
-      const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-pro-image-preview",
-          messages: [{ role: "user", content: imagePrompt }],
-          modalities: ["image", "text"],
-        }),
-      });
-
-      if (imageResponse.ok) {
-        const imageData = await imageResponse.json();
-        const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-        if (imageUrl && imageUrl.startsWith("data:image/")) {
-          const base64Match = imageUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-          if (base64Match) {
-            const ext = base64Match[1] === 'jpeg' ? 'jpg' : base64Match[1];
-            const base64Data = base64Match[2];
-            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-
-            const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-            const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-            const supabase = createClient(supabaseUrl, supabaseKey);
-
-            const fileName = `bundle-covers/${crypto.randomUUID()}.${ext}`;
-            const { error: uploadError } = await supabase.storage
-              .from("partner-assets")
-              .upload(fileName, binaryData, {
-                contentType: `image/${base64Match[1]}`,
-                upsert: true,
-              });
-
-            if (!uploadError) {
-              const { data: urlData } = supabase.storage.from("partner-assets").getPublicUrl(fileName);
-              coverImageUrl = urlData.publicUrl;
-            } else {
-              console.error("Upload error:", uploadError);
-            }
-          }
-        }
-      } else {
-        console.error("Image generation failed:", imageResponse.status);
-      }
-    } catch (imgErr) {
-      console.error("Image generation error:", imgErr);
-    }
-
     return new Response(JSON.stringify({
       ai_content: aiContent,
-      cover_image_url: coverImageUrl,
+      cover_image_url: null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

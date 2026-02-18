@@ -61,7 +61,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const [bundleName, setBundleName] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<SelectableProduct[]>([]);
   const [aiContent, setAiContent] = useState<ProductBundle["ai_content"]>(null);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -219,7 +218,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
       if (data.ai_content) { setAiContent(data.ai_content); toast.success("AI 文案生成成功"); }
-      if (data.cover_image_url) { setCoverImageUrl(data.cover_image_url); toast.success("AI 主图生成成功"); }
     } catch (err: any) {
       toast.error("AI 生成失败: " + (err.message || "未知错误"));
     } finally {
@@ -249,7 +247,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         })),
         total_price: totalPrice,
         ai_content: aiContent,
-        cover_image_url: coverImageUrl,
+        cover_image_url: null,
         published_product_id: editingId ? bundles.find((b) => b.id === editingId)?.published_product_id : null,
         created_at: editingId
           ? bundles.find((b) => b.id === editingId)?.created_at || new Date().toISOString()
@@ -307,7 +305,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const handleEdit = (bundle: ProductBundle) => {
     setEditingId(bundle.id);
     setBundleName(bundle.name);
-    setCoverImageUrl(bundle.cover_image_url);
     setAiContent(bundle.ai_content);
     const restored: SelectableProduct[] = bundle.products.map((p) => ({
       ...p,
@@ -321,7 +318,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setBundleName("");
     setSelectedProducts([]);
     setAiContent(null);
-    setCoverImageUrl(null);
     setEditingId(null);
     setSuggestKeyword("");
     setSuggestionReason(null);
@@ -363,9 +359,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bundles.map((bundle) => (
             <Card key={bundle.id} className="overflow-hidden">
-              {bundle.cover_image_url && (
-                <img src={bundle.cover_image_url} alt={bundle.name} className="w-full h-40 object-cover" />
-              )}
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-start justify-between">
                   <div>
@@ -504,14 +497,8 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
             )}
             <Button variant="outline" onClick={handleAIGenerate} disabled={generating || !bundleName.trim() || selectedProducts.length === 0} className="w-full">
               {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-              {generating ? "AI 生成中…" : "AI 智能生成文案与主图"}
+              {generating ? "AI 生成中…" : "AI 智能生成文案"}
             </Button>
-            {coverImageUrl && (
-              <div>
-                <Label>主图预览</Label>
-                <img src={coverImageUrl} alt="组合包主图" className="w-full rounded-lg mt-1 max-h-48 object-cover" />
-              </div>
-            )}
             <div>
               <Label>目标人群</Label>
               <Textarea value={aiContent?.target_audience || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, target_audience: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
