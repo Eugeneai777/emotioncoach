@@ -24,7 +24,7 @@ export function GraduateContinueCard({ awakeningGrowth = 0, isPartner = false }:
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="border border-amber-200/50 dark:border-amber-800/40 shadow-sm overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20">
+      <Card className="border border-amber-300 dark:border-amber-700 shadow-md overflow-hidden bg-white dark:bg-gray-900">
         {/* 顶部装饰条 */}
         <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
         
