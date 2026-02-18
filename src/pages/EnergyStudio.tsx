@@ -108,6 +108,10 @@ const EnergyStudio = () => {
       navigate('/emotion-health');
       return;
     }
+    if (toolId === 'women-competitiveness') {
+      navigate('/women-competitiveness');
+      return;
+    }
     setActiveTool(toolId);
   };
 
