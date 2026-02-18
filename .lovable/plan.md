@@ -1,41 +1,27 @@
 
 
-# 将健康商城移到快捷入口第一排
+# 优化快捷入口样式 + 移除分类Tab中的健康商城
 
-## 当前布局
-页面顶部有 4 个快捷入口（教练空间、学习课程、训练营、合伙人），排成一行。健康商城目前作为底部分类 Tab 之一（情绪工具、自我探索、生活管理、健康商城），点击后显示商品列表。
+## 改动内容
 
-## 改动方案
+### 1. 健康商城图标改为绿色系
+将 `quickEntries` 中健康商城的 gradient 从 `from-rose-500 to-red-500` 改为 `from-green-500 to-emerald-500`，emoji 保持 🛒。
 
-### 1. 快捷入口增加"健康商城"
-在 `quickEntries` 数组中，"合伙人"后面新增一项：
-```
-{ id: "store", label: "健康商城", emoji: "🛒", route: "/energy-studio?tab=store", gradient: "from-rose-500 to-red-500" }
-```
-共 5 个入口。
+### 2. 合伙人图标改颜色
+当前合伙人是 `from-emerald-500 to-teal-500`（绿色系），为避免与健康商城撞色，改为 `from-purple-500 to-violet-500`（紫色系）。
 
-### 2. 手机适配：5 个入口的布局调整
-当前 `grid-cols-4` 放 4 个刚好。5 个入口有两种方案：
-- **方案 A**：改为 `grid-cols-5`，每个入口更窄但仍一行展示（推荐，图标+两字标签足够）
-- **方案 B**：保持 `grid-cols-4`，第 5 个换行居中
-
-推荐方案 A，同时将图标从 `w-10 h-10` 缩小到 `w-9 h-9`，文字保持 `text-[11px]`，确保 5 列在 320px 屏幕上不溢出。
-
-### 3. 点击行为
-点击"健康商城"入口时，不跳转新页面，而是将 `activeCategory` 设为 `"store"`，直接在当前页面显示商品网格（复用现有逻辑）。通过 URL 参数 `?tab=store` 或直接内部状态切换实现。
-
-### 4. 分类 Tab 保留"健康商城"
-底部分类 Tab 中的"健康商城"保持不变，两个入口都能到达同一内容，用户体验一致。
+### 3. 从第二行分类 Tab 中移除"健康商城"
+在 `src/config/energyStudioTools.ts` 的 `categories` 数组中删除 `id: "store"` 这一项，避免重复入口。同时更新 TypeScript 类型，将 `"store"` 从 `CategoryConfig.id` 联合类型中移除（但 `activeCategory` state 仍保留 `"store"` 类型，因为顶部快捷入口需要用它切换到商城视图）。
 
 ---
 
 ## 技术细节
 
-**修改文件**: `src/pages/EnergyStudio.tsx`
+**修改文件 1**: `src/pages/EnergyStudio.tsx`
+- 第 49 行：合伙人 gradient 改为 `from-purple-500 to-violet-500`
+- 第 50 行：健康商城 gradient 改为 `from-green-500 to-emerald-500`
 
-1. `quickEntries` 数组末尾添加健康商城条目
-2. 网格 class 从 `grid-cols-4` 改为 `grid-cols-5`
-3. 图标容器从 `w-10 h-10` 改为 `w-9 h-9`
-4. 健康商城入口的 `onClick` 改为 `setActiveCategory("store")` 而非 `navigate`
-5. 其余快捷入口逻辑不变
+**修改文件 2**: `src/config/energyStudioTools.ts`
+- 删除 categories 数组中 `id: "store"` 的条目
+- 更新 CategoryConfig 的 id 类型，移除 `"store"`
 
