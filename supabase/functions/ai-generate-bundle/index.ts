@@ -180,6 +180,79 @@ serve(async (req) => {
       });
     }
 
+    // === polish_copy mode ===
+    if (type === "polish_copy") {
+      const { field, currentText, bundleName: polishBundleName, instruction } = body;
+      if (!currentText?.trim()) {
+        return new Response(JSON.stringify({ error: "当前文案不能为空" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const fieldLabels: Record<string, string> = {
+        target_audience: "目标人群",
+        pain_points: "痛点描述",
+        solution: "解决方案",
+        expected_results: "预期收获",
+      };
+      const fieldLabel = fieldLabels[field] || field;
+
+      const polishPrompt = `你是专业的健康产品营销文案专家。请润色优化以下"${fieldLabel}"板块的文案。
+
+组合包名称：${polishBundleName || "产品组合包"}
+
+当前文案：
+${currentText}
+
+${instruction ? `用户要求：${instruction}\n` : ""}
+要求：
+1. 保持原意不变，提升表达力和说服力
+2. 语言温暖专业，面向中国市场
+3. 控制在80-150字
+4. 直接返回优化后的文案文本，不要任何解释或格式包裹`;
+
+      const polishResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "user", content: polishPrompt }
+          ],
+        }),
+      });
+
+      if (!polishResponse.ok) {
+        const errText = await polishResponse.text();
+        console.error("AI polish error:", polishResponse.status, errText);
+        if (polishResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "AI 请求过于频繁，请稍后重试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (polishResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "AI 额度不足，请充值后重试" }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error("AI 润色失败");
+      }
+
+      const polishData = await polishResponse.json();
+      let refinedText = polishData.choices?.[0]?.message?.content || "";
+      refinedText = refinedText.trim().replace(/^```[\s\S]*?\n/, "").replace(/\n```$/, "").trim();
+
+      if (!refinedText) throw new Error("AI 未返回润色内容");
+
+      console.log("Polish success, field:", field, "length:", refinedText.length);
+      return new Response(JSON.stringify({ refinedText }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // === generate_cover_image mode ===
     if (type === "generate_cover_image") {
       const { bundleName: imgBundleName, products: imgProducts, aiContent: imgAiContent } = body;
