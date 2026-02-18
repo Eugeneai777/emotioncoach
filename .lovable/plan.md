@@ -1,68 +1,36 @@
 
-# 修复商品详情长文本未被精简的问题
 
-## 问题根因
+# 优化"恭喜完成训练营"卡片对比度
 
-`smartSplitContent` 函数第 42 行的逻辑：
+## 问题
 
+页面背景是暖色系渐变（amber/orange），卡片也用了 `from-amber-50/80 to-orange-50/60`，导致卡片和背景融为一体，看不出卡片边界。
+
+## 方案
+
+修改 **1 个文件**：`src/components/wealth-camp/GraduateContinueCard.tsx`
+
+将卡片背景从低对比度的 amber 渐变改为纯白底 + 更明显的边框和阴影：
+
+- 背景：`bg-white dark:bg-gray-900` 替代原来的 amber 渐变
+- 边框：`border-amber-300 dark:border-amber-700` 加强边框可见度
+- 阴影：`shadow-md` 替代 `shadow-sm`，增加层次感
+- 保留顶部橙色装饰条作为品牌色标识
+
+### 技术细节
+
+第 27 行的 Card className 从：
 ```
-if (/^[✅•]/.test(line) || line.length <= 30)
-```
-
-任何以 `✅` 开头的行都会直接跳过，不做拆分。但旧数据中的 `✅` 行可能是 60-100 字的长段落（如截图 2 所示），导致展示效果冗长。
-
-管理后台（截图 1）显示的是新生成的精简文案，而商城（截图 2）显示的是旧数据发布时保存的长文本。
-
-## 修改方案
-
-仅修改 **1 个文件**：`src/components/store/ProductDetailDialog.tsx`
-
-### 修改 `smartSplitContent` 函数（第 42 行）
-
-将判断逻辑改为：以 `✅` 开头 **且长度不超过 35 字** 才跳过。超过 35 字的 `✅` 行，去掉前缀后重新按句号拆分再加回前缀。
-
-修改后的逻辑：
-
-```
-function smartSplitContent(lines: string[]): string[] {
-  const result: string[] = [];
-  for (const line of lines) {
-    const isShort = line.length <= 35;
-    const hasBullet = /^[✅•]/.test(line);
-
-    if (isShort) {
-      result.push(line);
-    } else if (hasBullet) {
-      // 有 ✅ 前缀但太长，去掉前缀后重新拆分
-      const cleaned = line.replace(/^[✅•]\s*/, '');
-      const sentences = cleaned.split(/[，。！？、]/).map(s => s.trim()).filter(s => s.length > 0);
-      if (sentences.length > 1) {
-        // 取前 2-3 个关键短句作为精简版
-        sentences.slice(0, 2).forEach(s => result.push('✅ ' + s));
-      } else {
-        // 无法拆分则截断
-        result.push('✅ ' + cleaned.slice(0, 25) + '...');
-      }
-    } else {
-      const sentences = line.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
-      if (sentences.length > 1) {
-        sentences.forEach(s => result.push('✅ ' + s));
-      } else {
-        result.push('✅ ' + line);
-      }
-    }
-  }
-  return result;
-}
+border border-amber-200/50 dark:border-amber-800/40 shadow-sm overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20
 ```
 
-核心改动：
-- 短文本（35 字以内）：保持原样
-- 长文本有 `✅` 前缀：去掉前缀，按中文标点（逗号、句号、顿号等）拆分，每个短句重新加 `✅`，最多保留 2 条
-- 长文本无前缀：按句号拆分并加 `✅` 前缀（保持现有逻辑）
+改为：
+```
+border border-amber-300 dark:border-amber-700 shadow-md overflow-hidden bg-white dark:bg-gray-900
+```
 
 ## 效果
 
-- 旧数据中的长 `✅` 段落会被自动拆分为 2 条精简要点
-- 新数据（已经是短句格式）不受影响
-- 管理后台和商城展示风格统一
+- 白色卡片在暖色背景上清晰突出
+- 橙色顶部装饰条保持品牌一致性
+- 暗色模式下同样有足够对比度
