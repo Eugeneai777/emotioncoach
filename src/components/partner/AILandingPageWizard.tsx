@@ -652,28 +652,6 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
               </div>
             </div>
 
-            {/* 配对模式选择 */}
-            <div>
-              <Label className="mb-2 block">配对模式</Label>
-              <div className="flex gap-2 p-1 bg-muted rounded-lg">
-                <Button
-                  variant={matchMode === 'ai' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setMatchMode('ai')}
-                >
-                  <Bot className="w-4 h-4 mr-1" /> AI 推荐
-                </Button>
-                <Button
-                  variant={matchMode === 'manual' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setMatchMode('manual')}
-                >
-                  <Hand className="w-4 h-4 mr-1" /> 手工配对
-                </Button>
-              </div>
-            </div>
 
             <Button onClick={() => {
               if (matchMode === 'manual') {
