@@ -192,18 +192,20 @@ serve(async (req) => {
       const productNames = (imgProducts || []).map((p: any) => p.name).join('、');
       const audienceSnippet = imgAiContent?.target_audience?.slice(0, 60) || "";
 
-      const imagePrompt = `生成一张简洁精美的中文电商产品主图。
-要求：
-- 产品名称"${imgBundleName}"要以醒目的中文大字展示在图片中央
-- 健康养生风格，使用品牌绿色调（翡翠绿/蓝绿渐变）
-- 简洁专业的背景，可包含轻微的植物或自然元素装饰
-- 底部可以有小字副标题：${audienceSnippet || productNames}
-- 整体风格：现代、干净、高端感
-- 图片比例 1:1，适合电商商城展示
-- 不要出现真实人物照片`;
+      const imagePrompt = `Generate a clean, premium e-commerce product hero image.
+Product name: "${imgBundleName}"
+Style: Health & wellness, teal/emerald green gradient color scheme.
+Requirements:
+- Display the product name "${imgBundleName}" as large prominent Chinese text in the center
+- Clean professional background with subtle botanical or nature decorative elements
+- Modern, minimal, premium feel
+- Square 1:1 aspect ratio for e-commerce display
+- No real human faces or photos
+- Soft lighting with depth`;
 
       console.log("Generating cover image for:", imgBundleName);
 
+      // Use gemini-3-pro-image-preview (proven to work in generate-poster-image)
       const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -211,7 +213,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: imagePrompt }],
           modalities: ["image", "text"],
         }),
@@ -234,10 +236,12 @@ serve(async (req) => {
       }
 
       const imgData = await imgResponse.json();
+      console.log("AI image response keys:", JSON.stringify(Object.keys(imgData)));
+      
       const imageBase64 = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       if (!imageBase64) {
-        console.error("No image in AI response:", JSON.stringify(imgData).slice(0, 500));
-        throw new Error("AI 未返回图片数据");
+        console.error("No image in AI response:", JSON.stringify(imgData).slice(0, 800));
+        throw new Error("AI 未返回图片数据，请重试");
       }
 
       // Upload to partner-assets bucket
