@@ -1,95 +1,51 @@
 
 
-# 产品组合包上架为商城商品卡片
+# AI 主图风格统一 + 组合包 AI 建议优化
 
-## 方案概述
+## 问题分析
 
-组合包创建完成后，在管理界面增加"上架到商城"功能，将组合包作为一个新商品写入 `health_store_products` 表。上架前可预览最终商品卡片效果，产品名称也支持 AI 优化。
+1. **主图风格不统一**：当前 AI 生成主图的 Prompt 过于笼统（"现代简约、健康温暖"），没有参照网站真实的商城卡片风格，导致生成的图片与有劲 AI 品牌视觉不一致。
+2. **AI 建议位置不明显**：组合包创建流程中缺少"AI 推荐组合"功能，用户需要自己手动选产品。
 
-**上架位置：健康商城（有劲生活馆）**
+## 改动方案
 
-理由：
-- 商城已有完整的商品卡片、详情页、结算、支付、订单、佣金分成流程
-- 组合包上架后自动继承所有现有能力（分类、标签、库存、分成等）
-- 用户端无需任何改动即可看到新商品
+### 1. 优化 AI 主图生成 Prompt（边缘函数）
 
-## 用户操作流程
+修改 `supabase/functions/ai-generate-bundle/index.ts` 中的图片生成 Prompt：
 
-```text
-创建/编辑组合包 -> AI 生成文案和主图
-  -> 点击"上架到商城"
-  -> 弹出预览卡片（模拟真实商城卡片样式）
-  -> 可点"AI 优化名称"精炼产品名
-  -> 可微调价格、分类、标签
-  -> 确认上架 -> 写入 health_store_products
-  -> 商城立即可见
-```
+- 指定 **1:1 正方形** 比例（与商城卡片 `aspect-square` 一致）
+- 加入有劲 AI 品牌设计规范：圆角卡片感、温暖渐变色系（teal/emerald 为主色）、干净留白
+- 强调纯文字排版 + 品牌色，不使用真实照片或杂乱插图
+- 要求底部留出放产品名称和价格的空间（因为卡片 UI 会在图片下方叠加文字）
+- 使用更高质量模型 `google/gemini-3-pro-image-preview` 替代 flash 版
 
-## 技术改动
+### 2. 新增"AI 推荐组合"功能
 
-### 1. 前端：PartnerProductBundles.tsx
+在组合包创建 Dialog 中增加一个"AI 推荐"按钮：
 
-在每个组合包卡片上新增"上架到商城"按钮，以及新增两个 Dialog：
+- 用户输入目标场景或人群关键词（如"职场压力"、"情绪管理"、"身心健康"）
+- 调用边缘函数新增 `type: "suggest_bundle"` 模式
+- AI 根据关键词从可选产品列表中推荐 3-5 个产品组合
+- 用户可一键采纳推荐，自动填充产品选择
 
-**a) 预览 + 上架 Dialog**
-- 左侧：模拟商城卡片样式预览（主图 + 名称 + 价格 + 标签）
-- 右侧/下方：可编辑字段
-  - 产品名称（带"AI 优化"按钮，调用边缘函数生成更具吸引力的名称）
-  - 价格（默认为组合包 total_price）
-  - 原价（可选，用于显示划线价）
-  - 分类（下拉选择）
-  - 标签（输入）
-  - 库存（默认 -1 = 无限）
-- 描述：自动拼接 AI 四板块内容
-- 详情图：主图 + 组合包内各产品图
-- 确认后 INSERT 到 `health_store_products`，关联 `partner_id`
-
-**b) AI 名称优化**
-- 复用现有 `ai-generate-bundle` 边缘函数，新增一个 `optimize_name` 模式
-- 传入当前名称和产品列表，返回 3 个优化建议供选择
-
-### 2. 边缘函数：ai-generate-bundle/index.ts
-
-新增 `type: "optimize_name"` 分支：
-- 接收：当前名称 + 产品列表
-- 返回：3 个优化后的名称建议
-- 使用 tool calling 结构化输出
-
-### 3. 已上架状态追踪
-
-在组合包 JSON 结构中新增 `published_product_id` 字段：
-- 上架成功后记录 `health_store_products` 表中的商品 ID
-- 卡片上显示"已上架"状态标识
-- 支持"下架"操作（将商品 `is_available` 设为 false）
-
-## 文件清单
+### 3. 文件改动清单
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 修改 | 增加上架按钮、预览 Dialog、AI 名称优化 |
-| `src/components/admin/industry-partners/BundlePublishPreview.tsx` | 新建 | 上架预览组件（模拟商城卡片 + 编辑表单） |
-| `supabase/functions/ai-generate-bundle/index.ts` | 修改 | 新增 optimize_name 分支 |
+| `supabase/functions/ai-generate-bundle/index.ts` | 修改 | 优化图片 Prompt 匹配品牌风格；新增 suggest_bundle 模式 |
+| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 修改 | 创建 Dialog 中增加"AI 推荐组合"按钮和交互逻辑 |
 
-## 预览卡片设计
+### 4. 技术细节
 
-预览区域模拟真实商城卡片样式：
-- 圆角卡片，主图占上半部分（1:1 比例）
-- 下方显示名称（2 行截断）、描述（1 行截断）、价格（红色粗体）+ 原价划线
-- 标签 Badge 行
-- 底部模拟"立即购买"按钮
+**优化后的图片 Prompt 要点：**
+- 1:1 正方形（1080x1080px），适配商城 `aspect-square` 布局
+- 品牌色系：teal/emerald 渐变为主，搭配温暖的米白/浅金
+- 纯色或柔和渐变背景，中央放组合包核心关键词的艺术字
+- 整体风格：圆润、温暖、专业、简约，符合有劲 AI 健康生活馆定位
+- 不包含真实产品照片，而是用抽象的色块和文字排版
 
-这样管理员上架前就能看到用户端的真实效果。
+**AI 推荐组合流程：**
+- 前端传入：用户输入的场景关键词 + 全部可选产品列表（名称+价格+描述）
+- 边缘函数用 tool calling 返回：推荐的产品 key/id 列表 + 推荐理由
+- 前端自动勾选推荐的产品并填入组合包名称建议
 
-## 组合包 JSON 结构更新
-
-```text
-{
-  id: "uuid",
-  name: "知乐身心健康套餐",
-  products: [...],
-  ai_content: {...},
-  cover_image_url: "...",
-  published_product_id: "uuid" | null,  // 新增：关联商城商品 ID
-  created_at: "..."
-}
-```
