@@ -1,4 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
@@ -211,9 +212,9 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
     <Sidebar className="border-r border-border">
       <SidebarHeader className="border-b border-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <LayoutDashboard className="h-5 w-5" />
-          </div>
+          <Link to="/" className="flex-shrink-0 active:scale-95 transition-transform">
+            <BrandLogo size="sm" />
+          </Link>
           {!collapsed && (
             <div>
               <h2 className="font-semibold text-foreground">管理后台</h2>
