@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Plus, Sparkles, Loader2, Package, Trash2, X, Store, CheckCircle, XCircle, Lightbulb } from "lucide-react";
 import { BundlePublishPreview } from "./BundlePublishPreview";
+import { buildBundleDescription } from "./bundleDescriptionUtils";
 
 interface BundleProduct {
   source: "package" | "store";
@@ -242,6 +243,21 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         ? bundles.map((b) => (b.id === editingId ? bundle : b))
         : [...bundles, bundle];
       await updateBundles(newBundles);
+
+      // 如果已上架，同步更新商城商品的 description、名称和价格
+      if (bundle.published_product_id && aiContent) {
+        const description = buildBundleDescription(aiContent);
+        await supabase
+          .from("health_store_products" as any)
+          .update({
+            product_name: bundleName.trim(),
+            description,
+            price: totalPrice,
+            original_price: Math.round(totalPrice * 1.3),
+          } as any)
+          .eq("id", bundle.published_product_id);
+      }
+
       toast.success(editingId ? "组合包已更新" : "组合包已创建");
       resetForm();
       setDialogOpen(false);
