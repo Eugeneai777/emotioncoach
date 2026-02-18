@@ -189,21 +189,21 @@ export default function IndustryPartnerManagement() {
         <Tabs defaultValue="flywheel" className="space-y-4">
           <TabsList className="flex-wrap">
             <TabsTrigger value="flywheel">飞轮分析</TabsTrigger>
+            <TabsTrigger value="bundles">组合产品</TabsTrigger>
             <TabsTrigger value="store">商城商品</TabsTrigger>
             <TabsTrigger value="orders">商城订单</TabsTrigger>
-            <TabsTrigger value="bundles">产品组合包</TabsTrigger>
           </TabsList>
           <TabsContent value="flywheel">
             <FlywheelGrowthSystem partnerId={selectedPartnerId} />
+          </TabsContent>
+          <TabsContent value="bundles">
+            <PartnerProductBundles partnerId={selectedPartnerId} />
           </TabsContent>
           <TabsContent value="store">
             <PartnerStoreProducts partnerId={selectedPartnerId} />
           </TabsContent>
           <TabsContent value="orders">
             <PartnerStoreOrders partnerId={selectedPartnerId} />
-          </TabsContent>
-          <TabsContent value="bundles">
-            <PartnerProductBundles partnerId={selectedPartnerId} />
           </TabsContent>
         </Tabs>
       </AdminPageLayout>

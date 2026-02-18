@@ -173,7 +173,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
       const { data, error } = await supabase.functions.invoke("ai-generate-bundle", {
         body: {
           type: "optimize_name",
-          currentName: bundleName.trim() || "产品组合包",
+          currentName: bundleName.trim() || "组合产品",
           products: selectedProducts.map((p) => ({ name: p.name, price: p.price })),
         },
       });
@@ -400,10 +400,10 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">产品组合包</h3>
+        <h3 className="text-lg font-semibold">组合产品</h3>
         <Button size="sm" onClick={() => { resetForm(); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-1" />
-          创建组合包
+          创建组合产品
         </Button>
       </div>
 
@@ -411,50 +411,58 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Package className="h-10 w-10 mb-3 opacity-50" />
-            <p>暂无产品组合包</p>
-            <p className="text-sm">点击"创建组合包"开始组合产品</p>
+            <p>暂无组合产品</p>
+            <p className="text-sm">点击"创建组合产品"开始组合产品</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bundles.map((bundle) => (
-            <Card key={bundle.id} className="overflow-hidden">
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{bundle.name}</h4>
-                      {bundle.published_product_id && (
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0">
-                          <CheckCircle className="h-3 w-3 mr-0.5" />
-                          已上架
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {bundle.products.length} 个产品 · ¥{bundle.total_price.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(bundle)}>
-                      编辑
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(bundle.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+            <Card
+              key={bundle.id}
+              className={`overflow-hidden border-l-4 ${
+                bundle.published_product_id ? "border-l-green-500" : "border-l-primary"
+              }`}
+            >
+              <CardContent className="p-4 space-y-3">
+                {/* Header: name + status */}
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold flex-1">{bundle.name}</h4>
+                  {bundle.published_product_id && (
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-500 hover:bg-green-600">
+                      <CheckCircle className="h-3 w-3 mr-0.5" />
+                      已上架
+                    </Badge>
+                  )}
                 </div>
+
+                {/* Tags: product count + price */}
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs font-normal">
+                    <Package className="h-3 w-3 mr-1" />
+                    {bundle.products.length} 个产品
+                  </Badge>
+                  <Badge variant="outline" className="text-xs font-semibold">
+                    ¥{bundle.total_price.toFixed(2)}
+                  </Badge>
+                </div>
+
+                {/* AI content preview */}
                 {bundle.ai_content && (
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p><span className="font-medium">目标人群：</span>{bundle.ai_content.target_audience?.slice(0, 60)}…</p>
-                    <p><span className="font-medium">痛点：</span>{bundle.ai_content.pain_points?.slice(0, 60)}…</p>
+                  <div className="bg-muted/50 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
+                    <p><span className="font-medium text-foreground/70">🎯 目标人群：</span>{bundle.ai_content.target_audience?.slice(0, 60)}…</p>
+                    <p><span className="font-medium text-foreground/70">💢 痛点：</span>{bundle.ai_content.pain_points?.slice(0, 60)}…</p>
                   </div>
                 )}
-                {/* Publish / Unpublish buttons */}
-                <div className="flex gap-2 pt-1">
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 pt-1 border-t">
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => handleEdit(bundle)}>
+                    编辑
+                  </Button>
                   {bundle.published_product_id ? (
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       className="text-xs"
                       onClick={() => handleUnpublish(bundle)}
@@ -464,7 +472,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
                     </Button>
                   ) : (
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       className="text-xs"
                       onClick={() => setPublishBundle(bundle)}
@@ -474,6 +482,10 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
                       上架到商城
                     </Button>
                   )}
+                  <div className="flex-1" />
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(bundle.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -485,7 +497,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "编辑组合包" : "创建产品组合包"}</DialogTitle>
+            <DialogTitle>{editingId ? "编辑组合产品" : "创建组合产品"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
