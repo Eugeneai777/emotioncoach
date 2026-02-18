@@ -362,12 +362,13 @@ export function QuickRegisterStep({
         throw new Error('该手机号已注册，请直接登录');
       }
 
-      // 使用原生手机号注册
-      const phoneWithCode = `${countryCode}${phone}`;
+      // 使用占位邮箱注册
+      const placeholderEmail = generatePhoneEmail(countryCode, phone);
       const { data, error } = await supabase.auth.signUp({
-        phone: phoneWithCode,
+        email: placeholderEmail,
         password,
         options: {
+          emailRedirectTo: window.location.origin,
           data: { display_name: nickname || undefined }
         }
       });
@@ -421,25 +422,25 @@ export function QuickRegisterStep({
 
     setIsLoading(true);
     try {
-      // 优先使用原生手机号登录
-      const phoneWithCode = `${countryCode}${phone}`;
+      // 优先使用占位邮箱登录
+      const placeholderEmail = generatePhoneEmail(countryCode, phone);
       let loginData = null;
       const { data, error } = await supabase.auth.signInWithPassword({
-        phone: phoneWithCode,
+        email: placeholderEmail,
         password,
       });
 
       if (error) {
-        // 兜底：老用户可能只有占位邮箱
-        const placeholderEmail = generatePhoneEmail(countryCode, phone);
-        const { data: emailData, error: emailError } = await supabase.auth.signInWithPassword({
-          email: placeholderEmail,
+        // 兜底：批量注册用户可能只有原生手机号
+        const phoneWithCode = `${countryCode}${phone}`;
+        const { data: phoneData, error: phoneError } = await supabase.auth.signInWithPassword({
+          phone: phoneWithCode,
           password,
         });
-        if (emailError) {
+        if (phoneError) {
           throw new Error('手机号或密码错误');
         }
-        loginData = emailData;
+        loginData = phoneData;
       } else {
         loginData = data;
       }

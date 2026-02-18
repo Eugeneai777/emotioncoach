@@ -312,22 +312,24 @@ const Auth = () => {
         return;
       }
 
+      // 生成占位邮箱
+      const placeholderEmail = generatePhoneEmail(countryCode, phone);
+
       if (isLogin) {
-        // 优先使用原生手机号登录
-        const phoneWithCode = `${countryCode}${phone}`;
+        // 优先使用占位邮箱登录
         const { error } = await supabase.auth.signInWithPassword({
-          phone: phoneWithCode,
+          email: placeholderEmail,
           password,
         });
         
         if (error) {
-          // 兜底：老用户可能只有占位邮箱
-          const placeholderEmail = generatePhoneEmail(countryCode, phone);
-          const { error: emailError } = await supabase.auth.signInWithPassword({
-            email: placeholderEmail,
+          // 兜底：批量注册用户可能只有原生手机号
+          const phoneWithCode = `${countryCode}${phone}`;
+          const { error: phoneError } = await supabase.auth.signInWithPassword({
+            phone: phoneWithCode,
             password,
           });
-          if (emailError) {
+          if (phoneError) {
             throw new Error('手机号或密码错误');
           }
         }
@@ -363,11 +365,11 @@ const Auth = () => {
           return;
         }
 
-        const phoneWithCode = `${countryCode}${phone}`;
         const { data, error } = await supabase.auth.signUp({
-          phone: phoneWithCode,
+          email: placeholderEmail,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               display_name: displayName.trim(),
             },
