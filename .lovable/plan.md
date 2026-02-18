@@ -1,54 +1,40 @@
 
 
-# 在组合包编辑中添加 AI 主图生成功能
+# 为文案板块添加 AI 润色功能
 
-## 功能概述
+## 当前问题
 
-在组合包创建/编辑对话框中，新增"AI 生成主图"按钮，使用 Nano banana 模型（`google/gemini-2.5-flash-image`）根据产品名称和文案内容自动生成电商风格的产品主图。生成后的图片上传至 `partner-assets` 存储桶，URL 保存到组合包的 `cover_image_url` 字段。
+现在每个文案板块（适合谁、痛点、方案、收获）只有"手动编辑"按钮，用户需要自己修改文字。缺少一键让 AI 优化已有文案的功能。
 
 ## 改动方案
 
 ### 1. Edge Function: `supabase/functions/ai-generate-bundle/index.ts`
 
-新增 `type: "generate_cover_image"` 处理分支：
+新增 `type: "polish_copy"` 分支：
 
-- 接收 `bundleName`、`products`、`aiContent` 参数
-- 调用 `google/gemini-2.5-flash-image` 模型，带 `modalities: ["image", "text"]`
-- Prompt 指示生成：简洁的中文电商主图，健康/养生风格，品牌绿色调
-- 从返回的 `images[0].image_url.url` 取 base64 数据
-- 解码 base64 后上传到 `partner-assets` 存储桶（文件名用 UUID 避免中文问题）
-- 返回公开 URL
+- 接收参数：`field`（哪个板块）、`currentText`（当前文案）、`bundleName`、`instruction`（可选的用户润色指令）
+- 调用 AI 对当前文案进行润色优化，保持原意但提升表达力和说服力
+- 返回优化后的文案
 
-### 2. 前端: `src/components/admin/industry-partners/PartnerProductBundles.tsx`
+### 2. 前端: `PartnerProductBundles.tsx`
 
-在文案区域下方、保存按钮上方，添加主图区域：
+在每个文案板块的"编辑"按钮旁边，新增"AI 润色"按钮：
 
-- 新增状态：`generatingImage`（加载中标志）
-- 展示区域：
-  - 如果已有 `cover_image_url`，显示图片预览
-  - 显示"AI 生成主图"按钮，点击调用 edge function
-- 生成后自动更新 `coverImageUrl` 状态
-- 保存组合包时将 `cover_image_url` 一并写入
+- 点击后调用 edge function 的 `polish_copy` 模式
+- 显示加载状态（Sparkles 图标旋转）
+- AI 返回后自动替换该板块文案，并切换到预览模式展示效果
+- 用户不满意可以点击"编辑"手动微调，或再次点击"AI 润色"重新生成
 
-### 3. 上架时使用主图
-
-`BundlePublishPreview.tsx` 中，如果 `bundle.cover_image_url` 存在，商城卡片预览和实际上架都使用该图片替代默认渐变背景。
-
-## 技术细节
+### 改动范围
 
 | 文件 | 改动 |
 |------|------|
-| `supabase/functions/ai-generate-bundle/index.ts` | 新增 `generate_cover_image` 分支，调用 Nano banana 生成图片并上传存储桶 |
-| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 新增主图预览区 + AI 生成按钮 + `generatingImage` 状态 |
-| `src/components/admin/industry-partners/BundlePublishPreview.tsx` | 卡片预览区优先使用 `cover_image_url` 展示真实主图 |
+| `supabase/functions/ai-generate-bundle/index.ts` | 新增 `polish_copy` 分支，调用 AI 润色单个板块文案 |
+| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 每个文案板块增加"AI 润色"按钮 + 加载状态 |
 
-## 数据流
+### 用户体验
 
-1. 用户点击"AI 生成主图"
-2. 前端调用 `ai-generate-bundle`，`type: "generate_cover_image"`
-3. Edge Function 调用 Gemini 图片模型生成 base64 图片
-4. Edge Function 将图片上传到 `partner-assets` 存储桶
-5. 返回公开 URL，前端展示预览
-6. 保存时写入组合包的 `cover_image_url`
-7. 上架时自动使用该图片作为商城商品主图
+1. AI 生成初始文案后，用户可以逐个板块点击"AI 润色"让 AI 进一步优化
+2. 也可以先手动编辑修改方向，再点"AI 润色"让 AI 在此基础上润色
+3. 两种编辑方式（手动 + AI）可以交替使用，直到满意为止
 
