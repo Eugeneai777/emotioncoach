@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Loader2, Network, Plus, Building2 } from "lucide-react";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
+import { PartnerStoreProducts } from "@/components/partner/PartnerStoreProducts";
+import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AdminStatCard } from "./shared/AdminStatCard";
@@ -182,7 +185,22 @@ export default function IndustryPartnerManagement() {
           </Button>
         }
       >
-        <FlywheelGrowthSystem partnerId={selectedPartnerId} />
+        <Tabs defaultValue="flywheel" className="space-y-4">
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="flywheel">飞轮分析</TabsTrigger>
+            <TabsTrigger value="store">商城商品</TabsTrigger>
+            <TabsTrigger value="orders">商城订单</TabsTrigger>
+          </TabsList>
+          <TabsContent value="flywheel">
+            <FlywheelGrowthSystem partnerId={selectedPartnerId} />
+          </TabsContent>
+          <TabsContent value="store">
+            <PartnerStoreProducts partnerId={selectedPartnerId} />
+          </TabsContent>
+          <TabsContent value="orders">
+            <PartnerStoreOrders partnerId={selectedPartnerId} />
+          </TabsContent>
+        </Tabs>
       </AdminPageLayout>
     );
   }
