@@ -1,48 +1,54 @@
 
+# 修复商品详情长文本未被精简的问题
 
-# 商品详情排版优化：图标修复 + 内容精简
+## 问题根因
 
-## 问题分析
+`smartSplitContent` 函数第 42 行的逻辑：
 
-1. **图标不显示**：Emoji 图标（🎯💢💡🌟）在部分设备/浏览器渲染为乱码（◎、☹）。需要替换为可靠的 Lucide 图标。
-2. **内容太啰嗦**：数据库中已有的产品描述是 AI 改版前生成的长文本，`smartSplitContent` 按句号拆分后没有加 `✅` 前缀，显示仍为缩进段落，视觉上密集难读。
+```
+if (/^[✅•]/.test(line) || line.length <= 30)
+```
+
+任何以 `✅` 开头的行都会直接跳过，不做拆分。但旧数据中的 `✅` 行可能是 60-100 字的长段落（如截图 2 所示），导致展示效果冗长。
+
+管理后台（截图 1）显示的是新生成的精简文案，而商城（截图 2）显示的是旧数据发布时保存的长文本。
 
 ## 修改方案
 
 仅修改 **1 个文件**：`src/components/store/ProductDetailDialog.tsx`
 
-### 1. 用 Lucide 图标替代 Emoji
+### 修改 `smartSplitContent` 函数（第 42 行）
 
-将 `SECTION_META` 中的 emoji 字符串替换为 Lucide React 图标组件：
+将判断逻辑改为：以 `✅` 开头 **且长度不超过 35 字** 才跳过。超过 35 字的 `✅` 行，去掉前缀后重新按句号拆分再加回前缀。
 
-| 板块 | 原图标 | 新图标 |
-|------|--------|--------|
-| 适合谁 | 🎯 | `<Target />` |
-| 解决什么问题 | 💢 | `<AlertCircle />` |
-| 我们如何帮你 | 💡 | `<Lightbulb />` |
-| 你将收获 | 🌟 | `<Star />` |
-| 默认 | 📌 | `<Pin />` |
-
-图标统一使用 `w-4 h-4 inline` 样式，颜色跟随标题栏背景色系。
-
-### 2. 智能拆分时自动加 `✅` 前缀
-
-修改 `smartSplitContent` 函数：当长文本被按句号拆分后，自动为每条添加 `✅` 前缀，确保显示为清晰的要点列表而非大段文字。
+修改后的逻辑：
 
 ```
 function smartSplitContent(lines: string[]): string[] {
   const result: string[] = [];
   for (const line of lines) {
-    if (/^[✅•]/.test(line) || line.length <= 30) {
+    const isShort = line.length <= 35;
+    const hasBullet = /^[✅•]/.test(line);
+
+    if (isShort) {
       result.push(line);
+    } else if (hasBullet) {
+      // 有 ✅ 前缀但太长，去掉前缀后重新拆分
+      const cleaned = line.replace(/^[✅•]\s*/, '');
+      const sentences = cleaned.split(/[，。！？、]/).map(s => s.trim()).filter(s => s.length > 0);
+      if (sentences.length > 1) {
+        // 取前 2-3 个关键短句作为精简版
+        sentences.slice(0, 2).forEach(s => result.push('✅ ' + s));
+      } else {
+        // 无法拆分则截断
+        result.push('✅ ' + cleaned.slice(0, 25) + '...');
+      }
     } else {
       const sentences = line.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
       if (sentences.length > 1) {
-        sentences.forEach(s => result.push(`✅ ${s}`));  // 自动加前缀
-      } else if (line.length > 30) {
-        result.push(`✅ ${line}`);  // 单句但较长，也加前缀
+        sentences.forEach(s => result.push('✅ ' + s));
       } else {
-        result.push(line);
+        result.push('✅ ' + line);
       }
     }
   }
@@ -50,14 +56,13 @@ function smartSplitContent(lines: string[]): string[] {
 }
 ```
 
-### 3. 渲染样式优化
-
-- 有 `✅` 前缀的行：去掉缩进，使用 `text-foreground/80` 颜色，保持左对齐
-- 标题栏图标改为 Lucide 组件，带对应颜色
-- 区块间距和内边距保持现有 `space-y-3`、`px-4 py-3`
+核心改动：
+- 短文本（35 字以内）：保持原样
+- 长文本有 `✅` 前缀：去掉前缀，按中文标点（逗号、句号、顿号等）拆分，每个短句重新加 `✅`，最多保留 2 条
+- 长文本无前缀：按句号拆分并加 `✅` 前缀（保持现有逻辑）
 
 ## 效果
 
-- 图标在所有设备上可靠显示（SVG 渲染）
-- 旧数据的长文本自动转换为 `✅` 要点列表，清晰易读
-- 新生成的数据本身就是 `✅` 格式，无需额外处理
+- 旧数据中的长 `✅` 段落会被自动拆分为 2 条精简要点
+- 新数据（已经是短句格式）不受影响
+- 管理后台和商城展示风格统一
