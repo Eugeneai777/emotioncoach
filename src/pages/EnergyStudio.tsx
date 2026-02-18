@@ -47,6 +47,7 @@ const quickEntries = [
   { id: "courses", label: "学习课程", emoji: "📚", route: "/courses", gradient: "from-blue-500 to-indigo-500" },
   { id: "camp", label: "训练营", emoji: "🏕️", route: "/camps", gradient: "from-amber-500 to-orange-500" },
   { id: "partner", label: "合伙人", emoji: "🤝", route: "/partner/type", gradient: "from-emerald-500 to-teal-500" },
+  { id: "store", label: "健康商城", emoji: "🛒", route: "", gradient: "from-rose-500 to-red-500" },
 ];
 
 const EnergyStudio = () => {
@@ -170,16 +171,16 @@ const EnergyStudio = () => {
         ) : (
           <>
             {/* 快捷入口 - 2x2 网格 */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-1.5">
               {quickEntries.map((entry) => (
                 <MobileCard 
                   key={entry.id}
                   interactive
-                  className="text-center py-3"
-                  onClick={() => navigate(entry.route)}
+                  className="text-center py-2.5 px-1"
+                  onClick={() => entry.id === 'store' ? setActiveCategory('store') : navigate(entry.route)}
                 >
-                  <div className={`w-10 h-10 mx-auto rounded-xl bg-gradient-to-br ${entry.gradient} flex items-center justify-center mb-1.5`}>
-                    <span className="text-lg">{entry.emoji}</span>
+                  <div className={`w-9 h-9 mx-auto rounded-xl bg-gradient-to-br ${entry.gradient} flex items-center justify-center mb-1`}>
+                    <span className="text-base">{entry.emoji}</span>
                   </div>
                   <span className="text-[11px] font-medium whitespace-nowrap">{entry.label}</span>
                 </MobileCard>
