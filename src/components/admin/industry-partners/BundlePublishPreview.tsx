@@ -111,7 +111,7 @@ export function BundlePublishPreview({
           description,
           price,
           original_price: originalPrice,
-          image_url: null,
+          image_url: bundle.cover_image_url || null,
           category: "健康套餐",
           tags: ["组合包"],
           stock: -1,
@@ -147,9 +147,13 @@ export function BundlePublishPreview({
             <Label className="text-xs text-muted-foreground mb-2 block">商城卡片预览</Label>
             <div className="border rounded-2xl overflow-hidden shadow-sm bg-card">
               <AspectRatio ratio={1}>
-                <div className="w-full h-full bg-gradient-to-br from-teal-600 to-emerald-500 flex items-center justify-center p-6">
-                  <span className="text-white font-bold text-lg text-center leading-relaxed drop-shadow">{productName || "产品名称"}</span>
-                </div>
+                {bundle.cover_image_url ? (
+                  <img src={bundle.cover_image_url} alt={productName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-teal-600 to-emerald-500 flex items-center justify-center p-6">
+                    <span className="text-white font-bold text-lg text-center leading-relaxed drop-shadow">{productName || "产品名称"}</span>
+                  </div>
+                )}
               </AspectRatio>
               <div className="p-3 space-y-1.5">
                 <h3 className="font-semibold text-sm line-clamp-2">{productName || "产品名称"}</h3>
