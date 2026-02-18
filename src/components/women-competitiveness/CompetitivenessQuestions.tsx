@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import logoImage from "@/assets/logo-youjin-ai.png";
 import {
   questions,
   scoreLabels,
@@ -33,9 +34,10 @@ import {
 interface CompetitivenessQuestionsProps {
   onComplete: (result: CompetitivenessResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[]) => void;
   onExit?: () => void;
+  onHistory?: () => void;
 }
 
-export function CompetitivenessQuestions({ onComplete, onExit }: CompetitivenessQuestionsProps) {
+export function CompetitivenessQuestions({ onComplete, onExit, onHistory }: CompetitivenessQuestionsProps) {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -112,7 +114,7 @@ export function CompetitivenessQuestions({ onComplete, onExit }: Competitiveness
   }, [answers]);
 
   if (showStartScreen) {
-    return <CompetitivenessStartScreen onStart={() => setShowStartScreen(false)} onBack={onExit} />;
+    return <CompetitivenessStartScreen onStart={() => setShowStartScreen(false)} onBack={onExit} onHistory={onHistory} />;
   }
 
   const handleAnswer = async (value: number) => {
@@ -185,16 +187,28 @@ export function CompetitivenessQuestions({ onComplete, onExit }: Competitiveness
       {/* 顶部 */}
       <div className="pt-safe px-4 py-4">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          {onExit ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive h-9 w-9"
-              onClick={() => answeredCount > 0 ? setShowExitConfirm(true) : onExit()}
+          <div className="flex items-center gap-1">
+            <div
+              onClick={() => onExit?.()}
+              className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
             >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          ) : <div className="w-9" />}
+              <img
+                src={logoImage}
+                alt="有劲AI"
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            </div>
+            {onExit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive h-9 w-9"
+                onClick={() => answeredCount > 0 ? setShowExitConfirm(true) : onExit()}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
 
           <div className="flex flex-col items-center">
             <h1 className="font-bold text-lg">竞争力测评</h1>

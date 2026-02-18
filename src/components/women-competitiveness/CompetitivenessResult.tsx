@@ -7,9 +7,13 @@ import {
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
+  PolarRadiusAxis,
   Radar,
+  Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useAuth } from "@/hooks/useAuth";
+import PageHeader from "@/components/PageHeader";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +36,8 @@ interface CompetitivenessResultProps {
   answers: Record<number, number>;
   followUpInsights?: FollowUpAnswer[];
   onBack?: () => void;
+  assessmentId?: string;
+  preloadedAiAnalysis?: string | null;
 }
 
 // 分数标尺上的阶段配置
@@ -60,10 +66,12 @@ function splitMarkdownSections(md: string): { title: string; content: string }[]
   return sections;
 }
 
-export function CompetitivenessResult({ result, answers, followUpInsights, onBack }: CompetitivenessResultProps) {
+export function CompetitivenessResult({ result, answers, followUpInsights, onBack, assessmentId: existingId, preloadedAiAnalysis }: CompetitivenessResultProps) {
+  const { user } = useAuth();
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(true);
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 0: true });
+  const [assessmentId, setAssessmentId] = useState<string | null>(existingId || null);
 
   const level = levelInfo[result.level];
   const strongest = categoryInfo[result.strongestCategory];
@@ -90,7 +98,41 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
     return splitMarkdownSections(aiAnalysis);
   }, [aiAnalysis]);
 
+  // 保存测评结果到数据库
   useEffect(() => {
+    if (!user || assessmentId) return;
+    const saveAssessment = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('competitiveness_assessments' as any)
+          .insert({
+            user_id: user.id,
+            total_score: result.totalScore,
+            level: result.level,
+            category_scores: result.categoryScores,
+            strongest_category: result.strongestCategory,
+            weakest_category: result.weakestCategory,
+            answers,
+            follow_up_insights: followUpInsights || null,
+          })
+          .select('id')
+          .single();
+        if (!error && data) {
+          setAssessmentId((data as any).id);
+        }
+      } catch (err) {
+        console.error('Save assessment error:', err);
+      }
+    };
+    saveAssessment();
+  }, [user]);
+
+  useEffect(() => {
+    if (preloadedAiAnalysis) {
+      setAiAnalysis(preloadedAiAnalysis);
+      setIsLoadingAI(false);
+      return;
+    }
     const fetchAIAnalysis = async () => {
       setIsLoadingAI(true);
       try {
@@ -105,7 +147,16 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
           }
         });
         if (error) throw error;
-        setAiAnalysis(data?.analysis || data?.error || "AI分析暂时不可用");
+        const analysis = data?.analysis || data?.error || "AI分析暂时不可用";
+        setAiAnalysis(analysis);
+        // 更新数据库中的AI分析
+        if (assessmentId) {
+          supabase
+            .from('competitiveness_assessments' as any)
+            .update({ ai_analysis: analysis })
+            .eq('id', assessmentId)
+            .then(() => {});
+        }
       } catch (err) {
         console.error('AI analysis error:', err);
         setAiAnalysis(null);
@@ -115,21 +166,16 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
       }
     };
     fetchAIAnalysis();
-  }, []);
+  }, [preloadedAiAnalysis]);
 
   const toggleSection = (idx: number) => {
     setOpenSections(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 p-4 pb-safe">
-      <div className="max-w-lg mx-auto space-y-4">
-        {/* 返回 */}
-        {onBack && (
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" /> 重新测评
-          </Button>
-        )}
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 pb-safe">
+      <PageHeader title="竞争力报告" showBack={true} backTo={undefined} />
+      <div className="max-w-lg mx-auto space-y-4 p-4">
 
         {/* 竞争力等级卡片 — 增强版 */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -312,6 +358,8 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
                     </defs>
                     <PolarGrid stroke="#fda4af" strokeWidth={1} gridType="polygon" />
                     <PolarAngleAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} />
+                    <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                    <Tooltip formatter={(value: number) => [`${value}分`, '竞争力']} />
                     <Radar name="竞争力" dataKey="value" stroke="#f43f5e" strokeWidth={2} fill="url(#competitivenessGradient)" fillOpacity={0.6} />
                   </RadarChart>
                 </ResponsiveContainer>

@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Play, Lock, ArrowLeft, Sparkles } from "lucide-react";
+import { Heart, Play, Lock, Sparkles, History } from "lucide-react";
+import logoImage from "@/assets/logo-youjin-ai.png";
 
 interface CompetitivenessStartScreenProps {
   onStart: () => void;
   onBack?: () => void;
+  onHistory?: () => void;
 }
 
-export function CompetitivenessStartScreen({ onStart, onBack }: CompetitivenessStartScreenProps) {
+export function CompetitivenessStartScreen({ onStart, onBack, onHistory }: CompetitivenessStartScreenProps) {
   const dimensions = [
     { emoji: "💼", name: "职场生命力", desc: "跳槽勇气·谈薪能力·学习力" },
     { emoji: "🌟", name: "个人品牌力", desc: "表达力·影响力·社交资产" },
@@ -18,26 +20,33 @@ export function CompetitivenessStartScreen({ onStart, onBack }: CompetitivenessS
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 p-4 flex flex-col items-center justify-center relative">
-      {onBack && (
-        <motion.div
-          initial={{ opacity: 0.01 }}
-          animate={{ opacity: 1 }}
-          className="absolute top-4 left-4"
-          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-        >
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            返回
-          </Button>
-        </motion.div>
-      )}
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 flex flex-col items-center relative">
+      {/* Logo + 返回 header */}
+      <div className="w-full sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="flex items-center justify-between h-12 px-4">
+          <div className="flex items-center gap-1">
+            <div
+              onClick={onBack}
+              className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
+            >
+              <img src={logoImage} alt="有劲AI" className="w-9 h-9 rounded-full object-cover" />
+            </div>
+          </div>
+          <div />
+          {onHistory && (
+            <Button variant="ghost" size="sm" onClick={onHistory} className="text-muted-foreground">
+              <History className="w-4 h-4 mr-1" />
+              历史记录
+            </Button>
+          )}
+        </div>
+      </div>
 
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-md space-y-4"
+        className="w-full max-w-md space-y-4 p-4 flex-1 flex flex-col justify-center"
         style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         {/* 标题 */}
