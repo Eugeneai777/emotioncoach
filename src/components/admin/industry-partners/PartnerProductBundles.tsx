@@ -1,16 +1,18 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePackages } from "@/hooks/usePackages";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Sparkles, Loader2, Package, Trash2, X } from "lucide-react";
+import { Plus, Sparkles, Loader2, Package, Trash2, X, Store, CheckCircle, XCircle } from "lucide-react";
+import { BundlePublishPreview } from "./BundlePublishPreview";
 
 interface BundleProduct {
   source: "package" | "store";
@@ -33,6 +35,7 @@ interface ProductBundle {
     expected_results: string;
   } | null;
   cover_image_url: string | null;
+  published_product_id?: string | null;
   created_at: string;
 }
 
@@ -65,6 +68,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [publishBundle, setPublishBundle] = useState<ProductBundle | null>(null);
 
   // Load packages
   const { data: packages, isLoading: packagesLoading } = usePackages();
@@ -110,8 +114,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   // Build selectable product list
   const allProducts: SelectableProduct[] = useMemo(() => {
     const items: SelectableProduct[] = [];
-
-    // Youjin packages
     (packages || []).forEach((p) => {
       items.push({
         source: "package",
@@ -122,11 +124,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         group: "有劲系列",
       });
     });
-
-    // Bloom products
     items.push(...BLOOM_PRODUCTS);
-
-    // Store products
     (storeProducts || []).forEach((p: any) => {
       items.push({
         source: "store",
@@ -137,7 +135,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         group: "商城商品",
       });
     });
-
     return items;
   }, [packages, storeProducts]);
 
@@ -150,11 +147,8 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     return map;
   }, [allProducts]);
 
-  const isSelected = (p: SelectableProduct) => {
-    return selectedProducts.some(
-      (s) => (s.key && s.key === p.key) || (s.id && s.id === p.id)
-    );
-  };
+  const isSelected = (p: SelectableProduct) =>
+    selectedProducts.some((s) => (s.key && s.key === p.key) || (s.id && s.id === p.id));
 
   const toggleProduct = (p: SelectableProduct) => {
     if (isSelected(p)) {
@@ -169,98 +163,65 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   const totalPrice = selectedProducts.reduce((s, p) => s + p.price, 0);
 
   const handleAIGenerate = async () => {
-    if (!bundleName.trim()) {
-      toast.error("请先填写组合包名称");
-      return;
-    }
-    if (selectedProducts.length === 0) {
-      toast.error("请至少选择一个产品");
-      return;
-    }
-
+    if (!bundleName.trim()) { toast.error("请先填写组合包名称"); return; }
+    if (selectedProducts.length === 0) { toast.error("请至少选择一个产品"); return; }
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-generate-bundle", {
         body: {
           bundleName: bundleName.trim(),
           products: selectedProducts.map((p) => ({
-            name: p.name,
-            price: p.price,
-            description: p.description || "",
+            name: p.name, price: p.price, description: p.description || "",
           })),
         },
       });
-
       if (error) throw error;
       if (data.error) throw new Error(data.error);
-
-      if (data.ai_content) {
-        setAiContent(data.ai_content);
-        toast.success("AI 文案生成成功");
-      }
-      if (data.cover_image_url) {
-        setCoverImageUrl(data.cover_image_url);
-        toast.success("AI 主图生成成功");
-      }
+      if (data.ai_content) { setAiContent(data.ai_content); toast.success("AI 文案生成成功"); }
+      if (data.cover_image_url) { setCoverImageUrl(data.cover_image_url); toast.success("AI 主图生成成功"); }
     } catch (err: any) {
-      console.error("AI generate error:", err);
       toast.error("AI 生成失败: " + (err.message || "未知错误"));
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleSave = async () => {
-    if (!bundleName.trim()) {
-      toast.error("请填写组合包名称");
-      return;
-    }
-    if (selectedProducts.length === 0) {
-      toast.error("请至少选择一个产品");
-      return;
-    }
+  const updateBundles = async (newBundles: ProductBundle[]) => {
+    const { error } = await supabase
+      .from("partners")
+      .update({ custom_product_packages: newBundles as any })
+      .eq("id", partnerId);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["partner-bundles", partnerId] });
+  };
 
+  const handleSave = async () => {
+    if (!bundleName.trim()) { toast.error("请填写组合包名称"); return; }
+    if (selectedProducts.length === 0) { toast.error("请至少选择一个产品"); return; }
     setSaving(true);
     try {
       const bundle: ProductBundle = {
         id: editingId || crypto.randomUUID(),
         name: bundleName.trim(),
         products: selectedProducts.map((p) => ({
-          source: p.source,
-          key: p.key,
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          description: p.description,
+          source: p.source, key: p.key, id: p.id, name: p.name, price: p.price, description: p.description,
         })),
         total_price: totalPrice,
         ai_content: aiContent,
         cover_image_url: coverImageUrl,
+        published_product_id: editingId ? bundles.find((b) => b.id === editingId)?.published_product_id : null,
         created_at: editingId
           ? bundles.find((b) => b.id === editingId)?.created_at || new Date().toISOString()
           : new Date().toISOString(),
       };
-
-      let newBundles: ProductBundle[];
-      if (editingId) {
-        newBundles = bundles.map((b) => (b.id === editingId ? bundle : b));
-      } else {
-        newBundles = [...bundles, bundle];
-      }
-
-      const { error } = await supabase
-        .from("partners")
-        .update({ custom_product_packages: newBundles as any })
-        .eq("id", partnerId);
-
-      if (error) throw error;
-
+      const newBundles = editingId
+        ? bundles.map((b) => (b.id === editingId ? bundle : b))
+        : [...bundles, bundle];
+      await updateBundles(newBundles);
       toast.success(editingId ? "组合包已更新" : "组合包已创建");
       resetForm();
       setDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["partner-bundles", partnerId] });
     } catch (err: any) {
-      console.error("Save bundle error:", err);
       toast.error("保存失败: " + (err.message || "未知错误"));
     } finally {
       setSaving(false);
@@ -268,18 +229,38 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
   };
 
   const handleDelete = async (bundleId: string) => {
-    const newBundles = bundles.filter((b) => b.id !== bundleId);
-    const { error } = await supabase
-      .from("partners")
-      .update({ custom_product_packages: newBundles as any })
-      .eq("id", partnerId);
-
-    if (error) {
+    try {
+      await updateBundles(bundles.filter((b) => b.id !== bundleId));
+      toast.success("组合包已删除");
+    } catch {
       toast.error("删除失败");
-      return;
     }
-    toast.success("组合包已删除");
-    queryClient.invalidateQueries({ queryKey: ["partner-bundles", partnerId] });
+  };
+
+  const handleUnpublish = async (bundle: ProductBundle) => {
+    if (!bundle.published_product_id) return;
+    try {
+      await supabase
+        .from("health_store_products" as any)
+        .update({ is_available: false } as any)
+        .eq("id", bundle.published_product_id);
+      const newBundles = bundles.map((b) =>
+        b.id === bundle.id ? { ...b, published_product_id: null } : b
+      );
+      await updateBundles(newBundles);
+      toast.success("商品已下架");
+    } catch (err: any) {
+      toast.error("下架失败: " + (err.message || "未知错误"));
+    }
+  };
+
+  const handlePublished = async (productId: string) => {
+    if (!publishBundle) return;
+    const newBundles = bundles.map((b) =>
+      b.id === publishBundle.id ? { ...b, published_product_id: productId } : b
+    );
+    await updateBundles(newBundles);
+    setPublishBundle(null);
   };
 
   const handleEdit = (bundle: ProductBundle) => {
@@ -287,7 +268,6 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setBundleName(bundle.name);
     setCoverImageUrl(bundle.cover_image_url);
     setAiContent(bundle.ai_content);
-    // Restore selected products
     const restored: SelectableProduct[] = bundle.products.map((p) => ({
       ...p,
       group: p.source === "store" ? "商城商品" : "有劲系列",
@@ -322,13 +302,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">产品组合包</h3>
-        <Button
-          size="sm"
-          onClick={() => {
-            resetForm();
-            setDialogOpen(true);
-          }}
-        >
+        <Button size="sm" onClick={() => { resetForm(); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-1" />
           创建组合包
         </Button>
@@ -347,16 +321,20 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
           {bundles.map((bundle) => (
             <Card key={bundle.id} className="overflow-hidden">
               {bundle.cover_image_url && (
-                <img
-                  src={bundle.cover_image_url}
-                  alt={bundle.name}
-                  className="w-full h-40 object-cover"
-                />
+                <img src={bundle.cover_image_url} alt={bundle.name} className="w-full h-40 object-cover" />
               )}
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h4 className="font-semibold">{bundle.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">{bundle.name}</h4>
+                      {bundle.published_product_id && (
+                        <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                          <CheckCircle className="h-3 w-3 mr-0.5" />
+                          已上架
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {bundle.products.length} 个产品 · ¥{bundle.total_price.toFixed(2)}
                     </p>
@@ -376,6 +354,31 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
                     <p><span className="font-medium">痛点：</span>{bundle.ai_content.pain_points?.slice(0, 60)}…</p>
                   </div>
                 )}
+                {/* Publish / Unpublish buttons */}
+                <div className="flex gap-2 pt-1">
+                  {bundle.published_product_id ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => handleUnpublish(bundle)}
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />
+                      下架商品
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => setPublishBundle(bundle)}
+                      disabled={!bundle.ai_content}
+                    >
+                      <Store className="h-3 w-3 mr-1" />
+                      上架到商城
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -388,42 +391,22 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
           <DialogHeader>
             <DialogTitle>{editingId ? "编辑组合包" : "创建产品组合包"}</DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4">
-            {/* Name */}
             <div>
               <Label>组合包名称 *</Label>
-              <Input
-                value={bundleName}
-                onChange={(e) => setBundleName(e.target.value)}
-                placeholder="例如：知乐身心健康套餐"
-              />
+              <Input value={bundleName} onChange={(e) => setBundleName(e.target.value)} placeholder="例如：知乐身心健康套餐" />
             </div>
-
-            {/* Product Selection */}
             <div>
               <Label>选择产品（已选 {selectedProducts.length} 个，合计 ¥{totalPrice.toFixed(2)}）</Label>
               <div className="mt-2 border rounded-lg max-h-60 overflow-y-auto">
                 {Object.entries(grouped).map(([group, items]) => (
                   <div key={group}>
-                    <div className="sticky top-0 bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground border-b">
-                      {group}
-                    </div>
+                    <div className="sticky top-0 bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground border-b">{group}</div>
                     {items.map((p, idx) => {
                       const selected = isSelected(p);
                       return (
-                        <label
-                          key={p.key || p.id || idx}
-                          className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-accent/50 transition-colors ${
-                            selected ? "bg-primary/5" : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={() => toggleProduct(p)}
-                            className="rounded"
-                          />
+                        <label key={p.key || p.id || idx} className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-accent/50 transition-colors ${selected ? "bg-primary/5" : ""}`}>
+                          <input type="checkbox" checked={selected} onChange={() => toggleProduct(p)} className="rounded" />
                           <span className="flex-1 text-sm">{p.name}</span>
                           <span className="text-sm text-muted-foreground">¥{p.price}</span>
                         </label>
@@ -433,114 +416,63 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
                 ))}
               </div>
             </div>
-
-            {/* Selected chips */}
             {selectedProducts.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedProducts.map((p, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5"
-                  >
+                  <span key={i} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
                     {p.name}
-                    <button onClick={() => toggleProduct(p)}>
-                      <X className="h-3 w-3" />
-                    </button>
+                    <button onClick={() => toggleProduct(p)}><X className="h-3 w-3" /></button>
                   </span>
                 ))}
               </div>
             )}
-
-            {/* AI Generate Button */}
-            <Button
-              variant="outline"
-              onClick={handleAIGenerate}
-              disabled={generating || !bundleName.trim() || selectedProducts.length === 0}
-              className="w-full"
-            >
-              {generating ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Sparkles className="h-4 w-4 mr-2" />
-              )}
+            <Button variant="outline" onClick={handleAIGenerate} disabled={generating || !bundleName.trim() || selectedProducts.length === 0} className="w-full">
+              {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
               {generating ? "AI 生成中…" : "AI 智能生成文案与主图"}
             </Button>
-
-            {/* Cover Image Preview */}
             {coverImageUrl && (
               <div>
                 <Label>主图预览</Label>
-                <img
-                  src={coverImageUrl}
-                  alt="组合包主图"
-                  className="w-full rounded-lg mt-1 max-h-48 object-cover"
-                />
+                <img src={coverImageUrl} alt="组合包主图" className="w-full rounded-lg mt-1 max-h-48 object-cover" />
               </div>
             )}
-
-            {/* AI Content Fields */}
             <div>
               <Label>目标人群</Label>
-              <Textarea
-                value={aiContent?.target_audience || ""}
-                onChange={(e) =>
-                  setAiContent((prev) => ({ ...prev!, target_audience: e.target.value }))
-                }
-                placeholder="点击 AI 智能生成 自动填写，或手动输入"
-                rows={3}
-              />
+              <Textarea value={aiContent?.target_audience || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, target_audience: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
             </div>
             <div>
               <Label>解决痛点</Label>
-              <Textarea
-                value={aiContent?.pain_points || ""}
-                onChange={(e) =>
-                  setAiContent((prev) => ({ ...prev!, pain_points: e.target.value }))
-                }
-                placeholder="点击 AI 智能生成 自动填写，或手动输入"
-                rows={3}
-              />
+              <Textarea value={aiContent?.pain_points || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, pain_points: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
             </div>
             <div>
               <Label>如何解决和提供价值</Label>
-              <Textarea
-                value={aiContent?.solution || ""}
-                onChange={(e) =>
-                  setAiContent((prev) => ({ ...prev!, solution: e.target.value }))
-                }
-                placeholder="点击 AI 智能生成 自动填写，或手动输入"
-                rows={3}
-              />
+              <Textarea value={aiContent?.solution || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, solution: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
             </div>
             <div>
               <Label>可以看到什么结果和收获</Label>
-              <Textarea
-                value={aiContent?.expected_results || ""}
-                onChange={(e) =>
-                  setAiContent((prev) => ({ ...prev!, expected_results: e.target.value }))
-                }
-                placeholder="点击 AI 智能生成 自动填写，或手动输入"
-                rows={3}
-              />
+              <Textarea value={aiContent?.expected_results || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, expected_results: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
             </div>
-
-            {/* Actions */}
             <div className="flex gap-2 pt-2">
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1"
-              >
+              <Button onClick={handleSave} disabled={saving} className="flex-1">
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 {editingId ? "更新组合包" : "保存组合包"}
               </Button>
-              <Button variant="outline" onClick={() => { resetForm(); setDialogOpen(false); }}>
-                取消
-              </Button>
+              <Button variant="outline" onClick={() => { resetForm(); setDialogOpen(false); }}>取消</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Publish Preview Dialog */}
+      {publishBundle && (
+        <BundlePublishPreview
+          open={!!publishBundle}
+          onOpenChange={(open) => { if (!open) setPublishBundle(null); }}
+          bundle={publishBundle}
+          partnerId={partnerId}
+          onPublished={handlePublished}
+        />
+      )}
     </div>
   );
 }

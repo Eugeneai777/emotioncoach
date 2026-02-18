@@ -15,7 +15,88 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { bundleName, products } = await req.json();
+    const body = await req.json();
+    const { type } = body;
+
+    // === optimize_name mode ===
+    if (type === "optimize_name") {
+      const { currentName, products } = body;
+      if (!currentName || !products?.length) {
+        return new Response(JSON.stringify({ error: "缺少名称或产品列表" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const productList = products.map((p: any) => p.name).join('、');
+
+      const nameResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: "你是一位专业的产品命名专家，擅长为健康与个人成长领域的产品组合包取名。名称应该简洁有力、富有吸引力、易于记忆，适合中国市场。每个名称控制在4-12个字。"
+            },
+            {
+              role: "user",
+              content: `请为以下产品组合包优化名称：\n\n当前名称：${currentName}\n包含产品：${productList}\n\n请生成3个优化后的名称建议。`
+            }
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "suggest_names",
+                description: "返回3个优化后的产品组合包名称建议",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    suggestions: {
+                      type: "array",
+                      items: { type: "string", description: "优化后的名称，4-12个字" },
+                      minItems: 3,
+                      maxItems: 3,
+                    },
+                  },
+                  required: ["suggestions"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "suggest_names" } },
+        }),
+      });
+
+      if (!nameResponse.ok) {
+        const errText = await nameResponse.text();
+        console.error("AI name optimization error:", nameResponse.status, errText);
+        if (nameResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "AI 请求过于频繁，请稍后重试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error("AI 名称优化失败");
+      }
+
+      const nameData = await nameResponse.json();
+      const toolCall = nameData.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall) throw new Error("AI 未返回结构化内容");
+
+      const result = JSON.parse(toolCall.function.arguments);
+      return new Response(JSON.stringify({ suggestions: result.suggestions }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // === Default: generate bundle content + image ===
+    const { bundleName, products } = body;
     if (!bundleName || !products?.length) {
       return new Response(JSON.stringify({ error: "缺少组合包名称或产品列表" }), {
         status: 400,
@@ -110,7 +191,6 @@ serve(async (req) => {
         const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
         if (imageUrl && imageUrl.startsWith("data:image/")) {
-          // Extract base64 and upload to storage
           const base64Match = imageUrl.match(/^data:image\/(\w+);base64,(.+)$/);
           if (base64Match) {
             const ext = base64Match[1] === 'jpeg' ? 'jpg' : base64Match[1];
@@ -142,7 +222,6 @@ serve(async (req) => {
       }
     } catch (imgErr) {
       console.error("Image generation error:", imgErr);
-      // Continue without image
     }
 
     return new Response(JSON.stringify({
