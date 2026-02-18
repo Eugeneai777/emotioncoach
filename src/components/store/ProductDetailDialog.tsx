@@ -39,16 +39,25 @@ const DEFAULT_SECTION_META = { icon: <Pin className="w-4 h-4" />, bg: 'bg-muted/
 function smartSplitContent(lines: string[]): string[] {
   const result: string[] = [];
   for (const line of lines) {
-    if (/^[✅•]/.test(line) || line.length <= 30) {
+    const isShort = line.length <= 35;
+    const hasBullet = /^[✅•]/.test(line);
+
+    if (isShort) {
       result.push(line);
+    } else if (hasBullet) {
+      const cleaned = line.replace(/^[✅•]\s*/, '');
+      const sentences = cleaned.split(/[，。！？、]/).map(s => s.trim()).filter(s => s.length > 0);
+      if (sentences.length > 1) {
+        sentences.slice(0, 2).forEach(s => result.push('✅ ' + s));
+      } else {
+        result.push('✅ ' + cleaned.slice(0, 25) + '...');
+      }
     } else {
       const sentences = line.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
       if (sentences.length > 1) {
-        sentences.forEach(s => result.push(`✅ ${s}`));
-      } else if (line.length > 30) {
-        result.push(`✅ ${line}`);
+        sentences.forEach(s => result.push('✅ ' + s));
       } else {
-        result.push(line);
+        result.push('✅ ' + line);
       }
     }
   }
