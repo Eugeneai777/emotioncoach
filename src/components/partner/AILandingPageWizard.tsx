@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Sparkles, ArrowRight, ArrowLeft, Check, MessageSquare, Send, ChevronDown } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight, ArrowLeft, Check, MessageSquare, Send, ChevronDown, Hand, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -214,6 +214,80 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
 
   // Step 2: Match
   const [matchResult, setMatchResult] = useState<any>(null);
+  const [matchMode, setMatchMode] = useState<'ai' | 'manual'>('ai');
+  const [manualPartnerProducts, setManualPartnerProducts] = useState<any[]>([]);
+  const [manualStoreProducts, setManualStoreProducts] = useState<any[]>([]);
+  const [selectedManualIds, setSelectedManualIds] = useState<string[]>([]);
+  const [manualLoading, setManualLoading] = useState(false);
+
+  const fetchManualProducts = useCallback(async () => {
+    setManualLoading(true);
+    try {
+      const [partnerRes, storeRes] = await Promise.all([
+        supabase
+          .from("partner_products" as any)
+          .select("id, product_name, price, description")
+          .eq("partner_id", partnerId)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("health_store_products" as any)
+          .select("id, name, price, description")
+          .eq("partner_id", partnerId)
+          .eq("is_available", true)
+          .order("created_at", { ascending: false }),
+      ]);
+      setManualPartnerProducts((partnerRes.data || []) as any[]);
+      setManualStoreProducts((storeRes.data || []) as any[]);
+    } catch (err) {
+      console.error("Failed to fetch manual products:", err);
+    } finally {
+      setManualLoading(false);
+    }
+  }, [partnerId]);
+
+  const toggleManualProduct = (id: string) => {
+    setSelectedManualIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const getSelectedManualProductNames = () => {
+    const partnerNames = manualPartnerProducts
+      .filter(p => selectedManualIds.includes(p.id))
+      .map(p => p.product_name);
+    const storeNames = manualStoreProducts
+      .filter(p => selectedManualIds.includes(p.id))
+      .map(p => p.name);
+    return [...partnerNames, ...storeNames].join("、");
+  };
+
+  const handleManualConfirm = async () => {
+    if (selectedManualIds.length === 0) {
+      toast.error("请至少选择一个产品");
+      return;
+    }
+    const productNames = getSelectedManualProductNames();
+    const manualMatchResult = {
+      matched_product: productNames,
+      reason: "手工配对 — 用户自选产品",
+      level,
+    };
+    setMatchResult(manualMatchResult);
+    // Directly proceed to generate
+    setLoading(true);
+    try {
+      const data = await callAI("generate", { matched_product: productNames });
+      const result = data.result;
+      setContentA(result?.content_a || null);
+      setContentB(result?.content_b || null);
+      setStep(2);
+    } catch (err: any) {
+      toast.error("AI 生成失败: " + (err.message || "未知错误"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Step 3: Generate
   const [contentA, setContentA] = useState<LandingContent | null>(null);
@@ -578,9 +652,39 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
               </div>
             </div>
 
-            <Button onClick={handleMatchProduct} disabled={loading} className="w-full">
+            {/* 配对模式选择 */}
+            <div>
+              <Label className="mb-2 block">配对模式</Label>
+              <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                <Button
+                  variant={matchMode === 'ai' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setMatchMode('ai')}
+                >
+                  <Bot className="w-4 h-4 mr-1" /> AI 推荐
+                </Button>
+                <Button
+                  variant={matchMode === 'manual' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setMatchMode('manual')}
+                >
+                  <Hand className="w-4 h-4 mr-1" /> 手工配对
+                </Button>
+              </div>
+            </div>
+
+            <Button onClick={() => {
+              if (matchMode === 'manual') {
+                fetchManualProducts();
+                setStep(1);
+              } else {
+                handleMatchProduct();
+              }
+            }} disabled={loading} className="w-full">
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ArrowRight className="w-4 h-4 mr-1" />}
-              下一步：AI 配对产品
+              下一步：配对产品
             </Button>
           </div>
         )}
@@ -588,7 +692,36 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
         {/* Step 1: Match */}
         {step === 1 && (
           <div className="space-y-4">
-            {matchResult && (
+            {/* Mode toggle */}
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <Button
+                variant={matchMode === 'ai' ? 'default' : 'ghost'}
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setMatchMode('ai');
+                  setSelectedManualIds([]);
+                }}
+              >
+                <Bot className="w-4 h-4 mr-1" /> AI 推荐
+              </Button>
+              <Button
+                variant={matchMode === 'manual' ? 'default' : 'ghost'}
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setMatchMode('manual');
+                  if (manualPartnerProducts.length === 0 && manualStoreProducts.length === 0) {
+                    fetchManualProducts();
+                  }
+                }}
+              >
+                <Hand className="w-4 h-4 mr-1" /> 手工配对
+              </Button>
+            </div>
+
+            {/* AI mode */}
+            {matchMode === 'ai' && matchResult && (
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4 space-y-2">
                   <h3 className="font-bold text-sm">🎯 AI 推荐产品</h3>
@@ -601,14 +734,88 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
                 </CardContent>
               </Card>
             )}
+
+            {matchMode === 'ai' && !matchResult && (
+              <div className="text-center py-6">
+                <Button onClick={handleMatchProduct} disabled={loading}>
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
+                  开始 AI 配对
+                </Button>
+              </div>
+            )}
+
+            {/* Manual mode */}
+            {matchMode === 'manual' && (
+              <div className="space-y-3">
+                {manualLoading ? (
+                  <div className="text-center py-6 text-muted-foreground text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> 加载产品中...
+                  </div>
+                ) : (
+                  <>
+                    {manualPartnerProducts.length > 0 && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">产品中心</Label>
+                        <div className="border rounded-lg divide-y">
+                          {manualPartnerProducts.map((p: any) => (
+                            <label key={p.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-accent cursor-pointer">
+                              <Checkbox
+                                checked={selectedManualIds.includes(p.id)}
+                                onCheckedChange={() => toggleManualProduct(p.id)}
+                              />
+                              <span className="flex-1 text-sm">{p.product_name}</span>
+                              <span className="text-xs text-muted-foreground">¥{p.price}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {manualStoreProducts.length > 0 && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">商城商品</Label>
+                        <div className="border rounded-lg divide-y">
+                          {manualStoreProducts.map((p: any) => (
+                            <label key={p.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-accent cursor-pointer">
+                              <Checkbox
+                                checked={selectedManualIds.includes(p.id)}
+                                onCheckedChange={() => toggleManualProduct(p.id)}
+                              />
+                              <span className="flex-1 text-sm">{p.name}</span>
+                              <span className="text-xs text-muted-foreground">¥{p.price}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {manualPartnerProducts.length === 0 && manualStoreProducts.length === 0 && (
+                      <p className="text-center py-6 text-sm text-muted-foreground">暂无可选产品，请先在产品中心或商城添加产品</p>
+                    )}
+
+                    {selectedManualIds.length > 0 && (
+                      <p className="text-xs text-muted-foreground">已选 {selectedManualIds.length} 个产品</p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(0)}>
                 <ArrowLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
-              <Button onClick={handleGenerate} disabled={loading} className="flex-1">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
-                AI 生成 A/B 内容
-              </Button>
+              {matchMode === 'manual' ? (
+                <Button onClick={handleManualConfirm} disabled={selectedManualIds.length === 0} className="flex-1">
+                  <ArrowRight className="w-4 h-4 mr-1" />
+                  确认选择，AI 生成 A/B 内容
+                </Button>
+              ) : (
+                <Button onClick={handleGenerate} disabled={loading || !matchResult} className="flex-1">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
+                  AI 生成 A/B 内容
+                </Button>
+              )}
             </div>
           </div>
         )}
