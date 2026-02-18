@@ -471,21 +471,52 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
               {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
               {generating ? "AI 生成中…" : "AI 智能生成文案"}
             </Button>
-            <div>
-              <Label>目标人群</Label>
-              <Textarea value={aiContent?.target_audience || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, target_audience: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
-            </div>
-            <div>
-              <Label>解决痛点</Label>
-              <Textarea value={aiContent?.pain_points || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, pain_points: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
-            </div>
-            <div>
-              <Label>如何解决和提供价值</Label>
-              <Textarea value={aiContent?.solution || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, solution: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
-            </div>
-            <div>
-              <Label>可以看到什么结果和收获</Label>
-              <Textarea value={aiContent?.expected_results || ""} onChange={(e) => setAiContent((prev) => ({ ...prev!, expected_results: e.target.value }))} placeholder="点击 AI 智能生成 自动填写，或手动输入" rows={3} />
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">商品介绍文案（可编辑）</Label>
+
+              <div className="rounded-lg border-l-4 border-l-blue-400 bg-blue-50/50 dark:bg-blue-950/20 p-3">
+                <Label className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-1 block">🎯 适合谁</Label>
+                <Textarea
+                  value={aiContent?.target_audience || ""}
+                  onChange={(e) => setAiContent((prev) => ({ target_audience: e.target.value, pain_points: prev?.pain_points || "", solution: prev?.solution || "", expected_results: prev?.expected_results || "" }))}
+                  placeholder="描述目标人群，如：职场压力大、睡眠质量差的白领人群"
+                  rows={2}
+                  className="border-blue-200 dark:border-blue-800 bg-transparent"
+                />
+              </div>
+
+              <div className="rounded-lg border-l-4 border-l-red-400 bg-red-50/50 dark:bg-red-950/20 p-3">
+                <Label className="text-xs font-bold text-red-700 dark:text-red-300 mb-1 block">💢 解决什么问题</Label>
+                <Textarea
+                  value={aiContent?.pain_points || ""}
+                  onChange={(e) => setAiContent((prev) => ({ target_audience: prev?.target_audience || "", pain_points: e.target.value, solution: prev?.solution || "", expected_results: prev?.expected_results || "" }))}
+                  placeholder="描述用户面临的痛点，如：长期失眠、焦虑情绪反复"
+                  rows={2}
+                  className="border-red-200 dark:border-red-800 bg-transparent"
+                />
+              </div>
+
+              <div className="rounded-lg border-l-4 border-l-amber-400 bg-amber-50/50 dark:bg-amber-950/20 p-3">
+                <Label className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1 block">💡 我们如何帮你</Label>
+                <Textarea
+                  value={aiContent?.solution || ""}
+                  onChange={(e) => setAiContent((prev) => ({ target_audience: prev?.target_audience || "", pain_points: prev?.pain_points || "", solution: e.target.value, expected_results: prev?.expected_results || "" }))}
+                  placeholder="描述解决方案和价值，如：通过科学的情绪管理训练..."
+                  rows={2}
+                  className="border-amber-200 dark:border-amber-800 bg-transparent"
+                />
+              </div>
+
+              <div className="rounded-lg border-l-4 border-l-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 p-3">
+                <Label className="text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-1 block">🌟 你将收获</Label>
+                <Textarea
+                  value={aiContent?.expected_results || ""}
+                  onChange={(e) => setAiContent((prev) => ({ target_audience: prev?.target_audience || "", pain_points: prev?.pain_points || "", solution: prev?.solution || "", expected_results: e.target.value }))}
+                  placeholder="描述预期效果，如：情绪稳定、睡眠改善、自信提升"
+                  rows={2}
+                  className="border-emerald-200 dark:border-emerald-800 bg-transparent"
+                />
+              </div>
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1">
