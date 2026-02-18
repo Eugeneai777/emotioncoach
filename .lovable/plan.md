@@ -1,40 +1,52 @@
 
 
-# 为文案板块添加 AI 润色功能
+# 优化商品详情页文案展示
 
 ## 当前问题
 
-现在每个文案板块（适合谁、痛点、方案、收获）只有"手动编辑"按钮，用户需要自己修改文字。缺少一键让 AI 优化已有文案的功能。
+上架时 `buildDescription()` 用 `### 适合谁` / `### 解决什么问题` 等 markdown 格式拼接四段文案，但商品详情页 `ProductDetailDialog` 只用一个 `<p>` 标签渲染，导致 `###` 等标记原样显示为纯文本，阅读体验很差。
 
 ## 改动方案
 
-### 1. Edge Function: `supabase/functions/ai-generate-bundle/index.ts`
+### 1. `ProductDetailDialog.tsx` -- 结构化渲染商品描述
 
-新增 `type: "polish_copy"` 分支：
+将 description 按 `###` 分段解析，以电商详情页风格分块展示：
 
-- 接收参数：`field`（哪个板块）、`currentText`（当前文案）、`bundleName`、`instruction`（可选的用户润色指令）
-- 调用 AI 对当前文案进行润色优化，保持原意但提升表达力和说服力
-- 返回优化后的文案
+- 解析逻辑：按 `### ` 拆分文案为多个 section，每个 section 提取标题和内容
+- 每个板块配上对应的 emoji 图标（适合谁 -> 🎯，解决什么问题 -> 💢，我们如何帮你 -> 💡，你将收获 -> 🌟）
+- 每个板块用卡片式 UI 展示：带颜色背景的标题栏 + 内容区域
+- 内容区域自动识别 bullet point（以 ✅ 或 • 开头的行），分行展示
+- 普通段落文案正常分段展示
 
-### 2. 前端: `PartnerProductBundles.tsx`
+### 2. 展示效果
 
-在每个文案板块的"编辑"按钮旁边，新增"AI 润色"按钮：
+```text
+┌─────────────────────────┐
+│ 🎯 适合谁               │  <- 带浅色背景的标题
+├─────────────────────────┤
+│ ✅ 35+精英女性           │  <- bullet point 列表
+│ ✅ 家庭支柱              │
+│ ✅ 高压职场人士          │
+└─────────────────────────┘
 
-- 点击后调用 edge function 的 `polish_copy` 模式
-- 显示加载状态（Sparkles 图标旋转）
-- AI 返回后自动替换该板块文案，并切换到预览模式展示效果
-- 用户不满意可以点击"编辑"手动微调，或再次点击"AI 润色"重新生成
+┌─────────────────────────┐
+│ 💢 解决什么问题          │
+├─────────────────────────┤
+│ ✅ 查不出病因的酸痛      │
+│ ✅ 无端生起的焦躁        │
+└─────────────────────────┘
+```
 
 ### 改动范围
 
 | 文件 | 改动 |
 |------|------|
-| `supabase/functions/ai-generate-bundle/index.ts` | 新增 `polish_copy` 分支，调用 AI 润色单个板块文案 |
-| `src/components/admin/industry-partners/PartnerProductBundles.tsx` | 每个文案板块增加"AI 润色"按钮 + 加载状态 |
+| `src/components/store/ProductDetailDialog.tsx` | 新增 description 解析函数，将 `###` 分段渲染为结构化卡片，支持 bullet point 展示 |
 
-### 用户体验
+### 技术细节
 
-1. AI 生成初始文案后，用户可以逐个板块点击"AI 润色"让 AI 进一步优化
-2. 也可以先手动编辑修改方向，再点"AI 润色"让 AI 在此基础上润色
-3. 两种编辑方式（手动 + AI）可以交替使用，直到满意为止
+- 新增 `parseDescription(text)` 函数，按 `###` 拆分为 `{ title, content }[]`
+- 标题映射 emoji 和颜色主题
+- 内容按换行拆分，自动识别 bullet point 行和普通段落
+- 对于不含 `###` 的普通描述，保持原有的 `<p>` 展示（向后兼容）
 
