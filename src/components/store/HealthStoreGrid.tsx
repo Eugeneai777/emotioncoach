@@ -23,6 +23,7 @@ interface Product {
   stock: number;
   sales_count: number;
   partner_id: string | null;
+  detail_images: string[] | null;
 }
 
 export function HealthStoreGrid() {
