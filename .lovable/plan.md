@@ -1,98 +1,89 @@
 
-# 手机号登录双重匹配：占位邮箱 + 原生手机号
+
+# 取消占位邮箱，全面改用原生手机号认证
 
 ## 问题
-批量注册的用户在 `auth.users` 中只有 `phone` 字段、没有占位邮箱，当前登录逻辑仅用占位邮箱匹配，导致这些用户无法登录。
+当前登录和注册仍优先使用占位邮箱 `phone_86xxx@youjin.app`，手机号只是兜底。需要反转优先级：**只用手机号认证**，占位邮箱作为兜底（兼容老用户）。
 
-## 方案
-登录时先用占位邮箱尝试，失败后自动用 Supabase 原生 `phone + password` 方式兜底登录。两种方式任一成功即可。无需新建 edge function，无需数据迁移。
+## 改动
 
-## 改动文件
+### 1. `src/pages/Auth.tsx`
 
-### 1. `src/pages/Auth.tsx`（第 318-330 行）
-
-将：
+**登录（约第 318-335 行）**：反转顺序，优先用 `phone` 登录，失败再用占位邮箱兜底：
 ```typescript
+const phoneWithCode = `${countryCode}${phone}`;
 const { error } = await supabase.auth.signInWithPassword({
-  email: placeholderEmail,
-  password,
-});
-if (error) {
-  if (error.message.includes('Invalid login credentials')) {
-    throw new Error('手机号或密码错误');
-  }
-  throw error;
-}
-```
-
-改为：
-```typescript
-// 先尝试占位邮箱登录
-const { error } = await supabase.auth.signInWithPassword({
-  email: placeholderEmail,
+  phone: phoneWithCode,
   password,
 });
 
 if (error) {
-  // 兜底：尝试原生手机号登录（批量注册用户可能只有 phone 没有占位邮箱）
-  const phoneWithCode = `${countryCode}${phone}`;
-  const { error: phoneError } = await supabase.auth.signInWithPassword({
-    phone: phoneWithCode,
+  // 兜底：老用户可能只有占位邮箱
+  const placeholderEmail = generatePhoneEmail(countryCode, phone);
+  const { error: emailError } = await supabase.auth.signInWithPassword({
+    email: placeholderEmail,
     password,
   });
-  if (phoneError) {
+  if (emailError) {
     throw new Error('手机号或密码错误');
   }
 }
 ```
 
-### 2. `src/components/onboarding/QuickRegisterStep.tsx`（第 430-440 行）
-
-将：
+**注册（约第 368-377 行）**：改用 `phone` 注册：
 ```typescript
-const { data, error } = await supabase.auth.signInWithPassword({
-  email: placeholderEmail,
+const phoneWithCode = `${countryCode}${phone}`;
+const { data, error } = await supabase.auth.signUp({
+  phone: phoneWithCode,
   password,
+  options: {
+    data: { display_name: displayName.trim() },
+  },
 });
-if (error) {
-  if (error.message?.includes('Invalid login credentials')) {
-    throw new Error('手机号或密码错误');
-  }
-  throw error;
-}
-if (!data.user) throw new Error('登录失败');
 ```
 
-改为：
+`placeholderEmail` 变量移到登录兜底逻辑内部按需生成，不再提前生成。
+
+### 2. `src/components/onboarding/QuickRegisterStep.tsx`
+
+**登录（约第 430-450 行）**：同样反转，优先 phone，兜底占位邮箱：
 ```typescript
-// 先尝试占位邮箱登录
+const phoneWithCode = `${countryCode}${phone}`;
 let loginData = null;
 const { data, error } = await supabase.auth.signInWithPassword({
-  email: placeholderEmail,
+  phone: phoneWithCode,
   password,
 });
 
 if (error) {
-  // 兜底：原生手机号登录
-  const phoneWithCode = `${countryCode}${phone}`;
-  const { data: phoneData, error: phoneError } = await supabase.auth.signInWithPassword({
-    phone: phoneWithCode,
+  const placeholderEmail = generatePhoneEmail(countryCode, phone);
+  const { data: emailData, error: emailError } = await supabase.auth.signInWithPassword({
+    email: placeholderEmail,
     password,
   });
-  if (phoneError) {
-    throw new Error('手机号或密码错误');
-  }
-  loginData = phoneData;
+  if (emailError) throw new Error('手机号或密码错误');
+  loginData = emailData;
 } else {
   loginData = data;
 }
-if (!loginData?.user) throw new Error('登录失败');
 ```
 
-后续代码中将 `data.user` 替换为 `loginData.user`。
+**注册（约第 369-376 行）**：改用 `phone` 注册：
+```typescript
+const phoneWithCode = `${countryCode}${phone}`;
+const { data, error } = await supabase.auth.signUp({
+  phone: phoneWithCode,
+  password,
+  options: {
+    data: { display_name: nickname || undefined },
+  },
+});
+```
 
-## 不需要改动的部分
-- 注册逻辑保持使用占位邮箱不变
+### 不变的部分
+- `generatePhoneEmail` 函数保留（兜底仍需要）
 - 邮箱登录模式不变
+- profiles 表写入逻辑不变
+- 手机号查重逻辑不变
 - 批量注册函数不变
-- 无需新建 edge function 或迁移数据
+
