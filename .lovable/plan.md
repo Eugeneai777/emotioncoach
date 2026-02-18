@@ -1,36 +1,87 @@
 
 
-# 优化"恭喜完成训练营"卡片对比度
+# 修复产品组合包与商城商品内容不同步的问题
 
-## 问题
+## 问题根因
 
-页面背景是暖色系渐变（amber/orange），卡片也用了 `from-amber-50/80 to-orange-50/60`，导致卡片和背景融为一体，看不出卡片边界。
+产品组合包的文案数据存在两份：
 
-## 方案
+```text
+组合包定义 (partners.custom_product_packages)
+  └── ai_content: { target_audience, pain_points, solution, expected_results }
+  └── 管理后台编辑/AI润色后会更新
 
-修改 **1 个文件**：`src/components/wealth-camp/GraduateContinueCard.tsx`
+商城商品 (health_store_products.description)
+  └── 纯文本，用 ### 分隔的4个板块
+  └── 仅在首次"上架到商城"时写入，之后不再同步
+```
 
-将卡片背景从低对比度的 amber 渐变改为纯白底 + 更明显的边框和阴影：
+编辑组合包文案后，商城商品仍然显示旧内容，因为没有同步更新已上架商品的 description。
 
-- 背景：`bg-white dark:bg-gray-900` 替代原来的 amber 渐变
-- 边框：`border-amber-300 dark:border-amber-700` 加强边框可见度
-- 阴影：`shadow-md` 替代 `shadow-sm`，增加层次感
-- 保留顶部橙色装饰条作为品牌色标识
+## 修改方案
+
+修改 **1 个文件**：`src/components/admin/industry-partners/PartnerProductBundles.tsx`
+
+### 方案：保存组合包时自动同步已上架商品
+
+在 `handleSave` 函数中，如果该组合包已有 `published_product_id`（说明已上架），则在保存组合包的同时，用最新的 `ai_content` 重新构建 description 并更新对应的商城商品。
 
 ### 技术细节
 
-第 27 行的 Card className 从：
-```
-border border-amber-200/50 dark:border-amber-800/40 shadow-sm overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20
+1. 将 `BundlePublishPreview` 中的 `buildDescription` 和 `normalizeContent` 逻辑提取为共享工具函数，避免重复代码。
+
+2. 在 `handleSave`（约第 222 行）中增加同步逻辑：
+
+```typescript
+const handleSave = async () => {
+  // ... 现有的保存逻辑 ...
+
+  // 如果已上架，同步更新商城商品的 description、名称和价格
+  const existingPublishedId = editingId
+    ? bundles.find(b => b.id === editingId)?.published_product_id
+    : null;
+
+  if (existingPublishedId && aiContent) {
+    const description = buildBundleDescription(aiContent);
+    await supabase
+      .from("health_store_products")
+      .update({
+        product_name: bundleName.trim(),
+        description,
+        price: totalPrice,
+        original_price: Math.round(totalPrice * 1.3),
+      })
+      .eq("id", existingPublishedId);
+  }
+};
 ```
 
-改为：
+3. 提取共享函数 `buildBundleDescription`：
+
+```typescript
+function normalizeContent(text: string): string {
+  if (!text || text.includes('✅') || text.includes('\n')) return text;
+  const sentences = text.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
+  if (sentences.length <= 1) return text;
+  return sentences.map(s => '✅ ' + s).join('\n');
+}
+
+function buildBundleDescription(aiContent: ProductBundle['ai_content']): string {
+  if (!aiContent) return '';
+  const sections = [
+    aiContent.target_audience && '### 适合谁\n' + normalizeContent(aiContent.target_audience),
+    aiContent.pain_points && '### 解决什么问题\n' + normalizeContent(aiContent.pain_points),
+    aiContent.solution && '### 我们如何帮你\n' + normalizeContent(aiContent.solution),
+    aiContent.expected_results && '### 你将收获\n' + normalizeContent(aiContent.expected_results),
+  ].filter(Boolean);
+  return sections.join('\n\n');
+}
 ```
-border border-amber-300 dark:border-amber-700 shadow-md overflow-hidden bg-white dark:bg-gray-900
-```
+
+4. 同时更新 `BundlePublishPreview.tsx` 中的 `buildDescription` 方法，改为调用同一个共享函数，确保格式一致。
 
 ## 效果
 
-- 白色卡片在暖色背景上清晰突出
-- 橙色顶部装饰条保持品牌一致性
-- 暗色模式下同样有足够对比度
+- 编辑组合包文案并保存后，已上架的商城商品会自动同步更新
+- 名称、价格、文案三者保持一致
+- 无需手动下架再重新上架
