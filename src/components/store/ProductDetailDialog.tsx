@@ -27,6 +27,30 @@ interface ProductDetailDialogProps {
   onBuy: (product: Product) => void;
 }
 
+const SECTION_META: Record<string, { icon: string; bg: string }> = {
+  '适合谁': { icon: '🎯', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+  '解决什么问题': { icon: '💢', bg: 'bg-red-50 dark:bg-red-950/30' },
+  '我们如何帮你': { icon: '💡', bg: 'bg-amber-50 dark:bg-amber-950/30' },
+  '你将收获': { icon: '🌟', bg: 'bg-green-50 dark:bg-green-950/30' },
+};
+
+function parseDescription(text: string) {
+  if (!text.includes('###')) return null;
+  const parts = text.split(/^###\s*/m).filter(Boolean);
+  return parts.map(part => {
+    const [firstLine, ...rest] = part.trim().split('\n');
+    const title = firstLine.trim();
+    const content = rest.map(l => l.trim()).filter(Boolean);
+    const meta = Object.entries(SECTION_META).find(([k]) => title.includes(k));
+    return {
+      title,
+      content,
+      icon: meta?.[1].icon ?? '📌',
+      bg: meta?.[1].bg ?? 'bg-muted/50',
+    };
+  });
+}
+
 export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: ProductDetailDialogProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -76,9 +100,32 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
             )}
 
             {/* Description */}
-            {product.description && (
-              <p className="text-sm text-muted-foreground">{product.description}</p>
-            )}
+            {product.description && (() => {
+              const sections = parseDescription(product.description);
+              if (!sections) return <p className="text-sm text-muted-foreground">{product.description}</p>;
+              return (
+                <div className="space-y-2.5">
+                  {sections.map((sec, i) => (
+                    <div key={i} className="rounded-lg overflow-hidden border">
+                      <div className={`px-3 py-1.5 text-sm font-medium ${sec.bg}`}>
+                        {sec.icon} {sec.title}
+                      </div>
+                      <div className="px-3 py-2 space-y-1">
+                        {sec.content.map((line, j) => {
+                          const isBullet = /^[✅•]/.test(line);
+                          return isBullet ? (
+                            <p key={j} className="text-sm text-foreground/80 pl-1">{line}</p>
+                          ) : (
+                            <p key={j} className="text-sm text-muted-foreground">{line}</p>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
 
             {/* Detail images */}
             {detailImages.length > 0 && (
