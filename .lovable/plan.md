@@ -1,73 +1,37 @@
 
 
-# 上架预览优化：电商风格文案编辑 + 简化界面
+# 去除 AI 主图生成，仅保留文案生成
 
-## 问题分析
+## 问题
 
-当前 `BundlePublishPreview` 存在三个问题：
-
-1. **AI 文案不可编辑**：description 是自动拼接的四段文字，上架前无法逐段修改和打磨
-2. **暴露了不该暴露的设置**：售价、原价、分类、库存、标签等字段不应在此编辑（这些属于商品管理的范畴，应使用合理默认值自动填入）
-3. **暴露了产品组合明细**：底部的"包含 X 个产品"列表不应展示给最终用户，发布时也不应写入商品描述
+AI 主图生成（调用 `google/gemini-3-pro-image-preview`）不稳定，经常失败导致整个 AI 生成流程报错。主图生成不是核心需求，文案才是关键。
 
 ## 改动方案
 
-### BundlePublishPreview.tsx（重写）
+### 1. 边缘函数：移除图片生成逻辑
 
-**移除的内容：**
-- 售价、原价、分类、库存、标签的编辑表单
-- "包含 X 个产品"的产品组合列表
-- 左右分栏布局（简化为上下结构）
+**文件：** `supabase/functions/ai-generate-bundle/index.ts`
 
-**保留/新增的内容：**
-- 产品名称编辑 + AI 优化按钮（保留）
-- 卡片预览（保留，实时反映编辑内容）
-- **电商风格文案编辑区**：四个板块（目标人群、痛点、价值方案、预期收获）各自独立的 Textarea，可逐段编辑打磨
-- 文案编辑区使用电商介绍风格的标题（如"适合谁"、"解决什么问题"、"我们如何帮你"、"你将收获"）
-- 确认上架按钮
+- 删除第 254-325 行的整段图片生成代码（imagePrompt 构建、调用 gemini image API、上传 storage）
+- 返回值中 `cover_image_url` 固定为 `null`
+- 保留文案生成和其他模式（optimize_name、suggest_bundle）不变
 
-**自动填入的默认值（不暴露给用户）：**
-- `price` = bundle.total_price
-- `original_price` = Math.round(total_price * 1.3)
-- `category` = "健康套餐"
-- `tags` = ["组合包"]
-- `stock` = -1（无限）
+### 2. 前端：移除主图相关状态和展示
 
-### 文件清单
+**文件：** `src/components/admin/industry-partners/PartnerProductBundles.tsx`
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| `src/components/admin/industry-partners/BundlePublishPreview.tsx` | 重写 | 移除价格/分类/库存/产品列表编辑，增加电商风格文案逐段编辑 |
+- 移除 `coverImageUrl` / `setCoverImageUrl` 状态
+- `handleAIGenerate` 回调中删除 `cover_image_url` 的处理和 toast
+- `handleSave` 中 `cover_image_url` 固定为 `null`
+- 编辑恢复（`handleEdit`）中移除 `setCoverImageUrl`
+- 卡片列表中移除 `bundle.cover_image_url` 的图片展示
 
-### UI 结构
+**文件：** `src/components/admin/industry-partners/BundlePublishPreview.tsx`
 
-```text
-+----------------------------------+
-| 上架到健康商城                     |
-+----------------------------------+
-| [卡片预览 - 模拟真实商城样式]       |
-|  主图 + 名称 + 价格 + 立即购买     |
-+----------------------------------+
-| 产品名称 [输入框] [AI 优化按钮]    |
-|   (名称建议列表)                   |
-+----------------------------------+
-| 商品介绍文案（可编辑）              |
-|                                    |
-| 适合谁                             |
-| [Textarea - 目标人群]              |
-|                                    |
-| 解决什么问题                       |
-| [Textarea - 痛点]                  |
-|                                    |
-| 我们如何帮你                       |
-| [Textarea - 价值方案]              |
-|                                    |
-| 你将收获                           |
-| [Textarea - 预期收获]              |
-+----------------------------------+
-| [确认上架到商城]                   |
-+----------------------------------+
-```
+- 卡片预览中移除主图展示，使用纯色渐变背景替代（与品牌色一致）
+- 上架写入数据库时 `image_url` 和 `detail_images` 设为空或使用默认占位图
 
-description 字段写入数据库时仍拼接为四段格式，但标题改为更电商化的表述。
+### 3. Bundle 类型定义
+
+两个文件中的 `ProductBundle` 接口保留 `cover_image_url` 字段（设为可选 `string | null`），避免破坏已保存数据的兼容性。
 
