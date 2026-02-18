@@ -208,8 +208,9 @@ ${instruction ? `用户要求：${instruction}\n` : ""}
 要求：
 1. 保持原意不变，提升表达力和说服力
 2. 语言温暖专业，面向中国市场
-3. 控制在80-150字
-4. 直接返回优化后的文案文本，不要任何解释或格式包裹`;
+3. **输出格式必须为 4-6 条要点，每条以 ✅ 开头，每条 15-25 字**
+4. 不要写成大段文字，必须分条列出
+5. 直接返回优化后的文案文本，不要任何解释或格式包裹`;
 
       const polishResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -369,7 +370,7 @@ Requirements:
         messages: [
           {
             role: "system",
-            content: "你是一位专业的产品营销专家，擅长为健康与个人成长领域的产品组合包撰写精准的营销文案。文案应该温暖、专业、有说服力，面向中国市场。每个板块控制在80-150字。"
+            content: "你是一位专业的产品营销专家，擅长为健康与个人成长领域的产品组合包撰写精准的营销文案。文案应该温暖、专业、有说服力，面向中国市场。\n\n**重要格式要求**：每个板块必须输出 4-6 条要点，每条以 ✅ 开头，每条控制在 15-25 字。绝对不要写成大段文字，必须分条列出。"
           },
           {
             role: "user",
@@ -385,10 +386,10 @@ Requirements:
               parameters: {
                 type: "object",
                 properties: {
-                  target_audience: { type: "string", description: "目标人群描述，80-150字" },
-                  pain_points: { type: "string", description: "解决的痛点，80-150字" },
-                  solution: { type: "string", description: "如何解决和提供价值，80-150字" },
-                  expected_results: { type: "string", description: "可以看到什么结果和收获，80-150字" },
+                  target_audience: { type: "string", description: "目标人群描述，4-6条要点，每条以✅开头，每条15-25字，用换行符分隔" },
+                  pain_points: { type: "string", description: "解决的痛点，4-6条要点，每条以✅开头，每条15-25字，用换行符分隔" },
+                  solution: { type: "string", description: "如何解决和提供价值，4-6条要点，每条以✅开头，每条15-25字，用换行符分隔" },
+                  expected_results: { type: "string", description: "可以看到什么结果和收获，4-6条要点，每条以✅开头，每条15-25字，用换行符分隔" },
                 },
                 required: ["target_audience", "pain_points", "solution", "expected_results"],
                 additionalProperties: false,
