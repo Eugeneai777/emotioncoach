@@ -48,6 +48,8 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [detailImages, setDetailImages] = useState<string[]>([]);
+  const [detailImageFiles, setDetailImageFiles] = useState<File[]>([]);
 
   // AI smart fill state
   const [aiMode, setAiMode] = useState<"image" | "link">("image");
@@ -89,6 +91,14 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
         imageUrl = await uploadImage(imageFile);
       }
 
+      // Upload new detail images
+      const newDetailUrls: string[] = [];
+      for (const file of detailImageFiles) {
+        const url = await uploadImage(file);
+        newDetailUrls.push(url);
+      }
+      const allDetailImages = [...detailImages, ...newDetailUrls];
+
       const payload: any = {
         partner_id: partnerId,
         product_name: form.product_name.trim(),
@@ -101,6 +111,7 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
         shipping_info: form.shipping_info.trim() || null,
         contact_info: form.contact_info.trim() || null,
         is_available: form.is_available,
+        detail_images: allDetailImages.length > 0 ? allDetailImages : null,
       };
       if (imageUrl) payload.image_url = imageUrl;
 
@@ -147,6 +158,8 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
     setEditingId(null);
     setForm(emptyForm);
     setImageFile(null);
+    setDetailImages([]);
+    setDetailImageFiles([]);
     setAiImageFile(null);
     setAiLink("");
     setAiMode("image");
@@ -168,6 +181,8 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
       is_available: p.is_available ?? true,
     });
     setImageFile(null);
+    setDetailImages(p.detail_images || []);
+    setDetailImageFiles([]);
     setAiImageFile(null);
     setAiLink("");
     setDialogOpen(true);
@@ -178,6 +193,8 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
     setEditingId(null);
     setForm(emptyForm);
     setImageFile(null);
+    setDetailImages([]);
+    setDetailImageFiles([]);
     setAiImageFile(null);
     setAiLink("");
   };
@@ -415,13 +432,75 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
               <Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} placeholder="例如: 有机养生茶" />
             </div>
             <div>
-              <Label>商品图片</Label>
+              <Label>商品主图</Label>
               <div className="mt-1">
+                {/* Preview existing or selected image */}
+                {(imageFile || (editingId && products.find((p: any) => p.id === editingId)?.image_url)) && (
+                  <div className="mb-2 relative w-20 h-20">
+                    <img
+                      src={imageFile ? URL.createObjectURL(imageFile) : products.find((p: any) => p.id === editingId)?.image_url}
+                      alt="主图预览"
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                )}
                 <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-muted/50 text-sm">
                   <ImagePlus className="w-4 h-4" />
-                  {imageFile ? imageFile.name : "选择图片"}
+                  {imageFile ? imageFile.name : "选择主图"}
                   <input type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
                 </label>
+              </div>
+            </div>
+            <div>
+              <Label>详情图片（最多9张）</Label>
+              <div className="mt-1 space-y-2">
+                {/* Preview existing detail images */}
+                {(detailImages.length > 0 || detailImageFiles.length > 0) && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {detailImages.map((url, idx) => (
+                      <div key={`existing-${idx}`} className="relative group aspect-square">
+                        <img src={url} alt={`详情图 ${idx + 1}`} className="w-full h-full object-cover rounded-lg" />
+                        <button
+                          type="button"
+                          onClick={() => setDetailImages(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 p-0.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {detailImageFiles.map((file, idx) => (
+                      <div key={`new-${idx}`} className="relative group aspect-square">
+                        <img src={URL.createObjectURL(file)} alt={`新图 ${idx + 1}`} className="w-full h-full object-cover rounded-lg" />
+                        <button
+                          type="button"
+                          onClick={() => setDetailImageFiles(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 p-0.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(detailImages.length + detailImageFiles.length) < 9 && (
+                  <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-muted/50 text-sm">
+                    <ImagePlus className="w-4 h-4" />
+                    添加详情图（{detailImages.length + detailImageFiles.length}/9）
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={e => {
+                        const files = Array.from(e.target.files || []);
+                        const remaining = 9 - detailImages.length - detailImageFiles.length;
+                        setDetailImageFiles(prev => [...prev, ...files.slice(0, remaining)]);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
