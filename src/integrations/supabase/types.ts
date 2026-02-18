@@ -4497,6 +4497,8 @@ export type Database = {
       }
       health_store_products: {
         Row: {
+          bloom_commission_enabled: boolean
+          bloom_commission_rate: number
           category: string | null
           contact_info: string | null
           created_at: string
@@ -4515,8 +4517,12 @@ export type Database = {
           shipping_info: string | null
           stock: number
           tags: string[] | null
+          youjin_commission_enabled: boolean
+          youjin_commission_rate: number
         }
         Insert: {
+          bloom_commission_enabled?: boolean
+          bloom_commission_rate?: number
           category?: string | null
           contact_info?: string | null
           created_at?: string
@@ -4535,8 +4541,12 @@ export type Database = {
           shipping_info?: string | null
           stock?: number
           tags?: string[] | null
+          youjin_commission_enabled?: boolean
+          youjin_commission_rate?: number
         }
         Update: {
+          bloom_commission_enabled?: boolean
+          bloom_commission_rate?: number
           category?: string | null
           contact_info?: string | null
           created_at?: string
@@ -4555,6 +4565,8 @@ export type Database = {
           shipping_info?: string | null
           stock?: number
           tags?: string[] | null
+          youjin_commission_enabled?: boolean
+          youjin_commission_rate?: number
         }
         Relationships: [
           {

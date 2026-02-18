@@ -26,6 +26,10 @@ interface ProductForm {
   shipping_info: string;
   contact_info: string;
   is_available: boolean;
+  youjin_commission_enabled: boolean;
+  youjin_commission_rate: string;
+  bloom_commission_enabled: boolean;
+  bloom_commission_rate: string;
 }
 
 const emptyForm: ProductForm = {
@@ -39,6 +43,10 @@ const emptyForm: ProductForm = {
   shipping_info: "",
   contact_info: "",
   is_available: true,
+  youjin_commission_enabled: false,
+  youjin_commission_rate: "",
+  bloom_commission_enabled: false,
+  bloom_commission_rate: "",
 };
 
 export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
@@ -112,6 +120,10 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
         contact_info: form.contact_info.trim() || null,
         is_available: form.is_available,
         detail_images: allDetailImages.length > 0 ? allDetailImages : null,
+        youjin_commission_enabled: form.youjin_commission_enabled,
+        youjin_commission_rate: form.youjin_commission_enabled && form.youjin_commission_rate ? parseFloat(form.youjin_commission_rate) / 100 : 0,
+        bloom_commission_enabled: form.bloom_commission_enabled,
+        bloom_commission_rate: form.bloom_commission_enabled && form.bloom_commission_rate ? parseFloat(form.bloom_commission_rate) / 100 : 0,
       };
       if (imageUrl) payload.image_url = imageUrl;
 
@@ -179,6 +191,10 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
       shipping_info: p.shipping_info || "",
       contact_info: p.contact_info || "",
       is_available: p.is_available ?? true,
+      youjin_commission_enabled: p.youjin_commission_enabled ?? false,
+      youjin_commission_rate: p.youjin_commission_rate ? String(Math.round(p.youjin_commission_rate * 100)) : "",
+      bloom_commission_enabled: p.bloom_commission_enabled ?? false,
+      bloom_commission_rate: p.bloom_commission_rate ? String(Math.round(p.bloom_commission_rate * 100)) : "",
     });
     setImageFile(null);
     setDetailImages(p.detail_images || []);
@@ -539,6 +555,57 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
               <Label>联系方式（用于发货联络）</Label>
               <Input value={form.contact_info} onChange={e => setForm(f => ({ ...f, contact_info: e.target.value }))} placeholder="手机号或微信号" />
             </div>
+            {/* 分成设置 */}
+            <div className="rounded-lg border p-3 space-y-3">
+              <p className="text-sm font-medium flex items-center gap-1.5">💰 分成设置</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.youjin_commission_enabled} onCheckedChange={v => setForm(f => ({ ...f, youjin_commission_enabled: v }))} />
+                  <Label className="text-sm">有劲合伙人参与分成</Label>
+                </div>
+                {form.youjin_commission_enabled && (
+                  <div className="ml-14">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={form.youjin_commission_rate}
+                        onChange={e => setForm(f => ({ ...f, youjin_commission_rate: e.target.value }))}
+                        placeholder="10"
+                        className="w-20 h-8 text-sm"
+                      />
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.bloom_commission_enabled} onCheckedChange={v => setForm(f => ({ ...f, bloom_commission_enabled: v }))} />
+                  <Label className="text-sm">绽放合伙人参与分成</Label>
+                </div>
+                {form.bloom_commission_enabled && (
+                  <div className="ml-14">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={form.bloom_commission_rate}
+                        onChange={e => setForm(f => ({ ...f, bloom_commission_rate: e.target.value }))}
+                        placeholder="10"
+                        className="w-20 h-8 text-sm"
+                      />
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <Switch checked={form.is_available} onCheckedChange={v => setForm(f => ({ ...f, is_available: v }))} />
               <Label>上架状态</Label>
