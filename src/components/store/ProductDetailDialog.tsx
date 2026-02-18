@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Truck, X } from "lucide-react";
+import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin } from "lucide-react";
 
 interface Product {
   id: string;
@@ -27,24 +27,26 @@ interface ProductDetailDialogProps {
   onBuy: (product: Product) => void;
 }
 
-const SECTION_META: Record<string, { icon: string; bg: string }> = {
-  '适合谁': { icon: '🎯', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-  '解决什么问题': { icon: '💢', bg: 'bg-red-50 dark:bg-red-950/30' },
-  '我们如何帮你': { icon: '💡', bg: 'bg-amber-50 dark:bg-amber-950/30' },
-  '你将收获': { icon: '🌟', bg: 'bg-green-50 dark:bg-green-950/30' },
+const SECTION_META: Record<string, { icon: ReactNode; bg: string; iconColor: string }> = {
+  '适合谁': { icon: <Target className="w-4 h-4" />, bg: 'bg-blue-50 dark:bg-blue-950/30', iconColor: 'text-blue-600 dark:text-blue-400' },
+  '解决什么问题': { icon: <AlertCircle className="w-4 h-4" />, bg: 'bg-red-50 dark:bg-red-950/30', iconColor: 'text-red-600 dark:text-red-400' },
+  '我们如何帮你': { icon: <Lightbulb className="w-4 h-4" />, bg: 'bg-amber-50 dark:bg-amber-950/30', iconColor: 'text-amber-600 dark:text-amber-400' },
+  '你将收获': { icon: <Star className="w-4 h-4" />, bg: 'bg-green-50 dark:bg-green-950/30', iconColor: 'text-green-600 dark:text-green-400' },
 };
+
+const DEFAULT_SECTION_META = { icon: <Pin className="w-4 h-4" />, bg: 'bg-muted/50', iconColor: 'text-muted-foreground' };
 
 function smartSplitContent(lines: string[]): string[] {
   const result: string[] = [];
   for (const line of lines) {
-    // 已经是要点格式或短文本，保持原样
-    if (/^[✅•]/.test(line) || line.length <= 80) {
+    if (/^[✅•]/.test(line) || line.length <= 30) {
       result.push(line);
     } else {
-      // 长文本按句号拆分
       const sentences = line.split(/[。！？]/).map(s => s.trim()).filter(s => s.length > 0);
       if (sentences.length > 1) {
-        sentences.forEach(s => result.push(s));
+        sentences.forEach(s => result.push(`✅ ${s}`));
+      } else if (line.length > 30) {
+        result.push(`✅ ${line}`);
       } else {
         result.push(line);
       }
@@ -62,11 +64,13 @@ function parseDescription(text: string) {
     const rawContent = rest.map(l => l.trim()).filter(Boolean);
     const content = smartSplitContent(rawContent);
     const meta = Object.entries(SECTION_META).find(([k]) => title.includes(k));
+    const resolved = meta ? meta[1] : DEFAULT_SECTION_META;
     return {
       title,
       content,
-      icon: meta?.[1].icon ?? '📌',
-      bg: meta?.[1].bg ?? 'bg-muted/50',
+      icon: resolved.icon,
+      iconColor: resolved.iconColor,
+      bg: resolved.bg,
     };
   });
 }
@@ -127,8 +131,9 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
                 <div className="space-y-3">
                   {sections.map((sec, i) => (
                     <div key={i} className="rounded-xl overflow-hidden border">
-                      <div className={`px-4 py-2 text-base font-semibold ${sec.bg}`}>
-                        {sec.icon} {sec.title}
+                      <div className={`px-4 py-2 text-base font-semibold flex items-center gap-2 ${sec.bg}`}>
+                        <span className={sec.iconColor}>{sec.icon}</span>
+                        <span>{sec.title}</span>
                       </div>
                       <div className="px-4 py-3 space-y-2">
                         {sec.content.map((line, j) => {
