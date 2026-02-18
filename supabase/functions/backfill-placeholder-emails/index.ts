@@ -16,9 +16,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-    // Auth: require DATA_API_KEY in x-api-key header, or admin user
+    // Auth: require DATA_API_KEY, CRON_SECRET, or admin user
     const apiKey = req.headers.get('x-api-key');
     const dataApiKey = Deno.env.get('DATA_API_KEY');
+    const cronSecret = Deno.env.get('CRON_SECRET');
     const authHeader = req.headers.get('Authorization');
     
     let isAuthorized = false;
@@ -26,6 +27,12 @@ serve(async (req) => {
     // Check DATA_API_KEY
     if (apiKey && dataApiKey && apiKey === dataApiKey) {
       isAuthorized = true;
+    }
+
+    // Check CRON_SECRET via Bearer token
+    if (!isAuthorized && authHeader && cronSecret) {
+      const token = authHeader.replace('Bearer ', '');
+      if (token === cronSecret) isAuthorized = true;
     }
 
     // Check admin auth
