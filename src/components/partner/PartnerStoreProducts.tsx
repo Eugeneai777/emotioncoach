@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, Package, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { Plus, Loader2, Package, Pencil, Trash2, ImagePlus, Sparkles, Link, Image } from "lucide-react";
 import { toast } from "sonner";
 
 interface PartnerStoreProductsProps {
@@ -48,6 +48,12 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // AI smart fill state
+  const [aiMode, setAiMode] = useState<"image" | "link">("image");
+  const [aiLink, setAiLink] = useState("");
+  const [aiImageFile, setAiImageFile] = useState<File | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["partner-store-products", partnerId],
@@ -141,6 +147,9 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
     setEditingId(null);
     setForm(emptyForm);
     setImageFile(null);
+    setAiImageFile(null);
+    setAiLink("");
+    setAiMode("image");
     setDialogOpen(true);
   };
 
@@ -159,6 +168,8 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
       is_available: p.is_available ?? true,
     });
     setImageFile(null);
+    setAiImageFile(null);
+    setAiLink("");
     setDialogOpen(true);
   };
 
@@ -167,6 +178,97 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
     setEditingId(null);
     setForm(emptyForm);
     setImageFile(null);
+    setAiImageFile(null);
+    setAiLink("");
+  };
+
+  // AI smart fill handler
+  const handleAiExtract = async () => {
+    if (aiMode === "image" && !aiImageFile) {
+      toast.error("请先选择商品图片");
+      return;
+    }
+    if (aiMode === "link" && !aiLink.trim()) {
+      toast.error("请输入商品链接");
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      let requestBody: any = {};
+
+      if (aiMode === "image" && aiImageFile) {
+        // Upload image first to get URL
+        const ext = aiImageFile.name.split(".").pop() || "jpg";
+        const path = `store/${partnerId}/ai-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("partner-assets")
+          .upload(path, aiImageFile, { upsert: true });
+        if (uploadErr) throw uploadErr;
+
+        // Generate signed URL for AI to read (bucket is private)
+        const { data: signedData, error: signedErr } = await supabase.storage
+          .from("partner-assets")
+          .createSignedUrl(path, 600);
+        if (signedErr) throw signedErr;
+
+        requestBody.image_url = signedData.signedUrl;
+
+        // Also set the file as the product image
+        const { data: pubData } = supabase.storage
+          .from("partner-assets")
+          .getPublicUrl(path);
+        // Store the path for later use as product image
+        setImageFile(aiImageFile);
+      } else {
+        requestBody.link = aiLink.trim();
+      }
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-extract-product`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (resp.status === 429) {
+        toast.error("AI 服务繁忙，请稍后再试");
+        return;
+      }
+      if (resp.status === 402) {
+        toast.error("AI 额度不足");
+        return;
+      }
+
+      const result = await resp.json();
+      if (!resp.ok || !result.success) {
+        throw new Error(result.error || "AI 识别失败");
+      }
+
+      const d = result.data;
+      setForm(f => ({
+        ...f,
+        product_name: d.product_name || f.product_name,
+        description: d.description || f.description,
+        price: d.price ? String(d.price) : f.price,
+        original_price: d.original_price ? String(d.original_price) : f.original_price,
+        category: d.category || f.category,
+        tags: d.tags?.length ? d.tags.join(", ") : f.tags,
+        shipping_info: d.shipping_info || f.shipping_info,
+      }));
+
+      toast.success("AI 识别完成，已自动填充表单");
+    } catch (err: any) {
+      console.error("AI extract error:", err);
+      toast.error("AI 识别失败: " + (err.message || "未知错误"));
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const canSave = form.product_name.trim() && form.price && parseFloat(form.price) > 0;
@@ -234,6 +336,80 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
             <DialogTitle>{editingId ? "编辑商品" : "上架新商品"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* AI Smart Fill Section - only for new products */}
+            {!editingId && (
+              <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Sparkles className="w-4 h-4" />
+                  AI 智能填充（可选）
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={aiMode === "image" ? "default" : "outline"}
+                    onClick={() => setAiMode("image")}
+                    className="text-xs h-7"
+                  >
+                    <Image className="w-3 h-3 mr-1" />
+                    上传图片
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={aiMode === "link" ? "default" : "outline"}
+                    onClick={() => setAiMode("link")}
+                    className="text-xs h-7"
+                  >
+                    <Link className="w-3 h-3 mr-1" />
+                    粘贴链接
+                  </Button>
+                </div>
+
+                {aiMode === "image" ? (
+                  <div>
+                    <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-muted/50 text-sm bg-background">
+                      <ImagePlus className="w-4 h-4" />
+                      {aiImageFile ? aiImageFile.name : "选择商品图片"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => setAiImageFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <Input
+                    value={aiLink}
+                    onChange={e => setAiLink(e.target.value)}
+                    placeholder="输入商品页面链接，如 https://..."
+                    className="text-sm"
+                  />
+                )}
+
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAiExtract}
+                  disabled={aiLoading || (aiMode === "image" ? !aiImageFile : !aiLink.trim())}
+                  className="w-full"
+                >
+                  {aiLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                      AI 识别中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 mr-1" />
+                      AI 识别
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
             <div>
               <Label>商品名称 *</Label>
               <Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} placeholder="例如: 有机养生茶" />
