@@ -17,6 +17,84 @@ const SYSTEM_PROMPT = `你是专业的社区帖子排版优化助手。请优化
 6. 不要添加标题或额外的内容
 7. 直接返回优化后的文本，不要任何解释或 markdown 格式`;
 
+async function callAI(content: string): Promise<string> {
+  // Try Lovable AI gateway first
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (LOVABLE_API_KEY) {
+    try {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content },
+          ],
+        }),
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        const result = data.choices?.[0]?.message?.content || "";
+        if (result) {
+          console.log("[beautify-post] Lovable AI success");
+          return result;
+        }
+      } else {
+        const errText = await resp.text();
+        console.warn("[beautify-post] Lovable AI failed:", resp.status, errText);
+      }
+    } catch (e) {
+      console.warn("[beautify-post] Lovable AI exception:", e);
+    }
+  }
+
+  // Fallback: OpenAI (proxy or direct)
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  const OPENAI_PROXY_URL = Deno.env.get("OPENAI_PROXY_URL");
+  if (!OPENAI_API_KEY) {
+    throw new Error("AI 服务不可用：未配置备用 API Key");
+  }
+
+  const openaiBase = OPENAI_PROXY_URL
+    ? OPENAI_PROXY_URL.replace(/\/$/, "")
+    : "https://api.openai.com";
+
+  console.log("[beautify-post] Falling back to OpenAI via:", openaiBase);
+
+  const resp = await fetch(`${openaiBase}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content },
+      ],
+    }),
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    console.error("[beautify-post] OpenAI fallback error:", resp.status, errText);
+    if (resp.status === 429) throw new Error("rate_limit");
+    if (resp.status === 402) throw new Error("quota_exceeded");
+    throw new Error("openai_error");
+  }
+
+  const data = await resp.json();
+  const result = data.choices?.[0]?.message?.content || "";
+  console.log("[beautify-post] OpenAI fallback success, length:", result.length);
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -32,57 +110,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("[beautify-post] LOVABLE_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "AI 服务未配置" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     console.log("[beautify-post] Processing content, length:", content.length);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[beautify-post] AI gateway error:", response.status, errorText);
-
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "AI 请求过于频繁，请稍后再试" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI 额度不足，请联系管理员" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ error: "AI 服务暂时不可用" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const data = await response.json();
-    let beautified = data.choices?.[0]?.message?.content || "";
+    let beautified = await callAI(content);
 
     // 清理可能的 markdown 包裹
     beautified = beautified.replace(/^```[\s\S]*?\n/, "").replace(/\n```$/, "").trim();
@@ -95,8 +125,13 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("[beautify-post] Error:", error);
+    const msg = error instanceof Error ? error.message : "未知错误";
+    const userMsg =
+      msg === "rate_limit" ? "AI 请求过于频繁，请稍后再试" :
+      msg === "quota_exceeded" ? "AI 额度不足，请联系管理员" :
+      "AI 服务暂时不可用，请稍后重试";
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "未知错误" }),
+      JSON.stringify({ error: userMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
