@@ -24,12 +24,12 @@ interface GameProgressCardProps {
   streak?: number;
 }
 
-// 觉醒状态定义
+// 觉醒状态定义（高对比度版本，适配白色背景）
 const awakeningStates = [
-  { emoji: '🔴', label: '觉醒起步', minScore: 0, maxScore: 39, color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/50' },
-  { emoji: '🟠', label: '初步觉醒', minScore: 40, maxScore: 59, color: 'text-orange-400', bg: 'bg-orange-500/20 border-orange-500/50' },
-  { emoji: '🟡', label: '稳步觉醒', minScore: 60, maxScore: 79, color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/50' },
-  { emoji: '🟢', label: '高度觉醒', minScore: 80, maxScore: 100, color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/50' },
+  { emoji: '🔴', label: '觉醒起步', minScore: 0, maxScore: 39, color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 border-red-300 dark:bg-red-900/30 dark:border-red-700/50' },
+  { emoji: '🟠', label: '初步觉醒', minScore: 40, maxScore: 59, color: 'text-orange-700 dark:text-orange-400', bg: 'bg-orange-100 border-orange-300 dark:bg-orange-900/30 dark:border-orange-700/50' },
+  { emoji: '🟡', label: '稳步觉醒', minScore: 60, maxScore: 79, color: 'text-amber-800 dark:text-amber-300', bg: 'bg-amber-200 border-amber-400 dark:bg-amber-900/40 dark:border-amber-600/50' },
+  { emoji: '🟢', label: '高度觉醒', minScore: 80, maxScore: 100, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 border-emerald-300 dark:bg-emerald-900/30 dark:border-emerald-700/50' },
 ];
 
 const getAwakeningState = (score: number) => {
@@ -118,7 +118,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
     >
       <Card className={cn(
         cardBaseStyles.container,
-        "bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-yellow-50/30 dark:from-amber-950/30 dark:via-slate-900/50 dark:to-slate-900/80 border border-amber-200/50 dark:border-amber-800/30 overflow-hidden relative"
+        "bg-white/95 dark:bg-gray-900/90 border border-amber-300/70 dark:border-amber-700/50 overflow-hidden relative"
       )}>
         <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
         
@@ -158,7 +158,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                 key={progress.current_awakening}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
-                className={`text-2xl font-bold ${currentState.color}`}
+                className="text-3xl font-black text-amber-900 dark:text-amber-100"
               >
                 {progress.current_awakening}
               </motion.span>
@@ -233,8 +233,9 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
 
           {/* 区块3：等级图标轨道 */}
           <TooltipProvider>
-            <div className="space-y-2">
-              <div className="relative flex justify-between items-center px-1 sm:px-2">
+            <div className="space-y-3">
+              {/* 里程碑图标行 + 进度线 */}
+              <div className="relative flex justify-between items-start px-1 sm:px-2">
                 {awakeningLevels.map((level, index) => {
                   const isActive = currentLevel && level.level <= currentLevel.level;
                   const isCurrent = currentLevel && level.level === currentLevel.level;
@@ -243,7 +244,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                   return (
                     <div 
                       key={level.level} 
-                      className="flex flex-col items-center relative z-10"
+                      className="flex flex-col items-center gap-1 relative z-10"
                       onMouseEnter={() => setHoveredLevel(level.level)}
                       onMouseLeave={() => setHoveredLevel(null)}
                     >
@@ -251,27 +252,27 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                         <TooltipTrigger asChild>
                           <motion.div
                             className={cn(
-                              "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-lg cursor-pointer transition-all duration-200 relative",
+                              "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-base sm:text-xl cursor-pointer transition-all duration-200 relative",
                               isCurrent 
-                                ? 'bg-amber-500 shadow-lg shadow-amber-500/50 ring-2 ring-amber-300' 
+                                ? 'bg-amber-500 shadow-lg shadow-amber-500/40 ring-2 ring-amber-300 dark:ring-amber-600' 
                                 : isActive 
                                   ? 'bg-emerald-500/80' 
-                                  : 'bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/50'
+                                  : 'bg-white border border-amber-200 dark:bg-amber-950/40 dark:border-amber-700/50 hover:border-amber-300'
                             )}
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{ scale: isCurrent ? 1.1 : 1, opacity: 1 }}
                             transition={{ delay: 0.4 + index * 0.08, type: 'spring', stiffness: 300 }}
-                            whileHover={{ scale: 1.2 }}
+                            whileHover={{ scale: 1.15 }}
                           >
-                            {level.icon}
+                            <span className="text-sm sm:text-base">{level.icon}</span>
                             
                             {isActive && !isCurrent && (
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 bg-emerald-500 rounded-full flex items-center justify-center"
+                                className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center"
                               >
-                                <Check className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 text-white" />
+                                <Check className="h-2 w-2 text-white" />
                               </motion.div>
                             )}
                             
@@ -295,30 +296,41 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                         </TooltipContent>
                       </Tooltip>
                       
-                      {isCurrent && (
-                        <motion.div 
-                          className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 mt-0.5 sm:mt-1 font-medium whitespace-nowrap"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.8 }}
-                        >
-                          {level.name}
-                        </motion.div>
-                      )}
+                      {/* 等级名称（简短）*/}
+                      <motion.div
+                        className="flex flex-col items-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 + index * 0.05 }}
+                      >
+                        <span className={cn(
+                          "text-[9px] sm:text-[10px] font-medium whitespace-nowrap leading-tight",
+                          isCurrent 
+                            ? "text-amber-600 dark:text-amber-400 font-bold" 
+                            : isActive
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-muted-foreground"
+                        )}>
+                          {level.name.replace('觉醒', '').replace('情绪', '').replace('财富', '').replace('察', '')}
+                        </span>
+                        <span className="text-[8px] text-muted-foreground/70 leading-tight">
+                          {level.minPoints === 0 ? '0分' : `${level.minPoints}分`}
+                        </span>
+                      </motion.div>
                     </div>
                   );
                 })}
                 
                 {/* 进度条背景 */}
-                <div className="absolute top-3 sm:top-4 left-4 right-4 sm:left-6 sm:right-6 h-0.5 bg-amber-200/70 dark:bg-amber-900/40 -z-0" />
+                <div className="absolute top-[18px] sm:top-5 left-5 right-5 h-0.5 bg-amber-200/70 dark:bg-amber-900/40 -z-0" />
                 
                 {/* 进度条填充 */}
                 <motion.div 
-                  className="absolute top-3 sm:top-4 left-4 sm:left-6 h-0.5 bg-gradient-to-r from-emerald-500 via-amber-400 to-amber-500"
+                  className="absolute top-[18px] sm:top-5 left-5 h-0.5 bg-gradient-to-r from-emerald-500 via-amber-400 to-amber-500"
                   initial={{ width: 0 }}
                   animate={{ width: `${getLevelTrackProgress()}%` }}
                   transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
-                  style={{ maxWidth: 'calc(100% - 2rem)' }}
+                  style={{ maxWidth: 'calc(100% - 2.5rem)' }}
                 />
               </div>
 
@@ -333,6 +345,9 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                   <span className="text-xs text-muted-foreground">
                     距 <span className="text-amber-600 dark:text-amber-400 font-medium">Lv.{nextLevel.level} {nextLevel.name}</span> 还需 
                     <span className="text-amber-600 dark:text-amber-400 font-bold mx-1">{pointsToNext}</span>积分
+                    {nextLevel.unlockCondition && (
+                      <span className="text-muted-foreground/60 ml-1">· {nextLevel.unlockCondition}</span>
+                    )}
                   </span>
                 </motion.div>
               )}
