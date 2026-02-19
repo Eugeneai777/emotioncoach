@@ -77,6 +77,15 @@ export function XiaohongshuShareDialog({
 
   // Server-side generation handler
   const handleServerGenerate = async () => {
+    const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    let loadingToastId: string | number | undefined;
+
+    if (isiOS) {
+      onOpenChange(false);
+      loadingToastId = toast.loading('正在生成图片...');
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }
+
     const blob = await generateServerShareCard({
       healthScore,
       reactionPattern,
@@ -88,11 +97,12 @@ export function XiaohongshuShareDialog({
 
     if (blob) {
       const imageUrl = URL.createObjectURL(blob);
-      onOpenChange(false);
-      // Show preview with the server-generated image
+      if (loadingToastId) toast.dismiss(loadingToastId);
+      if (!isiOS) onOpenChange(false);
       setServerPreviewUrl(imageUrl);
       setShowServerPreview(true);
     } else {
+      if (loadingToastId) toast.dismiss(loadingToastId);
       toast.error('图片生成失败，请重试');
     }
   };
@@ -104,6 +114,9 @@ export function XiaohongshuShareDialog({
     setShowServerPreview(false);
     if (serverPreviewUrl) URL.revokeObjectURL(serverPreviewUrl);
     setServerPreviewUrl(null);
+    document.body.style.overflow = '';
+    document.body.removeAttribute('data-scroll-locked');
+    document.body.style.paddingRight = '';
   };
 
   return (
