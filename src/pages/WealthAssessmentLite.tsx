@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { Button } from "@/components/ui/button";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { LiteIntroCard } from "@/components/wealth-block/LiteIntroCard";
 import { LiteFooter } from "@/components/wealth-block/LiteFooter";
@@ -105,6 +106,26 @@ export default function WealthAssessmentLitePage() {
           deepFollowUpAnswers={deepFollowUpAnswers}
           onRetake={handleRetake}
         />
+      )}
+
+      {/* 固定底部付费按钮 - 未购买时显示 */}
+      {pageState === "result" && !hasPurchased && (
+        <div
+          className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur border-t px-4 py-3 flex items-center justify-between gap-3"
+          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-amber-600">¥9.9</span>
+            <span className="px-1.5 py-0.5 bg-red-500 rounded text-[10px] text-white font-medium animate-pulse">限时</span>
+            <span className="text-xs text-muted-foreground">解锁完整分析报告</span>
+          </div>
+          <Button
+            onClick={() => setShowPayDialog(true)}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-5 h-10 rounded-full shadow-md"
+          >
+            立即解锁
+          </Button>
+        </div>
       )}
       
       {/* 付费弹窗 */}
