@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, Home, Target, Share2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Home, Target, Share2, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +35,116 @@ import { useFavoriteBeliefs } from '@/hooks/useFavoriteBeliefs';
 import { useUserCampMode } from '@/hooks/useUserCampMode';
 import { usePartner } from '@/hooks/usePartner';
 import { useAchievementChecker } from '@/hooks/useAchievementChecker';
+
+// 语音教练卡片（可展开AI洞察）
+function VoiceInsightCard({ entry }: { entry: any }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  const awakening = entry.personal_awakening && typeof entry.personal_awakening === 'object'
+    ? entry.personal_awakening as Record<string, string>
+    : null;
+  const hasInsights = awakening || entry.new_belief || entry.giving_action || entry.behavior_block || entry.emotion_block || entry.belief_block;
+
+  return (
+    <Card className="overflow-hidden border-sky-200/60 dark:border-sky-800/40 bg-gradient-to-br from-sky-50/50 to-blue-50/30 dark:from-sky-950/20 dark:to-blue-950/10">
+      <CardContent className="p-4">
+        {/* Header row */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">🎙️</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-medium">语音梳理</span>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {new Date(entry.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+
+        {/* Block type tags */}
+        {(entry.behavior_type || entry.emotion_type || entry.belief_type) && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {entry.behavior_type && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">🎯 {entry.behavior_type}</span>
+            )}
+            {entry.emotion_type && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300">💭 {entry.emotion_type}</span>
+            )}
+            {entry.belief_type && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">💡 {entry.belief_type}</span>
+            )}
+          </div>
+        )}
+
+        {/* Preview: show one insight line before expand */}
+        {!expanded && awakening?.behavior_awakening && (
+          <p className="text-sm text-foreground line-clamp-1 mb-2">
+            ✨ {awakening.behavior_awakening}
+          </p>
+        )}
+        {!expanded && !awakening && entry.new_belief && (
+          <p className="text-sm text-foreground line-clamp-1 mb-2">🧠 {entry.new_belief}</p>
+        )}
+
+        {/* Expand toggle */}
+        {hasInsights && (
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 mt-1 transition-colors"
+          >
+            {expanded ? (
+              <><ChevronUp className="w-3.5 h-3.5" />收起洞察</>
+            ) : (
+              <><ChevronDown className="w-3.5 h-3.5" />查看AI关键洞察</>
+            )}
+          </button>
+        )}
+
+        {/* Expanded insights */}
+        {expanded && (
+          <div className="mt-3 space-y-2.5 border-t border-sky-100 dark:border-sky-800/50 pt-3">
+            {awakening && (
+              <>
+                {awakening.behavior_awakening && (
+                  <div className="rounded-lg bg-amber-50/80 dark:bg-amber-950/30 p-2.5">
+                    <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-0.5">🎯 行为觉察</p>
+                    <p className="text-sm text-foreground">{awakening.behavior_awakening}</p>
+                  </div>
+                )}
+                {awakening.emotion_awakening && (
+                  <div className="rounded-lg bg-pink-50/80 dark:bg-pink-950/30 p-2.5">
+                    <p className="text-xs font-medium text-pink-700 dark:text-pink-400 mb-0.5">💛 情绪觉察</p>
+                    <p className="text-sm text-foreground">{awakening.emotion_awakening}</p>
+                  </div>
+                )}
+                {awakening.belief_awakening && (
+                  <div className="rounded-lg bg-violet-50/80 dark:bg-violet-950/30 p-2.5">
+                    <p className="text-xs font-medium text-violet-700 dark:text-violet-400 mb-0.5">💡 信念觉察</p>
+                    <p className="text-sm text-foreground">{awakening.belief_awakening}</p>
+                  </div>
+                )}
+              </>
+            )}
+            {entry.new_belief && (
+              <div className="rounded-lg bg-sky-50/80 dark:bg-sky-950/30 p-2.5">
+                <p className="text-xs font-medium text-sky-700 dark:text-sky-400 mb-0.5">🧠 新信念</p>
+                <p className="text-sm text-foreground">{entry.new_belief}</p>
+              </div>
+            )}
+            {entry.giving_action && (
+              <div className="rounded-lg bg-emerald-50/80 dark:bg-emerald-950/30 p-2.5">
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-0.5">🎁 给予行动</p>
+                <p className="text-sm text-foreground">{entry.giving_action}</p>
+              </div>
+            )}
+            {entry.meditation_reflection && (
+              <div className="rounded-lg bg-muted/50 p-2.5">
+                <p className="text-xs font-medium text-muted-foreground mb-0.5">💬 通话备注</p>
+                <p className="text-sm text-muted-foreground">{entry.meditation_reflection}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function WealthCampCheckIn() {
   const { campId: urlCampId } = useParams();
@@ -1058,29 +1168,7 @@ ${reflection}`;
                           <p className="text-xs text-sky-700 dark:text-sky-300">语音对话记录仅供回顾，不计入觉醒指数</p>
                         </div>
                         {voiceEntries.map((entry: any) => (
-                          <Card key={entry.id} className="overflow-hidden border-sky-200/60 dark:border-sky-800/40 bg-gradient-to-br from-sky-50/50 to-blue-50/30 dark:from-sky-950/20 dark:to-blue-950/10">
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-lg">🎙️</span>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-medium">语音梳理</span>
-                                <span className="text-xs text-muted-foreground ml-auto">
-                                  {new Date(entry.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                              {entry.new_belief && (
-                                <p className="text-sm text-foreground mb-1">🧠 {entry.new_belief}</p>
-                              )}
-                              {entry.personal_awakening && typeof entry.personal_awakening === 'string' && (
-                                <p className="text-sm text-foreground mb-1">✨ {entry.personal_awakening}</p>
-                              )}
-                              {entry.giving_action && (
-                                <p className="text-sm text-foreground mb-1">🎁 {entry.giving_action}</p>
-                              )}
-                              {entry.meditation_reflection && (
-                                <p className="text-sm text-muted-foreground line-clamp-2">{entry.meditation_reflection}</p>
-                              )}
-                            </CardContent>
-                          </Card>
+                          <VoiceInsightCard key={entry.id} entry={entry} />
                         ))}
                       </>
                     )}
