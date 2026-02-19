@@ -220,6 +220,29 @@ export function CombinedPersonalityCard({
     { subject: '消费内疚', baseline: EMOTION_FULL - emotionBaseScores.guilt,      current: emotionCurrentScore(emotionBaseScores.guilt),      fullMark: EMOTION_FULL },
   ];
 
+  // 计算情绪层主导维度（baseline 值最低 = 卡点最重 = 觉醒度最低）
+  const emotionDimensions = [
+    { key: 'anxiety',    label: '金钱焦虑', rawScore: emotionBaseScores.anxiety,    emoji: '💰',
+      insight: '你对金钱有较强的焦虑感，这往往源于童年时期的匮乏体验。每次出现金钱焦虑时，试着观察它，而不是抗拒它——觉察本身就是疗愈的开始。',
+      tip: '练习：当焦虑来临时，深呼吸并问自己"我现在是安全的吗？"' },
+    { key: 'scarcity',  label: '匮乏恐惧', rawScore: emotionBaseScores.scarcity,   emoji: '🌱',
+      insight: '匮乏感是一种深层信念，让你总觉得"不够"。这种模式会无意识地阻断财富流入。好消息是：匮乏感是可以被重写的。',
+      tip: '练习：每天写下3件今天已经拥有的事物，培养丰盛感知力。' },
+    { key: 'comparison', label: '比较自卑', rawScore: emotionBaseScores.comparison, emoji: '🌸',
+      insight: '与他人比较是自我价值感低的信号。你的财富旅程是独特的，没有人走的路和你完全相同。把注意力从"比较"转向"成长"。',
+      tip: '练习：每次比较冒出来时，改问"我今天比昨天进步了什么？"' },
+    { key: 'shame',      label: '羞耻厌恶', rawScore: emotionBaseScores.shame,      emoji: '💗',
+      insight: '对金钱的羞耻感往往来自"赚钱是不好的"这类早期信念。这层情绪需要被温柔地接纳，才能逐渐松动。',
+      tip: '练习：对自己说"我允许自己拥有财富，财富是善意流动的能量。"' },
+    { key: 'guilt',      label: '消费内疚', rawScore: emotionBaseScores.guilt,      emoji: '✨',
+      insight: '消费内疚说明你和"享受"之间还有一道墙。真正的财富自由包括能坦然享用你赚到的钱，而不带任何愧疚。',
+      tip: '练习：下次消费后，对自己说"我值得这份好。"' },
+  ];
+  // 找到 rawScore 最高（卡点最重）的维度
+  const dominantEmotionDim = emotionDimensions.reduce((prev, curr) =>
+    curr.rawScore > prev.rawScore ? curr : prev
+  );
+
   // Belief radar - 觉醒度语义（越高越好）
   const BELIEF_FULL = 10;
   const beliefGrowthFactor = (beliefLayer?.currentStars || 0) / 5;
@@ -743,6 +766,20 @@ export function CombinedPersonalityCard({
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
+                    </div>
+
+                    {/* 个性化情绪解读 */}
+                    <div className="p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200/50 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-pink-800 dark:text-pink-300">
+                        <span>{dominantEmotionDim.emoji}</span>
+                        <span>你的主要情绪模式：{dominantEmotionDim.label}</span>
+                      </div>
+                      <p className="text-[11px] text-pink-700 dark:text-pink-400 leading-relaxed">
+                        {dominantEmotionDim.insight}
+                      </p>
+                      <p className="text-[10px] text-pink-600/80 dark:text-pink-300/70 italic">
+                        {dominantEmotionDim.tip}
+                      </p>
                     </div>
 
                     {/* 成长对比 - 统一星级显示 */}
