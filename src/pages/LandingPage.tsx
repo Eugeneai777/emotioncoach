@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, Award, Users, Star } from "lucide-react";
+import { Loader2, Shield, Award, Users, Star, Share2 } from "lucide-react";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Helmet } from "react-helmet";
+import { toast } from "sonner";
 
 interface LandingContent {
   title: string;
@@ -205,7 +206,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative px-6 pb-16 max-w-lg mx-auto space-y-3">
+      <section className="relative px-6 pb-8 max-w-lg mx-auto space-y-3">
         <Button
           className="w-full h-14 text-lg font-bold rounded-xl shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 animate-pulse-slow"
           size="lg"
@@ -217,6 +218,29 @@ export default function LandingPage() {
           <p className="text-xs text-center text-muted-foreground">{content.cta_subtext}</p>
         )}
         <p className="text-xs text-center text-primary/70 font-medium">🔥 限时优惠中，立即行动</p>
+      </section>
+
+      {/* Share Section */}
+      <section className="relative px-6 pb-16 max-w-lg mx-auto">
+        <Button
+          variant="outline"
+          className="w-full h-10 text-sm rounded-xl"
+          onClick={async () => {
+            trackEvent("share");
+            const url = `https://wechat.eugenewe.net/lp/${id}`;
+            if (navigator.share) {
+              try {
+                await navigator.share({ title: content.title, text: content.subtitle, url });
+              } catch {}
+            } else {
+              await navigator.clipboard.writeText(url);
+              toast.success("链接已复制，快去分享吧！");
+            }
+          }}
+        >
+          <Share2 className="w-4 h-4 mr-2" />
+          分享给朋友
+        </Button>
       </section>
 
       {/* Footer */}
