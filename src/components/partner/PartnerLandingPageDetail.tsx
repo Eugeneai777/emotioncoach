@@ -259,14 +259,32 @@ export default function PartnerLandingPageDetail() {
             <RotateCw className="w-3.5 h-3.5" />
             飞轮页
           </Button>
-          <div className={cn(
-            "text-xs px-2 py-0.5 rounded-full font-medium",
-            page.status === "published"
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              : "bg-muted text-muted-foreground"
-          )}>
-            {page.status === "published" ? "已发布" : "草稿"}
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "h-8 text-xs rounded-full font-medium",
+              page.status === "published"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                : "border-muted bg-muted text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+            )}
+            onClick={async () => {
+              const newStatus = page.status === "published" ? "draft" : "published";
+              try {
+                const { error } = await supabase
+                  .from("partner_landing_pages" as any)
+                  .update({ status: newStatus })
+                  .eq("id", id);
+                if (error) throw error;
+                setPage({ ...page, status: newStatus });
+                toast.success(newStatus === "published" ? "已发布" : "已转为草稿");
+              } catch (err: any) {
+                toast.error("状态更新失败: " + (err.message || "未知错误"));
+              }
+            }}
+          >
+            {page.status === "published" ? "已发布 ✓" : "草稿 → 发布"}
+          </Button>
         </div>
 
         {/* Stats Row */}
