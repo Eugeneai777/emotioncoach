@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Copy, ExternalLink, Trash2, Loader2, Pencil, Check, X, Plus, Eye, ShoppingCart, TrendingUp, Megaphone } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Trash2, Loader2, Pencil, Check, X, Plus, Eye, ShoppingCart, TrendingUp, Megaphone, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import { cn } from "@/lib/utils";
@@ -246,6 +246,10 @@ export default function PartnerLandingPageDetail() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-lg font-semibold flex-1 truncate">推广活动详情</h1>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => navigate("/partner")}>
+            <RotateCw className="w-3.5 h-3.5" />
+            飞轮页
+          </Button>
           <div className={cn(
             "text-xs px-2 py-0.5 rounded-full font-medium",
             page.status === "published"
