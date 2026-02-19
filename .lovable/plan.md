@@ -1,75 +1,59 @@
 
 
-# 优化推广活动页面设计 — 运营视角
+## 优化推广活动详情页 — 内容与运营信息分离
 
-## 目标
+### 问题
 
-将推广活动的详情页和列表页从"信息展示"升级为"运营工作台"，突出投放量、数据指标和快捷操作。
+当前内容卡片内嵌了"渠道 · 投放 · 日期"的 Meta 行，但这些是运营信息，不属于内容展示。投放量已经在上方 Stats Row 显示，渠道和日期也不该混在内容区域里。
 
-## 修改内容
+### 方案
 
-### 1. 详情页重构 (`PartnerLandingPageDetail.tsx`)
+**1. 移除内容卡片中的 Meta 行**
 
-**增加数据概览区（Stats Row）**
-在标题和 Meta 行之间插入一行 4 格统计卡片，运营一眼可见关键数据：
+删除 Content Card 中的 Meta Row（渠道/投放/日期那一行），让内容卡片只展示纯内容：标题、副标题、卖点、行动按钮。
+
+**2. 将渠道和日期移到 Stats Row**
+
+把渠道信息整合到顶部 Stats Row 区域，与投放量、观看、购买、转化率并列。调整为 5 格或将渠道显示在 Stats Row 下方的一行小字中。
+
+推荐方案：在 Stats Row 下方增加一行简洁的信息条，显示"渠道：xxx · 创建于 xxxx/x/x"，与 Stats Row 形成运营信息区块，和内容卡片完全分离。
+
+**3. 编辑模式调整**
+
+渠道和投放量的编辑字段从 Content Card 中移出，放到 Stats Row 区域或单独的编辑区域。
+
+### 技术细节
+
+**文件：`src/components/partner/PartnerLandingPageDetail.tsx`**
+
+| 区域 | 改动 |
+|------|------|
+| Meta Row (306-327行) | 删除整个 Meta Row 区块 |
+| Stats Row 下方 | 新增一行：渠道 + 创建日期，非编辑模式显示文本，编辑模式显示输入框 |
+| Content Card | 只保留标题、副标题、卖点、行动按钮 |
+
+最终布局：
 
 ```text
+[返回]  推广活动详情  [已发布]
+
 +----------+----------+----------+----------+
 | 投放量   | 观看     | 购买     | 转化率   |
-| 1000人以下|   12    |    3    |  25.0%   |
 +----------+----------+----------+----------+
+渠道：微信公众号  ·  创建于 2026/2/19
+
++------------------------------------------+
+| 标题                              [编辑] |
+| 副标题                                   |
+|                                          |
+| 卖点                                     |
+| - 卖点1                                  |
+| - 卖点2                                  |
+|                                          |
+| 行动按钮                                 |
+| CTA文案                                  |
++------------------------------------------+
+
+[复制链接]  [预览]
 ```
-
-- 投放量：读取数据库 `volume` 字段（如 "1000人以下"）
-- 观看/购买：从 `conversion_events` 表实时查询
-- 转化率：自动计算 购买/观看
-
-**Meta 行优化**
-- 显示顺序调整为：受众 · 渠道 · 投放量 · 创建日期
-- 编辑模式改为 3 列：受众 / 渠道 / 投放量
-
-**编辑模式支持 volume**
-- 新增 `editVolume` state
-- 保存时同步写入 `volume` 字段
-
-**接口更新**
-- `LandingPageData` 增加 `volume: string | null`
-
-### 2. 列表页优化 (`PartnerLandingPageList.tsx`)
-
-**展示真实投放量**
-- 查询时增加 `volume` 字段
-- "投放"列显示真实 `volume`（如 "1000人以下"），替代硬编码的 0
-- 因 volume 是文本格式（如 "1000人以下"），列宽适当加宽到 w-14
-
-**接口更新**
-- `LandingPage` 增加 `volume: string | null`
-
-### 3. 详情页数据获取
-
-新增 `fetchMetrics` 函数，从 `conversion_events` 中查询当前活动的观看和购买数据，与详情页 Stats Row 绑定。
-
-## 技术细节
-
-```text
-PartnerLandingPageDetail.tsx:
-  - interface: 增加 volume
-  - state: 新增 editVolume, metrics { views, purchases }
-  - fetchMetrics(): 查询 conversion_events where metadata->landing_page_id = id
-  - Stats Row: 4 格 grid，bg-muted/30 圆角卡片
-  - Meta 行: grid-cols-3 编辑布局（受众/渠道/投放量）
-  - saveEditing: update 含 volume
-
-PartnerLandingPageList.tsx:
-  - select 增加 volume
-  - interface 增加 volume
-  - "投放"列: page.volume || "—" 替代 "0"
-```
-
-## 涉及文件
-
-| 文件 | 改动 |
-|------|------|
-| `src/components/partner/PartnerLandingPageDetail.tsx` | 增加 Stats Row、volume 编辑、metrics 查询 |
-| `src/components/partner/PartnerLandingPageList.tsx` | 查询并展示真实 volume |
 
