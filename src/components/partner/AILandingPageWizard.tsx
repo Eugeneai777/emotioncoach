@@ -223,19 +223,20 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
   const fetchManualProducts = useCallback(async () => {
     setManualLoading(true);
     try {
-      const [partnerRes, storeRes] = await Promise.all([
+      const [packagesRes, storeRes] = await Promise.all([
         supabase
-          .from("partner_products" as any)
-          .select("id, product_name, price, description")
+          .from("packages")
+          .select("id, package_name, price, description")
           .eq("is_active", true)
-          .order("created_at", { ascending: false }),
+          .neq("package_key", "custom")
+          .order("display_order"),
         supabase
           .from("health_store_products" as any)
           .select("id, product_name, price, description")
           .eq("is_available", true)
           .order("created_at", { ascending: false }),
       ]);
-      setManualPartnerProducts((partnerRes.data || []) as any[]);
+      setManualPartnerProducts((packagesRes.data || []).map((p: any) => ({ ...p, product_name: p.package_name })));
       setManualStoreProducts((storeRes.data || []) as any[]);
     } catch (err) {
       console.error("Failed to fetch manual products:", err);
