@@ -95,12 +95,15 @@ export function WealthJournalCard({ entry, onClick, sequenceNumber }: WealthJour
             {/* Header */}
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-lg">{isVoice ? '🎙️' : '📖'}</span>
-              <span className="font-medium text-amber-800 dark:text-amber-200">
-                {isVoice ? '语音梳理' : sequenceNumber ? `第 ${sequenceNumber} 天` : `Day ${entry.day_number}`}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}
-              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-semibold text-amber-800 dark:text-amber-200">
+                  {isVoice ? '语音梳理' : sequenceNumber ? `第 ${sequenceNumber} 天` : `Day ${entry.day_number}`}
+                </span>
+                <span className="text-muted-foreground text-xs">·</span>
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}
+                </span>
+              </div>
               {isVoice && (
                 <Badge variant="secondary" className="text-xs bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
                   <Mic className="w-3 h-3 mr-1" />
