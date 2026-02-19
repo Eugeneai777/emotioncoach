@@ -1,29 +1,75 @@
 
 
-# 修复"产品中心"数据源：从 packages 表获取产品
+# 优化推广活动页面设计 — 运营视角
 
-## 问题原因
+## 目标
 
-当前手工配对的"产品中心"查询的是 `partner_products` 表（合伙人自建产品），但用户期望的"产品中心"是 `/packages` 页面中展示的所有套餐，数据来源是 `packages` 表。该表有 20 条活跃产品（尝鲜会员、365会员、各种训练营、合伙人套餐等），而 `partner_products` 表为空。
+将推广活动的详情页和列表页从"信息展示"升级为"运营工作台"，突出投放量、数据指标和快捷操作。
 
-## 修复方案
+## 修改内容
 
-修改 `src/components/partner/AILandingPageWizard.tsx` 中的 `fetchManualProducts` 函数：
+### 1. 详情页重构 (`PartnerLandingPageDetail.tsx`)
 
-1. 将"产品中心"的查询从 `partner_products` 改为 `packages` 表
-2. 查询条件：`is_active = true`，按 `display_order` 排序
-3. 字段映射：使用 `package_name` 作为显示名称
-4. 排除管理员专用套餐（如 `custom`）
+**增加数据概览区（Stats Row）**
+在标题和 Meta 行之间插入一行 4 格统计卡片，运营一眼可见关键数据：
+
+```text
++----------+----------+----------+----------+
+| 投放量   | 观看     | 购买     | 转化率   |
+| 1000人以下|   12    |    3    |  25.0%   |
++----------+----------+----------+----------+
+```
+
+- 投放量：读取数据库 `volume` 字段（如 "1000人以下"）
+- 观看/购买：从 `conversion_events` 表实时查询
+- 转化率：自动计算 购买/观看
+
+**Meta 行优化**
+- 显示顺序调整为：受众 · 渠道 · 投放量 · 创建日期
+- 编辑模式改为 3 列：受众 / 渠道 / 投放量
+
+**编辑模式支持 volume**
+- 新增 `editVolume` state
+- 保存时同步写入 `volume` 字段
+
+**接口更新**
+- `LandingPageData` 增加 `volume: string | null`
+
+### 2. 列表页优化 (`PartnerLandingPageList.tsx`)
+
+**展示真实投放量**
+- 查询时增加 `volume` 字段
+- "投放"列显示真实 `volume`（如 "1000人以下"），替代硬编码的 0
+- 因 volume 是文本格式（如 "1000人以下"），列宽适当加宽到 w-14
+
+**接口更新**
+- `LandingPage` 增加 `volume: string | null`
+
+### 3. 详情页数据获取
+
+新增 `fetchMetrics` 函数，从 `conversion_events` 中查询当前活动的观看和购买数据，与详情页 Stats Row 绑定。
 
 ## 技术细节
 
 ```text
-修改前（查询 partner_products）:
-  supabase.from("partner_products").select("id, product_name, price, description").eq("is_active", true)
+PartnerLandingPageDetail.tsx:
+  - interface: 增加 volume
+  - state: 新增 editVolume, metrics { views, purchases }
+  - fetchMetrics(): 查询 conversion_events where metadata->landing_page_id = id
+  - Stats Row: 4 格 grid，bg-muted/30 圆角卡片
+  - Meta 行: grid-cols-3 编辑布局（受众/渠道/投放量）
+  - saveEditing: update 含 volume
 
-修改后（查询 packages）:
-  supabase.from("packages").select("id, package_name, price, description").eq("is_active", true).neq("package_key", "custom").order("display_order")
+PartnerLandingPageList.tsx:
+  - select 增加 volume
+  - interface 增加 volume
+  - "投放"列: page.volume || "—" 替代 "0"
 ```
 
-渲染时将 `p.product_name` 改为 `p.package_name`，`getSelectedManualProductNames` 同步调整。
+## 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/partner/PartnerLandingPageDetail.tsx` | 增加 Stats Row、volume 编辑、metrics 查询 |
+| `src/components/partner/PartnerLandingPageList.tsx` | 查询并展示真实 volume |
 
