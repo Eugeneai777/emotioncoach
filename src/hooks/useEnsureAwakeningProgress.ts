@@ -108,11 +108,12 @@ export const useEnsureAwakeningProgress = () => {
         const healthScore = Math.round((totalScore / 150) * 100);
         const baselineAwakening = 100 - healthScore;
         
-        // 4. Get journal entries
+        // 4. Get journal entries (exclude voice entries - session_id IS NOT NULL)
         const { data: journalEntries } = await supabase
           .from('wealth_journal_entries')
           .select('behavior_score, emotion_score, belief_score')
           .eq('user_id', user.id)
+          .is('session_id', null)
           .order('day_number', { ascending: false });
         
         // Calculate current awakening

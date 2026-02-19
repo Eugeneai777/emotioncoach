@@ -287,7 +287,31 @@ export default function WealthCampCheckIn() {
     },
   });
 
-  // Merge all briefing sources into a unified list sorted by date
+  // 三类分离：训练营 / 文字教练 / 语音教练
+  const campEntries = useMemo(() =>
+    allJournalEntries.filter((e: any) => e.camp_id && !e.session_id)
+      .sort((a: any, b: any) => b.day_number - a.day_number),
+    [allJournalEntries]
+  );
+  const voiceEntries = useMemo(() =>
+    allJournalEntries.filter((e: any) => !!e.session_id)
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [allJournalEntries]
+  );
+
+  // 训练营按轮次分组（每7天一轮）
+  const campRounds = useMemo(() => {
+    return campEntries.reduce((acc: Record<number, any[]>, entry: any) => {
+      const round = Math.ceil((entry.day_number || 1) / 7);
+      if (!acc[round]) acc[round] = [];
+      acc[round].push(entry);
+      return acc;
+    }, {} as Record<number, any[]>);
+  }, [campEntries]);
+
+  const roundNames: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七' };
+
+  // Merge all briefing sources into a unified list sorted by date (kept for sequence map)
   const mergedBriefings = useMemo(() => {
     const journalItems = allJournalEntries.map((entry: any) => ({
       ...entry,
@@ -908,24 +932,88 @@ ${reflection}`;
                   </div>
                 </div>
                 
-                {mergedBriefings.length === 0 ? (
-                  <div className="text-center py-12 space-y-4">
-                  <div className="text-muted-foreground">
-                      <p>还没有财富简报</p>
-                      <p className="text-sm">完成财富梳理后自动生成</p>
-                    </div>
-                    <Button 
-                      onClick={() => navigate('/wealth-block')}
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                    >
-                      <Target className="w-4 h-4 mr-2" />
-                      开始财富测评
-                    </Button>
-                  </div>
-                ) : (
-                  mergedBriefings.map((item: any) => {
-                    if (item._source === 'coach_briefing') {
-                      return (
+                {/* 三分类 Tab：训练营 / 文字教练 / 语音教练 */}
+                <Tabs defaultValue="camp" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-4">
+                    <TabsTrigger value="camp" className="text-xs">
+                      🏕️ 训练营
+                      {campEntries.length > 0 && (
+                        <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 font-medium">
+                          {campEntries.length}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="text" className="text-xs">
+                      💬 文字教练
+                      {wealthCoachBriefings.length > 0 && (
+                        <span className="ml-1 text-[10px] bg-violet-100 text-violet-700 rounded-full px-1.5 py-0.5 font-medium">
+                          {wealthCoachBriefings.length}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="voice" className="text-xs">
+                      🎙️ 语音教练
+                      {voiceEntries.length > 0 && (
+                        <span className="ml-1 text-[10px] bg-sky-100 text-sky-700 rounded-full px-1.5 py-0.5 font-medium">
+                          {voiceEntries.length}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* 训练营 Tab：按轮次分组，7天一轮 */}
+                  <TabsContent value="camp" className="space-y-4 mt-0">
+                    {campEntries.length === 0 ? (
+                      <div className="text-center py-12 space-y-4">
+                        <p className="text-muted-foreground text-sm">还没有训练营打卡记录</p>
+                        <p className="text-xs text-muted-foreground">完成每日冥想和教练梳理后自动记录</p>
+                      </div>
+                    ) : (
+                      Object.entries(campRounds)
+                        .sort(([a], [b]) => Number(b) - Number(a))
+                        .map(([roundStr, entries]) => {
+                          const round = Number(roundStr);
+                          const startDay = (round - 1) * 7 + 1;
+                          const endDay = round * 7;
+                          return (
+                            <div key={round} className="space-y-2">
+                              <div className="flex items-center gap-2 py-1">
+                                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                                  🏕️ 第{roundNames[round] || round}轮
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  Day {startDay}–{endDay}
+                                </span>
+                                <span className="ml-auto text-xs text-muted-foreground">
+                                  已完成 {(entries as any[]).length} / 7 天
+                                </span>
+                              </div>
+                              {(entries as any[]).map((entry) => {
+                                const dayInRound = ((entry.day_number - 1) % 7) + 1;
+                                return (
+                                  <WealthJournalCard
+                                    key={entry.id}
+                                    entry={entry}
+                                    sequenceNumber={dayInRound}
+                                    onClick={() => navigate(`/wealth-journal/${entry.id}`)}
+                                  />
+                                );
+                              })}
+                            </div>
+                          );
+                        })
+                    )}
+                  </TabsContent>
+
+                  {/* 文字教练 Tab */}
+                  <TabsContent value="text" className="space-y-3 mt-0">
+                    {wealthCoachBriefings.length === 0 ? (
+                      <div className="text-center py-12 space-y-4">
+                        <p className="text-muted-foreground text-sm">还没有文字教练梳理</p>
+                        <p className="text-xs text-muted-foreground">与财富教练对话后自动生成</p>
+                      </div>
+                    ) : (
+                      wealthCoachBriefings.map((item: any) => (
                         <Card key={`cb-${item.id}`} className="overflow-hidden border-violet-200/60 dark:border-violet-800/40 bg-gradient-to-br from-violet-50/50 to-purple-50/30 dark:from-violet-950/20 dark:to-purple-950/10">
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
@@ -952,18 +1040,52 @@ ${reflection}`;
                             )}
                           </CardContent>
                         </Card>
-                      );
-                    }
-                    return (
-                      <WealthJournalCard
-                        key={item.id}
-                        entry={item}
-                        sequenceNumber={journalSequenceMap.get(item.id)}
-                        onClick={() => navigate(`/wealth-journal/${item.id}`)}
-                      />
-                    );
-                  })
-                )}
+                      ))
+                    )}
+                  </TabsContent>
+
+                  {/* 语音教练 Tab */}
+                  <TabsContent value="voice" className="space-y-3 mt-0">
+                    {voiceEntries.length === 0 ? (
+                      <div className="text-center py-12 space-y-4">
+                        <p className="text-muted-foreground text-sm">还没有语音教练记录</p>
+                        <p className="text-xs text-muted-foreground">语音对话结束后自动保存</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800">
+                          <span className="text-sky-500">🔇</span>
+                          <p className="text-xs text-sky-700 dark:text-sky-300">语音对话记录仅供回顾，不计入觉醒指数</p>
+                        </div>
+                        {voiceEntries.map((entry: any) => (
+                          <Card key={entry.id} className="overflow-hidden border-sky-200/60 dark:border-sky-800/40 bg-gradient-to-br from-sky-50/50 to-blue-50/30 dark:from-sky-950/20 dark:to-blue-950/10">
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-lg">🎙️</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-medium">语音梳理</span>
+                                <span className="text-xs text-muted-foreground ml-auto">
+                                  {new Date(entry.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              {entry.new_belief && (
+                                <p className="text-sm text-foreground mb-1">🧠 {entry.new_belief}</p>
+                              )}
+                              {entry.personal_awakening && typeof entry.personal_awakening === 'string' && (
+                                <p className="text-sm text-foreground mb-1">✨ {entry.personal_awakening}</p>
+                              )}
+                              {entry.giving_action && (
+                                <p className="text-sm text-foreground mb-1">🎁 {entry.giving_action}</p>
+                              )}
+                              {entry.meditation_reflection && (
+                                <p className="text-sm text-muted-foreground line-clamp-2">{entry.meditation_reflection}</p>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
           </TabsContent>
