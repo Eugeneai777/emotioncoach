@@ -394,7 +394,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
         content_b: contentB,
         selected_version: selectedVersion,
         ai_conversation: chatMessages,
-        status: "draft",
+        status: "published",
       });
       if (error) throw error;
       toast.success("落地页方案已保存");
