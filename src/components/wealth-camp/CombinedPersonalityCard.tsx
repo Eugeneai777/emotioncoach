@@ -180,32 +180,36 @@ export function CombinedPersonalityCard({
   const beliefLayer = layers.find(l => l.key === 'belief');
 
   // Build radar data with baseline and current for growth animation
+  // Semantic: 觉醒度 = 满分 - 卡点分数（越高越好，实线在外 = 成长）
   const behaviorGrowthFactor = (behaviorLayer?.currentStars || 0) / 5; // 0-1 scale
+  const FOUR_POOR_FULL = 15;
   const fourPoorRadarData = [
-    { subject: '嘴穷', baseline: baseline.mouth_score || 0, current: Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 15 },
-    { subject: '手穷', baseline: baseline.hand_score || 0, current: Math.max(0, (baseline.hand_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '眼穷', baseline: baseline.eye_score || 0, current: Math.max(0, (baseline.eye_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 15 },
-    { subject: '心穷', baseline: baseline.heart_score || 0, current: Math.max(0, (baseline.heart_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '嘴穷', baseline: FOUR_POOR_FULL - (baseline.mouth_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
+    { subject: '手穷', baseline: FOUR_POOR_FULL - (baseline.hand_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.hand_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
+    { subject: '眼穷', baseline: FOUR_POOR_FULL - (baseline.eye_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.eye_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
+    { subject: '心穷', baseline: FOUR_POOR_FULL - (baseline.heart_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.heart_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
   ];
 
-  // Emotion radar - approximate from baseline with growth
+  // Emotion radar - 觉醒度语义（越高越好）
+  const EMOTION_FULL = 10;
   const emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5;
   const emotionRadarData = [
-    { subject: '金钱焦虑', baseline: Math.round((baseline.emotion_score || 25) / 5), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '匮乏恐惧', baseline: Math.round((baseline.emotion_score || 25) / 5), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '比较自卑', baseline: Math.round((baseline.emotion_score || 25) / 6), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '羞耻厌恶', baseline: Math.round((baseline.emotion_score || 25) / 6), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '消费内疚', baseline: Math.round((baseline.emotion_score || 25) / 7), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 7) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '金钱焦虑', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 5), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
+    { subject: '匮乏恐惧', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 5), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
+    { subject: '比较自卑', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 6), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
+    { subject: '羞耻厌恶', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 6), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
+    { subject: '消费内疚', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 7), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 7) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
   ];
 
-  // Belief radar - approximate from baseline with growth
+  // Belief radar - 觉醒度语义（越高越好）
+  const BELIEF_FULL = 10;
   const beliefGrowthFactor = (beliefLayer?.currentStars || 0) / 5;
   const beliefRadarData = [
-    { subject: '匮乏感', baseline: Math.round((baseline.belief_score || 20) / 5), current: Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '线性思维', baseline: Math.round((baseline.belief_score || 20) / 5), current: Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '金钱污名', baseline: Math.round((baseline.belief_score || 20) / 5), current: Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '不配得感', baseline: Math.round((baseline.belief_score || 20) / 6), current: Math.max(0, Math.round((baseline.belief_score || 20) / 6) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
-    { subject: '关系恐惧', baseline: Math.round((baseline.belief_score || 20) / 7), current: Math.max(0, Math.round((baseline.belief_score || 20) / 7) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '匮乏感', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 5), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
+    { subject: '线性思维', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 5), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
+    { subject: '金钱污名', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 5), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
+    { subject: '不配得感', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 6), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 6) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
+    { subject: '关系恐惧', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 7), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 7) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
   ];
 
   const handleViewReport = () => {
@@ -463,7 +467,7 @@ export function CombinedPersonalityCard({
                           <RadarChart cx="50%" cy="50%" outerRadius="75%" data={fourPoorRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 8 }} />
-                            <PolarRadiusAxis angle={90} domain={[0, Math.max(baseline.mouth_score || 0, baseline.hand_score || 0, baseline.eye_score || 0, baseline.heart_score || 0, 5)]} tick={false} axisLine={false} />
+                            <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
                               name="Day 0 基线" 
@@ -492,11 +496,11 @@ export function CombinedPersonalityCard({
                         <div className="flex items-center justify-center gap-3 -mt-2 text-[9px]">
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-0.5 border-t border-dashed border-gray-400" />
-                            <span className="text-muted-foreground">Day 0</span>
+                            <span className="text-muted-foreground">Day 0 起点</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-1.5 bg-amber-500 rounded-sm" />
-                            <span className="text-foreground font-medium">当前</span>
+                            <span className="text-foreground font-medium">当前觉醒度 ↑</span>
                           </div>
                         </div>
                       </div>
@@ -648,7 +652,7 @@ export function CombinedPersonalityCard({
                           <RadarChart cx="50%" cy="50%" outerRadius="75%" data={emotionRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
-                            <PolarRadiusAxis angle={90} domain={[0, Math.max(...emotionRadarData.map(d => d.baseline), 3)]} tick={false} axisLine={false} />
+                            <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
                               name="Day 0 基线" 
@@ -677,11 +681,11 @@ export function CombinedPersonalityCard({
                         <div className="flex items-center justify-center gap-3 -mt-2 text-[9px]">
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-0.5 border-t border-dashed border-gray-400" />
-                            <span className="text-muted-foreground">Day 0</span>
+                            <span className="text-muted-foreground">Day 0 起点</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-1.5 bg-pink-500 rounded-sm" />
-                            <span className="text-foreground font-medium">当前</span>
+                            <span className="text-foreground font-medium">当前觉醒度 ↑</span>
                           </div>
                         </div>
                       </div>
@@ -843,7 +847,7 @@ export function CombinedPersonalityCard({
                           <RadarChart cx="50%" cy="50%" outerRadius="75%" data={beliefRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
-                            <PolarRadiusAxis angle={90} domain={[0, Math.max(...beliefRadarData.map(d => d.baseline), 3)]} tick={false} axisLine={false} />
+                            <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
                               name="Day 0 基线" 
@@ -872,11 +876,11 @@ export function CombinedPersonalityCard({
                         <div className="flex items-center justify-center gap-3 -mt-2 text-[9px]">
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-0.5 border-t border-dashed border-gray-400" />
-                            <span className="text-muted-foreground">Day 0</span>
+                            <span className="text-muted-foreground">Day 0 起点</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-1.5 bg-violet-500 rounded-sm" />
-                            <span className="text-foreground font-medium">当前</span>
+                            <span className="text-foreground font-medium">当前觉醒度 ↑</span>
                           </div>
                         </div>
                       </div>
