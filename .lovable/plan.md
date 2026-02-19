@@ -1,145 +1,110 @@
 
-# GameProgressCard 优化方案
+# 财富人格画像卡片设计优化方案
 
 ## 问题诊断（结合截图）
 
-### 问题 1：分数文字与背景撞色（最严重）
-当前：卡片背景 `from-amber-50/80 to-yellow-50/30`（浅黄色），而分数"78"和等级 badge 均使用 `text-yellow-400`/`bg-yellow-500/20`（黄色系）。
+截图显示卡片有三个明显视觉问题：
 
-结果：**黄色文字在浅黄背景上对比度极低，78分几乎看不清**。
+### 问题 1：内部"财富反应模式"色块过于饱和
+- 当前：`pattern.color` 渲染出一个**深宝蓝/紫蓝满铺渐变块**（截图中大片深紫蓝色区域）
+- 与外层白色卡片形成强烈视觉落差，也与其他卡片（白底+装饰条）的轻量风格不统一
+- 解决方向：改为"浅色调背景 + 彩色左边框"的统一模式，或将内层色块饱和度降低，换成白色文字→深色文字
 
-awakeningStates 配置中：
-- 稳步觉醒（60-79分）：`text-yellow-400`、`bg-yellow-500/20`
-- 这两种颜色在浅黄背景上完全"消失"
+### 问题 2："三层深度分析"面板强制暗黑模式（`dark` class）
+- 当前代码：`<div className="dark rounded-xl border border-border/50 bg-background p-2">`
+- `dark` 类强制内部变为暗黑模式，在浅色页面上形成一个黑色块，风格极度割裂
+- 解决方向：移除 `dark` class，改为与其他卡片一致的浅色面板 `bg-slate-50/60 border-slate-200/50`
 
-### 问题 2：里程碑轨道图标过小且缺乏信息
-- 6个图标 `w-6 h-6 sm:w-8 sm:h-8`，在移动端只有 24px，挤在一行里很拥挤
-- 未完成的等级图标（⭐🌟👑）用 `bg-amber-100` 背景，在浅黄卡片上几乎看不出来
-- 用户无法知道每个里程碑对应什么分数目标/需要什么积分，缺少信息引导
-- 当前等级下方显示 name，但其他等级没有任何标注
-
-### 问题 3：卡片背景与页面背景融合
-页面背景本身也是浅色调，整个卡片"融进"了页面，缺乏视觉边界感。
+### 问题 3：卡片头部与整体风格未完全统一
+- 与 `GameProgressCard` 的头部样式略有差异（字号、间距）
 
 ---
 
-## 优化方案
+## 设计决策：对齐"轻暖质感"统一调性
 
-### 修改一：提高分数区域对比度
+参照已优化的 `GameProgressCard`（白底+amber顶条）和 `AwakeningArchiveTab`（白底+色条），将 `CombinedPersonalityCard` 的内部子块也改为统一的轻量风格。
 
-**核心改变**：将分数"78"从动态颜色（黄色）改为固定高对比度颜色，在浅黄背景上清晰可见。
-
-```tsx
-// 改前：颜色随状态变化，在黄色背景上不可见
-<span className={`text-2xl font-bold ${currentState.color}`}>
-
-// 改后：固定使用深色 foreground，确保对比度，然后在旁边用 badge 展示状态颜色
-<span className="text-3xl font-black text-amber-900 dark:text-amber-100">
-```
-
-同时将状态 badge 的颜色方案调整为更高对比度：
-- 觉醒起步（红）：`bg-red-100 border-red-300 text-red-700`（在黄色背景上红色清晰可见）
-- 初步觉醒（橙）：`bg-orange-100 border-orange-300 text-orange-700`
-- 稳步觉醒（琥珀）：`bg-amber-200 border-amber-400 text-amber-800`（加深到能对比）
-- 高度觉醒（绿）：`bg-emerald-100 border-emerald-300 text-emerald-700`
-
-### 修改二：重新设计里程碑轨道——添加目标分数标注
-
-将当前"6个小图标一行"的极简轨道，改为"图标 + 积分标注"的清晰里程碑样式：
-
-**新布局**（关键改变）：
-- 图标尺寸：`w-9 h-9 sm:w-10 sm:h-10`（适当放大）
-- 图标下方显示等级名称（全部等级，不只是当前等级）
-- 图标下方再加一行积分（如 "100分" "300分"），让用户知道目标
-- 未完成的图标改为 `bg-white/80 border border-amber-200`（白色背景，与卡片浅黄区分）
-- 当前等级用 `ring-2 ring-amber-500 shadow-md` 突出
-
-**具体标注内容**（来自 awakeningLevels 配置）：
-```
-🌱        🌿        🌻        ⭐        🌟        👑
-探索者    学徒      觉醒者    转化者    觉醒师    大师
-0分       100分     300分     700分     1500分    5000分
-```
-
-### 修改三：增强卡片边界感
-
-**当前问题**：`border border-amber-200/50` 颜色太浅，卡片与页面背景融合。
-
-**改法**：
-- 加强边框：`border border-amber-300/70 dark:border-amber-700/50`
-- 或切换背景为更白的底色：`bg-white/95 dark:bg-gray-900/90`（只保留顶部装饰条的颜色标识）
-
-考虑到整体统一方向是"白底+彩色装饰条"，建议将背景改为 `bg-white/95`，彻底解决颜色融合问题，同时分数文字用深色更清晰。
-
-### 修改四：添加"需要X积分"的目标引导文字
-
-当前的 "距 Lv.4 信念转化者 还需 195 积分" 已经是好的设计，但可以增强：
-- 在目标积分旁边加小字说明解锁条件（如 "完成训练营后解锁"）
-- 参考 `unlockCondition` 字段
+### 颜色语言延续
+- **外层卡片**：保持 `bg-white/95` + `indigo` 顶部装饰条（已有）
+- **内层财富反应模式块**：改为**浅色渐变**（如 `from-indigo-50 to-violet-50`）+ 深色文字，降低视觉冲击
+- **三层深度分析面板**：改为浅灰 `bg-slate-50/80 dark:bg-slate-900/40` + `border-slate-200/60`（彻底去除 `dark` class）
 
 ---
 
-## 修改文件与代码变更
+## 具体修改方案
 
-### 唯一修改文件：`src/components/wealth-camp/GameProgressCard.tsx`
+### 修改一：财富反应模式色块降饱和度
 
-**改动 1**：`awakeningStates` 颜色配置（约第29-33行）
+**当前**（约第252-255行）：
 ```tsx
-// 改前（低对比度，在黄色背景上不可见）
-{ emoji: '🟡', label: '稳步觉醒', ..., color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/50' }
-
-// 改后（高对比度）
-{ emoji: '🟡', label: '稳步觉醒', ..., color: 'text-amber-800 dark:text-amber-200', bg: 'bg-amber-200/80 border-amber-400' }
+<div className={cn("rounded-xl overflow-hidden", pattern.color)}>
+  <div className="bg-gradient-to-br p-3 text-white">
 ```
 
-**改动 2**：分数数字样式（约第157-164行）
-```tsx
-// 改前
-<span className={`text-2xl font-bold ${currentState.color}`}>{progress.current_awakening}</span>
+**改为**：将内层块改为"浅色左边框"卡片风格。保留 `pattern.color` 中的色相，但转为浅色背景版本。
 
-// 改后：固定深色，更大，更突出
-<span className="text-3xl font-black text-amber-900 dark:text-amber-100">{progress.current_awakening}</span>
+核心改动：
+- 外层容器：改为 `bg-white dark:bg-gray-900/60 rounded-xl border-l-4 border-indigo-400`（移除深色满铺）
+- 内部文字：从 `text-white` 改为 `text-foreground`（或 `text-indigo-900 dark:text-indigo-100`）
+- 模式 emoji 背景：从 `bg-white/20` 改为 `bg-indigo-100 dark:bg-indigo-900/40`
+- "📌 这不是性格" 说明区：从 `bg-white/15` 改为 `bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100`
+- 进度条底层：从 `bg-white/20` 改为 `bg-indigo-100 dark:bg-indigo-900/40`
+- 进度条填充：从 `from-white/60 to-white` 改为 `from-indigo-400 to-violet-500`（彩色进度条，更清晰）
+- milestone 标记点：从白色 `bg-white border-white` 改为 `bg-indigo-500 border-white` 
+- 动态激励文字区：从 `bg-white/10` 改为 `bg-indigo-100/80 dark:bg-indigo-950/40`
+- 状态标签 pill：从 `bg-white/20 text-white/95` 改为 `bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300`
+
+由于 `pattern.color` 有多种颜色（蓝、橙、红、绿），这里采用**通用方案**（用 `indigo` 色），而不是跟随 pattern 动态改变，从而确保卡片在所有状态下视觉统一。
+
+### 修改二：移除三层深度分析的强制暗黑模式
+
+**当前**（约第403行）：
+```tsx
+<div className="dark rounded-xl border border-border/50 bg-background p-2">
 ```
 
-**改动 3**：卡片背景改为白底（约第119-122行）
+**改为**：
 ```tsx
-// 改前
-"bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-yellow-50/30 ..."
-
-// 改后
-"bg-white/95 dark:bg-gray-900/90 border border-amber-200/60 dark:border-amber-800/40 ..."
+<div className="rounded-xl border border-slate-200/70 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-900/40 p-2">
 ```
 
-**改动 4**：里程碑轨道重写（约第237-323行）
-- 图标改为 `w-9 h-9`
-- 未完成的图标背景改为 `bg-white border border-amber-200`（而非 `bg-amber-100`）
-- 每个图标下方：当前等级显示 name（橙色加粗），其他等级显示简短名称（灰色小字）
-- 每个图标下方再加积分标注（如 "0积分" "100积分"），用极小文字 `text-[9px]`
+这一个改动就能解决截图中最大的视觉割裂：去掉 `dark` class，整个三层分析区域将从黑色变为浅灰白色，与外部页面统一。
+
+分隔线标题文字也同步更新：
+```tsx
+<span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">三层深度分析</span>
+```
+
+### 修改三：转化进度标题色改为深色（可读性）
+
+将 `text-white/80` 改为 `text-indigo-700 dark:text-indigo-300`，确保在浅色背景上清晰可读。
 
 ---
 
-## 视觉效果预览
+## 修改文件清单
+
+| 文件 | 修改内容 | 改动量 |
+|------|---------|--------|
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 财富反应模式块浅色化 + 移除三层面板的 `dark` class | ~30行 |
+
+**不涉及任何数据逻辑、hooks或图表逻辑的修改**，只修改外层 className。
+
+---
+
+## 改前 vs 改后对比
 
 **改前**：
 ```
-[黄色背景卡片]
-[🟡 稳步觉醒]  黄色"78"分（几乎看不见）
-[浅黄7天目标区]
-[6个微小图标，挤在一行，缺信息]
+[白色卡片头部，indigo顶条]
+[深宝蓝满铺色块（财富反应模式）]   ← 视觉冲击
+[纯黑暗色面板（三层深度分析）]     ← 风格割裂
 ```
 
 **改后**：
 ```
-[琥珀顶部装饰条]
-[白色背景卡片，清晰边界]
-[🟡 稳步觉醒（深琥珀badge）]  黑色粗体"78"分（清晰醒目）  +33成长
-[浅黄7天目标区，已达成进度条]
-[较大图标轨道]
-  🌱    🌿   🌻🔆   ⭐    🌟    👑
- 探索者 学徒 觉醒者 转化者 觉醒师 大师
- 0积分 100  300   700  1500  5000
- ✓     ✓   当前
-[距 Lv.4 信念转化者 还需 195 积分 · 完成训练营后解锁]
+[白色卡片头部，indigo顶条]
+[白底+indigo左边框（财富反应模式）]  ← 轻量统一
+[浅灰白面板（三层深度分析）]         ← 浑然一体
 ```
 
-总改动约 **50-60行**，全部在 `GameProgressCard.tsx` 内，不涉及其他文件。
+整体改动量约 **30行**，完全保留所有数据、图表、手风琴交互逻辑。
