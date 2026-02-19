@@ -5684,6 +5684,7 @@ export type Database = {
           matched_product: string | null
           pain_points: string[] | null
           partner_id: string
+          published_at: string | null
           selected_version: string | null
           status: string
           target_audience: string | null
@@ -5703,6 +5704,7 @@ export type Database = {
           matched_product?: string | null
           pain_points?: string[] | null
           partner_id: string
+          published_at?: string | null
           selected_version?: string | null
           status?: string
           target_audience?: string | null
@@ -5722,6 +5724,7 @@ export type Database = {
           matched_product?: string | null
           pain_points?: string[] | null
           partner_id?: string
+          published_at?: string | null
           selected_version?: string | null
           status?: string
           target_audience?: string | null

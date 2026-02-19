@@ -21,6 +21,7 @@ interface LandingPage {
   channel: string | null;
   status: string;
   created_at: string;
+  published_at: string | null;
   volume: string | null;
 }
 
@@ -41,7 +42,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
     try {
       const { data, error } = await supabase
         .from("partner_landing_pages" as any)
-        .select("id, target_audience, selected_version, content_a, content_b, channel, status, created_at, volume")
+        .select("id, target_audience, selected_version, content_a, content_b, channel, status, created_at, published_at, volume")
         .eq("partner_id", partnerId)
         .eq("level", level)
         .order("created_at", { ascending: false });
@@ -153,7 +154,8 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
         const m = metrics[page.id] || { views: 0, purchases: 0 };
         const d = new Date(page.created_at);
         const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
-        const daysSince = page.status === "published" ? Math.max(1, Math.floor((Date.now() - d.getTime()) / 86400000)) : 0;
+        const publishDate = page.published_at ? new Date(page.published_at) : null;
+        const daysSince = page.status === "published" && publishDate ? Math.max(1, Math.floor((Date.now() - publishDate.getTime()) / 86400000)) : 0;
         return (
           <div
             key={page.id}
