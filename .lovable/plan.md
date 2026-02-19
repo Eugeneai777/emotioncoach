@@ -1,219 +1,134 @@
 
-# 觉醒简报分类重构：训练营 / 文字教练 / 语音教练
+# 训练营简报：按完成顺序显示（不依赖日历天数）
 
-## 当前问题
+## 问题分析
 
-觉醒简报页面将所有内容混合显示在一个时间线里，用户无法区分：
-- 训练营打卡（7天一轮）
-- 文字教练梳理（4问深度对话）
-- 语音教练通话（不应计入觉醒分）
-
-## 数据层分析（已确认）
-
-通过数据库查询确认当前实际数据分布：
-
-```text
-camp_id=null, session_id=null  → 12条（文字教练简报来源的日记）
-camp_id=null, session_id=有值  →  1条（语音教练 → journal entry）
-camp_id=有值, session_id=null  → 21条（训练营打卡）
-```
-
-三类来源识别规则（仅靠现有字段，无需改表）：
-
-| 分类 | 来源表 | 识别条件 |
-|------|--------|----------|
-| 训练营 | `wealth_journal_entries` | `camp_id IS NOT NULL` + `session_id IS NULL` |
-| 文字教练 | `wealth_coach_4_questions_briefings` | 独立表，所有记录 |
-| 语音教练 | `wealth_journal_entries` | `session_id IS NOT NULL` |
-
-## 觉醒分计算规则变更
-
-语音教练对话（`session_id IS NOT NULL`）**不计入觉醒分**。
-
-- 现有 `useEnsureAwakeningProgress.ts` 中第 112-131 行查询 `wealth_journal_entries` 来计算当前觉醒指数时，需要过滤掉 `session_id IS NOT NULL` 的记录
-- 现有 `useWealthJournalEntries.ts` 的 `awakeningIndex` 计算同样需要过滤语音条目
-- 文字教练简报（`wealth_coach_4_questions_briefings`）目前**不参与觉醒分计算**，维持现状不变（觉醒分仅由训练营打卡条目驱动）
-
-## 训练营轮次显示
-
-训练营每7天为一轮。`useUserCampMode` 已计算 `cycleRound` 和 `cycleDayInRound`，但觉醒简报页面没有用到这个逻辑来分组显示。
-
-方案：按 `day_number` 分轮：
-- 第1轮：Day 1–7
-- 第2轮：Day 8–14（显示为"第二轮 第1天"）
-- 第3轮：Day 15–21
-
-计算公式：
+### 当前逻辑（错误）
+训练营 Tab 使用 `entry.day_number` 来计算轮次和轮内天数：
 ```typescript
-const round = Math.ceil(entry.day_number / 7); // 第几轮
-const dayInRound = ((entry.day_number - 1) % 7) + 1; // 本轮第几天
+const round = Math.ceil((entry.day_number || 1) / 7);  // 按日历天数算轮次
+const dayInRound = ((entry.day_number - 1) % 7) + 1;    // 按日历天数算轮内第几天
 ```
+`day_number` 是**日历天数**（训练营开始第几天），而不是完成次数。用户第1天完成→Day 1，3天后再完成→Day 4，导致显示"第4天"而非"第2天"。
 
-## UI 重构方案
+### 正确逻辑（用户期望）
+按**完成顺序**来编号：
+- 第1次完成 → 第一轮·第1天
+- 第2次完成 → 第一轮·第2天
+- 第8次完成 → 第二轮·第1天（不管间隔多少天）
 
-将觉醒简报内容区替换为三个子 Tab：
+代码中已有 `journalSequenceMap`（`id → 所有 journal 完成顺序`），但它包含语音条目、非训练营条目。需要专门为训练营条目建立一个 `campSequenceMap`。
 
-```
-╔══════════════════════════════════════════╗
-║           觉醒简报                        ║
-╠══════════════════════════════════════════╣
-║  [ 训练营 ]  [ 文字教练 ]  [ 语音教练 ]   ║
-╠══════════════════════════════════════════╣
-║                                          ║
-║  训练营 Tab:                             ║
-║  ┌──────────────────────────────────┐   ║
-║  │ 🏕️ 第一轮                        │   ║
-║  │  Day 1 → Day 7                   │   ║
-║  ├──────────────────────────────────┤   ║
-║  │  第7天 · 3月18日  ⭐⭐⭐⭐        │   ║
-║  │  第6天 · 3月17日  ⭐⭐⭐          │   ║
-║  │  ...                             │   ║
-║  └──────────────────────────────────┘   ║
-║  ┌──────────────────────────────────┐   ║
-║  │ 🏕️ 第二轮（第1天完成）            │   ║
-║  │  Day 8 → Day 14                  │   ║
-║  └──────────────────────────────────┘   ║
-║                                          ║
-║  文字教练 Tab:                           ║
-║  ┌──────────────────────────────────┐   ║
-║  │ 💬 教练对话  3月15日 14:30        │   ║
-║  │ 🎯 行为洞察：...                 │   ║
-║  │ 💛 情绪洞察：...                 │   ║
-║  │ 💡 信念洞察：...                 │   ║
-║  └──────────────────────────────────┘   ║
-║                                          ║
-║  语音教练 Tab:                           ║
-║  ┌──────────────────────────────────┐   ║
-║  │ 🎙️ 语音梳理  3月14日 20:15       │   ║
-║  │ 暂无评分  (不计入觉醒指数)        │   ║
-║  │ 🧠 信念：...                     │   ║
-║  └──────────────────────────────────┘   ║
-╚══════════════════════════════════════════╝
-```
+## 修改方案
 
-## 技术实现清单
+### 唯一需要修改的文件：`src/pages/WealthCampCheckIn.tsx`
 
-### 文件变更
+#### 第一步：新增 `campSequenceMap`（行 412 附近，替换现有 `campRounds`）
 
-| 文件 | 操作 | 内容 |
-|------|------|------|
-| `src/pages/WealthCampCheckIn.tsx` | 修改 | 简报 Tab 内容改为三子 Tab；调整 `mergedBriefings` 分三类 |
-| `src/hooks/useEnsureAwakeningProgress.ts` | 修改 | 过滤语音条目（`session_id IS NOT NULL`）不参与觉醒分计算 |
-| `src/hooks/useWealthJournalEntries.ts` | 修改 | 过滤语音条目不参与 `awakeningIndex` 计算 |
-
-### WealthCampCheckIn.tsx 关键改动
-
-**数据分层：**
 ```typescript
-// 三类分开
-const campEntries = allJournalEntries.filter(
-  e => e.camp_id && !e.session_id // 训练营打卡
-);
-const voiceEntries = allJournalEntries.filter(
-  e => !!e.session_id // 语音教练
-);
-// wealthCoachBriefings → 文字教练（已有）
-
-// 训练营按轮次分组
-const campRounds = campEntries.reduce((acc, entry) => {
-  const round = Math.ceil(entry.day_number / 7);
-  if (!acc[round]) acc[round] = [];
-  acc[round].push(entry);
-  return acc;
-}, {} as Record<number, typeof campEntries>);
+// 训练营条目：按完成时间升序排列，建立序号映射
+const campSequenceMap = useMemo(() => {
+  const sorted = [...campEntries].sort(
+    (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  const map = new Map<string, number>();
+  sorted.forEach((entry: any, index: number) => {
+    map.set(entry.id, index + 1); // 1-based sequence
+  });
+  return map;
+}, [campEntries]);
 ```
 
-**三子 Tab 渲染：**
+#### 第二步：修改 `campRounds`，按序号分组而非 `day_number`
+
+```typescript
+// 训练营按轮次分组（每7次完成一轮，而非日历7天）
+const campRounds = useMemo(() => {
+  return campEntries.reduce((acc: Record<number, any[]>, entry: any) => {
+    const seq = campSequenceMap.get(entry.id) || 1;
+    const round = Math.ceil(seq / 7);
+    if (!acc[round]) acc[round] = [];
+    acc[round].push(entry);
+    return acc;
+  }, {} as Record<number, any[]>);
+}, [campEntries, campSequenceMap]);
+```
+
+#### 第三步：修改渲染逻辑，用序号替代 `day_number`（行 1101-1110）
+
+当前：
 ```tsx
-<Tabs defaultValue="camp">
-  <TabsList className="grid grid-cols-3">
-    <TabsTrigger value="camp">
-      🏕️ 训练营
-      {campEntries.length > 0 && <Badge>{campEntries.length}</Badge>}
-    </TabsTrigger>
-    <TabsTrigger value="text">
-      💬 文字教练
-      {wealthCoachBriefings.length > 0 && <Badge>{wealthCoachBriefings.length}</Badge>}
-    </TabsTrigger>
-    <TabsTrigger value="voice">
-      🎙️ 语音教练
-      {voiceEntries.length > 0 && <Badge>{voiceEntries.length}</Badge>}
-    </TabsTrigger>
-  </TabsList>
-
-  {/* 训练营 Tab：按轮次分组 */}
-  <TabsContent value="camp">
-    {Object.entries(campRounds).reverse().map(([round, entries]) => (
-      <div key={round}>
-        <div className="轮次标题">
-          🏕️ 第{roundNames[round]}轮  Day {(round-1)*7+1}–{round*7}
-        </div>
-        {entries
-          .sort((a, b) => b.day_number - a.day_number)
-          .map(entry => (
-            <WealthJournalCard
-              key={entry.id}
-              entry={entry}
-              dayLabel={`第 ${((entry.day_number - 1) % 7) + 1} 天`}
-              roundLabel={round > 1 ? `第${roundNames[round]}轮` : undefined}
-            />
-          ))
-        }
-      </div>
-    ))}
-  </TabsContent>
-
-  {/* 文字教练 Tab：现有 coach_briefing 渲染逻辑 */}
-  <TabsContent value="text">
-    {wealthCoachBriefings 渲染...}
-  </TabsContent>
-
-  {/* 语音教练 Tab：带"不计入觉醒指数"提示 */}
-  <TabsContent value="voice">
-    {voiceEntries 渲染，带不计入说明...}
-  </TabsContent>
-</Tabs>
+{(entries as any[]).map((entry) => {
+  const dayInRound = ((entry.day_number - 1) % 7) + 1;  // 旧：日历天数
+  return (
+    <WealthJournalCard
+      key={entry.id}
+      entry={entry}
+      sequenceNumber={dayInRound}
+      onClick={...}
+    />
+  );
+})}
 ```
 
-### useEnsureAwakeningProgress.ts 关键改动
-
-在第 112 行查询时加过滤条件：
-```typescript
-const { data: journalEntries } = await supabase
-  .from('wealth_journal_entries')
-  .select('behavior_score, emotion_score, belief_score, session_id')
-  .eq('user_id', user.id)
-  .is('session_id', null)  // ← 新增：排除语音条目
-  .order('day_number', { ascending: false });
+改为：
+```tsx
+{(entries as any[])
+  .sort((a: any, b: any) => {
+    const seqA = campSequenceMap.get(a.id) || 0;
+    const seqB = campSequenceMap.get(b.id) || 0;
+    return seqB - seqA; // 最新的在前
+  })
+  .map((entry) => {
+    const seq = campSequenceMap.get(entry.id) || 1;
+    const dayInRound = ((seq - 1) % 7) + 1;  // 新：基于完成序号
+    return (
+      <WealthJournalCard
+        key={entry.id}
+        entry={entry}
+        sequenceNumber={dayInRound}
+        onClick={...}
+      />
+    );
+  })}
 ```
 
-### useWealthJournalEntries.ts 关键改动
+#### 第四步：轮次标题也显示"已完成 N 天"，不再显示 Day X-Y 日历范围
 
-在 `awakeningIndex` 计算的 `useMemo` 中过滤掉语音条目：
-```typescript
-const { awakeningIndex, peakIndex, currentAvg } = useMemo(() => {
-  if (!entries || entries.length === 0) return { ... };
-  
-  // 过滤掉语音条目
-  const scorableEntries = entries.filter(e => !e.session_id);
-  
-  const dailyScores = scorableEntries
-    .filter(e => (e.behavior_score || 0) > 0 || ...)
-    .map(e => { ... });
-  ...
-}, [entries]);
+当前标题：`Day {startDay}–{endDay}`（日历范围，用户看不懂）
+
+改为：`第{roundNames[round]}轮 · {entries.length} / 7 天已完成`
+
+```tsx
+<div className="flex items-center gap-2 py-1">
+  <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+    🏕️ 第{roundNames[round] || round}轮
+  </span>
+  <span className="ml-auto text-xs text-muted-foreground">
+    已完成 {(entries as any[]).length} / 7 天
+  </span>
+</div>
 ```
+
+去掉 `Day {startDay}–{endDay}` 的子标题，因为用日历范围表达"进度"反而让用户困惑。
+
+## 数据示例
+
+| 完成时间 | day_number（DB存储）| campSequence | 显示 |
+|---------|---------------------|--------------|------|
+| 2月1日  | 1                   | 1            | 第一轮·第1天 |
+| 2月4日  | 4（跳过2,3天）      | 2            | 第一轮·第2天 |
+| 2月10日 | 10                  | 3            | 第一轮·第3天 |
+| ...     | ...                 | ...          | ... |
+| 第8次完成 | 任意              | 8            | 第二轮·第1天 |
+
+## 技术要点
+
+- **无需修改数据库**：`day_number` 继续保留日历天数，只是前端显示逻辑改为按 `created_at` 顺序
+- **只需修改 `WealthCampCheckIn.tsx` 中的3处**：新增 `campSequenceMap`，修改 `campRounds` 依赖，修改渲染中的 `dayInRound` 计算和标题
+- `campEntries` 筛选条件（`camp_id && !session_id`）保持不变
+- `WealthJournalCard` 接收 `sequenceNumber` prop，显示"第 N 天"，这个 prop 传入值从日历天改为完成序号即可
 
 ## 修改范围
 
-- **3个文件**，无需数据库变更，无需新建组件
-- 利用现有 `WealthJournalCard` 显示训练营和语音条目
-- 训练营轮次分组逻辑完全在前端基于 `day_number` 计算
-- 觉醒分过滤是轻量 SQL 条件补充（`.is('session_id', null)`）
-
-## 效果
-
-用户进入"觉醒简报"后：
-1. **训练营 Tab**：看到按轮次（第一轮Day1-7、第二轮Day1-7...）分组的打卡历史，清晰体现成长轨迹
-2. **文字教练 Tab**：看到深度梳理的4问简报，每条显示行为/情绪/信念洞察
-3. **语音教练 Tab**：看到语音通话记录，配有"🔇 不计入觉醒指数"提示，让用户理解评分规则
+只修改 **1个文件**，**3处代码**，约30行改动，无数据库变更。
