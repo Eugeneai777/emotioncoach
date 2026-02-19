@@ -1,115 +1,116 @@
 
-# Fix: Invisible Text in Three Dominant Block Cards
+# 修复：仅修改财富画像卡片的雷达图数据语义
 
-## Root Cause (Confirmed)
+## 范围澄清
 
-In `src/components/wealth-block/wealthBlockData.ts`, the `.color` property for all dominant block types stores Tailwind gradient stop classes:
-
-- `fourPoorInfo.eye.color = "from-blue-500 to-cyan-500"`
-- `emotionBlockInfo.anxiety.color = "from-orange-500 to-amber-500"`
-- etc.
-
-In `CombinedPersonalityCard.tsx`, these are applied as:
-```tsx
-<div className={cn("p-3 text-white rounded-lg", dominantPoor.color)}>
-```
-
-**Missing `bg-gradient-to-br`** → gradient never renders → transparent/white background → white text invisible.
-
-The screenshots show only the emoji (not text) because emojis are rendered as images by the OS, not as CSS text color.
+| 文件 | 雷达图类型 | 是否需要改 | 原因 |
+|------|-----------|-----------|------|
+| `WealthBlockResult.tsx`（测评结果页） | 单线，显示当前卡点分数 | **不需要改** | 只有一条线，无对比关系，数值越大表示卡点越重，语义自洽 |
+| `CombinedPersonalityCard.tsx`（财富画像卡片） | 双线对比（虚线=Day 0，实线=当前） | **需要改** | 目前虚线（baseline）> 实线（current），视觉上看起来"越来越差"，实际相反 |
 
 ---
 
-## Fix Strategy: Light-Themed Cards with Left Accent Border
+## 根本原因
 
-Replace all three broken dominant-block cards (lines 445, 630, 812) with a "light background + color left border + dark text" pattern — consistent with the rest of the app design system.
+`CombinedPersonalityCard.tsx` 第 184-209 行的数据格式：
 
-### Layer Color Mapping (fixed, not dynamic)
+```ts
+// 目前：卡点分数语义（越高越差）
+{ subject: '嘴穷', baseline: 12, current: 10.9 }
+//                  ↑ Day 0 虚线    ↑ 当前实线
+//                  数值大=图形靠外  数值小=图形靠内
+```
 
-Since each layer has a semantic meaning, we use fixed, safe colors per layer:
+**视觉结果**：虚线（Day 0）在实线（当前）的外圈，用户看到"我变差了？"
 
-| Layer | Background | Border | Text |
-|-------|-----------|--------|------|
-| Behavior (四穷) | `bg-amber-50` | `border-l-4 border-amber-400` | `text-amber-900` |
-| Emotion (情绪) | `bg-pink-50` | `border-l-4 border-pink-400` | `text-pink-900` |
-| Belief (信念) | `bg-violet-50` | `border-l-4 border-violet-400` | `text-violet-900` |
+**期望结果**：实线在外，表达"觉醒度提升了"
 
 ---
 
-## Specific Changes in `CombinedPersonalityCard.tsx`
+## 修复方案：翻转为"觉醒度"语义
 
-### Change 1: Behavior Layer Card (Line 445-457)
+公式：`觉醒度 = 满分 - 卡点分数`
 
-**Before:**
-```tsx
-<div className={cn("p-3 text-white rounded-lg", dominantPoor.color)}>
-  <h4 className="font-bold text-sm">{dominantPoor.name}</h4>
-  <p className="text-white/80 text-[10px]">{dominantPoor.description}</p>
-  <p className="text-white/90 text-xs leading-relaxed mb-2">{dominantPoor.detail}</p>
-  <div className="p-2 bg-white/20 rounded-lg">
-    <p className="text-xs">💡 突破方案：{dominantPoor.solution}</p>
-  </div>
-</div>
+```ts
+// 修复后：觉醒度语义（越高越好）
+const FOUR_POOR_FULL = 15;
+
+// Day 0 起点觉醒度（低）
+baseline: FOUR_POOR_FULL - (raw_score)    // 例：15 - 12 = 3（靠内）
+
+// 当前觉醒度（因练习而提升，高）
+current: FOUR_POOR_FULL - (raw_score * (1 - growthFactor * 0.3))  // 例：15 - 10.9 = 4.1（靠外）
 ```
 
-**After:**
-```tsx
-<div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-400">
-  <h4 className="font-bold text-sm text-amber-900 dark:text-amber-100">{dominantPoor.name}</h4>
-  <p className="text-amber-700/80 dark:text-amber-300/80 text-[10px]">{dominantPoor.description}</p>
-  <p className="text-amber-800 dark:text-amber-200 text-xs leading-relaxed mb-2">{dominantPoor.detail}</p>
-  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg border border-amber-200/60">
-    <p className="text-xs text-amber-800 dark:text-amber-200">💡 突破方案：{dominantPoor.solution}</p>
-  </div>
-</div>
+**修复前后对比**：
 ```
-
-### Change 2: Emotion Layer Card (Line 630-642)
-
-Same pattern with pink colors:
-```tsx
-<div className="p-3 rounded-lg bg-pink-50 dark:bg-pink-950/30 border-l-4 border-pink-400">
-  text-pink-900 / text-pink-700/80 / text-pink-800
-  inner box: bg-pink-100 border-pink-200/60
-```
-
-### Change 3: Belief Layer Card (Line 812-837)
-
-Same pattern with violet colors, plus the `coreBeliefs` tags inside also need color updates:
-```tsx
-<div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border-l-4 border-violet-400">
-  text-violet-900 / text-violet-700/80 / text-violet-800
-  belief tags: bg-violet-100 border border-violet-200/50 text-violet-700
-  inner box: bg-violet-100 border-violet-200/60
-```
-
-### Change 4: Radar Chart Scaling (Lines 463, 648, 843)
-
-Increase `outerRadius` from `60%` to `75%` and use dynamic domain calculations so the chart fills more of the available space:
-
-```tsx
-// Add before return statement (computed values):
-const fourPoorMax = Math.max(
-  baseline.mouth_score || 0, baseline.hand_score || 0,
-  baseline.eye_score || 0, baseline.heart_score || 0, 5
-);
-const emotionMax = Math.max(...emotionRadarData.map(d => d.baseline), 3);
-const beliefMax = Math.max(...beliefRadarData.map(d => d.baseline), 3);
-
-// Then update all 3 RadarCharts:
-<RadarChart cx="50%" cy="50%" outerRadius="75%" ...>
-  <PolarRadiusAxis angle={90} domain={[0, fourPoorMax]} tick={false} axisLine={false} />
+修复前：baseline=12(虚线外)  current=10.9(实线内)  → 看起来退步
+修复后：baseline=3 (虚线内)  current=4.1(实线外)   → 看起来成长 ✓
 ```
 
 ---
 
-## Files Modified
+## 具体改动（仅 `CombinedPersonalityCard.tsx`）
 
-| File | Lines Changed | Description |
-|------|-------------|-------------|
-| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | ~445-457 | Behavior layer card: amber light theme |
-| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | ~630-642 | Emotion layer card: pink light theme |
-| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | ~812-837 | Belief layer card: violet light theme (incl. tags) |
-| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | ~463, 648, 843 | All 3 RadarCharts: outerRadius 60%→75%, dynamic domain |
+### 改动一：行为层四穷雷达数据（约第 184-189 行）
 
-**Total: ~40 lines changed. No data logic, no other files.**
+```ts
+// 改前
+{ subject: '嘴穷', baseline: baseline.mouth_score || 0, current: Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 15 },
+
+// 改后
+const FOUR_POOR_FULL = 15;
+{ subject: '嘴穷', 
+  baseline: FOUR_POOR_FULL - (baseline.mouth_score || 0), 
+  current: Math.min(FOUR_POOR_FULL, FOUR_POOR_FULL - Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3))), 
+  fullMark: FOUR_POOR_FULL 
+}
+// 同理 hand/eye/heart
+```
+
+轴域同步固定为 `domain={[0, 15]}`。
+
+### 改动二：情绪层雷达数据（约第 193-199 行）
+
+```ts
+const EMOTION_FULL = 10;
+// 每条数据：baseline: EMOTION_FULL - rawValue, current: EMOTION_FULL - reducedRawValue
+// 5条维度（金钱焦虑/匮乏恐惧/比较自卑/羞耻厌恶/消费内疚）全部翻转
+```
+
+轴域固定为 `domain={[0, 10]}`。
+
+### 改动三：信念层雷达数据（约第 203-209 行）
+
+```ts
+const BELIEF_FULL = 10;
+// 5条维度（匮乏感/线性思维/金钱污名/不配得感/关系恐惧）全部翻转
+```
+
+轴域固定为 `domain={[0, 10]}`。
+
+### 改动四：图例文字同步更新（三处）
+
+```tsx
+// 改前
+<span>Day 0 基线</span>   // 虚线，数值大，在外
+<span>当前状态</span>     // 实线，数值小，在内
+
+// 改后
+<span>Day 0 起点</span>   // 虚线，觉醒度低，在内
+<span>当前觉醒度 ↑</span> // 实线，觉醒度高，在外
+```
+
+---
+
+## 修改文件清单
+
+| 文件 | 行数范围 | 内容 | 影响 |
+|------|---------|------|------|
+| `CombinedPersonalityCard.tsx` | L184-189 | 行为层雷达数据翻转 | 实线出现在虚线外面 |
+| `CombinedPersonalityCard.tsx` | L193-199 | 情绪层雷达数据翻转 | 同上 |
+| `CombinedPersonalityCard.tsx` | L203-209 | 信念层雷达数据翻转 | 同上 |
+| `CombinedPersonalityCard.tsx` | 三处图例 | 图例文字语义更新 | 用户理解正确含义 |
+
+**不涉及 `WealthBlockResult.tsx`（测评结果页）的任何改动。**
+**共改动约 20 行，全在 `CombinedPersonalityCard.tsx`。**
