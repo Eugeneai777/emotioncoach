@@ -1,35 +1,89 @@
 
+# 修复苹果手机财富卡点分享：海报不居中 + 无法返回
 
-# 修复安卓微信分享失败和画面卡死
+## 问题根因
 
-## 问题确认
+财富卡点测评的分享弹窗 `XiaohongshuShareDialog` 使用了自定义的 `onGenerate={handleServerGenerate}` 处理器。这导致 `ShareDialogBase` 中专门为 iOS 设计的优化逻辑被完全跳过：
 
-从截图可以看到：这是在**安卓微信浏览器**中，图片直接显示在页面上（没有进入全屏预览组件），底部显示"保存图片到手机失败"，页面无法返回。
-
-## 根因
-
-`src/utils/shareUtils.ts` 第 50-53 行的 `shouldUseImagePreview()` 函数决定是否使用全屏图片预览组件：
-
+```text
+ShareDialogBase.handleGenerateImage()
+  |
+  +--> if (onGenerate) {      <-- 财富卡点走这条路
+  |      onGenerate();         <-- 直接调用自定义函数，然后 return
+  |      return;               <-- iOS 的提前关闭 Dialog 逻辑永远不会执行
+  |    }
+  |
+  +--> // iOS 优化（提前关闭 Dialog、显示 loading toast）
+       // 这段代码被跳过了！
 ```
-return isWeChat || isMiniProgram || isIOS;
-```
 
-虽然包含了 `isWeChat`，但实际调用链中，`share-dialog-base.tsx` 在安卓微信环境下走了 `handleShareWithFallback` 路径，该路径尝试用 `<a>` 标签下载，被微信拦截导致失败，且未清理滚动锁导致页面卡死。
+结果：
+1. iOS 上 Dialog 遮罩在图片生成期间一直存在，生成完后 `ShareImagePreview` 被遮罩盖住或与其冲突
+2. Dialog 关闭时的 scroll lock 清理（100ms 延迟）与 `ShareImagePreview` 设置 `overflow: hidden` 产生竞争，导致滚动锁死
 
 ## 修复方案
 
-修改 `src/utils/shareUtils.ts`，在 `shouldUseImagePreview` 中加入 `isAndroid`：
+修改 `src/components/wealth-block/XiaohongshuShareDialog.tsx` 中的 `handleServerGenerate` 函数，加入与 `ShareDialogBase` 相同的 iOS 优化逻辑：
 
+1. 在 iOS 上先关闭 Dialog，显示 loading toast
+2. 等待两帧确保 Dialog 关闭动画完成
+3. 生成完成后正确 dismiss toast 并显示预览
+4. 关闭预览时强制清理 scroll lock
+
+## 技术细节
+
+### 文件：`src/components/wealth-block/XiaohongshuShareDialog.tsx`
+
+`handleServerGenerate` 函数改为：
+
+```typescript
+const handleServerGenerate = async () => {
+  // iOS: 立即关闭 Dialog 避免遮罩冲突
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let loadingToastId: string | number | undefined;
+
+  if (isiOS) {
+    onOpenChange(false);
+    loadingToastId = toast.loading('正在生成图片...');
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
+
+  const blob = await generateServerShareCard({
+    healthScore,
+    reactionPattern,
+    displayName: userInfo.displayName,
+    avatarUrl: userInfo.avatarUrl,
+    partnerCode: partnerInfo?.partnerCode,
+    dominantPoor,
+  });
+
+  if (blob) {
+    const imageUrl = URL.createObjectURL(blob);
+    if (loadingToastId) toast.dismiss(loadingToastId);
+    if (!isiOS) onOpenChange(false);
+    setServerPreviewUrl(imageUrl);
+    setShowServerPreview(true);
+  } else {
+    if (loadingToastId) toast.dismiss(loadingToastId);
+    toast.error('图片生成失败，请重试');
+  }
+};
 ```
-const { isMiniProgram, isWeChat, isIOS, isAndroid } = getShareEnvironment();
-return isWeChat || isMiniProgram || isIOS || isAndroid;
+
+`handleCloseServerPreview` 加入 scroll lock 清理：
+
+```typescript
+const handleCloseServerPreview = () => {
+  setShowServerPreview(false);
+  if (serverPreviewUrl) URL.revokeObjectURL(serverPreviewUrl);
+  setServerPreviewUrl(null);
+  // 强制清理 scroll lock
+  document.body.style.overflow = '';
+  document.body.removeAttribute('data-scroll-locked');
+  document.body.style.paddingRight = '';
+};
 ```
 
-这样安卓用户（包括安卓微信）点"生成分享图片"后，会直接进入已修复好的全屏 `ShareImagePreview` 组件，显示"长按上方图片保存"提示，而非尝试不可靠的下载方式。
-
-## 修改范围
-
-- 仅改 `src/utils/shareUtils.ts` 一个文件中的两行代码
-- `share-dialog-base.tsx` 通过调用该函数自动生效
-- `share-image-preview.tsx` 已在上次修复中支持安卓
-
+### 修改范围
+- 仅修改 `src/components/wealth-block/XiaohongshuShareDialog.tsx` 一个文件
+- `ShareDialogBase` 和 `ShareImagePreview` 无需改动
