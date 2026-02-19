@@ -118,11 +118,11 @@ export function CombinedPersonalityCard({
   
   // Get milestone message based on transformation rate
   const getMilestoneMessage = (rate: number) => {
-    if (rate >= 100) return { emoji: "🎊", text: "完美蜕变！你已完成模式转化", color: "text-emerald-300" };
-    if (rate >= 75) return { emoji: "🌟", text: "即将突破！再接再厉", color: "text-amber-300" };
-    if (rate >= 50) return { emoji: "💪", text: "突破半程！继续保持", color: "text-sky-300" };
-    if (rate >= 25) return { emoji: "🌱", text: "初见成效！觉醒正在发生", color: "text-green-300" };
-    return { emoji: "🚀", text: "觉醒启程，每一步都算数", color: "text-white/80" };
+    if (rate >= 100) return { emoji: "🎊", text: "完美蜕变！你已完成模式转化" };
+    if (rate >= 75) return { emoji: "🌟", text: "即将突破！再接再厉" };
+    if (rate >= 50) return { emoji: "💪", text: "突破半程！继续保持" };
+    if (rate >= 25) return { emoji: "🌱", text: "初见成效！觉醒正在发生" };
+    return { emoji: "🚀", text: "觉醒启程，每一步都算数" };
   };
   
   const milestoneMessage = getMilestoneMessage(transformationRate);
@@ -250,21 +250,21 @@ export function CombinedPersonalityCard({
           transition={{ delay: 0.05 }}
         >
           <div 
-            className={cn("rounded-xl overflow-hidden", pattern.color)}
+            className="rounded-xl overflow-hidden bg-white dark:bg-gray-900/60 border-l-4 border-indigo-400"
           >
-            <div className="bg-gradient-to-br p-3 text-white">
+            <div className="p-3 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30">
               {/* 头部 */}
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl">
                   <span className="text-2xl">{pattern.emoji}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <p className="text-white/80 text-[10px]">🧭 你的财富反应模式</p>
+                    <p className="text-indigo-600 dark:text-indigo-400 text-[10px]">🧭 你的财富反应模式</p>
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="text-white/60 hover:text-white/90 transition-colors">
+                          <button className="text-indigo-400 hover:text-indigo-600 transition-colors">
                             <HelpCircle className="w-3 h-3" />
                           </button>
                         </TooltipTrigger>
@@ -301,33 +301,32 @@ export function CombinedPersonalityCard({
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <h2 className="text-lg font-bold">【{pattern.name}】</h2>
-                  <p className="text-white/90 text-xs mt-0.5">{pattern.tagline}</p>
+                  <h2 className="text-lg font-bold text-indigo-900 dark:text-indigo-100">【{pattern.name}】</h2>
+                  <p className="text-indigo-600 dark:text-indigo-300 text-xs mt-0.5">{pattern.tagline}</p>
                 </div>
               </div>
               
               {/* 说明文字 */}
-              <div className="p-2 bg-white/15 rounded-lg mb-2">
-                <p className="text-white/95 text-xs leading-relaxed">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 rounded-lg mb-2">
+                <p className="text-indigo-800 dark:text-indigo-200 text-xs leading-relaxed">
                   📌 这不是性格，而是你在面对<span className="font-semibold">钱、机会、价格</span>时的自动反应。
                 </p>
               </div>
               
               
               {/* 转化进度 - 增强版 */}
-              <div className="pt-2 border-t border-white/20">
+              <div className="pt-2 border-t border-indigo-200 dark:border-indigo-800/40">
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-white/80">🎯 转化进度</span>
+                  <span className="text-indigo-700 dark:text-indigo-300">🎯 转化进度</span>
                   <span className="flex items-center gap-2">
-                    <span className="text-white/60">{safePatternConfig.transformation.from}</span>
+                    <span className="text-indigo-400 dark:text-indigo-500">{safePatternConfig.transformation.from}</span>
                     <span>→</span>
-                    <span className="font-semibold">{safePatternConfig.transformation.toName} {safePatternConfig.transformation.toEmoji}</span>
+                    <span className="font-semibold text-indigo-800 dark:text-indigo-200">{safePatternConfig.transformation.toName} {safePatternConfig.transformation.toEmoji}</span>
                   </span>
                 </div>
                 
                 {/* 里程碑进度条 */}
                 <div className="relative">
-                  {/* 里程碑标记 */}
                   <div className="absolute -top-1 left-0 right-0 flex justify-between px-0">
                     {[0, 25, 50, 75, 100].map((milestone) => (
                       <div 
@@ -338,15 +337,15 @@ export function CombinedPersonalityCard({
                         <div className={cn(
                           "w-2 h-2 rounded-full border-2 transition-all",
                           transformationRate >= milestone 
-                            ? "bg-white border-white shadow-[0_0_6px_rgba(255,255,255,0.6)]" 
-                            : "bg-white/30 border-white/50"
+                            ? "bg-indigo-500 border-white shadow-[0_0_6px_rgba(99,102,241,0.5)]" 
+                            : "bg-indigo-200 border-indigo-300 dark:bg-indigo-800 dark:border-indigo-700"
                         )}>
                           {transformationRate >= milestone && milestone > 0 && (
                             <motion.div
                               initial={{ scale: 0 }}
                               animate={{ scale: [1, 1.5, 1] }}
                               transition={{ duration: 0.5 }}
-                              className="absolute inset-0 rounded-full bg-white/30"
+                              className="absolute inset-0 rounded-full bg-indigo-300/40"
                             />
                           )}
                         </div>
@@ -354,18 +353,16 @@ export function CombinedPersonalityCard({
                     ))}
                   </div>
                   
-                  {/* 进度条 */}
-                  <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden mt-3">
+                  <div className="h-2 w-full bg-indigo-100 dark:bg-indigo-900/40 rounded-full overflow-hidden mt-3">
                     <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-white/60 via-white/80 to-white"
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-violet-500"
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(100, transformationRate)}%` }}
                       transition={{ duration: 0.8, ease: "easeOut" }}
                     />
                   </div>
                   
-                  {/* 里程碑数字 */}
-                  <div className="flex justify-between text-[8px] text-white/50 mt-0.5 px-0">
+                  <div className="flex justify-between text-[8px] text-indigo-400 dark:text-indigo-500 mt-0.5 px-0">
                     <span>0%</span>
                     <span>25%</span>
                     <span>50%</span>
@@ -374,23 +371,22 @@ export function CombinedPersonalityCard({
                   </div>
                 </div>
                 
-                {/* 动态祝贺提示 */}
                 <motion.div 
-                  className={cn("flex items-center justify-center gap-1.5 mt-2 py-1.5 rounded-lg bg-white/10", milestoneMessage.color)}
+                  className="flex items-center justify-center gap-1.5 mt-2 py-1.5 rounded-lg bg-indigo-100/80 dark:bg-indigo-950/40"
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
                   <span>{milestoneMessage.emoji}</span>
-                  <span className="text-[11px] font-medium">{milestoneMessage.text}</span>
-                  <span className="text-white font-bold ml-1">{transformationRate}%</span>
+                  <span className="text-[11px] font-medium text-indigo-800 dark:text-indigo-200">{milestoneMessage.text}</span>
+                  <span className="text-indigo-600 dark:text-indigo-300 font-bold ml-1">{transformationRate}%</span>
                 </motion.div>
               </div>
               
               {/* 状态标签 */}
               <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                 {pattern.state.map((item, index) => (
-                  <span key={index} className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white/95">
+                  <span key={index} className="bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded-full text-[10px] text-indigo-700 dark:text-indigo-300">
                     {item}
                   </span>
                 ))}
@@ -399,13 +395,13 @@ export function CombinedPersonalityCard({
           </div>
         </motion.div>
 
-        {/* 三层深度分析（深色面板） */}
-        <div className="dark rounded-xl border border-border/50 bg-background p-2">
+        {/* 三层深度分析 */}
+        <div className="rounded-xl border border-slate-200/70 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-900/40 p-2">
           {/* 分隔线 */}
           <div className="flex items-center gap-3 py-1">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-            <span className="text-[10px] text-muted-foreground font-medium">三层深度分析</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300/60 dark:via-slate-600/60 to-transparent" />
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">三层深度分析</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300/60 dark:via-slate-600/60 to-transparent" />
           </div>
 
           {/* 三层深度分析 - 手风琴 */}
