@@ -442,17 +442,33 @@ export function CombinedPersonalityCard({
                 <AccordionContent>
                   <CardContent className="p-3 space-y-3">
                     {/* 主导卡点卡片 */}
-                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-400">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{dominantPoor.emoji}</span>
-                        <div>
-                          <h4 className="font-bold text-sm text-amber-900 dark:text-amber-100">{dominantPoor.name}</h4>
-                          <p className="text-amber-700/80 dark:text-amber-300/80 text-[10px]">{dominantPoor.description}</p>
+                    <div className="rounded-xl overflow-hidden shadow-sm border border-amber-200 dark:border-amber-800/60">
+                      {/* 卡片标题行 */}
+                      <div className="flex items-center gap-3 px-3 py-2.5 bg-amber-400 dark:bg-amber-600">
+                        <span className="text-xl">{dominantPoor.emoji}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{dominantPoor.name}</h4>
+                            <span className="text-[10px] bg-white/25 text-white px-1.5 py-0.5 rounded-full font-medium">主导卡点</span>
+                          </div>
+                          <p className="text-white/85 text-[10px] mt-0.5">{dominantPoor.description}</p>
                         </div>
                       </div>
-                      <p className="text-amber-800 dark:text-amber-200 text-xs leading-relaxed mb-2">{dominantPoor.detail}</p>
-                      <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-                        <p className="text-xs text-amber-900 dark:text-amber-100">💡 突破方案：{dominantPoor.solution}</p>
+                      {/* 卡点详情 */}
+                      <div className="px-3 py-2 bg-amber-50 dark:bg-amber-950/40">
+                        <p className="text-amber-900 dark:text-amber-100 text-xs leading-relaxed">{dominantPoor.detail}</p>
+                      </div>
+                      {/* 突破方案 */}
+                      <div className="px-3 py-2 bg-white dark:bg-amber-950/20 border-t border-amber-200 dark:border-amber-800/40">
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs">💡</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-0.5">突破方案</p>
+                            <p className="text-xs text-amber-900 dark:text-amber-100 leading-relaxed">{dominantPoor.solution}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -627,17 +643,33 @@ export function CombinedPersonalityCard({
                 <AccordionContent>
                   <CardContent className="p-3 space-y-3">
                     {/* 主导卡点卡片 */}
-                    <div className="p-3 rounded-lg bg-pink-50 dark:bg-pink-950/30 border-l-4 border-pink-400">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{dominantEmotion.emoji}</span>
-                        <div>
-                          <h4 className="font-bold text-sm text-pink-900 dark:text-pink-100">{dominantEmotion.name}</h4>
-                          <p className="text-pink-700/80 dark:text-pink-300/80 text-[10px]">{dominantEmotion.description}</p>
+                    <div className="rounded-xl overflow-hidden shadow-sm border border-pink-200 dark:border-pink-800/60">
+                      {/* 卡片标题行 */}
+                      <div className="flex items-center gap-3 px-3 py-2.5 bg-pink-400 dark:bg-pink-600">
+                        <span className="text-xl">{dominantEmotion.emoji}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{dominantEmotion.name}</h4>
+                            <span className="text-[10px] bg-white/25 text-white px-1.5 py-0.5 rounded-full font-medium">主导情绪</span>
+                          </div>
+                          <p className="text-white/85 text-[10px] mt-0.5">{dominantEmotion.description}</p>
                         </div>
                       </div>
-                      <p className="text-pink-800 dark:text-pink-200 text-xs leading-relaxed mb-2">{dominantEmotion.detail}</p>
-                      <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg border border-pink-200 dark:border-pink-800">
-                        <p className="text-xs text-pink-900 dark:text-pink-100">💡 突破方案：{dominantEmotion.solution}</p>
+                      {/* 卡点详情 */}
+                      <div className="px-3 py-2 bg-pink-50 dark:bg-pink-950/40">
+                        <p className="text-pink-900 dark:text-pink-100 text-xs leading-relaxed">{dominantEmotion.detail}</p>
+                      </div>
+                      {/* 突破方案 */}
+                      <div className="px-3 py-2 bg-white dark:bg-pink-950/20 border-t border-pink-200 dark:border-pink-800/40">
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full bg-pink-100 dark:bg-pink-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs">💡</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-wide mb-0.5">突破方案</p>
+                            <p className="text-xs text-pink-900 dark:text-pink-100 leading-relaxed">{dominantEmotion.solution}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -809,30 +841,44 @@ export function CombinedPersonalityCard({
                 <AccordionContent>
                   <CardContent className="p-3 space-y-3">
                     {/* 主导卡点卡片 */}
-                    <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border-l-4 border-violet-400">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{dominantBelief.emoji}</span>
-                        <div>
-                          <h4 className="font-bold text-sm text-violet-900 dark:text-violet-100">{dominantBelief.name}</h4>
-                          <p className="text-violet-700/80 dark:text-violet-300/80 text-[10px]">{dominantBelief.description}</p>
+                    <div className="rounded-xl overflow-hidden shadow-sm border border-violet-200 dark:border-violet-800/60">
+                      {/* 卡片标题行 */}
+                      <div className="flex items-center gap-3 px-3 py-2.5 bg-violet-500 dark:bg-violet-600">
+                        <span className="text-xl">{dominantBelief.emoji}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{dominantBelief.name}</h4>
+                            <span className="text-[10px] bg-white/25 text-white px-1.5 py-0.5 rounded-full font-medium">主导信念</span>
+                          </div>
+                          <p className="text-white/85 text-[10px] mt-0.5">{dominantBelief.description}</p>
                         </div>
                       </div>
-                      <p className="text-violet-800 dark:text-violet-200 text-xs leading-relaxed mb-2">{dominantBelief.detail}</p>
-                      
+                      {/* 卡点详情 */}
+                      <div className="px-3 py-2 bg-violet-50 dark:bg-violet-950/40">
+                        <p className="text-violet-900 dark:text-violet-100 text-xs leading-relaxed">{dominantBelief.detail}</p>
+                      </div>
                       {/* 限制性信念标签 */}
-                      <div className="mb-2">
-                        <p className="text-violet-700/70 dark:text-violet-300/70 text-[10px] mb-1">限制性信念：</p>
+                      <div className="px-3 py-1.5 bg-violet-50 dark:bg-violet-950/40 border-t border-violet-100 dark:border-violet-800/30">
+                        <p className="text-violet-500 dark:text-violet-400 text-[10px] font-medium mb-1">限制性信念</p>
                         <div className="flex flex-wrap gap-1">
                           {dominantBelief.coreBeliefs.map((belief, index) => (
-                            <span key={index} className="bg-violet-100 dark:bg-violet-900/40 px-1.5 py-0.5 rounded text-[10px] text-violet-800 dark:text-violet-200">
+                            <span key={index} className="bg-violet-100 dark:bg-violet-900/50 border border-violet-200 dark:border-violet-700 px-1.5 py-0.5 rounded-full text-[10px] text-violet-800 dark:text-violet-200">
                               "{belief}"
                             </span>
                           ))}
                         </div>
                       </div>
-                      
-                      <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg border border-violet-200 dark:border-violet-800">
-                        <p className="text-xs text-violet-900 dark:text-violet-100">💡 突破方案：{dominantBelief.solution}</p>
+                      {/* 突破方案 */}
+                      <div className="px-3 py-2 bg-white dark:bg-violet-950/20 border-t border-violet-200 dark:border-violet-800/40">
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs">💡</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-0.5">突破方案</p>
+                            <p className="text-xs text-violet-900 dark:text-violet-100 leading-relaxed">{dominantBelief.solution}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
