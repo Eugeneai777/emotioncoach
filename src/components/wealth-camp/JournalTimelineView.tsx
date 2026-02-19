@@ -173,9 +173,17 @@ export function JournalTimelineView({ entries, baseline, className }: JournalTim
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Sort entries by day_number descending (newest first)
+  // Sort entries by created_at descending (newest first)
   const sortedEntries = useMemo(() => {
-    return [...entries].sort((a, b) => b.day_number - a.day_number);
+    return [...entries].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [entries]);
+
+  // Build sequence map: id → actual completion order (oldest = 第1天)
+  const sequenceMap = useMemo(() => {
+    const ascending = [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const map = new Map<string, number>();
+    ascending.forEach((e, i) => { if (e.id) map.set(e.id, i + 1); });
+    return map;
   }, [entries]);
 
   // Detect emotion tags present in entries
@@ -443,7 +451,8 @@ export function JournalTimelineView({ entries, baseline, className }: JournalTim
             <div className="space-y-1 pl-2">
               <AnimatePresence mode="popLayout">
                 {filteredEntries.map((entry, index) => {
-                  const prevEntry = sortedEntries.find(e => e.day_number === entry.day_number - 1);
+                  const entrySeq = entry.id ? (sequenceMap.get(entry.id) ?? entry.day_number) : entry.day_number;
+                  const prevEntry = sortedEntries[index + 1] ?? null;
                   const trend = getScoreTrend(entry, prevEntry);
                   const highlight = getHighlightContent(entry, filter);
                   const highlightStyles = getHighlightStyles(filter);
@@ -485,9 +494,10 @@ export function JournalTimelineView({ entries, baseline, className }: JournalTim
                             <div className="flex-1 min-w-0">
                               {/* Header: Day + Date + Trend + Emotion Tags */}
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <span className="font-semibold text-sm">Day {entry.day_number}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {format(new Date(entry.created_at), 'M/d', { locale: zhCN })}
+                                <span className="font-semibold text-sm">第 {entrySeq} 天</span>
+                                 <span className="text-xs text-muted-foreground">·</span>
+                                 <span className="text-xs text-muted-foreground">
+                                   {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}
                                 </span>
                                 {trend && (
                                   <trend.icon className={cn("w-3 h-3", trend.color)} />
