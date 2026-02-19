@@ -264,6 +264,24 @@ export default function PartnerLandingPageDetail() {
           ))}
         </div>
 
+        {/* Channel & Date Info Bar */}
+        {editing ? (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs font-medium mb-1 block text-muted-foreground">渠道</label>
+              <Input value={editChannel} onChange={(e) => setEditChannel(e.target.value)} placeholder="投放渠道" className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block text-muted-foreground">投放量</label>
+              <Input value={editVolume} onChange={(e) => setEditVolume(e.target.value)} placeholder="如：1000人以下" className="h-8 text-xs" />
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            渠道：{page.channel || "—"}  ·  创建于 {new Date(page.created_at).toLocaleDateString("zh-CN")}
+          </p>
+        )}
+
         {/* Content Card */}
         <Card className="overflow-hidden">
           <CardContent className="p-0">
@@ -300,30 +318,6 @@ export default function PartnerLandingPageDetail() {
                   </Button>
                 )}
               </div>
-            </div>
-
-            {/* Meta Row */}
-            <div className="px-4 py-3 flex items-center gap-4 text-xs text-muted-foreground border-b border-border/50 bg-muted/30">
-              {editing ? (
-                <div className="flex-1 grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">渠道</label>
-                    <Input value={editChannel} onChange={(e) => setEditChannel(e.target.value)} placeholder="投放渠道" className="h-8 text-xs" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">投放量</label>
-                    <Input value={editVolume} onChange={(e) => setEditVolume(e.target.value)} placeholder="如：1000人以下" className="h-8 text-xs" />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <span>渠道：{page.channel || "—"}</span>
-                  <span>·</span>
-                  <span>投放：{page.volume || "—"}</span>
-                  <span>·</span>
-                  <span>{new Date(page.created_at).toLocaleDateString("zh-CN")}</span>
-                </>
-              )}
             </div>
 
             {/* Selling Points */}
