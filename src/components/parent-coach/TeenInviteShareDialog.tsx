@@ -17,6 +17,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import TeenInviteShareCard, { CARD_THEMES, CardTheme } from './TeenInviteShareCard';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { handleShareWithFallback } from '@/utils/shareUtils';
 
 interface TeenInviteShareDialogProps {
   open: boolean;
@@ -140,47 +141,25 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
         throw new Error('生成图片失败');
       }
 
-      // Try system share
-      if (navigator.share && navigator.canShare) {
-        const file = new File([blob], '青少年私密空间-邀请卡.png', { type: 'image/png' });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: '有劲AI · 懂你版',
-              text: '这是一份给你的私密空间，有心事可以来这里聊聊'
-            });
-            toast({
-              title: "分享成功",
-              description: "邀请卡片已分享",
-            });
-            return;
-          } catch (e) {
-            // User cancelled or share failed
-          }
-        }
-      }
+      const result = await handleShareWithFallback(blob, '青少年私密空间-邀请卡.png', {
+        title: '有劲AI · 懂你版',
+        text: '这是一份给你的私密空间，有心事可以来这里聊聊',
+        onShowPreview: (blobUrl) => {
+          setPreviewImageUrl(blobUrl);
+          setShowImagePreview(true);
+        },
+        onDownload: () => {
+          toast({
+            title: "图片已生成",
+            description: "邀请卡片已保存，发给孩子即可使用",
+          });
+        },
+      });
 
-      // For WeChat/iOS, show image preview for long-press save
-      const url = URL.createObjectURL(blob);
-      
-      if (isWeChatOrIOS()) {
-        setPreviewImageUrl(url);
-        setShowImagePreview(true);
-      } else {
-        // Fallback to download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = '青少年私密空间-邀请卡.png';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-        toast({
-          title: "图片已生成",
-          description: "邀请卡片已保存，发给孩子即可使用",
-        });
+      if (result.method === 'webshare' && result.success) {
+        toast({ title: "分享成功", description: "邀请卡片已分享" });
+      } else if (result.cancelled) {
+        // User cancelled, no toast needed
       }
     } catch (error) {
       console.error('Image generation failed:', error);
