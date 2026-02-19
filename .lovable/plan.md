@@ -1,89 +1,79 @@
 
-# 修复苹果手机财富卡点分享：海报不居中 + 无法返回
+# 财富卡点测评结果页：固定底部 ¥9.9 购买按钮
 
-## 问题根因
+## 目标
+在结果页（`pageState === "result"`）底部，始终固定显示一个 ¥9.9 的"立即解锁完整报告"按钮，方便用户随时付费——类似 `LiteFooter` 的固定底栏效果，但专为未付费的结果预览场景设计。
 
-财富卡点测评的分享弹窗 `XiaohongshuShareDialog` 使用了自定义的 `onGenerate={handleServerGenerate}` 处理器。这导致 `ShareDialogBase` 中专门为 iOS 设计的优化逻辑被完全跳过：
+## 问题分析
+
+目前 `WealthAssessmentLite.tsx` 中：
+- `LiteFooter` 已导入但**从未被渲染**（import 存在，JSX 中不存在）
+- 结果页 `WealthBlockResult` 已预留了 `pb-[calc(80px+env(safe-area-inset-bottom))]` 的底部 padding，说明原本就设计了固定底栏，但没有实现
+
+用户反映：测评完成后，付费按钮埋在页面内容中，需要滚动才能找到，不够显眼。
+
+## 修改方案
+
+只修改 **`src/pages/WealthAssessmentLite.tsx`** 一个文件。
+
+### 具体变更
+
+在结果页显示时（`pageState === "result"`），若用户**未购买**（`!hasPurchased`），在页面底部渲染一个固定的 CTA 底栏，样式与 `LiteFooter` 一致：
 
 ```text
-ShareDialogBase.handleGenerateImage()
-  |
-  +--> if (onGenerate) {      <-- 财富卡点走这条路
-  |      onGenerate();         <-- 直接调用自定义函数，然后 return
-  |      return;               <-- iOS 的提前关闭 Dialog 逻辑永远不会执行
-  |    }
-  |
-  +--> // iOS 优化（提前关闭 Dialog、显示 loading toast）
-       // 这段代码被跳过了！
+┌─────────────────────────────────┐
+│         结果内容（可滚动）          │
+│              ...                │
+│                                 │
+│                                 │
+├─────────────────────────────────┤  ← fixed bottom
+│  ¥9.9 立即解锁完整分析报告        │
+│  [限时特价] [立即付费] 按钮        │
+└─────────────────────────────────┘
 ```
 
-结果：
-1. iOS 上 Dialog 遮罩在图片生成期间一直存在，生成完后 `ShareImagePreview` 被遮罩盖住或与其冲突
-2. Dialog 关闭时的 scroll lock 清理（100ms 延迟）与 `ShareImagePreview` 设置 `overflow: hidden` 产生竞争，导致滚动锁死
+### 底栏内容
+- 左侧：价格标签 `¥9.9` + `限时` 红色徽章
+- 右侧：`立即解锁报告` 按钮（点击触发已有的 `setShowPayDialog(true)`）
+- 背景：半透明毛玻璃效果，与 `LiteFooter` 同款
+- 适配 `safe-area-inset-bottom`（iPhone 刘海屏）
 
-## 修复方案
-
-修改 `src/components/wealth-block/XiaohongshuShareDialog.tsx` 中的 `handleServerGenerate` 函数，加入与 `ShareDialogBase` 相同的 iOS 优化逻辑：
-
-1. 在 iOS 上先关闭 Dialog，显示 loading toast
-2. 等待两帧确保 Dialog 关闭动画完成
-3. 生成完成后正确 dismiss toast 并显示预览
-4. 关闭预览时强制清理 scroll lock
+### 逻辑控制
+- 仅当 `pageState === "result"` 且 `!hasPurchased` 时显示
+- 已购买用户不显示该底栏
+- `AssessmentPayDialog` 已在页面中，点击按钮直接 `setShowPayDialog(true)` 即可
 
 ## 技术细节
 
-### 文件：`src/components/wealth-block/XiaohongshuShareDialog.tsx`
+### 文件：`src/pages/WealthAssessmentLite.tsx`
 
-`handleServerGenerate` 函数改为：
+**变更 1**：新增 `handleShowPayDialog` 回调（触发付费弹窗）
 
-```typescript
-const handleServerGenerate = async () => {
-  // iOS: 立即关闭 Dialog 避免遮罩冲突
-  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  let loadingToastId: string | number | undefined;
+**变更 2**：在 `pageState === "result"` 区块内，添加固定底栏：
 
-  if (isiOS) {
-    onOpenChange(false);
-    loadingToastId = toast.loading('正在生成图片...');
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  }
-
-  const blob = await generateServerShareCard({
-    healthScore,
-    reactionPattern,
-    displayName: userInfo.displayName,
-    avatarUrl: userInfo.avatarUrl,
-    partnerCode: partnerInfo?.partnerCode,
-    dominantPoor,
-  });
-
-  if (blob) {
-    const imageUrl = URL.createObjectURL(blob);
-    if (loadingToastId) toast.dismiss(loadingToastId);
-    if (!isiOS) onOpenChange(false);
-    setServerPreviewUrl(imageUrl);
-    setShowServerPreview(true);
-  } else {
-    if (loadingToastId) toast.dismiss(loadingToastId);
-    toast.error('图片生成失败，请重试');
-  }
-};
-```
-
-`handleCloseServerPreview` 加入 scroll lock 清理：
-
-```typescript
-const handleCloseServerPreview = () => {
-  setShowServerPreview(false);
-  if (serverPreviewUrl) URL.revokeObjectURL(serverPreviewUrl);
-  setServerPreviewUrl(null);
-  // 强制清理 scroll lock
-  document.body.style.overflow = '';
-  document.body.removeAttribute('data-scroll-locked');
-  document.body.style.paddingRight = '';
-};
+```tsx
+{/* 固定底部付费按钮 - 未购买时显示 */}
+{pageState === "result" && !hasPurchased && (
+  <div
+    className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur border-t px-4 py-3 flex items-center justify-between gap-3"
+    style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+  >
+    <div className="flex items-center gap-2">
+      <span className="text-2xl font-bold text-amber-600">¥9.9</span>
+      <span className="px-1.5 py-0.5 bg-red-500 rounded text-[10px] text-white font-medium animate-pulse">限时</span>
+      <span className="text-xs text-muted-foreground">解锁完整分析报告</span>
+    </div>
+    <Button
+      onClick={() => setShowPayDialog(true)}
+      className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-5 h-10 rounded-full shadow-md"
+    >
+      立即解锁
+    </Button>
+  </div>
+)}
 ```
 
 ### 修改范围
-- 仅修改 `src/components/wealth-block/XiaohongshuShareDialog.tsx` 一个文件
-- `ShareDialogBase` 和 `ShareImagePreview` 无需改动
+- **仅修改** `src/pages/WealthAssessmentLite.tsx` 一个文件
+- `WealthBlockResult`、`AssessmentPayDialog`、`LiteFooter` 均无需改动
+- 已有的 `pb-[calc(80px+...)]` padding 恰好为该底栏预留了空间，无布局冲突
