@@ -84,7 +84,7 @@ export function useWealthJournalEntries(options: UseWealthJournalEntriesOptions 
         .from('wealth_journal_entries')
         .select('*')
         .eq('user_id', user.id)
-        .order('day_number', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (campId) {
         query = query.eq('camp_id', campId);
