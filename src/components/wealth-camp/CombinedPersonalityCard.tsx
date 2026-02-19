@@ -533,7 +533,7 @@ export function CombinedPersonalityCard({
                               fillOpacity={0.15} 
                               strokeWidth={1} 
                             />
-                            {/* 当前状态 - 主色动画 */}
+                            {/* 当前状态 - 主色动画，顶点显示数值 */}
                             <Radar 
                               name="当前" 
                               dataKey="current" 
@@ -544,6 +544,17 @@ export function CombinedPersonalityCard({
                               isAnimationActive={true}
                               animationDuration={1000}
                               animationEasing="ease-out"
+                              label={({ x, y, value }: { x: number; y: number; value: number }) => (
+                                <text
+                                  x={x}
+                                  y={y}
+                                  textAnchor="middle"
+                                  dominantBaseline="central"
+                                  style={{ fontSize: 8, fontWeight: 600, fill: '#b45309' }}
+                                >
+                                  {typeof value === 'number' ? value.toFixed(1) : ''}
+                                </text>
+                              )}
                             />
                           </RadarChart>
                         </ResponsiveContainer>
@@ -718,7 +729,7 @@ export function CombinedPersonalityCard({
                               fillOpacity={0.15} 
                               strokeWidth={1} 
                             />
-                            {/* 当前状态 - 主色动画 */}
+                            {/* 当前状态 - 主色动画，顶点显示数值 */}
                             <Radar 
                               name="当前" 
                               dataKey="current" 
@@ -729,6 +740,17 @@ export function CombinedPersonalityCard({
                               isAnimationActive={true}
                               animationDuration={1000}
                               animationEasing="ease-out"
+                              label={({ x, y, value }: { x: number; y: number; value: number }) => (
+                                <text
+                                  x={x}
+                                  y={y}
+                                  textAnchor="middle"
+                                  dominantBaseline="central"
+                                  style={{ fontSize: 8, fontWeight: 600, fill: '#be185d' }}
+                                >
+                                  {typeof value === 'number' ? value.toFixed(1) : ''}
+                                </text>
+                              )}
                             />
                           </RadarChart>
                         </ResponsiveContainer>
@@ -927,7 +949,7 @@ export function CombinedPersonalityCard({
                               fillOpacity={0.15} 
                               strokeWidth={1} 
                             />
-                            {/* 当前状态 - 主色动画 */}
+                            {/* 当前状态 - 主色动画，顶点显示数值 */}
                             <Radar 
                               name="当前" 
                               dataKey="current" 
@@ -938,6 +960,17 @@ export function CombinedPersonalityCard({
                               isAnimationActive={true}
                               animationDuration={1000}
                               animationEasing="ease-out"
+                              label={({ x, y, value }: { x: number; y: number; value: number }) => (
+                                <text
+                                  x={x}
+                                  y={y}
+                                  textAnchor="middle"
+                                  dominantBaseline="central"
+                                  style={{ fontSize: 8, fontWeight: 600, fill: '#6d28d9' }}
+                                >
+                                  {typeof value === 'number' ? value.toFixed(1) : ''}
+                                </text>
+                              )}
                             />
                           </RadarChart>
                         </ResponsiveContainer>
