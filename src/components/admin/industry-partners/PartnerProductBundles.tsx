@@ -418,77 +418,58 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bundles.map((bundle) => (
-            <Card
+            <div
               key={bundle.id}
-              className={`overflow-hidden border-l-4 ${
+              className={`rounded-lg border bg-card overflow-hidden border-l-[3px] ${
                 bundle.published_product_id ? "border-l-green-500" : "border-l-primary"
               }`}
             >
-              <CardContent className="p-4 space-y-3">
-                {/* Header: name + status */}
+              <div className="px-3 py-2.5 space-y-2">
+                {/* Header: name + price + status */}
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold flex-1">{bundle.name}</h4>
+                  <h4 className="text-sm font-semibold flex-1 truncate">{bundle.name}</h4>
+                  <span className="text-sm font-bold text-foreground shrink-0">¥{bundle.total_price.toFixed(2)}</span>
                   {bundle.published_product_id && (
-                    <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-500 hover:bg-green-600">
-                      <CheckCircle className="h-3 w-3 mr-0.5" />
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-500 hover:bg-green-600 shrink-0">
                       已上架
                     </Badge>
                   )}
                 </div>
 
-                {/* Tags: product count + price */}
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs font-normal">
-                    <Package className="h-3 w-3 mr-1" />
-                    {bundle.products.length} 个产品
-                  </Badge>
-                  <Badge variant="outline" className="text-xs font-semibold">
-                    ¥{bundle.total_price.toFixed(2)}
-                  </Badge>
+                {/* Meta: product count + AI preview in one line */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="shrink-0">{bundle.products.length} 个产品</span>
+                  {bundle.ai_content?.target_audience && (
+                    <>
+                      <span>·</span>
+                      <span className="truncate">🎯 {bundle.ai_content.target_audience.slice(0, 30)}…</span>
+                    </>
+                  )}
                 </div>
 
-                {/* AI content preview */}
-                {bundle.ai_content && (
-                  <div className="bg-muted/50 rounded-lg p-2.5 text-xs text-muted-foreground space-y-1">
-                    <p><span className="font-medium text-foreground/70">🎯 目标人群：</span>{bundle.ai_content.target_audience?.slice(0, 60)}…</p>
-                    <p><span className="font-medium text-foreground/70">💢 痛点：</span>{bundle.ai_content.pain_points?.slice(0, 60)}…</p>
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-2 pt-1 border-t">
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => handleEdit(bundle)}>
+                {/* Compact action row */}
+                <div className="flex items-center gap-1 pt-1.5 border-t">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => handleEdit(bundle)}>
                     编辑
                   </Button>
                   {bundle.published_product_id ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => handleUnpublish(bundle)}
-                    >
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => handleUnpublish(bundle)}>
                       <XCircle className="h-3 w-3 mr-1" />
-                      下架商品
+                      下架
                     </Button>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => setPublishBundle(bundle)}
-                      disabled={!bundle.ai_content}
-                    >
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => setPublishBundle(bundle)} disabled={!bundle.ai_content}>
                       <Store className="h-3 w-3 mr-1" />
-                      上架到商城
+                      上架
                     </Button>
                   )}
                   <div className="flex-1" />
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(bundle.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(bundle.id)}>
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
