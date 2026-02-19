@@ -141,6 +141,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground" onClick={() => toggleSort("date")}>日期 <SortIcon k="date" /></span>
         <span className="flex-1">标题</span>
         <span className="shrink-0 w-14 text-center">投放</span>
+        <span className="shrink-0 w-10 text-center">天数</span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("views")}>观看 <SortIcon k="views" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("purchases")}>购买 <SortIcon k="purchases" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("spend")}>金额 <SortIcon k="spend" /></span>
@@ -152,6 +153,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
         const m = metrics[page.id] || { views: 0, purchases: 0 };
         const d = new Date(page.created_at);
         const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+        const daysSince = page.status === "published" ? Math.max(1, Math.floor((Date.now() - d.getTime()) / 86400000)) : 0;
         return (
           <div
             key={page.id}
@@ -161,6 +163,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
             <span className="text-muted-foreground shrink-0 w-10">{dateStr}</span>
             <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
             <span className="text-muted-foreground shrink-0 w-14 text-center truncate" title={page.volume || "—"}>{page.volume || "—"}</span>
+            <span className={cn("shrink-0 w-10 text-center", daysSince > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>{daysSince > 0 ? `${daysSince}天` : "—"}</span>
             <span className={cn("shrink-0 w-10 text-center", m.views > 0 ? "font-semibold text-blue-600" : "text-muted-foreground")}>{m.views}</span>
             <span className={cn("shrink-0 w-10 text-center", m.purchases > 0 ? "font-semibold text-emerald-600" : "text-muted-foreground")}>{m.purchases}</span>
             <span className="text-muted-foreground shrink-0 w-10 text-center">¥0</span>
