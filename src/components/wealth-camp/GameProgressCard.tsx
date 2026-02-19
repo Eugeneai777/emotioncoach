@@ -46,9 +46,10 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
   // 正在同步中
   if (isSyncing) {
     return (
-      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+      <Card className="bg-gradient-to-br from-amber-50/80 to-yellow-50/30 dark:from-amber-950/30 dark:to-slate-900/80 border border-amber-200/50 dark:border-amber-800/30 overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
         <CardContent className="p-6">
-          <div className="flex items-center justify-center gap-2 text-slate-400">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>正在同步你的觉醒数据...</span>
           </div>
@@ -61,15 +62,15 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
   if (!progress) {
     if (baseline) {
       return (
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+        <Card className="bg-gradient-to-br from-amber-50/80 to-yellow-50/30 dark:from-amber-950/30 dark:to-slate-900/80 border border-amber-200/50 dark:border-amber-800/30 overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
           <CardContent className="p-6">
             <div className="text-center space-y-3">
-              <div className="text-slate-400">数据同步中，请稍后...</div>
+              <div className="text-muted-foreground">数据同步中，请稍后...</div>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => window.location.reload()}
-                className="bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700"
               >
                 刷新页面
               </Button>
@@ -80,10 +81,11 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
     }
     
     return (
-      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+      <Card className="bg-gradient-to-br from-amber-50/80 to-yellow-50/30 dark:from-amber-950/30 dark:to-slate-900/80 border border-amber-200/50 dark:border-amber-800/30 overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
         <CardContent className="p-6">
           <div className="text-center space-y-4">
-            <div className="text-slate-300">完成财富测评开启你的觉醒之旅</div>
+            <div className="text-muted-foreground">完成财富测评开启你的觉醒之旅</div>
             <Button 
               onClick={() => navigate('/wealth-block')}
               className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
@@ -116,19 +118,19 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
     >
       <Card className={cn(
         cardBaseStyles.container,
-        "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-0 overflow-hidden relative"
+        "bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-yellow-50/30 dark:from-amber-950/30 dark:via-slate-900/50 dark:to-slate-900/80 border border-amber-200/50 dark:border-amber-800/30 overflow-hidden relative"
       )}>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+        <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
         
         <CardHeader className="pb-2 relative z-10">
-          <CardTitle className="flex items-center justify-between text-lg">
+          <CardTitle className="flex items-center justify-between text-lg text-amber-800 dark:text-amber-200">
             <div className="flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5 text-amber-400" />
+              <Gamepad2 className="h-5 w-5 text-amber-500 dark:text-amber-400" />
               我的财富觉醒之旅
             </div>
             <AwakeningRulesDialog 
               trigger={
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600/60 hover:text-amber-700 dark:text-amber-400/60 dark:hover:text-amber-300">
                   <Info className="h-4 w-4" />
                 </Button>
               }
@@ -160,9 +162,9 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
               >
                 {progress.current_awakening}
               </motion.span>
-              <span className="text-xs text-slate-400">分</span>
+              <span className="text-xs text-muted-foreground">分</span>
               {awakeningGrowth !== 0 && (
-                <span className={`text-xs font-medium ${awakeningGrowth > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className={`text-xs font-medium ${awakeningGrowth > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
                   ({awakeningGrowth > 0 ? '+' : ''}{awakeningGrowth})
                 </span>
               )}
@@ -182,27 +184,27 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
             
             return (
               <motion.div
-                className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 space-y-2"
+                className="rounded-lg bg-amber-100/60 border border-amber-300/50 dark:bg-amber-900/20 dark:border-amber-700/30 px-3 py-2.5 space-y-2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-300">
-                    🎯 7天觉醒目标：<span className="text-amber-400 font-bold">{day7Target} 分</span>
+                  <span className="text-xs text-amber-700 dark:text-amber-300">
+                    🎯 7天觉醒目标：<span className="text-amber-600 dark:text-amber-400 font-bold">{day7Target} 分</span>
                   </span>
                   {isAchieved ? (
-                    <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-0.5">
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-0.5">
                       <Check className="h-3 w-3" /> 已达成
                     </span>
                   ) : (
-                    <span className="text-[10px] text-slate-400">
-                      起点 <span className="text-slate-300 font-medium">{baselineScore}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      起点 <span className="text-foreground font-medium">{baselineScore}</span>
                     </span>
                   )}
                 </div>
                 
-                <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
+                <div className="h-1.5 w-full rounded-full bg-amber-200/60 dark:bg-amber-950/50 overflow-hidden">
                   <motion.div
                     className={cn(
                       "h-full rounded-full",
@@ -218,10 +220,10 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
 
                 <div className="text-[10px]">
                   {isAchieved ? (
-                    <span className="text-emerald-400 font-medium">🎉 已达成 7 天觉醒目标！</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">🎉 已达成 7 天觉醒目标！</span>
                   ) : (
-                    <span className="text-slate-400">
-                      距目标还差 <span className="text-amber-400 font-bold">{remaining}</span> 分
+                    <span className="text-muted-foreground">
+                      距目标还差 <span className="text-amber-600 dark:text-amber-400 font-bold">{remaining}</span> 分
                     </span>
                   )}
                 </div>
@@ -254,7 +256,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                                 ? 'bg-amber-500 shadow-lg shadow-amber-500/50 ring-2 ring-amber-300' 
                                 : isActive 
                                   ? 'bg-emerald-500/80' 
-                                  : 'bg-slate-700 hover:bg-slate-600'
+                                  : 'bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/50'
                             )}
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{ scale: isCurrent ? 1.1 : 1, opacity: 1 }}
@@ -295,7 +297,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                       
                       {isCurrent && (
                         <motion.div 
-                          className="text-[10px] sm:text-xs text-amber-400 mt-0.5 sm:mt-1 font-medium whitespace-nowrap"
+                          className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 mt-0.5 sm:mt-1 font-medium whitespace-nowrap"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.8 }}
@@ -308,7 +310,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                 })}
                 
                 {/* 进度条背景 */}
-                <div className="absolute top-3 sm:top-4 left-4 right-4 sm:left-6 sm:right-6 h-0.5 bg-slate-700 -z-0" />
+                <div className="absolute top-3 sm:top-4 left-4 right-4 sm:left-6 sm:right-6 h-0.5 bg-amber-200/70 dark:bg-amber-900/40 -z-0" />
                 
                 {/* 进度条填充 */}
                 <motion.div 
@@ -328,9 +330,9 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.7 }}
                 >
-                  <span className="text-xs text-slate-400">
-                    距 <span className="text-amber-400 font-medium">Lv.{nextLevel.level} {nextLevel.name}</span> 还需 
-                    <span className="text-amber-400 font-bold mx-1">{pointsToNext}</span>积分
+                  <span className="text-xs text-muted-foreground">
+                    距 <span className="text-amber-600 dark:text-amber-400 font-medium">Lv.{nextLevel.level} {nextLevel.name}</span> 还需 
+                    <span className="text-amber-600 dark:text-amber-400 font-bold mx-1">{pointsToNext}</span>积分
                   </span>
                 </motion.div>
               )}
