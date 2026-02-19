@@ -231,6 +231,53 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
 
   const awakeningStats = dimensionStats?.awakening;
 
+  // Custom tooltip: always renders for every x-position, even when value is null
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active) return null;
+
+    // Find raw chart entry to access hasData
+    const entry = chartData.find(d => d.day === label);
+    const isBaseline = entry?.isBaseline;
+    const hasData = entry?.hasData;
+
+    const titleLabel = isBaseline
+      ? `${label}（测评基准）`
+      : !hasData
+      ? `${label} · 文字梳理`
+      : label;
+
+    return (
+      <div
+        style={{
+          backgroundColor: 'hsl(var(--card))',
+          border: '1px solid hsl(var(--border))',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          fontSize: '12px',
+          padding: '8px 12px',
+          minWidth: '140px',
+        }}
+      >
+        <p style={{ fontWeight: 600, marginBottom: 4, color: 'hsl(var(--foreground))' }}>{titleLabel}</p>
+        {!hasData && !isBaseline ? (
+          <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>文字梳理，无评分数据</p>
+        ) : (
+          payload?.map((item: any, i: number) => (
+            item.value != null && (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: item.color, display: 'inline-block' }} />
+                <span style={{ color: 'hsl(var(--muted-foreground))' }}>{item.name}:</span>
+                <span style={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                  {showAwakening ? `${item.value} 分` : Number(item.value).toFixed(1)}
+                </span>
+              </div>
+            )
+          ))
+        )}
+      </div>
+    );
+  };
+
   const chartContent = (
     <>
       {/* Dimension Toggle */}
@@ -331,25 +378,7 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
             tickLine={false}
             axisLine={false}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              fontSize: '12px',
-            }}
-            formatter={(value: number | null, name: string, props: any) => {
-              if (value == null) return ['文字梳理（无评分）', name];
-              return [showAwakening ? `${value} 分` : value.toFixed(1), name];
-            }}
-            labelFormatter={(label, payload) => {
-              if (label === '第 0 天') return '第 0 天（测评基准）';
-              const entry = payload?.[0]?.payload;
-              if (entry && !entry.hasData) return `${label}（文字梳理，无评分数据）`;
-              return label;
-            }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           {!embedded && <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />}
 
           {/* 觉醒指数 */}
