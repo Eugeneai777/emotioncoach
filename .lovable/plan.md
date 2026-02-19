@@ -1,67 +1,131 @@
 
-# 将"觉醒指数"设为默认显示图表
+# 修复觉醒指数图表：与财富简报天数和数据同步
 
-## 问题
+## 问题诊断
 
-用户希望打开成长曲线时，默认就看到**整体觉醒指数（0-100）**的变化，而不是行为维度（当前 `useState<DimensionKey>('behavior')`）。
+### 根本原因
+
+当前图表数据与财富简报不同步，有两个层面的问题：
+
+**问题 1：排序不一致**
+
+- `useWealthJournalEntries` 查询时用 `.order('day_number', { ascending: true })` 排序
+- 财富简报的 `journalSequenceMap` 用 `created_at` 升序排列后分配序号
+- 图表的 `chartData` 也用 `created_at` 排列，但数据来源是 `day_number` 排序的 entries，如果 `day_number` 顺序与 `created_at` 顺序不一致（例如补卡），序号会对不上
+
+**问题 2：数据源不完整**
+
+- 图表只使用 `wealth_journal_entries`（语音梳理来源）
+- 财富简报同时包含 `wealth_journal_entries` + `wealth_coach_4_questions_briefings`（文字梳理）
+- 如果用户做过文字梳理，简报里有第 N 天的记录，但图表里没有对应数据点
+
+**结论：** 图表里的"第 1 天、第 2 天"序号与简报里的"第 1 天、第 2 天"不一致
 
 ---
 
 ## 解决方案
 
-需要同时完成两件事：
+### 核心思路：让图表使用与财富简报完全相同的数据源和排序逻辑
 
-### 1. 新增 `awakening` 维度（在上次计划已设计好）
-
-在 `WealthProgressChart.tsx` 中：
-
-- **新增 props** `baselineAwakening?: number`
-- **`DimensionKey` 扩展**为 `'behavior' | 'emotion' | 'belief' | 'awakening'`
-- **`chartData` 新增 `觉醒指数` 字段**：
-  - 第 0 天 → `baselineAwakening`（如 45）
-  - 第 N 天 → 三维星分均值换算为 0-100：`Math.round(((avg - 1) / 4) * 100)`
-- **Y 轴动态适配**：当 `activeDimension === 'awakening'` 时，`domain=[0,100]`，`ticks=[0,20,40,60,80,100]`
-- **默认维度改为 `'awakening'`**：`useState<DimensionKey>('awakening')`
-- **新增 Toggle 按钮"觉醒"**（琥珀金 / 渐变色）
-- **统计区适配**：觉醒维度显示"起点 / 当前 / 成长 / 峰值"
-
-### 2. `AwakeningArchiveTab.tsx` 传入 `baselineAwakening`
-
-从 `progress.baseline_awakening`（`useAwakeningProgress` 已有此字段）传给图表：
-
-```tsx
-<WealthProgressChart 
-  entries={...}
-  baseline={...}
-  baselineAwakening={progress?.baseline_awakening}
-/>
+**简报的天数逻辑（在 `WealthCampCheckIn.tsx`）：**
+```
+journalSequenceMap = 
+  mergedBriefings（journal + coach_briefing 混合）
+  → 仅筛选 journal 条目
+  → 按 created_at 升序
+  → 依次分配序号 1, 2, 3...
 ```
 
----
-
-## 图表效果（觉醒维度，默认显示）
-
-```text
-Y轴(0-100)
-100|
- 78|              ● 78（绿色，当前）
- 61|         ●
- 52|    ●
- 45| ◆（灰色，第0天起点）
-  0|________________________
-   第0天  第1天  第2天  第3天
-
-统计区：起点 45  当前 78  成长 +33↑  峰值 第3天
+**图表应采用的逻辑（同步）：**
 ```
+chartData = 
+  wealth_journal_entries（所有来源）
+  → 按 created_at 升序
+  → 依次分配序号 1, 2, 3...（与简报完全一致）
+  → 第 0 天 = 测评基准
+```
+
+注意：觉醒指数只能从 `wealth_journal_entries` 计算（因为 `wealth_coach_4_questions_briefings` 没有行为/情绪/信念评分），但**序号分配**必须与简报一致。
 
 ---
 
 ## 修改文件
 
-- **`src/components/wealth-camp/WealthProgressChart.tsx`**：
-  - `useState` 默认值改为 `'awakening'`
-  - 新增 `awakening` 维度、Y 轴 0-100、`觉醒指数` 字段、统计卡片
-  - 新增 `baselineAwakening` prop
+### 1. `src/hooks/useWealthJournalEntries.ts`
 
-- **`src/components/wealth-camp/AwakeningArchiveTab.tsx`**：
-  - 传入 `baselineAwakening={progress?.baseline_awakening}`
+**将查询排序从 `day_number` 改为 `created_at`**，确保图表数据与简报的排序基准一致：
+
+```typescript
+// 修改前
+.order('day_number', { ascending: true });
+
+// 修改后
+.order('created_at', { ascending: true });
+```
+
+### 2. `src/components/wealth-camp/WealthProgressChart.tsx`
+
+图表的 `chartData` 已经用 `created_at` 升序排列（上一次实现），但由于数据来源排序是 `day_number`，可能导致二次排序时行为异常。
+
+在 `chartData` 的 `useMemo` 中，**明确再次用 `created_at` 排序**（防御性编程），保证无论数据传入顺序如何，图表序号都正确：
+
+```typescript
+// 已有（维持不变），但加注释强调排序对齐
+const sorted = [...entries].sort((a, b) =>
+  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+);
+```
+
+这部分代码已正确，无需改动。
+
+### 3. `src/components/wealth-camp/AwakeningArchiveTab.tsx`
+
+目前 `fullEntries` 来自 `useWealthJournalEntries({ campId })`，修改 hook 排序后天然同步，无需额外改动。
+
+---
+
+## 最终效果对比
+
+**修改前（不同步）：**
+```
+财富简报：
+  第 1 天（created_at: 2/10）→ 语音梳理
+  第 2 天（created_at: 2/12）→ 文字梳理（无分数，不计入图表）
+  第 3 天（created_at: 2/14）→ 语音梳理
+
+图表显示：
+  第 0 天（起点）→ 45
+  第 1 天（day_number=1）→ 52  ← 可能与简报第1天对不上
+  第 2 天（day_number=3）→ 61  ← 简报里是第3天，图表显示第2天
+```
+
+**修改后（同步）：**
+```
+财富简报：
+  第 1 天（created_at: 2/10）→ 语音梳理 → 有分数
+  第 2 天（created_at: 2/12）→ 文字梳理 → 无分数（简报显示第2天，图表第2天为空/0）
+  第 3 天（created_at: 2/14）→ 语音梳理 → 有分数
+
+图表显示（created_at 升序）：
+  第 0 天（起点）→ 45
+  第 1 天（created_at: 2/10）→ 52  ← 与简报第1天一致 ✅
+  第 2 天（created_at: 2/12）→ 0   ← 文字梳理无分，图表断点（符合预期）
+  第 3 天（created_at: 2/14）→ 61  ← 与简报第3天一致 ✅
+```
+
+---
+
+## 技术细节
+
+### 为什么不把文字梳理也加入图表？
+
+`wealth_coach_4_questions_briefings` 表没有 `behavior_score`、`emotion_score`、`belief_score` 字段，无法计算觉醒指数。图表天数序号应当与简报一致，但分数数据只来自 `wealth_journal_entries`。
+
+### 只需改一行
+
+真正的核心修改只在 `useWealthJournalEntries.ts` 第 87 行：
+```
+.order('day_number', ...) → .order('created_at', ...)
+```
+
+这一行修改让数据源的排序与财富简报完全一致，图表中 `chartData` 已有 `created_at` 二次排序，所以两者序号将天然对齐。
