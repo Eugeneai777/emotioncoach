@@ -442,17 +442,17 @@ export function CombinedPersonalityCard({
                 <AccordionContent>
                   <CardContent className="p-3 space-y-3">
                     {/* 主导卡点卡片 */}
-                    <div className={cn("p-3 text-white rounded-lg", dominantPoor.color)}>
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-400">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">{dominantPoor.emoji}</span>
                         <div>
-                          <h4 className="font-bold text-sm">{dominantPoor.name}</h4>
-                          <p className="text-white/80 text-[10px]">{dominantPoor.description}</p>
+                          <h4 className="font-bold text-sm text-amber-900 dark:text-amber-100">{dominantPoor.name}</h4>
+                          <p className="text-amber-700/80 dark:text-amber-300/80 text-[10px]">{dominantPoor.description}</p>
                         </div>
                       </div>
-                      <p className="text-white/90 text-xs leading-relaxed mb-2">{dominantPoor.detail}</p>
-                      <div className="p-2 bg-white/20 rounded-lg">
-                        <p className="text-xs">💡 突破方案：{dominantPoor.solution}</p>
+                      <p className="text-amber-800 dark:text-amber-200 text-xs leading-relaxed mb-2">{dominantPoor.detail}</p>
+                      <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg border border-amber-200/60">
+                        <p className="text-xs text-amber-800 dark:text-amber-200">💡 突破方案：{dominantPoor.solution}</p>
                       </div>
                     </div>
 
@@ -460,10 +460,10 @@ export function CombinedPersonalityCard({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={fourPoorRadarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={fourPoorRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 8 }} />
-                            <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
+                            <PolarRadiusAxis angle={90} domain={[0, Math.max(baseline.mouth_score || 0, baseline.hand_score || 0, baseline.eye_score || 0, baseline.heart_score || 0, 5)]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
                               name="Day 0 基线" 
@@ -627,17 +627,17 @@ export function CombinedPersonalityCard({
                 <AccordionContent>
                   <CardContent className="p-3 space-y-3">
                     {/* 主导卡点卡片 */}
-                    <div className={cn("p-3 text-white rounded-lg", dominantEmotion.color)}>
+                    <div className="p-3 rounded-lg bg-pink-50 dark:bg-pink-950/30 border-l-4 border-pink-400">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">{dominantEmotion.emoji}</span>
                         <div>
-                          <h4 className="font-bold text-sm">{dominantEmotion.name}</h4>
-                          <p className="text-white/80 text-[10px]">{dominantEmotion.description}</p>
+                          <h4 className="font-bold text-sm text-pink-900 dark:text-pink-100">{dominantEmotion.name}</h4>
+                          <p className="text-pink-700/80 dark:text-pink-300/80 text-[10px]">{dominantEmotion.description}</p>
                         </div>
                       </div>
-                      <p className="text-white/90 text-xs leading-relaxed mb-2">{dominantEmotion.detail}</p>
-                      <div className="p-2 bg-white/20 rounded-lg">
-                        <p className="text-xs">💡 突破方案：{dominantEmotion.solution}</p>
+                      <p className="text-pink-800 dark:text-pink-200 text-xs leading-relaxed mb-2">{dominantEmotion.detail}</p>
+                      <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg border border-pink-200/60">
+                        <p className="text-xs text-pink-800 dark:text-pink-200">💡 突破方案：{dominantEmotion.solution}</p>
                       </div>
                     </div>
 
@@ -645,10 +645,10 @@ export function CombinedPersonalityCard({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={emotionRadarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={emotionRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
-                            <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
+                            <PolarRadiusAxis angle={90} domain={[0, Math.max(...emotionRadarData.map(d => d.baseline), 3)]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
                               name="Day 0 基线" 
@@ -809,30 +809,30 @@ export function CombinedPersonalityCard({
                 <AccordionContent>
                   <CardContent className="p-3 space-y-3">
                     {/* 主导卡点卡片 */}
-                    <div className={cn("p-3 text-white rounded-lg", dominantBelief.color)}>
+                    <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border-l-4 border-violet-400">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">{dominantBelief.emoji}</span>
                         <div>
-                          <h4 className="font-bold text-sm">{dominantBelief.name}</h4>
-                          <p className="text-white/80 text-[10px]">{dominantBelief.description}</p>
+                          <h4 className="font-bold text-sm text-violet-900 dark:text-violet-100">{dominantBelief.name}</h4>
+                          <p className="text-violet-700/80 dark:text-violet-300/80 text-[10px]">{dominantBelief.description}</p>
                         </div>
                       </div>
-                      <p className="text-white/90 text-xs leading-relaxed mb-2">{dominantBelief.detail}</p>
+                      <p className="text-violet-800 dark:text-violet-200 text-xs leading-relaxed mb-2">{dominantBelief.detail}</p>
                       
                       {/* 限制性信念标签 */}
                       <div className="mb-2">
-                        <p className="text-white/70 text-[10px] mb-1">限制性信念：</p>
+                        <p className="text-violet-700/70 dark:text-violet-300/70 text-[10px] mb-1">限制性信念：</p>
                         <div className="flex flex-wrap gap-1">
                           {dominantBelief.coreBeliefs.map((belief, index) => (
-                            <span key={index} className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
+                            <span key={index} className="bg-violet-100 dark:bg-violet-900/40 border border-violet-200/50 px-1.5 py-0.5 rounded text-[10px] text-violet-700 dark:text-violet-300">
                               "{belief}"
                             </span>
                           ))}
                         </div>
                       </div>
                       
-                      <div className="p-2 bg-white/20 rounded-lg">
-                        <p className="text-xs">💡 突破方案：{dominantBelief.solution}</p>
+                      <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg border border-violet-200/60">
+                        <p className="text-xs text-violet-800 dark:text-violet-200">💡 突破方案：{dominantBelief.solution}</p>
                       </div>
                     </div>
 
@@ -840,10 +840,10 @@ export function CombinedPersonalityCard({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={beliefRadarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={beliefRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
-                            <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
+                            <PolarRadiusAxis angle={90} domain={[0, Math.max(...beliefRadarData.map(d => d.baseline), 3)]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
                               name="Day 0 基线" 
