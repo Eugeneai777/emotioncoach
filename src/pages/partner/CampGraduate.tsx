@@ -32,6 +32,8 @@ import { AchievementBadgeWall } from "@/components/wealth-camp/AchievementBadgeW
 import { AchievementCelebration } from "@/components/wealth-camp/AchievementCelebration";
 import { useAwakeningProgress } from "@/hooks/useAwakeningProgress";
 import { useAchievementChecker } from "@/hooks/useAchievementChecker";
+import { useWealthJournalEntries } from "@/hooks/useWealthJournalEntries";
+import { WealthProgressChart } from "@/components/wealth-camp/WealthProgressChart";
 import { 
   LineChart, 
   Line, 
@@ -125,6 +127,10 @@ export default function CampGraduate() {
   
   // Achievement checker - auto award achievements on page load
   const { checkAndAwardAchievements, checking: checkingAchievements, newlyEarned, showCelebration, closeCelebration } = useAchievementChecker();
+
+  // Load full journal entries for the complete awakening chart (Day 0 → Day N)
+  const campIdForChart = graduationData?.campId || urlCampId || undefined;
+  const { entries: journalEntries } = useWealthJournalEntries({ campId: campIdForChart });
 
   // 页面访问埋点 + 成就检查
   useEffect(() => {
@@ -396,82 +402,36 @@ export default function CampGraduate() {
         {/* 以下内容仅毕业用户可见 */}
         {graduationData && (
           <>
-        {/* 觉醒曲线可视化 */}
-        {chartData.length > 0 && (
-          <Card className="border-0 shadow-lg overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-5 h-5 text-amber-500" />
-                <h3 className="font-semibold text-lg">7天觉醒曲线</h3>
-                {campSummary?.awakening_growth != null && (
-                  <Badge className={`border-0 ml-auto ${campSummary.awakening_growth >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
-                    {campSummary.awakening_growth >= 0 ? `+${campSummary.awakening_growth}` : campSummary.awakening_growth} 成长
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                    <defs>
-                      <linearGradient id="graduateGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis 
-                      dataKey="day" 
-                      axisLine={false} 
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: '#9ca3af' }}
-                    />
-                    <YAxis 
-                      domain={[0, 100]}
-                      axisLine={false} 
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: '#9ca3af' }}
-                    />
-                    {baseline?.awakeningStart != null && (
-                      <ReferenceLine 
-                        y={baseline.awakeningStart} 
-                        stroke="#9ca3af" 
-                        strokeDasharray="4 4"
-                        label={{ value: 'Day 0', position: 'right', fontSize: 10, fill: '#9ca3af' }}
-                      />
-                    )}
-                    <Area 
-                      type="monotone" 
-                      dataKey="score" 
-                      stroke="none"
-                      fill="url(#graduateGradient)" 
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="score" 
-                      stroke="#f59e0b" 
-                      strokeWidth={2.5}
-                      dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: 'white' }}
-                      activeDot={{ r: 6, fill: '#f59e0b' }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-              
-              {/* Start/End comparison */}
-              <div className="flex justify-between items-center mt-4 pt-4 border-t text-sm">
-                <div className="text-center">
-                  <div className="text-muted-foreground text-xs">起点</div>
-                  <div className="font-semibold text-lg">{campSummary?.start_awakening ?? baseline?.awakeningStart ?? '--'}</div>
-                </div>
-                <ArrowRight className="w-5 h-5 text-amber-500" />
-                <div className="text-center">
-                  <div className="text-muted-foreground text-xs">终点</div>
-                  <div className="font-semibold text-lg text-amber-600">{campSummary?.end_awakening ?? graduationData.awakeningScore}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* 觉醒指数完整曲线：第0天 → 结营 */}
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-5 h-5 text-amber-500" />
+              <h3 className="font-semibold text-lg">觉醒指数成长曲线</h3>
+              {campSummary?.awakening_growth != null && (
+                <Badge className={`border-0 ml-auto ${campSummary.awakening_growth >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                  {campSummary.awakening_growth >= 0 ? `+${campSummary.awakening_growth}` : campSummary.awakening_growth} 成长
+                </Badge>
+              )}
+            </div>
+            <WealthProgressChart
+              entries={journalEntries.map(e => ({
+                day_number: e.day_number,
+                behavior_score: e.behavior_score ?? null,
+                emotion_score: e.emotion_score ?? null,
+                belief_score: e.belief_score ?? null,
+                created_at: e.created_at,
+              }))}
+              embedded={true}
+              baseline={baseline ? {
+                behavior_score: baseline.behavior_score,
+                emotion_score: baseline.emotion_score,
+                belief_score: baseline.belief_score,
+              } : null}
+              baselineAwakening={awakeningProgress?.baseline_awakening}
+            />
+          </CardContent>
+        </Card>
 
         {/* 三层成长对比 */}
         {layerGrowth && (
