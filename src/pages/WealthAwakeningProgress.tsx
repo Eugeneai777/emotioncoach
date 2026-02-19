@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, TrendingUp, Sparkles, Target, Heart, Brain, Lightbulb, Gift, ChevronRight } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';

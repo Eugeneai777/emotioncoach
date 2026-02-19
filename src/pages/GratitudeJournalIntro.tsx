@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Share2, Heart, Brain, Moon, Users, Compass, Eye, Search, Sparkles, Target, FileText, BarChart3, TrendingUp, CheckCircle2, ChevronDown, Check, X } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";

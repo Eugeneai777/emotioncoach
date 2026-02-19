@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Info } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { emotionTypes } from "@/config/emotionReliefConfig";
 import EmotionIcon from "@/components/icons/emotions/EmotionIcon";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";

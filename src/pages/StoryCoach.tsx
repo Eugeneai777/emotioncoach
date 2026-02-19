@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import StoryCreationFlow from "@/components/coach/StoryCreationFlow";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { CoachHeader } from "@/components/coach/CoachHeader";
+import PageHeader from "@/components/PageHeader";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { supabase } from "@/integrations/supabase/client";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -152,17 +153,31 @@ export default function StoryCoach() {
       <DynamicOGMeta pageKey="storyCoach" />
       <div className="min-h-screen bg-background flex flex-col">
       {/* Header - 使用共享的 CoachHeader 组件 */}
-      <CoachHeader
-        emoji="📖"
-        primaryColor="orange"
-        historyRoute="/my-stories"
-        historyLabel="我的故事广场"
-        historyLabelShort="故事广场"
-        hasMessages={showCreation}
-        onRestart={handleRestart}
-        onSignOut={handleSignOut}
-        showNotificationCenter={true}
-        currentCoachKey="story_coach"
+      <PageHeader
+        title="故事教练"
+        showBack
+        rightActions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/my-stories')}
+              className="gap-1.5"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">故事广场</span>
+            </Button>
+            <CoachNotificationsModule 
+              notifications={notifications}
+              loading={notificationsLoading}
+              currentIndex={currentNotificationIndex}
+              onIndexChange={setCurrentNotificationIndex}
+              onMarkAsRead={markAsRead}
+              onDelete={deleteNotification}
+              onTrigger={triggerNotification}
+            />
+          </div>
+        }
       />
 
       {/* Main Content */}

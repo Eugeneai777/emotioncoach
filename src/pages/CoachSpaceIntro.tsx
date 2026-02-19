@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, ArrowRight, Clock, Lock, GraduationCap, Target, MessageCircle, Sparkles, Share2 } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
