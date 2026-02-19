@@ -1,53 +1,95 @@
 
-# 将觉醒档案嵌入为卡片，放在成长曲线下方
+# 觉醒简报分类重构：训练营 / 文字教练 / 语音教练
 
-## 当前结构
+## 当前问题
 
-`AwakeningArchiveTab.tsx` 中，成长曲线卡片（`WealthProgressChart`）之后，目前的顺序是：
-```
-1. 毕业成就卡片（条件显示）
-2. GameProgressCard（游戏化进度）
-3. 成长曲线（WealthProgressChart）← 目标插入位置
-4. 成就徽章墙（CompactAchievementGrid）
-5. 财富人格（CombinedPersonalityCard）
-```
+觉醒简报页面将所有内容混合显示在一个时间线里，用户无法区分：
+- 训练营打卡（7天一轮）
+- 文字教练梳理（4问深度对话）
+- 语音教练通话（不应计入觉醒分）
 
-`/wealth-awakening-archive` 页面包含：
-- 总览卡片：觉醒时刻数量统计（橙色渐变）
-- 里程碑洞察：第N周关键发现
-- 层次筛选 Tabs：全部 / 行为 / 情绪 / 信念 / 行动
-- 时间线：按天分组的觉醒卡片（行为、情绪、信念、行动转化）
+## 数据层分析（已确认）
 
-## 方案设计
+通过数据库查询确认当前实际数据分布：
 
-将 `/wealth-awakening-archive` 的核心内容**提取成一个独立组件 `AwakeningMomentsCard`**，嵌入到 `AwakeningArchiveTab` 的成长曲线正下方。
-
-### 卡片结构设计（紧凑版）
-
-```
-┌─────────────────────────────────────────┐
-│ ✨ 觉醒档案            共 N 个时刻  [展开] │ ← 折叠式标题栏
-├─────────────────────────────────────────┤
-│ [全部] [行为] [情绪] [信念] [行动]        │ ← tab filter
-├─────────────────────────────────────────┤
-│ 第7天  3月15日                           │
-│  ├─ 🎯 行为觉醒  手穷                    │
-│  │    发现可负责事项...                   │
-│  └─ 💡 信念转化  匮乏感                  │
-│       新信念：...                        │
-│ 第5天  3月13日                           │
-│  └─ ❤️ 情绪觉醒  金钱焦虑               │
-├─────────────────────────────────────────┤
-│         查看完整觉醒档案 →               │ ← 跳转全页
-└─────────────────────────────────────────┘
+```text
+camp_id=null, session_id=null  → 12条（文字教练简报来源的日记）
+camp_id=null, session_id=有值  →  1条（语音教练 → journal entry）
+camp_id=有值, session_id=null  → 21条（训练营打卡）
 ```
 
-### 关键设计决策
+三类来源识别规则（仅靠现有字段，无需改表）：
 
-1. **折叠/展开控制**：默认显示最近 3 天，点击"展开"显示全部，避免页面过长
-2. **Tab 筛选保留**：行为 / 情绪 / 信念 / 行动，方便用户快速定位关注的层
-3. **"查看完整档案"按钮**：保留跳转 `/wealth-awakening-archive` 的入口
-4. **数据复用**：直接复用 `AwakeningArchiveTab` 中已有的 `fullEntries`（通过 `useWealthJournalEntries`），无需额外网络请求
+| 分类 | 来源表 | 识别条件 |
+|------|--------|----------|
+| 训练营 | `wealth_journal_entries` | `camp_id IS NOT NULL` + `session_id IS NULL` |
+| 文字教练 | `wealth_coach_4_questions_briefings` | 独立表，所有记录 |
+| 语音教练 | `wealth_journal_entries` | `session_id IS NOT NULL` |
+
+## 觉醒分计算规则变更
+
+语音教练对话（`session_id IS NOT NULL`）**不计入觉醒分**。
+
+- 现有 `useEnsureAwakeningProgress.ts` 中第 112-131 行查询 `wealth_journal_entries` 来计算当前觉醒指数时，需要过滤掉 `session_id IS NOT NULL` 的记录
+- 现有 `useWealthJournalEntries.ts` 的 `awakeningIndex` 计算同样需要过滤语音条目
+- 文字教练简报（`wealth_coach_4_questions_briefings`）目前**不参与觉醒分计算**，维持现状不变（觉醒分仅由训练营打卡条目驱动）
+
+## 训练营轮次显示
+
+训练营每7天为一轮。`useUserCampMode` 已计算 `cycleRound` 和 `cycleDayInRound`，但觉醒简报页面没有用到这个逻辑来分组显示。
+
+方案：按 `day_number` 分轮：
+- 第1轮：Day 1–7
+- 第2轮：Day 8–14（显示为"第二轮 第1天"）
+- 第3轮：Day 15–21
+
+计算公式：
+```typescript
+const round = Math.ceil(entry.day_number / 7); // 第几轮
+const dayInRound = ((entry.day_number - 1) % 7) + 1; // 本轮第几天
+```
+
+## UI 重构方案
+
+将觉醒简报内容区替换为三个子 Tab：
+
+```
+╔══════════════════════════════════════════╗
+║           觉醒简报                        ║
+╠══════════════════════════════════════════╣
+║  [ 训练营 ]  [ 文字教练 ]  [ 语音教练 ]   ║
+╠══════════════════════════════════════════╣
+║                                          ║
+║  训练营 Tab:                             ║
+║  ┌──────────────────────────────────┐   ║
+║  │ 🏕️ 第一轮                        │   ║
+║  │  Day 1 → Day 7                   │   ║
+║  ├──────────────────────────────────┤   ║
+║  │  第7天 · 3月18日  ⭐⭐⭐⭐        │   ║
+║  │  第6天 · 3月17日  ⭐⭐⭐          │   ║
+║  │  ...                             │   ║
+║  └──────────────────────────────────┘   ║
+║  ┌──────────────────────────────────┐   ║
+║  │ 🏕️ 第二轮（第1天完成）            │   ║
+║  │  Day 8 → Day 14                  │   ║
+║  └──────────────────────────────────┘   ║
+║                                          ║
+║  文字教练 Tab:                           ║
+║  ┌──────────────────────────────────┐   ║
+║  │ 💬 教练对话  3月15日 14:30        │   ║
+║  │ 🎯 行为洞察：...                 │   ║
+║  │ 💛 情绪洞察：...                 │   ║
+║  │ 💡 信念洞察：...                 │   ║
+║  └──────────────────────────────────┘   ║
+║                                          ║
+║  语音教练 Tab:                           ║
+║  ┌──────────────────────────────────┐   ║
+║  │ 🎙️ 语音梳理  3月14日 20:15       │   ║
+║  │ 暂无评分  (不计入觉醒指数)        │   ║
+║  │ 🧠 信念：...                     │   ║
+║  └──────────────────────────────────┘   ║
+╚══════════════════════════════════════════╝
+```
 
 ## 技术实现清单
 
@@ -55,42 +97,123 @@
 
 | 文件 | 操作 | 内容 |
 |------|------|------|
-| `src/components/wealth-camp/AwakeningMomentsCard.tsx` | **新建** | 核心展示组件，包含 tab 筛选 + 时间线 + 折叠逻辑 |
-| `src/components/wealth-camp/AwakeningArchiveTab.tsx` | **修改** | 在成长曲线后插入 `<AwakeningMomentsCard>` |
+| `src/pages/WealthCampCheckIn.tsx` | 修改 | 简报 Tab 内容改为三子 Tab；调整 `mergedBriefings` 分三类 |
+| `src/hooks/useEnsureAwakeningProgress.ts` | 修改 | 过滤语音条目（`session_id IS NOT NULL`）不参与觉醒分计算 |
+| `src/hooks/useWealthJournalEntries.ts` | 修改 | 过滤语音条目不参与 `awakeningIndex` 计算 |
 
-### AwakeningMomentsCard 接收的 props
+### WealthCampCheckIn.tsx 关键改动
 
+**数据分层：**
 ```typescript
-interface AwakeningMomentsCardProps {
-  entries: WealthJournalEntry[];  // 直接传入已加载的 fullEntries
-  campId?: string;
-}
+// 三类分开
+const campEntries = allJournalEntries.filter(
+  e => e.camp_id && !e.session_id // 训练营打卡
+);
+const voiceEntries = allJournalEntries.filter(
+  e => !!e.session_id // 语音教练
+);
+// wealthCoachBriefings → 文字教练（已有）
+
+// 训练营按轮次分组
+const campRounds = campEntries.reduce((acc, entry) => {
+  const round = Math.ceil(entry.day_number / 7);
+  if (!acc[round]) acc[round] = [];
+  acc[round].push(entry);
+  return acc;
+}, {} as Record<number, typeof campEntries>);
 ```
 
-内部自行处理：
-- 解析 `awakeningMoments`（复用 `WealthAwakeningArchive` 中的逻辑）
-- Tab 筛选状态（`activeTab`）
-- 折叠状态（`isExpanded`，默认只显示最近3天）
+**三子 Tab 渲染：**
+```tsx
+<Tabs defaultValue="camp">
+  <TabsList className="grid grid-cols-3">
+    <TabsTrigger value="camp">
+      🏕️ 训练营
+      {campEntries.length > 0 && <Badge>{campEntries.length}</Badge>}
+    </TabsTrigger>
+    <TabsTrigger value="text">
+      💬 文字教练
+      {wealthCoachBriefings.length > 0 && <Badge>{wealthCoachBriefings.length}</Badge>}
+    </TabsTrigger>
+    <TabsTrigger value="voice">
+      🎙️ 语音教练
+      {voiceEntries.length > 0 && <Badge>{voiceEntries.length}</Badge>}
+    </TabsTrigger>
+  </TabsList>
 
-### 数据流（无额外请求）
+  {/* 训练营 Tab：按轮次分组 */}
+  <TabsContent value="camp">
+    {Object.entries(campRounds).reverse().map(([round, entries]) => (
+      <div key={round}>
+        <div className="轮次标题">
+          🏕️ 第{roundNames[round]}轮  Day {(round-1)*7+1}–{round*7}
+        </div>
+        {entries
+          .sort((a, b) => b.day_number - a.day_number)
+          .map(entry => (
+            <WealthJournalCard
+              key={entry.id}
+              entry={entry}
+              dayLabel={`第 ${((entry.day_number - 1) % 7) + 1} 天`}
+              roundLabel={round > 1 ? `第${roundNames[round]}轮` : undefined}
+            />
+          ))
+        }
+      </div>
+    ))}
+  </TabsContent>
 
+  {/* 文字教练 Tab：现有 coach_briefing 渲染逻辑 */}
+  <TabsContent value="text">
+    {wealthCoachBriefings 渲染...}
+  </TabsContent>
+
+  {/* 语音教练 Tab：带"不计入觉醒指数"提示 */}
+  <TabsContent value="voice">
+    {voiceEntries 渲染，带不计入说明...}
+  </TabsContent>
+</Tabs>
 ```
-AwakeningArchiveTab
-  └─ useWealthJournalEntries → fullEntries（已有）
-       └─ AwakeningMomentsCard
-            ├─ 解析 awakeningMoments（本地 useMemo）
-            ├─ Tab 筛选
-            ├─ 按天分组
-            └─ 折叠展示（最近3天 or 全部）
+
+### useEnsureAwakeningProgress.ts 关键改动
+
+在第 112 行查询时加过滤条件：
+```typescript
+const { data: journalEntries } = await supabase
+  .from('wealth_journal_entries')
+  .select('behavior_score, emotion_score, belief_score, session_id')
+  .eq('user_id', user.id)
+  .is('session_id', null)  // ← 新增：排除语音条目
+  .order('day_number', { ascending: false });
 ```
 
-### 样式方针
+### useWealthJournalEntries.ts 关键改动
 
-- 卡片整体继承 `Card` + `shadow-sm` 风格，与页面其他卡片一致
-- 时间线使用更紧凑的 padding（`p-3` 替代 `p-4`）
-- 觉醒 badge 颜色沿用原页面（行为=amber，情绪=pink，信念=violet，行动=emerald）
-- 底部"查看完整档案"用 `variant="link"` 按钮，保持轻量
+在 `awakeningIndex` 计算的 `useMemo` 中过滤掉语音条目：
+```typescript
+const { awakeningIndex, peakIndex, currentAvg } = useMemo(() => {
+  if (!entries || entries.length === 0) return { ... };
+  
+  // 过滤掉语音条目
+  const scorableEntries = entries.filter(e => !e.session_id);
+  
+  const dailyScores = scorableEntries
+    .filter(e => (e.behavior_score || 0) > 0 || ...)
+    .map(e => { ... });
+  ...
+}, [entries]);
+```
+
+## 修改范围
+
+- **3个文件**，无需数据库变更，无需新建组件
+- 利用现有 `WealthJournalCard` 显示训练营和语音条目
+- 训练营轮次分组逻辑完全在前端基于 `day_number` 计算
+- 觉醒分过滤是轻量 SQL 条件补充（`.is('session_id', null)`）
 
 ## 效果
 
-用户在"觉醒旅程"tab 中，滑过成长曲线后，**直接看到自己的觉醒档案摘要**，无需跳转另一个页面，且保留了跳转完整页的入口。
+用户进入"觉醒简报"后：
+1. **训练营 Tab**：看到按轮次（第一轮Day1-7、第二轮Day1-7...）分组的打卡历史，清晰体现成长轨迹
+2. **文字教练 Tab**：看到深度梳理的4问简报，每条显示行为/情绪/信念洞察
+3. **语音教练 Tab**：看到语音通话记录，配有"🔇 不计入觉醒指数"提示，让用户理解评分规则
