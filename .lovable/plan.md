@@ -1,31 +1,29 @@
 
 
-# 修复手工配对"暂无可选产品"问题
+# 修复"产品中心"数据源：从 packages 表获取产品
 
 ## 问题原因
 
-手工配对模式查询商城商品时使用了错误的列名 `name`，但数据库中实际列名是 `product_name`，导致查询报错（HTTP 400），商城商品始终加载失败。
+当前手工配对的"产品中心"查询的是 `partner_products` 表（合伙人自建产品），但用户期望的"产品中心"是 `/packages` 页面中展示的所有套餐，数据来源是 `packages` 表。该表有 20 条活跃产品（尝鲜会员、365会员、各种训练营、合伙人套餐等），而 `partner_products` 表为空。
 
-同时，当前查询限制了 `partner_id` 等于当前合伙人，但该合伙人可能没有自己上架的产品。根据需求"可以自己选择**全部**产品中心产品和商城商品"，应移除 `partner_id` 过滤，让用户看到所有可用产品。
-
-## 修复内容
+## 修复方案
 
 修改 `src/components/partner/AILandingPageWizard.tsx` 中的 `fetchManualProducts` 函数：
 
-1. 将 `health_store_products` 查询的 `name` 改为 `product_name`
-2. 移除两个查询中的 `partner_id` 过滤条件，展示全部可用产品
-3. 统一展示时的字段名引用
+1. 将"产品中心"的查询从 `partner_products` 改为 `packages` 表
+2. 查询条件：`is_active = true`，按 `display_order` 排序
+3. 字段映射：使用 `package_name` 作为显示名称
+4. 排除管理员专用套餐（如 `custom`）
 
 ## 技术细节
 
 ```text
-修改前:
-  .select("id, name, price, description")
-  .eq("partner_id", partnerId)
+修改前（查询 partner_products）:
+  supabase.from("partner_products").select("id, product_name, price, description").eq("is_active", true)
 
-修改后:
-  .select("id, product_name, price, description")
-  // 不限制 partner_id，展示全部可用商品
+修改后（查询 packages）:
+  supabase.from("packages").select("id, package_name, price, description").eq("is_active", true).neq("package_key", "custom").order("display_order")
 ```
 
-对 `partner_products` 同样移除 `partner_id` 过滤，并确保后续引用 `storeProducts` 时使用 `product_name` 而非 `name`。
+渲染时将 `p.product_name` 改为 `p.package_name`，`getSelectedManualProductNames` 同步调整。
+
