@@ -188,7 +188,7 @@ export default function IndustryPartnerManagement() {
       >
         <Tabs defaultValue="flywheel" className="space-y-4">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="flywheel">飞轮分析</TabsTrigger>
+            <TabsTrigger value="flywheel">创建活动</TabsTrigger>
             <TabsTrigger value="bundles">组合产品</TabsTrigger>
             <TabsTrigger value="store">商城商品</TabsTrigger>
             <TabsTrigger value="orders">商城订单</TabsTrigger>
