@@ -1,21 +1,35 @@
 
 
-# 活动列表数字凸显优化
+# 修复 iPhone 分享图片预览的两个问题
 
-## 问题
-当前活动列表中的数据列（投放、观看、购买、金额）使用 `text-muted-foreground` 颜色，与标题文字视觉权重相同，运营人员难以快速扫描关键转化数据。
+## 问题分析
 
-## 优化方案
+用户在 iPhone 上完成财富卡点测评后，点击"分享我的AI测评报告" -> "生成分享图片"，出现两个问题：
 
-### 修改文件：`src/components/partner/PartnerLandingPageList.tsx`
+### 问题 1：生成的海报没有居中全屏显示，需要滚动条下拉
+**根因**：`ShareImagePreview` 组件中的图片只限制了最大宽度 (`max-w-[420px]`)，没有限制最大高度。当分享卡片图片较长时，图片超出可视区域，需要滚动才能看到完整图片和底部操作区。
 
-1. **数字加粗加深**：将观看、购买、金额的数字从 `text-muted-foreground` 改为 `font-semibold text-foreground`
-2. **非零高亮**：观看数 > 0 时用蓝色，购买数 > 0 时用绿色，金额 > 0 时用橙色，零值保持灰色
-3. **字号微调**：数据列字号从默认 `text-xs` 保持不变，但通过加粗和颜色对比增强视觉层级
+### 问题 2：点保存到相册后，无法返回
+**根因**：在 iOS Safari 中长按图片保存后，页面的 `body.style.overflow = 'hidden'` 滚动锁定可能未被正确清除。同时关闭按钮在顶部，如果用户已经滚动到图片下方，需要回滚才能找到关闭按钮，造成"无法返回"的体验。
 
-### 具体样式映射
-- 观看：非零时 `font-semibold text-blue-600`，零时 `text-muted-foreground`
-- 购买：非零时 `font-semibold text-emerald-600`，零时 `text-muted-foreground`
-- 金额：非零时 `font-semibold text-orange-600`，零时 `text-muted-foreground`
-- 投放：保持当前样式（文本信息，非核心指标）
+## 修改方案
+
+### 修改文件：`src/components/ui/share-image-preview.tsx`
+
+1. **图片自适应视口高度**：给 `<img>` 添加 `max-h-[70vh]` 和 `object-contain`，确保图片始终在视口内完整显示，无需滚动
+2. **底部添加关闭按钮**：在底部操作区增加一个"关闭"按钮，用户保存图片后可以直接点击底部按钮返回，无需回到顶部寻找 X 按钮
+3. **强化滚动锁清理**：在 `onClose` 回调中显式清除 body 上的 `overflow`、`data-scroll-locked` 等残留属性，确保关闭后页面可正常滚动
+
+### 技术细节
+
+```text
+修改前图片样式：
+  max-w-[420px] w-full
+
+修改后图片样式：
+  max-w-[420px] w-full max-h-[70vh] object-contain
+
+底部操作区增加：
+  [关闭/返回] 按钮（在保存提示旁边或下方）
+```
 
