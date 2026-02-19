@@ -5,6 +5,7 @@ import { WealthProgressChart } from './WealthProgressChart';
 import { GameProgressCard } from './GameProgressCard';
 import { CompactAchievementGrid } from './CompactAchievementGrid';
 import { CombinedPersonalityCard } from './CombinedPersonalityCard';
+import { AwakeningMomentsCard } from './AwakeningMomentsCard';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
@@ -126,6 +127,9 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
           />
         </CardContent>
       </Card>
+
+      {/* 觉醒档案摘要 */}
+      <AwakeningMomentsCard entries={fullEntries} campId={campId} />
 
       {/* 成就徽章墙 */}
       <CompactAchievementGrid />
