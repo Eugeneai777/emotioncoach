@@ -227,13 +227,11 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
         supabase
           .from("partner_products" as any)
           .select("id, product_name, price, description")
-          .eq("partner_id", partnerId)
           .eq("is_active", true)
           .order("created_at", { ascending: false }),
         supabase
           .from("health_store_products" as any)
-          .select("id, name, price, description")
-          .eq("partner_id", partnerId)
+          .select("id, product_name, price, description")
           .eq("is_available", true)
           .order("created_at", { ascending: false }),
       ]);
@@ -258,7 +256,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
       .map(p => p.product_name);
     const storeNames = manualStoreProducts
       .filter(p => selectedManualIds.includes(p.id))
-      .map(p => p.name);
+      .map(p => p.product_name);
     return [...partnerNames, ...storeNames].join("、");
   };
 
@@ -759,7 +757,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
                                 checked={selectedManualIds.includes(p.id)}
                                 onCheckedChange={() => toggleManualProduct(p.id)}
                               />
-                              <span className="flex-1 text-sm">{p.name}</span>
+                              <span className="flex-1 text-sm">{p.product_name}</span>
                               <span className="text-xs text-muted-foreground">¥{p.price}</span>
                             </label>
                           ))}
