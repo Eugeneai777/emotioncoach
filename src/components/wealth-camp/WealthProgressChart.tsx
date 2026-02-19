@@ -97,6 +97,14 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
     return day0 ? [day0, ...journalPoints] : journalPoints;
   }, [entries, baselineValues, baselineAwakening]);
 
+  // Compute best-3-day threshold for tooltip star marking
+  const best3Threshold = useMemo(() => {
+    const dataWithValues = chartData.filter(d => d.hasData && !d.isBaseline);
+    const awakeningValues = dataWithValues.map(d => d['觉醒指数'] as number).filter(v => v != null && v > 0);
+    const sorted = [...awakeningValues].sort((a, b) => b - a);
+    return sorted.length >= 3 ? sorted[2] : (sorted.length > 0 ? sorted[sorted.length - 1] : 0);
+  }, [chartData]);
+
   // Calculate dimension-specific stats
   const dimensionStats = useMemo(() => {
     if (chartData.length === 0) return null;
@@ -239,6 +247,8 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
     const entry = chartData.find(d => d.day === label);
     const isBaseline = entry?.isBaseline;
     const hasData = entry?.hasData;
+    const entryAwakening = entry?.['觉醒指数'] as number | null | undefined;
+    const isInBest3 = showAwakening && entryAwakening != null && entryAwakening > 0 && entryAwakening >= best3Threshold && !isBaseline;
 
     const titleLabel = isBaseline
       ? `${label}（测评基准）`
@@ -262,17 +272,24 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
         {!hasData && !isBaseline ? (
           <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>文字梳理，无评分数据</p>
         ) : (
-          payload?.map((item: any, i: number) => (
-            item.value != null && (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: item.color, display: 'inline-block' }} />
-                <span style={{ color: 'hsl(var(--muted-foreground))' }}>{item.name}:</span>
-                <span style={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}>
-                  {showAwakening ? `${item.value} 分` : Number(item.value).toFixed(1)}
-                </span>
+          <>
+            {payload?.map((item: any, i: number) => (
+              item.value != null && (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: item.color, display: 'inline-block' }} />
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>{item.name}:</span>
+                  <span style={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                    {showAwakening ? `${item.value} 分` : Number(item.value).toFixed(1)}
+                  </span>
+                </div>
+              )
+            ))}
+            {isInBest3 && (
+              <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid hsl(var(--border))', color: '#f59e0b', fontWeight: 600, fontSize: 11 }}>
+                ⭐ 此天纳入峰值计算
               </div>
-            )
-          ))
+            )}
+          </>
         )}
       </div>
     );
@@ -305,7 +322,7 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
 
       {/* Stats panel */}
       {showAwakening && awakeningStats ? (
-        <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-lg p-2 mb-3 border border-amber-200/50 dark:border-amber-800/30">
+        <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-lg p-2 mb-1 border border-amber-200/50 dark:border-amber-800/30">
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground">起点:</span>
@@ -314,6 +331,7 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground">当前:</span>
               <span className="font-semibold text-amber-600">{awakeningStats.current}</span>
+              <span className="text-[10px] text-amber-500/70">（最佳3天）</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground">成长:</span>
@@ -327,6 +345,10 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
               <span className="text-muted-foreground text-[10px]">(第 {awakeningStats.peakDay} 天)</span>
             </div>
           </div>
+          {/* Explanation of chart vs stats */}
+          <p className="text-center text-[10px] text-muted-foreground/70 mt-1.5 leading-tight">
+            💡 折线图展示每日瞬时分 · "当前" = 记录中最好3天的平均峰值
+          </p>
         </div>
       ) : dimensionStats && !showAwakening ? (
         <div className="bg-muted/30 rounded-lg p-2 mb-3">
@@ -422,6 +444,18 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
               stroke="#8b5cf6"
               strokeWidth={3}
               dot={(props: any) => renderDot(props, '信念松动度', baselineValues?.belief, '#8b5cf6', 'belief')}
+            />
+          )}
+
+          {/* 当前觉醒指数参考线（最佳3天均值） */}
+          {showAwakening && awakeningStats && awakeningStats.current > 0 && hasJournalEntries && (
+            <ReferenceLine
+              y={awakeningStats.current}
+              stroke="#f97316"
+              strokeDasharray="5 4"
+              strokeWidth={1.5}
+              strokeOpacity={0.7}
+              label={{ value: `当前 ${awakeningStats.current}`, position: 'insideTopRight', fontSize: 9, fill: '#f97316', dy: -4 }}
             />
           )}
 
