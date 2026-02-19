@@ -305,11 +305,7 @@ export default function PartnerLandingPageDetail() {
             {/* Meta Row */}
             <div className="px-4 py-3 flex items-center gap-4 text-xs text-muted-foreground border-b border-border/50 bg-muted/30">
               {editing ? (
-                <div className="flex-1 grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">受众</label>
-                    <Input value={editAudience} onChange={(e) => setEditAudience(e.target.value)} placeholder="目标受众" className="h-8 text-xs" />
-                  </div>
+                <div className="flex-1 grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs font-medium mb-1 block">渠道</label>
                     <Input value={editChannel} onChange={(e) => setEditChannel(e.target.value)} placeholder="投放渠道" className="h-8 text-xs" />
@@ -321,8 +317,6 @@ export default function PartnerLandingPageDetail() {
                 </div>
               ) : (
                 <>
-                  <span>受众：{page.target_audience || "—"}</span>
-                  <span>·</span>
                   <span>渠道：{page.channel || "—"}</span>
                   <span>·</span>
                   <span>投放：{page.volume || "—"}</span>
