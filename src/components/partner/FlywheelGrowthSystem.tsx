@@ -26,6 +26,7 @@ const FLYWHEEL_LEVELS: LevelConfig[] = [
 
 interface FlywheelGrowthSystemProps {
   partnerId: string;
+  fromAdmin?: boolean;
 }
 
 function GrowthIndicator({ value }: { value: number }) {
@@ -53,7 +54,7 @@ function GrowthIndicator({ value }: { value: number }) {
   );
 }
 
-export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
+export function FlywheelGrowthSystem({ partnerId, fromAdmin }: FlywheelGrowthSystemProps) {
   const [loading, setLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({
     campaigns: 0, spend: 0, reach: 0, conversions: 0, revenue: 0,
@@ -276,7 +277,7 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
                 创建新活动
               </Button>
 
-              <PartnerLandingPageList partnerId={partnerId} level={level.level} />
+              <PartnerLandingPageList partnerId={partnerId} level={level.level} fromAdmin={fromAdmin} />
             </TabsContent>
           );
         })}

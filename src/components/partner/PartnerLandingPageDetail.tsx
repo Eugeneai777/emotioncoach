@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,11 +22,14 @@ interface LandingPageData {
   created_at: string;
   level: string | null;
   volume: string | null;
+  partner_id: string | null;
 }
 
 export default function PartnerLandingPageDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromAdmin = searchParams.get("from") === "admin";
   const [page, setPage] = useState<LandingPageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -246,7 +249,13 @@ export default function PartnerLandingPageDetail() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-lg font-semibold flex-1 truncate">推广活动详情</h1>
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => navigate("/partner")}>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => {
+            if (fromAdmin && page?.partner_id) {
+              navigate(`/admin/industry-partners?partner=${page.partner_id}`);
+            } else {
+              navigate("/partner");
+            }
+          }}>
             <RotateCw className="w-3.5 h-3.5" />
             飞轮页
           </Button>

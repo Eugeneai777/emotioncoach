@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageLayout } from "./shared/AdminPageLayout";
 import { AdminFilterBar } from "./shared/AdminFilterBar";
@@ -47,10 +48,11 @@ function generatePartnerCode(): string {
 }
 
 export default function IndustryPartnerManagement() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [partners, setPartners] = useState<IndustryPartner[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(searchParams.get("partner"));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -180,7 +182,7 @@ export default function IndustryPartnerManagement() {
       <AdminPageLayout
         title={`有劲飞轮 · ${selectedPartner.company_name || selectedPartner.partner_code}胶囊`}
         actions={
-          <Button variant="outline" size="sm" onClick={() => setSelectedPartnerId(null)}>
+          <Button variant="outline" size="sm" onClick={() => { setSelectedPartnerId(null); setSearchParams({}); }}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             返回列表
           </Button>
@@ -194,7 +196,7 @@ export default function IndustryPartnerManagement() {
             <TabsTrigger value="orders">商城订单</TabsTrigger>
           </TabsList>
           <TabsContent value="flywheel">
-            <FlywheelGrowthSystem partnerId={selectedPartnerId} />
+            <FlywheelGrowthSystem partnerId={selectedPartnerId} fromAdmin />
           </TabsContent>
           <TabsContent value="bundles">
             <PartnerProductBundles partnerId={selectedPartnerId} />
