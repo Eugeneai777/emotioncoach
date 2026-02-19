@@ -28,26 +28,33 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const isIOS = typeof navigator !== 'undefined' && 
     /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
 
+  const cleanupScrollLock = () => {
+    document.body.style.overflow = '';
+    document.body.removeAttribute('data-scroll-locked');
+    document.body.style.paddingRight = '';
+    document.body.style.marginRight = '';
+    document.body.style.position = '';
+  };
+
   // Fade-in on open
   useEffect(() => {
     if (open) {
       setImageSaved(false);
       setImageLoaded(false);
       setImageError(false);
-      // Trigger CSS transition after mount
       requestAnimationFrame(() => setVisible(true));
       document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-        document.body.removeAttribute('data-scroll-locked');
-        document.body.style.paddingRight = '';
-        document.body.style.marginRight = '';
-        document.body.style.position = '';
-      };
+      return cleanupScrollLock;
     } else {
       setVisible(false);
     }
   }, [open]);
+
+  // Wrap onClose to ensure scroll lock cleanup
+  const handleClose = useCallback(() => {
+    cleanupScrollLock();
+    onClose();
+  }, [onClose]);
 
   const handleDownload = useCallback(async () => {
     if (!imageUrl) return;
@@ -82,7 +89,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={handleClose}
           className="min-h-[44px] min-w-[44px]"
         >
           <X className="h-5 w-5" />
@@ -150,7 +157,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         <img
           src={imageUrl}
           alt="分享卡片"
-          className={`max-w-[420px] w-full rounded-2xl shadow-lg transition-opacity duration-200 ${
+          className={`max-w-[420px] w-full max-h-[70vh] object-contain rounded-2xl shadow-lg transition-opacity duration-200 ${
             imageLoaded ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
           }`}
           style={{
@@ -170,22 +177,42 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         className="shrink-0 flex flex-col items-center gap-3 px-4 pb-6"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
-        {(isWeChat || isIOS) ? (
-          <div className="flex items-center gap-3 bg-muted rounded-2xl px-5 py-3 max-w-sm w-full">
-            <span className="text-2xl shrink-0">👆</span>
-            <div>
-              <p className="text-foreground font-medium text-sm">长按上方图片保存</p>
-              <p className="text-muted-foreground text-xs mt-0.5">保存后可分享给好友或发朋友圈</p>
+      {(isWeChat || isIOS) ? (
+          <div className="flex flex-col items-center gap-3 max-w-sm w-full">
+            <div className="flex items-center gap-3 bg-muted rounded-2xl px-5 py-3 w-full">
+              <span className="text-2xl shrink-0">👆</span>
+              <div>
+                <p className="text-foreground font-medium text-sm">长按上方图片保存</p>
+                <p className="text-muted-foreground text-xs mt-0.5">保存后可分享给好友或发朋友圈</p>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="rounded-full px-8 h-11 gap-2 text-base w-full"
+            >
+              <X className="h-4 w-4" />
+              返回
+            </Button>
           </div>
         ) : (
-          <Button
-            onClick={handleDownload}
-            className="rounded-full px-8 h-12 gap-2 text-base font-medium"
-          >
-            <Download className="h-5 w-5" />
-            保存图片
-          </Button>
+          <div className="flex flex-col items-center gap-3 max-w-sm w-full">
+            <Button
+              onClick={handleDownload}
+              className="rounded-full px-8 h-12 gap-2 text-base font-medium w-full"
+            >
+              <Download className="h-5 w-5" />
+              保存图片
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="rounded-full px-8 h-11 gap-2 text-base w-full"
+            >
+              <X className="h-4 w-4" />
+              返回
+            </Button>
+          </div>
         )}
       </div>
     </div>
