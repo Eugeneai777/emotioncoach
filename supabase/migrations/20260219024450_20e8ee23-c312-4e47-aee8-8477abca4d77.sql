@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_landing_pages ADD COLUMN published_at timestamptz;

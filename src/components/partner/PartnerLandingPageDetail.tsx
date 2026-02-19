@@ -273,7 +273,7 @@ export default function PartnerLandingPageDetail() {
               try {
                 const { error } = await supabase
                   .from("partner_landing_pages" as any)
-                  .update({ status: newStatus })
+                  .update({ status: newStatus, ...(newStatus === "published" ? { published_at: new Date().toISOString() } : {}) })
                   .eq("id", id);
                 if (error) throw error;
                 setPage({ ...page, status: newStatus });
