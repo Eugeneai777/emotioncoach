@@ -1,8 +1,10 @@
 import React from "react";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AliveCheck as AliveCheckComponent } from "@/components/tools/AliveCheck";
+import PageHeader from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 
 const AliveCheck = () => {
   const navigate = useNavigate();
@@ -19,26 +21,11 @@ const AliveCheck = () => {
         <div className="absolute bottom-20 right-10 w-48 h-48 bg-fuchsia-200/20 rounded-full blur-3xl" />
       </div>
 
-      {/* 顶部导航 */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-4 sm:px-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-rose-700" />
-        </button>
-        
-        <h1 className="text-lg font-bold text-rose-800 flex items-center gap-1.5">
-          💗 死了吗
-        </h1>
-        
-        <button
-          onClick={() => navigate("/energy-studio-intro")}
-          className="p-2 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-colors"
-        >
-          <Info className="w-5 h-5 text-rose-700" />
-        </button>
-      </div>
+      <PageHeader title="💗 死了吗" showBack rightActions={
+        <Button variant="ghost" size="icon" onClick={() => navigate("/energy-studio-intro")}>
+          <Info className="w-5 h-5" />
+        </Button>
+      } />
 
       {/* 主内容区 */}
       <div className="relative z-10 px-4 sm:px-6 pb-8">

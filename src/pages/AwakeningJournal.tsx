@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Trash2, Filter, Calendar, Sparkles } from "lucide-react";
+import { Trash2, Filter, Calendar, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -129,15 +130,7 @@ const AwakeningJournal: React.FC = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/awakening')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-semibold">觉察日记</h1>
-            <div className="w-10" />
-          </div>
-        </header>
+        <PageHeader title="觉察日记" backTo="/awakening" showBack />
 
         {/* Filter */}
         <div className="max-w-lg mx-auto px-4 py-4">

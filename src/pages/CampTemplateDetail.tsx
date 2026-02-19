@@ -8,7 +8,8 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Check, Users, Clock, ArrowLeft, ShoppingCart } from "lucide-react";
+import { ArrowRight, Sparkles, Check, Users, Clock, ShoppingCart } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
@@ -122,12 +123,7 @@ const CampTemplateDetail = () => {
   return <>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b">
-          <div className="container max-w-5xl mx-auto px-4 py-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/camps")} className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              返回
-            </Button>
+        <PageHeader title="训练营详情" backTo="/camps" showBack />
           </div>
         </header>
 

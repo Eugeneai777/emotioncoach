@@ -2,7 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, HeartHandshake, Bell, Shield, Users, Clock, Check, ArrowRight, Share2 } from "lucide-react";
+import { HeartHandshake, Bell, Shield, Users, Clock, Check, ArrowRight, Share2 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,23 +71,11 @@ const AliveCheckIntro = () => {
       <div className="absolute bottom-40 left-10 w-64 h-64 bg-fuchsia-200/15 rounded-full blur-3xl" />
       
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-rose-100/50">
-        <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="text-rose-700 hover:bg-rose-50"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-semibold text-rose-800">安全打卡介绍</h1>
-          {introShareConfigs.aliveCheck && (
-            <IntroShareDialog config={introShareConfigs.aliveCheck} />
-          )}
-          {!introShareConfigs.aliveCheck && <div className="w-10" />}
-        </div>
-      </div>
+      <PageHeader title="安全打卡介绍" showBack rightActions={
+        introShareConfigs.aliveCheck && (
+          <IntroShareDialog config={introShareConfigs.aliveCheck} />
+        )
+      } />
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6 relative z-10">
         {/* Hero Section */}
