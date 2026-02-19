@@ -52,6 +52,7 @@ interface WealthJournalEntry {
 interface WealthJournalCardProps {
   entry: WealthJournalEntry;
   onClick?: () => void;
+  sequenceNumber?: number;
 }
 
 function ScoreStars({ score }: { score?: number }) {
@@ -72,7 +73,7 @@ function ScoreStars({ score }: { score?: number }) {
   );
 }
 
-export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
+export function WealthJournalCard({ entry, onClick, sequenceNumber }: WealthJournalCardProps) {
   const hasCamp = !!entry.camp_id;
   const isVoice = !!entry.session_id;
   const hasBlockTypes = entry.behavior_type || entry.emotion_type || entry.belief_type;
@@ -95,7 +96,7 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-lg">{isVoice ? '🎙️' : '📖'}</span>
               <span className="font-medium text-amber-800 dark:text-amber-200">
-                {isVoice ? '语音梳理' : `Day ${entry.day_number}`}
+                {isVoice ? '语音梳理' : sequenceNumber ? `第 ${sequenceNumber} 天` : `Day ${entry.day_number}`}
               </span>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}

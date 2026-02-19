@@ -304,6 +304,18 @@ export default function WealthCampCheckIn() {
     );
   }, [allJournalEntries, wealthCoachBriefings]);
 
+  // Build journal sequence map: id → actual completion order (1st entry = Day 1, etc.)
+  const journalSequenceMap = useMemo(() => {
+    const journalOnly = mergedBriefings
+      .filter((item: any) => item._source === 'journal')
+      .sort((a: any, b: any) => new Date(a._sortDate).getTime() - new Date(b._sortDate).getTime());
+    const map = new Map<string, number>();
+    journalOnly.forEach((item: any, index: number) => {
+      map.set(item.id, index + 1);
+    });
+    return map;
+  }, [mergedBriefings]);
+
   const { todayAction, todayEntryId, todayActionCompleted: journalActionCompleted } = useTodayWealthJournal(journalEntries, currentDay);
 
   // Fetch user ID
@@ -946,6 +958,7 @@ ${reflection}`;
                       <WealthJournalCard
                         key={item.id}
                         entry={item}
+                        sequenceNumber={journalSequenceMap.get(item.id)}
                         onClick={() => navigate(`/wealth-journal/${item.id}`)}
                       />
                     );
