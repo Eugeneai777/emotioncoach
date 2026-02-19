@@ -20,6 +20,7 @@ interface LandingPage {
   channel: string | null;
   status: string;
   created_at: string;
+  volume: string | null;
 }
 
 export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageListProps) {
@@ -39,7 +40,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
     try {
       const { data, error } = await supabase
         .from("partner_landing_pages" as any)
-        .select("id, target_audience, selected_version, content_a, content_b, channel, status, created_at")
+        .select("id, target_audience, selected_version, content_a, content_b, channel, status, created_at, volume")
         .eq("partner_id", partnerId)
         .eq("level", level)
         .order("created_at", { ascending: false });
@@ -138,7 +139,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
       <div className="flex items-center gap-2 px-2 py-1 text-[10px] text-muted-foreground select-none">
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground" onClick={() => toggleSort("date")}>日期 <SortIcon k="date" /></span>
         <span className="flex-1">标题</span>
-        <span className="shrink-0 w-10 text-center">投放</span>
+        <span className="shrink-0 w-14 text-center">投放</span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("views")}>观看 <SortIcon k="views" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("purchases")}>购买 <SortIcon k="purchases" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("spend")}>金额 <SortIcon k="spend" /></span>
@@ -158,7 +159,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
           >
             <span className="text-muted-foreground shrink-0 w-10">{dateStr}</span>
             <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
-            <span className="text-muted-foreground shrink-0 w-10 text-center">0</span>
+            <span className="text-muted-foreground shrink-0 w-14 text-center truncate" title={page.volume || "—"}>{page.volume || "—"}</span>
             <span className="text-muted-foreground shrink-0 w-10 text-center">{m.views}</span>
             <span className="text-muted-foreground shrink-0 w-10 text-center">{m.purchases}</span>
             <span className="text-muted-foreground shrink-0 w-10 text-center">¥0</span>
