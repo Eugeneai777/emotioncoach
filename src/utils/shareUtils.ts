@@ -45,10 +45,10 @@ export const getShareEnvironment = (): ShareEnvironment => {
  * iOS (including WeChat H5) will use native navigator.share for system share panel.
  */
 export const shouldUseImagePreview = (): boolean => {
-  const { isMiniProgram, isWeChat, isIOS } = getShareEnvironment();
-  // iOS 和微信环境都使用图片预览
-  // iOS Safari 的 navigator.share() 调微信时不可靠
-  return isWeChat || isMiniProgram || isIOS;
+  const { isMiniProgram, isWeChat, isIOS, isAndroid } = getShareEnvironment();
+  // 所有移动端都使用图片预览（长按保存）
+  // navigator.share() 和 <a> 下载在微信/安卓中不可靠
+  return isWeChat || isMiniProgram || isIOS || isAndroid;
 };
 
 /**
