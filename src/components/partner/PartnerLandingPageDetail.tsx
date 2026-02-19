@@ -188,7 +188,11 @@ export default function PartnerLandingPageDetail() {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/partner");
+    }
   };
 
   const addPoint = () => {
