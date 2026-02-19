@@ -304,14 +304,14 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                         transition={{ delay: 0.6 + index * 0.05 }}
                       >
                         <span className={cn(
-                          "text-[9px] sm:text-[10px] font-medium whitespace-nowrap leading-tight",
+                          "text-[8px] sm:text-[9px] font-medium leading-tight text-center max-w-[40px] sm:max-w-[48px] break-words",
                           isCurrent 
                             ? "text-amber-600 dark:text-amber-400 font-bold" 
                             : isActive
                               ? "text-emerald-600 dark:text-emerald-400"
                               : "text-muted-foreground"
                         )}>
-                          {level.name.replace('觉醒', '').replace('情绪', '').replace('财富', '').replace('察', '')}
+                          {level.name}
                         </span>
                         <span className="text-[8px] text-muted-foreground/70 leading-tight">
                           {level.minPoints === 0 ? '0分' : `${level.minPoints}分`}
