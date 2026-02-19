@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type SortKey = "date" | "views" | "purchases" | "spend";
+type SortKey = "date" | "views" | "purchases" | "spend" | "shares";
 
 interface PartnerLandingPageListProps {
   partnerId: string;
@@ -29,7 +29,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
   const navigate = useNavigate();
   const [pages, setPages] = useState<LandingPage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState<Record<string, { views: number; purchases: number }>>({});
+  const [metrics, setMetrics] = useState<Record<string, { views: number; purchases: number; shares: number }>>({});
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -70,8 +70,8 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
 
       if (!events) return;
 
-      const result: Record<string, { views: number; purchases: number }> = {};
-      pageIds.forEach(id => { result[id] = { views: 0, purchases: 0 }; });
+      const result: Record<string, { views: number; purchases: number; shares: number }> = {};
+      pageIds.forEach(id => { result[id] = { views: 0, purchases: 0, shares: 0 }; });
 
       (events as any[]).forEach((e) => {
         const lpId = e.metadata?.landing_page_id;
@@ -80,6 +80,8 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
           result[lpId].views++;
         } else if (e.event_type === "payment") {
           result[lpId].purchases++;
+        } else if (e.event_type === "share") {
+          result[lpId].shares++;
         }
       });
 
@@ -96,12 +98,13 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
   const sortedPages = useMemo(() => {
     return [...pages].sort((a, b) => {
       let valA: number, valB: number;
-      const mA = metrics[a.id] || { views: 0, purchases: 0 };
-      const mB = metrics[b.id] || { views: 0, purchases: 0 };
+      const mA = metrics[a.id] || { views: 0, purchases: 0, shares: 0 };
+      const mB = metrics[b.id] || { views: 0, purchases: 0, shares: 0 };
       switch (sortKey) {
         case "views": valA = mA.views; valB = mB.views; break;
         case "purchases": valA = mA.purchases; valB = mB.purchases; break;
         case "spend": valA = 0; valB = 0; break;
+        case "shares": valA = mA.shares; valB = mB.shares; break;
         default: valA = new Date(a.created_at).getTime(); valB = new Date(b.created_at).getTime();
       }
       return sortAsc ? valA - valB : valB - valA;
@@ -143,6 +146,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
         <span className="flex-1">标题</span>
         <span className="shrink-0 w-14 text-center">投放</span>
         <span className="shrink-0 w-10 text-center">天数</span>
+        <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("shares")}>转发 <SortIcon k="shares" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("views")}>观看 <SortIcon k="views" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("purchases")}>购买 <SortIcon k="purchases" /></span>
         <span className="shrink-0 w-10 cursor-pointer hover:text-foreground text-center" onClick={() => toggleSort("spend")}>金额 <SortIcon k="spend" /></span>
@@ -151,7 +155,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
       </div>
       {sortedPages.map((page) => {
         const content = getSelectedContent(page);
-        const m = metrics[page.id] || { views: 0, purchases: 0 };
+        const m = metrics[page.id] || { views: 0, purchases: 0, shares: 0 };
         const d = new Date(page.created_at);
         const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
         const publishDate = page.published_at ? new Date(page.published_at) : null;
@@ -166,6 +170,7 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
             <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
             <span className="text-muted-foreground shrink-0 w-14 text-center truncate" title={page.volume || "—"}>{page.volume || "—"}</span>
             <span className={cn("shrink-0 w-10 text-center", daysSince > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>{daysSince > 0 ? `${daysSince}天` : "—"}</span>
+            <span className={cn("shrink-0 w-10 text-center", m.shares > 0 ? "font-semibold text-purple-600" : "text-muted-foreground")}>{m.shares}</span>
             <span className={cn("shrink-0 w-10 text-center", m.views > 0 ? "font-semibold text-blue-600" : "text-muted-foreground")}>{m.views}</span>
             <span className={cn("shrink-0 w-10 text-center", m.purchases > 0 ? "font-semibold text-emerald-600" : "text-muted-foreground")}>{m.purchases}</span>
             <span className="text-muted-foreground shrink-0 w-10 text-center">¥0</span>
