@@ -1,110 +1,121 @@
 
-# 财富人格画像卡片设计优化方案
+# 修复：主导卡点卡片不可见文字 + 雷达图比例优化
 
-## 问题诊断（结合截图）
+## 问题根因分析
 
-截图显示卡片有三个明显视觉问题：
+### 问题 1：大片空白 / 文字不显示（截图中最明显的 bug）
 
-### 问题 1：内部"财富反应模式"色块过于饱和
-- 当前：`pattern.color` 渲染出一个**深宝蓝/紫蓝满铺渐变块**（截图中大片深紫蓝色区域）
-- 与外层白色卡片形成强烈视觉落差，也与其他卡片（白底+装饰条）的轻量风格不统一
-- 解决方向：改为"浅色调背景 + 彩色左边框"的统一模式，或将内层色块饱和度降低，换成白色文字→深色文字
+**根因**：`dominantPoor.color` 的值是 `"from-orange-500 to-amber-500"`（Tailwind 渐变方向类），但使用方式是：
 
-### 问题 2："三层深度分析"面板强制暗黑模式（`dark` class）
-- 当前代码：`<div className="dark rounded-xl border border-border/50 bg-background p-2">`
-- `dark` 类强制内部变为暗黑模式，在浅色页面上形成一个黑色块，风格极度割裂
-- 解决方向：移除 `dark` class，改为与其他卡片一致的浅色面板 `bg-slate-50/60 border-slate-200/50`
+```tsx
+<div className={cn("p-3 text-white rounded-lg", dominantPoor.color)}>
+```
 
-### 问题 3：卡片头部与整体风格未完全统一
-- 与 `GameProgressCard` 的头部样式略有差异（字号、间距）
+缺少 `bg-gradient-to-br`，所以渐变不生效，背景变成透明/白色，而文字是 `text-white`。
+
+**结果**：**白色文字 on 白色背景 = 完全看不见**。截图中看到的大片空白区域，其实是有内容的（emoji + 标题 + detail + 解决方案），只是文字和背景颜色完全相同。
+
+同样的问题也存在于情绪层（`dominantEmotion.color`，值为渐变类）和信念层（`dominantBelief.color`）。
+
+### 问题 2：雷达图视觉比例偏小
+
+**根因**：
+- `outerRadius="60%"` 已经限制了最大半径
+- 四穷雷达图中，`domain=[0, 15]`，实际值如眼穷分数 = 10-12，但嘴穷/心穷可能只有 6-7，整体形状偏向中心
+- 情绪和信念雷达图的值是用总分除以5-7得到的近似值，数值偏小（约3-5），在 domain=[0,10] 的轴上显示比例偏小
+- 图形显示在160px 高度的左半边格子里，实际渲染面积约 70px × 70px，感觉非常小
 
 ---
 
-## 设计决策：对齐"轻暖质感"统一调性
+## 修复方案
 
-参照已优化的 `GameProgressCard`（白底+amber顶条）和 `AwakeningArchiveTab`（白底+色条），将 `CombinedPersonalityCard` 的内部子块也改为统一的轻量风格。
+### 修复一：主导卡点卡片 — 改为浅色卡片风格（确保文字可见）
 
-### 颜色语言延续
-- **外层卡片**：保持 `bg-white/95` + `indigo` 顶部装饰条（已有）
-- **内层财富反应模式块**：改为**浅色渐变**（如 `from-indigo-50 to-violet-50`）+ 深色文字，降低视觉冲击
-- **三层深度分析面板**：改为浅灰 `bg-slate-50/80 dark:bg-slate-900/40` + `border-slate-200/60`（彻底去除 `dark` class）
+将三层的主导卡点卡片，从"有颜色背景 + 白色文字"改为"浅色背景 + 深色文字 + 彩色左边框"，与整体白底调性统一，同时彻底解决文字不可见问题。
+
+**行为层**（约第445行）：
+```tsx
+// 改前（文字不可见）
+<div className={cn("p-3 text-white rounded-lg", dominantPoor.color)}>
+  <h4 className="font-bold text-sm">{dominantPoor.name}</h4>
+  <p className="text-white/80 text-[10px]">{dominantPoor.description}</p>
+  <p className="text-white/90 text-xs">{dominantPoor.detail}</p>
+  <div className="p-2 bg-white/20 rounded-lg">
+
+// 改后（深色文字，浅色背景）
+<div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30 border-l-4 border-orange-400">
+  <h4 className="font-bold text-sm text-orange-900 dark:text-orange-100">{dominantPoor.name}</h4>
+  <p className="text-orange-700/80 dark:text-orange-300/80 text-[10px]">{dominantPoor.description}</p>
+  <p className="text-orange-800 dark:text-orange-200 text-xs">{dominantPoor.detail}</p>
+  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg border border-orange-200">
+```
+
+对于情绪层（`dominantEmotion`）和信念层（`dominantBelief`），同样应用此修复，使用各自的颜色（pink/violet）。由于每个dominant的 color 值不可预测且是渐变类，采用固定的层级颜色更安全。
+
+具体颜色方案：
+- **行为层（四穷）**：amber/orange 色系 `bg-amber-50 border-l-4 border-amber-400`，文字 `text-amber-900`
+- **情绪层**：pink/rose 色系 `bg-pink-50 border-l-4 border-pink-400`，文字 `text-pink-900`
+- **信念层**：violet/purple 色系 `bg-violet-50 border-l-4 border-violet-400`，文字 `text-violet-900`
+
+### 修复二：雷达图比例优化
+
+**两个改动**：
+
+1. **`outerRadius` 从 60% 调整为 75%**，让图形占据更多可用空间：
+```tsx
+<RadarChart cx="50%" cy="50%" outerRadius="75%" data={fourPoorRadarData}>
+```
+
+2. **`domain` 改为动态计算**，基于实际数据最大值，而不是固定的15或10：
+```tsx
+// 四穷：实际分值最高15分，但改为动态
+const fourPoorMax = Math.max(
+  baseline.mouth_score || 0, baseline.hand_score || 0,
+  baseline.eye_score || 0, baseline.heart_score || 0, 5
+);
+// 轴域：[0, 略高于最大值] 让图形填满更多空间
+domain={[0, fourPoorMax]}
+
+// 情绪和信念：同理取实际最大值作为上限
+const emotionMax = Math.max(...emotionRadarData.map(d => d.baseline), 3);
+domain={[0, emotionMax]}
+```
+
+这样，无论分数高低，雷达图形状都能充分填充到约75%半径处，视觉上饱满。
 
 ---
 
-## 具体修改方案
+## 文件改动范围
 
-### 修改一：财富反应模式色块降饱和度
+| 文件 | 行数区间 | 改动内容 |
+|------|---------|---------|
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 445-456（行为层卡片） | 改为浅色 amber 边框卡片 |
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 630-641（情绪层卡片） | 改为浅色 pink 边框卡片 |
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | ~815-826（信念层卡片） | 改为浅色 violet 边框卡片 |
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 463（行为层雷达） | outerRadius 60%→75%, domain 动态 |
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 648（情绪层雷达） | outerRadius 60%→75%, domain 动态 |
+| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 843（信念层雷达） | outerRadius 60%→75%, domain 动态 |
 
-**当前**（约第252-255行）：
-```tsx
-<div className={cn("rounded-xl overflow-hidden", pattern.color)}>
-  <div className="bg-gradient-to-br p-3 text-white">
-```
-
-**改为**：将内层块改为"浅色左边框"卡片风格。保留 `pattern.color` 中的色相，但转为浅色背景版本。
-
-核心改动：
-- 外层容器：改为 `bg-white dark:bg-gray-900/60 rounded-xl border-l-4 border-indigo-400`（移除深色满铺）
-- 内部文字：从 `text-white` 改为 `text-foreground`（或 `text-indigo-900 dark:text-indigo-100`）
-- 模式 emoji 背景：从 `bg-white/20` 改为 `bg-indigo-100 dark:bg-indigo-900/40`
-- "📌 这不是性格" 说明区：从 `bg-white/15` 改为 `bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100`
-- 进度条底层：从 `bg-white/20` 改为 `bg-indigo-100 dark:bg-indigo-900/40`
-- 进度条填充：从 `from-white/60 to-white` 改为 `from-indigo-400 to-violet-500`（彩色进度条，更清晰）
-- milestone 标记点：从白色 `bg-white border-white` 改为 `bg-indigo-500 border-white` 
-- 动态激励文字区：从 `bg-white/10` 改为 `bg-indigo-100/80 dark:bg-indigo-950/40`
-- 状态标签 pill：从 `bg-white/20 text-white/95` 改为 `bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300`
-
-由于 `pattern.color` 有多种颜色（蓝、橙、红、绿），这里采用**通用方案**（用 `indigo` 色），而不是跟随 pattern 动态改变，从而确保卡片在所有状态下视觉统一。
-
-### 修改二：移除三层深度分析的强制暗黑模式
-
-**当前**（约第403行）：
-```tsx
-<div className="dark rounded-xl border border-border/50 bg-background p-2">
-```
-
-**改为**：
-```tsx
-<div className="rounded-xl border border-slate-200/70 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-900/40 p-2">
-```
-
-这一个改动就能解决截图中最大的视觉割裂：去掉 `dark` class，整个三层分析区域将从黑色变为浅灰白色，与外部页面统一。
-
-分隔线标题文字也同步更新：
-```tsx
-<span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">三层深度分析</span>
-```
-
-### 修改三：转化进度标题色改为深色（可读性）
-
-将 `text-white/80` 改为 `text-indigo-700 dark:text-indigo-300`，确保在浅色背景上清晰可读。
+**总改动量约 40 行，全在同一文件内，不涉及数据逻辑或其他文件。**
 
 ---
 
-## 修改文件清单
-
-| 文件 | 修改内容 | 改动量 |
-|------|---------|--------|
-| `src/components/wealth-camp/CombinedPersonalityCard.tsx` | 财富反应模式块浅色化 + 移除三层面板的 `dark` class | ~30行 |
-
-**不涉及任何数据逻辑、hooks或图表逻辑的修改**，只修改外层 className。
-
----
-
-## 改前 vs 改后对比
+## 效果预览
 
 **改前**：
 ```
-[白色卡片头部，indigo顶条]
-[深宝蓝满铺色块（财富反应模式）]   ← 视觉冲击
-[纯黑暗色面板（三层深度分析）]     ← 风格割裂
+[卡片头部 - 橙色条]
+[空白区域————————]  ← 实为白色文字在白色背景（不可见）
+ 👁️                 ← 只有 emoji 能显示（因为不是文字）
+[🔅                ]  ← 解决方案图标（💡，emoji可见，文字不可见）
+[小雷达图，形状拥挤在中央]
 ```
 
 **改后**：
 ```
-[白色卡片头部，indigo顶条]
-[白底+indigo左边框（财富反应模式）]  ← 轻量统一
-[浅灰白面板（三层深度分析）]         ← 浑然一体
+[卡片头部 - 橙色条]
+[🧿 眼穷  狭隘视角模式]       ← 完整标题（amber 深色文字）
+[你习惯盯着问题和不足...]     ← detail 文字（清晰可读）
+[💡 突破方案：放下控制欲...]  ← 解决方案（浅橙背景框）
+[更大雷达图，形状充实到75%半径]
 ```
-
-整体改动量约 **30行**，完全保留所有数据、图表、手风琴交互逻辑。
