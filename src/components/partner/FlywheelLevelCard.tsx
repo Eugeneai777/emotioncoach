@@ -23,6 +23,7 @@ interface FlywheelLevelCardProps {
   isLast: boolean;
   onOpenWizard: (level: string) => void;
   partnerId: string;
+  fromAdmin?: boolean;
 }
 
 const COLOR_MAP: Record<string, { border: string; bg: string; text: string; icon: string }> = {
@@ -32,7 +33,7 @@ const COLOR_MAP: Record<string, { border: string; bg: string; text: string; icon
   amber: { border: "border-l-amber-500", bg: "bg-amber-50", text: "text-amber-700", icon: "bg-amber-100 text-amber-600" },
 };
 
-export function FlywheelLevelCard({ levelConfig, stats, upgradeRate, isLast, onOpenWizard, partnerId }: FlywheelLevelCardProps) {
+export function FlywheelLevelCard({ levelConfig, stats, upgradeRate, isLast, onOpenWizard, partnerId, fromAdmin }: FlywheelLevelCardProps) {
   const [open, setOpen] = useState(false);
   const colors = COLOR_MAP[levelConfig.color] || COLOR_MAP.blue;
 
@@ -122,7 +123,7 @@ export function FlywheelLevelCard({ levelConfig, stats, upgradeRate, isLast, onO
             </Button>
 
             {/* Saved Landing Pages */}
-            <PartnerLandingPageList partnerId={partnerId} level={levelConfig.level} />
+            <PartnerLandingPageList partnerId={partnerId} level={levelConfig.level} fromAdmin={fromAdmin} />
           </div>
         </CollapsibleContent>
       </Collapsible>

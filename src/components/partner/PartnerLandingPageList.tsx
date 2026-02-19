@@ -9,6 +9,7 @@ type SortKey = "date" | "views" | "purchases" | "spend";
 interface PartnerLandingPageListProps {
   partnerId: string;
   level: string;
+  fromAdmin?: boolean;
 }
 
 interface LandingPage {
@@ -23,7 +24,7 @@ interface LandingPage {
   volume: string | null;
 }
 
-export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageListProps) {
+export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerLandingPageListProps) {
   const navigate = useNavigate();
   const [pages, setPages] = useState<LandingPage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +156,7 @@ export function PartnerLandingPageList({ partnerId, level }: PartnerLandingPageL
           <div
             key={page.id}
             className="flex items-center gap-2 p-2 rounded-lg border border-border cursor-pointer hover:bg-accent/50 transition-colors text-xs"
-            onClick={() => navigate(`/partner/landing-page/${page.id}`)}
+            onClick={() => navigate(`/partner/landing-page/${page.id}${fromAdmin ? '?from=admin' : ''}`)}
           >
             <span className="text-muted-foreground shrink-0 w-10">{dateStr}</span>
             <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
