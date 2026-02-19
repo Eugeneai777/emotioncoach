@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Eye, Users, DollarSign, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Loader2, Eye, Users, DollarSign, Sparkles, TrendingUp, TrendingDown, Minus, Megaphone } from "lucide-react";
+import { AdminStatCard } from "@/components/admin/shared/AdminStatCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { AILandingPageWizard } from "./AILandingPageWizard";
 import { PartnerLandingPageList } from "./PartnerLandingPageList";
-import { MiniSparkline } from "./MiniSparkline";
+
 
 interface LevelConfig {
   level: string;
@@ -187,59 +187,36 @@ export function FlywheelGrowthSystem({ partnerId, fromAdmin }: FlywheelGrowthSys
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end mb-1">
-        <p className="text-sm text-muted-foreground">
-          {totalStats.campaigns} 个活跃活动 · 总投放 ¥{totalStats.spend.toLocaleString()}
-        </p>
-      </div>
-
-      {/* 3 core metric cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">触达</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold">{totalStats.reach.toLocaleString()}</p>
-                  <GrowthIndicator value={totalStats.reachGrowth} />
-                </div>
-              </div>
-            </div>
-            <MiniSparkline data={dailyData.reach} color="hsl(var(--primary))" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">转化</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold">{totalStats.conversions.toLocaleString()}</p>
-                  <GrowthIndicator value={totalStats.conversionGrowth} />
-                </div>
-              </div>
-            </div>
-            <MiniSparkline data={dailyData.conversions} color="hsl(var(--primary))" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">收入</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold">¥{totalStats.revenue.toLocaleString()}</p>
-                  <GrowthIndicator value={totalStats.revenueGrowth} />
-                </div>
-              </div>
-            </div>
-            <MiniSparkline data={dailyData.revenue} color="hsl(var(--primary))" />
-          </CardContent>
-        </Card>
+      {/* 4 compact stat cards */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <AdminStatCard
+          label="活跃活动"
+          value={totalStats.campaigns}
+          subtitle={`总投放 ¥${totalStats.spend.toLocaleString()}`}
+          icon={Megaphone}
+          accent="bg-primary/10 text-primary"
+        />
+        <AdminStatCard
+          label="触达"
+          value={totalStats.reach}
+          subtitle={totalStats.reachGrowth > 0 ? `+${totalStats.reachGrowth.toFixed(0)}%` : totalStats.reachGrowth < 0 ? `${totalStats.reachGrowth.toFixed(0)}%` : "0%"}
+          icon={Eye}
+          accent="bg-blue-500/10 text-blue-600"
+        />
+        <AdminStatCard
+          label="转化"
+          value={totalStats.conversions}
+          subtitle={totalStats.conversionGrowth > 0 ? `+${totalStats.conversionGrowth.toFixed(0)}%` : totalStats.conversionGrowth < 0 ? `${totalStats.conversionGrowth.toFixed(0)}%` : "0%"}
+          icon={Users}
+          accent="bg-green-500/10 text-green-600"
+        />
+        <AdminStatCard
+          label="收入"
+          value={`¥${totalStats.revenue.toLocaleString()}`}
+          subtitle={totalStats.revenueGrowth > 0 ? `+${totalStats.revenueGrowth.toFixed(0)}%` : totalStats.revenueGrowth < 0 ? `${totalStats.revenueGrowth.toFixed(0)}%` : "0%"}
+          icon={DollarSign}
+          accent="bg-amber-500/10 text-amber-600"
+        />
       </div>
 
       {/* Four-level flywheel as Tabs */}
