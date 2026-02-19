@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { BasicInfoStep } from "@/components/coach-application/BasicInfoStep";
 import { CertificationsStep } from "@/components/coach-application/CertificationsStep";
@@ -188,15 +189,7 @@ export default function BecomeCoach() {
       <DynamicOGMeta pageKey="becomeCoach" />
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between p-4 max-w-lg mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="font-semibold">申请成为教练</h1>
-          <div className="w-10" />
-        </div>
-      </div>
+      <PageHeader title="申请成为教练" showBack />
 
       {/* Progress */}
       <div className="max-w-lg mx-auto px-4 py-4">
