@@ -1,68 +1,31 @@
 
 
-# Step 2 产品配对增加手工选择模式
+# 修复手工配对"暂无可选产品"问题
 
-## 变更概述
+## 问题原因
 
-当前 AI 定制落地页向导的 Step 2 仅支持 AI 自动推荐产品。本次优化将增加"手工配对"模式，允许用户从**产品中心**（`partner_products`）和**商城商品**（`health_store_products`）中自主选择产品。
+手工配对模式查询商城商品时使用了错误的列名 `name`，但数据库中实际列名是 `product_name`，导致查询报错（HTTP 400），商城商品始终加载失败。
 
-## 交互设计
+同时，当前查询限制了 `partner_id` 等于当前合伙人，但该合伙人可能没有自己上架的产品。根据需求"可以自己选择**全部**产品中心产品和商城商品"，应移除 `partner_id` 过滤，让用户看到所有可用产品。
 
-Step 2 页面顶部增加模式切换：
+## 修复内容
 
-```text
-┌─────────────────────────────────────────┐
-│  [🤖 AI 推荐]    [✋ 手工配对]           │
-│─────────────────────────────────────────│
-│                                         │
-│  (AI 推荐模式 - 保持现有逻辑)            │
-│  或                                     │
-│  (手工配对模式 - 新增)                   │
-│                                         │
-│  ┌─ 产品中心 ─────────────────────────┐ │
-│  │ ☐ 知乐胶囊·身心评估   ¥299        │ │
-│  │ ☐ 财富觉醒训练营       ¥199        │ │
-│  └───────────────────────────────────┘ │
-│                                         │
-│  ┌─ 商城商品 ─────────────────────────┐ │
-│  │ ☐ 情绪健康测评         ¥9.90      │ │
-│  │ ☐ SCL-90 心理测评      ¥19.90     │ │
-│  └───────────────────────────────────┘ │
-│                                         │
-│  已选 2 个产品                          │
-│  [← 返回]   [AI 生成 A/B 内容]         │
-└─────────────────────────────────────────┘
-```
+修改 `src/components/partner/AILandingPageWizard.tsx` 中的 `fetchManualProducts` 函数：
+
+1. 将 `health_store_products` 查询的 `name` 改为 `product_name`
+2. 移除两个查询中的 `partner_id` 过滤条件，展示全部可用产品
+3. 统一展示时的字段名引用
 
 ## 技术细节
 
-### 修改文件
+```text
+修改前:
+  .select("id, name, price, description")
+  .eq("partner_id", partnerId)
 
-**`src/components/partner/AILandingPageWizard.tsx`**
+修改后:
+  .select("id, product_name, price, description")
+  // 不限制 partner_id，展示全部可用商品
+```
 
-1. **新增状态变量：**
-   - `matchMode`: `'ai' | 'manual'` — 控制 AI 推荐还是手工配对
-   - `manualProducts` / `manualStoreProducts` — 分别存储从两个表查询的产品列表
-   - `selectedManualProducts` — 用户勾选的产品 ID 数组
-
-2. **Step 1 按钮区改造：**
-   - 保留 AI 推荐结果卡片（matchMode === 'ai' 时显示）
-   - 新增手工模式 UI（matchMode === 'manual' 时显示）：
-     - 查询当前合伙人的 `partner_products`（产品中心，is_active = true）
-     - 查询当前合伙人的 `health_store_products`（商城商品，is_available = true）
-     - 使用 Checkbox 多选列表展示，按来源分组
-   - 选中产品的名称拼接为 `matched_product` 字符串传入后续步骤
-
-3. **Step 0 按钮文案：**
-   - "下一步：AI 配对产品" 改为 "下一步：配对产品"
-   - 点击后根据 matchMode 决定走 AI 匹配还是直接进入手工选择界面
-
-4. **数据流调整：**
-   - 手工模式下跳过 AI 调用，直接将选中产品名组合为 `matchResult.matched_product`
-   - 后续 `handleGenerate` 传入的 `matched_product` 不变，AI 生成内容基于所选产品名生成
-
-### 不涉及的变更
-- 不修改数据库结构
-- 不修改边缘函数
-- 不影响 Step 3（A/B 生成）和 Step 4（对话优化）的逻辑
-
+对 `partner_products` 同样移除 `partner_id` 过滤，并确保后续引用 `storeProducts` 时使用 `product_name` 而非 `name`。
