@@ -399,6 +399,32 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
         </LineChart>
       </ResponsiveContainer>
 
+      {/* Motivational message for awakening dimension */}
+      {showAwakening && awakeningStats && awakeningStats.growth !== 0 && (() => {
+        const g = awakeningStats.growth;
+        const start = awakeningStats.start;
+        const current = awakeningStats.current;
+        const peak = awakeningStats.peak;
+        let msg = '';
+        if (g >= 30) {
+          msg = `🌟 太惊人了！你已突破起点 ${g} 分，财富意识彻底觉醒！`;
+        } else if (g >= 20) {
+          msg = `🚀 你已突破起点 ${g} 分，正以飞速蜕变中，继续前进！`;
+        } else if (g >= 10) {
+          msg = `💪 你已突破起点 ${g} 分，每一天都在成长，加油！`;
+        } else if (g > 0) {
+          msg = `✨ 你已突破起点 ${g} 分，种子已种下，继续浇灌！`;
+        } else {
+          // g < 0
+          msg = `🌱 起点 ${start}，当前 ${current}，每次梳理都是积累，坚持就是胜利！`;
+        }
+        return (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-amber-50/80 border border-amber-200/60 text-center text-xs text-amber-700 font-medium">
+            {msg}
+          </div>
+        );
+      })()}
+
       {/* Score Legend */}
       {embedded && (
         <div className="flex flex-wrap justify-center gap-3 mt-2 text-[10px] text-muted-foreground">
