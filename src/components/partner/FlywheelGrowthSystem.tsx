@@ -273,7 +273,7 @@ export function FlywheelGrowthSystem({ partnerId }: FlywheelGrowthSystemProps) {
                 onClick={() => handleOpenWizard(level.level)}
               >
                 <Sparkles className="w-4 h-4 mr-1" />
-                建立推广活动
+                创建新活动
               </Button>
 
               <PartnerLandingPageList partnerId={partnerId} level={level.level} />
