@@ -53,7 +53,11 @@ export default function PartnerLandingPageDetail() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !editing) {
         e.preventDefault();
-        navigate(-1);
+        if (window.history.length > 1) {
+          navigate(-1);
+        } else {
+          navigate("/partner");
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
