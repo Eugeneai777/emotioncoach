@@ -339,11 +339,16 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               fontSize: '12px',
             }}
-            formatter={(value: number, name: string) => [
-              showAwakening ? `${value} 分` : value.toFixed(1),
-              name,
-            ]}
-            labelFormatter={(label) => label === '第 0 天' ? '第 0 天（测评基准）' : label}
+            formatter={(value: number | null, name: string, props: any) => {
+              if (value == null) return ['文字梳理（无评分）', name];
+              return [showAwakening ? `${value} 分` : value.toFixed(1), name];
+            }}
+            labelFormatter={(label, payload) => {
+              if (label === '第 0 天') return '第 0 天（测评基准）';
+              const entry = payload?.[0]?.payload;
+              if (entry && !entry.hasData) return `${label}（文字梳理，无评分数据）`;
+              return label;
+            }}
           />
           {!embedded && <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />}
 
