@@ -63,12 +63,13 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
     <div className="space-y-4">
       {/* 毕业成就卡片 */}
       {campSummary && (
-        <Card className="shadow-sm overflow-hidden border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50/50">
+        <Card className="shadow-sm overflow-hidden border border-emerald-200/50 dark:border-emerald-800/40 bg-white/90 dark:bg-gray-900/80">
+          <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
-                  <Trophy className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                  <Trophy className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-emerald-800">🎓 训练营毕业证书</h3>
@@ -102,9 +103,10 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
       <GameProgressCard currentDayNumber={currentDay} streak={consecutiveDays} />
 
       {/* 成长曲线 - 直接展示 */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-0 pt-3 px-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+      <Card className="shadow-sm overflow-hidden border border-violet-200/50 dark:border-violet-800/30">
+        <div className="h-1 bg-gradient-to-r from-violet-400 to-purple-400" />
+        <CardHeader className="pb-0 pt-3 px-3 bg-violet-50/40 dark:bg-violet-950/20">
+          <CardTitle className="text-sm font-medium flex items-center gap-1.5 text-violet-800 dark:text-violet-200">
             <span>📈</span> 成长曲线
           </CardTitle>
         </CardHeader>

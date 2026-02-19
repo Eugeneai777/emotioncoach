@@ -222,10 +222,11 @@ export function CombinedPersonalityCard({
   };
 
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-2">
+    <Card className={cn("overflow-hidden border border-indigo-200/50 dark:border-indigo-800/30", className)}>
+      <div className="h-1 bg-gradient-to-r from-indigo-400 to-violet-400" />
+      <CardHeader className="pb-2 bg-indigo-50/40 dark:bg-indigo-950/20">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2 text-indigo-800 dark:text-indigo-200">
             <span className="text-lg">🧬</span>
             我的财富人格画像
           </CardTitle>
