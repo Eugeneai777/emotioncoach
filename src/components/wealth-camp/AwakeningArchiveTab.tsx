@@ -122,6 +122,7 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
               emotion_score: baseline.emotion_score,
               belief_score: baseline.belief_score,
             } : null}
+            baselineAwakening={progress?.baseline_awakening}
           />
         </CardContent>
       </Card>
