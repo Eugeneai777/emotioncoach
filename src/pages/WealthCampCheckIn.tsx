@@ -409,15 +409,28 @@ export default function WealthCampCheckIn() {
     [allJournalEntries]
   );
 
-  // 训练营按轮次分组（每7天一轮）
+  // 训练营条目：按完成时间升序排列，建立序号映射（忽略日历天数）
+  const campSequenceMap = useMemo(() => {
+    const sorted = [...campEntries].sort(
+      (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const map = new Map<string, number>();
+    sorted.forEach((entry: any, index: number) => {
+      map.set(entry.id, index + 1);
+    });
+    return map;
+  }, [campEntries]);
+
+  // 训练营按轮次分组（每7次完成一轮，而非日历7天）
   const campRounds = useMemo(() => {
     return campEntries.reduce((acc: Record<number, any[]>, entry: any) => {
-      const round = Math.ceil((entry.day_number || 1) / 7);
+      const seq = campSequenceMap.get(entry.id) || 1;
+      const round = Math.ceil(seq / 7);
       if (!acc[round]) acc[round] = [];
       acc[round].push(entry);
       return acc;
     }, {} as Record<number, any[]>);
-  }, [campEntries]);
+  }, [campEntries, campSequenceMap]);
 
   const roundNames: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七' };
 
@@ -1083,32 +1096,34 @@ ${reflection}`;
                         .sort(([a], [b]) => Number(b) - Number(a))
                         .map(([roundStr, entries]) => {
                           const round = Number(roundStr);
-                          const startDay = (round - 1) * 7 + 1;
-                          const endDay = round * 7;
                           return (
                             <div key={round} className="space-y-2">
                               <div className="flex items-center gap-2 py-1">
-                                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                                  🏕️ 第{roundNames[round] || round}轮
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  Day {startDay}–{endDay}
-                                </span>
-                                <span className="ml-auto text-xs text-muted-foreground">
-                                  已完成 {(entries as any[]).length} / 7 天
-                                </span>
-                              </div>
-                              {(entries as any[]).map((entry) => {
-                                const dayInRound = ((entry.day_number - 1) % 7) + 1;
-                                return (
-                                  <WealthJournalCard
-                                    key={entry.id}
-                                    entry={entry}
-                                    sequenceNumber={dayInRound}
-                                    onClick={() => navigate(`/wealth-journal/${entry.id}`)}
-                                  />
-                                );
-                              })}
+                                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                                   🏕️ 第{roundNames[round] || round}轮
+                                 </span>
+                                 <span className="ml-auto text-xs text-muted-foreground">
+                                   已完成 {(entries as any[]).length} / 7 天
+                                 </span>
+                               </div>
+                               {(entries as any[])
+                                 .sort((a: any, b: any) => {
+                                   const seqA = campSequenceMap.get(a.id) || 0;
+                                   const seqB = campSequenceMap.get(b.id) || 0;
+                                   return seqB - seqA;
+                                 })
+                                 .map((entry) => {
+                                   const seq = campSequenceMap.get(entry.id) || 1;
+                                   const dayInRound = ((seq - 1) % 7) + 1;
+                                   return (
+                                     <WealthJournalCard
+                                       key={entry.id}
+                                       entry={entry}
+                                       sequenceNumber={dayInRound}
+                                       onClick={() => navigate(`/wealth-journal/${entry.id}`)}
+                                     />
+                                   );
+                                 })}
                             </div>
                           );
                         })
