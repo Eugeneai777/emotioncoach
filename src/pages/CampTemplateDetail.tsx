@@ -120,14 +120,12 @@ const CampTemplateDetail = () => {
         </div>
       </div>;
   }
-  return <>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        {/* Header */}
-        <PageHeader title="训练营详情" backTo="/camps" showBack />
-          </div>
-        </header>
+  return (
+    <>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <PageHeader title="训练营详情" backTo="/camps" showBack />
 
-        <main className="container max-w-5xl mx-auto px-4 py-12 space-y-12">
+      <main className="container max-w-5xl mx-auto px-4 py-12 space-y-12">
           {/* Hero Section */}
           <section className="text-center space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
             {!['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) && <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0 px-4 py-1.5 text-sm`}>
@@ -350,6 +348,7 @@ const CampTemplateDetail = () => {
       });
       window.location.reload();
     }} />
-    </>;
+    </>
+  );
 };
 export default CampTemplateDetail;
