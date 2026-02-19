@@ -1,79 +1,103 @@
 
-# 财富卡点测评结果页：固定底部 ¥9.9 购买按钮
+# 修复日记列表：按实际完成顺序显示"第 N 天"
 
-## 目标
-在结果页（`pageState === "result"`）底部，始终固定显示一个 ¥9.9 的"立即解锁完整报告"按钮，方便用户随时付费——类似 `LiteFooter` 的固定底栏效果，但专为未付费的结果预览场景设计。
+## 问题明确
 
-## 问题分析
+用户要求：显示的"第几天"应该是用户**实际完成的第几次**，而不是数据库里固定存储的 `day_number`。
 
-目前 `WealthAssessmentLite.tsx` 中：
-- `LiteFooter` 已导入但**从未被渲染**（import 存在，JSX 中不存在）
-- 结果页 `WealthBlockResult` 已预留了 `pb-[calc(80px+env(safe-area-inset-bottom))]` 的底部 padding，说明原本就设计了固定底栏，但没有实现
+举例：
+- 用户做了 7 天 → Day 1 ~ Day 7
+- 停了 10 天没做
+- 再做了一天 → 应该显示 **第 8 天**（不是 Day 1 或 Day 8）
 
-用户反映：测评完成后，付费按钮埋在页面内容中，需要滚动才能找到，不够显眼。
+当前问题：`WealthJournalCard` 直接显示 `entry.day_number`（数据库存的营期天数），与用户期待的"第 N 次打卡"不符。
 
-## 修改方案
-
-只修改 **`src/pages/WealthAssessmentLite.tsx`** 一个文件。
-
-### 具体变更
-
-在结果页显示时（`pageState === "result"`），若用户**未购买**（`!hasPurchased`），在页面底部渲染一个固定的 CTA 底栏，样式与 `LiteFooter` 一致：
+## 数据流分析
 
 ```text
-┌─────────────────────────────────┐
-│         结果内容（可滚动）          │
-│              ...                │
-│                                 │
-│                                 │
-├─────────────────────────────────┤  ← fixed bottom
-│  ¥9.9 立即解锁完整分析报告        │
-│  [限时特价] [立即付费] 按钮        │
-└─────────────────────────────────┘
+WealthCampCheckIn.tsx
+  └── mergedBriefings (按 created_at 降序排列)
+        └── allJournalEntries (来自 wealth_journal_entries 表)
+              └── WealthJournalCard (显示 entry.day_number ← 这里需要替换)
 ```
 
-### 底栏内容
-- 左侧：价格标签 `¥9.9` + `限时` 红色徽章
-- 右侧：`立即解锁报告` 按钮（点击触发已有的 `setShowPayDialog(true)`）
-- 背景：半透明毛玻璃效果，与 `LiteFooter` 同款
-- 适配 `safe-area-inset-bottom`（iPhone 刘海屏）
+`mergedBriefings` 是将所有日记条目和教练简报**按日期倒序**合并的列表。渲染时按索引可以计算出"这是用户第几条日记"。
 
-### 逻辑控制
-- 仅当 `pageState === "result"` 且 `!hasPurchased` 时显示
-- 已购买用户不显示该底栏
-- `AssessmentPayDialog` 已在页面中，点击按钮直接 `setShowPayDialog(true)` 即可
+## 修复方案
 
-## 技术细节
+### 方案：在渲染时传入"序号"
 
-### 文件：`src/pages/WealthAssessmentLite.tsx`
+**改动点 1：`WealthJournalCard.tsx`**
 
-**变更 1**：新增 `handleShowPayDialog` 回调（触发付费弹窗）
+给 `WealthJournalCardProps` 新增一个可选的 `sequenceNumber` 属性：
 
-**变更 2**：在 `pageState === "result"` 区块内，添加固定底栏：
+```typescript
+interface WealthJournalCardProps {
+  entry: WealthJournalEntry;
+  onClick?: () => void;
+  sequenceNumber?: number;  // 新增：实际完成的第几天
+}
+```
 
+显示逻辑从：
 ```tsx
-{/* 固定底部付费按钮 - 未购买时显示 */}
-{pageState === "result" && !hasPurchased && (
-  <div
-    className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur border-t px-4 py-3 flex items-center justify-between gap-3"
-    style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-  >
-    <div className="flex items-center gap-2">
-      <span className="text-2xl font-bold text-amber-600">¥9.9</span>
-      <span className="px-1.5 py-0.5 bg-red-500 rounded text-[10px] text-white font-medium animate-pulse">限时</span>
-      <span className="text-xs text-muted-foreground">解锁完整分析报告</span>
-    </div>
-    <Button
-      onClick={() => setShowPayDialog(true)}
-      className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-5 h-10 rounded-full shadow-md"
-    >
-      立即解锁
-    </Button>
-  </div>
-)}
+{isVoice ? '语音梳理' : `Day ${entry.day_number}`}
+```
+改为：
+```tsx
+{isVoice ? '语音梳理' : sequenceNumber ? `第 ${sequenceNumber} 天` : `Day ${entry.day_number}`}
 ```
 
-### 修改范围
-- **仅修改** `src/pages/WealthAssessmentLite.tsx` 一个文件
-- `WealthBlockResult`、`AssessmentPayDialog`、`LiteFooter` 均无需改动
-- 已有的 `pb-[calc(80px+...)]` padding 恰好为该底栏预留了空间，无布局冲突
+**改动点 2：`WealthCampCheckIn.tsx`**
+
+在渲染 `mergedBriefings` 时，先提取出所有 journal 类型的条目，按 `created_at` **升序**排列（从旧到新），建立一个 `id → 序号` 的映射表，然后在渲染 `WealthJournalCard` 时传入对应序号：
+
+```typescript
+// 建立 journal 条目的序号映射（按时间从旧到新排，第1条 = 第1天）
+const journalSequenceMap = useMemo(() => {
+  const journalOnly = mergedBriefings
+    .filter(item => item._source === 'journal')
+    .sort((a, b) => new Date(a._sortDate).getTime() - new Date(b._sortDate).getTime());
+  
+  const map = new Map<string, number>();
+  journalOnly.forEach((item, index) => {
+    map.set(item.id, index + 1);
+  });
+  return map;
+}, [mergedBriefings]);
+```
+
+渲染时：
+```tsx
+<WealthJournalCard
+  key={item.id}
+  entry={item}
+  sequenceNumber={journalSequenceMap.get(item.id)}
+  onClick={() => navigate(`/wealth-journal/${item.id}`)}
+/>
+```
+
+## 效果示意
+
+修复前（混乱）：
+```
+📖 Day 1  2月20日   ← 最新的，但显示 Day 1
+📖 Day 7  1月15日
+📖 Day 6  1月14日
+📖 Day 1  1月10日   ← 最早的，也显示 Day 1
+```
+
+修复后（清晰）：
+```
+📖 第 8 天  2月20日  ← 按实际完成顺序
+📖 第 7 天  1月15日
+📖 第 6 天  1月14日
+📖 第 1 天  1月10日
+```
+
+## 修改文件范围
+
+- `src/components/wealth-camp/WealthJournalCard.tsx`：新增 `sequenceNumber` prop，更新显示逻辑
+- `src/pages/WealthCampCheckIn.tsx`：计算序号映射表，传入 `WealthJournalCard`
+
+两处改动都很小，不影响其他使用 `WealthJournalCard` 的地方（`sequenceNumber` 为可选参数，不传则 fallback 到原来的 `Day N`）。
