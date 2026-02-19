@@ -161,8 +161,8 @@ export function PartnerLandingPageList({ partnerId, level, fromAdmin }: PartnerL
             <span className="text-muted-foreground shrink-0 w-10">{dateStr}</span>
             <span className="font-medium truncate min-w-0 flex-1">{content?.title || "无标题"}</span>
             <span className="text-muted-foreground shrink-0 w-14 text-center truncate" title={page.volume || "—"}>{page.volume || "—"}</span>
-            <span className="text-muted-foreground shrink-0 w-10 text-center">{m.views}</span>
-            <span className="text-muted-foreground shrink-0 w-10 text-center">{m.purchases}</span>
+            <span className={cn("shrink-0 w-10 text-center", m.views > 0 ? "font-semibold text-blue-600" : "text-muted-foreground")}>{m.views}</span>
+            <span className={cn("shrink-0 w-10 text-center", m.purchases > 0 ? "font-semibold text-emerald-600" : "text-muted-foreground")}>{m.purchases}</span>
             <span className="text-muted-foreground shrink-0 w-10 text-center">¥0</span>
             <div className={cn(
               "px-1.5 py-0.5 rounded shrink-0 w-10 text-center text-[10px]",
