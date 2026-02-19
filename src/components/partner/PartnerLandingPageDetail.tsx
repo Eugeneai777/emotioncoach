@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Copy, ExternalLink, Trash2, Loader2, Pencil, Check, X, Plus } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Trash2, Loader2, Pencil, Check, X, Plus, Eye, ShoppingCart, TrendingUp, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ interface LandingPageData {
   status: string;
   created_at: string;
   level: string | null;
+  volume: string | null;
 }
 
 export default function PartnerLandingPageDetail() {
@@ -30,6 +31,7 @@ export default function PartnerLandingPageDetail() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [metrics, setMetrics] = useState<{ views: number; purchases: number }>({ views: 0, purchases: 0 });
 
   // Editable fields
   const [editTitle, setEditTitle] = useState("");
@@ -38,10 +40,12 @@ export default function PartnerLandingPageDetail() {
   const [editCta, setEditCta] = useState("");
   const [editAudience, setEditAudience] = useState("");
   const [editChannel, setEditChannel] = useState("");
+  const [editVolume, setEditVolume] = useState("");
 
   useEffect(() => {
     if (!id) return;
     fetchPage();
+    fetchMetrics();
   }, [id]);
 
   // Press Enter to go back when not editing
@@ -74,6 +78,33 @@ export default function PartnerLandingPageDetail() {
     }
   };
 
+  const fetchMetrics = async () => {
+    if (!id) return;
+    try {
+      const { data: events } = await supabase
+        .from("conversion_events" as any)
+        .select("event_type, metadata")
+        .eq("feature_key", "landing_page");
+
+      if (!events) return;
+
+      let views = 0;
+      let purchases = 0;
+      (events as any[]).forEach((e) => {
+        const lpId = e.metadata?.landing_page_id;
+        if (lpId !== id) return;
+        if (e.event_type === "page_view" || e.event_type === "click") {
+          views++;
+        } else if (e.event_type === "payment") {
+          purchases++;
+        }
+      });
+      setMetrics({ views, purchases });
+    } catch (err) {
+      console.error("Fetch metrics error:", err);
+    }
+  };
+
   const getContent = () => {
     if (!page) return null;
     return page.selected_version === "a" ? page.content_a : page.content_b;
@@ -87,6 +118,7 @@ export default function PartnerLandingPageDetail() {
     setEditCta(content?.cta_text || "");
     setEditAudience(page?.target_audience || "");
     setEditChannel(page?.channel || "");
+    setEditVolume(page?.volume || "");
     setEditing(true);
   };
 
@@ -113,6 +145,7 @@ export default function PartnerLandingPageDetail() {
           [contentField]: updatedContent,
           target_audience: editAudience || null,
           channel: editChannel || null,
+          volume: editVolume || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -144,7 +177,6 @@ export default function PartnerLandingPageDetail() {
       const { error } = await supabase.from("partner_landing_pages" as any).delete().eq("id", id);
       if (error) throw error;
       toast.success("已删除");
-      // Use history.back() to preserve parent page state (e.g. admin selectedPartnerId)
       if (window.history.length > 1) {
         window.history.back();
       } else {
@@ -193,6 +225,9 @@ export default function PartnerLandingPageDetail() {
   }
 
   const content = getContent();
+  const conversionRate = metrics.views > 0
+    ? ((metrics.purchases / metrics.views) * 100).toFixed(1)
+    : "0.0";
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,6 +246,22 @@ export default function PartnerLandingPageDetail() {
           )}>
             {page.status === "published" ? "已发布" : "草稿"}
           </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: "投放量", value: page.volume || "—", icon: Megaphone, color: "text-blue-600" },
+            { label: "观看", value: String(metrics.views), icon: Eye, color: "text-amber-600" },
+            { label: "购买", value: String(metrics.purchases), icon: ShoppingCart, color: "text-emerald-600" },
+            { label: "转化率", value: `${conversionRate}%`, icon: TrendingUp, color: "text-purple-600" },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-xl bg-muted/30 border border-border/50 p-3 text-center space-y-1">
+              <stat.icon className={cn("w-4 h-4 mx-auto", stat.color)} />
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-sm font-semibold truncate">{stat.value}</p>
+            </div>
+          ))}
         </div>
 
         {/* Content Card */}
@@ -254,7 +305,7 @@ export default function PartnerLandingPageDetail() {
             {/* Meta Row */}
             <div className="px-4 py-3 flex items-center gap-4 text-xs text-muted-foreground border-b border-border/50 bg-muted/30">
               {editing ? (
-                <div className="flex-1 grid grid-cols-2 gap-2">
+                <div className="flex-1 grid grid-cols-3 gap-2">
                   <div>
                     <label className="text-xs font-medium mb-1 block">受众</label>
                     <Input value={editAudience} onChange={(e) => setEditAudience(e.target.value)} placeholder="目标受众" className="h-8 text-xs" />
@@ -263,12 +314,18 @@ export default function PartnerLandingPageDetail() {
                     <label className="text-xs font-medium mb-1 block">渠道</label>
                     <Input value={editChannel} onChange={(e) => setEditChannel(e.target.value)} placeholder="投放渠道" className="h-8 text-xs" />
                   </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">投放量</label>
+                    <Input value={editVolume} onChange={(e) => setEditVolume(e.target.value)} placeholder="如：1000人以下" className="h-8 text-xs" />
+                  </div>
                 </div>
               ) : (
                 <>
                   <span>受众：{page.target_audience || "—"}</span>
                   <span>·</span>
                   <span>渠道：{page.channel || "—"}</span>
+                  <span>·</span>
+                  <span>投放：{page.volume || "—"}</span>
                   <span>·</span>
                   <span>{new Date(page.created_at).toLocaleDateString("zh-CN")}</span>
                 </>
