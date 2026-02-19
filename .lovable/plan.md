@@ -1,35 +1,65 @@
 
 
-# 修复 iPhone 分享图片预览的两个问题
+# 修复亲子教练邀请卡片和海报中心的分享/保存问题
 
 ## 问题分析
 
-用户在 iPhone 上完成财富卡点测评后，点击"分享我的AI测评报告" -> "生成分享图片"，出现两个问题：
+### 问题 1：亲子教练邀请卡片无法发给微信好友
+**文件**: `src/components/parent-coach/TeenInviteShareDialog.tsx`
 
-### 问题 1：生成的海报没有居中全屏显示，需要滚动条下拉
-**根因**：`ShareImagePreview` 组件中的图片只限制了最大宽度 (`max-w-[420px]`)，没有限制最大高度。当分享卡片图片较长时，图片超出可视区域，需要滚动才能看到完整图片和底部操作区。
+**根因**: 该组件没有使用统一的 `handleShareWithFallback`，而是自己实现了分享逻辑。在微信环境中，它会先尝试调用 `navigator.share()`，这个 API 在微信中不可靠——可能返回成功但实际并未完成分享。因此用户看到 "分享成功" 的提示，但卡片并未真正发出去。
 
-### 问题 2：点保存到相册后，无法返回
-**根因**：在 iOS Safari 中长按图片保存后，页面的 `body.style.overflow = 'hidden'` 滚动锁定可能未被正确清除。同时关闭按钮在顶部，如果用户已经滚动到图片下方，需要回滚才能找到关闭按钮，造成"无法返回"的体验。
+### 问题 2：海报中心显示"已保存到相册"但相册里没有
+**文件**: `src/components/poster/PosterGenerator.tsx`
 
-## 修改方案
+**根因**: 该组件使用 `document.createElement('a').click()` 来触发下载，在微信浏览器中这种方式会被拦截（微信会提示"可在浏览器打开此网页来下载文件"），但代码仍然执行了 `toast.success("海报已保存到相册！")`，给用户造成已保存的错觉。
 
-### 修改文件：`src/components/ui/share-image-preview.tsx`
+## 修复方案
 
-1. **图片自适应视口高度**：给 `<img>` 添加 `max-h-[70vh]` 和 `object-contain`，确保图片始终在视口内完整显示，无需滚动
-2. **底部添加关闭按钮**：在底部操作区增加一个"关闭"按钮，用户保存图片后可以直接点击底部按钮返回，无需回到顶部寻找 X 按钮
-3. **强化滚动锁清理**：在 `onClose` 回调中显式清除 body 上的 `overflow`、`data-scroll-locked` 等残留属性，确保关闭后页面可正常滚动
+### 修改 1：TeenInviteShareDialog.tsx
+- 移除自定义的分享逻辑（lines 132-195）
+- 改用统一的 `handleShareWithFallback` 函数
+- 在微信/iOS 环境下直接展示图片预览（长按保存），不再尝试 `navigator.share`
 
-### 技术细节
+### 修改 2：PosterGenerator.tsx
+- 引入 `handleShareWithFallback` 和 `ShareImagePreview` 组件
+- 在微信/iOS 环境下，不使用 `<a>` 标签下载，而是展示全屏图片预览，让用户长按保存
+- 仅在实际下载成功（非微信环境）时才显示"已保存"提示
+
+## 技术细节
+
+### TeenInviteShareDialog 修改
 
 ```text
-修改前图片样式：
-  max-w-[420px] w-full
+修改前（lines 132-195）：
+  1. 调用 generateCardBlob 生成图片
+  2. 尝试 navigator.share（微信中不可靠）
+  3. 显示 "分享成功"（误报）
+  4. 仅在 share 不可用时才回退到图片预览
 
-修改后图片样式：
-  max-w-[420px] w-full max-h-[70vh] object-contain
-
-底部操作区增加：
-  [关闭/返回] 按钮（在保存提示旁边或下方）
+修改后：
+  1. 调用 generateCardBlob 生成图片
+  2. 调用 handleShareWithFallback，自动处理：
+     - 微信/iOS → 图片预览（长按保存）
+     - Android → 尝试系统分享，失败回退图片预览
+     - 桌面 → 尝试系统分享，失败回退下载
 ```
 
+### PosterGenerator 修改
+
+```text
+修改前（lines 213-219）：
+  1. 创建 <a> 标签触发下载
+  2. 直接显示 "海报已保存到相册！"
+
+修改后：
+  1. 将 canvas 转为 Blob
+  2. 调用 handleShareWithFallback：
+     - 微信/iOS → 展示 ShareImagePreview（长按保存）
+     - 其他环境 → <a> 标签下载
+  3. 仅在实际下载成功时显示 toast
+```
+
+### 影响范围
+- `src/components/parent-coach/TeenInviteShareDialog.tsx` — 重构分享逻辑
+- `src/components/poster/PosterGenerator.tsx` — 添加微信环境的图片预览回退
