@@ -795,16 +795,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     const bloomCamps = campTemplates?.filter(c => c.category === 'bloom') || [];
     
     // 进阶产品（独立产品，不在 camp_templates 中）
+    // 注意：life_bloom 已在 camp_templates 中（category='bloom'），不需要在此重复
     const advancedProducts = [
-      {
-        key: 'bloom_life_camp',
-        name: '生命绽放特训营',
-        price: bloomLifeCampPrice,
-        icon: '🔥',
-        description: '4周线上特训营，重塑生命能量',
-        gradient: 'from-amber-500 via-orange-500 to-red-500',
-        features: ['4周深度转化', '真人教练陪伴', '重塑生命能量'],
-      },
       {
         key: 'bloom_coach_cert',
         name: '绽放教练认证',
