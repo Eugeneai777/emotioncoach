@@ -178,11 +178,15 @@ export function useWealthJournalEntries(options: UseWealthJournalEntriesOptions 
   }, [entries]);
 
   // Unified awakening index (0-100 scale) - 使用"最佳3天"计算，让用户感受到进步被记住
+  // 语音条目（session_id IS NOT NULL）不计入觉醒分
   const { awakeningIndex, peakIndex, currentAvg } = useMemo(() => {
     if (!entries || entries.length === 0) return { awakeningIndex: 0, peakIndex: 0, currentAvg: 0 };
     
+    // 过滤掉语音条目（session_id IS NOT NULL）
+    const scorableEntries = entries.filter(e => !e.session_id);
+    
     // 计算每天的综合分（只计算有数据的天）
-    const dailyScores = entries
+    const dailyScores = scorableEntries
       .filter(e => (e.behavior_score || 0) > 0 || (e.emotion_score || 0) > 0 || (e.belief_score || 0) > 0)
       .map(e => {
         const b = e.behavior_score || 0;
