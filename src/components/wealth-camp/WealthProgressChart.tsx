@@ -47,42 +47,46 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
   }, [baseline]);
 
   const chartData = useMemo(() => {
-    // 找出最大天数（最多7天）
-    const maxDay = Math.max(...entries.map(e => e.day_number), 1);
-    const totalDays = Math.min(maxDay, 7);
-    
-    // 为所有天生成数据，未打卡的天显示0
-    return Array.from({ length: totalDays }, (_, i) => {
-      const dayNum = i + 1;
-      const entry = entries.find(e => e.day_number === dayNum);
-      
-      const behavior = entry?.behavior_score ?? 0;
-      const emotion = entry?.emotion_score ?? 0;
-      const belief = entry?.belief_score ?? 0;
-      const hasData = behavior > 0 || emotion > 0 || belief > 0;
-      
-      const validScores = [behavior, emotion, belief].filter(s => s > 0);
-      const composite = validScores.length > 0 
-        ? Math.round((validScores.reduce((a, b) => a + b, 0) / validScores.length) * 10) / 10 
-        : 0;
-      
+    // 第 0 天：测评基准点（isBaseline=true 用于特殊渲染）
+    const day0 = baselineValues ? {
+      day: '第 0 天',
+      dayNum: 0,
+      行为流动度: baselineValues.behavior,
+      情绪流动度: baselineValues.emotion,
+      信念松动度: baselineValues.belief,
+      hasData: true,
+      isBaseline: true,
+    } : null;
+
+    // 按 created_at 升序排列，依次分配序号 1, 2, 3…
+    const sorted = [...entries].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    const journalPoints = sorted.map((entry, index) => {
+      const b = entry.behavior_score ?? 0;
+      const em = entry.emotion_score ?? 0;
+      const be = entry.belief_score ?? 0;
       return {
-        day: `Day ${dayNum}`,
-        dayNum,
-        行为流动度: behavior,
-        情绪流动度: emotion,
-        信念松动度: belief,
-        综合觉醒: composite,
-        hasData, // 标记是否有实际打卡数据
+        day: `第 ${index + 1} 天`,
+        dayNum: index + 1,
+        行为流动度: b,
+        情绪流动度: em,
+        信念松动度: be,
+        hasData: b > 0 || em > 0 || be > 0,
+        isBaseline: false,
       };
     });
-  }, [entries]);
+
+    return day0 ? [day0, ...journalPoints] : journalPoints;
+  }, [entries, baselineValues]);
 
   // Calculate dimension-specific stats with baseline comparison
   const dimensionStats = useMemo(() => {
     if (chartData.length === 0) return null;
     
-    const dataWithValues = chartData.filter(d => d.hasData);
+    // Exclude the Day 0 baseline point from stats (only journal entries)
+    const dataWithValues = chartData.filter(d => d.hasData && !d.isBaseline);
     if (dataWithValues.length === 0) return null;
     
     const getStats = (key: '行为流动度' | '情绪流动度' | '信念松动度', baselineKey: 'behavior' | 'emotion' | 'belief') => {
@@ -106,7 +110,11 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
     };
   }, [chartData, baselineValues]);
 
-  if (chartData.length === 0) {
+  // Only journal entries (no baseline) determine if we have data to show
+  const hasJournalEntries = entries.length > 0;
+  const hasChartData = chartData.length > 0;
+
+  if (!hasChartData && !baselineValues) {
     if (embedded) {
       return (
         <div className="h-48 flex items-center justify-center text-muted-foreground">
@@ -134,6 +142,55 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
   const showBehavior = activeDimension === 'behavior';
   const showEmotion = activeDimension === 'emotion';
   const showBelief = activeDimension === 'belief';
+
+  // Custom dot renderer shared across all dimensions
+  const renderDot = (
+    props: any,
+    dimensionKey: '行为流动度' | '情绪流动度' | '信念松动度',
+    baselineVal: number | undefined,
+    color: string,
+    prefix: string,
+  ) => {
+    const { cx, cy, payload } = props;
+
+    // Day 0 baseline: special gray diamond-like circle
+    if (payload.isBaseline) {
+      return (
+        <circle
+          key={`${prefix}-baseline`}
+          cx={cx} cy={cy} r={8}
+          fill="#6b7280"
+          stroke="#4b5563"
+          strokeWidth={2}
+        />
+      );
+    }
+
+    if (!payload.hasData) {
+      return (
+        <circle
+          key={`${prefix}-${payload.dayNum}`}
+          cx={cx} cy={cy} r={4}
+          fill="none"
+          stroke="#d1d5db"
+          strokeWidth={2}
+          strokeDasharray="3 2"
+        />
+      );
+    }
+
+    const isBreakthrough = baselineVal !== undefined && (payload[dimensionKey] as number) > baselineVal;
+    return (
+      <circle
+        key={`${prefix}-${payload.dayNum}`}
+        cx={cx} cy={cy}
+        r={isBreakthrough ? 7 : 5}
+        fill={isBreakthrough ? '#10b981' : color}
+        stroke={isBreakthrough ? '#059669' : 'none'}
+        strokeWidth={isBreakthrough ? 2 : 0}
+      />
+    );
+  };
 
   const chartContent = (
     <>
@@ -178,7 +235,7 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
                 {dimensionStats[activeDimension].peak.toFixed(1)}
               </span>
               <span className="text-muted-foreground text-[10px]">
-                (Day {dimensionStats[activeDimension].peakDay})
+                (第 {dimensionStats[activeDimension].peakDay} 天)
               </span>
             </div>
             {/* Days Above Baseline */}
@@ -220,10 +277,11 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
               fontSize: '12px',
             }}
             formatter={(value: number, name: string) => [value.toFixed(1), name]}
+            labelFormatter={(label) => label === '第 0 天' ? '第 0 天（测评基准）' : label}
           />
           {!embedded && <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />}
           
-          {/* 行为层 - Custom dots for breakthrough & no-data */}
+          {/* 行为层 */}
           {showBehavior && (
             <Line 
               type="monotone" 
@@ -231,37 +289,11 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
               stroke="#d97706" 
               strokeWidth={3}
               strokeOpacity={1}
-              dot={(props: any) => {
-                const { cx, cy, payload } = props;
-                if (!payload.hasData) {
-                  // 未打卡：空心虚线圆
-                  return (
-                    <circle 
-                      key={`behavior-${payload.dayNum}`}
-                      cx={cx} cy={cy} r={5} 
-                      fill="none" 
-                      stroke="#d1d5db" 
-                      strokeWidth={2}
-                      strokeDasharray="3 2"
-                    />
-                  );
-                }
-                const isBreakthrough = baselineValues && payload.行为流动度 > baselineValues.behavior;
-                return (
-                  <circle 
-                    key={`behavior-${payload.dayNum}`}
-                    cx={cx} cy={cy} 
-                    r={isBreakthrough ? 7 : 5} 
-                    fill={isBreakthrough ? '#10b981' : '#d97706'}
-                    stroke={isBreakthrough ? '#059669' : 'none'}
-                    strokeWidth={isBreakthrough ? 2 : 0}
-                  />
-                );
-              }}
+              dot={(props: any) => renderDot(props, '行为流动度', baselineValues?.behavior, '#d97706', 'behavior')}
             />
           )}
           
-          {/* 情绪层 - Custom dots for breakthrough & no-data */}
+          {/* 情绪层 */}
           {showEmotion && (
             <Line 
               type="monotone" 
@@ -269,36 +301,11 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
               stroke="#ec4899" 
               strokeWidth={3}
               strokeOpacity={1}
-              dot={(props: any) => {
-                const { cx, cy, payload } = props;
-                if (!payload.hasData) {
-                  return (
-                    <circle 
-                      key={`emotion-${payload.dayNum}`}
-                      cx={cx} cy={cy} r={5} 
-                      fill="none" 
-                      stroke="#d1d5db" 
-                      strokeWidth={2}
-                      strokeDasharray="3 2"
-                    />
-                  );
-                }
-                const isBreakthrough = baselineValues && payload.情绪流动度 > baselineValues.emotion;
-                return (
-                  <circle 
-                    key={`emotion-${payload.dayNum}`}
-                    cx={cx} cy={cy} 
-                    r={isBreakthrough ? 7 : 5} 
-                    fill={isBreakthrough ? '#10b981' : '#ec4899'}
-                    stroke={isBreakthrough ? '#059669' : 'none'}
-                    strokeWidth={isBreakthrough ? 2 : 0}
-                  />
-                );
-              }}
+              dot={(props: any) => renderDot(props, '情绪流动度', baselineValues?.emotion, '#ec4899', 'emotion')}
             />
           )}
           
-          {/* 信念层 - Custom dots for breakthrough & no-data */}
+          {/* 信念层 */}
           {showBelief && (
             <Line 
               type="monotone" 
@@ -306,84 +313,48 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
               stroke="#8b5cf6" 
               strokeWidth={3}
               strokeOpacity={1}
-              dot={(props: any) => {
-                const { cx, cy, payload } = props;
-                if (!payload.hasData) {
-                  return (
-                    <circle 
-                      key={`belief-${payload.dayNum}`}
-                      cx={cx} cy={cy} r={5} 
-                      fill="none" 
-                      stroke="#d1d5db" 
-                      strokeWidth={2}
-                      strokeDasharray="3 2"
-                    />
-                  );
-                }
-                const isBreakthrough = baselineValues && payload.信念松动度 > baselineValues.belief;
-                return (
-                  <circle 
-                    key={`belief-${payload.dayNum}`}
-                    cx={cx} cy={cy} 
-                    r={isBreakthrough ? 7 : 5} 
-                    fill={isBreakthrough ? '#10b981' : '#8b5cf6'}
-                    stroke={isBreakthrough ? '#059669' : 'none'}
-                    strokeWidth={isBreakthrough ? 2 : 0}
-                  />
-                );
-              }}
+              dot={(props: any) => renderDot(props, '信念松动度', baselineValues?.belief, '#8b5cf6', 'belief')}
             />
           )}
 
-          {/* Day 0 基准线 */}
-          {baselineValues && showBehavior && (
+          {/* 基准虚线辅助线（已弱化，第 0 天节点为主要基准标记） */}
+          {baselineValues && showBehavior && hasJournalEntries && (
             <ReferenceLine 
               y={baselineValues.behavior} 
               stroke="#9ca3af" 
-              strokeDasharray="6 4"
-              strokeWidth={1.5}
-              label={{ 
-                value: `Day 0: ${baselineValues.behavior.toFixed(1)}`,
-                position: 'insideTopRight',
-                fill: '#6b7280',
-                fontSize: 10,
-              }}
+              strokeDasharray="4 6"
+              strokeWidth={1}
+              strokeOpacity={0.5}
             />
           )}
-          {baselineValues && showEmotion && (
+          {baselineValues && showEmotion && hasJournalEntries && (
             <ReferenceLine 
               y={baselineValues.emotion} 
               stroke="#9ca3af" 
-              strokeDasharray="6 4"
-              strokeWidth={1.5}
-              label={{ 
-                value: `Day 0: ${baselineValues.emotion.toFixed(1)}`,
-                position: 'insideTopRight',
-                fill: '#6b7280',
-                fontSize: 10,
-              }}
+              strokeDasharray="4 6"
+              strokeWidth={1}
+              strokeOpacity={0.5}
             />
           )}
-          {baselineValues && showBelief && (
+          {baselineValues && showBelief && hasJournalEntries && (
             <ReferenceLine 
               y={baselineValues.belief} 
               stroke="#9ca3af" 
-              strokeDasharray="6 4"
-              strokeWidth={1.5}
-              label={{ 
-                value: `Day 0: ${baselineValues.belief.toFixed(1)}`,
-                position: 'insideTopRight',
-                fill: '#6b7280',
-                fontSize: 10,
-              }}
+              strokeDasharray="4 6"
+              strokeWidth={1}
+              strokeOpacity={0.5}
             />
           )}
         </LineChart>
       </ResponsiveContainer>
 
-      {/* Score Legend - only in embedded mode */}
+      {/* Score Legend */}
       {embedded && (
         <div className="flex flex-wrap justify-center gap-3 mt-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#6b7280]" />
+            <span>第 0 天起点</span>
+          </div>
           <div className="flex items-center gap-1">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
             <span>突破基准</span>
@@ -391,10 +362,6 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
           <div className="flex items-center gap-1">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: DIMENSION_CONFIG[activeDimension].color }} />
             <span>常规</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-gray-300 bg-transparent" />
-            <span>未打卡</span>
           </div>
         </div>
       )}
