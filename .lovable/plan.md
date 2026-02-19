@@ -1,65 +1,49 @@
 
+# 修复安卓手机分享图片预览的三个问题
 
-# 修复亲子教练邀请卡片和海报中心的分享/保存问题
+## 问题根因
 
-## 问题分析
+### 问题 1：无法返回
+**根因**：`ShareImagePreview` 底部的两个"返回"按钮（第 191 行和第 209 行）直接调用 `onClose`，而不是 `handleClose`。`handleClose` 包含 `cleanupScrollLock()` 逻辑（清除 body 上的 `overflow: hidden` 和 `data-scroll-locked`），直接调用 `onClose` 会跳过这个清理步骤，导致页面滚动被锁死。
 
-### 问题 1：亲子教练邀请卡片无法发给微信好友
-**文件**: `src/components/parent-coach/TeenInviteShareDialog.tsx`
+### 问题 2：海报未居中全屏 / 需要滚动
+**根因**：在非 WeChat、非 iOS 环境（即安卓）下，底部操作区显示"保存图片"大按钮 + "返回"按钮，占用较多空间。加上图片区域的 `overflow-auto`，在部分安卓机型上会出现滚动。
 
-**根因**: 该组件没有使用统一的 `handleShareWithFallback`，而是自己实现了分享逻辑。在微信环境中，它会先尝试调用 `navigator.share()`，这个 API 在微信中不可靠——可能返回成功但实际并未完成分享。因此用户看到 "分享成功" 的提示，但卡片并未真正发出去。
+### 问题 3：保存图片失败
+**根因**：安卓上的 `handleDownload` 使用 `document.createElement('a').click()` 触发下载，这在安卓内置浏览器（微信、部分厂商浏览器）中会被拦截，导致下载失败。当前错误提示为"下载失败，请长按图片保存"，但底部没有引导用户长按的提示。
 
-### 问题 2：海报中心显示"已保存到相册"但相册里没有
-**文件**: `src/components/poster/PosterGenerator.tsx`
+## 修改方案
 
-**根因**: 该组件使用 `document.createElement('a').click()` 来触发下载，在微信浏览器中这种方式会被拦截（微信会提示"可在浏览器打开此网页来下载文件"），但代码仍然执行了 `toast.success("海报已保存到相册！")`，给用户造成已保存的错觉。
+### 修改文件：`src/components/ui/share-image-preview.tsx`
 
-## 修复方案
+#### 修复 1：底部按钮调用 handleClose
+将第 191 行和第 209 行的 `onClick={onClose}` 改为 `onClick={handleClose}`，确保关闭时正确清理滚动锁。
 
-### 修改 1：TeenInviteShareDialog.tsx
-- 移除自定义的分享逻辑（lines 132-195）
-- 改用统一的 `handleShareWithFallback` 函数
-- 在微信/iOS 环境下直接展示图片预览（长按保存），不再尝试 `navigator.share`
+#### 修复 2：安卓也走长按保存路径
+将底部操作区的条件判断从 `isWeChat || isIOS` 扩展为 `isWeChat || isIOS || isAndroid`（即所有移动端），安卓用户也看到"长按上方图片保存"的引导提示，而非不可靠的下载按钮。
 
-### 修改 2：PosterGenerator.tsx
-- 引入 `handleShareWithFallback` 和 `ShareImagePreview` 组件
-- 在微信/iOS 环境下，不使用 `<a>` 标签下载，而是展示全屏图片预览，让用户长按保存
-- 仅在实际下载成功（非微信环境）时才显示"已保存"提示
+#### 修复 3：改进下载失败的回退逻辑
+在 `handleDownload` 失败时，提示更清晰的"请长按图片保存"。
 
-## 技术细节
-
-### TeenInviteShareDialog 修改
+### 技术细节
 
 ```text
-修改前（lines 132-195）：
-  1. 调用 generateCardBlob 生成图片
-  2. 尝试 navigator.share（微信中不可靠）
-  3. 显示 "分享成功"（误报）
-  4. 仅在 share 不可用时才回退到图片预览
+修改前（第 180 行条件）：
+  if (isWeChat || isIOS) → 显示长按提示
+  else → 显示"保存图片"按钮
 
 修改后：
-  1. 调用 generateCardBlob 生成图片
-  2. 调用 handleShareWithFallback，自动处理：
-     - 微信/iOS → 图片预览（长按保存）
-     - Android → 尝试系统分享，失败回退图片预览
-     - 桌面 → 尝试系统分享，失败回退下载
-```
+  添加 isAndroid 检测
+  if (isWeChat || isIOS || isAndroid) → 显示长按提示
+  else → 显示"保存图片"按钮（仅桌面端）
 
-### PosterGenerator 修改
-
-```text
-修改前（lines 213-219）：
-  1. 创建 <a> 标签触发下载
-  2. 直接显示 "海报已保存到相册！"
+修改前（第 191、209 行）：
+  onClick={onClose}
 
 修改后：
-  1. 将 canvas 转为 Blob
-  2. 调用 handleShareWithFallback：
-     - 微信/iOS → 展示 ShareImagePreview（长按保存）
-     - 其他环境 → <a> 标签下载
-  3. 仅在实际下载成功时显示 toast
+  onClick={handleClose}
 ```
 
 ### 影响范围
-- `src/components/parent-coach/TeenInviteShareDialog.tsx` — 重构分享逻辑
-- `src/components/poster/PosterGenerator.tsx` — 添加微信环境的图片预览回退
+- 仅修改 `src/components/ui/share-image-preview.tsx` 一个文件
+- 该组件被 15+ 个功能使用，修复后全部受益
