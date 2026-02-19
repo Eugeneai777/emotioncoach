@@ -137,13 +137,19 @@ export default function PartnerLandingPageDetail() {
     window.open(`/lp/${id}`, '_blank');
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!id || !confirm("确认删除此推广活动？")) return;
     try {
       const { error } = await supabase.from("partner_landing_pages" as any).delete().eq("id", id);
       if (error) throw error;
       toast.success("已删除");
-      navigate(-1);
+      // Use history.back() to preserve parent page state (e.g. admin selectedPartnerId)
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        navigate("/partner");
+      }
     } catch (err: any) {
       toast.error("删除失败: " + (err.message || "未知错误"));
     }
