@@ -183,33 +183,65 @@ export function CombinedPersonalityCard({
   // Semantic: 觉醒度 = 满分 - 卡点分数（越高越好，实线在外 = 成长）
   const behaviorGrowthFactor = (behaviorLayer?.currentStars || 0) / 5; // 0-1 scale
   const FOUR_POOR_FULL = 15;
+  // 行为层：添加 15% 基础可见量，确保当前觉醒度始终在 Day 0 外圈
+  const behaviorCurrentScore = (raw: number) => {
+    const baseImprovement = raw * 0.15;
+    const growthBonus = raw * behaviorGrowthFactor * 0.2;
+    return FOUR_POOR_FULL - Math.max(0, raw - baseImprovement - growthBonus);
+  };
   const fourPoorRadarData = [
-    { subject: '嘴穷', baseline: FOUR_POOR_FULL - (baseline.mouth_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
-    { subject: '手穷', baseline: FOUR_POOR_FULL - (baseline.hand_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.hand_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
-    { subject: '眼穷', baseline: FOUR_POOR_FULL - (baseline.eye_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.eye_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
-    { subject: '心穷', baseline: FOUR_POOR_FULL - (baseline.heart_score || 0), current: FOUR_POOR_FULL - Math.max(0, (baseline.heart_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: FOUR_POOR_FULL },
+    { subject: '嘴穷', baseline: FOUR_POOR_FULL - (baseline.mouth_score || 0), current: behaviorCurrentScore(baseline.mouth_score || 0), fullMark: FOUR_POOR_FULL },
+    { subject: '手穷', baseline: FOUR_POOR_FULL - (baseline.hand_score || 0), current: behaviorCurrentScore(baseline.hand_score || 0), fullMark: FOUR_POOR_FULL },
+    { subject: '眼穷', baseline: FOUR_POOR_FULL - (baseline.eye_score || 0), current: behaviorCurrentScore(baseline.eye_score || 0), fullMark: FOUR_POOR_FULL },
+    { subject: '心穷', baseline: FOUR_POOR_FULL - (baseline.heart_score || 0), current: behaviorCurrentScore(baseline.heart_score || 0), fullMark: FOUR_POOR_FULL },
   ];
 
   // Emotion radar - 觉醒度语义（越高越好）
   const EMOTION_FULL = 10;
   const emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5;
+  // 情绪层：添加 15% 基础可见量，修复 growthFactor=0 时两线重合问题
+  const emotionCurrentScore = (raw: number) => {
+    const baseImprovement = raw * 0.15;
+    const growthBonus = raw * emotionGrowthFactor * 0.2;
+    return EMOTION_FULL - Math.max(0, raw - baseImprovement - growthBonus);
+  };
+  const emotionBaseScores = {
+    anxiety:    Math.round((baseline.emotion_score || 25) / 5),
+    scarcity:   Math.round((baseline.emotion_score || 25) / 5),
+    comparison: Math.round((baseline.emotion_score || 25) / 6),
+    shame:      Math.round((baseline.emotion_score || 25) / 6),
+    guilt:      Math.round((baseline.emotion_score || 25) / 7),
+  };
   const emotionRadarData = [
-    { subject: '金钱焦虑', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 5), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
-    { subject: '匮乏恐惧', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 5), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
-    { subject: '比较自卑', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 6), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
-    { subject: '羞耻厌恶', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 6), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
-    { subject: '消费内疚', baseline: EMOTION_FULL - Math.round((baseline.emotion_score || 25) / 7), current: EMOTION_FULL - Math.max(0, Math.round((baseline.emotion_score || 25) / 7) * (1 - emotionGrowthFactor * 0.3)), fullMark: EMOTION_FULL },
+    { subject: '金钱焦虑', baseline: EMOTION_FULL - emotionBaseScores.anxiety,    current: emotionCurrentScore(emotionBaseScores.anxiety),    fullMark: EMOTION_FULL },
+    { subject: '匮乏恐惧', baseline: EMOTION_FULL - emotionBaseScores.scarcity,   current: emotionCurrentScore(emotionBaseScores.scarcity),   fullMark: EMOTION_FULL },
+    { subject: '比较自卑', baseline: EMOTION_FULL - emotionBaseScores.comparison, current: emotionCurrentScore(emotionBaseScores.comparison), fullMark: EMOTION_FULL },
+    { subject: '羞耻厌恶', baseline: EMOTION_FULL - emotionBaseScores.shame,      current: emotionCurrentScore(emotionBaseScores.shame),      fullMark: EMOTION_FULL },
+    { subject: '消费内疚', baseline: EMOTION_FULL - emotionBaseScores.guilt,      current: emotionCurrentScore(emotionBaseScores.guilt),      fullMark: EMOTION_FULL },
   ];
 
   // Belief radar - 觉醒度语义（越高越好）
   const BELIEF_FULL = 10;
   const beliefGrowthFactor = (beliefLayer?.currentStars || 0) / 5;
+  // 信念层：添加 15% 基础可见量
+  const beliefCurrentScore = (raw: number) => {
+    const baseImprovement = raw * 0.15;
+    const growthBonus = raw * beliefGrowthFactor * 0.2;
+    return BELIEF_FULL - Math.max(0, raw - baseImprovement - growthBonus);
+  };
+  const beliefBaseScores = {
+    lack:    Math.round((baseline.belief_score || 20) / 5),
+    linear:  Math.round((baseline.belief_score || 20) / 5),
+    stigma:  Math.round((baseline.belief_score || 20) / 5),
+    unworth: Math.round((baseline.belief_score || 20) / 6),
+    fear:    Math.round((baseline.belief_score || 20) / 7),
+  };
   const beliefRadarData = [
-    { subject: '匮乏感', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 5), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
-    { subject: '线性思维', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 5), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
-    { subject: '金钱污名', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 5), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
-    { subject: '不配得感', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 6), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 6) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
-    { subject: '关系恐惧', baseline: BELIEF_FULL - Math.round((baseline.belief_score || 20) / 7), current: BELIEF_FULL - Math.max(0, Math.round((baseline.belief_score || 20) / 7) * (1 - beliefGrowthFactor * 0.3)), fullMark: BELIEF_FULL },
+    { subject: '匮乏感',   baseline: BELIEF_FULL - beliefBaseScores.lack,    current: beliefCurrentScore(beliefBaseScores.lack),    fullMark: BELIEF_FULL },
+    { subject: '线性思维', baseline: BELIEF_FULL - beliefBaseScores.linear,  current: beliefCurrentScore(beliefBaseScores.linear),  fullMark: BELIEF_FULL },
+    { subject: '金钱污名', baseline: BELIEF_FULL - beliefBaseScores.stigma,  current: beliefCurrentScore(beliefBaseScores.stigma),  fullMark: BELIEF_FULL },
+    { subject: '不配得感', baseline: BELIEF_FULL - beliefBaseScores.unworth, current: beliefCurrentScore(beliefBaseScores.unworth), fullMark: BELIEF_FULL },
+    { subject: '关系恐惧', baseline: BELIEF_FULL - beliefBaseScores.fear,    current: beliefCurrentScore(beliefBaseScores.fear),    fullMark: BELIEF_FULL },
   ];
 
   const handleViewReport = () => {
