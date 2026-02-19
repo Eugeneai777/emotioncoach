@@ -12,6 +12,7 @@ import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
 import { executeOneClickShare } from '@/utils/oneClickShare';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from "html2canvas";
+import { handleShareWithFallback } from '@/utils/shareUtils';
 
 interface PosterGeneratorProps {
   templateKey: string;
@@ -210,13 +211,27 @@ export function PosterGenerator({
         previewContainer.style.transform = originalContainerTransform;
       }
 
-      const link = document.createElement('a');
-      link.download = `${template.name}-推广海报.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      // Convert canvas to blob and use unified share handler
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/png');
+      });
 
       toast.dismiss();
-      toast.success("海报已保存到相册！");
+
+      const result = await handleShareWithFallback(blob, `${template.name}-推广海报.png`, {
+        title: `${template.name}-推广海报`,
+        onShowPreview: (blobUrl) => {
+          setPreviewImageUrl(blobUrl);
+          setShowImagePreview(true);
+        },
+        onDownload: () => {
+          toast.success("海报已保存！");
+        },
+      });
+
+      if (result.method === 'webshare' && result.success) {
+        toast.success("分享成功");
+      }
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss();
