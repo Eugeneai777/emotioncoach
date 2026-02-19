@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
@@ -107,31 +108,12 @@ const EmotionButtonIntro = () => {
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <DynamicOGMeta pageKey="emotionButtonIntro" />
-      {/* Header */}
-      <header className="bg-white/60 backdrop-blur-sm border-b border-teal-100 sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="gap-1 text-teal-700 hover:bg-teal-100/50"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShareDialogOpen(true)}
-              className="gap-1.5 border-teal-200 text-teal-700 hover:bg-teal-50"
-            >
-              <Share2 className="w-4 h-4" />
-              分享
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="情绪急救站" showBack rightActions={
+        <Button variant="outline" size="sm" onClick={() => setShareDialogOpen(true)} className="gap-1.5 border-teal-200 text-teal-700 hover:bg-teal-50">
+          <Share2 className="w-4 h-4" />
+          分享
+        </Button>
+      } />
 
       <main className="container max-w-lg mx-auto px-4 py-4 space-y-6">
         {/* Hero Section - 优化版 */}

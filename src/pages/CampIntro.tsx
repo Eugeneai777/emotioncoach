@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -111,20 +112,7 @@ const CampIntro = () => {
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="campIntro" />
-      {/* Header */}
-      <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-6xl mx-auto px-4 py-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(isParentCamp ? "/parent-diary" : "/camps")}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            返回
-          </Button>
-        </div>
-      </header>
+      <PageHeader title={campTemplate?.camp_name || "训练营介绍"} showBack />
 
       <main className="container max-w-6xl mx-auto px-4 py-8 space-y-10">
         {/* Hero Section */}

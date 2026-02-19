@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -109,16 +110,7 @@ const AwakeningSystemIntro: React.FC = () => {
         className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-semibold">觉察日记</h1>
-            <IntroShareDialog config={introShareConfigs.awakening} />
-          </div>
-        </header>
+        <PageHeader title="觉察日记" showBack rightActions={<IntroShareDialog config={introShareConfigs.awakening} />} />
 
         {/* Main Content */}
         <main className="max-w-lg mx-auto px-4 py-6 pb-32 space-y-6">

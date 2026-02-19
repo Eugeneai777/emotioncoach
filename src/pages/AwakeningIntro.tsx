@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, Layers, Share2 } from "lucide-react";
@@ -114,16 +115,7 @@ const AwakeningIntro: React.FC = () => {
       <DynamicOGMeta pageKey="awakeningIntro" />
 
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50/30">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-semibold">六大觉察入口</h1>
-            <IntroShareDialog config={introShareConfigs.awakening} />
-          </div>
-        </header>
+        <PageHeader title="六大觉察入口" showBack rightActions={<IntroShareDialog config={introShareConfigs.awakening} />} />
 
         {/* Main Content */}
         <main className="max-w-lg mx-auto px-4 py-4 pb-28 space-y-4">

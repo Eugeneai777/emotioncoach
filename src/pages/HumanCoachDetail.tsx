@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play, Settings, Phone } from "lucide-react";
+import { Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play, Settings, Phone } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -100,33 +101,14 @@ export default function HumanCoachDetail() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
-        <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            {isCurrentUserCoach && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/coach-dashboard")}
-                className="text-teal-600 border-teal-200 hover:bg-teal-50"
-              >
-                <Settings className="w-4 h-4 mr-1" />
-                我的后台
-              </Button>
-            )}
-          </div>
-          <h1 className="text-lg font-semibold">教练详情</h1>
-          <div className="w-10" />
-        </div>
-      </header>
+      <PageHeader title="教练详情" showBack rightActions={
+        isCurrentUserCoach ? (
+          <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
+            <Settings className="w-4 h-4 mr-1" />
+            我的后台
+          </Button>
+        ) : undefined
+      } />
       
       <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6 pb-24">
         {/* 教练基本信息卡片 */}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,20 +17,7 @@ export default function TeamCoaching() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* 顶部导航 */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
-        <div className="flex items-center justify-between px-4 h-14">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-semibold">绽放海沃塔 · 团队教练</h1>
-          <div className="w-10" />
-        </div>
-      </header>
+      <PageHeader title="绽放海沃塔 · 团队教练" showBack />
 
       {/* 筛选标签 */}
       <div className="px-4 py-3 border-b">

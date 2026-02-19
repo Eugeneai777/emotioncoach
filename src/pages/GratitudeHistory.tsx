@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -232,6 +233,11 @@ const GratitudeHistory = () => {
     <>
       <DynamicOGMeta pageKey="gratitudeHistory" />
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative">
+      <PageHeader title="感恩日记" showBack rightActions={user ? (
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh} disabled={isRefreshing || isPullRefreshing}>
+          <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      ) : undefined} />
       {/* Offline Status Banner */}
       <OfflineStatusBanner 
         isOnline={isOnline} 
@@ -252,29 +258,7 @@ const GratitudeHistory = () => {
         className="max-w-2xl mx-auto px-3 py-3 pb-20 h-screen overflow-y-auto overscroll-contain"
         style={pullStyle}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold">感恩日记</h1>
-              <p className="text-xs text-muted-foreground">看见日常微光，点亮内心力量</p>
-            </div>
-          </div>
-          {user && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleRefresh}
-              disabled={isRefreshing || isPullRefreshing}
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          )}
-        </div>
+        {/* PageHeader 覆盖在滚动容器外 */}
 
         <div className="space-y-3">
           {/* AI Analysis Sync Button - Show for all users */}

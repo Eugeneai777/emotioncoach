@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ArrowLeft, Search, Filter, Users, UserPlus } from "lucide-react";
+import { Search, Filter, Users, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -46,47 +47,18 @@ export default function HumanCoaches() {
     <>
       <DynamicOGMeta pageKey="humanCoaches" />
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
-        <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-semibold">真人教练</h1>
-              <p className="text-xs text-muted-foreground">一对一专属咨询服务</p>
-            </div>
-          </div>
-          
-          {/* 申请成为教练入口 */}
-          {!coachProfile && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/become-coach")}
-              className="text-teal-600 border-teal-200 hover:bg-teal-50"
-            >
-              <UserPlus className="w-4 h-4 mr-1" />
-              申请入驻
-            </Button>
-          )}
-          {coachProfile && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/coach-dashboard")}
-              className="text-teal-600 border-teal-200 hover:bg-teal-50"
-            >
-              我的后台
-            </Button>
-          )}
-        </div>
-      </header>
+      <PageHeader title="真人教练" showBack rightActions={
+        coachProfile ? (
+          <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
+            我的后台
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" onClick={() => navigate("/become-coach")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
+            <UserPlus className="w-4 h-4 mr-1" />
+            申请入驻
+          </Button>
+        )
+      } />
       
       {/* 搜索和筛选 */}
       <div className="container max-w-4xl mx-auto px-4 py-4 space-y-4">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -596,55 +597,26 @@ const Goals = (): JSX.Element => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">返回主页</span>
-                <span className="sm:hidden">返回</span>
-              </Button>
-              <h1 className="text-base md:text-xl font-bold text-foreground truncate">情绪目标</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                onClick={loadGoalSuggestions}
-                disabled={loadingSuggestions}
-                className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0"
-              >
-                {loadingSuggestions ? (
-                  <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                ) : (
-                  <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                )}
-                <span className="hidden sm:inline">目标建议</span>
-                <span className="sm:hidden">建议</span>
-              </Button>
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={() => setIntensityDialogOpen(true)}
-                className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0"
-              >
-                <Activity className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">强度目标</span>
-                <span className="sm:hidden">强度</span>
-              </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0">
-                  <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  <span className="hidden sm:inline">新建目标</span>
-                  <span className="sm:hidden">新建</span>
-                </Button>
-              </DialogTrigger>
+      <PageHeader title="情绪目标" showBack rightActions={
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={loadGoalSuggestions} disabled={loadingSuggestions} className="gap-1.5 text-xs md:text-sm">
+            {loadingSuggestions ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <TrendingUp className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">目标建议</span>
+            <span className="sm:hidden">建议</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setIntensityDialogOpen(true)} className="gap-1.5 text-xs md:text-sm">
+            <Activity className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">强度目标</span>
+            <span className="sm:hidden">强度</span>
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs md:text-sm">
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">新建目标</span>
+              <span className="sm:hidden">新建</span>
+            </Button>
+          </DialogTrigger>
               <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
                 <DialogHeader>
                   <DialogTitle className="text-base md:text-lg">设定情绪管理目标</DialogTitle>
@@ -703,10 +675,8 @@ const Goals = (): JSX.Element => {
                 </div>
               </DialogContent>
             </Dialog>
-            </div>
           </div>
-        </div>
-      </header>
+        } />
 
       <main className="container max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6 md:space-y-8">
         <Tabs defaultValue="active" className="w-full">

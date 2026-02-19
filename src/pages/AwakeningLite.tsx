@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PageHeader from "@/components/PageHeader";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
@@ -84,23 +85,7 @@ const AwakeningLite: React.FC = () => {
       <DynamicOGMeta pageKey="awakeningLite" />
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-semibold">觉察日记</h1>
-            <IntroShareDialog
-              config={introShareConfigs.awakening}
-              trigger={
-                <Button variant="ghost" size="icon">
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              }
-            />
-          </div>
-        </header>
+        <PageHeader title="觉察日记" showBack rightActions={<IntroShareDialog config={introShareConfigs.awakening} trigger={<Button variant="ghost" size="icon"><Share2 className="h-5 w-5" /></Button>} />} />
 
         {/* Main Content */}
         <main className="max-w-lg mx-auto px-4 py-4 pb-24 space-y-4">
