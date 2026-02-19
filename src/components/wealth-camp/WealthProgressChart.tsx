@@ -64,6 +64,7 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
       const be = entry.belief_score ?? 0;
       const validScores = [b, em, be].filter(v => v > 0);
       const avg = validScores.length > 0 ? validScores.reduce((a, c) => a + c, 0) / validScores.length : 0;
+      const hasData = b > 0 || em > 0 || be > 0;
       const awakening = avg > 0 ? starsToAwakening(avg) : 0;
       return {
         day: `第 ${index + 1} 天`,
@@ -71,8 +72,8 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
         行为流动度: b,
         情绪流动度: em,
         信念松动度: be,
-        觉醒指数: awakening,
-        hasData: b > 0 || em > 0 || be > 0,
+        觉醒指数: hasData ? awakening : null,
+        hasData,
         isBaseline: false,
       };
     });
@@ -117,10 +118,14 @@ export function WealthProgressChart({ entries, embedded = false, baseline, basel
       return { avg, peak, peakDay, vsBaseline, daysAboveBaseline, totalDays: dataWithValues.length };
     };
 
-    // Awakening stats
-    const awakeningValues = dataWithValues.map(d => d['觉醒指数'] as number).filter(v => v > 0);
+    // Awakening stats — use best-3-day average to match GameProgressCard
+    const awakeningValues = dataWithValues.map(d => d['觉醒指数'] as number).filter(v => v != null && v > 0);
     const awakeningStart = chartData.find(d => d.isBaseline)?.['觉醒指数'] as number | undefined;
-    const awakeningCurrent = awakeningValues.length > 0 ? awakeningValues[awakeningValues.length - 1] : 0;
+    const sortedAwakning = [...awakeningValues].sort((a, b) => b - a);
+    const bestDays = sortedAwakning.slice(0, Math.min(3, sortedAwakning.length));
+    const awakeningCurrent = bestDays.length > 0
+      ? Math.round(bestDays.reduce((a, b) => a + b, 0) / bestDays.length)
+      : 0;
     const awakeningPeak = awakeningValues.length > 0 ? Math.max(...awakeningValues) : 0;
     const awakeningPeakDay = dataWithValues.find(d => d['觉醒指数'] === awakeningPeak)?.dayNum || 0;
     const awakeningGrowth = awakeningStart !== undefined ? awakeningCurrent - awakeningStart : 0;
