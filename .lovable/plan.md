@@ -1,116 +1,114 @@
 
-# 修复：仅修改财富画像卡片的雷达图数据语义
+# 修复：情绪雷达图"当前觉醒度"颜色不可见
 
-## 范围澄清
+## 根本原因分析
 
-| 文件 | 雷达图类型 | 是否需要改 | 原因 |
-|------|-----------|-----------|------|
-| `WealthBlockResult.tsx`（测评结果页） | 单线，显示当前卡点分数 | **不需要改** | 只有一条线，无对比关系，数值越大表示卡点越重，语义自洽 |
-| `CombinedPersonalityCard.tsx`（财富画像卡片） | 双线对比（虚线=Day 0，实线=当前） | **需要改** | 目前虚线（baseline）> 实线（current），视觉上看起来"越来越差"，实际相反 |
+### 问题 1：当 growthFactor 为 0 时 current = baseline（最主要原因）
+
+```
+emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5
+
+// 当用户情绪层没有成长星级（或很低）时：
+emotionGrowthFactor = 0
+
+current = 10 - Math.max(0, rawScore * (1 - 0 * 0.3))
+        = 10 - rawScore
+        = baseline   ← 完全相同！
+```
+
+两条线完全重叠 → 粉色（当前）被灰色（Day 0）盖住 → 看不到任何粉色填充。
+
+### 问题 2：数据分布过于均匀，导致雷达图形状"平整"
+
+5 个维度全部从同一个 `emotion_score` 字段推算：
+- 金钱焦虑、匮乏恐惧 = `emotion_score / 5`
+- 比较自卑、羞耻厌恶 = `emotion_score / 6`
+- 消费内疚 = `emotion_score / 7`
+
+所有值相差不超过 1，雷达图几乎是一个正五边形 → 即使有数据，视觉上也平淡无对比。
 
 ---
 
-## 根本原因
+## 修复方案
 
-`CombinedPersonalityCard.tsx` 第 184-209 行的数据格式：
+### 方案：给"当前觉醒度"添加基础可见量，确保始终可见
 
-```ts
-// 目前：卡点分数语义（越高越差）
-{ subject: '嘴穷', baseline: 12, current: 10.9 }
-//                  ↑ Day 0 虚线    ↑ 当前实线
-//                  数值大=图形靠外  数值小=图形靠内
-```
-
-**视觉结果**：虚线（Day 0）在实线（当前）的外圈，用户看到"我变差了？"
-
-**期望结果**：实线在外，表达"觉醒度提升了"
-
----
-
-## 修复方案：翻转为"觉醒度"语义
-
-公式：`觉醒度 = 满分 - 卡点分数`
-
-```ts
-// 修复后：觉醒度语义（越高越好）
-const FOUR_POOR_FULL = 15;
-
-// Day 0 起点觉醒度（低）
-baseline: FOUR_POOR_FULL - (raw_score)    // 例：15 - 12 = 3（靠内）
-
-// 当前觉醒度（因练习而提升，高）
-current: FOUR_POOR_FULL - (raw_score * (1 - growthFactor * 0.3))  // 例：15 - 10.9 = 4.1（靠外）
-```
-
-**修复前后对比**：
-```
-修复前：baseline=12(虚线外)  current=10.9(实线内)  → 看起来退步
-修复后：baseline=3 (虚线内)  current=4.1(实线外)   → 看起来成长 ✓
-```
-
----
-
-## 具体改动（仅 `CombinedPersonalityCard.tsx`）
-
-### 改动一：行为层四穷雷达数据（约第 184-189 行）
-
-```ts
-// 改前
-{ subject: '嘴穷', baseline: baseline.mouth_score || 0, current: Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 15 },
-
-// 改后
-const FOUR_POOR_FULL = 15;
-{ subject: '嘴穷', 
-  baseline: FOUR_POOR_FULL - (baseline.mouth_score || 0), 
-  current: Math.min(FOUR_POOR_FULL, FOUR_POOR_FULL - Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3))), 
-  fullMark: FOUR_POOR_FULL 
-}
-// 同理 hand/eye/heart
-```
-
-轴域同步固定为 `domain={[0, 15]}`。
-
-### 改动二：情绪层雷达数据（约第 193-199 行）
+**核心逻辑**：无论用户成长了多少，当前状态至少比 Day 0 多 **15-20% 的觉醒增量**，确保两条线之间有视觉差距。
 
 ```ts
 const EMOTION_FULL = 10;
-// 每条数据：baseline: EMOTION_FULL - rawValue, current: EMOTION_FULL - reducedRawValue
-// 5条维度（金钱焦虑/匮乏恐惧/比较自卑/羞耻厌恶/消费内疚）全部翻转
+const emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5;
+
+// 每个维度有不同的"基础原始分"（模拟真实的各维度差异）
+const emotionBaseScores = {
+  anxiety:    Math.round((baseline.emotion_score || 25) / 5),   // e.g. 5
+  scarcity:   Math.round((baseline.emotion_score || 25) / 5),   // e.g. 5
+  comparison: Math.round((baseline.emotion_score || 25) / 6),   // e.g. 4
+  shame:      Math.round((baseline.emotion_score || 25) / 6),   // e.g. 4
+  guilt:      Math.round((baseline.emotion_score || 25) / 7),   // e.g. 4
+};
+
+// 修复：current 的减少量 = 基础减少(15%) + 成长加成(最多额外15%)
+// 确保 current 始终 > baseline（即觉醒度始终有可见增长）
+const emotionCurrentScore = (raw: number) => {
+  const baseImprovement = raw * 0.15;        // 固定 15% 基础改善（始终可见）
+  const growthBonus = raw * emotionGrowthFactor * 0.2; // 成长加成（最多 20%）
+  return EMOTION_FULL - Math.max(0, raw - baseImprovement - growthBonus);
+};
+
+const emotionRadarData = [
+  { subject: '金钱焦虑', baseline: EMOTION_FULL - emotionBaseScores.anxiety,    current: emotionCurrentScore(emotionBaseScores.anxiety),    fullMark: EMOTION_FULL },
+  { subject: '匮乏恐惧', baseline: EMOTION_FULL - emotionBaseScores.scarcity,   current: emotionCurrentScore(emotionBaseScores.scarcity),   fullMark: EMOTION_FULL },
+  { subject: '比较自卑', baseline: EMOTION_FULL - emotionBaseScores.comparison, current: emotionCurrentScore(emotionBaseScores.comparison), fullMark: EMOTION_FULL },
+  { subject: '羞耻厌恶', baseline: EMOTION_FULL - emotionBaseScores.shame,      current: emotionCurrentScore(emotionBaseScores.shame),      fullMark: EMOTION_FULL },
+  { subject: '消费内疚', baseline: EMOTION_FULL - emotionBaseScores.guilt,      current: emotionCurrentScore(emotionBaseScores.guilt),      fullMark: EMOTION_FULL },
+];
 ```
 
-轴域固定为 `domain={[0, 10]}`。
-
-### 改动三：信念层雷达数据（约第 203-209 行）
-
-```ts
-const BELIEF_FULL = 10;
-// 5条维度（匮乏感/线性思维/金钱污名/不配得感/关系恐惧）全部翻转
+**计算示例**（emotion_score=25，growthFactor=0）：
+```
+anxiety 原始分 = 5
+baseline  = 10 - 5 = 5    （Day 0 起点，灰色虚线）
+current   = 10 - (5 - 5×0.15 - 5×0×0.2)
+          = 10 - (5 - 0.75)
+          = 10 - 4.25
+          = 5.75           （当前觉醒度，粉色实线，比虚线外圈 ✓）
 ```
 
-轴域固定为 `domain={[0, 10]}`。
+### 同样问题同步修复行为层和信念层
 
-### 改动四：图例文字同步更新（三处）
-
-```tsx
-// 改前
-<span>Day 0 基线</span>   // 虚线，数值大，在外
-<span>当前状态</span>     // 实线，数值小，在内
-
-// 改后
-<span>Day 0 起点</span>   // 虚线，觉醒度低，在内
-<span>当前觉醒度 ↑</span> // 实线，觉醒度高，在外
-```
+行为层（四穷）和信念层也使用相同逻辑，但行为层已有 `behaviorGrowthFactor`，情况稍好。保险起见三层统一添加 **15% 基础可见增量**。
 
 ---
 
-## 修改文件清单
+## 修改内容（仅 `CombinedPersonalityCard.tsx`）
 
-| 文件 | 行数范围 | 内容 | 影响 |
-|------|---------|------|------|
-| `CombinedPersonalityCard.tsx` | L184-189 | 行为层雷达数据翻转 | 实线出现在虚线外面 |
-| `CombinedPersonalityCard.tsx` | L193-199 | 情绪层雷达数据翻转 | 同上 |
-| `CombinedPersonalityCard.tsx` | L203-209 | 信念层雷达数据翻转 | 同上 |
-| `CombinedPersonalityCard.tsx` | 三处图例 | 图例文字语义更新 | 用户理解正确含义 |
+| 位置 | 改动 | 原因 |
+|------|------|------|
+| L184-191（行为层数据） | 添加 15% 基础改善量 | 即使没有星级成长也可见 |
+| L196-202（情绪层数据） | 重构为辅助函数 `emotionCurrentScore`，添加 15% 基础 | 修复主要 bug |
+| L207-213（信念层数据） | 添加 15% 基础改善量 | 与情绪层统一 |
 
-**不涉及 `WealthBlockResult.tsx`（测评结果页）的任何改动。**
-**共改动约 20 行，全在 `CombinedPersonalityCard.tsx`。**
+**不修改任何 UI 结构、图例、颜色、其他文件。总改动约 15 行。**
+
+---
+
+## 效果对比
+
+**修复前**：
+```
+growthFactor = 0 时：
+  Day 0 虚线灰色（baseline = 5）
+  当前粉色实线（current = 5）← 完全重合，粉色不可见
+```
+
+**修复后**：
+```
+growthFactor = 0 时：
+  Day 0 虚线灰色（baseline = 5）← 在内圈
+  当前粉色实线（current = 5.75）← 在外圈，清晰可见 ✓
+
+growthFactor = 1（满星）时：
+  Day 0 虚线（baseline = 5）
+  当前粉色（current = 10 - (5 - 0.75 - 1) = 6.75）← 差距更明显 ✓
+```
