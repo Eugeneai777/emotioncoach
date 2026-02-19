@@ -27,6 +27,9 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     navigator.userAgent.toLowerCase().includes('micromessenger');
   const isIOS = typeof navigator !== 'undefined' && 
     /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+  const isAndroid = typeof navigator !== 'undefined' && 
+    /android/i.test(navigator.userAgent);
+  const isMobile = isWeChat || isIOS || isAndroid;
 
   const cleanupScrollLock = () => {
     document.body.style.overflow = '';
@@ -177,7 +180,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         className="shrink-0 flex flex-col items-center gap-3 px-4 pb-6"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
-      {(isWeChat || isIOS) ? (
+      {isMobile ? (
           <div className="flex flex-col items-center gap-3 max-w-sm w-full">
             <div className="flex items-center gap-3 bg-muted rounded-2xl px-5 py-3 w-full">
               <span className="text-2xl shrink-0">👆</span>
@@ -188,7 +191,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
             </div>
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-full px-8 h-11 gap-2 text-base w-full"
             >
               <X className="h-4 w-4" />
@@ -206,7 +209,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
             </Button>
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-full px-8 h-11 gap-2 text-base w-full"
             >
               <X className="h-4 w-4" />
