@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Info, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { emotionTypes, EmotionType } from "@/config/emotionReliefConfig";
 import EmotionReliefFlow from "@/components/tools/EmotionReliefFlow";
 import { useAuth } from "@/hooks/useAuth";

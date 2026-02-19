@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CoachMemoriesCard } from '@/components/wealth-camp/CoachMemoriesCard';
 import confetti from 'canvas-confetti';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import PageHeader from '@/components/PageHeader';
 
 interface AiInsight {
   behavior_analysis?: string;

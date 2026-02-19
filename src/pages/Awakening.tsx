@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
 import { ArrowLeft, Share2 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";

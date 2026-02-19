@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Sparkles, Eye, Heart, Lightbulb, Target, RefreshCw, MessageCircle, Users, Calendar } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 

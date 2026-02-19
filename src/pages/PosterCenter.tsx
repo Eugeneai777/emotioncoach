@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import PageHeader from '@/components/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/usePartner';
 import { Button } from '@/components/ui/button';

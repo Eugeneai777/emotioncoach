@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import PageHeader from '@/components/PageHeader';
 import { ArrowLeft, ClipboardCheck, Target, Calendar, Lightbulb, Share2, Loader2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

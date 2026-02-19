@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import PageHeader from "@/components/PageHeader";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowLeft, Heart, Sparkles, Target, TrendingUp, Users, CheckCircle2, AlertCircle, BookOpen, Video, MessageCircle, Award, Calendar, LineChart, Smile, Lightbulb, Shield } from "lucide-react";
 
