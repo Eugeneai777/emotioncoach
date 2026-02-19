@@ -180,7 +180,7 @@ export default function IndustryPartnerManagement() {
   if (selectedPartnerId && selectedPartner) {
     return (
       <AdminPageLayout
-        title={`有劲飞轮 · ${selectedPartner.company_name || selectedPartner.partner_code}胶囊`}
+        title={`知乐飞轮 · ${selectedPartner.company_name || selectedPartner.partner_code}`}
         actions={
           <Button variant="outline" size="sm" onClick={() => { setSelectedPartnerId(null); setSearchParams({}); }}>
             <ArrowLeft className="h-4 w-4 mr-1" />
