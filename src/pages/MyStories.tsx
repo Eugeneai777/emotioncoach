@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -130,31 +131,12 @@ export default function MyStories() {
   return (
     <div className="min-h-screen bg-background">
       <DynamicOGMeta pageKey="myStories" />
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-orange-500" />
-              我的故事广场
-            </h1>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => navigate("/story-coach")}
-                className="bg-gradient-to-r from-orange-500 to-amber-500"
-              >
-                <Sparkles className="w-4 h-4 mr-1" />
-                创作故事
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/story-coach")}>
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline ml-1">返回</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="我的故事广场" showBack rightActions={
+        <Button size="sm" onClick={() => navigate("/story-coach")} className="bg-gradient-to-r from-orange-500 to-amber-500">
+          <Sparkles className="w-4 h-4 mr-1" />
+          创作故事
+        </Button>
+      } />
 
       {/* Main Content */}
       <main className="container max-w-xl mx-auto px-3 md:px-4 py-4 md:py-6">

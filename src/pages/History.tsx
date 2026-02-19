@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -236,19 +237,7 @@ const History = () => {
         className="h-screen overflow-y-auto overscroll-contain bg-background pb-[env(safe-area-inset-bottom)]"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedBriefing(null)}
-              className="gap-1 md:gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回列表
-            </Button>
-          </div>
-        </header>
+        <PageHeader title="情绪简报" showBack />
 
         <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
@@ -424,32 +413,15 @@ const History = () => {
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <DynamicOGMeta pageKey="emotionHistory" />
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg md:text-xl font-bold text-foreground">我的情绪日记</h1>
-            <div className="flex items-center gap-1 md:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/tag-stats")}
-                className="gap-1 md:gap-2 px-2 md:px-3"
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">标签统计</span>
-              </Button>
-              <TagManager onTagsChange={loadBriefings} />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="gap-1 md:gap-2 px-2 md:px-3"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">返回主页</span>
-              </Button>
-            </div>
-          </div>
+      <PageHeader title="我的情绪日记" showBack rightActions={
+        <div className="flex items-center gap-1 md:gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate("/tag-stats")} className="gap-1 md:gap-2 px-2 md:px-3">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">标签统计</span>
+          </Button>
+          <TagManager onTagsChange={loadBriefings} />
+        </div>
+      } />
           {allTags.length > 0 && (
             <Collapsible open={isTagFilterExpanded} onOpenChange={setIsTagFilterExpanded}>
               <CollapsibleTrigger asChild>
@@ -511,8 +483,6 @@ const History = () => {
               </CollapsibleContent>
             </Collapsible>
           )}
-        </div>
-      </header>
 
       <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
         {briefings.length === 0 ? (

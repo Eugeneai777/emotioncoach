@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } from "lucide-react";
-import logoImage from "@/assets/logo-youjin-ai.png";
+import { TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } from "lucide-react";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
@@ -158,19 +158,7 @@ const CampList = () => {
         className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-200/30">
-          <div className="container max-w-6xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-1">
-              <div onClick={() => navigate('/')} className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform">
-                <img src={logoImage} alt="有劲AI" className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover" />
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
-                <ArrowLeft className="w-4 h-4" />
-                返回
-              </Button>
-            </div>
-          </div>
-        </header>
+        <PageHeader title="训练营" showBack />
 
         <main className="container max-w-6xl mx-auto px-4 py-12">
           {/* Skeleton Hero */}
@@ -198,42 +186,12 @@ const CampList = () => {
         className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-      {/* Header with Breadcrumb */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-200/30">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <div onClick={() => navigate('/')} className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform">
-                  <img src={logoImage} alt="有劲AI" className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover" />
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
-                  <ArrowLeft className="w-4 h-4" />
-                  返回
-                </Button>
-              </div>
-              {/* Breadcrumb */}
-              <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                <Home className="w-4 h-4" />
-                <ChevronRight className="w-4 h-4" />
-                <span>训练营</span>
-                <ChevronRight className="w-4 h-4" />
-                <span className="text-teal-700 font-medium">训练营列表</span>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/camps")}
-              className="gap-2 border-teal-300/50 text-teal-700 hover:bg-teal-50/50"
-            >
-              <Users className="w-4 h-4" />
-              我的训练营
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="训练营列表" showBack rightActions={
+        <Button variant="outline" size="sm" onClick={() => navigate("/camps")} className="gap-2 border-teal-300/50 text-teal-700 hover:bg-teal-50/50">
+          <Users className="w-4 h-4" />
+          我的训练营
+        </Button>
+      } />
 
       <main className="container max-w-6xl mx-auto px-4 py-6 sm:py-12">
         {/* Hero Section with Stats */}

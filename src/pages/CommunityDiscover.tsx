@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -157,22 +158,7 @@ const CommunityDiscover = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* 头部 */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/community")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">发现精彩</h1>
-            <p className="text-muted-foreground text-sm">
-              探索社区热门内容和活跃成员
-            </p>
-          </div>
-        </div>
+        <PageHeader title="发现精彩" showBack />
 
         {/* 标签页 */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

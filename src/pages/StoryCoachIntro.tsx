@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -221,15 +222,7 @@ const StoryCoachIntro = () => {
         <div className="absolute bottom-10 right-5 w-40 h-40 bg-yellow-300/30 rounded-full blur-2xl"></div>
         
         <div className="container mx-auto px-4 py-6 relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/story-coach")}
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              返回
-            </Button>
+          <div className="flex items-center justify-end mb-4">
             <IntroShareDialog config={introShareConfigs.storyCoach} />
           </div>
 

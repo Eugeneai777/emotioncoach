@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -192,33 +193,7 @@ const CampCheckIn = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:via-background dark:to-background">
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        {/* 头部 */}
-        <div className="flex items-center gap-3 mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1 text-teal-700 hover:bg-teal-100/50 dark:text-teal-300"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回
-          </Button>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h1 className="text-xl font-bold text-teal-800 dark:text-teal-200">
-                第 {displayCurrentDay} 天打卡
-              </h1>
-              {todayProgress?.is_checked_in && (
-                <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0 h-5 px-2 text-xs">
-                  ✓ 已完成
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatInCST(new Date(), "yyyy年MM月dd日 EEEE", { locale: zhCN })}
-            </p>
-          </div>
-        </div>
+      <PageHeader title={`第 ${displayCurrentDay} 天打卡`} showBack />
 
         <div className="space-y-5">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

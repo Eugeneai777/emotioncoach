@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, CheckCircle2, Share2 } from "lucide-react";
@@ -72,26 +73,7 @@ const EnergyStudioIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-lg mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/")}
-              className="gap-1"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回
-            </Button>
-            <h1 className="text-sm font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
-              有劲生活馆使用指南
-            </h1>
-            <IntroShareDialog config={introShareConfigs.energyStudio} />
-          </div>
-        </div>
-      </header>
+      <PageHeader title="有劲生活馆使用指南" showBack rightActions={<IntroShareDialog config={introShareConfigs.energyStudio} />} />
 
       <main className="container max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Hero Section */}

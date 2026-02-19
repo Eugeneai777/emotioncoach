@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { TeenModeOnboarding } from "@/components/parent-coach/TeenModeOnboarding";
@@ -46,16 +47,7 @@ export default function ParentTeenIntro() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
       <DynamicOGMeta pageKey="parentTeenIntro" />
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-teal-100">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold">双轨模式介绍</h1>
-          <IntroShareDialog config={introShareConfigs.parentTeen} />
-        </div>
-      </header>
+      <PageHeader title="双轨模式介绍" showBack rightActions={<IntroShareDialog config={introShareConfigs.parentTeen} />} />
 
       <main className="pb-24">
         {/* Hero Section */}
