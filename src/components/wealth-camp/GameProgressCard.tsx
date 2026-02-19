@@ -171,27 +171,64 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
             </div>
           </motion.div>
 
-          {/* 区块2：7天觉醒目标（个性化） */}
+          {/* 区块2：7天觉醒目标（个性化，支持滚动下一个目标） */}
           {(() => {
             const baselineScore = progress.baseline_awakening;
             const currentScore = progress.current_awakening;
-            const day7Target = Math.min(baselineScore + 20, 95);
-            const range = day7Target - baselineScore;
-            const gained = currentScore - baselineScore;
+            
+            // 计算第一个7天目标（起点+20）
+            const firstTarget = Math.min(baselineScore + 20, 95);
+            const firstAchieved = currentScore >= firstTarget;
+            
+            // 如果第一目标已达成，显示下一个7天目标（当前分数+15，最高95）
+            const activeBaseline = firstAchieved ? firstTarget : baselineScore;
+            const activeTarget = firstAchieved 
+              ? Math.min(currentScore + 15, 95)
+              : firstTarget;
+            const isNextGoal = firstAchieved && currentScore < 95;
+            const isMaxed = currentScore >= 95;
+            
+            const range = activeTarget - activeBaseline;
+            const gained = currentScore - activeBaseline;
             const goalProgress = range > 0 ? Math.min(100, Math.round((gained / range) * 100)) : 100;
-            const isAchieved = currentScore >= day7Target;
-            const remaining = day7Target - currentScore;
+            const isAchieved = currentScore >= activeTarget;
+            const remaining = activeTarget - currentScore;
+            
+            if (isMaxed) {
+              return (
+                <motion.div
+                  className="rounded-lg bg-emerald-50/80 border border-emerald-300/50 dark:bg-emerald-900/20 dark:border-emerald-700/30 px-3 py-2.5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">🏆 觉醒指数已达巅峰状态！持续保持中...</span>
+                </motion.div>
+              );
+            }
             
             return (
               <motion.div
-                className="rounded-lg bg-amber-100/60 border border-amber-300/50 dark:bg-amber-900/20 dark:border-amber-700/30 px-3 py-2.5 space-y-2"
+                className={cn(
+                  "rounded-lg border px-3 py-2.5 space-y-2",
+                  isNextGoal
+                    ? "bg-blue-50/60 border-blue-200/60 dark:bg-blue-900/15 dark:border-blue-700/30"
+                    : "bg-amber-100/60 border-amber-300/50 dark:bg-amber-900/20 dark:border-amber-700/30"
+                )}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-amber-700 dark:text-amber-300">
-                    🎯 7天觉醒目标：<span className="text-amber-600 dark:text-amber-400 font-bold">{day7Target} 分</span>
+                  <span className={cn(
+                    "text-xs font-medium",
+                    isNextGoal ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
+                  )}>
+                    {isNextGoal ? '🚀 下一个7天目标：' : '🎯 7天觉醒目标：'}
+                    <span className={cn(
+                      "font-bold",
+                      isNextGoal ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"
+                    )}>{activeTarget} 分</span>
                   </span>
                   {isAchieved ? (
                     <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-0.5">
@@ -199,18 +236,23 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                     </span>
                   ) : (
                     <span className="text-[10px] text-muted-foreground">
-                      起点 <span className="text-foreground font-medium">{baselineScore}</span>
+                      起点 <span className="text-foreground font-medium">{activeBaseline}</span>
                     </span>
                   )}
                 </div>
                 
-                <div className="h-1.5 w-full rounded-full bg-amber-200/60 dark:bg-amber-950/50 overflow-hidden">
+                <div className={cn(
+                  "h-1.5 w-full rounded-full overflow-hidden",
+                  isNextGoal ? "bg-blue-100 dark:bg-blue-950/50" : "bg-amber-200/60 dark:bg-amber-950/50"
+                )}>
                   <motion.div
                     className={cn(
                       "h-full rounded-full",
                       isAchieved 
                         ? "bg-gradient-to-r from-emerald-500 to-emerald-400" 
-                        : "bg-gradient-to-r from-amber-500 to-orange-400"
+                        : isNextGoal
+                          ? "bg-gradient-to-r from-blue-500 to-cyan-400"
+                          : "bg-gradient-to-r from-amber-500 to-orange-400"
                     )}
                     initial={{ width: 0 }}
                     animate={{ width: `${goalProgress}%` }}
@@ -220,10 +262,16 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
 
                 <div className="text-[10px]">
                   {isAchieved ? (
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">🎉 已达成 7 天觉醒目标！</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">🎉 已达成目标！继续保持觉醒！</span>
                   ) : (
                     <span className="text-muted-foreground">
-                      距目标还差 <span className="text-amber-600 dark:text-amber-400 font-bold">{remaining}</span> 分
+                      距目标还差 <span className={cn(
+                        "font-bold",
+                        isNextGoal ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"
+                      )}>{remaining}</span> 分
+                      {isNextGoal && firstAchieved && (
+                        <span className="ml-1 text-emerald-600 dark:text-emerald-400">· 已完成第一目标 ✓</span>
+                      )}
                     </span>
                   )}
                 </div>
