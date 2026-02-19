@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Plus, Pencil, Trash2, Heart, MessageCircle, FileText, RefreshCw } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Heart, MessageCircle, RefreshCw, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import PostComposer from "@/components/community/PostComposer";
 import PostEditDialog from "@/components/community/PostEditDialog";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import PageHeader from "@/components/PageHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -202,40 +203,31 @@ export default function MyPosts() {
       />
       
       {/* Header */}
-      <header className="border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-2">
-                <FileText className="h-5 w-5 text-teal-500" />
-                我的动态
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleRefresh}
-                disabled={isRefreshing || isPullRefreshing}
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setComposerOpen(true)}
-                className="bg-gradient-to-r from-teal-400 to-cyan-500"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                发布
-              </Button>
-            </div>
+      <PageHeader
+        title="我的动态"
+        showBack={true}
+        rightActions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isPullRefreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setComposerOpen(true)}
+              className="bg-gradient-to-r from-teal-400 to-cyan-500"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              发布
+            </Button>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <div 
         ref={containerRef}
