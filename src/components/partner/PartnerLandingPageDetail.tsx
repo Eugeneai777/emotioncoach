@@ -167,7 +167,7 @@ export default function PartnerLandingPageDetail() {
 
   const handlePreview = () => {
     if (!id) return;
-    window.open(`${window.location.origin}/lp/${id}`, '_blank');
+    navigate(`/lp/${id}`);
   };
 
   const handleDelete = async (e?: React.MouseEvent) => {
