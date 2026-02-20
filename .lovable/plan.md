@@ -1,85 +1,93 @@
 
-## 功能：记住登录名和密码
+
+## 功能：智能消息提醒手机注册用户绑定微信（用于找回密码）
 
 ### 目标
-在登录页面添加「记住账号」功能，用户勾选后，下次打开登录页时自动填充手机号（区号）和密码，无需重复输入。
+创建一个批量触发的 Edge Function，定期检查手机注册但未绑定微信的用户，通过站内智能消息提醒他们绑定微信公众号。绑定后既能接收消息推送，也能作为未来密码找回的验证通道。
 
 ---
 
 ### 方案设计
 
-**存储策略**
-- 使用 `localStorage` 存储已记住的账号信息（key: `remembered_login`）
-- 密码需要进行简单的 Base64 编码存储（不是加密，但可防止直接明文暴露在 Storage 面板）
-- 仅在用户明确勾选「记住账号」时才保存
-- 用户取消勾选并登录后，清除已保存的记录
-
-**UI 变更**
-在密码输入框下方、提交按钮上方，新增一个「记住账号」勾选框，和现有「同意条款」的勾选框风格保持一致。
+复用现有的 `generate-smart-notification` 架构，新增一个 `wechat_bindreminder` 场景，并创建对应的批量触发函数。
 
 ---
 
-### 技术细节（仅修改 `src/pages/Auth.tsx`）
+### 需要变更的内容
 
-**1. 新增状态变量**
-```typescript
-const [rememberMe, setRememberMe] = useState(false);
+#### 1. 新增 Edge Function: `batch-trigger-wechat-bindreminder`
+
+参照 `batch-trigger-profile-completion` 的模式：
+
+- 查询 `profiles` 表中手机注册用户（email 以 `phone_` 开头 或 包含 `@youjin.app`）
+- 关联 `wechat_user_mappings` 排除已绑定的用户
+- 7 天去重窗口（同一用户 7 天内不重复提醒）
+- 调用 `generate-smart-notification` 生成个性化通知
+- 通过 CRON_SECRET 验证（定时任务模式）
+
+#### 2. 修改 `generate-smart-notification/index.ts`
+
+新增 `wechat_bind_reminder` 场景配置：
+
+**Scenario 类型**：在 `Scenario` 联合类型中添加 `'wechat_bind_reminder'`
+
+**场景提示词**：
+```text
+用户通过手机号注册了账号，但尚未绑定微信公众号。
+绑定微信的好处包括：
+1. 忘记密码时可通过微信验证码重置
+2. 接收打卡提醒、情绪报告等智能消息
+3. 获取专属活动通知和福利
+4. 更安全的账号保障
+
+请用温暖、邀请式的语气提醒他们绑定微信，
+强调"密码找回"这个实用价值，让用户感受到这是为了保护他们的账号安全。
 ```
 
-**2. 页面加载时自动读取并填充（在 useEffect 中）**
-```typescript
-// 读取已记住的账号
-const remembered = localStorage.getItem('remembered_login');
-if (remembered) {
-  try {
-    const { phone: savedPhone, countryCode: savedCode, password: savedPwd } = JSON.parse(atob(remembered));
-    setPhone(savedPhone || '');
-    setCountryCode(savedCode || '+86');
-    setPassword(atob(savedPwd || ''));
-    setRememberMe(true);
-  } catch {}
-}
-```
+**通知类型映射**：`{ type: 'reminder', priority: 3 }`
 
-**3. 登录成功时根据勾选状态决定是否保存**
+**教练类型映射**：`'general'`
 
-在 `handleAuth` 的登录成功逻辑之后（`toast` 之前）：
-```typescript
-if (rememberMe) {
-  const data = { phone, countryCode, password: btoa(password) };
-  localStorage.setItem('remembered_login', btoa(JSON.stringify(data)));
-} else {
-  localStorage.removeItem('remembered_login');
-}
-```
+**Action 配置**：
+- `action_type`: `'navigate'`
+- `action_data`: `{ path: '/settings?tab=notifications' }`
+- `action_text`: `'去绑定'`
 
-**4. 新增 UI 勾选框**
+#### 3. 配置定时任务（`supabase/config.toml`）
 
-在密码输入框与提交按钮之间插入：
-```tsx
-{isLogin && authMode === 'phone' && (
-  <div className="flex items-center gap-2">
-    <Checkbox
-      id="rememberMe"
-      checked={rememberMe}
-      onCheckedChange={(checked) => setRememberMe(checked === true)}
-    />
-    <label htmlFor="rememberMe" className="text-xs text-muted-foreground cursor-pointer">
-      记住账号
-    </label>
-  </div>
-)}
+添加 Cron 配置，每天上午 10:00 执行一次：
+
+```toml
+[functions.batch-trigger-wechat-bind-reminder]
+verify_jwt = false
+
+# 每天早上10点检查并提醒未绑定微信的手机用户
+[[cron]]
+function = "batch-trigger-wechat-bind-reminder"
+schedule = "0 2 * * *"  # UTC 2:00 = 北京时间 10:00
 ```
 
 ---
 
-### 安全说明
-- 「记住账号」仅在手机号登录模式（`authMode === 'phone'`）且处于登录状态（`isLogin`）时显示，注册时不显示
-- 密码使用 Base64 编码存储，防止在 localStorage 中直接明文可见（注意：这不是加密，仅作为基础混淆）
-- 仅在登录成功后才写入/更新记忆数据，防止错误密码被保存
+### 技术细节
 
----
+**`batch-trigger-wechat-bind-reminder` 核心逻辑**：
 
-### 影响范围
-- 仅修改 `src/pages/Auth.tsx` 一个文件
-- 不影响注册流程、微信登录、邮箱登录
+```text
+1. 查询条件：
+   - profiles.email LIKE 'phone_%@youjin.app'  (手机注册用户)
+   - 不存在 wechat_user_mappings 记录    (未绑定微信)
+   - smart_notification_enabled != false   (未关闭通知)
+
+2. 去重：检查 smart_notifications 中 7 天内是否有 scenario='wechat_bind_reminder' 的记录
+
+3. 调用 generate-smart-notification 生成个性化提醒
+
+4. 通知将自动通过站内消息展示（已绑定微信的不在目标范围内，所以不会触发微信推送）
+```
+
+**影响范围**：
+- 新增 `supabase/functions/batch-trigger-wechat-bind-reminder/index.ts`
+- 修改 `supabase/functions/generate-smart-notification/index.ts`（添加新场景）
+- 修改 `supabase/config.toml`（添加 Cron 和函数配置）
+
