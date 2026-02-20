@@ -550,8 +550,8 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
             </span>
           </Button>
           
-          {/* 邀请码兑换入口 - 已登录未购买用户 */}
-          {isLoggedIn && !hasPurchased && (
+          {/* 邀请码兑换入口 - 已登录、未购买、且购买状态已确认加载完成 */}
+          {isLoggedIn && !hasPurchased && !isLoading && (
             <BloomInviteCodeEntry variant="card" onSuccess={onStart} />
           )}
 
