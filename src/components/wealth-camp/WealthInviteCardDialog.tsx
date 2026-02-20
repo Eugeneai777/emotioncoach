@@ -11,8 +11,8 @@ import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { ShareDialogBase } from '@/components/ui/share-dialog-base';
 import { cn } from '@/lib/utils';
-import { generateServerShareCard } from '@/utils/serverShareCard';
-import { shouldUseImagePreview } from '@/utils/shareUtils';
+import { generateServerShareCard, generateServerShareCardDataUrl } from '@/utils/serverShareCard';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -232,31 +232,32 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
   const handleServerGenerate = useCallback(async () => {
     if (!assessmentData) return;
-    const blob = await generateServerShareCard({
+
+    const isAndroidWeChat = /micromessenger/i.test(navigator.userAgent) && /android/i.test(navigator.userAgent);
+    const cardData = {
       healthScore: assessmentData.awakeningScore,
       reactionPattern: assessmentData.reactionPattern,
       displayName: userInfo.displayName,
       avatarUrl: userInfo.avatarUrl,
       partnerCode: partnerInfo?.partnerCode,
-    });
-    if (!blob) {
-      throw new Error('Server generation failed');
-    }
-    const useImage = shouldUseImagePreview();
-    if (useImage) {
-      // Convert blob to base64 for Android WeChat compatibility
-      const reader = new FileReader();
-      reader.onload = () => {
-        setServerPreviewUrl(reader.result as string);
-        setShowServerPreview(true);
-      };
-      reader.readAsDataURL(blob);
+    };
+
+    if (isAndroidWeChat) {
+      // Android WeChat: must use base64 data URL for long-press save to work
+      const dataUrl = await generateServerShareCardDataUrl(cardData);
+      if (!dataUrl) throw new Error('Server generation failed');
+      setOpen(false);
+      setServerPreviewUrl(dataUrl);
+      setShowServerPreview(true);
     } else {
+      const blob = await generateServerShareCard(cardData);
+      if (!blob) throw new Error('Server generation failed');
+      setOpen(false);
       const url = URL.createObjectURL(blob);
       setServerPreviewUrl(url);
       setShowServerPreview(true);
     }
-  }, [assessmentData, userInfo, partnerInfo]);
+  }, [assessmentData, userInfo, partnerInfo, setOpen]);
 
   // ── Card rendering helpers ────────────────────────────────────
 
@@ -375,28 +376,11 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         onGenerate={activeTab === 'value' ? handleServerGenerate : undefined}
       />
       {/* Server-side preview for value tab */}
-      {showServerPreview && serverPreviewUrl && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center"
-          onClick={handleCloseServerPreview}
-        >
-          <div className="relative max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-            <img
-              src={serverPreviewUrl}
-              alt="分享卡片"
-              className="w-full rounded-xl shadow-2xl"
-              style={{ maxHeight: '70vh', objectFit: 'contain' }}
-            />
-            <p className="text-center text-white/70 text-sm mt-4">长按图片保存到相册</p>
-            <button
-              className="mt-4 w-full py-3 rounded-xl bg-white/20 text-white text-sm font-medium"
-              onClick={handleCloseServerPreview}
-            >
-              返回
-            </button>
-          </div>
-        </div>
-      )}
+      <ShareImagePreview
+        open={showServerPreview}
+        onClose={handleCloseServerPreview}
+        imageUrl={serverPreviewUrl}
+      />
     </>
   );
 };

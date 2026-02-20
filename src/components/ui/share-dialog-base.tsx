@@ -154,34 +154,36 @@ export function ShareDialogBase({
   }, []);
 
   const handleGenerateImage = useCallback(async () => {
-    if (onGenerate) {
-      await onGenerate();
-      return;
-    }
-
-    if (!exportCardRef.current) {
-      console.warn("[ShareDialogBase] exportCardRef is null, waiting...");
-      const ready = await waitForRef(exportCardRef);
-      if (!ready) {
-        console.error("[ShareDialogBase] exportCardRef still null after waiting");
-        toast.error("卡片未加载完成，请稍后重试");
-        return;
-      }
-    }
-
+    // MUST be set first — before any early return or onGenerate call
     setIsGenerating(true);
 
-    // iOS: 立即关闭 Dialog 避免长黑屏遮罩，用 toast 显示进度
     const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     let loadingToastId: string | number | undefined;
-    if (isiOS) {
-      onOpenChange(false); // 立即关闭 Dialog
+
+    // iOS + html2canvas path: close Dialog early to avoid overlay freeze
+    // Server-side path (onGenerate): fast enough, keep Dialog open for feedback
+    if (isiOS && !onGenerate) {
+      onOpenChange(false);
       loadingToastId = toast.loading('正在生成图片...');
-      // 等待两帧确保 Dialog 关闭动画和 toast 都渲染完成
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     }
 
     try {
+      if (onGenerate) {
+        await onGenerate();
+        return;
+      }
+
+      if (!exportCardRef.current) {
+        console.warn("[ShareDialogBase] exportCardRef is null, waiting...");
+        const ready = await waitForRef(exportCardRef);
+        if (!ready) {
+          console.error("[ShareDialogBase] exportCardRef still null after waiting");
+          toast.error("卡片未加载完成，请稍后重试");
+          return;
+        }
+      }
+
       if (useDataUrl) {
         const dataUrl = await generateCardDataUrl(exportCardRef, {
           isWeChat,
