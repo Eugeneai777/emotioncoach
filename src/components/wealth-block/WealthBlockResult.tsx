@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 import { reactionPatternConfig, patternKeyMapping } from "@/config/reactionPatternConfig";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, Sparkles, ChevronDown, ChevronUp, BookImage } from "lucide-react";
+import { Target, Heart, Brain, Sparkles, ChevronDown, ChevronUp, BookImage } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+
 import { XiaohongshuShareDialog } from "./XiaohongshuShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -713,17 +713,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         transition={{ delay: 0.4 }}
         className="space-y-4"
       >
-        <WealthInviteCardDialog
-          defaultTab="value"
-          assessmentScore={100 - healthScore}
-          reactionPattern={result.reactionPattern}
-          trigger={
-            <Button className="w-full h-14 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg text-base">
-              <Share2 className="w-5 h-5 mr-2" />
-              分享我的AI测评报告
-            </Button>
-          }
-        />
 
 
 
