@@ -28,6 +28,7 @@ interface CoachHeaderProps {
   onSignOut: () => void;
   showNotificationCenter?: boolean;
   currentCoachKey?: string;
+  backRoute?: string;
 }
 
 export const CoachHeader = ({
@@ -40,7 +41,8 @@ export const CoachHeader = ({
   onRestart,
   onSignOut,
   showNotificationCenter = true,
-  currentCoachKey
+  currentCoachKey,
+  backRoute
 }: CoachHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -120,10 +122,14 @@ export const CoachHeader = ({
             {/* 有劲AI Logo */}
             <div
               onClick={() => {
-                const isHome = location.pathname === '/';
-                if (!isHome) navigate('/');
+                if (backRoute) {
+                  navigate(backRoute);
+                } else {
+                  const isHome = location.pathname === '/';
+                  if (!isHome) navigate('/');
+                }
               }}
-              className={`flex-shrink-0 ${location.pathname === '/' ? '' : 'cursor-pointer active:scale-95 transition-transform'}`}
+              className={`flex-shrink-0 cursor-pointer active:scale-95 transition-transform`}
             >
               <img
                 src={logoImage}

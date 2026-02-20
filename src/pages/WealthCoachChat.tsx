@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
@@ -34,6 +34,7 @@ const COACH_KEY = "wealth_coach_4_questions";
 
 const WealthCoachChat = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const locationState = location.state as LocationState | null;
   const [input, setInput] = useState("");
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
@@ -168,6 +169,11 @@ const WealthCoachChat = () => {
   };
 
   const handleNewConversation = () => {
+    // 如果是从训练营进入，返回到财富日记页面而非重置对话
+    if (locationState?.fromCamp) {
+      navigate('/wealth-camp-checkin');
+      return;
+    }
     resetConversation();
     toast({
       title: "开始新对话",
@@ -202,6 +208,7 @@ const WealthCoachChat = () => {
       <CoachLayout
         emoji={template.emoji}
         title={template.title}
+        backRoute={locationState?.fromCamp ? '/wealth-camp-checkin' : undefined}
         subtitle={
           campEntitlement?.hasAccess
             ? `${template.subtitle || ''} 💰 训练营会员 · 免费使用`

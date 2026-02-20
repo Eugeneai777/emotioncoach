@@ -141,6 +141,9 @@ interface CoachLayoutProps {
   
   // Chat entry route for intro-only mode
   chatEntryRoute?: string;
+
+  // Custom back route (e.g. when coming from training camp)
+  backRoute?: string;
 }
 
 export const CoachLayout = ({
@@ -208,7 +211,8 @@ export const CoachLayout = ({
   loadingPlaceholder,
   skipEmptyState = false,
   hideInput = false,
-  chatEntryRoute
+  chatEntryRoute,
+  backRoute
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -357,6 +361,7 @@ export const CoachLayout = ({
           onSignOut={handleSignOut}
           showNotificationCenter={showNotificationCenter}
           currentCoachKey={currentCoachKey}
+          backRoute={backRoute}
         />
 
         {/* Pull to Refresh Indicator */}
