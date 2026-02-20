@@ -469,3 +469,6 @@ verify_jwt = false
 
 [functions.ai-generate-bundle]
 verify_jwt = false
+
+[functions.batch-trigger-wechat-bind-reminder]
+verify_jwt = false
