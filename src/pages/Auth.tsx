@@ -61,6 +61,7 @@ const Auth = () => {
   const [password, setPassword] = useState(isPhoneOnly ? "123456" : "");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { isAgreed: agreedTerms, setAgreed: setAgreedTerms } = useTermsAgreement();
   const [showFollowGuide, setShowFollowGuide] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
@@ -93,6 +94,18 @@ const Auth = () => {
   };
 
   useEffect(() => {
+    // 读取已记住的账号
+    const remembered = localStorage.getItem('remembered_login');
+    if (remembered) {
+      try {
+        const { phone: savedPhone, countryCode: savedCode, password: savedPwd } = JSON.parse(atob(remembered));
+        setPhone(savedPhone || '');
+        setCountryCode(savedCode || '+86');
+        setPassword(atob(savedPwd || ''));
+        setRememberMe(true);
+      } catch {}
+    }
+
     // 处理推荐参数
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
@@ -320,6 +333,14 @@ const Auth = () => {
           }
         }
         
+        // 记住账号
+        if (rememberMe) {
+          const data = { phone, countryCode, password: btoa(password) };
+          localStorage.setItem('remembered_login', btoa(JSON.stringify(data)));
+        } else {
+          localStorage.removeItem('remembered_login');
+        }
+
         toast({
           title: "登录成功",
           description: "欢迎回来 🌿",
@@ -510,6 +531,19 @@ const Auth = () => {
                 className="rounded-xl text-sm"
               />
             </div>
+
+            {isLogin && authMode === 'phone' && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                />
+                <label htmlFor="rememberMe" className="text-xs text-muted-foreground cursor-pointer">
+                  记住账号
+                </label>
+              </div>
+            )}
 
             <Button
               type="submit"
