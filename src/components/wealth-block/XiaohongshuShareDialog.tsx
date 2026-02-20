@@ -5,7 +5,7 @@ import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
-import { generateServerShareCard } from '@/utils/serverShareCard';
+import { generateServerShareCard, generateServerShareCardDataUrl } from '@/utils/serverShareCard';
 import { toast } from 'sonner';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 
@@ -78,6 +78,7 @@ export function XiaohongshuShareDialog({
   // Server-side generation handler
   const handleServerGenerate = async () => {
     const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isAndroidWeChat = /micromessenger/i.test(navigator.userAgent) && /android/i.test(navigator.userAgent);
     let loadingToastId: string | number | undefined;
 
     if (isiOS) {
@@ -86,24 +87,38 @@ export function XiaohongshuShareDialog({
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     }
 
-    const blob = await generateServerShareCard({
+    const cardData = {
       healthScore,
       reactionPattern,
       displayName: userInfo.displayName,
       avatarUrl: userInfo.avatarUrl,
       partnerCode: partnerInfo?.partnerCode,
       dominantPoor,
-    });
+    };
 
-    if (blob) {
-      const imageUrl = URL.createObjectURL(blob);
+    if (isAndroidWeChat) {
+      // 安卓微信：使用 base64 data URL，微信长按可直接保存（blob URL 微信无法保存）
+      const dataUrl = await generateServerShareCardDataUrl(cardData);
       if (loadingToastId) toast.dismiss(loadingToastId);
-      if (!isiOS) onOpenChange(false);
-      setServerPreviewUrl(imageUrl);
-      setShowServerPreview(true);
+      if (dataUrl) {
+        if (!isiOS) onOpenChange(false);
+        setServerPreviewUrl(dataUrl);
+        setShowServerPreview(true);
+      } else {
+        toast.error('图片生成失败，请重试');
+      }
     } else {
-      if (loadingToastId) toast.dismiss(loadingToastId);
-      toast.error('图片生成失败，请重试');
+      const blob = await generateServerShareCard(cardData);
+      if (blob) {
+        const imageUrl = URL.createObjectURL(blob);
+        if (loadingToastId) toast.dismiss(loadingToastId);
+        if (!isiOS) onOpenChange(false);
+        setServerPreviewUrl(imageUrl);
+        setShowServerPreview(true);
+      } else {
+        if (loadingToastId) toast.dismiss(loadingToastId);
+        toast.error('图片生成失败，请重试');
+      }
     }
   };
 
@@ -112,7 +127,10 @@ export function XiaohongshuShareDialog({
 
   const handleCloseServerPreview = () => {
     setShowServerPreview(false);
-    if (serverPreviewUrl) URL.revokeObjectURL(serverPreviewUrl);
+    // 只对 blob URL 调用 revokeObjectURL，data URL 不需要
+    if (serverPreviewUrl && serverPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(serverPreviewUrl);
+    }
     setServerPreviewUrl(null);
     document.body.style.overflow = '';
     document.body.removeAttribute('data-scroll-locked');
