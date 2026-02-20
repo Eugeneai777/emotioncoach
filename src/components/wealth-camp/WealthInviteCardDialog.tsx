@@ -27,8 +27,6 @@ type CardTab = 'value' | 'camp' | 'achievement';
 
 const CARD_OPTIONS: { id: CardTab; label: string; emoji: string }[] = [
   { id: 'value', label: '测评结果', emoji: '🎁' },
-  { id: 'camp', label: '训练营', emoji: '🏕️' },
-  { id: 'achievement', label: '成就墙', emoji: '🏅' },
 ];
 
 interface WealthInviteCardDialogProps {
