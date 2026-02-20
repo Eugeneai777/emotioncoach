@@ -1,114 +1,101 @@
 
-# 修复：情绪雷达图"当前觉醒度"颜色不可见
+# 安卓微信"保存图片到手机失败"问题分析与修复
 
-## 根本原因分析
+## 问题根因
 
-### 问题 1：当 growthFactor 为 0 时 current = baseline（最主要原因）
+从截图和代码可以清楚看出，用户在**安卓微信浏览器**中点击"生成分享图片"后，`shareImagePreview` 组件显示图片，然后用户点击"下载"按钮触发了 `handleDownload`，但微信浏览器拦截了这次下载操作，导致报 **"保存图片到手机失败"** 的错误。
 
-```
-emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5
+### 具体问题链路
 
-// 当用户情绪层没有成长星级（或很低）时：
-emotionGrowthFactor = 0
+**步骤 1 - 图片生成（服务端）**：`XiaohongshuShareDialog` 调用 `generateServerShareCard` → Edge Function `generate-share-card` 返回 SVG → `svgToPngBlob` 在客户端用 Canvas 把 SVG 转成 PNG Blob
 
-current = 10 - Math.max(0, rawScore * (1 - 0 * 0.3))
-        = 10 - rawScore
-        = baseline   ← 完全相同！
-```
+**步骤 2 - 显示 ShareImagePreview**：Blob 被转成 `blobUrl = URL.createObjectURL(blob)` → 展示在全屏的 `ShareImagePreview` 组件中
 
-两条线完全重叠 → 粉色（当前）被灰色（Day 0）盖住 → 看不到任何粉色填充。
-
-### 问题 2：数据分布过于均匀，导致雷达图形状"平整"
-
-5 个维度全部从同一个 `emotion_score` 字段推算：
-- 金钱焦虑、匮乏恐惧 = `emotion_score / 5`
-- 比较自卑、羞耻厌恶 = `emotion_score / 6`
-- 消费内疚 = `emotion_score / 7`
-
-所有值相差不超过 1，雷达图几乎是一个正五边形 → 即使有数据，视觉上也平淡无对比。
-
----
-
-## 修复方案
-
-### 方案：给"当前觉醒度"添加基础可见量，确保始终可见
-
-**核心逻辑**：无论用户成长了多少，当前状态至少比 Day 0 多 **15-20% 的觉醒增量**，确保两条线之间有视觉差距。
-
-```ts
-const EMOTION_FULL = 10;
-const emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5;
-
-// 每个维度有不同的"基础原始分"（模拟真实的各维度差异）
-const emotionBaseScores = {
-  anxiety:    Math.round((baseline.emotion_score || 25) / 5),   // e.g. 5
-  scarcity:   Math.round((baseline.emotion_score || 25) / 5),   // e.g. 5
-  comparison: Math.round((baseline.emotion_score || 25) / 6),   // e.g. 4
-  shame:      Math.round((baseline.emotion_score || 25) / 6),   // e.g. 4
-  guilt:      Math.round((baseline.emotion_score || 25) / 7),   // e.g. 4
+**步骤 3 - 用户点击下载按钮（失败点）**：
+```typescript
+// share-image-preview.tsx 第 72-83 行
+const handleDownload = async () => {
+  const response = await fetch(imageUrl); // 重新 fetch blobUrl
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `share-card-xxx.png`; // 微信不支持 <a download>
+  link.click(); // ❌ 安卓微信忽略此操作，导致失败
 };
-
-// 修复：current 的减少量 = 基础减少(15%) + 成长加成(最多额外15%)
-// 确保 current 始终 > baseline（即觉醒度始终有可见增长）
-const emotionCurrentScore = (raw: number) => {
-  const baseImprovement = raw * 0.15;        // 固定 15% 基础改善（始终可见）
-  const growthBonus = raw * emotionGrowthFactor * 0.2; // 成长加成（最多 20%）
-  return EMOTION_FULL - Math.max(0, raw - baseImprovement - growthBonus);
-};
-
-const emotionRadarData = [
-  { subject: '金钱焦虑', baseline: EMOTION_FULL - emotionBaseScores.anxiety,    current: emotionCurrentScore(emotionBaseScores.anxiety),    fullMark: EMOTION_FULL },
-  { subject: '匮乏恐惧', baseline: EMOTION_FULL - emotionBaseScores.scarcity,   current: emotionCurrentScore(emotionBaseScores.scarcity),   fullMark: EMOTION_FULL },
-  { subject: '比较自卑', baseline: EMOTION_FULL - emotionBaseScores.comparison, current: emotionCurrentScore(emotionBaseScores.comparison), fullMark: EMOTION_FULL },
-  { subject: '羞耻厌恶', baseline: EMOTION_FULL - emotionBaseScores.shame,      current: emotionCurrentScore(emotionBaseScores.shame),      fullMark: EMOTION_FULL },
-  { subject: '消费内疚', baseline: EMOTION_FULL - emotionBaseScores.guilt,      current: emotionCurrentScore(emotionBaseScores.guilt),      fullMark: EMOTION_FULL },
-];
 ```
 
-**计算示例**（emotion_score=25，growthFactor=0）：
-```
-anxiety 原始分 = 5
-baseline  = 10 - 5 = 5    （Day 0 起点，灰色虚线）
-current   = 10 - (5 - 5×0.15 - 5×0×0.2)
-          = 10 - (5 - 0.75)
-          = 10 - 4.25
-          = 5.75           （当前觉醒度，粉色实线，比虚线外圈 ✓）
-```
+**根本原因**：
+1. **安卓微信不支持 `<a download>`**：微信内置浏览器屏蔽了通过 `<a>` 标签触发的文件下载
+2. **下载按钮在安卓微信中出现了**：`share-image-preview.tsx` 里判断 `!isWeChat` 才显示下载按钮，但当前代码的 `isWeChat` 判断是组件内独立写的，**可能未覆盖所有微信 UA 变体**（比如安卓微信 UA 含 `MicroMessenger` 大写）
+3. **移动端正确路径被跳过**：按照设计，安卓微信/iOS 用户应该看到**长按保存**提示，而非下载按钮；但从截图底部显示的是微信原生的失败 toast，说明用户看到了下载按钮并点击了它
 
-### 同样问题同步修复行为层和信念层
+### 代码中的 Bug
 
-行为层（四穷）和信念层也使用相同逻辑，但行为层已有 `behaviorGrowthFactor`，情况稍好。保险起见三层统一添加 **15% 基础可见增量**。
-
----
-
-## 修改内容（仅 `CombinedPersonalityCard.tsx`）
-
-| 位置 | 改动 | 原因 |
-|------|------|------|
-| L184-191（行为层数据） | 添加 15% 基础改善量 | 即使没有星级成长也可见 |
-| L196-202（情绪层数据） | 重构为辅助函数 `emotionCurrentScore`，添加 15% 基础 | 修复主要 bug |
-| L207-213（信念层数据） | 添加 15% 基础改善量 | 与情绪层统一 |
-
-**不修改任何 UI 结构、图例、颜色、其他文件。总改动约 15 行。**
-
----
-
-## 效果对比
-
-**修复前**：
-```
-growthFactor = 0 时：
-  Day 0 虚线灰色（baseline = 5）
-  当前粉色实线（current = 5）← 完全重合，粉色不可见
+```typescript
+// share-image-preview.tsx 第 17-18 行
+const isWeChat = typeof navigator !== 'undefined' && 
+  navigator.userAgent.toLowerCase().includes('micromessenger');
 ```
 
-**修复后**：
-```
-growthFactor = 0 时：
-  Day 0 虚线灰色（baseline = 5）← 在内圈
-  当前粉色实线（current = 5.75）← 在外圈，清晰可见 ✓
+这个检测是正确的，但**下载按钮的条件是 `!isWeChat`**，意味着非微信平台才显示下载按钮。问题在于：
 
-growthFactor = 1（满星）时：
-  Day 0 虚线（baseline = 5）
-  当前粉色（current = 10 - (5 - 0.75 - 1) = 6.75）← 差距更明显 ✓
+截图中底部显示的"保存图片到手机失败"是**微信系统的原生 toast**，不是应用内的 toast。说明用户**长按了图片**，然后微信尝试保存但失败了。
+
+实际根本原因是：**`svgToPngBlob` 生成的图片 src 是 `data:image/svg+xml`，当微信浏览器尝试长按保存这张显示的 `<img>` 时，`src` 本身是一个 blob URL（`blob://...`）**，微信浏览器无法直接保存 blob URL 指向的图片。
+
+### 真正的修复方案
+
+需要将 `ShareImagePreview` 中 `<img>` 的显示方式从 `blob URL` 改为 **base64 data URL**，这样微信浏览器长按时可以直接保存 base64 图片。
+
+## 修复计划
+
+### 修改 1：`src/utils/serverShareCard.ts` — 新增 `generateServerShareCardDataUrl` 返回 data URL
+
+将 `svgToPngBlob` 的结果通过 `FileReader` 转为 base64 data URL（此函数已存在，但 `XiaohongshuShareDialog` 没有使用它）。
+
+### 修改 2：`src/components/wealth-block/XiaohongshuShareDialog.tsx` — 在安卓微信下使用 data URL 而非 blob URL
+
+```typescript
+// 现在的代码（有问题）
+const blob = await generateServerShareCard({ ... });
+if (blob) {
+  const imageUrl = URL.createObjectURL(blob); // blob URL → 微信无法长按保存
+  setServerPreviewUrl(imageUrl);
+}
+
+// 修改后
+const isAndroidWeChat = /micromessenger/i.test(navigator.userAgent) && /android/i.test(navigator.userAgent);
+if (isAndroidWeChat) {
+  // 使用 data URL，微信可以长按保存
+  const dataUrl = await generateServerShareCardDataUrl({ ... });
+  setServerPreviewUrl(dataUrl);
+} else {
+  const blob = await generateServerShareCard({ ... });
+  if (blob) {
+    setServerPreviewUrl(URL.createObjectURL(blob));
+  }
+}
 ```
+
+### 修改 3：`src/components/ui/share-image-preview.tsx` — 修复 blob URL 清理逻辑
+
+当使用 data URL 时，不需要调用 `URL.revokeObjectURL`，需要区分 url 类型。
+
+## 技术细节
+
+```text
+问题流程（当前）：
+SVG → svgToPngBlob → Blob → blob://xxx → <img src="blob://xxx"> → 
+用户长按 → 微信尝试保存 blob:// URL → 失败（微信不支持 blob URL）
+
+修复流程：
+SVG → svgToPngBlob → Blob → FileReader → data:image/png;base64,... → 
+<img src="data:image/png;base64,..."> → 用户长按 → 微信成功保存
+```
+
+## 影响范围
+
+- 仅修改 3 个文件：`serverShareCard.ts`、`XiaohongshuShareDialog.tsx`、`share-image-preview.tsx`
+- 不影响 iOS 和 PC 端的分享逻辑
+- 其他分享卡片（SCL90、情绪健康等）使用 html2canvas 生成 blob URL，如有相同问题可后续一并修复
