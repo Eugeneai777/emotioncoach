@@ -11,6 +11,7 @@ import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { ShareDialogBase } from '@/components/ui/share-dialog-base';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { generateServerShareCard, generateServerShareCardDataUrl } from '@/utils/serverShareCard';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 
@@ -228,32 +229,39 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [serverPreviewUrl, setServerPreviewUrl] = useState<string | null>(null);
   const [showServerPreview, setShowServerPreview] = useState(false);
 
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleServerGenerate = useCallback(async () => {
     if (!assessmentData) return;
+    setIsGenerating(true);
 
-    const isAndroidWeChat = /micromessenger/i.test(navigator.userAgent) && /android/i.test(navigator.userAgent);
-    const cardData = {
-      healthScore: assessmentData.awakeningScore,
-      reactionPattern: assessmentData.reactionPattern,
-      displayName: userInfo.displayName,
-      avatarUrl: userInfo.avatarUrl,
-      partnerCode: partnerInfo?.partnerCode,
-    };
+    try {
+      const isAndroidWeChat = /micromessenger/i.test(navigator.userAgent) && /android/i.test(navigator.userAgent);
+      const cardData = {
+        healthScore: assessmentData.awakeningScore,
+        reactionPattern: assessmentData.reactionPattern,
+        displayName: userInfo.displayName,
+        avatarUrl: userInfo.avatarUrl,
+        partnerCode: partnerInfo?.partnerCode,
+      };
 
-    if (isAndroidWeChat) {
-      // Android WeChat: must use base64 data URL for long-press save to work
-      const dataUrl = await generateServerShareCardDataUrl(cardData);
-      if (!dataUrl) throw new Error('Server generation failed');
+      if (isAndroidWeChat) {
+        const dataUrl = await generateServerShareCardDataUrl(cardData);
+        if (!dataUrl) throw new Error('Server generation failed');
+        setServerPreviewUrl(dataUrl);
+      } else {
+        const blob = await generateServerShareCard(cardData);
+        if (!blob) throw new Error('Server generation failed');
+        const url = URL.createObjectURL(blob);
+        setServerPreviewUrl(url);
+      }
       setOpen(false);
-      setServerPreviewUrl(dataUrl);
       setShowServerPreview(true);
-    } else {
-      const blob = await generateServerShareCard(cardData);
-      if (!blob) throw new Error('Server generation failed');
-      setOpen(false);
-      const url = URL.createObjectURL(blob);
-      setServerPreviewUrl(url);
-      setShowServerPreview(true);
+    } catch (error) {
+      console.error('Share card generation failed:', error);
+      toast.error('生成分享卡片失败，请重试');
+    } finally {
+      setIsGenerating(false);
     }
   }, [assessmentData, userInfo, partnerInfo, setOpen]);
 
