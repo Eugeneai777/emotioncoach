@@ -56,6 +56,8 @@ import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
 import { NextStepActionCard } from "./NextStepActionCard";
 import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
 import { WealthAdvisorQRCard } from "./WealthAdvisorQRCard";
+import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+import { Share2, ChevronRight } from "lucide-react";
 
 
 interface WealthBlockResultProps {
@@ -693,6 +695,35 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         reactionPattern={result.reactionPattern}
         dominantPoor={result.dominantPoor}
       />
+
+      {/* 分享测评结果入口 */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <WealthInviteCardDialog
+          defaultTab="value"
+          assessmentScore={result ? 100 - calculateHealthScore(
+            result.behaviorScore + result.emotionScore + result.beliefScore
+          ) : undefined}
+          reactionPattern={result.reactionPattern}
+          trigger={
+            <Card className="cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200/50">
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <Share2 className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">分享我的AI测评报告</p>
+                  <p className="text-xs text-muted-foreground">让朋友也来看看自己的财富卡点</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </Card>
+          }
+        />
+      </motion.div>
 
       {/* 6. 绽放邀请码入口 - 未购买时显示 */}
       {!hasPurchased && (
