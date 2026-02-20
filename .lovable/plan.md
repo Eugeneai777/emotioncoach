@@ -1,82 +1,58 @@
 
-# 修复：绽放合伙人用户不显示邀请码入口
+# 问题根因与修复方案
 
 ## 问题分析
 
-邀请码入口（`BloomInviteCodeEntry`）的显示条件是：
+用户的完整操作路径：
+
+```text
+财富觉醒训练营首页（/wealth-camp-intro 或 /coach/wealth_coach_4_questions）
+    ↓ 点击"继续训练营"
+我的财富日记（/wealth-camp-checkin）—— Tab: 今日任务
+    ↓ 点击"开始教练梳理"（handleStartCoaching → setActiveTab('coaching')）
+我的财富日记（/wealth-camp-checkin）—— Tab: 教练对话（WealthCoachEmbedded）
+    ↓ 点击"开始教练梳理"按钮（WealthCoachEmbedded 内部）
+    ↓ 这里 WealthCoachEmbedded 直接调用 sendMessage，不跳页面 ✅
 ```
-isLoggedIn && !hasPurchased && !isLoading
-```
 
-`hasPurchased` 仅检查 `orders` 表中是否存在 `wealth_block_assessment` 的已支付记录。
+但截图显示用户看到的是**独立的 `/wealth-coach-chat` 页面**（有完整 CoachLayout Header），说明存在另一条入口路径导致用户进入了独立的教练页面。
 
-**漏洞场景**：用户已经是绽放合伙人（`partners` 表中存在 `partner_type = 'bloom'` 的记录），但由于数据同步时序或其他原因，`orders` 表中的记录尚未写入或被查询到，此时 `hasPurchased = false`，邀请码框依然显示，造成困惑。
+**核心问题**：当用户从 `/wealth-coach-chat`（独立教练页面）点击返回时：
+- 左上角的 Logo 会导航到 `/`（首页/SmartHomeRedirect）
+- 微信/浏览器底部的 `<` 按钮调用 `history.go(-1)`，回到上一条历史记录
 
-此外，即使权益已完整发放，对一个**已经是绽放合伙人的用户**展示"我有邀请码"入口在语义上是多余的——他们已经完成了整个领取流程。
+如果导航链是：`训练营首页 → 财富日记页 → 独立教练页`，那么从独立教练页点 `<` 应该回到财富日记页才对。
+
+但实际回到了训练营首页，说明**进入独立教练页时没有经过财富日记页**，即存在直接从训练营首页跳到 `/wealth-coach-chat` 的入口，绕过了 `/wealth-camp-checkin`。
+
+## 需要排查的入口
+
+`CoachTrainingCamp` 组件（在 WealthCoachChat 的 CoachLayout 中使用）里的"继续训练营"按钮，很可能是直接导航到 `/wealth-coach-chat`（独立教练页）而非 `/wealth-camp-checkin`（财富日记页）。
 
 ## 修复方案
 
-### 修改 1：`src/pages/WealthBlockAssessment.tsx`
+**修复 `CoachTrainingCamp` 组件中的"继续训练营"按钮**，使其跳转到 `/wealth-camp-checkin` 而非停留在或重新加载 `/wealth-coach-chat`。
 
-在已有的 `useAssessmentPurchase` 基础上，增加对 `partners` 表的查询，判断用户是否已经是绽放合伙人：
+同时，**在 `WealthCoachChat` 独立页面中添加"返回财富日记"的明确返回逻辑**：当页面是通过训练营入口（`locationState?.fromCamp === true`）进来时，返回按钮（或 CoachHeader 中的"返回主页"）应导航到 `/wealth-camp-checkin`，而非调用 `onNewConversation`。
 
-```typescript
-// 新增：检查用户是否已是绽放合伙人
-const { data: bloomPartnerRecord } = useQuery({
-  queryKey: ['bloom-partner-check', user?.id],
-  queryFn: async () => {
-    if (!user) return null;
-    const { data } = await supabase
-      .from('partners')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('partner_type', 'bloom')
-      .maybeSingle();
-    return data;
-  },
-  enabled: !!user
-});
+## 具体修改
 
-const isBloomPartner = !!bloomPartnerRecord;
-```
+### 1. 查找并修复 CoachTrainingCamp 中的导航逻辑
 
-然后将 `isBloomPartner` 传入 `AssessmentIntroCard`：
-```tsx
-<AssessmentIntroCard
-  isLoggedIn={!!user}
-  hasPurchased={hasPurchased}
-  isBloomPartner={isBloomPartner}  // 新增
-  isLoading={false}
-  ...
-/>
-```
+在 `CoachTrainingCamp` 组件里的"继续训练营"按钮，将跳转目标从任何非 `/wealth-camp-checkin` 的地址改为 `/wealth-camp-checkin`。
 
-### 修改 2：`src/components/wealth-block/AssessmentIntroCard.tsx`
+### 2. 在 WealthCoachChat 页面添加 fromCamp 返回逻辑
 
-1. 在 `AssessmentIntroCardProps` 接口增加 `isBloomPartner?: boolean`
-2. 将邀请码显示条件修改为：
+在 `WealthCoachChat.tsx` 中，当 `locationState?.fromCamp` 为 true 时，将 `onRestart`/`onNewConversation` 的行为从重置对话改为导航回 `/wealth-camp-checkin`，确保用户点击返回时回到正确页面。
 
-```tsx
-{/* 邀请码兑换入口 - 已登录、未购买、非绽放合伙人、且加载完成 */}
-{isLoggedIn && !hasPurchased && !isBloomPartner && !isLoading && (
-  <BloomInviteCodeEntry variant="card" onSuccess={onStart} />
-)}
-```
+### 3. 在 CoachLayout 的 onRestart 中支持自定义路由
 
-## 修改影响范围
+给 `CoachLayout` 增加 `backRoute` prop（可选），当设置了 backRoute 且用户点击返回时，导航到指定路由而非重置对话。
 
-- 仅修改 2 个文件：`WealthBlockAssessment.tsx`、`AssessmentIntroCard.tsx`
-- 不影响普通付费用户、未登录用户的任何逻辑
-- 绽放合伙人（`partner_type = 'bloom'`）将**永远不再看到**邀请码入口，无论 `orders` 表数据是否同步
+## 修改文件
 
-## 技术细节
-
-```text
-现有逻辑：
-显示邀请码 = 已登录 AND 未购买(orders表) AND 加载完成
-
-修复后：
-显示邀请码 = 已登录 AND 未购买(orders表) AND 非绽放合伙人(partners表) AND 加载完成
-```
-
-`partners` 表的查询开销极小（按 `user_id` 索引），不会对页面性能产生影响。
+| 文件 | 改动内容 |
+|------|---------|
+| `src/components/coach/CoachTrainingCamp.tsx` | 确认并修复"继续训练营"按钮跳转目标为 `/wealth-camp-checkin` |
+| `src/pages/WealthCoachChat.tsx` | 当 fromCamp 为 true 时，将 onRestart 改为 navigate('/wealth-camp-checkin') |
+| `src/components/coach/CoachLayout.tsx` | 新增可选 backRoute prop，点击 Logo 或返回时支持自定义路由 |
