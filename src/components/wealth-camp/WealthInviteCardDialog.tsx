@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import WealthCampShareCard from './WealthCampShareCard';
@@ -11,6 +11,8 @@ import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { ShareDialogBase } from '@/components/ui/share-dialog-base';
 import { cn } from '@/lib/utils';
+import { generateServerShareCard } from '@/utils/serverShareCard';
+import { shouldUseImagePreview } from '@/utils/shareUtils';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -223,6 +225,39 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     return () => clearTimeout(timeoutId);
   }, [open, campId, propCurrentDay]);
 
+  // ── Server-side generate for value tab (bypasses html2canvas) ──
+
+  const [serverPreviewUrl, setServerPreviewUrl] = useState<string | null>(null);
+  const [showServerPreview, setShowServerPreview] = useState(false);
+
+  const handleServerGenerate = useCallback(async () => {
+    if (!assessmentData) return;
+    const blob = await generateServerShareCard({
+      healthScore: assessmentData.awakeningScore,
+      reactionPattern: assessmentData.reactionPattern,
+      displayName: userInfo.displayName,
+      avatarUrl: userInfo.avatarUrl,
+      partnerCode: partnerInfo?.partnerCode,
+    });
+    if (!blob) {
+      throw new Error('Server generation failed');
+    }
+    const useImage = shouldUseImagePreview();
+    if (useImage) {
+      // Convert blob to base64 for Android WeChat compatibility
+      const reader = new FileReader();
+      reader.onload = () => {
+        setServerPreviewUrl(reader.result as string);
+        setShowServerPreview(true);
+      };
+      reader.readAsDataURL(blob);
+    } else {
+      const url = URL.createObjectURL(blob);
+      setServerPreviewUrl(url);
+      setShowServerPreview(true);
+    }
+  }, [assessmentData, userInfo, partnerInfo]);
+
   // ── Card rendering helpers ────────────────────────────────────
 
   const renderCard = (forExport: boolean) => {
@@ -307,6 +342,15 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     </Button>
   ) : null;
 
+  const handleCloseServerPreview = useCallback(() => {
+    setShowServerPreview(false);
+    // Only revoke if it's a blob URL (not base64)
+    if (serverPreviewUrl && serverPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(serverPreviewUrl);
+    }
+    setServerPreviewUrl(null);
+  }, [serverPreviewUrl]);
+
   return (
     <>
       {dialogTrigger}
@@ -328,7 +372,31 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         cardReady={!isLoadingUser}
         footerHint="点击分享按钮，或复制链接后发送"
         maxWidthClass="max-w-md"
+        onGenerate={activeTab === 'value' ? handleServerGenerate : undefined}
       />
+      {/* Server-side preview for value tab */}
+      {showServerPreview && serverPreviewUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center"
+          onClick={handleCloseServerPreview}
+        >
+          <div className="relative max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <img
+              src={serverPreviewUrl}
+              alt="分享卡片"
+              className="w-full rounded-xl shadow-2xl"
+              style={{ maxHeight: '70vh', objectFit: 'contain' }}
+            />
+            <p className="text-center text-white/70 text-sm mt-4">长按图片保存到相册</p>
+            <button
+              className="mt-4 w-full py-3 rounded-xl bg-white/20 text-white text-sm font-medium"
+              onClick={handleCloseServerPreview}
+            >
+              返回
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };
