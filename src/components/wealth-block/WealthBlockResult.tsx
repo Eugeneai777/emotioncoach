@@ -681,14 +681,8 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
 
       {/* 语音教练入口已移至底部Tab栏 */}
 
-      {/* 5. 觉醒起点 + 目标锚点卡片 */}
-      <AwakeningJourneyPreview
-        healthScore={healthScore}
-        dominantPoor={result.dominantPoor as 'mouth' | 'hand' | 'eye' | 'heart'}
-        reactionPattern={result.reactionPattern}
-        hasPurchased={hasPurchased}
-        onPurchase={() => setShowPayDialog(true)}
-      />
+
+
 
       {/* 5.5 财富觉醒顾问二维码卡片 */}
       <WealthAdvisorQRCard
