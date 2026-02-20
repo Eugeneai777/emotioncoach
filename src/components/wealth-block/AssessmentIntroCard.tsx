@@ -16,6 +16,7 @@ const isMobileDevice = () => {
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
   hasPurchased?: boolean; // 是否已购买测评
+  isBloomPartner?: boolean; // 是否已是绽放合伙人
   isLoading?: boolean; // 新增：是否正在加载登录/购买状态
   onStart: () => void;
   onLogin: () => void;
@@ -61,7 +62,7 @@ const loginBenefits = [
   "获得AI教练个性化指导",
 ];
 
-export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoading = false, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
+export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isBloomPartner = false, isLoading = false, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
   const isMobile = isMobileDevice();
   
   // 处理支付按钮点击
@@ -550,8 +551,8 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
             </span>
           </Button>
           
-          {/* 邀请码兑换入口 - 已登录、未购买、且购买状态已确认加载完成 */}
-          {isLoggedIn && !hasPurchased && !isLoading && (
+          {/* 邀请码兑换入口 - 已登录、未购买、非绽放合伙人、且购买状态已确认加载完成 */}
+          {isLoggedIn && !hasPurchased && !isBloomPartner && !isLoading && (
             <BloomInviteCodeEntry variant="card" onSuccess={onStart} />
           )}
 
