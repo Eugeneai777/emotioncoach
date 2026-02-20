@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -58,6 +59,23 @@ export default function WealthBlockAssessmentPage() {
   // 检查用户是否已购买测评
   const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
+
+  // 检查用户是否已是绽放合伙人
+  const { data: bloomPartnerRecord } = useQuery({
+    queryKey: ['bloom-partner-check', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('partners')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('partner_type', 'bloom')
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user
+  });
+  const isBloomPartner = !!bloomPartnerRecord;
 
   // 监听登录状态变化，登录后检查购买状态
   useEffect(() => {
@@ -744,6 +762,7 @@ export default function WealthBlockAssessmentPage() {
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
                   hasPurchased={hasPurchased}
+                  isBloomPartner={isBloomPartner}
                   isLoading={false}
                   onStart={() => {
                     // 埋点：开始测评
