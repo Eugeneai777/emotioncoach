@@ -239,6 +239,10 @@ export function ShareDialogBase({
       toast.error("生成图片失败，请重试");
     } finally {
       setIsGenerating(false);
+      // 强制清理 scroll-lock，防止 iOS 白屏遗留（无论成功/失败都执行）
+      document.body.removeAttribute('data-scroll-locked');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     }
   }, [
     onGenerate,
