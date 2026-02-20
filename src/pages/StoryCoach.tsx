@@ -174,7 +174,8 @@ export default function StoryCoach() {
               onIndexChange={setCurrentNotificationIndex}
               onMarkAsRead={markAsRead}
               onDelete={deleteNotification}
-              onTrigger={triggerNotification}
+              colorTheme="pink"
+              coachLabel="故事教练"
             />
           </div>
         }
