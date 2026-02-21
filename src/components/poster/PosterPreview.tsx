@@ -30,7 +30,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         parent_emotion_21: '21天突破亲子困境',
         '365_member': '一整年情绪自由',
         partner_recruit: '边助人边赚收入',
-        wealth_block: '3分钟发现财富盲点'
+        wealth_block: '3分钟定位财富天花板'
       };
       return slogans[key] || '有劲生活';
     };
@@ -47,7 +47,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         parent_emotion_21: '训练营',
         '365_member': '年度会员',
         partner_recruit: '创业机会',
-        wealth_block: '心理测评'
+        wealth_block: '财富心理测评'
       };
       return categories[key] || '有劲生活';
     };
