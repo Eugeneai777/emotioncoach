@@ -157,6 +157,7 @@ export function useOneClickShare(options: UseOneClickShareOptions = {}): UseOneC
       fear: '情绪锁诊断卡',
       blindspot: '盲区测评卡',
       transform: '觉醒之旅卡',
+      promo: '财富测评推广海报',
     };
 
     await executeOneClickShare({

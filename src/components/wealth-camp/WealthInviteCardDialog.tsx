@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import WealthCampShareCard from './WealthCampShareCard';
 import AchievementShareCard from './AchievementShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
+import WealthBlockPromoShareCard from '@/components/wealth-block/WealthBlockPromoShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 import useWechatShare from '@/hooks/useWechatShare';
@@ -24,10 +25,11 @@ interface UserInfo {
   totalDays?: number;
 }
 
-type CardTab = 'value' | 'camp' | 'achievement';
+type CardTab = 'value' | 'camp' | 'achievement' | 'promo';
 
 const CARD_OPTIONS: { id: CardTab; label: string; emoji: string }[] = [
-  { id: 'value', label: '测评结果', emoji: '🎁' },
+  { id: 'camp',  label: '训练营邀请', emoji: '🏕️' },
+  { id: 'promo', label: '财富测评',   emoji: '💰' },
 ];
 
 interface WealthInviteCardDialogProps {
@@ -81,10 +83,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const valueCardRef = useRef<HTMLDivElement>(null);
   const campCardRef = useRef<HTMLDivElement>(null);
   const achievementCardRef = useRef<HTMLDivElement>(null);
+  const promoCardRef = useRef<HTMLDivElement>(null);
 
   // Dynamic ref based on active tab
   const activeCardRef = activeTab === 'value' ? valueCardRef
     : activeTab === 'camp' ? campCardRef
+    : activeTab === 'promo' ? promoCardRef
     : achievementCardRef;
 
   // ── URLs ──────────────────────────────────────────────────────
@@ -291,7 +295,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
   const renderCard = (forExport: boolean) => {
     const ref = forExport
-      ? (activeTab === 'value' ? valueCardRef : activeTab === 'camp' ? campCardRef : achievementCardRef)
+      ? (activeTab === 'value' ? valueCardRef : activeTab === 'camp' ? campCardRef : activeTab === 'promo' ? promoCardRef : achievementCardRef)
       : undefined;
 
     if (isLoadingUser && !forExport) return <ShareCardSkeleton />;
@@ -332,10 +336,42 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             partnerInfo={partnerInfo || undefined}
           />
         );
+      case 'promo':
+        return (
+          <WealthBlockPromoShareCard
+            ref={ref as any}
+            avatarUrl={userInfo.avatarUrl}
+            displayName={userInfo.displayName}
+            partnerInfo={partnerInfo || undefined}
+          />
+        );
     }
   };
 
-  // Tab selector removed — only one card type remains
+  // Tab selector UI
+  const tabSelector = CARD_OPTIONS.length > 1 ? (
+    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '8px' }}>
+      {CARD_OPTIONS.map((opt) => (
+        <button
+          key={opt.id}
+          onClick={() => setActiveTab(opt.id)}
+          style={{
+            padding: '6px 16px',
+            borderRadius: '20px',
+            border: 'none',
+            fontSize: '13px',
+            fontWeight: activeTab === opt.id ? '600' : '400',
+            background: activeTab === opt.id ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+            color: activeTab === opt.id ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          {opt.emoji} {opt.label}
+        </button>
+      ))}
+    </div>
+  ) : undefined;
 
   // ── Render ────────────────────────────────────────────────────
 
@@ -368,12 +404,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         onOpenChange={setOpen}
         title="生成分享卡片"
         shareUrl={shareUrl}
-        fileName={`${activeTab === 'value' ? '财富测评价值卡' : activeTab === 'camp' ? '7天财富训练营邀请卡' : '财富觉醒成就墙'}.png`}
+        fileName={`${activeTab === 'value' ? '财富测评价值卡' : activeTab === 'camp' ? '7天财富训练营邀请卡' : activeTab === 'promo' ? '财富测评推广海报' : '财富觉醒成就墙'}.png`}
         shareTitle="财富觉醒训练营"
         shareText="邀请你一起突破财富卡点"
         previewHeight={activeTab === 'achievement' ? 360 : 400}
         previewScale={0.5}
-        abovePreview={undefined}
+        abovePreview={tabSelector}
         previewCard={renderCard(false)}
         exportCard={renderCard(true)}
         exportCardRef={activeCardRef}
