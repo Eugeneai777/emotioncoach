@@ -3,13 +3,11 @@ import { motion } from "framer-motion";
 import { Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePartner } from "@/hooks/usePartner";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { generateServerInfoCardDataUrl } from "@/utils/serverShareCard";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 
 export function ShareInfoCard() {
   const { partner } = usePartner();
-  const isMobile = useIsMobile();
   const [generating, setGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -28,25 +26,14 @@ export function ShareInfoCard() {
         return;
       }
 
-      if (isMobile) {
-        setPreviewUrl(dataUrl);
-        setShowPreview(true);
-      } else {
-        // Desktop: direct download
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = `wealth-info-card-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("卡片已保存 🎉");
-      }
+      setPreviewUrl(dataUrl);
+      setShowPreview(true);
     } catch {
       toast.error("生成失败，请稍后重试");
     } finally {
       setGenerating(false);
     }
-  }, [generating, partnerCode, isMobile]);
+  }, [generating, partnerCode]);
 
   const handleRegenerate = useCallback(async () => {
     setGenerating(true);
