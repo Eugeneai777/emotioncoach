@@ -28,8 +28,8 @@ interface UserInfo {
 type CardTab = 'value' | 'camp' | 'achievement' | 'promo';
 
 const CARD_OPTIONS: { id: CardTab; label: string; emoji: string }[] = [
-  { id: 'camp',  label: '训练营邀请', emoji: '🏕️' },
   { id: 'promo', label: '财富测评',   emoji: '💰' },
+  { id: 'camp',  label: '训练营邀请', emoji: '🏕️' },
 ];
 
 interface WealthInviteCardDialogProps {
@@ -52,7 +52,7 @@ interface WealthInviteCardDialogProps {
 
 const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   trigger,
-  defaultTab = 'camp',
+  defaultTab = 'promo',
   onGenerate,
   onViewComplete,
   campId,
