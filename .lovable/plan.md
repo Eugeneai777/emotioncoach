@@ -1,32 +1,32 @@
 
 
-# 修复分享卡片乱码 + 优化文案
+## 财富卡点测评海报 - 完整流程修复
 
-## 问题诊断
-卡片中出现的方框乱码（⊠）是因为使用了特殊 Unicode 字符（`──`、`▸`），这些字符在 satori 加载的 Noto Sans SC 字体中无法正确渲染。
+### 问题发现
 
-## 修复方案
+通过代码审查，发现"财富卡点测评"模板虽然已添加到模板列表，但在以下关键位置缺少配置，会导致海报生成和展示出现问题：
 
-### 修改文件：`supabase/functions/generate-share-card/index.ts`
+### 需要修复的文件
 
-**1. 修复乱码** - 将无法渲染的特殊字符替换为纯文本或 ASCII 符号：
-- `── 财富觉醒之旅 ──` 改为纯中文无装饰线
-- `▸` 标记改为可渲染的圆点 `·` 或纯色圆形 div
+**1. `src/components/poster/PosterGenerator.tsx`**
+- `stylePrompts` 对象（第71-81行）缺少 `wealth_block` 的 AI 背景图提示词
+- 当用户选择 AI 生成背景时，会回退到默认的 `emotion_button` 样式，不匹配财富测评主题
 
-**2. 优化文案** - 聚焦痛点和价值：
+**2. `src/components/poster/PosterPreview.tsx`**
+- `getProductSlogan()` 缺少 `wealth_block` 映射，会显示默认的"有劲生活"
+- `getProductCategory()` 缺少 `wealth_block` 映射，会显示默认的"有劲生活"
+- `gradientStyles` 缺少 `wealth_block` 的渐变色背景
 
-当前文案（功能描述）改为痛点 + 价值导向：
+### 具体改动
 
-| 原文案 | 新文案 |
-|-------|-------|
-| 30个真实场景 · 深度诊断 | 总觉得赚钱很难？找到你的财富卡点 |
-| 行为/情绪/信念三层扫描 | 行为·情绪·信念 三层深度扫描 |
-| 专属AI语音1对1解读 | AI一对一解读，给你专属破局方案 |
+| 文件 | 位置 | 改动 |
+|------|------|------|
+| PosterGenerator.tsx | stylePrompts | 添加 `wealth_block` 的 AI 背景提示词（金色/琥珀色调，财富主题） |
+| PosterPreview.tsx | getProductSlogan | 添加 `wealth_block: '3分钟发现财富盲点'` |
+| PosterPreview.tsx | getProductCategory | 添加 `wealth_block: '心理测评'` |
+| PosterPreview.tsx | gradientStyles | 添加 `wealth_block` 的琥珀-橙色渐变 |
 
-装饰标题改为：`财富觉醒之旅`（去掉无法渲染的装饰线）
+### 改动量
 
-标记符号改为用小圆形 div 色块代替文字符号，确保跨平台兼容。
-
-### 变更范围
-仅修改 `supabase/functions/generate-share-card/index.ts` 中 `createWealthInfoCard` 函数的文案和标记字符。
+共修改 2 个文件，每个文件添加 1-2 行配置，无逻辑变更。
 
