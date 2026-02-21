@@ -77,7 +77,8 @@ export function PosterGenerator({
         emotion_journal_21: `Create an energetic poster background with purple and pink gradients. Dynamic shapes suggesting progress and transformation. Motivating, active atmosphere. Vertical 9:16 ratio. No text.`,
         parent_emotion_21: `Create a warm family poster background with emerald and teal gradients. Shapes suggesting connection and breakthrough. Hopeful, nurturing atmosphere. Vertical 9:16 ratio. No text.`,
         '365_member': `Create a premium poster background with elegant gold and amber gradients. Subtle luxurious textures suggesting value and exclusivity. Sophisticated, high-end aesthetic. Vertical 9:16 ratio. No text.`,
-        partner_recruit: `Create an inspiring poster background with vibrant rose and pink gradients. Dynamic upward-flowing shapes suggesting growth and opportunity. Energetic, ambitious atmosphere. Vertical 9:16 ratio. No text.`
+        partner_recruit: `Create an inspiring poster background with vibrant rose and pink gradients. Dynamic upward-flowing shapes suggesting growth and opportunity. Energetic, ambitious atmosphere. Vertical 9:16 ratio. No text.`,
+        wealth_block: `Create a luxurious poster background with rich gold and amber gradients. Abstract flowing shapes suggesting wealth discovery and financial clarity. Elegant coins and diamond-like light refractions. Vertical 9:16 ratio. No text.`
       };
 
       const { data, error } = await supabase.functions.invoke('generate-poster-image', {
