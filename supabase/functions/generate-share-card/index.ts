@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Static characters used in card templates
-const STATIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /·▸()刚完成了AI财富心理测评卡点觉醒指数反应模式包含个真实场景深度智能分析行为情绪信念三层专属突破路径与动建议扫码体验你的诊断免费让自由从认识己开始有劲高度逐步初步起步嘴穷手眼心追逐和谐逃避创伤型探索者';
+const STATIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /·▸()刚完成了AI财富心理测评卡点觉醒指数反应模式包含个真实场景深度智能分析行为情绪信念三层专属突破路径与动建议扫码体验你的诊断免费让自由从认识己开始有劲高度逐步初步起步嘴穷手眼心追逐和谐逃避创伤型探索者之旅解读语音对';
 
 // Font cache
 const fontCache = new Map<string, ArrayBuffer>();
@@ -16,18 +16,14 @@ async function loadFont(extraChars: string, weight: number): Promise<ArrayBuffer
   const cacheKey = `font-${weight}`;
   if (fontCache.has(cacheKey)) return fontCache.get(cacheKey)!;
 
-  // Use Google Fonts CSS API requesting TTF format via subset
   const allChars = [...new Set(STATIC_CHARS + extraChars)].join('');
   const url = `https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@${weight}&text=${encodeURIComponent(allChars)}`;
   
-  // Use a modern User-Agent but request woff2, then try to get the raw URL
   const cssResp = await fetch(url);
   const css = await cssResp.text();
 
-  // Extract the font URL (woff2 format from modern UA)
   const match = css.match(/url\(([^)]+)\)\s*format\('woff2'\)/);
   if (!match) {
-    // Fallback: try any URL
     const fallback = css.match(/url\(([^)]+)\)/);
     if (!fallback) throw new Error(`Font URL not found for weight ${weight}`);
     const fontResp = await fetch(fallback[1]);
@@ -110,7 +106,6 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
         borderRadius: 16, overflow: 'hidden', fontFamily: 'Noto Sans SC',
       },
       children: [
-        // Main content area
         {
           type: 'div', props: {
             style: { display: 'flex', flexDirection: 'column', padding: '20px 20px 16px' },
@@ -239,6 +234,93 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
   };
 }
 
+/**
+ * wealth-info card: Pure promotional card with QR code, NO personal assessment results.
+ */
+function createWealthInfoCard(qrDataUrl: string): any {
+  const features = [
+    { marker: '▸', text: '30个真实场景 · 深度诊断' },
+    { marker: '▸', text: '行为/情绪/信念三层扫描' },
+    { marker: '▸', text: '专属AI语音1对1解读' },
+  ];
+
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex', flexDirection: 'column', width: 340,
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
+        borderRadius: 16, overflow: 'hidden', fontFamily: 'Noto Sans SC',
+      },
+      children: [
+        // Main content
+        {
+          type: 'div', props: {
+            style: { display: 'flex', flexDirection: 'column', padding: '28px 24px 20px', alignItems: 'center' },
+            children: [
+              // Decorative header
+              { type: 'span', props: { style: { color: 'rgba(252,211,77,0.6)', fontSize: 12, letterSpacing: 4, marginBottom: 12 }, children: '── 财富觉醒之旅 ──' } },
+              // Title
+              { type: 'span', props: { style: { color: '#fff', fontWeight: 700, fontSize: 24, marginBottom: 4 }, children: 'AI财富卡点测评' } },
+              { type: 'span', props: { style: { color: 'rgba(196,181,253,0.7)', fontSize: 12, marginBottom: 24 }, children: 'Powered by 有劲AI' } },
+              // Feature list
+              {
+                type: 'div', props: {
+                  style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%', marginBottom: 24 },
+                  children: features.map(f => ({
+                    type: 'div',
+                    props: {
+                      style: { display: 'flex', alignItems: 'center', gap: 10 },
+                      children: [
+                        { type: 'span', props: { style: { color: '#fbbf24', fontSize: 16 }, children: f.marker } },
+                        { type: 'span', props: { style: { color: 'rgba(255,255,255,0.9)', fontSize: 15 }, children: f.text } },
+                      ],
+                    },
+                  })),
+                },
+              },
+              // QR section
+              {
+                type: 'div', props: {
+                  style: {
+                    display: 'flex', alignItems: 'center', gap: 16, width: '100%',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(249,115,22,0.2))',
+                    borderRadius: 12, padding: 16, border: '1px solid rgba(245,158,11,0.3)',
+                  },
+                  children: [
+                    {
+                      type: 'div', props: {
+                        style: { display: 'flex', flexDirection: 'column', flex: 1 },
+                        children: [
+                          { type: 'span', props: { style: { color: '#fff', fontWeight: 600, fontSize: 15 }, children: '扫码开启你的' } },
+                          { type: 'span', props: { style: { color: '#fcd34d', fontWeight: 700, fontSize: 17, marginTop: 2 }, children: '财富觉醒之旅' } },
+                        ],
+                      },
+                    },
+                    {
+                      type: 'div', props: {
+                        style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex' },
+                        children: { type: 'img', props: { src: qrDataUrl, width: 68, height: 68 } },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        // Footer
+        {
+          type: 'div', props: {
+            style: { display: 'flex', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', padding: '12px 20px' },
+            children: { type: 'span', props: { style: { color: 'rgba(196,181,253,0.5)', fontSize: 12 }, children: '有劲AI · 让财富自由从认识自己开始' } },
+          },
+        },
+      ],
+    },
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -246,14 +328,37 @@ Deno.serve(async (req) => {
 
   try {
     const { cardType = 'wealth-assessment', data } = await req.json();
-    const displayName = data.displayName || '财富探索者';
     const partnerCode = data.partnerCode;
 
     const shareUrl = partnerCode
       ? `https://wechat.eugenewe.net/wealth-block?ref=${partnerCode}`
       : 'https://wechat.eugenewe.net/wealth-block';
 
-    // Parallel: QR code + avatar + fonts
+    if (cardType === 'wealth-info') {
+      // Pure info card - no personal data needed
+      const [qrDataUrl, fontRegular, fontBold] = await Promise.all([
+        generateQRDataUrl(shareUrl),
+        loadFont('', 400),
+        loadFont('', 700),
+      ]);
+
+      const cardMarkup = createWealthInfoCard(qrDataUrl);
+
+      const svg = await satori(cardMarkup, {
+        width: 340,
+        fonts: [
+          { name: 'Noto Sans SC', data: fontRegular, weight: 400, style: 'normal' as const },
+          { name: 'Noto Sans SC', data: fontBold, weight: 700, style: 'normal' as const },
+        ],
+      });
+
+      return new Response(svg, {
+        headers: { ...corsHeaders, 'Content-Type': 'image/svg+xml' },
+      });
+    }
+
+    // Default: wealth-assessment card
+    const displayName = data.displayName || '财富探索者';
     const extraChars = displayName + (patternNames[data.reactionPattern] || '') + (poorNames[data.dominantPoor] || '');
 
     const [qrDataUrl, avatarBase64, fontRegular, fontBold] = await Promise.all([
