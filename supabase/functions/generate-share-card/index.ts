@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Static characters used in card templates
-const STATIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /·▸()刚完成了AI财富心理测评卡点觉醒指数反应模式包含个真实场景深度智能分析行为情绪信念三层专属突破路径与动建议扫码体验你的诊断免费让自由从认识己开始有劲高度逐步初步起步嘴穷手眼心追逐和谐逃避创伤型探索者之旅解读语音对';
+const STATIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /·()刚完成了AI财富心理测评卡点觉醒指数反应模式包含个真实场景深度智能分析行为情绪信念三层专属突破路径与动建议扫码体验你的诊断免费让自由从认识己开始有劲高度逐步初步起步嘴穷手眼心追逐和谐逃避创伤型探索者之旅解读语音对总觉得赚钱很难找到破局方案给一';
 
 // Font cache
 const fontCache = new Map<string, ArrayBuffer>();
@@ -239,9 +239,9 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
  */
 function createWealthInfoCard(qrDataUrl: string): any {
   const features = [
-    { marker: '▸', text: '30个真实场景 · 深度诊断' },
-    { marker: '▸', text: '行为/情绪/信念三层扫描' },
-    { marker: '▸', text: '专属AI语音1对1解读' },
+    '总觉得赚钱很难？找到你的财富卡点',
+    '行为·情绪·信念 三层深度扫描',
+    'AI一对一解读，给你专属破局方案',
   ];
 
   return {
@@ -259,7 +259,7 @@ function createWealthInfoCard(qrDataUrl: string): any {
             style: { display: 'flex', flexDirection: 'column', padding: '28px 24px 20px', alignItems: 'center' },
             children: [
               // Decorative header
-              { type: 'span', props: { style: { color: 'rgba(252,211,77,0.6)', fontSize: 12, letterSpacing: 4, marginBottom: 12 }, children: '── 财富觉醒之旅 ──' } },
+              { type: 'span', props: { style: { color: 'rgba(252,211,77,0.6)', fontSize: 12, letterSpacing: 4, marginBottom: 12 }, children: '财富觉醒之旅' } },
               // Title
               { type: 'span', props: { style: { color: '#fff', fontWeight: 700, fontSize: 24, marginBottom: 4 }, children: 'AI财富卡点测评' } },
               { type: 'span', props: { style: { color: 'rgba(196,181,253,0.7)', fontSize: 12, marginBottom: 24 }, children: 'Powered by 有劲AI' } },
@@ -267,13 +267,13 @@ function createWealthInfoCard(qrDataUrl: string): any {
               {
                 type: 'div', props: {
                   style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%', marginBottom: 24 },
-                  children: features.map(f => ({
+                  children: features.map(text => ({
                     type: 'div',
                     props: {
                       style: { display: 'flex', alignItems: 'center', gap: 10 },
                       children: [
-                        { type: 'span', props: { style: { color: '#fbbf24', fontSize: 16 }, children: f.marker } },
-                        { type: 'span', props: { style: { color: 'rgba(255,255,255,0.9)', fontSize: 15 }, children: f.text } },
+                        { type: 'div', props: { style: { width: 8, height: 8, borderRadius: '50%', background: '#fbbf24', flexShrink: 0 } } },
+                        { type: 'span', props: { style: { color: 'rgba(255,255,255,0.9)', fontSize: 15 }, children: text } },
                       ],
                     },
                   })),
