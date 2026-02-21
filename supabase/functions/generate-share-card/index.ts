@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Static characters used in card templates - MUST include every Chinese character used in all card templates
-const STATIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /:?，·()刚完成了AI财富心理测评卡点觉醒指数反应模式包含个真实场景深度智能分析行为情绪信念三层专属突破路径与动建议扫码体验你的诊断免费让自由从认识己开始有劲高逐步初起嘴穷手眼心追逐和谐逃避创伤型探索者之旅解读语音对总觉得赚钱很难找到破局方案给一码启';
+const STATIC_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /:?？，·()刚完成了AI财富心理测评卡点觉醒指数反应模式包含个真实场景深度智能分析行为情绪信念三层专属突破路径与动建议扫码体验你的诊断描免费让自由从认识己开始有劲高逐步初起嘴穷手眼心追逐和谐逃避创伤型探索者之旅解读语音对总觉得赚钱很难找到破局方案给一启';
 
 // Font cache
 const fontCache = new Map<string, ArrayBuffer>();
