@@ -106,3 +106,52 @@ export async function generateServerShareCardDataUrl(data: WealthCardData): Prom
     reader.readAsDataURL(blob);
   });
 }
+
+// ============ Wealth Info Card (no personal data) ============
+
+export interface WealthInfoCardData {
+  partnerCode?: string;
+}
+
+/**
+ * Generate a wealth info share card (promotional, no personal results).
+ */
+export async function generateServerInfoCard(data: WealthInfoCardData): Promise<Blob | null> {
+  try {
+    const { data: svgData, error } = await supabase.functions.invoke('generate-share-card', {
+      body: { cardType: 'wealth-info', data },
+    });
+
+    if (error) {
+      console.error('[serverShareCard] Info card edge function error:', error);
+      return null;
+    }
+
+    const svgString = typeof svgData === 'string' ? svgData : await svgData.text?.() || String(svgData);
+
+    if (!svgString || svgString.startsWith('{')) {
+      console.error('[serverShareCard] Invalid SVG response:', svgString?.substring(0, 100));
+      return null;
+    }
+
+    return await svgToPngBlob(svgString, 340, 2);
+  } catch (e) {
+    console.error('[serverShareCard] Info card generation failed:', e);
+    return null;
+  }
+}
+
+/**
+ * Generate wealth info card and return as data URL.
+ */
+export async function generateServerInfoCardDataUrl(data: WealthInfoCardData): Promise<string | null> {
+  const blob = await generateServerInfoCard(data);
+  if (!blob) return null;
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
