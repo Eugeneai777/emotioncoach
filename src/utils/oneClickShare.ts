@@ -13,7 +13,7 @@ import {
   type CardBackgroundType 
 } from './shareCardConfig';
 
-export type CardType = 'camp' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform';
+export type CardType = 'camp' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform' | 'promo';
 
 // Map CardType to CardBackgroundType for compatibility
 const cardTypeToBackgroundType: Record<CardType, CardBackgroundType> = {
@@ -23,6 +23,7 @@ const cardTypeToBackgroundType: Record<CardType, CardBackgroundType> = {
   camp: 'camp',
   transform: 'transform',
   achievement: 'achievement',
+  promo: 'camp',
 };
 
 // Re-export for backwards compatibility
