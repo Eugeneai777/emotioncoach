@@ -236,7 +236,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     setIsGenerating(true);
 
     try {
-      const isAndroidWeChat = /micromessenger/i.test(navigator.userAgent) && /android/i.test(navigator.userAgent);
+      const isMobileWeChat = /micromessenger/i.test(navigator.userAgent);
+      const isAndroidWeChat = isMobileWeChat && /android/i.test(navigator.userAgent);
       const cardData = {
         healthScore: assessmentData.awakeningScore,
         reactionPattern: assessmentData.reactionPattern,
@@ -245,23 +246,42 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         partnerCode: partnerInfo?.partnerCode,
       };
 
-      if (isAndroidWeChat) {
-        const dataUrl = await generateServerShareCardDataUrl(cardData);
-        if (!dataUrl) throw new Error('Server generation failed');
-        setServerPreviewUrl(dataUrl);
+      if (isMobileWeChat) {
+        // 微信环境：使用图片预览（长按保存）
+        if (isAndroidWeChat) {
+          const dataUrl = await generateServerShareCardDataUrl(cardData);
+          if (!dataUrl) throw new Error('Server generation failed');
+          setServerPreviewUrl(dataUrl);
+        } else {
+          const blob = await generateServerShareCard(cardData);
+          if (!blob) throw new Error('Server generation failed');
+          setServerPreviewUrl(URL.createObjectURL(blob));
+        }
+        setOpen(false);
+        setShowServerPreview(true);
       } else {
+        // 非微信环境：直接下载图片
         const blob = await generateServerShareCard(cardData);
         if (!blob) throw new Error('Server generation failed');
         const url = URL.createObjectURL(blob);
-        setServerPreviewUrl(url);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `财富测评分享卡-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setOpen(false);
+        toast.success('图片已保存');
       }
-      setOpen(false);
-      setShowServerPreview(true);
     } catch (error) {
       console.error('Share card generation failed:', error);
       toast.error('生成分享卡片失败，请重试');
     } finally {
       setIsGenerating(false);
+      document.body.removeAttribute('data-scroll-locked');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     }
   }, [assessmentData, userInfo, partnerInfo, setOpen]);
 
