@@ -130,7 +130,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
           </span>
           {hasFreeRemaining && !disabled && (
             <span className="relative z-10 mt-0.5 px-1.5 py-[1px] bg-emerald-400 text-white text-[7px] font-bold rounded-full leading-none tracking-wider shadow-sm">
-              免费
+              前5次免费
             </span>
           )}
         </button>
@@ -139,8 +139,8 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
         {!disabled && (
           <div className="flex flex-wrap justify-center gap-1 mt-2.5">
             {[
-              { icon: FileText, label: '深度解读' },
-              { icon: Target, label: '个性建议' },
+              { icon: FileText, label: '逐条解析' },
+              { icon: Target, label: '定制方案' },
               { icon: MessageCircle, label: '语音互动' },
             ].map((item, i) => (
               <motion.span
