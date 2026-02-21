@@ -17,8 +17,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCampEntitlement } from "@/hooks/useCampEntitlement";
 import { useWeChatBindStatus } from "@/hooks/useWeChatBindStatus";
 import { triggerFollowReminder } from "@/hooks/useFollowReminder";
-import { Loader2 } from "lucide-react";
+import { Loader2, Share2 } from "lucide-react";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
+import { Button } from "@/components/ui/button";
+import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 
 interface LocationState {
   initialMessage?: string;
@@ -38,6 +40,7 @@ const WealthCoachChat = () => {
   const locationState = location.state as LocationState | null;
   const [input, setInput] = useState("");
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(COACH_KEY);
@@ -202,6 +205,9 @@ const WealthCoachChat = () => {
   const optionClickHandler = template.disable_option_buttons ? undefined : handleOptionClick;
   const optionSelectHandler = template.disable_option_buttons ? undefined : handleOptionSelect;
 
+
+
+
   return (
     <>
       <DynamicOGMeta pageKey="coach_wealth_coach_4_questions" />
@@ -309,7 +315,22 @@ const WealthCoachChat = () => {
             meditationTitle={locationState?.meditationTitle}
           />
         ) : undefined}
+        dialogs={
+          <WealthInviteCardDialog
+            defaultTab="promo"
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+          />
+        }
       />
+      {/* Floating share button */}
+      <Button
+        onClick={() => setShowShareDialog(true)}
+        size="icon"
+        className="fixed bottom-24 right-4 z-50 rounded-full w-11 h-11 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-violet-500/30"
+      >
+        <Share2 className="h-4 w-4" />
+      </Button>
     </>
   );
 };
