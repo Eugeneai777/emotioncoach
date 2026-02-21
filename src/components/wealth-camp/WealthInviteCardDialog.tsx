@@ -335,27 +335,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
   };
 
-  // ── Tab Selector ──────────────────────────────────────────────
-
-  const tabSelector = (
-    <div className="flex gap-2 px-4 pt-3">
-      {CARD_OPTIONS.map((opt) => (
-        <button
-          key={opt.id}
-          onClick={() => setActiveTab(opt.id)}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === opt.id
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-          )}
-        >
-          <span>{opt.emoji}</span>
-          <span>{opt.label}</span>
-        </button>
-      ))}
-    </div>
-  );
+  // Tab selector removed — only one card type remains
 
   // ── Render ────────────────────────────────────────────────────
 
@@ -393,7 +373,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         shareText="邀请你一起突破财富卡点"
         previewHeight={activeTab === 'achievement' ? 360 : 400}
         previewScale={0.5}
-        abovePreview={tabSelector}
+        abovePreview={undefined}
         previewCard={renderCard(false)}
         exportCard={renderCard(true)}
         exportCardRef={activeCardRef}
