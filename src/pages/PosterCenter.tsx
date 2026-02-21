@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import PageHeader from '@/components/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
@@ -677,15 +677,7 @@ export default function PosterCenter() {
     >
       <DynamicOGMeta pageKey="posterCenter" />
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
-        <div className="flex items-center justify-between max-w-lg mx-auto">
-          <Link to="/partner" className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </Link>
-          <h1 className="font-medium">海报工坊</h1>
-          <div className="w-10" />
-        </div>
-      </div>
+      <PageHeader title="海报工坊" />
 
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Mode Switch */}
