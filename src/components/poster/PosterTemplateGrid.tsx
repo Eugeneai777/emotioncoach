@@ -222,6 +222,31 @@ const posterTemplates: PosterTemplate[] = [
     }
   },
   {
+    key: 'wealth_block',
+    name: '财富卡点测评',
+    emoji: '💰',
+    tagline: '你的消费习惯背后，藏着看不见的财富盲点',
+    gradient: 'from-amber-500 to-orange-600',
+    sellingPoints: ['3分钟揭示你的财富心理盲点', 'AI深度剖析消费行为模式', '找到阻碍你财富增长的隐形卡点'],
+    sceneVariants: {
+      moments: {
+        tagline: '做完这个测评才发现，原来我一直在无意识地"推开"钱...',
+        sellingPoints: ['3分钟就能测出来', '结果准到让我沉默', '终于知道钱为什么留不住了'],
+        tone: '个人故事+震撼发现'
+      },
+      xiaohongshu: {
+        tagline: '财富心理盲点测评｜原来90%的人都在无意识地推开钱',
+        sellingPoints: ['心理学+行为经济学双重模型', 'AI精准分析你的财富卡点', '测完送专属改善建议'],
+        tone: '数据种草+心理测评'
+      },
+      wechat_group: {
+        tagline: '群里谁觉得自己赚得不少但存不住钱？试试这个测评',
+        sellingPoints: ['免费测评3分钟出结果', '群友测完都说准', '找到问题才能解决问题'],
+        tone: '群友推荐+共鸣'
+      }
+    }
+  },
+  {
     key: 'partner_recruit',
     name: '有劲合伙人',
     emoji: '🤝',
