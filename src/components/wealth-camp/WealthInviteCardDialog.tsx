@@ -232,12 +232,14 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleServerGenerate = useCallback(async () => {
-    if (!assessmentData) return;
+    if (!assessmentData) {
+      toast.error('测评数据未加载，请刷新重试');
+      return;
+    }
     setIsGenerating(true);
 
     try {
-      const isMobileWeChat = /micromessenger/i.test(navigator.userAgent);
-      const isAndroidWeChat = isMobileWeChat && /android/i.test(navigator.userAgent);
+      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
       const cardData = {
         healthScore: assessmentData.awakeningScore,
         reactionPattern: assessmentData.reactionPattern,
@@ -246,23 +248,23 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         partnerCode: partnerInfo?.partnerCode,
       };
 
-      if (isMobileWeChat) {
-        // 微信环境：使用图片预览（长按保存）
-        if (isAndroidWeChat) {
-          const dataUrl = await generateServerShareCardDataUrl(cardData);
-          if (!dataUrl) throw new Error('Server generation failed');
-          setServerPreviewUrl(dataUrl);
-        } else {
-          const blob = await generateServerShareCard(cardData);
-          if (!blob) throw new Error('Server generation failed');
-          setServerPreviewUrl(URL.createObjectURL(blob));
+      if (isMobile) {
+        // 移动端统一使用 data URL（避免微信/iOS blob 和 canvas 限制）
+        const dataUrl = await generateServerShareCardDataUrl(cardData);
+        if (!dataUrl) {
+          toast.error('图片生成失败，请重试');
+          return;
         }
+        setServerPreviewUrl(dataUrl);
         setOpen(false);
         setShowServerPreview(true);
       } else {
-        // 非微信环境：直接下载图片
+        // 桌面端：直接下载
         const blob = await generateServerShareCard(cardData);
-        if (!blob) throw new Error('Server generation failed');
+        if (!blob) {
+          toast.error('图片生成失败，请重试');
+          return;
+        }
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
