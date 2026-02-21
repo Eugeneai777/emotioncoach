@@ -1,75 +1,30 @@
 
+# 底部添加分享信息卡片
 
-## 在二维码卡片下方添加「分享测评结果」卡片按钮
+在财富测评结果页底部（绽放邀请码入口下方）新增一个简洁的分享信息卡片，纯信息展示，不包含任何测评结果数据。
 
-### 目标
-在 WealthAdvisorQRCard（财富觉醒顾问二维码卡片）下方，新增一个「分享我的测评结果」入口卡片，点击后打开已有的 `WealthInviteCardDialog` 分享弹窗。
+## 功能说明
+- 全新设计的分享卡片，不复用之前的 WealthInviteCardDialog 或任何旧分享组件
+- 点击后可复制分享链接或触发微信分享
+- 卡片仅展示产品介绍信息（如"财富卡点测评"名称、简短描述、扫码/链接体验），不显示用户的测评分数或结果
 
----
+## 技术方案
 
-### 设计方案
+### 1. 新建组件 `src/components/wealth-block/ShareInfoCard.tsx`
+- 独立的分享信息卡片组件
+- 包含：标题（如"推荐给朋友"）、简短描述、复制链接按钮
+- 使用 framer-motion 添加入场动画
+- 支持合伙人推广码（从 URL 参数或用户数据获取 ref）
+- 使用 navigator.clipboard 复制分享链接，配合 toast 提示
+- 样式：渐变背景卡片，Share2 图标，简洁大方
 
-在结果页中，WealthAdvisorQRCard 下方（约第 695 行之后）插入一个分享入口卡片，视觉上为一个简洁的 CTA 卡片：
+### 2. 修改 `src/components/wealth-block/WealthBlockResult.tsx`
+- 在绽放邀请码入口（BloomInviteCodeEntry）之后、支付对话框之前插入 `<ShareInfoCard />`
+- 传入当前页面路径 `/wealth-block` 作为分享链接
 
-```text
-┌────────────────────────────────────┐
-│  📤  分享我的AI测评报告给朋友       │
-│  让他们也来看看自己的财富卡点        │
-│                      [立即分享 →]  │
-└────────────────────────────────────┘
+### 卡片内容示例
 ```
-
-点击后触发 `WealthInviteCardDialog`，使用 `defaultTab="value"` 并传入当前测评分数和反应模式。
-
----
-
-### 技术细节（仅修改 `src/components/wealth-block/WealthBlockResult.tsx`）
-
-**1. 添加导入**
-- 导入 `WealthInviteCardDialog`（来自 `@/components/wealth-camp/WealthInviteCardDialog`）
-- 导入 `Share2` 图标（来自 `lucide-react`）
-
-**2. 在 WealthAdvisorQRCard 与 BloomInviteCodeEntry 之间插入分享卡片**
-
-```tsx
-{/* 分享测评结果入口 */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.4 }}
->
-  <WealthInviteCardDialog
-    defaultTab="value"
-    assessmentScore={result ? 100 - calculateHealthScore(
-      result.behaviorScore + result.emotionScore + result.beliefScore
-    ) : undefined}
-    reactionPattern={result.reactionPattern}
-    trigger={
-      <Card className="cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200/50">
-        <div className="flex items-center gap-3 p-4">
-          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-            <Share2 className="w-5 h-5 text-amber-600" />
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-sm">分享我的AI测评报告</p>
-            <p className="text-xs text-muted-foreground">让朋友也来看看自己的财富卡点</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </div>
-      </Card>
-    }
-  />
-</motion.div>
+[Share图标] 推荐给朋友
+发现你的财富卡点，开启觉醒之旅
+[复制链接]
 ```
-
-**3. 需要额外导入的内容**
-- `Share2` 已在页面头部导入列表中（需确认，若未导入则添加）
-- `WealthInviteCardDialog` 需新增导入
-- `ChevronRight` 需确认是否已导入
-
----
-
-### 影响范围
-- 仅修改 `src/components/wealth-block/WealthBlockResult.tsx`（添加导入 + 插入约 25 行 JSX）
-- 复用现有的 `WealthInviteCardDialog` 组件，无需创建新组件
-- 不影响现有页面逻辑
