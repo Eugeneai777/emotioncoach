@@ -45,6 +45,7 @@ export default function WealthBlockAssessmentPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [savedAssessmentId, setSavedAssessmentId] = useState<string | null>(null);
   const [previousAssessmentId, setPreviousAssessmentId] = useState<string | null>(null);
+  const [aiInsight, setAiInsight] = useState<AIInsightData | null>(null);
   
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -791,6 +792,7 @@ export default function WealthBlockAssessmentPage() {
                     onSave={user ? handleSave : undefined}
                     isSaving={isSaving}
                     isSaved={isSaved}
+                    onAiInsightReady={setAiInsight}
                   />
                 </div>
               ) : (
@@ -862,7 +864,7 @@ export default function WealthBlockAssessmentPage() {
                   <div className="relative -top-5 flex flex-col items-center">
                     <AssessmentVoiceCoach
                       result={currentResult}
-                      aiInsight={null}
+                      aiInsight={aiInsight}
                       healthScore={Math.round(
                         ((5 - currentResult.behaviorScore) / 4 * 33) +
                         ((5 - currentResult.emotionScore) / 4 * 33) +
