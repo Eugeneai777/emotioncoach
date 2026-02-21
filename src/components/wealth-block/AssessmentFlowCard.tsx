@@ -27,13 +27,13 @@ const postSteps = [
   {
     icon: Mic,
     title: "AI教练解读",
-    time: "前5次免费",
+    time: "24x7",
     color: "from-rose-500 to-pink-500",
   },
   {
     icon: Compass,
     title: "觉醒顾问",
-    time: "免费领取",
+    time: "24x7",
     color: "from-emerald-500 to-teal-500",
   },
 ];
