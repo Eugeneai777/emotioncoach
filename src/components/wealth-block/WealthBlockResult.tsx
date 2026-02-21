@@ -55,6 +55,7 @@ import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
 import { NextStepActionCard } from "./NextStepActionCard";
 import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
+import { ShareInfoCard } from "./ShareInfoCard";
 import { WealthAdvisorQRCard } from "./WealthAdvisorQRCard";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { Share2, ChevronRight } from "lucide-react";
@@ -702,6 +703,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           }}
         />
       )}
+
+      {/* 分享信息卡片 */}
+      <ShareInfoCard />
 
       {/* 分享和重测按钮 */}
       <motion.div
