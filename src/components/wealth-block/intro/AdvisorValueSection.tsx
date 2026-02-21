@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarCheck, MessageSquareHeart, Shield, Users, Sparkles } from "lucide-react";
+import { CalendarCheck, MessageSquareHeart, Shield, Users, Sparkles, TrendingUp, Quote } from "lucide-react";
 
 const benefits = [
   {
@@ -13,6 +13,12 @@ const benefits = [
     title: "1 对 1 随时觉醒对话",
     desc: "不限次数，随时向觉醒顾问倾诉困惑、获取指导",
     tag: "不限次数",
+  },
+  {
+    icon: TrendingUp,
+    title: "突破卡点追踪",
+    desc: "每周回顾你的觉醒进展，看到自己的变化轨迹",
+    tag: "持续成长",
   },
 ];
 
@@ -39,7 +45,7 @@ export function AdvisorValueSection() {
             专属觉醒顾问，陪你走出卡点
           </h2>
           <p className="text-sm text-slate-400">
-            不是冷冰冰的报告，而是有温度的陪伴
+            从发现卡点到突破卡点，全程有人陪
           </p>
         </div>
 
@@ -70,6 +76,21 @@ export function AdvisorValueSection() {
           ))}
         </div>
 
+        {/* User Testimonial */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.35 }}
+          className="relative z-10 mb-5 px-4 py-3 rounded-xl bg-white/5 border border-white/10"
+        >
+          <Quote className="w-3.5 h-3.5 text-amber-400/60 mb-1" />
+          <p className="text-xs text-slate-300 leading-relaxed italic">
+            "以前觉得赚钱难是能力问题，现在才发现是信念问题。顾问帮我找到了从小被植入的'不配有钱'的信念，7 天练习后我终于敢和老板谈加薪了。"
+          </p>
+          <p className="text-[10px] text-slate-500 mt-1.5">—— 用户小王</p>
+        </motion.div>
+
         {/* Social Proof */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -81,7 +102,7 @@ export function AdvisorValueSection() {
           <div className="flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-xs text-slate-300">
-              <span className="text-amber-400 font-bold">3,291</span> 人已领取
+              <span className="text-amber-400 font-bold">5,128</span> 人已领取
             </span>
           </div>
           <div className="flex items-center gap-1.5">

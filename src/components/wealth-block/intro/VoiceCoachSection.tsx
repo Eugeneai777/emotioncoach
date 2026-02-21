@@ -1,24 +1,30 @@
 import { motion } from "framer-motion";
-import { Mic, Brain, Route, MessageCircle } from "lucide-react";
+import { Mic, Brain, Route, MessageCircle, Zap, Star, Users } from "lucide-react";
 
 const values = [
   {
     icon: Brain,
-    title: "深度解读",
-    desc: "AI 逐条解析你的测评结果，告诉你「为什么卡住」",
+    title: "逐条解析",
+    desc: "AI 逐条解析你的测评结果，告诉你「为什么卡住」以及背后的深层原因",
     gradient: "from-rose-500 to-pink-500",
   },
   {
     icon: Route,
-    title: "个性建议",
-    desc: "基于你的独特模式，给出定制突破路径",
+    title: "定制方案",
+    desc: "基于你的四穷人格和觉醒指数，给出专属突破路径",
     gradient: "from-pink-500 to-fuchsia-500",
   },
   {
     icon: Mic,
     title: "语音互动",
-    desc: "像真人教练一样，用语音和你 1 对 1 对话",
+    desc: "像真人教练一样，用语音和你 1 对 1 深度对话",
     gradient: "from-fuchsia-500 to-violet-500",
+  },
+  {
+    icon: Zap,
+    title: "实时响应",
+    desc: "根据你的回答实时调整对话方向，不是预设脚本",
+    gradient: "from-violet-500 to-indigo-500",
   },
 ];
 
@@ -26,6 +32,8 @@ const chatBubbles = [
   { role: "coach" as const, text: "你刚才提到「不敢要高薪」，这背后可能藏着一个核心信念——「我不配」。我们一起来看看它是怎么形成的…" },
   { role: "user" as const, text: "好像确实是这样，小时候妈妈总说不要太贪心…" },
   { role: "coach" as const, text: "这就是你的「心穷」卡点来源。接下来我给你一个具体的突破练习，每天只需要 5 分钟…" },
+  { role: "user" as const, text: "好的，我愿意试试！具体怎么做？" },
+  { role: "coach" as const, text: "每天早上对镜子说：「我值得拥有丰盛的财富」，同时写下一件你今天可以为自己争取的小事。我们下次对话时一起回顾你的变化 ✨" },
 ];
 
 export function VoiceCoachSection() {
@@ -40,13 +48,13 @@ export function VoiceCoachSection() {
       >
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-100 text-rose-600 text-xs font-medium mb-3">
           <Mic className="w-3.5 h-3.5" />
-          完成测评后免费体验
+          完成测评后免费体验 · 前5次免费
         </div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">
-          测完不是结束，AI 教练帮你突破
+          你的专属 AI 财富教练，1对1 语音陪你突破
         </h2>
         <p className="text-sm text-slate-500">
-          不只告诉你「卡在哪」，更陪你「走出来」
+          不是冷冰冰的报告，而是像真人教练一样，和你对话、帮你拆解、给你方案
         </p>
       </motion.div>
 
@@ -104,6 +112,28 @@ export function VoiceCoachSection() {
               </div>
             </motion.div>
           ))}
+        </div>
+      </motion.div>
+
+      {/* Social Proof */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.3 }}
+        className="flex items-center justify-center gap-4 mt-5"
+      >
+        <div className="flex items-center gap-1.5">
+          <Users className="w-3.5 h-3.5 text-rose-400" />
+          <span className="text-xs text-slate-500">
+            已有 <span className="text-rose-500 font-bold">2,847</span> 人完成 AI 教练对话
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span className="text-xs text-slate-500">
+            满意度 <span className="text-amber-500 font-bold">4.8/5</span>
+          </span>
         </div>
       </motion.div>
     </section>
