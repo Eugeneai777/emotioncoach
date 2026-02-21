@@ -19,6 +19,14 @@ const comparisonItems = [
     traditional: "冷冰冰的分数标签",
     ai: "人格故事化解读",
   },
+  {
+    traditional: "测完就没人管了",
+    ai: "1对1 AI语音教练，陪你突破卡点",
+  },
+  {
+    traditional: "没有后续跟进",
+    ai: "专属觉醒顾问，7天定制路径",
+  },
 ];
 
 export function AIComparisonCard() {
@@ -68,7 +76,7 @@ export function AIComparisonCard() {
         className="mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-100 to-violet-100 border border-amber-300/50"
       >
         <p className="text-xs text-center text-slate-700">
-          <span className="font-bold text-amber-600">有劲AI</span> = 智能追问 + 可视诊断 + 精准方案
+          <span className="font-bold text-amber-600">有劲AI</span> = 智能追问 + 可视诊断 + AI教练 + 觉醒顾问
         </p>
       </motion.div>
     </Card>
