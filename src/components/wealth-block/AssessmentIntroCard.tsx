@@ -82,6 +82,7 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isBloomP
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -595,5 +596,29 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isBloomP
         </Card>
       )}
     </motion.div>
+
+    {/* Fixed Bottom CTA Bar */}
+    <div 
+      className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/50"
+      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+    >
+      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-2xl font-bold text-amber-600">¥9.9</span>
+          <span className="px-1.5 py-0.5 bg-red-500 rounded text-[10px] text-white font-medium animate-pulse">限时</span>
+        </div>
+        <Button
+          onClick={handlePayClick}
+          size="lg"
+          className="flex-1 h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white"
+        >
+          <span className="flex items-center gap-2">
+            {hasPurchased ? '继续测评' : '立即测评'}
+            <ArrowRight className="w-4 h-4" />
+          </span>
+        </Button>
+      </div>
+    </div>
+    </>
   );
 }

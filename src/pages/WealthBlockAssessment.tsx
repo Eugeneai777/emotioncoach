@@ -6,7 +6,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePageOG } from "@/hooks/usePageOG";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ArrowRight, RotateCcw, History, TrendingUp, Share2, Sparkles, ChevronRight, Home, Mic } from "lucide-react";
+import { ArrowLeft, RotateCcw, History, TrendingUp, Share2, Sparkles, ChevronRight, Home, Mic } from "lucide-react";
 import { AssessmentVoiceCoach } from "@/components/wealth-block/AssessmentVoiceCoach";
 import { AIInsightData } from "@/components/wealth-block/AIInsightCard";
 import PageHeader from "@/components/PageHeader";
@@ -910,31 +910,6 @@ export default function WealthBlockAssessmentPage() {
           setShowPayDialog(false);
         }}
       />
-
-      {/* Fixed Bottom CTA Bar - outside transform container */}
-      {!isRedirectingForAuth && !authLoading && !isPurchaseLoading && showIntro && !hasPurchased && !showResult && (
-        <div 
-          className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/50"
-          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-        >
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-2xl font-bold text-amber-600">¥9.9</span>
-              <span className="px-1.5 py-0.5 bg-red-500 rounded text-[10px] text-white font-medium animate-pulse">限时</span>
-            </div>
-            <Button
-              onClick={handlePayClick}
-              size="lg"
-              className="flex-1 h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white"
-            >
-              <span className="flex items-center gap-2">
-                立即测评
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
