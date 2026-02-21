@@ -69,9 +69,10 @@ interface WealthBlockResultProps {
   onSave?: () => void;
   isSaving?: boolean;
   isSaved?: boolean;
+  onAiInsightReady?: (insight: AIInsightData) => void;
 }
 
-export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
+export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { trackEvent } = useWealthCampAnalytics();
@@ -162,6 +163,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         }
 
         setAiInsight(data);
+        onAiInsightReady?.(data);
       } catch (err) {
         console.error('AI insight error:', err);
         setAiError("AI分析暂时不可用，您仍可查看基础分析结果");
