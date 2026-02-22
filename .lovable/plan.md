@@ -1,28 +1,36 @@
 
 
-## 修复导航流程：训练营入口应先经过财富教练页
+## 合伙人中心页面优化
 
-### 问题
-目前 "继续我的训练营" 和 "立即打卡" 按钮直接跳转到 `/wealth-camp-checkin`（我的财富日记/打卡页），跳过了财富教练页面（`/coach/wealth_coach_4_questions`），用户看不到财富觉醒 3 部曲进度、训练营状态等信息。
+### 问题总结
+1. 推广链接旁有一个小复制图标，底部又有一个大"复制"按钮，功能重复
+2. 页面只显示"绽放合伙人"身份，缺少"有劲合伙人"身份展示（绽放合伙人包含有劲初级合伙人权益）
+3. 页面标题写"绽放合伙人中心"，与飞轮里的身份标签重复
 
-### 期望流程
+### 修改方案
 
-```text
-[训练营介绍页] --"继续我的训练营"--> [财富教练页] --"立即打卡"--> [财富日记/打卡页]
-```
+#### 1. 去除重复复制按钮
+**文件**: `src/components/partner/PromotionHub.tsx`
+- 移除推广链接右侧的小复制图标按钮（第 169 行），保留底部的 3 个操作按钮（复制/二维码/海报）
+- 这样推广链接区域更简洁，操作统一集中在底部按钮组
 
-### 需要修改的文件
+#### 2. 显示双合伙人身份
+**文件**: `src/components/partner/MyFlywheelOverview.tsx`
+- 在现有的绽放合伙人标签旁，增加有劲合伙人标签（如 "💪 有劲初级合伙人 · 18%"）
+- 当 partnerType 为 bloom 时，同时展示两个身份标签
+
+#### 3. 统一页面标题
+**文件**: `src/pages/Partner.tsx`
+- 将页面标题统一为"合伙人中心"，不再区分"绽放合伙人中心"/"有劲合伙人中心"
+- 身份信息已在飞轮组件的标签中展示，无需在标题中重复
+
+### 技术细节
 
 | 文件 | 改动 |
 |------|------|
-| `src/pages/WealthCampIntro.tsx` | 将 "继续我的训练营" 的跳转目标从 `/wealth-camp-checkin` 改为 `/coach/wealth_coach_4_questions`（第 486 行） |
-| `src/pages/WealthCampActivate.tsx` | 同上，将 "继续我的训练营" 的跳转目标改为 `/coach/wealth_coach_4_questions`（第 239 行） |
+| `src/components/partner/PromotionHub.tsx` | 移除推广链接右侧的小复制图标（约第 169 行的 Button） |
+| `src/components/partner/MyFlywheelOverview.tsx` | bloom 合伙人同时展示有劲 L1 身份标签 |
+| `src/pages/Partner.tsx` | 第 48 行页面标题固定为"合伙人中心" |
 
-### 不改动的部分
-- `TrainingCampCard.tsx` 中财富教练页面上的 "立即打卡" 按钮仍保持跳转到 `/wealth-camp-checkin`，因为这是从教练页进入打卡页的正确路径
-- 加入训练营成功后的 `onSuccess` 回调仍跳转 `/wealth-camp-checkin`，因为首次加入直接进入打卡是合理的
+共 3 个文件修改，无数据库改动。
 
-### 关于修改时间
-无法从代码中确定具体修改时间，但从当前代码来看，这两个按钮一直都是直接指向 `/wealth-camp-checkin`，可能从训练营功能上线时就缺少了中间的教练页跳转。
-
-共 2 个文件修改，无数据库改动。
