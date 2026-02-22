@@ -96,6 +96,7 @@ const Courses = lazyRetry(() => import("./pages/Courses"));
 // 合伙人相关
 const Partner = lazyRetry(() => import("./pages/Partner"));
 const PartnerBenefits = lazyRetry(() => import("./pages/PartnerBenefits"));
+const PartnerBenefitsUnified = lazyRetry(() => import("./pages/PartnerBenefitsUnified"));
 const PartnerIntro = lazyRetry(() => import("./pages/PartnerIntro"));
 const PartnerTypeSelector = lazyRetry(() => import("./pages/PartnerTypeSelector"));
 const YoujinPartnerIntro = lazyRetry(() => import("./pages/YoujinPartnerIntro"));
@@ -297,6 +298,7 @@ const App = () => (
               <Route path="/partner-intro" element={<PartnerIntro />} />
               <Route path="/partner" element={<Partner />} />
               <Route path="/partner/benefits" element={<PartnerBenefits />} />
+              <Route path="/partner/benefits-all" element={<PartnerBenefitsUnified />} />
               <Route path="/claim" element={<Claim />} />
               <Route path="/pay-entry" element={<PayEntry />} />
               <Route path="/story-coach" element={<StoryCoach />} />
