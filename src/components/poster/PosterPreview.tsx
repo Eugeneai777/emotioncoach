@@ -308,7 +308,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               display: 'inline-block',
               marginTop: '4px'
             }}>
-              有劲AI · 科学验证
+              Powered by 有劲AI
             </div>
           </div>
         </div>
