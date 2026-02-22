@@ -166,7 +166,7 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
       <CardContent className="p-4 space-y-4">
         {/* Title with identity badge */}
         <div className="flex items-center justify-between">
-          {partnerType && (() => {
+        {partnerType && (() => {
             const level = getPartnerLevel(partnerType, partnerLevel || '');
             if (!level) return null;
             const isBloom = partnerType === 'bloom';
@@ -174,11 +174,25 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
               ? `${(level.commissionRateL1 * 100).toFixed(0)}%+${(level.commissionRateL2 * 100).toFixed(0)}%`
               : `${(level.commissionRateL1 * 100).toFixed(0)}%${level.commissionRateL2 > 0 ? `+${(level.commissionRateL2 * 100).toFixed(0)}%` : ''}`;
             return (
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${level.gradient}`}>
-                <span>{level.icon}</span>
-                <span>{level.name}</span>
-                <span className="opacity-80">·</span>
-                <span>{commissionLabel}</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${level.gradient}`}>
+                  <span>{level.icon}</span>
+                  <span>{level.name}</span>
+                  <span className="opacity-80">·</span>
+                  <span>{commissionLabel}</span>
+                </div>
+                {isBloom && (() => {
+                  const youjinL1 = getPartnerLevel('youjin', 'L1');
+                  if (!youjinL1) return null;
+                  return (
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${youjinL1.gradient}`}>
+                      <span>{youjinL1.icon}</span>
+                      <span>{youjinL1.name}</span>
+                      <span className="opacity-80">·</span>
+                      <span>{(youjinL1.commissionRateL1 * 100).toFixed(0)}%</span>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })()}
