@@ -1,70 +1,69 @@
 
 
-## 海报工坊优化 - 设计统一 + 分享修复
+## 添加 9.9 体验包海报模板
 
-### 问题诊断
+### 改动内容
 
-#### A. 设计问题 - teal/cyan 色系未统一
+在海报工坊的模板列表中新增一个 "9.9体验包" 模板，让合伙人可以专门为体验包生成推广海报。
 
-`PosterCenter.tsx` 全页仍使用 teal/cyan 色系，与已统一的品牌橙色不一致：
+### 具体改动
 
-| 位置 | 当前 | 应改为 |
-|------|------|--------|
-| 页面背景 | `from-teal-50 via-cyan-50 to-blue-50` | `from-orange-50 via-amber-50 to-orange-100` |
-| 快速生成按钮 | `from-teal-500 to-cyan-500` | `from-orange-500 to-amber-500` |
-| 加载动画 | `text-teal-500` | `text-orange-500` |
-| 出现 6 处 teal/cyan 背景 | 全部 teal | 全部 orange |
+#### 1. PosterTemplateGrid.tsx - 新增模板
 
-#### B. 分享规范问题 - PosterWithCustomCopy.tsx（3 个错误）
+在 `posterTemplates` 数组中添加一个新的体验包模板（插入到 `wealth_block` 之后、`partner_recruit` 之前）：
 
-| 问题 | 严重程度 | 说明 |
-|------|----------|------|
-| QR码生成 | 错误 | 直接用 `QRCode.toDataURL` 而非 `useQRCode` hook |
-| 域名硬编码 | 错误 | 硬编码 `https://wechat.eugenewe.net` 而非 `getPromotionDomain()` |
-| 品牌标识 | 警告 | `有劲AI · 每个人的生活教练` 应为 `Powered by 有劲AI` |
+```tsx
+{
+  key: 'experience_pack',
+  name: '9.9体验包',
+  emoji: '🎁',
+  tagline: '9.9元解锁4项专业服务，开启你的心理健康之旅',
+  gradient: 'from-orange-400 to-amber-500',
+  sellingPoints: [
+    '50点AI教练对话额度',
+    '情绪健康测评 1次',
+    'SCL-90心理测评 1次',
+    '财富卡点测评 1次'
+  ],
+  sceneVariants: {
+    moments: {
+      tagline: '花了9.9元做了个测评，才发现自己一直在忽略情绪信号...',
+      sellingPoints: ['一杯奶茶钱换4项专业服务', '测完才知道自己的情绪健康分', '早发现早调整，别等崩溃才后悔'],
+      tone: '个人觉醒+超值体验'
+    },
+    xiaohongshu: {
+      tagline: '9.9元薅羊毛｜4项心理测评+50次AI对话，不买亏大了',
+      sellingPoints: ['情绪健康+SCL-90+财富卡点三合一', '50点AI额度≈50次深度对话', '原价超100元，限时体验仅9.9'],
+      tone: '超值种草+限时紧迫'
+    },
+    wechat_group: {
+      tagline: '群友福利！9.9元体验包，4项服务全部解锁',
+      sellingPoints: ['一杯奶茶钱体验全套服务', '群友专属入口免费领取', '名额有限，先到先得'],
+      tone: '群友福利+限量感'
+    }
+  }
+}
+```
 
-#### C. 分享规范问题 - PosterPreview.tsx（1 个警告）
+#### 2. PosterPreview.tsx - 新增 slogan 和 category 映射
 
-| 问题 | 严重程度 | 说明 |
-|------|----------|------|
-| 品牌标识 | 警告 | 小红书版使用 `有劲AI · 科学验证`，应统一为 `Powered by 有劲AI` |
+在 `getProductSlogan` 和 `getProductCategory` 中添加 `experience_pack` 映射：
 
-### 改动方案
+- slogan: `'9.9元解锁4项专业服务'`
+- category: `'超值体验包'`
 
-#### 1. PosterCenter.tsx - teal 全改橙色（6 处）
+在 `gradientStyles` 中添加：
 
-- 第 103/118/130/350/396/450/548/675 行：`from-teal-50 via-cyan-50 to-blue-50` 改为 `from-orange-50 via-amber-50 to-orange-100`
-- 第 121 行：`text-teal-500` 改为 `text-orange-500`
-- 第 687 行：快速生成按钮 `from-teal-500 to-cyan-500` 改为 `from-orange-500 to-amber-500`
-
-#### 2. PosterWithCustomCopy.tsx - 修复 3 个分享规范问题
-
-**QR码修复**：
-- 移除 `import QRCode from 'qrcode'` 和手动 `useEffect` 生成逻辑
-- 改用 `import { useQRCode } from '@/utils/qrCodeUtils'`
-- 改用 `import { getPartnerShareUrl } from '@/utils/partnerQRUtils'`
-
-**域名修复**：
-- 移除 `const PRODUCTION_DOMAIN = 'https://wechat.eugenewe.net'`
-- 使用 `getPartnerShareUrl(partnerId, entryType)` 生成完整 URL（该函数内部已使用 `getPromotionDomain()`）
-- posterId 参数通过 URL 拼接追加
-
-**品牌标识修复**：
-- `有劲AI · 每个人的生活教练` 改为 `Powered by 有劲AI`
-
-#### 3. PosterPreview.tsx - 修复品牌标识
-
-- 第 312 行：`有劲AI · 科学验证` 改为 `Powered by 有劲AI`
+- `experience_pack: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #fbbf24 100%)'`
 
 ### 涉及文件
 
 | 文件 | 改动 | 说明 |
 |------|------|------|
-| `src/pages/PosterCenter.tsx` | 中 | 6 处 teal 颜色替换 |
-| `src/components/poster/PosterWithCustomCopy.tsx` | 中 | QR码 + 域名 + 品牌标识修复 |
-| `src/components/poster/PosterPreview.tsx` | 小 | 品牌标识修复 |
+| `src/components/poster/PosterTemplateGrid.tsx` | 小 | 新增 experience_pack 模板 |
+| `src/components/poster/PosterPreview.tsx` | 小 | 新增 slogan/category/gradient 映射 |
 
 ### 无数据库改动
 
-前端样式 + 分享规范修复，共改 3 个文件。
+纯前端模板配置，改 2 个文件。
 
