@@ -247,6 +247,36 @@ const posterTemplates: PosterTemplate[] = [
     }
   },
   {
+    key: 'experience_pack',
+    name: '9.9体验包',
+    emoji: '🎁',
+    tagline: '9.9元解锁4项专业服务，开启你的心理健康之旅',
+    gradient: 'from-orange-400 to-amber-500',
+    sellingPoints: [
+      '50点AI教练对话额度',
+      '情绪健康测评 1次',
+      'SCL-90心理测评 1次',
+      '财富卡点测评 1次'
+    ],
+    sceneVariants: {
+      moments: {
+        tagline: '花了9.9元做了个测评，才发现自己一直在忽略情绪信号...',
+        sellingPoints: ['一杯奶茶钱换4项专业服务', '测完才知道自己的情绪健康分', '早发现早调整，别等崩溃才后悔'],
+        tone: '个人觉醒+超值体验'
+      },
+      xiaohongshu: {
+        tagline: '9.9元薅羊毛｜4项心理测评+50次AI对话，不买亏大了',
+        sellingPoints: ['情绪健康+SCL-90+财富卡点三合一', '50点AI额度≈50次深度对话', '原价超100元，限时体验仅9.9'],
+        tone: '超值种草+限时紧迫'
+      },
+      wechat_group: {
+        tagline: '群友福利！9.9元体验包，4项服务全部解锁',
+        sellingPoints: ['一杯奶茶钱体验全套服务', '群友专属入口免费领取', '名额有限，先到先得'],
+        tone: '群友福利+限量感'
+      }
+    }
+  },
+  {
     key: 'partner_recruit',
     name: '有劲合伙人',
     emoji: '🤝',

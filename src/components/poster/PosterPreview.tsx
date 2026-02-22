@@ -30,7 +30,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         parent_emotion_21: '21天突破亲子困境',
         '365_member': '一整年情绪自由',
         partner_recruit: '边助人边赚收入',
-        wealth_block: '3分钟定位财富天花板'
+        wealth_block: '3分钟定位财富天花板',
+        experience_pack: '9.9元解锁4项专业服务'
       };
       return slogans[key] || '有劲生活';
     };
@@ -47,7 +48,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         parent_emotion_21: '训练营',
         '365_member': '年度会员',
         partner_recruit: '创业机会',
-        wealth_block: '财富心理测评'
+        wealth_block: '财富心理测评',
+        experience_pack: '超值体验包'
       };
       return categories[key] || '有劲生活';
     };
@@ -63,7 +65,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       parent_emotion_21: 'linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%)',
       '365_member': 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #facc15 100%)',
       partner_recruit: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #d946ef 100%)',
-      wealth_block: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)'
+      wealth_block: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
+      experience_pack: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #fbbf24 100%)'
     };
 
     // Get display content
