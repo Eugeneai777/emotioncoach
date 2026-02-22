@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react';
-import { getPromotionDomain } from '@/utils/partnerQRUtils';
-import { useQRCode } from '@/utils/qrCodeUtils';
+import ShareCardBase from '@/components/sharing/ShareCardBase';
 
 interface PartnerInfo {
   partnerId: string;
@@ -14,32 +13,26 @@ interface WealthCampShareCardProps {
   currentDay?: number;
   totalDays?: number;
   partnerInfo?: PartnerInfo;
+  onReady?: () => void;
 }
 
 const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>(
-  ({ className, avatarUrl, displayName = '财富觉醒者', currentDay, totalDays = 7, partnerInfo }, ref) => {
-    // Generate share URL with partner tracking
-    const baseUrl = `${getPromotionDomain()}/wealth-camp-intro`;
-    const shareUrl = partnerInfo?.partnerCode 
-      ? `${baseUrl}?ref=${partnerInfo.partnerCode}` 
-      : baseUrl;
-
-    const { qrCodeUrl } = useQRCode(shareUrl);
-
+  ({ className, avatarUrl, displayName = '财富觉醒者', currentDay, totalDays = 7, partnerInfo, onReady }, ref) => {
     return (
-      <div
+      <ShareCardBase
         ref={ref}
         className={className}
-        style={{
-          width: '360px',
-          padding: '32px 24px',
-          background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-          borderRadius: '24px',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          color: '#ffffff',
-          position: 'relative',
-          overflow: 'hidden',
+        sharePath="/wealth-camp-intro"
+        partnerCode={partnerInfo?.partnerCode}
+        background="linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)"
+        onReady={onReady}
+        footerConfig={{
+          ctaTitle: '扫码加入训练营',
+          ctaSubtitle: '7天突破财富障碍',
+          primaryColor: '#d97706',
+          secondaryColor: '#92400e',
         }}
+        style={{ color: '#ffffff' }}
       >
         {/* Background decorations */}
         <div style={{
@@ -146,7 +139,6 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
           background: 'rgba(255,255,255,0.15)',
           borderRadius: '16px',
           padding: '16px',
-          marginBottom: '24px',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
@@ -161,49 +153,7 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
             ))}
           </div>
         </div>
-
-        {/* QR Code Section */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '16px',
-          background: 'rgba(255,255,255,0.95)',
-          borderRadius: '16px',
-          padding: '16px',
-          marginBottom: '20px',
-        }}>
-          {qrCodeUrl && (
-            <img
-              src={qrCodeUrl}
-              alt="扫码加入"
-              style={{ width: '80px', height: '80px', borderRadius: '8px' }}
-            />
-          )}
-          <div style={{ color: '#d97706' }}>
-            <p style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 4px 0' }}>
-              扫码加入训练营
-            </p>
-            <p style={{ fontSize: '12px', opacity: 0.7, margin: 0 }}>
-              7天突破财富障碍
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center',
-          fontSize: '12px',
-          opacity: 0.8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-        }}>
-          <span>💎</span>
-          <span>有劲AI · 让财富自然流动</span>
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );
