@@ -9,7 +9,7 @@ export function ConversionGuide() {
       icon: <Ticket className="w-4 h-4" />,
       emoji: "🎟️",
       name: "兑换体验",
-      color: "text-blue-600 bg-blue-100",
+      color: "text-orange-500 bg-orange-100",
       definition: "用户通过你的兑换码/推广链接注册，开始免费体验训练营",
       metric: "兑换人数",
       action: "多渠道分享推广码，扩大触达面"
@@ -27,7 +27,7 @@ export function ConversionGuide() {
       icon: <Gem className="w-4 h-4" />,
       emoji: "💎",
       name: "购买365",
-      color: "text-green-600 bg-green-100",
+      color: "text-orange-600 bg-orange-100",
       definition: "用户升级为365会员，解锁全部功能和1000次AI对话",
       metric: "购买转化率",
       action: "训练营关键节点引导转化"
@@ -36,7 +36,7 @@ export function ConversionGuide() {
       icon: <Handshake className="w-4 h-4" />,
       emoji: "🤝",
       name: "成为合伙人",
-      color: "text-purple-600 bg-purple-100",
+      color: "text-amber-700 bg-amber-100",
       definition: "365会员进一步升级为有劲合伙人，开始自己推广",
       metric: "合伙人转化率",
       action: "毕业时分享收益机会，邀请加入"
@@ -152,10 +152,10 @@ export function ConversionGuide() {
             <AccordionContent className="space-y-4">
               {/* 高优先级跟进场景 */}
               <div>
-                <p className="text-xs font-medium text-red-600 mb-2">🔴 高优先级跟进场景</p>
+                <p className="text-xs font-medium text-orange-600 mb-2">🔶 高优先级跟进场景</p>
                 <div className="space-y-2">
                   {tips.highPriority.map((tip, idx) => (
-                    <div key={idx} className="flex gap-2 text-xs p-2 rounded bg-red-50">
+                    <div key={idx} className="flex gap-2 text-xs p-2 rounded bg-orange-50">
                       <span className="text-muted-foreground shrink-0">{tip.trigger}</span>
                       <span className="text-muted-foreground">→</span>
                       <span className="font-medium">{tip.action}</span>
@@ -166,10 +166,10 @@ export function ConversionGuide() {
 
               {/* 最佳转化时机 */}
               <div>
-                <p className="text-xs font-medium text-green-600 mb-2">🟢 最佳转化时机</p>
+                <p className="text-xs font-medium text-orange-600 mb-2">🔸 最佳转化时机</p>
                 <div className="flex flex-wrap gap-1.5">
                   {tips.bestTiming.map((timing, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs bg-green-50 border-green-200">
+                    <Badge key={idx} variant="outline" className="text-xs bg-orange-50 border-orange-200">
                       {timing}
                     </Badge>
                   ))}

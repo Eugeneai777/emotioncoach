@@ -165,7 +165,7 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
           action: '准备毕业祝贺和转化话术',
           script: '恭喜你即将完成训练营！这段时间的坚持真的很棒 🎉 想继续深入成长的话，365会员可以解锁更多功能哦~',
           icon: <GraduationCap className="w-4 h-4" />,
-          color: 'border-green-200 bg-green-50/50'
+          color: 'border-orange-200 bg-orange-50/50'
         });
       }
 
@@ -192,7 +192,7 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
           action: '发送祝贺并引导升级365会员',
           script: '恭喜达成里程碑！你的坚持让人感动 ✨ 升级365会员可以解锁1000次AI对话和全部高级功能，现在升级还有优惠~',
           icon: <Star className="w-4 h-4" />,
-          color: 'border-blue-200 bg-blue-50/50'
+          color: 'border-orange-200 bg-orange-50/50'
         });
       }
 
@@ -221,7 +221,7 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
           action: '重新激活，询问近况',
           script: '好久没看到你了，最近还好吗？如果有什么想聊的或者需要帮助的，随时联系我哦 🌿',
           icon: <Ghost className="w-4 h-4" />,
-          color: 'border-gray-200 bg-gray-50/50'
+          color: 'border-orange-200 bg-orange-50/50'
         });
       }
 
@@ -265,10 +265,10 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
 
   if (alerts.length === 0) {
     return (
-      <Card className="border-green-200 bg-green-50/30">
+      <Card className="border bg-muted/30">
         <CardContent className="p-6 text-center">
           <div className="text-4xl mb-2">✅</div>
-          <p className="text-green-700 font-medium">暂无需要跟进的学员</p>
+          <p className="text-foreground font-medium">暂无需要跟进的学员</p>
           <p className="text-sm text-muted-foreground mt-1">所有学员状态良好，继续保持！</p>
         </CardContent>
       </Card>
