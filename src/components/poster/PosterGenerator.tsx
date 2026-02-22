@@ -77,7 +77,13 @@ export function PosterGenerator({
         parent_emotion_21: `Create a warm family poster background with emerald and teal gradients. Shapes suggesting connection and breakthrough. Hopeful, nurturing atmosphere. Vertical 9:16 ratio. No text.`,
         '365_member': `Create a premium poster background with elegant gold and amber gradients. Subtle luxurious textures suggesting value and exclusivity. Sophisticated, high-end aesthetic. Vertical 9:16 ratio. No text.`,
         partner_recruit: `Create an inspiring poster background with vibrant rose and pink gradients. Dynamic upward-flowing shapes suggesting growth and opportunity. Energetic, ambitious atmosphere. Vertical 9:16 ratio. No text.`,
-        wealth_block: `Create a luxurious poster background with rich gold and amber gradients. Abstract flowing shapes suggesting wealth discovery and financial clarity. Elegant coins and diamond-like light refractions. Vertical 9:16 ratio. No text.`
+        wealth_block: `Create a luxurious poster background with rich gold and amber gradients. Abstract flowing shapes suggesting wealth discovery and financial clarity. Elegant coins and diamond-like light refractions. Vertical 9:16 ratio. No text.`,
+        scl90: `Create a professional clinical poster background with deep violet and indigo gradients. Abstract neural network patterns suggesting psychological analysis. Scientific, trustworthy, calming atmosphere. Vertical 9:16 ratio. No text.`,
+        emotion_health: `Create a warm healing poster background with purple to pink gradients. Gentle heart-like organic shapes suggesting emotional wellness. Therapeutic, caring atmosphere. Vertical 9:16 ratio. No text.`,
+        alive_check: `Create a warm protective poster background with soft pink and rose gradients. Gentle heartbeat-like waves suggesting safety and care. Comforting, protective atmosphere. Vertical 9:16 ratio. No text.`,
+        vibrant_life: `Create a vibrant life-themed poster background with indigo to purple gradients. Dynamic flowing shapes suggesting multiple life dimensions. Energetic, holistic wellness atmosphere. Vertical 9:16 ratio. No text.`,
+        awakening: `Create a mystical awareness-themed poster background with deep violet and purple gradients. Abstract mandala-like patterns suggesting self-discovery. Contemplative, transformative atmosphere. Vertical 9:16 ratio. No text.`,
+        parent_teen: `Create a warm dual-space poster background with fuchsia to purple gradients. Two connected abstract areas suggesting parent-child connection while maintaining individual space. Warm, trusting atmosphere. Vertical 9:16 ratio. No text.`
       };
 
       const { data, error } = await supabase.functions.invoke('generate-poster-image', {

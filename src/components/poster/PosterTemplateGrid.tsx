@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface SceneVariant {
   tagline: string;
@@ -20,7 +23,168 @@ interface PosterTemplate {
   };
 }
 
+type TemplateCategory = 'recommended' | 'coach' | 'camp' | 'membership';
+
+const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; shortLabel: string; emoji: string }> = {
+  recommended: { label: '推荐', shortLabel: '推荐', emoji: '🔥' },
+  coach: { label: '教练', shortLabel: '教练', emoji: '🎯' },
+  camp: { label: '训练营', shortLabel: '营', emoji: '🏕️' },
+  membership: { label: '会员 & 合伙人', shortLabel: '会员', emoji: '👑' },
+};
+
+const TEMPLATE_CATEGORIES: Record<string, TemplateCategory> = {
+  experience_pack: 'recommended',
+  wealth_block: 'recommended',
+  scl90: 'recommended',
+  emotion_health: 'recommended',
+  alive_check: 'recommended',
+  emotion_coach: 'coach',
+  parent_coach: 'coach',
+  communication_coach: 'coach',
+  story_coach: 'coach',
+  vibrant_life: 'coach',
+  emotion_button: 'coach',
+  emotion_journal_21: 'camp',
+  parent_emotion_21: 'camp',
+  awakening: 'camp',
+  parent_teen: 'camp',
+  '365_member': 'membership',
+  partner_recruit: 'membership',
+};
+
 const posterTemplates: PosterTemplate[] = [
+  // ===== 推荐 =====
+  {
+    key: 'experience_pack',
+    name: '9.9体验包',
+    emoji: '🎁',
+    tagline: '9.9元解锁7项专业服务，开启你的心理健康之旅',
+    gradient: 'from-orange-400 to-amber-500',
+    sellingPoints: [
+      '尝鲜会员 50点AI教练额度',
+      '3项专业测评（情绪健康+SCL-90+财富卡点）',
+      '3项日常工具（情绪SOS+觉察日记+打卡）',
+      '一杯奶茶钱，7项服务全解锁'
+    ],
+    sceneVariants: {
+      moments: {
+        tagline: '花了9.9元体验了7项服务，才发现自己一直在忽略情绪信号...',
+        sellingPoints: ['一杯奶茶钱换7项专业服务', '测评+工具+AI额度全覆盖', '早发现早调整，别等崩溃才后悔'],
+        tone: '个人觉醒+超值体验'
+      },
+      xiaohongshu: {
+        tagline: '9.9元薅羊毛｜7项心理服务+50次AI对话，不买亏大了',
+        sellingPoints: ['3项测评+3项日常工具+AI额度', '情绪SOS+觉察日记+打卡全解锁', '原价超100元，限时体验仅9.9'],
+        tone: '超值种草+限时紧迫'
+      },
+      wechat_group: {
+        tagline: '群友福利！9.9元体验包，7项服务全部解锁',
+        sellingPoints: ['一杯奶茶钱体验全套服务', '测评+工具+AI额度一站搞定', '名额有限，先到先得'],
+        tone: '群友福利+限量感'
+      }
+    }
+  },
+  {
+    key: 'wealth_block',
+    name: '财富卡点测评',
+    emoji: '💰',
+    tagline: '为什么努力赚钱，却总觉得不够？答案藏在你的潜意识里',
+    gradient: 'from-amber-500 to-orange-600',
+    sellingPoints: ['3分钟定位你的"财富天花板"在哪', 'AI解码你和钱之间的隐藏模式', '90%的人测完才发现：不是赚得少，是留不住'],
+    sceneVariants: {
+      moments: {
+        tagline: '测完这个我才知道，原来我潜意识里一直在"推开"钱……',
+        sellingPoints: ['3分钟出结果，准到后背发凉', '终于明白为什么钱总是"过路财"', '改变从看见开始，看见从测评开始'],
+        tone: '个人顿悟+情绪共鸣'
+      },
+      xiaohongshu: {
+        tagline: '震惊！你的消费习惯正在暴露你的"财富人格"｜免费AI测评',
+        sellingPoints: ['心理学×行为经济学双模型深度扫描', 'AI一对一解读你的财富卡点报告', '附赠专属"财富解锁"行动方案'],
+        tone: '悬念种草+专业背书'
+      },
+      wechat_group: {
+        tagline: '@ 所有觉得"赚得不少但存不下来"的人，3分钟找到原因',
+        sellingPoints: ['完全免费，扫码就能测', '已有5000+人测完直呼太准', '不改变认知，换多少工作都一样'],
+        tone: '群友痛点+紧迫感'
+      }
+    }
+  },
+  {
+    key: 'scl90',
+    name: 'SCL-90心理测评',
+    emoji: '🧠',
+    tagline: '90题专业量表，10大心理因子全面扫描，AI个性化解读',
+    gradient: 'from-violet-500 to-indigo-600',
+    sellingPoints: ['全球权威心理健康自评量表', '10大因子：抑郁/焦虑/强迫/人际等', 'AI智能解读+个性化建议'],
+    sceneVariants: {
+      moments: {
+        tagline: '做完这个SCL-90测评才知道，原来我的焦虑已经超出正常范围了...',
+        sellingPoints: ['90题全面扫描10大心理因子', '比网上随便测的准多了', '还有AI帮你分析和建议'],
+        tone: '个人觉察+专业信赖'
+      },
+      xiaohongshu: {
+        tagline: 'SCL-90专业心理测评｜医院同款量表，在家就能自测',
+        sellingPoints: ['全球广泛使用的心理健康筛查工具', '10大因子精准评估心理状态', 'AI个性化解读报告'],
+        tone: '专业背书+种草测评'
+      },
+      wechat_group: {
+        tagline: '推荐一个专业心理测评，90题全面了解自己的心理状态',
+        sellingPoints: ['医院级别专业量表', '免费就能测', '测完有AI帮你详细分析'],
+        tone: '群友推荐+专业信赖'
+      }
+    }
+  },
+  {
+    key: 'emotion_health',
+    name: '情绪健康测评',
+    emoji: '❤️‍🩹',
+    tagline: '32题三层诊断，找到你的情绪卡点，AI教练陪你修复',
+    gradient: 'from-purple-500 to-pink-500',
+    sellingPoints: ['三层诊断：状态/模式/阻滞点', '对标PHQ-9/GAD-7权威量表', 'AI教练个性化陪伴修复'],
+    sceneVariants: {
+      moments: {
+        tagline: '原来我一直以为是性格问题，测完才发现是情绪卡点在作祟...',
+        sellingPoints: ['32题就能精准定位问题根源', '三层深挖：不只看表面症状', '还有AI教练帮你一步步修复'],
+        tone: '个人顿悟+深层发现'
+      },
+      xiaohongshu: {
+        tagline: '情绪总是反复？32题三层诊断找到你的情绪卡点',
+        sellingPoints: ['对标国际权威量表PHQ-9/GAD-7', '三层诊断模型精准到位', 'AI教练定制修复方案'],
+        tone: '痛点切入+专业方案'
+      },
+      wechat_group: {
+        tagline: '群友们试试这个情绪健康测评，32题就能找到情绪问题根源',
+        sellingPoints: ['比一般测评深入三层', '测完有AI教练帮你分析', '好几个群友测完都说准'],
+        tone: '群友验证+真诚推荐'
+      }
+    }
+  },
+  {
+    key: 'alive_check',
+    name: '安全打卡',
+    emoji: '💗',
+    tagline: '每日一键确认安全，让关心你的人安心',
+    gradient: 'from-pink-400 to-rose-500',
+    sellingPoints: ['每日一键安全确认', '超时自动通知紧急联系人', '最多5位联系人，默默守护'],
+    sceneVariants: {
+      moments: {
+        tagline: '有了这个安全打卡功能，妈妈终于不用每天打电话确认我有没有事了',
+        sellingPoints: ['一键打卡，家人自动收到安全通知', '忘打卡会自动提醒联系人', '独居/异地/老人都适用'],
+        tone: '温暖故事+家人关怀'
+      },
+      xiaohongshu: {
+        tagline: '独居女生必备｜安全打卡功能，超时自动通知紧急联系人',
+        sellingPoints: ['每天点一下确认安全', '超时未打卡自动通知家人', '最多设置5位紧急联系人'],
+        tone: '安全种草+独居必备'
+      },
+      wechat_group: {
+        tagline: '群里独居的朋友看过来，这个安全打卡功能真的能救命',
+        sellingPoints: ['每天一键打卡确认安全', '忘了打卡会自动通知你设定的联系人', '免费使用，设置很简单'],
+        tone: '群友关怀+安全感'
+      }
+    }
+  },
+  // ===== 教练 =====
   {
     key: 'emotion_button',
     name: '情绪按钮',
@@ -147,6 +311,32 @@ const posterTemplates: PosterTemplate[] = [
     }
   },
   {
+    key: 'vibrant_life',
+    name: 'AI生活教练',
+    emoji: '🌈',
+    tagline: '5大生活场景智能适配，24小时温暖陪伴你的每一天',
+    gradient: 'from-indigo-400 to-purple-500',
+    sellingPoints: ['情绪/睡眠/压力/关系/目标全覆盖', '每次对话自动生成洞察报告', '24小时随时在线的私人教练'],
+    sceneVariants: {
+      moments: {
+        tagline: '自从有了这个AI生活教练，感觉生活每个角落都被照顾到了',
+        sellingPoints: ['睡不着、压力大、关系僵都能聊', '不只是陪聊，每次还给你洞察报告', '比朋友更懂你，比咨询更便宜'],
+        tone: '生活陪伴+全方位关怀'
+      },
+      xiaohongshu: {
+        tagline: 'AI生活教练体验｜5大场景全覆盖，私人教练24小时在线',
+        sellingPoints: ['情绪/睡眠/压力/关系/目标5大领域', '每次对话生成专属洞察报告', '月均不到一杯咖啡的钱'],
+        tone: '全面种草+性价比'
+      },
+      wechat_group: {
+        tagline: '安利一个AI生活教练，情绪、睡眠、压力什么都能聊',
+        sellingPoints: ['5个生活场景随便选', '24小时在线不用预约', '群友都说比想象中好用'],
+        tone: '群友安利+场景丰富'
+      }
+    }
+  },
+  // ===== 训练营 =====
+  {
     key: 'emotion_journal_21',
     name: '21天情绪日记营',
     emoji: '📝',
@@ -197,6 +387,57 @@ const posterTemplates: PosterTemplate[] = [
     }
   },
   {
+    key: 'awakening',
+    name: '觉察系统',
+    emoji: '🔮',
+    tagline: '6维深度觉察训练，情绪/感恩/行动/决策/关系/方向全覆盖',
+    gradient: 'from-violet-500 to-purple-600',
+    sellingPoints: ['6大觉察维度系统训练', 'AI引导式自我探索', '游戏化成长记录与可视化'],
+    sceneVariants: {
+      moments: {
+        tagline: '用了这个觉察系统后，才发现以前活得有多"自动驾驶"',
+        sellingPoints: ['6个维度帮我看清自己的盲点', '每天花几分钟就能深度觉察', '像给人生装了一面镜子'],
+        tone: '觉醒感悟+深度思考'
+      },
+      xiaohongshu: {
+        tagline: '自我觉察神器｜6维训练系统，像给人生装了高清镜头',
+        sellingPoints: ['情绪/感恩/行动/决策/关系/方向', 'AI引导不会尴尬不用约人', '游戏化成长可视化超有成就感'],
+        tone: '神器种草+系统化'
+      },
+      wechat_group: {
+        tagline: '想更了解自己的群友可以试试这个觉察系统',
+        sellingPoints: ['6个维度全面了解自己', 'AI引导很温和不强迫', '群友一起练效果更好'],
+        tone: '群友推荐+温和邀约'
+      }
+    }
+  },
+  {
+    key: 'parent_teen',
+    name: '亲子双轨模式',
+    emoji: '👨‍👩‍👧‍👦',
+    tagline: '父母与孩子各有独立空间，保护隐私的智能情绪陪伴',
+    gradient: 'from-fuchsia-400 to-purple-500',
+    sellingPoints: ['父母和孩子各有专属空间', '保护隐私的情绪陪伴', '智能匹配成长建议'],
+    sceneVariants: {
+      moments: {
+        tagline: '孩子终于愿意倾诉了，因为这个空间只属于TA自己',
+        sellingPoints: ['孩子有自己的私密空间更愿意说', '父母也有专属支持不再孤军奋战', '隐私保护让信任重建成为可能'],
+        tone: '信任重建+隐私关怀'
+      },
+      xiaohongshu: {
+        tagline: '亲子沟通新方式｜父母孩子各有AI空间，隐私保护超安心',
+        sellingPoints: ['双轨设计：父母端+孩子端', '孩子的秘密不会被看到', 'AI智能匹配亲子成长建议'],
+        tone: '创新模式+隐私安全'
+      },
+      wechat_group: {
+        tagline: '家有青春期孩子的看过来，这个双轨模式孩子更愿意用',
+        sellingPoints: ['孩子有自己的空间才肯说心里话', '父母也有专属教练支持', '比强迫沟通效果好100倍'],
+        tone: '群友验证+破冰方案'
+      }
+    }
+  },
+  // ===== 会员 & 合伙人 =====
+  {
     key: '365_member',
     name: '365会员',
     emoji: '👑',
@@ -218,61 +459,6 @@ const posterTemplates: PosterTemplate[] = [
         tagline: '经常用这个APP的群友可以考虑开个年卡，真的划算',
         sellingPoints: ['群友专属优惠链接', '一年1000次对话够用了', '开了后不心疼点数了'],
         tone: '群友推荐+专属感'
-      }
-    }
-  },
-  {
-    key: 'wealth_block',
-    name: '财富卡点测评',
-    emoji: '💰',
-    tagline: '为什么努力赚钱，却总觉得不够？答案藏在你的潜意识里',
-    gradient: 'from-amber-500 to-orange-600',
-    sellingPoints: ['3分钟定位你的"财富天花板"在哪', 'AI解码你和钱之间的隐藏模式', '90%的人测完才发现：不是赚得少，是留不住'],
-    sceneVariants: {
-      moments: {
-        tagline: '测完这个我才知道，原来我潜意识里一直在"推开"钱……',
-        sellingPoints: ['3分钟出结果，准到后背发凉', '终于明白为什么钱总是"过路财"', '改变从看见开始，看见从测评开始'],
-        tone: '个人顿悟+情绪共鸣'
-      },
-      xiaohongshu: {
-        tagline: '震惊！你的消费习惯正在暴露你的"财富人格"｜免费AI测评',
-        sellingPoints: ['心理学×行为经济学双模型深度扫描', 'AI一对一解读你的财富卡点报告', '附赠专属"财富解锁"行动方案'],
-        tone: '悬念种草+专业背书'
-      },
-      wechat_group: {
-        tagline: '@ 所有觉得"赚得不少但存不下来"的人，3分钟找到原因',
-        sellingPoints: ['完全免费，扫码就能测', '已有5000+人测完直呼太准', '不改变认知，换多少工作都一样'],
-        tone: '群友痛点+紧迫感'
-      }
-    }
-  },
-  {
-    key: 'experience_pack',
-    name: '9.9体验包',
-    emoji: '🎁',
-    tagline: '9.9元解锁7项专业服务，开启你的心理健康之旅',
-    gradient: 'from-orange-400 to-amber-500',
-    sellingPoints: [
-      '尝鲜会员 50点AI教练额度',
-      '3项专业测评（情绪健康+SCL-90+财富卡点）',
-      '3项日常工具（情绪SOS+觉察日记+打卡）',
-      '一杯奶茶钱，7项服务全解锁'
-    ],
-    sceneVariants: {
-      moments: {
-        tagline: '花了9.9元体验了7项服务，才发现自己一直在忽略情绪信号...',
-        sellingPoints: ['一杯奶茶钱换7项专业服务', '测评+工具+AI额度全覆盖', '早发现早调整，别等崩溃才后悔'],
-        tone: '个人觉醒+超值体验'
-      },
-      xiaohongshu: {
-        tagline: '9.9元薅羊毛｜7项心理服务+50次AI对话，不买亏大了',
-        sellingPoints: ['3项测评+3项日常工具+AI额度', '情绪SOS+觉察日记+打卡全解锁', '原价超100元，限时体验仅9.9'],
-        tone: '超值种草+限时紧迫'
-      },
-      wechat_group: {
-        tagline: '群友福利！9.9元体验包，7项服务全部解锁',
-        sellingPoints: ['一杯奶茶钱体验全套服务', '测评+工具+AI额度一站搞定', '名额有限，先到先得'],
-        tone: '群友福利+限量感'
       }
     }
   },
@@ -310,33 +496,84 @@ interface PosterTemplateGridProps {
 }
 
 export function PosterTemplateGrid({ onSelect }: PosterTemplateGridProps) {
+  const getTemplatesByCategory = (category: TemplateCategory) =>
+    posterTemplates.filter(t => TEMPLATE_CATEGORIES[t.key] === category);
+
+  const renderTemplateCard = (template: PosterTemplate, isRecommended = false) => (
+    <Card 
+      key={template.key}
+      className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1 overflow-hidden group"
+      onClick={() => onSelect(template.key)}
+    >
+      <div className={`h-2 bg-gradient-to-r ${template.gradient}`} />
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{template.emoji}</span>
+          <span className="font-medium text-sm">{template.name}</span>
+          {isRecommended && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-orange-100 text-orange-600 border-orange-200">
+              热门
+            </Badge>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground line-clamp-2">{template.tagline}</p>
+        <div className="space-y-1">
+          {template.sellingPoints.slice(0, 2).map((point, idx) => (
+            <div key={idx} className="text-xs text-muted-foreground/80 flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+              <span className="line-clamp-1">{point}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderCategorySection = (category: TemplateCategory) => {
+    const templates = getTemplatesByCategory(category);
+    const config = CATEGORY_CONFIG[category];
+    if (templates.length === 0) return null;
+
+    return (
+      <div key={category}>
+        <div className="flex items-center gap-2 mb-3">
+          <span>{config.emoji}</span>
+          <h3 className="font-medium text-sm text-foreground">{config.label}</h3>
+          <span className="text-xs text-muted-foreground">({templates.length})</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {templates.map(t => renderTemplateCard(t, category === 'recommended'))}
+        </div>
+      </div>
+    );
+  };
+
+  const categories: TemplateCategory[] = ['recommended', 'coach', 'camp', 'membership'];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      {posterTemplates.map((template) => (
-        <Card 
-          key={template.key}
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1 overflow-hidden group"
-          onClick={() => onSelect(template.key)}
-        >
-          <div className={`h-2 bg-gradient-to-r ${template.gradient}`} />
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{template.emoji}</span>
-              <span className="font-medium text-sm">{template.name}</span>
-            </div>
-            <p className="text-xs text-muted-foreground line-clamp-2">{template.tagline}</p>
-            <div className="space-y-1">
-              {template.sellingPoints.slice(0, 2).map((point, idx) => (
-                <div key={idx} className="text-xs text-muted-foreground/80 flex items-center gap-1">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/40 flex-shrink-0" />
-                  <span className="line-clamp-1">{point}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+    <Tabs defaultValue="all" className="w-full">
+      <TabsList className="w-full mb-4 flex-wrap h-auto gap-1 p-1">
+        <TabsTrigger value="all" className="text-xs">
+          全部
+        </TabsTrigger>
+        {categories.map(cat => (
+          <TabsTrigger key={cat} value={cat} className="text-xs">
+            <span className="hidden sm:inline">{CATEGORY_CONFIG[cat].emoji} {CATEGORY_CONFIG[cat].label}</span>
+            <span className="inline sm:hidden">{CATEGORY_CONFIG[cat].emoji} {CATEGORY_CONFIG[cat].shortLabel}</span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      <TabsContent value="all" className="space-y-6">
+        {categories.map(cat => renderCategorySection(cat))}
+      </TabsContent>
+
+      {categories.map(cat => (
+        <TabsContent key={cat} value={cat}>
+          {renderCategorySection(cat)}
+        </TabsContent>
       ))}
-    </div>
+    </Tabs>
   );
 }
 
