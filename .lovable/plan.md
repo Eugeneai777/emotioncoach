@@ -1,85 +1,167 @@
 
 
-## 优化 /partner 设计排版 - 第二轮
+## 重新规划 /partner 合伙人中心页面 - 第三轮优化
 
-### 当前问题
+### 当前问题诊断
 
-上一轮优化已统一了 PartnerOverviewCard、CompactConversionFunnel、EntryTypeSelector、PartnerSelfRedeemCard 的颜色。但以下组件仍存在**颜色不统一**和**冗余**问题：
+经过前两轮颜色统一优化后，颜色已基本统一为橙色系。但页面仍存在以下**结构性和设计问题**：
 
-| 组件 | 问题 |
+#### 1. 推广 Tab 内容严重冗余
+
+推广 Tab 包含 3 个独立卡片，功能高度重叠：
+
+| 组件 | 功能 |
 |------|------|
-| `FixedPromoLinkCard` | 仍用 teal/cyan 背景和按钮（`from-teal-50 to-cyan-50`），与已优化的橙色系不一致 |
-| `ConversionFunnel` | 漏斗条颜色为 蓝/橙/绿/紫 4色，应统一为橙色深浅 |
-| `ConversionGuide` | 阶段标签使用 蓝/橙/绿/紫 4色，与漏斗不一致 |
-| `ConversionAlerts` | 提醒框背景用 红/橙/绿/蓝/灰 5种，可简化 |
-| `PartnerUpgradeCard` | 已到期/临期用红色渐变背景，正常升级用橙色渐变 -- 可接受但背景渐变可精简 |
+| `PartnerSelfRedeemCard` | 入口方式无关，独立兑换操作 |
+| `EntryTypeSelector` | 选择免费/付费 + 体验包内容 + 链接预览 + 保存按钮 |
+| `FixedPromoLinkCard` | 显示链接 + 复制/二维码/海报按钮 |
 
-### 改动方案
+问题：`EntryTypeSelector` 和 `FixedPromoLinkCard` 都显示推广链接、都有复制功能、都显示入口方式。而 `PromotionHub`（绽放合伙人用）已经是合并版本，但有劲合伙人仍然分成了 3 个卡片。
 
-#### 1. FixedPromoLinkCard - teal 全改橙色
+#### 2. 收益 Tab 颜色仍不统一
 
-- 卡片背景：`from-teal-50 to-cyan-50 border-teal-200` -> `bg-white border`
-- 图标背景：`from-teal-400 to-cyan-500` -> `from-orange-400 to-amber-500`
-- 标题文字：`text-teal-800` -> `text-foreground`
-- 链接框边框：`border-teal-100` -> `border-border`
-- 链接文字：`text-teal-700` -> `text-foreground`
-- 复制按钮：`text-teal-600 hover:bg-teal-100` -> `text-orange-600 hover:bg-orange-100`
-- 操作按钮：`from-teal-500 to-cyan-500` -> `from-orange-500 to-amber-500`
-- 二维码按钮：`border-teal-300 text-teal-700` -> `border-orange-300 text-orange-700`
-- 底部说明：`text-teal-600` -> `text-muted-foreground`
-- 紫色（财富测评）保持不变（紫色是该产品的语义色）
-- QR 颜色：teal -> orange
+`PartnerAnalytics` 组件中：
+- 分享效果统计：紫色(`bg-purple-50`)、绿色(`bg-green-50`)、蓝色(`bg-blue-50`)、琥珀色(`bg-amber-50`) 4 种背景色
+- 转化率分析条：蓝(`bg-blue-500`)、青(`bg-teal-500`)、绿(`bg-green-500`) 3 种颜色
+- 本月收益文字：`text-green-600`（应为橙色）
+- 趋势图图标：`text-blue-500`
+- 佣金明细中的金额：`text-green-600`
 
-#### 2. ConversionFunnel - 统一橙色渐变
+#### 3. 概览卡片过于复杂
 
-漏斗条颜色从 4 色改为橙色系深浅：
-- 兑换体验：`bg-blue-500` -> `bg-orange-200`（浅橙）
-- 加入群聊：`bg-orange-500` -> `bg-orange-400`（中橙，保持）
-- 购买365：`bg-green-500` -> `bg-orange-500`（标准橙）
-- 成为合伙人：`bg-purple-500` -> `bg-amber-600`（深琥珀）
+`PartnerOverviewCard` 包含：等级头 + 到期提示 + 4 格数据 + 提现按钮 + 转化漏斗 = 6 个区域，垂直高度占据大量屏幕空间。
 
-圆形图标背景同步调整。
-整体转化率文字：`text-green-600` -> `text-orange-600`
+#### 4. 学员 Tab 组件过多
 
-#### 3. ConversionGuide - 统一橙色系
+学员 Tab 包含 5 个组件：`ConversionAlerts` + `ConversionFunnel` + `ConversionGuide` + 群管理折叠区 + `StudentList`。ConversionGuide 是静态教学内容，每次进入都显示，实际使用后不再需要。
 
-四阶段标签颜色统一：
-- `text-blue-600 bg-blue-100` -> `text-orange-500 bg-orange-100`
-- `text-orange-600 bg-orange-100` -> 保持
-- `text-green-600 bg-green-100` -> `text-orange-600 bg-orange-100`
-- `text-purple-600 bg-purple-100` -> `text-amber-700 bg-amber-100`
+### 优化方案
 
-关键节点提示中：
-- 高优先级背景：`bg-red-50` -> `bg-orange-50`，标题色改橙色
-- 最佳时机 Badge：`bg-green-50 border-green-200` -> `bg-orange-50 border-orange-200`
+#### A. 推广 Tab - 合并为一个卡片
 
-#### 4. ConversionAlerts - 简化颜色
+将 `EntryTypeSelector` 和 `FixedPromoLinkCard` 的功能合并，直接在 `YoujinPartnerDashboard` 中用 `PromotionHub` 替代两者（`PromotionHub` 已经是合并版本）。
 
-5 种提醒背景统一简化为 2 种：
-- 高优先级（high）：保持 `border-red-200 bg-red-50/50`（红色有语义意义：紧急）
-- 中/低优先级（medium/low）：统一为 `border-orange-200 bg-orange-50/50`
+改动：
+- `YoujinPartnerDashboard.tsx` 推广 Tab 内容改为：
+  1. `PartnerSelfRedeemCard`（自用兑换，保留）
+  2. `PromotionHub`（已有合并版本，替代 EntryTypeSelector + FixedPromoLinkCard）
+- 删除推广 Tab 中对 `EntryTypeSelector` 和 `FixedPromoLinkCard` 的引用
 
-即：蓝色（转化时机）、绿色（毕业）、灰色（长期未活跃）全部改为橙色。
+#### B. 收益 Tab - 颜色统一
 
-无状态 "暂无需要跟进" 卡片：`border-green-200 bg-green-50/30` -> `border-border bg-muted/30`
+**PartnerAnalytics.tsx**：
+- 分享效果统计 4 格背景统一：`bg-purple-50` / `bg-green-50` / `bg-blue-50` / `bg-amber-50` 全改为 `bg-orange-50`
+- 对应文字颜色：紫/绿/蓝/琥珀全改为 `text-orange-700`
+- 分享效果标题图标：`text-purple-500` 改为 `text-orange-500`
+- 趋势图标题图标：`text-blue-500` 改为 `text-orange-500`
+- 转化率分析条颜色：蓝/青/绿全改为橙色系深浅（`bg-orange-300` / `bg-orange-400` / `bg-orange-500`）
+- 本月收益文字：`text-green-600` 改为 `text-orange-600`
 
-#### 5. PartnerUpgradeCard - 精简背景
+**CommissionHistory.tsx**：
+- 佣金金额：`text-green-600` 改为 `text-orange-600`
 
-- 升级引导：`border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50` -> `bg-white border-orange-200`
-- 提示条：`bg-amber-100/50` -> `bg-orange-50`
-- 过期/临期状态保持红色/琥珀色（语义色，不改）
+#### C. 概览卡片精简
+
+**PartnerOverviewCard.tsx**：
+- 将 4 格数据从 `grid-cols-4` 改为 2 行紧凑展示（2 x 2 水平行），减少高度
+- 移除每格的图标（用文字标签足够），让数字更突出
+- 到期提示与等级条合并（到期信息直接显示在等级条右下角而非独立横幅）
+
+#### D. 学员 Tab 精简
+
+**YoujinPartnerDashboard.tsx**：
+- `ConversionGuide` 移到折叠状态（默认不展开），与"群管理"合并为一个"工具与指南"折叠区
+- 调整顺序：`ConversionAlerts`（跟进提醒） -> `StudentList`（学员列表） -> `ConversionFunnel`（漏斗，移到学员列表下方作为补充分析） -> 工具指南折叠区
 
 ### 涉及文件
 
-| 文件 | 改动量 |
-|------|--------|
-| `src/components/partner/FixedPromoLinkCard.tsx` | 中 - teal 全改 orange |
-| `src/components/partner/ConversionFunnel.tsx` | 小 - 4 个颜色值 |
-| `src/components/partner/ConversionGuide.tsx` | 小 - 标签和 badge 颜色 |
-| `src/components/partner/ConversionAlerts.tsx` | 小 - 提醒框背景色 |
-| `src/components/partner/PartnerUpgradeCard.tsx` | 小 - 背景渐变精简 |
+| 文件 | 改动 | 说明 |
+|------|------|------|
+| `YoujinPartnerDashboard.tsx` | 中 | 推广 Tab 合并组件、学员 Tab 重排 |
+| `PartnerOverviewCard.tsx` | 中 | 数据格精简为 2x2 紧凑布局、到期提示合并 |
+| `PartnerAnalytics.tsx` | 小 | 颜色统一为橙色系 |
+| `CommissionHistory.tsx` | 小 | 佣金金额颜色改橙 |
+
+### 具体改动细节
+
+#### 1. YoujinPartnerDashboard.tsx
+
+推广 Tab 部分（第 160-183 行）：
+```tsx
+// 改前：3 个组件
+<PartnerSelfRedeemCard />
+<EntryTypeSelector />
+<FixedPromoLinkCard />
+
+// 改后：2 个组件
+<PartnerSelfRedeemCard />
+<PromotionHub />  // 已有合并版，包含入口切换+链接+复制+二维码
+```
+
+学员 Tab 部分（第 186-281 行）：
+```tsx
+// 改前：ConversionAlerts -> ConversionFunnel -> ConversionGuide -> 群管理 -> StudentList
+// 改后：
+<ConversionAlerts />
+<StudentList />
+<ConversionFunnel />
+<Collapsible> {/* 工具与指南 */}
+  <ConversionGuide />
+  {/* 群管理内容 */}
+</Collapsible>
+```
+
+删除顶部对 `EntryTypeSelector` 和 `FixedPromoLinkCard` 的 import。
+
+#### 2. PartnerOverviewCard.tsx
+
+将 4 格数据 grid 改为更紧凑的 2 行水平布局：
+
+```tsx
+// 改前：grid-cols-4 每格带图标+数字+标签（占 3 行高度）
+// 改后：2 行各 2 个数据项，水平排列，无图标
+<div className="space-y-1.5">
+  <div className="flex justify-between">
+    <div className="flex items-baseline gap-1">
+      <span className="text-lg font-bold text-orange-600">¥{total_earnings}</span>
+      <span className="text-[10px] text-muted-foreground">累计收益</span>
+    </div>
+    <div className="flex items-baseline gap-1">
+      <span className="text-lg font-bold text-orange-600">¥{available_balance}</span>
+      <span className="text-[10px] text-muted-foreground">可提现</span>
+    </div>
+  </div>
+  <div className="flex justify-between">
+    <div className="flex items-baseline gap-1">
+      <span className="text-lg font-bold text-orange-600">{total_referrals}</span>
+      <span className="text-[10px] text-muted-foreground">直推用户</span>
+    </div>
+    <div className="flex items-baseline gap-1">
+      <span className="text-lg font-bold text-orange-600">{prepurchase_count}</span>
+      <span className="text-[10px] text-muted-foreground">剩余名额</span>
+    </div>
+  </div>
+</div>
+```
+
+到期提示从独立横幅改为在等级条 subtitle 中内联显示（移除第 118-141 行的独立到期区块，将关键信息放在等级条的副标题位置）。
+
+#### 3. PartnerAnalytics.tsx
+
+纯颜色替换：
+- 第 289-306 行：4 格背景色全改 `bg-orange-50`，文字色全改 `text-orange-700`
+- 第 282 行：`text-purple-500` 改 `text-orange-500`
+- 第 317 行：`text-blue-500` 改 `text-orange-500`
+- 第 247 行：`text-green-600` 改 `text-orange-600`
+- 第 390 行：`bg-blue-500` 改 `bg-orange-300`
+- 第 400 行：`bg-teal-500` 改 `bg-orange-400`
+- 第 413 行：`bg-green-500` 改 `bg-orange-500`
+
+#### 4. CommissionHistory.tsx
+
+- 第 141 行：`text-green-600` 改 `text-orange-600`
 
 ### 无数据库改动
 
-纯前端样式调整，共改 5 个文件。
+纯前端布局和样式优化，共改 4 个文件。
 
