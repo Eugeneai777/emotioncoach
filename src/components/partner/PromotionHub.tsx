@@ -166,9 +166,6 @@ export function PromotionHub({
             <p className="text-xs text-muted-foreground mb-1">📎 推广链接</p>
             <p className="text-sm font-mono text-teal-700 truncate">{promoUrl}</p>
           </div>
-          <Button size="sm" variant="ghost" className="shrink-0 text-teal-600 hover:text-teal-700 hover:bg-teal-100" onClick={handleCopyLink}>
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          </Button>
         </div>
 
         {/* 操作按钮 */}

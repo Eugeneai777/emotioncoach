@@ -45,7 +45,7 @@ export default function Partner() {
   }
 
   const isBloom = partner?.partner_type === 'bloom';
-  const pageTitle = isBloom ? "绽放合伙人中心" : (partner?.partner_type === 'youjin' ? "有劲合伙人中心" : "合伙人中心");
+  const pageTitle = "合伙人中心";
 
   return (
     <div 
