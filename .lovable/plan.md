@@ -1,54 +1,45 @@
 
 
-## 修复 /claim 页面显示内容
+## 合伙人体验包自选功能
 
-### 问题
+### 现状
 
-Claim 页面的成功和已领取状态显示内容与实际发放权益不匹配：
-
-| 问题 | 当前显示 | 实际情况 |
-|------|----------|----------|
-| 权益列表 | 4项硬编码（含"21天训练营"） | 7项动态发放，无训练营 |
-| 主要CTA | "开始免费训练营" -> /camps | 未发放训练营，应引导去使用工具 |
-| granted_items | 前端完全忽略 | 后端已返回实际发放列表 |
-| 已领取CTA | 也指向 /camps | 同上 |
+| 层 | 状态 | 说明 |
+|---|------|------|
+| 数据库 `partners.selected_experience_packages` | 已有 | text[] 类型字段 |
+| 后端 `claim-partner-entry` | 已支持 | 读取 `selected_experience_packages` 过滤发放项 |
+| 前端 `EntryTypeSelector` | 未实现 | 始终保存全部 `allPackageKeys`，无勾选 UI |
 
 ### 方案
 
-更新 `Claim.tsx` 的成功和已领取状态 UI，使其：
-1. 动态展示后端返回的 `granted_items` 列表
-2. 静态权益描述更新为 7 项正确内容
-3. CTA 按钮改为引导到首页（触发 SmartHomeRedirect）
+在 `EntryTypeSelector` 的"包含内容"区域，将静态展示改为可勾选列表，合伙人保存时将选中的 `package_key[]` 写入 `selected_experience_packages`。链接无需改动，后端已按此字段过滤发放。
 
 ### 改动
 
-#### Claim.tsx
+#### 1. EntryTypeSelector.tsx
 
-**Success 状态：**
-- 保存后端返回的 `granted_items` 到 state
-- 权益展示区显示实际发放的项目列表（使用 `granted_items`）
-- 如果 `granted_items` 为空则显示静态的 7 项默认列表：
-  - 尝鲜会员 50点AI教练额度
-  - 财富卡点测评
-  - 情绪健康测评
-  - SCL-90心理测评
-  - 死了吗打卡
-  - 觉察日记
-  - 情绪SOS按钮
-- 移除"免费参加21天训练营"和"解锁全部情绪工具"
-- 主 CTA 从"开始免费训练营"改为"开始体验" -> 跳转 `/`
-- 保留"进入首页"作为次级按钮
+- 新增 `selectedKeys: Set<string>` state，初始化为全选或从 partner 数据读取
+- 接收新 prop `currentSelectedPackages?: string[]`，用于初始化
+- "包含内容"区域：每行添加 Checkbox，点击可选/取消
+- 添加"全选/取消全选"快捷操作
+- 保存时将 `Array.from(selectedKeys)` 写入 `selected_experience_packages`
+- 至少选 1 项才可保存，否则禁用按钮
+- 选中项变化也触发 `hasChanges`
 
-**Already-claimed 状态：**
-- CTA 从"进入训练营"改为"开始使用" -> 跳转 `/`
-- 文案调整为引导使用已有工具
+#### 2. 使用 EntryTypeSelector 的父组件
 
-**新增 state：**
-- `grantedItems: string[]` 存储后端返回的实际发放列表
+需要传入 `currentSelectedPackages` prop（从 partner 数据中读取）。查找所有引用该组件的地方并补充传参。
+
+### 不需要改动
+
+- `claim-partner-entry` 后端（已支持按 `selected_experience_packages` 过滤）
+- `Claim.tsx`（已动态展示 `granted_items`）
+- 数据库 schema（字段已存在）
+- 推广链接格式（不变）
 
 ### 改动文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/pages/Claim.tsx` | 更新成功/已领取状态的权益展示和 CTA |
-
+| `src/components/partner/EntryTypeSelector.tsx` | 添加 Checkbox 勾选 UI + selectedKeys state |
+| 引用 EntryTypeSelector 的父组件 | 补充 `currentSelectedPackages` prop 传入 |
