@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePartner } from "@/hooks/usePartner";
@@ -5,16 +6,26 @@ import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
-import { ArrowRight } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { useEffect } from "react";
 import { bloomPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
+import { totalCommissionableCount } from "@/config/youjinPartnerProducts";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 export default function PartnerBenefitsUnified() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { partner, loading: partnerLoading } = usePartner();
   const { levels } = usePartnerLevels();
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<{ key: string; name: string; price: number } | null>(null);
+
+  usePaymentCallback({
+    onSuccess: () => navigate('/partner'),
+    showToast: true,
+    showConfetti: true,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -33,9 +44,12 @@ export default function PartnerBenefitsUnified() {
   const yL2 = youjinPartnerLevels[1];
   const yL3 = youjinPartnerLevels[2];
 
-  // Determine current level highlights
   const isBloom = partner?.partner_type === 'bloom';
   const partnerLevel = partner?.partner_level || 'L1';
+  const currentYoujinLevel = isBloom ? 'L1' : partnerLevel;
+
+  const canUpgradeToL2 = currentYoujinLevel === 'L1';
+  const canUpgradeToL3 = currentYoujinLevel === 'L1' || currentYoujinLevel === 'L2';
 
   const currentTag = (
     <span className="inline-block text-[10px] bg-primary/20 text-primary rounded-full px-1.5 py-0.5 font-medium">
@@ -52,14 +66,20 @@ export default function PartnerBenefitsUnified() {
 
   const makeYoujinHeader = (level: string, label: string, icon: string) => (
     <div className="flex flex-col items-center gap-1">
-      <span>{icon} {label}</span>
+      <span>{icon} 有劲{label}</span>
       {((isBloom && level === 'L1') || (!isBloom && partnerLevel === level)) && currentTag}
     </div>
   );
 
-  // Check if user can upgrade
-  const currentYoujinLevel = isBloom ? 'L1' : partnerLevel;
-  const canUpgrade = currentYoujinLevel !== 'L3';
+  const handleUpgrade = (level: 'L2' | 'L3') => {
+    const target = level === 'L2' ? yL2 : yL3;
+    setSelectedPackage({
+      key: `youjin_partner_${level.toLowerCase()}`,
+      name: target.name,
+      price: target.price,
+    });
+    setPayDialogOpen(true);
+  };
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-slate-50 via-white to-slate-50" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -82,6 +102,7 @@ export default function PartnerBenefitsUnified() {
               rows={[
                 { label: "一级佣金", values: [`${(bloom.commissionRateL1 * 100)}%`, `${(yL1.commissionRateL1 * 100)}%`, `${(yL2.commissionRateL1 * 100)}%`, `${(yL3.commissionRateL1 * 100)}%`] },
                 { label: "二级佣金", values: [`${(bloom.commissionRateL2 * 100)}%`, false, `${(yL2.commissionRateL2 * 100)}%`, `${(yL3.commissionRateL2 * 100)}%`] },
+                { label: "分成产品", values: [`绽放+有劲${totalCommissionableCount}款`, `有劲${totalCommissionableCount}款`, `有劲${totalCommissionableCount}款`, `有劲${totalCommissionableCount}款`] },
                 { label: "适用产品", values: ["绽放+有劲", "有劲产品", "有劲产品", "有劲产品"] },
                 { label: "体验包", values: ["含有劲体验包", "100份", "500份", "1000份"] },
                 { label: "推广方式", values: ["推广码/链接", "兑换码/二维码", "兑换码/二维码", "兑换码/二维码"] },
@@ -91,27 +112,56 @@ export default function PartnerBenefitsUnified() {
           </CardContent>
         </Card>
 
-        {/* 升级引导 */}
-        {canUpgrade && (
-          <Card className="border-2 border-amber-200 overflow-hidden">
-            <CardContent className="p-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="font-semibold text-sm">💎 升级有劲合伙人，解锁更高收益</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {currentYoujinLevel === 'L1' ? '升级到高级/钻石，享受更高佣金和二级分润' : '升级到钻石合伙人，享受50%佣金+专属客户经理'}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                className="shrink-0 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
-                onClick={() => navigate('/partner/youjin-intro')}
-              >
-                查看升级 <ArrowRight className="w-4 h-4" />
-              </Button>
-            </CardContent>
-          </Card>
+        {/* 升级按钮区域 */}
+        {(canUpgradeToL2 || canUpgradeToL3) && (
+          <div className="grid grid-cols-2 gap-3">
+            {canUpgradeToL2 && (
+              <Card className="border-orange-200 overflow-hidden">
+                <CardContent className="p-4 flex flex-col items-center gap-2 text-center">
+                  <span className="text-lg">🔥</span>
+                  <p className="font-semibold text-sm">升级有劲高级</p>
+                  <p className="text-lg font-bold text-primary">¥{yL2.price.toLocaleString()}</p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                    onClick={() => handleUpgrade('L2')}
+                  >
+                    立即升级
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {canUpgradeToL3 && (
+              <Card className="border-amber-200 overflow-hidden">
+                <CardContent className="p-4 flex flex-col items-center gap-2 text-center">
+                  <span className="text-lg">💎</span>
+                  <p className="font-semibold text-sm">升级有劲钻石</p>
+                  <p className="text-lg font-bold text-primary">¥{yL3.price.toLocaleString()}</p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
+                    onClick={() => handleUpgrade('L3')}
+                  >
+                    立即升级
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
       </div>
+
+      {/* 支付弹窗 */}
+      <UnifiedPayDialog
+        open={payDialogOpen}
+        onOpenChange={setPayDialogOpen}
+        packageInfo={selectedPackage}
+        onSuccess={() => {
+          setPayDialogOpen(false);
+          navigate('/partner');
+        }}
+        returnUrl="/partner/benefits-all"
+      />
     </div>
   );
 }
