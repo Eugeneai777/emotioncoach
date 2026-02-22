@@ -5571,6 +5571,7 @@ export type Database = {
       }
       partner_experience_items: {
         Row: {
+          category: string
           color_theme: string | null
           created_at: string
           description: string | null
@@ -5585,6 +5586,7 @@ export type Database = {
           value: string | null
         }
         Insert: {
+          category?: string
           color_theme?: string | null
           created_at?: string
           description?: string | null
@@ -5599,6 +5601,7 @@ export type Database = {
           value?: string | null
         }
         Update: {
+          category?: string
           color_theme?: string | null
           created_at?: string
           description?: string | null
