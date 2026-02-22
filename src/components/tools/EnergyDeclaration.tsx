@@ -9,8 +9,8 @@ import { TemplateSelector } from "@/components/declaration/TemplateSelector";
 import { AIDeclarationGenerator } from "@/components/declaration/AIDeclarationGenerator";
 import { VoiceRecorder } from "@/components/declaration/VoiceRecorder";
 import { getThemeById } from "@/config/themes";
-import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
-import html2canvas from "html2canvas";
+import { generateCardBlob } from '@/utils/shareCardConfig';
+import { handleShareWithFallback } from '@/utils/shareUtils';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -137,47 +137,7 @@ export const EnergyDeclaration = () => {
 
   const generatePosterBlob = async (): Promise<Blob | null> => {
     if (!posterRef.current) return null;
-
-    try {
-      const currentWidth = posterRef.current.offsetWidth;
-      const currentHeight = posterRef.current.offsetHeight;
-      
-      const targetWidth = 1080;
-      const targetHeight = 1920;
-      
-      const dpr = window.devicePixelRatio || 1;
-      const scale = Math.max(2, dpr);
-
-      const canvas = await html2canvas(posterRef.current, {
-        ...SHARE_CARD_CONFIG,
-        scale: scale, // Use dynamic scale for DPR
-        width: currentWidth,
-        height: currentHeight,
-        windowWidth: currentWidth,
-        windowHeight: currentHeight,
-      });
-
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = targetWidth;
-      finalCanvas.height = targetHeight;
-      const ctx = finalCanvas.getContext('2d');
-      
-      if (ctx) {
-        ctx.clearRect(0, 0, targetWidth, targetHeight);
-        const offsetX = (targetWidth - canvas.width) / 2;
-        const offsetY = (targetHeight - canvas.height) / 2;
-        ctx.drawImage(canvas, offsetX, offsetY);
-      }
-
-      return new Promise((resolve) => {
-        finalCanvas.toBlob((blob) => {
-          resolve(blob);
-        }, 'image/png', 1.0);
-      });
-    } catch (error) {
-      console.error('生成海报失败:', error);
-      return null;
-    }
+    return generateCardBlob(posterRef, {});
   };
 
   const handleDownload = async () => {
@@ -188,36 +148,20 @@ export const EnergyDeclaration = () => {
       
       if (blob) {
         const timestamp = new Date().toISOString().split('T')[0];
-        const file = new File([blob], `有劲能量宣言_${timestamp}.png`, { type: 'image/png' });
-
-        // 尝试使用系统分享
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: '有劲能量宣言',
+        const result = await handleShareWithFallback(blob, `有劲能量宣言_${timestamp}.png`, {
+          title: '有劲能量宣言',
+          text: '我的每日能量宣言',
+          onDownload: () => {
+            toast({
+              title: "海报已下载",
+              description: "可以通过相册分享到微信",
             });
-            toast({ title: "分享成功" });
-            return;
-          } catch {
-            // 系统分享取消，降级到下载
-          }
-        }
-
-        // 降级：下载（修复 appendChild）
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `有劲能量宣言_${timestamp}.png`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        toast({
-          title: "海报已下载",
-          description: "可以通过相册分享到微信",
+          },
         });
+
+        if (result.method === 'webshare' && result.success) {
+          toast({ title: "分享成功" });
+        }
       }
     } catch (error) {
       console.error('导出失败:', error);
@@ -242,30 +186,21 @@ export const EnergyDeclaration = () => {
       }
 
       const timestamp = new Date().toISOString().split('T')[0];
-      const file = new File([blob], `有劲能量宣言_${timestamp}.png`, { type: 'image/png' });
+      const result = await handleShareWithFallback(blob, `有劲能量宣言_${timestamp}.png`, {
+        title: '有劲能量宣言',
+        text: '我的每日能量宣言',
+        onDownload: () => {
+          toast({
+            title: "海报已保存",
+            description: "请从相册中选择图片分享到微信",
+          });
+        },
+      });
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: '有劲能量宣言',
-          text: '我的每日能量宣言',
-        });
-        
+      if (result.method === 'webshare' && result.success) {
         toast({
           title: "分享成功",
           description: "已打开分享菜单",
-        });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `有劲能量宣言_${timestamp}.png`;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        
-        toast({
-          title: "海报已保存",
-          description: "请从相册中选择图片分享到微信",
         });
       }
     } catch (error) {
