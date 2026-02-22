@@ -31,7 +31,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         '365_member': '一整年情绪自由',
         partner_recruit: '边助人边赚收入',
         wealth_block: '3分钟定位财富天花板',
-        experience_pack: '9.9元解锁4项专业服务'
+        experience_pack: '9.9元解锁7项专业服务'
       };
       return slogans[key] || '有劲生活';
     };
