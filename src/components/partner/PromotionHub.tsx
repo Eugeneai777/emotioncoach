@@ -41,14 +41,17 @@ export function PromotionHub({
   const [generatingQR, setGeneratingQR] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Initialize selectedKeys
+  // Initialize selectedKeys — stabilize deps to avoid infinite loops
+  const allKeysStr = JSON.stringify(allPackageKeys);
+  const currentPkgsStr = JSON.stringify(currentSelectedPackages);
   useEffect(() => {
     if (currentSelectedPackages && currentSelectedPackages.length > 0) {
       setSelectedKeys(new Set(currentSelectedPackages));
     } else if (allPackageKeys.length > 0) {
       setSelectedKeys(new Set(allPackageKeys));
     }
-  }, [currentSelectedPackages, allPackageKeys]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPkgsStr, allKeysStr]);
 
   useEffect(() => {
     setEntryType(currentEntryType as 'free' | 'paid');
