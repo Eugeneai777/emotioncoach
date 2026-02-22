@@ -1,69 +1,89 @@
 
 
-## 添加 9.9 体验包海报模板
+## 统一卡片生成与分享系统 - 全面整合方案
 
-### 改动内容
+### 当前问题总结
 
-在海报工坊的模板列表中新增一个 "9.9体验包" 模板，让合伙人可以专门为体验包生成推广海报。
+系统中存在 **3 种并行的分享实现路径**，导致不同卡片在微信/iOS 上表现不一致：
 
-### 具体改动
+| 路径 | 使用方式 | 问题 |
+|------|----------|------|
+| A. `ShareDialogBase` | 统一弹窗组件，内置 `generateCardBlob` | 最完整，含 iOS scroll-lock 修复 |
+| B. 直接 `import html2canvas` | 5 个文件自行调用 html2canvas | 缺少 iOS 白边裁剪、空白检测、scroll-lock 清理 |
+| C. `useOneClickShare` hook | 训练营邀请卡等 | 依赖隐藏 DOM 元素，微信中不稳定 |
 
-#### 1. PosterTemplateGrid.tsx - 新增模板
+### 需要修复的 5 个直接 html2canvas 调用
 
-在 `posterTemplates` 数组中添加一个新的体验包模板（插入到 `wealth_block` 之后、`partner_recruit` 之前）：
+| 文件 | 当前问题 | 修复方案 |
+|------|----------|----------|
+| `SCL90ShareDialog.tsx` | 手写整套 Dialog + html2canvas 逻辑（~240 行） | 改用 `ShareDialogBase`，删除 ~150 行重复代码 |
+| `PosterCenter.tsx` | 直接 html2canvas + 手动样式操作 | 改用 `generateCardBlob` |
+| `PosterGenerator.tsx` | 直接 html2canvas + 手动分享逻辑 | 改用 `generateCardBlob` + `handleShareWithFallback` |
+| `EnergyDeclaration.tsx` | 直接 html2canvas + 手动 navigator.share | 改用 `generateCardBlob` + `handleShareWithFallback` |
+| `WeeklyTagReport.tsx` | 直接 html2canvas 用于 PDF 导出 | 保留（PDF 用途不同于分享，不需要统一） |
 
-```tsx
-{
-  key: 'experience_pack',
-  name: '9.9体验包',
-  emoji: '🎁',
-  tagline: '9.9元解锁4项专业服务，开启你的心理健康之旅',
-  gradient: 'from-orange-400 to-amber-500',
-  sellingPoints: [
-    '50点AI教练对话额度',
-    '情绪健康测评 1次',
-    'SCL-90心理测评 1次',
-    '财富卡点测评 1次'
-  ],
-  sceneVariants: {
-    moments: {
-      tagline: '花了9.9元做了个测评，才发现自己一直在忽略情绪信号...',
-      sellingPoints: ['一杯奶茶钱换4项专业服务', '测完才知道自己的情绪健康分', '早发现早调整，别等崩溃才后悔'],
-      tone: '个人觉醒+超值体验'
-    },
-    xiaohongshu: {
-      tagline: '9.9元薅羊毛｜4项心理测评+50次AI对话，不买亏大了',
-      sellingPoints: ['情绪健康+SCL-90+财富卡点三合一', '50点AI额度≈50次深度对话', '原价超100元，限时体验仅9.9'],
-      tone: '超值种草+限时紧迫'
-    },
-    wechat_group: {
-      tagline: '群友福利！9.9元体验包，4项服务全部解锁',
-      sellingPoints: ['一杯奶茶钱体验全套服务', '群友专属入口免费领取', '名额有限，先到先得'],
-      tone: '群友福利+限量感'
-    }
-  }
-}
-```
+### 修复方案详情
 
-#### 2. PosterPreview.tsx - 新增 slogan 和 category 映射
+#### 1. SCL90ShareDialog.tsx - 重构为 ShareDialogBase
 
-在 `getProductSlogan` 和 `getProductCategory` 中添加 `experience_pack` 映射：
+当前是完全手写的 Dialog（含 html2canvas 调用、scroll-lock 清理、预览管理），但 `ShareDialogBase` 已经封装了所有这些逻辑。
 
-- slogan: `'9.9元解锁4项专业服务'`
-- category: `'超值体验包'`
+**改动**：
+- 移除直接 `import html2canvas`
+- 移除手写的 `handleGenerate`（含 html2canvas 调用、blob 转换）
+- 移除手写的 Dialog 布局、预览管理、scroll-lock 清理
+- 改用 `ShareDialogBase`，传入 `previewCard` 和 `exportCard`
+- 从 ~240 行减少到 ~80 行
 
-在 `gradientStyles` 中添加：
+#### 2. PosterCenter.tsx - 替换 html2canvas 为 generateCardBlob
 
-- `experience_pack: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #fbbf24 100%)'`
+**改动**：
+- 移除 `import html2canvas`
+- `handleDownload` 中的直接 html2canvas 调用改为 `generateCardBlob`
+- 移除手动样式操作（fixed 定位、z-index 等），改用 `generateCanvas` 的 `onclone` 处理
 
-### 涉及文件
+#### 3. PosterGenerator.tsx - 替换 html2canvas 为 generateCardBlob
 
-| 文件 | 改动 | 说明 |
+**改动**：
+- 移除 `import html2canvas`
+- 生成逻辑改用 `generateCardBlob`，获得统一的 iOS 白边裁剪和空白检测
+
+#### 4. EnergyDeclaration.tsx - 替换 html2canvas 为统一分享流程
+
+**改动**：
+- 移除 `import html2canvas`
+- `generatePosterBlob` 改用 `generateCardBlob`
+- `handleDownload` 中的手动 `navigator.share` 改用 `handleShareWithFallback`
+- 获得统一的微信/iOS 兼容处理
+
+#### 5. WeeklyTagReport.tsx - 保留不动
+
+PDF 导出场景与卡片分享不同，html2canvas + jsPDF 的组合是合理的，不需要统一。
+
+### 改动文件清单
+
+| 文件 | 改动量 | 说明 |
+|------|--------|------|
+| `src/components/scl90/SCL90ShareDialog.tsx` | 大 | 重写为 ShareDialogBase，删除 ~150 行 |
+| `src/pages/PosterCenter.tsx` | 中 | html2canvas 改 generateCardBlob |
+| `src/components/poster/PosterGenerator.tsx` | 中 | html2canvas 改 generateCardBlob |
+| `src/components/tools/EnergyDeclaration.tsx` | 中 | html2canvas 改统一分享流程 |
+
+### 不改的部分
+
+- `WeeklyTagReport.tsx`：PDF 导出，非分享场景
+- `WealthCampShareCard.tsx` / `AIAnalysisShareCard.tsx` / `XiaohongshuShareCard.tsx`：这些独立卡片虽未用 ShareCardBase，但它们的分享 Dialog 已使用 `ShareDialogBase`，分享流程是统一的。视觉迁移到 ShareCardBase 有回归风险，建议后续单独处理
+- `useOneClickShare` hook：训练营邀请卡专用，改动影响面大，建议后续单独优化
+
+### 风险评估
+
+| 风险 | 等级 | 应对 |
 |------|------|------|
-| `src/components/poster/PosterTemplateGrid.tsx` | 小 | 新增 experience_pack 模板 |
-| `src/components/poster/PosterPreview.tsx` | 小 | 新增 slogan/category/gradient 映射 |
+| SCL90 分享卡片视觉变化 | 低 | ShareDialogBase 的预览/导出分离机制与原实现一致 |
+| PosterCenter 海报尺寸变化 | 中 | generateCardBlob 的 explicitWidth/Height 参数可精确控制 |
+| EnergyDeclaration 1080x1920 特殊尺寸 | 中 | 保留 canvas 后处理逻辑（缩放到目标尺寸） |
 
 ### 无数据库改动
 
-纯前端模板配置，改 2 个文件。
+纯前端重构，改 4 个文件。
 
