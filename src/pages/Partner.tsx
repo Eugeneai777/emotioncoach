@@ -191,6 +191,7 @@ export default function Partner() {
                       partnerId={partner.id}
                       currentEntryType={partner.default_entry_type || 'free'}
                       prepurchaseCount={partner.prepurchase_count ?? 0}
+                      currentSelectedPackages={partner.selected_experience_packages}
                     />
                     {/* AI 海报中心卡片 */}
                     <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/poster-center')}>
