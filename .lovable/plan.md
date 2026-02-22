@@ -1,45 +1,61 @@
 
 
-## 合伙人体验包自选功能
+## 优化推广中心卡片为 2 步流程
 
-### 现状
+### 目标
 
-| 层 | 状态 | 说明 |
-|---|------|------|
-| 数据库 `partners.selected_experience_packages` | 已有 | text[] 类型字段 |
-| 后端 `claim-partner-entry` | 已支持 | 读取 `selected_experience_packages` 过滤发放项 |
-| 前端 `EntryTypeSelector` | 未实现 | 始终保存全部 `allPackageKeys`，无勾选 UI |
+将当前平铺布局改为清晰的 2 步流程卡片，让合伙人操作一目了然：
 
-### 方案
-
-在 `EntryTypeSelector` 的"包含内容"区域，将静态展示改为可勾选列表，合伙人保存时将选中的 `package_key[]` 写入 `selected_experience_packages`。链接无需改动，后端已按此字段过滤发放。
+```text
+┌─────────────────────────────────┐
+│  我的推广中心        剩余 99 名额 │
+├─────────────────────────────────┤
+│                                 │
+│  ① 选择入口方式                  │
+│  ┌──────────┐  ┌──────────┐    │
+│  │ 免费领取 ✓│  │ 付费 ¥9.9│    │
+│  │ 消耗1名额 │  │ ¥9.9归你 │    │
+│  └──────────┘  └──────────┘    │
+│                                 │
+│  ② 自选体验包内容 (已选 4/7 项)   │
+│  ┌─────────────────────────────┐│
+│  │ ☑ 🎫 尝鲜会员 (50点)        ││
+│  │ ☑ 💚 情绪健康测评 (1次)      ││
+│  │ ☐ 📋 SCL-90心理测评 (1次)   ││
+│  │ ...                  全选 ↗ ││
+│  └─────────────────────────────┘│
+│                                 │
+│  📎 推广链接                     │
+│  https://wechat.euge...         │
+│                                 │
+│  [  复制链接  ] [ 下载二维码 ]    │
+│  [      保存设置（有变更时）     ] │
+│  ✓永久有效 ✓永久绑定 ✓名额扣减   │
+└─────────────────────────────────┘
+```
 
 ### 改动
 
-#### 1. EntryTypeSelector.tsx
+#### PromotionHub.tsx
 
-- 新增 `selectedKeys: Set<string>` state，初始化为全选或从 partner 数据读取
-- 接收新 prop `currentSelectedPackages?: string[]`，用于初始化
-- "包含内容"区域：每行添加 Checkbox，点击可选/取消
-- 添加"全选/取消全选"快捷操作
-- 保存时将 `Array.from(selectedKeys)` 写入 `selected_experience_packages`
-- 至少选 1 项才可保存，否则禁用按钮
-- 选中项变化也触发 `hasChanges`
+1. 将"入口方式"区域包裹在带步骤编号的容器中：
+   - 左侧显示步骤圆圈 `①`，右侧是标题"选择入口方式"
+   - 下方保持现有的 2 列卡片选择
 
-#### 2. 使用 EntryTypeSelector 的父组件
+2. 将"自选体验包"从折叠改为带步骤编号的常显区域：
+   - 左侧显示步骤圆圈 `②`，右侧是标题"自选体验包内容（已选 N/M 项）"
+   - 勾选列表默认展开，不再使用 Collapsible
+   - 右上角保留"全选/取消全选"按钮
+   - 列表区域有浅背景区分
 
-需要传入 `currentSelectedPackages` prop（从 partner 数据中读取）。查找所有引用该组件的地方并补充传参。
-
-### 不需要改动
-
-- `claim-partner-entry` 后端（已支持按 `selected_experience_packages` 过滤）
-- `Claim.tsx`（已动态展示 `granted_items`）
-- 数据库 schema（字段已存在）
-- 推广链接格式（不变）
+3. 视觉优化：
+   - 步骤编号使用橙色圆圈 + 白色数字，直径 20px
+   - 两步之间用细分割线隔开
+   - 体验包列表区域高度限制 + 滚动（若超过 5 项）
 
 ### 改动文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/partner/EntryTypeSelector.tsx` | 添加 Checkbox 勾选 UI + selectedKeys state |
-| 引用 EntryTypeSelector 的父组件 | 补充 `currentSelectedPackages` prop 传入 |
+| `src/components/partner/PromotionHub.tsx` | 重构布局为 2 步流程，移除 Collapsible，添加步骤编号 |
+
