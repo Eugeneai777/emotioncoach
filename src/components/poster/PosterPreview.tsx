@@ -31,7 +31,13 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         '365_member': '一整年情绪自由',
         partner_recruit: '边助人边赚收入',
         wealth_block: '3分钟定位财富天花板',
-        experience_pack: '9.9元解锁7项专业服务'
+        experience_pack: '9.9元解锁7项专业服务',
+        scl90: '专业心理健康自评',
+        emotion_health: '三层诊断情绪卡点',
+        alive_check: '每日安全守护',
+        vibrant_life: '24小时智能生活陪伴',
+        awakening: '6维深度觉察训练',
+        parent_teen: '亲子双轨隐私陪伴'
       };
       return slogans[key] || '有劲生活';
     };
@@ -44,12 +50,18 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         parent_coach: 'AI教练',
         communication_coach: 'AI教练',
         story_coach: 'AI教练',
+        vibrant_life: 'AI教练',
         emotion_journal_21: '训练营',
         parent_emotion_21: '训练营',
+        awakening: '觉察工具',
+        parent_teen: '亲子工具',
         '365_member': '年度会员',
         partner_recruit: '创业机会',
         wealth_block: '财富心理测评',
-        experience_pack: '超值体验包'
+        experience_pack: '超值体验包',
+        scl90: '专业测评',
+        emotion_health: '专业测评',
+        alive_check: '安全工具'
       };
       return categories[key] || '有劲生活';
     };
@@ -66,7 +78,13 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       '365_member': 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #facc15 100%)',
       partner_recruit: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #d946ef 100%)',
       wealth_block: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
-      experience_pack: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #fbbf24 100%)'
+      experience_pack: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #fbbf24 100%)',
+      scl90: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #4f46e5 100%)',
+      emotion_health: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f43f5e 100%)',
+      alive_check: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #fb7185 100%)',
+      vibrant_life: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #8b5cf6 100%)',
+      awakening: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%)',
+      parent_teen: 'linear-gradient(135deg, #d946ef 0%, #a855f7 50%, #8b5cf6 100%)'
     };
 
     // Get display content
