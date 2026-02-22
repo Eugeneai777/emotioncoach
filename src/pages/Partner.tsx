@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
-import { Share2, Users, TrendingUp, Wallet, Gift, Sparkles } from "lucide-react";
+import { Share2, Users, TrendingUp, Wallet, Gift, Sparkles, ImagePlus } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { getPartnerLevel } from "@/config/partnerLevels";
 import { ReferralList } from "@/components/partner/ReferralList";
@@ -60,7 +60,7 @@ export default function Partner() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(partner?.partner_type === 'youjin' ? "/partner/youjin-plan" : "/partner/benefits")}
+              onClick={() => navigate(partner?.partner_type === 'youjin' ? "/partner/youjin-plan" : "/partner/benefits-all")}
               className="gap-2"
             >
               <Gift className="w-4 h-4" />
@@ -192,6 +192,21 @@ export default function Partner() {
                       currentEntryType={partner.default_entry_type || 'free'}
                       prepurchaseCount={partner.prepurchase_count ?? 0}
                     />
+                    {/* AI 海报中心卡片 */}
+                    <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/poster-center')}>
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shrink-0">
+                          <ImagePlus className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-orange-800 text-sm">AI 海报中心</h3>
+                          <p className="text-xs text-orange-600/80 mt-0.5">一键生成精美推广海报，提升分享转化率</p>
+                        </div>
+                        <Button size="sm" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shrink-0">
+                          生成海报
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </TabsContent>
 
                   {/* 学员 Tab */}

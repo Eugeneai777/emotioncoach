@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Link2, Gift, CreditCard, Check, Copy, QrCode, ImagePlus, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
+import { Link2, Gift, CreditCard, Check, Copy, QrCode, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
 import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
 import { useExperiencePackageItems } from "@/hooks/useExperiencePackageItems";
 import QRCode from "qrcode";
@@ -169,16 +169,13 @@ export function PromotionHub({
         </div>
 
         {/* 操作按钮 */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button onClick={handleCopyLink} size="sm" className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600">
-            <Copy className="w-4 h-4 mr-1" />复制
+            <Copy className="w-4 h-4 mr-1" />复制链接
           </Button>
           <Button onClick={handleDownloadQR} variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50" disabled={generatingQR}>
             {generatingQR ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <QrCode className="w-4 h-4 mr-1" />}
-            二维码
-          </Button>
-          <Button onClick={() => navigate('/poster-center')} variant="outline" size="sm" className="border-orange-300 text-orange-700 hover:bg-orange-50">
-            <ImagePlus className="w-4 h-4 mr-1" />海报
+            下载二维码
           </Button>
         </div>
 
