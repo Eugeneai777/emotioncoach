@@ -1,7 +1,6 @@
 import { ArrowLeft, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import logoImage from '@/assets/logo-youjin-ai.png';
 
 interface PageHeaderProps {
@@ -23,21 +22,18 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { homePage } = useQuickMenuConfig();
 
-  // 智能返回逻辑：检测是否有历史记录
   const handleBack = () => {
     if (backTo) {
       navigate(backTo);
     } else if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate(homePage);
+      navigate('/');
     }
   };
 
-  // 判断是否在首页
-  const isHomePage = location.pathname === '/' || location.pathname === homePage;
+  const isHomePage = location.pathname === '/';
   
   return (
     <header className={`sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 ${className}`}>
@@ -45,7 +41,7 @@ const PageHeader = ({
         <div className="flex items-center gap-1">
           {/* 有劲AI Logo */}
           <div
-            onClick={() => !isHomePage && navigate(homePage)}
+            onClick={() => !isHomePage && navigate('/')}
             className={`flex-shrink-0 ${isHomePage ? '' : 'cursor-pointer active:scale-95 transition-transform'}`}
           >
             <img
