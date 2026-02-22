@@ -20,8 +20,6 @@ import { CommissionHistory } from "./CommissionHistory";
 import { StoreCommissionProducts } from "./StoreCommissionProducts";
 import { WithdrawalForm } from "./WithdrawalForm";
 import { PartnerOverviewCard } from "./PartnerOverviewCard";
-import { PartnerQuickActions } from "./PartnerQuickActions";
-import { CompactConversionFunnel } from "./CompactConversionFunnel";
 import { PartnerUpgradeCard } from "./PartnerUpgradeCard";
 import { PartnerSelfRedeemCard } from "./PartnerSelfRedeemCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,17 +96,17 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* 过期横幅 */}
       {isExpired && (
         <Card className="border-red-300 bg-gradient-to-r from-red-50 to-orange-50">
-          <CardContent className="py-4">
+          <CardContent className="py-3">
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-red-500 shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-red-800">佣金权益已冻结</p>
-                <p className="text-sm text-red-600 mt-0.5">
-                  合伙人资格已过期，新订单不再产生佣金。续费后即可恢复，推荐关系和已有余额不受影响。
+                <p className="font-medium text-red-800 text-sm">佣金权益已冻结</p>
+                <p className="text-xs text-red-600 mt-0.5">
+                  合伙人资格已过期，新订单不再产生佣金。续费后即可恢复。
                 </p>
               </div>
               <Button 
@@ -123,18 +121,13 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         </Card>
       )}
 
-      {/* 顶部概览卡片 */}
+      {/* 顶部概览卡片（含转化漏斗） */}
       <PartnerOverviewCard 
         partner={partner} 
         isExpired={isExpired}
         daysUntilExpiry={daysUntilExpiry}
         onWithdraw={() => setActiveTab('earnings')}
-      />
-
-      {/* 转化漏斗预览 */}
-      <CompactConversionFunnel 
-        partnerId={partner.id} 
-        onClick={() => setActiveTab('students')}
+        onStudentsClick={() => setActiveTab('students')}
       />
 
       {/* 续费/升级提示 */}
@@ -144,12 +137,9 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         daysUntilExpiry={daysUntilExpiry}
       />
 
-      {/* 快捷操作 */}
-      <PartnerQuickActions onTabChange={handleTabChange} />
-
       {/* 主要功能区 - Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-12 bg-white/80 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-3 h-11 bg-muted/50">
           <ResponsiveTabsTrigger 
             value="promote" 
             label="推广"
@@ -168,30 +158,12 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         </TabsList>
 
         {/* 推广Tab */}
-        <TabsContent value="promote" className="space-y-4 mt-4">
+        <TabsContent value="promote" className="space-y-3 mt-3">
           {/* 自用兑换体验包 */}
           <PartnerSelfRedeemCard 
             partnerId={partner.id} 
             prepurchaseCount={partner.prepurchase_count || 0} 
           />
-
-          {/* 推广指南 */}
-          <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-teal-800">💡 如何推广</h4>
-              <Button 
-                variant="link" 
-                size="sm" 
-                className="text-teal-600 p-0 h-auto"
-                onClick={() => navigate('/partner/promo-guide')}
-              >
-                了解推广模式 →
-              </Button>
-            </div>
-            <p className="text-sm text-teal-700">
-              设置入口类型后，生成的二维码会自动使用你的设置。用户扫码后获得体验包并自动成为你的学员。体验包从预购名额扣减，不参与佣金分成；付费模式下¥9.9全额为你的收入。用户后续购买365会员、训练营等产品时，你将获得佣金分成。
-            </p>
-          </div>
           
           {/* 入口类型设置 */}
           <EntryTypeSelector 
@@ -211,7 +183,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         </TabsContent>
 
         {/* 学员Tab */}
-        <TabsContent value="students" className="space-y-4 mt-4">
+        <TabsContent value="students" className="space-y-3 mt-3">
           {/* 跟进提醒 */}
           <ConversionAlerts partnerId={partner.id} />
           
@@ -223,12 +195,12 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
 
           {/* 群管理 - 折叠区块 */}
           <Collapsible open={groupExpanded} onOpenChange={setGroupExpanded}>
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors py-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-500" />
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Users className="w-4 h-4 text-orange-500" />
                       学员群管理
                     </CardTitle>
                     <div className="flex items-center gap-2">
@@ -245,18 +217,18 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <CardContent className="pt-0 space-y-4">
+                <CardContent className="pt-0 space-y-3">
                   {/* 群二维码 */}
                   <div className="space-y-2">
                     <Label>群二维码</Label>
                     <div className="flex gap-3 items-start">
                       {groupQrUrl ? (
-                        <div className="w-24 h-24 border rounded-lg overflow-hidden bg-white p-1.5">
+                        <div className="w-20 h-20 border rounded-lg overflow-hidden bg-white p-1">
                           <img src={groupQrUrl} alt="群二维码" loading="lazy" decoding="async" className="w-full h-full object-contain" />
                         </div>
                       ) : (
-                        <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">
-                          <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                        <div className="w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">
+                          <ImageIcon className="w-5 h-5 text-muted-foreground" />
                         </div>
                       )}
                       <div className="flex-1 space-y-2">
@@ -309,7 +281,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         </TabsContent>
 
         {/* 收益Tab */}
-        <TabsContent value="earnings" className="space-y-4 mt-4">
+        <TabsContent value="earnings" className="space-y-3 mt-3">
           {/* 数据分析 */}
           <PartnerAnalytics partnerId={partner.id} />
           

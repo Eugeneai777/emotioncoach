@@ -52,20 +52,19 @@ export function CompactConversionFunnel({ partnerId, onClick }: CompactConversio
     }
   };
 
-  // 转化漏斗节点：体验 → Day3 → Day7 → 365 → 合伙人
   const funnelSteps = [
-    { label: "体验", value: stats.total, icon: Users, color: "text-blue-500", bg: "bg-blue-100" },
-    { label: "入群", value: stats.joinedGroup, icon: UserCheck, color: "text-orange-500", bg: "bg-orange-100" },
-    { label: "365", value: stats.purchased365, icon: TrendingUp, color: "text-green-500", bg: "bg-green-100" },
-    { label: "合伙人", value: stats.becamePartner, icon: Crown, color: "text-purple-500", bg: "bg-purple-100" }
+    { label: "体验", value: stats.total, bg: "bg-orange-100", color: "text-orange-600" },
+    { label: "入群", value: stats.joinedGroup, bg: "bg-orange-200", color: "text-orange-700" },
+    { label: "365", value: stats.purchased365, bg: "bg-orange-300", color: "text-orange-800" },
+    { label: "合伙人", value: stats.becamePartner, bg: "bg-amber-400", color: "text-amber-900" }
   ];
 
   const overallRate = stats.total > 0 ? Math.round((stats.purchased365 / stats.total) * 100) : 0;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-20">
-        <div className="animate-pulse text-muted-foreground text-sm">加载中...</div>
+      <div className="flex items-center justify-center h-16">
+        <div className="animate-pulse text-muted-foreground text-xs">加载中...</div>
       </div>
     );
   }
@@ -73,36 +72,33 @@ export function CompactConversionFunnel({ partnerId, onClick }: CompactConversio
   return (
     <button 
       onClick={onClick}
-      className="w-full p-3 rounded-xl bg-white/80 backdrop-blur-sm border hover:shadow-md transition-all text-left"
+      className="w-full p-2.5 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left"
     >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-medium text-xs flex items-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
+      <div className="flex items-center justify-between mb-1.5">
+        <h4 className="font-medium text-xs flex items-center gap-1">
+          <TrendingUp className="w-3 h-3 text-orange-500" />
           学员转化
         </h4>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          整体转化 <span className="font-bold text-green-600">{overallRate}%</span>
+          转化率 <span className="font-bold text-orange-600">{overallRate}%</span>
           <ArrowRight className="w-3 h-3" />
         </div>
       </div>
 
       <div className="flex items-center justify-between">
-        {funnelSteps.map((step, index) => {
-          const Icon = step.icon;
-          return (
-            <div key={step.label} className="flex items-center">
-              <div className="text-center">
-                <div className={`w-8 h-8 rounded-full ${step.bg} flex items-center justify-center mx-auto`}>
-                  <span className={`text-sm font-bold ${step.color}`}>{step.value}</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground mt-0.5 block">{step.label}</span>
+        {funnelSteps.map((step, index) => (
+          <div key={step.label} className="flex items-center">
+            <div className="text-center">
+              <div className={`w-7 h-7 rounded-full ${step.bg} flex items-center justify-center mx-auto`}>
+                <span className={`text-xs font-bold ${step.color}`}>{step.value}</span>
               </div>
-              {index < funnelSteps.length - 1 && (
-                <ArrowRight className="w-3 h-3 text-muted-foreground/50 mx-0.5" />
-              )}
+              <span className="text-[10px] text-muted-foreground mt-0.5 block">{step.label}</span>
             </div>
-          );
-        })}
+            {index < funnelSteps.length - 1 && (
+              <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40 mx-0.5" />
+            )}
+          </div>
+        ))}
       </div>
     </button>
   );

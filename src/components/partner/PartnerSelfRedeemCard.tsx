@@ -19,10 +19,8 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
   const [redeeming, setRedeeming] = useState(false);
   const { items: experienceItems, allPackageKeys } = useExperiencePackageItems();
 
-  // Derive assessment keys (non-basic packages)
   const assessmentKeys = allPackageKeys.filter(k => k !== 'basic');
 
-  // Check which products the user already owns
   const { data: ownedProducts, isLoading } = useQuery({
     queryKey: ['self-redeem-status', user?.id, assessmentKeys],
     queryFn: async () => {
@@ -92,37 +90,37 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
   if (isLoading) return null;
 
   return (
-    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Gift className="w-4 h-4 text-amber-600" />
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Gift className="w-4 h-4 text-orange-500" />
           自用兑换体验包
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          消耗 1 个体验包名额，为自己开通全部 {experienceItems.length} 种产品
+        <p className="text-xs text-muted-foreground">
+          消耗 1 个名额，为自己开通全部 {experienceItems.length} 种产品
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5">
         {/* Product list */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {experienceItems.map((item) => {
             const owned = isOwned(item);
             return (
               <div 
                 key={item.item_key}
-                className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
+                className={`flex items-center gap-1.5 p-1.5 rounded-lg text-xs ${
                   owned 
                     ? 'bg-green-50 border border-green-200' 
-                    : 'bg-white/70 border border-amber-100'
+                    : 'bg-muted/30 border border-border'
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
+                <span className="text-sm">{item.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate text-xs">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">{item.value}</div>
+                  <div className="font-medium truncate text-[11px]">{item.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{item.value}</div>
                 </div>
                 {owned && (
-                  <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                  <Check className="w-3 h-3 text-green-600 shrink-0" />
                 )}
               </div>
             );
@@ -131,19 +129,20 @@ export function PartnerSelfRedeemCard({ partnerId, prepurchaseCount }: PartnerSe
 
         {/* Action */}
         {allOwned ? (
-          <div className="flex items-center justify-center gap-2 py-2 text-sm text-green-700 bg-green-50 rounded-lg border border-green-200">
-            <Sparkles className="w-4 h-4" />
+          <div className="flex items-center justify-center gap-1.5 py-1.5 text-xs text-green-700 bg-green-50 rounded-lg border border-green-200">
+            <Sparkles className="w-3.5 h-3.5" />
             全部产品已开通
           </div>
         ) : (
           <Button
-            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            size="sm"
+            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
             onClick={handleRedeem}
             disabled={redeeming || prepurchaseCount < 1}
           >
             {redeeming ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 兑换中...
               </>
             ) : prepurchaseCount < 1 ? (

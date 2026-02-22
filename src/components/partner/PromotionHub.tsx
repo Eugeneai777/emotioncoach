@@ -35,7 +35,6 @@ export function PromotionHub({
     setEntryType(currentEntryType as 'free' | 'paid');
   }, [currentEntryType]);
 
-  // Auto-save with debounce
   const autoSave = useCallback(async (type: 'free' | 'paid') => {
     try {
       const { error } = await supabase
@@ -86,10 +85,9 @@ export function PromotionHub({
   const handleDownloadQR = async () => {
     setGeneratingQR(true);
     try {
-      const qrColor = entryType === 'paid' ? '#f97316' : '#14b8a6';
       const qrDataUrl = await QRCode.toDataURL(promoUrl, {
         width: 512, margin: 2,
-        color: { dark: qrColor, light: '#ffffff' }
+        color: { dark: '#f97316', light: '#ffffff' }
       });
       const link = document.createElement('a');
       link.href = qrDataUrl;
@@ -107,17 +105,17 @@ export function PromotionHub({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200">
-      <CardHeader className="pb-3">
+    <Card>
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
-              <Link2 className="w-4 h-4 text-white" />
+          <CardTitle className="text-sm flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+              <Link2 className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-teal-800">我的推广中心</span>
+            我的推广中心
           </CardTitle>
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${
-            prepurchaseCount > 0 ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'
+          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+            prepurchaseCount > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
           }`}>
             {prepurchaseCount > 0 ? (
               <><Check className="w-3 h-3" />剩余 {prepurchaseCount} 名额</>
@@ -128,71 +126,71 @@ export function PromotionHub({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {/* 入口方式切换 */}
         <div className="grid grid-cols-2 gap-2">
           <div
             onClick={() => handleSelectEntryType('free')}
-            className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-              entryType === 'free' ? 'border-teal-500 bg-white' : 'border-gray-200 bg-white/60 hover:border-teal-300'
+            className={`p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+              entryType === 'free' ? 'border-orange-400 bg-orange-50' : 'border-border hover:border-orange-300'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <Gift className={`w-4 h-4 ${entryType === 'free' ? 'text-teal-600' : 'text-gray-400'}`} />
-              <span className={`font-medium text-sm ${entryType === 'free' ? 'text-teal-700' : 'text-gray-600'}`}>免费领取</span>
-              {entryType === 'free' && <Check className="w-3 h-3 text-teal-600 ml-auto" />}
+            <div className="flex items-center gap-1.5">
+              <Gift className={`w-3.5 h-3.5 ${entryType === 'free' ? 'text-orange-600' : 'text-muted-foreground'}`} />
+              <span className={`font-medium text-xs ${entryType === 'free' ? 'text-orange-700' : 'text-muted-foreground'}`}>免费领取</span>
+              {entryType === 'free' && <Check className="w-3 h-3 text-orange-600 ml-auto" />}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">消耗1名额，无收入</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">消耗1名额，无收入</p>
           </div>
 
           <div
             onClick={() => handleSelectEntryType('paid')}
-            className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-              entryType === 'paid' ? 'border-orange-500 bg-white' : 'border-gray-200 bg-white/60 hover:border-orange-300'
+            className={`p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+              entryType === 'paid' ? 'border-orange-500 bg-orange-50' : 'border-border hover:border-orange-300'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <CreditCard className={`w-4 h-4 ${entryType === 'paid' ? 'text-orange-600' : 'text-gray-400'}`} />
-              <span className={`font-medium text-sm ${entryType === 'paid' ? 'text-orange-700' : 'text-gray-600'}`}>付费 ¥9.9</span>
+            <div className="flex items-center gap-1.5">
+              <CreditCard className={`w-3.5 h-3.5 ${entryType === 'paid' ? 'text-orange-600' : 'text-muted-foreground'}`} />
+              <span className={`font-medium text-xs ${entryType === 'paid' ? 'text-orange-700' : 'text-muted-foreground'}`}>付费 ¥9.9</span>
               {entryType === 'paid' && <Check className="w-3 h-3 text-orange-600 ml-auto" />}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">消耗1名额，¥9.9归你</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">消耗1名额，¥9.9归你</p>
           </div>
         </div>
 
         {/* 推广链接 */}
-        <div className="flex items-center gap-2 p-3 bg-white/80 rounded-lg border border-teal-100">
+        <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border border-border">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground mb-1">📎 推广链接</p>
-            <p className="text-sm font-mono text-teal-700 truncate">{promoUrl}</p>
+            <p className="text-[10px] text-muted-foreground mb-0.5">📎 推广链接</p>
+            <p className="text-xs font-mono text-foreground truncate">{promoUrl}</p>
           </div>
         </div>
 
         {/* 操作按钮 */}
         <div className="grid grid-cols-2 gap-2">
-          <Button onClick={handleCopyLink} size="sm" className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600">
-            <Copy className="w-4 h-4 mr-1" />复制链接
+          <Button onClick={handleCopyLink} size="sm" className="h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
+            <Copy className="w-3.5 h-3.5 mr-1" />复制链接
           </Button>
-          <Button onClick={handleDownloadQR} variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50" disabled={generatingQR}>
-            {generatingQR ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <QrCode className="w-4 h-4 mr-1" />}
+          <Button onClick={handleDownloadQR} variant="outline" size="sm" className="h-8" disabled={generatingQR}>
+            {generatingQR ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <QrCode className="w-3.5 h-3.5 mr-1" />}
             下载二维码
           </Button>
         </div>
 
         {/* 体验包内容 - 可折叠 */}
         <Collapsible open={packOpen} onOpenChange={setPackOpen}>
-          <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
-            <ChevronDown className={`w-4 h-4 transition-transform ${packOpen ? 'rotate-180' : ''}`} />
+          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full">
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${packOpen ? 'rotate-180' : ''}`} />
             查看体验包内容（{experienceItems.length}项）
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="mt-2 p-3 rounded-lg bg-white/60 border border-teal-100 space-y-2">
+            <div className="mt-1.5 p-2.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
               {experienceItems.map((pkg) => (
-                <div key={pkg.item_key} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-500" />
-                  <span className="text-sm">{pkg.icon}</span>
-                  <span className="text-sm font-medium">{pkg.name}</span>
-                  <span className="text-xs text-muted-foreground">({pkg.value})</span>
+                <div key={pkg.item_key} className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-orange-500" />
+                  <span className="text-xs">{pkg.icon}</span>
+                  <span className="text-xs font-medium">{pkg.name}</span>
+                  <span className="text-[10px] text-muted-foreground">({pkg.value})</span>
                 </div>
               ))}
             </div>
@@ -200,7 +198,7 @@ export function PromotionHub({
         </Collapsible>
 
         {/* 精简提示 */}
-        <div className="text-xs text-teal-600 flex flex-wrap gap-x-3 gap-y-1">
+        <div className="text-[10px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
           <span>✓ 永久有效</span>
           <span>✓ 用户注册后永久绑定</span>
           <span>✓ 体验包从预购名额扣减</span>
