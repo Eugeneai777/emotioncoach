@@ -483,7 +483,7 @@ const WealthCampIntro = () => {
         <div className="max-w-sm sm:max-w-md mx-auto">
           {hasJoinedCamp ? (
             <Button
-              onClick={() => navigate("/wealth-camp-checkin")}
+              onClick={() => navigate("/coach/wealth_coach_4_questions")}
               className="w-full h-11 sm:h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-sm sm:text-base"
             >
               继续我的训练营

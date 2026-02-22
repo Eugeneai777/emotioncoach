@@ -236,7 +236,7 @@ const WealthCampActivate = () => {
         <div className="max-w-sm mx-auto">
           {hasJoinedCamp ? (
             <Button
-              onClick={() => navigate('/wealth-camp-checkin')}
+              onClick={() => navigate('/coach/wealth_coach_4_questions')}
               className="w-full h-11 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium"
             >
               继续我的训练营
