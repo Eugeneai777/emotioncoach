@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Gift, CreditCard, Check, Loader2, AlertCircle, Copy, Save } from "lucide-react";
@@ -12,6 +13,7 @@ interface EntryTypeSelectorProps {
   partnerId: string;
   currentEntryType?: string;
   prepurchaseCount?: number;
+  currentSelectedPackages?: string[] | null;
   onUpdate?: () => void;
 }
 
@@ -19,21 +21,58 @@ export function EntryTypeSelector({
   partnerId, 
   currentEntryType = 'free',
   prepurchaseCount = 0,
+  currentSelectedPackages,
   onUpdate 
 }: EntryTypeSelectorProps) {
   const { items: experienceItems, allPackageKeys } = useExperiencePackageItems();
   const [entryType, setEntryType] = useState<'free' | 'paid'>(currentEntryType as 'free' | 'paid');
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+
+  // Initialize selectedKeys from props or default to all
+  useEffect(() => {
+    if (currentSelectedPackages && currentSelectedPackages.length > 0) {
+      setSelectedKeys(new Set(currentSelectedPackages));
+    } else if (allPackageKeys.length > 0) {
+      setSelectedKeys(new Set(allPackageKeys));
+    }
+  }, [currentSelectedPackages, allPackageKeys]);
 
   useEffect(() => {
     setEntryType(currentEntryType as 'free' | 'paid');
-    setHasChanges(false);
   }, [currentEntryType]);
+
+  const hasChanges = useMemo(() => {
+    if (entryType !== currentEntryType) return true;
+    const original = new Set(currentSelectedPackages && currentSelectedPackages.length > 0 ? currentSelectedPackages : allPackageKeys);
+    if (selectedKeys.size !== original.size) return true;
+    for (const k of selectedKeys) {
+      if (!original.has(k)) return true;
+    }
+    return false;
+  }, [entryType, currentEntryType, selectedKeys, currentSelectedPackages, allPackageKeys]);
 
   const handleSelectEntryType = (type: 'free' | 'paid') => {
     setEntryType(type);
-    setHasChanges(type !== currentEntryType);
+  };
+
+  const toggleKey = (key: string) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const isAllSelected = selectedKeys.size === allPackageKeys.length;
+
+  const toggleAll = () => {
+    if (isAllSelected) {
+      setSelectedKeys(new Set());
+    } else {
+      setSelectedKeys(new Set(allPackageKeys));
+    }
   };
 
   const previewUrl = getPartnerShareUrl(partnerId, entryType, 'trial_member');
@@ -48,6 +87,10 @@ export function EntryTypeSelector({
   };
 
   const handleSave = async () => {
+    if (selectedKeys.size === 0) {
+      toast.error("请至少选择一项体验包内容");
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase
@@ -57,7 +100,7 @@ export function EntryTypeSelector({
           default_product_type: 'trial_member',
           default_entry_price: entryType === 'paid' ? 9.9 : 0,
           default_quota_amount: 50,
-          selected_experience_packages: allPackageKeys,
+          selected_experience_packages: Array.from(selectedKeys),
           updated_at: new Date().toISOString()
         } as Record<string, unknown>)
         .eq('id', partnerId);
@@ -65,7 +108,6 @@ export function EntryTypeSelector({
       if (error) throw error;
 
       toast.success("推广设置已保存");
-      setHasChanges(false);
       onUpdate?.();
     } catch (error) {
       console.error("Save entry type error:", error);
@@ -107,7 +149,6 @@ export function EntryTypeSelector({
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">入口方式</Label>
           <div className="grid grid-cols-2 gap-2">
-            {/* 免费领取 */}
             <div
               onClick={() => handleSelectEntryType('free')}
               className={`p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
@@ -121,16 +162,11 @@ export function EntryTypeSelector({
                 <span className={`font-medium text-xs ${entryType === 'free' ? 'text-orange-700' : 'text-muted-foreground'}`}>
                   免费领取
                 </span>
-                {entryType === 'free' && (
-                  <Check className="w-3 h-3 text-orange-600 ml-auto" />
-                )}
+                {entryType === 'free' && <Check className="w-3 h-3 text-orange-600 ml-auto" />}
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                消耗1名额，无收入
-              </p>
+              <p className="text-[10px] text-muted-foreground">消耗1名额，无收入</p>
             </div>
 
-            {/* 付费入口 */}
             <div
               onClick={() => handleSelectEntryType('paid')}
               className={`p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
@@ -144,42 +180,52 @@ export function EntryTypeSelector({
                 <span className={`font-medium text-xs ${entryType === 'paid' ? 'text-orange-700' : 'text-muted-foreground'}`}>
                   付费 ¥9.9
                 </span>
-                {entryType === 'paid' && (
-                  <Check className="w-3 h-3 text-orange-600 ml-auto" />
-                )}
+                {entryType === 'paid' && <Check className="w-3 h-3 text-orange-600 ml-auto" />}
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                消耗1名额，¥9.9归你
-              </p>
+              <p className="text-[10px] text-muted-foreground">消耗1名额，¥9.9归你</p>
             </div>
           </div>
         </div>
 
-        {/* 体验包内容展示 */}
+        {/* 体验包内容勾选 */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">包含内容</Label>
-          <div className="p-2.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">包含内容</Label>
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="text-[10px] text-orange-600 hover:underline"
+            >
+              {isAllSelected ? '取消全选' : '全选'}
+            </button>
+          </div>
+          <div className="p-2.5 rounded-lg bg-muted/30 border border-border space-y-1">
             {experienceItems.map((pkg) => (
-              <div key={pkg.item_key} className="flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-orange-500" />
+              <label
+                key={pkg.item_key}
+                className="flex items-center gap-1.5 cursor-pointer py-0.5"
+              >
+                <Checkbox
+                  checked={selectedKeys.has(pkg.package_key)}
+                  onCheckedChange={() => toggleKey(pkg.package_key)}
+                  className="h-4 w-4 min-h-0 min-w-0"
+                />
                 <span className="text-xs">{pkg.icon}</span>
                 <span className="text-xs font-medium">{pkg.name}</span>
                 <span className="text-[10px] text-muted-foreground">({pkg.value})</span>
-              </div>
+              </label>
             ))}
           </div>
+          {selectedKeys.size === 0 && (
+            <p className="text-[10px] text-red-500">请至少选择一项</p>
+          )}
         </div>
 
         {/* 实时链接预览 */}
         <div className="p-2.5 bg-muted/30 rounded-lg border border-border">
           <div className="flex items-center justify-between mb-0.5">
             <span className="text-[10px] text-muted-foreground">📎 推广链接预览</span>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="h-5 px-1.5"
-              onClick={copyPreviewUrl}
-            >
+            <Button size="sm" variant="ghost" className="h-5 px-1.5" onClick={copyPreviewUrl}>
               <Copy className="w-3 h-3 mr-0.5" />
               <span className="text-[10px]">复制</span>
             </Button>
@@ -190,20 +236,14 @@ export function EntryTypeSelector({
         {/* 保存按钮 */}
         <Button
           onClick={handleSave}
-          disabled={saving || !hasChanges}
+          disabled={saving || !hasChanges || selectedKeys.size === 0}
           size="sm"
           className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50"
         >
           {saving ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-              保存中...
-            </>
+            <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />保存中...</>
           ) : (
-            <>
-              <Save className="w-3.5 h-3.5 mr-1.5" />
-              保存设置
-            </>
+            <><Save className="w-3.5 h-3.5 mr-1.5" />保存设置</>
           )}
         </Button>
 

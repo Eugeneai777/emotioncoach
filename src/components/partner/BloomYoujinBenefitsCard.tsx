@@ -59,6 +59,7 @@ export function BloomYoujinBenefitsCard({ partner }: BloomYoujinBenefitsCardProp
           partnerId={partner.id}
           currentEntryType={partner.default_entry_type || 'free'}
           prepurchaseCount={partner.prepurchase_count ?? 0}
+          currentSelectedPackages={partner.selected_experience_packages}
           onUpdate={() => setRefreshKey(k => k + 1)}
         />
 
