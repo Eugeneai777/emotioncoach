@@ -18,10 +18,10 @@ import { PosterSizeSelector, POSTER_SIZES, type PosterSize } from '@/components/
 import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 import { executeOneClickShare } from '@/utils/oneClickShare';
 import ShareImagePreview from '@/components/ui/share-image-preview';
-import html2canvas from 'html2canvas';
+import { handleShareWithFallback } from '@/utils/shareUtils';
 
 type Mode = 'quick' | 'expert';
 type QuickStep = 'template' | 'scene' | 'generate';
@@ -221,64 +221,32 @@ export default function PosterCenter() {
     toast.loading('正在生成海报...');
 
     try {
-      const posterElement = posterRef.current;
-      
-      // 保存原始样式
-      const originalTransform = posterElement.style.transform;
-      const originalPosition = posterElement.style.position;
-      const originalTop = posterElement.style.top;
-      const originalLeft = posterElement.style.left;
-      const originalZIndex = posterElement.style.zIndex;
-      const originalWidth = posterElement.style.width;
-      const originalHeight = posterElement.style.height;
-      
-      // 查找并临时禁用父容器的缩放
-      const previewContainer = posterElement.parentElement;
-      let originalContainerTransform = '';
-      if (previewContainer) {
-        originalContainerTransform = previewContainer.style.transform;
-        previewContainer.style.transform = 'none';
-      }
-      
-      // 将海报移到可见位置，确保不受缩放影响
-      posterElement.style.position = 'fixed';
-      posterElement.style.top = '0';
-      posterElement.style.left = '0';
-      posterElement.style.zIndex = '99999';
-      posterElement.style.transform = 'none';
-      posterElement.style.width = `${selectedPosterSize.width}px`;
-      posterElement.style.height = `${selectedPosterSize.height}px`;
-      
-      // 等待重新渲染
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 直接截图原始元素（保留所有内部布局）
-      const canvas = await html2canvas(posterElement, {
-        ...SHARE_CARD_CONFIG,
-        width: selectedPosterSize.width,
-        height: selectedPosterSize.height,
+      const blob = await generateCardBlob(posterRef, {
+        explicitWidth: selectedPosterSize.width,
+        explicitHeight: selectedPosterSize.height,
       });
 
-      // 恢复原始样式
-      posterElement.style.transform = originalTransform;
-      posterElement.style.position = originalPosition;
-      posterElement.style.top = originalTop;
-      posterElement.style.left = originalLeft;
-      posterElement.style.zIndex = originalZIndex;
-      posterElement.style.width = originalWidth;
-      posterElement.style.height = originalHeight;
-      
-      if (previewContainer) {
-        previewContainer.style.transform = originalContainerTransform;
+      toast.dismiss();
+
+      if (!blob) {
+        toast.error('生成海报失败，请重试');
+        return;
       }
 
-      const link = document.createElement('a');
-      link.download = `promotion-poster-${selectedPosterSize.key}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const result = await handleShareWithFallback(blob, `promotion-poster-${selectedPosterSize.key}-${Date.now()}.png`, {
+        title: 'AI定制海报',
+        onShowPreview: (blobUrl) => {
+          setPosterPreviewUrl(blobUrl);
+          setShowPosterPreview(true);
+        },
+        onDownload: () => {
+          toast.success('海报已保存');
+        },
+      });
 
-      toast.dismiss();
-      toast.success('海报已保存');
+      if (result.method === 'webshare' && result.success) {
+        toast.success('分享成功');
+      }
     } catch (error) {
       console.error('Download error:', error);
       toast.dismiss();

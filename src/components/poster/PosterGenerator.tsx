@@ -8,10 +8,9 @@ import { BackgroundSourceSelector } from "./BackgroundSourceSelector";
 import { UnsplashImagePicker } from "./UnsplashImagePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 import { executeOneClickShare } from '@/utils/oneClickShare';
 import ShareImagePreview from '@/components/ui/share-image-preview';
-import html2canvas from "html2canvas";
 import { handleShareWithFallback } from '@/utils/shareUtils';
 
 interface PosterGeneratorProps {
@@ -160,64 +159,21 @@ export function PosterGenerator({
 
     try {
       toast.loading("正在生成海报...");
-      
-      const posterElement = posterRef.current;
+
       const posterWidth = 300;
       const posterHeight = 533;
-      
-      // 保存原始样式
-      const originalTransform = posterElement.style.transform;
-      const originalPosition = posterElement.style.position;
-      const originalTop = posterElement.style.top;
-      const originalLeft = posterElement.style.left;
-      const originalZIndex = posterElement.style.zIndex;
-      const originalWidth = posterElement.style.width;
-      const originalHeight = posterElement.style.height;
-      
-      // 查找并临时禁用父容器的缩放
-      const previewContainer = posterElement.parentElement;
-      let originalContainerTransform = '';
-      if (previewContainer) {
-        originalContainerTransform = previewContainer.style.transform;
-        previewContainer.style.transform = 'none';
-      }
-      
-      // 将海报移到可见位置
-      posterElement.style.position = 'fixed';
-      posterElement.style.top = '0';
-      posterElement.style.left = '0';
-      posterElement.style.zIndex = '99999';
-      posterElement.style.transform = 'none';
-      posterElement.style.width = `${posterWidth}px`;
-      posterElement.style.height = `${posterHeight}px`;
-      
-      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const canvas = await html2canvas(posterElement, {
-        ...SHARE_CARD_CONFIG,
-        width: posterWidth,
-        height: posterHeight,
-      });
-
-      // 恢复原始样式
-      posterElement.style.transform = originalTransform;
-      posterElement.style.position = originalPosition;
-      posterElement.style.top = originalTop;
-      posterElement.style.left = originalLeft;
-      posterElement.style.zIndex = originalZIndex;
-      posterElement.style.width = originalWidth;
-      posterElement.style.height = originalHeight;
-      
-      if (previewContainer) {
-        previewContainer.style.transform = originalContainerTransform;
-      }
-
-      // Convert canvas to blob and use unified share handler
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/png');
+      const blob = await generateCardBlob(posterRef, {
+        explicitWidth: posterWidth,
+        explicitHeight: posterHeight,
       });
 
       toast.dismiss();
+
+      if (!blob) {
+        toast.error("生成海报失败，请重试");
+        return;
+      }
 
       const result = await handleShareWithFallback(blob, `${template.name}-推广海报.png`, {
         title: `${template.name}-推广海报`,
