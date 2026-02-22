@@ -9,7 +9,7 @@ import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import PageHeader from "@/components/PageHeader";
 import { useEffect } from "react";
 import { bloomPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
-import { totalCommissionableCount } from "@/config/youjinPartnerProducts";
+import { totalCommissionableCount, commissionableProducts } from "@/config/youjinPartnerProducts";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
@@ -102,53 +102,50 @@ export default function PartnerBenefitsUnified() {
               rows={[
                 { label: "一级佣金", values: [`${(bloom.commissionRateL1 * 100)}%`, `${(yL1.commissionRateL1 * 100)}%`, `${(yL2.commissionRateL1 * 100)}%`, `${(yL3.commissionRateL1 * 100)}%`] },
                 { label: "二级佣金", values: [`${(bloom.commissionRateL2 * 100)}%`, false, `${(yL2.commissionRateL2 * 100)}%`, `${(yL3.commissionRateL2 * 100)}%`] },
-                { label: "分成产品", values: [`绽放+有劲${totalCommissionableCount}款`, `有劲${totalCommissionableCount}款`, `有劲${totalCommissionableCount}款`, `有劲${totalCommissionableCount}款`] },
-                { label: "适用产品", values: ["绽放+有劲", "有劲产品", "有劲产品", "有劲产品"] },
+                { label: `── 分成产品（${totalCommissionableCount}款） ──`, values: ["", "", "", ""] },
+                ...commissionableProducts.map(p => ({
+                  label: `${p.name} ¥${p.price.toLocaleString()}`,
+                  values: [true, true, true, true] as (string | boolean | React.ReactNode)[],
+                })),
+                { label: "绽放系列产品", values: [true, false, false, false] },
                 { label: "体验包", values: ["含有劲体验包", "100份", "500份", "1000份"] },
                 { label: "推广方式", values: ["推广码/链接", "兑换码/二维码", "兑换码/二维码", "兑换码/二维码"] },
                 { label: "专属服务", values: ["社群+培训", "合伙人社群", "优先活动+运营支持", "VIP活动+客户经理"] },
+                ...((canUpgradeToL2 || canUpgradeToL3) ? [{
+                  label: "升级",
+                  values: [
+                    "—",
+                    "—",
+                    canUpgradeToL2 ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs font-bold text-primary">¥{yL2.price.toLocaleString()}</span>
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs px-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                          onClick={() => handleUpgrade('L2')}
+                        >
+                          立即升级
+                        </Button>
+                      </div>
+                    ) : "—",
+                    canUpgradeToL3 ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs font-bold text-primary">¥{yL3.price.toLocaleString()}</span>
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs px-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
+                          onClick={() => handleUpgrade('L3')}
+                        >
+                          立即升级
+                        </Button>
+                      </div>
+                    ) : "—",
+                  ] as (string | boolean | React.ReactNode)[],
+                }] : []),
               ]}
             />
           </CardContent>
         </Card>
-
-        {/* 升级按钮区域 */}
-        {(canUpgradeToL2 || canUpgradeToL3) && (
-          <div className="grid grid-cols-2 gap-3">
-            {canUpgradeToL2 && (
-              <Card className="border-orange-200 overflow-hidden">
-                <CardContent className="p-4 flex flex-col items-center gap-2 text-center">
-                  <span className="text-lg">🔥</span>
-                  <p className="font-semibold text-sm">升级有劲高级</p>
-                  <p className="text-lg font-bold text-primary">¥{yL2.price.toLocaleString()}</p>
-                  <Button
-                    size="sm"
-                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
-                    onClick={() => handleUpgrade('L2')}
-                  >
-                    立即升级
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-            {canUpgradeToL3 && (
-              <Card className="border-amber-200 overflow-hidden">
-                <CardContent className="p-4 flex flex-col items-center gap-2 text-center">
-                  <span className="text-lg">💎</span>
-                  <p className="font-semibold text-sm">升级有劲钻石</p>
-                  <p className="text-lg font-bold text-primary">¥{yL3.price.toLocaleString()}</p>
-                  <Button
-                    size="sm"
-                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
-                    onClick={() => handleUpgrade('L3')}
-                  >
-                    立即升级
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
       </div>
 
       {/* 支付弹窗 */}
