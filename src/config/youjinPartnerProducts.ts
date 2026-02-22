@@ -9,6 +9,7 @@ export interface ExperiencePackageItem {
   description: string;
   features: string[];
   color_theme?: string;
+  category?: 'assessment' | 'tool';
 }
 
 export const experiencePackageItems: ExperiencePackageItem[] = [
@@ -23,7 +24,8 @@ export const experiencePackageItems: ExperiencePackageItem[] = [
       '情绪觉醒、亲子、沟通等主题',
       '情绪🆘按钮即时支持',
       '20+成长工具免费使用'
-    ]
+    ],
+    category: 'assessment',
   },
   { 
     key: 'emotion_health', 
@@ -36,7 +38,8 @@ export const experiencePackageItems: ExperiencePackageItem[] = [
       '5个维度情绪健康评估',
       '个性化改善建议',
       '专属成长路径推荐'
-    ]
+    ],
+    category: 'assessment',
   },
   { 
     key: 'scl90', 
@@ -49,7 +52,8 @@ export const experiencePackageItems: ExperiencePackageItem[] = [
       '10个心理因子分析',
       '雷达图可视化结果',
       '详细改善建议'
-    ]
+    ],
+    category: 'assessment',
   },
   { 
     key: 'wealth_block', 
@@ -62,7 +66,50 @@ export const experiencePackageItems: ExperiencePackageItem[] = [
       '4种财富卡点类型分析',
       'AI深度追问洞察',
       '专属突破建议'
-    ]
+    ],
+    category: 'assessment',
+  },
+  {
+    key: 'alive_check',
+    name: '死了吗打卡',
+    value: '永久',
+    icon: '🫀',
+    description: '每天1秒确认活着，唤醒生命热情',
+    features: [
+      '每天1秒确认活着',
+      '唤醒生命热情',
+      '连续打卡记录',
+      '紧急联系人通知'
+    ],
+    category: 'tool',
+  },
+  {
+    key: 'awakening_system',
+    name: '觉察日记',
+    value: '永久',
+    icon: '📔',
+    description: 'AI教练陪你写日记，看见情绪变化轨迹',
+    features: [
+      'AI教练陪你写日记',
+      '看见情绪变化轨迹',
+      '生成觉察卡片',
+      '成长数据可视化'
+    ],
+    category: 'tool',
+  },
+  {
+    key: 'emotion_button',
+    name: '情绪SOS按钮',
+    value: '永久',
+    icon: '🆘',
+    description: '崩溃时按一下就好，3分钟恢复平静',
+    features: [
+      '崩溃时按一下就好',
+      '3分钟恢复平静',
+      '多种呼吸练习',
+      '即时情绪支持'
+    ],
+    category: 'tool',
   },
 ];
 
