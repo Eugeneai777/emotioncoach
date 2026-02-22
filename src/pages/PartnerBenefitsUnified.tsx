@@ -3,8 +3,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePartner } from "@/hooks/usePartner";
 import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
-import { Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { useEffect } from "react";
 import { bloomPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
@@ -28,64 +29,42 @@ export default function PartnerBenefitsUnified() {
   }
 
   const bloom = bloomPartnerLevel;
-  const youjinL1 = youjinPartnerLevels[0];
+  const yL1 = youjinPartnerLevels[0];
+  const yL2 = youjinPartnerLevels[1];
+  const yL3 = youjinPartnerLevels[2];
 
-  // Try to get dynamic data from DB, fallback to config
-  const bloomDb = levels.find(l => l.partner_type === 'bloom');
-  const youjinDb = levels.find(l => l.partner_type === 'youjin' && l.level_name === 'L1');
+  // Determine current level highlights
+  const isBloom = partner?.partner_type === 'bloom';
+  const partnerLevel = partner?.partner_level || 'L1';
 
-  const bloomBenefits = bloomDb?.benefits?.length ? bloomDb.benefits : bloom.benefits;
-  const youjinBenefits = youjinDb?.benefits?.length ? youjinDb.benefits : youjinL1.benefits;
+  const currentTag = (
+    <span className="inline-block text-[10px] bg-primary/20 text-primary rounded-full px-1.5 py-0.5 font-medium">
+      当前
+    </span>
+  );
+
+  const bloomHeader = (
+    <div className="flex flex-col items-center gap-1">
+      <span>🦋 绽放</span>
+      {isBloom && currentTag}
+    </div>
+  );
+
+  const makeYoujinHeader = (level: string, label: string, icon: string) => (
+    <div className="flex flex-col items-center gap-1">
+      <span>{icon} {label}</span>
+      {((isBloom && level === 'L1') || (!isBloom && partnerLevel === level)) && currentTag}
+    </div>
+  );
+
+  // Check if user can upgrade
+  const currentYoujinLevel = isBloom ? 'L1' : partnerLevel;
+  const canUpgrade = currentYoujinLevel !== 'L3';
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-slate-50 via-white to-slate-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <PageHeader title="我的合伙人权益" />
       <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* 双列权益卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 绽放合伙人 */}
-          <Card className="border-2 border-purple-200 overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-purple-500 to-pink-500 text-white py-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="text-2xl">🦋</span>
-                绽放合伙人
-              </CardTitle>
-              <p className="text-white/80 text-sm mt-1">
-                直推 {((bloomDb?.commission_rate_l1 ?? bloom.commissionRateL1) * 100).toFixed(0)}% + 二级 {((bloomDb?.commission_rate_l2 ?? bloom.commissionRateL2) * 100).toFixed(0)}%
-              </p>
-            </CardHeader>
-            <CardContent className="p-4 space-y-2">
-              {bloomBenefits.map((b, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <span className="text-sm">{String(b)}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* 有劲初级合伙人 */}
-          <Card className="border-2 border-orange-200 overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-orange-500 to-amber-500 text-white py-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="text-2xl">💪</span>
-                有劲初级合伙人
-              </CardTitle>
-              <p className="text-white/80 text-sm mt-1">
-                全产品 {((youjinDb?.commission_rate_l1 ?? youjinL1.commissionRateL1) * 100).toFixed(0)}% 佣金
-              </p>
-            </CardHeader>
-            <CardContent className="p-4 space-y-2">
-              {youjinBenefits.map((b, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
-                  <span className="text-sm">{String(b)}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Matrix 对比表 */}
         <Card>
           <CardHeader>
@@ -95,19 +74,43 @@ export default function PartnerBenefitsUnified() {
             <ResponsiveComparison
               columns={[
                 { header: "对比项" },
-                { header: "🦋 绽放合伙人", highlight: true },
-                { header: "💪 有劲初级合伙人" },
+                { header: bloomHeader as any, highlight: isBloom },
+                { header: makeYoujinHeader('L1', '初级', '💪') as any, highlight: isBloom || partnerLevel === 'L1' },
+                { header: makeYoujinHeader('L2', '高级', '🔥') as any, highlight: !isBloom && partnerLevel === 'L2' },
+                { header: makeYoujinHeader('L3', '钻石', '💎') as any, highlight: !isBloom && partnerLevel === 'L3' },
               ]}
               rows={[
-                { label: "佣金比例", values: ["30% + 10%", "18%"] },
-                { label: "适用产品", values: ["绽放+有劲产品", "有劲产品"] },
-                { label: "体验包", values: ["含有劲体验包", "100份体验包"] },
-                { label: "推广方式", values: ["推广码/链接", "兑换码/二维码"] },
-                { label: "二级佣金", values: [true, false] },
+                { label: "一级佣金", values: [`${(bloom.commissionRateL1 * 100)}%`, `${(yL1.commissionRateL1 * 100)}%`, `${(yL2.commissionRateL1 * 100)}%`, `${(yL3.commissionRateL1 * 100)}%`] },
+                { label: "二级佣金", values: [`${(bloom.commissionRateL2 * 100)}%`, false, `${(yL2.commissionRateL2 * 100)}%`, `${(yL3.commissionRateL2 * 100)}%`] },
+                { label: "适用产品", values: ["绽放+有劲", "有劲产品", "有劲产品", "有劲产品"] },
+                { label: "体验包", values: ["含有劲体验包", "100份", "500份", "1000份"] },
+                { label: "推广方式", values: ["推广码/链接", "兑换码/二维码", "兑换码/二维码", "兑换码/二维码"] },
+                { label: "专属服务", values: ["社群+培训", "合伙人社群", "优先活动+运营支持", "VIP活动+客户经理"] },
               ]}
             />
           </CardContent>
         </Card>
+
+        {/* 升级引导 */}
+        {canUpgrade && (
+          <Card className="border-2 border-amber-200 overflow-hidden">
+            <CardContent className="p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-sm">💎 升级有劲合伙人，解锁更高收益</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {currentYoujinLevel === 'L1' ? '升级到高级/钻石，享受更高佣金和二级分润' : '升级到钻石合伙人，享受50%佣金+专属客户经理'}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="shrink-0 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                onClick={() => navigate('/partner/youjin-intro')}
+              >
+                查看升级 <ArrowRight className="w-4 h-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
