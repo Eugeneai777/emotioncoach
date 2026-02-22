@@ -1,107 +1,85 @@
 
 
-## 优化 /partner 合伙人中心设计排版
+## 优化 /partner 设计排版 - 第二轮
 
-### 问题分析
+### 当前问题
 
-当前页面存在以下设计问题：
+上一轮优化已统一了 PartnerOverviewCard、CompactConversionFunnel、EntryTypeSelector、PartnerSelfRedeemCard 的颜色。但以下组件仍存在**颜色不统一**和**冗余**问题：
 
-1. **颜色混乱** - 至少 6 种不同色系在同一页面竞争视觉焦点：
-   - 橙色/琥珀色（PartnerOverviewCard、PartnerUpgradeCard、PartnerSelfRedeemCard、海报入口）
-   - 青色/蓝绿色（PromotionHub、EntryTypeSelector 免费模式、推广指南提示）
-   - 蓝色/靛蓝色（数据卡片、转化漏斗）
-   - 绿色/翡翠色（余额、提现按钮）
-   - 紫色/粉色（名额数据卡片）
-   - 红色/橙色（过期提醒）
+| 组件 | 问题 |
+|------|------|
+| `FixedPromoLinkCard` | 仍用 teal/cyan 背景和按钮（`from-teal-50 to-cyan-50`），与已优化的橙色系不一致 |
+| `ConversionFunnel` | 漏斗条颜色为 蓝/橙/绿/紫 4色，应统一为橙色深浅 |
+| `ConversionGuide` | 阶段标签使用 蓝/橙/绿/紫 4色，与漏斗不一致 |
+| `ConversionAlerts` | 提醒框背景用 红/橙/绿/蓝/灰 5种，可简化 |
+| `PartnerUpgradeCard` | 已到期/临期用红色渐变背景，正常升级用橙色渐变 -- 可接受但背景渐变可精简 |
 
-2. **间距松散** - 组件之间 `space-y-4` 加上每个组件自身的 padding，导致页面过长
-3. **重复信息** - PartnerOverviewCard 和 CompactConversionFunnel 都展示学员数据；QuickActions 和 Tabs 功能重叠
-4. **层次不清** - 每个组件都有自己的背景色和渐变，没有主次之分
+### 改动方案
 
-### 设计方案
+#### 1. FixedPromoLinkCard - teal 全改橙色
 
-#### 统一色彩体系
+- 卡片背景：`from-teal-50 to-cyan-50 border-teal-200` -> `bg-white border`
+- 图标背景：`from-teal-400 to-cyan-500` -> `from-orange-400 to-amber-500`
+- 标题文字：`text-teal-800` -> `text-foreground`
+- 链接框边框：`border-teal-100` -> `border-border`
+- 链接文字：`text-teal-700` -> `text-foreground`
+- 复制按钮：`text-teal-600 hover:bg-teal-100` -> `text-orange-600 hover:bg-orange-100`
+- 操作按钮：`from-teal-500 to-cyan-500` -> `from-orange-500 to-amber-500`
+- 二维码按钮：`border-teal-300 text-teal-700` -> `border-orange-300 text-orange-700`
+- 底部说明：`text-teal-600` -> `text-muted-foreground`
+- 紫色（财富测评）保持不变（紫色是该产品的语义色）
+- QR 颜色：teal -> orange
 
-有劲合伙人页面统一使用 **橙色系**（品牌色）作为主色调，辅以中性灰色：
+#### 2. ConversionFunnel - 统一橙色渐变
 
-| 元素 | 当前 | 优化后 |
-|------|------|--------|
-| 概览卡片头部 | 橙色渐变 ✓ | 保持不变 |
-| 数据统计格 | 橙/绿/蓝/紫 4色 | 统一白底 + 橙色系文字 |
-| 转化漏斗 | 蓝/橙/绿/紫 4色 | 统一橙色系深浅渐变 |
-| 快捷操作 | 橙/青/蓝/绿 4色 | 删除（与 Tabs 重复） |
-| 推广中心 | 青色/蓝绿色 | 改为白底 + 橙色点缀 |
-| 自用兑换 | 琥珀/橙色 | 白底卡片 + 橙色按钮 |
-| 入口设置 | 青+橙混合 | 白底 + 橙色高亮选中态 |
-| 推广指南提示 | 青色背景 | 浅灰背景 + 橙色图标 |
-| 提现按钮 | 绿色渐变 | 橙色渐变（统一品牌色） |
+漏斗条颜色从 4 色改为橙色系深浅：
+- 兑换体验：`bg-blue-500` -> `bg-orange-200`（浅橙）
+- 加入群聊：`bg-orange-500` -> `bg-orange-400`（中橙，保持）
+- 购买365：`bg-green-500` -> `bg-orange-500`（标准橙）
+- 成为合伙人：`bg-purple-500` -> `bg-amber-600`（深琥珀）
 
-绽放合伙人保持 **紫色系** 作为品牌色。
+圆形图标背景同步调整。
+整体转化率文字：`text-green-600` -> `text-orange-600`
 
-#### 紧凑布局
+#### 3. ConversionGuide - 统一橙色系
 
-1. **删除 PartnerQuickActions** - 4 个快捷操作与 3 个 Tab 功能完全重复，删除后减少一整行
-2. **合并概览卡片** - 将 CompactConversionFunnel 内嵌到 PartnerOverviewCard 底部，减少一个独立卡片
-3. **压缩间距** - 组件间距从 `space-y-4` 改为 `space-y-3`，内部 padding 统一减小
-4. **压缩数据格** - 4 格统计数据改为更紧凑的行内展示，减少高度
-5. **推广 Tab 内精简** - PromotionHub 和 EntryTypeSelector 功能合并，避免两个组件展示相同的入口设置
+四阶段标签颜色统一：
+- `text-blue-600 bg-blue-100` -> `text-orange-500 bg-orange-100`
+- `text-orange-600 bg-orange-100` -> 保持
+- `text-green-600 bg-green-100` -> `text-orange-600 bg-orange-100`
+- `text-purple-600 bg-purple-100` -> `text-amber-700 bg-amber-100`
+
+关键节点提示中：
+- 高优先级背景：`bg-red-50` -> `bg-orange-50`，标题色改橙色
+- 最佳时机 Badge：`bg-green-50 border-green-200` -> `bg-orange-50 border-orange-200`
+
+#### 4. ConversionAlerts - 简化颜色
+
+5 种提醒背景统一简化为 2 种：
+- 高优先级（high）：保持 `border-red-200 bg-red-50/50`（红色有语义意义：紧急）
+- 中/低优先级（medium/low）：统一为 `border-orange-200 bg-orange-50/50`
+
+即：蓝色（转化时机）、绿色（毕业）、灰色（长期未活跃）全部改为橙色。
+
+无状态 "暂无需要跟进" 卡片：`border-green-200 bg-green-50/30` -> `border-border bg-muted/30`
+
+#### 5. PartnerUpgradeCard - 精简背景
+
+- 升级引导：`border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50` -> `bg-white border-orange-200`
+- 提示条：`bg-amber-100/50` -> `bg-orange-50`
+- 过期/临期状态保持红色/琥珀色（语义色，不改）
 
 ### 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `src/components/partner/YoujinPartnerDashboard.tsx` | 删除 QuickActions 引用、调整间距、内嵌漏斗 |
-| `src/components/partner/PartnerOverviewCard.tsx` | 统一数据格颜色为橙色系、内嵌转化漏斗、压缩间距 |
-| `src/components/partner/CompactConversionFunnel.tsx` | 颜色统一为橙色系深浅 |
-| `src/components/partner/PromotionHub.tsx` | 背景改为白底、颜色改为橙色系 |
-| `src/components/partner/EntryTypeSelector.tsx` | 颜色统一为橙色系 |
-| `src/components/partner/PartnerSelfRedeemCard.tsx` | 背景改为白底卡片 |
-| `src/components/partner/StoreCommissionProducts.tsx` | 微调保持一致 |
-
-### 具体改动
-
-#### 1. YoujinPartnerDashboard - 精简结构
-
-- 删除 `PartnerQuickActions` 组件引用和导入
-- 将 `CompactConversionFunnel` 从独立卡片移到 `PartnerOverviewCard` 内部
-- 组件间距从 `space-y-4` 改为 `space-y-3`
-- 删除推广 Tab 内的 `推广指南提示框`（teal 背景的"如何推广"区块）和 `AI 海报中心` 卡片入口（信息过多）
-
-#### 2. PartnerOverviewCard - 统一配色 + 内嵌漏斗
-
-- 4 格统计数据背景统一改为 `bg-muted/50`（浅灰），图标和数字保持橙色
-- 移除每格不同的彩色渐变背景（orange-50、green-50、blue-50、purple-50 全改为统一的浅灰）
-- 底部新增 CompactConversionFunnel 展示区
-- 提现按钮颜色从绿色改为橙色渐变
-
-#### 3. CompactConversionFunnel - 颜色统一
-
-- 4 个圆形指标从蓝/橙/绿/紫改为橙色系的深浅层次：
-  - 体验: `bg-orange-100 text-orange-500`
-  - 入群: `bg-orange-200 text-orange-600`
-  - 365: `bg-orange-300 text-orange-700`
-  - 合伙人: `bg-amber-400 text-amber-800`
-
-#### 4. PromotionHub - 去掉 teal 改橙色
-
-- 卡片背景从 `from-teal-50 to-cyan-50 border-teal-200` 改为 `bg-white border`
-- 图标背景从 `from-teal-400 to-cyan-500` 改为 `from-orange-400 to-amber-500`
-- 标题文字从 `text-teal-800` 改为 `text-foreground`
-- 按钮从 teal 渐变改为橙色渐变
-- 名额标签保持语义色（有名额绿色、无名额红色）
-
-#### 5. EntryTypeSelector - 统一橙色
-
-- 免费模式选中态从 teal 改为橙色系的浅色调（`border-orange-400 bg-orange-50`）
-- 勾选图标统一橙色
-- 整体视觉与 PromotionHub 一致
-
-#### 6. PartnerSelfRedeemCard - 白底
-
-- 背景从 `from-amber-50 to-orange-50` 改为 `bg-white border`
-- 按钮保持橙色渐变
+| 文件 | 改动量 |
+|------|--------|
+| `src/components/partner/FixedPromoLinkCard.tsx` | 中 - teal 全改 orange |
+| `src/components/partner/ConversionFunnel.tsx` | 小 - 4 个颜色值 |
+| `src/components/partner/ConversionGuide.tsx` | 小 - 标签和 badge 颜色 |
+| `src/components/partner/ConversionAlerts.tsx` | 小 - 提醒框背景色 |
+| `src/components/partner/PartnerUpgradeCard.tsx` | 小 - 背景渐变精简 |
 
 ### 无数据库改动
 
-纯前端样式和布局调整，共改 6-7 个组件文件。
+纯前端样式调整，共改 5 个文件。
 
