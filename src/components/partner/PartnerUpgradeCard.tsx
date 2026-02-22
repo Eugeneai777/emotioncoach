@@ -102,7 +102,7 @@ export function PartnerUpgradeCard({ currentLevel, isExpired, daysUntilExpiry }:
   if (!upgradeInfo) return null;
 
   return (
-    <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 overflow-hidden">
+    <Card className="border-orange-200 bg-white overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-400 to-amber-400">
@@ -118,7 +118,7 @@ export function PartnerUpgradeCard({ currentLevel, isExpired, daysUntilExpiry }:
           享受{upgradeInfo.highlight}，收益翻倍！
         </p>
         
-        <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-100/50 px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 text-xs text-amber-700 bg-orange-50 px-3 py-2 rounded-lg">
           <TrendingUp className="w-4 h-4" />
           <span>升级需支付等级全价 ¥{upgradeInfo.price.toLocaleString()}</span>
         </div>

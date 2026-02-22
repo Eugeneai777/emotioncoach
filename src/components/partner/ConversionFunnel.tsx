@@ -58,14 +58,14 @@ export function ConversionFunnel({ partnerId }: ConversionFunnelProps) {
       label: "兑换体验",
       value: stats.total,
       icon: Users,
-      color: "bg-blue-500",
+      color: "bg-orange-200",
       description: "通过兑换码加入"
     },
     {
       label: "加入群聊",
       value: stats.joinedGroup,
       icon: UserCheck,
-      color: "bg-orange-500",
+      color: "bg-orange-400",
       description: "加入学员群",
       rate: stats.total > 0 ? Math.round((stats.joinedGroup / stats.total) * 100) : 0
     },
@@ -73,7 +73,7 @@ export function ConversionFunnel({ partnerId }: ConversionFunnelProps) {
       label: "购买365",
       value: stats.purchased365,
       icon: TrendingUp,
-      color: "bg-green-500",
+      color: "bg-orange-500",
       description: "升级365会员",
       rate: stats.joinedGroup > 0 ? Math.round((stats.purchased365 / stats.joinedGroup) * 100) : 0
     },
@@ -81,7 +81,7 @@ export function ConversionFunnel({ partnerId }: ConversionFunnelProps) {
       label: "成为合伙人",
       value: stats.becamePartner,
       icon: Crown,
-      color: "bg-purple-500",
+      color: "bg-amber-600",
       description: "成为有劲合伙人",
       rate: stats.purchased365 > 0 ? Math.round((stats.becamePartner / stats.purchased365) * 100) : 0
     }
@@ -100,7 +100,7 @@ export function ConversionFunnel({ partnerId }: ConversionFunnelProps) {
           </CardTitle>
           {stats.total > 0 && (
             <span className="text-sm">
-              整体转化 <span className="font-bold text-green-600">{overallRate}%</span>
+              整体转化 <span className="font-bold text-orange-600">{overallRate}%</span>
             </span>
           )}
         </div>
