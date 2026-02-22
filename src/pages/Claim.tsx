@@ -20,6 +20,7 @@ export default function Claim() {
   const [message, setMessage] = useState("");
   const [quotaAmount, setQuotaAmount] = useState(50);
   const [durationDays, setDurationDays] = useState(365);
+  const [grantedItems, setGrantedItems] = useState<string[]>([]);
 
   // Track poster scan on page load
   useEffect(() => {
@@ -122,6 +123,7 @@ export default function Claim() {
         setStatus('success');
         setQuotaAmount(data.quota_amount || 50);
         setDurationDays(data.duration_days || 365);
+        setGrantedItems(data.granted_items || []);
         setMessage(data.message || "领取成功！");
         toast.success("🎉 领取成功！");
       } else {
@@ -206,48 +208,50 @@ export default function Claim() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {status === 'success' && (
-            <>
-              <div className="text-center space-y-4">
-                <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-center gap-2 text-lg font-bold text-teal-600">
-                    <Sparkles className="w-5 h-5" />
-                    <span>体验套餐权益</span>
+          {status === 'success' && (() => {
+            const defaultItems = [
+              '🎫 尝鲜会员 50点AI教练额度',
+              '💰 财富卡点测评',
+              '💚 情绪健康测评',
+              '📋 SCL-90心理测评',
+              '🫀 死了吗打卡',
+              '📔 觉察日记',
+              '🆘 情绪SOS按钮',
+            ];
+            const itemsToShow = grantedItems.length > 0 ? grantedItems : defaultItems;
+            return (
+              <>
+                <div className="text-center space-y-4">
+                  <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-center gap-2 text-lg font-bold text-teal-600">
+                      <Sparkles className="w-5 h-5" />
+                      <span>体验套餐权益</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {itemsToShow.map((item, i) => (
+                        <div key={i} className="flex items-center justify-center gap-2">
+                          <span className="text-teal-500">✓</span>
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center gap-2">
-                      <Gift className="w-4 h-4 text-teal-500" />
-                      <span className="font-medium">{quotaAmount} 点 AI 额度</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-teal-500">✓</span>
-                      <span>{durationDays} 天有效期</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-teal-500">✓</span>
-                      <span>免费参加21天训练营</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-teal-500">✓</span>
-                      <span>解锁全部情绪工具</span>
-                    </div>
-                  </div>
+                  <p className="text-muted-foreground">现在就开始你的情绪梳理之旅吧！</p>
                 </div>
-                <p className="text-muted-foreground">现在就开始你的情绪梳理之旅吧！</p>
-              </div>
-              <div className="space-y-3">
-                <Button
-                  onClick={() => navigate('/camps')}
-                  className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-                >
-                  🏕️ 开始免费训练营
-                </Button>
-                <Button onClick={() => navigate('/')} variant="outline" className="w-full">
-                  进入首页
-                </Button>
-              </div>
-            </>
-          )}
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => navigate('/')}
+                    className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                  >
+                    ✨ 开始体验
+                  </Button>
+                  <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+                    进入首页
+                  </Button>
+                </div>
+              </>
+            );
+          })()}
 
           {status === 'self-claim' && (
             <>
@@ -287,16 +291,16 @@ export default function Claim() {
                     你已经领取过体验套餐，无需重复领取 🎉
                   </p>
                   <p className="text-sm text-teal-600 mt-2">
-                    快去体验各种工具吧！
+                    快去体验AI教练和各种工具吧！
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
                 <Button
-                  onClick={() => navigate('/camps')}
+                  onClick={() => navigate('/')}
                   className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
                 >
-                  🏕️ 进入训练营
+                  ✨ 开始使用
                 </Button>
                 <Button onClick={() => navigate('/')} variant="outline" className="w-full">
                   进入首页
