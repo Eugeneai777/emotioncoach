@@ -1,7 +1,8 @@
-import { forwardRef, useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import { forwardRef } from 'react';
 import { type PosterScheme } from './SchemePreview';
 import { type PosterLayout } from './PosterLayoutSelector';
+import { useQRCode } from '@/utils/qrCodeUtils';
+import { getPartnerShareUrl } from '@/utils/partnerQRUtils';
 
 interface PosterWithCustomCopyProps {
   copy: PosterScheme & { target_audience: string; promotion_scene: string };
@@ -14,7 +15,7 @@ interface PosterWithCustomCopyProps {
   height?: number;
 }
 
-const PRODUCTION_DOMAIN = 'https://wechat.eugenewe.net';
+
 
 const templateGradients: Record<string, string> = {
   emotion_button: 'linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%)',
@@ -57,23 +58,11 @@ const templateNames: Record<string, string> = {
 
 export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomCopyProps>(
   ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default', width = 300, height = 533 }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-    useEffect(() => {
-      const generateQR = async () => {
-        let referralUrl = `${PRODUCTION_DOMAIN}/claim/${partnerId}?type=${entryType}`;
-        if (posterId) {
-          referralUrl += `&poster=${posterId}`;
-        }
-        const url = await QRCode.toDataURL(referralUrl, {
-          width: 100,
-          margin: 1,
-          color: { dark: '#000000', light: '#ffffff' },
-        });
-        setQrCodeUrl(url);
-      };
-      generateQR();
-    }, [partnerId, entryType, posterId]);
+    let shareUrl = getPartnerShareUrl(partnerId, entryType);
+    if (posterId) {
+      shareUrl += (shareUrl.includes('?') ? '&' : '?') + `poster=${posterId}`;
+    }
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     const gradient = copy.color_scheme 
       ? `linear-gradient(135deg, ${copy.color_scheme.primary} 0%, ${copy.color_scheme.secondary || copy.color_scheme.primary} 100%)`
@@ -117,7 +106,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
     const BrandFooter = () => (
       <div style={{ textAlign: 'center', marginTop: '8px' }}>
         <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
-          有劲AI · 每个人的生活教练
+          Powered by 有劲AI
         </span>
       </div>
     );

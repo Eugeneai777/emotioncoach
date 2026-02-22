@@ -100,7 +100,7 @@ export default function PosterCenter() {
   if (!user && !authLoading) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="text-center">
@@ -115,10 +115,10 @@ export default function PosterCenter() {
   if (authLoading || partnerLoading) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -127,7 +127,7 @@ export default function PosterCenter() {
   if (!partner) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center p-4 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="text-center">
@@ -347,7 +347,7 @@ export default function PosterCenter() {
   if (mode === 'quick' && quickStep === 'scene' && currentTemplate) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
@@ -393,7 +393,7 @@ export default function PosterCenter() {
   if (mode === 'expert' && expertStep === 'layout' && customCopy) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
@@ -447,7 +447,7 @@ export default function PosterCenter() {
   if (mode === 'expert' && expertStep === 'background' && customCopy) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
@@ -545,7 +545,7 @@ export default function PosterCenter() {
   if (mode === 'expert' && expertStep === 'preview' && customCopy) {
     return (
       <div 
-        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {/* Header */}
@@ -672,7 +672,7 @@ export default function PosterCenter() {
   // Main selection view
   return (
     <div 
-      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <DynamicOGMeta pageKey="posterCenter" />
@@ -684,7 +684,7 @@ export default function PosterCenter() {
         <div className="flex gap-2 mb-6">
           <Button
             variant={mode === 'quick' ? 'default' : 'outline'}
-            className={mode === 'quick' ? 'flex-1 bg-gradient-to-r from-teal-500 to-cyan-500' : 'flex-1'}
+            className={mode === 'quick' ? 'flex-1 bg-gradient-to-r from-orange-500 to-amber-500' : 'flex-1'}
             onClick={() => {
               setMode('quick');
               resetToModeSelection();
