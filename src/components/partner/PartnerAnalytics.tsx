@@ -244,7 +244,7 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
               <DollarSign className="w-4 h-4" />
               本月收益
             </div>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-orange-600">
               ¥{stats?.monthlyRevenue.toFixed(2) || '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">预估佣金</p>
@@ -279,30 +279,30 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-purple-500" />
+              <Share2 className="w-5 h-5 text-orange-500" />
               分享效果
             </CardTitle>
             <CardDescription>扫码访问与转化数据</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center justify-center gap-1 text-purple-600 mb-1">
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="flex items-center justify-center gap-1 text-orange-600 mb-1">
                   <MousePointerClick className="w-4 h-4" />
                 </div>
-                <div className="text-xl font-bold text-purple-700">{shareStats.scanLanded}</div>
+                <div className="text-xl font-bold text-orange-700">{shareStats.scanLanded}</div>
                 <div className="text-xs text-muted-foreground">扫码访问</div>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-xl font-bold text-green-700">{shareStats.scanConverted}</div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-xl font-bold text-orange-700">{shareStats.scanConverted}</div>
                 <div className="text-xs text-muted-foreground">转化人数</div>
               </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-xl font-bold text-blue-700">{shareStats.conversionRate}</div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-xl font-bold text-orange-700">{shareStats.conversionRate}</div>
                 <div className="text-xs text-muted-foreground">转化率</div>
               </div>
-              <div className="text-center p-3 bg-amber-50 rounded-lg">
-                <div className="text-sm font-medium text-amber-700 truncate">{shareStats.topLandingPage}</div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-sm font-medium text-orange-700 truncate">{shareStats.topLandingPage}</div>
                 <div className="text-xs text-muted-foreground">热门入口</div>
               </div>
             </div>
@@ -314,7 +314,7 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-500" />
+            <TrendingUp className="w-5 h-5 text-orange-500" />
             30天趋势
           </CardTitle>
           <CardDescription>新增学员、入群和转化趋势</CardDescription>
@@ -387,7 +387,7 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
             </div>
             <div className="relative h-2 bg-muted rounded-full overflow-hidden">
               <div 
-                className="absolute left-0 top-0 h-full bg-blue-500 rounded-full"
+                className="absolute left-0 top-0 h-full bg-orange-300 rounded-full"
                 style={{ width: '100%' }}
               />
             </div>
@@ -398,7 +398,7 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
             </div>
             <div className="relative h-2 bg-muted rounded-full overflow-hidden">
               <div 
-                className="absolute left-0 top-0 h-full bg-teal-500 rounded-full"
+                className="absolute left-0 top-0 h-full bg-orange-400 rounded-full"
                 style={{ width: `${groupJoinRate}%` }}
               />
             </div>
@@ -411,7 +411,7 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
             </div>
             <div className="relative h-2 bg-muted rounded-full overflow-hidden">
               <div 
-                className="absolute left-0 top-0 h-full bg-green-500 rounded-full"
+                className="absolute left-0 top-0 h-full bg-orange-500 rounded-full"
                 style={{ width: `${purchaseRate}%` }}
               />
             </div>

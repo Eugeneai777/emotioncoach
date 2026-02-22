@@ -9,12 +9,11 @@ import { Partner, usePartner } from "@/hooks/usePartner";
 import { Upload, ImageIcon, Palette, Users, TrendingUp, Wallet, ChevronDown, ChevronUp, Bell, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { EntryTypeSelector } from "./EntryTypeSelector";
-import { FixedPromoLinkCard } from "./FixedPromoLinkCard";
 import { StudentList } from "./StudentList";
 import { ConversionFunnel } from "./ConversionFunnel";
 import { ConversionAlerts } from "./ConversionAlerts";
 import { ConversionGuide } from "./ConversionGuide";
+import { PromotionHub } from "./PromotionHub";
 import { PartnerAnalytics } from "./PartnerAnalytics";
 import { CommissionHistory } from "./CommissionHistory";
 import { StoreCommissionProducts } from "./StoreCommissionProducts";
@@ -165,20 +164,12 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
             prepurchaseCount={partner.prepurchase_count || 0} 
           />
           
-          {/* 入口类型设置 */}
-          <EntryTypeSelector 
-            partnerId={partner.id} 
+          {/* 推广中心（合并入口设置+链接+复制+二维码） */}
+          <PromotionHub 
+            partnerId={partner.id}
             currentEntryType={partner.default_entry_type || 'free'}
             prepurchaseCount={partner.prepurchase_count || 0}
             onUpdate={() => setRefreshKey(k => k + 1)}
-          />
-          
-          {/* 推广链接 */}
-          <FixedPromoLinkCard 
-            key={refreshKey}
-            partnerId={partner.id}
-            entryType={(partner.default_entry_type || 'free') as 'free' | 'paid'}
-            productType={(partner.default_product_type as 'trial_member' | 'wealth_assessment') || 'trial_member'}
           />
         </TabsContent>
 
@@ -187,26 +178,23 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
           {/* 跟进提醒 */}
           <ConversionAlerts partnerId={partner.id} />
           
+          {/* 学员列表 */}
+          <StudentList partnerId={partner.id} />
+
           {/* 详细漏斗 */}
           <ConversionFunnel partnerId={partner.id} />
-          
-          {/* 转化指南 */}
-          <ConversionGuide />
 
-          {/* 群管理 - 折叠区块 */}
+          {/* 工具与指南 - 折叠区块 */}
           <Collapsible open={groupExpanded} onOpenChange={setGroupExpanded}>
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors py-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm flex items-center gap-2">
-                      <Users className="w-4 h-4 text-orange-500" />
-                      学员群管理
+                      <Sparkles className="w-4 h-4 text-orange-500" />
+                      工具与指南
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      {groupQrUrl && (
-                        <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">已配置</span>
-                      )}
                       {groupExpanded ? (
                         <ChevronUp className="w-4 h-4 text-muted-foreground" />
                       ) : (
@@ -217,67 +205,74 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <CardContent className="pt-0 space-y-3">
-                  {/* 群二维码 */}
-                  <div className="space-y-2">
-                    <Label>群二维码</Label>
-                    <div className="flex gap-3 items-start">
-                      {groupQrUrl ? (
-                        <div className="w-20 h-20 border rounded-lg overflow-hidden bg-white p-1">
-                          <img src={groupQrUrl} alt="群二维码" loading="lazy" decoding="async" className="w-full h-full object-contain" />
+                <CardContent className="pt-0 space-y-4">
+                  {/* 转化指南 */}
+                  <ConversionGuide />
+
+                  {/* 群管理 */}
+                  <div className="space-y-3 pt-3 border-t">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Users className="w-4 h-4 text-orange-500" />
+                      学员群管理
+                    </h4>
+                    {/* 群二维码 */}
+                    <div className="space-y-2">
+                      <Label>群二维码</Label>
+                      <div className="flex gap-3 items-start">
+                        {groupQrUrl ? (
+                          <div className="w-20 h-20 border rounded-lg overflow-hidden bg-white p-1">
+                            <img src={groupQrUrl} alt="群二维码" loading="lazy" decoding="async" className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">
+                            <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 space-y-2">
+                          <input 
+                            type="file" 
+                            ref={fileInputRef}
+                            accept="image/*"
+                            onChange={handleUploadQR}
+                            className="hidden"
+                          />
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="w-full"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            {uploading ? "上传中..." : groupQrUrl ? "更换" : "上传"}
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            上传微信/企业微信群二维码
+                          </p>
                         </div>
-                      ) : (
-                        <div className="w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">
-                          <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="flex-1 space-y-2">
-                        <input 
-                          type="file" 
-                          ref={fileInputRef}
-                          accept="image/*"
-                          onChange={handleUploadQR}
-                          className="hidden"
-                        />
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploading}
-                          className="w-full"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          {uploading ? "上传中..." : groupQrUrl ? "更换" : "上传"}
-                        </Button>
-                        <p className="text-xs text-muted-foreground">
-                          上传微信/企业微信群二维码
-                        </p>
                       </div>
                     </div>
-                  </div>
 
-                  {/* 群名称 */}
-                  <div className="space-y-2">
-                    <Label>群名称</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        value={groupName}
-                        onChange={(e) => setGroupName(e.target.value)}
-                        placeholder="输入群名称"
-                        className="h-9"
-                      />
-                      <Button variant="outline" size="sm" onClick={handleSaveGroupName}>
-                        保存
-                      </Button>
+                    {/* 群名称 */}
+                    <div className="space-y-2">
+                      <Label>群名称</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={groupName}
+                          onChange={(e) => setGroupName(e.target.value)}
+                          placeholder="输入群名称"
+                          className="h-9"
+                        />
+                        <Button variant="outline" size="sm" onClick={handleSaveGroupName}>
+                          保存
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </CollapsibleContent>
             </Card>
           </Collapsible>
-          
-          {/* 学员列表 */}
-          <StudentList partnerId={partner.id} />
         </TabsContent>
 
         {/* 收益Tab */}

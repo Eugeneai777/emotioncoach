@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Partner } from "@/hooks/usePartner";
 import { getPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
-import { TrendingUp, Wallet, Users, Gift, ArrowRight, Clock, AlertTriangle } from "lucide-react";
+import { Wallet, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CompactConversionFunnel } from "./CompactConversionFunnel";
 
@@ -28,49 +28,25 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
 
   const remaining = nextLevel ? nextLevel.minPrepurchase - partner.prepurchase_count : 0;
 
-  const getExpiryDisplay = () => {
-    if (!partner.partner_expires_at) return null;
-    
+  // 到期信息内联到等级条副标题
+  const getSubtitleContent = () => {
     if (isExpired) {
-      return {
-        color: 'text-red-600 bg-red-50 border-red-200',
-        icon: <AlertTriangle className="w-3.5 h-3.5 text-red-500" />,
-        text: '合伙人资格已过期',
-        subtext: '续费后恢复佣金权益',
-        showRenewButton: true,
-      };
+      return { text: '已过期 · 续费后恢复佣金权益', urgent: true };
     }
-    
-    if (daysUntilExpiry !== null && daysUntilExpiry <= 7) {
-      return {
-        color: 'text-red-600 bg-red-50 border-red-200',
-        icon: <AlertTriangle className="w-3.5 h-3.5 text-red-500" />,
-        text: `即将到期，还剩 ${daysUntilExpiry} 天`,
-        subtext: '请尽快续费',
-        showRenewButton: true,
-      };
+    if (daysUntilExpiry !== null && daysUntilExpiry !== undefined && daysUntilExpiry <= 7) {
+      return { text: `还剩 ${daysUntilExpiry} 天到期 · 请尽快续费`, urgent: true };
     }
-    
-    if (daysUntilExpiry !== null && daysUntilExpiry <= 30) {
-      return {
-        color: 'text-amber-700 bg-amber-50 border-amber-200',
-        icon: <Clock className="w-3.5 h-3.5 text-amber-500" />,
-        text: `还有 ${daysUntilExpiry} 天到期`,
-        subtext: '建议提前续费',
-        showRenewButton: true,
-      };
+    if (daysUntilExpiry !== null && daysUntilExpiry !== undefined && daysUntilExpiry <= 30) {
+      return { text: `还有 ${daysUntilExpiry} 天到期 · 建议提前续费`, urgent: false };
     }
-    
-    return {
-      color: 'text-muted-foreground bg-muted/50 border-border',
-      icon: <Clock className="w-3.5 h-3.5 text-muted-foreground" />,
-      text: `有效期至 ${new Date(partner.partner_expires_at).toLocaleDateString()}`,
-      subtext: null,
-      showRenewButton: false,
-    };
+    if (nextLevel) {
+      return { text: `还需 ${remaining} 预购升级`, urgent: false };
+    }
+    return { text: '最高等级', urgent: false };
   };
 
-  const expiryDisplay = getExpiryDisplay();
+  const subtitle = getSubtitleContent();
+  const showRenewButton = isExpired || (daysUntilExpiry !== null && daysUntilExpiry !== undefined && daysUntilExpiry <= 30);
 
   return (
     <div className="rounded-2xl border-0 shadow-lg overflow-hidden">
@@ -80,17 +56,22 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">{currentLevel?.icon || '💪'}</span>
             <div>
-              <h3 className="font-bold text-sm">
+              <h3 className="font-bold text-sm flex items-center gap-1.5">
                 有劲合伙人 · {currentLevel?.name || 'L1'}
-                {isExpired && <span className="ml-2 text-xs font-normal bg-white/20 px-1.5 py-0.5 rounded">已过期</span>}
+                {isExpired && <span className="text-xs font-normal bg-white/20 px-1.5 py-0.5 rounded">已过期</span>}
               </h3>
-              <p className="text-white/80 text-xs">
-                {isExpired ? (
-                  <>续费后恢复佣金权益</>
-                ) : nextLevel ? (
-                  <>还需 {remaining} 预购升级</>
-                ) : (
-                  <>最高等级</>
+              <p className="text-white/80 text-xs flex items-center gap-1">
+                {subtitle.urgent && (
+                  <AlertTriangle className="w-3 h-3" />
+                )}
+                {subtitle.text}
+                {showRenewButton && (
+                  <button 
+                    onClick={() => navigate('/partner/youjin-intro')}
+                    className="underline ml-1 hover:text-white"
+                  >
+                    {isExpired ? '续费' : '去续费'}
+                  </button>
                 )}
               </p>
             </div>
@@ -115,64 +96,28 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
         )}
       </div>
 
-      {/* 到期状态提示 */}
-      {expiryDisplay && (
-        <div className={`mx-3 mt-3 p-2 rounded-lg border ${expiryDisplay.color} flex items-center justify-between`}>
-          <div className="flex items-center gap-1.5 flex-1">
-            {expiryDisplay.icon}
-            <div>
-              <p className="text-xs font-medium">{expiryDisplay.text}</p>
-              {expiryDisplay.subtext && (
-                <p className="text-[10px] opacity-80">{expiryDisplay.subtext}</p>
-              )}
-            </div>
-          </div>
-          {expiryDisplay.showRenewButton && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="ml-2 shrink-0 h-7 text-xs"
-              onClick={() => navigate('/partner/youjin-intro')}
-            >
-              {isExpired ? '续费' : '去续费'}
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* 核心数据 - 统一橙色系 */}
+      {/* 核心数据 - 2x2 紧凑布局 */}
       <div className="p-3">
-        <div className="grid grid-cols-4 gap-2">
-          <div className="text-center p-2 rounded-xl bg-muted/50">
-            <TrendingUp className="w-4 h-4 mx-auto text-orange-500 mb-0.5" />
-            <div className="text-lg font-bold text-orange-600">
-              ¥{partner.total_earnings.toFixed(0)}
+        <div className="space-y-1.5">
+          <div className="flex justify-between">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-orange-600">¥{partner.total_earnings.toFixed(0)}</span>
+              <span className="text-[10px] text-muted-foreground">累计收益</span>
             </div>
-            <div className="text-[10px] text-muted-foreground">累计收益</div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-orange-600">¥{partner.available_balance.toFixed(0)}</span>
+              <span className="text-[10px] text-muted-foreground">可提现</span>
+            </div>
           </div>
-
-          <div className="text-center p-2 rounded-xl bg-muted/50">
-            <Wallet className="w-4 h-4 mx-auto text-orange-500 mb-0.5" />
-            <div className="text-lg font-bold text-orange-600">
-              ¥{partner.available_balance.toFixed(0)}
+          <div className="flex justify-between">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-orange-600">{partner.total_referrals}</span>
+              <span className="text-[10px] text-muted-foreground">直推用户</span>
             </div>
-            <div className="text-[10px] text-muted-foreground">可提现</div>
-          </div>
-
-          <div className="text-center p-2 rounded-xl bg-muted/50">
-            <Users className="w-4 h-4 mx-auto text-orange-500 mb-0.5" />
-            <div className="text-lg font-bold text-orange-600">
-              {partner.total_referrals}
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-orange-600">{partner.prepurchase_count}</span>
+              <span className="text-[10px] text-muted-foreground">剩余名额</span>
             </div>
-            <div className="text-[10px] text-muted-foreground">直推用户</div>
-          </div>
-
-          <div className="text-center p-2 rounded-xl bg-muted/50">
-            <Gift className="w-4 h-4 mx-auto text-orange-500 mb-0.5" />
-            <div className="text-lg font-bold text-orange-600">
-              {partner.prepurchase_count}
-            </div>
-            <div className="text-[10px] text-muted-foreground">剩余名额</div>
           </div>
         </div>
 

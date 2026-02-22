@@ -138,7 +138,7 @@ export function CommissionHistory({ partnerId }: CommissionHistoryProps) {
                     </div>
                   </div>
                   <div className="text-right space-y-2">
-                    <div className="text-lg font-bold text-green-600">
+                    <div className="text-lg font-bold text-orange-600">
                       +¥{commission.commission_amount.toFixed(2)}
                     </div>
                     <div className="text-xs text-muted-foreground">
