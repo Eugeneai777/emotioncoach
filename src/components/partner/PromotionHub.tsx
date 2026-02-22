@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Link2, Gift, CreditCard, Check, Copy, QrCode, ChevronDown, AlertCircle, Loader2 } from "lucide-react";
+import { Link2, Gift, CreditCard, Check, Copy, QrCode, ChevronDown, AlertCircle, Loader2, Save } from "lucide-react";
 import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
 import { useExperiencePackageItems } from "@/hooks/useExperiencePackageItems";
 import QRCode from "qrcode";
@@ -14,6 +15,7 @@ interface PromotionHubProps {
   partnerId: string;
   currentEntryType?: string;
   prepurchaseCount?: number;
+  currentSelectedPackages?: string[] | null;
   onUpdate?: () => void;
 }
 
@@ -21,53 +23,61 @@ export function PromotionHub({
   partnerId,
   currentEntryType = 'free',
   prepurchaseCount = 0,
+  currentSelectedPackages,
   onUpdate
 }: PromotionHubProps) {
   const navigate = useNavigate();
   const { items: experienceItems, allPackageKeys } = useExperiencePackageItems();
   const [entryType, setEntryType] = useState<'free' | 'paid'>(currentEntryType as 'free' | 'paid');
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
   const [packOpen, setPackOpen] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Initialize selectedKeys
+  useEffect(() => {
+    if (currentSelectedPackages && currentSelectedPackages.length > 0) {
+      setSelectedKeys(new Set(currentSelectedPackages));
+    } else if (allPackageKeys.length > 0) {
+      setSelectedKeys(new Set(allPackageKeys));
+    }
+  }, [currentSelectedPackages, allPackageKeys]);
 
   useEffect(() => {
     setEntryType(currentEntryType as 'free' | 'paid');
   }, [currentEntryType]);
 
-  const autoSave = useCallback(async (type: 'free' | 'paid') => {
-    try {
-      const { error } = await supabase
-        .from('partners')
-        .update({
-          default_entry_type: type,
-          default_product_type: 'trial_member',
-          default_entry_price: type === 'paid' ? 9.9 : 0,
-          default_quota_amount: 50,
-          selected_experience_packages: allPackageKeys,
-          updated_at: new Date().toISOString()
-        } as Record<string, unknown>)
-        .eq('id', partnerId);
-
-      if (error) throw error;
-      toast.success(type === 'paid' ? "已切换为付费入口" : "已切换为免费入口");
-      onUpdate?.();
-    } catch (error) {
-      console.error("Auto-save error:", error);
-      toast.error("保存失败，请重试");
+  const hasChanges = useMemo(() => {
+    if (entryType !== currentEntryType) return true;
+    const original = new Set(currentSelectedPackages && currentSelectedPackages.length > 0 ? currentSelectedPackages : allPackageKeys);
+    if (selectedKeys.size !== original.size) return true;
+    for (const k of selectedKeys) {
+      if (!original.has(k)) return true;
     }
-  }, [partnerId, allPackageKeys, onUpdate]);
+    return false;
+  }, [entryType, currentEntryType, selectedKeys, currentSelectedPackages, allPackageKeys]);
 
   const handleSelectEntryType = (type: 'free' | 'paid') => {
     if (type === entryType) return;
     setEntryType(type);
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => autoSave(type), 500);
   };
 
-  useEffect(() => {
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, []);
+  const toggleKey = (key: string) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const isAllSelected = selectedKeys.size === allPackageKeys.length;
+  const toggleAll = () => {
+    setSelectedKeys(isAllSelected ? new Set() : new Set(allPackageKeys));
+  };
+
+  const selectedCount = selectedKeys.size;
 
   const promoUrl = getPartnerShareUrl(partnerId, entryType, 'trial_member');
 
@@ -101,6 +111,36 @@ export function PromotionHub({
       toast.error("生成二维码失败");
     } finally {
       setGeneratingQR(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (selectedKeys.size === 0) {
+      toast.error("请至少选择一项体验包内容");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('partners')
+        .update({
+          default_entry_type: entryType,
+          default_product_type: 'trial_member',
+          default_entry_price: entryType === 'paid' ? 9.9 : 0,
+          default_quota_amount: 50,
+          selected_experience_packages: Array.from(selectedKeys),
+          updated_at: new Date().toISOString()
+        } as Record<string, unknown>)
+        .eq('id', partnerId);
+
+      if (error) throw error;
+      toast.success("推广设置已保存");
+      onUpdate?.();
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error("保存失败，请重试");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -158,6 +198,45 @@ export function PromotionHub({
           </div>
         </div>
 
+        {/* 体验包内容勾选 - 可折叠 */}
+        <Collapsible open={packOpen} onOpenChange={setPackOpen}>
+          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full">
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${packOpen ? 'rotate-180' : ''}`} />
+            自选体验包内容（已选 {selectedCount}/{experienceItems.length} 项）
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-1.5 p-2.5 rounded-lg bg-muted/30 border border-border space-y-1">
+              <div className="flex items-center justify-between mb-1">
+                <button
+                  type="button"
+                  onClick={toggleAll}
+                  className="text-[10px] text-orange-600 hover:underline"
+                >
+                  {isAllSelected ? '取消全选' : '全选'}
+                </button>
+              </div>
+              {experienceItems.map((pkg) => (
+                <label
+                  key={pkg.item_key}
+                  className="flex items-center gap-1.5 cursor-pointer py-0.5"
+                >
+                  <Checkbox
+                    checked={selectedKeys.has(pkg.package_key)}
+                    onCheckedChange={() => toggleKey(pkg.package_key)}
+                    className="h-4 w-4 min-h-0 min-w-0"
+                  />
+                  <span className="text-xs">{pkg.icon}</span>
+                  <span className="text-xs font-medium">{pkg.name}</span>
+                  <span className="text-[10px] text-muted-foreground">({pkg.value})</span>
+                </label>
+              ))}
+              {selectedKeys.size === 0 && (
+                <p className="text-[10px] text-red-500 mt-1">请至少选择一项</p>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* 推广链接 */}
         <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border border-border">
           <div className="flex-1 min-w-0">
@@ -177,25 +256,21 @@ export function PromotionHub({
           </Button>
         </div>
 
-        {/* 体验包内容 - 可折叠 */}
-        <Collapsible open={packOpen} onOpenChange={setPackOpen}>
-          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full">
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${packOpen ? 'rotate-180' : ''}`} />
-            查看体验包内容（{experienceItems.length}项）
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="mt-1.5 p-2.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
-              {experienceItems.map((pkg) => (
-                <div key={pkg.item_key} className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-orange-500" />
-                  <span className="text-xs">{pkg.icon}</span>
-                  <span className="text-xs font-medium">{pkg.name}</span>
-                  <span className="text-[10px] text-muted-foreground">({pkg.value})</span>
-                </div>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        {/* 保存按钮 - 有变更时显示 */}
+        {hasChanges && (
+          <Button
+            onClick={handleSave}
+            disabled={saving || selectedKeys.size === 0}
+            size="sm"
+            className="w-full h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50"
+          >
+            {saving ? (
+              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />保存中...</>
+            ) : (
+              <><Save className="w-3.5 h-3.5 mr-1" />保存设置</>
+            )}
+          </Button>
+        )}
 
         {/* 精简提示 */}
         <div className="text-[10px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
