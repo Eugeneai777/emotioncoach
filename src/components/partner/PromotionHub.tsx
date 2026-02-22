@@ -231,8 +231,7 @@ export function PromotionHub({
             </button>
           </div>
 
-          <div className="rounded-lg bg-muted/30 border border-border">
-            <ScrollArea className={experienceItems.length > 5 ? 'h-[180px]' : ''}>
+          <div className="rounded-lg bg-muted/30 border border-border max-h-[200px] overflow-y-auto">
               <div className="p-2.5 space-y-0.5">
                 {experienceItems.map((pkg) => (
                   <label
@@ -250,7 +249,6 @@ export function PromotionHub({
                   </label>
                 ))}
               </div>
-            </ScrollArea>
             {selectedKeys.size === 0 && (
               <p className="text-[10px] text-red-500 px-2.5 pb-2">请至少选择一项</p>
             )}
