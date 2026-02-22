@@ -1,52 +1,47 @@
 
 
-## 统一体验包与产品列表 — 补齐 3 项工具
+## 更新 9.9 体验包海报分享内容
 
-### 目标
+### 问题
 
-将 `/packages` 页的工具列表从硬编码改为数据库驱动，与体验包共享同一数据源。以后在后台添加新工具时，体验包和产品页自动同步。
+体验包已从 4 项扩展到 7 项（新增死了吗打卡、觉察日记、情绪SOS），但海报工坊中的 `experience_pack` 模板仍显示旧的 4 项内容：
 
-### 当前状态
+| 位置 | 当前内容 | 问题 |
+|------|----------|------|
+| 标语 | "9.9元解锁4项专业服务" | 应为 7 项 |
+| 卖点列表 | 50点AI额度 + 3个测评 | 缺少 3 个日常工具 |
+| 各场景文案 | 均提及"4项" | 数量不准确 |
+| PosterPreview slogan | "9.9元解锁4项专业服务" | 同上 |
 
-体验包已包含尝鲜会员 + 3 项测评（共 4 项）。`/packages` 页额外硬编码了 3 项日常工具，但这些不在数据库中。
+### 方案
 
-### 步骤
+更新 2 个文件中的硬编码内容，使海报准确反映当前 7 项体验包。
 
-#### 1. 数据库迁移
+### 改动
 
-- 向 `partner_experience_items` 表添加 `category` 列（text，默认 'assessment'）
-- 插入 3 条新记录：alive_check、awakening_system、emotion_button（category 设为 'tool'）
-- 更新现有 4 条记录的 category 为 'assessment'
+#### 1. PosterTemplateGrid.tsx -- 更新模板数据
 
-#### 2. 更新 useExperiencePackageItems hook
+- **tagline**: "9.9元解锁7项专业服务，开启你的心理健康之旅"
+- **sellingPoints**: 重新组织为更有吸引力的概括性卖点：
+  - "尝鲜会员 50点AI教练额度"
+  - "3项专业测评（情绪健康+SCL-90+财富卡点）"
+  - "3项日常工具（情绪SOS+觉察日记+打卡）"
+  - "一杯奶茶钱，7项服务全解锁"
+- **sceneVariants**: 更新三个场景（朋友圈/小红书/微信群）中所有提及"4项"的文案为"7项"，并补充新工具的亮点
 
-- ExperienceItem 接口添加 `category` 字段
-- 查询时包含 category
-- fallback 数据扩展到 7 项
+#### 2. PosterPreview.tsx -- 更新产品标语
 
-#### 3. 更新 youjinPartnerProducts.ts
-
-- experiencePackageItems 数组从 4 项扩展到 7 项
-- 每项添加 category 字段
-
-#### 4. 改造 Tools99Grid
-
-- 移除硬编码的 TOOLS_99_PRODUCTS 常量
-- 改为调用 useExperiencePackageItems() 获取数据
-- 按 category 字段分组（assessment 左列、tool 右列）
-- 保留现有双栏布局和卡片样式
+- 将 `experience_pack` 的 slogan 从 "9.9元解锁4项专业服务" 改为 "9.9元解锁7项专业服务"
 
 ### 改动文件
 
-| 文件 | 改动 |
-|------|------|
-| 数据库 | 添加 category 列 + 3 条记录 |
-| `src/hooks/useExperiencePackageItems.ts` | 添加 category 字段 |
-| `src/config/youjinPartnerProducts.ts` | fallback 扩展到 7 项 |
-| `src/components/Tools99Grid.tsx` | 移除硬编码，改用 hook |
+| 文件 | 改动范围 |
+|------|----------|
+| `src/components/poster/PosterTemplateGrid.tsx` | experience_pack 模板的 tagline、sellingPoints、3 个场景文案 |
+| `src/components/poster/PosterPreview.tsx` | experience_pack 的 slogan 映射 |
 
 ### 不需要改动
 
-- `partner-self-redeem` 边缘函数（已动态读取数据库）
-- 其他消费 useExperiencePackageItems 的组件（自动获得新数据）
-
+- PosterGenerator.tsx（渲染逻辑无需调整）
+- 数据库（体验包数据已是最新的 7 项）
+- 其他海报模板（不受影响）
