@@ -163,10 +163,14 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-4 space-y-4">
+      <CardContent className="p-3 space-y-3">
         {/* Title with identity badge */}
         <div className="flex items-center justify-between">
-        {partnerType && (() => {
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg">🎯</span>
+            <h3 className="font-bold text-base">我的财富飞轮</h3>
+          </div>
+          {partnerType && (() => {
             const level = getPartnerLevel(partnerType, partnerLevel || '');
             if (!level) return null;
             const isBloom = partnerType === 'bloom';
@@ -174,7 +178,7 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
               ? `${(level.commissionRateL1 * 100).toFixed(0)}%+${(level.commissionRateL2 * 100).toFixed(0)}%`
               : `${(level.commissionRateL1 * 100).toFixed(0)}%${level.commissionRateL2 > 0 ? `+${(level.commissionRateL2 * 100).toFixed(0)}%` : ''}`;
             return (
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
                 <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${level.gradient}`}>
                   <span>{level.icon}</span>
                   <span>{level.name}</span>
@@ -196,27 +200,23 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
               </div>
             );
           })()}
-          <div className="flex items-center gap-1.5">
-            <span className="text-lg">🎯</span>
-            <h3 className="font-bold text-base">我的飞轮</h3>
-          </div>
         </div>
 
         {/* 4-Level Funnel */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {levels.map((level, idx) => (
             <div key={level.label} className="relative">
-              <div className="rounded-xl border bg-card p-3 space-y-2 h-full">
+              <div className="rounded-xl border bg-card p-2.5 space-y-1.5 h-full">
                 {/* Level number badge */}
-                <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${level.gradient} flex items-center justify-center`}>
-                    <span className="text-xs font-bold text-white">{idx + 1}</span>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${level.gradient} flex items-center justify-center`}>
+                    <span className="text-[10px] font-bold text-white">{idx + 1}</span>
                   </div>
                   <span className="text-xs font-medium truncate">{level.emoji} {level.label}</span>
                 </div>
 
                 {/* Count */}
-                <div className={`text-2xl font-bold ${level.textColor}`}>
+                <div className={`text-xl font-bold ${level.textColor}`}>
                   {level.count}
                   <span className="text-xs font-normal text-muted-foreground ml-1">人</span>
                 </div>
@@ -229,8 +229,8 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
 
               {/* Conversion arrow between levels (desktop only) */}
               {idx < levels.length - 1 && levels[idx].count > 0 && (
-                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 flex-col items-center">
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                <div className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 flex-col items-center">
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-[10px] text-muted-foreground">
                     {((levels[idx + 1].count / levels[idx].count) * 100).toFixed(0)}%
                   </span>
@@ -253,13 +253,13 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
         </div>
 
         {/* Summary */}
-        <div className="flex items-center justify-between pt-2 border-t">
+        <div className="flex items-center justify-between pt-1.5 border-t">
           <div className="flex items-center gap-4">
             <span className="text-sm">
               总收益 <span className="font-bold text-foreground">¥{totalEarnings.toLocaleString()}</span>
             </span>
             <span className="text-sm">
-              可提现 <span className="font-bold text-green-600">¥{availableBalance.toLocaleString()}</span>
+              可提现 <span className="font-bold text-orange-600">¥{availableBalance.toLocaleString()}</span>
             </span>
           </div>
         </div>
