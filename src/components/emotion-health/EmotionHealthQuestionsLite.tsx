@@ -108,14 +108,14 @@ export function EmotionHealthQuestionsLite({
         <div className="px-4 py-3 space-y-2">
           {/* 标题和进度 */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <span className={cn(
-                "inline-flex items-center justify-center px-3 py-1 rounded-full text-white text-xs font-medium bg-gradient-to-r",
+                "inline-flex items-center justify-center px-3 py-1 rounded-full text-white text-xs font-medium bg-gradient-to-r shrink-0",
                 currentLayerConfig.color
               )}>
                 {currentLayerConfig.name}
               </span>
-              <h1 className="text-base font-semibold text-foreground">情绪健康测评</h1>
+              <h1 className="text-base font-semibold text-foreground truncate">情绪健康测评</h1>
             </div>
             <span className="text-sm text-muted-foreground font-medium">
               {currentIndex + 1}/{totalQuestions}

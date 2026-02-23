@@ -3049,22 +3049,28 @@ export type Database = {
       }
       conversations: {
         Row: {
+          coach_type: string | null
           created_at: string
           id: string
+          metadata: Json | null
           title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          coach_type?: string | null
           created_at?: string
           id?: string
+          metadata?: Json | null
           title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          coach_type?: string | null
           created_at?: string
           id?: string
+          metadata?: Json | null
           title?: string | null
           updated_at?: string
           user_id?: string
@@ -3646,7 +3652,9 @@ export type Database = {
           id: string
           key_insight: string | null
           messages: Json | null
+          metadata: Json | null
           session_summary: string | null
+          source: string | null
           stage_1_insight: string | null
           stage_2_insight: string | null
           stage_3_insight: string | null
@@ -3663,7 +3671,9 @@ export type Database = {
           id?: string
           key_insight?: string | null
           messages?: Json | null
+          metadata?: Json | null
           session_summary?: string | null
+          source?: string | null
           stage_1_insight?: string | null
           stage_2_insight?: string | null
           stage_3_insight?: string | null
@@ -3680,7 +3690,9 @@ export type Database = {
           id?: string
           key_insight?: string | null
           messages?: Json | null
+          metadata?: Json | null
           session_summary?: string | null
+          source?: string | null
           stage_1_insight?: string | null
           stage_2_insight?: string | null
           stage_3_insight?: string | null

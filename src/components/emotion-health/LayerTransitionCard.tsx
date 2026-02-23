@@ -18,7 +18,7 @@ export function LayerTransitionCard({ transitionKey, onContinue }: LayerTransiti
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
     >
       <Card className="w-full max-w-sm overflow-hidden">
         <div className={`bg-gradient-to-r ${config.color} p-6 text-center text-white`}>
