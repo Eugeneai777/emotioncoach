@@ -29,6 +29,7 @@ interface Certification {
   issuingAuthority: string;
   certNumber: string;
   imageUrl: string;
+  description: string;
 }
 
 interface Service {
@@ -104,6 +105,7 @@ export default function BecomeCoach() {
           issuing_authority: cert.issuingAuthority || null,
           cert_number: cert.certNumber || null,
           image_url: cert.imageUrl,
+          description: cert.description || null,
           verification_status: "pending",
         }));
 

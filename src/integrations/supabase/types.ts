@@ -1854,6 +1854,7 @@ export type Database = {
           cert_type: string
           coach_id: string
           created_at: string | null
+          description: string | null
           expiry_date: string | null
           id: string
           image_url: string | null
@@ -1870,6 +1871,7 @@ export type Database = {
           cert_type: string
           coach_id: string
           created_at?: string | null
+          description?: string | null
           expiry_date?: string | null
           id?: string
           image_url?: string | null
@@ -1886,6 +1888,7 @@ export type Database = {
           cert_type?: string
           coach_id?: string
           created_at?: string | null
+          description?: string | null
           expiry_date?: string | null
           id?: string
           image_url?: string | null

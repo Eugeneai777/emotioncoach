@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, User } from "lucide-react";
+import { Camera, User, Sparkles, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,7 @@ const SPECIALTY_OPTIONS = [
 
 export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
   const [uploading, setUploading] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
   const { toast } = useToast();
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +71,32 @@ export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
       toast({ title: "上传失败，请重试", variant: "destructive" });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleOptimizeBio = async () => {
+    if (!data.bio.trim()) return;
+    setOptimizing(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke("ai-coach-application", {
+        body: {
+          action: "optimize_bio",
+          displayName: data.displayName,
+          specialties: data.specialties,
+          yearsExperience: data.yearsExperience,
+          bio: data.bio,
+        },
+      });
+      if (error) throw error;
+      if (result?.result) {
+        onChange({ ...data, bio: result.result });
+        toast({ title: "简介优化成功" });
+      }
+    } catch (error) {
+      console.error("Optimize bio error:", error);
+      toast({ title: "优化失败，请重试", variant: "destructive" });
+    } finally {
+      setOptimizing(false);
     }
   };
 
@@ -173,9 +200,26 @@ export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
             className="min-h-[100px]"
             maxLength={500}
           />
-          <p className="text-xs text-muted-foreground text-right">
-            {data.bio.length}/500
-          </p>
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleOptimizeBio}
+              disabled={!data.bio.trim() || optimizing}
+              className="gap-1.5"
+            >
+              {optimizing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              {optimizing ? "优化中..." : "AI 优化简介"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {data.bio.length}/500
+            </p>
+          </div>
         </div>
 
         <div className="space-y-2">

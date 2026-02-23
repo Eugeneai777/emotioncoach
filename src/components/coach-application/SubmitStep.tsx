@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, User, FileCheck, Coins, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, User, FileCheck, Coins, Send, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { CoachBadge } from "@/components/human-coach/CoachBadge";
 
 interface BasicInfoData {
   displayName: string;
@@ -20,6 +23,7 @@ interface Certification {
   issuingAuthority: string;
   certNumber: string;
   imageUrl: string;
+  description: string;
 }
 
 interface Service {
@@ -47,6 +51,41 @@ export function SubmitStep({
   isSubmitting,
 }: SubmitStepProps) {
   const [agreed, setAgreed] = useState(false);
+  const [badgeLoading, setBadgeLoading] = useState(false);
+  const [recommendedBadge, setRecommendedBadge] = useState<string | null>(null);
+  const [badgeReason, setBadgeReason] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleRecommendBadge = async () => {
+    setBadgeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-coach-application", {
+        body: {
+          action: "recommend_badge",
+          basicInfo,
+          certifications,
+          services,
+        },
+      });
+      if (error) throw error;
+      if (data?.result) {
+        try {
+          const parsed = JSON.parse(data.result);
+          setRecommendedBadge(parsed.badge);
+          setBadgeReason(parsed.reason);
+        } catch {
+          // If not valid JSON, try to extract
+          setRecommendedBadge("certified");
+          setBadgeReason(data.result);
+        }
+      }
+    } catch (error) {
+      console.error("Recommend badge error:", error);
+      toast({ title: "获取推荐失败，请重试", variant: "destructive" });
+    } finally {
+      setBadgeLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -148,6 +187,53 @@ export function SubmitStep({
             </div>
           ))}
         </div>
+      </Card>
+
+      {/* AI Badge Recommendation */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-primary font-medium">
+            <Sparkles className="h-4 w-4" />
+            AI 推荐勋章
+          </div>
+          {!recommendedBadge && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRecommendBadge}
+              disabled={badgeLoading}
+              className="gap-1.5"
+            >
+              {badgeLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              {badgeLoading ? "分析中..." : "获取 AI 推荐"}
+            </Button>
+          )}
+        </div>
+        {recommendedBadge ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">推荐等级：</span>
+              <CoachBadge badgeType={recommendedBadge} size="md" />
+            </div>
+            {badgeReason && (
+              <p className="text-sm text-muted-foreground">{badgeReason}</p>
+            )}
+            <p className="text-xs text-muted-foreground italic">
+              * 仅供参考，最终勋章由管理员审核决定
+            </p>
+          </div>
+        ) : (
+          !badgeLoading && (
+            <p className="text-sm text-muted-foreground">
+              点击按钮，AI 将根据您的资料推荐初始勋章等级
+            </p>
+          )
+        )}
       </Card>
 
       {/* Agreement */}

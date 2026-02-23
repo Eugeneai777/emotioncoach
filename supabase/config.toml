@@ -475,3 +475,6 @@ verify_jwt = false
 
 [functions.get-partner-preview]
 verify_jwt = false
+
+[functions.ai-coach-application]
+verify_jwt = false
