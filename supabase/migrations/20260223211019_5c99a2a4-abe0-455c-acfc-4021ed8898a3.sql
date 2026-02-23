@@ -1,0 +1,1 @@
+ALTER TABLE public.coach_certifications ADD COLUMN description text;
