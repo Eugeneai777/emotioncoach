@@ -3,10 +3,20 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles, Info, Share2 } from "lucide-react";
+import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles, Info, Share2, MessageCircle, BarChart3, ClipboardList, Skull, BookOpen, Siren, Home } from "lucide-react";
 import { toast } from "sonner";
 
 type ClaimStatus = 'loading' | 'success' | 'error' | 'no-partner' | 'self-claim' | 'already-claimed';
+
+const ENTRY_MAPPINGS: { keyword: string; label: string; path: string; icon: React.ReactNode }[] = [
+  { keyword: '尝鲜会员', label: '和AI教练聊聊', path: '/coach/awakening', icon: <MessageCircle className="w-4 h-4" /> },
+  { keyword: '情绪健康测评', label: '开始情绪健康测评', path: '/emotion-health', icon: <BarChart3 className="w-4 h-4" /> },
+  { keyword: 'SCL-90', label: '开始SCL-90测评', path: '/scl90', icon: <ClipboardList className="w-4 h-4" /> },
+  { keyword: '财富卡点', label: '开始财富卡点测评', path: '/wealth-block', icon: <BarChart3 className="w-4 h-4" /> },
+  { keyword: '死了吗', label: '开启每日打卡', path: '/alive-check', icon: <Skull className="w-4 h-4" /> },
+  { keyword: '觉察日记', label: '写觉察日记', path: '/awakening', icon: <BookOpen className="w-4 h-4" /> },
+  { keyword: '情绪SOS', label: '试试情绪SOS', path: '/emotion-button', icon: <Siren className="w-4 h-4" /> },
+];
 
 export default function Claim() {
   const [searchParams] = useSearchParams();
@@ -239,13 +249,39 @@ export default function Claim() {
                   <p className="text-muted-foreground">现在就开始你的情绪梳理之旅吧！</p>
                 </div>
                 <div className="space-y-3">
-                  <Button
-                    onClick={() => navigate('/')}
-                    className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-                  >
-                    ✨ 开始体验
-                  </Button>
+                  {(() => {
+                    const matchedEntries = ENTRY_MAPPINGS.filter(entry =>
+                      itemsToShow.some(item => item.includes(entry.keyword))
+                    ).slice(0, 3);
+
+                    if (matchedEntries.length === 0) {
+                      return (
+                        <Button
+                          onClick={() => navigate('/')}
+                          className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                        >
+                          ✨ 开始体验
+                        </Button>
+                      );
+                    }
+
+                    return matchedEntries.map((entry, index) => (
+                      <Button
+                        key={entry.path}
+                        onClick={() => navigate(entry.path)}
+                        variant={index === 0 ? "default" : "outline"}
+                        className={index === 0
+                          ? "w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                          : "w-full"
+                        }
+                      >
+                        {entry.icon}
+                        {entry.label}
+                      </Button>
+                    ));
+                  })()}
                   <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+                    <Home className="w-4 h-4" />
                     进入首页
                   </Button>
                 </div>
