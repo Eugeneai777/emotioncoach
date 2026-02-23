@@ -18,7 +18,7 @@ export const experiencePackageItems: ExperiencePackageItem[] = [
     name: '尝鲜会员', 
     value: '50点', 
     icon: '🎫',
-    description: '体验有劲AI教练的入门权益，50点可与5位AI教练对话约50次',
+    description: '体验有劲AI教练的入门权益，50点可与5位AI教练文字对话约50次',
     features: [
       '5位AI教练任选对话',
       '情绪觉醒、亲子、沟通等主题',
