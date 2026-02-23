@@ -32,6 +32,7 @@ const SPECIALTY_OPTIONS = [
   "个人成长",
   "焦虑抑郁",
   "青少年心理",
+  "企业管理",
 ];
 
 export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
