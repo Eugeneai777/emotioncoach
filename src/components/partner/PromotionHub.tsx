@@ -264,7 +264,7 @@ export function PromotionHub({
         <section>
           <div className="flex items-center gap-2 mb-2.5">
             <StepNumber n={3} />
-            <span className="text-xs font-semibold text-foreground">复制链接</span>
+            <span className="text-xs font-semibold text-foreground">复制和分享链接</span>
           </div>
 
           <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border border-border">
