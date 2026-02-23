@@ -6,7 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles, Info, Share2, MessageCircle, BarChart3, ClipboardList, Skull, BookOpen, Siren, Home } from "lucide-react";
 import { toast } from "sonner";
 
-type ClaimStatus = 'loading' | 'success' | 'error' | 'no-partner' | 'self-claim' | 'already-claimed';
+type ClaimStatus = 'loading-preview' | 'preview' | 'claiming' | 'success' | 'error' | 'no-partner' | 'self-claim' | 'already-claimed';
+
+interface PreviewItem {
+  item_key: string;
+  name: string;
+  value: string;
+  icon: string;
+  description: string;
+  color_theme: string;
+  category: string;
+}
 
 const ENTRY_MAPPINGS: { keyword: string; label: string; path: string; icon: React.ReactNode }[] = [
   { keyword: '尝鲜会员', label: '和AI教练聊聊', path: '/coach/awakening', icon: <MessageCircle className="w-4 h-4" /> },
@@ -26,11 +36,11 @@ export default function Claim() {
   const type = searchParams.get("type");
   const ref = searchParams.get("ref");
   
-  const [status, setStatus] = useState<ClaimStatus>('loading');
+  const [status, setStatus] = useState<ClaimStatus>('loading-preview');
   const [message, setMessage] = useState("");
-  const [quotaAmount, setQuotaAmount] = useState(50);
-  const [durationDays, setDurationDays] = useState(365);
   const [grantedItems, setGrantedItems] = useState<string[]>([]);
+  const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
+  const [previewError, setPreviewError] = useState("");
 
   // Track poster scan on page load
   useEffect(() => {
@@ -95,7 +105,7 @@ export default function Claim() {
       setMessage("缺少合伙人信息");
       return;
     }
-    claimEntry();
+    loadPreview();
   }, [partnerId, type, ref]);
 
   const handleCampInvite = async () => {
@@ -114,15 +124,41 @@ export default function Claim() {
     }
   };
 
-  const claimEntry = async () => {
+  const loadPreview = async () => {
+    setStatus('loading-preview');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate(`/auth?redirect=/claim?partner=${partnerId}${posterId ? `&poster=${posterId}` : ''}`);
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-partner-preview?partner_id=${partnerId}`,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setPreviewError(data.error || '获取权益信息失败');
+        setStatus('error');
+        setMessage(data.error || '获取权益信息失败');
         return;
       }
+      setPreviewItems(data.items || []);
+      setStatus('preview');
+    } catch (e) {
+      console.error('Load preview error:', e);
+      setPreviewError('网络错误，请稍后重试');
+      setStatus('error');
+      setMessage('网络错误，请稍后重试');
+    }
+  };
 
+  const handleClaim = async () => {
+    // Check auth first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const redirectUrl = `/claim?partner=${partnerId}${posterId ? `&poster=${posterId}` : ''}`;
+      navigate(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
+      return;
+    }
+
+    setStatus('claiming');
+    try {
       const { data, error } = await supabase.functions.invoke('claim-partner-entry', {
         body: { partner_id: partnerId }
       });
@@ -131,24 +167,19 @@ export default function Claim() {
 
       if (data.success) {
         setStatus('success');
-        setQuotaAmount(data.quota_amount || 50);
-        setDurationDays(data.duration_days || 365);
         setGrantedItems(data.granted_items || []);
         setMessage(data.message || "领取成功！");
         toast.success("🎉 领取成功！");
       } else {
-        // Distinguish error types by message keywords
         const msg = data.message || "领取失败";
         if (msg.includes("自己")) {
           setStatus('self-claim');
-          setMessage(msg);
         } else if (msg.includes("已经领取") || msg.includes("已领取")) {
           setStatus('already-claimed');
-          setMessage(msg);
         } else {
           setStatus('error');
-          setMessage(msg);
         }
+        setMessage(msg);
       }
     } catch (error: any) {
       console.error("Claim error:", error);
@@ -164,15 +195,45 @@ export default function Claim() {
     }
   };
 
+  // Auto-claim if user returns from auth (already logged in and in preview state)
+  useEffect(() => {
+    if (status === 'preview' && partnerId) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        // Check if user just returned from auth redirect
+        const returnedFromAuth = document.referrer.includes('/auth') || sessionStorage.getItem('claim_pending');
+        if (user && returnedFromAuth) {
+          sessionStorage.removeItem('claim_pending');
+          handleClaim();
+        }
+      });
+    }
+  }, [status]);
+
+  // Mark pending claim before redirect
+  const handleClaimClick = () => {
+    sessionStorage.setItem('claim_pending', '1');
+    handleClaim();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-teal-100">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center gap-3">
-            {status === 'loading' && (
+            {(status === 'loading-preview' || status === 'claiming') && (
               <>
                 <Loader2 className="w-12 h-12 text-teal-500 animate-spin" />
-                <span className="text-lg text-teal-700">正在领取...</span>
+                <span className="text-lg text-teal-700">
+                  {status === 'claiming' ? '正在领取...' : '加载中...'}
+                </span>
+              </>
+            )}
+            {status === 'preview' && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+                  <Gift className="w-10 h-10 text-white" />
+                </div>
+                <span className="text-xl text-teal-700">🎁 有人送你一份成长礼物</span>
               </>
             )}
             {status === 'success' && (
@@ -204,7 +265,7 @@ export default function Claim() {
                 <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
                   <AlertCircle className="w-10 h-10 text-red-500" />
                 </div>
-                <span className="text-xl text-red-600">领取失败</span>
+                <span className="text-xl text-red-600">出错了</span>
               </>
             )}
             {status === 'no-partner' && (
@@ -218,6 +279,42 @@ export default function Claim() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Preview state - show benefits */}
+          {status === 'preview' && (
+            <>
+              <div className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">以下权益将免费解锁给你：</p>
+                <div className="space-y-2">
+                  {previewItems.map((item) => (
+                    <div
+                      key={item.item_key}
+                      className="flex items-start gap-3 bg-gradient-to-r from-teal-50/80 to-cyan-50/80 rounded-xl p-3 text-left"
+                    >
+                      <span className="text-xl flex-shrink-0 mt-0.5">{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-foreground">{item.name}</span>
+                          <span className="text-[10px] text-teal-600 bg-teal-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">{item.value}</span>
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Button
+                onClick={handleClaimClick}
+                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+              >
+                <Gift className="w-5 h-5 mr-1" />
+                免费领取
+              </Button>
+            </>
+          )}
+
+          {/* Success state */}
           {status === 'success' && (() => {
             const defaultItems = [
               '🎫 尝鲜会员 50点AI教练额度',
