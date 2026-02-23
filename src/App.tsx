@@ -330,6 +330,7 @@ const App = () => (
               <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
               <Route path="/my-appointments" element={<MyAppointments />} />
               <Route path="/become-coach" element={<BecomeCoach />} />
+              <Route path="/coach-recruitment" element={<CoachRecruitment />} />
               <Route path="/coach-dashboard" element={<CoachDashboard />} />
               <Route path="/coach/:coachKey" element={<DynamicCoach />} />
               <Route path="/teen-chat/:token" element={<TeenChat />} />

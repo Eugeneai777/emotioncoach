@@ -148,6 +148,7 @@ export const pathToKeyMap: Record<string, string> = {
   '/share-invite': 'shareInvite',
   '/my-appointments': 'myAppointments',
   '/become-coach': 'becomeCoach',
+  '/coach-recruitment': 'coachRecruitment',
   '/introduction': 'introduction',
   '/emotion-button-intro': 'emotionButtonIntro',
   '/energy-studio-intro': 'energyStudioIntro',
