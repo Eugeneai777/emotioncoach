@@ -260,24 +260,30 @@ export function PromotionHub({
 
         <Separator />
 
-        {/* 推广链接 */}
-        <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border border-border">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-muted-foreground mb-0.5">📎 推广链接</p>
-            <p className="text-xs font-mono text-foreground truncate">{promoUrl}</p>
+        {/* ③ 复制链接 */}
+        <section>
+          <div className="flex items-center gap-2 mb-2.5">
+            <StepNumber n={3} />
+            <span className="text-xs font-semibold text-foreground">复制链接</span>
           </div>
-        </div>
 
-        {/* 操作按钮 */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={handleCopyLink} size="sm" className="h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
-            <Copy className="w-3.5 h-3.5 mr-1" />{copied ? '已复制' : '复制链接'}
-          </Button>
-          <Button onClick={handleDownloadQR} variant="outline" size="sm" className="h-8" disabled={generatingQR}>
-            {generatingQR ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <QrCode className="w-3.5 h-3.5 mr-1" />}
-            下载二维码
-          </Button>
-        </div>
+          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border border-border">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-muted-foreground mb-0.5">📎 推广链接</p>
+              <p className="text-xs font-mono text-foreground truncate">{promoUrl}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <Button onClick={handleCopyLink} size="sm" className="h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
+              <Copy className="w-3.5 h-3.5 mr-1" />{copied ? '已复制' : '复制链接'}
+            </Button>
+            <Button onClick={handleDownloadQR} variant="outline" size="sm" className="h-8" disabled={generatingQR}>
+              {generatingQR ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <QrCode className="w-3.5 h-3.5 mr-1" />}
+              下载二维码
+            </Button>
+          </div>
+        </section>
 
         {/* 保存按钮 - 有变更时显示 */}
         {hasChanges && (
