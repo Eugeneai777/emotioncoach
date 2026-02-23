@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Plus, X, Upload, FileCheck, ArrowLeft } from "lucide-react";
+import { Plus, X, Upload, FileCheck, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,7 @@ interface Certification {
   issuingAuthority: string;
   certNumber: string;
   imageUrl: string;
+  description: string;
 }
 
 interface CertificationsStepProps {
@@ -37,6 +39,7 @@ export function CertificationsStep({
   onBack,
 }: CertificationsStepProps) {
   const [uploading, setUploading] = useState<number | null>(null);
+  const [generating, setGenerating] = useState<number | null>(null);
   const { toast } = useToast();
 
   const addCertification = () => {
@@ -48,6 +51,7 @@ export function CertificationsStep({
         issuingAuthority: "",
         certNumber: "",
         imageUrl: "",
+        description: "",
       },
     ]);
   };
@@ -95,6 +99,32 @@ export function CertificationsStep({
       toast({ title: "上传失败，请重试", variant: "destructive" });
     } finally {
       setUploading(null);
+    }
+  };
+
+  const handleGenerateDescription = async (index: number) => {
+    const cert = data[index];
+    if (!cert.certName) return;
+    setGenerating(index);
+    try {
+      const { data: result, error } = await supabase.functions.invoke("ai-coach-application", {
+        body: {
+          action: "generate_cert_description",
+          certType: cert.certType,
+          certName: cert.certName,
+          issuingAuthority: cert.issuingAuthority,
+        },
+      });
+      if (error) throw error;
+      if (result?.result) {
+        updateCertification(index, { description: result.result });
+        toast({ title: "证书描述已生成" });
+      }
+    } catch (error) {
+      console.error("Generate cert description error:", error);
+      toast({ title: "生成失败，请重试", variant: "destructive" });
+    } finally {
+      setGenerating(null);
     }
   };
 
@@ -219,6 +249,37 @@ export function CertificationsStep({
                   />
                 </label>
               )}
+            </div>
+
+            {/* AI Description */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>证书描述</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleGenerateDescription(index)}
+                  disabled={!cert.certName || generating !== null}
+                  className="gap-1.5"
+                >
+                  {generating === index ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  {generating === index ? "生成中..." : "AI 生成描述"}
+                </Button>
+              </div>
+              <Textarea
+                placeholder="证书的专业描述（可点击 AI 生成）"
+                value={cert.description}
+                onChange={(e) =>
+                  updateCertification(index, { description: e.target.value })
+                }
+                className="min-h-[60px]"
+                maxLength={200}
+              />
             </div>
           </Card>
         ))}

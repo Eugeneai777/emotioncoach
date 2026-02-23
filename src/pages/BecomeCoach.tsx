@@ -29,6 +29,7 @@ interface Certification {
   issuingAuthority: string;
   certNumber: string;
   imageUrl: string;
+  description: string;
 }
 
 interface Service {
