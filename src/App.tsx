@@ -146,6 +146,7 @@ const HumanCoaches = lazyRetry(() => import("./pages/HumanCoaches"));
 const HumanCoachDetail = lazyRetry(() => import("./pages/HumanCoachDetail"));
 const MyAppointments = lazyRetry(() => import("./pages/MyAppointments"));
 const BecomeCoach = lazyRetry(() => import("./pages/BecomeCoach"));
+const CoachRecruitment = lazyRetry(() => import("./pages/CoachRecruitment"));
 const CoachDashboard = lazyRetry(() => import("./pages/CoachDashboard"));
 
 // 觉醒系统
