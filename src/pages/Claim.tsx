@@ -153,7 +153,7 @@ export default function Claim() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       const redirectUrl = `/claim?partner=${partnerId}${posterId ? `&poster=${posterId}` : ''}`;
-      navigate(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
+      navigate(`/auth?register=true&redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
 
