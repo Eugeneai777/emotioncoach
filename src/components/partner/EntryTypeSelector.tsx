@@ -203,16 +203,23 @@ export function EntryTypeSelector({
             {experienceItems.map((pkg) => (
               <label
                 key={pkg.item_key}
-                className="flex items-center gap-1.5 cursor-pointer py-0.5"
+                className="flex items-start gap-1.5 cursor-pointer py-1"
               >
                 <Checkbox
                   checked={selectedKeys.has(pkg.package_key)}
                   onCheckedChange={() => toggleKey(pkg.package_key)}
-                  className="h-4 w-4 min-h-0 min-w-0"
+                  className="h-4 w-4 min-h-0 min-w-0 mt-0.5"
                 />
-                <span className="text-xs">{pkg.icon}</span>
-                <span className="text-xs font-medium">{pkg.name}</span>
-                <span className="text-[10px] text-muted-foreground">({pkg.value})</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">{pkg.icon}</span>
+                    <span className="text-xs font-medium">{pkg.name}</span>
+                    <span className="text-[10px] text-muted-foreground">({pkg.value})</span>
+                  </div>
+                  {pkg.description && (
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{pkg.description}</p>
+                  )}
+                </div>
               </label>
             ))}
           </div>
