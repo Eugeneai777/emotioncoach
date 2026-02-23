@@ -457,15 +457,15 @@ const Auth = () => {
             {/* 仅手机号模式且注册时显示用户名称 */}
             {authMode === 'phone' && !isLogin && (
               <div className="space-y-1.5 md:space-y-2">
-                <Label htmlFor="displayName" className="text-xs md:text-sm">用户名称</Label>
+                <Label htmlFor="displayName" className="text-xs md:text-sm">你的昵称</Label>
                 <Input
                   id="displayName"
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="请输入你的名称"
+                  placeholder="AI教练会用这个名字称呼你"
                   required={!isLogin}
-                  maxLength={50}
+                  maxLength={20}
                   className="rounded-xl text-sm"
                 />
               </div>
