@@ -1,56 +1,36 @@
 
 
-## 修复 Bug #322：未付费用户可以直接开启21天情绪训练营
+## 在推广中心加入第 ③ 步：复制链接
 
-### 根因分析
+### 当前状态
 
-在 `src/pages/Index.tsx`（情绪教练主页），"开启训练营" 按钮触发的 `StartCampDialog` 传入了一个硬编码的 `campTemplate` 对象，但**缺少 `price` 字段**：
+PromotionHub 组件（`src/components/partner/PromotionHub.tsx`）目前有两个编号步骤：
+- ① 选择入口方式
+- ② 自选体验包内容
 
-```js
-campTemplate={{
-  camp_type: 'emotion_journal_21',
-  camp_name: '21天情绪日记训练营',
-  duration_days: 21,
-  icon: '📝'
-  // price 缺失!
-}}
-```
+推广链接和复制/二维码按钮在下方，但没有编号标注，不够醒目。
 
-在 `StartCampDialog` 中，购买校验逻辑如下：
+### 改动内容
 
-```js
-const isFree = campTemplate.price === 0 
-  || campTemplate.price === undefined  // <-- undefined 被判定为免费
-  || campTemplate.price === null;
-const needsPurchase = !isFree && !hasPurchased;
-```
+在 `src/components/partner/PromotionHub.tsx` 中，将现有的"推广链接"区域和操作按钮包裹为正式的 **第 ③ 步：复制链接**，与前两步视觉统一：
 
-因为 `price` 是 `undefined`，`isFree` 为 `true`，所以**完全跳过了购买校验**，任何用户都可以直接开启训练营。
-
-数据库中该训练营实际售价为 **399 元**。
-
-### 修复方案
-
-在 `src/pages/Index.tsx` 的硬编码 `campTemplate` 中补充 `price` 和 `original_price` 字段：
-
-```js
-campTemplate={{
-  camp_type: 'emotion_journal_21',
-  camp_name: '21天情绪日记训练营',
-  duration_days: 21,
-  icon: '📝',
-  price: 399,
-  original_price: 399,
-}}
-```
+1. 在第二个 `<Separator />` 之后，将推广链接显示区和操作按钮包进一个 `<section>` 中
+2. 添加 `<StepNumber n={3} />` 和标题"复制链接"
+3. 保持原有的复制链接、下载二维码按钮不变
 
 ### 改动文件
 
-- `src/pages/Index.tsx`（约第585-590行）：为 campTemplate 添加 `price: 399, original_price: 399`
+- `src/components/partner/PromotionHub.tsx`（约 263-280 行）：将推广链接区域包裹为 Step 3
 
-### 影响范围
+### 改动前后对比
 
-修复后：
-- 未购买用户点击"开启训练营"会看到"需要购买此训练营"提示弹窗
-- 已购买用户不受影响，可正常开启
-- 免费训练营（price=0）不受影响
+改动前：推广链接和按钮是无标号的独立区块
+
+改动后：
+```
+③ 复制链接
+  📎 推广链接  [链接文本]
+  [复制链接] [下载二维码]
+```
+
+视觉上与 ① ② 保持一致的编号步骤风格。
