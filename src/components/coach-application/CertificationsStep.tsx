@@ -128,6 +128,38 @@ export function CertificationsStep({
     }
   };
 
+  const [generatingImage, setGeneratingImage] = useState<number | null>(null);
+
+  const handleGenerateCertImage = async (index: number) => {
+    const cert = data[index];
+    if (!cert.certName) {
+      toast({ title: "请先填写证书名称", variant: "destructive" });
+      return;
+    }
+    setGeneratingImage(index);
+    try {
+      const { data: result, error } = await supabase.functions.invoke("ai-coach-application", {
+        body: {
+          action: "generate_cert_image",
+          certType: cert.certType,
+          certName: cert.certName,
+          issuingAuthority: cert.issuingAuthority,
+          coachName: "",
+        },
+      });
+      if (error) throw error;
+      if (result?.result) {
+        updateCertification(index, { imageUrl: result.result });
+        toast({ title: "AI 证书图片已生成" });
+      }
+    } catch (error) {
+      console.error("Generate cert image error:", error);
+      toast({ title: "生成失败，请重试", variant: "destructive" });
+    } finally {
+      setGeneratingImage(null);
+    }
+  };
+
   const isValid = data.length > 0 && data.every((cert) => cert.certName && cert.imageUrl);
 
   return (
@@ -229,25 +261,42 @@ export function CertificationsStep({
                   </Button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                  {uploading === index ? (
-                    <div className="text-sm text-muted-foreground">上传中...</div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">
-                        点击上传证书图片
-                      </span>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(index, e)}
-                    disabled={uploading !== null}
-                  />
-                </label>
+                <div className="space-y-2">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                    {uploading === index ? (
+                      <div className="text-sm text-muted-foreground">上传中...</div>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-sm text-muted-foreground">
+                          点击上传证书图片
+                        </span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(index, e)}
+                      disabled={uploading !== null}
+                    />
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={() => handleGenerateCertImage(index)}
+                    disabled={!cert.certName || generatingImage !== null}
+                  >
+                    {generatingImage === index ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    {generatingImage === index ? "AI 生成中..." : "AI 生成证书图片"}
+                  </Button>
+                </div>
               )}
             </div>
 
