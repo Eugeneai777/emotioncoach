@@ -128,6 +128,38 @@ export function CertificationsStep({
     }
   };
 
+  const [generatingImage, setGeneratingImage] = useState<number | null>(null);
+
+  const handleGenerateCertImage = async (index: number) => {
+    const cert = data[index];
+    if (!cert.certName) {
+      toast({ title: "请先填写证书名称", variant: "destructive" });
+      return;
+    }
+    setGeneratingImage(index);
+    try {
+      const { data: result, error } = await supabase.functions.invoke("ai-coach-application", {
+        body: {
+          action: "generate_cert_image",
+          certType: cert.certType,
+          certName: cert.certName,
+          issuingAuthority: cert.issuingAuthority,
+          coachName: "",
+        },
+      });
+      if (error) throw error;
+      if (result?.result) {
+        updateCertification(index, { imageUrl: result.result });
+        toast({ title: "AI 证书图片已生成" });
+      }
+    } catch (error) {
+      console.error("Generate cert image error:", error);
+      toast({ title: "生成失败，请重试", variant: "destructive" });
+    } finally {
+      setGeneratingImage(null);
+    }
+  };
+
   const isValid = data.length > 0 && data.every((cert) => cert.certName && cert.imageUrl);
 
   return (

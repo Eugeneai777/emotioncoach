@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,94 @@ serve(async (req) => {
 
     const { action, ...params } = await req.json();
 
+    // Handle certificate image generation separately (uses image model)
+    if (action === "generate_cert_image") {
+      const { certType, certName, issuingAuthority, coachName } = params;
+      const certTypeMap: Record<string, string> = {
+        psychological_counselor: "心理咨询师",
+        marriage_counselor: "婚姻家庭咨询师",
+        education: "学历证书",
+        training: "培训证书",
+        other: "专业资质",
+      };
+      const certLabel = certTypeMap[certType] || certType;
+
+      const prompt = `Generate a professional Chinese certificate image with the following details:
+- Certificate type: ${certLabel}
+- Certificate name: ${certName}
+- Issuing authority: ${issuingAuthority || "有劲教练平台"}
+- Holder name: ${coachName || "教练"}
+- Style: Formal, elegant, with gold borders and official seal design
+- Include decorative elements like laurel wreaths or emblems
+- Text should be in Chinese
+- Colors: warm gold, deep red accents on cream/ivory background
+- Size: landscape orientation, clean and professional layout
+- Ultra high resolution`;
+
+      const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!imgResponse.ok) {
+        if (imgResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "请求过于频繁，请稍后再试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (imgResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "AI 服务额度不足" }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const t = await imgResponse.text();
+        console.error("AI image gateway error:", imgResponse.status, t);
+        throw new Error("AI image service error");
+      }
+
+      const imgData = await imgResponse.json();
+      const imageUrl = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+      if (!imageUrl) {
+        throw new Error("No image generated");
+      }
+
+      // Upload base64 image to Supabase storage
+      const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, "");
+      const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+      const fileName = `ai-certs/cert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("community-images")
+        .upload(fileName, imageBytes, { contentType: "image/png", upsert: false });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error("Failed to upload generated certificate image");
+      }
+
+      const { data: urlData } = supabaseAdmin.storage
+        .from("community-images")
+        .getPublicUrl(fileName);
+
+      return new Response(JSON.stringify({ result: urlData.publicUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Text-based AI actions
     let systemPrompt = "";
     let userPrompt = "";
 
