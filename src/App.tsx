@@ -146,6 +146,7 @@ const HumanCoaches = lazyRetry(() => import("./pages/HumanCoaches"));
 const HumanCoachDetail = lazyRetry(() => import("./pages/HumanCoachDetail"));
 const MyAppointments = lazyRetry(() => import("./pages/MyAppointments"));
 const BecomeCoach = lazyRetry(() => import("./pages/BecomeCoach"));
+const CoachRecruitment = lazyRetry(() => import("./pages/CoachRecruitment"));
 const CoachDashboard = lazyRetry(() => import("./pages/CoachDashboard"));
 
 // 觉醒系统
@@ -329,6 +330,7 @@ const App = () => (
               <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
               <Route path="/my-appointments" element={<MyAppointments />} />
               <Route path="/become-coach" element={<BecomeCoach />} />
+              <Route path="/coach-recruitment" element={<CoachRecruitment />} />
               <Route path="/coach-dashboard" element={<CoachDashboard />} />
               <Route path="/coach/:coachKey" element={<DynamicCoach />} />
               <Route path="/teen-chat/:token" element={<TeenChat />} />
