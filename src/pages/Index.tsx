@@ -586,7 +586,9 @@ const Index = () => {
           camp_type: 'emotion_journal_21',
           camp_name: '21天情绪日记训练营',
           duration_days: 21,
-          icon: '📝'
+          icon: '📝',
+          price: 399,
+          original_price: 399,
         }}
         onSuccess={loadActiveCamp}
       />
