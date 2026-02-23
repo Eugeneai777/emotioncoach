@@ -472,3 +472,6 @@ verify_jwt = false
 
 [functions.batch-trigger-wechat-bind-reminder]
 verify_jwt = false
+
+[functions.get-partner-preview]
+verify_jwt = false
