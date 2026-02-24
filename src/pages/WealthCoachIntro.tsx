@@ -212,7 +212,7 @@ const WealthCoachIntro = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/50 via-white to-orange-50/30 dark:from-amber-950/10 dark:via-background dark:to-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50/50 via-white to-orange-50/30 dark:from-amber-950/10 dark:via-background dark:to-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="wealthCoachIntro" />
       {/* Header - 使用统一的PageHeader */}
       <PageHeader 

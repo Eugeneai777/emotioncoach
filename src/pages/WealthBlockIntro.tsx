@@ -476,7 +476,7 @@ export default function WealthBlockIntro() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-slate-50 via-white to-slate-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <ResponsiveContainer size="sm" className="pb-24">
         <HeroSection />
         <PainPointSection />

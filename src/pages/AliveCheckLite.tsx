@@ -32,15 +32,8 @@ const AliveCheckLite = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="aliveCheckLite" />
-      
-      {/* 装饰性背景元素 */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-rose-200/30 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -left-20 w-64 h-64 bg-pink-200/25 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-48 h-48 bg-fuchsia-200/20 rounded-full blur-3xl" />
-      </div>
 
       <PageHeader title="💗 死了吗" showBack rightActions={
         <Button variant="ghost" size="icon" onClick={() => navigate("/alive-check-intro")}>

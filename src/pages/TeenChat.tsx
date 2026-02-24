@@ -146,7 +146,7 @@ export default function TeenChat() {
   return (
     <>
       <DynamicOGMeta pageKey="teenCoach" />
-    <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <div className="text-center pt-10 px-6">
         <div className="text-4xl mb-3">{avatarEmoji}</div>

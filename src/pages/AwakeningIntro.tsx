@@ -114,7 +114,7 @@ const AwakeningIntro: React.FC = () => {
     <>
       <DynamicOGMeta pageKey="awakeningIntro" />
 
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50/30">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-amber-50 via-background to-orange-50/30" style={{ WebkitOverflowScrolling: 'touch' }}>
         <PageHeader title="六大觉察入口" showBack rightActions={<IntroShareDialog config={introShareConfigs.awakening} />} />
 
         {/* Main Content */}

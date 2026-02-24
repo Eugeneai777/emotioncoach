@@ -173,7 +173,7 @@ export default function WealthAwakeningProgress() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="wealthAwakeningProgress" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">

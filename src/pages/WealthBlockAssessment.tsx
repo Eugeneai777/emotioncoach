@@ -690,7 +690,7 @@ export default function WealthBlockAssessmentPage() {
   const { ogConfig } = usePageOG("wealthBlock");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 via-orange-50/30 to-white" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* SEO & 微信分享 Meta Tags - 动态从数据库读取 */}
       <DynamicOGMeta pageKey="wealthBlock" />
 

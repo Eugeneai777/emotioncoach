@@ -144,7 +144,7 @@ export default function MyAppointments() {
   return (
     <>
       <DynamicOGMeta pageKey="myAppointments" />
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
         <div className="flex items-center justify-between p-4">

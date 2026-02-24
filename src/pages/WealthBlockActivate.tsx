@@ -154,7 +154,7 @@ const WealthBlockActivate = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 py-8">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-orange-50 p-4 py-8" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="max-w-md mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">

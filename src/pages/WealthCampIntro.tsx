@@ -152,7 +152,7 @@ const WealthCampIntro = () => {
   return (
     <>
       <DynamicOGMeta pageKey="wealthCampIntro" />
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 via-orange-50/30 to-white" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header - 使用统一的PageHeader */}
       <PageHeader 
         title="财富觉醒训练营"

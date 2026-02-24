@@ -45,7 +45,7 @@ export default function ParentTeenIntro() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="parentTeenIntro" />
       <PageHeader title="双轨模式介绍" showBack rightActions={<IntroShareDialog config={introShareConfigs.parentTeen} />} />
 

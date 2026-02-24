@@ -221,7 +221,7 @@ const ParentIntake = () => {
     <>
       <DynamicOGMeta pageKey="parentIntake" />
       
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-orange-100">
           <div className="container max-w-lg mx-auto px-4 py-3 flex items-center gap-3">

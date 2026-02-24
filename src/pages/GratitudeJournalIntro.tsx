@@ -186,14 +186,8 @@ const GratitudeJournalIntro = () => {
   const whyItWorks = ["看见自己", "看见幸福", "看见力量", "看见方向"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="gratitudeJournalIntro" />
-      {/* Decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-teal-200/30 rounded-full blur-3xl" />
-        <div className="absolute top-40 right-10 w-40 h-40 bg-cyan-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 left-20 w-36 h-36 bg-blue-200/30 rounded-full blur-3xl" />
-      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-teal-100/50">

@@ -162,7 +162,7 @@ export default function PartnerInvitePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 py-8 px-4">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 py-8 px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">

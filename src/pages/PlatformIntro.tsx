@@ -329,7 +329,7 @@ const PlatformIntro = () => {
   return (
     <div 
       ref={setRefs}
-      className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 pb-[env(safe-area-inset-bottom)] overflow-y-auto overscroll-contain"
+      className="h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 pb-[env(safe-area-inset-bottom)] overflow-y-auto overscroll-contain"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <DynamicOGMeta pageKey="platformIntro" />

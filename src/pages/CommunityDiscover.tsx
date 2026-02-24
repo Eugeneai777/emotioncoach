@@ -156,7 +156,7 @@ const CommunityDiscover = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-background to-secondary/20" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <PageHeader title="发现精彩" showBack />
 

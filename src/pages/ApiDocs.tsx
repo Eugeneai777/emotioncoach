@@ -551,7 +551,7 @@ const ApiDocs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">

@@ -124,7 +124,7 @@ export default function LandingPage() {
   const ogDescription = content.subtitle.slice(0, 155);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background relative overflow-hidden">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-primary/5 via-background to-background relative" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* SEO & OG Meta */}
       <Helmet>
         <title>{ogTitle} - 有劲AI</title>

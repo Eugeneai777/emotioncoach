@@ -322,7 +322,7 @@ const Introduction = () => {
       answer: "不会。所有对话用于陪伴与成长，遵循严格隐私保护机制。"
     }]
   }];
-  return <div className="min-h-screen bg-background">
+  return <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* 模块1: Hero Banner */}
       <section className="relative overflow-hidden">
         {/* 渐变背景 */}

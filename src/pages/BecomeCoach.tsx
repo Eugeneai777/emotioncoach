@@ -189,7 +189,7 @@ export default function BecomeCoach() {
   return (
     <>
       <DynamicOGMeta pageKey="becomeCoach" />
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <PageHeader title="申请成为教练" showBack />
 

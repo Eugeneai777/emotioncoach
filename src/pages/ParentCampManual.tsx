@@ -172,7 +172,7 @@ const ParentCampManual = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-background via-primary/5 to-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
