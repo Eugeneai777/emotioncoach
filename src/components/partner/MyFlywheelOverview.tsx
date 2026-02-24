@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowRight } from "lucide-react";
-import { getPartnerLevel } from "@/config/partnerLevels";
+import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 
 interface MyFlywheelOverviewProps {
   partnerId: string;
