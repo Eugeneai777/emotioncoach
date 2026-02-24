@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Partner } from "@/hooks/usePartner";
-import { youjinPartnerLevels } from "@/config/partnerLevels";
+import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { TrendingUp } from "lucide-react";
 
 interface PartnerLevelProgressProps {
@@ -9,9 +9,14 @@ interface PartnerLevelProgressProps {
 }
 
 export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
-  const currentLevelIndex = youjinPartnerLevels.findIndex(l => l.level === partner.partner_level);
-  const currentLevel = youjinPartnerLevels[currentLevelIndex];
-  const nextLevel = youjinPartnerLevels[currentLevelIndex + 1];
+  const { getYoujinLevels, loading } = usePartnerLevels('youjin');
+  const youjinLevels = getYoujinLevels();
+  
+  if (loading || youjinLevels.length === 0) return null;
+
+  const currentLevelIndex = youjinLevels.findIndex(l => l.level_name === partner.partner_level);
+  const currentLevel = youjinLevels[currentLevelIndex];
+  const nextLevel = youjinLevels[currentLevelIndex + 1];
 
   if (!currentLevel) return null;
 
