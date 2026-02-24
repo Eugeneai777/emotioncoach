@@ -191,7 +191,7 @@ const CampCheckIn = () => {
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:via-background dark:to-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:via-background dark:to-background" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <div className="container mx-auto px-4 py-6 max-w-3xl">
       <PageHeader title={`第 ${displayCurrentDay} 天打卡`} showBack />
 

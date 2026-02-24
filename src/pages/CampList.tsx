@@ -196,11 +196,7 @@ const CampList = () => {
       <main className="container max-w-6xl mx-auto px-4 py-6 sm:py-12">
         {/* Hero Section with Stats */}
         <section className="relative text-center space-y-4 sm:space-y-8 mb-6 sm:mb-12 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-          {/* Decorative Background */}
-          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
-            <div className="absolute top-20 right-1/4 w-80 h-80 bg-cyan-200/20 rounded-full blur-3xl" />
-          </div>
+          {/* Decorative backgrounds removed for mobile performance */}
 
           <div className="space-y-4">
             <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0 text-base px-4 py-2 animate-pulse">
@@ -337,15 +333,9 @@ const CampList = () => {
         </Tabs>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-teal-200/30 py-8 mt-16 bg-white/50 backdrop-blur-sm dark:bg-teal-950/20 dark:border-teal-800/30">
-        <div className="container max-w-6xl mx-auto px-4 text-center space-y-4">
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-teal-600 transition-colors">关于我们</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">使用条款</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">隐私政策</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">联系我们</a>
-          </div>
+      {/* Footer simplified */}
+      <footer className="border-t border-teal-200/30 py-4 mt-8 bg-white/50 dark:bg-teal-950/20 dark:border-teal-800/30">
+        <div className="container max-w-6xl mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
             © 2024 有劲生活馆. 让生命绽放
           </p>

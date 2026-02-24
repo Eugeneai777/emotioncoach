@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Shield, Clock, MessageCircle, TrendingDown, Calendar } from "lucide-react";
+import { Shield, Clock, MessageCircle, TrendingDown, Calendar } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -147,23 +147,9 @@ const PanicHistory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <DynamicOGMeta pageKey="panicHistory" />
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              返回
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">历史分析</h1>
-              <p className="text-sm text-slate-500">追踪你的缓解进展 🌊</p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="历史分析" showBack />
 
       <main className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
         {isLoading ? (

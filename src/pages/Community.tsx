@@ -306,7 +306,7 @@ const Community = () => {
       <DynamicOGMeta pageKey="community" />
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -317,7 +317,7 @@ const Community = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
               🌈 有劲社区
             </h1>
             <p className="text-xs text-muted-foreground">分享成长 · 见证蜕变</p>

@@ -232,7 +232,7 @@ const GratitudeHistory = () => {
   return (
     <>
       <DynamicOGMeta pageKey="gratitudeHistory" />
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <PageHeader title="感恩日记" showBack rightActions={user ? (
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh} disabled={isRefreshing || isPullRefreshing}>
           <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />

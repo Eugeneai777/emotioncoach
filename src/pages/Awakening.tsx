@@ -100,7 +100,7 @@ const Awakening: React.FC = () => {
     <AwakeningErrorBoundary>
       <SafeOGMeta />
 
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30" style={{ WebkitOverflowScrolling: 'touch' as any }}>
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
