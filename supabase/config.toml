@@ -478,3 +478,6 @@ verify_jwt = false
 
 [functions.ai-coach-application]
 verify_jwt = false
+
+[functions.recommend-courses-v2]
+verify_jwt = false
