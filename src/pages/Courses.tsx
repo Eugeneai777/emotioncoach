@@ -256,7 +256,7 @@ const Courses = () => {
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
         <div className="container max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
             <div className="flex items-center gap-1">
               <div
                 onClick={() => navigate('/')}
@@ -274,7 +274,7 @@ const Courses = () => {
                 返回
               </Button>
             </div>
-            <div className="flex-1 text-center">
+            <div className="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none">
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
                 线上课程
               </h1>
