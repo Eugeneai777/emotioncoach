@@ -16,7 +16,8 @@ import {
   Heart,
   ExternalLink,
   BookOpen,
-  User
+  User,
+  Coins
 } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,12 +38,28 @@ interface Course {
 
 const Courses = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"personal" | "all">("all");
   const [activeSource, setActiveSource] = useState<string>("all");
   const [visibleCount, setVisibleCount] = useState(20);
+
+  // 获取用户剩余点数
+  const { data: userAccount } = useQuery({
+    queryKey: ['user-account-quota', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_accounts')
+        .select('remaining_quota, total_quota, used_quota')
+        .eq('user_id', user!.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
 
   // 获取课程列表
   const { data: courses = [], isLoading } = useQuery({
@@ -153,6 +170,11 @@ const Courses = () => {
     if (!result.success) {
       toast.error(result.error || "额度不足，请充值后观看");
       return;
+    }
+
+    // 扣费成功后刷新余额显示
+    if (result.isFirstWatch) {
+      queryClient.invalidateQueries({ queryKey: ['user-account-quota', user.id] });
     }
 
     // 打开视频
@@ -285,6 +307,20 @@ const Courses = () => {
           </div>
         </div>
       </header>
+
+      {/* Quota Banner */}
+      {user && userAccount && (
+        <div className="container max-w-7xl mx-auto px-4 pt-3 pb-0">
+          <div className="flex items-center justify-center gap-3 py-2 px-4 rounded-xl bg-primary/5 border border-primary/10 text-sm">
+            <Coins className="w-4 h-4 text-primary flex-shrink-0" />
+            <span className="text-muted-foreground">
+              剩余 <span className="font-semibold text-foreground">{userAccount.remaining_quota ?? 0}</span> 点
+            </span>
+            <span className="text-muted-foreground/50">·</span>
+            <span className="text-muted-foreground">每次观看消耗 <span className="font-semibold text-primary">1</span> 点（首次观看扣费）</span>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="container max-w-7xl mx-auto px-4 py-4">
