@@ -370,7 +370,7 @@ const Courses = () => {
                   </Button>
                 ))}
               </div>
-            )
+            )}
 
             {/* 课程网格 */}
             {filteredCourses.length === 0 ? (
