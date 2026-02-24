@@ -106,7 +106,7 @@ export default function MeditationLibrary() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <PageHeader title="冥想音频库" backTo="/wealth-camp-checkin" />
       
       <main className="container max-w-lg mx-auto px-4 py-6 pb-32">

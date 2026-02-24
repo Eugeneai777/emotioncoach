@@ -62,13 +62,8 @@ const AliveCheckIntro = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-fuchsia-50 relative overflow-hidden">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-rose-50 via-pink-50 to-fuchsia-50 relative" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="aliveCheckIntro" />
-      
-      {/* 装饰性背景元素 */}
-      <div className="absolute top-20 left-0 w-72 h-72 bg-rose-200/20 rounded-full blur-3xl" />
-      <div className="absolute top-96 right-0 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-40 left-10 w-64 h-64 bg-fuchsia-200/15 rounded-full blur-3xl" />
       
       {/* Header */}
       <PageHeader title="安全打卡介绍" showBack rightActions={

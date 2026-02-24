@@ -122,7 +122,7 @@ const DeploymentPackage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-background to-muted/20" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="container max-w-5xl mx-auto px-4 py-8 md:py-12">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">

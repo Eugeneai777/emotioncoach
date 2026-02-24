@@ -82,7 +82,7 @@ const SCL90Page = () => {
   // 历史页面单独渲染
   if (pageState === "history") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
         <DynamicOGMeta pageKey="scl90" />
         <PageHeader title="SCL-90 测评历史" backTo="/scl90" />
         <main className="container max-w-2xl mx-auto px-3 py-4">

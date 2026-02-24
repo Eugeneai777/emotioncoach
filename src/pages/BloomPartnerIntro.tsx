@@ -95,7 +95,7 @@ const BloomPartnerIntro = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-purple-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-rose-50 via-pink-50 to-purple-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <div className="pt-12 pb-6 text-center px-4">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg mb-4">

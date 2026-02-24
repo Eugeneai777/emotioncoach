@@ -84,7 +84,7 @@ const AwakeningLite: React.FC = () => {
     <>
       <DynamicOGMeta pageKey="awakeningLite" />
 
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30" style={{ WebkitOverflowScrolling: 'touch' }}>
         <PageHeader title="觉察日记" showBack rightActions={<IntroShareDialog config={introShareConfigs.awakening} trigger={<Button variant="ghost" size="icon"><Share2 className="h-5 w-5" /></Button>} />} />
 
         {/* Main Content */}

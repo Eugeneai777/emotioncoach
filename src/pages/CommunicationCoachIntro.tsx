@@ -179,7 +179,7 @@ const CommunicationCoachIntro = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="communicationCoachIntro" />
       {/* 模块1: Hero Banner */}
       <section className="relative overflow-hidden">

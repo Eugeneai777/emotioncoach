@@ -154,7 +154,7 @@ const WealthCampActivate = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 via-orange-50/30 to-white" style={{ WebkitOverflowScrolling: 'touch' }}>
       <PageHeader title="财富觉醒训练营" className="bg-white/80 border-amber-100" />
 
       <div className="pb-44">

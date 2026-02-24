@@ -49,7 +49,7 @@ export default function MashangLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-amber-950 text-white overflow-x-hidden relative">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-red-950 via-red-900 to-amber-950 text-white overflow-x-hidden relative" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Floating wealth + stars + celebration background */}
       {sparkles.map((s, i) => (
         <div

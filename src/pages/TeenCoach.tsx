@@ -52,7 +52,7 @@ export default function TeenCoach() {
   return (
     <>
       <DynamicOGMeta pageKey="teenCoach" />
-      <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="container max-w-lg mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <motion.div
