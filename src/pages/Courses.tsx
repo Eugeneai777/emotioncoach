@@ -81,7 +81,7 @@ const Courses = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  // 来源筛选后的课程（用于计算类别统计）
+  // 来源筛选后的课程
   const sourceFilteredCourses = activeSource === "all"
     ? courses
     : courses.filter(c => c.source === activeSource);
@@ -92,6 +92,10 @@ const Courses = () => {
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  // 判断当前来源下是否只有一个分类
+  const categoryEntries = Object.entries(categoryStats);
+  const showCategories = categoryEntries.length > 1;
 
   // 筛选和搜索
   const filteredCourses = courses.filter(course => {
@@ -230,20 +234,18 @@ const Courses = () => {
   }
 
   const sources = [
-    { id: "all", name: "全部来源", count: courses.length },
+    { id: "all", name: "全部", emoji: "📚", count: courses.length },
     ...Object.entries(sourceStats).map(([name, count]) => ({
-      id: name, name, count
+      id: name, name, count,
+      emoji: name === "绽放公开课" ? "🦋" : name === "有劲365" ? "🔥" : "📖"
     }))
   ];
 
-  const categories = [
-    { id: "all", name: "全部", count: sourceFilteredCourses.length },
-    ...Object.entries(categoryStats).map(([name, count]) => ({
-      id: name,
-      name,
-      count
-    }))
-  ];
+  const categories = categoryEntries.map(([name, count]) => ({
+    id: name,
+    name,
+    count
+  }));
 
   return (
     <div 
@@ -314,8 +316,8 @@ const Courses = () => {
               />
             </div>
 
-            {/* 来源筛选 */}
-            <div className="flex flex-wrap gap-1.5 mb-2 justify-center">
+            {/* 一级来源切换 */}
+            <div className="flex flex-wrap gap-2 mb-3 justify-center">
               {sources.map(source => (
                 <Button
                   key={source.id}
@@ -326,33 +328,49 @@ const Courses = () => {
                     setActiveCategory("all");
                     setVisibleCount(20);
                   }}
-                  className="gap-1 text-xs h-7 px-2.5"
+                  className={`gap-1.5 text-sm h-9 px-4 rounded-full font-medium transition-all ${
+                    activeSource === source.id
+                      ? source.id === "绽放公开课"
+                        ? "bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                        : source.id === "有劲365"
+                          ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                          : ""
+                      : ""
+                  }`}
                 >
+                  <span>{source.emoji}</span>
                   {source.name}
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  <Badge variant={activeSource === source.id ? "outline" : "secondary"} className={`text-[10px] px-1.5 py-0 ${
+                    activeSource === source.id ? "border-white/40 text-white/90" : ""
+                  }`}>
                     {source.count}
                   </Badge>
                 </Button>
               ))}
             </div>
 
-            {/* 类别筛选 */}
-            <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
-              {categories.map(category => (
-                <Button
-                  key={category.id}
-                  variant={activeCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => { setActiveCategory(category.id); setVisibleCount(20); }}
-                  className="gap-1 text-xs h-7 px-2.5"
-                >
-                  {category.name}
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                    {category.count}
-                  </Badge>
-                </Button>
-              ))}
-            </div>
+            {/* 二级类别筛选（仅多分类时显示） */}
+            {showCategories && (
+              <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
+                {categories.map(category => (
+                  <Button
+                    key={category.id}
+                    variant={activeCategory === category.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setActiveCategory(prev => prev === category.id ? "all" : category.id);
+                      setVisibleCount(20);
+                    }}
+                    className="gap-1 text-xs h-7 px-2.5"
+                  >
+                    {category.name}
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {category.count}
+                    </Badge>
+                  </Button>
+                ))}
+              </div>
+            )}
 
             {/* 课程网格 */}
             {filteredCourses.length === 0 ? (
