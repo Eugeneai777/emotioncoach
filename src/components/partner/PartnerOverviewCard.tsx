@@ -60,7 +60,7 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
             <span className="text-2xl">{currentLevel?.icon || '💪'}</span>
             <div>
               <h3 className="font-bold text-sm flex items-center gap-1.5">
-                有劲合伙人 · {currentLevel?.name || 'L1'}
+                有劲合伙人 · {currentLevel?.level_name || 'L1'}
                 {isExpired && <span className="text-xs font-normal bg-white/20 px-1.5 py-0.5 rounded">已过期</span>}
               </h3>
               <p className="text-white/80 text-xs flex items-center gap-1">
