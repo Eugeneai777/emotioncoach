@@ -122,7 +122,7 @@ const CampTemplateDetail = () => {
   }
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-accent/5" style={{ WebkitOverflowScrolling: 'touch' }}>
       <PageHeader title="训练营详情" backTo="/camps" showBack />
 
       <main className="container max-w-5xl mx-auto px-4 py-12 space-y-12">

@@ -265,7 +265,7 @@ export default function CampGraduate() {
         />
       )}
       
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 via-white to-orange-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
         <div className="flex items-center justify-between p-4">

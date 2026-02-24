@@ -8,7 +8,7 @@ interface LiteIntroCardProps {
 
 export function LiteIntroCard({ onStart }: LiteIntroCardProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-background px-4 py-6 pb-36">
+    <div className="bg-gradient-to-b from-amber-50/50 to-background px-4 py-6 pb-36">
       {/* 标题区域 */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100 rounded-full text-amber-700 text-sm mb-4">
