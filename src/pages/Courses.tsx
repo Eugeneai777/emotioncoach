@@ -81,7 +81,7 @@ const Courses = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  // 来源筛选后的课程（用于计算类别统计）
+  // 来源筛选后的课程
   const sourceFilteredCourses = activeSource === "all"
     ? courses
     : courses.filter(c => c.source === activeSource);
@@ -92,6 +92,10 @@ const Courses = () => {
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  // 判断当前来源下是否只有一个分类
+  const categoryEntries = Object.entries(categoryStats);
+  const showCategories = categoryEntries.length > 1;
 
   // 筛选和搜索
   const filteredCourses = courses.filter(course => {
