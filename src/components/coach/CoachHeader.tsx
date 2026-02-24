@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target, LogIn, Lightbulb } from "lucide-react";
+import { ChevronDown, Sparkles, History, Menu, RotateCcw, Target, LogIn } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
@@ -262,27 +262,6 @@ export const CoachHeader = ({
               </Button>
             )}
 
-            {/* 套餐 & 觉醒 - 仅桌面端显示，移动端已移入汉堡菜单 */}
-            <div className="hidden md:flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate("/packages")}
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
-                title="套餐"
-              >
-                <ShoppingBag className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate("/awakening")}
-                className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-md group"
-                title="觉察"
-              >
-                <Lightbulb className="w-4 h-4 animate-[pulse_3s_ease-in-out_infinite] group-hover:animate-none group-hover:scale-110 transition-transform" />
-              </Button>
-            </div>
 
             {/* Notification Center */}
             {showNotificationCenter && <SmartNotificationCenter />}
