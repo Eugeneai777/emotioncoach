@@ -445,6 +445,21 @@ const Courses = () => {
                   );
                 })}
               </div>
+              {visibleCount < filteredCourses.length && (
+                <div className="text-center mt-6 mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleCount(prev => prev + 20)}
+                    className="gap-2"
+                  >
+                    加载更多课程
+                    <Badge variant="secondary" className="text-xs">
+                      还有 {filteredCourses.length - visibleCount} 门
+                    </Badge>
+                  </Button>
+                </div>
+              )}
+              </>
             )}
           </TabsContent>
         </Tabs>
