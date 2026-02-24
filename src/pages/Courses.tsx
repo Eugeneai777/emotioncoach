@@ -316,8 +316,8 @@ const Courses = () => {
               />
             </div>
 
-            {/* 一级来源切换 */}
-            <div className="flex flex-wrap gap-2 mb-3 justify-center">
+            {/* 一级来源切换 - 手机端横向滚动 */}
+            <div className="flex gap-2 mb-3 justify-center md:flex-wrap overflow-x-auto md:overflow-visible pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
               {sources.map(source => (
                 <Button
                   key={source.id}
@@ -328,7 +328,7 @@ const Courses = () => {
                     setActiveCategory("all");
                     setVisibleCount(20);
                   }}
-                  className={`gap-1.5 text-sm h-9 px-4 rounded-full font-medium transition-all ${
+                  className={`gap-1 md:gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 rounded-full font-medium transition-all flex-shrink-0 ${
                     activeSource === source.id
                       ? source.id === "绽放公开课"
                         ? "bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
@@ -349,9 +349,9 @@ const Courses = () => {
               ))}
             </div>
 
-            {/* 二级类别筛选（仅多分类时显示） */}
+            {/* 二级类别筛选 - 手机端横向滚动 */}
             {showCategories && (
-              <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
+              <div className="flex gap-1.5 mb-4 justify-center md:flex-wrap overflow-x-auto md:overflow-visible pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
                 {categories.map(category => (
                   <Button
                     key={category.id}
@@ -361,7 +361,7 @@ const Courses = () => {
                       setActiveCategory(prev => prev === category.id ? "all" : category.id);
                       setVisibleCount(20);
                     }}
-                    className="gap-1 text-xs h-7 px-2.5"
+                    className="gap-1 text-xs h-7 px-2.5 flex-shrink-0"
                   >
                     {category.name}
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
