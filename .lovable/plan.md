@@ -1,51 +1,45 @@
 
 
-## Optimize /courses Page for Mobile
+## Add Source Filter to /courses Page
 
-### Problems Identified
-1. **Header too tall** -- `py-6` padding plus large `text-2xl` title and subtitle wastes vertical space
-2. **Category filters overflow** -- 5 buttons wrapping onto 3 rows, each with a BookOpen icon and Badge, consuming ~150px of screen height
-3. **Excessive margins** -- `mb-8` on tabs and category section, `mb-6` on search, `py-8` on main content
-4. **Course cards too verbose** -- Large padding, oversized buttons, and decorative elements
+### Problem
+Users cannot filter courses by source ("有劲365" vs "绽放公开课"). Currently only category filters (领导力, 个人成长, etc.) exist, making it hard to find all videos from a specific series.
 
 ### Solution
+Add a source filter row above the category filters, allowing users to quickly switch between "全部来源", "有劲365 (253)", and "绽放公开课 (105)".
+
+### Changes
 
 **File: `src/pages/Courses.tsx`**
 
-1. **Compact header**
-   - Reduce padding from `py-6` to `py-3`
-   - Reduce title from `text-2xl sm:text-3xl` to `text-xl`
-   - Remove subtitle text on mobile (keep on sm+)
-   - Remove the empty spacer div (`w-[80px]`)
+1. **Add source filter state**
+   - New state: `activeSource` (default: `"all"`)
 
-2. **Streamline category filters**
-   - Remove the `BookOpen` icon from each filter button (redundant)
-   - Use smaller, more compact pill-style buttons
-   - Reduce gap and margins (`mb-8` to `mb-4`, `gap-2` to `gap-1.5`)
+2. **Compute source stats** from courses data (similar to how `categoryStats` works)
 
-3. **Tighten spacing throughout**
-   - Main content padding: `py-8` to `py-4`
-   - Tab list margin: `mb-8` to `mb-4`
-   - Search margin: `mb-6` to `mb-4`
+3. **Add source filter buttons** above the existing category filter row
+   - Compact pill-style buttons matching the existing category filter design
+   - Buttons: "全部来源 (358)" | "有劲365 (253)" | "绽放公开课 (105)"
 
-4. **Compact course cards**
-   - Reduce card title from `text-lg` to `text-base`
-   - Limit description to 2 lines on mobile
-   - Remove source text on mobile to save space
+4. **Update filtering logic** to also filter by `course.source` when a source is selected
+
+5. **Update category counts** to reflect the source filter -- so when "有劲365" is selected, category counts update accordingly (e.g., 领导力 might show 200 instead of 260)
+
+### Layout (mobile)
+```text
+[全部来源 358] [有劲365 253] [绽放公开课 105]    <-- new row
+[全部 253] [个人成长 20] [人际关系 15] ...        <-- existing, counts update
+```
 
 ### Technical Details
 
-All changes are in `src/pages/Courses.tsx`:
+In `src/pages/Courses.tsx`:
 
-**Header** (lines 230-261): Reduce padding, title size, hide subtitle on mobile, remove spacer div.
+- Add `const [activeSource, setActiveSource] = useState("all")` around line 43
+- Compute `sourceStats` from `courses` (similar to `categoryStats` on lines 76-80)
+- Add source filter before category filter (before line 293), reset `activeCategory` to "all" when source changes
+- Update `filteredCourses` (line 83) to add: `if (activeSource !== "all" && course.source !== activeSource) return false`
+- Make `categoryStats` computed from source-filtered courses so counts stay accurate
 
-**Tabs** (line 266): Change `mb-8` to `mb-4`.
-
-**Search** (line 283): Change `mb-6` to `mb-4`.
-
-**Category filters** (lines 294-310): Remove `BookOpen` icons, change `mb-8` to `mb-4`, `gap-2` to `gap-1.5`.
-
-**Main content** (line 264): Change `py-8` to `py-4`.
-
-**Course cards** (lines 324-396): Reduce title size, tighten description clamp.
+No database or backend changes needed.
 
