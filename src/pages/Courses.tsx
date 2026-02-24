@@ -234,20 +234,18 @@ const Courses = () => {
   }
 
   const sources = [
-    { id: "all", name: "全部来源", count: courses.length },
+    { id: "all", name: "全部", emoji: "📚", count: courses.length },
     ...Object.entries(sourceStats).map(([name, count]) => ({
-      id: name, name, count
+      id: name, name, count,
+      emoji: name === "绽放公开课" ? "🦋" : name === "有劲365" ? "🔥" : "📖"
     }))
   ];
 
-  const categories = [
-    { id: "all", name: "全部", count: sourceFilteredCourses.length },
-    ...Object.entries(categoryStats).map(([name, count]) => ({
-      id: name,
-      name,
-      count
-    }))
-  ];
+  const categories = categoryEntries.map(([name, count]) => ({
+    id: name,
+    name,
+    count
+  }));
 
   return (
     <div 
