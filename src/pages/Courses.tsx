@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/PageHeader";
@@ -42,6 +42,7 @@ const Courses = () => {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"personal" | "all">("all");
   const [activeSource, setActiveSource] = useState<string>("all");
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // 获取课程列表
   const { data: courses = [], isLoading } = useQuery({
@@ -359,8 +360,12 @@ const Courses = () => {
                 <p className="text-muted-foreground">暂无符合条件的课程</p>
               </div>
             ) : (
+              <>
+              <p className="text-center text-xs text-muted-foreground mb-3">
+                显示 {Math.min(visibleCount, filteredCourses.length)} / {filteredCourses.length} 门课程
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCourses.map((course, index) => {
+                {filteredCourses.slice(0, visibleCount).map((course, index) => {
                   const isFavorited = favorites.includes(course.id);
                   
                   return (
