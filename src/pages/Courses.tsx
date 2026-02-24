@@ -324,6 +324,7 @@ const Courses = () => {
                   onClick={() => {
                     setActiveSource(source.id);
                     setActiveCategory("all");
+                    setVisibleCount(20);
                   }}
                   className="gap-1 text-xs h-7 px-2.5"
                 >
@@ -342,7 +343,7 @@ const Courses = () => {
                   key={category.id}
                   variant={activeCategory === category.id ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setActiveCategory(category.id)}
+                  onClick={() => { setActiveCategory(category.id); setVisibleCount(20); }}
                   className="gap-1 text-xs h-7 px-2.5"
                 >
                   {category.name}
