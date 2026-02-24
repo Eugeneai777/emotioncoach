@@ -1,50 +1,28 @@
 
 
-## Optimize Coach Space Mobile Layout
+## Remove Product/Awakening Icons and Improve CoachHeader Spacing
 
 ### Problem
-The Coach Space page header is overcrowded on mobile:
-- **Left side**: Logo + Back button + Home button (3 elements)
-- **Center**: Title "教练空间"
-- **Right side**: HelpTooltip + Info button + Bell button (3 elements)
-
-This causes icons to overlap and squeeze together on small screens.
+The CoachHeader navigation bar is too crowded, especially on mobile/tablet screens. The 产品中心 (ShoppingBag) and 觉醒日记 (Lightbulb) icon buttons take up space unnecessarily -- these features are already accessible via the hamburger menu.
 
 ### Solution
 
-**1. Simplify the header actions in `CoachSpace.tsx`**
-- Remove the redundant `HelpTooltip` button (its functionality overlaps with the Info button)
-- Remove the `showHomeButton` prop (the logo already navigates home, and there's a back button)
-- Keep only the Bell (notifications) button as the right action
+**File: `src/components/coach/CoachHeader.tsx`**
 
-**2. Clean up the welcome section in `CoachSpace.tsx`**
-- Reduce vertical padding on the welcome text area to make more room for content
-- Tighten spacing between sections
+1. **Remove the "套餐 & 觉醒" icon group entirely** (lines 265-285)
+   - Delete the entire `div` containing the ShoppingBag and Lightbulb buttons
+   - These are redundant since both "产品中心" and "觉察" are already in the hamburger menu config
 
-### Files to Modify
+2. **Clean up unused imports**
+   - Remove `ShoppingBag` and `Lightbulb` from the lucide-react import (line 3)
 
-**`src/pages/CoachSpace.tsx`**
-- Remove `HelpTooltip` import and usage from `rightActions`
-- Remove `Info` button from `rightActions` (or keep only one of Info/HelpTooltip)
-- Remove `showHomeButton` prop from `PageHeader`
-- Reduce `py-4` to `py-3` on the welcome section
-- Keep the layout clean with only essential actions
+This frees up horizontal space in the header, giving the hamburger menu and coach space dropdown more breathing room.
 
 ### Technical Details
 
-Changes to `CoachSpace.tsx` header section:
-```tsx
-<PageHeader
-  title="教练空间"
-  rightActions={
-    <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')}>
-      <Bell className="w-5 h-5" />
-    </Button>
-  }
-/>
-```
+In `src/components/coach/CoachHeader.tsx`:
+- Delete lines 265-285 (the `hidden md:flex` container with ShoppingBag and Lightbulb buttons)
+- Update import on line 3 to remove `ShoppingBag` and `Lightbulb`
 
-Remove unused imports: `Info`, `HelpTooltip`.
-
-This reduces the header from 6 elements to 4 (logo, back, title, bell), giving each element proper spacing on mobile.
+No other files need changes -- both routes (`/packages` and `/awakening`) remain accessible through the hamburger menu defined in `hamburgerMenuConfig.ts`.
 
