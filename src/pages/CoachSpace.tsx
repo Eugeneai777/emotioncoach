@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { Bell, Info } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import { EnhancedCoachCard } from "@/components/coach/EnhancedCoachCard";
@@ -9,7 +9,6 @@ import { HumanCoachEntry } from "@/components/coach/HumanCoachEntry";
 import { TeamCoachingEntry } from "@/components/coach/TeamCoachingEntry";
 import PageHeader from "@/components/PageHeader";
 import { CoachCardSkeleton, LoadingMessage } from "@/components/CoachCardSkeleton";
-import { HelpTooltip } from "@/components/HelpTooltip";
 
 const CoachSpace = () => {
   const navigate = useNavigate();
@@ -24,30 +23,15 @@ const CoachSpace = () => {
       {/* 通用顶部 Header */}
       <PageHeader
         title="教练空间"
-        showHomeButton
         rightActions={
-          <>
-            <HelpTooltip
-              title="教练空间使用指南"
-              description="选择适合你的AI教练，开始成长对话"
-              tips={[
-                "每位教练专注不同领域，选择最匹配你需求的",
-                "可以随时切换教练，对话记录会保存",
-                "语音对话功能让交流更自然"
-              ]}
-            />
-            <Button variant="ghost" size="icon" onClick={() => navigate('/coach-space-intro')}>
-              <Info className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')}>
-              <Bell className="w-5 h-5" />
-            </Button>
-          </>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')}>
+            <Bell className="w-5 h-5" />
+          </Button>
         }
       />
 
       {/* 欢迎语 */}
-      <div className="px-4 py-4 text-center">
+      <div className="px-4 py-3 text-center">
         <motion.div 
           initial={{ opacity: 0, y: 10 }} 
           animate={{ opacity: 1, y: 0 }}
