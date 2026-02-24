@@ -17,16 +17,19 @@ interface PartnerOverviewCardProps {
 
 export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWithdraw, onStudentsClick }: PartnerOverviewCardProps) {
   const navigate = useNavigate();
-  const currentLevel = getPartnerLevel('youjin', partner.partner_level);
-  const currentLevelIndex = youjinPartnerLevels.findIndex(l => l.level === partner.partner_level);
-  const nextLevel = youjinPartnerLevels[currentLevelIndex + 1];
+  const { getYoujinLevels } = usePartnerLevels('youjin');
+  const youjinLevels = getYoujinLevels();
+  
+  const currentLevelIndex = youjinLevels.findIndex(l => l.level_name === partner.partner_level);
+  const currentLevel = youjinLevels[currentLevelIndex] || null;
+  const nextLevel = youjinLevels[currentLevelIndex + 1] || null;
 
   const progress = nextLevel
-    ? ((partner.prepurchase_count - (currentLevel?.minPrepurchase || 0)) / 
-       (nextLevel.minPrepurchase - (currentLevel?.minPrepurchase || 0))) * 100
+    ? ((partner.prepurchase_count - (currentLevel?.min_prepurchase || 0)) / 
+       (nextLevel.min_prepurchase - (currentLevel?.min_prepurchase || 0))) * 100
     : 100;
 
-  const remaining = nextLevel ? nextLevel.minPrepurchase - partner.prepurchase_count : 0;
+  const remaining = nextLevel ? nextLevel.min_prepurchase - partner.prepurchase_count : 0;
 
   // 到期信息内联到等级条副标题
   const getSubtitleContent = () => {
