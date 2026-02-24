@@ -38,6 +38,7 @@ interface Course {
 
 const Courses = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
@@ -169,6 +170,11 @@ const Courses = () => {
     if (!result.success) {
       toast.error(result.error || "额度不足，请充值后观看");
       return;
+    }
+
+    // 扣费成功后刷新余额显示
+    if (result.isFirstWatch) {
+      queryClient.invalidateQueries({ queryKey: ['user-account-quota', user.id] });
     }
 
     // 打开视频
