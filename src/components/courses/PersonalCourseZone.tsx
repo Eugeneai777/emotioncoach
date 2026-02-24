@@ -1,28 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Sparkles } from "lucide-react";
-import { UnifiedCourseUnit } from "./UnifiedCourseUnit";
-import { toast } from "sonner";
-import { 
-  UnifiedBriefing, 
-  mapEmotionBriefing, 
-  mapCommunicationBriefing, 
-  mapParentBriefing, 
-  mapVibrantLifeBriefing 
-} from "@/types/briefings";
-
-interface CourseRecommendation {
-  id: string;
-  title: string;
-  video_url: string;
-  reason: string;
-  match_score: number;
-  category?: string;
-  description?: string;
-  source?: string;
-}
+import { Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PersonalRecommendationCard } from "./PersonalRecommendationCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PersonalCourseZoneProps {
   onWatchCourse: (videoUrl: string, courseId: string) => void;
@@ -30,131 +14,32 @@ interface PersonalCourseZoneProps {
 
 export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) => {
   const { user } = useAuth();
-  const [recommendationsMap, setRecommendationsMap] = useState<Map<string, CourseRecommendation[]>>(new Map());
-  const [loadingMap, setLoadingMap] = useState<Map<string, boolean>>(new Map());
+  const [showAll, setShowAll] = useState(false);
 
-  // 获取用户最近的所有教练简报（最近7天，最多5条）
-  const { data: recentBriefings, isLoading: loadingBriefings } = useQuery({
-    queryKey: ["allRecentBriefings", user?.id],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["personalRecommendationsV2", user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      // 先获取用户的对话ID列表
-      const { data: conversations } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("user_id", user.id);
-      
-      if (!conversations || conversations.length === 0) return [];
-      
-      const conversationIds = conversations.map(c => c.id);
-      
-      // 并行获取四种教练的简报
-      const [emotionData, communicationData, parentData, vibrantLifeData] = await Promise.all([
-        // 1. 情绪教练简报
-        supabase
-          .from("briefings")
-          .select("id, created_at, emotion_theme, emotion_intensity, insight, action, conversation_id")
-          .in("conversation_id", conversationIds)
-          .gte("created_at", sevenDaysAgo.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(5),
-        
-        // 2. 沟通教练简报
-        supabase
-          .from("communication_briefings")
-          .select("id, created_at, communication_theme, communication_difficulty, growth_insight, micro_action, conversation_id")
-          .in("conversation_id", conversationIds)
-          .gte("created_at", sevenDaysAgo.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(5),
-        
-        // 3. 亲子教练简报
-        supabase
-          .from("parent_coaching_sessions")
-          .select("id, created_at, summary, micro_action, conversation_id, briefing_id")
-          .eq("user_id", user.id)
-          .not("briefing_id", "is", null)
-          .gte("created_at", sevenDaysAgo.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(5),
-        
-        // 4. 有劲AI简报
-        supabase
-          .from("vibrant_life_sage_briefings")
-          .select("id, created_at, user_issue_summary, reasoning, conversation_id")
-          .in("conversation_id", conversationIds)
-          .gte("created_at", sevenDaysAgo.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(5)
-      ]);
-
-      // 映射并合并所有简报
-      const allBriefings: UnifiedBriefing[] = [
-        ...(emotionData.data || []).map(mapEmotionBriefing),
-        ...(communicationData.data || []).map(mapCommunicationBriefing),
-        ...(parentData.data || []).map(mapParentBriefing),
-        ...(vibrantLifeData.data || []).map(mapVibrantLifeBriefing),
-      ];
-
-      // 按时间排序，取最近5条
-      return allBriefings
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5);
+      const { data, error } = await supabase.functions.invoke("recommend-courses-v2");
+      if (error) throw error;
+      return data as {
+        summary: string;
+        recommendations: Array<{
+          id: string;
+          title: string;
+          video_url: string;
+          description?: string;
+          category?: string;
+          source?: string;
+          reason: string;
+          match_score: number;
+          data_sources: string[];
+        }>;
+        no_data?: boolean;
+      };
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 缓存5分钟
   });
-
-  // 为每条简报获取推荐课程
-  useEffect(() => {
-    const fetchRecommendationsForBriefing = async (briefing: UnifiedBriefing) => {
-      // 标记为加载中
-      setLoadingMap(prev => new Map(prev).set(briefing.id, true));
-
-      try {
-        const { data, error } = await supabase.functions.invoke("recommend-courses", {
-          body: { 
-            briefing: {
-              id: briefing.id,
-              created_at: briefing.created_at,
-              conversation_id: briefing.conversation_id,
-              emotion_theme: briefing.theme,
-              emotion_intensity: briefing.intensity,
-              insight: briefing.insight,
-              action: briefing.action,
-            },
-            coachType: briefing.coachType
-          },
-        });
-
-        if (error) throw error;
-        
-        if (data?.recommendations) {
-          setRecommendationsMap(prev => 
-            new Map(prev).set(briefing.id, data.recommendations)
-          );
-        }
-      } catch (error) {
-        console.error(`Error fetching recommendations for briefing ${briefing.id}:`, error);
-        // 不显示 toast，静默失败
-      } finally {
-        setLoadingMap(prev => new Map(prev).set(briefing.id, false));
-      }
-    };
-
-    if (recentBriefings && recentBriefings.length > 0) {
-      // 为每条简报获取推荐
-      recentBriefings.forEach(briefing => {
-        // 如果还没有获取过推荐，则获取
-        if (!recommendationsMap.has(briefing.id) && !loadingMap.get(briefing.id)) {
-          fetchRecommendationsForBriefing(briefing);
-        }
-      });
-    }
-  }, [recentBriefings]);
 
   if (!user) {
     return (
@@ -164,52 +49,83 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
     );
   }
 
-  if (loadingBriefings) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="space-y-4">
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
       </div>
     );
   }
 
-  if (!recentBriefings || recentBriefings.length === 0) {
+  if (data?.no_data || (!data?.recommendations?.length && !error)) {
     return (
       <div className="text-center py-12 space-y-4">
         <div className="text-6xl">📝</div>
-        <h3 className="text-xl font-semibold">还没有情绪记录</h3>
+        <h3 className="text-xl font-semibold">还没有足够的数据</h3>
         <p className="text-muted-foreground max-w-md mx-auto">
-          开始记录你的情绪状态，我们将为你推荐适合的课程
+          去和教练聊聊天、记录情绪或写日记，我们将为你智能推荐课程
         </p>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* 页面标题 */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Sparkles className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold">个人专区</h2>
-          <p className="text-sm text-muted-foreground">基于你的情绪状态智能推荐</p>
-        </div>
-      </div>
+  const recommendations = data?.recommendations || [];
+  const visibleRecs = showAll ? recommendations : recommendations.slice(0, 5);
 
-      {/* 多教练课程单元列表 */}
-      <div className="space-y-4">
-        {recentBriefings.map((briefing, index) => (
-          <UnifiedCourseUnit
-            key={briefing.id}
-            briefing={briefing}
-            recommendations={recommendationsMap.get(briefing.id) || []}
-            loading={loadingMap.get(briefing.id) || false}
-            isLatest={index === 0}
-            onWatchCourse={onWatchCourse}
+  return (
+    <div className="space-y-4">
+      {/* 成长画像摘要 */}
+      {data?.summary && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold mb-1">你的成长画像</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {data.summary}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 推荐列表 */}
+      <div className="space-y-3">
+        {visibleRecs.map((rec) => (
+          <PersonalRecommendationCard
+            key={rec.id}
+            recommendation={rec}
+            onWatch={onWatchCourse}
           />
         ))}
       </div>
+
+      {/* 展开/收起 */}
+      {recommendations.length > 5 && (
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(!showAll)}
+          >
+            {showAll ? (
+              <>
+                收起 <ChevronUp className="w-4 h-4 ml-1" />
+              </>
+            ) : (
+              <>
+                查看更多（还有 {recommendations.length - 5} 个）
+                <ChevronDown className="w-4 h-4 ml-1" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
