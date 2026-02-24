@@ -2,7 +2,7 @@ import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Partner } from "@/hooks/usePartner";
-import { getPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
+import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { Wallet, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CompactConversionFunnel } from "./CompactConversionFunnel";
