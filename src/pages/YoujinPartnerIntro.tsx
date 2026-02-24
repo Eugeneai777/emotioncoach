@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock, Share2, Sparkles } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
-import { youjinPartnerLevels } from "@/config/partnerLevels";
+import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { toast } from "sonner";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
@@ -26,6 +26,8 @@ export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
   const { partner, isExpired, daysUntilExpiry } = usePartner();
   const { items: experiencePackageItems } = useExperiencePackageItems();
+  const { getYoujinLevels, loading: levelsLoading } = usePartnerLevels('youjin');
+  const youjinLevels = getYoujinLevels();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<{
     key: string;
@@ -73,12 +75,12 @@ export default function YoujinPartnerIntro() {
   };
 
   const handlePurchase = (levelId: string) => {
-    const level = youjinPartnerLevels.find(l => l.level === levelId);
+    const level = youjinLevels.find(l => l.level_name === levelId);
     if (!level) return;
 
     setSelectedPackage({
-      key: `youjin_partner_${level.level.toLowerCase()}`,
-      name: level.name,
+      key: `youjin_partner_${level.level_name.toLowerCase()}`,
+      name: level.level_name,
       price: level.price,
     });
     setPayDialogOpen(true);
@@ -93,16 +95,24 @@ export default function YoujinPartnerIntro() {
   // 获取按钮文案
   const getButtonLabel = (levelId: string) => {
     const state = getButtonState(levelId);
-    const level = youjinPartnerLevels.find(l => l.level === levelId);
+    const level = youjinLevels.find(l => l.level_name === levelId);
     if (!level) return '';
     
     switch (state) {
-      case 'purchase': return `立即购买 ${level.name}`;
-      case 'renew': return `续费 ${level.name} ¥${level.price}`;
-      case 'renew_switch': return `续费并切换到 ${level.name} ¥${level.price}`;
-      default: return `立即购买 ${level.name}`;
+      case 'purchase': return `立即购买 ${level.level_name}`;
+      case 'renew': return `续费 ${level.level_name} ¥${level.price}`;
+      case 'renew_switch': return `续费并切换到 ${level.level_name} ¥${level.price}`;
+      default: return `立即购买 ${level.level_name}`;
     }
   };
+
+  if (levelsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-orange-50/30" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -171,7 +181,9 @@ export default function YoujinPartnerIntro() {
               <div>
                 <p className="font-medium">等级越高佣金越高</p>
                 <p className="text-sm text-muted-foreground">
-                  L1享18%，L2享30%+二级5%，L3享50%+二级12%
+                  {youjinLevels.length >= 3 
+                    ? `L1享${(youjinLevels[0].commission_rate_l1 * 100).toFixed(0)}%，L2享${(youjinLevels[1].commission_rate_l1 * 100).toFixed(0)}%+二级${(youjinLevels[1].commission_rate_l2 * 100).toFixed(0)}%，L3享${(youjinLevels[2].commission_rate_l1 * 100).toFixed(0)}%+二级${(youjinLevels[2].commission_rate_l2 * 100).toFixed(0)}%`
+                    : 'L1享18%，L2享30%+二级5%，L3享50%+二级12%'}
                 </p>
               </div>
             </div>
@@ -281,15 +293,15 @@ export default function YoujinPartnerIntro() {
           )}
 
           {/* 省钱提示 */}
-          {!isYoujinPartner && (
+          {!isYoujinPartner && youjinLevels.length >= 3 && (
             <Card className="border-teal-200 bg-gradient-to-r from-teal-50 to-cyan-50">
               <CardContent className="py-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">💎</span>
                   <div>
                     <p className="font-medium text-teal-800">一步到位更划算！</p>
-                     <p className="text-sm text-teal-600">直接买钻石：¥4,950</p>
-                     <p className="text-sm text-teal-600">先买初级再升：¥792 + ¥4,950 = ¥5,742</p>
+                     <p className="text-sm text-teal-600">直接买钻石：¥{youjinLevels[2].price.toLocaleString()}</p>
+                     <p className="text-sm text-teal-600">先买初级再升：¥{youjinLevels[0].price.toLocaleString()} + ¥{youjinLevels[2].price.toLocaleString()} = ¥{(youjinLevels[0].price + youjinLevels[2].price).toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -297,16 +309,16 @@ export default function YoujinPartnerIntro() {
           )}
           
           <div className="grid gap-6">
-            {youjinPartnerLevels.map((level) => {
-              const buttonState = getButtonState(level.level);
+            {youjinLevels.map((level) => {
+              const buttonState = getButtonState(level.level_name);
               
               return (
                 <Card 
-                  key={level.level}
+                  key={level.level_name}
                   className={`transition-all cursor-pointer hover:border-orange-500 hover:shadow-lg ${
                     buttonState === 'renew' && !isExpired ? 'border-green-300 bg-green-50/30' : ''
                   }`}
-                  onClick={() => handlePurchase(level.level)}
+                  onClick={() => handlePurchase(level.level_name)}
                 >
                   <CardContent className="p-6 space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -314,7 +326,7 @@ export default function YoujinPartnerIntro() {
                         <span className="text-4xl">{level.icon}</span>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-xl font-bold">{level.name}</p>
+                            <p className="text-xl font-bold">{level.level_name}</p>
                             {buttonState === 'renew' && !isExpired && (
                               <Badge className="bg-green-100 text-green-700 border-green-200">当前等级</Badge>
                             )}
@@ -324,17 +336,17 @@ export default function YoujinPartnerIntro() {
                       </div>
                       <div className="text-right">
                         <p className="text-3xl font-bold text-orange-600">¥{level.price}</p>
-                        <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包 · 1年有效</p>
+                        <p className="text-sm text-muted-foreground">{level.min_prepurchase}份体验包 · 1年有效</p>
                       </div>
                     </div>
 
                      <div className="flex flex-wrap gap-2">
                       <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium">
-                        全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
+                        全产品 {(level.commission_rate_l1 * 100).toFixed(0)}% 佣金
                       </span>
-                      {level.commissionRateL2 > 0 && (
+                      {level.commission_rate_l2 > 0 && (
                         <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
-                          二级 {(level.commissionRateL2 * 100).toFixed(0)}% 佣金
+                          二级 {(level.commission_rate_l2 * 100).toFixed(0)}% 佣金
                         </span>
                       )}
                     </div>
@@ -353,10 +365,10 @@ export default function YoujinPartnerIntro() {
                       size="lg"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePurchase(level.level);
+                        handlePurchase(level.level_name);
                       }}
                     >
-                      {getButtonLabel(level.level)}
+                      {getButtonLabel(level.level_name)}
                     </Button>
                   </CardContent>
                 </Card>
@@ -402,18 +414,20 @@ export default function YoujinPartnerIntro() {
             <div className="space-y-2">
               <p className="font-medium">Q: 续费时可以换等级吗？</p>
               <p className="text-sm text-muted-foreground">
-                A: 可以！续费时可自由选择任意等级，佣金比例和体验包配额按新等级生效。
+                A: 可以。续费时可自由选择任意等级，佣金比例按新等级生效，有效期延长1年。
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* 支付弹窗 */}
       <UnifiedPayDialog
         open={payDialogOpen}
         onOpenChange={setPayDialogOpen}
         packageInfo={selectedPackage}
         onSuccess={handlePaymentSuccess}
+        returnUrl="/partner/youjin-intro"
       />
     </div>
   );

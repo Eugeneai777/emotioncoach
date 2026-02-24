@@ -171,30 +171,31 @@ export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyF
             <span className="text-lg">🎯</span>
             <h3 className="font-bold text-base">我的财富飞轮</h3>
           </div>
-          {partnerType && (() => {
-            const level = getPartnerLevel(partnerType, partnerLevel || '');
-            if (!level) return null;
+        {partnerType && (() => {
             const isBloom = partnerType === 'bloom';
+            const level = getLevelByName(partnerLevel || '', partnerType as 'youjin' | 'bloom');
+            if (!level) return null;
             const commissionLabel = isBloom
-              ? `${(level.commissionRateL1 * 100).toFixed(0)}%+${(level.commissionRateL2 * 100).toFixed(0)}%`
-              : `${(level.commissionRateL1 * 100).toFixed(0)}%${level.commissionRateL2 > 0 ? `+${(level.commissionRateL2 * 100).toFixed(0)}%` : ''}`;
+              ? `${(level.commission_rate_l1 * 100).toFixed(0)}%+${(level.commission_rate_l2 * 100).toFixed(0)}%`
+              : `${(level.commission_rate_l1 * 100).toFixed(0)}%${level.commission_rate_l2 > 0 ? `+${(level.commission_rate_l2 * 100).toFixed(0)}%` : ''}`;
             return (
               <div className="flex items-center gap-1.5 flex-wrap justify-end">
                 <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${level.gradient}`}>
                   <span>{level.icon}</span>
-                  <span>{level.name}</span>
+                  <span>{level.level_name}</span>
                   <span className="opacity-80">·</span>
                   <span>{commissionLabel}</span>
                 </div>
                 {isBloom && (() => {
-                  const youjinL1 = getPartnerLevel('youjin', 'L1');
+                  const youjinLevels = getYoujinLevels();
+                  const youjinL1 = youjinLevels.find(l => l.level_name === 'L1');
                   if (!youjinL1) return null;
                   return (
                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${youjinL1.gradient}`}>
                       <span>{youjinL1.icon}</span>
-                      <span>{youjinL1.name}</span>
+                      <span>{youjinL1.level_name}</span>
                       <span className="opacity-80">·</span>
-                      <span>{(youjinL1.commissionRateL1 * 100).toFixed(0)}%</span>
+                      <span>{(youjinL1.commission_rate_l1 * 100).toFixed(0)}%</span>
                     </div>
                   );
                 })()}

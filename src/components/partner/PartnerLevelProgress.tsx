@@ -57,15 +57,15 @@ export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
               </div>
               <Progress value={progress} className="h-3 bg-white/20" />
               <p className="text-sm text-white/80">
-                还需预购 <span className="font-bold">{remaining}</span> 份即可升级到 {nextLevel.name}
+                还需预购 <span className="font-bold">{remaining}</span> 份即可升级到 {nextLevel.level_name}
               </p>
             </div>
 
             <div className="flex items-center gap-2 text-sm bg-white/10 rounded-lg px-3 py-2">
               <TrendingUp className="w-4 h-4" />
-              <span>升级后佣金提升至 {(nextLevel.commissionRateL1 * 100).toFixed(0)}%</span>
-              {nextLevel.commissionRateL2 > 0 && (
-                <span>+ 二级 {(nextLevel.commissionRateL2 * 100).toFixed(0)}%</span>
+              <span>升级后佣金提升至 {(nextLevel.commission_rate_l1 * 100).toFixed(0)}%</span>
+              {nextLevel.commission_rate_l2 > 0 && (
+                <span>+ 二级 {(nextLevel.commission_rate_l2 * 100).toFixed(0)}%</span>
               )}
             </div>
           </>

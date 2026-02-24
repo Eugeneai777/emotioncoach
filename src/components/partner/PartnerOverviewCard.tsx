@@ -82,10 +82,10 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
           <div className="text-right">
             <div className="text-xs text-white/80">佣金比例</div>
             <div className="text-lg font-bold">
-              {((currentLevel?.commissionRateL1 || 0.2) * 100).toFixed(0)}%
-              {currentLevel?.commissionRateL2 > 0 && (
+              {((currentLevel?.commission_rate_l1 || 0.2) * 100).toFixed(0)}%
+              {(currentLevel?.commission_rate_l2 || 0) > 0 && (
                 <span className="text-xs font-normal ml-1">
-                  +{(currentLevel.commissionRateL2 * 100).toFixed(0)}%
+                  +{((currentLevel?.commission_rate_l2 || 0) * 100).toFixed(0)}%
                 </span>
               )}
             </div>
