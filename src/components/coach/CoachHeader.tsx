@@ -205,7 +205,8 @@ export const CoachHeader = ({
                   className="gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
                 >
                   <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  <span className="hidden md:inline">教练空间</span>
+              <span className="hidden sm:inline">教练空间</span>
+              <span className="sm:hidden">教练</span>
                   <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -236,15 +237,16 @@ export const CoachHeader = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* 有劲生活馆 - 仅桌面端显示，移动端已移入汉堡菜单 */}
+            {/* 有劲生活馆 */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => navigate("/energy-studio")}
-              className="hidden md:flex gap-1 text-sm h-8 px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
-              <Sparkles className="w-4 h-4" />
-              <span className="font-medium">有劲生活馆</span>
+              <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span className="hidden sm:inline font-medium">有劲生活馆</span>
+              <span className="sm:hidden font-medium">生活馆</span>
             </Button>
 
             {/* History/Diary Button */}
