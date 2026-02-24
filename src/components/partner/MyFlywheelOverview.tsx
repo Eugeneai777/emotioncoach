@@ -26,6 +26,7 @@ const LEVEL_3_KEYS = ['bloom_identity_camp', 'awakening_system'];
 const LEVEL_4_KEYS = ['youjin_partner_l1', 'youjin_partner_l2'];
 
 export function MyFlywheelOverview({ partnerId, partnerType, partnerLevel }: MyFlywheelOverviewProps) {
+  const { getLevelByName, getYoujinLevels } = usePartnerLevels();
   const [loading, setLoading] = useState(true);
   const [levels, setLevels] = useState<LevelData[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
