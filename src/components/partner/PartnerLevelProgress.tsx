@@ -21,11 +21,11 @@ export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
   if (!currentLevel) return null;
 
   const progress = nextLevel
-    ? ((partner.prepurchase_count - currentLevel.minPrepurchase) / 
-       (nextLevel.minPrepurchase - currentLevel.minPrepurchase)) * 100
+    ? ((partner.prepurchase_count - currentLevel.min_prepurchase) / 
+       (nextLevel.min_prepurchase - currentLevel.min_prepurchase)) * 100
     : 100;
 
-  const remaining = nextLevel ? nextLevel.minPrepurchase - partner.prepurchase_count : 0;
+  const remaining = nextLevel ? nextLevel.min_prepurchase - partner.prepurchase_count : 0;
 
   return (
     <Card className={`border-2 bg-gradient-to-br ${currentLevel.gradient} text-white`}>
@@ -34,7 +34,7 @@ export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
           <div className="flex items-center gap-3">
             <span className="text-4xl">{currentLevel.icon}</span>
             <div>
-              <CardTitle className="text-white">{currentLevel.name}</CardTitle>
+              <CardTitle className="text-white">{currentLevel.level_name}</CardTitle>
               <CardDescription className="text-white/90">
                 {currentLevel.description}
               </CardDescription>
