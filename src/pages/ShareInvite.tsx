@@ -190,7 +190,7 @@ const ShareInvite = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <DynamicOGMeta pageKey="shareInvite" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-white/20">

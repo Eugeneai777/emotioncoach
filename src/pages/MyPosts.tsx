@@ -192,7 +192,7 @@ export default function MyPosts() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 relative">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 relative" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <DynamicOGMeta pageKey="myPosts" />
       {/* Pull to Refresh Indicator */}
       <PullToRefreshIndicator

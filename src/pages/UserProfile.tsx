@@ -272,41 +272,23 @@ const UserProfile = () => {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
-      <div className="max-w-4xl mx-auto p-4 md:p-6">
-        {/* 顶部导航 */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="text-muted-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            返回
-          </Button>
-          <div className="flex items-center gap-2">
-            {/* 消息中心入口 */}
-            {isOwnProfile && <SmartNotificationCenter />}
-            
-            {isOwnProfile && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/settings")}
-                className="text-muted-foreground"
-              >
-                <Settings className="w-4 h-4 mr-1" />
-                编辑资料
-              </Button>
-            )}
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' as any }}>
+      <PageHeader title="个人主页" showBack rightActions={
+        isOwnProfile ? (
+          <div className="flex items-center gap-1">
+            <SmartNotificationCenter />
+            <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
+              <Settings className="w-5 h-5" />
+            </Button>
           </div>
-        </div>
+        ) : undefined
+      } />
+      <div className="max-w-4xl mx-auto p-4 md:p-6">
 
         {/* 用户信息卡片 - 增强版 */}
         <Card className="mb-6 bg-white/70 backdrop-blur-sm border-0 shadow-lg overflow-hidden">
           {/* 封面背景 */}
-          <div className="h-24 bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400" />
+          <div className="h-16 sm:h-24 bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400" />
           
           <CardContent className="relative pt-0 pb-6">
             {/* 头像 */}

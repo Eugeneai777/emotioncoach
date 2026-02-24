@@ -128,7 +128,7 @@ const AwakeningJournal: React.FC = () => {
     <>
       <DynamicOGMeta pageKey="awakeningJournal" />
 
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30" style={{ WebkitOverflowScrolling: 'touch' as any }}>
         {/* Header */}
         <PageHeader title="觉察日记" backTo="/awakening" showBack />
 

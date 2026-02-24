@@ -16,7 +16,7 @@ export default function TeamCoaching() {
   const { data: sessions, isLoading } = usePublishedSessions(filter);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <PageHeader title="绽放海沃塔 · 团队教练" showBack />
 
       {/* 筛选标签 */}

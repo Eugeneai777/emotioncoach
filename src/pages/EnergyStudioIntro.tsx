@@ -72,7 +72,7 @@ const EnergyStudioIntro = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-accent/5" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <PageHeader title="有劲生活馆使用指南" showBack rightActions={<IntroShareDialog config={introShareConfigs.energyStudio} />} />
 
       <main className="container max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -130,10 +130,10 @@ const EnergyStudioIntro = () => {
         </section>
 
         {/* 工具分类介绍 */}
-        <section className="space-y-12">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">工具分类介绍</h3>
-            <p className="text-muted-foreground">三大类别，全方位支持你的成长</p>
+        <section className="space-y-6">
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-bold">工具分类介绍</h3>
+            <p className="text-sm text-muted-foreground">三大类别，全方位支持你的成长</p>
           </div>
 
           {categories.map((category, catIndex) => {
@@ -181,10 +181,10 @@ const EnergyStudioIntro = () => {
         </section>
 
         {/* 推荐使用场景 */}
-        <section className="space-y-8">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">推荐使用场景</h3>
-            <p className="text-muted-foreground">根据你的状态，快速找到合适的工具组合</p>
+        <section className="space-y-4">
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-bold">推荐使用场景</h3>
+            <p className="text-sm text-muted-foreground">根据你的状态，快速找到合适的工具组合</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {recommendedScenarios.map((scenario, index) => (
@@ -209,10 +209,10 @@ const EnergyStudioIntro = () => {
         </section>
 
         {/* 精选工具详细介绍 */}
-        <section className="space-y-8">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">精选工具详解</h3>
-            <p className="text-muted-foreground">深入了解我们的特色工具</p>
+        <section className="space-y-4">
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-bold">精选工具详解</h3>
+            <p className="text-sm text-muted-foreground">深入了解我们的特色工具</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {featuredTools.map((tool, index) => (
