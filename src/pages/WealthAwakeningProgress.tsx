@@ -151,7 +151,7 @@ export default function WealthAwakeningProgress() {
 
   if (!entries || entries.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
           <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>

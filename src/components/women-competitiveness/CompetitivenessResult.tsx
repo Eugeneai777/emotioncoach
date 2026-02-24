@@ -193,7 +193,7 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 pb-safe">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-rose-50 to-purple-50 pb-safe" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="womenCompetitiveness" />
       <PageHeader
         title="竞争力报告"

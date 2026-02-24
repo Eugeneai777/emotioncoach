@@ -49,7 +49,7 @@ export function CompetitivenessHistory({ onBack, onViewReport }: Competitiveness
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-purple-50 pb-safe">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-rose-50 to-purple-50 pb-safe" style={{ WebkitOverflowScrolling: 'touch' }}>
       <PageHeader title="历史测评记录" showBack={true} />
       <div className="max-w-lg mx-auto p-4 space-y-3">
         {loading ? (

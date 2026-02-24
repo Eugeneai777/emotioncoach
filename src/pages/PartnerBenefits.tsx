@@ -55,7 +55,7 @@ export default function PartnerBenefits() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-primary/5" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="partnerBenefits" />
       <div className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
