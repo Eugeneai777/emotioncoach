@@ -41,7 +41,7 @@ const Courses = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"personal" | "all">("all");
-  
+  const [activeSource, setActiveSource] = useState<string>("all");
   const [visibleCount, setVisibleCount] = useState(20);
 
   // 获取课程列表
@@ -74,8 +74,20 @@ const Courses = () => {
     enabled: !!user
   });
 
-  // 获取类别统计
-  const categoryStats = courses.reduce((acc, course) => {
+  // 来源统计
+  const sourceStats = courses.reduce((acc, course) => {
+    const src = course.source || '其他';
+    acc[src] = (acc[src] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // 来源筛选后的课程（用于计算类别统计）
+  const sourceFilteredCourses = activeSource === "all"
+    ? courses
+    : courses.filter(c => c.source === activeSource);
+
+  // 获取类别统计（基于来源筛选）
+  const categoryStats = sourceFilteredCourses.reduce((acc, course) => {
     const cat = course.category || '其他';
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
@@ -83,6 +95,10 @@ const Courses = () => {
 
   // 筛选和搜索
   const filteredCourses = courses.filter(course => {
+    // 来源筛选
+    if (activeSource !== "all" && course.source !== activeSource) {
+      return false;
+    }
     // 类别筛选
     if (activeCategory !== "all" && course.category !== activeCategory) {
       return false;
@@ -213,11 +229,21 @@ const Courses = () => {
     );
   }
 
-  const categories = Object.entries(categoryStats).map(([name, count]) => ({
-    id: name,
-    name,
-    count
-  }));
+  const sources = [
+    { id: "all", name: "全部来源", count: courses.length },
+    ...Object.entries(sourceStats).map(([name, count]) => ({
+      id: name, name, count
+    }))
+  ];
+
+  const categories = [
+    { id: "all", name: "全部", count: sourceFilteredCourses.length },
+    ...Object.entries(categoryStats).map(([name, count]) => ({
+      id: name,
+      name,
+      count
+    }))
+  ];
 
   return (
     <div 
@@ -288,6 +314,28 @@ const Courses = () => {
               />
             </div>
 
+            {/* 来源筛选 */}
+            <div className="flex flex-wrap gap-1.5 mb-2 justify-center">
+              {sources.map(source => (
+                <Button
+                  key={source.id}
+                  variant={activeSource === source.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setActiveSource(source.id);
+                    setActiveCategory("all");
+                    setVisibleCount(20);
+                  }}
+                  className="gap-1 text-xs h-7 px-2.5"
+                >
+                  {source.name}
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {source.count}
+                  </Badge>
+                </Button>
+              ))}
+            </div>
+
             {/* 类别筛选 */}
             <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
               {categories.map(category => (
@@ -295,7 +343,7 @@ const Courses = () => {
                   key={category.id}
                   variant={activeCategory === category.id ? "default" : "outline"}
                   size="sm"
-                  onClick={() => { setActiveCategory(prev => prev === category.id ? "all" : category.id); setVisibleCount(20); }}
+                  onClick={() => { setActiveCategory(category.id); setVisibleCount(20); }}
                   className="gap-1 text-xs h-7 px-2.5"
                 >
                   {category.name}
