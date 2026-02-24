@@ -1,45 +1,115 @@
 
 
-## Add Source Filter to /courses Page
+## 优化个人专区 - 全方位用户画像智能推荐
 
-### Problem
-Users cannot filter courses by source ("有劲365" vs "绽放公开课"). Currently only category filters (领导力, 个人成长, etc.) exist, making it hard to find all videos from a specific series.
+### 当前问题
 
-### Solution
-Add a source filter row above the category filters, allowing users to quickly switch between "全部来源", "有劲365 (253)", and "绽放公开课 (105)".
+1. **数据来源太窄** -- 只用最近7天的教练简报（4种），忽略了打卡记录、日记、情绪快速记录、观看历史等丰富数据
+2. **API调用浪费** -- 每条简报单独触发一次AI调用（最多5次），浪费额度且加载慢
+3. **缺少全局画像** -- 推荐是按单条简报独立生成的，无法发现跨数据的成长模式（如日记显示焦虑 + 打卡完成率低 = 更深层需求）
+4. **推荐理由不够突出** -- "为什么推荐"被压缩在横向滚动小卡片里，很难看清
 
-### Changes
+### 解决方案
 
-**File: `src/pages/Courses.tsx`**
+用一个新的后端函数聚合全部用户数据，生成"用户成长画像"，然后一次AI调用返回5-8个精准推荐，每个都附带详细的"为什么推荐"说明。
 
-1. **Add source filter state**
-   - New state: `activeSource` (default: `"all"`)
+---
 
-2. **Compute source stats** from courses data (similar to how `categoryStats` works)
+### 具体改动
 
-3. **Add source filter buttons** above the existing category filter row
-   - Compact pill-style buttons matching the existing category filter design
-   - Buttons: "全部来源 (358)" | "有劲365 (253)" | "绽放公开课 (105)"
+#### 1. 新建后端函数：`supabase/functions/recommend-courses-v2/index.ts`
 
-4. **Update filtering logic** to also filter by `course.source` when a source is selected
+一次性聚合5个数据源：
 
-5. **Update category counts** to reflect the source filter -- so when "有劲365" is selected, category counts update accordingly (e.g., 领导力 might show 200 instead of 260)
+| 数据源 | 表名 | 抓取内容 |
+|--------|------|----------|
+| 教练简报 | `briefings` + `communication_briefings` + `parent_coaching_sessions` + `vibrant_life_sage_briefings` | 最近14天，每类取最近3条，提取主题和洞察 |
+| 情绪快速记录 | `emotion_quick_logs` | 最近14天，提取强度趋势和备注 |
+| 打卡数据 | `camp_daily_progress` | 最近14天，计算完成率和参与模式 |
+| 日记 | `wealth_journal_entries` | 最近14天，提取 emotion_block、belief_block、behavior_block 内容 |
+| 观看历史 | `video_watch_history` | 已观看的视频ID，用于排除重复推荐 |
 
-### Layout (mobile)
+流程：
+1. 从认证token获取 user_id
+2. 并行查询5个表
+3. 组装"用户成长画像"文本（约500 tokens）
+4. 一次AI调用（gemini-2.5-flash），要求返回5-8个推荐，每个包含：
+   - `course_index`：课程编号
+   - `reason`：2-3句详细推荐理由，引用具体数据来源
+   - `match_score`：匹配度
+   - `data_sources`：推荐依据来自哪些数据（如 "情绪记录"、"日记"）
+5. 同时返回一句"用户成长摘要"（如"最近关注焦虑管理和亲子沟通"）
+6. 排除已观看的视频
+
+#### 2. 重写前端：`src/components/courses/PersonalCourseZone.tsx`
+
+替换当前"每条简报一个单元"的布局，改为：
+
 ```text
-[全部来源 358] [有劲365 253] [绽放公开课 105]    <-- new row
-[全部 253] [个人成长 20] [人际关系 15] ...        <-- existing, counts update
++--------------------------------------+
+| [Sparkles] 你的成长画像               |
+| "最近关注焦虑管理和亲子沟通，          |
+|  情绪强度偏高，打卡参与度良好"         |
++--------------------------------------+
+|                                      |
+| [卡片1] 课程标题                      |
+|   匹配度 95% | 分类：情绪管理          |
+|   数据来源：情绪记录 · 日记            |
+|   为什么推荐：你最近3次情绪记录显示     |
+|   焦虑强度平均7.2，这门课教你如何      |
+|   用呼吸法快速降低焦虑...              |
+|   [观看课程]                          |
++--------------------------------------+
+| [卡片2] ...                           |
++--------------------------------------+
 ```
 
-### Technical Details
+关键变化：
+- **成长摘要卡** -- 顶部显示AI生成的一句话用户状态总结
+- **竖向列表** -- 替代横向滚动小卡片，手机端更好阅读
+- **突出推荐理由** -- 理由作为主要内容，引用具体数据来源
+- **数据来源标签** -- 显示推荐依据（如"情绪记录"、"打卡数据"）
+- 单一加载状态，不再每条简报单独转圈
+- 默认显示5个，可展开查看更多
 
-In `src/pages/Courses.tsx`:
+#### 3. 新建组件：`src/components/courses/PersonalRecommendationCard.tsx`
 
-- Add `const [activeSource, setActiveSource] = useState("all")` around line 43
-- Compute `sourceStats` from `courses` (similar to `categoryStats` on lines 76-80)
-- Add source filter before category filter (before line 293), reset `activeCategory` to "all" when source changes
-- Update `filteredCourses` (line 83) to add: `if (activeSource !== "all" && course.source !== activeSource) return false`
-- Make `categoryStats` computed from source-filtered courses so counts stay accurate
+全宽竖向卡片，包含：
+- 匹配度分数 + 分类标签
+- 课程标题
+- 数据来源标签组（如 `[情绪记录] [日记] [打卡]`）
+- 推荐理由（2-3句话，突出显示）
+- 观看按钮
 
-No database or backend changes needed.
+#### 4. 删除/保留旧组件
+
+- `UnifiedCourseUnit.tsx` 和 `MiniCourseCard.tsx` 保留不动（其他页面可能用到）
+- `PersonalCourseZone.tsx` 内部不再引用它们
+
+---
+
+### 技术细节
+
+**后端函数 `recommend-courses-v2`**：
+- 接收认证token，从中提取 user_id
+- 使用 service role 查询数据库
+- 用 Lovable AI (`google/gemini-2.5-flash`) 生成推荐
+- 调用 `deduct-quota` 扣费一次（而非每条简报扣一次）
+- 返回格式：`{ summary: string, recommendations: [...] }`
+
+**前端 `PersonalCourseZone.tsx`**：
+- 单个 `useQuery` 调用 `recommend-courses-v2`
+- 替换 `recommendationsMap` + `loadingMap` 为单一状态
+- 无数据时显示引导提示（如"去和教练聊聊天"）
+
+**数据优先级**：
+```text
+1. 教练简报（最有深度 -- AI分析过的主题）
+2. 日记内容（自我反思，含 emotion/belief/behavior 三维度）
+3. 情绪快速记录（频率 + 强度趋势）
+4. 打卡数据（参与度模式）
+5. 观看历史（仅用于排除，避免重复推荐）
+```
+
+无需数据库改动，无需新建表。
 
