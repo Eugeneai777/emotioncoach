@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import PageHeader from "@/components/PageHeader";
 import { useEffect } from "react";
-import { bloomPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
 import { totalCommissionableCount, commissionableProducts } from "@/config/youjinPartnerProducts";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
@@ -17,7 +16,7 @@ export default function PartnerBenefitsUnified() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { partner, loading: partnerLoading } = usePartner();
-  const { levels } = usePartnerLevels();
+  const { levels, loading: levelsLoading, getYoujinLevels, getBloomLevels } = usePartnerLevels();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<{ key: string; name: string; price: number } | null>(null);
 
@@ -31,7 +30,7 @@ export default function PartnerBenefitsUnified() {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
-  if (authLoading || partnerLoading) {
+  if (authLoading || partnerLoading || levelsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
@@ -39,10 +38,14 @@ export default function PartnerBenefitsUnified() {
     );
   }
 
-  const bloom = bloomPartnerLevel;
-  const yL1 = youjinPartnerLevels[0];
-  const yL2 = youjinPartnerLevels[1];
-  const yL3 = youjinPartnerLevels[2];
+  const bloomLevels = getBloomLevels();
+  const youjinLevels = getYoujinLevels();
+  const bloom = bloomLevels[0];
+  const yL1 = youjinLevels.find(l => l.level_name === 'L1');
+  const yL2 = youjinLevels.find(l => l.level_name === 'L2');
+  const yL3 = youjinLevels.find(l => l.level_name === 'L3');
+
+  if (!bloom || !yL1 || !yL2 || !yL3) return null;
 
   const isBloom = partner?.partner_type === 'bloom';
   const partnerLevel = partner?.partner_level || 'L1';
@@ -75,7 +78,7 @@ export default function PartnerBenefitsUnified() {
     const target = level === 'L2' ? yL2 : yL3;
     setSelectedPackage({
       key: `youjin_partner_${level.toLowerCase()}`,
-      name: target.name,
+      name: target.level_name,
       price: target.price,
     });
     setPayDialogOpen(true);
@@ -100,15 +103,15 @@ export default function PartnerBenefitsUnified() {
                 { header: makeYoujinHeader('L3', '钻石', '💎') as any, highlight: !isBloom && partnerLevel === 'L3' },
               ]}
               rows={[
-                { label: "一级佣金", values: [`${(bloom.commissionRateL1 * 100)}%`, `${(yL1.commissionRateL1 * 100)}%`, `${(yL2.commissionRateL1 * 100)}%`, `${(yL3.commissionRateL1 * 100)}%`] },
-                { label: "二级佣金", values: [`${(bloom.commissionRateL2 * 100)}%`, false, `${(yL2.commissionRateL2 * 100)}%`, `${(yL3.commissionRateL2 * 100)}%`] },
+                { label: "一级佣金", values: [`${(bloom.commission_rate_l1 * 100)}%`, `${(yL1.commission_rate_l1 * 100)}%`, `${(yL2.commission_rate_l1 * 100)}%`, `${(yL3.commission_rate_l1 * 100)}%`] },
+                { label: "二级佣金", values: [`${(bloom.commission_rate_l2 * 100)}%`, false, `${(yL2.commission_rate_l2 * 100)}%`, `${(yL3.commission_rate_l2 * 100)}%`] },
                 { label: `── 分成产品（${totalCommissionableCount}款） ──`, values: ["", "", "", ""] },
                 ...commissionableProducts.map(p => ({
                   label: `${p.name} ¥${p.price.toLocaleString()}`,
                   values: [true, true, true, true] as (string | boolean | React.ReactNode)[],
                 })),
                 { label: "绽放系列产品", values: [true, false, false, false] },
-                { label: "体验包", values: ["含有劲体验包", "100份", "500份", "1000份"] },
+                { label: "体验包", values: ["含有劲体验包", `${yL1.min_prepurchase}份`, `${yL2.min_prepurchase}份`, `${yL3.min_prepurchase}份`] },
                 { label: "推广方式", values: ["推广码/链接", "兑换码/二维码", "兑换码/二维码", "兑换码/二维码"] },
                 { label: "专属服务", values: ["社群+培训", "合伙人社群", "优先活动+运营支持", "VIP活动+客户经理"] },
                 ...((canUpgradeToL2 || canUpgradeToL3) ? [{

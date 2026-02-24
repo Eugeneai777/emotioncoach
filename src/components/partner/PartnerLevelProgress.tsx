@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Partner } from "@/hooks/usePartner";
-import { youjinPartnerLevels } from "@/config/partnerLevels";
+import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { TrendingUp } from "lucide-react";
 
 interface PartnerLevelProgressProps {
@@ -9,18 +9,23 @@ interface PartnerLevelProgressProps {
 }
 
 export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
-  const currentLevelIndex = youjinPartnerLevels.findIndex(l => l.level === partner.partner_level);
-  const currentLevel = youjinPartnerLevels[currentLevelIndex];
-  const nextLevel = youjinPartnerLevels[currentLevelIndex + 1];
+  const { getYoujinLevels, loading } = usePartnerLevels('youjin');
+  const youjinLevels = getYoujinLevels();
+  
+  if (loading || youjinLevels.length === 0) return null;
+
+  const currentLevelIndex = youjinLevels.findIndex(l => l.level_name === partner.partner_level);
+  const currentLevel = youjinLevels[currentLevelIndex];
+  const nextLevel = youjinLevels[currentLevelIndex + 1];
 
   if (!currentLevel) return null;
 
   const progress = nextLevel
-    ? ((partner.prepurchase_count - currentLevel.minPrepurchase) / 
-       (nextLevel.minPrepurchase - currentLevel.minPrepurchase)) * 100
+    ? ((partner.prepurchase_count - currentLevel.min_prepurchase) / 
+       (nextLevel.min_prepurchase - currentLevel.min_prepurchase)) * 100
     : 100;
 
-  const remaining = nextLevel ? nextLevel.minPrepurchase - partner.prepurchase_count : 0;
+  const remaining = nextLevel ? nextLevel.min_prepurchase - partner.prepurchase_count : 0;
 
   return (
     <Card className={`border-2 bg-gradient-to-br ${currentLevel.gradient} text-white`}>
@@ -29,7 +34,7 @@ export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
           <div className="flex items-center gap-3">
             <span className="text-4xl">{currentLevel.icon}</span>
             <div>
-              <CardTitle className="text-white">{currentLevel.name}</CardTitle>
+              <CardTitle className="text-white">{currentLevel.level_name}</CardTitle>
               <CardDescription className="text-white/90">
                 {currentLevel.description}
               </CardDescription>
@@ -52,15 +57,15 @@ export function PartnerLevelProgress({ partner }: PartnerLevelProgressProps) {
               </div>
               <Progress value={progress} className="h-3 bg-white/20" />
               <p className="text-sm text-white/80">
-                还需预购 <span className="font-bold">{remaining}</span> 份即可升级到 {nextLevel.name}
+                还需预购 <span className="font-bold">{remaining}</span> 份即可升级到 {nextLevel.level_name}
               </p>
             </div>
 
             <div className="flex items-center gap-2 text-sm bg-white/10 rounded-lg px-3 py-2">
               <TrendingUp className="w-4 h-4" />
-              <span>升级后佣金提升至 {(nextLevel.commissionRateL1 * 100).toFixed(0)}%</span>
-              {nextLevel.commissionRateL2 > 0 && (
-                <span>+ 二级 {(nextLevel.commissionRateL2 * 100).toFixed(0)}%</span>
+              <span>升级后佣金提升至 {(nextLevel.commission_rate_l1 * 100).toFixed(0)}%</span>
+              {nextLevel.commission_rate_l2 > 0 && (
+                <span>+ 二级 {(nextLevel.commission_rate_l2 * 100).toFixed(0)}%</span>
               )}
             </div>
           </>

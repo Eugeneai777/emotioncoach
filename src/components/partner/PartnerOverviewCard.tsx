@@ -2,7 +2,7 @@ import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Partner } from "@/hooks/usePartner";
-import { getPartnerLevel, youjinPartnerLevels } from "@/config/partnerLevels";
+import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { Wallet, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CompactConversionFunnel } from "./CompactConversionFunnel";
@@ -17,16 +17,19 @@ interface PartnerOverviewCardProps {
 
 export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWithdraw, onStudentsClick }: PartnerOverviewCardProps) {
   const navigate = useNavigate();
-  const currentLevel = getPartnerLevel('youjin', partner.partner_level);
-  const currentLevelIndex = youjinPartnerLevels.findIndex(l => l.level === partner.partner_level);
-  const nextLevel = youjinPartnerLevels[currentLevelIndex + 1];
+  const { getYoujinLevels } = usePartnerLevels('youjin');
+  const youjinLevels = getYoujinLevels();
+  
+  const currentLevelIndex = youjinLevels.findIndex(l => l.level_name === partner.partner_level);
+  const currentLevel = youjinLevels[currentLevelIndex] || null;
+  const nextLevel = youjinLevels[currentLevelIndex + 1] || null;
 
   const progress = nextLevel
-    ? ((partner.prepurchase_count - (currentLevel?.minPrepurchase || 0)) / 
-       (nextLevel.minPrepurchase - (currentLevel?.minPrepurchase || 0))) * 100
+    ? ((partner.prepurchase_count - (currentLevel?.min_prepurchase || 0)) / 
+       (nextLevel.min_prepurchase - (currentLevel?.min_prepurchase || 0))) * 100
     : 100;
 
-  const remaining = nextLevel ? nextLevel.minPrepurchase - partner.prepurchase_count : 0;
+  const remaining = nextLevel ? nextLevel.min_prepurchase - partner.prepurchase_count : 0;
 
   // 到期信息内联到等级条副标题
   const getSubtitleContent = () => {
@@ -57,7 +60,7 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
             <span className="text-2xl">{currentLevel?.icon || '💪'}</span>
             <div>
               <h3 className="font-bold text-sm flex items-center gap-1.5">
-                有劲合伙人 · {currentLevel?.name || 'L1'}
+                有劲合伙人 · {currentLevel?.level_name || 'L1'}
                 {isExpired && <span className="text-xs font-normal bg-white/20 px-1.5 py-0.5 rounded">已过期</span>}
               </h3>
               <p className="text-white/80 text-xs flex items-center gap-1">
@@ -79,10 +82,10 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
           <div className="text-right">
             <div className="text-xs text-white/80">佣金比例</div>
             <div className="text-lg font-bold">
-              {((currentLevel?.commissionRateL1 || 0.2) * 100).toFixed(0)}%
-              {currentLevel?.commissionRateL2 > 0 && (
+              {((currentLevel?.commission_rate_l1 || 0.2) * 100).toFixed(0)}%
+              {(currentLevel?.commission_rate_l2 || 0) > 0 && (
                 <span className="text-xs font-normal ml-1">
-                  +{(currentLevel.commissionRateL2 * 100).toFixed(0)}%
+                  +{((currentLevel?.commission_rate_l2 || 0) * 100).toFixed(0)}%
                 </span>
               )}
             </div>
