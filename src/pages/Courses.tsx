@@ -228,8 +228,8 @@ const Courses = () => {
       <DynamicOGMeta pageKey="courses" />
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="container max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <div
                 onClick={() => navigate('/')}
@@ -248,22 +248,21 @@ const Courses = () => {
               </Button>
             </div>
             <div className="flex-1 text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
                 线上课程
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
                 共 {courses.length} 门课程 · 系统化学习成长
               </p>
             </div>
-            <div className="w-[80px]"></div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-7xl mx-auto px-4 py-8">
+      <main className="container max-w-7xl mx-auto px-4 py-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "personal" | "all")} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-4">
             <TabsTrigger value="all" className="gap-2">
               <BookOpen className="w-4 h-4" />
               全部课程
@@ -280,7 +279,7 @@ const Courses = () => {
 
           <TabsContent value="all">
             {/* 搜索框 */}
-            <div className="relative max-w-xl mx-auto mb-6">
+            <div className="relative max-w-xl mx-auto mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="搜索课程标题、描述或标签..."
@@ -291,18 +290,17 @@ const Courses = () => {
             </div>
 
             {/* 类别筛选 */}
-            <div className="flex flex-wrap gap-2 mb-8 justify-center">
+            <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
               {categories.map(category => (
                 <Button
                   key={category.id}
                   variant={activeCategory === category.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setActiveCategory(category.id)}
-                  className="gap-2"
+                  className="gap-1 text-xs h-7 px-2.5"
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
                   {category.name}
-                  <Badge variant="secondary" className="ml-1 text-xs">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                     {category.count}
                   </Badge>
                 </Button>
@@ -329,7 +327,7 @@ const Courses = () => {
                       <CardHeader className="relative pb-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
+                            <CardTitle className="text-base group-hover:text-primary transition-colors line-clamp-2">
                               {course.title}
                             </CardTitle>
                             {course.category && (
@@ -358,7 +356,7 @@ const Courses = () => {
                       
                       <CardContent className="space-y-4">
                         {course.description && (
-                          <CardDescription className="text-sm leading-relaxed line-clamp-3">
+                          <CardDescription className="text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
                             {course.description}
                           </CardDescription>
                         )}
@@ -388,7 +386,7 @@ const Courses = () => {
                         </Button>
 
                         {course.source && (
-                          <p className="text-xs text-muted-foreground text-center">
+                          <p className="text-xs text-muted-foreground text-center hidden sm:block">
                             来源：{course.source}
                           </p>
                         )}
