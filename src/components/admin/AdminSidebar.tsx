@@ -13,6 +13,7 @@ import {
   BarChart3,
   DollarSign,
   Flag,
+  Phone,
   Activity,
   Package,
   CreditCard,
