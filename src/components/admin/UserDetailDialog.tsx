@@ -387,7 +387,7 @@ export function UserDetailDialog({
             <div className="flex items-center gap-2">
               <h3 className="text-xl font-semibold">{userName}</h3>
               <Badge variant="outline">
-                {authProvider === 'wechat' ? '💬微信' : '📧邮箱'}
+                {authProvider === 'wechat' ? '💬微信' : authProvider === 'phone' ? '📱手机' : '📧邮箱'}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
