@@ -5,6 +5,7 @@ import "./index.css";
 import { installErrorTracker } from "./lib/frontendErrorTracker";
 import { installApiErrorTracker } from "./lib/apiErrorTracker";
 import { installStabilityCollector } from "./lib/stabilityDataCollector";
+import { installMonitorReporter } from "./lib/monitorReporter";
 
 // Install global frontend error tracker
 installErrorTracker();
@@ -12,6 +13,8 @@ installErrorTracker();
 installApiErrorTracker();
 // Install stability data collector
 installStabilityCollector();
+// Install monitor data reporter (batched DB persistence)
+installMonitorReporter();
 
 // Auto-reload once when a dynamically imported chunk is missing (stale deploy)
 const RELOAD_KEY = "__chunk_reload";

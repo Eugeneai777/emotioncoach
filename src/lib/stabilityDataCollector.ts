@@ -331,6 +331,24 @@ function pushRecord(record: RequestRecord) {
     currentSecondCount = 1;
   }
 
+  // 异步上报稳定性记录到数据库
+  try {
+    import('./monitorReporter').then(({ reportStabilityRecord }) => {
+      reportStabilityRecord({
+        path: record.path,
+        method: record.method,
+        statusCode: record.statusCode,
+        success: record.success,
+        totalDuration: record.totalDuration,
+        errorType: record.errorType,
+        source: record.source,
+        userId: record.userId,
+        page: record.page,
+        thirdPartyName: tpName || undefined,
+      });
+    });
+  } catch { /* ignore */ }
+
   notifyListeners();
 }
 

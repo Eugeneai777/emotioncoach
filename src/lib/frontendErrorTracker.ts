@@ -33,6 +33,13 @@ function genId(): string {
 function push(error: FrontendError) {
   errors = [error, ...errors].slice(0, MAX_ERRORS);
   listeners.forEach((fn) => fn(errors));
+
+  // 异步上报到数据库
+  try {
+    import('./monitorReporter').then(({ reportFrontendError }) => {
+      reportFrontendError(error);
+    });
+  } catch { /* ignore */ }
 }
 
 function baseInfo(): Pick<FrontendError, 'userAgent' | 'page' | 'timestamp'> {
