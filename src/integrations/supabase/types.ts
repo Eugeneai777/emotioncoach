@@ -4833,7 +4833,10 @@ export type Database = {
       monitor_api_errors: {
         Row: {
           created_at: string
+          diagnosed_at: string | null
+          diagnosis: string | null
           error_type: string
+          fix_suggestion: string | null
           id: string
           message: string
           method: string
@@ -4842,6 +4845,7 @@ export type Database = {
           platform: Database["public"]["Enums"]["monitor_platform"]
           response_body: string | null
           response_time: number | null
+          status: string
           status_code: number | null
           url: string
           user_agent: string | null
@@ -4849,7 +4853,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          diagnosed_at?: string | null
+          diagnosis?: string | null
           error_type: string
+          fix_suggestion?: string | null
           id?: string
           message: string
           method: string
@@ -4858,6 +4865,7 @@ export type Database = {
           platform?: Database["public"]["Enums"]["monitor_platform"]
           response_body?: string | null
           response_time?: number | null
+          status?: string
           status_code?: number | null
           url: string
           user_agent?: string | null
@@ -4865,7 +4873,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          diagnosed_at?: string | null
+          diagnosis?: string | null
           error_type?: string
+          fix_suggestion?: string | null
           id?: string
           message?: string
           method?: string
@@ -4874,6 +4885,7 @@ export type Database = {
           platform?: Database["public"]["Enums"]["monitor_platform"]
           response_body?: string | null
           response_time?: number | null
+          status?: string
           status_code?: number | null
           url?: string
           user_agent?: string | null
@@ -4884,8 +4896,11 @@ export type Database = {
       monitor_frontend_errors: {
         Row: {
           created_at: string
+          diagnosed_at: string | null
+          diagnosis: string | null
           error_type: string
           extra: Json | null
+          fix_suggestion: string | null
           id: string
           message: string
           page: string | null
@@ -4893,13 +4908,17 @@ export type Database = {
           request_info: string | null
           resource_url: string | null
           stack: string | null
+          status: string
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          diagnosed_at?: string | null
+          diagnosis?: string | null
           error_type: string
           extra?: Json | null
+          fix_suggestion?: string | null
           id?: string
           message: string
           page?: string | null
@@ -4907,13 +4926,17 @@ export type Database = {
           request_info?: string | null
           resource_url?: string | null
           stack?: string | null
+          status?: string
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          diagnosed_at?: string | null
+          diagnosis?: string | null
           error_type?: string
           extra?: Json | null
+          fix_suggestion?: string | null
           id?: string
           message?: string
           page?: string | null
@@ -4921,6 +4944,7 @@ export type Database = {
           request_info?: string | null
           resource_url?: string | null
           stack?: string | null
+          status?: string
           user_agent?: string | null
           user_id?: string | null
         }
