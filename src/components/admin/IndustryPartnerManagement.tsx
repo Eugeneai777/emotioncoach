@@ -155,6 +155,7 @@ export default function IndustryPartnerManagement() {
     if (user) fetchPartners();
   }, [fetchPartners, user]);
 
+  const handleCreate = async () => {
     if (!form.company_name.trim()) {
       toast.error("请填写公司/机构名称");
       return;
