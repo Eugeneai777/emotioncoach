@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageLayout } from "./shared/AdminPageLayout";
 import { AdminFilterBar } from "./shared/AdminFilterBar";
@@ -49,12 +50,14 @@ function generatePartnerCode(): string {
 
 export default function IndustryPartnerManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const [partners, setPartners] = useState<IndustryPartner[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(searchParams.get("partner"));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [isPartnerAdmin, setIsPartnerAdmin] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -67,19 +70,53 @@ export default function IndustryPartnerManagement() {
     settlement_cycle: "monthly",
   });
 
+  // Check if user is partner_admin (not full admin)
   useEffect(() => {
-    fetchPartners();
-  }, []);
+    const checkRole = async () => {
+      if (!user) return;
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['admin', 'partner_admin']);
+      
+      const hasAdmin = roles?.some(r => r.role === 'admin');
+      const hasPartnerAdmin = roles?.some(r => r.role === 'partner_admin');
+      setIsPartnerAdmin(!hasAdmin && !!hasPartnerAdmin);
+    };
+    checkRole();
+  }, [user]);
 
-  const fetchPartners = async () => {
+  const fetchPartners = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // If partner_admin, first get bound partner IDs
+      let boundPartnerIds: string[] | null = null;
+      if (isPartnerAdmin) {
+        const { data: bindings } = await supabase
+          .from('partner_admin_bindings')
+          .select('partner_id')
+          .eq('user_id', user.id);
+        boundPartnerIds = (bindings || []).map(b => b.partner_id);
+        if (boundPartnerIds.length === 0) {
+          setPartners([]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      let query = supabase
         .from("partners")
         .select("id, partner_code, status, partner_type, total_referrals, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2, traffic_source, settlement_cycle, custom_product_packages")
         .eq("partner_type", "industry")
         .order("created_at", { ascending: false });
 
+      if (boundPartnerIds) {
+        query = query.in('id', boundPartnerIds);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
       const userIds = (data || []).map((p) => p.user_id).filter(Boolean);
@@ -96,19 +133,27 @@ export default function IndustryPartnerManagement() {
         }
       }
 
-      setPartners(
-        (data || []).map((p) => ({
-          ...p,
-          nickname: nicknameMap[p.user_id] || "",
-        }))
-      );
+      const partnerList = (data || []).map((p) => ({
+        ...p,
+        nickname: nicknameMap[p.user_id] || "",
+      }));
+      setPartners(partnerList);
+
+      // If partner_admin with only one partner, auto-select it
+      if (isPartnerAdmin && partnerList.length === 1 && !selectedPartnerId) {
+        setSelectedPartnerId(partnerList[0].id);
+      }
     } catch (err) {
       console.error("fetchPartners error:", err);
       toast.error("加载行业合伙人列表失败");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isPartnerAdmin, selectedPartnerId]);
+
+  useEffect(() => {
+    if (user) fetchPartners();
+  }, [fetchPartners, user]);
 
   const handleCreate = async () => {
     if (!form.company_name.trim()) {
@@ -217,6 +262,7 @@ export default function IndustryPartnerManagement() {
       title="行业合伙人"
       description="管理 B2B 渠道合作伙伴，配置独立佣金与 Campaign"
       actions={
+        !isPartnerAdmin ? (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -304,6 +350,7 @@ export default function IndustryPartnerManagement() {
             </div>
           </DialogContent>
         </Dialog>
+        ) : null
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

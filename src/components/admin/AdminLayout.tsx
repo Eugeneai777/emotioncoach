@@ -43,7 +43,7 @@ import FlywheelFunnel from "./flywheel/FlywheelFunnel";
 import FlywheelRevenue from "./flywheel/FlywheelRevenue";
 import FlywheelReferral from "./flywheel/FlywheelReferral";
 import FlywheelAIStrategy from "./flywheel/FlywheelAIStrategy";
-export type AdminRole = 'admin' | 'content_admin';
+export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
   userRole: AdminRole;
@@ -52,6 +52,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ userRole }: AdminLayoutProps) {
   const location = useLocation();
   const isContentAdmin = userRole === 'content_admin';
+  const isPartnerAdmin = userRole === 'partner_admin';
 
   return (
     <SidebarProvider>
@@ -66,7 +67,16 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <Routes>
-              {!isContentAdmin && (
+              {/* partner_admin 专属路由 */}
+              {isPartnerAdmin && (
+                <>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="industry-partners" element={<IndustryPartnerManagement />} />
+                  <Route path="*" element={<Navigate to="/admin/industry-partners" replace />} />
+                </>
+              )}
+              {/* admin 全权限路由 */}
+              {!isContentAdmin && !isPartnerAdmin && (
                 <>
                   <Route index element={<AdminDashboard />} />
                   <Route path="users" element={<UserAccountsTable />} />
@@ -108,16 +118,25 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                 <Route index element={<ContentAdminDashboard />} />
               )}
               {/* 内容管理 - admin 和 content_admin 均可访问 */}
-              <Route path="coaches" element={<CoachTemplatesManagement />} />
-              <Route path="camps" element={<CampTemplatesManagement />} />
-              <Route path="human-coaches" element={<HumanCoachesManagement />} />
-              <Route path="videos" element={<VideoCoursesManagement />} />
-              <Route path="knowledge" element={<KnowledgeBaseManagement />} />
-              <Route path="tools" element={<EnergyStudioToolsManagement />} />
-              <Route path="community-posts" element={<CommunityPostsManagement />} />
-              <Route path="reports" element={<ReportsManagement />} />
+              {!isPartnerAdmin && (
+                <>
+                  <Route path="coaches" element={<CoachTemplatesManagement />} />
+                  <Route path="camps" element={<CampTemplatesManagement />} />
+                  <Route path="human-coaches" element={<HumanCoachesManagement />} />
+                  <Route path="videos" element={<VideoCoursesManagement />} />
+                  <Route path="knowledge" element={<KnowledgeBaseManagement />} />
+                  <Route path="tools" element={<EnergyStudioToolsManagement />} />
+                  <Route path="community-posts" element={<CommunityPostsManagement />} />
+                  <Route path="reports" element={<ReportsManagement />} />
+                </>
+              )}
               {/* 未匹配路由重定向 */}
-              <Route path="*" element={<Navigate to={isContentAdmin ? "/admin/community-posts" : "/admin"} replace />} />
+              {isContentAdmin && (
+                <Route path="*" element={<Navigate to="/admin/community-posts" replace />} />
+              )}
+              {!isContentAdmin && !isPartnerAdmin && (
+                <Route path="*" element={<Navigate to="/admin" replace />} />
+              )}
             </Routes>
           </main>
         </SidebarInset>

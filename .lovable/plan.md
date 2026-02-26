@@ -1,135 +1,65 @@
 
 
-# 行业合伙人运营人员方案（限定特定合伙人）
+# 错误类型分布增加页面位置、用户、时间信息
 
-## 目标
+## 问题
 
-新增 `partner_admin` 角色，运营人员登录后台后**仅能看到和操作自己被绑定的那一个（或几个）行业合伙人**，而非所有合伙人。
+当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
+- **报错页面位置**：不知道是在哪个页面/功能触发的错误
+- **来源用户**：只有截断的 userId（8位），没有用户昵称
+- **详细时间**：没有展示最近发生时间
 
-## 整体设计
+## 修复方案
 
-```text
-user_roles 表          partner_admin_bindings 表
-+----------------+     +-------------------------+
-| user_id        |     | user_id (运营人员)       |
-| role =         |     | partner_id (绑定的合伙人) |
-| partner_admin  |     +-------------------------+
-+----------------+
-        \                       /
-         \                     /
-          前端：过滤侧边栏 + 路由
-          后端：查询时按 binding 过滤
-```
+### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
 
-## 实施步骤
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-### 1. 数据库变更
+- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
+- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
+- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
 
-**a) 扩展 app_role 枚举**
+### 2. 错误指标增强：`typeDistribution` 携带详情
 
-```sql
-ALTER TYPE public.app_role ADD VALUE 'partner_admin';
-```
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-**b) 创建绑定表 `partner_admin_bindings`**
+- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
+- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
 
-记录哪个运营人员可以管理哪个行业合伙人：
+### 3. 用户名查询
 
-```sql
-CREATE TABLE public.partner_admin_bindings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  partner_id uuid NOT NULL REFERENCES public.partners(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(user_id, partner_id)
-);
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
-ALTER TABLE public.partner_admin_bindings ENABLE ROW LEVEL SECURITY;
+- 收集所有出现在 `recentDetails` 中的 userId
+- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
+- 建立 userId → 显示名称 的映射
 
--- 管理员可以管理所有绑定
-CREATE POLICY "admin_manage_bindings" ON public.partner_admin_bindings
-  FOR ALL TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
+### 4. UI 展示增强
 
--- partner_admin 只能查看自己的绑定
-CREATE POLICY "partner_admin_view_own" ON public.partner_admin_bindings
-  FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
-```
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
-### 2. 前端：扩展 AdminRole 类型
-
-在 `AdminLayout.tsx` 中扩展：
-```text
-export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
-```
-
-### 3. 入口鉴权（Admin.tsx）
-
-- 角色检查增加 `partner_admin`，允许进入后台
-- 优先级：admin > partner_admin > content_admin
-
-### 4. 侧边栏（AdminSidebar.tsx）
-
-`partner_admin` 仅可见以下菜单组：
-- **概览**（仪表板）
-- **合伙人** 中仅保留 **行业合伙人** 一项（隐藏有劲/绽放）
-
-其他组（用户与订单、系统安全、成本监控、转化飞轮等）全部不可见。
-
-### 5. 行业合伙人页面过滤（IndustryPartnerManagement.tsx）
-
-核心变更 — `partner_admin` 看到的不是全部行业合伙人，而是仅自己绑定的：
-
-- 页面加载时，先查询 `partner_admin_bindings` 获取当前用户绑定的 `partner_id` 列表
-- `fetchPartners` 查询增加 `.in('id', boundPartnerIds)` 过滤
-- 隐藏"新建行业合伙人"按钮（仅 admin 可见）
-- 如果只绑定了一个合伙人，直接跳转到该合伙人的飞轮详情页
-
-### 6. 路由控制（AdminLayout.tsx）
-
-`partner_admin` 可访问的路由：
-- `industry-partners`（行业合伙人管理，自动按绑定过滤）
-
-不可访问的路由（保持仅 admin）：用户、订单、有劲/绽放合伙人、系统安全、成本监控等全部其他页面。
-
-### 7. 角色分配（SetRoleDialog.tsx）
-
-新增角色选项：
-- 标签：**合伙人运营**
-- 图标：Handshake（绿色）
-- 描述：仅可管理被分配的行业合伙人
-
-### 8. 合伙人绑定管理 UI
-
-在 `SetRoleDialog.tsx` 或单独组件中，当勾选 `partner_admin` 角色时：
-- 展示行业合伙人下拉选择器（多选）
-- 保存时同步写入 `partner_admin_bindings` 表
-- 管理员可随时修改绑定关系
-
-### 9. 汉堡菜单入口（CoachHeader.tsx）
-
-将 admin 角色检查从仅 `admin` 扩展为同时检查 `partner_admin`：
+在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
 
 ```text
-检查 user_roles 是否包含 admin 或 partner_admin
+server_error  ████████████  3次 (60%)
+├ 诊断卡片...
+└ 最近报错:
+  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
+  · 情绪健康测评      张三    2026.02.26 09:20
 ```
 
-## 涉及文件
+每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
 
-| 文件 | 变更 |
-|------|------|
-| 数据库迁移 | 新增 `partner_admin` 枚举值 + `partner_admin_bindings` 表 + RLS |
-| `src/components/admin/AdminLayout.tsx` | 扩展 AdminRole、增加 partner_admin 路由条件 |
-| `src/components/admin/AdminSidebar.tsx` | partner_admin 仅显示概览 + 行业合伙人 |
-| `src/pages/Admin.tsx` | 角色检查加入 partner_admin |
-| `src/components/admin/IndustryPartnerManagement.tsx` | 按绑定过滤合伙人列表、隐藏新建按钮 |
-| `src/components/admin/SetRoleDialog.tsx` | 新增角色选项 + 合伙人绑定选择器 |
-| `src/components/coach/CoachHeader.tsx` | 后台入口兼容 partner_admin |
+## 技术细节
 
-## 安全性
+| 文件 | 改动说明 |
+|------|----------|
+| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
+| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
 
-- 绑定表有独立 RLS，partner_admin 仅能读取自己的绑定记录
-- 合伙人数据查询在前端按 binding 过滤，即使手动输入 URL 访问其他合伙人 ID，因 binding 不存在也无法操作
-- 不影响现有 admin 和 content_admin 的权限体系
+## 改动量
+- 2 个文件
+- 数据采集层约 30 行改动
+- UI 展示层约 40 行改动
+- 不影响现有功能，纯增量
 

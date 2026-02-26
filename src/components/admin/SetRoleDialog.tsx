@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Shield, ShieldCheck, User } from "lucide-react";
+import { Loader2, Shield, ShieldCheck, User, Handshake } from "lucide-react";
 
 interface SetRoleDialogProps {
   open: boolean;
@@ -22,6 +22,7 @@ type AppRole = Database['public']['Enums']['app_role'];
 const ROLE_CONFIG: { role: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
   { role: 'admin', label: '管理员', description: '拥有后台管理全部权限', icon: <ShieldCheck className="h-4 w-4 text-red-500" /> },
   { role: 'content_admin', label: '内容管理员', description: '仅可管理内容和举报，无法查看用户、订单、财务等', icon: <Shield className="h-4 w-4 text-orange-500" /> },
+  { role: 'partner_admin', label: '合伙人运营', description: '仅可管理被分配的行业合伙人', icon: <Handshake className="h-4 w-4 text-emerald-500" /> },
   { role: 'user', label: '普通用户', description: '标准用户权限', icon: <User className="h-4 w-4 text-blue-500" /> },
 ];
 
@@ -32,6 +33,11 @@ export function SetRoleDialog({ open, onOpenChange, userId, userName, onSuccess 
   const [saving, setSaving] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  // Partner binding state
+  const [industryPartners, setIndustryPartners] = useState<{ id: string; company_name: string }[]>([]);
+  const [selectedPartnerIds, setSelectedPartnerIds] = useState<string[]>([]);
+  const [originalPartnerIds, setOriginalPartnerIds] = useState<string[]>([]);
+
   // 获取当前登录用户ID
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -41,10 +47,12 @@ export function SetRoleDialog({ open, onOpenChange, userId, userName, onSuccess 
     getCurrentUser();
   }, []);
 
-  // 获取用户当前角色
+  // 获取用户当前角色 + 绑定
   useEffect(() => {
     if (open && userId) {
       fetchUserRoles();
+      fetchBindings();
+      fetchIndustryPartners();
     }
   }, [open, userId]);
 
@@ -66,6 +74,26 @@ export function SetRoleDialog({ open, onOpenChange, userId, userName, onSuccess 
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchBindings = async () => {
+    const { data } = await supabase
+      .from('partner_admin_bindings')
+      .select('partner_id')
+      .eq('user_id', userId);
+    const ids = (data || []).map(b => b.partner_id);
+    setSelectedPartnerIds(ids);
+    setOriginalPartnerIds(ids);
+  };
+
+  const fetchIndustryPartners = async () => {
+    const { data } = await supabase
+      .from('partners')
+      .select('id, company_name')
+      .eq('partner_type', 'industry')
+      .eq('status', 'active')
+      .order('company_name');
+    setIndustryPartners(data || []);
   };
 
   const handleRoleToggle = (role: AppRole, checked: boolean) => {
@@ -109,6 +137,24 @@ export function SetRoleDialog({ open, onOpenChange, userId, userName, onSuccess 
         if (insertError) throw insertError;
       }
 
+      // 同步 partner_admin_bindings
+      const bindingsToRemove = originalPartnerIds.filter(id => !selectedPartnerIds.includes(id));
+      const bindingsToAdd = selectedPartnerIds.filter(id => !originalPartnerIds.includes(id));
+
+      if (bindingsToRemove.length > 0) {
+        await supabase
+          .from('partner_admin_bindings')
+          .delete()
+          .eq('user_id', userId)
+          .in('partner_id', bindingsToRemove);
+      }
+
+      if (bindingsToAdd.length > 0) {
+        await supabase
+          .from('partner_admin_bindings')
+          .insert(bindingsToAdd.map(partner_id => ({ user_id: userId, partner_id })));
+      }
+
       toast.success('用户角色已更新');
       onSuccess?.();
       onOpenChange(false);
@@ -119,7 +165,8 @@ export function SetRoleDialog({ open, onOpenChange, userId, userName, onSuccess 
     }
   };
 
-  const hasChanges = JSON.stringify(selectedRoles.sort()) !== JSON.stringify(originalRoles.sort());
+  const hasChanges = JSON.stringify(selectedRoles.sort()) !== JSON.stringify(originalRoles.sort())
+    || JSON.stringify(selectedPartnerIds.sort()) !== JSON.stringify(originalPartnerIds.sort());
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,6 +212,36 @@ export function SetRoleDialog({ open, onOpenChange, userId, userName, onSuccess 
                   </div>
                 </div>
               ))}
+              {/* Partner binding selector - show when partner_admin is selected */}
+              {selectedRoles.includes('partner_admin') && (
+                <div className="mt-4 p-3 rounded-lg border bg-muted/30">
+                  <p className="text-sm font-medium mb-2">分配管理的行业合伙人</p>
+                  {industryPartners.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">暂无行业合伙人</p>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {industryPartners.map(p => (
+                        <div key={p.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`partner-${p.id}`}
+                            checked={selectedPartnerIds.includes(p.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedPartnerIds(prev => [...prev, p.id]);
+                              } else {
+                                setSelectedPartnerIds(prev => prev.filter(id => id !== p.id));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`partner-${p.id}`} className="text-sm cursor-pointer">
+                            {p.company_name || '未命名'}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

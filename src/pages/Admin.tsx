@@ -70,16 +70,17 @@ export default function Admin() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .in('role', ['admin', 'content_admin']);
+        .in('role', ['admin', 'content_admin', 'partner_admin']);
 
       if (!roles || roles.length === 0) {
         navigate("/");
         return;
       }
 
-      // admin 优先
+      // 优先级: admin > partner_admin > content_admin
       const hasAdmin = roles.some(r => r.role === 'admin');
-      setUserRole(hasAdmin ? 'admin' : 'content_admin');
+      const hasPartnerAdmin = roles.some(r => r.role === 'partner_admin');
+      setUserRole(hasAdmin ? 'admin' : hasPartnerAdmin ? 'partner_admin' : 'content_admin');
       setChecking(false);
     };
 
