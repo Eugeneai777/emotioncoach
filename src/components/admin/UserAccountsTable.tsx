@@ -157,7 +157,7 @@ export function UserAccountsTable() {
                         <div className="flex items-center gap-2">
                           <span className="font-medium truncate max-w-[120px]">{displayName}</span>
                           <Badge variant="outline" className="text-xs shrink-0">
-                            {authProvider === 'wechat' ? '💬微信' : '📧邮箱'}
+                            {authProvider === 'wechat' ? '💬微信' : authProvider === 'phone' ? '📱手机' : '📧邮箱'}
                           </Badge>
                         </div>
                         <div className="text-sm text-foreground/70">
