@@ -13,6 +13,8 @@ export interface RequestRecord {
   userId?: string;
   ip: string;
   path: string;
+  /** 触发请求时的页面路径 */
+  page?: string;
   /** H5 / voice / api */
   source: 'h5' | 'voice' | 'api' | 'unknown';
   success: boolean;
@@ -132,10 +134,16 @@ export interface QpsMetrics {
   trend: { time: number; qps: number }[];
 }
 
+export interface ErrorTypeDetail {
+  userId?: string;
+  page?: string;
+  timestamp: number;
+}
+
 export interface ErrorMetrics {
   totalErrors: number;
   errorRate: number;
-  typeDistribution: { type: string; count: number; percent: number }[];
+  typeDistribution: { type: string; count: number; percent: number; recentDetails: ErrorTypeDetail[] }[];
   topErrorPaths: { path: string; count: number; lastTime: number }[];
   recentErrors: RequestRecord[];
 }
@@ -185,6 +193,43 @@ export interface HealthMetrics {
   errors: ErrorMetrics;
   timeout: TimeoutMetrics;
   thirdPartyHealth: ThirdPartyHealth;
+}
+
+// ==================== 页面路径映射 ====================
+
+const PAGE_LABELS: Record<string, string> = {
+  '/': '首页',
+  '/auth': '登录注册',
+  '/onboarding': '新手引导',
+  '/emotion-diary': '情绪日记',
+  '/emotion-coach': '情绪教练',
+  '/life-coach': '生活教练',
+  '/wealth-block': '财富卡点测评',
+  '/wealth-assessment': '财富觉醒测评',
+  '/identity-assessment': '身份认同测评',
+  '/breathing': '呼吸练习',
+  '/meditation': '冥想',
+  '/community': '社区',
+  '/admin': '管理后台',
+  '/admin/stability': '稳定性监控',
+  '/profile': '个人中心',
+  '/camp': '训练营',
+  '/coaching': '教练咨询',
+  '/partner': '合伙人',
+  '/alive-check': '存活检测',
+  '/awakening': '觉醒之旅',
+  '/video-courses': '视频课程',
+};
+
+export function getPageLabel(path?: string): string {
+  if (!path) return '未知页面';
+  // 精确匹配
+  if (PAGE_LABELS[path]) return PAGE_LABELS[path];
+  // 前缀匹配（如 /admin/xxx → 管理后台）
+  for (const [prefix, label] of Object.entries(PAGE_LABELS)) {
+    if (prefix !== '/' && path.startsWith(prefix)) return label;
+  }
+  return path;
 }
 
 // ==================== 工具函数 ====================
@@ -574,11 +619,20 @@ function computeHealthMetrics(): HealthMetrics {
   // 错误监控
   const failed = requestRecords.filter((r) => !r.success);
   const errorTypeMap: Record<string, number> = {};
+  const errorTypeDetails: Record<string, ErrorTypeDetail[]> = {};
   const errorPathMap: Record<string, { count: number; lastTime: number }> = {};
 
   failed.forEach((r) => {
     const t = r.errorType || 'unknown';
     errorTypeMap[t] = (errorTypeMap[t] || 0) + 1;
+    if (!errorTypeDetails[t]) errorTypeDetails[t] = [];
+    if (errorTypeDetails[t].length < 5) {
+      errorTypeDetails[t].push({
+        userId: r.userId,
+        page: r.page,
+        timestamp: r.timestamp,
+      });
+    }
     if (!errorPathMap[r.path]) {
       errorPathMap[r.path] = { count: 0, lastTime: 0 };
     }
@@ -587,7 +641,12 @@ function computeHealthMetrics(): HealthMetrics {
   });
 
   const typeDistribution = Object.entries(errorTypeMap)
-    .map(([type, count]) => ({ type, count, percent: failed.length > 0 ? Math.round((count / failed.length) * 100) : 0 }))
+    .map(([type, count]) => ({
+      type,
+      count,
+      percent: failed.length > 0 ? Math.round((count / failed.length) * 100) : 0,
+      recentDetails: errorTypeDetails[type] || [],
+    }))
     .sort((a, b) => b.count - a.count);
 
   const topErrorPaths = Object.entries(errorPathMap)
@@ -696,6 +755,7 @@ export function installStabilityCollector() {
         userId: extractUserId(),
         ip: 'client',
         path: extractPath(url),
+        page: location.pathname,
         source: detectSource(url, init),
         success: isSuccess,
         errorCode: isSuccess ? undefined : response.status,
@@ -717,6 +777,7 @@ export function installStabilityCollector() {
         userId: extractUserId(),
         ip: 'client',
         path: extractPath(url),
+        page: location.pathname,
         source: detectSource(url, init),
         success: false,
         errorType: classifyErrorType(undefined, isTimeout),

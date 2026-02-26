@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
   getStabilitySnapshot,
   subscribeStability,
   clearStabilityData,
+  getPageLabel,
   type StabilitySnapshot,
   type RequestRecord,
   type ThirdPartyStats,
@@ -23,6 +25,7 @@ import {
   type ServiceHealthPanel,
   type DependencyAvailability,
   type DependencyStatus,
+  type ErrorTypeDetail,
 } from "@/lib/stabilityDataCollector";
 import {
   diagnoseErrorType,
@@ -365,7 +368,7 @@ function QpsPanel({ hm }: { hm: HealthMetrics }) {
 }
 
 // ==================== 7. 错误监控 ====================
-function ErrorPanel({ hm }: { hm: HealthMetrics }) {
+function ErrorPanel({ hm, userNames }: { hm: HealthMetrics; userNames: Record<string, string> }) {
   const e = hm.errors;
 
   return (
@@ -408,6 +411,19 @@ function ErrorPanel({ hm }: { hm: HealthMetrics }) {
                       <span className="text-sm font-medium w-16 text-right">{t.count}次 ({t.percent}%)</span>
                     </div>
                     <DiagnosisCard diagnosis={diag} context={`错误类型: ${t.type}, 次数: ${t.count}`} />
+                    {t.recentDetails && t.recentDetails.length > 0 && (
+                      <div className="ml-2 pl-3 border-l-2 border-muted space-y-1">
+                        <p className="text-xs text-muted-foreground font-medium">最近报错:</p>
+                        {t.recentDetails.map((d, i) => (
+                          <div key={i} className="text-xs text-muted-foreground flex items-center gap-2">
+                            <span>·</span>
+                            <span className="font-medium text-foreground">{getPageLabel(d.page)}</span>
+                            <span>{d.userId ? (userNames[d.userId] || d.userId) : '匿名'}</span>
+                            <span>{new Date(d.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1249,6 +1265,43 @@ function ProtectionEventIcon({ type }: { type: ProtectionEvent['type'] }) {
 export default function StabilityMonitor() {
   const [snapshot, setSnapshot] = useState<StabilitySnapshot>(getStabilitySnapshot);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+
+  // Collect all userIds from error details and query profiles
+  const allUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    snapshot.healthMetrics.errors.typeDistribution.forEach((t) => {
+      t.recentDetails?.forEach((d) => {
+        if (d.userId) ids.add(d.userId);
+      });
+    });
+    return Array.from(ids);
+  }, [snapshot]);
+
+  useEffect(() => {
+    if (allUserIds.length === 0) return;
+    // Filter out already resolved ids
+    const missing = allUserIds.filter((id) => !userNames[id]);
+    if (missing.length === 0) return;
+
+    const fetchNames = async () => {
+      // userId is first 8 chars of UUID, use ilike to match
+      const orFilter = missing.map((id) => `id.ilike.${id}%`).join(',');
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .or(orFilter);
+      if (data) {
+        const map: Record<string, string> = { ...userNames };
+        data.forEach((p) => {
+          const short = p.id.slice(0, 8);
+          if (p.display_name) map[short] = p.display_name;
+        });
+        setUserNames(map);
+      }
+    };
+    fetchNames();
+  }, [allUserIds.join(',')]);
 
   useEffect(() => {
     const unsub = subscribeStability(setSnapshot);
@@ -1352,7 +1405,7 @@ export default function StabilityMonitor() {
           </div>
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldAlert className="h-4 w-4" />错误监控</h3>
-            <ErrorPanel hm={snapshot.healthMetrics} />
+            <ErrorPanel hm={snapshot.healthMetrics} userNames={userNames} />
           </div>
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Hourglass className="h-4 w-4" />超时监控</h3>
