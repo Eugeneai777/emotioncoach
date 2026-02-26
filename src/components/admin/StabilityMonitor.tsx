@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { triggerEmergencyAlert } from "@/lib/emergencyAlertService";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1303,6 +1304,34 @@ export default function StabilityMonitor() {
     };
     fetchNames();
   }, [allUserIds.join(',')]);
+
+  // 稳定性告警推送
+  const stabilityAlertSent = useRef(false);
+  useEffect(() => {
+    if (stabilityAlertSent.current) return;
+    const { successRate } = snapshot.summary;
+    const { totalErrors } = snapshot.healthMetrics.errors;
+
+    if (successRate < 90 && totalErrors > 0) {
+      stabilityAlertSent.current = true;
+      triggerEmergencyAlert({
+        source: 'stability',
+        level: 'critical',
+        alertType: 'success_rate_critical',
+        message: `系统成功率降至 ${successRate.toFixed(1)}%，错误 ${totalErrors} 条`,
+        details: `P95响应 ${snapshot.healthMetrics.responseTime.p95}ms · 超时 ${snapshot.healthMetrics.timeout.timeoutCount} 次`,
+      });
+    } else if (successRate < 95 && totalErrors > 0) {
+      stabilityAlertSent.current = true;
+      triggerEmergencyAlert({
+        source: 'stability',
+        level: 'high',
+        alertType: 'success_rate_degraded',
+        message: `系统成功率降至 ${successRate.toFixed(1)}%`,
+        details: `错误 ${totalErrors} 条 · P95响应 ${snapshot.healthMetrics.responseTime.p95}ms`,
+      });
+    }
+  }, [snapshot.summary.successRate]);
 
   useEffect(() => {
     const unsub = subscribeStability(setSnapshot);
