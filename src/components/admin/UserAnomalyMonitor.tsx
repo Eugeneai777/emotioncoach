@@ -15,7 +15,7 @@ export default function UserAnomalyMonitor() {
           <Users className="h-6 w-6" />
           用户异常监控
         </h1>
-        <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等</p>
+        <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等 · 数据持久化 · 覆盖 Web/移动端/微信/小程序</p>
       </div>
 
       <Tabs defaultValue="aggregation" className="w-full">
