@@ -3613,6 +3613,39 @@ export type Database = {
         }
         Relationships: []
       }
+      emergency_contacts: {
+        Row: {
+          alert_levels: string[]
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          wecom_webhook_url: string
+        }
+        Insert: {
+          alert_levels?: string[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          wecom_webhook_url: string
+        }
+        Update: {
+          alert_levels?: string[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          wecom_webhook_url?: string
+        }
+        Relationships: []
+      }
       emotion_coach_preferences: {
         Row: {
           category: string
