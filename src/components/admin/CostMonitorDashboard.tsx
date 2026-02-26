@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { triggerEmergencyAlert } from "@/lib/emergencyAlertService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -199,6 +200,18 @@ export default function CostMonitorDashboard() {
       const { data, error } = await supabase.functions.invoke('check-cost-alerts');
       if (error) throw error;
       toast.success(`预警检查完成，发现 ${data.alerts_count} 个新预警`);
+
+      // 触发紧急告警推送
+      if (data.alerts_count > 0) {
+        triggerEmergencyAlert({
+          source: 'cost_monitor',
+          level: data.alerts_count >= 3 ? 'critical' : 'high',
+          alertType: 'cost_alert_triggered',
+          message: `成本预警检查发现 ${data.alerts_count} 个新预警`,
+          details: `请及时查看成本监控面板确认详情`,
+        });
+      }
+
       fetchData();
     } catch (error) {
       console.error('Error running alert check:', error);
