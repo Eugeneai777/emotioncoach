@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { triggerEmergencyAlert } from "@/lib/emergencyAlertService";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,34 @@ export default function UserAnomalyMonitor() {
     high_frequency: anomalies.filter((a: any) => a.anomaly_type === 'high_frequency').length,
     suspicious_operation: anomalies.filter((a: any) => a.anomaly_type === 'suspicious_operation').length,
   };
+
+  // 当出现严重异常时自动推送紧急告警
+  const alertSentRef = useRef(false);
+  useEffect(() => {
+    if (alertSentRef.current || anomalies.length === 0) return;
+    const criticalCount = anomalies.filter((a: any) => a.severity === 'critical').length;
+    const totalCount = anomalies.length;
+
+    if (criticalCount > 0) {
+      alertSentRef.current = true;
+      triggerEmergencyAlert({
+        source: 'user_anomaly',
+        level: 'critical',
+        alertType: 'user_anomaly_critical',
+        message: `发现 ${criticalCount} 条严重用户异常`,
+        details: `异常登录 ${stats.abnormal_login} · 高频调用 ${stats.high_frequency} · 可疑操作 ${stats.suspicious_operation}`,
+      });
+    } else if (totalCount >= 5) {
+      alertSentRef.current = true;
+      triggerEmergencyAlert({
+        source: 'user_anomaly',
+        level: 'high',
+        alertType: 'user_anomaly_high_volume',
+        message: `用户异常监控累计 ${totalCount} 条告警`,
+        details: `异常登录 ${stats.abnormal_login} · 高频调用 ${stats.high_frequency} · 可疑操作 ${stats.suspicious_operation}`,
+      });
+    }
+  }, [anomalies]);
 
   const filtered = searchText
     ? anomalies.filter((a: any) =>

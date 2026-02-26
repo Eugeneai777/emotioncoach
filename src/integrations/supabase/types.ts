@@ -3613,9 +3613,60 @@ export type Database = {
         }
         Relationships: []
       }
+      emergency_alert_logs: {
+        Row: {
+          alert_level: string
+          alert_source: string
+          alert_type: string
+          contact_id: string | null
+          contact_name: string
+          created_at: string
+          details: string | null
+          error_message: string | null
+          id: string
+          message: string
+          send_status: string
+        }
+        Insert: {
+          alert_level: string
+          alert_source: string
+          alert_type: string
+          contact_id?: string | null
+          contact_name: string
+          created_at?: string
+          details?: string | null
+          error_message?: string | null
+          id?: string
+          message: string
+          send_status?: string
+        }
+        Update: {
+          alert_level?: string
+          alert_source?: string
+          alert_type?: string
+          contact_id?: string | null
+          contact_name?: string
+          created_at?: string
+          details?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string
+          send_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_alert_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emergency_contacts: {
         Row: {
           alert_levels: string[]
+          alert_types: string[] | null
           created_at: string
           description: string | null
           id: string
@@ -3626,6 +3677,7 @@ export type Database = {
         }
         Insert: {
           alert_levels?: string[]
+          alert_types?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -3636,6 +3688,7 @@ export type Database = {
         }
         Update: {
           alert_levels?: string[]
+          alert_types?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
