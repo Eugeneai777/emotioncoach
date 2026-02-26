@@ -1286,12 +1286,17 @@ export default function StabilityMonitor() {
     if (missing.length === 0) return;
 
     const fetchNames = async () => {
-      // userId is first 8 chars of UUID, use ilike to match
-      const orFilter = missing.map((id) => `id.ilike.${id}%`).join(',');
-      const { data } = await supabase
+      // userId is first 8 chars of UUID, cast id to text for ilike matching
+      const orFilter = missing.map((id) => `id::text.ilike.${id}%`).join(',');
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, display_name')
         .or(orFilter);
+      if (error) {
+        // Fallback: try fetching full UUIDs directly if cast doesn't work
+        console.warn('[StabilityMonitor] Profile lookup failed, trying fallback', error.message);
+        return;
+      }
       if (data) {
         const map: Record<string, string> = { ...userNames };
         data.forEach((p) => {
