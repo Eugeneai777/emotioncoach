@@ -62,7 +62,7 @@ const NAV_GROUPS = [
     title: "概览",
     icon: LayoutDashboard,
     defaultOpen: true,
-    roles: ['admin', 'content_admin'] as AdminRole[],
+    roles: ['admin', 'content_admin', 'partner_admin'] as AdminRole[],
     items: [
       { key: "dashboard", label: "概览仪表板", path: "/admin", icon: LayoutDashboard }
     ]
@@ -92,6 +92,15 @@ const NAV_GROUPS = [
         { key: "bloom-monthly", label: "绽放月度利润", path: "/admin/bloom-monthly", icon: TrendingUp },
         { key: "bloom-cashflow", label: "绽放月度现金流", path: "/admin/bloom-cashflow", icon: Wallet },
       ]},
+      { key: "industry-partners", label: "行业合伙人", path: "/admin/industry-partners", icon: Network }
+    ]
+  },
+  {
+    title: "行业合伙人",
+    icon: Network,
+    defaultOpen: true,
+    roles: ['partner_admin'] as AdminRole[],
+    items: [
       { key: "industry-partners", label: "行业合伙人", path: "/admin/industry-partners", icon: Network }
     ]
   },

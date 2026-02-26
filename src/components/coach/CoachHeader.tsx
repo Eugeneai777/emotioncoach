@@ -60,9 +60,8 @@ export const CoachHeader = ({
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-      setIsAdmin(!!data);
+        .in('role', ['admin', 'content_admin', 'partner_admin']);
+      setIsAdmin(!!(data && data.length > 0));
     };
     checkAdminRole();
   }, [user]);
