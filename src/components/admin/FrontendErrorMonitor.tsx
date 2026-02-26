@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Bug, AlertTriangle, MonitorX, Wifi, FileWarning, Search, Shield, Copy, ChevronDown, ChevronUp, Wrench,
+  Bug, AlertTriangle, MonitorX, Wifi, FileWarning, Search, Shield, Copy, ChevronDown, ChevronUp, Wrench, Loader2, CheckCircle2, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -12,6 +12,9 @@ import { useMonitorFrontendErrors } from "@/lib/monitorQueries";
 import MonitorFilters from "./shared/MonitorFilters";
 import type { MonitorPlatform } from "@/lib/platformDetector";
 import { getPlatformLabel } from "@/lib/platformDetector";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import ReactMarkdown from "react-markdown";
 
 type ErrorType = 'js_error' | 'promise_rejection' | 'white_screen' | 'resource_error' | 'network_error';
 
@@ -23,23 +26,30 @@ const TYPE_META: Record<ErrorType, { label: string; color: string; icon: typeof 
   network_error: { label: "网络错误", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: Wifi },
 };
 
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending: { label: "待处理", color: "bg-muted text-muted-foreground" },
+  diagnosed: { label: "已诊断", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  fixed: { label: "已修复", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  ignored: { label: "已忽略", color: "bg-muted text-muted-foreground" },
+};
+
 export default function FrontendErrorMonitor() {
   const [platform, setPlatform] = useState<MonitorPlatform | 'all'>('all');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<ErrorType | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [diagnosingId, setDiagnosingId] = useState<string | null>(null);
 
+  const queryClient = useQueryClient();
   const { data: dbErrors = [], isLoading } = useMonitorFrontendErrors({ platform, timeRange });
 
-  // 统计
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: dbErrors.length };
     for (const e of dbErrors) c[e.error_type] = (c[e.error_type] || 0) + 1;
     return c;
   }, [dbErrors]);
 
-  // 过滤
   const filtered = useMemo(() => {
     let list = dbErrors;
     if (filterType !== "all") list = list.filter((e: any) => e.error_type === filterType);
@@ -60,9 +70,44 @@ export default function FrontendErrorMonitor() {
     toast.success("已复制");
   };
 
+  const handleDiagnose = async (err: any) => {
+    setDiagnosingId(err.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("monitor-diagnose", {
+        body: {
+          error_id: err.id,
+          error_table: "monitor_frontend_errors",
+          error_data: err,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("AI 诊断完成");
+      queryClient.invalidateQueries({ queryKey: ['monitor-frontend-errors'] });
+      setExpandedId(err.id);
+    } catch (e: any) {
+      toast.error(e.message || "诊断失败，请稍后重试");
+    } finally {
+      setDiagnosingId(null);
+    }
+  };
+
+  const handleMarkStatus = async (errId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from("monitor_frontend_errors" as any)
+        .update({ status } as any)
+        .eq("id", errId);
+      if (error) throw error;
+      toast.success(`已标记为${STATUS_LABELS[status]?.label || status}`);
+      queryClient.invalidateQueries({ queryKey: ['monitor-frontend-errors'] });
+    } catch (e: any) {
+      toast.error("操作失败");
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* 平台 & 时间筛选 */}
       <MonitorFilters
         platform={platform}
         onPlatformChange={setPlatform}
@@ -139,6 +184,10 @@ export default function FrontendErrorMonitor() {
                 const meta = TYPE_META[err.error_type as ErrorType] || TYPE_META.js_error;
                 const Icon = meta.icon;
                 const isExpanded = expandedId === err.id;
+                const statusMeta = STATUS_LABELS[err.status] || STATUS_LABELS.pending;
+                const isDiagnosing = diagnosingId === err.id;
+                const hasDiagnosis = !!err.diagnosis;
+
                 return (
                   <div key={err.id} className="border rounded-lg overflow-hidden">
                     <div
@@ -152,11 +201,27 @@ export default function FrontendErrorMonitor() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={`text-[10px] py-0 ${meta.color} border-0`}>{meta.label}</Badge>
                           <Badge variant="outline" className="text-[10px]">{getPlatformLabel(err.platform)}</Badge>
+                          <Badge className={`text-[10px] py-0 ${statusMeta.color} border-0`}>{statusMeta.label}</Badge>
                         </div>
                         <p className="text-sm font-medium mt-1 truncate">{err.message}</p>
                         <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{err.page}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs px-2 gap-1"
+                          disabled={isDiagnosing}
+                          onClick={(e) => { e.stopPropagation(); handleDiagnose(err); }}
+                        >
+                          {isDiagnosing ? (
+                            <><Loader2 className="h-3 w-3 animate-spin" />诊断中</>
+                          ) : hasDiagnosis ? (
+                            <><Sparkles className="h-3 w-3" />重新诊断</>
+                          ) : (
+                            <><Wrench className="h-3 w-3" />一键修复</>
+                          )}
+                        </Button>
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                           {format(new Date(err.created_at), "MM-dd HH:mm:ss")}
                         </span>
@@ -166,6 +231,46 @@ export default function FrontendErrorMonitor() {
 
                     {isExpanded && (
                       <div className="border-t bg-muted/30 p-3 space-y-2 text-xs">
+                        {/* AI Diagnosis Result */}
+                        {hasDiagnosis && (
+                          <div className="bg-background border border-primary/20 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                              <Sparkles className="h-4 w-4" />
+                              AI 智能诊断
+                              {err.diagnosed_at && (
+                                <span className="text-[10px] text-muted-foreground font-normal">
+                                  {format(new Date(err.diagnosed_at), "yyyy-MM-dd HH:mm")}
+                                </span>
+                              )}
+                            </div>
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-xs">
+                              <ReactMarkdown>{err.diagnosis}</ReactMarkdown>
+                            </div>
+                            {err.fix_suggestion && (
+                              <>
+                                <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 mt-2">
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  修复建议
+                                </div>
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-xs">
+                                  <ReactMarkdown>{err.fix_suggestion}</ReactMarkdown>
+                                </div>
+                              </>
+                            )}
+                            <div className="flex items-center gap-2 pt-2 border-t">
+                              <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleMarkStatus(err.id, 'fixed')}>
+                                <CheckCircle2 className="h-3 w-3 mr-1" />标记已修复
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleMarkStatus(err.id, 'ignored')}>
+                                忽略
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => copyToClipboard(`诊断：\n${err.diagnosis}\n\n修复建议：\n${err.fix_suggestion || '无'}`)}>
+                                <Copy className="h-3 w-3 mr-1" />复制诊断
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <div>
                             <span className="text-muted-foreground">时间：</span>
