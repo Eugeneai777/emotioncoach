@@ -4,16 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  AlertTriangle, Ban, Clock, Server, Globe, Wifi, Search, ChevronDown, ChevronUp, Copy, Wrench, Loader2, CheckCircle2, Sparkles,
+  AlertTriangle, Ban, Clock, Server, Globe, Wifi, Search, ChevronDown, ChevronUp, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMonitorApiErrors } from "@/lib/monitorQueries";
 import MonitorFilters from "./shared/MonitorFilters";
 import type { MonitorPlatform } from "@/lib/platformDetector";
 import { getPlatformLabel } from "@/lib/platformDetector";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
 
 type ApiErrorType = 'rate_limit' | 'server_error' | 'third_party' | 'timeout' | 'network_fail' | 'client_error';
 
@@ -26,13 +23,6 @@ const TYPE_LABELS: Record<ApiErrorType, { label: string; color: string; icon: Re
   client_error: { label: "客户端错误", color: "bg-muted text-muted-foreground border-border", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
 };
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "待处理", color: "bg-muted text-muted-foreground" },
-  diagnosed: { label: "已诊断", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  fixed: { label: "已修复", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  ignored: { label: "已忽略", color: "bg-muted text-muted-foreground" },
-};
-
 const FILTER_OPTIONS: { value: ApiErrorType | "all"; label: string }[] = [
   { value: "all", label: "全部" },
   { value: "rate_limit", label: "429 限流" },
@@ -42,19 +32,36 @@ const FILTER_OPTIONS: { value: ApiErrorType | "all"; label: string }[] = [
   { value: "network_fail", label: "网络失败" },
 ];
 
+function buildApiErrorText(err: any): string {
+  const meta = TYPE_LABELS[err.error_type as ApiErrorType];
+  const lines = [
+    `【${meta?.label || err.error_type}】${err.message}`,
+    `时间：${new Date(err.created_at).toLocaleString("zh-CN")}`,
+    `平台：${getPlatformLabel(err.platform)}`,
+    `页面：${err.page || '未知'}`,
+    `URL：${err.url || '未知'}`,
+    `方法：${err.method || '未知'}`,
+    `状态码：${err.status_code || '未知'}`,
+    `响应时间：${err.response_time || '未知'}ms`,
+  ];
+  if (err.model_name) lines.push(`模型：${err.model_name}`);
+  if (err.user_id) lines.push(`用户：${err.user_id}`);
+  lines.push(`UA：${err.user_agent || '未知'}`);
+  if (err.response_body) lines.push(`响应体：\n${err.response_body}`);
+  return lines.join("\n");
+}
+
 export default function ApiErrorMonitor() {
   const [platform, setPlatform] = useState<MonitorPlatform | 'all'>('all');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
   const [filter, setFilter] = useState<ApiErrorType | "all">("all");
   const [keyword, setKeyword] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [diagnosingId, setDiagnosingId] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
   const { data: dbErrors = [], isLoading } = useMonitorApiErrors({ platform, timeRange });
 
   const stats = useMemo(() => {
-    const s = { totalCalls: dbErrors.length, failedCalls: dbErrors.length, rateLimitCount: 0, serverErrorCount: 0, timeoutCount: 0, thirdPartyErrorCount: 0 };
+    const s = { rateLimitCount: 0, serverErrorCount: 0, timeoutCount: 0, thirdPartyErrorCount: 0 };
     for (const e of dbErrors) {
       if (e.error_type === 'rate_limit') s.rateLimitCount++;
       else if (e.error_type === 'server_error') s.serverErrorCount++;
@@ -78,122 +85,44 @@ export default function ApiErrorMonitor() {
     return list;
   }, [dbErrors, filter, keyword]);
 
-  const copyDetail = (e: any) => {
-    navigator.clipboard.writeText(JSON.stringify(e, null, 2));
-    toast.success("已复制到剪贴板");
-  };
-
-  const handleDiagnose = async (err: any) => {
-    setDiagnosingId(err.id);
-    try {
-      const { data, error } = await supabase.functions.invoke("monitor-diagnose", {
-        body: {
-          error_id: err.id,
-          error_table: "monitor_api_errors",
-          error_data: err,
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast.success("AI 诊断完成");
-      queryClient.invalidateQueries({ queryKey: ['monitor-api-errors'] });
-      setExpandedId(err.id);
-    } catch (e: any) {
-      toast.error(e.message || "诊断失败，请稍后重试");
-    } finally {
-      setDiagnosingId(null);
-    }
-  };
-
-  const handleMarkStatus = async (errId: string, status: string) => {
-    try {
-      const { error } = await supabase
-        .from("monitor_api_errors" as any)
-        .update({ status } as any)
-        .eq("id", errId);
-      if (error) throw error;
-      toast.success(`已标记为${STATUS_LABELS[status]?.label || status}`);
-      queryClient.invalidateQueries({ queryKey: ['monitor-api-errors'] });
-    } catch (e: any) {
-      toast.error("操作失败");
-    }
+  const copyError = (err: any) => {
+    navigator.clipboard.writeText(buildApiErrorText(err));
+    toast.success("已复制完整报错信息");
   };
 
   return (
     <div className="space-y-4">
-      <MonitorFilters
-        platform={platform}
-        onPlatformChange={setPlatform}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
-        showRealtimeHint
-      />
+      <MonitorFilters platform={platform} onPlatformChange={setPlatform} timeRange={timeRange} onTimeRangeChange={setTimeRange} showRealtimeHint />
 
-      {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">异常总数</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="!p-6">
-            <div className="text-2xl font-bold">{dbErrors.length}</div>
-            <p className="text-xs text-muted-foreground">{isLoading ? '加载中...' : '已入库记录'}</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">异常总数</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader>
+          <CardContent className="!p-6"><div className="text-2xl font-bold">{dbErrors.length}</div><p className="text-xs text-muted-foreground">{isLoading ? '加载中...' : '已入库记录'}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">429 限流</CardTitle>
-            <Ban className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent className="!p-6">
-            <div className={`text-2xl font-bold ${stats.rateLimitCount > 0 ? "text-amber-500" : ""}`}>{stats.rateLimitCount}</div>
-            <p className="text-xs text-muted-foreground">累计触发</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">429 限流</CardTitle><Ban className="h-4 w-4 text-amber-500" /></CardHeader>
+          <CardContent className="!p-6"><div className={`text-2xl font-bold ${stats.rateLimitCount > 0 ? "text-amber-500" : ""}`}>{stats.rateLimitCount}</div><p className="text-xs text-muted-foreground">累计触发</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">500 错误</CardTitle>
-            <Server className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent className="!p-6">
-            <div className={`text-2xl font-bold ${stats.serverErrorCount > 0 ? "text-destructive" : ""}`}>{stats.serverErrorCount}</div>
-            <p className="text-xs text-muted-foreground">内部错误</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">500 错误</CardTitle><Server className="h-4 w-4 text-destructive" /></CardHeader>
+          <CardContent className="!p-6"><div className={`text-2xl font-bold ${stats.serverErrorCount > 0 ? "text-destructive" : ""}`}>{stats.serverErrorCount}</div><p className="text-xs text-muted-foreground">内部错误</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">超时</CardTitle>
-            <Clock className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent className="!p-6">
-            <div className={`text-2xl font-bold ${stats.timeoutCount > 0 ? "text-orange-500" : ""}`}>{stats.timeoutCount}</div>
-            <p className="text-xs text-muted-foreground">请求超时</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">超时</CardTitle><Clock className="h-4 w-4 text-orange-500" /></CardHeader>
+          <CardContent className="!p-6"><div className={`text-2xl font-bold ${stats.timeoutCount > 0 ? "text-orange-500" : ""}`}>{stats.timeoutCount}</div><p className="text-xs text-muted-foreground">请求超时</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">第三方异常</CardTitle>
-            <Globe className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent className="!p-6">
-            <div className={`text-2xl font-bold ${stats.thirdPartyErrorCount > 0 ? "text-purple-500" : ""}`}>{stats.thirdPartyErrorCount}</div>
-            <p className="text-xs text-muted-foreground">API 报错</p>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">第三方异常</CardTitle><Globe className="h-4 w-4 text-purple-500" /></CardHeader>
+          <CardContent className="!p-6"><div className={`text-2xl font-bold ${stats.thirdPartyErrorCount > 0 ? "text-purple-500" : ""}`}>{stats.thirdPartyErrorCount}</div><p className="text-xs text-muted-foreground">API 报错</p></CardContent>
         </Card>
       </div>
 
-      {/* Filters & List */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">接口异常记录</CardTitle>
-        </CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-base">接口异常记录</CardTitle></CardHeader>
         <CardContent className="!p-6 space-y-3">
           <div className="flex flex-wrap gap-2 items-center">
             {FILTER_OPTIONS.map((opt) => (
-              <Badge key={opt.value} variant={filter === opt.value ? "default" : "outline"} className="cursor-pointer" onClick={() => setFilter(opt.value)}>
-                {opt.label}
-              </Badge>
+              <Badge key={opt.value} variant={filter === opt.value ? "default" : "outline"} className="cursor-pointer" onClick={() => setFilter(opt.value)}>{opt.label}</Badge>
             ))}
             <div className="relative ml-auto w-48">
               <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
@@ -208,10 +137,6 @@ export default function ApiErrorMonitor() {
               {filtered.map((err: any) => {
                 const meta = TYPE_LABELS[err.error_type as ApiErrorType] || TYPE_LABELS.client_error;
                 const isOpen = expandedId === err.id;
-                const statusMeta = STATUS_LABELS[err.status] || STATUS_LABELS.pending;
-                const isDiagnosing = diagnosingId === err.id;
-                const hasDiagnosis = !!err.diagnosis;
-
                 return (
                   <div key={err.id} className="border rounded-lg p-3 space-y-1.5 text-sm">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -219,30 +144,10 @@ export default function ApiErrorMonitor() {
                         <Badge variant="outline" className={`${meta.color} gap-1 text-xs`}>{meta.icon} {meta.label}</Badge>
                         {err.status_code && <Badge variant="secondary" className="text-xs">{err.status_code}</Badge>}
                         <Badge variant="outline" className="text-[10px]">{getPlatformLabel(err.platform)}</Badge>
-                        <Badge className={`text-[10px] py-0 ${statusMeta.color} border-0`}>{statusMeta.label}</Badge>
                         <span className="font-mono text-xs text-muted-foreground">{err.method}</span>
                         <span className="text-xs text-muted-foreground">{err.response_time}ms</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs px-2 gap-1"
-                          disabled={isDiagnosing}
-                          onClick={(e) => { e.stopPropagation(); handleDiagnose(err); }}
-                        >
-                          {isDiagnosing ? (
-                            <><Loader2 className="h-3 w-3 animate-spin" />诊断中</>
-                          ) : hasDiagnosis ? (
-                            <><Sparkles className="h-3 w-3" />重新诊断</>
-                          ) : (
-                            <><Wrench className="h-3 w-3" />一键修复</>
-                          )}
-                        </Button>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(err.created_at).toLocaleString("zh-CN")}
-                        </span>
-                      </div>
+                      <span className="text-xs text-muted-foreground">{new Date(err.created_at).toLocaleString("zh-CN")}</span>
                     </div>
                     <p className="font-mono text-xs break-all text-foreground/80">{err.url}</p>
                     <p className="text-xs text-muted-foreground">{err.message}</p>
@@ -255,55 +160,12 @@ export default function ApiErrorMonitor() {
                         {isOpen ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
                         {isOpen ? "收起" : "详情"}
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => copyDetail(err)}>
+                      <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => copyError(err)}>
                         <Copy className="h-3 w-3 mr-1" /> 复制
                       </Button>
                     </div>
                     {isOpen && (
-                      <div className="bg-muted/50 rounded p-2 text-xs space-y-2 mt-1">
-                        {/* AI Diagnosis Result */}
-                        {hasDiagnosis && (
-                          <div className="bg-background border border-primary/20 rounded-lg p-3 space-y-2">
-                            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                              <Sparkles className="h-4 w-4" />
-                              AI 智能诊断
-                              {err.diagnosed_at && (
-                                <span className="text-[10px] text-muted-foreground font-normal">
-                                  {new Date(err.diagnosed_at).toLocaleString("zh-CN")}
-                                </span>
-                              )}
-                            </div>
-                            <div className="prose prose-sm dark:prose-invert max-w-none text-xs">
-                              <ReactMarkdown>{err.diagnosis}</ReactMarkdown>
-                            </div>
-                            {err.fix_suggestion && (
-                              <>
-                                <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 mt-2">
-                                  <CheckCircle2 className="h-4 w-4" />
-                                  修复建议
-                                </div>
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-xs">
-                                  <ReactMarkdown>{err.fix_suggestion}</ReactMarkdown>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex items-center gap-2 pt-2 border-t">
-                              <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleMarkStatus(err.id, 'fixed')}>
-                                <CheckCircle2 className="h-3 w-3 mr-1" />标记已修复
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleMarkStatus(err.id, 'ignored')}>
-                                忽略
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => {
-                                navigator.clipboard.writeText(`诊断：\n${err.diagnosis}\n\n修复建议：\n${err.fix_suggestion || '无'}`);
-                                toast.success("已复制诊断");
-                              }}>
-                                <Copy className="h-3 w-3 mr-1" />复制诊断
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-
+                      <div className="bg-muted/50 rounded p-2 text-xs space-y-1 mt-1">
                         <p><span className="text-muted-foreground">页面:</span> {err.page}</p>
                         <p><span className="text-muted-foreground">平台:</span> {getPlatformLabel(err.platform)}</p>
                         <p><span className="text-muted-foreground">UA:</span> {err.user_agent?.slice(0, 120)}</p>
