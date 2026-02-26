@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   const { data: partnerStats, isLoading: loadingPartners } = useQuery({
     queryKey: ['admin-partner-stats'],
     queryFn: async () => {
-      const { data } = await supabase.from('partners' as any).select('id').eq('partner_type', 'youjin').eq('is_active', true);
+      const { data } = await supabase.from('partners' as any).select('id').eq('partner_type', 'youjin').eq('status', 'active');
       return { active: (data as any[])?.length || 0 };
     }
   });

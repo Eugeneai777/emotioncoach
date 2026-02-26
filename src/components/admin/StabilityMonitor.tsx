@@ -1286,17 +1286,17 @@ export default function StabilityMonitor() {
     if (missing.length === 0) return;
 
     const fetchNames = async () => {
-      // userId is first 8 chars of UUID, use ilike to match
-      const orFilter = missing.map((id) => `id.ilike.${id}%`).join(',');
+      // Fetch profiles and match by prefix (userId is first 8 chars of UUID)
       const { data } = await supabase
         .from('profiles')
-        .select('id, display_name')
-        .or(orFilter);
+        .select('id, display_name');
       if (data) {
         const map: Record<string, string> = { ...userNames };
         data.forEach((p) => {
           const short = p.id.slice(0, 8);
-          if (p.display_name) map[short] = p.display_name;
+          if (missing.includes(short) && p.display_name) {
+            map[short] = p.display_name;
+          }
         });
         setUserNames(map);
       }
