@@ -59,21 +59,25 @@ export default function UserAnomalyMonitor() {
 
     if (criticalCount > 0) {
       alertSentRef.current = true;
+      const criticalItems = anomalies.filter((a: any) => a.severity === 'critical').slice(0, 5);
+      const criticalMessages = criticalItems.map((a: any) => `• ${a.title || a.message}`).join('\n');
       triggerEmergencyAlert({
         source: 'user_anomaly',
         level: 'critical',
         alertType: 'user_anomaly_critical',
         message: `发现 ${criticalCount} 条严重用户异常`,
-        details: `异常登录 ${stats.abnormal_login} · 高频调用 ${stats.high_frequency} · 可疑操作 ${stats.suspicious_operation}`,
+        details: `异常明细:\n${criticalMessages}\n\n统计: 异常登录 ${stats.abnormal_login} 次 · 高频调用 ${stats.high_frequency} 次 · 可疑操作 ${stats.suspicious_operation} 次\n总异常数: ${totalCount} 条`,
       });
     } else if (totalCount >= 5) {
       alertSentRef.current = true;
+      const topItems = anomalies.slice(0, 5);
+      const topMessages = topItems.map((a: any) => `• ${a.title || a.message}`).join('\n');
       triggerEmergencyAlert({
         source: 'user_anomaly',
         level: 'high',
         alertType: 'user_anomaly_high_volume',
         message: `用户异常监控累计 ${totalCount} 条告警`,
-        details: `异常登录 ${stats.abnormal_login} · 高频调用 ${stats.high_frequency} · 可疑操作 ${stats.suspicious_operation}`,
+        details: `最新异常:\n${topMessages}\n\n统计: 异常登录 ${stats.abnormal_login} 次 · 高频调用 ${stats.high_frequency} 次 · 可疑操作 ${stats.suspicious_operation} 次`,
       });
     }
   }, [anomalies]);
