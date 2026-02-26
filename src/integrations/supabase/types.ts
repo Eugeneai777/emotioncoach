@@ -5851,6 +5851,35 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_admin_bindings: {
+        Row: {
+          created_at: string
+          id: string
+          partner_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          partner_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          partner_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_admin_bindings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_benefits: {
         Row: {
           benefit_description: string | null
@@ -9852,7 +9881,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "content_admin"
+      app_role: "admin" | "user" | "content_admin" | "partner_admin"
       monitor_platform:
         | "web"
         | "mobile_browser"
@@ -9986,7 +10015,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "content_admin"],
+      app_role: ["admin", "user", "content_admin", "partner_admin"],
       monitor_platform: [
         "web",
         "mobile_browser",
