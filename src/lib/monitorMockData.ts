@@ -38,16 +38,28 @@ export async function injectMonitorMockData() {
     { anomaly_type: 'slow_interaction', scene: 'page_load', scene_label: '页面加载', message: '[Mock] 页面首屏加载超过 8 秒', duration: 8200, platform: currentPlatform, page: '/awakening' },
   ];
 
+  const userAnomalies = [
+    { anomaly_type: 'abnormal_login', severity: 'critical', title: '异地登录检测', message: '[Mock] 用户从新 IP 118.25.xx.xx (北京) 登录，与常用地 (广州) 不一致', platform: currentPlatform, user_agent: navigator.userAgent, ip_address: '118.25.12.34', user_id: 'mock-user-001' },
+    { anomaly_type: 'abnormal_login', severity: 'warning', title: '深夜登录', message: '[Mock] 用户在凌晨 3:15 登录，偏离正常使用时段', platform: 'mobile_browser' as DbPlatform, user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)', user_id: 'mock-user-002' },
+    { anomaly_type: 'high_frequency', severity: 'critical', title: '高频 API 调用', message: '[Mock] 用户在 1 分钟内调用 /api/chat 接口 85 次，超过阈值 (30次/分钟)', platform: currentPlatform, user_agent: navigator.userAgent, user_id: 'mock-user-003', extra: { endpoint: '/api/chat', count: 85, threshold: 30, window: '1min' } },
+    { anomaly_type: 'high_frequency', severity: 'warning', title: '频繁刷新页面', message: '[Mock] 用户在 5 分钟内刷新页面 42 次', platform: 'wechat' as DbPlatform, user_agent: 'Mozilla/5.0 MicroMessenger/8.0', user_id: 'mock-user-004' },
+    { anomaly_type: 'suspicious_operation', severity: 'critical', title: '批量数据导出', message: '[Mock] 用户短时间内请求导出全部用户数据，疑似数据爬取', platform: currentPlatform, user_agent: navigator.userAgent, user_id: 'mock-user-005', page: '/admin/users' },
+    { anomaly_type: 'suspicious_operation', severity: 'warning', title: '越权访问尝试', message: '[Mock] 普通用户尝试访问管理后台 API /admin/settings，已被 RLS 拒绝', platform: 'mini_program' as DbPlatform, user_agent: 'Mozilla/5.0 MiniProgramEnv', user_id: 'mock-user-006', page: '/admin/settings' },
+    { anomaly_type: 'abnormal_login', severity: 'warning', title: '多设备同时登录', message: '[Mock] 同一账号在 3 台不同设备上同时活跃', platform: currentPlatform, user_agent: navigator.userAgent, user_id: 'mock-user-007' },
+  ];
+
   const results = await Promise.allSettled([
     supabase.from('monitor_frontend_errors').insert(frontendErrors),
     supabase.from('monitor_api_errors').insert(apiErrors),
     supabase.from('monitor_ux_anomalies').insert(uxAnomalies),
+    supabase.from('monitor_user_anomalies').insert(userAnomalies),
   ]);
 
   const summary = {
     frontendErrors: results[0].status === 'fulfilled' ? frontendErrors.length : 0,
     apiErrors: results[1].status === 'fulfilled' ? apiErrors.length : 0,
     uxAnomalies: results[2].status === 'fulfilled' ? uxAnomalies.length : 0,
+    userAnomalies: results[3].status === 'fulfilled' ? userAnomalies.length : 0,
     errors: results.filter(r => r.status === 'rejected').map(r => (r as PromiseRejectedResult).reason),
   };
 

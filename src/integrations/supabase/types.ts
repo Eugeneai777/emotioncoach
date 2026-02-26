@@ -5001,6 +5001,60 @@ export type Database = {
         }
         Relationships: []
       }
+      monitor_user_anomalies: {
+        Row: {
+          anomaly_type: string
+          created_at: string
+          extra: Json | null
+          id: string
+          ip_address: string | null
+          message: string
+          page: string | null
+          platform: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          title: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          anomaly_type: string
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          ip_address?: string | null
+          message: string
+          page?: string | null
+          platform?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          title: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          anomaly_type?: string
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          ip_address?: string | null
+          message?: string
+          page?: string | null
+          platform?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       monitor_ux_anomalies: {
         Row: {
           anomaly_type: string
