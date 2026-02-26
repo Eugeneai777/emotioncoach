@@ -17,6 +17,7 @@ import {
   getStabilitySnapshot,
   subscribeStability,
   clearStabilityData,
+  injectMockErrors,
   getPageLabel,
   type StabilitySnapshot,
   type RequestRecord,
@@ -1336,6 +1337,9 @@ export default function StabilityMonitor() {
           </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-3 w-3 mr-1" />刷新
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { injectMockErrors(); setSnapshot(getStabilitySnapshot()); }}>
+            <AlertTriangle className="h-3 w-3 mr-1" />模拟预警
           </Button>
           <Button variant="outline" size="sm" onClick={handleClear}>
             <Trash2 className="h-3 w-3 mr-1" />清空

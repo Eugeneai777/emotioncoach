@@ -687,6 +687,28 @@ function computeHealthMetrics(): HealthMetrics {
   return { successRate, responseTime, qps, errors, timeout, thirdPartyHealth };
 }
 
+// ==================== 模拟预警数据 ====================
+
+export function injectMockErrors() {
+  const mockErrors: Partial<RequestRecord>[] = [
+    { path: '/functions/v1/wechat-pay', page: '/wealth-block', source: 'api', errorType: 'server_error', statusCode: 500, errorCode: 500, userId: 'a1b2c3d4', method: 'POST', totalDuration: 1200 },
+    { path: '/functions/v1/generate-smart-notification', page: '/emotion-coach', source: 'api', errorType: 'server_error', statusCode: 502, errorCode: 502, userId: 'e5f6g7h8', method: 'POST', totalDuration: 3500 },
+    { path: '/functions/v1/vibrant-life-realtime-token', page: '/life-coach', source: 'voice', errorType: 'timeout', userId: 'i9j0k1l2', method: 'POST', totalDuration: 31000 },
+    { path: 'https://api.openai.com/v1/chat/completions', page: '/emotion-diary', source: 'api', errorType: 'rate_limit', statusCode: 429, errorCode: 429, userId: 'a1b2c3d4', method: 'POST', totalDuration: 200 },
+    { path: '/rest/v1/profiles', page: '/admin', source: 'api', errorType: 'client_error', statusCode: 401, errorCode: 401, userId: 'm3n4o5p6', method: 'GET', totalDuration: 80 },
+  ];
+
+  mockErrors.forEach((mock, i) => {
+    pushRecord({
+      requestId: genRequestId(),
+      timestamp: Date.now() - i * 60000, // 每条间隔1分钟
+      ip: 'client',
+      success: false,
+      ...mock,
+    } as RequestRecord);
+  });
+}
+
 // ==================== 对外 API ====================
 
 export function getStabilitySnapshot(): StabilitySnapshot {
