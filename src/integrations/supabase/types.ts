@@ -4830,6 +4830,201 @@ export type Database = {
           },
         ]
       }
+      monitor_api_errors: {
+        Row: {
+          created_at: string
+          error_type: string
+          id: string
+          message: string
+          method: string
+          model_name: string | null
+          page: string | null
+          platform: Database["public"]["Enums"]["monitor_platform"]
+          response_body: string | null
+          response_time: number | null
+          status_code: number | null
+          url: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_type: string
+          id?: string
+          message: string
+          method: string
+          model_name?: string | null
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          response_body?: string | null
+          response_time?: number | null
+          status_code?: number | null
+          url: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_type?: string
+          id?: string
+          message?: string
+          method?: string
+          model_name?: string | null
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          response_body?: string | null
+          response_time?: number | null
+          status_code?: number | null
+          url?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      monitor_frontend_errors: {
+        Row: {
+          created_at: string
+          error_type: string
+          extra: Json | null
+          id: string
+          message: string
+          page: string | null
+          platform: Database["public"]["Enums"]["monitor_platform"]
+          request_info: string | null
+          resource_url: string | null
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_type: string
+          extra?: Json | null
+          id?: string
+          message: string
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          request_info?: string | null
+          resource_url?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_type?: string
+          extra?: Json | null
+          id?: string
+          message?: string
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          request_info?: string | null
+          resource_url?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      monitor_stability_records: {
+        Row: {
+          created_at: string
+          error_type: string | null
+          id: string
+          method: string
+          page: string | null
+          platform: Database["public"]["Enums"]["monitor_platform"]
+          request_path: string
+          source: string | null
+          status_code: number | null
+          success: boolean
+          third_party_name: string | null
+          total_duration: number
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_type?: string | null
+          id?: string
+          method: string
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          request_path: string
+          source?: string | null
+          status_code?: number | null
+          success: boolean
+          third_party_name?: string | null
+          total_duration: number
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_type?: string | null
+          id?: string
+          method?: string
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          request_path?: string
+          source?: string | null
+          status_code?: number | null
+          success?: boolean
+          third_party_name?: string | null
+          total_duration?: number
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      monitor_ux_anomalies: {
+        Row: {
+          anomaly_type: string
+          created_at: string
+          duration: number | null
+          extra: Json | null
+          fail_count: number | null
+          id: string
+          message: string
+          page: string | null
+          platform: Database["public"]["Enums"]["monitor_platform"]
+          retry_count: number | null
+          scene: string
+          scene_label: string
+          user_id: string | null
+        }
+        Insert: {
+          anomaly_type: string
+          created_at?: string
+          duration?: number | null
+          extra?: Json | null
+          fail_count?: number | null
+          id?: string
+          message: string
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          retry_count?: number | null
+          scene: string
+          scene_label: string
+          user_id?: string | null
+        }
+        Update: {
+          anomaly_type?: string
+          created_at?: string
+          duration?: number | null
+          extra?: Json | null
+          fail_count?: number | null
+          id?: string
+          message?: string
+          page?: string | null
+          platform?: Database["public"]["Enums"]["monitor_platform"]
+          retry_count?: number | null
+          scene?: string
+          scene_label?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       og_configurations: {
         Row: {
           category_id: string | null
@@ -9494,6 +9689,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "content_admin"
+      monitor_platform:
+        | "web"
+        | "mobile_browser"
+        | "wechat"
+        | "mini_program"
+        | "unknown"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -9622,6 +9823,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "content_admin"],
+      monitor_platform: [
+        "web",
+        "mobile_browser",
+        "wechat",
+        "mini_program",
+        "unknown",
+      ],
     },
   },
 } as const

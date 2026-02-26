@@ -76,6 +76,13 @@ function getStats(): ApiCallStats {
 function push(error: ApiError) {
   apiErrors = [error, ...apiErrors].slice(0, MAX_ERRORS);
   listeners.forEach((fn) => fn(apiErrors, getStats()));
+
+  // 异步上报到数据库
+  try {
+    import('./monitorReporter').then(({ reportApiError }) => {
+      reportApiError(error);
+    });
+  } catch { /* ignore */ }
 }
 
 function notify() {

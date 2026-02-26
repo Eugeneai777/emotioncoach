@@ -97,6 +97,13 @@ function getStats(): UxAnomalyStats {
 function push(anomaly: UxAnomaly) {
   anomalies = [anomaly, ...anomalies].slice(0, MAX_ANOMALIES);
   listeners.forEach((fn) => fn(anomalies, getStats()));
+
+  // 异步上报到数据库
+  try {
+    import('./monitorReporter').then(({ reportUxAnomaly }) => {
+      reportUxAnomaly(anomaly);
+    });
+  } catch { /* ignore */ }
 }
 
 function getUserId(): string | undefined {
