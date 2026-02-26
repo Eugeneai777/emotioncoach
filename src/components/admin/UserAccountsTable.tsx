@@ -85,7 +85,8 @@ export function UserAccountsTable() {
     return (
       account.profile?.display_name?.toLowerCase().includes(searchLower) ||
       account.user_id.toLowerCase().includes(searchLower) ||
-      account.wechat?.nickname?.toLowerCase().includes(searchLower)
+      account.wechat?.nickname?.toLowerCase().includes(searchLower) ||
+      account.wechat?.phone_number?.includes(search)
     );
   });
 
@@ -96,7 +97,7 @@ export function UserAccountsTable() {
       <AdminFilterBar
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="搜索用户名/微信昵称/ID..."
+        searchPlaceholder="搜索用户名/微信昵称/手机号/ID..."
         totalCount={filteredAccounts?.length}
       />
 
