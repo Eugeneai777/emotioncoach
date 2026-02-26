@@ -397,6 +397,13 @@ export default function CostMonitorDashboard() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <DollarSign className="h-6 w-6 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">成本监控</h1>
+          <p className="text-sm text-muted-foreground">实时追踪 API 调用成本、预算预警与账单核对</p>
+        </div>
+      </div>
       {/* 概览卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
