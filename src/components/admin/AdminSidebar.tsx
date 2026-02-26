@@ -13,6 +13,7 @@ import {
   BarChart3,
   DollarSign,
   Flag,
+  Phone,
   Activity,
   Package,
   CreditCard,
@@ -154,7 +155,8 @@ const NAV_GROUPS = [
       { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
       { key: "user-anomaly", label: "用户异常监控", path: "/admin/user-anomaly", icon: Users },
       { key: "stability", label: "稳定性监控", path: "/admin/stability", icon: RefreshCw },
-      { key: "risk-content", label: "风险内容监控", path: "/admin/risk-content", icon: Flag }
+      { key: "risk-content", label: "风险内容监控", path: "/admin/risk-content", icon: Flag },
+      { key: "emergency-contacts", label: "紧急联系人", path: "/admin/emergency-contacts", icon: Phone }
     ]
   },
   {

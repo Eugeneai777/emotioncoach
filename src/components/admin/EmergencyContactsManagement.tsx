@@ -43,7 +43,7 @@ export default function EmergencyContactsManagement() {
   const { data: contacts, isLoading } = useQuery({
     queryKey: ["emergency-contacts"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("emergency_contacts")
         .select("*")
         .order("created_at", { ascending: false });
@@ -54,7 +54,7 @@ export default function EmergencyContactsManagement() {
 
   const addMutation = useMutation({
     mutationFn: async (values: typeof form) => {
-      const { error } = await supabase.from("emergency_contacts").insert({
+      const { error } = await (supabase as any).from("emergency_contacts").insert({
         name: values.name,
         wecom_webhook_url: values.wecom_webhook_url,
         alert_levels: values.alert_levels,
@@ -74,7 +74,7 @@ export default function EmergencyContactsManagement() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("emergency_contacts")
         .update({ is_active })
         .eq("id", id);
@@ -85,7 +85,7 @@ export default function EmergencyContactsManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("emergency_contacts").delete().eq("id", id);
+      const { error } = await (supabase as any).from("emergency_contacts").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -20,6 +20,7 @@ import OperationsMonitorDashboard from "./OperationsMonitorDashboard";
 import UserAnomalyMonitor from "./UserAnomalyMonitor";
 import StabilityMonitor from "./StabilityMonitor";
 import RiskContentMonitor from "./RiskContentMonitor";
+import EmergencyContactsManagement from "./EmergencyContactsManagement";
 import { PartnerLevelManagement } from "./PartnerLevelManagement";
 import IndustryPartnerManagement from "./IndustryPartnerManagement";
 import { HumanCoachesManagement } from "./human-coaches/HumanCoachesManagement";
@@ -86,6 +87,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="user-anomaly" element={<UserAnomalyMonitor />} />
                   <Route path="stability" element={<StabilityMonitor />} />
                   <Route path="risk-content" element={<RiskContentMonitor />} />
+                  <Route path="emergency-contacts" element={<EmergencyContactsManagement />} />
                   <Route path="packages" element={<PackagesManagement />} />
                   <Route path="partner-levels" element={<PartnerLevelManagement />} />
                   <Route path="sync" element={<SyncStatusDashboard />} />
