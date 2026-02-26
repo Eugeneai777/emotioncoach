@@ -39,7 +39,7 @@ export async function injectMonitorMockData() {
   ];
 
   const userAnomalies = [
-    { anomaly_type: 'abnormal_login', severity: 'critical', title: '异地登录检测', message: '[Mock] 用户从新 IP 118.25.xx.xx (北京) 登录，与常用地 (广州) 不一致', platform: currentPlatform, user_agent: navigator.userAgent, ip_address: '118.25.12.34', user_id: 'mock-user-001' },
+    { anomaly_type: 'abnormal_login', severity: 'warning', title: '异地登录检测', message: '[Mock] 用户从新 IP 118.25.xx.xx (北京) 登录，与常用地 (广州) 不一致', platform: currentPlatform, user_agent: navigator.userAgent, ip_address: '118.25.12.34', user_id: 'mock-user-001' },
     { anomaly_type: 'abnormal_login', severity: 'warning', title: '深夜登录', message: '[Mock] 用户在凌晨 3:15 登录，偏离正常使用时段', platform: 'mobile_browser' as DbPlatform, user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)', user_id: 'mock-user-002' },
     { anomaly_type: 'high_frequency', severity: 'critical', title: '高频 API 调用', message: '[Mock] 用户在 1 分钟内调用 /api/chat 接口 85 次，超过阈值 (30次/分钟)', platform: currentPlatform, user_agent: navigator.userAgent, user_id: 'mock-user-003', extra: { endpoint: '/api/chat', count: 85, threshold: 30, window: '1min' } },
     { anomaly_type: 'high_frequency', severity: 'warning', title: '频繁刷新页面', message: '[Mock] 用户在 5 分钟内刷新页面 42 次', platform: 'wechat' as DbPlatform, user_agent: 'Mozilla/5.0 MicroMessenger/8.0', user_id: 'mock-user-004' },
