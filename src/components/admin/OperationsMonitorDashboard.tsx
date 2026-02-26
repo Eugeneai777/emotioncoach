@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerEmergencyAlert } from "@/lib/emergencyAlertService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -207,6 +208,28 @@ export default function OperationsMonitorDashboard() {
     }
 
     setAnomalyAlerts(alerts);
+
+    // 触发紧急告警推送（仅 critical 级别）
+    alerts.filter(a => a.severity === 'critical').forEach(a => {
+      triggerEmergencyAlert({
+        source: 'api_monitor',
+        level: 'critical',
+        alertType: a.type,
+        message: a.message,
+        details: a.detail,
+      });
+    });
+    // 非 critical 但有告警也推送 high 级别
+    if (alerts.length > 0 && !alerts.some(a => a.severity === 'critical')) {
+      const first = alerts[0];
+      triggerEmergencyAlert({
+        source: 'api_monitor',
+        level: 'high',
+        alertType: first.type,
+        message: `调用监控发现 ${alerts.length} 条异常`,
+        details: alerts.map(a => a.message).join('\n'),
+      });
+    }
   }, []);
 
   const fetchAll = useCallback(async () => {
