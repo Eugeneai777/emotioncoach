@@ -1,21 +1,56 @@
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
 import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
 import AnomalyAggregation from "./AnomalyAggregation";
 import PaymentMonitor from "./PaymentMonitor";
+import { injectMonitorMockData } from "@/lib/monitorMockData";
 
 export default function UserAnomalyMonitor() {
+  const [injecting, setInjecting] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleSimulate = async () => {
+    setInjecting(true);
+    try {
+      const result = await injectMonitorMockData();
+      const total = result.frontendErrors + result.apiErrors + result.uxAnomalies;
+      toast.success(`模拟预警数据已注入 ${total} 条`, {
+        description: `前端 ${result.frontendErrors} · 接口 ${result.apiErrors} · 体验 ${result.uxAnomalies}`,
+      });
+      // 刷新所有监控查询
+      queryClient.invalidateQueries({ queryKey: ['monitor-frontend-errors'] });
+      queryClient.invalidateQueries({ queryKey: ['monitor-api-errors'] });
+      queryClient.invalidateQueries({ queryKey: ['monitor-ux-anomalies'] });
+      queryClient.invalidateQueries({ queryKey: ['monitor-stability-records'] });
+    } catch (e) {
+      toast.error('模拟数据注入失败');
+      console.error(e);
+    } finally {
+      setInjecting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Users className="h-6 w-6" />
-          用户异常监控
-        </h1>
-        <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等 · 数据持久化 · 覆盖 Web/移动端/微信/小程序</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            用户异常监控
+          </h1>
+          <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等 · 数据持久化 · 覆盖 Web/移动端/微信/小程序</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleSimulate} disabled={injecting}>
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          {injecting ? '注入中...' : '模拟预警'}
+        </Button>
       </div>
 
       <Tabs defaultValue="aggregation" className="w-full">
