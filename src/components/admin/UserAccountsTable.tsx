@@ -42,7 +42,7 @@ export function UserAccountsTable() {
             const [profileResult, subscriptionResult, wechatResult, paidOrderResult] = await Promise.all([
               supabase
                 .from('profiles')
-                .select('display_name, avatar_url, auth_provider, created_at, is_disabled, disabled_at, disabled_reason, deleted_at')
+                .select('display_name, avatar_url, auth_provider, created_at, is_disabled, disabled_at, disabled_reason, deleted_at, phone')
                 .eq('id', account.user_id)
                 .maybeSingle(),
               supabase
@@ -86,7 +86,8 @@ export function UserAccountsTable() {
       account.profile?.display_name?.toLowerCase().includes(searchLower) ||
       account.user_id.toLowerCase().includes(searchLower) ||
       account.wechat?.nickname?.toLowerCase().includes(searchLower) ||
-      account.wechat?.phone_number?.includes(search)
+      account.wechat?.phone_number?.includes(search) ||
+      account.profile?.phone?.includes(search)
     );
   });
 
