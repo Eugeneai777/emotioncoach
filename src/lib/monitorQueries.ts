@@ -124,6 +124,34 @@ export function useMonitorStabilityRecords(options: MonitorQueryOptions) {
   });
 }
 
+/** 查询用户异常 */
+export function useMonitorUserAnomalies(options: MonitorQueryOptions & { anomalyType?: string }) {
+  return useQuery({
+    queryKey: ['monitor-user-anomalies', options.platform, options.timeRange, options.anomalyType],
+    queryFn: async () => {
+      let query = supabase
+        .from('monitor_user_anomalies')
+        .select('*')
+        .gte('created_at', getStartTime(options.timeRange))
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (options.platform && options.platform !== 'all') {
+        query = query.eq('platform', options.platform);
+      }
+      if (options.anomalyType && options.anomalyType !== 'all') {
+        query = query.eq('anomaly_type', options.anomalyType);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: options.enabled !== false,
+    refetchInterval: 30000,
+  });
+}
+
 /** 查询所有监控表的汇总统计 */
 export function useMonitorSummary(options: MonitorQueryOptions) {
   const feQuery = useMonitorFrontendErrors(options);
