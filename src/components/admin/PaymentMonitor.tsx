@@ -16,6 +16,8 @@ interface PaymentAnomaly {
   title: string;
   detail: string;
   timestamp: string;
+  /** 按产品维度的明细（放弃率等） */
+  productBreakdown?: { name: string; abandonRate: number; pendingCount: number; totalCount: number }[];
 }
 
 export default function PaymentMonitor() {
@@ -41,7 +43,7 @@ export default function PaymentMonitor() {
       // 查询所有订单数据
       const { data: ordersData } = await supabase
         .from('orders')
-        .select('id, user_id, amount, status, created_at, paid_at')
+        .select('id, user_id, amount, status, created_at, paid_at, package_name')
         .gte('created_at', startTime)
         .order('created_at', { ascending: false });
 
@@ -75,15 +77,36 @@ export default function PaymentMonitor() {
       // 异常检测
       const detectedAnomalies: PaymentAnomaly[] = [];
 
-      // 1. 高放弃率
+      // 1. 高放弃率 - 按产品维度统计
       if (totalOrders >= 5 && abandonRate > 50) {
+        // 按 package_name 分组统计放弃率
+        const productMap = new Map<string, { total: number; pending: number }>();
+        ordersData.forEach((o: any) => {
+          const name = o.package_name || '未知产品';
+          const entry = productMap.get(name) || { total: 0, pending: 0 };
+          entry.total++;
+          if (o.status === 'pending') entry.pending++;
+          productMap.set(name, entry);
+        });
+
+        const productBreakdown = Array.from(productMap.entries())
+          .map(([name, { total, pending }]) => ({
+            name,
+            abandonRate: total > 0 ? (pending / total) * 100 : 0,
+            pendingCount: pending,
+            totalCount: total,
+          }))
+          .filter(p => p.pendingCount > 0)
+          .sort((a, b) => b.abandonRate - a.abandonRate);
+
         detectedAnomalies.push({
           id: 'high_abandon',
           type: 'high_abandon',
           level: abandonRate > 70 ? 'error' : 'warn',
           title: '支付放弃率过高',
-          detail: `当前放弃率 ${abandonRate.toFixed(1)}%，待支付订单 ${pendingOrders.length} 笔`,
+          detail: `整体放弃率 ${abandonRate.toFixed(1)}%，待支付订单 ${pendingOrders.length} 笔`,
           timestamp: new Date().toISOString(),
+          productBreakdown,
         });
       }
 
@@ -291,6 +314,32 @@ export default function PaymentMonitor() {
                       {anomaly.level === 'error' ? '严重' : '警告'}
                     </Badge>
                   </div>
+                  {/* 按产品维度的放弃率排行 */}
+                  {anomaly.productBreakdown && anomaly.productBreakdown.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border/50">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">按产品放弃率排行</p>
+                      <div className="space-y-2">
+                        {anomaly.productBreakdown.map((p, idx) => (
+                          <div key={p.name} className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-muted-foreground w-5">{idx + 1}.</span>
+                            <span className="text-xs font-medium flex-1 truncate">{p.name}</span>
+                            <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${p.abandonRate > 70 ? 'bg-destructive' : p.abandonRate > 50 ? 'bg-amber-500' : 'bg-primary'}`}
+                                style={{ width: `${Math.min(p.abandonRate, 100)}%` }}
+                              />
+                            </div>
+                            <span className={`text-xs font-bold min-w-[3.5rem] text-right ${p.abandonRate > 70 ? 'text-destructive' : p.abandonRate > 50 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                              {p.abandonRate.toFixed(0)}%
+                            </span>
+                            <span className="text-xs text-muted-foreground min-w-[4rem] text-right">
+                              待付 {p.pendingCount}/{p.totalCount}笔
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
