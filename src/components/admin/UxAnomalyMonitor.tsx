@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, XCircle, AlertTriangle, RotateCw, Search, Activity, Wrench } from "lucide-react";
+import { Clock, XCircle, AlertTriangle, RotateCw, Search, Activity, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useMonitorUxAnomalies } from "@/lib/monitorQueries";
 import MonitorFilters from "./shared/MonitorFilters";
@@ -144,13 +144,41 @@ export default function UxAnomalyMonitor() {
                         <Badge variant="secondary">{a.scene_label}</Badge>
                         <Badge variant="outline" className="text-[10px]">{getPlatformLabel(a.platform)}</Badge>
                         {a.duration && <span className="text-xs text-muted-foreground">{(a.duration / 1000).toFixed(1)}s</span>}
-                        {a.fail_count && <span className="text-xs text-red-500 font-medium">连续{a.fail_count}次</span>}
-                        {a.retry_count && <span className="text-xs text-orange-500 font-medium">重试{a.retry_count}次</span>}
+                        {a.fail_count && <span className="text-xs text-destructive font-medium">连续{a.fail_count}次</span>}
+                        {a.retry_count && <span className="text-xs text-warning font-medium">重试{a.retry_count}次</span>}
                       </div>
                       <p className="text-sm text-foreground break-all">{a.message}</p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {a.user_id && <span>用户: {a.user_id.slice(0, 8)}</span>}
-                        <span>{new Date(a.created_at).toLocaleString("zh-CN")}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          {a.user_id && <span>用户: {a.user_id.slice(0, 8)}</span>}
+                          <span>{new Date(a.created_at).toLocaleString("zh-CN")}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => {
+                            const lines = [
+                              `【体验异常报告】`,
+                              `类型: ${cfg.label}`,
+                              `场景: ${a.scene_label || a.scene}`,
+                              `消息: ${a.message}`,
+                              `时间: ${new Date(a.created_at).toLocaleString("zh-CN")}`,
+                              `平台: ${getPlatformLabel(a.platform)}`,
+                              a.page ? `页面: ${a.page}` : '',
+                              a.user_agent ? `UA: ${a.user_agent}` : '',
+                              a.user_id ? `用户ID: ${a.user_id}` : '',
+                              a.duration ? `耗时: ${(a.duration / 1000).toFixed(1)}s` : '',
+                              a.fail_count ? `连续失败: ${a.fail_count}次` : '',
+                              a.retry_count ? `重试次数: ${a.retry_count}次` : '',
+                              a.extra ? `额外信息: ${JSON.stringify(a.extra)}` : '',
+                            ].filter(Boolean).join('\n');
+                            navigator.clipboard.writeText(lines);
+                            toast.success("已复制异常信息");
+                          }}
+                        >
+                          <Copy className="h-3 w-3 mr-1" />复制
+                        </Button>
                       </div>
                     </div>
                   </div>
