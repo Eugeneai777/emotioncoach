@@ -1,35 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ParentEventAnalysis } from "@/components/parentDiary/ParentEventAnalysis";
 import { ParentPatternInsights } from "@/components/parentDiary/ParentPatternInsights";
-import { FourStepsProgress } from "@/components/parentDiary/FourStepsProgress";
-import { ParentSessionHeatmap } from "@/components/parentDiary/ParentSessionHeatmap";
-import { ParentSessionTagSelector } from "@/components/parentDiary/ParentSessionTagSelector";
 import { ParentTagManager } from "@/components/parentDiary/ParentTagManager";
 import { ParentEmotionTagCloud } from "@/components/parentDiary/ParentEmotionTagCloud";
 import { ParentCycleAnalysis } from "@/components/parentDiary/ParentCycleAnalysis";
-import { ParentSessionComparison } from "@/components/parentDiary/ParentSessionComparison";
 import { ParentEmotionReview } from "@/components/parentDiary/ParentEmotionReview";
-import { MusicRecommendation } from "@/components/MusicRecommendation";
-import { FrequencyMusicPlayer } from "@/components/FrequencyMusicPlayer";
-import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
+import { ParentSessionDetail } from "@/components/parentDiary/ParentSessionDetail";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
-import { CommunicationProgressCurve } from "@/components/parent-coach/CommunicationProgressCurve";
-import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
-import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
 
 interface ParentTag {
   id: string;
@@ -67,22 +54,6 @@ const ParentChildDiary = () => {
   const [allTags, setAllTags] = useState<ParentTag[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
-
-  // Fetch active bindings for teen usage stats
-  const { data: activeBindings } = useQuery({
-    queryKey: ['parent-teen-bindings-diary', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data } = await supabase
-        .from('parent_teen_bindings')
-        .select('id, teen_user_id, teen_nickname, status')
-        .eq('parent_user_id', user.id)
-        .eq('status', 'active');
-      return data || [];
-    },
-    enabled: !!user?.id
-  });
 
   useEffect(() => {
     checkAuthAndLoadSessions();
@@ -90,12 +61,10 @@ const ParentChildDiary = () => {
 
   const checkAuthAndLoadSessions = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
     if (!session) {
       navigate("/auth");
       return;
     }
-
     await loadSessions();
   };
 
@@ -104,7 +73,6 @@ const ParentChildDiary = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load completed parent coaching sessions with briefings
       const { data, error } = await supabase
         .from("parent_coaching_sessions")
         .select(`
@@ -125,15 +93,11 @@ const ParentChildDiary = () => {
 
       if (error) throw error;
 
-      // Load tags for each session
       const sessionsWithTags = await Promise.all(
         (data || []).map(async (session) => {
           const { data: tagData } = await supabase
             .from("parent_session_tags")
-            .select(`
-              tag_id,
-              parent_tags (id, name, color)
-            `)
+            .select(`tag_id, parent_tags (id, name, color)`)
             .eq("session_id", session.id);
 
           const tags = tagData?.map((t: any) => t.parent_tags).filter(Boolean) || [];
@@ -142,253 +106,47 @@ const ParentChildDiary = () => {
       );
 
       setSessions(sessionsWithTags);
-      
-      // Load all available tags for filtering
+
       const { data: tagsData } = await supabase
         .from("parent_tags")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
-      
+
       setAllTags(tagsData || []);
     } catch (error: any) {
-      toast({
-        title: "加载失败",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "加载失败", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("zh-CN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const filteredSessions = selectedTagFilter
-    ? sessions.filter(session => 
-        session.tags?.some(tag => tag.id === selectedTagFilter)
-      )
+    ? sessions.filter(session => session.tags?.some(tag => tag.id === selectedTagFilter))
     : sessions;
 
   if (loading) {
     return (
       <div className="h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (selectedSession) {
     return (
-      <div 
-        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-[env(safe-area-inset-bottom)]"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedSession(null)}
-              className="gap-1 md:gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回列表
-            </Button>
-          </div>
-        </header>
-
-        <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
-          <div className="bg-white border border-purple-100 rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
-            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground pb-3 md:pb-4 border-b border-border/50">
-              <Calendar className="w-3 h-3 md:w-4 md:h-4" />
-              {formatDate(selectedSession.created_at)}
-            </div>
-
-            <div className="space-y-4 md:space-y-6">
-              {selectedSession.briefing?.emotion_theme && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    💜 情绪主题
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.emotion_theme}</p>
-                </div>
-              )}
-
-              {selectedSession.briefing?.emotion_intensity !== null && selectedSession.briefing?.emotion_intensity !== undefined && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                    📊 情绪强度
-                  </h3>
-                  <EmotionIntensityCard intensity={selectedSession.briefing.emotion_intensity} />
-                  {selectedSession.briefing.intensity_reasoning && (
-                    <div className="mt-3 p-3 rounded-lg bg-muted/50">
-                      <p className="text-sm text-foreground/70 leading-relaxed">
-                        <span className="font-medium">分析：</span>{selectedSession.briefing.intensity_reasoning}
-                      </p>
-                      {selectedSession.briefing.intensity_keywords && selectedSession.briefing.intensity_keywords.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {selectedSession.briefing.intensity_keywords.map((keyword, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedSession.event_description && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    🌟 触发事件
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.event_description}</p>
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 md:mb-3 flex items-center gap-2">
-                  💜 亲子情绪四部曲旅程
-                </h3>
-                <div className="space-y-3 pl-2 md:pl-4">
-                  {selectedSession.feel_it && (
-                    <div>
-                      <p className="font-medium text-foreground text-sm md:text-base">1️⃣ 觉察（Feel it）</p>
-                      <p className="text-foreground/70 text-xs md:text-sm mt-1">
-                        {typeof selectedSession.feel_it === 'string' 
-                          ? selectedSession.feel_it 
-                          : JSON.stringify(selectedSession.feel_it)}
-                      </p>
-                    </div>
-                  )}
-                  {selectedSession.see_it && (
-                    <div>
-                      <p className="font-medium text-foreground text-sm md:text-base">2️⃣ 看见（See it）</p>
-                      <p className="text-foreground/70 text-xs md:text-sm mt-1">
-                        {typeof selectedSession.see_it === 'string' 
-                          ? selectedSession.see_it 
-                          : JSON.stringify(selectedSession.see_it)}
-                      </p>
-                    </div>
-                  )}
-                  {selectedSession.sense_it && (
-                    <div>
-                      <p className="font-medium text-foreground text-sm md:text-base">3️⃣ 反应（Sense it）</p>
-                      <p className="text-foreground/70 text-xs md:text-sm mt-1">
-                        {typeof selectedSession.sense_it === 'string' 
-                          ? selectedSession.sense_it 
-                          : JSON.stringify(selectedSession.sense_it)}
-                      </p>
-                    </div>
-                  )}
-                  {selectedSession.transform_it && (
-                    <div>
-                      <p className="font-medium text-foreground text-sm md:text-base">4️⃣ 转化（Transform it）</p>
-                      <p className="text-foreground/70 text-xs md:text-sm mt-1">
-                        {typeof selectedSession.transform_it === 'string' 
-                          ? selectedSession.transform_it 
-                          : JSON.stringify(selectedSession.transform_it)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {selectedSession.briefing?.insight && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    💡 今日洞察
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.insight}</p>
-                </div>
-              )}
-
-              {selectedSession.briefing?.action && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    🎯 今日行动
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.action}</p>
-                </div>
-              )}
-
-              {selectedSession.briefing?.growth_story && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    🌱 今日成长故事
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.growth_story}</p>
-                </div>
-              )}
-
-              {selectedSession.micro_action && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    ✨ 微行动
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.micro_action}</p>
-                </div>
-              )}
-
-              {selectedSession.summary && (
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                    📝 总结
-                  </h3>
-                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.summary}</p>
-                </div>
-              )}
-
-              <div className="pt-3 md:pt-4 border-t border-border/50">
-                <h3 className="text-sm font-medium text-foreground mb-2">标签</h3>
-                <ParentSessionTagSelector
-                  sessionId={selectedSession.id}
-                  selectedTags={selectedSession.tags || []}
-                  onTagsChange={loadSessions}
-                />
-              </div>
-
-              {selectedSession.briefing?.emotion_theme && (
-                <>
-                  <div className="pt-3 md:pt-4 border-t border-border/50">
-                    <FrequencyMusicPlayer emotionTheme={selectedSession.briefing.emotion_theme} />
-                  </div>
-
-                  <div className="pt-3 md:pt-4 border-t border-border/50">
-                    <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                      🎵 音乐推荐
-                    </h3>
-                    <MusicRecommendation 
-                      emotionTheme={selectedSession.briefing.emotion_theme}
-                      insight={selectedSession.briefing.insight || undefined}
-                      briefingContent={selectedSession.summary || undefined}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </main>
-      </div>
+      <ParentSessionDetail
+        session={selectedSession}
+        onBack={() => setSelectedSession(null)}
+        onTagsChange={loadSessions}
+      />
     );
   }
 
   return (
-    <div 
+    <div
       className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-[env(safe-area-inset-bottom)]"
-      style={{ WebkitOverflowScrolling: 'touch' }}
+      style={{ WebkitOverflowScrolling: "touch" }}
     >
       <DynamicOGMeta pageKey="parentChildDiary" />
       <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -397,12 +155,7 @@ const ParentChildDiary = () => {
             <h1 className="text-lg md:text-xl font-bold text-foreground">亲子简报</h1>
             <div className="flex items-center gap-1 md:gap-2">
               <ParentTagManager onTagsChange={loadSessions} />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/parent-coach")}
-                className="gap-1 md:gap-2 px-2 md:px-3"
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate("/parent-coach")} className="gap-1 md:gap-2 px-2 md:px-3">
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">返回</span>
               </Button>
@@ -448,47 +201,15 @@ const ParentChildDiary = () => {
           </div>
         ) : (
           <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
+            <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6 h-auto">
               <ResponsiveTabsTrigger value="list" label="亲子简报" shortLabel="简报" />
               <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
-              <ResponsiveTabsTrigger value="patterns" label="模式洞察" shortLabel="洞察" />
-              <ResponsiveTabsTrigger value="compare" label="记录对比" shortLabel="对比" />
-              <ResponsiveTabsTrigger value="review" label="情绪复盘" shortLabel="复盘" />
+              <ResponsiveTabsTrigger value="insights" label="模式洞察" shortLabel="洞察" />
             </TabsList>
 
-            <TabsContent value="list" className="space-y-3 md:space-y-4">
-              {/* Communication Progress Curve */}
-              <CommunicationProgressCurve />
-
-              {/* Teen Usage Stats */}
-              {activeBindings && activeBindings.length > 0 && (
-                <TeenUsageStats
-                  teenUserId={activeBindings[0].teen_user_id || undefined}
-                  bindingId={activeBindings[0].id}
-                />
-              )}
-
-              <UnifiedEmotionHeatmap
-                briefings={sessions.map(s => ({
-                  id: s.id,
-                  emotion_theme: s.briefing?.emotion_theme || "亲子对话",
-                  emotion_intensity: s.briefing?.emotion_intensity || 5,
-                  created_at: s.created_at,
-                  stage_1_content: null,
-                  stage_2_content: null,
-                  stage_3_content: null,
-                  stage_4_content: null,
-                  insight: s.briefing?.insight || null,
-                  action: s.briefing?.action || null,
-                  growth_story: s.briefing?.growth_story || null,
-                  intensity_reasoning: s.briefing?.intensity_reasoning || null,
-                  intensity_keywords: s.briefing?.intensity_keywords || null,
-                  tags: s.tags
-                }))}
-                quickLogs={[]}
-              />
-              <Separator className="my-4" />
-              <ScrollArea className="h-[calc(100vh-400px)]">
+            {/* Tab 1: 简报列表 */}
+            <TabsContent value="list">
+              <ScrollArea className="h-[calc(100vh-320px)]">
                 <div className="space-y-4">
                   {filteredSessions.map((session) => (
                     <Card
@@ -497,7 +218,6 @@ const ParentChildDiary = () => {
                       onClick={() => setSelectedSession(session)}
                     >
                       <div className="space-y-3">
-                        {/* Header: theme + date */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">🌿</span>
@@ -506,14 +226,10 @@ const ParentChildDiary = () => {
                             </span>
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {new Date(session.created_at).toLocaleDateString("zh-CN", {
-                              month: "short",
-                              day: "numeric"
-                            })}
+                            {new Date(session.created_at).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}
                           </span>
                         </div>
 
-                        {/* Insight */}
                         {session.briefing?.insight && (
                           <div className="flex gap-2 items-start">
                             <span className="text-amber-500 mt-0.5">💡</span>
@@ -521,7 +237,6 @@ const ParentChildDiary = () => {
                           </div>
                         )}
 
-                        {/* Action */}
                         {session.briefing?.action && (
                           <div className="flex gap-2 items-start">
                             <span className="text-orange-500 mt-0.5">⚡</span>
@@ -529,7 +244,6 @@ const ParentChildDiary = () => {
                           </div>
                         )}
 
-                        {/* Bottom: intensity + tags */}
                         <div className="flex items-center gap-2 flex-wrap">
                           {session.briefing?.emotion_intensity != null && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary">
@@ -544,7 +258,7 @@ const ParentChildDiary = () => {
                               style={{
                                 backgroundColor: `${tag.color}20`,
                                 color: tag.color,
-                                borderColor: tag.color
+                                borderColor: tag.color,
                               }}
                             >
                               {tag.name}
@@ -558,36 +272,43 @@ const ParentChildDiary = () => {
               </ScrollArea>
             </TabsContent>
 
+            {/* Tab 2: 趋势 = 热力图 + 标签云 + 周期分析 */}
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
-                  {/* 宏观视角 */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground px-1">📊 宏观视角</h3>
-                    <ParentEmotionTagCloud sessions={sessions} />
-                  </div>
-
-                  {/* 深度分析 */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground px-1">🔍 深度分析</h3>
-                    <ParentCycleAnalysis sessions={sessions} />
-                  </div>
+                  <UnifiedEmotionHeatmap
+                    briefings={sessions.map(s => ({
+                      id: s.id,
+                      emotion_theme: s.briefing?.emotion_theme || "亲子对话",
+                      emotion_intensity: s.briefing?.emotion_intensity || 5,
+                      created_at: s.created_at,
+                      stage_1_content: null,
+                      stage_2_content: null,
+                      stage_3_content: null,
+                      stage_4_content: null,
+                      insight: s.briefing?.insight || null,
+                      action: s.briefing?.action || null,
+                      growth_story: s.briefing?.growth_story || null,
+                      intensity_reasoning: s.briefing?.intensity_reasoning || null,
+                      intensity_keywords: s.briefing?.intensity_keywords || null,
+                      tags: s.tags,
+                    }))}
+                    quickLogs={[]}
+                  />
+                  <ParentEmotionTagCloud sessions={sessions} />
+                  <ParentCycleAnalysis sessions={sessions} />
                 </div>
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="patterns">
+            {/* Tab 3: 洞察 = PatternInsights + EmotionReview */}
+            <TabsContent value="insights">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <ParentPatternInsights />
+                <div className="space-y-4 md:space-y-6">
+                  <ParentPatternInsights />
+                  <ParentEmotionReview />
+                </div>
               </ScrollArea>
-            </TabsContent>
-
-            <TabsContent value="compare">
-              <ParentSessionComparison sessions={sessions} />
-            </TabsContent>
-
-            <TabsContent value="review">
-              <ParentEmotionReview />
             </TabsContent>
           </Tabs>
         )}
