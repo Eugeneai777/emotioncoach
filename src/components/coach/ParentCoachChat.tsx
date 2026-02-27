@@ -78,6 +78,13 @@ export const ParentCoachChat = ({
               </Card>
             </div>
           )}
+          {briefingData && (
+            <div className="flex justify-start">
+              <div className="max-w-[85%]">
+                <ParentBriefingCard briefing={briefingData} />
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
