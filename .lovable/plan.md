@@ -1,61 +1,65 @@
 
 
-# 简化 /parent-diary 页面
+# 错误类型分布增加页面位置、用户、时间信息
 
-## 当前问题
+## 问题
 
-页面共 599 行，5 个 Tab，功能重复严重：
+当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
+- **报错页面位置**：不知道是在哪个页面/功能触发的错误
+- **来源用户**：只有截断的 userId（8位），没有用户昵称
+- **详细时间**：没有展示最近发生时间
 
-| 问题 | 详情 |
-|------|------|
-| Tab 过多 | 5 个 Tab（简报/趋势/洞察/对比/复盘），其中趋势、对比、复盘功能高度重叠 |
-| "简报"Tab 塞太多 | CommunicationProgressCurve + TeenUsageStats + UnifiedEmotionHeatmap + 列表，杂乱 |
-| Session 详情内联 | 200 行详情视图直接写在页面组件里，臃肿 |
-| 导入爆炸 | 30+ 行 import，很多组件只在一个 Tab 里用 |
+## 修复方案
 
-## 简化方案
+### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
 
-### 1. 合并为 3 个 Tab
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-- **简报** — 简报列表（核心功能）
-- **趋势** — 合并热力图 + 标签云 + 周期分析
-- **洞察** — 合并 PatternInsights + EmotionReview（去掉独立的"对比"和"复盘"Tab）
+- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
+- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
+- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
 
-### 2. 提取 Session 详情为独立组件
+### 2. 错误指标增强：`typeDistribution` 携带详情
 
-新建 `src/components/parentDiary/ParentSessionDetail.tsx`，将 190-386 行的详情视图提取出来，页面从 ~600 行减到 ~300 行。
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-### 3. 精简"简报"Tab
+- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
+- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
 
-移除嵌在列表 Tab 里的 CommunicationProgressCurve 和 TeenUsageStats（这些属于趋势/分析，不属于简报列表），只保留列表本身。将 UnifiedEmotionHeatmap 移到"趋势"Tab。
+### 3. 用户名查询
 
-### 4. 去掉"对比"Tab
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
-ParentSessionComparison 使用率低且与"复盘"功能重叠，直接移除。
+- 收集所有出现在 `recentDetails` 中的 userId
+- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
+- 建立 userId → 显示名称 的映射
 
-## 文件清单
+### 4. UI 展示增强
 
-| 操作 | 文件 | 说明 |
-|------|------|------|
-| 新建 | `src/components/parentDiary/ParentSessionDetail.tsx` | 提取 session 详情视图 |
-| 修改 | `src/pages/ParentChildDiary.tsx` | 合并 Tab、精简导入、引用新组件 |
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
-## 简化后结构
+在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
 
 ```text
-Tab 1: 简报（列表）
-  - 筛选标签
-  - 简报卡片列表
-
-Tab 2: 趋势
-  - UnifiedEmotionHeatmap
-  - ParentEmotionTagCloud
-  - ParentCycleAnalysis
-
-Tab 3: 洞察
-  - ParentPatternInsights
-  - ParentEmotionReview
+server_error  ████████████  3次 (60%)
+├ 诊断卡片...
+└ 最近报错:
+  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
+  · 情绪健康测评      张三    2026.02.26 09:20
 ```
 
-页面预计从 599 行减少到约 250 行。
+每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
+
+## 技术细节
+
+| 文件 | 改动说明 |
+|------|----------|
+| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
+| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
+
+## 改动量
+- 2 个文件
+- 数据采集层约 30 行改动
+- UI 展示层约 40 行改动
+- 不影响现有功能，纯增量
 
