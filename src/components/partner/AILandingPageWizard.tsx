@@ -447,7 +447,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent size="full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -821,7 +821,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
                   <MessageSquare className="w-4 h-4" />
                   对话优化
                 </div>
-                <div className="border rounded-lg h-48 overflow-y-auto p-2 space-y-2 bg-muted/30">
+                <div className="border rounded-lg h-64 overflow-y-auto p-2 space-y-2 bg-muted/30">
                   {chatMessages.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center mt-8">告诉 AI 你想如何调整文案</p>
                   )}
