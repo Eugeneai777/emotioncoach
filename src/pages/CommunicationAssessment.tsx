@@ -156,6 +156,7 @@ export default function CommunicationAssessment() {
               onStartCoach={handleStartCoach}
               onRetake={handleRetake}
               onSaved={handleResultSaved}
+              isHistoryView={isHistoryView}
             />
           ) : (
             <CommAssessmentStartScreen
