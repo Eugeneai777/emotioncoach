@@ -197,10 +197,12 @@ export const useDynamicCoachChat = (
 
       // 检查该对话是否已生成简报（通过 briefingTableName 查询）
       if (briefingTableName) {
+        // wealth_coach_4_questions_briefings 使用 session_id 而非 conversation_id
+        const fkColumn = briefingTableName === 'wealth_coach_4_questions_briefings' ? 'session_id' : 'conversation_id';
         const { data: existingBriefing } = await (supabase as any)
           .from(briefingTableName)
           .select('id')
-          .eq('conversation_id', recentConv.id)
+          .eq(fkColumn, recentConv.id)
           .limit(1);
 
         if (existingBriefing && existingBriefing.length > 0) {
@@ -309,11 +311,13 @@ export const useDynamicCoachChat = (
       // 提取场景追踪相关字段，不保存到简报表
       const { user_satisfaction, completed_naturally, ...restBriefingData } = briefingData;
 
+      // wealth_coach_4_questions_briefings 使用 session_id 而非 conversation_id
+      const fkColumn = briefingTableName === 'wealth_coach_4_questions_briefings' ? 'session_id' : 'conversation_id';
       const { data, error } = await (supabase as any)
         .from(briefingTableName)
         .insert({
           user_id: user.id,
-          conversation_id: convId,
+          [fkColumn]: convId,
           ...restBriefingData,
         })
         .select()
