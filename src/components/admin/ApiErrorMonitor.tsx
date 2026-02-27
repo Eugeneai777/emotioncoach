@@ -23,6 +23,23 @@ const TYPE_LABELS: Record<ApiErrorType, { label: string; color: string; icon: Re
   client_error: { label: "客户端错误", color: "bg-muted text-muted-foreground border-border", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
 };
 
+/** 已知无需处理的错误模式 - URL 包含关键词 + 错误类型 匹配则标记 */
+const KNOWN_HARMLESS_PATTERNS: { urlMatch: string; errorType?: ApiErrorType; reason: string }[] = [
+  { urlMatch: 'check-order-status', errorType: 'timeout', reason: '用户未完成支付，轮询超时属正常行为' },
+  { urlMatch: 'check-order-status', errorType: 'network_fail', reason: '支付轮询被中断（用户离开页面），属正常行为' },
+  { urlMatch: '/auth/v1/token', errorType: 'client_error', reason: '用户输入了错误的登录凭据，属正常行为' },
+  { urlMatch: 'PGRST116', errorType: 'client_error', reason: '查询结果为空（.single() 无匹配），属正常行为' },
+];
+
+function getHarmlessReason(err: any): string | null {
+  for (const pattern of KNOWN_HARMLESS_PATTERNS) {
+    const urlMatch = (err.url || '').includes(pattern.urlMatch) || (err.response_body || '').includes(pattern.urlMatch);
+    const typeMatch = !pattern.errorType || err.error_type === pattern.errorType;
+    if (urlMatch && typeMatch) return pattern.reason;
+  }
+  return null;
+}
+
 const FILTER_OPTIONS: { value: ApiErrorType | "all"; label: string }[] = [
   { value: "all", label: "全部" },
   { value: "rate_limit", label: "429 限流" },
