@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ParentBriefingCard } from "@/components/parent-coach/ParentBriefingCard";
 
 interface Message {
   role: string;
@@ -15,13 +16,15 @@ interface ParentCoachChatProps {
   isLoading: boolean;
   onSendMessage: (message: string) => void;
   onSelectOption: (option: string) => void;
+  briefingData?: any;
 }
 
 export const ParentCoachChat = ({ 
   messages, 
   isLoading, 
   onSendMessage,
-  onSelectOption 
+  onSelectOption,
+  briefingData
 }: ParentCoachChatProps) => {
   const [input, setInput] = useState("");
 
@@ -73,6 +76,13 @@ export const ParentCoachChat = ({
                   <span className="text-xs text-muted-foreground">劲老师正在思考...</span>
                 </div>
               </Card>
+            </div>
+          )}
+          {briefingData && (
+            <div className="flex justify-start">
+              <div className="max-w-[85%]">
+                <ParentBriefingCard briefing={briefingData} />
+              </div>
             </div>
           )}
         </div>

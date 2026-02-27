@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useParentCoach } from "@/hooks/useParentCoach";
 import { StageHintCard } from "@/components/coach/StageHintCard";
+import { ParentBriefingCard } from "@/components/parent-coach/ParentBriefingCard";
 import { toast } from "sonner";
 
 interface ParentCoachEmbeddedProps {
@@ -24,6 +25,7 @@ export const ParentCoachEmbedded = ({
     messages,
     isLoading,
     isCreating,
+    briefingData,
     createSession,
     sendMessage,
     resetSession,
@@ -157,6 +159,10 @@ export const ParentCoachEmbedded = ({
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="text-sm">劲老师正在思考...</span>
                 </div>
+              )}
+
+              {briefingData && (
+                <ParentBriefingCard briefing={briefingData} />
               )}
 
               <div ref={messagesEndRef} />
