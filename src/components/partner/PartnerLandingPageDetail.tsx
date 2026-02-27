@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Copy, ExternalLink, Trash2, Loader2, Pencil, Check, X, Plus, Eye, ShoppingCart, TrendingUp, Megaphone, RotateCw } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Trash2, Loader2, Pencil, Check, X, Plus, Eye, ShoppingCart, TrendingUp, Megaphone, RotateCw, Sparkles, Send, MessageSquare, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,16 @@ interface LandingPageData {
   level: string | null;
   volume: string | null;
   partner_id: string | null;
+  design: any;
 }
+
+const DESIGN_PRESETS = [
+  { label: "🌸 暖色温馨", prompt: "请将设计风格改为暖色温馨风格，使用 rose/amber 色系，毛玻璃卡片，适合女性情感类产品" },
+  { label: "🧊 冷色专业", prompt: "请将设计风格改为冷色专业风格，使用 blue/indigo 色系，实心卡片，适合职场/商务类产品" },
+  { label: "⚡ 活力明亮", prompt: "请将设计风格改为活力明亮风格，使用 yellow/orange 色系，描边卡片，适合限时活动推广" },
+  { label: "🖤 简约高级", prompt: "请将设计风格改为简约高级风格，使用 slate/gray 色系，实心卡片，去除装饰元素，突出文字" },
+  { label: "🌿 自然放松", prompt: "请将设计风格改为自然放松风格，使用 green/teal 色系，毛玻璃卡片，波浪装饰，适合冥想放松类" },
+];
 
 export default function PartnerLandingPageDetail() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +54,14 @@ export default function PartnerLandingPageDetail() {
   const [editChannel, setEditChannel] = useState("");
   const [editVolume, setEditVolume] = useState("");
 
+  // AI Optimization
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiMessages, setAiMessages] = useState<{ role: string; content: string }[]>([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [previewContent, setPreviewContent] = useState<any>(null);
+  const [previewDesign, setPreviewDesign] = useState<any>(null);
+
   useEffect(() => {
     if (!id) return;
     fetchPage();
@@ -54,7 +71,7 @@ export default function PartnerLandingPageDetail() {
   // Press Enter to go back when not editing
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !editing) {
+      if (e.key === "Enter" && !editing && !aiOpen) {
         e.preventDefault();
         if (window.history.length > 1) {
           navigate(-1);
@@ -65,7 +82,7 @@ export default function PartnerLandingPageDetail() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editing, navigate]);
+  }, [editing, aiOpen, navigate]);
 
   const fetchPage = async () => {
     setLoading(true);
@@ -214,6 +231,91 @@ export default function PartnerLandingPageDetail() {
     const updated = [...editPoints];
     updated[index] = value;
     setEditPoints(updated);
+  };
+
+  // === AI Optimization ===
+  const handleAiOpen = () => {
+    const content = getContent();
+    setPreviewContent(content);
+    setPreviewDesign(page?.design || content?.design || null);
+    setAiMessages([]);
+    setAiInput("");
+    setAiOpen(true);
+  };
+
+  const handleAiSend = async (message?: string) => {
+    const userMsg = (message || aiInput).trim();
+    if (!userMsg) return;
+    if (!message) setAiInput("");
+
+    const newMessages = [...aiMessages, { role: "user", content: userMsg }];
+    setAiMessages(newMessages);
+    setAiLoading(true);
+
+    try {
+      const currentContent = previewContent || getContent();
+      const contentWithDesign = { ...currentContent, design: previewDesign || page?.design || {} };
+
+      const { data, error } = await supabase.functions.invoke("flywheel-landing-page-ai", {
+        body: {
+          mode: "optimize",
+          current_content: contentWithDesign,
+          user_message: userMsg,
+          conversation_history: newMessages,
+          target_audience: page?.target_audience,
+          channel: page?.channel,
+        },
+      });
+
+      if (error) throw error;
+
+      const result = data?.result;
+      if (result && typeof result === "object" && result.title) {
+        const { design: newDesign, ...textContent } = result;
+        setPreviewContent(textContent);
+        if (newDesign) setPreviewDesign(newDesign);
+        setAiMessages([...newMessages, { role: "assistant", content: "✅ 已优化，请查看预览效果。满意请点击"应用修改"。" }]);
+      } else {
+        setAiMessages([...newMessages, { role: "assistant", content: data?.raw || "优化完成" }]);
+      }
+    } catch (err: any) {
+      setAiMessages([...newMessages, { role: "assistant", content: "❌ 优化失败: " + (err.message || "未知错误") }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAiApply = async () => {
+    if (!page || !id || !previewContent) return;
+    setAiLoading(true);
+    try {
+      const contentField = page.selected_version === "a" ? "content_a" : "content_b";
+      const updateData: any = {
+        [contentField]: previewContent,
+      };
+      if (previewDesign) {
+        updateData.design = previewDesign;
+      }
+      const { error } = await supabase
+        .from("partner_landing_pages" as any)
+        .update(updateData)
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("AI 优化已应用");
+      setAiOpen(false);
+      fetchPage();
+    } catch (err: any) {
+      toast.error("应用失败: " + (err.message || "未知错误"));
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAiCancel = () => {
+    setAiOpen(false);
+    setPreviewContent(null);
+    setPreviewDesign(null);
+    setAiMessages([]);
   };
 
   if (loading) {
@@ -407,6 +509,23 @@ export default function PartnerLandingPageDetail() {
                 )}
               </div>
             )}
+
+            {/* Design badge */}
+            {!editing && page.design && (
+              <div className="px-4 pb-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1">设计风格</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{page.design.theme || "默认"}</span>
+                  {page.design.accent_color && (
+                    <span className="flex items-center gap-1 text-xs">
+                      <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: page.design.accent_color }} />
+                      {page.design.accent_color}
+                    </span>
+                  )}
+                  {page.design.card_style && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{page.design.card_style}</span>}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -424,19 +543,137 @@ export default function PartnerLandingPageDetail() {
         )}
 
         {/* Quick Actions */}
-        {!editing && (
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" className="h-10" onClick={handleCopyLink}>
-              <Copy className="w-4 h-4 mr-1.5" /> 复制链接
-            </Button>
-            <Button variant="outline" className="h-10" onClick={handlePreview}>
-              <ExternalLink className="w-4 h-4 mr-1.5" /> 预览
+        {!editing && !aiOpen && (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="h-10" onClick={handleCopyLink}>
+                <Copy className="w-4 h-4 mr-1.5" /> 复制链接
+              </Button>
+              <Button variant="outline" className="h-10" onClick={handlePreview}>
+                <ExternalLink className="w-4 h-4 mr-1.5" /> 预览
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full h-10 border-primary/30 text-primary hover:bg-primary/5"
+              onClick={handleAiOpen}
+            >
+              <Sparkles className="w-4 h-4 mr-1.5" /> AI 优化文案 & 设计
             </Button>
           </div>
         )}
 
+        {/* AI Optimization Panel */}
+        {aiOpen && (
+          <Card className="border-primary/30 overflow-hidden">
+            <CardContent className="p-0">
+              {/* Header */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-primary/5">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium flex-1">AI 优化</span>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleAiCancel}>
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+
+              {/* Design Presets */}
+              <div className="px-4 py-3 border-b border-border/50">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  <Palette className="w-3 h-3" /> 快捷设计风格
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {DESIGN_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.label}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2.5 rounded-full"
+                      disabled={aiLoading}
+                      onClick={() => handleAiSend(preset.prompt)}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="h-48 overflow-y-auto p-3 space-y-2 bg-muted/20">
+                {aiMessages.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center mt-6">
+                    输入指令优化文案或设计<br />
+                    如"标题更有紧迫感"、"换成蓝色科技风"
+                  </p>
+                )}
+                {aiMessages.map((m, i) => (
+                  <div key={i} className={cn("text-xs p-2 rounded-lg max-w-[85%]", m.role === "user" ? "ml-auto bg-primary text-primary-foreground" : "bg-muted")}>
+                    {m.content}
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" /> AI 思考中...
+                  </div>
+                )}
+              </div>
+
+              {/* Input */}
+              <div className="flex gap-2 p-3 border-t border-border/50">
+                <Input
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  placeholder="如：换成暖色调、标题更有冲击力"
+                  className="h-9 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && !aiLoading && handleAiSend()}
+                />
+                <Button size="sm" className="h-9 w-9 p-0" onClick={() => handleAiSend()} disabled={aiLoading || !aiInput.trim()}>
+                  {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+
+              {/* Preview Changes & Actions */}
+              {previewContent && (
+                <div className="px-4 pb-3 space-y-2 border-t border-border/50 pt-3">
+                  <p className="text-xs font-medium text-muted-foreground">预览变更</p>
+                  <div className="rounded-lg border p-3 space-y-1.5 bg-background">
+                    <p className="text-sm font-semibold">{previewContent.title}</p>
+                    <p className="text-xs text-muted-foreground">{previewContent.subtitle}</p>
+                    {previewContent.selling_points?.slice(0, 2).map((p: string, i: number) => (
+                      <p key={i} className="text-xs flex items-start gap-1">
+                        <span className="text-primary">✓</span> {p}
+                      </p>
+                    ))}
+                    {previewContent.selling_points?.length > 2 && (
+                      <p className="text-xs text-muted-foreground">...还有 {previewContent.selling_points.length - 2} 条卖点</p>
+                    )}
+                    {previewDesign && (
+                      <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-border/30">
+                        <span className="text-xs text-muted-foreground">设计：</span>
+                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{previewDesign.theme}</span>
+                        {previewDesign.accent_color && (
+                          <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: previewDesign.accent_color }} />
+                        )}
+                        {previewDesign.card_style && <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{previewDesign.card_style}</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={handleAiCancel} disabled={aiLoading}>
+                      取消
+                    </Button>
+                    <Button size="sm" className="flex-1" onClick={handleAiApply} disabled={aiLoading}>
+                      {aiLoading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                      应用修改
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Delete */}
-        {!editing && (
+        {!editing && !aiOpen && (
           <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-destructive" onClick={handleDelete}>
             <Trash2 className="w-3.5 h-3.5 mr-1" /> 删除此活动
           </Button>

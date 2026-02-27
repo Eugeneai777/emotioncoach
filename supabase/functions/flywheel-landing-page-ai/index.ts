@@ -6,6 +6,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const DESIGN_SCHEMA_INSTRUCTION = `
+同时为每个版本生成一个 design 对象，包含以下字段：
+- theme: "warm" | "cool" | "energetic" | "calm" | "professional"（整体风格）
+- bg_gradient: Tailwind CSS 渐变类，如 "from-rose-50 via-orange-50 to-amber-50"
+- accent_color: 强调色 hex 值，如 "#E11D48"
+- card_style: "glass" | "solid" | "outline"（卡片风格）
+- cta_gradient: CTA 按钮渐变，如 "from-rose-500 to-orange-500"
+- text_color: "dark" | "light"（主文字色调）
+- layout: "centered" | "left-aligned"（排版方式）
+- decorative: "circles" | "waves" | "dots" | "none"（装饰元素）
+
+根据产品类型和目标人群选择合适的视觉风格：
+- 女性情感/亲子 → warm 主题，rose/amber 色系
+- 专业测评/职场 → cool 主题，blue/indigo 色系
+- 活动推广/限时 → energetic 主题，yellow/orange 色系
+- 冥想/放松/睡眠 → calm 主题，green/teal 色系
+- 商务/咨询 → professional 主题，slate/gray 色系
+`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -70,7 +89,7 @@ serve(async (req) => {
       }
 
       case "generate": {
-        systemPrompt = `你是一个高转化落地页文案专家。根据产品信息和目标人群，生成两个版本的落地页文案（A版和B版），用于AB测试。
+        systemPrompt = `你是一个高转化落地页文案和视觉设计专家。根据产品信息和目标人群，生成两个版本的落地页方案（A版和B版），用于AB测试。
 
 每个版本包含：
 - title：主标题（10-20字，直击痛点）
@@ -79,8 +98,10 @@ serve(async (req) => {
 - cta_text：CTA按钮文字（4-8字）
 - cta_subtext：CTA辅助文字（10-20字）
 
-两个版本风格要有明显差异：A版偏理性/数据驱动，B版偏感性/故事驱动。
-请用JSON格式返回 { content_a: {...}, content_b: {...} }`;
+${DESIGN_SCHEMA_INSTRUCTION}
+
+两个版本风格要有明显差异：A版偏理性/数据驱动（建议 cool 或 professional 主题），B版偏感性/故事驱动（建议 warm 或 calm 主题）。
+请用JSON格式返回 { content_a: { title, subtitle, selling_points, cta_text, cta_subtext, design: {...} }, content_b: { title, subtitle, selling_points, cta_text, cta_subtext, design: {...} } }`;
 
         userPrompt = `产品：${params.matched_product || "未指定"}
 层级：${params.level || "未指定"}
@@ -91,7 +112,15 @@ serve(async (req) => {
       }
 
       case "optimize": {
-        systemPrompt = `你是一个落地页优化专家。根据用户的修改意见，优化现有的落地页文案。保持JSON格式输出，包含：title、subtitle、selling_points、cta_text、cta_subtext。只返回优化后的完整内容JSON。`;
+        systemPrompt = `你是一个落地页优化专家，同时精通文案和视觉设计。根据用户的修改意见，优化现有的落地页文案和/或设计样式。
+
+用户可能要求修改文案（标题、卖点、CTA等），也可能要求修改设计（配色、风格、布局等），或者同时修改两者。
+
+${DESIGN_SCHEMA_INSTRUCTION}
+
+请返回完整的优化后内容JSON，包含：title、subtitle、selling_points、cta_text、cta_subtext、design。
+即使用户只修改了文案，也要保留原有的 design；如果只修改了设计，也要保留原有的文案。
+只返回优化后的完整内容JSON，不要包含额外解释文字。`;
 
         userPrompt = `当前文案：
 ${JSON.stringify(params.current_content, null, 2)}
