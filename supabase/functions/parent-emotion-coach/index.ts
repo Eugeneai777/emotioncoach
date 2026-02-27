@@ -408,8 +408,7 @@ ${getStagePrompt(session?.current_stage || 0)}`;
 
     // Get available tools based on current stage and briefing request status
     const availableTools = getAvailableTools(
-      session.current_stage || 0,
-      session.briefing_requested || false
+      session.current_stage || 0
     );
 
     // Add user message to history
@@ -548,12 +547,11 @@ ${getStagePrompt(session?.current_stage || 0)}`;
 这个 1mm 就足够改变未来所有方向。
 
 【对话风格】
-- 每次回复100-180字,充满温度和深度
+- 每次回复150-250字,充满温度和深度
 - 先共情再引导,用鼓励性语言
-- 用开放式提问,让父母自己发现
+- 不只是提问,要把用户的话"翻译"成更深层的觉察（镜像反射）
+- 每个阶段最多2轮对话后果断推进
 - 当观察到成功指标时,及时给予肯定："你刚才说的这句话特别重要..."
-- 不急于推进阶段,在每个维度深挖直到看到成功指标
-- 多轮探索同一维度是正常的
 
 【4步曲：从情绪被动到关系松动】
 1️⃣ 觉察（Feel it）：从情绪被动 → 情绪被看见
@@ -612,8 +610,7 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
         // Continue conversation with AI
         // Get updated tools after stage progression
         const updatedTools = getAvailableTools(
-          updatedSession?.current_stage || 0,
-          updatedSession?.briefing_requested || false
+          updatedSession?.current_stage || 0
         );
 
         const continueResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
