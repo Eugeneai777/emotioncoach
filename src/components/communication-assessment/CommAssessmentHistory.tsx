@@ -178,7 +178,7 @@ export function CommAssessmentHistory({ records, isLoading, onDelete, onViewDeta
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
