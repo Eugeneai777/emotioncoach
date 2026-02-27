@@ -112,6 +112,10 @@ const EnergyStudio = () => {
       navigate('/women-competitiveness');
       return;
     }
+    if (toolId === 'comm-assessment') {
+      navigate('/communication-assessment');
+      return;
+    }
     setActiveTool(toolId);
   };
 
