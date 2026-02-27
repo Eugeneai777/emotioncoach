@@ -22,7 +22,7 @@ export default function PartnerAdminDashboard() {
         .select('partner_id')
         .eq('admin_user_id', user.id);
 
-      const partnerIds = bindings?.map(b => b.partner_id) || [];
+      const partnerIds = (bindings as any[])?.map((b: any) => b.partner_id) || [];
 
       if (partnerIds.length === 0) {
         return { partnerCount: 0, activeCampaigns: 0 };
