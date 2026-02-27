@@ -278,8 +278,12 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
     try {
       const data = await callAI("generate", { matched_product: productNames });
       const result = data.result;
-      setContentA(result?.content_a || null);
-      setContentB(result?.content_b || null);
+      const cA = result?.content_a || null;
+      const cB = result?.content_b || null;
+      if (cA?.design) setDesignA(cA.design);
+      if (cB?.design) setDesignB(cB.design);
+      setContentA(cA);
+      setContentB(cB);
       setStep(2);
     } catch (err: any) {
       toast.error("AI 生成失败: " + (err.message || "未知错误"));
@@ -297,6 +301,9 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [optimizedContent, setOptimizedContent] = useState<LandingContent | null>(null);
+  const [designA, setDesignA] = useState<any>(null);
+  const [designB, setDesignB] = useState<any>(null);
+  const [selectedDesign, setSelectedDesign] = useState<any>(null);
 
   const callAI = async (mode: string, extra: any = {}) => {
     const { data, error } = await supabase.functions.invoke("flywheel-landing-page-ai", {
@@ -335,8 +342,13 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
     try {
       const data = await callAI("generate", { matched_product: matchResult?.matched_product });
       const result = data.result;
-      setContentA(result?.content_a || null);
-      setContentB(result?.content_b || null);
+      const cA = result?.content_a || null;
+      const cB = result?.content_b || null;
+      // Extract design from content if present, store separately
+      if (cA?.design) setDesignA(cA.design);
+      if (cB?.design) setDesignB(cB.design);
+      setContentA(cA);
+      setContentB(cB);
       setStep(2);
     } catch (err: any) {
       toast.error("AI 生成失败: " + (err.message || "未知错误"));
@@ -348,6 +360,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
   const handleSelectVersion = (v: "a" | "b") => {
     setSelectedVersion(v);
     setOptimizedContent(v === "a" ? contentA : contentB);
+    setSelectedDesign(v === "a" ? designA : designB);
     setStep(3);
   };
 
@@ -359,15 +372,18 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
     setChatMessages(newMessages);
     setLoading(true);
     try {
+      const contentWithDesign = { ...optimizedContent, design: selectedDesign || {} };
       const data = await callAI("optimize", {
-        current_content: optimizedContent,
+        current_content: contentWithDesign,
         user_message: userMsg,
         conversation_history: newMessages,
       });
       const result = data.result;
       if (result && typeof result === "object" && result.title) {
-        setOptimizedContent(result);
-        setChatMessages([...newMessages, { role: "assistant", content: "已按您的要求优化文案，请查看右侧预览。" }]);
+        const { design: newDesign, ...textContent } = result;
+        setOptimizedContent(textContent as LandingContent);
+        if (newDesign) setSelectedDesign(newDesign);
+        setChatMessages([...newMessages, { role: "assistant", content: "已按您的要求优化，请查看右侧预览。" }]);
       } else {
         setChatMessages([...newMessages, { role: "assistant", content: data.raw || "优化完成" }]);
       }
