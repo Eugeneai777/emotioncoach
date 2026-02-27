@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, Award, Users, Star, Share2 } from "lucide-react";
+import { Loader2, Shield, Award, Users, Star, Share2, ArrowLeft } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { toast } from "sonner";
 
@@ -93,6 +93,7 @@ function DecorativeElements({ design }: { design: LandingDesign }) {
 
 export default function LandingPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [content, setContent] = useState<LandingContent | null>(null);
   const [design, setDesign] = useState<LandingDesign>(DEFAULT_DESIGN);
   const [product, setProduct] = useState<string | null>(null);
@@ -216,6 +217,15 @@ export default function LandingPage() {
         <meta property="og:site_name" content="有劲AI" />
         <link rel="canonical" href={`https://wechat.eugenewe.net/lp/${id}`} />
       </Helmet>
+
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-4 left-4 z-50 p-2 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-sm hover:bg-accent transition-colors"
+        aria-label="返回"
+      >
+        <ArrowLeft className="w-5 h-5 text-foreground" />
+      </button>
 
       {/* Decorative elements */}
       <DecorativeElements design={design} />
