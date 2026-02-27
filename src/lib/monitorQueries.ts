@@ -152,6 +152,37 @@ export function useMonitorUserAnomalies(options: MonitorQueryOptions & { anomaly
   });
 }
 
+/** 查询风险内容 */
+export function useMonitorRiskContent(options: MonitorQueryOptions & { riskLevel?: string; contentSource?: string; status?: string }) {
+  return useQuery({
+    queryKey: ['monitor-risk-content', options.platform, options.timeRange, options.riskLevel, options.contentSource, options.status],
+    queryFn: async () => {
+      let query = (supabase as any)
+        .from('monitor_risk_content')
+        .select('*')
+        .gte('created_at', getStartTime(options.timeRange))
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (options.riskLevel && options.riskLevel !== 'all') {
+        query = query.eq('risk_level', options.riskLevel);
+      }
+      if (options.contentSource && options.contentSource !== 'all') {
+        query = query.eq('content_source', options.contentSource);
+      }
+      if (options.status && options.status !== 'all') {
+        query = query.eq('status', options.status);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: options.enabled !== false,
+    refetchInterval: 30000,
+  });
+}
+
 /** 查询所有监控表的汇总统计 */
 export function useMonitorSummary(options: MonitorQueryOptions) {
   const feQuery = useMonitorFrontendErrors(options);
