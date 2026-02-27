@@ -71,7 +71,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
               {/* partner_admin 专属路由 */}
               {isPartnerAdmin && (
                 <>
-                  <Route index element={<AdminDashboard />} />
+                  <Route index element={<PartnerAdminDashboard />} />
                   <Route path="industry-partners" element={<IndustryPartnerManagement />} />
                   <Route path="*" element={<Navigate to="/admin/industry-partners" replace />} />
                 </>

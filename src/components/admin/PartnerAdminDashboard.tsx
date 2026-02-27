@@ -18,7 +18,7 @@ export default function PartnerAdminDashboard() {
 
       // 获取绑定的合伙人ID
       const { data: bindings } = await supabase
-        .from('partner_admin_bindings')
+        .from('partner_admin_bindings' as any)
         .select('partner_id')
         .eq('admin_user_id', user.id);
 
