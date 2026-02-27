@@ -117,7 +117,13 @@ export function UserDetailDialog({
       const last7Days = subDays(now, 7);
       const last30Days = subDays(now, 30);
 
-      // 并行查询所有统计数据
+      // 并行查询所有统计数据，每个单独 catch 防止一个失败导致全部挂起
+      const safeQuery = <T,>(promise: PromiseLike<T>, fallback: T): Promise<T> =>
+        Promise.resolve(promise).catch(() => fallback);
+
+      const emptyResult = { count: 0, data: null, error: null } as any;
+      const emptyArrayResult = { count: 0, data: [], error: null } as any;
+
       const [
         conversationsResult,
         recentConversationsResult,
@@ -126,68 +132,49 @@ export function UserDetailDialog({
         trainingCampsResult,
         usageRecordsResult
       ] = await Promise.all([
-        // 总对话数
-        supabase
-          .from('conversations')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId),
-        // 最近7天对话数
-        supabase
-          .from('conversations')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .gte('created_at', last7Days.toISOString()),
-        // 情绪教练会话数
-        supabase
-          .from('emotion_coaching_sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId),
-        // 社区帖子数
-        supabase
-          .from('community_posts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId),
-        // 训练营参与
-        supabase
-          .from('training_camps')
-          .select('id, status, camp_type')
-          .eq('user_id', userId),
-        // 使用记录（最近30天统计）
-        supabase
-          .from('usage_records')
-          .select('id, amount, created_at')
-          .eq('user_id', userId)
-          .gte('created_at', last30Days.toISOString())
+        safeQuery(supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId), emptyResult),
+        safeQuery(supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', last7Days.toISOString()), emptyResult),
+        safeQuery(supabase.from('emotion_coaching_sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId), emptyResult),
+        safeQuery(supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId), emptyResult),
+        safeQuery(supabase.from('training_camps').select('id, status, camp_type').eq('user_id', userId), emptyArrayResult),
+        safeQuery(supabase.from('usage_records').select('id, amount, created_at').eq('user_id', userId).gte('created_at', last30Days.toISOString()), emptyArrayResult),
       ]);
 
       // 查询简报数（通过conversations关联）
-      const { data: userConversations } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user_id', userId);
-      
-      const conversationIds = userConversations?.map(c => c.id) || [];
-      
       let briefingsCount = 0;
-      if (conversationIds.length > 0) {
-        const { count } = await supabase
-          .from('briefings')
-          .select('id', { count: 'exact', head: true })
-          .in('conversation_id', conversationIds);
-        briefingsCount = count || 0;
+      try {
+        const { data: userConversations } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(500);
+        
+        const conversationIds = userConversations?.map(c => c.id) || [];
+        
+        if (conversationIds.length > 0) {
+          // 分批查询避免 URL 过长
+          const batchSize = 100;
+          for (let i = 0; i < conversationIds.length; i += batchSize) {
+            const batch = conversationIds.slice(i, i + batchSize);
+            const { count } = await supabase
+              .from('briefings')
+              .select('id', { count: 'exact', head: true })
+              .in('conversation_id', batch);
+            briefingsCount += count || 0;
+          }
+        }
+      } catch {
+        // ignore briefings error
       }
 
-      // 计算使用频率
       const totalConversations = conversationsResult.count || 0;
       const recentConversations = recentConversationsResult.count || 0;
       
-      // 计算总消耗点数
-      const totalPointsUsed = usageRecordsResult.data?.reduce(
-        (sum, record) => sum + (record.amount || 0), 0
+      const totalPointsUsed = (usageRecordsResult.data as any[])?.reduce(
+        (sum: number, record: any) => sum + (record.amount || 0), 0
       ) || 0;
 
-      // 活跃训练营
-      const activeCamps = trainingCampsResult.data?.filter(c => c.status === 'active') || [];
+      const activeCamps = (trainingCampsResult.data as any[])?.filter((c: any) => c.status === 'active') || [];
 
       return {
         totalConversations,
@@ -195,13 +182,15 @@ export function UserDetailDialog({
         briefingsCount,
         coachingSessions: coachingSessionsResult.count || 0,
         communityPosts: communityPostsResult.count || 0,
-        trainingCamps: trainingCampsResult.data || [],
+        trainingCamps: (trainingCampsResult.data as any[]) || [],
         activeCampsCount: activeCamps.length,
         totalPointsUsed,
-        usageRecordsCount: usageRecordsResult.data?.length || 0
+        usageRecordsCount: (usageRecordsResult.data as any[])?.length || 0
       };
     },
-    enabled: open && !!userId
+    enabled: open && !!userId,
+    retry: 1,
+    staleTime: 30000,
   });
 
   // 详细使用记录查询
