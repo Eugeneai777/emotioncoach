@@ -4,9 +4,10 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
+import PageHeader from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Badge } from "@/components/ui/badge";
@@ -149,49 +150,42 @@ const ParentChildDiary = () => {
       style={{ WebkitOverflowScrolling: "touch" }}
     >
       <DynamicOGMeta pageKey="parentChildDiary" />
-      <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg md:text-xl font-bold text-foreground">亲子简报</h1>
-            <div className="flex items-center gap-1 md:gap-2">
-              <ParentTagManager onTagsChange={loadSessions} />
-              <Button variant="ghost" size="sm" onClick={() => navigate("/parent-coach")} className="gap-1 md:gap-2 px-2 md:px-3">
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">返回</span>
-              </Button>
-            </div>
-          </div>
-          {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">筛选:</span>
+      <PageHeader
+        title="亲子日记"
+        backTo="/parent-coach"
+        rightActions={<ParentTagManager onTagsChange={loadSessions} />}
+      />
+      {allTags.length > 0 && (
+        <div className="container max-w-2xl mx-auto px-3 md:px-4 pt-2 pb-1">
+          <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">筛选:</span>
+            <Button
+              variant={selectedTagFilter === null ? "secondary" : "outline"}
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => setSelectedTagFilter(null)}
+            >
+              全部
+            </Button>
+            {allTags.map((tag) => (
               <Button
-                variant={selectedTagFilter === null ? "secondary" : "outline"}
+                key={tag.id}
+                variant={selectedTagFilter === tag.id ? "secondary" : "outline"}
                 size="sm"
                 className="h-6 text-xs"
-                onClick={() => setSelectedTagFilter(null)}
+                onClick={() => setSelectedTagFilter(tag.id)}
+                style={{
+                  backgroundColor: selectedTagFilter === tag.id ? `${tag.color}20` : undefined,
+                  color: selectedTagFilter === tag.id ? tag.color : undefined,
+                  borderColor: selectedTagFilter === tag.id ? tag.color : undefined,
+                }}
               >
-                全部
+                {tag.name}
               </Button>
-              {allTags.map((tag) => (
-                <Button
-                  key={tag.id}
-                  variant={selectedTagFilter === tag.id ? "secondary" : "outline"}
-                  size="sm"
-                  className="h-6 text-xs"
-                  onClick={() => setSelectedTagFilter(tag.id)}
-                  style={{
-                    backgroundColor: selectedTagFilter === tag.id ? `${tag.color}20` : undefined,
-                    color: selectedTagFilter === tag.id ? tag.color : undefined,
-                    borderColor: selectedTagFilter === tag.id ? tag.color : undefined,
-                  }}
-                >
-                  {tag.name}
-                </Button>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
         </div>
-      </header>
+      )}
 
       <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
         {sessions.length === 0 ? (
