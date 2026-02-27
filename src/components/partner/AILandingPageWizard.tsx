@@ -410,6 +410,7 @@ export function AILandingPageWizard({ open, onOpenChange, partnerId, level }: AI
         content_b: contentB,
         selected_version: selectedVersion,
         ai_conversation: chatMessages,
+        design: selectedDesign || (selectedVersion === "a" ? designA : designB) || null,
         status: "published",
       });
       if (error) throw error;
