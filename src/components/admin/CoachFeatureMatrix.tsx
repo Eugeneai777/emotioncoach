@@ -527,7 +527,7 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
 
       {/* Prompt Dialog with Version History */}
       <Dialog open={!!selectedPrompt} onOpenChange={(open) => !open && setSelectedPrompt(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh]">
+        <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-2xl">{selectedPrompt?.template.emoji}</span>

@@ -186,7 +186,7 @@ export function OGBatchCategorize({ configs, categories }: OGBatchCategorizeProp
           批量分类
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>批量分类 OG 卡片</DialogTitle>
           <DialogDescription>

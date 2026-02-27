@@ -134,7 +134,7 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             💪 添加有劲合伙人

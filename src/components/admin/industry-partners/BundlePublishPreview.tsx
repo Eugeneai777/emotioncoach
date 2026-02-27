@@ -137,7 +137,7 @@ export function BundlePublishPreview({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>上架到健康商城</DialogTitle>
         </DialogHeader>

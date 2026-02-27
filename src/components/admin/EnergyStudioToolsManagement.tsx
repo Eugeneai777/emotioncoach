@@ -225,7 +225,7 @@ export function EnergyStudioToolsManagement() {
               添加工具
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent size="lg">
             <DialogHeader>
               <DialogTitle>添加新工具</DialogTitle>
             </DialogHeader>
@@ -316,7 +316,7 @@ export function EnergyStudioToolsManagement() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>编辑工具</DialogTitle>
           </DialogHeader>

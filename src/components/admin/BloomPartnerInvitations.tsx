@@ -269,7 +269,7 @@ export function BloomPartnerInvitations() {
                 添加邀请
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent size="sm">
               <DialogHeader>
                 <DialogTitle>添加单条邀请</DialogTitle>
               </DialogHeader>

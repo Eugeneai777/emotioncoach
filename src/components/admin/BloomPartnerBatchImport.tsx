@@ -212,7 +212,7 @@ export function BloomPartnerBatchImport({ onSuccess }: { onSuccess?: () => void 
           批量导入
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>批量导入绽放合伙人</DialogTitle>
         </DialogHeader>

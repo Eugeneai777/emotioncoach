@@ -238,7 +238,7 @@ export function CertificationReview({ coachId, certifications }: CertificationRe
         open={!!selectedCert && selectedCert.verification_status !== "pending"} 
         onOpenChange={() => setSelectedCert(null)}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>{selectedCert?.cert_name}</DialogTitle>
           </DialogHeader>

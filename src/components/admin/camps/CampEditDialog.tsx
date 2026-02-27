@@ -156,7 +156,7 @@ export function CampEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
             编辑训练营: {camp?.camp_name || "新训练营"}

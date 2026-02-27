@@ -481,7 +481,7 @@ export function PackagesManagement() {
                     新增套餐
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent size="lg">
                   <form onSubmit={handleSubmit}>
                     <DialogHeader>
                       <DialogTitle>{editingPackage ? "编辑套餐" : "新增套餐"}</DialogTitle>

@@ -270,7 +270,7 @@ export default function IndustryPartnerManagement() {
               新建行业合伙人
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent size="sm">
             <DialogHeader>
               <DialogTitle>新建行业合伙人</DialogTitle>
             </DialogHeader>

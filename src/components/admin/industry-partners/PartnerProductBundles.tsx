@@ -476,7 +476,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>{editingId ? "编辑组合产品" : "创建组合产品"}</DialogTitle>
           </DialogHeader>

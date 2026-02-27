@@ -133,7 +133,7 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>编辑教练信息</DialogTitle>
         </DialogHeader>

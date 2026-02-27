@@ -197,7 +197,7 @@ export default function EmergencyContactsManagement() {
               <DialogTrigger asChild>
                 <Button><Plus className="h-4 w-4 mr-2" />添加联系人</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent size="sm">
                 <DialogHeader>
                   <DialogTitle>添加紧急联系人</DialogTitle>
                 </DialogHeader>
