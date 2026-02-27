@@ -123,6 +123,47 @@ serve(async (req) => {
       });
     }
 
+    // 🛡️ 异步风险内容扫描（不阻塞简报生成）
+    const riskScanPromise = (async () => {
+      try {
+        // 获取用户显示名
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const scanResponse = await fetch(`${supabaseUrl}/functions/v1/scan-risk-content`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            content: transcript,
+            user_id: user.id,
+            user_display_name: profile?.display_name || null,
+            content_source: 'ai_conversation',
+            source_detail: `${coach_type || '有劲AI'}语音对话`,
+            platform: 'web',
+            page: `/coach/${coach_type || 'vibrant_life_sage'}`,
+          }),
+        });
+
+        if (scanResponse.ok) {
+          const scanResult = await scanResponse.json();
+          if (scanResult.detected) {
+            console.log(`[generate-life-briefing] 🚨 Risk detected in transcript: type=${scanResult.risk_type}, level=${scanResult.risk_level}`);
+          }
+        } else {
+          const errText = await scanResponse.text();
+          console.warn(`[generate-life-briefing] Risk scan failed: ${scanResponse.status} ${errText}`);
+        }
+      } catch (e) {
+        console.warn('[generate-life-briefing] Risk scan error (non-blocking):', e);
+      }
+    })();
+
     // 调用 Lovable AI 生成结构化简报
     const systemPrompt = `你是有劲AI的对话分析师。请分析以下对话内容，生成结构化的简报。
 
@@ -233,6 +274,9 @@ ${transcript}
 
     // 获取推荐服务的详细信息
     const recommendedService = SERVICE_RECOMMENDATIONS[briefingData.recommended_coach_type] || SERVICE_RECOMMENDATIONS.vibrant_life_sage;
+
+    // 等待风险扫描完成（最多3秒，超时不阻塞）
+    await Promise.race([riskScanPromise, new Promise(resolve => setTimeout(resolve, 3000))]);
 
     return new Response(JSON.stringify({
       success: true,
