@@ -5036,6 +5036,87 @@ export type Database = {
         }
         Relationships: []
       }
+      monitor_risk_content: {
+        Row: {
+          action_taken: string | null
+          alert_sent: boolean | null
+          alert_sent_at: string | null
+          content_preview: string | null
+          content_source: string
+          content_text: string
+          created_at: string
+          detection_method: string | null
+          id: string
+          page: string | null
+          platform: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_keywords: string[] | null
+          risk_level: string
+          risk_score: number | null
+          risk_type: string
+          source_detail: string | null
+          source_id: string | null
+          status: string
+          updated_at: string
+          user_display_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          alert_sent?: boolean | null
+          alert_sent_at?: string | null
+          content_preview?: string | null
+          content_source: string
+          content_text: string
+          created_at?: string
+          detection_method?: string | null
+          id?: string
+          page?: string | null
+          platform?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_keywords?: string[] | null
+          risk_level?: string
+          risk_score?: number | null
+          risk_type: string
+          source_detail?: string | null
+          source_id?: string | null
+          status?: string
+          updated_at?: string
+          user_display_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          alert_sent?: boolean | null
+          alert_sent_at?: string | null
+          content_preview?: string | null
+          content_source?: string
+          content_text?: string
+          created_at?: string
+          detection_method?: string | null
+          id?: string
+          page?: string | null
+          platform?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_keywords?: string[] | null
+          risk_level?: string
+          risk_score?: number | null
+          risk_type?: string
+          source_detail?: string | null
+          source_id?: string | null
+          status?: string
+          updated_at?: string
+          user_display_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       monitor_stability_records: {
         Row: {
           created_at: string
