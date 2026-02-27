@@ -2808,6 +2808,71 @@ export type Database = {
           },
         ]
       }
+      communication_pattern_assessments: {
+        Row: {
+          ai_analysis: Json | null
+          answers: Json | null
+          boundary_score: number
+          conflict_score: number
+          created_at: string
+          empathy_score: number
+          expression_score: number
+          id: string
+          invite_code: string | null
+          linked_assessment_id: string | null
+          listening_score: number
+          perspective: string
+          primary_pattern: string | null
+          secondary_pattern: string | null
+          understanding_score: number
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          answers?: Json | null
+          boundary_score?: number
+          conflict_score?: number
+          created_at?: string
+          empathy_score?: number
+          expression_score?: number
+          id?: string
+          invite_code?: string | null
+          linked_assessment_id?: string | null
+          listening_score?: number
+          perspective: string
+          primary_pattern?: string | null
+          secondary_pattern?: string | null
+          understanding_score?: number
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          answers?: Json | null
+          boundary_score?: number
+          conflict_score?: number
+          created_at?: string
+          empathy_score?: number
+          expression_score?: number
+          id?: string
+          invite_code?: string | null
+          linked_assessment_id?: string | null
+          listening_score?: number
+          perspective?: string
+          primary_pattern?: string | null
+          secondary_pattern?: string | null
+          understanding_score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_pattern_assessments_linked_assessment_id_fkey"
+            columns: ["linked_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "communication_pattern_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communication_tags: {
         Row: {
           color: string | null

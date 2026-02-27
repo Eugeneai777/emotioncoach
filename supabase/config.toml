@@ -484,3 +484,6 @@ verify_jwt = false
 
 [functions.scan-risk-content]
 verify_jwt = false
+
+[functions.generate-comm-assessment-insight]
+verify_jwt = false
