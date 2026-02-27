@@ -151,14 +151,16 @@ export default function ApiErrorMonitor() {
             <p className="text-muted-foreground text-sm py-6 text-center">暂无接口异常记录 ✅</p>
           ) : (
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {filtered.map((err: any) => {
+                {filtered.map((err: any) => {
                 const meta = TYPE_LABELS[err.error_type as ApiErrorType] || TYPE_LABELS.client_error;
                 const isOpen = expandedId === err.id;
+                const harmlessReason = getHarmlessReason(err);
                 return (
-                  <div key={err.id} className="border rounded-lg p-3 space-y-1.5 text-sm">
+                  <div key={err.id} className={`border rounded-lg p-3 space-y-1.5 text-sm ${harmlessReason ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className={`${meta.color} gap-1 text-xs`}>{meta.icon} {meta.label}</Badge>
+                        {harmlessReason && <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 text-[10px]">✅ 无需处理</Badge>}
                         {err.status_code && <Badge variant="secondary" className="text-xs">{err.status_code}</Badge>}
                         <Badge variant="outline" className="text-[10px]">{getPlatformLabel(err.platform)}</Badge>
                         <span className="font-mono text-xs text-muted-foreground">{err.method}</span>
@@ -166,6 +168,7 @@ export default function ApiErrorMonitor() {
                       </div>
                       <span className="text-xs text-muted-foreground">{new Date(err.created_at).toLocaleString("zh-CN")}</span>
                     </div>
+                    {harmlessReason && <p className="text-xs text-emerald-600">💡 {harmlessReason}</p>}
                     <p className="font-mono text-xs break-all text-foreground/80">{err.url}</p>
                     <p className="text-xs text-muted-foreground">{err.message}</p>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
