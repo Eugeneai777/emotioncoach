@@ -1,65 +1,35 @@
 
-
-# 错误类型分布增加页面位置、用户、时间信息
-
 ## 问题
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+`partner_admin`（行业合伙人管理员）角色目前使用的是与超级管理员完全相同的仪表板（`AdminDashboard`），显示了总用户数、订单、收入、成本预警等敏感数据，并且快速操作链接指向他们无权访问的页面。
 
-## 修复方案
+## 方案
 
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
+为 `partner_admin` 创建一个专属的精简仪表板，只展示与其管理的行业合伙人相关的数据。
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+### 具体改动
 
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
+**1. 新建 `PartnerAdminDashboard` 组件**
 
-### 2. 错误指标增强：`typeDistribution` 携带详情
+创建 `src/components/admin/PartnerAdminDashboard.tsx`，内容包括：
+- 统计卡片：管理的行业合伙人数量、活跃活动数等（从 `partner_admin_bindings` 和 `industry_partners` 表查询）
+- 快速操作：仅保留"行业合伙人管理"入口
+- 移除所有敏感数据（用户数、订单、收入、成本预警、举报等）
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+**2. 修改路由配置**
 
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
-
-### 3. 用户名查询
-
-**文件**：`src/components/admin/StabilityMonitor.tsx`
-
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
-
-### 4. UI 展示增强
-
-**文件**：`src/components/admin/StabilityMonitor.tsx`
-
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+在 `AdminLayout.tsx` 中，将 `partner_admin` 的首页路由从 `AdminDashboard` 改为 `PartnerAdminDashboard`：
 
 ```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
+// Before
+<Route index element={<AdminDashboard />} />
+
+// After
+<Route index element={<PartnerAdminDashboard />} />
 ```
 
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
+### 技术细节
 
-## 技术细节
-
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
-
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
-
+- `PartnerAdminDashboard` 会查询当前用户在 `partner_admin_bindings` 中绑定的合伙人，统计相关数据
+- 使用与现有仪表板相同的 `AdminPageLayout` 和 `AdminStatCard` 组件保持 UI 一致性
+- 所有链接仅指向 `/admin/industry-partners`，确保不会导航到无权访问的页面
