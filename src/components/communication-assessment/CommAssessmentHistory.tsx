@@ -85,7 +85,7 @@ export function CommAssessmentHistory({ records, isLoading, onDelete, onViewDeta
 
   return (
     <>
-      <ScrollArea className="max-h-[60vh] sm:max-h-[500px] pr-2 sm:pr-4">
+      <div className="space-y-4">
         <div className="space-y-4">
           {records.map((record, index) => {
             const pattern = record.primary_pattern
@@ -178,7 +178,7 @@ export function CommAssessmentHistory({ records, isLoading, onDelete, onViewDeta
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

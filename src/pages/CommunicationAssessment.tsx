@@ -163,7 +163,7 @@ export default function CommunicationAssessment() {
         </TabsContent>
 
         <TabsContent value="history" className="flex-1 m-0">
-          <div className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-24">
+          <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-24">
             <div className="max-w-md mx-auto">
               <h2 className="text-lg font-bold mb-4">📋 测评历史记录</h2>
               <CommAssessmentHistory
