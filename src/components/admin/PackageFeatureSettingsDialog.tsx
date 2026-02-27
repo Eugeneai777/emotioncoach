@@ -321,7 +321,7 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent size="full">
         <DialogHeader>
           <DialogTitle>配置套餐权益 - {pkg?.package_name}</DialogTitle>
           <DialogDescription>管理此套餐的功能启用状态和扣费配置</DialogDescription>

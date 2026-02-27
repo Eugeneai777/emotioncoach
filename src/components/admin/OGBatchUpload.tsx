@@ -346,7 +346,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />

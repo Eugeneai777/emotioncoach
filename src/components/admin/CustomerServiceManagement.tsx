@@ -585,7 +585,7 @@ export default function CustomerServiceManagement() {
 
       {/* 工单详情弹窗 */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>处理工单 {selectedTicket?.ticket_no}</DialogTitle>
           </DialogHeader>
@@ -629,7 +629,7 @@ export default function CustomerServiceManagement() {
 
       {/* 建议详情弹窗 */}
       <Dialog open={!!selectedFeedback} onOpenChange={() => setSelectedFeedback(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>处理用户建议</DialogTitle>
           </DialogHeader>

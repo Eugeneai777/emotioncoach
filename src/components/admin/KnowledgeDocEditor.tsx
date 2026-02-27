@@ -197,7 +197,7 @@ const KnowledgeDocEditor = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent size="xl" className="flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isEditing ? "编辑文档" : "添加文档"}

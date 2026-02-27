@@ -212,7 +212,7 @@ export default function FlywheelCampaigns() {
       </AdminTableContainer>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? "编辑活动" : "新建活动"}</DialogTitle>
           </DialogHeader>

@@ -72,7 +72,7 @@ export function CoachStepsEditor({ open, onOpenChange, steps: initialSteps, onSa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent size="full">
         <DialogHeader>
           <DialogTitle>编辑四部曲步骤</DialogTitle>
         </DialogHeader>

@@ -360,7 +360,7 @@ export function ExperiencePackageManagement() {
               添加体验项
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent size="lg">
             <DialogHeader>
               <DialogTitle>添加体验项</DialogTitle>
             </DialogHeader>
@@ -473,7 +473,7 @@ export function ExperiencePackageManagement() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>编辑体验包</DialogTitle>
           </DialogHeader>

@@ -152,7 +152,7 @@ export function OGCategoryManager({ onCategoriesChange }: OGCategoryManagerProps
           编辑分类
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>编辑 OG 分类</DialogTitle>
         </DialogHeader>

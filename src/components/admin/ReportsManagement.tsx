@@ -228,7 +228,7 @@ const ReportsManagement = () => {
           open={!!selectedReport}
           onOpenChange={(open) => !open && setSelectedReport(null)}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent size="lg">
             <DialogHeader>
               <DialogTitle>举报详情</DialogTitle>
               <DialogDescription>

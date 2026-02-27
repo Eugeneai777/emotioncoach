@@ -511,7 +511,7 @@ export const VideoCoursesManagement = () => {
                   批量导入
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogContent size="full">
                 <DialogHeader>
                   <DialogTitle>批量导入视频课程</DialogTitle>
                 </DialogHeader>
@@ -711,7 +711,7 @@ export const VideoCoursesManagement = () => {
                   添加课程
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogContent size="lg">
               <DialogHeader>
                 <DialogTitle>
                   {editingCourse ? "编辑视频课程" : "添加新视频课程"}

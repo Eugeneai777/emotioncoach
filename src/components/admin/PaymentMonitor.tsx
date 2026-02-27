@@ -412,7 +412,7 @@ export default function PaymentMonitor() {
 
       {/* 订单详情对话框 */}
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>订单详情</DialogTitle>
             <DialogDescription>订单ID: {selectedOrder?.id}</DialogDescription>
