@@ -121,7 +121,6 @@ export default function CommunicationAssessment() {
             ) : (
               <CommAssessmentStartScreen
                 onStart={handleStart}
-                onBack={() => navigate(-1)}
               />
             )}
           </motion.div>
