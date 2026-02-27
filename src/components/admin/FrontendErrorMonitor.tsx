@@ -23,6 +23,28 @@ const TYPE_META: Record<ErrorType, { label: string; color: string; icon: typeof 
   network_error: { label: "网络错误", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: Wifi },
 };
 
+/** 已知无需处理的前端错误模式 */
+const KNOWN_HARMLESS_FRONTEND_PATTERNS: { messageMatch?: string; errorType?: ErrorType; requestMatch?: string; reason: string }[] = [
+  { messageMatch: 'Fetch is aborted', errorType: 'network_error', reason: '请求被主动取消（页面切换或 AbortController），属正常行为' },
+  { messageMatch: 'Failed to fetch', errorType: 'network_error', reason: '移动端网络波动或页面切换导致请求中断，属正常行为' },
+  { messageMatch: 'AbortError', errorType: 'network_error', reason: '请求被主动取消，属正常行为' },
+  { messageMatch: 'NetworkError', errorType: 'network_error', reason: '移动端网络环境不稳定导致请求失败，属正常行为' },
+  { messageMatch: 'Load failed', errorType: 'network_error', reason: 'Safari 环境下的网络请求中断，属正常行为' },
+  { messageMatch: 'cancelled', errorType: 'network_error', reason: '请求被取消，属正常行为' },
+  { requestMatch: 'check-order-status', errorType: 'network_error', reason: '支付轮询被中断（用户离开或支付完成），属正常行为' },
+  { requestMatch: 'monitor_', errorType: 'network_error', reason: '监控上报请求被中断（页面关闭），属正常行为' },
+];
+
+function getFrontendHarmlessReason(err: any): string | null {
+  for (const pattern of KNOWN_HARMLESS_FRONTEND_PATTERNS) {
+    const msgMatch = !pattern.messageMatch || (err.message || '').includes(pattern.messageMatch);
+    const typeMatch = !pattern.errorType || err.error_type === pattern.errorType;
+    const reqMatch = !pattern.requestMatch || (err.request_info || '').includes(pattern.requestMatch) || (err.resource_url || '').includes(pattern.requestMatch);
+    if (msgMatch && typeMatch && reqMatch) return pattern.reason;
+  }
+  return null;
+}
+
 function buildErrorText(err: any): string {
   const meta = TYPE_META[err.error_type as ErrorType];
   const lines = [
@@ -128,15 +150,18 @@ export default function FrontendErrorMonitor() {
                 const meta = TYPE_META[err.error_type as ErrorType] || TYPE_META.js_error;
                 const Icon = meta.icon;
                 const isExpanded = expandedId === err.id;
+                const harmlessReason = getFrontendHarmlessReason(err);
                 return (
-                  <div key={err.id} className="border rounded-lg overflow-hidden">
+                  <div key={err.id} className={`border rounded-lg overflow-hidden ${harmlessReason ? 'opacity-60' : ''}`}>
                     <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpandedId(isExpanded ? null : err.id)}>
                       <div className={`p-1.5 rounded-md mt-0.5 ${meta.color}`}><Icon className="h-3.5 w-3.5" /></div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={`text-[10px] py-0 ${meta.color} border-0`}>{meta.label}</Badge>
+                          {harmlessReason && <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 text-[10px]">✅ 无需处理</Badge>}
                           <Badge variant="outline" className="text-[10px]">{getPlatformLabel(err.platform)}</Badge>
                         </div>
+                        {harmlessReason && <p className="text-xs text-emerald-600 mt-0.5">💡 {harmlessReason}</p>}
                         <p className="text-sm font-medium mt-1 truncate">{err.message}</p>
                         <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{err.page}</p>
                       </div>
