@@ -193,6 +193,113 @@ const CampCheckIn = () => {
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
 
+  const handleCoachingComplete = useCallback(async () => {
+    if (!user || !campId) return;
+    try {
+      const result = await performCheckIn(user.id, campId, "auto");
+      if (result.success) {
+        toast({
+          title: "🎉 打卡成功！",
+          description: `第 ${result.streakDays} 天打卡已完成`,
+        });
+        await loadCampData();
+        setActiveTab("checkin");
+      }
+    } catch (error) {
+      console.error("自动打卡失败:", error);
+    }
+  }, [user, campId]);
+
+  // ============ parent_emotion_21 专属布局 ============
+  if (camp.camp_type === 'parent_emotion_21') {
+    return (
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-purple-50 via-pink-50 to-white dark:from-background dark:via-background dark:to-background" style={{ WebkitOverflowScrolling: 'touch' as any }}>
+        <div className="container mx-auto px-4 py-6 max-w-3xl">
+          <PageHeader title={`第 ${displayCurrentDay} 天 · ${camp.camp_name}`} showBack />
+
+          <div className="space-y-5">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 h-9 bg-white/60 backdrop-blur-sm border border-purple-200/30 dark:bg-background/60">
+                <ResponsiveTabsTrigger value="checkin" label="今日任务" shortLabel="任务" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white" />
+                <ResponsiveTabsTrigger value="coach" label="教练对话" shortLabel="对话" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white" />
+                <ResponsiveTabsTrigger value="archive" label="成长档案" shortLabel="档案" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white" />
+              </TabsList>
+
+              {/* Tab 1: 今日任务 - 瀑布流 */}
+              <TabsContent value="checkin" className="space-y-3 mt-4">
+                <ParentWaterfallSteps
+                  coachingCompleted={todayProgress?.is_checked_in || false}
+                  shareCompleted={todayProgress?.has_shared_to_community || false}
+                  lessonCompleted={todayProgress?.video_learning_completed || false}
+                  onCoachingClick={() => setActiveTab("coach")}
+                  onShareClick={handleShare}
+                  onLessonClick={() => setActiveTab("archive")}
+                />
+              </TabsContent>
+
+              {/* Tab 2: 教练对话 - 嵌入式 */}
+              <TabsContent value="coach" className="mt-4">
+                <ParentCoachEmbedded
+                  campId={campId!}
+                  dayNumber={displayCurrentDay}
+                  onCoachingComplete={handleCoachingComplete}
+                />
+              </TabsContent>
+
+              {/* Tab 3: 成长档案 */}
+              <TabsContent value="archive" className="space-y-4 mt-4">
+                <CampProgressCalendar
+                  campId={campId!}
+                  startDate={camp.start_date}
+                  checkInDates={checkInDates}
+                  currentDay={calculatedCurrentDay}
+                  makeupDaysLimit={1}
+                  onMakeupCheckIn={handleMakeupCheckIn}
+                  onDayClick={(date, isCheckedIn) => {
+                    if (isCheckedIn) {
+                      setSelectedDate(date);
+                      setShowDayDetail(true);
+                    }
+                  }}
+                />
+                <CampDailyTaskList
+                  campId={campId!}
+                  briefingData={latestBriefing}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        {camp && (
+          <CampShareDialog
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+            campId={camp.id}
+            campName={camp.camp_name}
+            campDay={camp.current_day}
+            briefingId={latestBriefing?.id}
+            emotionTheme={latestBriefing?.emotion_theme}
+            emotionIntensity={latestBriefing?.emotion_intensity}
+            insight={latestBriefing?.insight}
+            action={latestBriefing?.action}
+          />
+        )}
+
+        {user && campId && (
+          <DayDetailDialog
+            open={showDayDetail}
+            onOpenChange={setShowDayDetail}
+            campId={campId}
+            userId={user.id}
+            date={selectedDate}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ============ 通用打卡布局（emotion_diary_21 等） ============
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:via-background dark:to-background" style={{ WebkitOverflowScrolling: 'touch' as any }}>
       <div className="container mx-auto px-4 py-6 max-w-3xl">
@@ -249,10 +356,7 @@ const CampCheckIn = () => {
                   }`}
                   onClick={() => {
                     if (!todayProgress?.is_checked_in) {
-                      if (camp.camp_type === 'parent_emotion_21') {
-                        navigate(`/parent-coach?campId=${campId}`);
-                      } else if (camp.camp_type === 'emotion_diary_21') {
-                        // 情绪日记营：明确跳转到情绪教练页面
+                      if (camp.camp_type === 'emotion_diary_21') {
                         navigate("/emotion-coach");
                       } else {
                         navigate("/");
@@ -269,17 +373,13 @@ const CampCheckIn = () => {
                       {todayProgress?.is_checked_in ? (
                         <CheckCircle2 className="w-5 h-5 text-white" />
                       ) : (
-                        camp.camp_type === 'parent_emotion_21' ? (
-                          <Sparkles className="w-5 h-5 text-white" />
-                        ) : (
-                          <MessageSquare className="w-5 h-5 text-white" />
-                        )
+                        <MessageSquare className="w-5 h-5 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
-                          {camp.camp_type === 'parent_emotion_21' ? '亲子教练' : '情绪教练对话'}
+                          情绪教练对话
                         </h4>
                         <Badge className="bg-teal-100 text-teal-700 border-0 h-4 px-1.5 text-[10px] dark:bg-teal-900/50 dark:text-teal-300">核心</Badge>
                         {todayProgress?.emotion_logs_count > 0 && (
@@ -291,18 +391,13 @@ const CampCheckIn = () => {
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {todayProgress?.is_checked_in 
                           ? "今日简报已生成" 
-                          : camp.camp_type === 'parent_emotion_21' 
-                            ? "和劲老师完成四部曲觉察旅程" 
-                            : "完成四步曲生成简报即可打卡"}
+                          : "完成四步曲生成简报即可打卡"}
                       </p>
                       {!todayProgress?.is_checked_in && (
                         <Button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (camp.camp_type === 'parent_emotion_21') {
-                              navigate(`/parent-coach?campId=${campId}`);
-                            } else if (camp.camp_type === 'emotion_diary_21') {
-                              // 情绪日记营：明确跳转到情绪教练页面
+                            if (camp.camp_type === 'emotion_diary_21') {
                               navigate("/emotion-coach");
                             } else {
                               navigate("/");
