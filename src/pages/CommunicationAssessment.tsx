@@ -15,6 +15,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 
 type Phase = 'start' | 'questions' | 'result';
