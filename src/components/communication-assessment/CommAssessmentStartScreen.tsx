@@ -18,7 +18,7 @@ export function CommAssessmentStartScreen({ onStart, onBack, onEnterInviteCode }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50 p-4 flex flex-col items-center justify-center relative">
+    <div className="min-h-[calc(100vh-48px)] bg-gradient-to-b from-sky-50 to-indigo-50 p-4 flex flex-col items-center justify-center relative">
       {onBack && (
         <motion.div
           initial={{ opacity: 0.01 }}
