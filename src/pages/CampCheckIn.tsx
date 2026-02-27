@@ -209,7 +209,6 @@ const CampCheckIn = () => {
     getDaysSinceStart(camp.start_date) + 1
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
-  }, [user, campId]);
 
   // ============ parent_emotion_21 专属布局 ============
   if (camp.camp_type === 'parent_emotion_21') {
