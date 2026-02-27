@@ -30,6 +30,7 @@ import AdminBloomMonthlyProfit from "./AdminBloomMonthlyProfit";
 import AdminBloomSingleDelivery from "./AdminBloomSingleDelivery";
 import AdminBloomMonthlyCashflow from "./AdminBloomMonthlyCashflow";
 import { ConversionFunnelDashboard } from "@/components/analytics/ConversionFunnelDashboard";
+import PartnerAdminDashboard from "./PartnerAdminDashboard";
 import OGPreviewManagement from "./OGPreviewManagement";
 import ShareCardsAdmin from "@/pages/admin/ShareCardsAdmin";
 import { BloomPartnerInvitations } from "./BloomPartnerInvitations";
