@@ -29,6 +29,9 @@ const KNOWN_HARMLESS_PATTERNS: { urlMatch: string; errorType?: ApiErrorType; rea
   { urlMatch: 'check-order-status', errorType: 'network_fail', reason: '支付轮询被中断（用户离开页面），属正常行为' },
   { urlMatch: '/auth/v1/token', errorType: 'client_error', reason: '用户输入了错误的登录凭据，属正常行为' },
   { urlMatch: 'PGRST116', errorType: 'client_error', reason: '查询结果为空（.single() 无匹配），属正常行为' },
+  { urlMatch: 'wechat_user_mappings', errorType: 'network_fail', reason: '用户端网络波动或页面切换导致请求中断，属正常行为' },
+  { urlMatch: 'phone_provider_disabled', errorType: 'client_error', reason: '用户尝试手机号登录但未开启该功能，属正常行为' },
+  { urlMatch: 'monitor_frontend_errors', errorType: 'network_fail', reason: '监控上报请求被中断（页面关闭），属正常行为' },
 ];
 
 function getHarmlessReason(err: any): string | null {
