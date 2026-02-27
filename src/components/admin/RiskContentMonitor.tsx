@@ -97,6 +97,8 @@ export default function RiskContentMonitor() {
   const [reviewDialog, setReviewDialog] = useState<{ open: boolean; item: any | null }>({ open: false, item: null });
   const [reviewAction, setReviewAction] = useState<string>("none");
   const [reviewNote, setReviewNote] = useState("");
+  const { sendAlert } = useEmergencyAlert();
+  const alertedIdsRef = useRef<Set<string>>(new Set());
 
   const { data: records = [], isLoading, refetch } = useMonitorRiskContent({
     platform, timeRange,
