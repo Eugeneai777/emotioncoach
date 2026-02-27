@@ -23,6 +23,28 @@ const TYPE_META: Record<ErrorType, { label: string; color: string; icon: typeof 
   network_error: { label: "网络错误", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: Wifi },
 };
 
+/** 已知无需处理的前端错误模式 */
+const KNOWN_HARMLESS_FRONTEND_PATTERNS: { messageMatch?: string; errorType?: ErrorType; requestMatch?: string; reason: string }[] = [
+  { messageMatch: 'Fetch is aborted', errorType: 'network_error', reason: '请求被主动取消（页面切换或 AbortController），属正常行为' },
+  { messageMatch: 'Failed to fetch', errorType: 'network_error', reason: '移动端网络波动或页面切换导致请求中断，属正常行为' },
+  { messageMatch: 'AbortError', errorType: 'network_error', reason: '请求被主动取消，属正常行为' },
+  { messageMatch: 'NetworkError', errorType: 'network_error', reason: '移动端网络环境不稳定导致请求失败，属正常行为' },
+  { messageMatch: 'Load failed', errorType: 'network_error', reason: 'Safari 环境下的网络请求中断，属正常行为' },
+  { messageMatch: 'cancelled', errorType: 'network_error', reason: '请求被取消，属正常行为' },
+  { requestMatch: 'check-order-status', errorType: 'network_error', reason: '支付轮询被中断（用户离开或支付完成），属正常行为' },
+  { requestMatch: 'monitor_', errorType: 'network_error', reason: '监控上报请求被中断（页面关闭），属正常行为' },
+];
+
+function getFrontendHarmlessReason(err: any): string | null {
+  for (const pattern of KNOWN_HARMLESS_FRONTEND_PATTERNS) {
+    const msgMatch = !pattern.messageMatch || (err.message || '').includes(pattern.messageMatch);
+    const typeMatch = !pattern.errorType || err.error_type === pattern.errorType;
+    const reqMatch = !pattern.requestMatch || (err.request_info || '').includes(pattern.requestMatch) || (err.resource_url || '').includes(pattern.requestMatch);
+    if (msgMatch && typeMatch && reqMatch) return pattern.reason;
+  }
+  return null;
+}
+
 function buildErrorText(err: any): string {
   const meta = TYPE_META[err.error_type as ErrorType];
   const lines = [
