@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
-import { ArrowLeft, Copy, Check, MessageCircle, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Copy, Check, MessageCircle, Sparkles, Loader2, ArrowRight, GraduationCap, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -28,7 +28,7 @@ interface CommAssessmentResultProps {
   onSaved?: () => void;
 }
 
-export function CommAssessmentResult({ result, onBack, onStartCoach }: CommAssessmentResultProps) {
+export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake, onSaved }: CommAssessmentResultProps) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
