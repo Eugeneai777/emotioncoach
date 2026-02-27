@@ -118,6 +118,12 @@ export function UserDetailDialog({
       const last30Days = subDays(now, 30);
 
       // 并行查询所有统计数据，每个单独 catch 防止一个失败导致全部挂起
+      const safeQuery = <T,>(promise: PromiseLike<T>, fallback: T): Promise<T> =>
+        Promise.resolve(promise).catch(() => fallback);
+
+      const emptyResult = { count: 0, data: null, error: null } as any;
+      const emptyArrayResult = { count: 0, data: [], error: null } as any;
+
       const [
         conversationsResult,
         recentConversationsResult,
@@ -126,32 +132,12 @@ export function UserDetailDialog({
         trainingCampsResult,
         usageRecordsResult
       ] = await Promise.all([
-        supabase
-          .from('conversations')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId).then(r => r).catch(() => ({ count: 0, data: null, error: null })),
-        supabase
-          .from('conversations')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .gte('created_at', last7Days.toISOString()).then(r => r).catch(() => ({ count: 0, data: null, error: null })),
-        supabase
-          .from('emotion_coaching_sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId).then(r => r).catch(() => ({ count: 0, data: null, error: null })),
-        supabase
-          .from('community_posts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId).then(r => r).catch(() => ({ count: 0, data: null, error: null })),
-        supabase
-          .from('training_camps')
-          .select('id, status, camp_type')
-          .eq('user_id', userId).then(r => r).catch(() => ({ count: 0, data: [], error: null })),
-        supabase
-          .from('usage_records')
-          .select('id, amount, created_at')
-          .eq('user_id', userId)
-          .gte('created_at', last30Days.toISOString()).then(r => r).catch(() => ({ count: 0, data: [], error: null })),
+        safeQuery(supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId), emptyResult),
+        safeQuery(supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', last7Days.toISOString()), emptyResult),
+        safeQuery(supabase.from('emotion_coaching_sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId), emptyResult),
+        safeQuery(supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId), emptyResult),
+        safeQuery(supabase.from('training_camps').select('id, status, camp_type').eq('user_id', userId), emptyArrayResult),
+        safeQuery(supabase.from('usage_records').select('id, amount, created_at').eq('user_id', userId).gte('created_at', last30Days.toISOString()), emptyArrayResult),
       ]);
 
       // 查询简报数（通过conversations关联）
