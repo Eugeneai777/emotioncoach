@@ -20,7 +20,7 @@ export default function PartnerAdminDashboard() {
       const { data: bindings } = await supabase
         .from('partner_admin_bindings' as any)
         .select('partner_id')
-        .eq('admin_user_id', user.id);
+        .eq('user_id', user.id);
 
       const partnerIds = (bindings as any[])?.map((b: any) => b.partner_id) || [];
 
