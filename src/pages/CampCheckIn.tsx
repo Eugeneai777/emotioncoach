@@ -173,6 +173,23 @@ const CampCheckIn = () => {
     }
   };
 
+  const handleCoachingComplete = useCallback(async () => {
+    if (!user || !campId) return;
+    try {
+      const result = await performCheckIn(user.id, campId, "auto");
+      if (result.success) {
+        toast({
+          title: "🎉 打卡成功！",
+          description: `第 ${result.streakDays} 天打卡已完成`,
+        });
+        await loadCampData();
+        setActiveTab("checkin");
+      }
+    } catch (error) {
+      console.error("自动打卡失败:", error);
+    }
+  }, [user, campId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:to-background flex items-center justify-center">
@@ -192,22 +209,6 @@ const CampCheckIn = () => {
     getDaysSinceStart(camp.start_date) + 1
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
-
-  const handleCoachingComplete = useCallback(async () => {
-    if (!user || !campId) return;
-    try {
-      const result = await performCheckIn(user.id, campId, "auto");
-      if (result.success) {
-        toast({
-          title: "🎉 打卡成功！",
-          description: `第 ${result.streakDays} 天打卡已完成`,
-        });
-        await loadCampData();
-        setActiveTab("checkin");
-      }
-    } catch (error) {
-      console.error("自动打卡失败:", error);
-    }
   }, [user, campId]);
 
   // ============ parent_emotion_21 专属布局 ============
