@@ -1,65 +1,35 @@
 
 
-# 错误类型分布增加页面位置、用户、时间信息
+## 拉大管理后台弹窗尺寸
 
-## 问题
+### 问题
+当前 `DialogContent` 默认最大宽度为 `sm:max-w-lg`（约 512px），对管理后台的复杂表单和内容来说偏小。
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+### 方案
 
-## 修复方案
-
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
-
-**文件**：`src/lib/stabilityDataCollector.ts`
-
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
-
-### 2. 错误指标增强：`typeDistribution` 携带详情
-
-**文件**：`src/lib/stabilityDataCollector.ts`
-
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
-
-### 3. 用户名查询
-
-**文件**：`src/components/admin/StabilityMonitor.tsx`
-
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
-
-### 4. UI 展示增强
-
-**文件**：`src/components/admin/StabilityMonitor.tsx`
-
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+为 `DialogContent` 增加 `size` prop，提供 5 个标准尺寸，方便各弹窗按需选择：
 
 ```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
+size="sm"   -> sm:max-w-md   (420px, 简单确认/设置)
+size="md"   -> sm:max-w-lg   (512px, 默认，保持向后兼容)
+size="lg"   -> sm:max-w-2xl  (672px, 复杂表单)
+size="xl"   -> sm:max-w-3xl  (768px, 富内容编辑)
+size="full" -> sm:max-w-4xl  (896px, 大表格/矩阵)
 ```
 
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
+### 改动范围
 
-## 技术细节
+**1. 修改 `src/components/ui/dialog.tsx`**
+- 用 `class-variance-authority` 为 `DialogContent` 添加 `size` variant
+- 统一内置 `max-h-[85vh] overflow-y-auto`
+- 默认 `size="md"`，不传时行为不变
 
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
+**2. 批量更新管理后台弹窗**
 
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
+将各弹窗手动写的 `className="max-w-xxx"` 替换为对应的 `size` prop：
+- 简单弹窗（删除确认、角色设置）→ `size="sm"`
+- 中等弹窗（创建合伙人、工单详情）→ `size="md"`（可省略）
+- 复杂弹窗（用户详情、产品编辑、OG编辑）→ `size="lg"`
+- 大型弹窗（知识库编辑、Prompt矩阵、四部曲编辑）→ `size="xl"` 或 `size="full"`
 
+约 35 个管理后台弹窗文件需要更新，非管理后台弹窗保持不变。
