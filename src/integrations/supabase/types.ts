@@ -6084,6 +6084,7 @@ export type Database = {
           content_a: Json | null
           content_b: Json | null
           created_at: string
+          design: Json | null
           id: string
           landing_url: string | null
           level: string
@@ -6104,6 +6105,7 @@ export type Database = {
           content_a?: Json | null
           content_b?: Json | null
           created_at?: string
+          design?: Json | null
           id?: string
           landing_url?: string | null
           level: string
@@ -6124,6 +6126,7 @@ export type Database = {
           content_a?: Json | null
           content_b?: Json | null
           created_at?: string
+          design?: Json | null
           id?: string
           landing_url?: string | null
           level?: string
