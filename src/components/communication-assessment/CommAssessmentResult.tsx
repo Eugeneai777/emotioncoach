@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
-import { ArrowLeft, Copy, Check, MessageCircle, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Copy, Check, MessageCircle, Sparkles, Loader2, ArrowRight, GraduationCap, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -13,13 +13,22 @@ import {
   generateInviteCode,
 } from "./communicationAssessmentData";
 
+const campReasonMap: Record<string, string> = {
+  controlling: '学习用引导代替命令，建立信任关系',
+  dismissive: '重建亲子情感连接，学会回应与陪伴',
+  anxious: '管理自身焦虑，给孩子成长空间',
+  democratic: '进一步巩固优秀的沟通模式',
+};
+
 interface CommAssessmentResultProps {
   result: ResultType;
   onBack: () => void;
   onStartCoach?: () => void;
+  onRetake?: () => void;
+  onSaved?: () => void;
 }
 
-export function CommAssessmentResult({ result, onBack, onStartCoach }: CommAssessmentResultProps) {
+export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake, onSaved }: CommAssessmentResultProps) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -59,6 +68,7 @@ export function CommAssessmentResult({ result, onBack, onStartCoach }: CommAsses
       if (!error && data) {
         setSavedId((data as any).id);
         setInviteCode(code);
+        onSaved?.();
       }
     } catch (e) {
       console.error('Save result error:', e);
@@ -234,6 +244,42 @@ export function CommAssessmentResult({ result, onBack, onStartCoach }: CommAsses
                   <p className="text-sm text-muted-foreground whitespace-pre-line">{aiInsight}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* 训练营推荐 */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }} style={{ transform: 'translateZ(0)' }}>
+          <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 shadow-lg overflow-hidden">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-2xl shadow-md">
+                  👨‍👩‍👧
+                </div>
+                <div>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-purple-500" />
+                    训练营推荐
+                  </h3>
+                  <p className="text-sm text-muted-foreground">21天青少年困境突破营</p>
+                </div>
+              </div>
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                {campReasonMap[result.primaryPattern] || campReasonMap.democratic}
+              </p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>21天</span>
+                </div>
+              </div>
+              <Button
+                onClick={() => window.location.href = '/camp-intro?type=parent_emotion_21'}
+                className="w-full bg-gradient-to-r from-purple-400 to-pink-500 text-white hover:opacity-90"
+              >
+                了解详情
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </CardContent>
           </Card>
         </motion.div>
