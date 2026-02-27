@@ -1,81 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
-import { ArrowLeft, Copy, Check, Sparkles, Loader2, Tent, ChevronRight } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Sparkles, Loader2, Tent, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import {
   type CommAssessmentResult as ResultType,
-  type Perspective,
   patternConfigs,
-  generateInviteCode,
 } from "./communicationAssessmentData";
 import { CommInviteCard } from "./CommInviteCard";
 import { CommAssessmentShareCard } from "./CommAssessmentShareCard";
 
 interface CommAssessmentResultProps {
   result: ResultType;
+  inviteCode: string | null;
   onBack: () => void;
   onStartCoach?: () => void;
   onRetake?: () => void;
 }
 
-export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake }: CommAssessmentResultProps) {
+export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach, onRetake }: CommAssessmentResultProps) {
   const navigate = useNavigate();
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [savedId, setSavedId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(true);
 
   const primary = patternConfigs[result.primaryPattern];
   const secondary = result.secondaryPattern ? patternConfigs[result.secondaryPattern] : null;
-
-  const saveCalledRef = useRef(false);
-
-  useEffect(() => {
-    if (saveCalledRef.current) return;
-    saveCalledRef.current = true;
-    saveResult();
-  }, []);
-
-  const saveResult = async () => {
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setSaving(false); return; }
-
-      const code = generateInviteCode();
-      const scores = Object.fromEntries(result.dimensionScores.map(d => [`${d.key}_score`, d.score]));
-
-      const { data, error } = await supabase
-        .from('communication_pattern_assessments')
-        .insert({
-          user_id: user.id,
-          perspective: result.perspective,
-          ...scores,
-          primary_pattern: result.primaryPattern,
-          secondary_pattern: result.secondaryPattern,
-          answers: result.dimensionScores as any,
-          invite_code: code,
-        } as any)
-        .select('id')
-        .single();
-
-      if (!error && data) {
-        setSavedId((data as any).id);
-        setInviteCode(code);
-      }
-    } catch (e) {
-      console.error('Save result error:', e);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const fetchAIInsight = async () => {
     setAiLoading(true);
@@ -247,28 +199,12 @@ export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake }:
           </Card>
         </motion.div>
 
-        {/* 邀请卡片 - 骨架屏或实际内容 */}
-        {saving ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-            <Card className="border-sky-200 bg-white/90 shadow-sm">
-              <CardContent className="p-4 space-y-3">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-full" />
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-24 w-24 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-8 w-full rounded-md" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ) : inviteCode ? (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        {/* 邀请卡片 */}
+        {inviteCode && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <CommInviteCard inviteCode={inviteCode} perspective={result.perspective} />
           </motion.div>
-        ) : null}
+        )}
 
         {/* 分享卡片 */}
         <CommAssessmentShareCard />

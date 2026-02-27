@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { CommHistoryRecord } from "./CommAssessmentHistory";
@@ -9,6 +9,15 @@ import { CommHistoryRecord } from "./CommAssessmentHistory";
 interface CommAssessmentTrendProps {
   records: CommHistoryRecord[];
 }
+
+const dimensionLines = [
+  { key: 'listening', label: '倾听', color: '#0ea5e9' },
+  { key: 'empathy', label: '共情', color: '#ec4899' },
+  { key: 'boundary', label: '边界', color: '#f59e0b' },
+  { key: 'expression', label: '表达', color: '#10b981' },
+  { key: 'conflict', label: '冲突', color: '#ef4444' },
+  { key: 'understanding', label: '理解', color: '#6366f1' },
+];
 
 export function CommAssessmentTrend({ records }: CommAssessmentTrendProps) {
   if (records.length < 2) return null;
@@ -21,8 +30,6 @@ export function CommAssessmentTrend({ records }: CommAssessmentTrendProps) {
     expression: record.expression_score,
     conflict: record.conflict_score,
     understanding: record.understanding_score,
-    total: record.listening_score + record.empathy_score + record.boundary_score + 
-           record.expression_score + record.conflict_score + record.understanding_score,
   }));
 
   const latest = records[0];
@@ -53,21 +60,36 @@ export function CommAssessmentTrend({ records }: CommAssessmentTrendProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="h-[180px]">
+        <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="commTotalGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 72]} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(value: number) => [`${value}分`, '综合得分']} />
-              <Area type="monotone" dataKey="total" stroke="#0ea5e9" strokeWidth={2} fill="url(#commTotalGrad)" />
-            </AreaChart>
+              <YAxis domain={[0, 12]} tick={{ fontSize: 11 }} />
+              <Tooltip
+                formatter={(value: number, name: string) => {
+                  const dim = dimensionLines.find(d => d.key === name);
+                  return [`${value}/12`, dim?.label || name];
+                }}
+              />
+              <Legend
+                formatter={(value: string) => {
+                  const dim = dimensionLines.find(d => d.key === value);
+                  return <span className="text-xs">{dim?.label || value}</span>;
+                }}
+              />
+              {dimensionLines.map(dim => (
+                <Line
+                  key={dim.key}
+                  type="monotone"
+                  dataKey={dim.key}
+                  stroke={dim.color}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              ))}
+            </LineChart>
           </ResponsiveContainer>
         </div>
         <p className="text-xs text-muted-foreground text-center mt-2">

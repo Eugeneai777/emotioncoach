@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RotateCcw, History, TrendingUp, Loader2 } from "lucide-react";
+import { RotateCcw, History, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommAssessmentStartScreen } from "@/components/communication-assessment/CommAssessmentStartScreen";
 import { CommAssessmentQuestions } from "@/components/communication-assessment/CommAssessmentQuestions";
@@ -12,6 +12,9 @@ import { CommAssessmentTrend } from "@/components/communication-assessment/CommA
 import { CommAssessmentVoiceCoach } from "@/components/communication-assessment/CommAssessmentVoiceCoach";
 import {
   calculateResult,
+  dimensions,
+  patternConfigs,
+  generateInviteCode,
   type Perspective,
   type CommAssessmentResult as ResultType,
 } from "@/components/communication-assessment/communicationAssessmentData";
@@ -31,12 +34,12 @@ export default function CommunicationAssessment() {
   const [phase, setPhase] = useState<Phase>('start');
   const [perspective, setPerspective] = useState<Perspective>('parent');
   const [result, setResult] = useState<ResultType | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   // History
   const [historyRecords, setHistoryRecords] = useState<CommHistoryRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Load history when user changes or tab switches
   useEffect(() => {
     if (user && activeTab === 'history') {
       loadHistory();
@@ -69,15 +72,77 @@ export default function CommunicationAssessment() {
     setPhase('questions');
   };
 
-  const handleComplete = (answers: Record<number, number>) => {
+  const handleComplete = async (answers: Record<number, number>) => {
     const r = calculateResult(answers, perspective);
     setResult(r);
+    setInviteCode(null);
     setPhase('result');
+
+    // Save to database (moved from CommAssessmentResult)
+    if (!user) return;
+    try {
+      const code = generateInviteCode();
+      const scores = Object.fromEntries(r.dimensionScores.map(d => [`${d.key}_score`, d.score]));
+
+      const { data, error } = await supabase
+        .from('communication_pattern_assessments')
+        .insert({
+          user_id: user.id,
+          perspective: r.perspective,
+          ...scores,
+          primary_pattern: r.primaryPattern,
+          secondary_pattern: r.secondaryPattern,
+          answers: r.dimensionScores as any,
+          invite_code: code,
+        } as any)
+        .select('id')
+        .single();
+
+      if (!error && data) {
+        setInviteCode(code);
+      }
+    } catch (e) {
+      console.error('Save result error:', e);
+    }
   };
 
   const handleRetake = () => {
     setResult(null);
+    setInviteCode(null);
     setPhase('start');
+    setActiveTab('assessment');
+    window.scrollTo(0, 0);
+  };
+
+  const handleViewDetail = (record: CommHistoryRecord) => {
+    // Reconstruct result from history record
+    const dimScores = dimensions.map(d => {
+      const score = record[`${d.key}_score` as keyof CommHistoryRecord] as number;
+      return {
+        key: d.key,
+        label: d.label,
+        emoji: d.emoji,
+        score,
+        maxScore: d.maxScore,
+        percentage: Math.round((score / d.maxScore) * 100),
+      };
+    });
+
+    const totalScore = dimScores.reduce((s, d) => s + d.score, 0);
+    const maxTotalScore = dimScores.reduce((s, d) => s + d.maxScore, 0);
+
+    const reconstructed: ResultType = {
+      dimensionScores: dimScores,
+      totalScore,
+      maxTotalScore,
+      primaryPattern: record.primary_pattern,
+      secondaryPattern: record.secondary_pattern,
+      perspective: record.perspective,
+    };
+
+    setResult(reconstructed);
+    setInviteCode(null); // Historical view doesn't show invite
+    setPhase('result');
     setActiveTab('assessment');
     window.scrollTo(0, 0);
   };
@@ -115,6 +180,7 @@ export default function CommunicationAssessment() {
             ) : phase === 'result' && result ? (
               <CommAssessmentResult
                 result={result}
+                inviteCode={inviteCode}
                 onBack={() => setPhase('start')}
                 onRetake={handleRetake}
               />
@@ -149,6 +215,7 @@ export default function CommunicationAssessment() {
                   records={historyRecords}
                   isLoading={isLoadingHistory}
                   onDelete={handleDelete}
+                  onViewDetail={handleViewDetail}
                 />
               </div>
             )}
@@ -164,7 +231,6 @@ export default function CommunicationAssessment() {
             </TabsList>
 
             <div className="flex items-end justify-around pt-0.5 pb-1">
-              {/* 左 - 重新测评 */}
               <button
                 onClick={handleRetake}
                 className={`flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 min-w-[72px]
@@ -176,14 +242,12 @@ export default function CommunicationAssessment() {
                 <span className={`text-[10px] leading-tight tracking-wide ${activeTab === "assessment" && phase !== 'result' ? "font-bold" : "font-medium"}`}>重新测评</span>
               </button>
 
-              {/* 中 - 语音教练 FAB（仅结果页显示） */}
               {phase === 'result' && result && (
                 <div className="relative -top-5 flex flex-col items-center">
                   <CommAssessmentVoiceCoach result={result} />
                 </div>
               )}
 
-              {/* 右 - 历史记录 */}
               <button
                 onClick={() => setActiveTab("history")}
                 className={`flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 min-w-[72px]

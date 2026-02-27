@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquareHeart, Trash2, Calendar, TrendingUp, User, Users } from "lucide-react";
+import { MessageSquareHeart, Trash2, Calendar, TrendingUp, User, Users, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { patternConfigs, type PatternType, type Perspective, dimensions } from "./communicationAssessmentData";
+import { patternConfigs, type PatternType, type Perspective } from "./communicationAssessmentData";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,9 +36,10 @@ interface CommAssessmentHistoryProps {
   records: CommHistoryRecord[];
   isLoading: boolean;
   onDelete?: (id: string) => void;
+  onViewDetail?: (record: CommHistoryRecord) => void;
 }
 
-export function CommAssessmentHistory({ records, isLoading, onDelete }: CommAssessmentHistoryProps) {
+export function CommAssessmentHistory({ records, isLoading, onDelete, onViewDetail }: CommAssessmentHistoryProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -128,13 +129,24 @@ export function CommAssessmentHistory({ records, isLoading, onDelete }: CommAsse
                           </div>
                         ))}
                       </div>
-                      {onDelete && (
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(record.id)}>
+                      <div className="flex justify-between items-center">
+                        {onViewDetail && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-sky-600 border-sky-200 hover:bg-sky-50"
+                            onClick={() => onViewDetail(record)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            查看详情
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive ml-auto" onClick={() => setDeleteId(record.id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
