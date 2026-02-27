@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { UnifiedStageProgress } from "@/components/coach/UnifiedStageProgress";
+import { StageHintCard } from "@/components/coach/StageHintCard";
 import { useParentCoach } from "@/hooks/useParentCoach";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -460,6 +461,7 @@ ${briefingData.growth_story || '暂无记录'}
                 </div>
               )}
               <UnifiedStageProgress coachType="parent" currentStage={session.current_stage || 0} />
+              <StageHintCard currentStage={session.current_stage || 0} />
             </>
           ) : undefined
         }
