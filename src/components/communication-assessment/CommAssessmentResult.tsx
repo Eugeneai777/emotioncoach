@@ -280,7 +280,7 @@ export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake, o
                 </div>
               </div>
               <Button
-                onClick={() => window.location.href = '/camp-intro?type=parent_emotion_21'}
+                onClick={() => window.location.href = '/parent-camp'}
                 className="w-full bg-gradient-to-r from-purple-400 to-pink-500 text-white hover:opacity-90"
               >
                 了解详情
