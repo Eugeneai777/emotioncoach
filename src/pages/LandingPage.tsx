@@ -93,6 +93,7 @@ function DecorativeElements({ design }: { design: LandingDesign }) {
 
 export default function LandingPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [content, setContent] = useState<LandingContent | null>(null);
   const [design, setDesign] = useState<LandingDesign>(DEFAULT_DESIGN);
   const [product, setProduct] = useState<string | null>(null);
