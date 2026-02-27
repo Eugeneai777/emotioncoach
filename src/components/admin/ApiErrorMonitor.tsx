@@ -35,7 +35,8 @@ const KNOWN_HARMLESS_PATTERNS: { urlMatch: string; errorType?: ApiErrorType; rea
   { urlMatch: 'monitor_api_errors', errorType: 'network_fail', reason: '监控上报请求被中断（页面关闭），属正常行为' },
   { urlMatch: 'monitor_stability_records', errorType: 'network_fail', reason: '监控上报请求被中断（页面关闭），属正常行为' },
   { urlMatch: 'monitor_ux_anomalies', errorType: 'network_fail', reason: '监控上报请求被中断（页面关闭），属正常行为' },
-  { urlMatch: '/rest/v1/profiles', errorType: 'timeout', reason: '心跳更新（last_seen_at）在移动端后台挂起后超时，属正常行为' },
+  { urlMatch: '/rest/v1/', errorType: 'timeout', reason: '移动端后台挂起导致数据库请求超时，属正常行为' },
+  { urlMatch: '/rest/v1/', errorType: 'network_fail', reason: '移动端页面切换或后台挂起导致请求中断，属正常行为' },
 ];
 
 function getHarmlessReason(err: any): string | null {
