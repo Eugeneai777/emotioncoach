@@ -107,6 +107,35 @@ export default function RiskContentMonitor() {
     status: filterStatus,
   });
 
+  // ── 自动告警：新增 critical/high 风险内容自动推送企业微信 ──
+  useEffect(() => {
+    if (!records.length) return;
+    const criticalItems = records.filter(
+      (r: any) => (r.risk_level === 'critical' || r.risk_level === 'high') && 
+        r.status === 'pending' && !alertedIdsRef.current.has(r.id)
+    );
+    criticalItems.forEach((item: any) => {
+      alertedIdsRef.current.add(item.id);
+      const riskMeta = RISK_TYPE_META[item.risk_type as RiskType] || RISK_TYPE_META.other;
+      const levelMeta = RISK_LEVEL_META[item.risk_level as RiskLevel];
+      const sourceMeta = SOURCE_META[item.content_source as ContentSource];
+      sendAlert({
+        source: 'risk_content',
+        level: item.risk_level === 'critical' ? 'critical' : 'high',
+        alertType: `risk_${item.risk_type}`,
+        message: `检测到${levelMeta?.label || '高'}级风险内容 [${riskMeta.label}]`,
+        details: [
+          `来源：${sourceMeta?.label || item.content_source}`,
+          `内容预览：${(item.content_preview || item.content_text || '').substring(0, 150)}`,
+          item.risk_keywords?.length ? `命中关键词：${item.risk_keywords.join(', ')}` : '',
+          item.risk_score != null ? `置信度：${item.risk_score}%` : '',
+          item.user_display_name ? `用户：${item.user_display_name}` : '',
+          item.user_id ? `用户ID：${item.user_id}` : '',
+        ].filter(Boolean).join('\n'),
+      });
+    });
+  }, [records, sendAlert]);
+
   // ── 统计 ──
   const stats = useMemo(() => {
     const pending = records.filter((r: any) => r.status === 'pending').length;
@@ -131,6 +160,7 @@ export default function RiskContentMonitor() {
   // ── 审核处理 ──
   const handleReview = async (newStatus: 'confirmed' | 'dismissed') => {
     if (!reviewDialog.item) return;
+    const item = reviewDialog.item;
     try {
       const { error } = await (supabase as any)
         .from('monitor_risk_content')
@@ -140,8 +170,32 @@ export default function RiskContentMonitor() {
           review_note: reviewNote || null,
           action_taken: newStatus === 'confirmed' ? reviewAction : 'none',
         })
-        .eq('id', reviewDialog.item.id);
+        .eq('id', item.id);
       if (error) throw error;
+
+      // 确认为风险内容时，推送企业微信告警
+      if (newStatus === 'confirmed') {
+        const riskMeta = RISK_TYPE_META[item.risk_type as RiskType] || RISK_TYPE_META.other;
+        const sourceMeta = SOURCE_META[item.content_source as ContentSource];
+        const actionLabel = reviewAction === 'delete_content' ? '删除内容' : 
+          reviewAction === 'warn_user' ? '警告用户' : 
+          reviewAction === 'ban_user' ? '封禁用户' : '无';
+        sendAlert({
+          source: 'risk_content',
+          level: (item.risk_level === 'critical' || item.risk_level === 'high') ? 
+            (item.risk_level as 'critical' | 'high') : 'medium',
+          alertType: `risk_confirmed_${item.risk_type}`,
+          message: `管理员已确认风险内容 [${riskMeta.label}]，处理措施：${actionLabel}`,
+          details: [
+            `来源：${sourceMeta?.label || item.content_source}`,
+            `内容预览：${(item.content_preview || item.content_text || '').substring(0, 150)}`,
+            item.risk_keywords?.length ? `命中关键词：${item.risk_keywords.join(', ')}` : '',
+            item.user_display_name ? `用户：${item.user_display_name}` : '',
+            reviewNote ? `审核备注：${reviewNote}` : '',
+          ].filter(Boolean).join('\n'),
+        });
+      }
+
       toast.success(newStatus === 'confirmed' ? '已确认为风险内容' : '已忽略该记录');
       setReviewDialog({ open: false, item: null });
       setReviewNote("");
