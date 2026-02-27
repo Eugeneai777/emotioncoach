@@ -60,7 +60,7 @@ export function CommAssessmentQuestions({ perspective, onComplete, onBack }: Com
   })();
 
   return (
-    <div className="min-h-[calc(100vh-48px)] bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-32 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50 p-4 flex flex-col">
       {/* 顶部导航 */}
       <div className="flex items-center justify-between mb-4">
         <Button variant="ghost" size="sm" onClick={handlePrev}>

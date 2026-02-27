@@ -1,34 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
-import { Sparkles, Loader2, Tent, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Copy, Check, MessageCircle, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   type CommAssessmentResult as ResultType,
+  type Perspective,
   patternConfigs,
+  generateInviteCode,
 } from "./communicationAssessmentData";
-import { CommInviteCard } from "./CommInviteCard";
-import { CommAssessmentShareCard } from "./CommAssessmentShareCard";
 
 interface CommAssessmentResultProps {
   result: ResultType;
-  inviteCode: string | null;
   onBack: () => void;
   onStartCoach?: () => void;
-  onRetake?: () => void;
 }
 
-export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach, onRetake }: CommAssessmentResultProps) {
-  const navigate = useNavigate();
+export function CommAssessmentResult({ result, onBack, onStartCoach }: CommAssessmentResultProps) {
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
 
   const primary = patternConfigs[result.primaryPattern];
   const secondary = result.secondaryPattern ? patternConfigs[result.secondaryPattern] : null;
 
+  // 保存结果到数据库
+  useEffect(() => {
+    saveResult();
+  }, []);
+
+  const saveResult = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const code = generateInviteCode();
+      const scores = Object.fromEntries(result.dimensionScores.map(d => [`${d.key}_score`, d.score]));
+
+      const { data, error } = await supabase
+        .from('communication_pattern_assessments')
+        .insert({
+          user_id: user.id,
+          perspective: result.perspective,
+          ...scores,
+          primary_pattern: result.primaryPattern,
+          secondary_pattern: result.secondaryPattern,
+          answers: result.dimensionScores as any,
+          invite_code: code,
+        } as any)
+        .select('id')
+        .single();
+
+      if (!error && data) {
+        setSavedId((data as any).id);
+        setInviteCode(code);
+      }
+    } catch (e) {
+      console.error('Save result error:', e);
+    }
+  };
+
+  // 获取AI建议
   const fetchAIInsight = async () => {
     setAiLoading(true);
     try {
@@ -51,6 +88,16 @@ export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach,
     }
   };
 
+  const copyInviteCode = () => {
+    if (inviteCode) {
+      navigator.clipboard.writeText(inviteCode);
+      setCopied(true);
+      toast.success('邀请码已复制');
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // 雷达图数据
   const radarData = result.dimensionScores.map((d) => ({
     dimension: d.label,
     score: d.percentage,
@@ -60,7 +107,14 @@ export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach,
   const overallPercentage = Math.round((result.totalScore / result.maxTotalScore) * 100);
 
   return (
-    <div className="min-h-[calc(100vh-48px)] bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-32">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-24">
+      {/* 顶部 */}
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-1" />返回
+        </Button>
+      </div>
+
       <div className="max-w-md mx-auto space-y-4">
         {/* 模式识别卡片 */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ transform: 'translateZ(0)' }}>
@@ -75,6 +129,7 @@ export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach,
                   综合得分 {overallPercentage}%
                 </div>
               </div>
+
               {secondary && (
                 <div className="mt-3 pt-3 border-t border-dashed border-sky-200">
                   <p className="text-xs text-muted-foreground text-center">
@@ -142,7 +197,9 @@ export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach,
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} style={{ transform: 'translateZ(0)' }}>
           <Card className="border-sky-200 bg-white/90 shadow-sm">
             <CardContent className="p-4 space-y-2">
-              <h3 className="text-sm font-semibold flex items-center gap-1.5">💡 改善建议</h3>
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <span>💡</span> 改善建议
+              </h3>
               {primary.improveTips.map((tip, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="text-sky-400 mt-0.5">•</span>
@@ -158,7 +215,11 @@ export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach,
           <Card className="border-indigo-200 bg-gradient-to-r from-indigo-50 to-sky-50 shadow-sm">
             <CardContent className="p-4">
               {!aiInsight && !aiLoading ? (
-                <Button onClick={fetchAIInsight} variant="outline" className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+                <Button
+                  onClick={fetchAIInsight}
+                  variant="outline"
+                  className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                >
                   <Sparkles className="h-4 w-4 mr-2" />获取 AI 个性化建议
                 </Button>
               ) : aiLoading ? (
@@ -177,37 +238,41 @@ export function CommAssessmentResult({ result, inviteCode, onBack, onStartCoach,
           </Card>
         </motion.div>
 
-        {/* 训练营推荐 */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
-          <Card 
-            className="border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 shadow-sm cursor-pointer active:scale-[0.98] transition-transform overflow-hidden"
-            onClick={() => navigate('/camp-intro?type=parent_emotion_21')}
-          >
-            <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0">
-                  <Tent className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-foreground">21天亲子突破训练营</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">系统改善亲子沟通，每天10分钟练习</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 邀请卡片 */}
+        {/* 邀请码 */}
         {inviteCode && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <CommInviteCard inviteCode={inviteCode} perspective={result.perspective} />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ transform: 'translateZ(0)' }}>
+            <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-pink-50 shadow-sm">
+              <CardContent className="p-4 text-center">
+                <h3 className="text-sm font-semibold mb-2">
+                  📨 邀请{result.perspective === 'parent' ? '孩子' : '家长'}也来测评
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  分享邀请码，完成双视角对比，发现你们之间的认知差异
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-2xl font-bold tracking-widest text-violet-700 bg-violet-100 px-4 py-2 rounded-lg">
+                    {inviteCode}
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={copyInviteCode}>
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 
-        {/* 分享卡片 */}
-        <CommAssessmentShareCard />
+        {/* CTA：亲子教练对话 */}
+        {onStartCoach && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} style={{ transform: 'translateZ(0)' }}>
+            <Button
+              onClick={onStartCoach}
+              className="w-full h-12 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white font-medium rounded-full shadow-lg"
+            >
+              <MessageCircle className="mr-2 h-5 w-5" />开始亲子教练对话
+            </Button>
+          </motion.div>
+        )}
       </div>
     </div>
   );
