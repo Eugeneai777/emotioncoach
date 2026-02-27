@@ -274,7 +274,7 @@ export default function PartnerLandingPageDetail() {
         const { design: newDesign, ...textContent } = result;
         setPreviewContent(textContent);
         if (newDesign) setPreviewDesign(newDesign);
-        setAiMessages([...newMessages, { role: "assistant", content: "✅ 已优化，请查看预览效果。满意请点击"应用修改"。" }]);
+        setAiMessages([...newMessages, { role: "assistant", content: "✅ 已优化，请查看预览效果。满意请点击「应用修改」。" }]);
       } else {
         setAiMessages([...newMessages, { role: "assistant", content: data?.raw || "优化完成" }]);
       }
