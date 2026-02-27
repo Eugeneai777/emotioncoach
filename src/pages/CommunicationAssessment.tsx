@@ -138,16 +138,20 @@ export default function CommunicationAssessment() {
   // Questions phase - full screen, no bottom nav
   if (phase === 'questions') {
     return (
-      <CommAssessmentQuestions
-        perspective={perspective}
-        onComplete={handleComplete}
-        onBack={handleBack}
-      />
+      <div className="min-h-screen flex flex-col">
+        <PageHeader title="亲子沟通测评" backTo="/parent-coach" />
+        <CommAssessmentQuestions
+          perspective={perspective}
+          onComplete={handleComplete}
+          onBack={handleBack}
+        />
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col">
+      <PageHeader title="亲子沟通测评" backTo="/parent-coach" />
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)} className="flex-1 flex flex-col">
         <TabsContent value="assessment" className="flex-1 m-0">
           {phase === 'result' && result ? (
