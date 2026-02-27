@@ -1,65 +1,103 @@
 
 
-# 错误类型分布增加页面位置、用户、时间信息
+# 亲子沟通测评结果页增强方案
 
-## 问题
+## 概述
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+参考财富卡点测评的成熟架构，为亲子沟通测评结果页增加以下功能模块：
 
-## 修复方案
+1. 亲子训练营推荐卡片
+2. 亲子教练语音解说（底部导航栏 FAB 按钮）
+3. 重新测评 + 历史记录（底部固定导航栏，Tabs 架构）
+4. 分享功能（生成分享卡片）
+5. 邀请孩子卡片（含邀请码 + 二维码）
 
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
+---
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+## 一、页面架构改造
 
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
+将 `CommunicationAssessment.tsx` 从简单的 phase 状态机改造为 Tabs 架构（参考 `WealthBlockAssessment.tsx`），包含：
 
-### 2. 错误指标增强：`typeDistribution` 携带详情
+- **Tab 1: 测评/结果**（介绍页 -> 答题 -> 结果展示）
+- **Tab 2: 历史记录**（列表 + 趋势图）
+- **底部固定导航栏**：重新测评 | 亲子教练解说(FAB) | 历史记录
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+### 页面状态管理
+- `activeTab`: 'assessment' | 'history'
+- `showResult` / `currentResult` / 历史记录列表等状态
+- 用户登录后自动加载历史数据
 
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
+---
 
-### 3. 用户名查询
+## 二、结果页增强（CommAssessmentResult.tsx）
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+### 2.1 亲子训练营推荐卡片
+在 AI 建议区域下方添加训练营推荐，推荐 `parent_emotion_21`（21天青少年困境突破营），点击跳转至 `/camp-intro?type=parent_emotion_21`。
 
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
+### 2.2 分享功能
+- 添加 `ShareInfoCard` 组件（复用现有的分享信息卡片模式）
+- 生成包含测评结果摘要 + 品牌二维码的分享图片
 
-### 4. UI 展示增强
+### 2.3 邀请孩子/家长卡片
+- 将现有的简单邀请码区域升级为完整的邀请卡片
+- 包含二维码（扫码直达测评页 + 自动填入邀请码）
+- 支持复制邀请码和链接
+- 参考 `TeenInviteShareCard` 的卡片风格
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+### 2.4 重新测评按钮
+- 底部添加 `onRetake` 回调，由父组件控制重置流程
 
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+---
 
-```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
-```
+## 三、亲子教练语音解说
 
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
+### 3.1 新组件：CommAssessmentVoiceCoach
+参考 `AssessmentVoiceCoach.tsx` 结构：
+- 底部导航栏中间凸出 FAB 按钮（蓝色/天蓝渐变）
+- 点击后打开 `CoachVoiceChat` 语音对话
+- 传入测评结果数据（维度得分、模式类型）
+- 使用现有的 `parent-realtime-token` 或新建专用 token endpoint
+- 通话结束后可选显示后续引导
 
-## 技术细节
+### 3.2 Edge Function
+- 复用或扩展现有的亲子教练 realtime token endpoint
+- 将测评结果注入 system prompt，让教练基于测评数据进行针对性解说
 
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
+---
 
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
+## 四、历史记录
+
+### 4.1 新组件：CommAssessmentHistory
+参考 `WealthBlockHistory.tsx`，显示：
+- 历史测评记录列表
+- 每条记录显示：主要模式、视角（家长/青少年）、日期、六维得分条
+- 支持删除和查看详情
+
+### 4.2 新组件：CommAssessmentTrend
+参考 `WealthBlockTrend.tsx`，用折线图展示得分趋势变化。
+
+---
+
+## 五、新建/修改文件清单
+
+### 新建文件
+1. `src/components/communication-assessment/CommAssessmentVoiceCoach.tsx` - 语音教练 FAB 按钮
+2. `src/components/communication-assessment/CommAssessmentHistory.tsx` - 历史记录列表
+3. `src/components/communication-assessment/CommAssessmentTrend.tsx` - 趋势图
+4. `src/components/communication-assessment/CommAssessmentShareCard.tsx` - 分享卡片
+5. `src/components/communication-assessment/CommInviteCard.tsx` - 邀请孩子卡片（含二维码）
+
+### 修改文件
+1. `src/pages/CommunicationAssessment.tsx` - 改造为 Tabs 架构 + 底部导航栏 + 历史记录
+2. `src/components/communication-assessment/CommAssessmentResult.tsx` - 添加训练营推荐、分享、邀请卡片、重新测评回调
+
+---
+
+## 六、实现顺序
+
+1. 改造页面为 Tabs 架构（重新测评 + 历史记录导航）
+2. 增强结果页（训练营推荐 + 分享 + 邀请卡片）
+3. 创建历史记录和趋势组件
+4. 创建语音教练 FAB 组件
+5. 创建分享和邀请卡片组件
 
