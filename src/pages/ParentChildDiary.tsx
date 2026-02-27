@@ -394,7 +394,7 @@ const ParentChildDiary = () => {
       <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg md:text-xl font-bold text-foreground">我的亲子日记</h1>
+            <h1 className="text-lg md:text-xl font-bold text-foreground">亲子简报</h1>
             <div className="flex items-center gap-1 md:gap-2">
               <ParentTagManager onTagsChange={loadSessions} />
               <Button
