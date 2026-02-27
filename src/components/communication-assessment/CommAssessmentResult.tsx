@@ -26,21 +26,27 @@ interface CommAssessmentResultProps {
   onStartCoach?: () => void;
   onRetake?: () => void;
   onSaved?: () => void;
+  /** 查看历史记录时为 true，跳过保存 */
+  isHistoryView?: boolean;
 }
 
-export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake, onSaved }: CommAssessmentResultProps) {
+export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake, onSaved, isHistoryView = false }: CommAssessmentResultProps) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [hasSaved, setHasSaved] = useState(false);
 
   const primary = patternConfigs[result.primaryPattern];
   const secondary = result.secondaryPattern ? patternConfigs[result.secondaryPattern] : null;
 
-  // 保存结果到数据库
+  // 保存结果到数据库（仅新测评时保存，查看历史不保存，防止 StrictMode 双调用）
   useEffect(() => {
-    saveResult();
+    if (!isHistoryView && !hasSaved) {
+      setHasSaved(true);
+      saveResult();
+    }
   }, []);
 
   const saveResult = async () => {

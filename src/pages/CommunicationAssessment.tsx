@@ -28,6 +28,7 @@ export default function CommunicationAssessment() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('assessment');
   const [historyRecords, setHistoryRecords] = useState<CommHistoryRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isHistoryView, setIsHistoryView] = useState(false);
 
   // Load history on mount
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function CommunicationAssessment() {
     const r = calculateResult(answers, perspective);
     setResult(r);
     setPhase('result');
+    setIsHistoryView(false);
   };
 
   const handleBack = () => {
@@ -125,6 +127,7 @@ export default function CommunicationAssessment() {
     setResult(reconstructed);
     setPhase('result');
     setActiveTab('assessment');
+    setIsHistoryView(true);
   };
 
   const handleResultSaved = () => {
@@ -153,6 +156,7 @@ export default function CommunicationAssessment() {
               onStartCoach={handleStartCoach}
               onRetake={handleRetake}
               onSaved={handleResultSaved}
+              isHistoryView={isHistoryView}
             />
           ) : (
             <CommAssessmentStartScreen
