@@ -481,3 +481,6 @@ verify_jwt = false
 
 [functions.recommend-courses-v2]
 verify_jwt = false
+
+[functions.scan-risk-content]
+verify_jwt = false

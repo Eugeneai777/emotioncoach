@@ -105,6 +105,45 @@ serve(async (req) => {
     
     console.log(`Assessment coach chat - Pattern: ${pattern}, Stage: ${stage}, User messages: ${userMessageCount}`);
 
+    // 🛡️ 异步风险扫描最新用户消息（不阻塞回复）
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMsg && lastUserMsg.content.length > 5) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && supabaseKey) {
+        // 从auth header获取用户ID
+        const authHeader = req.headers.get('Authorization');
+        let userId = 'anonymous';
+        if (authHeader) {
+          try {
+            const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+            const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || '';
+            const client = createClient(supabaseUrl, anonKey, {
+              global: { headers: { Authorization: authHeader } }
+            });
+            const { data: { user } } = await client.auth.getUser();
+            if (user) userId = user.id;
+          } catch { /* ignore */ }
+        }
+
+        fetch(`${supabaseUrl}/functions/v1/scan-risk-content`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            content: lastUserMsg.content,
+            user_id: userId,
+            content_source: 'ai_conversation',
+            source_detail: `测评教练对话 (${patternName})`,
+            platform: 'web',
+            page: '/assessment-coach',
+          }),
+        }).then(r => r.text()).catch(() => {});
+      }
+    }
+
     // 构建系统提示词
     const systemPrompt = getStagePrompt(stage, pattern, patternName);
 
