@@ -158,6 +158,17 @@ export const tools: ToolConfig[] = [
     available: true
   },
   {
+    id: "comm-assessment",
+    title: "亲子沟通测评",
+    description: "双视角诊断亲子沟通模式",
+    detailedDescription: "家长与青少年分别作答24道专业量表题，识别4种沟通模式（控制指令型、忽视回避型、焦虑过度型、民主共情型），输出6维雷达图和AI个性化建议，支持邀请码双视角对比。",
+    iconName: "MessageSquareHeart",
+    category: "exploration",
+    gradient: "from-cyan-500 to-blue-500",
+    usageScenarios: ["亲子沟通不畅时", "想改善家庭关系", "了解孩子的真实感受"],
+    available: true
+  },
+  {
     id: "relationship",
     title: "人际关系",
     description: "维护关系，珍惜每一份联结",
