@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,11 @@ export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake }:
   const primary = patternConfigs[result.primaryPattern];
   const secondary = result.secondaryPattern ? patternConfigs[result.secondaryPattern] : null;
 
+  const saveCalledRef = useRef(false);
+
   useEffect(() => {
+    if (saveCalledRef.current) return;
+    saveCalledRef.current = true;
     saveResult();
   }, []);
 
