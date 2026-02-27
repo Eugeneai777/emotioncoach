@@ -99,7 +99,7 @@ export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake }:
   const overallPercentage = Math.round((result.totalScore / result.maxTotalScore) * 100);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-32">
+    <div className="min-h-[calc(100vh-48px)] bg-gradient-to-b from-sky-50 to-indigo-50 p-4 pb-32">
       <div className="max-w-md mx-auto space-y-4">
         {/* 模式识别卡片 */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ transform: 'translateZ(0)' }}>
