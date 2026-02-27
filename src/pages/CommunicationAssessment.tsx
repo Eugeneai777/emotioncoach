@@ -127,6 +127,7 @@ export default function CommunicationAssessment() {
     setResult(reconstructed);
     setPhase('result');
     setActiveTab('assessment');
+    setIsHistoryView(true);
   };
 
   const handleResultSaved = () => {
