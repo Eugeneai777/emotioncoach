@@ -16,6 +16,7 @@ export const useParentCoach = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [videoRecommendations, setVideoRecommendations] = useState<any[]>([]);
+  const [briefingData, setBriefingData] = useState<any>(null);
   const { toast } = useToast();
 
   const createSession = async (campId?: string, eventDescription?: string) => {
@@ -172,6 +173,9 @@ export const useParentCoach = () => {
       if (data.completed) {
         // Session completed
         setSession(prev => prev ? { ...prev, status: 'completed' } : null);
+        if (data.briefing) {
+          setBriefingData(data.briefing);
+        }
       }
 
       return data;
@@ -192,6 +196,7 @@ export const useParentCoach = () => {
   const resetSession = () => {
     setSession(null);
     setMessages([]);
+    setBriefingData(null);
   };
 
   const addAssistantMessage = (content: string) => {
@@ -229,6 +234,7 @@ export const useParentCoach = () => {
     isLoading,
     isCreating,
     videoRecommendations,
+    briefingData,
     createSession,
     loadSession,
     sendMessage,
