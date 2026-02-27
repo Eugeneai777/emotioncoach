@@ -449,7 +449,7 @@ const ParentChildDiary = () => {
         ) : (
           <Tabs defaultValue="list" className="w-full">
             <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
-              <ResponsiveTabsTrigger value="list" label="记录列表" shortLabel="列表" />
+              <ResponsiveTabsTrigger value="list" label="亲子简报" shortLabel="简报" />
               <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
               <ResponsiveTabsTrigger value="patterns" label="模式洞察" shortLabel="洞察" />
               <ResponsiveTabsTrigger value="compare" label="记录对比" shortLabel="对比" />
@@ -489,24 +489,22 @@ const ParentChildDiary = () => {
               />
               <Separator className="my-4" />
               <ScrollArea className="h-[calc(100vh-400px)]">
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {filteredSessions.map((session) => (
                     <Card
                       key={session.id}
-                      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200/50"
                       onClick={() => setSelectedSession(session)}
                     >
-                      <div className="space-y-2">
-                        {session.briefing?.emotion_theme && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">💜</span>
-                            <span className="font-semibold text-foreground">{session.briefing.emotion_theme}</span>
-                          </div>
-                        )}
+                      <div className="space-y-3">
+                        {/* Header: theme + date */}
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {session.event_description || "亲子教练对话"}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">🌿</span>
+                            <span className="font-semibold text-sm text-foreground">
+                              {session.briefing?.emotion_theme || "亲子觉察"}
+                            </span>
+                          </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {new Date(session.created_at).toLocaleDateString("zh-CN", {
                               month: "short",
@@ -514,29 +512,45 @@ const ParentChildDiary = () => {
                             })}
                           </span>
                         </div>
-                        {session.briefing?.emotion_intensity !== null && session.briefing?.emotion_intensity !== undefined && (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
-                            强度 {session.briefing.emotion_intensity}/10
+
+                        {/* Insight */}
+                        {session.briefing?.insight && (
+                          <div className="flex gap-2 items-start">
+                            <span className="text-amber-500 mt-0.5">💡</span>
+                            <p className="text-sm text-foreground/80 line-clamp-2">{session.briefing.insight}</p>
                           </div>
                         )}
-                        {session.tags && session.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {session.tags.map(tag => (
-                              <Badge
-                                key={tag.id}
-                                variant="secondary"
-                                className="text-xs"
-                                style={{
-                                  backgroundColor: `${tag.color}20`,
-                                  color: tag.color,
-                                  borderColor: tag.color
-                                }}
-                              >
-                                {tag.name}
-                              </Badge>
-                            ))}
+
+                        {/* Action */}
+                        {session.briefing?.action && (
+                          <div className="flex gap-2 items-start">
+                            <span className="text-orange-500 mt-0.5">⚡</span>
+                            <p className="text-sm text-foreground/70 line-clamp-1">{session.briefing.action}</p>
                           </div>
                         )}
+
+                        {/* Bottom: intensity + tags */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {session.briefing?.emotion_intensity != null && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary">
+                              强度 {session.briefing.emotion_intensity}/10
+                            </span>
+                          )}
+                          {session.tags?.map(tag => (
+                            <Badge
+                              key={tag.id}
+                              variant="secondary"
+                              className="text-xs"
+                              style={{
+                                backgroundColor: `${tag.color}20`,
+                                color: tag.color,
+                                borderColor: tag.color
+                              }}
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     </Card>
                   ))}
