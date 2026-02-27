@@ -26,6 +26,8 @@ interface CommAssessmentResultProps {
   onStartCoach?: () => void;
   onRetake?: () => void;
   onSaved?: () => void;
+  /** 查看历史记录时为 true，跳过保存 */
+  isHistoryView?: boolean;
 }
 
 export function CommAssessmentResult({ result, onBack, onStartCoach, onRetake, onSaved }: CommAssessmentResultProps) {
