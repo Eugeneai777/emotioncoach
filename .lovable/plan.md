@@ -1,65 +1,53 @@
 
-
-# 错误类型分布增加页面位置、用户、时间信息
+# 修复亲子沟通测评：清理重复数据 + 对齐财富卡点架构
 
 ## 问题
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+数据库中有 9 条记录，但用户只做过 1 次测评。原因：
+1. React StrictMode 导致 `saveResult` 被调用两次（每次产生 2 条）
+2. 多次进入结果页（调试/重试）累积了更多重复
 
-## 修复方案
+## 修改方案
 
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
+### 第一步：清理数据库重复记录
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+通过数据操作工具删除重复记录，保留每组相同分数中最早的一条。当前 9 条将精简为 2 条（两组不同分数各保留 1 条）。
 
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
+### 第二步：保存逻辑从 CommAssessmentResult 移到父页面
 
-### 2. 错误指标增强：`typeDistribution` 携带详情
+**对齐财富测评模式**：在 `CommunicationAssessment.tsx` 的 `handleComplete` 中完成数据库保存，`CommAssessmentResult` 变为纯展示组件。
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+**`src/pages/CommunicationAssessment.tsx`**：
+- `handleComplete` 中自动保存到数据库（参考财富测评 `handleComplete`）
+- 新增 `inviteCode`、`isSaved` 状态，作为 props 传给 `CommAssessmentResult`
+- 新增 `handleViewDetail` 函数，支持从历史记录查看完整结果
 
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
+**`src/components/communication-assessment/CommAssessmentResult.tsx`**：
+- 移除 `saveResult`、`useEffect`、`saveCalledRef`、`saving` 等所有保存逻辑
+- 新增 props：`inviteCode`（从父组件传入）
+- 移除骨架屏（保存在进入结果页前已完成）
+- 变为纯展示组件，不再直接操作数据库
 
-### 3. 用户名查询
+### 第三步：历史记录添加"查看详情"
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+**`src/components/communication-assessment/CommAssessmentHistory.tsx`**：
+- 新增 `onViewDetail` prop
+- 每条记录增加"查看详情"按钮（对齐 `WealthBlockHistory`）
 
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
+**`src/pages/CommunicationAssessment.tsx`**：
+- 实现 `handleViewDetail`：从历史记录的 `answers` 字段重建 result 对象，切换到结果页展示
 
-### 4. UI 展示增强
+### 第四步：趋势图优化
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+**`src/components/communication-assessment/CommAssessmentTrend.tsx`**：
+- 增加六维分层折线显示（倾听/共情/边界/表达/冲突/理解），对齐财富测评趋势图风格
 
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+## 涉及文件
 
-```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
-```
-
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
-
-## 技术细节
-
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
-
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
-
+| 文件 | 操作 |
+|------|------|
+| `communication_pattern_assessments` 表数据 | 删除 7 条重复记录 |
+| `src/pages/CommunicationAssessment.tsx` | 重构：保存逻辑移入 + handleViewDetail |
+| `src/components/communication-assessment/CommAssessmentResult.tsx` | 简化为纯展示组件 |
+| `src/components/communication-assessment/CommAssessmentHistory.tsx` | 新增查看详情按钮 |
+| `src/components/communication-assessment/CommAssessmentTrend.tsx` | 增强趋势图 |
