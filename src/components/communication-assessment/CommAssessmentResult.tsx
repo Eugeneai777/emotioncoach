@@ -13,10 +13,19 @@ import {
   generateInviteCode,
 } from "./communicationAssessmentData";
 
+const campReasonMap: Record<string, string> = {
+  controlling: '学习用引导代替命令，建立信任关系',
+  dismissive: '重建亲子情感连接，学会回应与陪伴',
+  anxious: '管理自身焦虑，给孩子成长空间',
+  democratic: '进一步巩固优秀的沟通模式',
+};
+
 interface CommAssessmentResultProps {
   result: ResultType;
   onBack: () => void;
   onStartCoach?: () => void;
+  onRetake?: () => void;
+  onSaved?: () => void;
 }
 
 export function CommAssessmentResult({ result, onBack, onStartCoach }: CommAssessmentResultProps) {
