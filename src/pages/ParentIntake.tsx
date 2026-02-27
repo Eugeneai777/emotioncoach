@@ -176,12 +176,18 @@ const ParentIntake = () => {
       const types = identifyProblemTypes();
       setIdentifiedTypes(types);
       
-      // Save to database
-      await saveProfile({
-        primary_problem_type: types.primary,
-        secondary_problem_types: types.secondary ? [types.secondary] : null,
-        intake_answers: answers,
-      });
+      // Save to database only if logged in
+      if (user?.id) {
+        try {
+          await saveProfile({
+            primary_problem_type: types.primary,
+            secondary_problem_types: types.secondary ? [types.secondary] : null,
+            intake_answers: answers,
+          });
+        } catch (e) {
+          console.error("Save profile error (non-blocking):", e);
+        }
+      }
       
       setShowResult(true);
     } else {
