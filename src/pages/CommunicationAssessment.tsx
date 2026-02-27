@@ -68,6 +68,7 @@ export default function CommunicationAssessment() {
     const r = calculateResult(answers, perspective);
     setResult(r);
     setPhase('result');
+    setIsHistoryView(false);
   };
 
   const handleBack = () => {
