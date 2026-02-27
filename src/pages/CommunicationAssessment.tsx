@@ -28,6 +28,7 @@ export default function CommunicationAssessment() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('assessment');
   const [historyRecords, setHistoryRecords] = useState<CommHistoryRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isHistoryView, setIsHistoryView] = useState(false);
 
   // Load history on mount
   useEffect(() => {
