@@ -218,6 +218,15 @@ export default function LandingPage() {
         <link rel="canonical" href={`https://wechat.eugenewe.net/lp/${id}`} />
       </Helmet>
 
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-4 left-4 z-50 p-2 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-sm hover:bg-accent transition-colors"
+        aria-label="返回"
+      >
+        <ArrowLeft className="w-5 h-5 text-foreground" />
+      </button>
+
       {/* Decorative elements */}
       <DecorativeElements design={design} />
 
