@@ -1,65 +1,85 @@
 
+# 亲子沟通测评 - 历史记录 + 训练营推荐
 
-# 错误类型分布增加页面位置、用户、时间信息
+## 概述
 
-## 问题
+参考财富卡点测评的 Tabs 架构，为亲子沟通测评增加历史记录保存/展示功能，以及结果页底部的亲子训练营推荐卡片。
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+---
 
-## 修复方案
+## 一、页面架构改造
 
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
+将 `CommunicationAssessment.tsx` 从简单的 phase 状态机改造为 **Tabs 架构**（参考 `WealthBlockAssessment.tsx`）：
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+- **Tab: assessment** - 介绍页 / 答题 / 结果展示
+- **Tab: history** - 历史记录列表
+- **底部固定导航栏**：重新测评 | 历史记录（两栏布局）
 
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
+### 状态管理
+- `activeTab`: 'assessment' | 'history'
+- `showResult` / `currentResult` / `historyRecords` 等
+- 用户登录后自动加载历史数据
+- 测评完成后自动保存（复用现有 `saveResult` 逻辑，移至父组件统一管理）
 
-### 2. 错误指标增强：`typeDistribution` 携带详情
+---
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+## 二、历史记录组件
 
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
+### 新建: `CommAssessmentHistory.tsx`
 
-### 3. 用户名查询
+参考 `WealthBlockHistory.tsx`，显示：
+- 每条记录：主要沟通模式 emoji + 名称、视角标签（家长/青少年）、日期
+- 六维度得分条（倾听/共情/边界/表达/冲突/理解）
+- 支持点击查看详情（切回结果页展示该记录）
+- 支持删除（带确认弹窗）
+- 空状态提示
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+---
 
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
+## 三、结果页增加训练营推荐
 
-### 4. UI 展示增强
+### 修改: `CommAssessmentResult.tsx`
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+在 AI 建议区域下方、邀请码上方，添加亲子训练营推荐卡片：
+- 推荐 `parent_emotion_21`（21天青少年困境突破营）
+- 卡片样式参考 `CampRecommendationCard`：图标 + 营名 + 天数 + 推荐理由
+- 推荐理由根据测评结果的主模式动态生成（如控制型 -> "学习更有效的亲子沟通方式"）
+- 点击跳转 `/camp-intro?type=parent_emotion_21`
 
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+---
 
+## 四、技术细节
+
+### 文件变更
+
+| 文件 | 操作 |
+|------|------|
+| `src/pages/CommunicationAssessment.tsx` | 重写：Tabs 架构 + 底部导航栏 + 历史记录加载/删除 + 重新测评 |
+| `src/components/communication-assessment/CommAssessmentResult.tsx` | 修改：添加训练营推荐卡片 + 接收 `onRetake` 回调 |
+| `src/components/communication-assessment/CommAssessmentHistory.tsx` | 新建：历史记录列表组件 |
+
+### 数据库
+- 已有 `communication_pattern_assessments` 表，无需新建迁移
+- 现有的 `saveResult` 逻辑已在 `CommAssessmentResult` 中，将保留并优化
+
+### 底部导航栏结构
 ```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
++-------------------------------+
+|  重新测评     |    历史记录     |
+|  (RotateCcw)  |   (History)    |
++-------------------------------+
 ```
 
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
+### 训练营推荐理由映射
+- controlling (控制型) -> "学习用引导代替命令，建立信任关系"
+- dismissive (忽视型) -> "重建亲子情感连接，学会回应与陪伴"
+- anxious (焦虑型) -> "管理自身焦虑，给孩子成长空间"
+- democratic (民主型) -> "进一步巩固优秀的沟通模式"
 
-## 技术细节
+---
 
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
+## 五、实现顺序
 
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
-
+1. 新建 `CommAssessmentHistory.tsx` 历史记录组件
+2. 改造 `CommunicationAssessment.tsx` 为 Tabs 架构 + 底部导航
+3. 修改 `CommAssessmentResult.tsx` 添加训练营推荐卡片 + onRetake
