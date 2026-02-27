@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
@@ -27,36 +28,53 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+const dialogContentVariants = cva(
+  [
+    "fixed z-50 grid w-full gap-3 sm:gap-4 border bg-background shadow-lg duration-200",
+    "max-h-[85vh] overflow-y-auto",
+    "p-4 sm:p-6",
+    // 移动端：底部弹出样式
+    "inset-x-0 bottom-0 rounded-t-2xl",
+    // 桌面端：居中弹窗样式
+    "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg",
+    // 动画
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+    "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+    // 移动端动画（从底部滑入）
+    "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+    // 桌面端动画（缩放）
+    "sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-bottom-0",
+    "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
+    "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]",
+    "sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
+  ].join(" "),
+  {
+    variants: {
+      size: {
+        sm: "sm:max-w-md",
+        md: "sm:max-w-lg",
+        lg: "sm:max-w-2xl",
+        xl: "sm:max-w-3xl",
+        full: "sm:max-w-4xl",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+    },
+  }
+);
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     hideCloseButton?: boolean;
-  }
->(({ className, children, hideCloseButton = false, ...props }, ref) => (
+  } & VariantProps<typeof dialogContentVariants>
+>(({ className, children, hideCloseButton = false, size, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn(
-        "fixed z-50 grid w-full gap-3 sm:gap-4 border bg-background shadow-lg duration-200",
-        "max-h-[90vh] overflow-y-auto",
-        "p-4 sm:p-6",
-        // 移动端：底部弹出样式
-        "inset-x-0 bottom-0 rounded-t-2xl",
-        // 桌面端：居中弹窗样式
-        "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:rounded-lg",
-        // 动画
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        // 移动端动画（从底部滑入）
-        "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        // 桌面端动画（缩放）
-        "sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-bottom-0",
-        "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
-        "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]",
-        "sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
-        className,
-      )}
+      className={cn(dialogContentVariants({ size }), className)}
       {...props}
     >
       {children}
