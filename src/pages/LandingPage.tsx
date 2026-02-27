@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, Award, Users, Star, Share2 } from "lucide-react";
+import { Loader2, Shield, Award, Users, Star, Share2, ArrowLeft } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { toast } from "sonner";
 
