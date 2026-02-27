@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
 
 type Phase = 'start' | 'questions' | 'result';
 
@@ -97,6 +98,7 @@ export default function CommunicationAssessment() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50">
+      <PageHeader backTo="/communication-intro" />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsContent value="assessment" className="mt-0">
           <motion.div
