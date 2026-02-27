@@ -131,7 +131,11 @@ export default function ParentCoach() {
       if (initRef.current || session || isCreating) return;
       if (user) {
         initRef.current = true;
-        await createSession(campId || undefined);
+        const newSession = await createSession(campId || undefined);
+        // 训练营专注模式：自动发送引导消息
+        if (newSession && campId) {
+          await sendMessage("我来完成今天的训练营打卡");
+        }
       }
     };
     initSession();
@@ -434,6 +438,7 @@ ${briefingData.growth_story || '暂无记录'}
         moreInfoRoute="/parent-coach-intro"
         historyRoute="/parent-diary"
         historyLabel="亲子日记"
+        backRoute={campId ? `/camp-checkin/${campId}` : undefined}
         messages={messages.map(m => ({ ...m, role: m.role as "user" | "assistant" }))}
         isLoading={isLoading}
         input={input}
@@ -445,21 +450,31 @@ ${briefingData.growth_story || '暂无记录'}
         currentCoachKey="parent"
         stageProgress={
           messages.length > 0 && session ? (
-            <UnifiedStageProgress coachType="parent" currentStage={session.current_stage || 0} />
+            <>
+              {campId && existingParentCamp && (
+                <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200/60 flex items-center gap-2">
+                  <span className="text-base">🏕️</span>
+                  <span className="text-xs font-medium text-purple-700">
+                    第{existingParentCamp.current_day}天 · {existingParentCamp.camp_name}
+                  </span>
+                </div>
+              )}
+              <UnifiedStageProgress coachType="parent" currentStage={session.current_stage || 0} />
+            </>
           ) : undefined
         }
-        trainingCamp={
+        trainingCamp={campId ? undefined : (
           <>
             {onboardingGuide}
             {teenModeModule}
             {trainingCampModule}
           </>
-        }
-        notifications={notificationsModule}
-        community={<CommunityWaterfall />}
+        )}
+        notifications={campId ? undefined : notificationsModule}
+        community={campId ? undefined : <CommunityWaterfall />}
         briefingConfirmation={briefingConfirmation}
         campRecommendation={campRecommendation}
-        scenarioChips={
+        scenarioChips={campId ? undefined : (
           coachConfig?.enable_scenarios && coachConfig?.scenarios ? (
             <CoachScenarioChips
               scenarios={coachConfig.scenarios as any[]}
@@ -470,15 +485,15 @@ ${briefingData.growth_story || '暂无记录'}
               primaryColor={coachConfig.primary_color}
             />
           ) : undefined
-        }
+        )}
         enableVoiceInput={true}
         enableStepsCollapse={true}
-        voiceChatCTA={
+        voiceChatCTA={campId ? undefined : (
           <ParentVoiceCallCTA
             onVoiceChatClick={() => setShowVoiceChat(true)}
             hasCompletedIntake={!!existingProfile}
           />
-        }
+        )}
         dialogs={dialogs}
       />
     </>
