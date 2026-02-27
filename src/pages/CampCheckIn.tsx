@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,9 @@ import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
 import DayDetailDialog from "@/components/camp/DayDetailDialog";
+import { ParentCoachEmbedded } from "@/components/parent-coach/ParentCoachEmbedded";
+import { ParentWaterfallSteps } from "@/components/camp/ParentWaterfallSteps";
+import { performCheckIn } from "@/utils/campCheckInValidator";
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceStart } from "@/utils/dateUtils";
