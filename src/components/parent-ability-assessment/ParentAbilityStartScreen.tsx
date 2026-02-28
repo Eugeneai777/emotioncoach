@@ -115,6 +115,15 @@ export function ParentAbilityStartScreen({ onStart, onBack, onHistory }: ParentA
           </Button>
         </motion.div>
 
+        {/* 历史记录 */}
+        {onHistory && (
+          <motion.div initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} className="text-center" style={{ transform: 'translateZ(0)' }}>
+            <button onClick={onHistory} className="text-sm text-teal-600 underline underline-offset-2">
+              查看历史测评记录
+            </button>
+          </motion.div>
+        )}
+
         {/* 隐私 */}
         <motion.div initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center" style={{ transform: 'translateZ(0)' }}>
           <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
