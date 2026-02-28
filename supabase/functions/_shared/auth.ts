@@ -22,15 +22,8 @@ export const corsHeaders = {
  */
 export function validateCronSecret(req: Request): Response | null {
   const cronSecret = Deno.env.get('CRON_SECRET');
-  
-  // If CRON_SECRET is not configured, deny all access for security
-  if (!cronSecret) {
-    console.error('CRON_SECRET is not configured - denying access');
-    return new Response(
-      JSON.stringify({ error: 'Server configuration error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
   const authHeader = req.headers.get('authorization');
   
@@ -45,7 +38,13 @@ export function validateCronSecret(req: Request): Response | null {
   
   const providedSecret = authHeader.replace('Bearer ', '');
   
-  if (providedSecret !== cronSecret) {
+  // Accept CRON_SECRET, anon key (pg_cron), or service role key
+  const isValid = 
+    (cronSecret && providedSecret === cronSecret) ||
+    (anonKey && providedSecret === anonKey) ||
+    (serviceRoleKey && providedSecret === serviceRoleKey);
+  
+  if (!isValid) {
     console.warn('Invalid cron secret provided');
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),

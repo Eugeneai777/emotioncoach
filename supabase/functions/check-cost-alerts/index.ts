@@ -7,11 +7,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Support both cron secret and authenticated admin user
+  // Support cron secret, anon key (pg_cron), service role, or authenticated admin user
   const authHeader = req.headers.get('authorization') || '';
   const token = authHeader.replace('Bearer ', '');
   const cronSecret = Deno.env.get('CRON_SECRET');
-  const isCron = cronSecret && token === cronSecret;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const isCron = (cronSecret && token === cronSecret) || 
+                 (anonKey && token === anonKey) || 
+                 (serviceRoleKey && token === serviceRoleKey);
 
   if (!isCron) {
     // Validate as authenticated user
@@ -159,6 +163,73 @@ serve(async (req) => {
               alert_message: `单用户每日成本预警: 用户 ${userId.slice(0, 8)}... 今日花费 ¥${total.toFixed(2)}`
             });
           }
+        }
+      }
+    }
+
+    // 检查单次调用高成本
+    const singleCallSetting = settings.find(s => s.alert_type === 'single_call');
+    if (singleCallSetting) {
+      const { data: expensiveCalls } = await supabase
+        .from('api_cost_logs')
+        .select('id, function_name, model, estimated_cost_cny, user_id, created_at')
+        .gte('created_at', todayStr)
+        .gte('estimated_cost_cny', singleCallSetting.threshold_cny)
+        .order('estimated_cost_cny', { ascending: false })
+        .limit(10);
+
+      for (const call of (expensiveCalls || [])) {
+        // 检查是否已对该条记录发过预警
+        const { data: existingAlert } = await supabase
+          .from('cost_alerts')
+          .select('id')
+          .eq('alert_type', 'single_call')
+          .gte('created_at', todayStr)
+          .like('alert_message', `%${call.id.slice(0, 8)}%`)
+          .limit(1);
+
+        if (!existingAlert?.length) {
+          alerts.push({
+            alert_type: 'single_call',
+            user_id: call.user_id || undefined,
+            threshold_cny: singleCallSetting.threshold_cny,
+            actual_cost_cny: Number(call.estimated_cost_cny),
+            alert_message: `单次调用高成本预警: ${call.function_name}(${call.model || '未知模型'}) 花费 ¥${Number(call.estimated_cost_cny).toFixed(2)}，记录ID ${call.id.slice(0, 8)}...`
+          });
+        }
+      }
+    }
+
+    // 检查计费不一致
+    const billingMismatchSetting = settings.find(s => s.alert_type === 'billing_mismatch');
+    if (billingMismatchSetting) {
+      // 检查是否有 input/output tokens 但 cost 为 0 或 null 的记录
+      const { data: mismatchRecords, count: mismatchCount } = await supabase
+        .from('api_cost_logs')
+        .select('id, function_name, model, input_tokens, output_tokens, estimated_cost_cny', { count: 'exact' })
+        .gte('created_at', todayStr)
+        .or('estimated_cost_cny.is.null,estimated_cost_cny.eq.0')
+        .gt('input_tokens', 0)
+        .limit(5);
+
+      if ((mismatchCount || 0) > 0) {
+        const { data: existingAlert } = await supabase
+          .from('cost_alerts')
+          .select('id')
+          .eq('alert_type', 'billing_mismatch')
+          .gte('created_at', todayStr)
+          .limit(1);
+
+        if (!existingAlert?.length) {
+          const samples = (mismatchRecords || [])
+            .map(r => `${r.function_name}(${r.model}): tokens=${(r.input_tokens||0)+(r.output_tokens||0)} cost=¥${r.estimated_cost_cny||0}`)
+            .join('; ');
+          alerts.push({
+            alert_type: 'billing_mismatch',
+            threshold_cny: 0,
+            actual_cost_cny: 0,
+            alert_message: `计费不一致预警: 今日 ${mismatchCount} 条记录有token消耗但成本为0。示例: ${samples}`
+          });
         }
       }
     }
