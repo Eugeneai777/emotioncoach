@@ -254,7 +254,7 @@ export function ParentAbilityResult({ answers, followUpAnswers, onRestart, saved
                   const pct = Math.round((sub.score / sub.maxScore) * 100);
                   const dimIdx = ['stability', 'insight', 'repair'].indexOf(sub.dimension);
                   const barColor = dimConfig[dimIdx]?.color || '#10b981';
-                  const isWeakest = sub.subDimension === weakestSub.subDimension;
+                  const isWeakest = showWeakest && sub.subDimension === weakestSub.subDimension;
                   return (
                     <div key={sub.subDimension} className={`flex items-center gap-2 ${isWeakest ? 'bg-amber-50 rounded-lg px-2 py-1 -mx-2' : ''}`}>
                       {isWeakest && <span className="text-xs">⚠️</span>}
