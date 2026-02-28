@@ -90,6 +90,39 @@ serve(async (req) => {
       });
     }
 
+    // 4. 检查 UX 体验异常突增（15分钟内 > 20 条）
+    const { count: uxAnomalyCount } = await supabase
+      .from('monitor_ux_anomalies')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', fifteenMinAgo);
+
+    if ((uxAnomalyCount || 0) > 20) {
+      // 获取分布详情
+      const { data: uxDetails } = await supabase
+        .from('monitor_ux_anomalies')
+        .select('anomaly_type, scene')
+        .gte('created_at', fifteenMinAgo)
+        .limit(50);
+
+      const typeCounts = new Map<string, number>();
+      for (const d of (uxDetails || [])) {
+        const key = `${d.anomaly_type}(${d.scene || '未知'})`;
+        typeCounts.set(key, (typeCounts.get(key) || 0) + 1);
+      }
+      const topTypes = Array.from(typeCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([k, v]) => `- ${k}: ${v} 条`)
+        .join('\n');
+
+      alerts.push({
+        type: 'stability',
+        level: 'high',
+        message: `UX 体验异常突增预警：最近15分钟内出现 ${uxAnomalyCount} 条体验异常`,
+        details: `异常类型分布:\n${topTypes}`,
+      });
+    }
+
     // 推送告警
     if (alerts.length > 0) {
       const { data: contacts } = await supabase
