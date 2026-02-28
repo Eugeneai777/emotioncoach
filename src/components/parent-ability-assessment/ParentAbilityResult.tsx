@@ -155,18 +155,32 @@ export function ParentAbilityResult({ answers, followUpAnswers, onRestart }: Par
                 <div className="space-y-3 text-sm leading-relaxed">
                   <div>
                     <p className="font-medium text-foreground mb-1">📝 你的家长情绪画像</p>
-                    <p className="text-muted-foreground">{aiInsight.portrait}</p>
+                    <p className="text-muted-foreground">{typeof aiInsight.portrait === 'string' ? aiInsight.portrait : JSON.stringify(aiInsight.portrait)}</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">🔍 需要突破的盲区</p>
-                    <p className="text-muted-foreground">{aiInsight.blindSpot}</p>
+                    <p className="text-muted-foreground">{typeof aiInsight.blindSpot === 'string' ? aiInsight.blindSpot : JSON.stringify(aiInsight.blindSpot)}</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">✅ 本周微行动</p>
-                    <p className="text-muted-foreground">{aiInsight.microAction}</p>
+                    <div className="text-muted-foreground">
+                      {typeof aiInsight.microAction === 'string' 
+                        ? <p>{aiInsight.microAction}</p>
+                        : aiInsight.microAction && typeof aiInsight.microAction === 'object'
+                          ? <div>
+                              {(aiInsight.microAction as any).title && <p className="font-medium">{(aiInsight.microAction as any).title}</p>}
+                              {Array.isArray((aiInsight.microAction as any).steps) && (
+                                <ul className="list-disc list-inside mt-1 space-y-0.5">
+                                  {(aiInsight.microAction as any).steps.map((step: string, i: number) => <li key={i}>{step}</li>)}
+                                </ul>
+                              )}
+                            </div>
+                          : <p>{JSON.stringify(aiInsight.microAction)}</p>
+                      }
+                    </div>
                   </div>
                   <div className="pt-2 border-t border-teal-200">
-                    <p className="text-xs text-teal-600 italic">{aiInsight.balanceComment}</p>
+                    <p className="text-xs text-teal-600 italic">{typeof aiInsight.balanceComment === 'string' ? aiInsight.balanceComment : JSON.stringify(aiInsight.balanceComment)}</p>
                   </div>
                 </div>
               ) : null}
