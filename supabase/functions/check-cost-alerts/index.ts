@@ -170,18 +170,34 @@ serve(async (req) => {
         console.error('Error inserting alerts:', error);
       }
 
-      // 发送企业微信通知
+      // 发送企业微信通知（查询 emergency_contacts）
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      const { data: contacts } = await supabase
+        .from('emergency_contacts')
+        .select('*')
+        .eq('is_active', true)
+        .contains('alert_types', ['cost_monitor']);
+
       for (const alert of alerts) {
-        const setting = settings.find(s => s.alert_type === alert.alert_type);
-        if (setting?.notify_wecom) {
+        for (const contact of (contacts || [])) {
+          if (!contact.alert_levels?.includes('high') && !contact.alert_levels?.includes('critical')) continue;
           try {
-            await supabase.functions.invoke('send-wecom-notification', {
-              body: {
-                message: `⚠️ 成本预警\n\n${alert.alert_message}\n\n请及时关注API成本情况。`
-              }
+            await fetch(`${supabaseUrl}/functions/v1/send-emergency-alert`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+              body: JSON.stringify({
+                webhook_url: contact.wecom_webhook_url,
+                contact_name: contact.name,
+                alert_type: 'cost_monitor',
+                alert_level: 'high',
+                message: `⚠️ 成本预警\n\n${alert.alert_message}`,
+                details: `阈值: ¥${alert.threshold_cny} | 实际: ¥${alert.actual_cost_cny.toFixed(2)}`,
+              }),
             });
+            console.log(`Cost alert sent to ${contact.name}`);
           } catch (e) {
-            console.error('Failed to send WeCom notification:', e);
+            console.error(`Failed to send cost alert to ${contact.name}:`, e);
           }
         }
       }

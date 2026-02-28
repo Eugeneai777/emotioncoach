@@ -211,6 +211,61 @@ serve(async (req) => {
       console.error('[scan-risk] Failed to insert risk record:', insertError);
     } else {
       console.log(`[scan-risk] ✅ Risk record saved to monitor_risk_content`);
+
+      // 自动推送企业微信通知（仅 critical/high 级别）
+      if (['critical', 'high'].includes(finalResult.risk_level)) {
+        try {
+          const { data: contacts } = await supabase
+            .from('emergency_contacts')
+            .select('*')
+            .eq('is_active', true)
+            .contains('alert_types', ['risk_content'])
+            .contains('alert_levels', [finalResult.risk_level]);
+
+          for (const contact of (contacts || [])) {
+            try {
+              const levelEmoji: Record<string, string> = { critical: '🔴', high: '🟠' };
+              const emoji = levelEmoji[finalResult.risk_level] || '⚠️';
+              const alertResp = await fetch(
+                `${supabaseUrl}/functions/v1/send-emergency-alert`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${supabaseKey}`,
+                  },
+                  body: JSON.stringify({
+                    webhook_url: contact.wecom_webhook_url,
+                    contact_name: contact.name,
+                    alert_type: 'risk_content',
+                    alert_level: finalResult.risk_level,
+                    message: `${emoji} 风险内容预警\n\n风险类型：${finalResult.risk_type}\n风险等级：${finalResult.risk_level.toUpperCase()}\n匹配关键词：${finalResult.matched_keywords.join(', ')}\n用户ID：${user_id.slice(0, 8)}...\n内容来源：${content_source}${source_detail ? ' / ' + source_detail : ''}\n\n内容预览：${contentPreview}`,
+                    details: finalResult.ai_analysis || '关键词+AI二次分析确认为真实风险',
+                  }),
+                }
+              );
+              if (alertResp.ok) {
+                console.log(`[scan-risk] ✅ WeChat alert sent to ${contact.name}`);
+                // 记录告警日志
+                await supabase.from('emergency_alert_logs').insert({
+                  contact_id: contact.id,
+                  contact_name: contact.name,
+                  alert_type: 'risk_content',
+                  alert_level: finalResult.risk_level,
+                  message: `风险内容自动告警: ${finalResult.risk_type}`,
+                  status: 'sent',
+                });
+              } else {
+                console.error(`[scan-risk] ❌ WeChat alert failed for ${contact.name}: ${alertResp.status}`);
+              }
+            } catch (e) {
+              console.error(`[scan-risk] ❌ Alert send error for ${contact.name}:`, e);
+            }
+          }
+        } catch (e) {
+          console.error('[scan-risk] Failed to send auto alerts:', e);
+        }
+      }
     }
 
     return new Response(JSON.stringify({
