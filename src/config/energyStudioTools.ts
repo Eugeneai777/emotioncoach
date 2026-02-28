@@ -169,6 +169,17 @@ export const tools: ToolConfig[] = [
     available: true
   },
   {
+    id: "parent-ability",
+    title: "家长三力测评",
+    description: "测评你的情绪稳定力、洞察力和修复力",
+    detailedDescription: "基于'父母三力模型'（情绪稳定力、情绪洞察力、关系修复力），通过24道专业题目+AI情景追问，精准识别你在应对青春期孩子情绪时的能力水平，生成个性化家长情绪画像和改善建议。",
+    iconName: "Shield",
+    category: "exploration",
+    gradient: "from-emerald-500 to-teal-500",
+    usageScenarios: ["孩子进入青春期", "亲子冲突频繁", "想提升应对能力"],
+    available: true
+  },
+  {
     id: "relationship",
     title: "人际关系",
     description: "维护关系，珍惜每一份联结",
