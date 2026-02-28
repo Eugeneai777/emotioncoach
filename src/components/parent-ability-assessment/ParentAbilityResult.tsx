@@ -88,7 +88,7 @@ export function ParentAbilityResult({ answers, followUpAnswers, onRestart, saved
       const insightDim = dimScores.find(d => d.dimension === 'insight')!;
       const repair = dimScores.find(d => d.dimension === 'repair')!;
 
-      await supabase.from('parent_ability_assessments' as any).insert({
+      const { error } = await supabase.from('parent_ability_assessments' as any).insert({
         user_id: user.id,
         total_score: totalScore,
         total_max: totalMax,
@@ -105,9 +105,17 @@ export function ParentAbilityResult({ answers, followUpAnswers, onRestart, saved
         follow_up_answers: followUpAnswers,
         ai_insight: insight,
       } as any);
-      setSaved(true);
+
+      if (error) {
+        console.error('Save assessment error:', error);
+        hasSaved.current = false; // Allow retry
+        toast.error('保存记录失败，请稍后重试');
+      } else {
+        setSaved(true);
+      }
     } catch (e) {
       console.error('Save failed:', e);
+      hasSaved.current = false;
     }
   };
 
