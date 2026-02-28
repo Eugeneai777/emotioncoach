@@ -181,6 +181,18 @@ export function ParentAbilityHistory({ onViewReport, onBack, onRetake }: ParentA
             })}
           </div>
         )}
+
+        {/* 重新测评按钮 */}
+        {!loading && onRetake && (
+          <div className="pt-2">
+            <Button
+              onClick={onRetake}
+              className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium rounded-full shadow-lg"
+            >
+              重新测评
+            </Button>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
