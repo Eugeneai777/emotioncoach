@@ -9,7 +9,7 @@ interface ParentAbilityStartScreenProps {
   onHistory?: () => void;
 }
 
-export function ParentAbilityStartScreen({ onStart, onBack }: ParentAbilityStartScreenProps) {
+export function ParentAbilityStartScreen({ onStart, onBack, onHistory }: ParentAbilityStartScreenProps) {
   const painPoints = [
     { text: '孩子一发脾气，我也忍不住跟着爆发', emoji: '😤' },
     { text: '明明为TA好，为什么TA就是觉得我不理解？', emoji: '😔' },
