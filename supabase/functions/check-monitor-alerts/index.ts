@@ -12,7 +12,7 @@ serve(async (req) => {
   const token = authHeader.replace('Bearer ', '');
   const cronSecret = Deno.env.get('CRON_SECRET');
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const srvKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const isCron = (cronSecret && token === cronSecret) || 
                  (anonKey && token === anonKey) || 
                  (serviceKey && token === serviceKey);
