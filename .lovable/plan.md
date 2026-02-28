@@ -1,103 +1,65 @@
 
 
-# 青春期孩子情绪·家长应对能力测评（三力测评）
+# 错误类型分布增加页面位置、用户、时间信息
 
-## 设计升级：更精细的题库 + AI 深度解读
+## 问题
 
-### 题库设计：24题（每力8题）
+当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
+- **报错页面位置**：不知道是在哪个页面/功能触发的错误
+- **来源用户**：只有截断的 userId（8位），没有用户昵称
+- **详细时间**：没有展示最近发生时间
 
-相比原计划的15题，扩展到 **24题**，每个维度8题，涵盖更细分的子维度：
+## 修复方案
 
-| 维度 | 子维度 | 题数 |
-|------|--------|------|
-| 情绪稳定力 | 自我觉察(2) + 情绪隔离(2) + 压力承受(2) + 自我调节(2) | 8题 |
-| 情绪洞察力 | 行为解码(2) + 需求识别(2) + 情绪命名(2) + 发展理解(2) | 8题 |
-| 关系修复力 | 主动修复(2) + 非暴力沟通(2) + 信任重建(2) + 柔性回应(2) | 8题 |
+### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
 
-每题4级评分（1-4），含正向题和反向题混合，题目顺序打乱避免模式化作答。
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-### AI 元素融合
+- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
+- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
+- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
 
-**1. AI 情景追问（答题中）**
-- 当用户在某个子维度连续得高分或低分时，触发一道 AI 生成的情景题
-- 例：稳定力低分时，AI 生成"假如孩子考试不及格回家，你的第一反应是？"并给出4个具体情景选项
-- 复用已有的 `smart-question-followup` 边缘函数模式
+### 2. 错误指标增强：`typeDistribution` 携带详情
 
-**2. AI 个性化报告（结果页）**
-- 新建边缘函数 `generate-parent-ability-insight`，基于三力得分、弱项子维度、情景追问回答，生成：
-  - 你的"家长情绪画像"（一段 3-4 句的人物素描）
-  - 最需突破的1个盲区 + 具体场景分析
-  - 本周可执行的1个微行动
-- 使用 Lovable AI (gemini-2.5-flash)
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-**3. AI 雷达图解读（结果页）**
-- 在三力雷达图下方，AI 生成一句话点评三力平衡状态
-- 例："你的洞察力远高于稳定力，说明你能看懂孩子，但容易被情绪带走——先稳住自己，你的洞察才能发挥作用。"
+- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
+- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
 
-### 结果分型（6种，比原来4种更精细）
+### 3. 用户名查询
 
-| 类型 | 条件 | 描述 |
-|------|------|------|
-| 稳定引航型 | 三力均衡且高 | 情绪稳定，既能看懂孩子也能修复关系 |
-| 情绪卷入型 | 稳定力明显低 | 容易被孩子情绪带走，先处理自己的情绪 |
-| 认知盲区型 | 洞察力明显低 | 常误读孩子行为，需要学习"看见"孩子 |
-| 断裂回避型 | 修复力明显低 | 冲突后回避，关系裂痕积累 |
-| 心有余力不足型 | 洞察高但稳定+修复低 | 能看懂但做不到，需要技能训练 |
-| 潜力觉醒型 | 整体中等偏低 | 三力都有提升空间，系统训练效果最好 |
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
----
+- 收集所有出现在 `recentDetails` 中的 userId
+- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
+- 建立 userId → 显示名称 的映射
 
-## 文件清单
+### 4. UI 展示增强
 
-| 操作 | 文件 | 说明 |
-|------|------|------|
-| 新建 | `src/components/parent-ability-assessment/parentAbilityData.ts` | 24题题库、子维度定义、6种结果类型、计算逻辑 |
-| 新建 | `src/components/parent-ability-assessment/ParentAbilityStartScreen.tsx` | 开始页：痛点共鸣 + 三力简介 + "3分钟测一测" |
-| 新建 | `src/components/parent-ability-assessment/ParentAbilityQuestions.tsx` | 答题页：逐题滑动 + AI 情景追问（高/低分触发） |
-| 新建 | `src/components/parent-ability-assessment/ParentAbilityResult.tsx` | 结果页：雷达图 + AI 画像 + 类型卡片 + 训练营 CTA |
-| 新建 | `src/pages/ParentAbilityAssessment.tsx` | 页面容器，管理流程状态 |
-| 新建 | `supabase/functions/generate-parent-ability-insight/index.ts` | AI 报告生成边缘函数 |
-| 修改 | `src/App.tsx` | 添加路由 `/parent-ability-assessment` |
-| 修改 | `src/pages/CampIntro.tsx` | 训练营介绍页增加"先测一测"入口按钮 |
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
----
+在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+
+```text
+server_error  ████████████  3次 (60%)
+├ 诊断卡片...
+└ 最近报错:
+  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
+  · 情绪健康测评      张三    2026.02.26 09:20
+```
+
+每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
 
 ## 技术细节
 
-### AI 情景追问触发逻辑
+| 文件 | 改动说明 |
+|------|----------|
+| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
+| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
 
-```text
-在每个子维度（2题一组）答完后检查：
-- 如果2题得分均 <= 2（弱项），触发 AI 情景追问
-- 调用 smart-question-followup 函数，传入子维度信息
-- 生成一道具体情景选择题，答案纳入最终报告
-- 最多触发 3 次追问，避免测评过长
-```
-
-### 边缘函数 `generate-parent-ability-insight`
-
-```text
-输入：三力得分、各子维度得分、结果类型、情景追问回答
-输出：JSON { portrait, blindSpot, microAction, balanceComment }
-- portrait: 3-4 句家长情绪画像
-- blindSpot: 最弱子维度的场景分析
-- microAction: 本周可执行的1个练习
-- balanceComment: 雷达图一句话解读
-```
-
-### 用户流程
-
-```text
-训练营介绍页 → "先测一测我的三力水平"
-  → 开始页（3个痛点场景 + 三力介绍）
-  → 答题（24题 + 最多3道AI情景追问，约5分钟）
-  → 结果页（雷达图 + AI画像 + 类型 + 训练营推荐）
-```
-
-### UI 风格
-
-- 配色：emerald/teal 渐变，与训练营主题一致
-- 复用现有 `CommAssessmentQuestions` 的滑动交互模式
-- AI 加载时使用 Sparkles 图标 + 渐进式文字显示
-- 雷达图使用 recharts（已安装）
+## 改动量
+- 2 个文件
+- 数据采集层约 30 行改动
+- UI 展示层约 40 行改动
+- 不影响现有功能，纯增量
 

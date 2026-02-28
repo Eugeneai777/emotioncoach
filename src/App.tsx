@@ -87,6 +87,7 @@ const CommunicationCoach = lazyRetry(() => import("./pages/CommunicationCoach"))
 const CommunicationHistory = lazyRetry(() => import("./pages/CommunicationHistory"));
 const CommunicationCoachIntro = lazyRetry(() => import("./pages/CommunicationCoachIntro"));
 const CommunicationAssessment = lazyRetry(() => import("./pages/CommunicationAssessment"));
+const ParentAbilityAssessment = lazyRetry(() => import("./pages/ParentAbilityAssessment"));
 
 // 用户相关
 const UserProfile = lazyRetry(() => import("./pages/UserProfile"));
@@ -282,6 +283,7 @@ const App = () => (
               <Route path="/communication-history" element={<CommunicationHistory />} />
               <Route path="/communication-intro" element={<CommunicationCoachIntro />} />
               <Route path="/communication-assessment" element={<CommunicationAssessment />} />
+              <Route path="/parent-ability-assessment" element={<ParentAbilityAssessment />} />
               <Route path="/parent-diary" element={<ParentChildDiary />} />
               <Route path="/camp-intro/:campType" element={<CampIntro />} />
               <Route path="/camp/:campId" element={<TrainingCampDetail />} />

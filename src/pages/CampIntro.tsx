@@ -305,7 +305,18 @@ const CampIntro = () => {
 
       {/* Sticky Bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-purple-100 z-20">
-        <div className="container max-w-lg mx-auto">
+        <div className="container max-w-lg mx-auto space-y-2">
+          {/* 三力测评入口 - 仅 parent_emotion_21 训练营显示 */}
+          {campType === 'parent_emotion_21' && !hasJoinedCamp && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/parent-ability-assessment')}
+              className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            >
+              <Sparkles className="w-4 h-4 mr-1" />先测一测我的三力水平
+            </Button>
+          )}
           <Button 
             size="lg" 
             onClick={() => {
