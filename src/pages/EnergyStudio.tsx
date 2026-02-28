@@ -116,6 +116,10 @@ const EnergyStudio = () => {
       navigate('/communication-assessment');
       return;
     }
+    if (toolId === 'parent-ability') {
+      navigate('/parent-ability-assessment');
+      return;
+    }
     setActiveTool(toolId);
   };
 
