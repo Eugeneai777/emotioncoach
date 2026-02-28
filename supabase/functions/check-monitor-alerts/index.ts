@@ -7,11 +7,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // 验证 cron secret 或 admin 身份
+  // 验证 cron secret、anon key（pg_cron）或 admin 身份
   const authHeader = req.headers.get('authorization') || '';
   const token = authHeader.replace('Bearer ', '');
   const cronSecret = Deno.env.get('CRON_SECRET');
-  const isCron = cronSecret && token === cronSecret;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const isCron = (cronSecret && token === cronSecret) || 
+                 (anonKey && token === anonKey) || 
+                 (serviceKey && token === serviceKey);
 
   if (!isCron) {
     const authClient = createClient(

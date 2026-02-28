@@ -7,11 +7,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Support both cron secret and authenticated admin user
+  // Support cron secret, anon key (pg_cron), service role, or authenticated admin user
   const authHeader = req.headers.get('authorization') || '';
   const token = authHeader.replace('Bearer ', '');
   const cronSecret = Deno.env.get('CRON_SECRET');
-  const isCron = cronSecret && token === cronSecret;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const isCron = (cronSecret && token === cronSecret) || 
+                 (anonKey && token === anonKey) || 
+                 (serviceRoleKey && token === serviceRoleKey);
 
   if (!isCron) {
     // Validate as authenticated user
