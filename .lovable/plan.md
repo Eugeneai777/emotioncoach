@@ -1,65 +1,61 @@
 
 
-# 错误类型分布增加页面位置、用户、时间信息
+## 问题分析
 
-## 问题
+当前告警通知的触发方式存在根本性问题：
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+1. **风险内容告警**：`useEmergencyAlert` 是前端 React Hook，只在管理员打开 `RiskContentMonitor` 组件时，通过 `useEffect` 遍历数据库记录来触发通知。如果没有管理员打开页面，通知永远不会发送。
 
-## 修复方案
+2. **成本告警**：`check-cost-alerts` 是后端函数，已支持 cron 调用，但**未配置 cron 定时任务**。
 
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
+3. **`scan-risk-content`**：后端函数已能实时检测风险内容并写入数据库，但写入后**没有触发企业微信通知**。
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+**核心问题**：告警推送逻辑放在了前端（需要管理员在线），而不是后端（自动执行）。
 
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
+---
 
-### 2. 错误指标增强：`typeDistribution` 携带详情
+## 实施计划
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+### 1. 修改 `scan-risk-content` 边缘函数 — 检测到风险后直接推送企业微信通知
 
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
+在风险记录成功插入 `monitor_risk_content` 后，增加服务端逻辑：
+- 查询 `emergency_contacts` 表中匹配 `risk_content` 来源且匹配对应级别的联系人
+- 调用 `send-emergency-alert` 函数推送企业微信通知
+- 只对 `critical` 和 `high` 级别风险自动推送
 
-### 3. 用户名查询
+这样每次 AI 对话或社区内容触发风险检测时，**实时**推送通知，无需管理员在线。
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+### 2. 为 `check-cost-alerts` 添加 cron 定时任务
 
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
+- 添加每 30 分钟执行一次的 cron 任务
+- 并在 `check-cost-alerts` 函数中，将现有的 `send-wecom-notification`（不存在的函数）替换为 `send-emergency-alert`
 
-### 4. UI 展示增强
+### 3. 创建 `check-monitor-alerts` 边缘函数 — 统一巡检
 
-**文件**：`src/components/admin/StabilityMonitor.tsx`
+新建一个定时巡检函数，每 15 分钟执行，检查：
+- API 错误率突增（`monitor_api_errors` 表，最近 15 分钟错误数 > 阈值）
+- 前端错误突增（`monitor_frontend_errors` 表）
+- 未处理的高危风险内容（`monitor_risk_content` 表中 `status = 'pending'` 且 `risk_level in ('critical','high')`）
 
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
+触发条件满足时，调用 `send-emergency-alert` 推送通知。配合 cron 任务自动执行。
 
-```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
-```
+### 4. 注册 cron 定时任务
 
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
+通过 SQL 注册两个新 cron job：
+- `check-cost-alerts`：每 30 分钟
+- `check-monitor-alerts`：每 15 分钟
+
+### 5. 前端告警逻辑保留但降级
+
+`RiskContentMonitor` 中的 `useEmergencyAlert` useEffect 保留作为**补充**（管理员在线时的即时反馈），但主要告警职责由后端承担。
+
+---
 
 ## 技术细节
 
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
-
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
+**修改文件：**
+- `supabase/functions/scan-risk-content/index.ts` — 插入记录后增加通知推送
+- `supabase/functions/check-cost-alerts/index.ts` — 修复通知调用（`send-wecom-notification` → `send-emergency-alert`）
+- 新建 `supabase/functions/check-monitor-alerts/index.ts` — 统一巡检函数
+- SQL：注册 2 个 cron job
 
