@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { scanCommunityContent } from "@/lib/scanCommunityContent";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -199,6 +200,18 @@ const CampShareDialog = ({
       });
 
       if (error) throw error;
+
+      // 异步风险扫描
+      const fullContent = `${customTitle || ''} ${shareContent || ''} ${insight || ''}`.trim();
+      if (fullContent) {
+        scanCommunityContent({
+          content: fullContent,
+          userId: user.id,
+          contentSource: 'community_post',
+          sourceDetail: `训练营分享: ${campName}`,
+          page: '/community',
+        });
+      }
 
       // 更新分享状态 - 根据训练营类型更新不同的表
       const today = getTodayInBeijing();

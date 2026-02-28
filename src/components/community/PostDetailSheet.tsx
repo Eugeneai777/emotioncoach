@@ -1,4 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { scanCommunityContent } from "@/lib/scanCommunityContent";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -351,6 +352,16 @@ const PostDetailSheet = ({
         parent_id: replyTarget?.id || null,
       });
       if (error) throw error;
+
+      // 异步风险扫描（不阻塞用户）
+      scanCommunityContent({
+        content: newComment.trim(),
+        userId: session.user.id,
+        contentSource: 'post_comment',
+        sourceDetail: `帖子评论`,
+        sourceId: post.id,
+        page: `/community/post/${post.id}`,
+      });
 
       // 查询实际评论数并更新
       const { count: actualCount } = await supabase
