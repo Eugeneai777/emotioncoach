@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ParentAbilityStartScreen } from "@/components/parent-ability-assessment/ParentAbilityStartScreen";
 import { ParentAbilityQuestions, type FollowUpAnswer } from "@/components/parent-ability-assessment/ParentAbilityQuestions";
 import { ParentAbilityResult } from "@/components/parent-ability-assessment/ParentAbilityResult";
 import { ParentAbilityHistory, type AssessmentRecord } from "@/components/parent-ability-assessment/ParentAbilityHistory";
+import PageHeader from "@/components/PageHeader";
 
 type Phase = 'start' | 'questions' | 'result' | 'history' | 'view-record';
 
@@ -33,13 +34,30 @@ const ParentAbilityAssessment = () => {
     setPhase('view-record');
   };
 
+  const handleGoBack = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && phase === 'start') {
+        handleGoBack();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [phase, handleGoBack]);
+
   if (phase === 'start') {
     return (
-      <ParentAbilityStartScreen
-        onStart={() => setPhase('questions')}
-        onBack={() => navigate(-1)}
-        onHistory={() => setPhase('history')}
-      />
+      <>
+        <PageHeader title="家长应对能力测评" backTo="/parent-coach" />
+        <ParentAbilityStartScreen
+          onStart={() => setPhase('questions')}
+          onBack={undefined}
+          onHistory={() => setPhase('history')}
+        />
+      </>
     );
   }
 
