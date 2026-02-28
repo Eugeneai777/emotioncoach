@@ -5691,6 +5691,66 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_ability_assessments: {
+        Row: {
+          ai_insight: Json | null
+          answers: Json | null
+          created_at: string
+          follow_up_answers: Json | null
+          id: string
+          insight_max: number
+          insight_score: number
+          repair_max: number
+          repair_score: number
+          result_title: string
+          result_type: string
+          stability_max: number
+          stability_score: number
+          sub_dimension_scores: Json | null
+          total_max: number
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          ai_insight?: Json | null
+          answers?: Json | null
+          created_at?: string
+          follow_up_answers?: Json | null
+          id?: string
+          insight_max?: number
+          insight_score?: number
+          repair_max?: number
+          repair_score?: number
+          result_title: string
+          result_type: string
+          stability_max?: number
+          stability_score?: number
+          sub_dimension_scores?: Json | null
+          total_max: number
+          total_score: number
+          user_id: string
+        }
+        Update: {
+          ai_insight?: Json | null
+          answers?: Json | null
+          created_at?: string
+          follow_up_answers?: Json | null
+          id?: string
+          insight_max?: number
+          insight_score?: number
+          repair_max?: number
+          repair_score?: number
+          result_title?: string
+          result_type?: string
+          stability_max?: number
+          stability_score?: number
+          sub_dimension_scores?: Json | null
+          total_max?: number
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       parent_coaching_sessions: {
         Row: {
           briefing_id: string | null
