@@ -6,6 +6,7 @@ import { ArrowLeft, Lock, Shield, Eye, Heart, Sparkles } from "lucide-react";
 interface ParentAbilityStartScreenProps {
   onStart: () => void;
   onBack?: () => void;
+  onHistory?: () => void;
 }
 
 export function ParentAbilityStartScreen({ onStart, onBack }: ParentAbilityStartScreenProps) {
