@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { scanCommunityContent } from "@/lib/scanCommunityContent";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -204,6 +205,18 @@ const BriefingShareDialog = ({
       });
 
       if (error) throw error;
+
+      // 异步风险扫描
+      const fullContent = `${customTitle || ''} ${shareContent || ''} ${insight || ''}`.trim();
+      if (fullContent) {
+        scanCommunityContent({
+          content: fullContent,
+          userId: user.id,
+          contentSource: 'community_post',
+          sourceDetail: '简报分享',
+          page: '/community',
+        });
+      }
 
       toast({
         title: "分享成功",

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { scanCommunityContent } from "@/lib/scanCommunityContent";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,15 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
       });
 
       if (error) throw error;
+
+      // 异步风险扫描（不阻塞用户）
+      scanCommunityContent({
+        content: content.trim(),
+        userId: session.user.id,
+        contentSource: 'community_post',
+        sourceDetail: `社区帖子: ${title.trim() || '无标题'}`,
+        page: '/community',
+      });
 
       toast({
         title: "发布成功",
