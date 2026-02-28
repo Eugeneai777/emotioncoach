@@ -41,9 +41,10 @@ export interface AssessmentRecord {
 interface ParentAbilityHistoryProps {
   onViewReport: (record: AssessmentRecord) => void;
   onBack: () => void;
+  onRetake?: () => void;
 }
 
-export function ParentAbilityHistory({ onViewReport, onBack }: ParentAbilityHistoryProps) {
+export function ParentAbilityHistory({ onViewReport, onBack, onRetake }: ParentAbilityHistoryProps) {
   const { user } = useAuth();
   const [records, setRecords] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,6 +179,18 @@ export function ParentAbilityHistory({ onViewReport, onBack }: ParentAbilityHist
                 </motion.div>
               );
             })}
+          </div>
+        )}
+
+        {/* 重新测评按钮 */}
+        {!loading && onRetake && (
+          <div className="pt-2">
+            <Button
+              onClick={onRetake}
+              className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium rounded-full shadow-lg"
+            >
+              重新测评
+            </Button>
           </div>
         )}
       </div>

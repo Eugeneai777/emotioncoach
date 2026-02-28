@@ -57,6 +57,7 @@ const ParentAbilityAssessment = () => {
       <ParentAbilityHistory
         onViewReport={handleViewRecord}
         onBack={() => setPhase('start')}
+        onRetake={() => setPhase('questions')}
       />
     );
   }
