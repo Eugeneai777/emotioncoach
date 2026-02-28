@@ -6,9 +6,10 @@ import { ArrowLeft, Lock, Shield, Eye, Heart, Sparkles } from "lucide-react";
 interface ParentAbilityStartScreenProps {
   onStart: () => void;
   onBack?: () => void;
+  onHistory?: () => void;
 }
 
-export function ParentAbilityStartScreen({ onStart, onBack }: ParentAbilityStartScreenProps) {
+export function ParentAbilityStartScreen({ onStart, onBack, onHistory }: ParentAbilityStartScreenProps) {
   const painPoints = [
     { text: '孩子一发脾气，我也忍不住跟着爆发', emoji: '😤' },
     { text: '明明为TA好，为什么TA就是觉得我不理解？', emoji: '😔' },
@@ -113,6 +114,15 @@ export function ParentAbilityStartScreen({ onStart, onBack }: ParentAbilityStart
             开始测评我的三力水平
           </Button>
         </motion.div>
+
+        {/* 历史记录 */}
+        {onHistory && (
+          <motion.div initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} className="text-center" style={{ transform: 'translateZ(0)' }}>
+            <button onClick={onHistory} className="text-sm text-teal-600 underline underline-offset-2">
+              查看历史测评记录
+            </button>
+          </motion.div>
+        )}
 
         {/* 隐私 */}
         <motion.div initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center" style={{ transform: 'translateZ(0)' }}>
