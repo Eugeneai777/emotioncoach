@@ -41,9 +41,10 @@ export interface AssessmentRecord {
 interface ParentAbilityHistoryProps {
   onViewReport: (record: AssessmentRecord) => void;
   onBack: () => void;
+  onRetake?: () => void;
 }
 
-export function ParentAbilityHistory({ onViewReport, onBack }: ParentAbilityHistoryProps) {
+export function ParentAbilityHistory({ onViewReport, onBack, onRetake }: ParentAbilityHistoryProps) {
   const { user } = useAuth();
   const [records, setRecords] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
