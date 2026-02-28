@@ -15,7 +15,7 @@ serve(async (req) => {
   const srvKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const isCron = (cronSecret && token === cronSecret) || 
                  (anonKey && token === anonKey) || 
-                 (serviceKey && token === serviceKey);
+                 (srvKey && token === srvKey);
 
   if (!isCron) {
     const authClient = createClient(
