@@ -160,10 +160,13 @@ export function ParentAbilityResult({ answers, followUpAnswers, onRestart, saved
     { key: 'repair', color: '#8b5cf6', bgColor: 'bg-violet-50', textColor: 'text-violet-700', Icon: Heart },
   ];
 
-  // Find weakest sub-dimension
+  // Find weakest sub-dimension (only highlight if notably lower than average)
   const weakestSub = subDimScores.reduce((min, cur) =>
     (cur.score / cur.maxScore) < (min.score / min.maxScore) ? cur : min
   , subDimScores[0]);
+  const avgSubPct = subDimScores.reduce((s, d) => s + d.score / d.maxScore, 0) / subDimScores.length;
+  const weakestPct = weakestSub.score / weakestSub.maxScore;
+  const showWeakest = weakestPct < avgSubPct - 0.1; // Only highlight if >10% below average
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white p-4 pb-24">
@@ -251,7 +254,7 @@ export function ParentAbilityResult({ answers, followUpAnswers, onRestart, saved
                   const pct = Math.round((sub.score / sub.maxScore) * 100);
                   const dimIdx = ['stability', 'insight', 'repair'].indexOf(sub.dimension);
                   const barColor = dimConfig[dimIdx]?.color || '#10b981';
-                  const isWeakest = sub.subDimension === weakestSub.subDimension;
+                  const isWeakest = showWeakest && sub.subDimension === weakestSub.subDimension;
                   return (
                     <div key={sub.subDimension} className={`flex items-center gap-2 ${isWeakest ? 'bg-amber-50 rounded-lg px-2 py-1 -mx-2' : ''}`}>
                       {isWeakest && <span className="text-xs">⚠️</span>}
