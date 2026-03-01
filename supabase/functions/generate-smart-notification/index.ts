@@ -654,9 +654,13 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
     });
 
   } catch (e) {
-    console.error("生成通知错误:", e instanceof Error ? e.message : "unknown");
+    const errMsg = e instanceof Error ? e.message : String(e);
+    const errStack = e instanceof Error ? e.stack?.slice(0, 300) : '';
+    console.error(`[generate-smart-notification] 错误: ${errMsg}`);
+    if (errStack) console.error(`[generate-smart-notification] Stack: ${errStack}`);
     return new Response(JSON.stringify({ 
-      error: "生成通知过程出现错误，请稍后再试" 
+      error: "生成通知过程出现错误，请稍后再试",
+      detail: errMsg
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
