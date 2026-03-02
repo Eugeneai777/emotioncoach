@@ -23,6 +23,7 @@ import { toast } from "sonner";
 
 const ISSUE_TYPE_CONFIG: Record<string, { label: string; icon: typeof ImageIcon; color: string }> = {
   share_action: { label: '用户分享', icon: Share2, color: 'text-emerald-500' },
+  native_share_landed: { label: '原生分享回访', icon: Share2, color: 'text-blue-500' },
   image_load_failed: { label: '图片加载失败', icon: XCircle, color: 'text-destructive' },
   config_missing: { label: '配置缺失', icon: FileWarning, color: 'text-orange-500' },
   config_incomplete: { label: '配置不完整', icon: AlertTriangle, color: 'text-yellow-600' },
