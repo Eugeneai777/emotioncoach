@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, Phone, Send, Shield, Clock, Activity, DollarSign, Users, ShieldAlert, RefreshCw, Pencil } from "lucide-react";
+import { Plus, Trash2, Phone, Send, Shield, Clock, Activity, DollarSign, Users, ShieldAlert, RefreshCw, Pencil, Share2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface EmergencyContact {
@@ -50,6 +50,7 @@ const ALERT_SOURCE_OPTIONS = [
   { value: "user_anomaly", label: "用户异常", icon: Users },
   { value: "stability", label: "稳定性监控", icon: RefreshCw },
   { value: "risk_content", label: "风险内容", icon: ShieldAlert },
+  { value: "og_health", label: "OG分享监控", icon: Share2 },
 ];
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -58,13 +59,14 @@ const SOURCE_LABELS: Record<string, string> = {
   user_anomaly: '用户异常',
   stability: '稳定性监控',
   risk_content: '风险内容',
+  og_health: 'OG分享监控',
 };
 
 const DEFAULT_FORM = {
   name: "",
   wecom_webhook_url: "",
   alert_levels: ["critical"] as string[],
-  alert_types: ["api_monitor", "cost_monitor", "user_anomaly", "stability", "risk_content"] as string[],
+  alert_types: ["api_monitor", "cost_monitor", "user_anomaly", "stability", "risk_content", "og_health"] as string[],
   description: "",
 };
 
