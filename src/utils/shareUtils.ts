@@ -104,6 +104,7 @@ export interface ShareResult {
 export interface ShareOptions {
   title?: string;
   text?: string;
+  filename?: string;
   onShowPreview?: (blobUrl: string) => void;
   onDownload?: () => void;
 }
@@ -113,28 +114,42 @@ export const handleShareWithFallback = async (
   filename: string,
   options: ShareOptions = {}
 ): Promise<ShareResult> => {
+  const { reportShareAction } = await import("@/lib/ogHealthReporter");
   const { isIOS, isMiniProgram, isAndroid, isWeChat } = getShareEnvironment();
   const file = new File([blob], filename, { type: 'image/png' });
   
+  const reportShare = (result: ShareResult) => {
+    try {
+      reportShareAction({
+        method: result.method,
+        success: result.success,
+        cancelled: result.cancelled,
+        title: options.title,
+        filename,
+      });
+    } catch { /* silent */ }
+    return result;
+  };
+
   // Mini Program environment: Always use image preview (no Web Share API support)
   if (isMiniProgram) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
-    return { success: true, method: 'preview', blobUrl };
+    return reportShare({ success: true, method: 'preview', blobUrl });
   }
   
   // WeChat H5: Skip navigator.share (unreliable), show image preview
   if (isWeChat && !isMiniProgram) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
-    return { success: true, method: 'preview', blobUrl };
+    return reportShare({ success: true, method: 'preview', blobUrl });
   }
   
   // iOS: Skip unreliable navigator.share, show image preview
   if (isIOS) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
-    return { success: true, method: 'preview', blobUrl };
+    return reportShare({ success: true, method: 'preview', blobUrl });
   }
   
   // Android: Try Web Share API first
@@ -145,15 +160,15 @@ export const handleShareWithFallback = async (
         title: options.title || filename,
         text: options.text,
       });
-      return { success: true, method: 'webshare' };
+      return reportShare({ success: true, method: 'webshare' });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        return { success: false, method: 'webshare', cancelled: true };
+        return reportShare({ success: false, method: 'webshare', cancelled: true });
       }
       // Fall through to preview on Android if share fails
       const blobUrl = URL.createObjectURL(blob);
       options.onShowPreview?.(blobUrl);
-      return { success: true, method: 'preview', blobUrl };
+      return reportShare({ success: true, method: 'preview', blobUrl });
     }
   }
   
@@ -165,10 +180,10 @@ export const handleShareWithFallback = async (
         title: options.title || filename,
         text: options.text,
       });
-      return { success: true, method: 'webshare' };
+      return reportShare({ success: true, method: 'webshare' });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        return { success: false, method: 'webshare', cancelled: true };
+        return reportShare({ success: false, method: 'webshare', cancelled: true });
       }
       // Fall through to download
     }
@@ -188,12 +203,12 @@ export const handleShareWithFallback = async (
     setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     
     options.onDownload?.();
-    return { success: true, method: 'download' };
+    return reportShare({ success: true, method: 'download' });
   } catch (error) {
-    return { 
+    return reportShare({ 
       success: false, 
       method: 'download', 
       error: (error as Error).message 
-    };
+    });
   }
 };

@@ -6,7 +6,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { detectPlatform } from "@/lib/platformDetector";
 
-type OGIssueType = 'image_load_failed' | 'config_missing' | 'config_incomplete' | 'image_url_invalid' | 'share_failed';
+type OGIssueType = 'image_load_failed' | 'config_missing' | 'config_incomplete' | 'image_url_invalid' | 'share_failed' | 'share_action';
 
 interface OGHealthReport {
   pageKey: string;
@@ -117,6 +117,35 @@ export function checkOGImageHealth(
     });
   };
   img.src = imageUrl;
+}
+
+/**
+ * 记录用户分享行为
+ */
+export function reportShareAction(options: {
+  method: 'webshare' | 'preview' | 'download';
+  success: boolean;
+  cancelled?: boolean;
+  title?: string;
+  filename?: string;
+}): void {
+  const pagePath = window.location.pathname;
+  const pageKey = pagePath || '/';
+
+  reportOGHealth({
+    pageKey,
+    pagePath,
+    issueType: 'share_action',
+    severity: 'info',
+    message: `用户分享: ${options.method} ${options.success ? '成功' : options.cancelled ? '取消' : '失败'}`,
+    extra: {
+      method: options.method,
+      success: options.success,
+      cancelled: options.cancelled || false,
+      title: options.title,
+      filename: options.filename,
+    },
+  });
 }
 
 /**
