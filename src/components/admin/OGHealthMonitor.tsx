@@ -22,6 +22,7 @@ import { getPlatformLabel, type MonitorPlatform } from "@/lib/platformDetector";
 import { toast } from "sonner";
 
 const ISSUE_TYPE_CONFIG: Record<string, { label: string; icon: typeof ImageIcon; color: string }> = {
+  share_action: { label: '用户分享', icon: Share2, color: 'text-emerald-500' },
   image_load_failed: { label: '图片加载失败', icon: XCircle, color: 'text-destructive' },
   config_missing: { label: '配置缺失', icon: FileWarning, color: 'text-orange-500' },
   config_incomplete: { label: '配置不完整', icon: AlertTriangle, color: 'text-yellow-600' },
@@ -77,6 +78,7 @@ export default function OGHealthMonitor() {
   });
 
   const stats = {
+    share_action: records.filter((r: any) => r.issue_type === 'share_action').length,
     image_load_failed: records.filter((r: any) => r.issue_type === 'image_load_failed').length,
     config_missing: records.filter((r: any) => r.issue_type === 'config_missing').length,
     config_incomplete: records.filter((r: any) => r.issue_type === 'config_incomplete').length,
@@ -143,7 +145,7 @@ export default function OGHealthMonitor() {
       />
 
       {/* 统计卡片 */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-6">
         {Object.entries(ISSUE_TYPE_CONFIG).map(([key, cfg]) => {
           const Icon = cfg.icon;
           const count = stats[key as keyof typeof stats] || 0;
