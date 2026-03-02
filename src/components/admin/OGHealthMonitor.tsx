@@ -23,6 +23,7 @@ import { toast } from "sonner";
 
 const ISSUE_TYPE_CONFIG: Record<string, { label: string; icon: typeof ImageIcon; color: string }> = {
   share_action: { label: '用户分享', icon: Share2, color: 'text-emerald-500' },
+  native_share_landed: { label: '原生分享回访', icon: Share2, color: 'text-blue-500' },
   image_load_failed: { label: '图片加载失败', icon: XCircle, color: 'text-destructive' },
   config_missing: { label: '配置缺失', icon: FileWarning, color: 'text-orange-500' },
   config_incomplete: { label: '配置不完整', icon: AlertTriangle, color: 'text-yellow-600' },
@@ -47,6 +48,14 @@ function getStartTime(range: string): string {
   return new Date(now.getTime() - ms[range]).toISOString();
 }
 
+function detectPlatformFromUA(ua: string): string {
+  const lower = ua.toLowerCase();
+  if (lower.includes('micromessenger') && lower.includes('miniprogram')) return 'miniprogram';
+  if (lower.includes('micromessenger')) return 'wechat';
+  if (/android|iphone|ipad|ipod/i.test(lower)) return 'mobile_browser';
+  return 'web';
+}
+
 export default function OGHealthMonitor() {
   const [platform, setPlatform] = useState<MonitorPlatform | 'all'>('all');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
@@ -56,29 +65,81 @@ export default function OGHealthMonitor() {
   const { data: records = [], isLoading, refetch } = useQuery({
     queryKey: ['monitor-og-health', platform, timeRange, typeFilter],
     queryFn: async () => {
-      let query = (supabase as any)
+      const startTime = getStartTime(timeRange);
+      
+      // Fetch OG health records
+      let ogQuery = (supabase as any)
         .from('monitor_og_health')
         .select('*')
-        .gte('created_at', getStartTime(timeRange))
+        .gte('created_at', startTime)
         .order('created_at', { ascending: false })
         .limit(500);
 
       if (platform !== 'all') {
-        query = query.eq('platform', platform);
+        ogQuery = ogQuery.eq('platform', platform);
       }
-      if (typeFilter !== 'all') {
-        query = query.eq('issue_type', typeFilter);
+      if (typeFilter !== 'all' && typeFilter !== 'native_share_landed') {
+        ogQuery = ogQuery.eq('issue_type', typeFilter);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      // Fetch native share landed events from conversion_events
+      let shareQuery = (supabase as any)
+        .from('conversion_events')
+        .select('*')
+        .eq('event_type', 'share_scan_landed')
+        .gte('created_at', startTime)
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      const [ogRes, shareRes] = await Promise.all([
+        typeFilter === 'native_share_landed' ? Promise.resolve({ data: [], error: null }) : ogQuery,
+        shareQuery,
+      ]);
+
+      if (ogRes.error) throw ogRes.error;
+
+      const ogRecords = (ogRes.data || []) as any[];
+      
+      // Transform conversion_events to match OG health record format
+      const shareRecords = ((shareRes.data || []) as any[])
+        .filter((e: any) => e.metadata?.ref_code === 'share')
+        .map((e: any) => ({
+          id: e.id,
+          issue_type: 'native_share_landed',
+          severity: 'info',
+          page_key: e.metadata?.landing_page || '-',
+          page_path: e.metadata?.landing_page || '-',
+          message: `原生分享回访 · 来源: ${e.metadata?.referrer || '直接访问'}`,
+          image_url: null,
+          user_id: e.user_id || e.visitor_id,
+          user_agent: e.metadata?.user_agent || '-',
+          platform: detectPlatformFromUA(e.metadata?.user_agent || ''),
+          extra: e.metadata,
+          status: 'resolved',
+          created_at: e.created_at,
+        }));
+
+      // Filter by platform if needed
+      const filteredShares = platform !== 'all'
+        ? shareRecords.filter((r: any) => r.platform === platform)
+        : shareRecords;
+
+      // If filtering by native_share_landed, only return share records
+      if (typeFilter === 'native_share_landed') {
+        return filteredShares;
+      }
+
+      // Merge and sort by created_at desc
+      const merged = [...ogRecords, ...filteredShares];
+      merged.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return merged;
     },
     refetchInterval: 30000,
   });
 
   const stats = {
     share_action: records.filter((r: any) => r.issue_type === 'share_action').length,
+    native_share_landed: records.filter((r: any) => r.issue_type === 'native_share_landed').length,
     image_load_failed: records.filter((r: any) => r.issue_type === 'image_load_failed').length,
     config_missing: records.filter((r: any) => r.issue_type === 'config_missing').length,
     config_incomplete: records.filter((r: any) => r.issue_type === 'config_incomplete').length,
@@ -145,7 +206,7 @@ export default function OGHealthMonitor() {
       />
 
       {/* 统计卡片 */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-7">
         {Object.entries(ISSUE_TYPE_CONFIG).map(([key, cfg]) => {
           const Icon = cfg.icon;
           const count = stats[key as keyof typeof stats] || 0;
