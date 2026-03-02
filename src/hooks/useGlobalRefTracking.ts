@@ -78,6 +78,7 @@ export const useGlobalRefTracking = () => {
  * 全局追踪组件 - 在 App.tsx 中使用
  */
 export const GlobalRefTracker = () => {
+  useAutoShareRef();
   useGlobalRefTracking();
   return null;
 };
