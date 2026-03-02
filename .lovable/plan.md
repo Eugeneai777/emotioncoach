@@ -1,65 +1,48 @@
 
 
-# 错误类型分布增加页面位置、用户、时间信息
+## 问题诊断结果
 
-## 问题
+`monitor_og_health` 表的 RLS 策略角色配置与其他监控表不一致：
 
-当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
-- **报错页面位置**：不知道是在哪个页面/功能触发的错误
-- **来源用户**：只有截断的 userId（8位），没有用户昵称
-- **详细时间**：没有展示最近发生时间
+- **其他监控表**（frontend_errors, api_errors, ux_anomalies, stability_records）：INSERT 策略角色为 `{anon, authenticated}` ✅
+- **monitor_og_health**：INSERT 策略角色为 `{public}` ⚠️，SELECT/UPDATE 也是 `{public}`
+
+在 Supabase 中，客户端请求使用 `anon` 或 `authenticated` 角色，而 `public` 是 PostgreSQL 层面的角色，不会被 Supabase 客户端 SDK 直接匹配，导致**未登录用户上报 OG 异常时可能被 RLS 拒绝**。
 
 ## 修复方案
 
-### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
+执行一次数据库迁移，将 `monitor_og_health` 的三条 RLS 策略对齐到其他监控表的标准：
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+```sql
+-- 1. 删除旧策略
+DROP POLICY "Anyone can insert OG health records" ON monitor_og_health;
+DROP POLICY "Admins can view OG health records" ON monitor_og_health;
+DROP POLICY "Admins can update OG health records" ON monitor_og_health;
 
-- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
-- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
-- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
+-- 2. 重建 INSERT 策略（anon + authenticated）
+CREATE POLICY "Anyone can insert OG health records"
+  ON monitor_og_health FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
 
-### 2. 错误指标增强：`typeDistribution` 携带详情
+-- 3. 重建 SELECT 策略（仅 authenticated + admin）
+CREATE POLICY "Admins can view OG health records"
+  ON monitor_og_health FOR SELECT
+  TO authenticated
+  USING (has_role(auth.uid(), 'admin'));
 
-**文件**：`src/lib/stabilityDataCollector.ts`
+-- 4. 重建 UPDATE 策略（仅 authenticated + admin）
+CREATE POLICY "Admins can update OG health records"
+  ON monitor_og_health FOR UPDATE
+  TO authenticated
+  USING (has_role(auth.uid(), 'admin'));
 
-- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
-- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
-
-### 3. 用户名查询
-
-**文件**：`src/components/admin/StabilityMonitor.tsx`
-
-- 收集所有出现在 `recentDetails` 中的 userId
-- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
-- 建立 userId → 显示名称 的映射
-
-### 4. UI 展示增强
-
-**文件**：`src/components/admin/StabilityMonitor.tsx`
-
-在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
-
-```text
-server_error  ████████████  3次 (60%)
-├ 诊断卡片...
-└ 最近报错:
-  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
-  · 情绪健康测评      张三    2026.02.26 09:20
+-- 5. 补充 DELETE 策略（与其他监控表一致，仅 service_role）
+CREATE POLICY "Service role can delete OG health records"
+  ON monitor_og_health FOR DELETE
+  TO service_role
+  USING (true);
 ```
 
-每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
-
-## 技术细节
-
-| 文件 | 改动说明 |
-|------|----------|
-| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
-| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
-
-## 改动量
-- 2 个文件
-- 数据采集层约 30 行改动
-- UI 展示层约 40 行改动
-- 不影响现有功能，纯增量
+改动仅涉及 RLS 策略，不需要修改任何前端代码。
 
