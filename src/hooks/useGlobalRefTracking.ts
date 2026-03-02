@@ -3,6 +3,31 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { useWealthCampAnalytics } from './useWealthCampAnalytics';
 
 /**
+ * 自动为页面 URL 注入 ref=share 参数
+ * 
+ * 当用户使用浏览器原生分享（Safari/Chrome 分享菜单）时，
+ * 分享出去的链接会自动带上 ?ref=share，
+ * 接收者点击后通过 useGlobalRefTracking 记录回访。
+ */
+const useAutoShareRef = () => {
+  const [searchParams] = useSearchParams();
+  const hasInjected = useRef(false);
+
+  useEffect(() => {
+    if (hasInjected.current) return;
+    
+    // 如果已有 ref 参数（合伙人链接等），不覆盖
+    if (searchParams.has('ref')) return;
+    
+    // 注入 ref=share 到 URL，不触发页面刷新
+    const url = new URL(window.location.href);
+    url.searchParams.set('ref', 'share');
+    window.history.replaceState(window.history.state, '', url.toString());
+    hasInjected.current = true;
+  }, [searchParams]);
+};
+
+/**
  * 全局合伙人追踪 Hook
  * 
  * 任何页面带 ?ref=partnerCode 参数时自动追踪：
