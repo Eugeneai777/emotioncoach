@@ -655,6 +655,8 @@ ${reflection}`;
     coachingJustCompletedRef.current = true;
     setHasShownCelebration(false);
     queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+    queryClient.invalidateQueries({ queryKey: ['wealth-camp'] });
+    queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });
     
     if (campId) {
       trackDayCheckin(currentDay, campId);
@@ -677,6 +679,8 @@ ${reflection}`;
     // 3秒后再刷新一次，等待边缘函数写入完成后允许DB同步
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+      queryClient.invalidateQueries({ queryKey: ['wealth-camp'] });
+      queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });
       coachingJustCompletedRef.current = false;
     }, 3000);
   };
