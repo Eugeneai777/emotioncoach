@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
@@ -13,6 +13,7 @@ import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
 import AnomalyAggregation from "./AnomalyAggregation";
 import PaymentMonitor from "./PaymentMonitor";
+import OGHealthMonitor from "./OGHealthMonitor";
 import MonitorFilters from "./shared/MonitorFilters";
 import { injectMonitorMockData } from "@/lib/monitorMockData";
 import { useMonitorUserAnomalies } from "@/lib/monitorQueries";
@@ -180,6 +181,11 @@ export default function UserAnomalyMonitor() {
             <span className="hidden sm:inline">体验异常监控</span>
             <span className="sm:hidden">体验</span>
           </TabsTrigger>
+          <TabsTrigger value="og" className="text-xs sm:text-sm">
+            <ImageIcon className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">OG分享监控</span>
+            <span className="sm:hidden">OG</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="user">
@@ -311,6 +317,10 @@ export default function UserAnomalyMonitor() {
 
         <TabsContent value="ux">
           <UxAnomalyMonitor />
+        </TabsContent>
+
+        <TabsContent value="og">
+          <OGHealthMonitor />
         </TabsContent>
 
         <TabsContent value="aggregation">
