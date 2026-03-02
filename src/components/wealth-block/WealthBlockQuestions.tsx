@@ -234,18 +234,37 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         setTimeout(() => {
           setCurrentIndex(prev => prev + 1);
         }, 300);
+      } else if (Object.keys(newAnswers).length === questions.length) {
+        // 最后一题回答完毕，自动提交
+        setTimeout(() => {
+          autoSubmitWithAnswers(newAnswers);
+        }, 500);
       }
     }
   };
 
+  // 自动提交（用传入的answers避免闭包问题）
+  const autoSubmitWithAnswers = async (finalAnswers: Record<number, number>) => {
+    const result = calculateResult(finalAnswers);
+    toast.success("🎉 恭喜完成测评！正在生成深度问题...", { duration: 2000 });
+    const pendingData = {
+      result,
+      answers: finalAnswers,
+      followUpInsights: followUpAnswers.length > 0 ? followUpAnswers : undefined
+    };
+    setPendingResult(pendingData);
+    await generateDeepFollowUp(result, pendingData);
+  };
+
   // 处理追问回答
   const handleFollowUpAnswer = (answer: string) => {
-    setFollowUpAnswers(prev => [...prev, {
+    const newFollowUps = [...followUpAnswers, {
       questionId: currentQuestion.id,
       questionText: currentQuestion.text,
       selectedOption: answer,
       timestamp: new Date()
-    }]);
+    }];
+    setFollowUpAnswers(newFollowUps);
     
     setShowFollowUp(false);
     setCurrentFollowUp(null);
@@ -253,11 +272,15 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     
     toast.success("感谢分享！", { duration: 1500 });
     
-    // 继续下一题
+    // 继续下一题或自动提交
     if (!isLastQuestion) {
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
       }, 300);
+    } else if (Object.keys(answers).length === questions.length) {
+      setTimeout(() => {
+        autoSubmitWithAnswers(answers);
+      }, 500);
     }
   };
 
@@ -267,11 +290,15 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     setCurrentFollowUp(null);
     setPendingNextQuestion(false);
     
-    // 继续下一题
+    // 继续下一题或自动提交
     if (!isLastQuestion) {
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
       }, 300);
+    } else if (Object.keys(answers).length === questions.length) {
+      setTimeout(() => {
+        autoSubmitWithAnswers(answers);
+      }, 500);
     }
   };
 
