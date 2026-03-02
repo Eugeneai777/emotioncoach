@@ -139,6 +139,7 @@ export default function OGHealthMonitor() {
 
   const stats = {
     share_action: records.filter((r: any) => r.issue_type === 'share_action').length,
+    native_share_landed: records.filter((r: any) => r.issue_type === 'native_share_landed').length,
     image_load_failed: records.filter((r: any) => r.issue_type === 'image_load_failed').length,
     config_missing: records.filter((r: any) => r.issue_type === 'config_missing').length,
     config_incomplete: records.filter((r: any) => r.issue_type === 'config_incomplete').length,
