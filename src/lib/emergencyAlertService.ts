@@ -5,7 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type AlertSource = 'api_monitor' | 'cost_monitor' | 'user_anomaly' | 'stability' | 'risk_content';
+export type AlertSource = 'api_monitor' | 'cost_monitor' | 'user_anomaly' | 'stability' | 'risk_content' | 'og_health';
 
 export interface EmergencyAlertPayload {
   /** 告警来源模块 */
@@ -26,6 +26,7 @@ const SOURCE_LABELS: Record<AlertSource, string> = {
   user_anomaly: '用户异常',
   stability: '稳定性监控',
   risk_content: '风险内容',
+  og_health: 'OG分享监控',
 };
 
 // Cooldown: same source+alertType won't fire within 5 minutes
