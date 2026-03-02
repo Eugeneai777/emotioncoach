@@ -5101,6 +5101,54 @@ export type Database = {
         }
         Relationships: []
       }
+      monitor_og_health: {
+        Row: {
+          created_at: string
+          extra: Json | null
+          id: string
+          image_url: string | null
+          issue_type: string
+          message: string
+          page_key: string
+          page_path: string | null
+          platform: string | null
+          severity: string
+          status: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          image_url?: string | null
+          issue_type: string
+          message: string
+          page_key: string
+          page_path?: string | null
+          platform?: string | null
+          severity?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          image_url?: string | null
+          issue_type?: string
+          message?: string
+          page_key?: string
+          page_path?: string | null
+          platform?: string | null
+          severity?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       monitor_risk_content: {
         Row: {
           action_taken: string | null
