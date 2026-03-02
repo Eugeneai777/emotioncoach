@@ -48,6 +48,14 @@ function getStartTime(range: string): string {
   return new Date(now.getTime() - ms[range]).toISOString();
 }
 
+function detectPlatformFromUA(ua: string): string {
+  const lower = ua.toLowerCase();
+  if (lower.includes('micromessenger') && lower.includes('miniprogram')) return 'miniprogram';
+  if (lower.includes('micromessenger')) return 'wechat';
+  if (/android|iphone|ipad|ipod/i.test(lower)) return 'mobile_browser';
+  return 'web';
+}
+
 export default function OGHealthMonitor() {
   const [platform, setPlatform] = useState<MonitorPlatform | 'all'>('all');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
