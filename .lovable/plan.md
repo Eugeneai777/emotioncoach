@@ -1,76 +1,65 @@
 
 
-## Bug: 教练梳理完成后状态未显示已完成
+# 错误类型分布增加页面位置、用户、时间信息
 
-### 问题分析
+## 问题
 
-经过代码和数据库排查，发现了一个**状态竞态**问题：
+当前"错误类型分布与诊断"只显示错误类型名称和次数（如 `server_error 3次 60%`），缺少关键上下文：
+- **报错页面位置**：不知道是在哪个页面/功能触发的错误
+- **来源用户**：只有截断的 userId（8位），没有用户昵称
+- **详细时间**：没有展示最近发生时间
 
-1. 用户在"教练对话"标签完成教练梳理后，`handleCoachingComplete()` 在内存中将 `coachingCompleted` 设为 `true`
-2. 同时，`handleCoachingComplete` 调用 `queryClient.invalidateQueries` 刷新日志数据
-3. 刷新后的 `journalEntries` 触发 `useEffect`（第524行），该 effect 用 `!!todayEntry.behavior_block` **重新覆盖** `coachingCompleted` 的值
-4. 如果此时 `generate-wealth-journal` 边缘函数尚未完成写入（异步调用），或写入失败，`behavior_block` 仍为 null，导致 `coachingCompleted` 被重置为 `false`
+## 修复方案
 
-数据库验证：多条日志记录显示 `meditation_completed: true` 但 `behavior_block: null`，说明日志生成环节存在写入不完整或失败的情况。
+### 1. 数据采集层：`RequestRecord` 增加 `page` 字段
 
-### 解决方案
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-**双保险机制**：防止 useEffect 覆盖已确认的完成状态 + 增加回调重试
+- `RequestRecord` 接口新增 `page?: string` 字段，记录触发请求时的 `location.pathname`
+- 在 fetch 拦截器的两处 `pushRecord()` 调用中，添加 `page: location.pathname`
+- 同时增加路径到中文页面名的映射函数 `getPageLabel()`，将 `/wealth-block` 映射为"财富卡点测评"等
 
-#### 修改 1：使用 ref 保护已确认的教练完成状态
+### 2. 错误指标增强：`typeDistribution` 携带详情
 
-在 `src/pages/WealthCampCheckIn.tsx` 中：
+**文件**：`src/lib/stabilityDataCollector.ts`
 
-- 新增 `coachingCompletedRef` (类似已有的 `isRedoingMeditationRef` 模式)
-- 在 `handleCoachingComplete` 中设置 `coachingCompletedRef.current = true`
-- 在 `useEffect`（第524-552行）中检查：如果 `coachingCompletedRef` 为 true，则**不**用 DB 值覆盖 `coachingCompleted` 状态
+- `ErrorMetrics.typeDistribution` 每项增加 `recentDetails` 数组，包含该类型最近 5 条错误的 `{ userId, page, timestamp }` 信息
+- 在 `computeHealthMetrics()` 的错误统计逻辑中收集这些详情
 
-```text
-// 伪代码
-const coachingJustCompletedRef = useRef(false);
+### 3. 用户名查询
 
-handleCoachingComplete: 
-  coachingJustCompletedRef.current = true
-  setCoachingCompleted(true)
-  ...
+**文件**：`src/components/admin/StabilityMonitor.tsx`
 
-useEffect (journalEntries变化时):
-  if (!coachingJustCompletedRef.current) {
-    setCoachingCompleted(!!todayEntry.behavior_block)
-  }
-```
+- 收集所有出现在 `recentDetails` 中的 userId
+- 批量查询 `profiles` 表的 `display_name`（userId 是前8位，需用 `like` 匹配）
+- 建立 userId → 显示名称 的映射
 
-#### 修改 2：延迟重新验证
+### 4. UI 展示增强
 
-在 `handleCoachingComplete` 中，增加一个延迟查询（3秒后），等待边缘函数完成写入后再刷新数据：
+**文件**：`src/components/admin/StabilityMonitor.tsx`
+
+在"错误类型分布与诊断"的每个错误类型条目下方，新增一个"最近报错详情"区域：
 
 ```text
-handleCoachingComplete:
-  setCoachingCompleted(true)
-  coachingJustCompletedRef.current = true
-  // 立即刷新一次
-  queryClient.invalidateQueries(...)
-  // 3秒后再刷新一次（等待边缘函数完成）
-  setTimeout(() => {
-    queryClient.invalidateQueries(...)
-    coachingJustCompletedRef.current = false  // 此时DB应已更新，允许同步
-  }, 3000)
+server_error  ████████████  3次 (60%)
+├ 诊断卡片...
+└ 最近报错:
+  · 财富卡点测评支付  桑洪彪  2026.02.26 09:25
+  · 情绪健康测评      张三    2026.02.26 09:20
 ```
 
-#### 修改 3：WealthCoachEmbedded 回调时机优化
+每条显示：页面中文名 · 用户昵称（无则显示ID前8位）· 格式化时间
 
-在 `src/components/wealth-camp/WealthCoachEmbedded.tsx` 中，确保 `onCoachingComplete` 在 `generate-wealth-journal` 成功返回**之后**才调用（目前是在 briefing 数据生成后立即调用，可能先于日志写入完成）。
+## 技术细节
 
-实际上回调链是：`useDynamicCoachChat` 中 tool call 处理 → 调用 `generate-wealth-journal` → 成功后调用 `onBriefingGenerated` → 调用 `onCoachingComplete`。这个顺序是正确的，问题在于 `queryClient.invalidateQueries` 触发的 refetch 可能比回调更快到达 useEffect。
+| 文件 | 改动说明 |
+|------|----------|
+| `src/lib/stabilityDataCollector.ts` | `RequestRecord` 加 `page` 字段；fetch 拦截器记录 `location.pathname`；`typeDistribution` 增加 `recentDetails`；新增 `getPageLabel()` 路径映射 |
+| `src/components/admin/StabilityMonitor.tsx` | 查询 profiles 获取用户名；错误类型条目下展示页面、用户、时间详情 |
 
-### 涉及文件
+## 改动量
+- 2 个文件
+- 数据采集层约 30 行改动
+- UI 展示层约 40 行改动
+- 不影响现有功能，纯增量
 
-| 文件 | 改动 |
-|------|------|
-| `src/pages/WealthCampCheckIn.tsx` | 增加 `coachingJustCompletedRef` 防覆盖机制；`handleCoachingComplete` 增加延迟刷新 |
-
-### 预期效果
-
-- 用户完成教练梳理 → 立即显示已完成（绿色勾勾）
-- 切换回"今日任务"tab → 仍然显示已完成
-- 3秒后数据库同步完成，状态从 ref 保护切换为 DB 驱动，长期一致

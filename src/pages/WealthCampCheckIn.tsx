@@ -530,7 +530,10 @@ export default function WealthCampCheckIn() {
         if (!isRedoingMeditationRef.current) {
           setMeditationCompleted(todayEntry.meditation_completed || false);
         }
-        setCoachingCompleted(!!todayEntry.behavior_block);
+        // 如果教练梳理刚完成，不要用DB值覆盖（边缘函数可能还没写入完成）
+        if (!coachingJustCompletedRef.current) {
+          setCoachingCompleted(!!todayEntry.behavior_block);
+        }
         setSavedReflection(todayEntry.meditation_reflection || '');
         setShareCompleted((todayEntry as any).share_completed || hasSharedPost);
       } else {
@@ -553,6 +556,9 @@ export default function WealthCampCheckIn() {
 
   // 使用 ref 标记重新冥想状态，防止 useEffect 从 DB 覆盖回 true
   const isRedoingMeditationRef = useRef(false);
+  
+  // 使用 ref 保护教练梳理完成状态，防止 useEffect 在边缘函数写入完成前用 DB 值覆盖
+  const coachingJustCompletedRef = useRef(false);
   
   const handleRedoMeditation = () => {
     isRedoingMeditationRef.current = true;
@@ -646,6 +652,7 @@ ${reflection}`;
 
   const handleCoachingComplete = async () => {
     setCoachingCompleted(true);
+    coachingJustCompletedRef.current = true;
     setHasShownCelebration(false);
     queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
     
@@ -666,6 +673,12 @@ ${reflection}`;
     setTimeout(() => {
       checkAndAwardAchievements();
     }, 1000);
+    
+    // 3秒后再刷新一次，等待边缘函数写入完成后允许DB同步
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+      coachingJustCompletedRef.current = false;
+    }, 3000);
   };
 
   const scrollToMeditation = () => {
