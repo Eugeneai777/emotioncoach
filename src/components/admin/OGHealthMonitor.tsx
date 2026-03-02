@@ -206,7 +206,7 @@ export default function OGHealthMonitor() {
       />
 
       {/* 统计卡片 */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-7">
         {Object.entries(ISSUE_TYPE_CONFIG).map(([key, cfg]) => {
           const Icon = cfg.icon;
           const count = stats[key as keyof typeof stats] || 0;
