@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, Phone, Send, Shield, Clock, Activity, DollarSign, Users, ShieldAlert, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Phone, Send, Shield, Clock, Activity, DollarSign, Users, ShieldAlert, RefreshCw, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
 interface EmergencyContact {
@@ -60,16 +60,19 @@ const SOURCE_LABELS: Record<string, string> = {
   risk_content: '风险内容',
 };
 
+const DEFAULT_FORM = {
+  name: "",
+  wecom_webhook_url: "",
+  alert_levels: ["critical"] as string[],
+  alert_types: ["api_monitor", "cost_monitor", "user_anomaly", "stability", "risk_content"] as string[],
+  description: "",
+};
+
 export default function EmergencyContactsManagement() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    wecom_webhook_url: "",
-    alert_levels: ["critical"] as string[],
-    alert_types: ["api_monitor", "cost_monitor", "user_anomaly", "stability", "risk_content"] as string[],
-    description: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ ...DEFAULT_FORM });
   const [testing, setTesting] = useState<string | null>(null);
 
   const { data: contacts, isLoading } = useQuery({
@@ -111,11 +114,32 @@ export default function EmergencyContactsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emergency-contacts"] });
-      setDialogOpen(false);
-      setForm({ name: "", wecom_webhook_url: "", alert_levels: ["critical"], alert_types: ["api_monitor", "cost_monitor", "user_anomaly", "stability", "risk_content"], description: "" });
+      closeDialog();
       toast.success("紧急联系人添加成功");
     },
     onError: (err: any) => toast.error("添加失败: " + err.message),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: typeof form }) => {
+      const { error } = await (supabase as any)
+        .from("emergency_contacts")
+        .update({
+          name: values.name,
+          wecom_webhook_url: values.wecom_webhook_url,
+          alert_levels: values.alert_levels,
+          alert_types: values.alert_types,
+          description: values.description || null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["emergency-contacts"] });
+      closeDialog();
+      toast.success("联系人信息已更新");
+    },
+    onError: (err: any) => toast.error("更新失败: " + err.message),
   });
 
   const toggleMutation = useMutation({
@@ -139,6 +163,40 @@ export default function EmergencyContactsManagement() {
       toast.success("已删除");
     },
   });
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setEditingId(null);
+    setForm({ ...DEFAULT_FORM });
+  };
+
+  const openAdd = () => {
+    setEditingId(null);
+    setForm({ ...DEFAULT_FORM });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (contact: EmergencyContact) => {
+    setEditingId(contact.id);
+    setForm({
+      name: contact.name,
+      wecom_webhook_url: contact.wecom_webhook_url,
+      alert_levels: [...(contact.alert_levels || [])],
+      alert_types: [...(contact.alert_types || [])],
+      description: contact.description || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = () => {
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, values: form });
+    } else {
+      addMutation.mutate(form);
+    }
+  };
+
+  const isSubmitting = addMutation.isPending || updateMutation.isPending;
 
   const handleTest = async (contact: EmergencyContact) => {
     setTesting(contact.id);
@@ -193,13 +251,13 @@ export default function EmergencyContactsManagement() {
         {/* ========== 联系人管理 ========== */}
         <TabsContent value="contacts" className="space-y-4">
           <div className="flex justify-end">
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); else setDialogOpen(true); }}>
               <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" />添加联系人</Button>
+                <Button onClick={openAdd}><Plus className="h-4 w-4 mr-2" />添加联系人</Button>
               </DialogTrigger>
               <DialogContent size="sm">
                 <DialogHeader>
-                  <DialogTitle>添加紧急联系人</DialogTitle>
+                  <DialogTitle>{editingId ? "编辑紧急联系人" : "添加紧急联系人"}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-2">
                   <div>
@@ -265,10 +323,10 @@ export default function EmergencyContactsManagement() {
                   </div>
                   <Button
                     className="w-full"
-                    onClick={() => addMutation.mutate(form)}
-                    disabled={!form.name || !form.wecom_webhook_url || addMutation.isPending}
+                    onClick={handleSubmit}
+                    disabled={!form.name || !form.wecom_webhook_url || isSubmitting}
                   >
-                    {addMutation.isPending ? "添加中..." : "确认添加"}
+                    {isSubmitting ? (editingId ? "保存中..." : "添加中...") : (editingId ? "保存修改" : "确认添加")}
                   </Button>
                 </div>
               </DialogContent>
@@ -326,6 +384,14 @@ export default function EmergencyContactsManagement() {
                     </div>
                     <p className="text-xs text-muted-foreground truncate mb-3">{c.wecom_webhook_url}</p>
                     <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEdit(c)}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        编辑
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
