@@ -65,6 +65,7 @@ export default function OGPreviewManagement() {
         description: customConfig?.description || DEFAULT_OG_CONFIG.description,
         image: customConfig?.image_url || DEFAULT_OG_CONFIG.image,
         url: customConfig?.url || `${OG_BASE_URL}/`,
+        siteName: customConfig?.site_name || DEFAULT_OG_CONFIG.siteName,
       };
       
       return {

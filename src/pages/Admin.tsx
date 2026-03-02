@@ -24,33 +24,6 @@ import OGPreviewManagement from "@/components/admin/OGPreviewManagement";
 import { BloomPartnerInvitations } from "@/components/admin/BloomPartnerInvitations";
 import CommunityPostsManagement from "@/components/admin/CommunityPostsManagement";
 
-function AdminRoutes() {
-  return (
-    <Routes>
-      <Route index element={<AdminDashboard />} />
-      <Route path="users" element={<UserAccountsTable />} />
-      <Route path="orders" element={<OrdersTable />} />
-      <Route path="partners" element={<PartnerManagement />} />
-      <Route path="bloom-invitations" element={<BloomPartnerInvitations />} />
-      <Route path="coaches" element={<CoachTemplatesManagement />} />
-      <Route path="camps" element={<CampTemplatesManagement />} />
-      <Route path="videos" element={<VideoCoursesManagement />} />
-      <Route path="knowledge" element={<KnowledgeBaseManagement />} />
-      <Route path="tools" element={<EnergyStudioToolsManagement />} />
-      <Route path="usage" element={<UsageRecordsTable />} />
-      <Route path="pricing" element={<FeatureCostManagement />} />
-      <Route path="cost-monitor" element={<CostMonitorDashboard />} />
-      <Route path="conversion" element={<ConversionAnalytics />} />
-      <Route path="reports" element={<ReportsManagement />} />
-      <Route path="packages" element={<PackagesManagement />} />
-      <Route path="sync" element={<SyncStatusDashboard />} />
-      <Route path="service" element={<CustomerServiceManagement />} />
-      <Route path="og-preview" element={<OGPreviewManagement />} />
-      <Route path="community-posts" element={<CommunityPostsManagement />} />
-    </Routes>
-  );
-}
-
 import type { AdminRole } from "@/components/admin/AdminLayout";
 
 export default function Admin() {
