@@ -1,8 +1,10 @@
+import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet";
 import { usePageOG } from "@/hooks/usePageOG";
 import { OG_BASE_URL } from "@/config/ogConfig";
 import { useWechatShare } from "@/hooks/useWechatShare";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { checkOGImageHealth, checkOGConfigCompleteness, reportOGHealth } from "@/lib/ogHealthReporter";
 
 interface DynamicOGMetaProps {
   pageKey: string;
@@ -40,7 +42,7 @@ const DEFAULT_IMAGE_HEIGHT = 630;
  * <DynamicOGMeta pageKey="wealthBlock" overrides={{ title: "自定义标题" }} />
  */
 export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
-  const { ogConfig } = usePageOG(pageKey);
+  const { ogConfig, isLoading } = usePageOG(pageKey);
 
   // Apply overrides if provided
   const finalConfig = {
@@ -69,6 +71,39 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     link: canonicalUrl,
     imgUrl: finalConfig.image,
   });
+
+  // OG 健康检查 - 仅在配置加载完成后执行一次
+  const healthChecked = useRef(false);
+  useEffect(() => {
+    if (isLoading || healthChecked.current) return;
+    healthChecked.current = true;
+
+    const pagePath = window.location.pathname;
+
+    // 检查配置完整性
+    checkOGConfigCompleteness(
+      { ogTitle: finalConfig.ogTitle, description: finalConfig.description, image: finalConfig.image, url: finalConfig.url },
+      pageKey,
+      pagePath,
+      ogConfig.isCustomized
+    );
+
+    // 检查图片是否可加载
+    if (finalConfig.image) {
+      checkOGImageHealth(finalConfig.image, pageKey, pagePath);
+    }
+
+    // 如果数据库中没有该页面的自定义配置，记录为 info
+    if (!ogConfig.isCustomized) {
+      reportOGHealth({
+        pageKey,
+        pagePath,
+        issueType: 'config_missing',
+        severity: 'info',
+        message: `页面 ${pageKey} 使用默认 OG 配置，未在数据库中自定义`,
+      });
+    }
+  }, [isLoading, pageKey]);
 
   return (
     <Helmet>
