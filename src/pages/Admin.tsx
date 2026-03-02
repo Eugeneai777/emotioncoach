@@ -1,29 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Routes, Route } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import AdminDashboard from "@/components/admin/AdminDashboard";
-import { UserAccountsTable } from "@/components/admin/UserAccountsTable";
-import { OrdersTable } from "@/components/admin/OrdersTable";
-import { UsageRecordsTable } from "@/components/admin/UsageRecordsTable";
-import { SyncStatusDashboard } from "@/components/admin/SyncStatusDashboard";
-import ReportsManagement from "@/components/admin/ReportsManagement";
-import { VideoCoursesManagement } from "@/components/admin/VideoCoursesManagement";
-import { EnergyStudioToolsManagement } from "@/components/admin/EnergyStudioToolsManagement";
-import { PartnerManagement } from "@/components/admin/PartnerManagement";
-import { PackagesManagement } from "@/components/admin/PackagesManagement";
-import { CoachTemplatesManagement } from "@/components/admin/CoachTemplatesManagement";
-import { CampTemplatesManagement } from "@/components/admin/CampTemplatesManagement";
-import KnowledgeBaseManagement from "@/components/admin/KnowledgeBaseManagement";
-import CustomerServiceManagement from "@/components/admin/CustomerServiceManagement";
-import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
-import CostMonitorDashboard from "@/components/admin/CostMonitorDashboard";
-import ConversionAnalytics from "@/components/admin/ConversionAnalytics";
-import OGPreviewManagement from "@/components/admin/OGPreviewManagement";
-import { BloomPartnerInvitations } from "@/components/admin/BloomPartnerInvitations";
-import CommunityPostsManagement from "@/components/admin/CommunityPostsManagement";
-
 import type { AdminRole } from "@/components/admin/AdminLayout";
 
 export default function Admin() {
