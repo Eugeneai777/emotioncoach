@@ -1,38 +1,62 @@
 
 
-## 修复：完成打卡后右上角完成天数自动更新
+# 修复：教练梳理完成后未显示已完成
 
-### 问题原因
+## 问题分析
 
-当教练梳理完成后，`useDynamicCoachChat` 会更新数据库中的 `training_camps.completed_days`（+1），但 `handleCoachingComplete` 只刷新了 `wealth-journal-entries` 查询，没有刷新 `wealth-camp` 查询。因此右上角 header 显示的 `camp.completed_days` 仍然是旧值，直到用户手动刷新页面。
+数据库中大量日记条目的 `behavior_block` 为 `null`，而前端判断教练梳理是否完成的逻辑是 `!!todayEntry.behavior_block`。这意味着即使教练对话已完成、简报已生成，只要 AI 未填写 `behavior_block` 字段，任务就不会显示为已完成。
 
-### 解决方案
+**根本原因**: 依赖单一字段 `behavior_block` 来判断教练梳理完成状态不可靠。
 
-在 `handleCoachingComplete` 中增加对 `wealth-camp` 查询的 invalidate，使 camp 数据自动重新获取。
+## 解决方案
 
-### 修改文件
+采用双重修复策略：
 
-**`src/pages/WealthCampCheckIn.tsx`**
+### 1. 前端：改进完成判定逻辑
 
-在 `handleCoachingComplete` 函数中：
+**文件: `src/pages/WealthCampCheckIn.tsx`（约第 535 行）**
 
-1. 立即刷新时，增加 `queryClient.invalidateQueries({ queryKey: ['wealth-camp'] })`
-2. 3 秒延迟刷新时，同样增加对 `wealth-camp` 的刷新
-3. 同时也刷新 `user-camp-mode` 查询（确保模式状态同步）
+将 `!!todayEntry.behavior_block` 改为更宽松的判定——只要日记条目中有任意一个梳理内容字段（`behavior_block`、`emotion_block`、`belief_block`、`briefing_content`）不为空，即视为已完成：
 
-```text
-handleCoachingComplete:
-  ...
-  queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
-  queryClient.invalidateQueries({ queryKey: ['wealth-camp'] });        // 新增
-  queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });     // 新增
-  ...
-  setTimeout(() => {
-    queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
-    queryClient.invalidateQueries({ queryKey: ['wealth-camp'] });      // 新增
-    queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });   // 新增
-    coachingJustCompletedRef.current = false;
-  }, 3000);
+```ts
+// 改前
+setCoachingCompleted(!!todayEntry.behavior_block);
+
+// 改后
+const hasCoachingContent = !!(
+  todayEntry.behavior_block || 
+  todayEntry.emotion_block || 
+  todayEntry.belief_block || 
+  todayEntry.briefing_content
+);
+setCoachingCompleted(hasCoachingContent);
 ```
 
-改动极小，仅增加 4 行 invalidate 调用。
+同时更新 `completedDays` 的计算逻辑（约第 694 行），保持一致：
+
+```ts
+// 改前
+journalEntries.filter(e => e.behavior_block).map(...)
+
+// 改后  
+journalEntries.filter(e => e.behavior_block || e.emotion_block || e.belief_block || e.briefing_content).map(...)
+```
+
+### 2. 后端：确保 `behavior_block` 不为空
+
+**文件: `supabase/functions/generate-wealth-journal/index.ts`（约第 67 行）**
+
+当 `behavior_block` 为空但其他字段有值时，生成一个兜底值：
+
+```ts
+// 在现有提取逻辑后添加兜底
+if (!behaviorBlock && (emotionBlock || beliefBlock)) {
+  behaviorBlock = emotionBlock || beliefBlock || '已完成教练梳理';
+}
+```
+
+### 改动范围
+
+- `src/pages/WealthCampCheckIn.tsx` — 2 处判定逻辑
+- `supabase/functions/generate-wealth-journal/index.ts` — 1 处兜底逻辑
+
