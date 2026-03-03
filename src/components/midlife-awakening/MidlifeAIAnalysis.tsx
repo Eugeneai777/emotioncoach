@@ -4,7 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageCircle, ChevronRight, Eye, AlertTriangle, Footprints, Zap, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import confetti from "canvas-confetti";
 import type { MidlifePersonalityType } from "./midlifeAwakeningData";
 
 export interface MidlifeAIAnalysisData {
@@ -54,6 +55,19 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
   const navigate = useNavigate();
   const [microActionDone, setMicroActionDone] = useState(false);
 
+  const handleMicroActionToggle = useCallback(() => {
+    const next = !microActionDone;
+    setMicroActionDone(next);
+    if (next) {
+      confetti({
+        particleCount: 60,
+        spread: 55,
+        origin: { y: 0.7 },
+        colors: ['#f59e0b', '#f97316', '#eab308'],
+      });
+    }
+  }, [microActionDone]);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -91,8 +105,8 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
 
   return (
     <div className="space-y-4">
-      {/* "看见你" 卡片 */}
-      <Card className="overflow-hidden border-amber-200 dark:border-amber-800">
+      {/* "看见你" 卡片 — 呼吸灯边框 */}
+      <Card className="overflow-hidden border-amber-200 dark:border-amber-800 shadow-[0_0_15px_-3px_hsl(38,92%,50%,0.15)]">
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 text-amber-600" />
@@ -116,32 +130,36 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
         </CardContent>
       </Card>
 
-      {/* 突破路径 */}
+      {/* 突破路径 — 带连接线 */}
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Footprints className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold">突破路径</h3>
           </div>
-          <div className="space-y-2">
+          <div className="relative">
             {analysis.breakthrough.map((step, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+              <div key={i} className="flex items-start gap-3 relative">
+                {/* 连接线 */}
+                {i < analysis.breakthrough.length - 1 && (
+                  <div className="absolute left-3 top-7 w-px h-[calc(100%-4px)] border-l-2 border-dashed border-primary/20" />
+                )}
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5 z-10">
                   {i + 1}
                 </span>
-                <p className="text-sm leading-relaxed">{step}</p>
+                <p className="text-sm leading-relaxed pb-3">{step}</p>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* 今日微行动 */}
+      {/* 今日微行动 — 完成时 confetti */}
       <Card className={cn("transition-all", microActionDone && "opacity-70")}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <button
-              onClick={() => setMicroActionDone(!microActionDone)}
+              onClick={handleMicroActionToggle}
               className={cn(
                 "flex-shrink-0 w-5 h-5 rounded border-2 mt-0.5 transition-colors",
                 microActionDone
