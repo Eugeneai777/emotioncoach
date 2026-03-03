@@ -4981,6 +4981,54 @@ export type Database = {
           },
         ]
       }
+      midlife_awakening_assessments: {
+        Row: {
+          action_power: number
+          answers: Json
+          created_at: string
+          dimensions: Json
+          id: string
+          internal_friction_risk: number
+          is_paid: boolean
+          mission_clarity: number
+          order_id: string | null
+          personality_type: string
+          regret_risk: number
+          support_warmth: number
+          user_id: string
+        }
+        Insert: {
+          action_power?: number
+          answers?: Json
+          created_at?: string
+          dimensions?: Json
+          id?: string
+          internal_friction_risk?: number
+          is_paid?: boolean
+          mission_clarity?: number
+          order_id?: string | null
+          personality_type: string
+          regret_risk?: number
+          support_warmth?: number
+          user_id: string
+        }
+        Update: {
+          action_power?: number
+          answers?: Json
+          created_at?: string
+          dimensions?: Json
+          id?: string
+          internal_friction_risk?: number
+          is_paid?: boolean
+          mission_clarity?: number
+          order_id?: string | null
+          personality_type?: string
+          regret_risk?: number
+          support_warmth?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       monitor_api_errors: {
         Row: {
           created_at: string
