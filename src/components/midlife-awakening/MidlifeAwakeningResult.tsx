@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Share2, RotateCcw, Bot, ChevronRight } from "lucide-react";
+import { MessageCircle, Share2, RotateCcw, Bot, ChevronRight, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +23,7 @@ interface MidlifeAwakeningResultProps {
   result: MidlifeResult;
   onShare?: () => void;
   onRetake?: () => void;
+  onViewHistory?: () => void;
 }
 
 function IndexBar({ label, value, icon }: { label: string; value: number; icon: string }) {
@@ -49,7 +50,7 @@ function IndexBar({ label, value, icon }: { label: string; value: number; icon: 
   );
 }
 
-export function MidlifeAwakeningResult({ result, onShare, onRetake }: MidlifeAwakeningResultProps) {
+export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory }: MidlifeAwakeningResultProps) {
   const navigate = useNavigate();
   const personality = personalityTypeConfig[result.personalityType];
   const recommendation = personalityRecommendations[result.personalityType];
@@ -186,12 +187,18 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake }: MidlifeAwa
       </Card>
 
       {/* 操作按钮 */}
-      <div className="flex gap-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
-        <Button variant="outline" onClick={onRetake} className="flex-1">
-          <RotateCcw className="w-4 h-4 mr-1" />
-          重新测评
-        </Button>
-        <Button onClick={onShare} className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+      <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={onRetake} className="flex-1">
+            <RotateCcw className="w-4 h-4 mr-1" />
+            重新测评
+          </Button>
+          <Button variant="outline" onClick={onViewHistory} className="flex-1">
+            <History className="w-4 h-4 mr-1" />
+            历史记录
+          </Button>
+        </div>
+        <Button onClick={onShare} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
           <Share2 className="w-4 h-4 mr-1" />
           分享结果
         </Button>
