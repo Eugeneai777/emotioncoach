@@ -83,7 +83,7 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
   const scoreColor = getScoreColor(healthScore);
 
   const avatarNode = avatarBase64
-    ? { type: 'img', props: { src: avatarBase64, width: 48, height: 48, style: { borderRadius: '50%', border: '2px solid rgba(251,191,35,0.5)' } } }
+    ? { type: 'img', props: { src: avatarBase64, style: { width: 48, height: 48, borderRadius: '50%', border: '2px solid rgba(251,191,35,0.5)' } } }
     : {
         type: 'div', props: {
           style: { width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #f97316)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
@@ -213,7 +213,7 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
                     {
                       type: 'div', props: {
                         style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex' },
-                        children: { type: 'img', props: { src: qrDataUrl, width: 68, height: 68 } },
+                        children: { type: 'img', props: { src: qrDataUrl, style: { width: 68, height: 68 } } },
                       },
                     },
                   ],
@@ -300,7 +300,7 @@ function createWealthInfoCard(qrDataUrl: string): any {
                     {
                       type: 'div', props: {
                         style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex' },
-                        children: { type: 'img', props: { src: qrDataUrl, width: 68, height: 68 } },
+                        children: { type: 'img', props: { src: qrDataUrl, style: { width: 68, height: 68 } } },
                       },
                     },
                   ],
