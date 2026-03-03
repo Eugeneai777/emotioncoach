@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X, RotateCw, Download, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -82,7 +83,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
 
   if (!open || !imageUrl) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex flex-col bg-background transition-opacity duration-200"
       style={{ opacity: visible ? 1 : 0 }}
@@ -208,7 +209,8 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
