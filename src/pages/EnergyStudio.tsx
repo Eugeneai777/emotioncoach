@@ -120,6 +120,10 @@ const EnergyStudio = () => {
       navigate('/parent-ability-assessment');
       return;
     }
+    if (toolId === 'midlife-awakening') {
+      navigate('/midlife-awakening');
+      return;
+    }
     setActiveTool(toolId);
   };
 
