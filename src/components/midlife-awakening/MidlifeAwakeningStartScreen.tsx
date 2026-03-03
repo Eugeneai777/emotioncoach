@@ -66,11 +66,7 @@ function DimensionPreview() {
 
 export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased, isLoading, price }: MidlifeAwakeningStartScreenProps) {
   const handleAction = () => {
-    if (hasPurchased) {
-      onStart();
-    } else {
-      onPayClick?.();
-    }
+    onStart();
   };
 
   return (
@@ -194,10 +190,8 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : hasPurchased ? (
-              <>开始测评 <ChevronRight className="w-5 h-5 ml-1" /></>
             ) : (
-              <>立即测评 · ¥{price ?? 9.9}</>
+              <>免费开始测评 <ChevronRight className="w-5 h-5 ml-1" /></>
             )}
           </Button>
           <p className="text-center text-[10px] text-muted-foreground">
