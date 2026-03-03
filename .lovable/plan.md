@@ -1,62 +1,38 @@
 
 
-# 修复：教练梳理完成后未显示已完成
+# 修复：分享图片预览未居中全屏显示
 
-## 问题分析
+## 问题
 
-数据库中大量日记条目的 `behavior_block` 为 `null`，而前端判断教练梳理是否完成的逻辑是 `!!todayEntry.behavior_block`。这意味着即使教练对话已完成、简报已生成，只要 AI 未填写 `behavior_block` 字段，任务就不会显示为已完成。
+`ShareImagePreview` 组件在手机上，底部引导区域（提示卡片 + 返回按钮）占据过多空间，图片区域虽然是 `flex-1`，但图片设置了 `max-h-[70vh]` 且底部区域约占 30% 屏幕，导致图片被挤到可视区域外，需要滚动才能看到。
 
-**根本原因**: 依赖单一字段 `behavior_block` 来判断教练梳理完成状态不可靠。
+## 修复方案
 
-## 解决方案
+**文件: `src/components/ui/share-image-preview.tsx`**
 
-采用双重修复策略：
+1. **移动端底部区域精简**：将提示卡片（👆长按上方图片保存）和返回按钮合并为一行紧凑布局，减少占用高度
+2. **图片自适应**：将 `max-h-[70vh]` 改为 `max-h-full`，让图片根据 flex-1 容器的实际可用空间自适应
+3. **图片区域**：将 `overflow-auto` 改为 `overflow-hidden`，避免出现滚动条
 
-### 1. 前端：改进完成判定逻辑
+具体改动：
 
-**文件: `src/pages/WealthCampCheckIn.tsx`（约第 535 行）**
-
-将 `!!todayEntry.behavior_block` 改为更宽松的判定——只要日记条目中有任意一个梳理内容字段（`behavior_block`、`emotion_block`、`belief_block`、`briefing_content`）不为空，即视为已完成：
-
-```ts
-// 改前
-setCoachingCompleted(!!todayEntry.behavior_block);
-
-// 改后
-const hasCoachingContent = !!(
-  todayEntry.behavior_block || 
-  todayEntry.emotion_block || 
-  todayEntry.belief_block || 
-  todayEntry.briefing_content
-);
-setCoachingCompleted(hasCoachingContent);
 ```
+// 图片区域：overflow-auto → overflow-hidden, 减小padding
+<div className="flex-1 flex items-center justify-center p-2 overflow-hidden min-h-0">
 
-同时更新 `completedDays` 的计算逻辑（约第 694 行），保持一致：
+// 图片：max-h-[70vh] → max-h-full
+<img className="max-w-[420px] w-full max-h-full object-contain ..."
 
-```ts
-// 改前
-journalEntries.filter(e => e.behavior_block).map(...)
-
-// 改后  
-journalEntries.filter(e => e.behavior_block || e.emotion_block || e.belief_block || e.briefing_content).map(...)
-```
-
-### 2. 后端：确保 `behavior_block` 不为空
-
-**文件: `supabase/functions/generate-wealth-journal/index.ts`（约第 67 行）**
-
-当 `behavior_block` 为空但其他字段有值时，生成一个兜底值：
-
-```ts
-// 在现有提取逻辑后添加兜底
-if (!behaviorBlock && (emotionBlock || beliefBlock)) {
-  behaviorBlock = emotionBlock || beliefBlock || '已完成教练梳理';
-}
+// 移动端底部：精简为一行
+<div className="flex items-center gap-3 w-full max-w-sm">
+  <div className="flex items-center gap-2 text-muted-foreground text-xs flex-1">
+    <span>👆</span>
+    <span>长按图片保存 · 分享给好友</span>
+  </div>
+  <Button variant="outline" size="sm" onClick={handleClose}>返回</Button>
+</div>
 ```
 
 ### 改动范围
-
-- `src/pages/WealthCampCheckIn.tsx` — 2 处判定逻辑
-- `supabase/functions/generate-wealth-journal/index.ts` — 1 处兜底逻辑
+- 仅 `src/components/ui/share-image-preview.tsx` 一个文件，3 处调整
 
