@@ -67,6 +67,11 @@ serve(async (req) => {
     let behaviorBlock = briefing_data?.behavior_block || briefing_data?.actions_performed?.join('、') || '';
     let emotionBlock = briefing_data?.emotion_block || briefing_data?.emotion_feeling || '';
     let beliefBlock = briefing_data?.belief_block || briefing_data?.belief_insight || '';
+    
+    // 兜底：确保 behavior_block 不为空（防止完成判定失败）
+    if (!behaviorBlock && (emotionBlock || beliefBlock)) {
+      behaviorBlock = emotionBlock || beliefBlock || '已完成教练梳理';
+    }
     let smallestProgress = briefing_data?.smallest_progress || '';
     
     // 卡点类型和行动建议
