@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState, useCallback } from "react";
 import confetti from "canvas-confetti";
-import type { MidlifePersonalityType } from "./midlifeAwakeningData";
+import type { MidlifePersonalityType, MidlifeDimensionScore } from "./midlifeAwakeningData";
 
 export interface MidlifeAIAnalysisData {
   coreInsight: string;
@@ -24,6 +24,7 @@ interface MidlifeAIAnalysisProps {
   isLoading: boolean;
   error: string | null;
   personalityType: MidlifePersonalityType;
+  dimensions?: MidlifeDimensionScore[];
 }
 
 function AnalysisSkeleton() {
@@ -51,7 +52,7 @@ function AnalysisSkeleton() {
   );
 }
 
-export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType }: MidlifeAIAnalysisProps) {
+export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType, dimensions }: MidlifeAIAnalysisProps) {
   const navigate = useNavigate();
   const [microActionDone, setMicroActionDone] = useState(false);
 
@@ -98,6 +99,8 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
         pattern: personalityType,
         blockedDimension: personalityType,
         fromAssessment: 'midlife_awakening',
+        personalityType,
+        dimensions,
         aiAnalysis: analysis,
       },
     });
@@ -105,7 +108,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
 
   return (
     <div className="space-y-4">
-      {/* "看见你" 卡片 — 呼吸灯边框 */}
+      {/* "看见你" 卡片 */}
       <Card className="overflow-hidden border-amber-200 dark:border-amber-800 shadow-[0_0_15px_-3px_hsl(38,92%,50%,0.15)]">
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -130,7 +133,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
         </CardContent>
       </Card>
 
-      {/* 突破路径 — 带连接线 */}
+      {/* 突破路径 */}
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -140,7 +143,6 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
           <div className="relative">
             {analysis.breakthrough.map((step, i) => (
               <div key={i} className="flex items-start gap-3 relative">
-                {/* 连接线 */}
                 {i < analysis.breakthrough.length - 1 && (
                   <div className="absolute left-3 top-7 w-px h-[calc(100%-4px)] border-l-2 border-dashed border-primary/20" />
                 )}
@@ -154,7 +156,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
         </CardContent>
       </Card>
 
-      {/* 今日微行动 — 完成时 confetti */}
+      {/* 今日微行动 */}
       <Card className={cn("transition-all", microActionDone && "opacity-70")}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -193,7 +195,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType 
             className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
-            和 AI 教练深聊
+            和 AI 觉醒教练深聊
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </CardContent>
