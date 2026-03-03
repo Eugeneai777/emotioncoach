@@ -134,20 +134,20 @@ export default function MidlifeAwakeningPage() {
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('midlife_awakening_assessments' as any)
+        .from('midlife_awakening_assessments')
         .insert({
           user_id: user.id,
           personality_type: calculatedResult.personalityType,
-          dimensions: calculatedResult.dimensions,
+          dimensions: calculatedResult.dimensions as any,
           internal_friction_risk: calculatedResult.internalFrictionRisk,
           action_power: calculatedResult.actionPower,
           mission_clarity: calculatedResult.missionClarity,
           regret_risk: calculatedResult.regretRisk,
           support_warmth: calculatedResult.supportWarmth,
-          answers,
+          answers: answers as any,
           is_paid: true,
           order_id: purchaseRecord?.id || null,
-        } as any);
+        });
       if (error) throw error;
       localStorage.removeItem(STORAGE_KEY);
       setStep('result');
