@@ -142,42 +142,105 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
         return;
       }
 
-      const response = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          sessionId: sid,
-          message: userMessage,
-          pattern,
-          patternName: patternInfo.name,
-        }),
-        signal: abortControllerRef.current.signal,
-      });
+      if (isMidlife) {
+        // 觉醒教练：流式响应
+        const allMessages = [
+          ...messages.filter(m => !m.content.startsWith('[系统：')).map(m => ({ role: m.role, content: m.content })),
+          { role: 'user' as const, content: userMessage }
+        ];
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "请求失败");
-      }
+        const response = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            messages: allMessages,
+            pattern,
+            patternName: displayName,
+            fromAssessment: 'midlife_awakening',
+            midlifeData,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
 
-      const data = await response.json();
-      
-      // 更新阶段
-      if (data.current_stage !== undefined) {
-        setCurrentStage(data.current_stage);
-      }
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "请求失败");
+        }
 
-      // 检查是否生成了简报
-      if (data.tool_call?.function === 'generate_briefing') {
-        setBriefing(data.tool_call.args);
-        sessionCompletedRef.current = true; // 标记会话已完成，防止触发未完成通知
-      }
+        // Parse SSE stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let assistantContent = '';
 
-      // 添加助手回复
-      if (data.content) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+        if (reader) {
+          setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta?.content;
+                  if (delta) {
+                    assistantContent += delta;
+                    setMessages(prev => {
+                      const updated = [...prev];
+                      updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
+                      return updated;
+                    });
+                  }
+                } catch { /* skip unparseable lines */ }
+              }
+            }
+          }
+        }
+      } else {
+        // 情绪教练：JSON响应
+        const response = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            sessionId: sid,
+            message: userMessage,
+            pattern,
+            patternName: patternInfo.name,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "请求失败");
+        }
+
+        const data = await response.json();
+        
+        if (data.current_stage !== undefined) {
+          setCurrentStage(data.current_stage);
+        }
+
+        if (data.tool_call?.function === 'generate_briefing') {
+          setBriefing(data.tool_call.args);
+          sessionCompletedRef.current = true;
+        }
+
+        if (data.content) {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+        }
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -188,7 +251,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     } finally {
       setIsLoading(false);
     }
-  }, [pattern, patternInfo.name]);
+  }, [pattern, patternInfo.name, isMidlife, displayName, midlifeData, messages]);
 
   // 恢复未完成会话
   const resumeExistingSession = useCallback(async (): Promise<boolean> => {
