@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { personalityTypeConfig, dimensionConfig, type MidlifeResult } from "./midlifeAwakeningData";
+import { personalityTypeConfig, type MidlifeResult } from "./midlifeAwakeningData";
 import ShareCardBase from "@/components/sharing/ShareCardBase";
 
 interface MidlifeAwakeningShareCardProps {
@@ -11,7 +11,7 @@ interface MidlifeAwakeningShareCardProps {
   onReady?: () => void;
 }
 
-function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
+function MetricCard({ label, value }: { label: string; value: number }) {
   return (
     <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "12px", padding: "10px", textAlign: "center" }}>
       <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)", margin: 0 }}>{label}</p>
@@ -24,20 +24,20 @@ export const MidlifeAwakeningShareCard = React.forwardRef<HTMLDivElement, Midlif
   ({ result, userName, avatarUrl, partnerCode, onReady }, ref) => {
     const { user } = useAuth();
     const personality = personalityTypeConfig[result.personalityType];
-    const dateStr = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
 
     return (
       <ShareCardBase
         ref={ref}
-        gradient="linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #e11d48 100%)"
-        title="中场觉醒力测评 3.0"
-        subtitle={dateStr}
-        userName={userName || user?.user_metadata?.name || '用户'}
-        avatarUrl={avatarUrl}
+        background="linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #e11d48 100%)"
+        sharePath="/midlife-awakening"
         partnerCode={partnerCode}
-        qrPath="/midlife-awakening"
         onReady={onReady}
       >
+        {/* 标题 */}
+        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)", margin: 0 }}>中场觉醒力测评 3.0</p>
+        </div>
+
         {/* 人格类型 */}
         <div style={{ textAlign: "center", margin: "12px 0" }}>
           <span style={{ fontSize: "36px" }}>{personality.emoji}</span>
@@ -47,9 +47,9 @@ export const MidlifeAwakeningShareCard = React.forwardRef<HTMLDivElement, Midlif
 
         {/* 核心指标 */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", margin: "12px 0" }}>
-          <MetricCard label="内耗风险" value={result.internalFrictionRisk} color="#ef4444" />
-          <MetricCard label="行动力" value={result.actionPower} color="#3b82f6" />
-          <MetricCard label="使命清晰" value={result.missionClarity} color="#f59e0b" />
+          <MetricCard label="内耗风险" value={result.internalFrictionRisk} />
+          <MetricCard label="行动力" value={result.actionPower} />
+          <MetricCard label="使命清晰" value={result.missionClarity} />
         </div>
       </ShareCardBase>
     );

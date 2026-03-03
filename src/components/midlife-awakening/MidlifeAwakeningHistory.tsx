@@ -40,7 +40,7 @@ export function useMidlifeAwakeningHistory() {
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from('midlife_awakening_assessments')
+        .from('midlife_awakening_assessments' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
