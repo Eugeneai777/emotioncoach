@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { type MidlifeAIAnalysisData } from "@/components/midlife-awakening/MidlifeAIAnalysis";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Helmet } from "react-helmet";
@@ -64,6 +65,9 @@ export default function MidlifeAwakeningPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<MidlifeAIAnalysisData | null>(null);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
   const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useMidlifeAwakeningPurchase();
   const hasPurchased = !!purchaseRecord;
@@ -127,13 +131,45 @@ export default function MidlifeAwakeningPage() {
     setStep('questions');
   }, [user, hasPurchased, navigate, handlePayClick]);
 
+  const triggerAIAnalysis = useCallback(async (calcResult: MidlifeResult, assessmentId?: string) => {
+    setAiAnalysisLoading(true);
+    setAiAnalysisError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('midlife-ai-analysis', {
+        body: {
+          personalityType: calcResult.personalityType,
+          dimensions: calcResult.dimensions,
+          internalFrictionRisk: calcResult.internalFrictionRisk,
+          actionPower: calcResult.actionPower,
+          missionClarity: calcResult.missionClarity,
+          regretRisk: calcResult.regretRisk,
+          supportWarmth: calcResult.supportWarmth,
+          answers,
+          assessmentId,
+          userId: user?.id,
+        }
+      });
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
+      setAiAnalysis(data?.analysis as MidlifeAIAnalysisData);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'AI分析失败';
+      setAiAnalysisError(msg);
+      console.error('AI analysis error:', err);
+    } finally {
+      setAiAnalysisLoading(false);
+    }
+  }, [answers, user?.id]);
+
   const handleComplete = async () => {
     if (!user) { toast.error("请先登录"); return; }
     const calculatedResult = calculateMidlifeResult(answers);
     setResult(calculatedResult);
+    setAiAnalysis(null);
     setIsSaving(true);
+    let savedAssessmentId: string | undefined;
     try {
-      const { error } = await supabase
+      const { data: insertData, error } = await supabase
         .from('midlife_awakening_assessments')
         .insert({
           user_id: user.id,
@@ -147,10 +183,15 @@ export default function MidlifeAwakeningPage() {
           answers: answers as any,
           is_paid: true,
           order_id: purchaseRecord?.id || null,
-        });
+        })
+        .select('id')
+        .single();
       if (error) throw error;
+      savedAssessmentId = insertData?.id;
       localStorage.removeItem(STORAGE_KEY);
       setStep('result');
+      // 异步触发 AI 分析，不阻塞结果展示
+      triggerAIAnalysis(calculatedResult, savedAssessmentId);
     } catch (error) {
       console.error('Failed to save assessment:', error);
       toast.error("保存结果失败，请重试");
@@ -158,7 +199,7 @@ export default function MidlifeAwakeningPage() {
   };
 
   const handleBack = () => { step === 'questions' ? setStep('start') : navigate(-1); };
-  const handleRetake = () => { setAnswers({}); setResult(null); setStep('start'); localStorage.removeItem(STORAGE_KEY); };
+  const handleRetake = () => { setAnswers({}); setResult(null); setAiAnalysis(null); setAiAnalysisError(null); setStep('start'); localStorage.removeItem(STORAGE_KEY); };
 
   const handleViewHistoryResult = (record: MidlifeHistoryRecord) => {
     const dims = (record.dimensions as any) || [];
@@ -232,7 +273,7 @@ export default function MidlifeAwakeningPage() {
 
         {step === 'result' && result && (
           <>
-            <MidlifeAwakeningResult result={result} onShare={() => setShareDialogOpen(true)} onRetake={handleRetake} onViewHistory={() => { setStep('start'); setActiveTab('history'); }} />
+            <MidlifeAwakeningResult result={result} onShare={() => setShareDialogOpen(true)} onRetake={handleRetake} onViewHistory={() => { setStep('start'); setActiveTab('history'); }} aiAnalysis={aiAnalysis} aiAnalysisLoading={aiAnalysisLoading} aiAnalysisError={aiAnalysisError} />
             <MidlifeAwakeningShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} result={result} />
           </>
         )}

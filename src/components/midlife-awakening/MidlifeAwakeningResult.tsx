@@ -18,12 +18,16 @@ import {
   getMidlifeBarColor,
   type MidlifeDimension,
 } from "./midlifeAwakeningData";
+import { MidlifeAIAnalysis, type MidlifeAIAnalysisData } from "./MidlifeAIAnalysis";
 
 interface MidlifeAwakeningResultProps {
   result: MidlifeResult;
   onShare?: () => void;
   onRetake?: () => void;
   onViewHistory?: () => void;
+  aiAnalysis?: MidlifeAIAnalysisData | null;
+  aiAnalysisLoading?: boolean;
+  aiAnalysisError?: string | null;
 }
 
 function IndexBar({ label, value, icon }: { label: string; value: number; icon: string }) {
@@ -50,7 +54,7 @@ function IndexBar({ label, value, icon }: { label: string; value: number; icon: 
   );
 }
 
-export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory }: MidlifeAwakeningResultProps) {
+export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory, aiAnalysis, aiAnalysisLoading = false, aiAnalysisError }: MidlifeAwakeningResultProps) {
   const navigate = useNavigate();
   const personality = personalityTypeConfig[result.personalityType];
   const recommendation = personalityRecommendations[result.personalityType];
@@ -99,6 +103,14 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
           </div>
         </CardContent>
       </Card>
+
+      {/* AI 深度分析 */}
+      <MidlifeAIAnalysis
+        analysis={aiAnalysis || null}
+        isLoading={aiAnalysisLoading}
+        error={aiAnalysisError || null}
+        personalityType={result.personalityType}
+      />
 
       {/* 六维雷达图 */}
       <Card>
