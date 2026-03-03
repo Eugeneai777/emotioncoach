@@ -532,7 +532,13 @@ export default function WealthCampCheckIn() {
         }
         // 如果教练梳理刚完成，不要用DB值覆盖（边缘函数可能还没写入完成）
         if (!coachingJustCompletedRef.current) {
-          setCoachingCompleted(!!todayEntry.behavior_block);
+          const hasCoachingContent = !!(
+            todayEntry.behavior_block || 
+            todayEntry.emotion_block || 
+            todayEntry.belief_block || 
+            (todayEntry as any).briefing_content
+          );
+          setCoachingCompleted(hasCoachingContent);
         }
         setSavedReflection(todayEntry.meditation_reflection || '');
         setShareCompleted((todayEntry as any).share_completed || hasSharedPost);
@@ -691,7 +697,7 @@ ${reflection}`;
 
   // 计算完成天数和补卡天数
   const completedDays = useMemo(() => 
-    journalEntries.filter(e => e.behavior_block).map(e => e.day_number),
+    journalEntries.filter(e => e.behavior_block || e.emotion_block || e.belief_block || (e as any).briefing_content).map(e => e.day_number),
     [journalEntries]
   );
 
@@ -700,7 +706,7 @@ ${reflection}`;
     const days: number[] = [];
     for (let i = currentDay - 1; i >= Math.max(1, currentDay - makeupLimit); i--) {
       const entry = journalEntries.find(e => e.day_number === i);
-      if (!entry?.behavior_block) {
+      if (!(entry?.behavior_block || entry?.emotion_block || entry?.belief_block || (entry as any)?.briefing_content)) {
         days.push(i);
       }
     }
