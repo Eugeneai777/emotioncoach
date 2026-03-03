@@ -84,8 +84,9 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     }
   }, [messages, briefing]);
 
-  // 创建会话
+  // 创建会话（仅用于情绪教练模式）
   const createSession = useCallback(async () => {
+    if (isMidlife) return null; // 觉醒教练不需要session
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -107,7 +108,6 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       });
 
       if (response.status === 402) {
-        // 额度用完，显示购买提示
         setShowUpsell(true);
         return null;
       }
@@ -124,7 +124,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       toast.error(error instanceof Error ? error.message : "创建会话失败");
       return null;
     }
-  }, [pattern, patternInfo.name]);
+  }, [pattern, patternInfo.name, isMidlife]);
 
   // 发送消息
   const sendMessage = useCallback(async (userMessage: string, sid: string) => {
