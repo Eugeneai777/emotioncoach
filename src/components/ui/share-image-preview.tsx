@@ -133,7 +133,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
       </div>
 
       {/* Image area */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-auto min-h-0">
+      <div className="flex-1 flex items-center justify-center p-2 overflow-hidden min-h-0">
         {/* Loading */}
         {!imageLoaded && !imageError && (
           <div className="flex flex-col items-center gap-3">
@@ -160,7 +160,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         <img
           src={imageUrl}
           alt="分享卡片"
-          className={`max-w-[420px] w-full max-h-[70vh] object-contain rounded-2xl shadow-lg transition-opacity duration-200 ${
+          className={`max-w-[420px] w-full max-h-full object-contain rounded-2xl shadow-lg transition-opacity duration-200 ${
             imageLoaded ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
           }`}
           style={{
@@ -181,22 +181,12 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
       {isMobile ? (
-          <div className="flex flex-col items-center gap-3 max-w-sm w-full">
-            <div className="flex items-center gap-3 bg-muted rounded-2xl px-5 py-3 w-full">
-              <span className="text-2xl shrink-0">👆</span>
-              <div>
-                <p className="text-foreground font-medium text-sm">长按上方图片保存</p>
-                <p className="text-muted-foreground text-xs mt-0.5">保存后可分享给好友或发朋友圈</p>
-              </div>
+          <div className="flex items-center gap-3 w-full max-w-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs flex-1">
+              <span>👆</span>
+              <span>长按图片保存 · 分享给好友</span>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleClose}
-              className="rounded-full px-8 h-11 gap-2 text-base w-full"
-            >
-              <X className="h-4 w-4" />
-              返回
-            </Button>
+            <Button variant="outline" size="sm" onClick={handleClose}>返回</Button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 max-w-sm w-full">
