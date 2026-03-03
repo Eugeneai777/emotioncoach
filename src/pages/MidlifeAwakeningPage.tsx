@@ -45,7 +45,7 @@ function useMidlifeAwakeningPurchase() {
         .eq('status', 'paid')
         .maybeSingle();
       if (error) throw error;
-      return data as { id: string } | null;
+      return data as unknown as { id: string } | null;
     },
     enabled: !!user,
   });
