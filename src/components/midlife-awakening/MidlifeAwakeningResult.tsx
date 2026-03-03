@@ -322,16 +322,16 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
           </div>
 
           {/* 优先突破建议 */}
-          <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-900/10 dark:to-orange-900/10 rounded-xl p-4 space-y-3 border border-amber-200/50 dark:border-amber-800/30">
+          <div className="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-900/10 dark:to-purple-900/10 rounded-xl p-4 space-y-3 border border-pink-200/50 dark:border-pink-800/30">
             <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-amber-600" />
+              <Target className="w-4 h-4 text-pink-600" />
               <h4 className="text-sm font-semibold">优先突破方向</h4>
             </div>
             {weakest2.map((d, i) => {
               const interp = dimensionInterpretations[d.dimension];
               return (
                 <div key={d.dimension} className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 text-xs font-bold flex items-center justify-center mt-0.5">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-pink-500/15 text-pink-700 dark:text-pink-400 text-xs font-bold flex items-center justify-center mt-0.5">
                     {i + 1}
                   </span>
                   <div>
@@ -432,11 +432,11 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
       </Card>
 
       {/* 6. "你的下一步" CTA */}
-      <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800 animate-fade-in"
+      <Card className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200 dark:border-pink-800 animate-fade-in"
         style={{ animationDelay: '0.5s', animationFillMode: 'both' }}>
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -444,7 +444,7 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
               <p className="text-xs text-muted-foreground">根据你的「{personality.name}」特征，AI 觉醒教练会为你定制突破方案</p>
             </div>
           </div>
-          <Button onClick={handleStartCoach} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+          <Button onClick={handleStartCoach} className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
             <MessageCircle className="w-4 h-4 mr-2" />
             和 AI 觉醒教练深聊
             <ChevronRight className="w-4 h-4 ml-1" />
@@ -455,7 +455,7 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
 
       {/* 7. 操作按钮 */}
       <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))] animate-fade-in" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
-        <Button onClick={onShare} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+        <Button onClick={onShare} className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
           <Share2 className="w-4 h-4 mr-1" />
           分享结果
         </Button>

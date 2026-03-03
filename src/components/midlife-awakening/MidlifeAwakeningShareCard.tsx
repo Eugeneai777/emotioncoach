@@ -36,7 +36,7 @@ export const MidlifeAwakeningShareCard = React.forwardRef<HTMLDivElement, Midlif
     return (
       <ShareCardBase
         ref={ref}
-        background="linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #e11d48 100%)"
+        background="linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #d946ef 100%)"
         sharePath="/midlife-awakening"
         partnerCode={partnerCode}
         onReady={onReady}

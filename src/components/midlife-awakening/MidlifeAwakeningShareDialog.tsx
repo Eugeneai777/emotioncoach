@@ -30,7 +30,7 @@ export function MidlifeAwakeningShareDialog({ open, onOpenChange, result }: Midl
       description="生成中场觉醒力测评分享图片或复制分享链接"
       shareUrl={shareUrl}
       fileName="中场觉醒力测评.png"
-      buttonGradient="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+      buttonGradient="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
       exportCardRef={exportCardRef}
       previewScale={0.75}
       useDataUrl
