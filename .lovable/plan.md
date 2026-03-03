@@ -1,32 +1,19 @@
 
 
-# 修复：分享卡片二维码不显示
+# 已修复：分享卡片二维码不显示
 
-## 问题分析
+## 问题根因
 
-用户截图显示，`generate-share-card` 边缘函数生成的 wealth-info 卡片中，二维码区域只显示白色背景，QR 码图案未渲染。
+satori 将 `img` 元素的 `src` (data URL) 嵌入到 SVG `<image>` 元素中。客户端将该 SVG 作为 `data:image/svg+xml` 加载到 `<img>` 标签时，浏览器（尤其是 iOS/WebKit）出于安全原因会阻止加载嵌套的 data URL，导致二维码区域显示为空白。
 
-根因：satori 渲染 `img` 元素时，`width`/`height` 作为 HTML 属性传入，但 satori 要求通过 `style` 属性提供尺寸信息才能正确渲染图片。当前代码：
+## 修复方案
 
-```js
-{ type: 'img', props: { src: qrDataUrl, width: 68, height: 68 } }
-```
+将二维码从 `img` 元素改为使用 `QRCode.create()` 获取原始矩阵数据，然后用 div 网格（flex row + cells）渲染每个模块，完全避免 data URL 嵌套问题。
 
-应改为：
+## 修改文件
 
-```js
-{ type: 'img', props: { src: qrDataUrl, style: { width: 68, height: 68 } } }
-```
+**`supabase/functions/generate-share-card/index.ts`**
 
-## 修改范围
-
-**文件：`supabase/functions/generate-share-card/index.ts`**
-
-修改所有 `img` 元素的 `width`/`height`，从 HTML 属性改为 `style` 属性：
-
-1. **createWealthCard 函数** (约第 86 行) — 头像 img
-2. **createWealthCard 函数** (约第 216 行) — QR 码 img  
-3. **createWealthInfoCard 函数** (约第 303 行) — QR 码 img
-
-每处改为 `{ type: 'img', props: { src: ..., style: { width: N, height: N } } }`，确保 satori 能正确识别图片尺寸并渲染。
-
+- 新增 `generateQRElement()` 函数：使用 `QRCode.create()` 获取 QR 矩阵，渲染为 satori 兼容的 div 网格
+- `createWealthCard` 和 `createWealthInfoCard` 改为接收 QR 元素而非 data URL
+- 主处理函数改用 `generateQRElement()` 替代 `generateQRDataUrl()`
