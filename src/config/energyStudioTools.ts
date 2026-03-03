@@ -190,6 +190,17 @@ export const tools: ToolConfig[] = [
     usageScenarios: ["关系梳理", "社交管理", "维护重要关系"],
     available: true
   },
+  {
+    id: "midlife-awakening",
+    title: "中场觉醒力测评",
+    description: "6维深度扫描，找到你的中场突破口",
+    detailedDescription: "通过内耗循环、自我价值、行动停滞、支持系统、后悔风险、使命清晰6大维度30道专业题目，精准定位你的中场人格类型（迷雾困兽/责任压抑/稳定焦虑/觉醒转型），提供AI教练1对1深度对话和个性化突破方案。",
+    iconName: "Compass",
+    category: "exploration",
+    gradient: "from-amber-500 to-orange-500",
+    usageScenarios: ["人生中场迷茫时", "感觉内耗严重时", "想找到突破方向"],
+    available: true
+  },
   // 生活管理工具
   {
     id: "habits",
