@@ -1,0 +1,1 @@
+ALTER TABLE public.midlife_awakening_assessments ADD COLUMN ai_analysis JSONB DEFAULT NULL;

@@ -4984,6 +4984,7 @@ export type Database = {
       midlife_awakening_assessments: {
         Row: {
           action_power: number
+          ai_analysis: Json | null
           answers: Json
           created_at: string
           dimensions: Json
@@ -4999,6 +5000,7 @@ export type Database = {
         }
         Insert: {
           action_power?: number
+          ai_analysis?: Json | null
           answers?: Json
           created_at?: string
           dimensions?: Json
@@ -5014,6 +5016,7 @@ export type Database = {
         }
         Update: {
           action_power?: number
+          ai_analysis?: Json | null
           answers?: Json
           created_at?: string
           dimensions?: Json
