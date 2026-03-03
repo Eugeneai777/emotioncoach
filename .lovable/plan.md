@@ -1,38 +1,34 @@
 
 
-# 修复：分享图片预览未居中全屏显示
+# 将中场觉醒力测评配色从琥珀橙色改为粉紫色系
 
-## 问题
+## 改动范围
 
-`ShareImagePreview` 组件在手机上，底部引导区域（提示卡片 + 返回按钮）占据过多空间，图片区域虽然是 `flex-1`，但图片设置了 `max-h-[70vh]` 且底部区域约占 30% 屏幕，导致图片被挤到可视区域外，需要滚动才能看到。
+需要修改 **5 个文件**，将所有 `amber/orange/rose` 主色调替换为 `pink/purple/fuchsia` 粉紫色系。
 
-## 修复方案
+### 1. `src/components/midlife-awakening/MidlifeAwakeningStartScreen.tsx`
+- Hero 渐变：`from-amber-500 via-orange-500 to-rose-500` → `from-pink-500 via-purple-500 to-fuchsia-500`
+- 图标颜色：`text-amber-500` → `text-pink-500`，`text-orange-500` → `text-purple-500`
+- 列表圆点：`text-amber-500` → `text-pink-500`
+- CTA 按钮：`from-amber-500 to-orange-500` → `from-pink-500 to-purple-500`（含 hover）
 
-**文件: `src/components/ui/share-image-preview.tsx`**
+### 2. `src/components/midlife-awakening/MidlifeAwakeningResult.tsx`
+- "优先突破方向"区块：`amber-50/orange-50` 背景 → `pink-50/purple-50`
+- AI 教练 CTA 卡片：`amber → pink/purple` 渐变
+- 分享按钮 & 教练按钮：`amber/orange` → `pink/purple`
+- 序号徽标：`amber-500/amber-700` → `pink-500/pink-700`
+- 注：状态指示色（good/ok/bad 的 emerald/amber/rose）保持不变，因为这些是语义色
 
-1. **移动端底部区域精简**：将提示卡片（👆长按上方图片保存）和返回按钮合并为一行紧凑布局，减少占用高度
-2. **图片自适应**：将 `max-h-[70vh]` 改为 `max-h-full`，让图片根据 flex-1 容器的实际可用空间自适应
-3. **图片区域**：将 `overflow-auto` 改为 `overflow-hidden`，避免出现滚动条
+### 3. `src/components/midlife-awakening/MidlifeAwakeningShareCard.tsx`
+- 背景渐变：`#f59e0b → #ea580c → #e11d48` → `#ec4899 → #a855f7 → #d946ef`（pink→purple→fuchsia）
 
-具体改动：
+### 4. `src/components/midlife-awakening/MidlifeAwakeningShareDialog.tsx`
+- `buttonGradient`：`from-amber-500 to-orange-500` → `from-pink-500 to-purple-500`
 
-```
-// 图片区域：overflow-auto → overflow-hidden, 减小padding
-<div className="flex-1 flex items-center justify-center p-2 overflow-hidden min-h-0">
+### 5. `src/components/midlife-awakening/MidlifeAIAnalysis.tsx`（如有 amber/orange 主题色也一并替换）
 
-// 图片：max-h-[70vh] → max-h-full
-<img className="max-w-[420px] w-full max-h-full object-contain ..."
-
-// 移动端底部：精简为一行
-<div className="flex items-center gap-3 w-full max-w-sm">
-  <div className="flex items-center gap-2 text-muted-foreground text-xs flex-1">
-    <span>👆</span>
-    <span>长按图片保存 · 分享给好友</span>
-  </div>
-  <Button variant="outline" size="sm" onClick={handleClose}>返回</Button>
-</div>
-```
-
-### 改动范围
-- 仅 `src/components/ui/share-image-preview.tsx` 一个文件，3 处调整
+### 不改动的部分
+- `midlifeAwakeningData.ts` 中的维度配色（红、琥珀、蓝、绿、紫、玫瑰）— 这些是各维度的语义色，不应统一改
+- 评分选项的语义色（emerald/blue/gray/amber/rose 表示同意程度）
+- 状态指示色（good=emerald, ok=amber, bad=rose）
 
