@@ -131,6 +131,7 @@ const SCL90Lite = lazyRetry(() => import("./pages/SCL90Lite"));
 const EmotionHealthPage = lazyRetry(() => import("./pages/EmotionHealthPage"));
 const EmotionHealthLite = lazyRetry(() => import("./pages/EmotionHealthLite"));
 const AssessmentCoachPage = lazyRetry(() => import("./pages/AssessmentCoachPage"));
+const MidlifeAwakeningPage = lazyRetry(() => import("./pages/MidlifeAwakeningPage"));
 
 // 生活教练
 const VibrantLifeIntro = lazyRetry(() => import("./pages/VibrantLifeIntro"));
@@ -322,6 +323,7 @@ const App = () => (
               <Route path="/emotion-health" element={<EmotionHealthPage />} />
               <Route path="/emotion-health-lite" element={<EmotionHealthLite />} />
               <Route path="/assessment-coach" element={<AssessmentCoachPage />} />
+              <Route path="/midlife-awakening" element={<MidlifeAwakeningPage />} />
               <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
               <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
               <Route path="/gratitude-journal" element={<GratitudeHistory />} />
