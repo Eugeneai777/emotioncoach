@@ -1,40 +1,38 @@
 
 
-# 优化中场觉醒力测评结果页 — 底部添加重新测评和历史记录
+## 修复：完成打卡后右上角完成天数自动更新
 
-## 当前状态
+### 问题原因
 
-结果页底部已有"重新测评"和"分享结果"两个按钮，但缺少"历史记录"入口。用户完成测评后无法直接跳转到历史记录页面。
+当教练梳理完成后，`useDynamicCoachChat` 会更新数据库中的 `training_camps.completed_days`（+1），但 `handleCoachingComplete` 只刷新了 `wealth-journal-entries` 查询，没有刷新 `wealth-camp` 查询。因此右上角 header 显示的 `camp.completed_days` 仍然是旧值，直到用户手动刷新页面。
 
-## 修改内容
+### 解决方案
 
-### 1. 修改 `MidlifeAwakeningResult.tsx` 底部按钮区
+在 `handleCoachingComplete` 中增加对 `wealth-camp` 查询的 invalidate，使 camp 数据自动重新获取。
 
-将底部操作区从两个按钮改为三个按钮布局：
+### 修改文件
 
-- **重新测评** — 保留现有 `onRetake` 逻辑
-- **历史记录** — 新增，通过新的 `onViewHistory` 回调跳转
-- **分享结果** — 保留现有 `onShare` 逻辑
+**`src/pages/WealthCampCheckIn.tsx`**
 
-布局调整为：上排两个按钮（重新测评 + 历史记录），下排一个全宽分享按钮，视觉层次更清晰。
+在 `handleCoachingComplete` 函数中：
 
-接口新增 `onViewHistory?: () => void` prop。
+1. 立即刷新时，增加 `queryClient.invalidateQueries({ queryKey: ['wealth-camp'] })`
+2. 3 秒延迟刷新时，同样增加对 `wealth-camp` 的刷新
+3. 同时也刷新 `user-camp-mode` 查询（确保模式状态同步）
 
-### 2. 修改 `MidlifeAwakeningPage.tsx` 传递回调
+```text
+handleCoachingComplete:
+  ...
+  queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+  queryClient.invalidateQueries({ queryKey: ['wealth-camp'] });        // 新增
+  queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });     // 新增
+  ...
+  setTimeout(() => {
+    queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+    queryClient.invalidateQueries({ queryKey: ['wealth-camp'] });      // 新增
+    queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });   // 新增
+    coachingJustCompletedRef.current = false;
+  }, 3000);
+```
 
-在结果页渲染处传入 `onViewHistory` 回调，实现逻辑：
-- 切换回 `start` 步骤
-- 将 `activeTab` 设为 `history`
-
-这样用户点击后直接回到开始页的历史记录 Tab。
-
-## 技术细节
-
-**MidlifeAwakeningResult.tsx**:
-- 新增 `History` 图标 import
-- 接口增加 `onViewHistory?: () => void`
-- 底部按钮改为两行布局
-
-**MidlifeAwakeningPage.tsx**:
-- 给 `MidlifeAwakeningResult` 传入 `onViewHistory={() => { setStep('start'); setActiveTab('history'); }}`
-
+改动极小，仅增加 4 行 invalidate 调用。
