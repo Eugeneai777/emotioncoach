@@ -38,8 +38,55 @@ async function loadFont(extraChars: string, weight: number): Promise<ArrayBuffer
   return data;
 }
 
-async function generateQRDataUrl(text: string): Promise<string> {
-  return QRCode.toDataURL(text, { width: 160, margin: 1 });
+/**
+ * Generate QR code as a satori-compatible element tree (grid of divs with flex wrap).
+ * This avoids data URL nesting issues when SVG is loaded as data:image/svg+xml.
+ */
+function generateQRElement(text: string, size: number): any {
+  const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
+  const modules = qr.modules;
+  const moduleCount = modules.size;
+  const cellSize = Math.floor((size / moduleCount) * 100) / 100;
+
+  // Build rows of cells
+  const rows: any[] = [];
+  for (let row = 0; row < moduleCount; row++) {
+    const rowCells: any[] = [];
+    for (let col = 0; col < moduleCount; col++) {
+      rowCells.push({
+        type: 'div',
+        props: {
+          style: {
+            width: cellSize,
+            height: cellSize,
+            background: modules.get(row, col) ? '#000' : '#fff',
+          },
+        },
+      });
+    }
+    rows.push({
+      type: 'div',
+      props: {
+        style: { display: 'flex' },
+        children: rowCells,
+      },
+    });
+  }
+
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        width: size,
+        height: size,
+        background: '#fff',
+        overflow: 'hidden',
+      },
+      children: rows,
+    },
+  };
 }
 
 async function fetchImageBase64(url: string): Promise<string | null> {
@@ -77,7 +124,7 @@ const poorNames: Record<string, string> = {
   mouth: '嘴穷', hand: '手穷', eye: '眼穷', heart: '心穷',
 };
 
-function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | null): any {
+function createWealthCard(data: any, qrElement: any, avatarBase64: string | null): any {
   const { healthScore = 65, reactionPattern = 'chase', displayName = '财富探索者' } = data;
   const patternName = patternNames[reactionPattern] || reactionPattern;
   const scoreColor = getScoreColor(healthScore);
@@ -212,8 +259,8 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
                     },
                     {
                       type: 'div', props: {
-                        style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex' },
-                        children: { type: 'img', props: { src: qrDataUrl, style: { width: 68, height: 68 } } },
+                        style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+                        children: qrElement,
                       },
                     },
                   ],
@@ -237,7 +284,7 @@ function createWealthCard(data: any, qrDataUrl: string, avatarBase64: string | n
 /**
  * wealth-info card: Pure promotional card with QR code, NO personal assessment results.
  */
-function createWealthInfoCard(qrDataUrl: string): any {
+function createWealthInfoCard(qrElement: any): any {
   const features = [
     '总觉得赚钱很难？找到你的财富卡点',
     '行为·情绪·信念 三层深度扫描',
@@ -299,8 +346,8 @@ function createWealthInfoCard(qrDataUrl: string): any {
                     },
                     {
                       type: 'div', props: {
-                        style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex' },
-                        children: { type: 'img', props: { src: qrDataUrl, style: { width: 68, height: 68 } } },
+                        style: { width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+                        children: qrElement,
                       },
                     },
                   ],
@@ -336,13 +383,13 @@ Deno.serve(async (req) => {
 
     if (cardType === 'wealth-info') {
       // Pure info card - no personal data needed
-      const [qrDataUrl, fontRegular, fontBold] = await Promise.all([
-        generateQRDataUrl(shareUrl),
+      const qrElement = generateQRElement(shareUrl, 68);
+      const [fontRegular, fontBold] = await Promise.all([
         loadFont('', 400),
         loadFont('', 700),
       ]);
 
-      const cardMarkup = createWealthInfoCard(qrDataUrl);
+      const cardMarkup = createWealthInfoCard(qrElement);
 
       const svg = await satori(cardMarkup, {
         width: 340,
@@ -361,14 +408,14 @@ Deno.serve(async (req) => {
     const displayName = data.displayName || '财富探索者';
     const extraChars = displayName + (patternNames[data.reactionPattern] || '') + (poorNames[data.dominantPoor] || '');
 
-    const [qrDataUrl, avatarBase64, fontRegular, fontBold] = await Promise.all([
-      generateQRDataUrl(shareUrl),
+    const qrElement = generateQRElement(shareUrl, 68);
+    const [avatarBase64, fontRegular, fontBold] = await Promise.all([
       data.avatarUrl ? fetchImageBase64(data.avatarUrl) : Promise.resolve(null),
       loadFont(extraChars, 400),
       loadFont(extraChars, 700),
     ]);
 
-    const cardMarkup = createWealthCard(data, qrDataUrl, avatarBase64);
+    const cardMarkup = createWealthCard(data, qrElement, avatarBase64);
 
     const svg = await satori(cardMarkup, {
       width: 340,
