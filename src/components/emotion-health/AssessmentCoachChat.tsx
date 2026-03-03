@@ -38,9 +38,16 @@ interface AssessmentCoachChatProps {
   blockedDimension?: BlockedDimension;
   onComplete?: (action: string) => void;
   resumeSessionId?: string;
+  fromAssessment?: string;
+  midlifeData?: {
+    personalityType?: string;
+    dimensions?: any[];
+    aiAnalysis?: any;
+  };
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-emotion-coach`;
+const EMOTION_COACH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-emotion-coach`;
+const MIDLIFE_COACH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-coach-chat`;
 
 // 情绪四部曲阶段配置
 const emotionStages: StageConfig[] = [
@@ -50,7 +57,7 @@ const emotionStages: StageConfig[] = [
   { id: 4, name: "转化", subtitle: "Transform it", emoji: "🦋" }
 ];
 
-export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, resumeSessionId }: AssessmentCoachChatProps) {
+export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, resumeSessionId, fromAssessment, midlifeData }: AssessmentCoachChatProps) {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -65,7 +72,10 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
 
+  const isMidlife = fromAssessment === 'midlife_awakening';
+  const CHAT_URL = isMidlife ? MIDLIFE_COACH_URL : EMOTION_COACH_URL;
   const patternInfo = patternConfig[pattern] || patternConfig['exhaustion'];
+  const displayName = isMidlife ? (midlifeData?.personalityType || pattern) : patternInfo.name;
 
   // 自动滚动到底部
   useEffect(() => {
@@ -74,8 +84,9 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     }
   }, [messages, briefing]);
 
-  // 创建会话
+  // 创建会话（仅用于情绪教练模式）
   const createSession = useCallback(async () => {
+    if (isMidlife) return null; // 觉醒教练不需要session
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -97,7 +108,6 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       });
 
       if (response.status === 402) {
-        // 额度用完，显示购买提示
         setShowUpsell(true);
         return null;
       }
@@ -114,7 +124,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       toast.error(error instanceof Error ? error.message : "创建会话失败");
       return null;
     }
-  }, [pattern, patternInfo.name]);
+  }, [pattern, patternInfo.name, isMidlife]);
 
   // 发送消息
   const sendMessage = useCallback(async (userMessage: string, sid: string) => {
@@ -132,42 +142,105 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
         return;
       }
 
-      const response = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          sessionId: sid,
-          message: userMessage,
-          pattern,
-          patternName: patternInfo.name,
-        }),
-        signal: abortControllerRef.current.signal,
-      });
+      if (isMidlife) {
+        // 觉醒教练：流式响应
+        const allMessages = [
+          ...messages.filter(m => !m.content.startsWith('[系统：')).map(m => ({ role: m.role, content: m.content })),
+          { role: 'user' as const, content: userMessage }
+        ];
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "请求失败");
-      }
+        const response = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            messages: allMessages,
+            pattern,
+            patternName: displayName,
+            fromAssessment: 'midlife_awakening',
+            midlifeData,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
 
-      const data = await response.json();
-      
-      // 更新阶段
-      if (data.current_stage !== undefined) {
-        setCurrentStage(data.current_stage);
-      }
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "请求失败");
+        }
 
-      // 检查是否生成了简报
-      if (data.tool_call?.function === 'generate_briefing') {
-        setBriefing(data.tool_call.args);
-        sessionCompletedRef.current = true; // 标记会话已完成，防止触发未完成通知
-      }
+        // Parse SSE stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let assistantContent = '';
 
-      // 添加助手回复
-      if (data.content) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+        if (reader) {
+          setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta?.content;
+                  if (delta) {
+                    assistantContent += delta;
+                    setMessages(prev => {
+                      const updated = [...prev];
+                      updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
+                      return updated;
+                    });
+                  }
+                } catch { /* skip unparseable lines */ }
+              }
+            }
+          }
+        }
+      } else {
+        // 情绪教练：JSON响应
+        const response = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            sessionId: sid,
+            message: userMessage,
+            pattern,
+            patternName: patternInfo.name,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "请求失败");
+        }
+
+        const data = await response.json();
+        
+        if (data.current_stage !== undefined) {
+          setCurrentStage(data.current_stage);
+        }
+
+        if (data.tool_call?.function === 'generate_briefing') {
+          setBriefing(data.tool_call.args);
+          sessionCompletedRef.current = true;
+        }
+
+        if (data.content) {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+        }
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -178,7 +251,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     } finally {
       setIsLoading(false);
     }
-  }, [pattern, patternInfo.name]);
+  }, [pattern, patternInfo.name, isMidlife, displayName, midlifeData, messages]);
 
   // 恢复未完成会话
   const resumeExistingSession = useCallback(async (): Promise<boolean> => {
@@ -243,23 +316,30 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       if (initialized) return;
       setInitialized(true);
 
-      // 先尝试恢复未完成的会话
+      if (isMidlife) {
+        // 觉醒教练：无需session，直接发送初始消息
+        setSessionId('midlife-direct');
+        const initialMessage = `[系统：用户刚完成中场觉醒力测评，人格类型为"${displayName}"。请作为劲老师（觉醒教练），用温暖共情的方式开始第一轮对话。]`;
+        setMessages([{ role: 'user', content: initialMessage }]);
+        await sendMessage(initialMessage, 'midlife-direct');
+        return;
+      }
+
+      // 情绪教练：先尝试恢复，再创建session
       const resumed = await resumeExistingSession();
       if (resumed) return;
 
-      // 没有可恢复的会话，创建新会话
       const sid = await createSession();
       if (!sid) return;
       
       setSessionId(sid);
       
-      // 发送初始消息
       const initialMessage = `[系统：用户刚完成情绪健康测评，结果显示为"${patternInfo.name}"模式。请作为劲老师，用温暖共情的方式开始第一轮对话。]`;
       await sendMessage(initialMessage, sid);
     };
 
     init();
-  }, [initialized, createSession, sendMessage, patternInfo.name, resumeExistingSession]);
+  }, [initialized, createSession, sendMessage, patternInfo.name, resumeExistingSession, isMidlife, displayName]);
 
   // 离开页面时触发未完成对话通知
   useEffect(() => {
@@ -283,13 +363,13 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   }, [sessionId, currentStage, messages.length, pattern, patternInfo.name]);
 
   const handleSend = useCallback(() => {
-    if (!input.trim() || isLoading || !sessionId) return;
+    if (!input.trim() || isLoading || (!sessionId && !isMidlife)) return;
 
     const userMessage = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput("");
-    sendMessage(userMessage, sessionId);
-  }, [input, isLoading, sessionId, sendMessage]);
+    sendMessage(userMessage, sessionId || 'midlife-direct');
+  }, [input, isLoading, sessionId, sendMessage, isMidlife]);
 
   const handleCTAClick = (type: 'camp' | 'membership') => {
     if (type === 'camp') {
@@ -385,21 +465,23 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       {/* 模式标签 + 阶段进度 */}
       <div className="px-4 py-2 border-b space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xl">{patternInfo.emoji}</span>
+          <span className="text-xl">{isMidlife ? '🌅' : patternInfo.emoji}</span>
           <Badge variant="secondary" className="text-xs">
-            {patternInfo.name}
+            {isMidlife ? displayName : patternInfo.name}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            · 情绪四部曲
+            · {isMidlife ? '觉醒对话' : '情绪四部曲'}
           </span>
         </div>
         
-        {/* 四部曲进度 */}
-        <UnifiedStageProgress 
-          coachType="emotion" 
-          currentStage={currentStage}
-          stages={emotionStages}
-        />
+        {/* 四部曲进度（仅情绪教练显示） */}
+        {!isMidlife && (
+          <UnifiedStageProgress 
+            coachType="emotion" 
+            currentStage={currentStage}
+            stages={emotionStages}
+          />
+        )}
       </div>
 
       {/* 聊天区域 */}
