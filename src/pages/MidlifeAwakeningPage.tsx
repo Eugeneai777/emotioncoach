@@ -38,14 +38,15 @@ function useMidlifeAwakeningPurchase() {
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
-        .from('assessment_purchases' as any)
+        .from('orders')
         .select('id')
         .eq('user_id', user.id)
-        .eq('assessment_type', 'midlife_awakening')
+        .eq('package_key', 'midlife_awakening_assessment')
         .eq('status', 'paid')
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as unknown as { id: string } | null;
+      return data;
     },
     enabled: !!user,
   });
