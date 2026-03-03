@@ -65,7 +65,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
 
-  const patternInfo = patternConfig[pattern];
+  const patternInfo = patternConfig[pattern] || patternConfig['exhaustion'];
 
   // 自动滚动到底部
   useEffect(() => {
