@@ -1,33 +1,32 @@
 
 
-# 修复：分享图片预览被页面固定元素遮挡
+# 修复：分享卡片二维码不显示
 
-## 问题根因
+## 问题分析
 
-`ShareImagePreview` 虽然使用了 `fixed inset-0 z-[9999]`，但它被渲染在页面的 `h-screen overflow-y-auto` 滚动容器内部（`WealthBlockResult → ShareInfoCard → ShareImagePreview`）。
+用户截图显示，`generate-share-card` 边缘函数生成的 wealth-info 卡片中，二维码区域只显示白色背景，QR 码图案未渲染。
 
-在微信等移动端浏览器中，当 `fixed` 元素位于 `overflow-y-auto` 滚动容器内时，不会真正脱离滚动容器的层叠上下文。结果就是页面的 `sticky top-0 z-50` 头部导航 和 `fixed bottom-0 z-50` 底部工具栏 显示在分享图片预览之上，图片被挡住。
+根因：satori 渲染 `img` 元素时，`width`/`height` 作为 HTML 属性传入，但 satori 要求通过 `style` 属性提供尺寸信息才能正确渲染图片。当前代码：
 
-## 修复方案
-
-**文件: `src/components/ui/share-image-preview.tsx`**
-
-使用 **React Portal** (`ReactDOM.createPortal`) 将整个预览组件渲染到 `document.body`，彻底脱离页面滚动容器的层叠上下文。
-
-```tsx
-import { createPortal } from 'react-dom';
-
-// 在 return 中用 createPortal 包裹
-return createPortal(
-  <div className="fixed inset-0 z-[9999] ...">
-    ...
-  </div>,
-  document.body
-);
+```js
+{ type: 'img', props: { src: qrDataUrl, width: 68, height: 68 } }
 ```
 
-### 改动范围
-- 仅修改 `src/components/ui/share-image-preview.tsx` 一个文件
-- 添加 `createPortal` import，将返回的 JSX 用 `createPortal(jsx, document.body)` 包裹
-- 全站所有使用 `ShareImagePreview` 的地方（XiaohongshuShareDialog、ShareInfoCard 等）自动生效
+应改为：
+
+```js
+{ type: 'img', props: { src: qrDataUrl, style: { width: 68, height: 68 } } }
+```
+
+## 修改范围
+
+**文件：`supabase/functions/generate-share-card/index.ts`**
+
+修改所有 `img` 元素的 `width`/`height`，从 HTML 属性改为 `style` 属性：
+
+1. **createWealthCard 函数** (约第 86 行) — 头像 img
+2. **createWealthCard 函数** (约第 216 行) — QR 码 img  
+3. **createWealthInfoCard 函数** (约第 303 行) — QR 码 img
+
+每处改为 `{ type: 'img', props: { src: ..., style: { width: N, height: N } } }`，确保 satori 能正确识别图片尺寸并渲染。
 
