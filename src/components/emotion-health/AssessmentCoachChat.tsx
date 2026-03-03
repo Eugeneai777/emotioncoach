@@ -316,23 +316,30 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       if (initialized) return;
       setInitialized(true);
 
-      // 先尝试恢复未完成的会话
+      if (isMidlife) {
+        // 觉醒教练：无需session，直接发送初始消息
+        setSessionId('midlife-direct');
+        const initialMessage = `[系统：用户刚完成中场觉醒力测评，人格类型为"${displayName}"。请作为劲老师（觉醒教练），用温暖共情的方式开始第一轮对话。]`;
+        setMessages([{ role: 'user', content: initialMessage }]);
+        await sendMessage(initialMessage, 'midlife-direct');
+        return;
+      }
+
+      // 情绪教练：先尝试恢复，再创建session
       const resumed = await resumeExistingSession();
       if (resumed) return;
 
-      // 没有可恢复的会话，创建新会话
       const sid = await createSession();
       if (!sid) return;
       
       setSessionId(sid);
       
-      // 发送初始消息
       const initialMessage = `[系统：用户刚完成情绪健康测评，结果显示为"${patternInfo.name}"模式。请作为劲老师，用温暖共情的方式开始第一轮对话。]`;
       await sendMessage(initialMessage, sid);
     };
 
     init();
-  }, [initialized, createSession, sendMessage, patternInfo.name, resumeExistingSession]);
+  }, [initialized, createSession, sendMessage, patternInfo.name, resumeExistingSession, isMidlife, displayName]);
 
   // 离开页面时触发未完成对话通知
   useEffect(() => {
@@ -356,13 +363,13 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   }, [sessionId, currentStage, messages.length, pattern, patternInfo.name]);
 
   const handleSend = useCallback(() => {
-    if (!input.trim() || isLoading || !sessionId) return;
+    if (!input.trim() || isLoading || (!sessionId && !isMidlife)) return;
 
     const userMessage = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput("");
-    sendMessage(userMessage, sessionId);
-  }, [input, isLoading, sessionId, sendMessage]);
+    sendMessage(userMessage, sessionId || 'midlife-direct');
+  }, [input, isLoading, sessionId, sendMessage, isMidlife]);
 
   const handleCTAClick = (type: 'camp' | 'membership') => {
     if (type === 'camp') {
