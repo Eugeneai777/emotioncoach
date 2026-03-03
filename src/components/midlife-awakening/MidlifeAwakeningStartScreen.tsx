@@ -74,7 +74,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
       {/* Hero */}
       <AnimatedSection>
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-6 text-white text-center">
+          <div className="bg-gradient-to-br from-pink-500 via-purple-500 to-fuchsia-500 p-6 text-white text-center">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
               <span className="text-5xl block mb-3">🧭</span>
             </motion.div>
@@ -109,7 +109,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Brain className="w-4 h-4 text-amber-500" />
+              <Brain className="w-4 h-4 text-pink-500" />
               你是否正经历这些？
             </h3>
             <div className="space-y-2">
@@ -120,7 +120,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
                 '外人眼中成功，内心却充满不安',
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span className="text-pink-500 mt-0.5">•</span>
                   <span className="text-muted-foreground">{text}</span>
                 </div>
               ))}
@@ -160,14 +160,14 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-orange-500" />
+              <Zap className="w-4 h-4 text-purple-500" />
               测评后你将获得
             </h3>
             <div className="space-y-2">
               {[
                 { icon: <Target className="w-4 h-4 text-blue-500" />, text: '六维雷达图全景分析' },
                 { icon: <Users className="w-4 h-4 text-purple-500" />, text: '中场人格类型报告' },
-                { icon: <Bot className="w-4 h-4 text-amber-500" />, text: 'AI觉醒教练1对1对话' },
+                { icon: <Bot className="w-4 h-4 text-pink-500" />, text: 'AI觉醒教练1对1对话' },
                 { icon: <Shield className="w-4 h-4 text-emerald-500" />, text: '个性化突破方案推荐' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
@@ -186,7 +186,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
           <Button
             onClick={handleAction}
             disabled={isLoading}
-            className="w-full h-14 text-base font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-2xl shadow-lg"
+            className="w-full h-14 text-base font-bold bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-2xl shadow-lg"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

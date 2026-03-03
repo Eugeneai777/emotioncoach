@@ -64,7 +64,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType,
         particleCount: 60,
         spread: 55,
         origin: { y: 0.7 },
-        colors: ['#f59e0b', '#f97316', '#eab308'],
+        colors: ['#ec4899', '#a855f7', '#d946ef'],
       });
     }
   }, [microActionDone]);
@@ -73,7 +73,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType,
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Sparkles className="w-4 h-4 animate-pulse text-amber-500" />
+          <Sparkles className="w-4 h-4 animate-pulse text-pink-500" />
           <span>AI 正在为你生成深度洞察...</span>
         </div>
         <AnalysisSkeleton />
@@ -109,14 +109,14 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType,
   return (
     <div className="space-y-4">
       {/* "看见你" 卡片 */}
-      <Card className="overflow-hidden border-amber-200 dark:border-amber-800 shadow-[0_0_15px_-3px_hsl(38,92%,50%,0.15)]">
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 space-y-3">
+      <Card className="overflow-hidden border-pink-200 dark:border-pink-800 shadow-[0_0_15px_-3px_hsl(330,80%,50%,0.15)]">
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-amber-600" />
-            <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300">看见你</h3>
+            <Eye className="w-4 h-4 text-pink-600" />
+            <h3 className="text-sm font-semibold text-pink-800 dark:text-pink-300">看见你</h3>
           </div>
           <p className="text-sm leading-relaxed">{analysis.coreInsight}</p>
-          <div className="bg-white/60 dark:bg-white/10 rounded-lg p-3 border-l-3 border-amber-400">
+          <div className="bg-white/60 dark:bg-white/10 rounded-lg p-3 border-l-3 border-pink-400">
             <p className="text-sm font-medium italic">"{analysis.painPoint}"</p>
           </div>
         </div>
@@ -177,7 +177,7 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType,
             </button>
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                <Zap className="w-3.5 h-3.5 text-pink-500" />
                 <span className="text-xs font-medium text-muted-foreground">今日微行动（2分钟）</span>
               </div>
               <p className={cn("text-sm", microActionDone && "line-through")}>{analysis.microAction}</p>
@@ -187,12 +187,12 @@ export function MidlifeAIAnalysis({ analysis, isLoading, error, personalityType,
       </Card>
 
       {/* 深聊邀请 */}
-      <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+      <Card className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200 dark:border-pink-800">
         <CardContent className="p-4 space-y-3">
           <p className="text-sm leading-relaxed">{analysis.coachInvite}</p>
           <Button
             onClick={handleStartCoach}
-            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
             和 AI 觉醒教练深聊
