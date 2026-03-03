@@ -317,22 +317,6 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/60 dark:bg-white/10">
-              <span className="text-sm flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-amber-600" />
-                推荐教练：{recommendation.coach}
-              </span>
-              <Badge variant="secondary" className="text-[10px]">适合你</Badge>
-            </div>
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/60 dark:bg-white/10">
-              <span className="text-sm flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-600" />
-                推荐工具：{recommendation.tool}
-              </span>
-              <Badge variant="secondary" className="text-[10px]">突破口</Badge>
-            </div>
-          </div>
 
           <Button onClick={handleStartCoach} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
             <MessageCircle className="w-4 h-4 mr-2" />
