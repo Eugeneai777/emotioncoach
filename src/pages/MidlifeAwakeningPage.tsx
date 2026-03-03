@@ -38,14 +38,15 @@ function useMidlifeAwakeningPurchase() {
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
-        .from('assessment_purchases' as any)
+        .from('orders')
         .select('id')
         .eq('user_id', user.id)
-        .eq('assessment_type', 'midlife_awakening')
+        .eq('package_key', 'midlife_awakening_assessment')
         .eq('status', 'paid')
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as unknown as { id: string } | null;
+      return data;
     },
     enabled: !!user,
   });
@@ -133,20 +134,20 @@ export default function MidlifeAwakeningPage() {
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('midlife_awakening_assessments' as any)
+        .from('midlife_awakening_assessments')
         .insert({
           user_id: user.id,
           personality_type: calculatedResult.personalityType,
-          dimensions: calculatedResult.dimensions,
+          dimensions: calculatedResult.dimensions as any,
           internal_friction_risk: calculatedResult.internalFrictionRisk,
           action_power: calculatedResult.actionPower,
           mission_clarity: calculatedResult.missionClarity,
           regret_risk: calculatedResult.regretRisk,
           support_warmth: calculatedResult.supportWarmth,
-          answers,
+          answers: answers as any,
           is_paid: true,
           order_id: purchaseRecord?.id || null,
-        } as any);
+        });
       if (error) throw error;
       localStorage.removeItem(STORAGE_KEY);
       setStep('result');
