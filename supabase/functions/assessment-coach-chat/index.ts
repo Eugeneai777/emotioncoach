@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// 阶段配置 - 精简为4轮高价值对话
 type Stage = 'empathy' | 'awareness' | 'action' | 'conversion';
 
 interface Message {
@@ -13,16 +12,15 @@ interface Message {
   content: string;
 }
 
-// 阶段判断逻辑 - 压缩阶段，每轮都有明确目标
 function determineStage(messageCount: number): Stage {
-  if (messageCount <= 1) return 'empathy';       // 第1轮：精准共情
-  if (messageCount <= 2) return 'awareness';     // 第2轮：觉醒洞察
-  if (messageCount <= 3) return 'action';        // 第3轮：即时价值
-  return 'conversion';                           // 第4轮+：自然转化
+  if (messageCount <= 1) return 'empathy';
+  if (messageCount <= 2) return 'awareness';
+  if (messageCount <= 3) return 'action';
+  return 'conversion';
 }
 
-// 阶段性系统提示词 - 目标导向，快速给用户价值
-function getStagePrompt(stage: Stage, pattern: string, patternName: string): string {
+// 情绪教练阶段提示词
+function getEmotionStagePrompt(stage: Stage, pattern: string, patternName: string): string {
   const farewellRule = `\n【结束规则】如果用户表示想结束对话（如"今天先聊到这"、"谢谢"、"再见"、"不聊了"等），温暖告别即可，不要追问任何问题，回复2-3句结尾加祝福。`;
 
   const stagePrompts: Record<Stage, string> = {
@@ -47,7 +45,6 @@ function getStagePrompt(stage: Stage, pattern: string, patternName: string): str
 3. 正常化这个模式："这不是你的问题，是大脑的保护机制"
 4. 结尾问："这个说法有没有让你有什么感触？"
 
-这是关键环节！要让用户产生"原来如此"的感觉。
 语言风格：温暖、洞察力强、不用bullet points
 回复控制在80字以内。${farewellRule}`,
 
@@ -82,16 +79,90 @@ function getStagePrompt(stage: Stage, pattern: string, patternName: string): str
   return stagePrompts[stage];
 }
 
+// 觉醒教练阶段提示词
+function getMidlifeStagePrompt(stage: Stage, patternName: string, midlifeContext: string): string {
+  const farewellRule = `\n【结束规则】如果用户表示想结束对话，温暖告别即可，不要追问任何问题，回复2-3句结尾加祝福。`;
+
+  const stagePrompts: Record<Stage, string> = {
+    empathy: `你是"劲老师"，专业的AI觉醒教练。用户刚完成中场觉醒力测评，人格类型为「${patternName}」。
+
+${midlifeContext}
+
+【目标】快速锁定用户最核心的中场困境
+
+做法：
+1. 用一句话精准共情他们的处境——他们可能正在经历人生的"卡住"感
+2. 基于他们的测评数据，点出最突出的维度
+3. 问一个聚焦问题："在你的生活中，什么时刻让你最强烈地感到'不是这样的'？"
+
+语言风格：温暖、有洞察力、口语化
+回复控制在80字以内。${farewellRule}`,
+
+    awareness: `你是"劲老师"。用户是「${patternName}」类型，刚分享了他们的中场困境。
+
+${midlifeContext}
+
+【目标】创造"觉醒时刻" - 让用户看见自己的深层模式
+
+做法：
+1. 基于用户分享和测评数据，揭示他们可能没意识到的模式
+2. 用"你有没有想过..."或"其实这背后是..."开头
+3. 将困境重新定义为"觉醒信号"——这不是危机，是转变的前兆
+4. 结尾问："听到这个，你内心有什么感觉？"
+
+语言风格：温暖、深刻、不用bullet points
+回复控制在100字以内。${farewellRule}`,
+
+    action: `你是"劲老师"。用户刚经历了一个觉醒时刻。
+
+${midlifeContext}
+
+【目标】给用户一个具体的突破方向
+
+做法：
+1. 肯定他们的觉察——"看见"本身就是最大的勇气
+2. 基于他们最需突破的维度，给出一个具体的微行动建议
+3. 不是泛泛的"多运动多读书"，而是针对他们具体模式的精准建议
+4. 结尾问："你愿意这周试试吗？"
+
+语言风格：温暖、实用、有方向感
+回复控制在100字以内。${farewellRule}`,
+
+    conversion: `你是"劲老师"。用户已经获得了觉醒洞察和行动建议。
+
+${midlifeContext}
+
+【目标】自然引导到更深入的觉醒之旅
+
+做法：
+1. 肯定今天对话的意义——"觉醒不是一次顿悟，是持续的自我探索"
+2. 点明：中场觉醒是一个需要陪伴的旅程
+3. 自然引出训练营或持续陪伴的选项
+4. 不强推："你可以先感受一下今天的收获"
+
+语言风格：温暖、自然、有力量感
+回复控制在80字以内。${farewellRule}`
+  };
+
+  return stagePrompts[stage];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, pattern, patternName } = await req.json() as {
+    const { messages, pattern, patternName, fromAssessment, midlifeData } = await req.json() as {
       messages: Message[];
       pattern: string;
       patternName: string;
+      fromAssessment?: string;
+      midlifeData?: {
+        personalityType?: string;
+        dimensions?: Array<{ dimension: string; score: number }>;
+        aiAnalysis?: any;
+      };
     };
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -99,19 +170,18 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // 计算当前阶段
     const userMessageCount = messages.filter(m => m.role === 'user').length;
     const stage = determineStage(userMessageCount);
+    const isMidlife = fromAssessment === 'midlife_awakening';
     
-    console.log(`Assessment coach chat - Pattern: ${pattern}, Stage: ${stage}, User messages: ${userMessageCount}`);
+    console.log(`Assessment coach chat - Pattern: ${pattern}, Stage: ${stage}, Midlife: ${isMidlife}, User messages: ${userMessageCount}`);
 
-    // 🛡️ 异步风险扫描最新用户消息（不阻塞回复）
+    // 🛡️ 异步风险扫描
     const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
     if (lastUserMsg && lastUserMsg.content.length > 5) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (supabaseUrl && supabaseKey) {
-        // 从auth header获取用户ID
         const authHeader = req.headers.get('Authorization');
         let userId = 'anonymous';
         if (authHeader) {
@@ -136,7 +206,7 @@ serve(async (req) => {
             content: lastUserMsg.content,
             user_id: userId,
             content_source: 'ai_conversation',
-            source_detail: `测评教练对话 (${patternName})`,
+            source_detail: isMidlife ? `觉醒教练对话 (${patternName})` : `测评教练对话 (${patternName})`,
             platform: 'web',
             page: '/assessment-coach',
           }),
@@ -145,9 +215,25 @@ serve(async (req) => {
     }
 
     // 构建系统提示词
-    const systemPrompt = getStagePrompt(stage, pattern, patternName);
+    let systemPrompt: string;
+    if (isMidlife && midlifeData) {
+      // 构建觉醒教练上下文
+      const dims = midlifeData.dimensions || [];
+      const dimSummary = dims.map(d => `${d.dimension}: ${d.score}分（觉醒度${100 - d.score}）`).join('、');
+      const weakDims = [...dims].sort((a, b) => b.score - a.score).slice(0, 2);
+      const weakSummary = weakDims.map(d => d.dimension).join('和');
+      
+      const midlifeContext = `【测评数据】
+人格类型：${midlifeData.personalityType || patternName}
+六维得分：${dimSummary}
+最需突破：${weakSummary}
+${midlifeData.aiAnalysis?.coreInsight ? `AI洞察：${midlifeData.aiAnalysis.coreInsight}` : ''}`;
+      
+      systemPrompt = getMidlifeStagePrompt(stage, patternName, midlifeContext);
+    } else {
+      systemPrompt = getEmotionStagePrompt(stage, pattern, patternName);
+    }
 
-    // 构建请求
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -189,7 +275,6 @@ serve(async (req) => {
       );
     }
 
-    // 返回流式响应
     return new Response(response.body, {
       headers: {
         ...corsHeaders,

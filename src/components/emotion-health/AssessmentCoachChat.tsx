@@ -38,9 +38,16 @@ interface AssessmentCoachChatProps {
   blockedDimension?: BlockedDimension;
   onComplete?: (action: string) => void;
   resumeSessionId?: string;
+  fromAssessment?: string;
+  midlifeData?: {
+    personalityType?: string;
+    dimensions?: any[];
+    aiAnalysis?: any;
+  };
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-emotion-coach`;
+const EMOTION_COACH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-emotion-coach`;
+const MIDLIFE_COACH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assessment-coach-chat`;
 
 // 情绪四部曲阶段配置
 const emotionStages: StageConfig[] = [
@@ -50,7 +57,7 @@ const emotionStages: StageConfig[] = [
   { id: 4, name: "转化", subtitle: "Transform it", emoji: "🦋" }
 ];
 
-export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, resumeSessionId }: AssessmentCoachChatProps) {
+export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, resumeSessionId, fromAssessment, midlifeData }: AssessmentCoachChatProps) {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -65,7 +72,10 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
 
+  const isMidlife = fromAssessment === 'midlife_awakening';
+  const CHAT_URL = isMidlife ? MIDLIFE_COACH_URL : EMOTION_COACH_URL;
   const patternInfo = patternConfig[pattern] || patternConfig['exhaustion'];
+  const displayName = isMidlife ? (midlifeData?.personalityType || pattern) : patternInfo.name;
 
   // 自动滚动到底部
   useEffect(() => {
