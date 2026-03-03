@@ -25,3 +25,4 @@ export { MidlifeAwakeningResult } from './MidlifeAwakeningResult';
 export { MidlifeAwakeningHistory, type MidlifeHistoryRecord } from './MidlifeAwakeningHistory';
 export { MidlifeAwakeningShareCard } from './MidlifeAwakeningShareCard';
 export { MidlifeAwakeningShareDialog } from './MidlifeAwakeningShareDialog';
+export { MidlifeAIAnalysis, type MidlifeAIAnalysisData } from './MidlifeAIAnalysis';
