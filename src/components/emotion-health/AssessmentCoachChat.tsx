@@ -465,21 +465,23 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       {/* 模式标签 + 阶段进度 */}
       <div className="px-4 py-2 border-b space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xl">{patternInfo.emoji}</span>
+          <span className="text-xl">{isMidlife ? '🌅' : patternInfo.emoji}</span>
           <Badge variant="secondary" className="text-xs">
-            {patternInfo.name}
+            {isMidlife ? displayName : patternInfo.name}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            · 情绪四部曲
+            · {isMidlife ? '觉醒对话' : '情绪四部曲'}
           </span>
         </div>
         
-        {/* 四部曲进度 */}
-        <UnifiedStageProgress 
-          coachType="emotion" 
-          currentStage={currentStage}
-          stages={emotionStages}
-        />
+        {/* 四部曲进度（仅情绪教练显示） */}
+        {!isMidlife && (
+          <UnifiedStageProgress 
+            coachType="emotion" 
+            currentStage={currentStage}
+            stages={emotionStages}
+          />
+        )}
       </div>
 
       {/* 聊天区域 */}
