@@ -104,6 +104,14 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
         </CardContent>
       </Card>
 
+      {/* AI 深度分析 */}
+      <MidlifeAIAnalysis
+        analysis={aiAnalysis || null}
+        isLoading={aiAnalysisLoading}
+        error={aiAnalysisError || null}
+        personalityType={result.personalityType}
+      />
+
       {/* 六维雷达图 */}
       <Card>
         <CardHeader className="pb-2">
