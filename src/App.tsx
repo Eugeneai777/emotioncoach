@@ -141,7 +141,6 @@ const GratitudeHistory = lazyRetry(() => import("./pages/GratitudeHistory"));
 
 // 工具和帮助
 const ApiDocs = lazyRetry(() => import("./pages/ApiDocs"));
-const ProductBrochure = lazyRetry(() => import("./pages/ProductBrochure"));
 const PosterCenter = lazyRetry(() => import("./pages/PosterCenter"));
 const CustomerSupport = lazyRetry(() => import("./pages/CustomerSupport"));
 
@@ -296,7 +295,6 @@ const App = () => (
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/introduction" element={<Introduction />} />
               <Route path="/user-manual" element={<UserManual />} />
-              <Route path="/product-brochure" element={<ProductBrochure />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/partner/type" element={<PartnerTypeSelector />} />
               <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />

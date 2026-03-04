@@ -905,14 +905,6 @@ const PlatformIntro = () => {
               >
                 🚀 开始体验有劲AI <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button 
-                onClick={() => navigate('/product-brochure')}
-                variant="outline"
-                size="lg"
-                className="w-full min-h-[44px] mt-3 text-sm sm:text-base"
-              >
-                📄 下载产品手册 PDF
-              </Button>
             </Card>
           </motion.div>
         </section>
