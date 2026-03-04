@@ -2,11 +2,18 @@ import { ArrowLeft, Download, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { introShareConfigs, SHARE_DOMAIN } from '@/config/introShareConfig';
+import { saveAs } from 'file-saver';
 
 const categoryLabels: Record<string, string> = {
   coach: '🎯 AI教练',
   tool: '🛠 工具与测评',
   partner: '🤝 合伙人计划',
+};
+
+const categoryTitles: Record<string, string> = {
+  coach: '一、AI教练',
+  tool: '二、工具与测评',
+  partner: '三、合伙人计划',
 };
 
 const grouped = Object.values(introShareConfigs).reduce((acc, c) => {
@@ -16,16 +23,48 @@ const grouped = Object.values(introShareConfigs).reduce((acc, c) => {
 
 const categoryOrder = ['coach', 'tool', 'partner'] as const;
 
+function generateMarkdown(): string {
+  const lines: string[] = [
+    '# 有劲AI · 产品手册',
+    '',
+    '> 每个人的生活教练 — 温暖陪伴 × 系统工具 × 成长社群',
+    '',
+    `📅 更新日期：${new Date().toLocaleDateString('zh-CN')}`,
+    '',
+    '---',
+    '',
+  ];
+
+  for (const cat of categoryOrder) {
+    const items = grouped[cat];
+    if (!items?.length) continue;
+    lines.push(`## ${categoryTitles[cat]}（${items.length}款）`, '');
+    for (const item of items) {
+      lines.push(
+        `### ${item.emoji} ${item.title}`,
+        `> ${item.subtitle}`,
+        '',
+        ...item.highlights.map(h => `- ${h}`),
+        '',
+        `🔗 ${SHARE_DOMAIN}${item.targetUrl}`,
+        '',
+        '---',
+        '',
+      );
+    }
+  }
+
+  lines.push('> 📩 如需了解更多，请访问 https://wechat.eugenewe.net');
+  return lines.join('\n');
+}
+
 const ProductBrochure = () => {
   const navigate = useNavigate();
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = '/有劲AI产品手册.md';
-    link.download = '有劲AI产品手册.md';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const md = generateMarkdown();
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    saveAs(blob, 'YouJinAI_Product_Brochure.md');
   };
 
   return (
