@@ -97,7 +97,7 @@ export default function FrontendErrorMonitor() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0 overflow-hidden">
       <MonitorFilters platform={platform} onPlatformChange={setPlatform} timeRange={timeRange} onTimeRangeChange={setTimeRange} showRealtimeHint />
 
       <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
@@ -153,10 +153,10 @@ export default function FrontendErrorMonitor() {
                 const harmlessReason = getFrontendHarmlessReason(err);
                 return (
                   <div key={err.id} className={`border rounded-lg overflow-hidden ${harmlessReason ? 'opacity-60' : ''}`}>
-                    <div className="p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpandedId(isExpanded ? null : err.id)}>
-                      <div className="flex items-start gap-3">
-                        <div className={`p-1.5 rounded-md mt-0.5 ${meta.color}`}><Icon className="h-3.5 w-3.5" /></div>
-                        <div className="flex-1 min-w-0">
+                    <div className="p-3 cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden" onClick={() => setExpandedId(isExpanded ? null : err.id)}>
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`p-1.5 rounded-md mt-0.5 shrink-0 ${meta.color}`}><Icon className="h-3.5 w-3.5" /></div>
+                        <div className="flex-1 min-w-0 overflow-hidden">
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge className={`text-[10px] py-0 ${meta.color} border-0`}>{meta.label}</Badge>
                             {harmlessReason && <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 text-[10px]">✅ 无需处理</Badge>}
@@ -179,16 +179,16 @@ export default function FrontendErrorMonitor() {
                     </div>
 
                     {isExpanded && (
-                      <div className="border-t bg-muted/30 p-3 space-y-2 text-xs">
+                      <div className="border-t bg-muted/30 p-3 space-y-2 text-xs overflow-hidden">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <div><span className="text-muted-foreground">时间：</span><span className="font-mono">{format(new Date(err.created_at), "yyyy-MM-dd HH:mm:ss")}</span></div>
-                          <div><span className="text-muted-foreground">平台：</span><span>{getPlatformLabel(err.platform)}</span></div>
-                          <div><span className="text-muted-foreground">页面：</span><span className="font-mono break-all">{err.page}</span></div>
-                          {err.user_id && <div><span className="text-muted-foreground">用户：</span><span className="font-mono">{err.user_id.slice(0, 8)}</span></div>}
+                          <div className="min-w-0"><span className="text-muted-foreground">时间：</span><span className="font-mono">{format(new Date(err.created_at), "yyyy-MM-dd HH:mm:ss")}</span></div>
+                          <div className="min-w-0"><span className="text-muted-foreground">平台：</span><span>{getPlatformLabel(err.platform)}</span></div>
+                          <div className="min-w-0 col-span-1 md:col-span-2"><span className="text-muted-foreground">页面：</span><span className="font-mono break-all">{err.page}</span></div>
+                          {err.user_id && <div className="min-w-0"><span className="text-muted-foreground">用户：</span><span className="font-mono">{err.user_id.slice(0, 8)}</span></div>}
                         </div>
-                        {err.resource_url && <div><span className="text-muted-foreground">资源 URL：</span><span className="font-mono break-all">{err.resource_url}</span></div>}
-                        {err.request_info && <div><span className="text-muted-foreground">请求：</span><span className="font-mono break-all">{err.request_info}</span></div>}
-                        <div><span className="text-muted-foreground">UA：</span><span className="font-mono break-all text-[11px]">{err.user_agent}</span></div>
+                        {err.resource_url && <div className="min-w-0"><span className="text-muted-foreground">资源 URL：</span><span className="font-mono break-all">{err.resource_url}</span></div>}
+                        {err.request_info && <div className="min-w-0"><span className="text-muted-foreground">请求：</span><span className="font-mono break-all">{err.request_info}</span></div>}
+                        <div className="min-w-0"><span className="text-muted-foreground">UA：</span><span className="font-mono break-all text-[11px]">{err.user_agent}</span></div>
                         {err.stack && (
                           <div>
                             <span className="text-muted-foreground">堆栈信息：</span>
