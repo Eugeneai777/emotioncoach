@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/useAuth";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { forceReleaseSessionLock } from "@/hooks/useVoiceSessionLock";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { AssessmentResult, patternInfo, fourPoorInfo, emotionBlockInfo, beliefBlockInfo } from "./wealthBlockData";
 import { AIInsightData } from "./AIInsightCard";
@@ -94,6 +95,8 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
       setShowPayDialog(true);
       return;
     }
+    // 清理可能的残留锁，防止"点了没反应"
+    forceReleaseSessionLock();
     setShowVoiceChat(true);
   };
 
