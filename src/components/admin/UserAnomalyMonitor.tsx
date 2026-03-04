@@ -134,23 +134,23 @@ export default function UserAnomalyMonitor() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="h-6 w-6" />
+    <div className="space-y-6 w-full min-w-0 overflow-hidden">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
             用户异常监控
           </h1>
-          <p className="text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等 · 数据持久化 · 覆盖 Web/移动端/微信/小程序</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">监控异常用户行为、前端运行异常、接口异常等 · 数据持久化 · 覆盖 Web/移动端/微信/小程序</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleSimulate} disabled={injecting}>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={handleSimulate} disabled={injecting}>
           <AlertTriangle className="h-3 w-3 mr-1" />
           {injecting ? '注入中...' : '模拟预警'}
         </Button>
       </div>
 
-      <Tabs defaultValue="aggregation" className="w-full">
-        <TabsList>
+      <Tabs defaultValue="aggregation" className="w-full min-w-0">
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="aggregation" className="text-xs sm:text-sm">
             <BarChart3 className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">聚合分析</span>
@@ -242,9 +242,9 @@ export default function UserAnomalyMonitor() {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>异常事件列表</CardTitle>
-                  <div className="relative w-60">
+                <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+                  <CardTitle className="text-base">异常事件列表</CardTitle>
+                  <div className="relative w-full sm:w-60">
                     <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
                       placeholder="搜索消息/用户ID..."
@@ -267,26 +267,26 @@ export default function UserAnomalyMonitor() {
                       const Icon = cfg.icon;
                       const sev = SEVERITY_BADGE[a.severity] || SEVERITY_BADGE.info;
                       return (
-                        <div key={a.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
-                          <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${cfg.color}`} />
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-sm">{a.title}</span>
+                        <div key={a.id} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border bg-card w-full min-w-0 overflow-hidden">
+                          <Icon className={`h-4 w-4 sm:h-5 sm:w-5 mt-0.5 shrink-0 ${cfg.color}`} />
+                          <div className="flex-1 min-w-0 space-y-1 overflow-hidden">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <span className="font-medium text-xs sm:text-sm">{a.title}</span>
                               <Badge variant={sev.variant} className="text-[10px]">{sev.label}</Badge>
                               <Badge variant="outline" className="text-[10px]">{cfg.label}</Badge>
                               <Badge variant="outline" className="text-[10px]">{getPlatformLabel(a.platform)}</Badge>
                             </div>
-                            <p className="text-sm text-foreground break-all">{a.message}</p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                                {a.user_id && <span>用户: {a.user_id.slice(0, 8)}</span>}
+                            <p className="text-xs sm:text-sm text-foreground break-all">{a.message}</p>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground flex-wrap min-w-0">
+                                {a.user_id && <span className="truncate">用户: {a.user_id.slice(0, 8)}</span>}
                                 {a.ip_address && <span>IP: {a.ip_address}</span>}
-                                <span>{new Date(a.created_at).toLocaleString("zh-CN")}</span>
+                                <span className="whitespace-nowrap">{new Date(a.created_at).toLocaleString("zh-CN")}</span>
                               </div>
                               <Button
                                 size="sm"
-                                variant="ghost"
-                                className="h-7 px-2 text-xs shrink-0"
+                                variant="outline"
+                                className="h-6 sm:h-7 px-2 text-[10px] sm:text-xs shrink-0"
                                 onClick={() => handleCopy(a)}
                               >
                                 <Copy className="h-3 w-3 mr-1" />复制
