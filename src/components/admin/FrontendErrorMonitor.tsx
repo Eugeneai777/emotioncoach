@@ -153,19 +153,21 @@ export default function FrontendErrorMonitor() {
                 const harmlessReason = getFrontendHarmlessReason(err);
                 return (
                   <div key={err.id} className={`border rounded-lg overflow-hidden ${harmlessReason ? 'opacity-60' : ''}`}>
-                    <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpandedId(isExpanded ? null : err.id)}>
-                      <div className={`p-1.5 rounded-md mt-0.5 ${meta.color}`}><Icon className="h-3.5 w-3.5" /></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge className={`text-[10px] py-0 ${meta.color} border-0`}>{meta.label}</Badge>
-                          {harmlessReason && <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 text-[10px]">✅ 无需处理</Badge>}
-                          <Badge variant="outline" className="text-[10px]">{getPlatformLabel(err.platform)}</Badge>
+                    <div className="p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpandedId(isExpanded ? null : err.id)}>
+                      <div className="flex items-start gap-3">
+                        <div className={`p-1.5 rounded-md mt-0.5 ${meta.color}`}><Icon className="h-3.5 w-3.5" /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge className={`text-[10px] py-0 ${meta.color} border-0`}>{meta.label}</Badge>
+                            {harmlessReason && <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 text-[10px]">✅ 无需处理</Badge>}
+                            <Badge variant="outline" className="text-[10px]">{getPlatformLabel(err.platform)}</Badge>
+                          </div>
+                          {harmlessReason && <p className="text-xs text-emerald-600 mt-0.5">💡 {harmlessReason}</p>}
+                          <p className="text-sm font-medium mt-1 truncate">{err.message}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{err.page}</p>
                         </div>
-                        {harmlessReason && <p className="text-xs text-emerald-600 mt-0.5">💡 {harmlessReason}</p>}
-                        <p className="text-sm font-medium mt-1 truncate">{err.message}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{err.page}</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center justify-end gap-2 mt-2">
                         <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={(e) => { e.stopPropagation(); copyError(err); }}>
                           <Copy className="h-3 w-3" />复制
                         </Button>
