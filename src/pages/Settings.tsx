@@ -21,7 +21,7 @@ import { AccountCredentials } from "@/components/profile/AccountCredentials";
 import { PhoneNumberManager } from "@/components/profile/PhoneNumberManager";
 import { WeChatBindStatus } from "@/components/profile/WeChatBindStatus";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle2, AlertCircle, Home, Zap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Home, Zap, FileText } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -365,6 +365,23 @@ export default function Settings() {
             <PurchaseHistory />
             <PackageSelector />
             <BillingExplanation />
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">产品资料</CardTitle>
+                <CardDescription>下载平台产品手册PDF宣传册</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate('/product-brochure')}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  下载产品手册 PDF
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="reminders">
