@@ -1,63 +1,33 @@
 
 
-# 产品手册/宣传册 PDF 下载功能
+# 修复：AI教练解说按钮点击无响应
 
-## 概述
+## 问题分析
 
-新建一个「产品手册下载」页面，自动汇总网站所有产品介绍页的核心内容，生成一份精美的 PDF 宣传册供下载。
+`wealth-assessment-realtime-token` 边缘函数日志完全为空，说明语音通话流程在到达 token 请求之前就已经失败退出。
 
-## 实现方案
+最可能的原因是**全局语音会话锁（VoiceSessionLock）残留**：如果之前有语音会话异常结束（页面刷新、网络中断等），锁没有正确释放，后续所有 `CoachVoiceChat` 启动时 `acquireLock()` 返回 false，显示一个短暂 toast 后立即调用 `onClose()`，用户看到的就是"点了没反应"。
 
-### 1. 创建产品目录数据文件
+## 修复方案
 
-**文件：`src/data/productCatalog.ts`**
+**文件：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
 
-定义所有产品/功能模块的结构化数据，每个条目包含：
-- 产品名称、一句话描述、核心卖点（3-5条）
-- 适用人群、使用场景
-- 对应的介绍页路由
+在 `handleClick` 中，打开语音通话前先调用 `forceReleaseSessionLock()` 清理可能的残留锁，确保不会因为旧锁阻塞新通话。
 
-从现有各 Intro 页面中提取文案内容，涵盖：
-- 情绪健康测评（SCL90、情绪健康指数）
-- 财富卡点测评 / 财富觉醒训练营
-- AI 教练空间（情绪教练、亲子教练、沟通教练等）
-- 觉醒日记 / 情绪按钮
-- 有劲生活馆工具箱
-- 训练营体系
-- 合伙人计划
+```ts
+import { forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 
-### 2. 创建 PDF 生成工具
+const handleClick = () => {
+  if (disabled) return;
+  if (isLimitReached) {
+    setShowPayDialog(true);
+    return;
+  }
+  // 清理可能的残留锁，防止"点了没反应"
+  forceReleaseSessionLock();
+  setShowVoiceChat(true);
+};
+```
 
-**文件：`src/utils/productBrochurePdf.ts`**
-
-使用已有的 `jspdf` + `jspdf-autotable` 库生成 PDF：
-- 封面页：品牌名 + slogan + 日期
-- 目录页：列出所有产品模块
-- 每个产品独立一页：标题、描述、卖点列表、适用人群
-- 页脚：品牌信息 + 页码
-- 中文字体处理：使用 jsPDF 内置方案或 base64 字体嵌入
-
-### 3. 创建产品手册页面
-
-**文件：`src/pages/ProductBrochure.tsx`**
-
-页面包含：
-- 产品列表预览（卡片形式展示所有产品模块）
-- 「下载完整产品手册 PDF」按钮
-- 可勾选要包含的产品模块
-
-### 4. 添加路由
-
-在路由配置中添加 `/product-brochure` 路由。
-
-### 5. 入口
-
-在设置页面或平台介绍页增加「下载产品手册」入口链接。
-
-## 技术要点
-
-- 复用项目已有的 `jspdf`（v3.0.3）和 `jspdf-autotable`（v5.0.2）
-- 参考 `ExportDialog.tsx` 中已有的 PDF 生成模式
-- jsPDF 对中文支持有限，将使用 `autoTable` 的字体回退机制，并在文案中尽量使用简洁文字
-- 产品数据集中管理，后续新增产品只需在 `productCatalog.ts` 中添加条目
+改动约 3 行，仅影响 `AssessmentVoiceCoach` 组件。
 
