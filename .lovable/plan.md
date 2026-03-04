@@ -1,33 +1,58 @@
 
 
-# 修复：AI教练解说按钮点击无响应
+# 直接生成产品手册档案
 
-## 问题分析
+不搭建任何新页面，只做两件事：
 
-`wealth-assessment-realtime-token` 边缘函数日志完全为空，说明语音通话流程在到达 token 请求之前就已经失败退出。
+## 方案
 
-最可能的原因是**全局语音会话锁（VoiceSessionLock）残留**：如果之前有语音会话异常结束（页面刷新、网络中断等），锁没有正确释放，后续所有 `CoachVoiceChat` 启动时 `acquireLock()` 返回 false，显示一个短暂 toast 后立即调用 `onClose()`，用户看到的就是"点了没反应"。
+### 1. 创建 Markdown 产品手册文件 (`public/有劲AI产品手册.md`)
 
-## 修复方案
+直接放在 `public/` 目录下，部署后可通过 URL 直接下载。
 
-**文件：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+内容从 `introShareConfig.ts` 的 17 个产品条目整合，按类别分组：
 
-在 `handleClick` 中，打开语音通话前先调用 `forceReleaseSessionLock()` 清理可能的残留锁，确保不会因为旧锁阻塞新通话。
+```text
+# 有劲AI · 产品手册
+> 每个人的生活教练 — 温暖陪伴 × 系统工具 × 成长社群
 
-```ts
-import { forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
+---
 
-const handleClick = () => {
-  if (disabled) return;
-  if (isLimitReached) {
-    setShowPayDialog(true);
-    return;
-  }
-  // 清理可能的残留锁，防止"点了没反应"
-  forceReleaseSessionLock();
-  setShowVoiceChat(true);
-};
+## 一、AI教练（7款）
+
+### 🌟 AI生活教练
+> 24小时智能陪伴
+- 5大生活场景智能适配
+- 情绪/睡眠/压力全覆盖
+- 每次对话自动生成洞察
+🔗 https://wechat.eugenewe.net/vibrant-life-intro
+
+### 💜 亲子情绪教练
+> 读懂情绪，连结孩子
+- 亲子四部曲对话法
+- 情绪理解 + 连结修复
+- 每次对话生成育儿洞察
+🔗 https://wechat.eugenewe.net/parent-coach-intro
+
+... (所有 17 个产品)
+
+## 二、工具类
+## 三、合伙人计划
 ```
 
-改动约 3 行，仅影响 `AssessmentVoiceCoach` 组件。
+### 2. 在平台介绍页底部加一个下载按钮（可选）
+
+在 `PlatformIntro.tsx` 底部加一行：
+```tsx
+<a href="/有劲AI产品手册.md" download>📥 下载产品手册</a>
+```
+
+## 文件变更
+
+| 操作 | 文件 |
+|------|------|
+| 新建 | `public/有劲AI产品手册.md` — 完整产品手册 |
+| 微调 | `src/pages/PlatformIntro.tsx` — 加下载链接（可选） |
+
+部署后直接访问 `https://你的域名/有劲AI产品手册.md` 即可下载。
 
