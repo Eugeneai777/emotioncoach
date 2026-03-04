@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,12 +19,23 @@ export const VoiceInputButton = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
   // 检测当前环境
   const isMiniProgram = isWeChatMiniProgram();
   const isWechat = isWeChatBrowser();
+
+  // 组件卸载时释放麦克风流
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
 
   const startRecording = async () => {
     // 微信小程序环境：使用 JSSDK 录音或提示用户使用原生输入
@@ -55,7 +66,11 @@ export const VoiceInputButton = ({
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 复用已缓存的流，避免重复弹出权限对话框
+      if (!streamRef.current || streamRef.current.getTracks().every(t => t.readyState === 'ended')) {
+        streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      const stream = streamRef.current;
       
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
@@ -71,9 +86,7 @@ export const VoiceInputButton = ({
       };
 
       mediaRecorder.onstop = async () => {
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-        
+        // 不释放 stream，保留供下次复用
         // Process the recorded audio
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
         await processAudio(audioBlob);
