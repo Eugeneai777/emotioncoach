@@ -142,6 +142,7 @@ const GratitudeHistory = lazyRetry(() => import("./pages/GratitudeHistory"));
 // 工具和帮助
 const ApiDocs = lazyRetry(() => import("./pages/ApiDocs"));
 const PosterCenter = lazyRetry(() => import("./pages/PosterCenter"));
+const ProductBrochure = lazyRetry(() => import("./pages/ProductBrochure"));
 const CustomerSupport = lazyRetry(() => import("./pages/CustomerSupport"));
 
 // 人工教练
@@ -375,6 +376,7 @@ const App = () => (
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
               <Route path="/women-competitiveness" element={<WomenCompetitiveness />} />
+              <Route path="/product-brochure" element={<ProductBrochure />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
