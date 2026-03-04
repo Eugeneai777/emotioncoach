@@ -167,12 +167,14 @@ export default function FrontendErrorMonitor() {
                           <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{err.page}</p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={(e) => { e.stopPropagation(); copyError(err); }}>
-                          <Copy className="h-3 w-3" />复制
-                        </Button>
+                      <div className="flex items-center justify-between gap-2 mt-2">
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">{format(new Date(err.created_at), "MM-dd HH:mm:ss")}</span>
-                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" className="h-7 text-xs px-3 gap-1.5" onClick={(e) => { e.stopPropagation(); copyError(err); }}>
+                            <Copy className="h-3.5 w-3.5" />复制错误
+                          </Button>
+                          {isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+                        </div>
                       </div>
                     </div>
 
