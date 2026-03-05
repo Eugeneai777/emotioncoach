@@ -833,6 +833,7 @@ export const CoachVoiceChat = ({
     setStatus(mappedStatus);
     if (mappedStatus === 'connected') {
       lastActivityRef.current = Date.now();
+      if (durationRef.current) clearInterval(durationRef.current);
       durationRef.current = setInterval(() => {
         setDuration(prev => {
           const newVal = prev + 1;

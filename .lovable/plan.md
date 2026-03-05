@@ -1,21 +1,14 @@
 
 
-## 修复计时器跳动过快
+## 改回跳转到 /wealth-coach-chat
 
-### 问题
-`CoachVoiceChat.tsx` 第 834-836 行，当状态变为 `connected` 时直接创建新 `setInterval`，未清除可能已存在的旧计时器。若 `handleStatusChange('connected')` 被多次触发（断线重连等），多个计时器同时运行导致 `duration` 每秒增加多次。
+### 变更
 
-### 修复
-**文件：`src/components/coach/CoachVoiceChat.tsx`，第 834-836 行**
+**1. `src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+- 将 `navigate('/coach/wealth_coach_4_questions', ...)` 改回 `navigate('/wealth-coach-chat', ...)`
 
-在 `setInterval` 前加一行 `clearInterval`：
+**2. `src/pages/DynamicCoach.tsx`**
+- 移除上次添加的测评相关代码：`PostCallAdvisorDialog` 导入、`LocationState` 中的 `fromAssessment/autoStartVoice/assessmentData/reactionPattern/dominantPoor` 字段、`showPostCallDialog/hasAutoStarted` 状态、自动启动语音的 `useEffect`、`CoachVoiceChat` 中的测评条件逻辑、`PostCallAdvisorDialog` 渲染，恢复原始简洁实现。
 
-```typescript
-if (mappedStatus === 'connected') {
-  lastActivityRef.current = Date.now();
-  if (durationRef.current) clearInterval(durationRef.current); // 防止多个计时器叠加
-  durationRef.current = setInterval(() => {
-```
-
-仅增加 1 行代码。
+`/wealth-coach-chat` 页面已有完整的 💎 图标、"财富觉醒教练"标题、全屏语音通话、`autoStartVoice` 处理和 `PostCallAdvisorDialog` 支持，无需额外修改。
 
