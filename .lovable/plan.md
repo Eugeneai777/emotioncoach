@@ -1,33 +1,39 @@
 
 
-# 修复：AI教练解说按钮点击无响应
+## 分析
 
-## 问题分析
+浏览器的"允许使用麦克风"弹窗是**操作系统/浏览器原生行为**，我们的代码无法完全控制它。但不同环境表现不同：
 
-`wealth-assessment-realtime-token` 边缘函数日志完全为空，说明语音通话流程在到达 token 请求之前就已经失败退出。
+| 环境 | 权限持久性 |
+|------|-----------|
+| Chrome/Safari 桌面 | 授权后永久记住（同域名） |
+| 微信内置浏览器 | 可能每次会话重置 |
+| 小程序 WebView | 取决于 `app.json` 中的 `scope.record` 授权 |
 
-最可能的原因是**全局语音会话锁（VoiceSessionLock）残留**：如果之前有语音会话异常结束（页面刷新、网络中断等），锁没有正确释放，后续所有 `CoachVoiceChat` 启动时 `acquireLock()` 返回 false，显示一个短暂 toast 后立即调用 `onClose()`，用户看到的就是"点了没反应"。
+## 我们能做到的
 
-## 修复方案
+通过创建**模块级麦克风管理器**，可以确保：
 
-**文件：`src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+1. **同一次访问中**：只弹一次对话框，后续录音复用已缓存的 MediaStream
+2. **浏览器已记住权限时**：通过 `navigator.permissions.query` 检测到 `granted` 状态，静默获取流，**完全不弹窗**
+3. **微信环境权限被重置时**：无法避免首次弹窗（这是系统限制），但同一会话内不再重复
 
-在 `handleClick` 中，打开语音通话前先调用 `forceReleaseSessionLock()` 清理可能的残留锁，确保不会因为旧锁阻塞新通话。
+## 实现计划
 
-```ts
-import { forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
+### 1. 创建 `src/utils/microphoneManager.ts`
+- 模块级单例，缓存 MediaStream
+- `acquireMicrophone()`：先用 Permissions API 检查状态，`granted` 则静默获取；否则正常请求（触发弹窗）
+- `releaseMicrophone()`：释放资源
+- `getStream()`：返回缓存流或获取新流
 
-const handleClick = () => {
-  if (disabled) return;
-  if (isLimitReached) {
-    setShowPayDialog(true);
-    return;
-  }
-  // 清理可能的残留锁，防止"点了没反应"
-  forceReleaseSessionLock();
-  setShowVoiceChat(true);
-};
-```
+### 2. 更新 `VoiceInputButton.tsx`
+- 移除组件内 `streamRef` 管理逻辑，改用共享 microphoneManager
 
-改动约 3 行，仅影响 `AssessmentVoiceCoach` 组件。
+### 3. 更新 `VoiceCustomerSupport.tsx`
+- 同样改用共享 microphoneManager
+
+## 结论
+
+- 标准浏览器（Chrome/Safari）：用户授权一次后，后续登录**不会再弹窗**（浏览器自身记住）
+- 微信浏览器/小程序：如果环境重置了权限，**首次使用仍会弹窗一次**，这是系统限制无法绕过，但同一会话内不会重复弹
 
