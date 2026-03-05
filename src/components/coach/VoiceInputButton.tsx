@@ -38,14 +38,6 @@ export const VoiceInputButton = ({
   }, []);
 
   const startRecording = async () => {
-    // 微信小程序环境：使用 JSSDK 录音或提示用户使用原生输入
-    if (isMiniProgram) {
-      toast({
-        title: "请使用键盘语音输入",
-        description: "在小程序中，请点击键盘上的语音按钮进行输入",
-      });
-      return;
-    }
 
     // 检查浏览器是否支持 getUserMedia
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
