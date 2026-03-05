@@ -1,27 +1,14 @@
 
 
-## Problem
+## 改回跳转到 /wealth-coach-chat
 
-The "AI教练解说" button currently navigates to `/wealth-coach-chat`, but it should navigate to `/coach/wealth_coach_4_questions` (the 财富觉醒教练 DynamicCoach page). The second screenshot shows the correct destination page.
+### 变更
 
-## Solution
+**1. `src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+- 将 `navigate('/coach/wealth_coach_4_questions', ...)` 改回 `navigate('/wealth-coach-chat', ...)`
 
-### 1. Update `AssessmentVoiceCoach.tsx` — Change navigation target
+**2. `src/pages/DynamicCoach.tsx`**
+- 移除上次添加的测评相关代码：`PostCallAdvisorDialog` 导入、`LocationState` 中的 `fromAssessment/autoStartVoice/assessmentData/reactionPattern/dominantPoor` 字段、`showPostCallDialog/hasAutoStarted` 状态、自动启动语音的 `useEffect`、`CoachVoiceChat` 中的测评条件逻辑、`PostCallAdvisorDialog` 渲染，恢复原始简洁实现。
 
-Change line 99 from:
-```
-navigate('/wealth-coach-chat', { state: { ... } })
-```
-to:
-```
-navigate('/coach/wealth_coach_4_questions', { state: { ... } })
-```
-
-### 2. Update `DynamicCoach.tsx` — Handle assessment auto-start
-
-Add `fromAssessment`, `autoStartVoice`, `assessmentData`, `reactionPattern`, `dominantPoor` to the `LocationState` interface, then add a `useEffect` to auto-open `CoachVoiceChat` when `autoStartVoice` is true. Pass the assessment context (`tokenEndpoint`, `extraBody`, `skipBilling`) to `CoachVoiceChat` when `isFromAssessment` is detected, mirroring the existing logic in `WealthCoachChat.tsx`.
-
-### 3. Post-call dialog
-
-Import and render `PostCallWecomDialog` in DynamicCoach when `isFromAssessment` is true and voice chat closes, same as the current WealthCoachChat behavior.
+`/wealth-coach-chat` 页面已有完整的 💎 图标、"财富觉醒教练"标题、全屏语音通话、`autoStartVoice` 处理和 `PostCallAdvisorDialog` 支持，无需额外修改。
 
