@@ -1,14 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Mic, Crown, FileText, Target, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/useAuth";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { forceReleaseSessionLock } from "@/hooks/useVoiceSessionLock";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { AssessmentResult, patternInfo, fourPoorInfo, emotionBlockInfo, beliefBlockInfo } from "./wealthBlockData";
 import { AIInsightData } from "./AIInsightCard";
-import { PostCallAdvisorDialog } from "./PostCallAdvisorDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -33,9 +32,8 @@ const MEMBER_365_PACKAGE = {
 export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled = false }: AssessmentVoiceCoachProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const navigate = useNavigate();
   const [showPayDialog, setShowPayDialog] = useState(false);
-  const [showPostCallDialog, setShowPostCallDialog] = useState(false);
 
   // 查询已使用次数
   const { data: sessionCount = 0 } = useQuery({
@@ -74,7 +72,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
   const isLimitReached = sessionCount >= FREE_SESSION_LIMIT && !isMember365;
   const hasFreeRemaining = sessionCount < FREE_SESSION_LIMIT;
 
-  // 构建传递给 edge function 的测评数据
+  // 构建传递给教练页面的测评数据
   const assessmentData = result ? {
     healthScore,
     patternName: patternInfo[result.reactionPattern]?.name || '未知',
@@ -97,15 +95,17 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
     }
     // 清理可能的残留锁，防止"点了没反应"
     forceReleaseSessionLock();
-    setShowVoiceChat(true);
+    // 跳转到财富教练对话页面，携带测评数据并自动启动语音
+    navigate('/wealth-coach-chat', {
+      state: {
+        fromAssessment: true,
+        autoStartVoice: true,
+        assessmentData,
+        reactionPattern: result?.reactionPattern,
+        dominantPoor: result?.dominantPoor,
+      }
+    });
   };
-
-  // 按钮文字逻辑
-  const buttonLabel = isLimitReached
-    ? '升级解锁'
-    : hasFreeRemaining
-      ? 'AI教练解说（免费）'
-      : 'AI教练解说';
 
   const ButtonIcon = isLimitReached ? Crown : Mic;
 
@@ -161,24 +161,6 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
         )}
       </div>
 
-      {showVoiceChat && (
-        <CoachVoiceChat
-          onClose={() => {
-            setShowVoiceChat(false);
-            setShowPostCallDialog(true);
-          }}
-          coachEmoji="💎"
-          coachTitle="财富觉醒教练"
-          primaryColor="amber"
-          tokenEndpoint="wealth-assessment-realtime-token"
-          mode="general"
-          featureKey="realtime_voice_wealth_assessment"
-          extraBody={{ assessmentData }}
-          maxDurationOverride={null}
-          skipBilling={true}
-        />
-      )}
-
       <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
@@ -188,15 +170,6 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
           toast({ title: "🎉 升级成功", description: "现在可以无限次对话了" });
         }}
       />
-
-      {result && (
-        <PostCallAdvisorDialog
-          open={showPostCallDialog}
-          onOpenChange={setShowPostCallDialog}
-          reactionPattern={result.reactionPattern}
-          dominantPoor={result.dominantPoor}
-        />
-      )}
     </>
   );
 }
