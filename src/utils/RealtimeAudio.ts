@@ -701,8 +701,17 @@ export class RealtimeChat {
         const state = this.pc?.connectionState;
         console.log('[WebRTC] Connection state changed:', state);
         
-        if (state === 'failed' || state === 'closed') {
-          console.error('[WebRTC] Connection state:', state);
+        if (state === 'failed') {
+          // 给 10 秒恢复时间而非立即断开
+          console.warn('[WebRTC] Connection state failed, waiting 10s...');
+          setTimeout(() => {
+            if (this.pc?.connectionState === 'failed') {
+              console.error('[WebRTC] Connection still failed after 10s');
+              this.disconnect();
+            }
+          }, 10000);
+        } else if (state === 'closed') {
+          console.error('[WebRTC] Connection state closed');
           this.disconnect();
         }
       };
