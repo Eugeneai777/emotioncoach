@@ -1,59 +1,14 @@
 
 
-## 语音对话断开原因分析
+## 改回跳转到 /wealth-coach-chat
 
-经过代码审查，语音通话断开有以下几类原因：
+### 变更
 
-### 1. WebRTC 网络层断开（最常见）
+**1. `src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+- 将 `navigate('/coach/wealth_coach_4_questions', ...)` 改回 `navigate('/wealth-coach-chat', ...)`
 
-**ICE 连接中断**（`RealtimeAudio.ts` 第 667-691 行）：
-- ICE 状态变为 `disconnected` 后，只给 **5 秒恢复时间**，超时即断开
-- ICE 状态变为 `failed` 时立即断开
-- WebRTC `connectionState` 变为 `failed` 或 `closed` 时断开
+**2. `src/pages/DynamicCoach.tsx`**
+- 移除上次添加的测评相关代码：`PostCallAdvisorDialog` 导入、`LocationState` 中的 `fromAssessment/autoStartVoice/assessmentData/reactionPattern/dominantPoor` 字段、`showPostCallDialog/hasAutoStarted` 状态、自动启动语音的 `useEffect`、`CoachVoiceChat` 中的测评条件逻辑、`PostCallAdvisorDialog` 渲染，恢复原始简洁实现。
 
-**数据通道无活动**（第 722-730 行）：
-- 每 30 秒检测一次，**2 分钟**无数据通道活动即断开
-- 如果 OpenAI 服务端短暂无响应，可能误判
-
-### 2. 计费失败导致断开
-
-**余额不足**（`CoachVoiceChat.tsx` 第 1784-1797 行）：
-- 每分钟扣费时余额不足，立即断开
-
-**网络扣费失败**（第 1737-1783 行）：
-- 扣费网络请求失败后给 60 秒宽限期
-- 宽限期后重试仍失败，断开通话
-
-### 3. 自动保护机制断开
-
-**页面隐藏超时**（第 1820-1860 行）：
-- 切到后台/其他标签页 **10 分钟**后自动挂断
-
-**用户无活动**（第 1862-1917 行）：
-- **3 分钟**无用户语音活动 → AI 语音提醒
-- 提醒后 **1 分钟**仍无响应 → 自动断开
-
-**最大通话时长**（第 1716-1723 行）：
-- 达到套餐限制的最大时长（默认 3 分钟）后强制结束
-
-### 4. OpenAI 服务端断开
-
-- OpenAI Realtime API 有自身的会话超时限制（约 15 分钟）
-- 服务端主动关闭 WebSocket/DataChannel 时触发 `dcCloseHandler`
-
----
-
-### 建议优化方向
-
-最可能导致"对话中断掉"的是 **ICE 5 秒恢复窗口太短** 和 **2 分钟数据通道无活动检测**。建议：
-
-1. **延长 ICE 恢复窗口**：从 5 秒改为 15 秒，移动网络切换（WiFi↔4G）通常需要更长时间
-2. **延长数据通道无活动超时**：从 2 分钟改为 3-4 分钟，因为用户沉默思考时 AI 也可能长时间无响应
-3. **添加 WebRTC 自动重连**：ICE 恢复失败后，自动降级到 WebSocket relay 模式而非直接断开
-4. **断线时显示重连按钮**：而非仅显示 toast 提示
-
-### 修改文件
-
-- `src/utils/RealtimeAudio.ts` — 调整 ICE 恢复超时和活动检测超时
-- `src/components/coach/CoachVoiceChat.tsx` — 添加断线自动重连/降级逻辑
+`/wealth-coach-chat` 页面已有完整的 💎 图标、"财富觉醒教练"标题、全屏语音通话、`autoStartVoice` 处理和 `PostCallAdvisorDialog` 支持，无需额外修改。
 
