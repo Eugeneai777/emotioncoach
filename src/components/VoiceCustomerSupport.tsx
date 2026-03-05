@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { acquireMicrophone } from '@/utils/microphoneManager';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -29,7 +30,7 @@ const VoiceCustomerSupport: React.FC<VoiceCustomerSupportProps> = ({ onClose }) 
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await acquireMicrophone();
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -41,7 +42,7 @@ const VoiceCustomerSupport: React.FC<VoiceCustomerSupportProps> = ({ onClose }) 
       };
 
       mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(track => track.stop());
+        // 不释放流，保留给 microphoneManager 缓存复用
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await processVoiceInput(audioBlob);
       };

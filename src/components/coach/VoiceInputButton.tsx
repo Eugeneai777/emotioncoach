@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
+import { acquireMicrophone, releaseMicrophone } from "@/utils/microphoneManager";
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
@@ -19,29 +20,14 @@ export const VoiceInputButton = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
-  // 检测当前环境
-  const isMiniProgram = isWeChatMiniProgram();
   const isWechat = isWeChatBrowser();
 
-  // 组件卸载时释放麦克风流
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-    };
-  }, []);
-
   const startRecording = async () => {
-
     // 检查浏览器是否支持 getUserMedia
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      // 微信浏览器可能不支持，给出降级提示
       if (isWechat) {
         toast({
           title: "语音功能受限",
@@ -58,11 +44,8 @@ export const VoiceInputButton = ({
     }
 
     try {
-      // 复用已缓存的流，避免重复弹出权限对话框
-      if (!streamRef.current || streamRef.current.getTracks().every(t => t.readyState === 'ended')) {
-        streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
-      const stream = streamRef.current;
+      // 使用共享麦克风管理器获取流（自动缓存，减少弹窗）
+      const stream = await acquireMicrophone();
       
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
@@ -78,8 +61,6 @@ export const VoiceInputButton = ({
       };
 
       mediaRecorder.onstop = async () => {
-        // 不释放 stream，保留供下次复用
-        // Process the recorded audio
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
         await processAudio(audioBlob);
       };
@@ -89,7 +70,6 @@ export const VoiceInputButton = ({
     } catch (error) {
       console.error('Error accessing microphone:', error);
       
-      // 根据环境给出不同的提示
       if (isWechat) {
         toast({
           title: "请使用键盘语音输入",
@@ -116,7 +96,6 @@ export const VoiceInputButton = ({
     setIsProcessing(true);
     
     try {
-      // Convert blob to base64
       const reader = new FileReader();
       const base64Audio = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
@@ -127,7 +106,6 @@ export const VoiceInputButton = ({
         reader.readAsDataURL(audioBlob);
       });
 
-      // Call the voice-to-text edge function
       const { data, error } = await supabase.functions.invoke('voice-to-text', {
         body: { audio: base64Audio }
       });
