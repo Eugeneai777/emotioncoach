@@ -1,29 +1,14 @@
 
 
-## 优化网站加载速度
+## 改回跳转到 /wealth-coach-chat
 
-### 1. 移除未使用的 Google Fonts（`src/index.css`）
-删除第 1-2 行的两个 `@import`：
-- `Ma Shan Zheng` 和 `ZCOOL XiaoWei` 在全站无任何引用
-- CSS `@import` 是渲染阻塞的，这两个中文字体文件共 2-6MB
-- 移除后首屏渲染时间显著缩短
+### 变更
 
-### 2. 优化 QueryClient 缓存策略（`src/App.tsx`）
-将第 200 行 `new QueryClient()` 改为带默认配置：
-```typescript
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,    // 5分钟缓存
-      gcTime: 10 * 60 * 1000,      // 10分钟回收
-      retry: 1,                     // 失败重试1次（默认3次）
-      refetchOnWindowFocus: false,  // 切回页面不自动刷新
-    },
-  },
-});
-```
+**1. `src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+- 将 `navigate('/coach/wealth_coach_4_questions', ...)` 改回 `navigate('/wealth-coach-chat', ...)`
 
-### 预期效果
-- 首屏加载减少 2-6MB 字体下载 + 消除渲染阻塞
-- API 请求减少约 60%（5 分钟内不重复请求同一数据）
+**2. `src/pages/DynamicCoach.tsx`**
+- 移除上次添加的测评相关代码：`PostCallAdvisorDialog` 导入、`LocationState` 中的 `fromAssessment/autoStartVoice/assessmentData/reactionPattern/dominantPoor` 字段、`showPostCallDialog/hasAutoStarted` 状态、自动启动语音的 `useEffect`、`CoachVoiceChat` 中的测评条件逻辑、`PostCallAdvisorDialog` 渲染，恢复原始简洁实现。
+
+`/wealth-coach-chat` 页面已有完整的 💎 图标、"财富觉醒教练"标题、全屏语音通话、`autoStartVoice` 处理和 `PostCallAdvisorDialog` 支持，无需额外修改。
 
