@@ -670,17 +670,23 @@ export class RealtimeChat {
         
         if (state === 'disconnected') {
           console.warn('[WebRTC] ICE disconnected, waiting for recovery...');
-          // 给 5 秒恢复时间
+          // 给 15 秒恢复时间（移动网络切换 WiFi↔4G 需要更长时间）
           this.iceRecoveryTimeout = setTimeout(() => {
             if (this.pc?.iceConnectionState === 'disconnected' || 
                 this.pc?.iceConnectionState === 'failed') {
-              console.error('[WebRTC] ICE failed to recover, disconnecting');
+              console.error('[WebRTC] ICE failed to recover after 15s, disconnecting');
               this.disconnect();
             }
-          }, 5000);
+          }, 15000);
         } else if (state === 'failed') {
-          console.error('[WebRTC] ICE connection failed');
-          this.disconnect();
+          // ICE failed 也给一次恢复机会（10 秒），而非立即断开
+          console.warn('[WebRTC] ICE connection failed, waiting 10s for recovery...');
+          this.iceRecoveryTimeout = setTimeout(() => {
+            if (this.pc?.iceConnectionState === 'failed') {
+              console.error('[WebRTC] ICE still failed after 10s, disconnecting');
+              this.disconnect();
+            }
+          }, 10000);
         } else if (state === 'connected' || state === 'completed') {
           // 连接恢复，清除恢复超时
           if (this.iceRecoveryTimeout) {
@@ -722,9 +728,9 @@ export class RealtimeChat {
           // 🔧 启动活动检测：每 30 秒检测一次数据通道活动
           this.activityCheckInterval = setInterval(() => {
             const inactiveTime = Date.now() - this.lastDataChannelActivity;
-            // 2 分钟无活动视为异常（AI 应该有回应或心跳）
-            if (inactiveTime > 120000) {
-              console.warn('[WebRTC] Data channel inactive for 2 minutes, disconnecting');
+            // 4 分钟无活动视为异常（用户可能在思考，AI 也可能长时间无响应）
+            if (inactiveTime > 240000) {
+              console.warn('[WebRTC] Data channel inactive for 4 minutes, disconnecting');
               this.disconnect();
             }
           }, 30000);
