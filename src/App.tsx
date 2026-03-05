@@ -197,7 +197,16 @@ const FollowWechatReminder = lazyRetry(() => import("./components/FollowWechatRe
 
 const BloomInvitePrompt = lazyRetry(() => import("./components/BloomInvitePrompt").then(m => ({ default: m.BloomInvitePrompt })));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // 防止 Dialog/预览层等残留的 scroll-lock 导致页面无法上下滚动
 const ScrollUnlocker = () => {
