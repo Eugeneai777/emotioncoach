@@ -96,7 +96,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
     // 清理可能的残留锁，防止"点了没反应"
     forceReleaseSessionLock();
     // 跳转到财富教练对话页面，携带测评数据并自动启动语音
-    navigate('/coach/wealth_coach_4_questions', {
+    navigate('/wealth-coach-chat', {
       state: {
         fromAssessment: true,
         autoStartVoice: true,

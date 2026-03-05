@@ -26,17 +26,11 @@ import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
 import { Badge } from "@/components/ui/badge";
-import { PostCallAdvisorDialog } from "@/components/wealth-block/PostCallAdvisorDialog";
 
 interface LocationState {
   initialMessage?: string;
   fromCamp?: boolean;
   fromAwakening?: boolean;
-  fromAssessment?: boolean;
-  autoStartVoice?: boolean;
-  assessmentData?: Record<string, any>;
-  reactionPattern?: string;
-  dominantPoor?: string;
   campId?: string;
   dayNumber?: number;
   meditationTitle?: string;
@@ -51,8 +45,6 @@ const DynamicCoach = () => {
   const [input, setInput] = useState("");
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const [showPostCallDialog, setShowPostCallDialog] = useState(false);
-  const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(coachKey || '');
@@ -199,17 +191,8 @@ const DynamicCoach = () => {
     }
   }, [locationState, template, hasAutoSent, messages.length, isLoading, sendMessage]);
 
-  // 从测评页跳转过来时，自动启动语音对话
-  const isFromAssessment = locationState?.fromAssessment;
-  useEffect(() => {
-    if (locationState?.autoStartVoice && !hasAutoStarted && template) {
-      setHasAutoStarted(true);
-      const timer = setTimeout(() => {
-        setShowVoiceChat(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [locationState?.autoStartVoice, hasAutoStarted, template]);
+
+
 
   // 当收到AI回复后，隐藏冥想分析引导
   useEffect(() => {
@@ -420,31 +403,12 @@ const DynamicCoach = () => {
     {/* OpenAI Realtime 语音对话全屏界面 */}
     {showVoiceChat && (
       <CoachVoiceChat
-        onClose={() => {
-          setShowVoiceChat(false);
-          if (isFromAssessment && locationState?.reactionPattern && locationState?.dominantPoor) {
-            setShowPostCallDialog(true);
-          }
-        }}
-        coachEmoji={isFromAssessment ? "💎" : template.emoji}
-        coachTitle={isFromAssessment ? "财富觉醒教练" : template.title}
-        primaryColor={isFromAssessment ? "amber" : (template.primary_color || 'rose')}
-        tokenEndpoint={isFromAssessment ? "wealth-assessment-realtime-token" : undefined}
-        featureKey={isFromAssessment ? "realtime_voice_wealth_assessment" : "realtime_voice_vibrant_life"}
-        extraBody={isFromAssessment && locationState?.assessmentData ? { assessmentData: locationState.assessmentData } : undefined}
-        maxDurationOverride={isFromAssessment ? null : undefined}
-        skipBilling={isFromAssessment ? true : undefined}
+        onClose={() => setShowVoiceChat(false)}
+        coachEmoji={template.emoji}
+        coachTitle={template.title}
+        primaryColor={template.primary_color || 'rose'}
+        featureKey="realtime_voice_vibrant_life"
         scenario={new URLSearchParams(location.search).get('scenario') || undefined}
-      />
-    )}
-
-    {/* 测评后通话结束 - 顾问推荐弹窗 */}
-    {locationState?.reactionPattern && locationState?.dominantPoor && (
-      <PostCallAdvisorDialog
-        open={showPostCallDialog}
-        onOpenChange={setShowPostCallDialog}
-        reactionPattern={locationState.reactionPattern}
-        dominantPoor={locationState.dominantPoor}
       />
     )}
   </>
