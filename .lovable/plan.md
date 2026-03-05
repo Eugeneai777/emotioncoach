@@ -1,39 +1,36 @@
 
 
-## 分析
+## Problem
 
-浏览器的"允许使用麦克风"弹窗是**操作系统/浏览器原生行为**，我们的代码无法完全控制它。但不同环境表现不同：
+Clicking the "AI教练解说" button on the wealth assessment result page (`/wealth-block`) opens a `CoachVoiceChat` overlay within the same page. On mobile/WeChat, this overlay renders incorrectly (partially hidden, z-index issues with the scrollable container). The user expects navigation to a dedicated voice coach page.
 
-| 环境 | 权限持久性 |
-|------|-----------|
-| Chrome/Safari 桌面 | 授权后永久记住（同域名） |
-| 微信内置浏览器 | 可能每次会话重置 |
-| 小程序 WebView | 取决于 `app.json` 中的 `scope.record` 授权 |
+## Root Cause
 
-## 我们能做到的
+`AssessmentVoiceCoach` renders `CoachVoiceChat` as an inline child component (overlay). The `/wealth-block` page has `h-screen overflow-y-auto` containers and fixed bottom bars that interfere with the full-screen overlay on mobile WebView.
 
-通过创建**模块级麦克风管理器**，可以确保：
+## Solution
 
-1. **同一次访问中**：只弹一次对话框，后续录音复用已缓存的 MediaStream
-2. **浏览器已记住权限时**：通过 `navigator.permissions.query` 检测到 `granted` 状态，静默获取流，**完全不弹窗**
-3. **微信环境权限被重置时**：无法避免首次弹窗（这是系统限制），但同一会话内不再重复
+Change the "AI教练解说" button behavior: instead of rendering `CoachVoiceChat` inline, **navigate to the wealth coach page** (`/coach/wealth_coach_4_questions`) and pass the assessment context via route state. The wealth coach page already supports voice calling.
 
-## 实现计划
+### Changes
 
-### 1. 创建 `src/utils/microphoneManager.ts`
-- 模块级单例，缓存 MediaStream
-- `acquireMicrophone()`：先用 Permissions API 检查状态，`granted` 则静默获取；否则正常请求（触发弹窗）
-- `releaseMicrophone()`：释放资源
-- `getStream()`：返回缓存流或获取新流
+**1. `src/components/wealth-block/AssessmentVoiceCoach.tsx`**
+- Replace inline `CoachVoiceChat` rendering with `useNavigate()` navigation
+- On click, navigate to `/coach/wealth_coach_4_questions` with route state containing:
+  - `fromAssessment: true`
+  - `assessmentData` (the existing context object)
+  - `autoStartVoice: true` (signal to auto-open voice chat)
+- Remove the `showVoiceChat` state and inline `CoachVoiceChat` component
+- Keep the `PostCallAdvisorDialog` logic (move it to trigger on return, or remove since the coach page handles post-call flow)
 
-### 2. 更新 `VoiceInputButton.tsx`
-- 移除组件内 `streamRef` 管理逻辑，改用共享 microphoneManager
+**2. `src/pages/DynamicCoach.tsx` or `src/pages/WealthCoachChat.tsx`**
+- Read route state for `autoStartVoice` and `assessmentData`
+- If `autoStartVoice` is true, automatically trigger the voice coach with the assessment context passed as `extraBody`
+- Use the same `tokenEndpoint="wealth-assessment-realtime-token"` and `skipBilling={true}` when launched from assessment context
 
-### 3. 更新 `VoiceCustomerSupport.tsx`
-- 同样改用共享 microphoneManager
-
-## 结论
-
-- 标准浏览器（Chrome/Safari）：用户授权一次后，后续登录**不会再弹窗**（浏览器自身记住）
-- 微信浏览器/小程序：如果环境重置了权限，**首次使用仍会弹窗一次**，这是系统限制无法绕过，但同一会话内不会重复弹
+This approach:
+- Navigates to a proper full-page coach experience (no overlay z-index issues)
+- Preserves the assessment data context for personalized coaching
+- Works reliably in WeChat/mobile environments
+- Leverages existing coach page infrastructure
 
