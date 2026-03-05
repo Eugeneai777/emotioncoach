@@ -9,6 +9,7 @@ import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButto
 import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useDynamicCoachChat, CoachChatMode } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -21,11 +22,17 @@ import { Loader2, Share2 } from "lucide-react";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
 import { Button } from "@/components/ui/button";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+import { PostCallAdvisorDialog } from "@/components/wealth-block/PostCallAdvisorDialog";
 
 interface LocationState {
   initialMessage?: string;
   fromCamp?: boolean;
   fromAwakening?: boolean;
+  fromAssessment?: boolean;
+  autoStartVoice?: boolean;
+  assessmentData?: Record<string, any>;
+  reactionPattern?: string;
+  dominantPoor?: string;
   campId?: string;
   dayNumber?: number;
   meditationTitle?: string;
@@ -41,6 +48,9 @@ const WealthCoachChat = () => {
   const [input, setInput] = useState("");
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [showPostCallDialog, setShowPostCallDialog] = useState(false);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(COACH_KEY);
@@ -61,6 +71,18 @@ const WealthCoachChat = () => {
     deleteNotification,
     triggerNotification,
   } = useSmartNotification(coachTypeForNotifications);
+
+  // 从测评页跳转过来时，自动启动语音对话
+  useEffect(() => {
+    if (locationState?.autoStartVoice && !hasAutoStarted && template) {
+      setHasAutoStarted(true);
+      // 延迟一点确保页面渲染完成
+      const timer = setTimeout(() => {
+        setShowVoiceChat(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [locationState?.autoStartVoice, hasAutoStarted, template]);
 
   // 简报生成后触发智能通知
   const handleBriefingGenerated = (briefingData: any) => {
@@ -205,8 +227,16 @@ const WealthCoachChat = () => {
   const optionClickHandler = template.disable_option_buttons ? undefined : handleOptionClick;
   const optionSelectHandler = template.disable_option_buttons ? undefined : handleOptionSelect;
 
+  // 判断是否来自测评页面
+  const isFromAssessment = locationState?.fromAssessment;
 
-
+  const handleVoiceChatClose = () => {
+    setShowVoiceChat(false);
+    // 如果是从测评页跳转来的，通话结束后显示顾问推荐弹窗
+    if (isFromAssessment && locationState?.reactionPattern && locationState?.dominantPoor) {
+      setShowPostCallDialog(true);
+    }
+  };
 
   return (
     <>
@@ -214,7 +244,7 @@ const WealthCoachChat = () => {
       <CoachLayout
         emoji={template.emoji}
         title={template.title}
-        backRoute={locationState?.fromCamp ? '/wealth-camp-checkin' : undefined}
+        backRoute={locationState?.fromCamp ? '/wealth-camp-checkin' : (isFromAssessment ? '/wealth-block' : undefined)}
         subtitle={
           campEntitlement?.hasAccess
             ? `${template.subtitle || ''} 💰 训练营会员 · 免费使用`
@@ -323,6 +353,33 @@ const WealthCoachChat = () => {
           />
         }
       />
+
+      {/* 语音对话全屏界面 */}
+      {showVoiceChat && (
+        <CoachVoiceChat
+          onClose={handleVoiceChatClose}
+          coachEmoji="💎"
+          coachTitle="财富觉醒教练"
+          primaryColor="amber"
+          tokenEndpoint={isFromAssessment ? "wealth-assessment-realtime-token" : undefined}
+          mode="general"
+          featureKey="realtime_voice_wealth_assessment"
+          extraBody={isFromAssessment && locationState?.assessmentData ? { assessmentData: locationState.assessmentData } : undefined}
+          maxDurationOverride={isFromAssessment ? null : undefined}
+          skipBilling={isFromAssessment ? true : undefined}
+        />
+      )}
+
+      {/* 测评后通话结束 - 顾问推荐弹窗 */}
+      {locationState?.reactionPattern && locationState?.dominantPoor && (
+        <PostCallAdvisorDialog
+          open={showPostCallDialog}
+          onOpenChange={setShowPostCallDialog}
+          reactionPattern={locationState.reactionPattern}
+          dominantPoor={locationState.dominantPoor}
+        />
+      )}
+
       {/* Floating share button */}
       <Button
         onClick={() => setShowShareDialog(true)}
