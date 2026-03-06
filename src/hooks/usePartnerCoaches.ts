@@ -12,8 +12,8 @@ export function usePartnerCoaches(partnerId: string | null) {
       const { data, error } = await supabase
         .from('coach_templates')
         .select('*')
-        .eq('created_by_partner_id', partnerId)
-        .eq('is_partner_coach', true)
+        .eq('created_by_partner_id' as any, partnerId)
+        .eq('is_partner_coach' as any, true)
         .order('created_at', { ascending: false });
       
       if (error) throw error;

@@ -14,6 +14,7 @@ import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { StoreCommissionProducts } from "@/components/partner/StoreCommissionProducts";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
+import { IndustryPartnerDashboard } from "@/components/partner/IndustryPartnerDashboard";
 import { PromotionHub } from "@/components/partner/PromotionHub";
 import { MyFlywheelOverview } from "@/components/partner/MyFlywheelOverview";
 import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
