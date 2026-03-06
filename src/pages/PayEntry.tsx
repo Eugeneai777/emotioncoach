@@ -25,7 +25,9 @@ export default function PayEntry() {
   // 支付恢复参数
   const isPaymentResume = searchParams.get('payment_resume') === '1';
   const resumeOpenId = searchParams.get('payment_openid') || undefined;
+  const resumeTokenHash = searchParams.get('payment_token_hash') || undefined;
   
+  const [cachedOpenId, setCachedOpenId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState<any>(null);
   const [showPayDialog, setShowPayDialog] = useState(false);
