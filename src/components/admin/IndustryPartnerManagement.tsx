@@ -324,6 +324,32 @@ export default function IndustryPartnerManagement() {
             <PartnerStoreOrders partnerId={selectedPartnerId} />
           </TabsContent>
         </Tabs>
+
+        {/* Bind User Dialog (detail view) */}
+        <Dialog open={bindDialogOpen} onOpenChange={setBindDialogOpen}>
+          <DialogContent size="sm">
+            <DialogHeader>
+              <DialogTitle>绑定用户账号</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                输入用户手机号，将其账号与此行业合伙人关联。绑定后合伙人可登录访问合伙人中心。
+              </p>
+              <div>
+                <Label>手机号</Label>
+                <Input
+                  value={bindPhone}
+                  onChange={(e) => setBindPhone(e.target.value)}
+                  placeholder="请输入用户手机号"
+                />
+              </div>
+              <Button onClick={handleBindUser} disabled={binding || !bindPhone.trim()} className="w-full">
+                {binding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UserPlus className="h-4 w-4 mr-1" />}
+                确认绑定
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </AdminPageLayout>
     );
   }
