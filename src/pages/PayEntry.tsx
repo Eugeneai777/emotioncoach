@@ -131,7 +131,7 @@ export default function PayEntry() {
     setSearchParams(newParams, { replace: true });
   }, [isPaymentResume, partner, isPaymentAuthCallback]);
 
-
+  const fetchPartnerInfo = async () => {
     try {
       const { data, error } = await supabase
         .from('partners')
