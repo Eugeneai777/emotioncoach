@@ -58,6 +58,10 @@ export default function IndustryPartnerManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [isPartnerAdmin, setIsPartnerAdmin] = useState(false);
+  const [bindDialogOpen, setBindDialogOpen] = useState(false);
+  const [bindPartnerId, setBindPartnerId] = useState<string | null>(null);
+  const [bindPhone, setBindPhone] = useState("");
+  const [binding, setBinding] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
