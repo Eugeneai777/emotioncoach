@@ -11,7 +11,7 @@ import { Sparkles, Loader2, ShoppingBag } from "lucide-react";
 import { normalizeContent } from "./bundleDescriptionUtils";
 
 interface BundleProduct {
-  source: "package" | "store";
+  source: "package" | "store" | "coach";
   key?: string;
   id?: string;
   name: string;
