@@ -9,18 +9,18 @@ export function usePartnerCoaches(partnerId: string | null) {
     queryKey: ['partner-coaches', partnerId],
     queryFn: async () => {
       if (!partnerId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('coach_templates')
-        .select('*')
-        .eq('created_by_partner_id' as any, partnerId)
-        .eq('is_partner_coach' as any, true)
+        .select('*') as any)
+        .eq('created_by_partner_id', partnerId)
+        .eq('is_partner_coach', true)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return (data || []).map(t => ({
+      return (data || []).map((t: any) => ({
         ...t,
-        steps: (t.steps || []) as unknown as CoachStep[],
-        scenarios: (t.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
+        steps: (t.steps || []) as CoachStep[],
+        scenarios: (t.scenarios || undefined) as CoachTemplate['scenarios'],
       })) as CoachTemplate[];
     },
     enabled: !!partnerId,
