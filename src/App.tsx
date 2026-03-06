@@ -164,6 +164,9 @@ const TransformationFlow = lazyRetry(() => import("./pages/TransformationFlow"))
 // 女性竞争力测评
 const WomenCompetitiveness = lazyRetry(() => import("./pages/WomenCompetitiveness"));
 
+// 动态测评
+const DynamicAssessmentPage = lazyRetry(() => import("./pages/DynamicAssessmentPage"));
+
 // 财富教练
 const WealthBlockIntro = lazyRetry(() => import("./pages/WealthBlockIntro"));
 const WealthBlockAssessment = lazyRetry(() => import("./pages/WealthBlockAssessment"));
@@ -385,6 +388,7 @@ const App = () => (
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
               <Route path="/women-competitiveness" element={<WomenCompetitiveness />} />
+              <Route path="/assessment/:assessmentKey" element={<DynamicAssessmentPage />} />
               <Route path="/product-brochure" element={<ProductBrochure />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Bot } from "lucide-react";
 import { PartnerCoachManager } from "./PartnerCoachManager";
+import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
 import type { Partner } from "@/hooks/usePartner";
 
 interface IndustryPartnerDashboardProps {
@@ -35,6 +36,12 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
 
       {/* AI Coach Manager */}
       <PartnerCoachManager 
+        partnerId={partner.id} 
+        partnerCode={partner.partner_code} 
+      />
+
+      {/* Assessment Manager */}
+      <PartnerAssessmentManager 
         partnerId={partner.id} 
         partnerCode={partner.partner_code} 
       />

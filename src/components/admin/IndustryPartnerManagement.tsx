@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot } from "lucide-react";
+import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList } from "lucide-react";
 import { PartnerCoachManager } from "@/components/partner/PartnerCoachManager";
+import { PartnerAssessmentManager } from "@/components/partner/PartnerAssessmentManager";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
 import { PartnerStoreProducts } from "@/components/partner/PartnerStoreProducts";
 import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
@@ -284,6 +285,10 @@ export default function IndustryPartnerManagement() {
               <Bot className="w-3.5 h-3.5" />
               AI 教练
             </TabsTrigger>
+            <TabsTrigger value="assessments" className="gap-1">
+              <ClipboardList className="w-3.5 h-3.5" />
+              测评
+            </TabsTrigger>
             <TabsTrigger value="bundles">组合产品</TabsTrigger>
             <TabsTrigger value="store">商城商品</TabsTrigger>
             <TabsTrigger value="orders">商城订单</TabsTrigger>
@@ -293,6 +298,9 @@ export default function IndustryPartnerManagement() {
           </TabsContent>
           <TabsContent value="coaches">
             <PartnerCoachManager partnerId={selectedPartnerId} partnerCode={selectedPartner.partner_code} />
+          </TabsContent>
+          <TabsContent value="assessments">
+            <PartnerAssessmentManager partnerId={selectedPartnerId} partnerCode={selectedPartner.partner_code} />
           </TabsContent>
           <TabsContent value="bundles">
             <PartnerProductBundles partnerId={selectedPartnerId} />
