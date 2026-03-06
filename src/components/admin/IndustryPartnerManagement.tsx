@@ -16,6 +16,7 @@ import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem"
 import { PartnerStoreProducts } from "@/components/partner/PartnerStoreProducts";
 import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
 import { PartnerProductBundles } from "@/components/admin/industry-partners/PartnerProductBundles";
+import { PartnerInfoEditor } from "@/components/admin/industry-partners/PartnerInfoEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
