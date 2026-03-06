@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Network, Plus, Building2 } from "lucide-react";
+import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2 } from "lucide-react";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
 import { PartnerStoreProducts } from "@/components/partner/PartnerStoreProducts";
 import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
