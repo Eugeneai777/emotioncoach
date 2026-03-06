@@ -494,7 +494,7 @@ export default function IndustryPartnerManagement() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     暂无行业合伙人，点击右上角"新建"添加
                   </TableCell>
                 </TableRow>
