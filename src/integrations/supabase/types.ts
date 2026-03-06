@@ -2221,6 +2221,7 @@ export type Database = {
           briefing_tool_config: Json | null
           coach_key: string
           created_at: string | null
+          created_by_partner_id: string | null
           description: string | null
           disable_option_buttons: boolean | null
           display_order: number | null
@@ -2242,10 +2243,12 @@ export type Database = {
           history_route: string
           id: string
           is_active: boolean | null
+          is_partner_coach: boolean
           is_prompt_locked: boolean | null
           is_system: boolean | null
           more_info_route: string | null
           page_route: string
+          partner_coach_status: string
           placeholder: string | null
           primary_color: string | null
           prompt_locked_at: string | null
@@ -2267,6 +2270,7 @@ export type Database = {
           briefing_tool_config?: Json | null
           coach_key: string
           created_at?: string | null
+          created_by_partner_id?: string | null
           description?: string | null
           disable_option_buttons?: boolean | null
           display_order?: number | null
@@ -2288,10 +2292,12 @@ export type Database = {
           history_route: string
           id?: string
           is_active?: boolean | null
+          is_partner_coach?: boolean
           is_prompt_locked?: boolean | null
           is_system?: boolean | null
           more_info_route?: string | null
           page_route: string
+          partner_coach_status?: string
           placeholder?: string | null
           primary_color?: string | null
           prompt_locked_at?: string | null
@@ -2313,6 +2319,7 @@ export type Database = {
           briefing_tool_config?: Json | null
           coach_key?: string
           created_at?: string | null
+          created_by_partner_id?: string | null
           description?: string | null
           disable_option_buttons?: boolean | null
           display_order?: number | null
@@ -2334,10 +2341,12 @@ export type Database = {
           history_route?: string
           id?: string
           is_active?: boolean | null
+          is_partner_coach?: boolean
           is_prompt_locked?: boolean | null
           is_system?: boolean | null
           more_info_route?: string | null
           page_route?: string
+          partner_coach_status?: string
           placeholder?: string | null
           primary_color?: string | null
           prompt_locked_at?: string | null
@@ -2354,7 +2363,15 @@ export type Database = {
           training_camp_type?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coach_templates_created_by_partner_id_fkey"
+            columns: ["created_by_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coach_time_slots: {
         Row: {
@@ -10138,6 +10155,7 @@ export type Database = {
           remaining_quota: number
         }[]
       }
+      get_partner_id_for_user: { Args: { p_user_id: string }; Returns: string }
       get_user_permissions: {
         Args: { p_user_id: string }
         Returns: {
