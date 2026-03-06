@@ -14,6 +14,7 @@ import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { StoreCommissionProducts } from "@/components/partner/StoreCommissionProducts";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
+import { IndustryPartnerDashboard } from "@/components/partner/IndustryPartnerDashboard";
 import { PromotionHub } from "@/components/partner/PromotionHub";
 import { MyFlywheelOverview } from "@/components/partner/MyFlywheelOverview";
 import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
@@ -168,6 +169,8 @@ export default function Partner() {
             {/* 根据合伙人类型显示不同面板 */}
             {partner.partner_type === 'youjin' ? (
               <YoujinPartnerDashboard partner={partner} />
+            ) : partner.partner_type === 'industry' ? (
+              <IndustryPartnerDashboard partner={partner} />
             ) : (
               <>
                 {/* 飞轮概览（含身份标识）— 置顶 */}

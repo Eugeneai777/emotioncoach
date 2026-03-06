@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Network, Plus, Building2 } from "lucide-react";
+import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2 } from "lucide-react";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
 import { PartnerStoreProducts } from "@/components/partner/PartnerStoreProducts";
 import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
@@ -58,6 +58,10 @@ export default function IndustryPartnerManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [isPartnerAdmin, setIsPartnerAdmin] = useState(false);
+  const [bindDialogOpen, setBindDialogOpen] = useState(false);
+  const [bindPartnerId, setBindPartnerId] = useState<string | null>(null);
+  const [bindPhone, setBindPhone] = useState("");
+  const [binding, setBinding] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -208,6 +212,45 @@ export default function IndustryPartnerManagement() {
       toast.error("创建失败: " + (err.message || "未知错误"));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleBindUser = async () => {
+    if (!bindPhone.trim() || !bindPartnerId) return;
+    setBinding(true);
+    try {
+      // Find user by phone
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles' as any)
+        .select('id, display_name, phone')
+        .eq('phone', bindPhone.trim())
+        .limit(1);
+      
+      if (profileError) throw profileError;
+      if (!profiles || profiles.length === 0) {
+        toast.error('未找到该手机号对应的用户');
+        return;
+      }
+
+      const userId = (profiles as any[])[0].id;
+
+      // Update partner's user_id
+      const { error } = await supabase
+        .from('partners')
+        .update({ user_id: userId } as any)
+        .eq('id', bindPartnerId);
+
+      if (error) throw error;
+
+      toast.success(`已绑定用户: ${(profiles as any[])[0].display_name || bindPhone}`);
+      setBindDialogOpen(false);
+      setBindPhone("");
+      setBindPartnerId(null);
+      fetchPartners();
+    } catch (err: any) {
+      toast.error('绑定失败: ' + (err.message || '未知错误'));
+    } finally {
+      setBinding(false);
     }
   };
 
@@ -396,6 +439,7 @@ export default function IndustryPartnerManagement() {
                 <TableHead>公司/机构</TableHead>
                 <TableHead>合伙人编码</TableHead>
                 <TableHead>联系人</TableHead>
+                <TableHead>绑定用户</TableHead>
                 <TableHead>一级佣金</TableHead>
                 
                 <TableHead className="text-right">推荐用户</TableHead>
@@ -409,6 +453,27 @@ export default function IndustryPartnerManagement() {
                   <TableCell className="font-medium">{p.company_name || "-"}</TableCell>
                   <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
                   <TableCell>{p.contact_person || "-"}</TableCell>
+                  <TableCell>
+                    {p.user_id ? (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1">
+                        <Link2 className="h-3 w-3" />
+                        已绑定
+                      </span>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 px-2"
+                        onClick={() => {
+                          setBindPartnerId(p.id);
+                          setBindDialogOpen(true);
+                        }}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        绑定
+                      </Button>
+                    )}
+                  </TableCell>
                   <TableCell>{((p.custom_commission_rate_l1 ?? 0.30) * 100).toFixed(0)}%</TableCell>
                   
                   <TableCell className="text-right">{p.total_referrals}</TableCell>
@@ -429,7 +494,7 @@ export default function IndustryPartnerManagement() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     暂无行业合伙人，点击右上角"新建"添加
                   </TableCell>
                 </TableRow>
@@ -438,6 +503,32 @@ export default function IndustryPartnerManagement() {
           </Table>
         </div>
       )}
+
+      {/* Bind User Dialog */}
+      <Dialog open={bindDialogOpen} onOpenChange={setBindDialogOpen}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>绑定用户账号</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              输入用户手机号，将其账号与此行业合伙人关联。绑定后合伙人可登录访问合伙人中心。
+            </p>
+            <div>
+              <Label>手机号</Label>
+              <Input
+                value={bindPhone}
+                onChange={(e) => setBindPhone(e.target.value)}
+                placeholder="请输入用户手机号"
+              />
+            </div>
+            <Button onClick={handleBindUser} disabled={binding || !bindPhone.trim()} className="w-full">
+              {binding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UserPlus className="h-4 w-4 mr-1" />}
+              确认绑定
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminPageLayout>
   );
 }
