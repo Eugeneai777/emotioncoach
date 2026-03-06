@@ -453,6 +453,27 @@ export default function IndustryPartnerManagement() {
                   <TableCell className="font-medium">{p.company_name || "-"}</TableCell>
                   <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
                   <TableCell>{p.contact_person || "-"}</TableCell>
+                  <TableCell>
+                    {p.user_id ? (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1">
+                        <Link2 className="h-3 w-3" />
+                        已绑定
+                      </span>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 px-2"
+                        onClick={() => {
+                          setBindPartnerId(p.id);
+                          setBindDialogOpen(true);
+                        }}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        绑定
+                      </Button>
+                    )}
+                  </TableCell>
                   <TableCell>{((p.custom_commission_rate_l1 ?? 0.30) * 100).toFixed(0)}%</TableCell>
                   
                   <TableCell className="text-right">{p.total_referrals}</TableCell>
