@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 
 export default function PayEntry() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const partnerId = searchParams.get("partner");
 
@@ -21,6 +21,10 @@ export default function PayEntry() {
     searchParams.get('payment_auth_callback') === '1' &&
     !!paymentAuthCode &&
     !!paymentRedirect;
+
+  // 支付恢复参数
+  const isPaymentResume = searchParams.get('payment_resume') === '1';
+  const resumeOpenId = searchParams.get('payment_openid') || undefined;
   
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState<any>(null);
@@ -110,8 +114,24 @@ export default function PayEntry() {
     fetchPartnerInfo();
   }, [partnerId, isPaymentAuthCallback]);
 
+  // 支付恢复：授权回跳后自动打开支付对话框
+  useEffect(() => {
+    if (!isPaymentResume || !partner || isPaymentAuthCallback) return;
+    console.log('[PayEntry] Payment resume detected, auto-opening pay dialog. openId:', resumeOpenId);
+    setShowPayDialog(true);
+    // 清理 URL 参数，防止刷新重复触发
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('payment_resume');
+    newParams.delete('payment_openid');
+    newParams.delete('payment_token_hash');
+    newParams.delete('assessment_pay_resume');
+    newParams.delete('payment_auth_error');
+    newParams.delete('is_new_user');
+    newParams.delete('pay_flow');
+    setSearchParams(newParams, { replace: true });
+  }, [isPaymentResume, partner, isPaymentAuthCallback]);
 
-  const fetchPartnerInfo = async () => {
+
     try {
       const { data, error } = await supabase
         .from('partners')
@@ -358,6 +378,7 @@ export default function PayEntry() {
           quota: 50
         }}
         onSuccess={handlePaymentSuccess}
+        openId={resumeOpenId}
       />
     </div>
   );
