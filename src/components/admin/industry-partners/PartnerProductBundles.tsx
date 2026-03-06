@@ -41,7 +41,7 @@ interface ProductBundle {
 }
 
 interface SelectableProduct {
-  source: "package" | "store";
+  source: "package" | "store" | "coach";
   key?: string;
   id?: string;
   name: string;
