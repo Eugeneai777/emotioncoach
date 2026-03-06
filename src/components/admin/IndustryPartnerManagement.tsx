@@ -465,7 +465,7 @@ export default function IndustryPartnerManagement() {
             </TableHeader>
             <TableBody>
               {filtered.map((p) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className="cursor-pointer hover:bg-accent/50" onClick={() => setSelectedPartnerId(p.id)}>
                   <TableCell className="font-medium">{p.company_name || "-"}</TableCell>
                   <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
                   <TableCell>{p.contact_person || "-"}</TableCell>
@@ -480,7 +480,8 @@ export default function IndustryPartnerManagement() {
                         variant="ghost"
                         size="sm"
                         className="text-xs h-7 px-2"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setBindPartnerId(p.id);
                           setBindDialogOpen(true);
                         }}
@@ -501,9 +502,9 @@ export default function IndustryPartnerManagement() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedPartnerId(p.id)}>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPartnerId(p.id); }}>
                       <Network className="h-4 w-4 mr-1" />
-                      查看飞轮
+                      管理
                     </Button>
                   </TableCell>
                 </TableRow>
