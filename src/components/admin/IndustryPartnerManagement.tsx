@@ -280,12 +280,19 @@ export default function IndustryPartnerManagement() {
         <Tabs defaultValue="flywheel" className="space-y-4">
           <TabsList className="flex-wrap">
             <TabsTrigger value="flywheel">创建活动</TabsTrigger>
+            <TabsTrigger value="coaches" className="gap-1">
+              <Bot className="w-3.5 h-3.5" />
+              AI 教练
+            </TabsTrigger>
             <TabsTrigger value="bundles">组合产品</TabsTrigger>
             <TabsTrigger value="store">商城商品</TabsTrigger>
             <TabsTrigger value="orders">商城订单</TabsTrigger>
           </TabsList>
           <TabsContent value="flywheel">
             <FlywheelGrowthSystem partnerId={selectedPartnerId} fromAdmin />
+          </TabsContent>
+          <TabsContent value="coaches">
+            <PartnerCoachManager partnerId={selectedPartnerId} partnerCode={selectedPartner.partner_code} />
           </TabsContent>
           <TabsContent value="bundles">
             <PartnerProductBundles partnerId={selectedPartnerId} />
