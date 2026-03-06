@@ -393,7 +393,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setCoverImageUrl(bundle.cover_image_url || null);
     const restored: SelectableProduct[] = bundle.products.map((p) => ({
       ...p,
-      group: p.source === "store" ? "商城商品" : "有劲系列",
+      group: p.source === "store" ? "商城商品" : p.source === "coach" ? "AI 教练" : "有劲系列",
     }));
     setSelectedProducts(restored);
     setDialogOpen(true);
