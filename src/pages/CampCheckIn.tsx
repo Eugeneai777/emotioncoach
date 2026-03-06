@@ -356,7 +356,7 @@ const CampCheckIn = () => {
                   }`}
                   onClick={() => {
                     if (!todayProgress?.is_checked_in) {
-                      if (camp.camp_type === 'emotion_diary_21') {
+                      if (camp.camp_type === 'emotion_journal_21') {
                         navigate("/emotion-coach");
                       } else {
                         navigate("/");
@@ -397,7 +397,7 @@ const CampCheckIn = () => {
                         <Button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (camp.camp_type === 'emotion_diary_21') {
+                            if (camp.camp_type === 'emotion_journal_21') {
                               navigate("/emotion-coach");
                             } else {
                               navigate("/");
