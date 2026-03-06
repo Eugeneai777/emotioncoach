@@ -252,6 +252,7 @@ export default function IndustryPartnerManagement() {
     } finally {
       setBinding(false);
     }
+  };
 
   const filtered = partners.filter((p) => {
     const q = search.toLowerCase();
