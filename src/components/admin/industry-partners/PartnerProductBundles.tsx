@@ -16,7 +16,7 @@ import { BundlePublishPreview } from "./BundlePublishPreview";
 import { buildBundleDescription } from "./bundleDescriptionUtils";
 
 interface BundleProduct {
-  source: "package" | "store";
+  source: "package" | "store" | "coach";
   key?: string;
   id?: string;
   name: string;
