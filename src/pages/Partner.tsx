@@ -169,6 +169,8 @@ export default function Partner() {
             {/* 根据合伙人类型显示不同面板 */}
             {partner.partner_type === 'youjin' ? (
               <YoujinPartnerDashboard partner={partner} />
+            ) : partner.partner_type === 'industry' ? (
+              <IndustryPartnerDashboard partner={partner} />
             ) : (
               <>
                 {/* 飞轮概览（含身份标识）— 置顶 */}
