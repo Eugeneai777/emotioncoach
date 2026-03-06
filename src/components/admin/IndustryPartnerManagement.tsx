@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList } from "lucide-react";
+import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList, Settings, Save } from "lucide-react";
 import { PartnerCoachManager } from "@/components/partner/PartnerCoachManager";
 import { PartnerAssessmentManager } from "@/components/partner/PartnerAssessmentManager";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
@@ -280,6 +280,12 @@ export default function IndustryPartnerManagement() {
       >
         <Tabs defaultValue="flywheel" className="space-y-4">
           <TabsList className="flex-wrap">
+            {!isPartnerAdmin && (
+              <TabsTrigger value="info" className="gap-1">
+                <Settings className="w-3.5 h-3.5" />
+                基本信息
+              </TabsTrigger>
+            )}
             <TabsTrigger value="flywheel">创建活动</TabsTrigger>
             <TabsTrigger value="coaches" className="gap-1">
               <Bot className="w-3.5 h-3.5" />
@@ -293,6 +299,11 @@ export default function IndustryPartnerManagement() {
             <TabsTrigger value="store">商城商品</TabsTrigger>
             <TabsTrigger value="orders">商城订单</TabsTrigger>
           </TabsList>
+          {!isPartnerAdmin && (
+            <TabsContent value="info">
+              <PartnerInfoEditor partner={selectedPartner} onSaved={fetchPartners} onBindUser={(id) => { setBindPartnerId(id); setBindDialogOpen(true); }} />
+            </TabsContent>
+          )}
           <TabsContent value="flywheel">
             <FlywheelGrowthSystem partnerId={selectedPartnerId} fromAdmin />
           </TabsContent>
