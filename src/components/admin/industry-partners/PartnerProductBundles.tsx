@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Sparkles, Loader2, Package, Trash2, X, Store, CheckCircle, XCircle, Lightbulb } from "lucide-react";
+import { Plus, Sparkles, Loader2, Package, Trash2, X, Store, CheckCircle, XCircle, Lightbulb, Bot } from "lucide-react";
 import { BundlePublishPreview } from "./BundlePublishPreview";
 import { buildBundleDescription } from "./bundleDescriptionUtils";
 
@@ -90,6 +90,21 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     },
   });
 
+  // Load partner AI coaches
+  const { data: partnerCoaches, isLoading: coachesLoading } = useQuery({
+    queryKey: ["partner-coaches-for-bundle", partnerId],
+    queryFn: async () => {
+      const { data, error } = await (supabase
+        .from("coach_templates")
+        .select("id, title, emoji, description") as any)
+        .eq("created_by_partner_id", partnerId)
+        .eq("is_partner_coach", true)
+        .eq("is_active", true);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
   // Load existing bundles from partner
   const { data: partnerData, isLoading: partnerLoading } = useQuery({
     queryKey: ["partner-bundles", partnerId],
@@ -138,8 +153,18 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         group: "商城商品",
       });
     });
+    (partnerCoaches || []).forEach((c: any) => {
+      items.push({
+        source: "coach",
+        id: c.id,
+        name: `${c.emoji || '🤖'} ${c.title}`,
+        price: 0,
+        description: c.description || undefined,
+        group: "AI 教练",
+      });
+    });
     return items;
-  }, [packages, storeProducts]);
+  }, [packages, storeProducts, partnerCoaches]);
 
   const grouped = useMemo(() => {
     const map: Record<string, SelectableProduct[]> = {};
