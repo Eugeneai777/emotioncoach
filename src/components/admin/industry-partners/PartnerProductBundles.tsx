@@ -408,7 +408,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setNameSuggestions([]);
   };
 
-  const isLoading = packagesLoading || storeLoading || partnerLoading;
+  const isLoading = packagesLoading || storeLoading || partnerLoading || coachesLoading;
 
   if (isLoading) {
     return (
