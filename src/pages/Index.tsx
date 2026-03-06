@@ -44,7 +44,7 @@ const Index = () => {
   
   
   // AI 来电状态 - 从 navigation state 获取
-  const incomingCallState = location.state as { isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string } | null;
+  const incomingCallState = location.state as { isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string; autoStartVoice?: boolean } | null;
   
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
@@ -74,8 +74,8 @@ const Index = () => {
 
   // AI 来电：自动启动语音聊天
   useEffect(() => {
-    if (incomingCallState?.isIncomingCall) {
-      console.log('[EmotionCoach] AI incoming call detected, auto-starting voice chat');
+    if (incomingCallState?.isIncomingCall || incomingCallState?.autoStartVoice) {
+      console.log('[EmotionCoach] Auto-starting voice chat', incomingCallState);
       setShowVoiceChat(true);
     }
   }, [incomingCallState?.isIncomingCall]);
