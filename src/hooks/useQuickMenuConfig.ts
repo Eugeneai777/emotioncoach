@@ -22,7 +22,7 @@ export interface QuickMenuConfig {
 // Note: Most coaches use /coach/:coachKey dynamic route, except standalone pages
 export const coachPages = [
   { path: '/coach-space', label: '教练空间', icon: 'Users', color: 'bg-rose-500' },
-  { path: '/coach/emotion', label: '情绪教练', icon: 'Heart', color: 'bg-pink-500' },
+  { path: '/emotion-coach', label: '情绪教练', icon: 'Heart', color: 'bg-pink-500' },
   { path: '/parent-coach', label: '亲子教练', icon: 'Baby', color: 'bg-sky-500' },
   { path: '/coach/wealth_coach_4_questions', label: '财富教练', icon: 'Coins', color: 'bg-amber-500' },
   { path: '/coach/vibrant_life', label: '生活教练', icon: 'Sparkles', color: 'bg-violet-500' },
