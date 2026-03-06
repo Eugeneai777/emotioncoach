@@ -11,12 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Sparkles, Loader2, Package, Trash2, X, Store, CheckCircle, XCircle, Lightbulb } from "lucide-react";
+import { Plus, Sparkles, Loader2, Package, Trash2, X, Store, CheckCircle, XCircle, Lightbulb, Bot } from "lucide-react";
 import { BundlePublishPreview } from "./BundlePublishPreview";
 import { buildBundleDescription } from "./bundleDescriptionUtils";
 
 interface BundleProduct {
-  source: "package" | "store";
+  source: "package" | "store" | "coach";
   key?: string;
   id?: string;
   name: string;
@@ -41,7 +41,7 @@ interface ProductBundle {
 }
 
 interface SelectableProduct {
-  source: "package" | "store";
+  source: "package" | "store" | "coach";
   key?: string;
   id?: string;
   name: string;
@@ -85,6 +85,21 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         .select("id, product_name, price, description")
         .eq("partner_id", partnerId)
         .eq("is_available", true);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  // Load partner AI coaches
+  const { data: partnerCoaches, isLoading: coachesLoading } = useQuery({
+    queryKey: ["partner-coaches-for-bundle", partnerId],
+    queryFn: async () => {
+      const { data, error } = await (supabase
+        .from("coach_templates")
+        .select("id, title, emoji, description") as any)
+        .eq("created_by_partner_id", partnerId)
+        .eq("is_partner_coach", true)
+        .eq("is_active", true);
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -138,8 +153,18 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
         group: "商城商品",
       });
     });
+    (partnerCoaches || []).forEach((c: any) => {
+      items.push({
+        source: "coach",
+        id: c.id,
+        name: `${c.emoji || '🤖'} ${c.title}`,
+        price: 0,
+        description: c.description || undefined,
+        group: "AI 教练",
+      });
+    });
     return items;
-  }, [packages, storeProducts]);
+  }, [packages, storeProducts, partnerCoaches]);
 
   const grouped = useMemo(() => {
     const map: Record<string, SelectableProduct[]> = {};
@@ -368,7 +393,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setCoverImageUrl(bundle.cover_image_url || null);
     const restored: SelectableProduct[] = bundle.products.map((p) => ({
       ...p,
-      group: p.source === "store" ? "商城商品" : "有劲系列",
+      group: p.source === "store" ? "商城商品" : p.source === "coach" ? "AI 教练" : "有劲系列",
     }));
     setSelectedProducts(restored);
     setDialogOpen(true);
@@ -383,7 +408,7 @@ export function PartnerProductBundles({ partnerId }: { partnerId: string }) {
     setNameSuggestions([]);
   };
 
-  const isLoading = packagesLoading || storeLoading || partnerLoading;
+  const isLoading = packagesLoading || storeLoading || partnerLoading || coachesLoading;
 
   if (isLoading) {
     return (
