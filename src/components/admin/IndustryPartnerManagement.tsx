@@ -396,6 +396,7 @@ export default function IndustryPartnerManagement() {
                 <TableHead>公司/机构</TableHead>
                 <TableHead>合伙人编码</TableHead>
                 <TableHead>联系人</TableHead>
+                <TableHead>绑定用户</TableHead>
                 <TableHead>一级佣金</TableHead>
                 
                 <TableHead className="text-right">推荐用户</TableHead>
