@@ -25,7 +25,9 @@ export default function PayEntry() {
   // 支付恢复参数
   const isPaymentResume = searchParams.get('payment_resume') === '1';
   const resumeOpenId = searchParams.get('payment_openid') || undefined;
+  const resumeTokenHash = searchParams.get('payment_token_hash') || undefined;
   
+  const [cachedOpenId, setCachedOpenId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState<any>(null);
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -117,18 +119,48 @@ export default function PayEntry() {
   // 支付恢复：授权回跳后自动打开支付对话框
   useEffect(() => {
     if (!isPaymentResume || !partner || isPaymentAuthCallback) return;
-    console.log('[PayEntry] Payment resume detected, auto-opening pay dialog. openId:', resumeOpenId);
-    setShowPayDialog(true);
-    // 清理 URL 参数，防止刷新重复触发
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete('payment_resume');
-    newParams.delete('payment_openid');
-    newParams.delete('payment_token_hash');
-    newParams.delete('assessment_pay_resume');
-    newParams.delete('payment_auth_error');
-    newParams.delete('is_new_user');
-    newParams.delete('pay_flow');
-    setSearchParams(newParams, { replace: true });
+    
+    const resumePayment = async () => {
+      console.log('[PayEntry] Payment resume detected. openId:', resumeOpenId, 'tokenHash:', resumeTokenHash ? 'present' : 'none');
+      
+      // Bug fix 1: Auto-login with tokenHash before opening pay dialog
+      if (resumeTokenHash) {
+        try {
+          console.log('[PayEntry] Auto-login with tokenHash...');
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: resumeTokenHash,
+            type: 'magiclink',
+          });
+          if (error) {
+            console.error('[PayEntry] Auto-login failed:', error);
+          } else {
+            console.log('[PayEntry] Auto-login successful');
+          }
+        } catch (e) {
+          console.error('[PayEntry] Auto-login exception:', e);
+        }
+      }
+      
+      // Bug fix 2: Cache openId in state BEFORE clearing URL params
+      if (resumeOpenId) {
+        setCachedOpenId(resumeOpenId);
+      }
+      
+      setShowPayDialog(true);
+      
+      // Clean URL params to prevent duplicate triggers
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment_resume');
+      newParams.delete('payment_openid');
+      newParams.delete('payment_token_hash');
+      newParams.delete('assessment_pay_resume');
+      newParams.delete('payment_auth_error');
+      newParams.delete('is_new_user');
+      newParams.delete('pay_flow');
+      setSearchParams(newParams, { replace: true });
+    };
+    
+    resumePayment();
   }, [isPaymentResume, partner, isPaymentAuthCallback]);
 
   const fetchPartnerInfo = async () => {
@@ -152,7 +184,7 @@ export default function PayEntry() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      navigate(`/auth?redirect=/pay-entry?partner=${partnerId}`);
+      navigate(`/auth?redirect=${encodeURIComponent(`/pay-entry?partner=${partnerId}`)}`);
       return;
     }
     
@@ -378,7 +410,7 @@ export default function PayEntry() {
           quota: 50
         }}
         onSuccess={handlePaymentSuccess}
-        openId={resumeOpenId}
+        openId={cachedOpenId || resumeOpenId}
       />
     </div>
   );
