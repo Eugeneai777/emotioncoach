@@ -3,6 +3,7 @@ import { Phone, MessageSquare } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { preheatTokenEndpoint, prewarmMicrophoneStream } from '@/utils/RealtimeAudio';
 
 interface EmotionVoiceCallCTAProps {
@@ -21,10 +22,12 @@ export const EmotionVoiceCallCTA = ({
     isLoading
   } = usePersonalizedGreeting();
 
-  // 🚀 P0: 预热 Edge Function 和麦克风流（使用 OpenAI Realtime）
+  // 🚀 P0: 预热豆包语音引擎（优先）和 OpenAI Realtime（降级备用）
   const handlePreheat = useCallback(() => {
     Promise.all([
-      // 情绪教练使用 OpenAI Realtime token
+      // 豆包预热：AudioContext + 麦克风
+      (() => { DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: false }); })(),
+      // OpenAI 降级备用预热
       preheatTokenEndpoint('emotion-realtime-token'),
       prewarmMicrophoneStream()
     ]).catch(console.warn);
