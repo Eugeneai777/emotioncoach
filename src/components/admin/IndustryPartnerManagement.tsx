@@ -215,6 +215,44 @@ export default function IndustryPartnerManagement() {
     }
   };
 
+  const handleBindUser = async () => {
+    if (!bindPhone.trim() || !bindPartnerId) return;
+    setBinding(true);
+    try {
+      // Find user by phone
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles' as any)
+        .select('id, display_name, phone')
+        .eq('phone', bindPhone.trim())
+        .limit(1);
+      
+      if (profileError) throw profileError;
+      if (!profiles || profiles.length === 0) {
+        toast.error('未找到该手机号对应的用户');
+        return;
+      }
+
+      const userId = (profiles as any[])[0].id;
+
+      // Update partner's user_id
+      const { error } = await supabase
+        .from('partners')
+        .update({ user_id: userId } as any)
+        .eq('id', bindPartnerId);
+
+      if (error) throw error;
+
+      toast.success(`已绑定用户: ${(profiles as any[])[0].display_name || bindPhone}`);
+      setBindDialogOpen(false);
+      setBindPhone("");
+      setBindPartnerId(null);
+      fetchPartners();
+    } catch (err: any) {
+      toast.error('绑定失败: ' + (err.message || '未知错误'));
+    } finally {
+      setBinding(false);
+    }
+
   const filtered = partners.filter((p) => {
     const q = search.toLowerCase();
     return (
