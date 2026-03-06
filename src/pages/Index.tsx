@@ -74,8 +74,8 @@ const Index = () => {
 
   // AI 来电：自动启动语音聊天
   useEffect(() => {
-    if (incomingCallState?.isIncomingCall || incomingCallState?.autoStartVoice) {
-      console.log('[EmotionCoach] Auto-starting voice chat', incomingCallState);
+    if (incomingCallState?.isIncomingCall) {
+      console.log('[EmotionCoach] AI incoming call detected, auto-starting voice chat');
       setShowVoiceChat(true);
     }
   }, [incomingCallState?.isIncomingCall]);
