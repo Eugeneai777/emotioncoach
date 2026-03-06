@@ -6202,6 +6202,124 @@ export type Database = {
           },
         ]
       }
+      partner_assessment_results: {
+        Row: {
+          ai_insight: string | null
+          answers: Json
+          created_at: string
+          dimension_scores: Json
+          id: string
+          primary_pattern: string | null
+          template_id: string
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          ai_insight?: string | null
+          answers?: Json
+          created_at?: string
+          dimension_scores?: Json
+          id?: string
+          primary_pattern?: string | null
+          template_id: string
+          total_score?: number
+          user_id: string
+        }
+        Update: {
+          ai_insight?: string | null
+          answers?: Json
+          created_at?: string
+          dimension_scores?: Json
+          id?: string
+          primary_pattern?: string | null
+          template_id?: string
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_assessment_results_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "partner_assessment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_assessment_templates: {
+        Row: {
+          ai_insight_prompt: string | null
+          assessment_key: string
+          created_at: string
+          created_by_partner_id: string
+          description: string | null
+          dimensions: Json
+          emoji: string | null
+          gradient: string | null
+          id: string
+          is_active: boolean
+          max_score: number
+          page_route: string | null
+          question_count: number
+          questions: Json
+          result_patterns: Json
+          scoring_logic: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_insight_prompt?: string | null
+          assessment_key: string
+          created_at?: string
+          created_by_partner_id: string
+          description?: string | null
+          dimensions?: Json
+          emoji?: string | null
+          gradient?: string | null
+          id?: string
+          is_active?: boolean
+          max_score?: number
+          page_route?: string | null
+          question_count?: number
+          questions?: Json
+          result_patterns?: Json
+          scoring_logic?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_insight_prompt?: string | null
+          assessment_key?: string
+          created_at?: string
+          created_by_partner_id?: string
+          description?: string | null
+          dimensions?: Json
+          emoji?: string | null
+          gradient?: string | null
+          id?: string
+          is_active?: boolean
+          max_score?: number
+          page_route?: string | null
+          question_count?: number
+          questions?: Json
+          result_patterns?: Json
+          scoring_logic?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_assessment_templates_created_by_partner_id_fkey"
+            columns: ["created_by_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_benefits: {
         Row: {
           benefit_description: string | null
