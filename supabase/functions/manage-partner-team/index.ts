@@ -89,14 +89,14 @@ Deno.serve(async (req) => {
       const userIds = bindings.map((b: any) => b.user_id);
       const { data: profiles } = await adminClient
         .from("profiles")
-        .select("id, display_name, nickname, phone")
+        .select("id, display_name, phone")
         .in("id", userIds);
 
       const members = bindings.map((b: any) => {
         const profile = profiles?.find((p: any) => p.id === b.user_id);
         return {
           user_id: b.user_id,
-          display_name: profile?.display_name || profile?.nickname || "未设置",
+          display_name: profile?.display_name || "未设置",
           phone: profile?.phone || "",
           bound_at: b.created_at,
         };
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       // Find user by phone
       const { data: profiles } = await adminClient
         .from("profiles")
-        .select("id, display_name, nickname, phone")
+        .select("id, display_name, phone")
         .eq("phone", phone.trim())
         .limit(1);
 
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: `已添加 ${profiles[0].display_name || profiles[0].nickname || phone}` 
+        message: `已添加 ${profiles[0].display_name || phone}` 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
