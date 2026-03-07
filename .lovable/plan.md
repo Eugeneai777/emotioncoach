@@ -1,23 +1,32 @@
 
 
-## 两个问题需要修复
+## 行业合伙人分成接入方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 问题
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+`calculate-commission` 边缘函数通过 `partner_type === productLine` 过滤合伙人，而 `productLine` 只返回 `youjin` 或 `bloom`，导致 `partner_type = 'industry'` 的行业合伙人**永远不会获得佣金**，即使用户通过其推广链接进入并产生了后续购买。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+修改 `calculate-commission/index.ts`，在 L1 和 L2 佣金计算中增加对 `industry` 类型合伙人的支持：
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+- **匹配规则**：行业合伙人推广的是有劲产品线，因此当 `partner_type === 'industry'` 且 `productLine === 'youjin'` 时，应参与分成
+- **佣金率来源**：行业合伙人使用自身记录上的 `commission_rate_l1` / `commission_rate_l2`（由管理员在详情页设置），不走 `partner_level_rules` 表
+- **过期检查**：复用现有的 `partner_expires_at` 过期校验逻辑
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+### 具体改动
+
+**文件：`supabase/functions/calculate-commission/index.ts`**
+
+1. L1 佣金部分（约 line 111-114），在现有的 `isMatchingProductLine` 和 `isBloomPromotingYoujin` 条件之后，新增：
+   ```
+   const isIndustryPartner = partner.partner_type === 'industry' && productLine === 'youjin';
+   ```
+   将 `if (isMatchingProductLine || isBloomPromotingYoujin)` 改为 `if (isMatchingProductLine || isBloomPromotingYoujin || isIndustryPartner)`
+
+2. 在分支内部，增加 `isIndustryPartner` 的处理逻辑：直接读取 `partner.commission_rate_l1` 计算佣金，类似现有的"无等级规则"回退路径
+
+3. L2 佣金部分（约 line 252），在 `partner_type === productLine` 条件中增加 `|| partner.partner_type === 'industry'`，同样使用 `partner.commission_rate_l2`
+
+改动约 20 行代码，仅涉及一个文件。
 
