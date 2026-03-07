@@ -225,6 +225,19 @@ export function useIndustryPartners() {
     },
   });
 
+  const updateOrderMutation = useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      const updates = orderedIds.map((id, index) =>
+        supabase.from("partners").update({ display_order: index + 1 } as any).eq("id", id)
+      );
+      await Promise.all(updates);
+    },
+    onError: () => {
+      toast.error("排序保存失败");
+      refetch();
+    },
+  });
+
   return {
     partners,
     loading,
@@ -237,5 +250,6 @@ export function useIndustryPartners() {
     unbindUser: unbindMutation.mutateAsync,
     unbindingId: unbindMutation.variables,
     isUnbinding: unbindMutation.isPending,
+    updateOrder: updateOrderMutation.mutateAsync,
   };
 }
