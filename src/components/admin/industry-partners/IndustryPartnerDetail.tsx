@@ -172,28 +172,41 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
             </SelectContent>
           </Select>
         ) : (
-          /* Desktop: Grouped TabsList with separators */
-          <div className="overflow-x-auto -mx-4 px-4 pb-1">
-            <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1.5 gap-0">
-              {groupOrder.map((groupKey, groupIdx) => {
+          /* Desktop: Two-level navigation */
+          <div className="space-y-3">
+            {/* Level 1: Group buttons */}
+            <div className="flex flex-wrap gap-1.5">
+              {groupOrder.map((groupKey) => {
                 const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
                 if (groupTabs.length === 0) return null;
+                const isActive = activeGroup === groupKey;
                 return (
-                  <div key={groupKey} className="flex items-center">
-                    {groupIdx > 0 && (
-                      <Separator orientation="vertical" className="mx-2 h-5" />
-                    )}
-                    {groupTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs sm:text-sm px-3 py-2">
-                          <Icon className="w-3.5 h-3.5" />
-                          <span className="hidden lg:inline">{tab.label}</span>
-                          <span className="lg:hidden">{tab.shortLabel}</span>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </div>
+                  <Button
+                    key={groupKey}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className="text-sm"
+                    onClick={() => {
+                      setActiveGroup(groupKey);
+                      // Auto-select first tab in group
+                      const firstTab = groupTabs[0];
+                      if (firstTab) setTab(firstTab.value);
+                    }}
+                  >
+                    {GROUP_LABELS[groupKey]}
+                  </Button>
+                );
+              })}
+            </div>
+            {/* Level 2: Sub-tabs for active group */}
+            <TabsList className="inline-flex w-auto h-auto p-1 gap-0.5">
+              {activeGroupTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-sm px-4 py-2">
+                    <Icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                  </TabsTrigger>
                 );
               })}
             </TabsList>
