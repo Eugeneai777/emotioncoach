@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { AdminPageLayout } from "../shared/AdminPageLayout";
 import { AdminFilterBar } from "../shared/AdminFilterBar";
@@ -35,6 +35,12 @@ interface IndustryPartnerListProps {
   onUpdateOrder?: (orderedIds: string[]) => Promise<void>;
 }
 
+const SortIcon = memo(({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: SortDir }) => {
+  if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+  return sortDir === "desc" ? <ArrowDown className="h-3 w-3 ml-1" /> : <ArrowUp className="h-3 w-3 ml-1" />;
+});
+SortIcon.displayName = "SortIcon";
+
 export function IndustryPartnerList({
   partners,
   loading,
@@ -58,24 +64,24 @@ export function IndustryPartnerList({
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const isMobile = useIsMobile();
 
-  // Drag-drop is only enabled when no search/filter/sort is active
   const isDragEnabled = !search && statusFilter === "all" && !sortField && !isPartnerAdmin;
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      if (sortDir === "desc") setSortDir("asc");
-      else { setSortField(null); setSortDir("desc"); }
-    } else {
-      setSortField(field);
+  const handleSort = useCallback((field: SortField) => {
+    setSortField((prev) => {
+      if (prev === field) {
+        setSortDir((d) => {
+          if (d === "desc") return "asc";
+          // Reset sort
+          setSortField(null);
+          return "desc";
+        });
+        return prev;
+      }
       setSortDir("desc");
-    }
+      return field;
+    });
     setPage(0);
-  };
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
-    return sortDir === "desc" ? <ArrowDown className="h-3 w-3 ml-1" /> : <ArrowUp className="h-3 w-3 ml-1" />;
-  };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -101,11 +107,15 @@ export function IndustryPartnerList({
   }, [partners, search, statusFilter, sortField, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const paged = useMemo(() => filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [filtered, page]);
 
-  const totalEarnings = partners.reduce((s, p) => s + (p.total_earnings || 0), 0);
+  const { totalEarnings, activeCount, totalReferrals } = useMemo(() => ({
+    totalEarnings: partners.reduce((s, p) => s + (p.total_earnings || 0), 0),
+    activeCount: partners.filter((p) => p.status === "active").length,
+    totalReferrals: partners.reduce((s, p) => s + (p.total_referrals || 0), 0),
+  }), [partners]);
 
-  const handleDragEnd = async (result: DropResult) => {
+  const handleDragEnd = useCallback(async (result: DropResult) => {
     if (!result.destination || !onUpdateOrder) return;
     const sourceIndex = result.source.index + page * PAGE_SIZE;
     const destIndex = result.destination.index + page * PAGE_SIZE;
@@ -116,9 +126,9 @@ export function IndustryPartnerList({
     reordered.splice(destIndex, 0, moved);
 
     await onUpdateOrder(reordered.map((p) => p.id));
-  };
+  }, [filtered, onUpdateOrder, page]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = useCallback(() => {
     const headers = ["公司名称", "合伙人编码", "联系人", "联系电话", "佣金比例", "推荐用户", "总收益", "状态"];
     const rows = filtered.map((p) => [
       p.company_name || "",
@@ -138,7 +148,10 @@ export function IndustryPartnerList({
     a.download = `行业合伙人_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }, [filtered]);
+
+  const handleSearchChange = useCallback((v: string) => { setSearch(v); setPage(0); }, []);
+  const handleStatusChange = useCallback((v: string) => { if (v) { setStatusFilter(v); setPage(0); } }, []);
 
   const renderPartnerCard = (p: IndustryPartner) => (
     <MobileCard key={p.id} interactive onClick={() => onSelectPartner(p.id)}>
@@ -325,6 +338,65 @@ export function IndustryPartnerList({
     );
   };
 
+  const tableContent = (
+    <AdminTableContainer minWidth={900}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {isDragEnabled && <TableHead className="w-8 px-1" />}
+            <TableHead>公司/机构</TableHead>
+            <TableHead>合伙人编码</TableHead>
+            <TableHead>联系人</TableHead>
+            <TableHead>负责人</TableHead>
+            <TableHead>一级佣金</TableHead>
+            <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_referrals")}>
+              <span className="inline-flex items-center">
+                推荐用户
+                <SortIcon field="total_referrals" sortField={sortField} sortDir={sortDir} />
+              </span>
+            </TableHead>
+            <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_earnings")}>
+              <span className="inline-flex items-center">
+                总收益
+                <SortIcon field="total_earnings" sortField={sortField} sortDir={sortDir} />
+              </span>
+            </TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead>操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        {isDragEnabled ? (
+          <Droppable droppableId="partner-list">
+            {(provided) => (
+              <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+                {paged.map((p, index) => renderTableRow(p, index))}
+                {provided.placeholder}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                      暂无行业合伙人，点击右上角"新建"添加
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            )}
+          </Droppable>
+        ) : (
+          <TableBody>
+            {paged.map((p, index) => renderTableRow(p, index))}
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  暂无行业合伙人，点击右上角"新建"添加
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        )}
+      </Table>
+    </AdminTableContainer>
+  );
+
   return (
     <AdminPageLayout
       title="行业合伙人"
@@ -333,13 +405,13 @@ export function IndustryPartnerList({
     >
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <AdminStatCard label="合伙人总数" value={partners.length} icon={Building2} accent="bg-primary/10 text-primary" loading={loading} />
-        <AdminStatCard label="活跃合伙人" value={partners.filter((p) => p.status === "active").length} icon={Network} accent="bg-emerald-50 text-emerald-600" loading={loading} />
-        <AdminStatCard label="总推荐用户" value={partners.reduce((s, p) => s + (p.total_referrals || 0), 0)} icon={Network} accent="bg-blue-50 text-blue-600" loading={loading} />
+        <AdminStatCard label="活跃合伙人" value={activeCount} icon={Network} accent="bg-emerald-50 text-emerald-600" loading={loading} />
+        <AdminStatCard label="总推荐用户" value={totalReferrals} icon={Network} accent="bg-blue-50 text-blue-600" loading={loading} />
         <AdminStatCard label="总收益" value={`¥${totalEarnings.toFixed(2)}`} icon={TrendingUp} accent="bg-amber-50 text-amber-600" loading={loading} />
       </div>
 
-      <AdminFilterBar searchValue={search} onSearchChange={(v) => { setSearch(v); setPage(0); }} searchPlaceholder="搜索公司名称、编码或联系人…" totalCount={filtered.length}>
-        <ToggleGroup type="single" value={statusFilter} onValueChange={(v) => { if (v) { setStatusFilter(v); setPage(0); } }}>
+      <AdminFilterBar searchValue={search} onSearchChange={handleSearchChange} searchPlaceholder="搜索公司名称、编码或联系人…" totalCount={filtered.length}>
+        <ToggleGroup type="single" value={statusFilter} onValueChange={handleStatusChange}>
           <ToggleGroupItem value="all" className="text-xs h-8 px-3">全部</ToggleGroupItem>
           <ToggleGroupItem value="active" className="text-xs h-8 px-3">活跃</ToggleGroupItem>
           <ToggleGroupItem value="inactive" className="text-xs h-8 px-3">停用</ToggleGroupItem>
@@ -368,54 +440,12 @@ export function IndustryPartnerList({
             </div>
           )}
         </div>
+      ) : isDragEnabled ? (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          {tableContent}
+        </DragDropContext>
       ) : (
-        <>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <AdminTableContainer minWidth={900}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {isDragEnabled && <TableHead className="w-8 px-1" />}
-                    <TableHead>公司/机构</TableHead>
-                    <TableHead>合伙人编码</TableHead>
-                    <TableHead>联系人</TableHead>
-                    <TableHead>负责人</TableHead>
-                    <TableHead>一级佣金</TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_referrals")}>
-                      <span className="inline-flex items-center">
-                        推荐用户
-                        <SortIcon field="total_referrals" />
-                      </span>
-                    </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_earnings")}>
-                      <span className="inline-flex items-center">
-                        总收益
-                        <SortIcon field="total_earnings" />
-                      </span>
-                    </TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <Droppable droppableId="partner-list">
-                  {(provided) => (
-                    <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                      {paged.map((p, index) => renderTableRow(p, index))}
-                      {provided.placeholder}
-                      {filtered.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={isDragEnabled ? 10 : 9} className="text-center text-muted-foreground py-8">
-                            暂无行业合伙人，点击右上角"新建"添加
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  )}
-                </Droppable>
-              </Table>
-            </AdminTableContainer>
-          </DragDropContext>
-        </>
+        tableContent
       )}
 
       {totalPages > 1 && (
@@ -438,8 +468,9 @@ export function IndustryPartnerList({
         open={bindDialogOpen}
         onOpenChange={setBindDialogOpen}
         onBind={async (phone) => {
-          if (bindPartnerId) await onBindUser({ partnerId: bindPartnerId, phone });
-          setBindPartnerId(null);
+          if (!bindPartnerId) return;
+          await onBindUser({ partnerId: bindPartnerId, phone });
+          setBindDialogOpen(false);
         }}
         isBinding={isBinding}
       />
