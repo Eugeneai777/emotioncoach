@@ -107,9 +107,9 @@ const PromoGuide = () => {
                   <ChevronRight className="h-3 w-3 text-teal-400 flex-shrink-0" />
                   <span className="bg-amber-50 rounded px-2 py-1">支付 ¥9.9</span>
                   <ChevronRight className="h-3 w-3 text-teal-400 flex-shrink-0" />
-                  <span className="bg-emerald-100 rounded px-2 py-1 font-medium">¥9.9 归你</span>
+                  <span className="bg-emerald-100 rounded px-2 py-1 font-medium">按比例分成</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1.5">消耗 1 个名额，用户付费获得体验套餐，收入全额归你</p>
+                <p className="text-xs text-muted-foreground mt-1.5">消耗 1 个名额，用户付费获得体验套餐，按合伙人佣金比例分成</p>
               </div>
             </CardContent>
           </Card>
