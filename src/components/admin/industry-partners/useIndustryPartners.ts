@@ -121,6 +121,7 @@ export function useIndustryPartners() {
         commission_rate_l2: 0,
         traffic_source: form.traffic_source.trim() || null,
         settlement_cycle: form.settlement_cycle || "monthly",
+        prepurchase_count: 1000,
       } as any);
 
       if (error) throw error;
