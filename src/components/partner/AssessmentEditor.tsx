@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Save, Trash2, ArrowLeft, Send, Sparkles, Bot, User } from "lucide-react";
+import { Loader2, Save, Trash2, ArrowLeft, Send, Sparkles, Bot, User, Check, X } from "lucide-react";
 import { useUpdatePartnerAssessment, PartnerAssessmentTemplate } from "@/hooks/usePartnerAssessments";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -44,6 +44,7 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<any | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -188,11 +189,10 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
         }
       }
 
-      // Extract and apply template from AI response
+      // Extract template from AI response and set as pending (requires confirmation)
       const extracted = extractTemplateFromResponse(assistantContent);
       if (extracted) {
-        setTemplate(extracted);
-        toast.success("AI 优化已应用到编辑器");
+        setPendingTemplate(extracted);
       }
     } catch (err: any) {
       toast.error(err.message || "AI 对话失败");
@@ -387,10 +387,40 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm max-w-none dark:prose-invert [&_pre]:hidden [&_code]:hidden">
-                        <ReactMarkdown>
-                          {msg.content.replace(/```json[\s\S]*?```/g, "✅ *模板已更新*")}
-                        </ReactMarkdown>
+                      <div className="space-y-2">
+                        <div className="prose prose-sm max-w-none dark:prose-invert [&_pre]:hidden [&_code]:hidden">
+                          <ReactMarkdown>
+                            {msg.content.replace(/```json[\s\S]*?```/g, pendingTemplate && i === chatMessages.length - 1 ? "⏳ *模板优化待确认*" : "✅ *模板已更新*")}
+                          </ReactMarkdown>
+                        </div>
+                        {pendingTemplate && i === chatMessages.length - 1 && !isStreaming && (
+                          <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+                            <Button
+                              size="sm"
+                              className="gap-1 h-7 text-xs"
+                              onClick={() => {
+                                setTemplate(pendingTemplate);
+                                setPendingTemplate(null);
+                                toast.success("AI 优化已应用到编辑器");
+                              }}
+                            >
+                              <Check className="h-3 w-3" />
+                              应用优化
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 h-7 text-xs"
+                              onClick={() => {
+                                setPendingTemplate(null);
+                                toast("已忽略本次优化建议");
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                              忽略
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       msg.content
