@@ -46,6 +46,7 @@ interface TabDef {
 const TAB_DEFINITIONS: TabDef[] = [
   // Settings group
   { value: "info", label: "基本信息", shortLabel: "信息", icon: Settings, group: "settings", adminOnly: true },
+  { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "settings" },
   // Business group
   { value: "revenue", label: "收益看板", shortLabel: "收益", icon: TrendingUp, group: "business" },
   { value: "promotion", label: "推广链接", shortLabel: "推广", icon: Share2, group: "business" },
@@ -63,7 +64,6 @@ const TAB_DEFINITIONS: TabDef[] = [
   { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "crm" },
   { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "crm" },
   // Organization group
-  { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "organization" },
   { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
   { value: "orders", label: "商城订单", shortLabel: "订单", icon: ShoppingCart, group: "organization" },
 ];
