@@ -143,7 +143,7 @@ export function PartnerChannelAttribution({ partnerId }: PartnerChannelAttributi
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">📊 渠道归因分析</h3>
         <Select value={timeRange} onValueChange={setTimeRange}>

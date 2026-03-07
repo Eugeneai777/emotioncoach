@@ -158,20 +158,20 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
           </Select>
         ) : (
           /* Desktop: Grouped TabsList with separators */
-          <div className="overflow-x-auto -mx-4 px-4">
-            <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1">
+          <div className="overflow-x-auto -mx-4 px-4 pb-1">
+            <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1.5 gap-0">
               {groupOrder.map((groupKey, groupIdx) => {
                 const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
                 if (groupTabs.length === 0) return null;
                 return (
                   <div key={groupKey} className="flex items-center">
                     {groupIdx > 0 && (
-                      <Separator orientation="vertical" className="mx-1.5 h-5" />
+                      <Separator orientation="vertical" className="mx-2 h-5" />
                     )}
                     {groupTabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
-                        <TabsTrigger key={tab.value} value={tab.value} className="gap-1 text-xs sm:text-sm">
+                        <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs sm:text-sm px-3 py-2">
                           <Icon className="w-3.5 h-3.5" />
                           <span className="hidden lg:inline">{tab.label}</span>
                           <span className="lg:hidden">{tab.shortLabel}</span>

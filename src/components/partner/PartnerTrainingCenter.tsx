@@ -217,14 +217,14 @@ export function PartnerTrainingCenter({ partnerId }: PartnerTrainingCenterProps)
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="font-semibold text-lg">📚 合伙人培训中心</h3>
 
       <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-        <TabsList className="w-full">
-          <TabsTrigger value="all" className="flex-1 text-xs">全部</TabsTrigger>
+        <TabsList className="w-full h-auto flex-wrap gap-1 p-1">
+          <TabsTrigger value="all" className="flex-1 text-xs py-2">全部</TabsTrigger>
           {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
-            <TabsTrigger key={key} value={key} className="flex-1 text-xs gap-1">
+            <TabsTrigger key={key} value={key} className="flex-1 text-xs gap-1 py-2">
               {cfg.icon}
               <span className="hidden sm:inline">{cfg.label}</span>
             </TabsTrigger>
@@ -237,7 +237,7 @@ export function PartnerTrainingCenter({ partnerId }: PartnerTrainingCenterProps)
           <CardContent className="p-8 text-center text-muted-foreground">暂无内容</CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {filteredResources.map((resource) => {
             const cfg = CATEGORY_CONFIG[resource.category] || CATEGORY_CONFIG.guide;
             const isExpanded = expandedId === resource.id;

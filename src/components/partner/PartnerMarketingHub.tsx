@@ -134,8 +134,8 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
         </TabsList>
 
         <TabsContent value="generate" className="space-y-4 mt-4">
-          {/* Type selector */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {/* Type selector - horizontal scroll on mobile */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0">
             {COPY_TYPES.map((type) => {
               const Icon = type.icon;
               const isSelected = selectedType === type.value;
@@ -143,7 +143,7 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
                 <button
                   key={type.value}
                   onClick={() => setSelectedType(type.value)}
-                  className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  className={`shrink-0 w-[140px] sm:w-auto p-3 rounded-xl border-2 transition-all text-left ${
                     isSelected
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/40"
@@ -151,7 +151,7 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
                 >
                   <Icon className={`w-5 h-5 mb-1 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                   <div className="font-medium text-sm">{type.label}</div>
-                  <div className="text-xs text-muted-foreground">{type.description}</div>
+                  <div className="text-xs text-muted-foreground whitespace-nowrap">{type.description}</div>
                 </button>
               );
             })}
