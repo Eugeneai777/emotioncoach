@@ -387,10 +387,40 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm max-w-none dark:prose-invert [&_pre]:hidden [&_code]:hidden">
-                        <ReactMarkdown>
-                          {msg.content.replace(/```json[\s\S]*?```/g, "✅ *模板已更新*")}
-                        </ReactMarkdown>
+                      <div className="space-y-2">
+                        <div className="prose prose-sm max-w-none dark:prose-invert [&_pre]:hidden [&_code]:hidden">
+                          <ReactMarkdown>
+                            {msg.content.replace(/```json[\s\S]*?```/g, pendingTemplate && i === chatMessages.length - 1 ? "⏳ *模板优化待确认*" : "✅ *模板已更新*")}
+                          </ReactMarkdown>
+                        </div>
+                        {pendingTemplate && i === chatMessages.length - 1 && !isStreaming && (
+                          <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+                            <Button
+                              size="sm"
+                              className="gap-1 h-7 text-xs"
+                              onClick={() => {
+                                setTemplate(pendingTemplate);
+                                setPendingTemplate(null);
+                                toast.success("AI 优化已应用到编辑器");
+                              }}
+                            >
+                              <Check className="h-3 w-3" />
+                              应用优化
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 h-7 text-xs"
+                              onClick={() => {
+                                setPendingTemplate(null);
+                                toast("已忽略本次优化建议");
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                              忽略
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       msg.content
