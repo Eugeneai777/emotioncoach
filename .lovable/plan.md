@@ -1,23 +1,39 @@
 
 
-## 两个问题需要修复
+## 需求分析
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+当前只有超级管理员（admin）才能通过"设置角色"对话框给用户分配 `partner_admin` 角色并绑定行业合伙人。用户希望让已有 `partner_admin` 角色的用户（如 5e5cdc49...）能够自主添加/移除团队成员，让这些成员也能看到和管理知乐合伙人的活动。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## 方案
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 1. 创建 Edge Function: `manage-partner-team`
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+由于 `partner_admin` 没有对 `user_roles` 和 `partner_admin_bindings` 的写入权限（RLS 限制），需要一个 Edge Function 使用 service_role 来完成操作。
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+功能：
+- **添加成员**：通过手机号查找用户 → 为其添加 `partner_admin` 角色（如不存在）→ 插入 `partner_admin_bindings` 绑定到调用者管理的合伙人
+- **移除成员**：删除该用户对应合伙人的 binding，如该用户无其他 binding 则同时移除 `partner_admin` 角色
+- **列出成员**：查询当前合伙人绑定的所有 partner_admin 用户列表
 
-| 文件 | 修改 |
+安全校验：调用者必须是该 partner 的已绑定 partner_admin 或超级 admin。
+
+### 2. 新增 UI 组件: `PartnerTeamManager`
+
+在行业合伙人详情页添加"团队成员"Tab，显示当前绑定到该合伙人的所有运营人员，并提供添加/移除功能。
+
+- 显示成员列表（昵称、手机号、添加时间）
+- "添加成员"按钮 → 输入手机号搜索并添加
+- "移除"按钮（不能移除自己）
+
+### 3. 在详情页 Tabs 中添加入口
+
+在 `IndustryPartnerManagement.tsx` 的合伙人详情 Tabs 中新增"团队成员"Tab，对 partner_admin 和 admin 都可见。
+
+### 文件变更
+
+| 文件 | 操作 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `supabase/functions/manage-partner-team/index.ts` | 新建 Edge Function |
+| `src/components/admin/industry-partners/PartnerTeamManager.tsx` | 新建 UI 组件 |
+| `src/components/admin/IndustryPartnerManagement.tsx` | 添加"团队成员"Tab |
 
