@@ -116,7 +116,7 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-lg">🔔 跟进提醒</h3>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2 } from "lucide-react";
@@ -9,13 +10,46 @@ import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
 import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Partner } from "@/hooks/usePartner";
 
 interface IndustryPartnerDashboardProps {
   partner: Partner;
 }
 
+const TAB_GROUPS = [
+  {
+    label: "内容工具",
+    tabs: [
+      { value: "coaches", label: "AI教练" },
+      { value: "assessments", label: "测评" },
+    ],
+  },
+  {
+    label: "营销增长",
+    tabs: [
+      { value: "marketing", label: "AI文案" },
+      { value: "promotions", label: "营销活动" },
+      { value: "channels", label: "渠道归因" },
+    ],
+  },
+  {
+    label: "运营管理",
+    tabs: [
+      { value: "reminders", label: "跟进提醒" },
+      { value: "training", label: "培训中心" },
+    ],
+  },
+];
+
+const ALL_TABS = TAB_GROUPS.flatMap((g) => g.tabs);
+
 export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardProps) {
+  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("coaches");
+
   return (
     <div className="space-y-6">
       {/* Header Card */}
@@ -40,16 +74,45 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="coaches" className="space-y-4">
-        <TabsList className="w-full flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="coaches" className="text-xs flex-1">AI教练</TabsTrigger>
-          <TabsTrigger value="assessments" className="text-xs flex-1">测评</TabsTrigger>
-          <TabsTrigger value="marketing" className="text-xs flex-1">AI文案</TabsTrigger>
-          <TabsTrigger value="promotions" className="text-xs flex-1">营销</TabsTrigger>
-          <TabsTrigger value="channels" className="text-xs flex-1">渠道</TabsTrigger>
-          <TabsTrigger value="reminders" className="text-xs flex-1">提醒</TabsTrigger>
-          <TabsTrigger value="training" className="text-xs flex-1">培训</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        {isMobile ? (
+          /* Mobile: grouped Select dropdown */
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                {ALL_TABS.find((t) => t.value === activeTab)?.label || "选择功能"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {TAB_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    {group.label}
+                  </div>
+                  {group.tabs.map((tab) => (
+                    <SelectItem key={tab.value} value={tab.value}>
+                      {tab.label}
+                    </SelectItem>
+                  ))}
+                </div>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          /* Desktop: grouped TabsList with separators */
+          <TabsList className="inline-flex w-auto h-auto p-1 gap-0">
+            {TAB_GROUPS.map((group, gi) => (
+              <div key={group.label} className="flex items-center">
+                {gi > 0 && <Separator orientation="vertical" className="mx-2 h-5" />}
+                {group.tabs.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-sm px-4 py-2">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </div>
+            ))}
+          </TabsList>
+        )}
 
         <TabsContent value="coaches">
           <PartnerCoachManager partnerId={partner.id} partnerCode={partner.partner_code} />
