@@ -11,7 +11,6 @@ import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
 import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CompactConversionFunnel } from "./CompactConversionFunnel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Partner } from "@/hooks/usePartner";
@@ -90,8 +89,6 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
           </div>
         </CardContent>
       </Card>
-
-      <CompactConversionFunnel partnerId={partner.id} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         {isMobile ? (

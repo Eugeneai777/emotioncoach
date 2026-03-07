@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen } from "lucide-react";
 import { IndustryPartner } from "./types";
-import { CompactConversionFunnel } from "@/components/partner/CompactConversionFunnel";
 import { BindUserDialog } from "./BindUserDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -213,8 +212,6 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
             </TabsList>
           </div>
         )}
-
-        <CompactConversionFunnel partnerId={partner.id} onClick={() => setTab("students")} />
 
         <Suspense fallback={<TabLoading />}>
           {!isPartnerAdmin && (
