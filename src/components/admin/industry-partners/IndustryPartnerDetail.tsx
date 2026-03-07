@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone } from "lucide-react";
+import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen } from "lucide-react";
 import { IndustryPartner } from "./types";
 import { BindUserDialog } from "./BindUserDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +24,9 @@ const PartnerStoreProducts = lazy(() => import("@/components/partner/PartnerStor
 const PartnerStoreOrders = lazy(() => import("@/components/partner/PartnerStoreOrders").then((m) => ({ default: m.PartnerStoreOrders })));
 const PartnerMarketingHub = lazy(() => import("@/components/partner/PartnerMarketingHub").then((m) => ({ default: m.PartnerMarketingHub })));
 const PartnerPromotionManager = lazy(() => import("@/components/partner/PartnerPromotionManager").then((m) => ({ default: m.PartnerPromotionManager })));
+const PartnerChannelAttribution = lazy(() => import("@/components/partner/PartnerChannelAttribution").then((m) => ({ default: m.PartnerChannelAttribution })));
+const PartnerFollowupReminders = lazy(() => import("@/components/partner/PartnerFollowupReminders").then((m) => ({ default: m.PartnerFollowupReminders })));
+const PartnerTrainingCenter = lazy(() => import("@/components/partner/PartnerTrainingCenter").then((m) => ({ default: m.PartnerTrainingCenter })));
 
 const TabLoading = () => (
   <div className="flex justify-center py-12">
@@ -54,6 +57,9 @@ const TAB_DEFINITIONS: TabDef[] = [
   { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "operations" },
   { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "operations" },
   { value: "promotions", label: "营销活动", shortLabel: "营销", icon: Megaphone, group: "operations" },
+  { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "operations" },
+  { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "operations" },
+  { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "operations" },
   // Organization group
   { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "organization" },
   { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
@@ -241,6 +247,15 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
           </TabsContent>
           <TabsContent value="promotions">
             <PartnerPromotionManager partnerId={partner.id} partnerCode={partner.partner_code} />
+          </TabsContent>
+          <TabsContent value="channels">
+            <PartnerChannelAttribution partnerId={partner.id} />
+          </TabsContent>
+          <TabsContent value="reminders">
+            <PartnerFollowupReminders partnerId={partner.id} />
+          </TabsContent>
+          <TabsContent value="training">
+            <PartnerTrainingCenter partnerId={partner.id} />
           </TabsContent>
           <TabsContent value="team">
             <PartnerTeamManager partnerId={partner.id} />

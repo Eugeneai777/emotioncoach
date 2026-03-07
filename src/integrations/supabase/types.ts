@@ -6460,6 +6460,85 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_followup_reminders: {
+        Row: {
+          created_at: string | null
+          id: string
+          inactive_days: number
+          is_read: boolean | null
+          partner_id: string
+          reminder_type: string | null
+          student_name: string | null
+          student_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inactive_days: number
+          is_read?: boolean | null
+          partner_id: string
+          reminder_type?: string | null
+          student_name?: string | null
+          student_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inactive_days?: number
+          is_read?: boolean | null
+          partner_id?: string
+          reminder_type?: string | null
+          student_name?: string | null
+          student_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_followup_reminders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_followup_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          inactive_days_threshold: number | null
+          is_enabled: boolean | null
+          partner_id: string
+          reminder_channels: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inactive_days_threshold?: number | null
+          is_enabled?: boolean | null
+          partner_id: string
+          reminder_channels?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inactive_days_threshold?: number | null
+          is_enabled?: boolean | null
+          partner_id?: string
+          reminder_channels?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_followup_settings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_invitations: {
         Row: {
           claimed_at: string | null
@@ -7026,6 +7105,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_training_resources: {
+        Row: {
+          category: string
+          content: string | null
+          content_type: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_published: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
       }
       partner_withdrawals: {
         Row: {

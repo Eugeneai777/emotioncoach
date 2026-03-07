@@ -5,6 +5,9 @@ import { PartnerCoachManager } from "./PartnerCoachManager";
 import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
 import { PartnerMarketingHub } from "./PartnerMarketingHub";
 import { PartnerPromotionManager } from "./PartnerPromotionManager";
+import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
+import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
+import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Partner } from "@/hooks/usePartner";
 
@@ -38,36 +41,36 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
       </Card>
 
       <Tabs defaultValue="coaches" className="space-y-4">
-        <TabsList className="w-full">
-          <TabsTrigger value="coaches" className="flex-1">AI教练</TabsTrigger>
-          <TabsTrigger value="assessments" className="flex-1">测评</TabsTrigger>
-          <TabsTrigger value="marketing" className="flex-1">AI文案</TabsTrigger>
-          <TabsTrigger value="promotions" className="flex-1">营销</TabsTrigger>
+        <TabsList className="w-full flex-wrap h-auto gap-1 p-1">
+          <TabsTrigger value="coaches" className="text-xs flex-1">AI教练</TabsTrigger>
+          <TabsTrigger value="assessments" className="text-xs flex-1">测评</TabsTrigger>
+          <TabsTrigger value="marketing" className="text-xs flex-1">AI文案</TabsTrigger>
+          <TabsTrigger value="promotions" className="text-xs flex-1">营销</TabsTrigger>
+          <TabsTrigger value="channels" className="text-xs flex-1">渠道</TabsTrigger>
+          <TabsTrigger value="reminders" className="text-xs flex-1">提醒</TabsTrigger>
+          <TabsTrigger value="training" className="text-xs flex-1">培训</TabsTrigger>
         </TabsList>
 
         <TabsContent value="coaches">
-          <PartnerCoachManager 
-            partnerId={partner.id} 
-            partnerCode={partner.partner_code} 
-          />
+          <PartnerCoachManager partnerId={partner.id} partnerCode={partner.partner_code} />
         </TabsContent>
-
         <TabsContent value="assessments">
-          <PartnerAssessmentManager 
-            partnerId={partner.id} 
-            partnerCode={partner.partner_code} 
-          />
+          <PartnerAssessmentManager partnerId={partner.id} partnerCode={partner.partner_code} />
         </TabsContent>
-
         <TabsContent value="marketing">
           <PartnerMarketingHub partnerId={partner.id} />
         </TabsContent>
-
         <TabsContent value="promotions">
-          <PartnerPromotionManager 
-            partnerId={partner.id} 
-            partnerCode={partner.partner_code} 
-          />
+          <PartnerPromotionManager partnerId={partner.id} partnerCode={partner.partner_code} />
+        </TabsContent>
+        <TabsContent value="channels">
+          <PartnerChannelAttribution partnerId={partner.id} />
+        </TabsContent>
+        <TabsContent value="reminders">
+          <PartnerFollowupReminders partnerId={partner.id} />
+        </TabsContent>
+        <TabsContent value="training">
+          <PartnerTrainingCenter partnerId={partner.id} />
         </TabsContent>
       </Tabs>
     </div>
