@@ -4,7 +4,7 @@ import { AdminPageLayout } from "../shared/AdminPageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+
 import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen } from "lucide-react";
 import { IndustryPartner } from "./types";
 import { BindUserDialog } from "./BindUserDialog";
@@ -39,7 +39,7 @@ interface TabDef {
   label: string;
   shortLabel: string;
   icon: React.ComponentType<{ className?: string }>;
-  group: "settings" | "business" | "operations" | "organization";
+  group: "settings" | "business" | "content" | "marketing" | "crm" | "organization";
   adminOnly?: boolean;
 }
 
@@ -49,17 +49,19 @@ const TAB_DEFINITIONS: TabDef[] = [
   // Business group
   { value: "revenue", label: "收益看板", shortLabel: "收益", icon: TrendingUp, group: "business" },
   { value: "promotion", label: "推广链接", shortLabel: "推广", icon: Share2, group: "business" },
-  { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "business" },
-  // Operations group
-  { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "operations" },
-  { value: "coaches", label: "AI 教练", shortLabel: "教练", icon: Bot, group: "operations" },
-  { value: "assessments", label: "测评", shortLabel: "测评", icon: ClipboardList, group: "operations" },
-  { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "operations" },
-  { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "operations" },
-  { value: "promotions", label: "营销活动", shortLabel: "营销", icon: Megaphone, group: "operations" },
-  { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "operations" },
-  { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "operations" },
-  { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "operations" },
+  // Content group (建内容)
+  { value: "coaches", label: "AI 教练", shortLabel: "教练", icon: Bot, group: "content" },
+  { value: "assessments", label: "测评", shortLabel: "测评", icon: ClipboardList, group: "content" },
+  { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "content" },
+  // Marketing group (做推广)
+  { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "marketing" },
+  { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "marketing" },
+  { value: "promotions", label: "营销活动", shortLabel: "营销", icon: Megaphone, group: "marketing" },
+  { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "marketing" },
+  // CRM group (跟客户)
+  { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "crm" },
+  { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "crm" },
+  { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "crm" },
   // Organization group
   { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "organization" },
   { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
@@ -69,7 +71,9 @@ const TAB_DEFINITIONS: TabDef[] = [
 const GROUP_LABELS: Record<string, string> = {
   settings: "设置",
   business: "业务数据",
-  operations: "运营工具",
+  content: "内容建设",
+  marketing: "营销获客",
+  crm: "客户运营",
   organization: "组织商城",
 };
 
@@ -99,8 +103,19 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
 
   // Group tabs for desktop rendering
   const groupOrder = isPartnerAdmin
-    ? ["business", "operations", "organization"]
-    : ["settings", "business", "operations", "organization"];
+    ? ["business", "content", "marketing", "crm", "organization"]
+    : ["settings", "business", "content", "marketing", "crm", "organization"];
+
+  // Two-level nav: track active group
+  const currentGroup = visibleTabs.find((t) => t.value === currentTab)?.group || groupOrder[0];
+  const [activeGroup, setActiveGroup] = useState(currentGroup);
+  const activeGroupTabs = visibleTabs.filter((t) => t.group === activeGroup);
+
+  // Sync active group when tab changes externally (e.g. URL)
+  const correctGroup = visibleTabs.find((t) => t.value === currentTab)?.group;
+  if (correctGroup && correctGroup !== activeGroup) {
+    setActiveGroup(correctGroup);
+  }
 
   return (
     <AdminPageLayout
@@ -157,28 +172,41 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
             </SelectContent>
           </Select>
         ) : (
-          /* Desktop: Grouped TabsList with separators */
-          <div className="overflow-x-auto -mx-4 px-4 pb-1">
-            <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1.5 gap-0">
-              {groupOrder.map((groupKey, groupIdx) => {
+          /* Desktop: Two-level navigation */
+          <div className="space-y-3">
+            {/* Level 1: Group buttons */}
+            <div className="flex flex-wrap gap-1.5">
+              {groupOrder.map((groupKey) => {
                 const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
                 if (groupTabs.length === 0) return null;
+                const isActive = activeGroup === groupKey;
                 return (
-                  <div key={groupKey} className="flex items-center">
-                    {groupIdx > 0 && (
-                      <Separator orientation="vertical" className="mx-2 h-5" />
-                    )}
-                    {groupTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs sm:text-sm px-3 py-2">
-                          <Icon className="w-3.5 h-3.5" />
-                          <span className="hidden lg:inline">{tab.label}</span>
-                          <span className="lg:hidden">{tab.shortLabel}</span>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </div>
+                  <Button
+                    key={groupKey}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className="text-sm"
+                    onClick={() => {
+                      setActiveGroup(groupKey);
+                      // Auto-select first tab in group
+                      const firstTab = groupTabs[0];
+                      if (firstTab) setTab(firstTab.value);
+                    }}
+                  >
+                    {GROUP_LABELS[groupKey]}
+                  </Button>
+                );
+              })}
+            </div>
+            {/* Level 2: Sub-tabs for active group */}
+            <TabsList className="inline-flex w-auto h-auto p-1 gap-0.5">
+              {activeGroupTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-sm px-4 py-2">
+                    <Icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                  </TabsTrigger>
                 );
               })}
             </TabsList>
