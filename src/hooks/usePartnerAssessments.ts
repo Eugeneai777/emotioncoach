@@ -57,6 +57,22 @@ export function useCreatePartnerAssessment() {
   });
 }
 
+export function useUpdatePartnerAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<PartnerAssessmentTemplate> }) => {
+      const { error } = await supabase
+        .from("partner_assessment_templates" as any)
+        .update(updates as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["partner-assessments"] });
+    },
+  });
+}
+
 export function useTogglePartnerAssessment() {
   const qc = useQueryClient();
   return useMutation({
