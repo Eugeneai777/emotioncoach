@@ -3,9 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { AdminPageLayout } from "../shared/AdminPageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package } from "lucide-react";
 import { IndustryPartner } from "./types";
 import { BindUserDialog } from "./BindUserDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Lazy-loaded tab components
 const PartnerInfoEditor = lazy(() => import("./PartnerInfoEditor").then((m) => ({ default: m.PartnerInfoEditor })));
@@ -26,6 +29,40 @@ const TabLoading = () => (
   </div>
 );
 
+interface TabDef {
+  value: string;
+  label: string;
+  shortLabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+  group: "settings" | "business" | "operations" | "organization";
+  adminOnly?: boolean;
+}
+
+const TAB_DEFINITIONS: TabDef[] = [
+  // Settings group
+  { value: "info", label: "基本信息", shortLabel: "信息", icon: Settings, group: "settings", adminOnly: true },
+  // Business group
+  { value: "revenue", label: "收益看板", shortLabel: "收益", icon: TrendingUp, group: "business" },
+  { value: "promotion", label: "推广链接", shortLabel: "推广", icon: Share2, group: "business" },
+  { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "business" },
+  // Operations group
+  { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "operations" },
+  { value: "coaches", label: "AI 教练", shortLabel: "教练", icon: Bot, group: "operations" },
+  { value: "assessments", label: "测评", shortLabel: "测评", icon: ClipboardList, group: "operations" },
+  { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "operations" },
+  // Organization group
+  { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "organization" },
+  { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
+  { value: "orders", label: "商城订单", shortLabel: "订单", icon: ShoppingCart, group: "organization" },
+];
+
+const GROUP_LABELS: Record<string, string> = {
+  settings: "设置",
+  business: "业务数据",
+  operations: "运营工具",
+  organization: "组织商城",
+};
+
 interface IndustryPartnerDetailProps {
   partner: IndustryPartner;
   isPartnerAdmin: boolean;
@@ -38,6 +75,9 @@ interface IndustryPartnerDetailProps {
 export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindUser, isBinding, onSaved }: IndustryPartnerDetailProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [bindDialogOpen, setBindDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const visibleTabs = TAB_DEFINITIONS.filter((t) => !(t.adminOnly && isPartnerAdmin));
 
   const currentTab = searchParams.get("tab") || "flywheel";
   const setTab = (tab: string) => {
@@ -46,6 +86,11 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
       return prev;
     });
   };
+
+  // Group tabs for desktop rendering
+  const groupOrder = isPartnerAdmin
+    ? ["business", "operations", "organization"]
+    : ["settings", "business", "operations", "organization"];
 
   return (
     <AdminPageLayout
@@ -58,63 +103,77 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
       }
     >
       <Tabs value={currentTab} onValueChange={setTab} className="space-y-4">
-        <div className="overflow-x-auto -mx-4 px-4">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
-            {!isPartnerAdmin && (
-              <TabsTrigger value="info" className="gap-1 text-xs sm:text-sm">
-                <Settings className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">基本信息</span>
-                <span className="sm:hidden">信息</span>
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="revenue" className="gap-1 text-xs sm:text-sm">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">收益看板</span>
-              <span className="sm:hidden">收益</span>
-            </TabsTrigger>
-            <TabsTrigger value="promotion" className="gap-1 text-xs sm:text-sm">
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">推广链接</span>
-              <span className="sm:hidden">推广</span>
-            </TabsTrigger>
-            <TabsTrigger value="students" className="gap-1 text-xs sm:text-sm">
-              <UserPlus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">学员管理</span>
-              <span className="sm:hidden">学员</span>
-            </TabsTrigger>
-            <TabsTrigger value="flywheel" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">创建活动</span>
-              <span className="sm:hidden">活动</span>
-            </TabsTrigger>
-            <TabsTrigger value="coaches" className="gap-1 text-xs sm:text-sm">
-              <Bot className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">AI 教练</span>
-              <span className="sm:hidden">教练</span>
-            </TabsTrigger>
-            <TabsTrigger value="assessments" className="gap-1 text-xs sm:text-sm">
-              <ClipboardList className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">测评</span>
-              <span className="sm:hidden">测评</span>
-            </TabsTrigger>
-            <TabsTrigger value="bundles" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">组合产品</span>
-              <span className="sm:hidden">组合</span>
-            </TabsTrigger>
-            <TabsTrigger value="team" className="gap-1 text-xs sm:text-sm">
-              <Users className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">团队成员</span>
-              <span className="sm:hidden">团队</span>
-            </TabsTrigger>
-            <TabsTrigger value="store" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">商城商品</span>
-              <span className="sm:hidden">商品</span>
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">商城订单</span>
-              <span className="sm:hidden">订单</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        {/* Mobile: Select dropdown */}
+        {isMobile ? (
+          <Select value={currentTab} onValueChange={setTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                {(() => {
+                  const tab = visibleTabs.find((t) => t.value === currentTab);
+                  if (!tab) return "选择功能";
+                  const Icon = tab.icon;
+                  return (
+                    <span className="flex items-center gap-2">
+                      <Icon className="w-4 h-4" />
+                      {tab.label}
+                    </span>
+                  );
+                })()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {groupOrder.map((groupKey) => {
+                const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
+                if (groupTabs.length === 0) return null;
+                return (
+                  <div key={groupKey}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      {GROUP_LABELS[groupKey]}
+                    </div>
+                    {groupTabs.map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <SelectItem key={tab.value} value={tab.value}>
+                          <span className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            {tab.label}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        ) : (
+          /* Desktop: Grouped TabsList with separators */
+          <div className="overflow-x-auto -mx-4 px-4">
+            <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1">
+              {groupOrder.map((groupKey, groupIdx) => {
+                const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
+                if (groupTabs.length === 0) return null;
+                return (
+                  <div key={groupKey} className="flex items-center">
+                    {groupIdx > 0 && (
+                      <Separator orientation="vertical" className="mx-1.5 h-5" />
+                    )}
+                    {groupTabs.map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <TabsTrigger key={tab.value} value={tab.value} className="gap-1 text-xs sm:text-sm">
+                          <Icon className="w-3.5 h-3.5" />
+                          <span className="hidden lg:inline">{tab.label}</span>
+                          <span className="lg:hidden">{tab.shortLabel}</span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </TabsList>
+          </div>
+        )}
 
         <Suspense fallback={<TabLoading />}>
           {!isPartnerAdmin && (
