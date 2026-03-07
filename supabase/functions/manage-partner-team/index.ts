@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     const isAdmin = callerRoles?.some((r: any) => r.role === "admin");
     let isAuthorizedPartnerAdmin = false;
