@@ -56,7 +56,7 @@ const TAB_DEFINITIONS: TabDef[] = [
   // Marketing group (做推广)
   { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "marketing" },
   { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "marketing" },
-  { value: "promotions", label: "营销活动", shortLabel: "营销", icon: Megaphone, group: "marketing" },
+  
   { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "marketing" },
   // CRM group (跟客户)
   { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "crm" },
@@ -272,9 +272,6 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
           </TabsContent>
           <TabsContent value="marketing">
             <PartnerMarketingHub partnerId={partner.id} />
-          </TabsContent>
-          <TabsContent value="promotions">
-            <PartnerPromotionManager partnerId={partner.id} partnerCode={partner.partner_code} />
           </TabsContent>
           <TabsContent value="channels">
             <PartnerChannelAttribution partnerId={partner.id} />
