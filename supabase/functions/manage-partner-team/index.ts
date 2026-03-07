@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
       }
 
       // Cannot remove yourself
-      if (user_id_to_remove === user.id) {
+      if (user_id_to_remove === userId) {
         return new Response(JSON.stringify({ error: "不能移除自己" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
