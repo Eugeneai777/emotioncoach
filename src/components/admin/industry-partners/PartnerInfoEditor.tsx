@@ -29,6 +29,7 @@ interface PartnerInfoEditorProps {
 
 export function PartnerInfoEditor({ partner, onSaved, onBindUser }: PartnerInfoEditorProps) {
   const [saving, setSaving] = useState(false);
+  const [unbinding, setUnbinding] = useState(false);
   const [form, setForm] = useState({
     company_name: partner.company_name || "",
     contact_person: partner.contact_person || "",
@@ -176,9 +177,36 @@ export function PartnerInfoEditor({ partner, onSaved, onBindUser }: PartnerInfoE
         </CardHeader>
         <CardContent>
           {partner.user_id ? (
-            <div className="flex items-center gap-2 text-sm">
-              <Link2 className="h-4 w-4 text-emerald-600" />
-              <span className="text-emerald-600 font-medium">已绑定用户账号</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Link2 className="h-4 w-4 text-emerald-600" />
+                <span className="text-emerald-600 font-medium">已绑定用户账号</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={unbinding}
+                onClick={async () => {
+                  if (!confirm("确认解除绑定？解除后该合伙人将无法通过合伙人中心访问。")) return;
+                  setUnbinding(true);
+                  try {
+                    const { error } = await supabase
+                      .from("partners")
+                      .update({ user_id: null } as any)
+                      .eq("id", partner.id);
+                    if (error) throw error;
+                    toast.success("已解除绑定");
+                    onSaved();
+                  } catch (err: any) {
+                    toast.error("解绑失败: " + (err.message || "未知错误"));
+                  } finally {
+                    setUnbinding(false);
+                  }
+                }}
+              >
+                {unbinding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Unlink className="h-4 w-4 mr-1" />}
+                解除绑定
+              </Button>
             </div>
           ) : (
             <div className="space-y-2">
