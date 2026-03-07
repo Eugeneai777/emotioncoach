@@ -69,13 +69,10 @@ export function PartnerChannelAttribution({ partnerId }: PartnerChannelAttributi
         .in("campaign_id", campaignIds)
         .gte("created_at", since.toISOString());
 
-      // Get orders
-      const { data: orders } = await supabase
-        .from("orders")
-        .select("amount, campaign_id")
-        .in("campaign_id", campaignIds)
-        .eq("status", "paid")
-        .gte("created_at", since.toISOString());
+      // Count purchase events as revenue proxy
+      const purchaseEvents = (events || []).filter(
+        (e) => e.event_type === "purchase" || e.event_type === "share_scan_converted"
+      );
 
       // Aggregate by channel
       const channelMap = new Map<string, { views: number; clicks: number; conversions: number; revenue: number; cost: number }>();
@@ -102,11 +99,12 @@ export function PartnerChannelAttribution({ partnerId }: PartnerChannelAttributi
         else if (e.event_type === "purchase" || e.event_type === "share_scan_converted") data.conversions++;
       });
 
-      // Sum revenue by channel
-      (orders || []).forEach((o) => {
-        const ch = campaignChannelMap.get(o.campaign_id || "") || "other";
+      // Estimate revenue from purchase metadata
+      purchaseEvents.forEach((e) => {
+        const ch = campaignChannelMap.get(e.campaign_id || "") || "other";
         if (!channelMap.has(ch)) channelMap.set(ch, { views: 0, clicks: 0, conversions: 0, revenue: 0, cost: 0 });
-        channelMap.get(ch)!.revenue += o.amount || 0;
+        const meta = e.metadata as any;
+        channelMap.get(ch)!.revenue += meta?.amount || meta?.order_amount || 0;
       });
 
       const result: ChannelData[] = Array.from(channelMap.entries())
