@@ -114,7 +114,7 @@ export function IndustryPartnerList({
                   <TableHead>公司/机构</TableHead>
                   <TableHead>合伙人编码</TableHead>
                   <TableHead>联系人</TableHead>
-                  <TableHead>绑定用户</TableHead>
+                  <TableHead>负责人</TableHead>
                   <TableHead>一级佣金</TableHead>
                   <TableHead className="text-right">推荐用户</TableHead>
                   <TableHead className="text-right">总收益</TableHead>
@@ -143,7 +143,7 @@ export function IndustryPartnerList({
                               disabled={isUnbinding && unbindingId === p.id}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (!confirm("确认解除绑定？")) return;
+                                if (!confirm("确认移除负责人？移除后该合伙人将无法通过合伙人中心访问。")) return;
                                 onUnbindUser(p.id);
                               }}
                             >
@@ -164,7 +164,7 @@ export function IndustryPartnerList({
                             }}
                           >
                             <UserPlus className="h-3 w-3 mr-1" />
-                            绑定
+                             设置
                           </Button>
                         )
                       )}

@@ -173,21 +173,21 @@ export function PartnerInfoEditor({ partner, onSaved, onBindUser }: PartnerInfoE
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">账号绑定</CardTitle>
+          <CardTitle className="text-base">负责人</CardTitle>
         </CardHeader>
         <CardContent>
           {partner.user_id ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <Link2 className="h-4 w-4 text-emerald-600" />
-                <span className="text-emerald-600 font-medium">已绑定用户账号</span>
+                <span className="text-emerald-600 font-medium">已设置负责人</span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={unbinding}
                 onClick={async () => {
-                  if (!confirm("确认解除绑定？解除后该合伙人将无法通过合伙人中心访问。")) return;
+                  if (!confirm("确认移除负责人？移除后该合伙人将无法通过合伙人中心访问。")) return;
                   setUnbinding(true);
                   try {
                     const { error } = await supabase
@@ -195,25 +195,25 @@ export function PartnerInfoEditor({ partner, onSaved, onBindUser }: PartnerInfoE
                       .update({ user_id: null } as any)
                       .eq("id", partner.id);
                     if (error) throw error;
-                    toast.success("已解除绑定");
+                    toast.success("已移除负责人");
                     onSaved();
                   } catch (err: any) {
-                    toast.error("解绑失败: " + (err.message || "未知错误"));
+                    toast.error("移除失败: " + (err.message || "未知错误"));
                   } finally {
                     setUnbinding(false);
                   }
                 }}
               >
                 {unbinding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Unlink className="h-4 w-4 mr-1" />}
-                解除绑定
+                移除负责人
               </Button>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">尚未绑定用户账号，绑定后合伙人可登录访问合伙人中心。</p>
+              <p className="text-sm text-muted-foreground">尚未设置负责人，设置后负责人可登录访问合伙人中心。</p>
               <Button variant="outline" size="sm" onClick={() => onBindUser(partner.id)}>
                 <UserPlus className="h-4 w-4 mr-1" />
-                绑定用户
+                设置负责人
               </Button>
             </div>
           )}
