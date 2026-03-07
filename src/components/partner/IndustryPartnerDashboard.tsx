@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Building2 } from "lucide-react";
 import { PartnerCoachManager } from "./PartnerCoachManager";
 import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
@@ -11,7 +12,6 @@ import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Partner } from "@/hooks/usePartner";
 
@@ -21,14 +21,16 @@ interface IndustryPartnerDashboardProps {
 
 const TAB_GROUPS = [
   {
-    label: "内容工具",
+    key: "content",
+    label: "内容建设",
     tabs: [
       { value: "coaches", label: "AI教练" },
       { value: "assessments", label: "测评" },
     ],
   },
   {
-    label: "营销增长",
+    key: "marketing",
+    label: "营销获客",
     tabs: [
       { value: "marketing", label: "AI文案" },
       { value: "promotions", label: "营销活动" },
@@ -36,7 +38,8 @@ const TAB_GROUPS = [
     ],
   },
   {
-    label: "运营管理",
+    key: "crm",
+    label: "客户运营",
     tabs: [
       { value: "reminders", label: "跟进提醒" },
       { value: "training", label: "培训中心" },
@@ -46,9 +49,22 @@ const TAB_GROUPS = [
 
 const ALL_TABS = TAB_GROUPS.flatMap((g) => g.tabs);
 
+function getGroupForTab(tabValue: string) {
+  return TAB_GROUPS.find((g) => g.tabs.some((t) => t.value === tabValue))?.key || TAB_GROUPS[0].key;
+}
+
 export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardProps) {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("coaches");
+  const [activeGroup, setActiveGroup] = useState("content");
+
+  // Sync group when tab changes
+  const correctGroup = getGroupForTab(activeTab);
+  if (correctGroup !== activeGroup) {
+    setActiveGroup(correctGroup);
+  }
+
+  const activeGroupDef = TAB_GROUPS.find((g) => g.key === activeGroup)!;
 
   return (
     <div className="space-y-6">
@@ -85,7 +101,7 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
             </SelectTrigger>
             <SelectContent>
               {TAB_GROUPS.map((group) => (
-                <div key={group.label}>
+                <div key={group.key}>
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                     {group.label}
                   </div>
@@ -99,19 +115,34 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
             </SelectContent>
           </Select>
         ) : (
-          /* Desktop: grouped TabsList with separators */
-          <TabsList className="inline-flex w-auto h-auto p-1 gap-0">
-            {TAB_GROUPS.map((group, gi) => (
-              <div key={group.label} className="flex items-center">
-                {gi > 0 && <Separator orientation="vertical" className="mx-2 h-5" />}
-                {group.tabs.map((tab) => (
-                  <TabsTrigger key={tab.value} value={tab.value} className="text-sm px-4 py-2">
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </div>
-            ))}
-          </TabsList>
+          /* Desktop: Two-level navigation */
+          <div className="space-y-3">
+            {/* Level 1: Group buttons */}
+            <div className="flex flex-wrap gap-1.5">
+              {TAB_GROUPS.map((group) => (
+                <Button
+                  key={group.key}
+                  variant={activeGroup === group.key ? "default" : "outline"}
+                  size="sm"
+                  className="text-sm"
+                  onClick={() => {
+                    setActiveGroup(group.key);
+                    setActiveTab(group.tabs[0].value);
+                  }}
+                >
+                  {group.label}
+                </Button>
+              ))}
+            </div>
+            {/* Level 2: Sub-tabs */}
+            <TabsList className="inline-flex w-auto h-auto p-1 gap-0.5">
+              {activeGroupDef.tabs.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value} className="text-sm px-4 py-2">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
         )}
 
         <TabsContent value="coaches">
