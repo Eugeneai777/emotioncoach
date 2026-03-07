@@ -112,8 +112,20 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
                       {assessment.description || assessment.subtitle}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {assessment.question_count} 题 · 路由: {assessment.page_route}
+                      {assessment.question_count} 题
                     </p>
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <button
+                        onClick={() => handleCopyLink(assessment)}
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {copiedId === assessment.id ? (
+                          <><Check className="w-3 h-3" /> 已复制</>
+                        ) : (
+                          <><Link className="w-3 h-3" /> 复制链接</>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
