@@ -25,8 +25,7 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const getAssessmentUrl = (assessment: PartnerAssessmentTemplate) => {
-    const origin = window.location.origin;
-    return `${origin}/assessment/${assessment.assessment_key}`;
+    return `https://wechat.eugenewe.net/assessment/${assessment.assessment_key}`;
   };
 
   const handleCopyLink = (assessment: PartnerAssessmentTemplate) => {
