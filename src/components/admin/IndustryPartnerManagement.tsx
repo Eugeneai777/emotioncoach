@@ -37,7 +37,7 @@ export default function IndustryPartnerManagement() {
         partner={selectedPartner}
         isPartnerAdmin={isPartnerAdmin}
         onBack={() => setSearchParams({})}
-        onBindUser={bindUser}
+        onBindUser={async (data) => { await bindUser(data); }}
         isBinding={isBinding}
         onSaved={refetch}
       />
@@ -52,9 +52,9 @@ export default function IndustryPartnerManagement() {
       onSelectPartner={(id) => setSearchParams({ partner: id })}
       onCreatePartner={createPartner}
       isCreating={isCreating}
-      onBindUser={bindUser}
+      onBindUser={async (data) => { await bindUser(data); }}
       isBinding={isBinding}
-      onUnbindUser={unbindUser}
+      onUnbindUser={async (id) => { await unbindUser(id); }}
       isUnbinding={isUnbinding}
       unbindingId={unbindingId as string | undefined}
     />

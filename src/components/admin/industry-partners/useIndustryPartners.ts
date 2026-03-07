@@ -27,6 +27,24 @@ export function useIndustryPartners() {
     checkRole();
   }, [user]);
 
+  // Realtime subscription for partners table
+  useEffect(() => {
+    const channel = supabase
+      .channel("partners-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "partners", filter: "partner_type=eq.industry" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: PARTNER_QUERY_KEY });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const { data: partners = [], isLoading: loading } = useQuery({
     queryKey: [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
     queryFn: async () => {
@@ -136,14 +154,40 @@ export function useIndustryPartners() {
         .eq("id", partnerId);
 
       if (error) throw error;
-      return displayName;
+      return { displayName, partnerId, userId };
     },
-    onSuccess: (displayName) => {
+    onMutate: async ({ partnerId, phone }: { partnerId: string; phone: string }) => {
+      await queryClient.cancelQueries({ queryKey: PARTNER_QUERY_KEY });
+      const previous = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
+      // Optimistic: mark as "binding in progress"
+      if (previous) {
+        queryClient.setQueryData(
+          [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+          previous.map((p) =>
+            p.id === partnerId ? { ...p, user_id: "pending", nickname: phone } : p
+          )
+        );
+      }
+      return { previous };
+    },
+    onSuccess: ({ displayName, partnerId, userId }) => {
       toast.success(`已设置负责人: ${displayName}`);
-      refetch();
+      // Update cache with real data
+      const current = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
+      if (current) {
+        queryClient.setQueryData(
+          [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+          current.map((p) =>
+            p.id === partnerId ? { ...p, user_id: userId, nickname: displayName } : p
+          )
+        );
+      }
     },
-    onError: (err: any) => {
+    onError: (err: any, _vars, context) => {
       toast.error("设置失败: " + (err.message || "未知错误"));
+      if (context?.previous) {
+        queryClient.setQueryData([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin], context.previous);
+      }
     },
   });
 
@@ -154,13 +198,29 @@ export function useIndustryPartners() {
         .update({ user_id: null } as any)
         .eq("id", partnerId);
       if (error) throw error;
+      return partnerId;
+    },
+    onMutate: async (partnerId) => {
+      await queryClient.cancelQueries({ queryKey: PARTNER_QUERY_KEY });
+      const previous = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
+      if (previous) {
+        queryClient.setQueryData(
+          [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+          previous.map((p) =>
+            p.id === partnerId ? { ...p, user_id: null, nickname: "" } : p
+          )
+        );
+      }
+      return { previous };
     },
     onSuccess: () => {
       toast.success("已移除负责人");
-      refetch();
     },
-    onError: () => {
+    onError: (_err, _vars, context) => {
       toast.error("移除失败");
+      if (context?.previous) {
+        queryClient.setQueryData([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin], context.previous);
+      }
     },
   });
 
