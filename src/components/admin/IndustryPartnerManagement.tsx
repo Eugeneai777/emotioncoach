@@ -20,6 +20,7 @@ export default function IndustryPartnerManagement() {
     unbindUser,
     unbindingId,
     isUnbinding,
+    updateOrder,
   } = useIndustryPartners();
 
   // Auto-select for partner_admin with single partner
@@ -57,6 +58,7 @@ export default function IndustryPartnerManagement() {
       onUnbindUser={async (id) => { await unbindUser(id); }}
       isUnbinding={isUnbinding}
       unbindingId={unbindingId as string | undefined}
+      onUpdateOrder={updateOrder}
     />
   );
 }

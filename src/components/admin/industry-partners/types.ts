@@ -30,6 +30,7 @@ export interface IndustryPartner {
   custom_product_packages: any | null;
   partner_level: string | null;
   partner_expires_at: string | null;
+  display_order: number;
   nickname?: string;
 }
 

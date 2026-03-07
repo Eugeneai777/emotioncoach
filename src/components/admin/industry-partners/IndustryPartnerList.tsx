@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { AdminPageLayout } from "../shared/AdminPageLayout";
 import { AdminFilterBar } from "../shared/AdminFilterBar";
 import { AdminStatCard } from "../shared/AdminStatCard";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent } from "@/components/ui/mobile-card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Network, Building2, Link2, UserPlus, Unlink, TrendingUp, ChevronLeft, ChevronRight, Download, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Network, Building2, Link2, UserPlus, Unlink, TrendingUp, ChevronLeft, ChevronRight, Download, ArrowUpDown, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { IndustryPartner } from "./types";
 import { CreatePartnerDialog } from "./CreatePartnerDialog";
 import { BindUserDialog } from "./BindUserDialog";
@@ -31,6 +32,7 @@ interface IndustryPartnerListProps {
   onUnbindUser: (partnerId: string) => Promise<void>;
   isUnbinding: boolean;
   unbindingId?: string;
+  onUpdateOrder?: (orderedIds: string[]) => Promise<void>;
 }
 
 export function IndustryPartnerList({
@@ -45,6 +47,7 @@ export function IndustryPartnerList({
   onUnbindUser,
   isUnbinding,
   unbindingId,
+  onUpdateOrder,
 }: IndustryPartnerListProps) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -54,6 +57,9 @@ export function IndustryPartnerList({
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const isMobile = useIsMobile();
+
+  // Drag-drop is only enabled when no search/filter/sort is active
+  const isDragEnabled = !search && statusFilter === "all" && !sortField && !isPartnerAdmin;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -98,6 +104,19 @@ export function IndustryPartnerList({
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const totalEarnings = partners.reduce((s, p) => s + (p.total_earnings || 0), 0);
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination || !onUpdateOrder) return;
+    const sourceIndex = result.source.index + page * PAGE_SIZE;
+    const destIndex = result.destination.index + page * PAGE_SIZE;
+    if (sourceIndex === destIndex) return;
+
+    const reordered = [...filtered];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destIndex, 0, moved);
+
+    await onUpdateOrder(reordered.map((p) => p.id));
+  };
 
   const handleExportCSV = () => {
     const headers = ["公司名称", "合伙人编码", "联系人", "联系电话", "佣金比例", "推荐用户", "总收益", "状态"];
@@ -200,6 +219,112 @@ export function IndustryPartnerList({
     </MobileCard>
   );
 
+  const renderTableRow = (p: IndustryPartner, index: number) => {
+    const rowContent = (dragHandleProps?: any) => (
+      <>
+        {isDragEnabled && (
+          <TableCell className="w-8 px-1">
+            <span {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+              <GripVertical className="h-4 w-4" />
+            </span>
+          </TableCell>
+        )}
+        <TableCell className="font-medium">{p.company_name || "-"}</TableCell>
+        <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
+        <TableCell>{p.contact_person || "-"}</TableCell>
+        <TableCell>
+          {p.user_id ? (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-emerald-600 flex items-center gap-1">
+                <Link2 className="h-3 w-3" />
+                {p.nickname || "已绑定"}
+              </span>
+              {!isPartnerAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                  disabled={isUnbinding && unbindingId === p.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!confirm("确认移除负责人？移除后该合伙人将无法通过合伙人中心访问。")) return;
+                    onUnbindUser(p.id);
+                  }}
+                >
+                  {isUnbinding && unbindingId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Unlink className="h-3 w-3" />}
+                </Button>
+              )}
+            </div>
+          ) : (
+            !isPartnerAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBindPartnerId(p.id);
+                  setBindDialogOpen(true);
+                }}
+              >
+                <UserPlus className="h-3 w-3 mr-1" />
+                设置
+              </Button>
+            )
+          )}
+        </TableCell>
+        <TableCell>{((p.custom_commission_rate_l1 ?? 0.3) * 100).toFixed(0)}%</TableCell>
+        <TableCell className="text-right">{p.total_referrals}</TableCell>
+        <TableCell className="text-right font-medium">¥{(p.total_earnings || 0).toFixed(2)}</TableCell>
+        <TableCell>
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              p.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {p.status === "active" ? "活跃" : p.status}
+          </span>
+        </TableCell>
+        <TableCell>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectPartner(p.id);
+            }}
+          >
+            <Network className="h-4 w-4 mr-1" />
+            管理
+          </Button>
+        </TableCell>
+      </>
+    );
+
+    if (isDragEnabled) {
+      return (
+        <Draggable key={p.id} draggableId={p.id} index={index}>
+          {(provided, snapshot) => (
+            <TableRow
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              className={`cursor-pointer hover:bg-accent/50 ${snapshot.isDragging ? "bg-accent shadow-md" : ""}`}
+              onClick={() => onSelectPartner(p.id)}
+            >
+              {rowContent(provided.dragHandleProps)}
+            </TableRow>
+          )}
+        </Draggable>
+      );
+    }
+
+    return (
+      <TableRow key={p.id} className="cursor-pointer hover:bg-accent/50" onClick={() => onSelectPartner(p.id)}>
+        {rowContent()}
+      </TableRow>
+    );
+  };
+
   return (
     <AdminPageLayout
       title="行业合伙人"
@@ -225,12 +350,15 @@ export function IndustryPartnerList({
         </Button>
       </AdminFilterBar>
 
+      {isDragEnabled && (
+        <p className="text-xs text-muted-foreground mt-2 mb-1">💡 拖拽左侧手柄可调整合伙人排列顺序</p>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : isMobile ? (
-        /* Mobile: Card layout */
         <div className="space-y-3 mt-4">
           {paged.length > 0 ? (
             paged.map(renderPartnerCard)
@@ -241,117 +369,52 @@ export function IndustryPartnerList({
           )}
         </div>
       ) : (
-        /* Desktop: Table layout */
         <>
-          <AdminTableContainer minWidth={900}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>公司/机构</TableHead>
-                  <TableHead>合伙人编码</TableHead>
-                  <TableHead>联系人</TableHead>
-                  <TableHead>负责人</TableHead>
-                  <TableHead>一级佣金</TableHead>
-                  <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_referrals")}>
-                    <span className="inline-flex items-center">
-                      推荐用户
-                      <SortIcon field="total_referrals" />
-                    </span>
-                  </TableHead>
-                  <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_earnings")}>
-                    <span className="inline-flex items-center">
-                      总收益
-                      <SortIcon field="total_earnings" />
-                    </span>
-                  </TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paged.map((p) => (
-                  <TableRow key={p.id} className="cursor-pointer hover:bg-accent/50" onClick={() => onSelectPartner(p.id)}>
-                    <TableCell className="font-medium">{p.company_name || "-"}</TableCell>
-                    <TableCell className="font-mono text-xs">{p.partner_code}</TableCell>
-                    <TableCell>{p.contact_person || "-"}</TableCell>
-                    <TableCell>
-                      {p.user_id ? (
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-emerald-600 flex items-center gap-1">
-                            <Link2 className="h-3 w-3" />
-                            {p.nickname || "已绑定"}
-                          </span>
-                          {!isPartnerAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                              disabled={isUnbinding && unbindingId === p.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!confirm("确认移除负责人？移除后该合伙人将无法通过合伙人中心访问。")) return;
-                                onUnbindUser(p.id);
-                              }}
-                            >
-                              {isUnbinding && unbindingId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Unlink className="h-3 w-3" />}
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        !isPartnerAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs h-7 px-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setBindPartnerId(p.id);
-                              setBindDialogOpen(true);
-                            }}
-                          >
-                            <UserPlus className="h-3 w-3 mr-1" />
-                            设置
-                          </Button>
-                        )
-                      )}
-                    </TableCell>
-                    <TableCell>{((p.custom_commission_rate_l1 ?? 0.3) * 100).toFixed(0)}%</TableCell>
-                    <TableCell className="text-right">{p.total_referrals}</TableCell>
-                    <TableCell className="text-right font-medium">¥{(p.total_earnings || 0).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          p.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {p.status === "active" ? "活跃" : p.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectPartner(p.id);
-                        }}
-                      >
-                        <Network className="h-4 w-4 mr-1" />
-                        管理
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <AdminTableContainer minWidth={900}>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                      暂无行业合伙人，点击右上角"新建"添加
-                    </TableCell>
+                    {isDragEnabled && <TableHead className="w-8 px-1" />}
+                    <TableHead>公司/机构</TableHead>
+                    <TableHead>合伙人编码</TableHead>
+                    <TableHead>联系人</TableHead>
+                    <TableHead>负责人</TableHead>
+                    <TableHead>一级佣金</TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_referrals")}>
+                      <span className="inline-flex items-center">
+                        推荐用户
+                        <SortIcon field="total_referrals" />
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("total_earnings")}>
+                      <span className="inline-flex items-center">
+                        总收益
+                        <SortIcon field="total_earnings" />
+                      </span>
+                    </TableHead>
+                    <TableHead>状态</TableHead>
+                    <TableHead>操作</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </AdminTableContainer>
+                </TableHeader>
+                <Droppable droppableId="partner-list">
+                  {(provided) => (
+                    <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+                      {paged.map((p, index) => renderTableRow(p, index))}
+                      {provided.placeholder}
+                      {filtered.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={isDragEnabled ? 10 : 9} className="text-center text-muted-foreground py-8">
+                            暂无行业合伙人，点击右上角"新建"添加
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  )}
+                </Droppable>
+              </Table>
+            </AdminTableContainer>
+          </DragDropContext>
         </>
       )}
 
