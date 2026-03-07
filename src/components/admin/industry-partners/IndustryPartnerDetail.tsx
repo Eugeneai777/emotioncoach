@@ -39,7 +39,7 @@ interface TabDef {
   label: string;
   shortLabel: string;
   icon: React.ComponentType<{ className?: string }>;
-  group: "settings" | "business" | "operations" | "organization";
+  group: "settings" | "business" | "content" | "marketing" | "crm" | "organization";
   adminOnly?: boolean;
 }
 
@@ -49,17 +49,19 @@ const TAB_DEFINITIONS: TabDef[] = [
   // Business group
   { value: "revenue", label: "收益看板", shortLabel: "收益", icon: TrendingUp, group: "business" },
   { value: "promotion", label: "推广链接", shortLabel: "推广", icon: Share2, group: "business" },
-  { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "business" },
-  // Operations group
-  { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "operations" },
-  { value: "coaches", label: "AI 教练", shortLabel: "教练", icon: Bot, group: "operations" },
-  { value: "assessments", label: "测评", shortLabel: "测评", icon: ClipboardList, group: "operations" },
-  { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "operations" },
-  { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "operations" },
-  { value: "promotions", label: "营销活动", shortLabel: "营销", icon: Megaphone, group: "operations" },
-  { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "operations" },
-  { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "operations" },
-  { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "operations" },
+  // Content group (建内容)
+  { value: "coaches", label: "AI 教练", shortLabel: "教练", icon: Bot, group: "content" },
+  { value: "assessments", label: "测评", shortLabel: "测评", icon: ClipboardList, group: "content" },
+  { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "content" },
+  // Marketing group (做推广)
+  { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "marketing" },
+  { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "marketing" },
+  { value: "promotions", label: "营销活动", shortLabel: "营销", icon: Megaphone, group: "marketing" },
+  { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "marketing" },
+  // CRM group (跟客户)
+  { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "crm" },
+  { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "crm" },
+  { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "crm" },
   // Organization group
   { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "organization" },
   { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
@@ -69,7 +71,9 @@ const TAB_DEFINITIONS: TabDef[] = [
 const GROUP_LABELS: Record<string, string> = {
   settings: "设置",
   business: "业务数据",
-  operations: "运营工具",
+  content: "内容建设",
+  marketing: "营销获客",
+  crm: "客户运营",
   organization: "组织商城",
 };
 
@@ -99,8 +103,19 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
 
   // Group tabs for desktop rendering
   const groupOrder = isPartnerAdmin
-    ? ["business", "operations", "organization"]
-    : ["settings", "business", "operations", "organization"];
+    ? ["business", "content", "marketing", "crm", "organization"]
+    : ["settings", "business", "content", "marketing", "crm", "organization"];
+
+  // Two-level nav: track active group
+  const currentGroup = visibleTabs.find((t) => t.value === currentTab)?.group || groupOrder[0];
+  const [activeGroup, setActiveGroup] = useState(currentGroup);
+  const activeGroupTabs = visibleTabs.filter((t) => t.group === activeGroup);
+
+  // Sync active group when tab changes externally (e.g. URL)
+  const correctGroup = visibleTabs.find((t) => t.value === currentTab)?.group;
+  if (correctGroup && correctGroup !== activeGroup) {
+    setActiveGroup(correctGroup);
+  }
 
   return (
     <AdminPageLayout
