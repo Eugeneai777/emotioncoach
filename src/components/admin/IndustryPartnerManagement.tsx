@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList, Settings, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList, Settings, Save, Users } from "lucide-react";
 import { PartnerCoachManager } from "@/components/partner/PartnerCoachManager";
 import { PartnerAssessmentManager } from "@/components/partner/PartnerAssessmentManager";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
 import { PartnerStoreProducts } from "@/components/partner/PartnerStoreProducts";
 import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
 import { PartnerProductBundles } from "@/components/admin/industry-partners/PartnerProductBundles";
+import { PartnerTeamManager } from "@/components/admin/industry-partners/PartnerTeamManager";
 import { PartnerInfoEditor } from "@/components/admin/industry-partners/PartnerInfoEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -297,6 +298,10 @@ export default function IndustryPartnerManagement() {
               测评
             </TabsTrigger>
             <TabsTrigger value="bundles">组合产品</TabsTrigger>
+            <TabsTrigger value="team" className="gap-1">
+              <Users className="w-3.5 h-3.5" />
+              团队成员
+            </TabsTrigger>
             <TabsTrigger value="store">商城商品</TabsTrigger>
             <TabsTrigger value="orders">商城订单</TabsTrigger>
           </TabsList>
@@ -316,6 +321,9 @@ export default function IndustryPartnerManagement() {
           </TabsContent>
           <TabsContent value="bundles">
             <PartnerProductBundles partnerId={selectedPartnerId} />
+          </TabsContent>
+          <TabsContent value="team">
+            <PartnerTeamManager partnerId={selectedPartnerId} />
           </TabsContent>
           <TabsContent value="store">
             <PartnerStoreProducts partnerId={selectedPartnerId} />
