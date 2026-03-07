@@ -62,9 +62,9 @@ export function useIndustryPartners() {
 
       let query = supabase
         .from("partners")
-        .select("id, partner_code, status, partner_type, total_referrals, total_l2_referrals, total_earnings, pending_balance, available_balance, withdrawn_amount, prepurchase_count, default_entry_type, default_entry_price, default_quota_amount, default_product_type, selected_experience_packages, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2, traffic_source, settlement_cycle, custom_product_packages, commission_rate_l1, commission_rate_l2, partner_level, partner_expires_at")
+        .select("id, partner_code, status, partner_type, total_referrals, total_l2_referrals, total_earnings, pending_balance, available_balance, withdrawn_amount, prepurchase_count, default_entry_type, default_entry_price, default_quota_amount, default_product_type, selected_experience_packages, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2, traffic_source, settlement_cycle, custom_product_packages, commission_rate_l1, commission_rate_l2, partner_level, partner_expires_at, display_order")
         .eq("partner_type", "industry")
-        .order("created_at", { ascending: false });
+        .order("display_order", { ascending: true });
 
       if (boundPartnerIds) {
         query = query.in("id", boundPartnerIds);
