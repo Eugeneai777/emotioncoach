@@ -273,9 +273,6 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
           <TabsContent value="marketing">
             <PartnerMarketingHub partnerId={partner.id} />
           </TabsContent>
-          <TabsContent value="promotions">
-            <PartnerPromotionManager partnerId={partner.id} partnerCode={partner.partner_code} />
-          </TabsContent>
           <TabsContent value="channels">
             <PartnerChannelAttribution partnerId={partner.id} />
           </TabsContent>
