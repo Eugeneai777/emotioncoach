@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AdminPageLayout } from "../shared/AdminPageLayout";
 import { Button } from "@/components/ui/button";
@@ -44,26 +44,19 @@ interface TabDef {
 }
 
 const TAB_DEFINITIONS: TabDef[] = [
-  // Settings group
   { value: "info", label: "基本信息", shortLabel: "信息", icon: Settings, group: "settings", adminOnly: true },
   { value: "team", label: "团队成员", shortLabel: "团队", icon: Users, group: "settings" },
-  // Business group
   { value: "revenue", label: "收益看板", shortLabel: "收益", icon: TrendingUp, group: "business" },
   { value: "promotion", label: "推广链接", shortLabel: "推广", icon: Share2, group: "business" },
-  // Content group (建内容)
   { value: "coaches", label: "AI 教练", shortLabel: "教练", icon: Bot, group: "content" },
   { value: "assessments", label: "测评", shortLabel: "测评", icon: ClipboardList, group: "content" },
   { value: "bundles", label: "组合产品", shortLabel: "组合", icon: Package, group: "content" },
-  // Marketing group (做推广)
   { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "marketing" },
   { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "marketing" },
-  
   { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "marketing" },
-  // CRM group (跟客户)
   { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "crm" },
   { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "crm" },
   { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "crm" },
-  // Organization group
   { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
   { value: "orders", label: "商城订单", shortLabel: "订单", icon: ShoppingCart, group: "organization" },
 ];
@@ -91,31 +84,61 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
   const [bindDialogOpen, setBindDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const visibleTabs = TAB_DEFINITIONS.filter((t) => !(t.adminOnly && isPartnerAdmin));
+  const visibleTabs = useMemo(
+    () => TAB_DEFINITIONS.filter((t) => !(t.adminOnly && isPartnerAdmin)),
+    [isPartnerAdmin]
+  );
+
+  const groupOrder = useMemo(
+    () => isPartnerAdmin
+      ? ["business", "content", "marketing", "crm", "organization"]
+      : ["settings", "business", "content", "marketing", "crm", "organization"],
+    [isPartnerAdmin]
+  );
 
   const currentTab = searchParams.get("tab") || "flywheel";
-  const setTab = (tab: string) => {
+
+  const setTab = useCallback((tab: string) => {
     setSearchParams((prev) => {
       prev.set("tab", tab);
       return prev;
     });
-  };
+  }, [setSearchParams]);
 
-  // Group tabs for desktop rendering
-  const groupOrder = isPartnerAdmin
-    ? ["business", "content", "marketing", "crm", "organization"]
-    : ["settings", "business", "content", "marketing", "crm", "organization"];
+  // Derive active group from current tab
+  const activeGroup = useMemo(() => {
+    const group = visibleTabs.find((t) => t.value === currentTab)?.group;
+    return group || groupOrder[0];
+  }, [currentTab, visibleTabs, groupOrder]);
 
-  // Two-level nav: track active group
-  const currentGroup = visibleTabs.find((t) => t.value === currentTab)?.group || groupOrder[0];
-  const [activeGroup, setActiveGroup] = useState(currentGroup);
-  const activeGroupTabs = visibleTabs.filter((t) => t.group === activeGroup);
+  const activeGroupTabs = useMemo(
+    () => visibleTabs.filter((t) => t.group === activeGroup),
+    [visibleTabs, activeGroup]
+  );
 
-  // Sync active group when tab changes externally (e.g. URL)
-  const correctGroup = visibleTabs.find((t) => t.value === currentTab)?.group;
-  if (correctGroup && correctGroup !== activeGroup) {
-    setActiveGroup(correctGroup);
-  }
+  const handleGroupClick = useCallback((groupKey: string) => {
+    const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
+    if (groupTabs.length > 0) setTab(groupTabs[0].value);
+  }, [visibleTabs, setTab]);
+
+  const partnerStatsData = useMemo(() => ({
+    ...partner,
+    total_earnings: partner.total_earnings ?? 0,
+    pending_balance: partner.pending_balance ?? 0,
+    available_balance: partner.available_balance ?? 0,
+    withdrawn_amount: partner.withdrawn_amount ?? 0,
+    total_referrals: partner.total_referrals ?? 0,
+    total_l2_referrals: partner.total_l2_referrals ?? 0,
+    commission_rate_l1: partner.commission_rate_l1 ?? 0,
+    commission_rate_l2: partner.commission_rate_l2 ?? 0,
+    partner_level: partner.partner_level ?? "L1",
+    prepurchase_count: partner.prepurchase_count ?? 0,
+    partner_type: partner.partner_type ?? "industry",
+    partner_code: partner.partner_code,
+    source: "admin",
+    partner_expires_at: partner.partner_expires_at ?? null,
+    prepurchase_expires_at: null,
+  }), [partner]);
 
   return (
     <AdminPageLayout
@@ -133,7 +156,6 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
       }
     >
       <Tabs value={currentTab} onValueChange={setTab} className="space-y-4">
-        {/* Mobile: Select dropdown */}
         {isMobile ? (
           <Select value={currentTab} onValueChange={setTab}>
             <SelectTrigger className="w-full">
@@ -177,9 +199,7 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
             </SelectContent>
           </Select>
         ) : (
-          /* Desktop: Two-level navigation */
           <div className="space-y-3">
-            {/* Level 1: Group buttons */}
             <div className="flex flex-wrap gap-1.5">
               {groupOrder.map((groupKey) => {
                 const groupTabs = visibleTabs.filter((t) => t.group === groupKey);
@@ -191,19 +211,13 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
                     variant={isActive ? "default" : "outline"}
                     size="sm"
                     className="text-sm"
-                    onClick={() => {
-                      setActiveGroup(groupKey);
-                      // Auto-select first tab in group
-                      const firstTab = groupTabs[0];
-                      if (firstTab) setTab(firstTab.value);
-                    }}
+                    onClick={() => handleGroupClick(groupKey)}
                   >
                     {GROUP_LABELS[groupKey]}
                   </Button>
                 );
               })}
             </div>
-            {/* Level 2: Sub-tabs for active group */}
             <TabsList className="inline-flex w-auto h-auto p-1 gap-0.5">
               {activeGroupTabs.map((tab) => {
                 const Icon = tab.icon;
@@ -224,33 +238,12 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
               <PartnerInfoEditor
                 partner={partner}
                 onSaved={onSaved}
-                onBindUser={(id) => {
-                  setBindDialogOpen(true);
-                }}
+                onBindUser={() => setBindDialogOpen(true)}
               />
             </TabsContent>
           )}
           <TabsContent value="revenue">
-            <PartnerStats
-              partner={{
-                ...partner,
-                total_earnings: partner.total_earnings ?? 0,
-                pending_balance: partner.pending_balance ?? 0,
-                available_balance: partner.available_balance ?? 0,
-                withdrawn_amount: partner.withdrawn_amount ?? 0,
-                total_referrals: partner.total_referrals ?? 0,
-                total_l2_referrals: partner.total_l2_referrals ?? 0,
-                commission_rate_l1: partner.commission_rate_l1 ?? 0,
-                commission_rate_l2: partner.commission_rate_l2 ?? 0,
-                partner_level: partner.partner_level ?? "L1",
-                prepurchase_count: partner.prepurchase_count ?? 0,
-                partner_type: partner.partner_type ?? "industry",
-                partner_code: partner.partner_code,
-                source: "admin",
-                partner_expires_at: partner.partner_expires_at ?? null,
-                prepurchase_expires_at: null,
-              } as any}
-            />
+            <PartnerStats partner={partnerStatsData as any} />
           </TabsContent>
           <TabsContent value="promotion">
             <PromotionHub

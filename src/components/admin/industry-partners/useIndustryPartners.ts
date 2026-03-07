@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { IndustryPartner, CreatePartnerForm, generatePartnerCode } from "./types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 const PARTNER_QUERY_KEY = ["industry-partners"];
 
@@ -27,7 +27,7 @@ export function useIndustryPartners() {
     checkRole();
   }, [user]);
 
-  // Realtime subscription for partners table
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("partners-realtime")
@@ -45,8 +45,13 @@ export function useIndustryPartners() {
     };
   }, [queryClient]);
 
+  const fullQueryKey = useMemo(
+    () => [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+    [user?.id, isPartnerAdmin]
+  );
+
   const { data: partners = [], isLoading: loading } = useQuery({
-    queryKey: [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+    queryKey: fullQueryKey,
     queryFn: async () => {
       if (!user) return [];
 
@@ -95,12 +100,18 @@ export function useIndustryPartners() {
     enabled: !!user,
   });
 
-  const refetch = () => queryClient.invalidateQueries({ queryKey: PARTNER_QUERY_KEY });
+  const refetch = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: PARTNER_QUERY_KEY }),
+    [queryClient]
+  );
 
   const createMutation = useMutation({
     mutationFn: async (form: CreatePartnerForm) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("未登录");
+
+      const parsed = parseFloat(form.commission_l1);
+      const commissionRate = isNaN(parsed) ? 0.2 : parsed;
 
       const { error } = await supabase.from("partners").insert({
         user_id: null,
@@ -115,9 +126,9 @@ export function useIndustryPartners() {
         contact_person: form.contact_person.trim() || null,
         contact_phone: form.contact_phone.trim() || null,
         cooperation_note: form.cooperation_note.trim() || null,
-        custom_commission_rate_l1: parseFloat(form.commission_l1) || 0.2,
+        custom_commission_rate_l1: commissionRate,
         custom_commission_rate_l2: 0,
-        commission_rate_l1: parseFloat(form.commission_l1) || 0.2,
+        commission_rate_l1: commissionRate,
         commission_rate_l2: 0,
         traffic_source: form.traffic_source.trim() || null,
         settlement_cycle: form.settlement_cycle || "monthly",
@@ -157,13 +168,12 @@ export function useIndustryPartners() {
       if (error) throw error;
       return { displayName, partnerId, userId };
     },
-    onMutate: async ({ partnerId, phone }: { partnerId: string; phone: string }) => {
+    onMutate: async ({ partnerId, phone }) => {
       await queryClient.cancelQueries({ queryKey: PARTNER_QUERY_KEY });
-      const previous = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
-      // Optimistic: mark as "binding in progress"
+      const previous = queryClient.getQueryData<IndustryPartner[]>(fullQueryKey);
       if (previous) {
         queryClient.setQueryData(
-          [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+          fullQueryKey,
           previous.map((p) =>
             p.id === partnerId ? { ...p, user_id: "pending", nickname: phone } : p
           )
@@ -173,11 +183,10 @@ export function useIndustryPartners() {
     },
     onSuccess: ({ displayName, partnerId, userId }) => {
       toast.success(`已设置负责人: ${displayName}`);
-      // Update cache with real data
-      const current = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
+      const current = queryClient.getQueryData<IndustryPartner[]>(fullQueryKey);
       if (current) {
         queryClient.setQueryData(
-          [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+          fullQueryKey,
           current.map((p) =>
             p.id === partnerId ? { ...p, user_id: userId, nickname: displayName } : p
           )
@@ -187,7 +196,7 @@ export function useIndustryPartners() {
     onError: (err: any, _vars, context) => {
       toast.error("设置失败: " + (err.message || "未知错误"));
       if (context?.previous) {
-        queryClient.setQueryData([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin], context.previous);
+        queryClient.setQueryData(fullQueryKey, context.previous);
       }
     },
   });
@@ -203,10 +212,10 @@ export function useIndustryPartners() {
     },
     onMutate: async (partnerId) => {
       await queryClient.cancelQueries({ queryKey: PARTNER_QUERY_KEY });
-      const previous = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
+      const previous = queryClient.getQueryData<IndustryPartner[]>(fullQueryKey);
       if (previous) {
         queryClient.setQueryData(
-          [...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin],
+          fullQueryKey,
           previous.map((p) =>
             p.id === partnerId ? { ...p, user_id: null, nickname: "" } : p
           )
@@ -220,21 +229,40 @@ export function useIndustryPartners() {
     onError: (_err, _vars, context) => {
       toast.error("移除失败");
       if (context?.previous) {
-        queryClient.setQueryData([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin], context.previous);
+        queryClient.setQueryData(fullQueryKey, context.previous);
       }
     },
   });
 
   const updateOrderMutation = useMutation({
     mutationFn: async (orderedIds: string[]) => {
+      // Batch updates: build all updates and execute in parallel
       const updates = orderedIds.map((id, index) =>
         supabase.from("partners").update({ display_order: index + 1 } as any).eq("id", id)
       );
       await Promise.all(updates);
     },
-    onError: () => {
+    onMutate: async (orderedIds) => {
+      // Optimistic reorder
+      await queryClient.cancelQueries({ queryKey: PARTNER_QUERY_KEY });
+      const previous = queryClient.getQueryData<IndustryPartner[]>(fullQueryKey);
+      if (previous) {
+        const orderMap = new Map(orderedIds.map((id, i) => [id, i + 1]));
+        const reordered = [...previous].sort(
+          (a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999)
+        );
+        queryClient.setQueryData(fullQueryKey, reordered.map((p, i) => ({
+          ...p,
+          display_order: i + 1,
+        })));
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
       toast.error("排序保存失败");
-      refetch();
+      if (context?.previous) {
+        queryClient.setQueryData(fullQueryKey, context.previous);
+      }
     },
   });
 
