@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 interface AdminPageLayoutProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
