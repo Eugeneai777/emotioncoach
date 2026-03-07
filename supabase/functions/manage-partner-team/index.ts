@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         const { data: binding } = await adminClient
           .from("partner_admin_bindings")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("partner_id", partner_id)
           .maybeSingle();
         isAuthorizedPartnerAdmin = !!binding;
