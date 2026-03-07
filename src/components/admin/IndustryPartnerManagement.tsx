@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList, Settings, Save, Users, Unlink } from "lucide-react";
+import { ArrowLeft, Loader2, Network, Plus, Building2, UserPlus, Link2, Bot, ClipboardList, Settings, Save, Users, Unlink, TrendingUp, Share2 } from "lucide-react";
 import { PartnerCoachManager } from "@/components/partner/PartnerCoachManager";
 import { PartnerAssessmentManager } from "@/components/partner/PartnerAssessmentManager";
 import { FlywheelGrowthSystem } from "@/components/partner/FlywheelGrowthSystem";
@@ -18,6 +18,9 @@ import { PartnerStoreOrders } from "@/components/partner/PartnerStoreOrders";
 import { PartnerProductBundles } from "@/components/admin/industry-partners/PartnerProductBundles";
 import { PartnerTeamManager } from "@/components/admin/industry-partners/PartnerTeamManager";
 import { PartnerInfoEditor } from "@/components/admin/industry-partners/PartnerInfoEditor";
+import { PartnerStats } from "@/components/partner/PartnerStats";
+import { PromotionHub } from "@/components/partner/PromotionHub";
+import { ReferralList } from "@/components/partner/ReferralList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -117,7 +120,7 @@ export default function IndustryPartnerManagement() {
 
       let query = supabase
         .from("partners")
-        .select("id, partner_code, status, partner_type, total_referrals, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2, traffic_source, settlement_cycle, custom_product_packages")
+        .select("id, partner_code, status, partner_type, total_referrals, total_l2_referrals, total_earnings, pending_balance, available_balance, withdrawn_amount, prepurchase_count, default_entry_type, default_entry_price, default_quota_amount, default_product_type, selected_experience_packages, created_at, user_id, company_name, contact_person, contact_phone, cooperation_note, custom_commission_rate_l1, custom_commission_rate_l2, traffic_source, settlement_cycle, custom_product_packages, commission_rate_l1, commission_rate_l2, partner_level, partner_expires_at")
         .eq("partner_type", "industry")
         .order("created_at", { ascending: false });
 
@@ -289,6 +292,18 @@ export default function IndustryPartnerManagement() {
                 基本信息
               </TabsTrigger>
             )}
+            <TabsTrigger value="revenue" className="gap-1">
+              <TrendingUp className="w-3.5 h-3.5" />
+              收益看板
+            </TabsTrigger>
+            <TabsTrigger value="promotion" className="gap-1">
+              <Share2 className="w-3.5 h-3.5" />
+              推广链接
+            </TabsTrigger>
+            <TabsTrigger value="students" className="gap-1">
+              <UserPlus className="w-3.5 h-3.5" />
+              学员管理
+            </TabsTrigger>
             <TabsTrigger value="flywheel">创建活动</TabsTrigger>
             <TabsTrigger value="coaches" className="gap-1">
               <Bot className="w-3.5 h-3.5" />
@@ -311,6 +326,37 @@ export default function IndustryPartnerManagement() {
               <PartnerInfoEditor partner={selectedPartner} onSaved={fetchPartners} onBindUser={(id) => { setBindPartnerId(id); setBindDialogOpen(true); }} />
             </TabsContent>
           )}
+          <TabsContent value="revenue">
+            <PartnerStats partner={{
+              ...selectedPartner,
+              total_earnings: (selectedPartner as any).total_earnings ?? 0,
+              pending_balance: (selectedPartner as any).pending_balance ?? 0,
+              available_balance: (selectedPartner as any).available_balance ?? 0,
+              withdrawn_amount: (selectedPartner as any).withdrawn_amount ?? 0,
+              total_referrals: (selectedPartner as any).total_referrals ?? 0,
+              total_l2_referrals: (selectedPartner as any).total_l2_referrals ?? 0,
+              commission_rate_l1: (selectedPartner as any).commission_rate_l1 ?? 0,
+              commission_rate_l2: (selectedPartner as any).commission_rate_l2 ?? 0,
+              partner_level: (selectedPartner as any).partner_level ?? 'L1',
+              prepurchase_count: (selectedPartner as any).prepurchase_count ?? 0,
+              partner_type: (selectedPartner as any).partner_type ?? 'industry',
+              partner_code: selectedPartner.partner_code,
+              source: 'admin',
+              partner_expires_at: (selectedPartner as any).partner_expires_at ?? null,
+              prepurchase_expires_at: null,
+            } as any} />
+          </TabsContent>
+          <TabsContent value="promotion">
+            <PromotionHub 
+              partnerId={selectedPartnerId} 
+              currentEntryType={(selectedPartner as any).default_entry_type || 'free'}
+              prepurchaseCount={(selectedPartner as any).prepurchase_count ?? 0}
+              currentSelectedPackages={(selectedPartner as any).selected_experience_packages}
+            />
+          </TabsContent>
+          <TabsContent value="students">
+            <ReferralList partnerId={selectedPartnerId} />
+          </TabsContent>
           <TabsContent value="flywheel">
             <FlywheelGrowthSystem partnerId={selectedPartnerId} fromAdmin />
           </TabsContent>
