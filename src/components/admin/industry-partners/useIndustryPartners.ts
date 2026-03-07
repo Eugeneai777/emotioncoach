@@ -139,11 +139,11 @@ export function useIndustryPartners() {
       return displayName;
     },
     onSuccess: (displayName) => {
-      toast.success(`已绑定用户: ${displayName}`);
+      toast.success(`已设置负责人: ${displayName}`);
       refetch();
     },
     onError: (err: any) => {
-      toast.error("绑定失败: " + (err.message || "未知错误"));
+      toast.error("设置失败: " + (err.message || "未知错误"));
     },
   });
 
@@ -156,11 +156,11 @@ export function useIndustryPartners() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("已解除绑定");
+      toast.success("已移除负责人");
       refetch();
     },
     onError: () => {
-      toast.error("解绑失败");
+      toast.error("移除失败");
     },
   });
 

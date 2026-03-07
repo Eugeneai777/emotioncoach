@@ -26,11 +26,11 @@ export function BindUserDialog({ open, onOpenChange, onBind, isBinding }: BindUs
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle>绑定用户账号</DialogTitle>
+          <DialogTitle>设置负责人</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            输入用户手机号，将其账号与此行业合伙人关联。绑定后合伙人可登录访问合伙人中心。
+            输入负责人手机号，设置后该负责人可登录访问合伙人中心。
           </p>
           <div>
             <Label>手机号</Label>
@@ -43,7 +43,7 @@ export function BindUserDialog({ open, onOpenChange, onBind, isBinding }: BindUs
           </div>
           <Button onClick={handleBind} disabled={isBinding || !phone.trim()} className="w-full">
             {isBinding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UserPlus className="h-4 w-4 mr-1" />}
-            确认绑定
+            确认设置
           </Button>
         </div>
       </DialogContent>
