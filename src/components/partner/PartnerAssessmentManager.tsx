@@ -3,9 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Loader2, ClipboardList } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Pencil } from "lucide-react";
 import { usePartnerAssessments, useTogglePartnerAssessment } from "@/hooks/usePartnerAssessments";
 import { AIAssessmentCreator } from "./AIAssessmentCreator";
+import { AssessmentEditor } from "./AssessmentEditor";
+import type { PartnerAssessmentTemplate } from "@/hooks/usePartnerAssessments";
 
 interface PartnerAssessmentManagerProps {
   partnerId: string;
@@ -18,6 +20,7 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
   const { data: assessments = [], isLoading } = usePartnerAssessments(partnerId);
   const toggleAssessment = useTogglePartnerAssessment();
   const [showCreator, setShowCreator] = useState(false);
+  const [editingAssessment, setEditingAssessment] = useState<PartnerAssessmentTemplate | null>(null);
 
   const canCreate = assessments.length < MAX_ASSESSMENTS;
 
@@ -26,6 +29,15 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
       <div className="flex justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (editingAssessment) {
+    return (
+      <AssessmentEditor
+        assessment={editingAssessment}
+        onBack={() => setEditingAssessment(null)}
+      />
     );
   }
 
@@ -88,6 +100,15 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => setEditingAssessment(assessment)}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      编辑
+                    </Button>
                     <Switch
                       checked={assessment.is_active}
                       onCheckedChange={(checked) =>
