@@ -490,3 +490,6 @@ verify_jwt = false
 
 [functions.midlife-ai-analysis]
 verify_jwt = false
+
+[functions.manage-partner-team]
+verify_jwt = false
