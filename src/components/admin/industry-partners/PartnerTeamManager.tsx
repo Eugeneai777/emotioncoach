@@ -139,7 +139,10 @@ export function PartnerTeamManager({ partnerId }: PartnerTeamManagerProps) {
             <TableBody>
               {members.map((m) => (
                 <TableRow key={m.user_id}>
-                  <TableCell className="font-medium">{m.display_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {m.display_name}
+                    <Badge variant="secondary" className="ml-2 bg-orange-100 text-orange-700 border-orange-200 text-[10px] px-1.5 py-0">有劲飞轮</Badge>
+                  </TableCell>
                   <TableCell>{m.phone || "-"}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(m.bound_at).toLocaleDateString("zh-CN")}
