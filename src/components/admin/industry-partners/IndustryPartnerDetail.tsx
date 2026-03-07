@@ -119,7 +119,12 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
 
   return (
     <AdminPageLayout
-      title={partner.company_name || partner.partner_code}
+      title={
+        <span className="inline-flex items-center gap-2">
+          {partner.company_name || partner.partner_code}
+          <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 border border-orange-200 text-[11px] px-2 py-0.5 font-medium">有劲飞轮</span>
+        </span>
+      }
       actions={
         <Button variant="outline" size="sm" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-1" />
