@@ -66,6 +66,7 @@ export default function IndustryPartnerManagement() {
   const [bindPartnerId, setBindPartnerId] = useState<string | null>(null);
   const [bindPhone, setBindPhone] = useState("");
   const [binding, setBinding] = useState(false);
+  const [unbindingId, setUnbindingId] = useState<string | null>(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -517,10 +518,38 @@ export default function IndustryPartnerManagement() {
                   <TableCell>{p.contact_person || "-"}</TableCell>
                   <TableCell>
                     {p.user_id ? (
-                      <span className="text-xs text-emerald-600 flex items-center gap-1">
-                        <Link2 className="h-3 w-3" />
-                        已绑定
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-emerald-600 flex items-center gap-1">
+                          <Link2 className="h-3 w-3" />
+                          已绑定
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          disabled={unbindingId === p.id}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!confirm("确认解除绑定？")) return;
+                            setUnbindingId(p.id);
+                            try {
+                              const { error } = await supabase
+                                .from("partners")
+                                .update({ user_id: null } as any)
+                                .eq("id", p.id);
+                              if (error) throw error;
+                              toast.success("已解除绑定");
+                              fetchPartners();
+                            } catch (err: any) {
+                              toast.error("解绑失败");
+                            } finally {
+                              setUnbindingId(null);
+                            }
+                          }}
+                        >
+                          {unbindingId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Unlink className="h-3 w-3" />}
+                        </Button>
+                      </div>
                     ) : (
                       <Button
                         variant="ghost"
