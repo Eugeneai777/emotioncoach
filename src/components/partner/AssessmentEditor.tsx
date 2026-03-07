@@ -351,18 +351,21 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
                   <Bot className="h-10 w-10 mx-auto text-muted-foreground/40" />
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">我是测评优化助手</p>
-                    <p className="text-xs text-muted-foreground">告诉我你想如何优化这份测评，例如：</p>
+                    <p className="text-xs text-muted-foreground">我可以主动分析并提出优化建议</p>
                   </div>
                   <div className="flex flex-wrap gap-1.5 justify-center">
-                    {["把题目改得更简洁", "增加一个压力维度", "优化结果描述更温暖"].map((s) => (
+                    {[
+                      { label: "🔍 请分析这份测评", value: "请分析这份测评，给出优化建议" },
+                      { label: "✏️ 精简题目措辞", value: "把所有题目的措辞改得更简洁口语化" },
+                      { label: "🎯 优化结果描述", value: "优化结果模式的描述，让它更温暖有力" },
+                      { label: "📊 检查计分合理性", value: "检查维度设计和计分逻辑是否合理" },
+                    ].map((s) => (
                       <button
-                        key={s}
+                        key={s.value}
                         className="text-xs px-2.5 py-1.5 rounded-full border bg-background hover:bg-accent transition-colors"
-                        onClick={() => {
-                          setChatInput(s);
-                        }}
+                        onClick={() => setChatInput(s.value)}
                       >
-                        {s}
+                        {s.label}
                       </button>
                     ))}
                   </div>
