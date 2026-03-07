@@ -11,20 +11,28 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Authenticate caller
+    // Authenticate caller using getClaims
     const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
-
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { authorization: `Bearer ${token}` } },
-    });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
+    if (!authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "未登录" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const token = authHeader.replace("Bearer ", "");
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "未登录" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub as string;
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
@@ -41,7 +49,7 @@ Deno.serve(async (req) => {
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     const isAdmin = callerRoles?.some((r: any) => r.role === "admin");
     let isAuthorizedPartnerAdmin = false;
@@ -52,7 +60,7 @@ Deno.serve(async (req) => {
         const { data: binding } = await adminClient
           .from("partner_admin_bindings")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("partner_id", partner_id)
           .maybeSingle();
         isAuthorizedPartnerAdmin = !!binding;
@@ -178,7 +186,7 @@ Deno.serve(async (req) => {
       }
 
       // Cannot remove yourself
-      if (user_id_to_remove === user.id) {
+      if (user_id_to_remove === userId) {
         return new Response(JSON.stringify({ error: "不能移除自己" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
