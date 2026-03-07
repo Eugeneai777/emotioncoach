@@ -11,20 +11,28 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Authenticate caller
+    // Authenticate caller using getClaims
     const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
-
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { authorization: `Bearer ${token}` } },
-    });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
+    if (!authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "未登录" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const token = authHeader.replace("Bearer ", "");
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "未登录" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub as string;
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
