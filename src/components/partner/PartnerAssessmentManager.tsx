@@ -22,6 +22,21 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
   const toggleAssessment = useTogglePartnerAssessment();
   const [showCreator, setShowCreator] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<PartnerAssessmentTemplate | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const getAssessmentUrl = (assessment: PartnerAssessmentTemplate) => {
+    const origin = window.location.origin;
+    return `${origin}/assessment/${assessment.assessment_key}`;
+  };
+
+  const handleCopyLink = (assessment: PartnerAssessmentTemplate) => {
+    const url = getAssessmentUrl(assessment);
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(assessment.id);
+      toast.success("链接已复制");
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
   const canCreate = assessments.length < MAX_ASSESSMENTS;
 
