@@ -6,7 +6,7 @@ function getProductLine(orderType: string): 'youjin' | 'bloom' {
   // 有劲产品线：会员、测评、训练营、有劲合伙人
   const youjinProducts = [
     'basic', 'member365', 'trial', 'package_trial', 'package_365',
-    'ai_coach_upgrade',
+    'ai_coach_upgrade', 'partner_entry_paid',
     'wealth_block_assessment', 'scl90_report', 'emotion_health_assessment',
     'camp-emotion_journal_21', 'wealth_camp_7day',
     'youjin_partner_l1', 'youjin_partner_l2', 'youjin_partner_l3'
