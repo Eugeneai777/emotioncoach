@@ -1,8 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Bot } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { PartnerCoachManager } from "./PartnerCoachManager";
 import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
+import { PartnerMarketingHub } from "./PartnerMarketingHub";
+import { PartnerPromotionManager } from "./PartnerPromotionManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Partner } from "@/hooks/usePartner";
 
 interface IndustryPartnerDashboardProps {
@@ -34,17 +37,39 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         </CardContent>
       </Card>
 
-      {/* AI Coach Manager */}
-      <PartnerCoachManager 
-        partnerId={partner.id} 
-        partnerCode={partner.partner_code} 
-      />
+      <Tabs defaultValue="coaches" className="space-y-4">
+        <TabsList className="w-full">
+          <TabsTrigger value="coaches" className="flex-1">AI教练</TabsTrigger>
+          <TabsTrigger value="assessments" className="flex-1">测评</TabsTrigger>
+          <TabsTrigger value="marketing" className="flex-1">AI文案</TabsTrigger>
+          <TabsTrigger value="promotions" className="flex-1">营销</TabsTrigger>
+        </TabsList>
 
-      {/* Assessment Manager */}
-      <PartnerAssessmentManager 
-        partnerId={partner.id} 
-        partnerCode={partner.partner_code} 
-      />
+        <TabsContent value="coaches">
+          <PartnerCoachManager 
+            partnerId={partner.id} 
+            partnerCode={partner.partner_code} 
+          />
+        </TabsContent>
+
+        <TabsContent value="assessments">
+          <PartnerAssessmentManager 
+            partnerId={partner.id} 
+            partnerCode={partner.partner_code} 
+          />
+        </TabsContent>
+
+        <TabsContent value="marketing">
+          <PartnerMarketingHub partnerId={partner.id} />
+        </TabsContent>
+
+        <TabsContent value="promotions">
+          <PartnerPromotionManager 
+            partnerId={partner.id} 
+            partnerCode={partner.partner_code} 
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
