@@ -156,7 +156,7 @@ export function useIndustryPartners() {
       if (error) throw error;
       return { displayName, partnerId, userId };
     },
-    onMutate: async ({ partnerId, phone }) => {
+    onMutate: async ({ partnerId, phone }: { partnerId: string; phone: string }) => {
       await queryClient.cancelQueries({ queryKey: PARTNER_QUERY_KEY });
       const previous = queryClient.getQueryData<IndustryPartner[]>([...PARTNER_QUERY_KEY, user?.id, isPartnerAdmin]);
       // Optimistic: mark as "binding in progress"
