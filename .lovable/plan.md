@@ -1,68 +1,23 @@
 
 
-## 行业合伙人管理页优化方案
+## 两个问题需要修复
 
-### 问题分析
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-当前 `IndustryPartnerManagement.tsx` 是一个 **672 行的巨型组件**，包含列表页、详情页、创建弹窗、绑定弹窗等所有逻辑，存在以下问题：
-- 单文件职责过多，难以维护
-- 所有 Tab 内容同时加载，性能浪费
-- 列表页信息密度可优化，缺少分页和批量操作
-- 移动端表格体验差
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
----
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 1. 代码架构拆分
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-将 672 行文件拆分为独立组件：
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-```text
-src/components/admin/industry-partners/
-├── PartnerInfoEditor.tsx        (已有)
-├── PartnerTeamManager.tsx       (已有)
-├── PartnerProductBundles.tsx    (已有)
-├── IndustryPartnerList.tsx      ← 新：列表页（统计卡片 + 筛选 + 表格）
-├── IndustryPartnerDetail.tsx    ← 新：详情页（Tabs 容器）
-├── CreatePartnerDialog.tsx      ← 新：创建弹窗
-├── BindUserDialog.tsx           ← 新：绑定用户弹窗
-├── useIndustryPartners.ts       ← 新：数据获取 hook
-└── types.ts                     ← 新：共享类型定义
-```
-
-主文件 `IndustryPartnerManagement.tsx` 精简为路由分发（约 50 行）：根据 `selectedPartnerId` 渲染 List 或 Detail。
-
-### 2. 性能优化
-
-- **懒加载 Tab 内容**：使用 `React.lazy` + `Suspense` 按需加载重量级 Tab 组件（FlywheelGrowthSystem、PartnerCoachManager 等），未激活的 Tab 不加载代码
-- **自定义 Hook + React Query**：将 `fetchPartners` 迁移到 `useIndustryPartners` hook，利用已配置的 5 分钟 staleTime 缓存，避免重复请求
-- **列表虚拟化**：合伙人数量较多时考虑，当前阶段暂不需要
-
-### 3. UI/UX 改进
-
-- **列表页增强**：
-  - 在表格中增加"总收益"列，快速了解合伙人价值
-  - 绑定用户列显示昵称而非仅"已绑定"
-  - 使用 `AdminTableContainer` 包裹表格，统一移动端横向滚动体验
-  - 空状态使用更友好的插图
-
-- **详情页 Tab 优化**：
-  - Tab 导航在移动端改为可横向滚动，当前 `flex-wrap` 在小屏上换行过多
-  - 记住上次选中的 Tab（通过 URL searchParams `?tab=revenue`）
-
-- **统计卡片**：增加"总收益"卡片到列表页概览
-
-### 4. 功能增强
-
-- **分页**：列表超过 20 条时启用分页，避免一次加载全部数据
-- **批量操作**：支持批量启用/停用合伙人
-- **数据导出**：列表页增加"导出 CSV"按钮，导出合伙人基础数据 + 收益汇总
-- **URL 状态同步**：详情页当前 Tab 同步到 URL（`?partner=xxx&tab=revenue`），支持分享和刷新保持
-
-### 实施优先级
-
-1. **架构拆分 + 类型抽取**（最高优先级，降低后续开发成本）
-2. **useIndustryPartners hook + React Query 集成**
-3. **Tab 懒加载 + URL 状态同步**
-4. **UI 细节改进**（表格列、移动端 Tab 滚动）
-5. **分页 + 导出功能**
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
