@@ -7212,6 +7212,7 @@ export type Database = {
           default_entry_type: string | null
           default_product_type: string | null
           default_quota_amount: number | null
+          display_order: number | null
           id: string
           partner_code: string
           partner_expires_at: string | null
@@ -7253,6 +7254,7 @@ export type Database = {
           default_entry_type?: string | null
           default_product_type?: string | null
           default_quota_amount?: number | null
+          display_order?: number | null
           id?: string
           partner_code: string
           partner_expires_at?: string | null
@@ -7294,6 +7296,7 @@ export type Database = {
           default_entry_type?: string | null
           default_product_type?: string | null
           default_quota_amount?: number | null
+          display_order?: number | null
           id?: string
           partner_code?: string
           partner_expires_at?: string | null
