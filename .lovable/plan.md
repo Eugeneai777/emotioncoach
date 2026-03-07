@@ -1,27 +1,23 @@
 
 
-## 行业合伙人详情页固定转化飞轮
+## 两个问题需要修复
 
-### 需求理解
-在行业合伙人详情页（admin端和partner端）的Tab内容区域**上方**，固定显示一个紧凑的转化飞轮摘要条，让运营者无论切换到哪个Tab，都能一眼看到该合伙人的核心转化数据（体验→入群→365→合伙人）。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-#### 1. IndustryPartnerDetail.tsx（管理员端）
-- 在 `<Tabs>` 组件内、导航栏下方、`<TabsContent>` 上方，插入 `<CompactConversionFunnel>` 组件
-- 点击飞轮时自动切换到 "students" Tab
-- 始终可见，不随Tab切换消失
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-#### 2. IndustryPartnerDashboard.tsx（合伙人端）
-- 在 Header Card 下方、Tabs 导航上方，插入 `<CompactConversionFunnel>`
-- 点击时切换到学员相关功能（如果有的话，否则仅展示）
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-#### 涉及文件
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| `IndustryPartnerDetail.tsx` | 导入 CompactConversionFunnel，在Tab导航与TabsContent之间插入 |
-| `IndustryPartnerDashboard.tsx` | 导入 CompactConversionFunnel，在Header与Tabs之间插入 |
-
-改动量很小，每个文件仅增加约5行代码。
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
