@@ -206,7 +206,7 @@ export function PromotionHub({
                 <span className={`font-medium text-xs ${entryType === 'paid' ? 'text-orange-700' : 'text-muted-foreground'}`}>付费 ¥9.9</span>
                 {entryType === 'paid' && <Check className="w-3 h-3 text-orange-600 ml-auto" />}
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">消耗1名额，¥9.9归你</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">消耗1名额，按比例分成</p>
             </div>
           </div>
         </section>

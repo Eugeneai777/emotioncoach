@@ -182,7 +182,7 @@ export function EntryTypeSelector({
                 </span>
                 {entryType === 'paid' && <Check className="w-3 h-3 text-orange-600 ml-auto" />}
               </div>
-              <p className="text-[10px] text-muted-foreground">消耗1名额，¥9.9归你</p>
+              <p className="text-[10px] text-muted-foreground">消耗1名额，按比例分成</p>
             </div>
           </div>
         </div>
