@@ -189,11 +189,10 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
         }
       }
 
-      // Extract and apply template from AI response
+      // Extract template from AI response and set as pending (requires confirmation)
       const extracted = extractTemplateFromResponse(assistantContent);
       if (extracted) {
-        setTemplate(extracted);
-        toast.success("AI 优化已应用到编辑器");
+        setPendingTemplate(extracted);
       }
     } catch (err: any) {
       toast.error(err.message || "AI 对话失败");
