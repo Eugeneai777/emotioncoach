@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Loader2, ClipboardList, Pencil } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Pencil, Link, Check } from "lucide-react";
+import { toast } from "sonner";
 import { usePartnerAssessments, useTogglePartnerAssessment } from "@/hooks/usePartnerAssessments";
 import { AIAssessmentCreator } from "./AIAssessmentCreator";
 import { AssessmentEditor } from "./AssessmentEditor";
@@ -21,6 +22,21 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
   const toggleAssessment = useTogglePartnerAssessment();
   const [showCreator, setShowCreator] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<PartnerAssessmentTemplate | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const getAssessmentUrl = (assessment: PartnerAssessmentTemplate) => {
+    const origin = window.location.origin;
+    return `${origin}/assessment/${assessment.assessment_key}`;
+  };
+
+  const handleCopyLink = (assessment: PartnerAssessmentTemplate) => {
+    const url = getAssessmentUrl(assessment);
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(assessment.id);
+      toast.success("链接已复制");
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
   const canCreate = assessments.length < MAX_ASSESSMENTS;
 
@@ -96,8 +112,20 @@ export function PartnerAssessmentManager({ partnerId, partnerCode }: PartnerAsse
                       {assessment.description || assessment.subtitle}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {assessment.question_count} 题 · 路由: {assessment.page_route}
+                      {assessment.question_count} 题
                     </p>
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <button
+                        onClick={() => handleCopyLink(assessment)}
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {copiedId === assessment.id ? (
+                          <><Check className="w-3 h-3" /> 已复制</>
+                        ) : (
+                          <><Link className="w-3 h-3" /> 复制链接</>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
