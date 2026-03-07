@@ -48,7 +48,8 @@ export function PartnerInfoEditor({ partner, onSaved, onBindUser }: PartnerInfoE
     }
     setSaving(true);
     try {
-      const commissionRate = parseFloat(form.commission_l1) || 0.20;
+      const parsed = parseFloat(form.commission_l1);
+      const commissionRate = isNaN(parsed) ? 0.20 : parsed;
       const { error } = await supabase
         .from("partners")
         .update({
