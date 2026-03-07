@@ -6645,6 +6645,50 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_marketing_copies: {
+        Row: {
+          content: string
+          copy_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_favorite: boolean | null
+          metadata: Json | null
+          partner_id: string
+          title: string | null
+        }
+        Insert: {
+          content: string
+          copy_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          metadata?: Json | null
+          partner_id: string
+          title?: string | null
+        }
+        Update: {
+          content?: string
+          copy_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          metadata?: Json | null
+          partner_id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_marketing_copies_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_posters: {
         Row: {
           call_to_action: string
@@ -6778,6 +6822,74 @@ export type Database = {
           },
         ]
       }
+      partner_promotions: {
+        Row: {
+          created_at: string | null
+          current_participants: number | null
+          description: string | null
+          ends_at: string
+          id: string
+          max_participants: number | null
+          original_price: number | null
+          partner_id: string
+          promo_code: string | null
+          promo_price: number
+          promotion_type: string
+          starts_at: string
+          status: string | null
+          target_product_id: string | null
+          target_product_type: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_participants?: number | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          max_participants?: number | null
+          original_price?: number | null
+          partner_id: string
+          promo_code?: string | null
+          promo_price: number
+          promotion_type?: string
+          starts_at: string
+          status?: string | null
+          target_product_id?: string | null
+          target_product_type?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_participants?: number | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          max_participants?: number | null
+          original_price?: number | null
+          partner_id?: string
+          promo_code?: string | null
+          promo_price?: number
+          promotion_type?: string
+          starts_at?: string
+          status?: string | null
+          target_product_id?: string | null
+          target_product_type?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_promotions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_referrals: {
         Row: {
           conversion_status: string | null
@@ -6838,6 +6950,76 @@ export type Database = {
           },
           {
             foreignKeyName: "partner_referrals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_student_followups: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          follow_up_type: string | null
+          id: string
+          note: string
+          partner_id: string
+          referred_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          follow_up_type?: string | null
+          id?: string
+          note: string
+          partner_id: string
+          referred_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          follow_up_type?: string | null
+          id?: string
+          note?: string
+          partner_id?: string
+          referred_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_student_followups_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_student_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          partner_id: string
+          referred_user_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          partner_id: string
+          referred_user_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          partner_id?: string
+          referred_user_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_student_tags_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
