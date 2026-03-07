@@ -107,17 +107,25 @@ Deno.serve(async (req) => {
       if (partner.partner_expires_at && new Date(partner.partner_expires_at) < new Date()) {
         console.log(`L1 partner ${partner.id} has expired (expires_at: ${partner.partner_expires_at}), skipping commission`);
       } else {
-      // 检查是否应计算佣金：产品线匹配 或 绽放合伙人推广有劲产品
+      // 检查是否应计算佣金：产品线匹配 或 绽放合伙人推广有劲产品 或 行业合伙人推广有劲产品
       const isMatchingProductLine = partner.partner_type === productLine;
       const isBloomPromotingYoujin = shouldBloomGetYoujinCommission(partner.partner_type, productLine);
+      const isIndustryPartner = partner.partner_type === 'industry' && productLine === 'youjin';
       
-      if (isMatchingProductLine || isBloomPromotingYoujin) {
+      if (isMatchingProductLine || isBloomPromotingYoujin || isIndustryPartner) {
         // 绽放合伙人推广有劲产品时使用固定 L1 佣金率
-        if (isBloomPromotingYoujin) {
-          const commissionRate = BLOOM_YOUJIN_L1_RATE;
+        if (isBloomPromotingYoujin || isIndustryPartner) {
+          // 绽放合伙人使用固定 L1 佣金率；行业合伙人使用自身 commission_rate_l1
+          const commissionRate = isIndustryPartner
+            ? parseFloat(partner.commission_rate_l1 || '0')
+            : BLOOM_YOUJIN_L1_RATE;
+          
+          if (commissionRate <= 0) {
+            console.log(`${isIndustryPartner ? 'Industry' : 'Bloom'} partner ${partner.id} has no L1 rate, skipping`);
+          } else {
           const commissionAmount = amount * commissionRate;
 
-          console.log(`Bloom partner ${partner.id} promoting youjin product, using L1 rate: ${commissionRate}`);
+          console.log(`${isIndustryPartner ? 'Industry' : 'Bloom'} partner ${partner.id} promoting youjin product, using L1 rate: ${commissionRate}`);
 
           const { data: commission, error: commError } = await supabase
             .from('partner_commissions')
@@ -143,7 +151,8 @@ Deno.serve(async (req) => {
               p_amount: commissionAmount
             });
             commissions.push(commission);
-            console.log(`L1 commission (bloom->youjin) created: ¥${commissionAmount.toFixed(2)} (${(commissionRate * 100).toFixed(0)}%)`);
+            console.log(`L1 commission (${isIndustryPartner ? 'industry' : 'bloom'}->youjin) created: ¥${commissionAmount.toFixed(2)} (${(commissionRate * 100).toFixed(0)}%)`);
+          }
           }
         } else {
           // 原有逻辑：产品线匹配时的佣金计算
@@ -249,7 +258,7 @@ Deno.serve(async (req) => {
       // 检查合伙人资格是否过期
       if (partner.partner_expires_at && new Date(partner.partner_expires_at) < new Date()) {
         console.log(`L2 partner ${partner.id} has expired (expires_at: ${partner.partner_expires_at}), skipping commission`);
-      } else if (partner.partner_type === productLine) {
+      } else if (partner.partner_type === productLine || (partner.partner_type === 'industry' && productLine === 'youjin')) {
         // 获取合伙人等级规则ID
         const { data: levelRule } = await supabase
           .from('partner_level_rules')
