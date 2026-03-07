@@ -44,6 +44,7 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<any | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
