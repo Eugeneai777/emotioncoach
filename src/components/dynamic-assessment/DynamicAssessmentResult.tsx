@@ -40,6 +40,7 @@ interface DynamicAssessmentResultProps {
     qr_image_url?: string | null;
     qr_title?: string | null;
     coach_prompt?: string | null;
+    coach_type?: string | null;
     assessment_key: string;
   };
   aiInsight: string | null;
@@ -62,7 +63,22 @@ export function DynamicAssessmentResult({
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
   const [recommendedCamps, setRecommendedCamps] = useState<CampInfo[]>([]);
+  const [coachRoute, setCoachRoute] = useState<string | null>(null);
 
+  // Fetch coach route from coach_templates based on coach_type
+  useEffect(() => {
+    if (!template.coach_type) return;
+    const fetchRoute = async () => {
+      const { data } = await supabase
+        .from('coach_templates')
+        .select('page_route')
+        .eq('coach_key', template.coach_type!)
+        .eq('is_active', true)
+        .single();
+      if (data) setCoachRoute(data.page_route);
+    };
+    fetchRoute();
+  }, [template.coach_type]);
   useEffect(() => {
     if (!recommendedCampTypes?.length) return;
     const fetchCamps = async () => {
@@ -77,7 +93,8 @@ export function DynamicAssessmentResult({
   }, [recommendedCampTypes]);
 
   const handleAICoach = () => {
-    navigate("/assessment-coach", {
+    const targetRoute = coachRoute || "/assessment-coach";
+    navigate(targetRoute, {
       state: {
         fromAssessment: template.assessment_key,
         assessmentData: {
@@ -175,7 +192,7 @@ export function DynamicAssessmentResult({
       </Card>
 
       {/* AI Coach Button */}
-      {template.coach_prompt && (
+      {(template.coach_prompt || template.coach_type) && (
         <Button
           onClick={handleAICoach}
           className="w-full mb-4 gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"

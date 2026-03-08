@@ -199,6 +199,7 @@ export default function DynamicAssessmentPage() {
             qr_image_url: tpl?.qr_image_url,
             qr_title: tpl?.qr_title,
             coach_prompt: tpl?.coach_prompt,
+            coach_type: tpl?.coach_type,
             assessment_key: template.assessment_key,
           }}
           recommendedCampTypes={tpl?.recommended_camp_types}
