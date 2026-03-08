@@ -4,19 +4,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, ChevronDown } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useToolUsage } from "@/hooks/useToolUsage";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-import MoodEntryCard from "@/components/living-lab/MoodEntryCard";
-import DailyRecommendation from "@/components/living-lab/DailyRecommendation";
+import SuperEntry from "@/components/living-lab/SuperEntry";
 import UsageStreakBar from "@/components/living-lab/UsageStreakBar";
 import ToolGrid from "@/components/living-lab/ToolGrid";
 import QuickNavFooter from "@/components/living-lab/QuickNavFooter";
-import EmotionSOSPreviewCard from "@/components/tools/EmotionSOSPreviewCard";
 
-// Inline tool components (same as EnergyStudio)
+// Inline tool components
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MindfulnessPractice } from "@/components/tools/MindfulnessPractice";
 import { ValuesExplorer } from "@/components/tools/ValuesExplorer";
@@ -49,6 +48,7 @@ const LivingLab = () => {
   const { user } = useAuth();
   const { streak, weekDays, loading: streakLoading, trackUsage } = useToolUsage();
   const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const { data: tools = [], isLoading } = useQuery({
     queryKey: ["energy-studio-tools"],
@@ -64,10 +64,8 @@ const LivingLab = () => {
   });
 
   const handleToolClick = (toolId: string) => {
-    // Track usage
     if (user) trackUsage(toolId);
 
-    // Navigate-based tools
     const navRoutes: Record<string, string> = {
       awakening: "/awakening",
       goals: "/goals",
@@ -125,7 +123,7 @@ const LivingLab = () => {
       <DynamicOGMeta pageKey="energyStudio" />
       <PageHeader title="有劲生活馆" />
 
-      <main className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
+      <main className="container max-w-2xl mx-auto px-3 py-3 space-y-4">
         {activeTool ? (
           <div>
             <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-sm">
@@ -136,23 +134,31 @@ const LivingLab = () => {
           </div>
         ) : (
           <>
-            {/* 1. 情绪入口 */}
-            <MoodEntryCard onToolSelect={handleToolClick} />
+            {/* 1. Super Entry - 超级入口 */}
+            <div className="pt-4">
+              <SuperEntry onInlineTool={handleToolClick} />
+            </div>
 
-            {/* 2. 每日推荐 */}
-            <DailyRecommendation onToolSelect={handleToolClick} />
+            {/* 2. 连续使用追踪 */}
+            {user && (
+              <div className="mt-6">
+                <UsageStreakBar streak={streak} weekDays={weekDays} loading={streakLoading} />
+              </div>
+            )}
 
-            {/* 3. 连续使用追踪 */}
-            {user && <UsageStreakBar streak={streak} weekDays={weekDays} loading={streakLoading} />}
-
-            {/* 情绪🆘入口 */}
-            <EmotionSOSPreviewCard />
-
-            {/* 4. 工具网格 */}
-            <ToolGrid tools={tools} onToolClick={handleToolClick} />
-
-            {/* 5. 更多服务 */}
-            <QuickNavFooter />
+            {/* 3. 更多工具（折叠） */}
+            <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
+              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <span>还想探索更多？</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-4 pb-6">
+                  <ToolGrid tools={tools} onToolClick={handleToolClick} />
+                  <QuickNavFooter />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </>
         )}
       </main>
