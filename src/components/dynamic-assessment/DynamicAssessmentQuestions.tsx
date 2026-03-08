@@ -67,7 +67,7 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
       }
       const num = parseInt(e.key);
       if (!isNaN(num) && q) {
-        const opts = shuffledOptionsMap[currentQ];
+        const opts = shuffledOptionsMap[currentQ] as any[];
         if (num >= 1 && num <= opts.length) {
           handleAnswer(currentQ, opts[num - 1].score);
         }
