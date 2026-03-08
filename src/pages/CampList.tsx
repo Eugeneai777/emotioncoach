@@ -269,7 +269,7 @@ const CampList = () => {
                     key={camp.id}
                     camp={camp}
                     index={index}
-                    enrolledCount={enrollmentStats?.[camp.camp_type] || 0}
+                    enrolledCount={0}
                     onClick={() => {
                       if (camp.camp_type === 'parent_emotion_21') {
                         navigate('/parent-camp');
