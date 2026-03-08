@@ -5,12 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, ChevronDown } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useToolUsage } from "@/hooks/useToolUsage";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import SuperEntry from "@/components/living-lab/SuperEntry";
 import UsageStreakBar from "@/components/living-lab/UsageStreakBar";
+import ToolGrid from "@/components/living-lab/ToolGrid";
 import QuickNavFooter from "@/components/living-lab/QuickNavFooter";
 
 // Inline tool components
@@ -117,17 +119,11 @@ const LivingLab = () => {
   }
 
   return (
-    <div className="h-screen overflow-y-auto overscroll-contain bg-muted/30" style={{ WebkitOverflowScrolling: "touch" }}>
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: "touch" }}>
       <DynamicOGMeta pageKey="energyStudio" />
+      <PageHeader title="每个人的生活教练" />
 
-      {/* Clean minimal header */}
-      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border/40">
-        <div className="container max-w-2xl mx-auto px-4 h-12 flex items-center justify-center">
-          <h1 className="text-sm font-semibold text-foreground tracking-wide">每个人的生活教练</h1>
-        </div>
-      </header>
-
-      <main className="container max-w-2xl mx-auto px-4 py-5 space-y-6">
+      <main className="container max-w-2xl mx-auto px-3 py-3 space-y-4">
         {activeTool ? (
           <div>
             <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-sm">
@@ -138,28 +134,24 @@ const LivingLab = () => {
           </div>
         ) : (
           <>
-            {/* 连续使用打卡 */}
-            {user && !streakLoading && (
-              <UsageStreakBar streak={streak} weekDays={weekDays} />
-            )}
-
-            {/* Super Entry */}
-            <SuperEntry onInlineTool={handleToolClick} />
-
-            {/* 更多服务（折叠） */}
-            <div className="pt-2">
-              <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-                <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <span>还想探索更多？</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="space-y-4 pb-8">
-                    <QuickNavFooter />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+            {/* 1. Super Entry - 超级入口 */}
+            <div className="pt-4">
+              <SuperEntry onInlineTool={handleToolClick} />
             </div>
+
+
+            {/* 3. 更多工具（折叠） */}
+            <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
+              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <span>还想探索更多？</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-4 pb-6">
+                  <QuickNavFooter />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </>
         )}
       </main>
