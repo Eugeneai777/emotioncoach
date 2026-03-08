@@ -198,7 +198,7 @@ export function DynamicAssessmentHistory({
                             <Badge variant="outline">{record.total_score} 分</Badge>
                             <span className="text-xs text-muted-foreground truncate">{record.primary_pattern}</span>
                             {scoreDiff !== null && scoreDiff !== 0 && (
-                              <span className={`text-xs font-medium ${scoreDiff > 0 ? "text-green-500" : "text-red-500"}`}>
+                              <span className={`text-xs font-medium ${scoreDiff > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                                 {scoreDiff > 0 ? "↑" : "↓"}{Math.abs(scoreDiff)}
                               </span>
                             )}
