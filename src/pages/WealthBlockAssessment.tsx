@@ -837,8 +837,8 @@ export default function WealthBlockAssessmentPage() {
             </motion.div>
           </TabsContent>
           {/* 底部固定一体化导航栏 */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-t border-gray-100 shadow-[0_-2px_20px_rgba(0,0,0,0.04)] pb-[env(safe-area-inset-bottom)]">
-            <div className="container max-w-sm sm:max-w-lg mx-auto px-1 relative">
+          <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-t border-gray-100 shadow-[0_-2px_20px_rgba(0,0,0,0.04)] pb-[env(safe-area-inset-bottom)] overflow-visible">
+            <div className="container max-w-sm sm:max-w-lg mx-auto px-1 relative overflow-visible">
               {/* 隐藏的 TabsList 保持 Radix Tabs 状态同步 */}
               <TabsList className="hidden">
                 <TabsTrigger value="assessment">开始测评</TabsTrigger>
