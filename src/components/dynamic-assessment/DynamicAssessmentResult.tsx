@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
+import { ClinicalResultSection } from "./ClinicalResultSection";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
 import ShareImagePreview from "@/components/ui/share-image-preview";
