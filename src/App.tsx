@@ -376,6 +376,7 @@ const App = () => (
               <Route path="/wealth-journal/:entryId" element={<WealthJournalDetail />} />
               <Route path="/wealth-coach-intro" element={<WealthCoachIntro />} />
               <Route path="/wealth-coach-chat" element={<WealthCoachChat />} />
+              <Route path="/wealth-coach-voice" element={<WealthCoachVoice />} />
               <Route path="/share-invite" element={<ShareInvite />} />
               <Route path="/wealth-camp-intro" element={<WealthCampIntro />} />
               <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
