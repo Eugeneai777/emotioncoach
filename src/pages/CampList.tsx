@@ -252,7 +252,6 @@ const CampList = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popular">🔥 最热门</SelectItem>
                     <SelectItem value="duration">⏱️ 时长排序</SelectItem>
                     <SelectItem value="newest">✨ 最新发布</SelectItem>
                   </SelectContent>
