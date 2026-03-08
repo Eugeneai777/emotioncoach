@@ -148,7 +148,6 @@ const LivingLab = () => {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="space-y-4 pb-6">
-                  <ToolGrid tools={tools} onToolClick={handleToolClick} />
                   <QuickNavFooter />
                 </div>
               </CollapsibleContent>
