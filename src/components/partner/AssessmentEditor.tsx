@@ -37,6 +37,12 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
     result_patterns: assessment.result_patterns || [],
     scoring_logic: assessment.scoring_logic || "",
     ai_insight_prompt: assessment.ai_insight_prompt || "",
+    require_auth: (assessment as any).require_auth ?? true,
+    require_payment: (assessment as any).require_payment ?? false,
+    package_key: (assessment as any).package_key || "",
+    qr_image_url: (assessment as any).qr_image_url || "",
+    qr_title: (assessment as any).qr_title || "",
+    coach_prompt: (assessment as any).coach_prompt || "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -97,6 +103,12 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
           ai_insight_prompt: template.ai_insight_prompt || null,
           max_score: totalMaxScore,
           question_count: (template.questions || []).length,
+          require_auth: template.require_auth,
+          require_payment: template.require_payment,
+          package_key: template.package_key || null,
+          qr_image_url: template.qr_image_url || null,
+          qr_title: template.qr_title || null,
+          coach_prompt: template.coach_prompt || null,
         } as any,
       });
       toast.success("测评已保存");
