@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, BookOpen, BarChart3, Rocket } from "lucide-react";
+import { Phone, BookOpen, BarChart3, Wrench } from "lucide-react";
 
 const paths = [
   {
@@ -9,9 +9,9 @@ const paths = [
     sub: "即刻陪伴",
     desc: "当你感到焦虑、低落、压力山大……不需要找到原因，直接开口说就好。AI教练会在第一时间接住你。",
     route: "/emotion-button",
-    iconColor: "text-rose-400",
-    bg: "bg-rose-500/8",
-    ring: "ring-rose-500/15",
+    iconColor: "text-pink-400",
+    bg: "bg-pink-500/8",
+    ring: "ring-pink-500/15",
   },
   {
     icon: BookOpen,
@@ -29,12 +29,12 @@ const paths = [
     sub: "专业测评",
     desc: "通过科学的心理测评工具，深度了解自己的情绪模式和内在需求。",
     route: "/assessment-picker",
-    iconColor: "text-teal-400",
-    bg: "bg-teal-500/8",
-    ring: "ring-teal-500/15",
+    iconColor: "text-blue-400",
+    bg: "bg-blue-500/8",
+    ring: "ring-blue-500/15",
   },
   {
-    icon: Rocket,
+    icon: Wrench,
     label: "真正改变",
     sub: "系统训练",
     desc: "在AI教练+真人教练的双重陪伴下，用科学方法重塑情绪模式，实现蜕变。",

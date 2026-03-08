@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, BookOpen, BarChart3, Rocket, Mic } from "lucide-react";
+import { Phone, BookOpen, BarChart3, Wrench, Mic } from "lucide-react";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
 import { useAuth } from "@/hooks/useAuth";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
@@ -18,9 +18,9 @@ const paths = [
     label: "不太舒服",
     sub: "即刻陪伴",
     route: "/emotion-button",
-    color: "text-rose-400",
-    bg: "bg-rose-500/12",
-    ring: "ring-rose-400/20",
+    color: "text-pink-400",
+    bg: "bg-pink-500/10",
+    ring: "ring-pink-500/20",
   },
   {
     id: "record",
@@ -29,8 +29,8 @@ const paths = [
     sub: "看见变化",
     route: "/awakening",
     color: "text-amber-400",
-    bg: "bg-amber-500/12",
-    ring: "ring-amber-400/20",
+    bg: "bg-amber-500/10",
+    ring: "ring-amber-500/20",
   },
   {
     id: "assess",
@@ -38,19 +38,19 @@ const paths = [
     label: "看清自己",
     sub: "专业测评",
     route: "/assessment-picker",
-    color: "text-teal-400",
-    bg: "bg-teal-500/12",
-    ring: "ring-teal-400/20",
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    ring: "ring-blue-500/20",
   },
   {
     id: "change",
-    icon: Rocket,
+    icon: Wrench,
     label: "真正改变",
     sub: "系统训练",
     route: "/camps",
     color: "text-violet-400",
-    bg: "bg-violet-500/12",
-    ring: "ring-violet-400/20",
+    bg: "bg-violet-500/10",
+    ring: "ring-violet-500/20",
   },
 ];
 
@@ -85,72 +85,66 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Hero Voice CTA */}
+    <div className="space-y-7">
+      {/* Hero Voice CTA — 珊瑚粉渐变 */}
       <motion.div
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-900 via-stone-800/90 to-stone-900 p-6 border border-stone-700/40"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-400 via-pink-500 to-fuchsia-500 p-8 pb-7"
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Subtle warm glow */}
-        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-amber-500/8 blur-3xl" />
-        <div className="absolute -bottom-12 -left-12 w-36 h-36 rounded-full bg-rose-500/6 blur-3xl" />
+        {/* Soft light overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-white/10" />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <p className="text-stone-400 text-xs mb-4 tracking-wide">{greeting}</p>
+          <p className="text-white/80 text-sm mb-6 tracking-wide">{greeting}</p>
 
-          {/* Voice button */}
+          {/* Voice button — large white circle */}
           <button
             onClick={handleVoiceClick}
-            className="relative group focus:outline-none touch-manipulation mb-4"
+            className="relative group focus:outline-none touch-manipulation mb-5"
             aria-label="开始语音对话"
           >
-            {/* Breathing rings */}
+            {/* Breathing ring */}
             <motion.div
-              className="absolute inset-[-16px] rounded-full border border-amber-300/10"
-              animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.45, 0.2] }}
+              className="absolute inset-[-14px] rounded-full border-2 border-white/15"
+              animate={{ scale: [1, 1.12, 1], opacity: [0.2, 0.4, 0.2] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
             />
-            <motion.div
-              className="absolute inset-[-8px] rounded-full border border-rose-300/12"
-              animate={{ scale: [1, 1.08, 1], opacity: [0.25, 0.5, 0.25] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            />
             
-            {/* Button */}
-            <div className="relative w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-50 rounded-full flex flex-col items-center justify-center
-                            shadow-lg shadow-amber-500/10
+            {/* White circle button */}
+            <div className="relative w-[88px] h-[88px] bg-white rounded-full flex flex-col items-center justify-center
+                            shadow-xl shadow-rose-900/20
                             group-active:scale-95 transition-transform duration-200">
-              <Mic className="w-7 h-7 text-rose-400 mb-0.5" />
-              <span className="text-[9px] font-bold text-rose-500/90">点击对话</span>
+              <Mic className="w-8 h-8 text-rose-400 mb-1" />
+              <span className="text-[10px] font-bold text-rose-500">点击对话</span>
             </div>
           </button>
 
-          <p className="text-stone-500 text-[11px] tracking-wider">随时开口，我在</p>
+          <p className="text-white/60 text-xs tracking-wider">随时开口，我在</p>
         </div>
       </motion.div>
 
-      {/* 4 Quick Paths */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* 4 Quick Paths — dark rounded squares */}
+      <div className="grid grid-cols-4 gap-3">
         {paths.map((path, i) => {
           const Icon = path.icon;
           return (
             <motion.button
               key={path.id}
               onClick={() => navigate(path.route)}
-              className="group flex flex-col items-center gap-2 focus:outline-none touch-manipulation"
-              initial={{ opacity: 0, y: 12 }}
+              className="group flex flex-col items-center gap-2.5 focus:outline-none touch-manipulation"
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + i * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className={`w-12 h-12 rounded-2xl ${path.bg} ring-1 ${path.ring} flex items-center justify-center
+              <div className={`w-14 h-14 rounded-2xl ${path.bg} ring-1 ${path.ring} flex items-center justify-center
                               group-active:scale-90 transition-transform duration-200`}>
-                <Icon className={`w-5 h-5 ${path.color}`} />
+                <Icon className={`w-6 h-6 ${path.color}`} />
               </div>
               <div className="text-center">
-                <p className="text-[11px] font-medium text-stone-300 leading-tight">{path.label}</p>
-                <p className="text-[9px] text-stone-500 mt-0.5">{path.sub}</p>
+                <p className="text-xs font-semibold text-stone-200 leading-tight">{path.label}</p>
+                <p className="text-[10px] text-stone-500 mt-0.5">{path.sub}</p>
               </div>
             </motion.button>
           );
