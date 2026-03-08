@@ -78,9 +78,13 @@ export function DynamicAssessmentResult({
   recommendedCampTypes,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [recommendedCamps, setRecommendedCamps] = useState<CampInfo[]>([]);
   const [coachRoute, setCoachRoute] = useState<string | null>(null);
-  const [sharing, setSharing] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [profileData, setProfileData] = useState<{ displayName?: string; avatarUrl?: string }>({});
 
   // Fetch coach route
   useEffect(() => {
