@@ -38,6 +38,7 @@ import { ActivationCodeManagement } from "./ActivationCodeManagement";
 import { ExperiencePackageManagement } from "./ExperiencePackageManagement";
 import CommunityPostsManagement from "./CommunityPostsManagement";
 import ContentAdminDashboard from "./ContentAdminDashboard";
+import AssessmentsManagement from "./AssessmentsManagement";
 import FlywheelDashboard from "./flywheel/FlywheelDashboard";
 import FlywheelCampaigns from "./flywheel/FlywheelCampaigns";
 import FlywheelFunnel from "./flywheel/FlywheelFunnel";
@@ -123,6 +124,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                 <>
                   <Route path="coaches" element={<CoachTemplatesManagement />} />
                   <Route path="camps" element={<CampTemplatesManagement />} />
+                  <Route path="assessments" element={<AssessmentsManagement />} />
                   <Route path="human-coaches" element={<HumanCoachesManagement />} />
                   <Route path="videos" element={<VideoCoursesManagement />} />
                   <Route path="knowledge" element={<KnowledgeBaseManagement />} />
