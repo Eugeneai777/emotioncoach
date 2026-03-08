@@ -686,9 +686,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       {/* 5. 财富觉醒训练营推荐 */}
       <CampPersonalizedCard
         dominantPoor={result.dominantPoor}
-        dominantEmotion={result.dominantEmotion}
-        dominantBelief={result.dominantBelief}
-        healthScore={calculateHealthScore(result)}
+        dominantEmotion={result.dominantEmotionBlock}
+        dominantBelief={result.dominantBeliefBlock}
+        healthScore={healthScore}
         onPurchase={() => setShowPayDialog(true)}
         onViewDetails={() => navigate('/wealth-camp-intro')}
         hasPurchased={hasPurchased}
