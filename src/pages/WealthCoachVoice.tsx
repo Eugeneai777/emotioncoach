@@ -15,15 +15,28 @@ interface LocationState {
 const WealthCoachVoice = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const locationState = location.state as LocationState | null;
   const [showPostCallDialog, setShowPostCallDialog] = useState(false);
 
+  console.log('[WealthCoachVoice] Rendered', { 
+    hasUser: !!user, 
+    loading,
+    locationState,
+    pathname: location.pathname 
+  });
+
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
+      console.log('[WealthCoachVoice] No user, redirecting to auth');
       navigate("/auth", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    console.log('[WealthCoachVoice] Auth loading...');
+    return <div className="min-h-screen bg-black flex items-center justify-center text-white">加载中...</div>;
+  }
 
   if (!user) return null;
 
