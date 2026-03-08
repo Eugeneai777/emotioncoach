@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen } from "lucide-react";
+import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen, LineChart } from "lucide-react";
 import { IndustryPartner } from "./types";
 import { BindUserDialog } from "./BindUserDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
