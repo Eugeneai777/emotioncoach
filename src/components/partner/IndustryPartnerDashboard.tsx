@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2 } from "lucide-react";
 import { PartnerCoachManager } from "./PartnerCoachManager";
+import { PartnerTeamManager } from "@/components/admin/industry-partners/PartnerTeamManager";
 import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
 import { PartnerAssessmentAnalytics } from "./PartnerAssessmentAnalytics";
 import { PartnerMarketingHub } from "./PartnerMarketingHub";
