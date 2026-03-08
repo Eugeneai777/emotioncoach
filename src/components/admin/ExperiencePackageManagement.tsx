@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { AssessmentSyncChecker } from "./AssessmentSyncChecker";
 
 interface ExperienceItem {
   id: string;
@@ -346,6 +347,7 @@ export function ExperiencePackageManagement() {
 
   return (
     <Card className="p-6">
+      <AssessmentSyncChecker onSynced={invalidateQueries} />
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold">体验包管理</h2>

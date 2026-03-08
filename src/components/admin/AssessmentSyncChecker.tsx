@@ -38,7 +38,7 @@ export function AssessmentSyncChecker({ onSynced }: Props) {
         .select("assessment_key, title, emoji")
         .eq("is_active", true);
       if (error) throw error;
-      return (data || []) as { assessment_key: string; title: string; emoji: string }[];
+      return (data || []) as unknown as { assessment_key: string; title: string; emoji: string }[];
     },
     staleTime: 30_000,
   });
@@ -51,7 +51,7 @@ export function AssessmentSyncChecker({ onSynced }: Props) {
         .from("partner_experience_items" as any)
         .select("package_key");
       if (error) throw error;
-      return (data || []) as { package_key: string }[];
+      return (data || []) as unknown as { package_key: string }[];
     },
     staleTime: 30_000,
   });
@@ -64,7 +64,7 @@ export function AssessmentSyncChecker({ onSynced }: Props) {
         .from("energy_studio_tools" as any)
         .select("tool_id");
       if (error) throw error;
-      return (data || []) as { tool_id: string }[];
+      return (data || []) as unknown as { tool_id: string }[];
     },
     staleTime: 30_000,
   });
