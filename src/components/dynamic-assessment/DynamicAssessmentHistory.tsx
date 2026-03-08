@@ -100,12 +100,12 @@ export function DynamicAssessmentHistory({
               </div>
               <div className="text-center">
                 {sorted[0].total_score > sorted[1].total_score ? (
-                  <div className="flex items-center gap-1 text-green-500">
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                     <TrendingUp className="w-4 h-4" />
                     <span className="font-medium">+{sorted[0].total_score - sorted[1].total_score}</span>
                   </div>
                 ) : sorted[0].total_score < sorted[1].total_score ? (
-                  <div className="flex items-center gap-1 text-red-500">
+                  <div className="flex items-center gap-1 text-destructive">
                     <TrendingDown className="w-4 h-4" />
                     <span className="font-medium">{sorted[0].total_score - sorted[1].total_score}</span>
                   </div>
