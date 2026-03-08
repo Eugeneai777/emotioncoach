@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Copy, Check, Trash2, Star, Loader2, MessageSquare, BookOpen, Video, Image } from "lucide-react";
+import { Sparkles, Copy, Check, Trash2, Star, Loader2, MessageSquare, BookOpen, Video, Image, ImagePlus, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
