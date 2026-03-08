@@ -151,8 +151,19 @@ const LivingLab = () => {
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="space-y-4 pb-6">
+                <div className="space-y-6 pb-6">
+                  <PathDetailCards />
+                  <UseCasesSection />
+                  <TestimonialsSection />
                   <QuickNavFooter />
+                  <BottomCTA onVoiceClick={() => {
+                    if (!user) {
+                      navigate("/auth");
+                      return;
+                    }
+                    // Scroll to top where SuperEntry voice button is
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }} />
                 </div>
               </CollapsibleContent>
             </Collapsible>
