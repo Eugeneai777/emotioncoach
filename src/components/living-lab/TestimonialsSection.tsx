@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Quote } from "lucide-react";
 
 const testimonials = [
   {
@@ -24,29 +23,28 @@ const testimonials = [
 
 const TestimonialsSection = () => {
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-medium text-stone-300 px-1">他们的真实体验</h3>
-      <div className="space-y-2.5">
+    <div className="space-y-2.5">
+      <h3 className="text-xs font-medium text-stone-400 px-0.5">他们的真实体验</h3>
+      <div className="space-y-2">
         {testimonials.map((t, i) => (
           <motion.div
             key={i}
-            className="p-4 rounded-2xl bg-stone-800/40 border border-stone-700/30 relative"
-            initial={{ opacity: 0, y: 10 }}
+            className="p-3 rounded-xl bg-stone-800/30 ring-1 ring-stone-700/30"
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.35 }}
+            transition={{ delay: i * 0.08, duration: 0.3 }}
           >
-            <Quote className="absolute top-3 right-3 w-4 h-4 text-stone-600" />
-            <span className="inline-block px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/20 text-[10px] text-amber-300 font-medium mb-2">
+            <span className="inline-block px-1.5 py-0.5 rounded-full bg-amber-500/10 ring-1 ring-amber-500/15 text-[9px] text-amber-400 font-medium mb-1.5">
               {t.tag}
             </span>
-            <p className="text-xs text-stone-300 leading-relaxed mb-3">"{t.quote}"</p>
+            <p className="text-[11px] text-stone-400 leading-relaxed mb-2">"{t.quote}"</p>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-rose-400 to-amber-400 flex items-center justify-center">
-                <span className="text-[10px] text-white font-bold">{t.name[0]}</span>
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-rose-400 to-amber-400 flex items-center justify-center">
+                <span className="text-[8px] text-white font-bold">{t.name[0]}</span>
               </div>
               <div>
-                <p className="text-[11px] text-stone-300 font-medium">{t.name}</p>
-                <p className="text-[10px] text-stone-500">{t.identity}</p>
+                <p className="text-[10px] text-stone-400 font-medium">{t.name}</p>
+                <p className="text-[9px] text-stone-600">{t.identity}</p>
               </div>
             </div>
           </motion.div>
