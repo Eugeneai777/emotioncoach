@@ -101,50 +101,50 @@ const Awakening: React.FC = () => {
       <SafeOGMeta />
 
       <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30" style={{ WebkitOverflowScrolling: 'touch' as any }}>
-        {/* Header */}
+        {/* Header - 更紧凑 */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/coach/wealth_coach_4_questions')}>
-              <ArrowLeft className="h-5 w-5" />
+          <div className="max-w-lg mx-auto px-3 py-2 flex items-center justify-between">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/coach/wealth_coach_4_questions')}>
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold">觉察日记</h1>
+            <h1 className="text-sm font-semibold">觉察日记</h1>
             <IntroShareDialog
               config={introShareConfigs.awakening}
               trigger={
-                <Button variant="ghost" size="icon">
-                  <Share2 className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Share2 className="h-4 w-4" />
                 </Button>
               }
             />
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-4 pb-24 space-y-4">
+        {/* Main Content - 更紧凑间距 */}
+        <main className="max-w-lg mx-auto px-3 py-3 pb-24 space-y-3">
           {/* Hero区：核心标语 */}
           <AwakeningHeroCard />
 
           {/* 痛点共鸣卡片 */}
           <AwakeningPainPointCard />
 
-          {/* 分类说明 */}
-          <div className="space-y-3">
+          {/* 分类入口卡片 */}
+          <div className="space-y-2.5">
             {/* 困境记录 */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <motion.div
                 initial={{ opacity: 0.01, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                className="flex items-center gap-2 motion-fallback"
+                className="flex items-center gap-1.5 motion-fallback"
               >
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
-                <span className="text-sm font-medium text-destructive/80 flex items-center gap-1">
+                <span className="text-[11px] font-medium text-destructive/80 flex items-center gap-0.5">
                   <span>🔥</span> 困境 → 破局关键点
                 </span>
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
               </motion.div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {challengeDimensions.map((dimension, index) => (
                   <AwakeningEntryCard
                     key={dimension.id}
@@ -158,21 +158,21 @@ const Awakening: React.FC = () => {
             </div>
 
             {/* 顺境记录 */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <motion.div
                 initial={{ opacity: 0.01, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
                 style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                className="flex items-center gap-2 motion-fallback"
+                className="flex items-center gap-1.5 motion-fallback"
               >
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-                <span className="text-sm font-medium text-primary/80 flex items-center gap-1">
+                <span className="text-[11px] font-medium text-primary/80 flex items-center gap-0.5">
                   <span>✨</span> 顺境 → 滋养与锚定
                 </span>
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
               </motion.div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {blessingDimensions.map((dimension, index) => (
                   <AwakeningEntryCard
                     key={dimension.id}
@@ -186,17 +186,16 @@ const Awakening: React.FC = () => {
             </div>
           </div>
 
-
           {/* 底部金句 */}
           <motion.div
             initial={{ opacity: 0.01 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             style={{ transform: 'translateZ(0)', willChange: 'opacity' }}
-            className="text-center text-xs text-muted-foreground pt-2 motion-fallback"
+            className="text-center text-[10px] text-muted-foreground pt-1 motion-fallback"
           >
             <p>把平凡日常积累成个人成长的复利资产</p>
-            <p className="mt-1">将碎片化时间冶炼成金 ✨</p>
+            <p className="mt-0.5">将碎片化时间冶炼成金 ✨</p>
           </motion.div>
         </main>
 

@@ -35,10 +35,10 @@ const AwakeningPainPointCard: React.FC = () => {
       onClick={() => setIsExpanded(!isExpanded)}
     >
       {/* 触发区域 */}
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-slate-500" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+      <div className="px-3 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <AlertCircle className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
             你是否也这样？
           </span>
         </div>
@@ -46,7 +46,7 @@ const AwakeningPainPointCard: React.FC = () => {
           animate={{ rotate: isExpanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
         </motion.div>
       </div>
 
@@ -60,45 +60,45 @@ const AwakeningPainPointCard: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-3">
-              <ul className="space-y-2">
+            <div className="px-3 pb-3 space-y-2.5">
+              <ul className="space-y-1.5">
                 {painPoints.map((point, index) => (
                   <motion.li
                     key={index}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                    className="flex items-start gap-1.5 text-xs text-muted-foreground leading-relaxed"
                   >
-                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span className="text-slate-400 mt-0.5 shrink-0">•</span>
                     <span>{point}</span>
                   </motion.li>
                 ))}
               </ul>
               <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/30">
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                   📝 记录 = 用最低成本打破无意识状态
                 </p>
               </div>
               
               {/* 写法小贴士 */}
               <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/30">
-                <div className="flex items-center gap-1 mb-2">
-                  <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <Lightbulb className="h-3 w-3 text-amber-500 shrink-0" />
+                  <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
                     写法小贴士
                   </span>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-1">
                   {tips.map((tip, index) => (
                     <motion.li
                       key={index}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 + index * 0.05 }}
-                      className="flex items-start gap-2 text-xs text-muted-foreground"
+                      className="flex items-start gap-1.5 text-[10px] text-muted-foreground leading-relaxed"
                     >
-                      <span className={cn("mt-0.5", tip.colorClass)}>•</span>
+                      <span className={cn("mt-0.5 shrink-0", tip.colorClass)}>•</span>
                       <span>{tip.text}</span>
                     </motion.li>
                   ))}
