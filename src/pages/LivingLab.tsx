@@ -14,6 +14,10 @@ import SuperEntry from "@/components/living-lab/SuperEntry";
 import UsageStreakBar from "@/components/living-lab/UsageStreakBar";
 import ToolGrid from "@/components/living-lab/ToolGrid";
 import QuickNavFooter from "@/components/living-lab/QuickNavFooter";
+import PathDetailCards from "@/components/living-lab/PathDetailCards";
+import UseCasesSection from "@/components/living-lab/UseCasesSection";
+import TestimonialsSection from "@/components/living-lab/TestimonialsSection";
+import BottomCTA from "@/components/living-lab/BottomCTA";
 
 // Inline tool components
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
@@ -147,8 +151,19 @@ const LivingLab = () => {
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="space-y-4 pb-6">
+                <div className="space-y-6 pb-6">
+                  <PathDetailCards />
+                  <UseCasesSection />
+                  <TestimonialsSection />
                   <QuickNavFooter />
+                  <BottomCTA onVoiceClick={() => {
+                    if (!user) {
+                      navigate("/auth");
+                      return;
+                    }
+                    // Scroll to top where SuperEntry voice button is
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }} />
                 </div>
               </CollapsibleContent>
             </Collapsible>
