@@ -2560,7 +2560,7 @@ export const CoachVoiceChat = ({
           size="lg"
           className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
         >
-          {status === 'connected' || status === 'connecting' ? (
+          {(status === 'connected' || status === 'connecting') ? (
             <PhoneOff className="w-6 h-6" />
           ) : (
             <Phone className="w-6 h-6" />
@@ -2569,7 +2569,7 @@ export const CoachVoiceChat = ({
       </div>
 
       {/* 提示 - 仅在非通话状态显示 */}
-      {status !== 'connected' && status !== 'connecting' && (
+      {status !== 'connected' && (
         <div className="absolute bottom-24 left-0 right-0 text-center">
           <p className="text-white/40 text-xs">
             {skipBilling
