@@ -1,23 +1,64 @@
 
 
-## 两个问题需要修复
+## 有劲生活馆改版计划
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 当前问题
+- 打开页面看到的是工具列表，用户不知道从哪开始
+- 没有个性化引导，所有人看到一样的内容
+- 缺乏留存机制（连续使用、进度追踪）
+- 快捷入口占据首屏但与"生活馆"定位无关（教练空间、训练营等应在其他入口）
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 改版方案：痛点驱动 + 每日仪式感
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+#### 1. 首屏：情绪入口卡片（马上看到痛点）
+替换当前快捷入口 + 分类 Tab，改为一张大卡片：
+- **"你现在感觉怎么样？"** — 3-4 个情绪状态按钮（焦虑、低落、迷茫、还不错）
+- 点击后直接推荐 2-3 个最相关的工具，附带一句话说明"为什么适合你现在用"
+- 未登录用户也能点击体验
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+#### 2. 每日推荐区（容易上手 + 马上看到价值）
+基于时间段和用户历史，展示 1 个"今日推荐"工具卡片：
+- 早晨推荐能量宣言/呼吸练习，晚上推荐感恩日记/睡眠记录
+- 卡片包含：工具名称 + **"1分钟开始"** 按钮 + 使用人数/好评
+- 新用户默认推荐"死了吗"或"情绪🆘按钮"（低门槛高冲击力）
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+#### 3. 连续使用追踪条（每天想用，上瘾）
+首屏下方增加轻量打卡条：
+- 显示本周 7 天圆点，已使用的日子亮起
+- "已连续使用 X 天" 文案
+- 数据存储在 `user_tool_usage` 表（新建），记录 user_id + tool_id + used_at
 
-| 文件 | 修改 |
+#### 4. 工具网格重组（设计吸引）
+取消 3 分类 Tab，改为 2 种展示：
+- **"快速缓解"区**（情绪急救类）：呼吸、🆘按钮、死了吗 — 大卡片，强视觉
+- **"深度探索"区**（测评 + 管理类）：其余工具 — 2 列网格，图标 + 名称 + 一句话
+
+#### 5. 快捷入口精简
+将教练空间、训练营等 5 个入口移到底部或收入"更多"，首屏只保留工具相关内容。健康商城保留为独立 Tab 或底部入口。
+
+### 需要新建的数据库表
+
+**`user_tool_usage`**：
+- `id` (uuid, PK)
+- `user_id` (uuid, NOT NULL)
+- `tool_id` (text, NOT NULL)
+- `used_at` (timestamptz, default now())
+- RLS: 用户只能读写自己的记录
+
+### 文件变更
+
+| 文件 | 变更 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/EnergyStudio.tsx` | 重写布局：情绪入口 → 每日推荐 → 连续使用条 → 工具网格 |
+| `src/components/energy-studio/MoodEntryCard.tsx` | 新建：情绪状态选择卡片 + 推荐逻辑 |
+| `src/components/energy-studio/DailyRecommendation.tsx` | 新建：基于时段的今日推荐 |
+| `src/components/energy-studio/UsageStreakBar.tsx` | 新建：连续使用追踪条 |
+| `src/components/energy-studio/ToolGrid.tsx` | 新建：分区工具网格（快速缓解 + 深度探索） |
+| `src/hooks/useToolUsageStreak.ts` | 新建：记录和查询使用数据 |
+| 数据库迁移 | 新建 `user_tool_usage` 表 + RLS |
+
+### 不变的部分
+- 所有工具组件本身不变（BreathingExercise、AliveCheck 等）
+- `energy_studio_tools` 表继续使用
+- 工具路由不变
 
