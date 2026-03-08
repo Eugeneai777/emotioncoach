@@ -98,37 +98,9 @@ const CampList = () => {
     }
   });
 
-  // 查询报名人数
-  const { data: enrollmentStats } = useQuery({
-    queryKey: ['camp-enrollment-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('training_camps')
-        .select('camp_type');
-      if (error) throw error;
-
-      const stats: Record<string, number> = {};
-      data.forEach((camp: any) => {
-        stats[camp.camp_type] = (stats[camp.camp_type] || 0) + 1;
-      });
-      return stats;
-    }
-  });
-
-  // 计算统计数据
-  const stats = useMemo(() => {
-    const totalCamps = campTemplates?.length || 0;
-    const totalEnrolled = Object.values(enrollmentStats || {}).reduce((sum, count) => sum + count, 0);
-    const categoryCamps = campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory).length || 0;
-    const categoryEnrolled = campTemplates
-      ?.filter(camp => (camp.category || 'youjin') === activeCategory)
-      .reduce((sum, camp) => sum + (enrollmentStats?.[camp.camp_type] || 0), 0) || 0;
-
-    return {
-      total: { camps: totalCamps, enrolled: totalEnrolled },
-      category: { camps: categoryCamps, enrolled: categoryEnrolled }
-    };
-  }, [campTemplates, enrollmentStats, activeCategory]);
+  const categoryCampCount = useMemo(() => {
+    return campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory).length || 0;
+  }, [campTemplates, activeCategory]);
 
   // 筛选和排序
   const filteredAndSortedCamps = useMemo(() => {
