@@ -106,12 +106,7 @@ const CampList = () => {
   const filteredAndSortedCamps = useMemo(() => {
     let camps = campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory) || [];
 
-    // 排序
-    if (sortBy === 'popular') {
-      camps = [...camps].sort((a, b) => 
-        (enrollmentStats?.[b.camp_type] || 0) - (enrollmentStats?.[a.camp_type] || 0)
-      );
-    } else if (sortBy === 'duration') {
+    if (sortBy === 'duration') {
       camps = [...camps].sort((a, b) => a.duration_days - b.duration_days);
     } else if (sortBy === 'newest') {
       camps = [...camps].sort((a, b) => 
@@ -120,7 +115,7 @@ const CampList = () => {
     }
 
     return camps;
-  }, [campTemplates, activeCategory, sortBy, enrollmentStats]);
+  }, [campTemplates, activeCategory, sortBy]);
 
   const currentCategory = campCategories.find(cat => cat.id === activeCategory)!;
 
