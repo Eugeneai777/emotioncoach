@@ -333,6 +333,7 @@ export const CoachVoiceChat = ({
         }, 1500);
       }
     }
+  };
 
   // 处理页面导航 - 改为用户确认后再跳转，避免意外触发
   const handleNavigation = (path: string, name: string) => {
