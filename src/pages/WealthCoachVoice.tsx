@@ -43,6 +43,7 @@ const WealthCoachVoice = () => {
   const isFromAssessment = locationState?.fromAssessment;
 
   const handleClose = () => {
+    console.log('[WealthCoachVoice] handleClose called', { isFromAssessment, hasReactionPattern: !!locationState?.reactionPattern, hasDominantPoor: !!locationState?.dominantPoor });
     // 如果是从测评页跳转来的，通话结束后显示顾问推荐弹窗
     if (isFromAssessment && locationState?.reactionPattern && locationState?.dominantPoor) {
       setShowPostCallDialog(true);
