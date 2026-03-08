@@ -142,8 +142,9 @@ const ASSESSMENT_TYPE_MAP: Record<string, string> = {
   "scl90": "scl90",
   "wealth-block": "wealth_block",
   "women-competitiveness": "women_competitiveness",
-  "communication": "communication",
   "parent-ability": "parent_ability",
+  "communication-parent": "communication_parent",
+  "communication-teen": "communication_teen",
 };
 
 function useCompletedAssessments() {
