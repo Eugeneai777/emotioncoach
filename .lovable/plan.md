@@ -1,23 +1,94 @@
 
 
-## 两个问题需要修复
+## 有劲生活馆改版：超级入口 + 自动分流
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 核心理念
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+用户打开页面，**不选分类、不填表单、不找功能**。一个超级入口（类似 VoiceCallCTA 的大圆形按钮风格），点击后通过一句简单的问话自动分流到 4 条路径。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 新首屏设计
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+替换当前 MoodEntryCard + DailyRecommendation + EmotionSOSPreviewCard + ToolGrid，改为：
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+#### 1. 超级入口按钮（首屏核心）
 
-| 文件 | 修改 |
+借鉴 VoiceCallCTA 的品牌感设计，中心放一个大按钮：
+- 呼吸光晕动画 + 品牌渐变
+- 文案："说说你现在的感觉" 或 "我在，你说"
+- 副文案："点一下，我来陪你"
+- 点击后展开 4 个分流选项（不是分类，是**状态描述**）
+
+#### 2. 四条自动分流路径（点击超级入口后展开）
+
+不用"情绪/关系/亲子"这种分类词，用**用户当下的状态语言**：
+
+| 状态描述 | 分流目标 | 实际动作 |
+|---------|---------|---------|
+| "我现在不太舒服" | 情绪疏导 | → 直接进入情绪🆘按钮（`/emotion-button`），即时AI陪伴 |
+| "我想记录一下" | 觉察日记 | → 进入感恩日记或能量宣言（inline工具），表达式记录 |
+| "我想看清自己" | 专业测评 | → 展示2-3个推荐测评卡片（中场觉醒力、情绪健康等） |
+| "我想真正改变" | 教练对接 | → 直接进入教练空间（`/coach-space`），与AI教练对话 |
+
+每个选项用一句共情描述 + 一个动作按钮，点击即走，零决策成本。
+
+#### 3. 连续使用条（保留）
+
+UsageStreakBar 保留在分流选项下方，轻量存在感。
+
+#### 4. 更多工具（折叠/底部）
+
+ToolGrid 和 QuickNavFooter 移到底部，以"还想探索更多？"标题折叠展示，不干扰首屏。
+
+### 文件变更
+
+| 文件 | 变更 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/living-lab/SuperEntry.tsx` | **新建**：超级入口按钮 + 4 路径分流卡片，含呼吸动画 |
+| `src/pages/LivingLab.tsx` | **重写首屏布局**：SuperEntry → UsageStreakBar → 折叠式工具区 |
+| `src/components/living-lab/MoodEntryCard.tsx` | 不再在首页使用（保留文件） |
+| `src/components/living-lab/DailyRecommendation.tsx` | 不再在首页使用（保留文件） |
+
+### SuperEntry 组件设计
+
+```text
+┌─────────────────────────────┐
+│                             │
+│     个性化问候语（时段）       │
+│                             │
+│      ┌───────────────┐      │
+│      │   ○ 呼吸光晕   │      │
+│      │               │      │
+│      │  我在，你说     │      │
+│      │  点一下开始 ↓   │      │
+│      └───────────────┘      │
+│                             │
+│  ┌─ 点击后展开 ──────────┐   │
+│  │ 😔 我现在不太舒服  → │   │
+│  │ 📝 我想记录一下    → │   │
+│  │ 🔍 我想看清自己    → │   │
+│  │ 🚀 我想真正改变    → │   │
+│  └──────────────────────┘   │
+│                             │
+│  🔥 3天  一 二 三 四 五 六 日 │
+│                             │
+│  ▼ 还想探索更多？            │
+│    [工具网格 + 更多服务]      │
+└─────────────────────────────┘
+```
+
+### 交互细节
+
+- 超级入口按钮使用 framer-motion 展开动画
+- 4 个路径卡片依次滑入（staggerChildren）
+- "我现在不太舒服" 直接 navigate 到 `/emotion-button`
+- "我想记录一下" 展开 inline 的感恩日记/能量宣言选择
+- "我想看清自己" 展开 2-3 个测评卡片
+- "我想真正改变" 直接 navigate 到 `/coach-space`
+- 底部工具区默认折叠，用 Collapsible 组件
+
+### 不变的部分
+- 所有工具组件本身不变
+- UsageStreakBar 保留
+- 路由不变（`/living-lab`）
+- 数据库不变
 
