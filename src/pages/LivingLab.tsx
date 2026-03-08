@@ -11,7 +11,8 @@ import { useToolUsage } from "@/hooks/useToolUsage";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import SuperEntry from "@/components/living-lab/SuperEntry";
-import ContextCards from "@/components/living-lab/ContextCards";
+import UsageStreakBar from "@/components/living-lab/UsageStreakBar";
+import ToolGrid from "@/components/living-lab/ToolGrid";
 import QuickNavFooter from "@/components/living-lab/QuickNavFooter";
 
 // Inline tool components
@@ -122,9 +123,9 @@ const LivingLab = () => {
       <DynamicOGMeta pageKey="energyStudio" />
       <PageHeader title="每个人的生活教练" className="text-amber-50 [&_h1]:text-amber-50 [&_span]:text-amber-50" />
 
-      <main className="container max-w-2xl mx-auto px-4">
+      <main className="container max-w-2xl mx-auto px-3 py-3 space-y-4">
         {activeTool ? (
-          <div className="py-3">
+          <div>
             <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-sm text-zinc-300 hover:text-white">
               <ArrowLeft className="w-4 h-4" />
               返回
@@ -133,17 +134,15 @@ const LivingLab = () => {
           </div>
         ) : (
           <>
-            {/* 1. Full-screen immersive voice hero */}
-            <SuperEntry onInlineTool={handleToolClick} />
-
-            {/* 2. Contextual recommendation cards */}
-            <div className="py-6">
-              <ContextCards onToolSelect={handleToolClick} />
+            {/* 1. Super Entry - 超级入口 */}
+            <div className="pt-4">
+              <SuperEntry onInlineTool={handleToolClick} />
             </div>
 
-            {/* 3. More tools (collapsed) */}
+
+            {/* 3. 更多工具（折叠） */}
             <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-stone-500 hover:text-stone-400 transition-colors">
+              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-stone-400 hover:text-stone-300 transition-colors">
                 <span>还想探索更多？</span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
