@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, BellOff, Clock, UserX, CheckCircle, Loader2, Settings } from "lucide-react";
+import { Bell, BellOff, Clock, UserX, CheckCircle, Loader2, Settings, BookOpen, Brain, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -24,14 +24,64 @@ interface Reminder {
   created_at: string;
 }
 
+interface ProductRule {
+  enabled: boolean;
+  trigger: string;
+  threshold: number;
+}
+
+interface ProductRules {
+  camp: ProductRule;
+  assessment: ProductRule;
+  tool: ProductRule;
+}
+
 interface FollowupSettings {
   is_enabled: boolean;
   inactive_days_threshold: number;
+  product_rules: ProductRules;
 }
+
+const DEFAULT_RULES: ProductRules = {
+  camp: { enabled: true, trigger: "no_checkin_days", threshold: 3 },
+  assessment: { enabled: true, trigger: "no_login_days", threshold: 7 },
+  tool: { enabled: true, trigger: "no_open_days", threshold: 5 },
+};
+
+const PRODUCT_CONFIG = [
+  {
+    key: "camp" as const,
+    label: "训练营",
+    icon: <BookOpen className="w-4 h-4" />,
+    description: "天未打卡/看课程",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-50",
+  },
+  {
+    key: "assessment" as const,
+    label: "测评产品",
+    icon: <Brain className="w-4 h-4" />,
+    description: "天内未登录答题",
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+  },
+  {
+    key: "tool" as const,
+    label: "工具类",
+    icon: <Wrench className="w-4 h-4" />,
+    description: "天未打开应用",
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
+  },
+];
 
 export function PartnerFollowupReminders({ partnerId }: PartnerFollowupRemindersProps) {
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [settings, setSettings] = useState<FollowupSettings>({ is_enabled: true, inactive_days_threshold: 7 });
+  const [settings, setSettings] = useState<FollowupSettings>({
+    is_enabled: true,
+    inactive_days_threshold: 7,
+    product_rules: DEFAULT_RULES,
+  });
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -59,9 +109,11 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
 
       setReminders((remindersRes.data as Reminder[]) || []);
       if (settingsRes.data) {
+        const d = settingsRes.data as any;
         setSettings({
-          is_enabled: (settingsRes.data as any).is_enabled ?? true,
-          inactive_days_threshold: (settingsRes.data as any).inactive_days_threshold ?? 7,
+          is_enabled: d.is_enabled ?? true,
+          inactive_days_threshold: d.inactive_days_threshold ?? 7,
+          product_rules: d.product_rules ? { ...DEFAULT_RULES, ...d.product_rules } : DEFAULT_RULES,
         });
       }
     } catch (err) {
@@ -84,6 +136,16 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
     toast.success("已全部标记为已读");
   };
 
+  const updateProductRule = (key: keyof ProductRules, field: keyof ProductRule, value: any) => {
+    setSettings((s) => ({
+      ...s,
+      product_rules: {
+        ...s.product_rules,
+        [key]: { ...s.product_rules[key], [field]: value },
+      },
+    }));
+  };
+
   const saveSettings = async () => {
     setSaving(true);
     try {
@@ -92,6 +154,7 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
           partner_id: partnerId,
           is_enabled: settings.is_enabled,
           inactive_days_threshold: settings.inactive_days_threshold,
+          product_rules: settings.product_rules as any,
         },
         { onConflict: "partner_id" }
       );
@@ -138,7 +201,7 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
         </div>
       </div>
 
-      {/* Settings panel */}
+      {/* Settings panel — product-specific rules */}
       {showSettings && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-4 space-y-4">
@@ -149,20 +212,69 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
                 onCheckedChange={(checked) => setSettings((s) => ({ ...s, is_enabled: checked }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm">未活跃天数阈值</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={90}
-                  value={settings.inactive_days_threshold}
-                  onChange={(e) => setSettings((s) => ({ ...s, inactive_days_threshold: parseInt(e.target.value) || 7 }))}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">天未活跃时发送提醒</span>
-              </div>
-            </div>
+
+            {settings.is_enabled && (
+              <>
+                <div className="text-xs text-muted-foreground font-medium pt-1">按产品类型设置提醒规则</div>
+                <div className="space-y-3">
+                  {PRODUCT_CONFIG.map((product) => {
+                    const rule = settings.product_rules[product.key];
+                    return (
+                      <div
+                        key={product.key}
+                        className={`rounded-lg p-3 ${product.bgColor} border border-transparent`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className={product.color}>{product.icon}</span>
+                            <span className="text-sm font-medium">{product.label}</span>
+                          </div>
+                          <Switch
+                            checked={rule.enabled}
+                            onCheckedChange={(v) => updateProductRule(product.key, "enabled", v)}
+                          />
+                        </div>
+                        {rule.enabled && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">超过</span>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={90}
+                              value={rule.threshold}
+                              onChange={(e) =>
+                                updateProductRule(product.key, "threshold", parseInt(e.target.value) || 3)
+                              }
+                              className="w-16 h-8 text-center"
+                            />
+                            <span className="text-muted-foreground">{product.description}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legacy fallback threshold */}
+                <div className="space-y-2 border-t pt-3">
+                  <Label className="text-xs text-muted-foreground">通用兜底阈值（未分类产品）</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={90}
+                      value={settings.inactive_days_threshold}
+                      onChange={(e) =>
+                        setSettings((s) => ({ ...s, inactive_days_threshold: parseInt(e.target.value) || 7 }))
+                      }
+                      className="w-20 h-8"
+                    />
+                    <span className="text-sm text-muted-foreground">天未活跃时发送提醒</span>
+                  </div>
+                </div>
+              </>
+            )}
+
             <Button size="sm" onClick={saveSettings} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
               保存设置
@@ -178,9 +290,9 @@ export function PartnerFollowupReminders({ partnerId }: PartnerFollowupReminders
             <>
               <Bell className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium">自动提醒已开启</p>
+                <p className="text-sm font-medium">分产品智能提醒已开启</p>
                 <p className="text-xs text-muted-foreground">
-                  学员 {settings.inactive_days_threshold} 天未活跃将自动推送提醒
+                  训练营 {settings.product_rules.camp.threshold}天 · 测评 {settings.product_rules.assessment.threshold}天 · 工具 {settings.product_rules.tool.threshold}天
                 </p>
               </div>
             </>
