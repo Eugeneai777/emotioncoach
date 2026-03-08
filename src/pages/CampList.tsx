@@ -180,19 +180,19 @@ const CampList = () => {
             </p>
           </div>
 
-          {/* Global Stats */}
+          {/* Feature Highlights */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-teal-50/80 to-cyan-50/60 border-teal-200/50 dark:from-teal-950/30 dark:to-cyan-950/20 dark:border-teal-800/30">
-              <div className="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">{stats.total.camps}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">训练营总数</div>
+              <div className="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">系统</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">科学课程体系</div>
             </Card>
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-cyan-50/80 to-blue-50/60 border-cyan-200/50 dark:from-cyan-950/30 dark:to-blue-950/20 dark:border-cyan-800/30">
-              <div className="text-2xl sm:text-3xl font-bold text-cyan-600 dark:text-cyan-400">{stats.total.enrolled}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">学员报名</div>
+              <div className="text-2xl sm:text-3xl font-bold text-cyan-600 dark:text-cyan-400">陪伴</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">专业导师指导</div>
             </Card>
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50/80 to-teal-50/60 border-blue-200/50 dark:from-blue-950/30 dark:to-teal-950/20 dark:border-blue-800/30">
-              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">专业</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">导师陪伴</div>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">社群</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">共同成长</div>
             </Card>
           </div>
         </section>
