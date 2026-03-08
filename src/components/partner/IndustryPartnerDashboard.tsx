@@ -48,6 +48,13 @@ const TAB_GROUPS = [
       { value: "training", label: "培训中心" },
     ],
   },
+  {
+    key: "team",
+    label: "团队管理",
+    tabs: [
+      { value: "team-members", label: "团队成员" },
+    ],
+  },
 ];
 
 const ALL_TABS = TAB_GROUPS.flatMap((g) => g.tabs);
