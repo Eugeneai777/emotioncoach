@@ -235,6 +235,49 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
                 <div className="whitespace-pre-wrap text-sm leading-relaxed">
                   {generatedContent}
                 </div>
+                {/* Generate Image Button */}
+                <div className="mt-4 pt-3 border-t border-primary/20">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="w-full sm:w-auto"
+                  >
+                    {generatingImage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        AI正在生成配图...
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="w-4 h-4 mr-2" />
+                        生成配图
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {/* Generated Image Preview */}
+                {generatedImageUrl && (
+                  <div className="mt-3 space-y-2">
+                    <img
+                      src={generatedImageUrl}
+                      alt="AI生成的营销配图"
+                      className="w-full max-w-md rounded-lg border"
+                    />
+                    <a
+                      href={generatedImageUrl}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-1" />
+                        下载配图
+                      </Button>
+                    </a>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
