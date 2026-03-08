@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, Trash2, ArrowLeft, Send, Sparkles, Bot, User, Check, X, Upload, Image } from "lucide-react";
+import { QuestionEditor } from "./QuestionEditor";
 import { useUpdatePartnerAssessment, PartnerAssessmentTemplate } from "@/hooks/usePartnerAssessments";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -358,36 +359,12 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
               </CardContent>
             </Card>
 
-            {/* Questions */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <h4 className="font-semibold text-sm text-muted-foreground">
-                  题目 ({template.questions?.length || 0})
-                </h4>
-                {(template.questions || []).map((q: any, i: number) => (
-                  <div key={i} className="border rounded-lg p-3">
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs text-muted-foreground mt-2 shrink-0">Q{i + 1}</span>
-                      <div className="flex-1 space-y-1">
-                        <Textarea
-                          value={q.text || ""}
-                          onChange={(e) => updateQuestion(i, "text", e.target.value)}
-                          rows={2}
-                          className="text-sm"
-                        />
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Badge variant="outline" className="text-xs">{q.dimension}</Badge>
-                          <span>{q.positive ? "正向" : "反向"}计分</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => removeQuestion(i)}>
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            {/* Questions - Drag & Drop Editor */}
+            <QuestionEditor
+              questions={template.questions || []}
+              dimensions={template.dimensions || []}
+              onChange={(qs) => setTemplate((t: any) => ({ ...t, questions: qs }))}
+            />
 
             {/* Result Patterns */}
             <Card>
