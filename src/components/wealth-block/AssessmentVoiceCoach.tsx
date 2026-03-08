@@ -88,6 +88,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
   } : null;
 
   const handleClick = () => {
+    console.log('[AssessmentVoiceCoach] Button clicked', { disabled, isLimitReached, hasResult: !!result });
     if (disabled) return;
     if (isLimitReached) {
       setShowPayDialog(true);
@@ -96,6 +97,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
     // 清理可能的残留锁，防止"点了没反应"
     forceReleaseSessionLock();
     // 跳转到财富教练对话页面，携带测评数据并自动启动语音
+    console.log('[AssessmentVoiceCoach] Navigating to /wealth-coach-chat');
     navigate('/wealth-coach-chat', {
       state: {
         fromAssessment: true,
@@ -123,8 +125,8 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
         >
           {!disabled && (
             <>
-              <span className="absolute -inset-1 rounded-full bg-rose-400/30 animate-pulse" />
-              <span className="absolute -inset-2.5 rounded-full bg-rose-300/15 animate-pulse [animation-delay:0.5s]" />
+              <span className="absolute -inset-1 rounded-full bg-rose-400/30 animate-pulse pointer-events-none" />
+              <span className="absolute -inset-2.5 rounded-full bg-rose-300/15 animate-pulse [animation-delay:0.5s] pointer-events-none" />
             </>
           )}
           <ButtonIcon className="w-5 h-5 relative z-10" />
