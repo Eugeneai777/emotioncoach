@@ -15,7 +15,7 @@ const QuickNavFooter = () => {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground px-1">
+      <h3 className="text-sm font-semibold text-zinc-300 px-1">
         更多服务
       </h3>
       <div className="grid grid-cols-5 gap-2">
@@ -30,11 +30,12 @@ const QuickNavFooter = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06, duration: 0.3 }}
             >
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${entry.gradient} flex items-center justify-center
-                              shadow-md group-hover:scale-110 group-active:scale-95 transition-transform duration-200`}>
-                <Icon className="w-5 h-5 text-white" />
+              <div className={`w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-sm flex items-center justify-center
+                              shadow-md group-hover:scale-110 group-active:scale-95 transition-transform duration-200 border border-white/10`}>
+                <Icon className={`w-5 h-5 bg-gradient-to-br ${entry.gradient} bg-clip-text text-transparent`} style={{ stroke: 'url(#grad)' }} />
+                <Icon className="w-5 h-5 text-zinc-400" />
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground leading-tight">{entry.label}</span>
+              <span className="text-[10px] font-medium text-zinc-500 leading-tight">{entry.label}</span>
             </motion.button>
           );
         })}
