@@ -318,7 +318,21 @@ export const CoachVoiceChat = ({
         description: config.getDesc(result, args),
       });
     }
-  };
+
+    // navigate_to 工具：当AI判断用户想去训练营时，自动结束通话并跳转
+    if (tool === 'navigate_to') {
+      const dest = args?.destination || result?.destination;
+      if (dest === 'training_camp' || dest === 'wealth_camp') {
+        setTimeout(() => {
+          try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+          if (durationRef.current) clearInterval(durationRef.current);
+          recordSession().then(() => {
+            releaseLock();
+            navigate('/wealth-camp-intro');
+          });
+        }, 1500);
+      }
+    }
 
   // 处理页面导航 - 改为用户确认后再跳转，避免意外触发
   const handleNavigation = (path: string, name: string) => {
