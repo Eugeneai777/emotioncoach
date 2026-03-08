@@ -235,6 +235,7 @@ export default function DynamicAssessmentPage() {
             coach_prompt: tpl?.coach_prompt,
             assessment_key: template.assessment_key,
           }}
+          recommendedCampTypes={tpl?.recommended_camp_types}
           aiInsight={aiInsight}
           loadingInsight={loadingInsight}
           onRetake={handleRetake}

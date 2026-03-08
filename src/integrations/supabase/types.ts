@@ -6250,7 +6250,9 @@ export type Database = {
         Row: {
           ai_insight_prompt: string | null
           assessment_key: string
+          coach_options: Json | null
           coach_prompt: string | null
+          coach_type: string | null
           created_at: string
           created_by_partner_id: string
           description: string | null
@@ -6266,6 +6268,7 @@ export type Database = {
           qr_title: string | null
           question_count: number
           questions: Json
+          recommended_camp_types: Json | null
           require_auth: boolean
           require_payment: boolean
           result_patterns: Json
@@ -6277,7 +6280,9 @@ export type Database = {
         Insert: {
           ai_insight_prompt?: string | null
           assessment_key: string
+          coach_options?: Json | null
           coach_prompt?: string | null
+          coach_type?: string | null
           created_at?: string
           created_by_partner_id: string
           description?: string | null
@@ -6293,6 +6298,7 @@ export type Database = {
           qr_title?: string | null
           question_count?: number
           questions?: Json
+          recommended_camp_types?: Json | null
           require_auth?: boolean
           require_payment?: boolean
           result_patterns?: Json
@@ -6304,7 +6310,9 @@ export type Database = {
         Update: {
           ai_insight_prompt?: string | null
           assessment_key?: string
+          coach_options?: Json | null
           coach_prompt?: string | null
+          coach_type?: string | null
           created_at?: string
           created_by_partner_id?: string
           description?: string | null
@@ -6320,6 +6328,7 @@ export type Database = {
           qr_title?: string | null
           question_count?: number
           questions?: Json
+          recommended_camp_types?: Json | null
           require_auth?: boolean
           require_payment?: boolean
           result_patterns?: Json

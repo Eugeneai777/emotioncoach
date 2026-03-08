@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Save, Trash2, ArrowLeft, Send, Sparkles, Bot, User, Check, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Save, Trash2, ArrowLeft, Send, Sparkles, Bot, User, Check, X, Upload, Image } from "lucide-react";
 import { useUpdatePartnerAssessment, PartnerAssessmentTemplate } from "@/hooks/usePartnerAssessments";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -43,8 +45,56 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
     qr_image_url: (assessment as any).qr_image_url || "",
     qr_title: (assessment as any).qr_title || "",
     coach_prompt: (assessment as any).coach_prompt || "",
+    recommended_camp_types: (assessment as any).recommended_camp_types || [],
+    coach_type: (assessment as any).coach_type || "",
+    coach_options: (assessment as any).coach_options || [],
   });
   const [saving, setSaving] = useState(false);
+  const [campTemplates, setCampTemplates] = useState<any[]>([]);
+  const [uploadingQR, setUploadingQR] = useState(false);
+  const qrInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch camp templates
+  useEffect(() => {
+    const fetchCamps = async () => {
+      const { data } = await supabase
+        .from('camp_templates')
+        .select('camp_type, camp_name, icon, duration_days, price')
+        .eq('is_active', true)
+        .order('display_order');
+      if (data) setCampTemplates(data);
+    };
+    fetchCamps();
+  }, []);
+
+  const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingQR(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `qr/${assessment.id}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('partner-assets').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('partner-assets').getPublicUrl(path);
+      updateField('qr_image_url', urlData.publicUrl);
+      toast.success("二维码上传成功");
+    } catch (err: any) {
+      toast.error("上传失败: " + (err.message || "未知错误"));
+    } finally {
+      setUploadingQR(false);
+    }
+  };
+
+  const toggleCampType = (campType: string) => {
+    setTemplate((t: any) => {
+      const current = t.recommended_camp_types || [];
+      const next = current.includes(campType)
+        ? current.filter((c: string) => c !== campType)
+        : [...current, campType];
+      return { ...t, recommended_camp_types: next };
+    });
+  };
 
   // AI Chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -109,6 +159,9 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
           qr_image_url: template.qr_image_url || null,
           qr_title: template.qr_title || null,
           coach_prompt: template.coach_prompt || null,
+          recommended_camp_types: template.recommended_camp_types || [],
+          coach_type: template.coach_type || null,
+          coach_options: template.coach_options || [],
         } as any,
       });
       toast.success("测评已保存");
@@ -383,25 +436,48 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
               </CardContent>
             </Card>
 
-            {/* QR Code */}
+            {/* QR Code with Upload */}
             <Card>
               <CardContent className="p-4 space-y-3">
                 <h4 className="font-semibold text-sm text-muted-foreground">二维码引导</h4>
-                <div className="grid grid-cols-[auto_1fr] gap-3 items-center">
-                  <Label className="text-right text-sm">二维码 URL</Label>
-                  <Input
-                    value={template.qr_image_url || ""}
-                    onChange={(e) => updateField("qr_image_url", e.target.value)}
-                    placeholder="二维码图片链接"
-                    className="text-sm"
-                  />
-                  <Label className="text-right text-sm">引导文案</Label>
-                  <Input
-                    value={template.qr_title || ""}
-                    onChange={(e) => updateField("qr_title", e.target.value)}
-                    placeholder="如：扫码添加专属顾问"
-                    className="text-sm"
-                  />
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    {template.qr_image_url ? (
+                      <img src={template.qr_image_url} alt="QR" className="w-20 h-20 rounded-lg object-cover border" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                        <Image className="w-6 h-6 text-muted-foreground/40" />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-2">
+                      <input ref={qrInputRef} type="file" accept="image/*" className="hidden" onChange={handleQRUpload} />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => qrInputRef.current?.click()}
+                        disabled={uploadingQR}
+                      >
+                        {uploadingQR ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                        上传二维码
+                      </Button>
+                      <Input
+                        value={template.qr_image_url || ""}
+                        onChange={(e) => updateField("qr_image_url", e.target.value)}
+                        placeholder="或手动输入图片链接"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-[auto_1fr] gap-3 items-center">
+                    <Label className="text-right text-sm">引导文案</Label>
+                    <Input
+                      value={template.qr_title || ""}
+                      onChange={(e) => updateField("qr_title", e.target.value)}
+                      placeholder="如：扫码添加专属顾问"
+                      className="text-sm"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -417,6 +493,39 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
                   className="text-sm"
                   placeholder="配置后结果页将显示'AI教练深度解读'按钮，留空则不显示"
                 />
+              </CardContent>
+            </Card>
+
+            {/* Recommended Training Camps */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">
+                  推荐训练营 ({(template.recommended_camp_types || []).length} 已选)
+                </h4>
+                {campTemplates.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">暂无可用训练营</p>
+                ) : (
+                  <div className="space-y-2">
+                    {campTemplates.map((camp) => (
+                      <label
+                        key={camp.camp_type}
+                        className="flex items-center gap-3 p-2 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={(template.recommended_camp_types || []).includes(camp.camp_type)}
+                          onCheckedChange={() => toggleCampType(camp.camp_type)}
+                        />
+                        <span className="text-lg">{camp.icon || '🏕️'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{camp.camp_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {camp.duration_days}天 · {camp.price === 0 ? '免费' : `¥${camp.price}`}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
