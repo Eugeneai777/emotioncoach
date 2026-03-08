@@ -16,7 +16,7 @@ const BottomCTA = ({ onVoiceClick }: BottomCTAProps) => {
       <p className="text-xs text-stone-500">准备好了吗？</p>
       <button
         onClick={onVoiceClick}
-        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500/70 to-amber-500/70 text-white text-xs font-medium active:scale-95 transition-transform duration-200 shadow-md shadow-rose-500/15"
+        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-fuchsia-500 text-white text-xs font-medium active:scale-95 transition-transform duration-200 shadow-md shadow-pink-500/20"
       >
         <Mic className="w-3.5 h-3.5" />
         开始和AI生活教练对话
