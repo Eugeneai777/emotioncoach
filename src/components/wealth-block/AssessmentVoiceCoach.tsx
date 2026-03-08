@@ -88,6 +88,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
   } : null;
 
   const handleClick = () => {
+    console.log('[AssessmentVoiceCoach] Button clicked', { disabled, isLimitReached, hasResult: !!result });
     if (disabled) return;
     if (isLimitReached) {
       setShowPayDialog(true);
@@ -96,6 +97,7 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
     // 清理可能的残留锁，防止"点了没反应"
     forceReleaseSessionLock();
     // 跳转到财富教练对话页面，携带测评数据并自动启动语音
+    console.log('[AssessmentVoiceCoach] Navigating to /wealth-coach-chat');
     navigate('/wealth-coach-chat', {
       state: {
         fromAssessment: true,
