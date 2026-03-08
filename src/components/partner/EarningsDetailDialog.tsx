@@ -49,6 +49,7 @@ interface Referral {
 
 const TYPE_CONFIG: Record<DetailType, { title: string; icon: React.ReactNode }> = {
   earnings: { title: "累计收益明细", icon: <TrendingUp className="w-5 h-5 text-orange-500" /> },
+  pending: { title: "待确认佣金明细", icon: <TrendingUp className="w-5 h-5 text-amber-500" /> },
   available: { title: "可提现明细", icon: <Wallet className="w-5 h-5 text-orange-500" /> },
   withdrawn: { title: "已提现记录", icon: <ArrowDownCircle className="w-5 h-5 text-orange-500" /> },
   referrals_l1: { title: "直推用户明细", icon: <Users className="w-5 h-5 text-orange-500" /> },
