@@ -282,6 +282,9 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
           <TabsContent value="training">
             <PartnerTrainingCenter partnerId={partner.id} />
           </TabsContent>
+          <TabsContent value="data-dashboard">
+            <PartnerSharedDataDashboard partnerId={partner.id} isAdmin />
+          </TabsContent>
           <TabsContent value="team">
             <PartnerTeamManager partnerId={partner.id} />
           </TabsContent>
