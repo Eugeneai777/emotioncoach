@@ -257,6 +257,13 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* Clinical Factor Analysis (for SCL-90 etc.) */}
+        {scoringType === "clinical" && (
+          <ClinicalResultSection
+            dimensionScores={result.dimensionScores}
+            meta={result.meta}
+          />
+
         {/* Dimension Scores */}
         <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
           <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">

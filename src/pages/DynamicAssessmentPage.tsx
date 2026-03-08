@@ -202,6 +202,7 @@ export default function DynamicAssessmentPage() {
             coach_type: tpl?.coach_type,
             assessment_key: template.assessment_key,
           }}
+          scoringType={scoringType}
           recommendedCampTypes={tpl?.recommended_camp_types}
           aiInsight={aiInsight}
           loadingInsight={loadingInsight}
