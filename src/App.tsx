@@ -296,8 +296,8 @@ const App = () => (
               <Route path="/communication-coach" element={<CommunicationCoach />} />
               <Route path="/communication-history" element={<CommunicationHistory />} />
               <Route path="/communication-intro" element={<CommunicationCoachIntro />} />
-              <Route path="/communication-assessment" element={<CommunicationAssessment />} />
-              <Route path="/parent-ability-assessment" element={<ParentAbilityAssessment />} />
+              <Route path="/communication-assessment" element={<Navigate to="/assessment/communication_parent" replace />} />
+              <Route path="/parent-ability-assessment" element={<Navigate to="/assessment/parent_ability" replace />} />
               <Route path="/parent-diary" element={<ParentChildDiary />} />
               <Route path="/camp-intro/:campType" element={<CampIntro />} />
               <Route path="/camp/:campId" element={<TrainingCampDetail />} />
@@ -387,7 +387,7 @@ const App = () => (
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
-              <Route path="/women-competitiveness" element={<WomenCompetitiveness />} />
+              <Route path="/women-competitiveness" element={<Navigate to="/assessment/women_competitiveness" replace />} />
               <Route path="/assessment/:assessmentKey" element={<DynamicAssessmentPage />} />
               <Route path="/product-brochure" element={<ProductBrochure />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
