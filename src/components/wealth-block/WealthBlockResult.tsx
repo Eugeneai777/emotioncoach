@@ -57,6 +57,7 @@ import { NextStepActionCard } from "./NextStepActionCard";
 import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
 import { ShareInfoCard } from "./ShareInfoCard";
 import { WealthAdvisorQRCard } from "./WealthAdvisorQRCard";
+import { CampPersonalizedCard } from "./CampPersonalizedCard";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { Share2, ChevronRight } from "lucide-react";
 
@@ -682,10 +683,16 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
-      {/* 语音教练入口已移至底部Tab栏 */}
-
-
-
+      {/* 5. 财富觉醒训练营推荐 */}
+      <CampPersonalizedCard
+        dominantPoor={result.dominantPoor}
+        dominantEmotion={result.dominantEmotionBlock}
+        dominantBelief={result.dominantBeliefBlock}
+        healthScore={healthScore}
+        onPurchase={() => setShowPayDialog(true)}
+        onViewDetails={() => navigate('/wealth-camp-intro')}
+        hasPurchased={hasPurchased}
+      />
 
       {/* 5.5 财富觉醒顾问二维码卡片 */}
       <WealthAdvisorQRCard
