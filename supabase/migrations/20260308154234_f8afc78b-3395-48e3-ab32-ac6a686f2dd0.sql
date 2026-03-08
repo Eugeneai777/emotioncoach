@@ -1,0 +1,2 @@
+ALTER TABLE public.partner_followup_settings 
+ADD COLUMN IF NOT EXISTS product_rules jsonb DEFAULT '{"camp":{"enabled":true,"trigger":"no_checkin_days","threshold":3},"assessment":{"enabled":true,"trigger":"no_login_days","threshold":7},"tool":{"enabled":true,"trigger":"no_open_days","threshold":5}}'::jsonb;

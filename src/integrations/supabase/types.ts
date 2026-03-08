@@ -6547,6 +6547,7 @@ export type Database = {
           inactive_days_threshold: number | null
           is_enabled: boolean | null
           partner_id: string
+          product_rules: Json | null
           reminder_channels: string[] | null
           updated_at: string | null
         }
@@ -6556,6 +6557,7 @@ export type Database = {
           inactive_days_threshold?: number | null
           is_enabled?: boolean | null
           partner_id: string
+          product_rules?: Json | null
           reminder_channels?: string[] | null
           updated_at?: string | null
         }
@@ -6565,6 +6567,7 @@ export type Database = {
           inactive_days_threshold?: number | null
           is_enabled?: boolean | null
           partner_id?: string
+          product_rules?: Json | null
           reminder_channels?: string[] | null
           updated_at?: string | null
         }
