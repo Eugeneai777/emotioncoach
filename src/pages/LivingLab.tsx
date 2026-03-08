@@ -139,12 +139,6 @@ const LivingLab = () => {
               <SuperEntry onInlineTool={handleToolClick} />
             </div>
 
-            {/* 2. 连续使用追踪 */}
-            {user && (
-              <div className="mt-6">
-                <UsageStreakBar streak={streak} weekDays={weekDays} loading={streakLoading} />
-              </div>
-            )}
 
             {/* 3. 更多工具（折叠） */}
             <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
