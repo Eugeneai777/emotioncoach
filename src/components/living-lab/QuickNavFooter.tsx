@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
 const entries = [
-  { label: "情绪按钮", emoji: "🆘", route: "/emotion-button" },
   { label: "教练空间", emoji: "🧭", route: "/coach-space" },
   { label: "学习课程", emoji: "📚", route: "/courses" },
   { label: "训练营", emoji: "🏕️", route: "/camps" },
