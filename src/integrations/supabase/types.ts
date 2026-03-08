@@ -7078,6 +7078,50 @@ export type Database = {
           },
         ]
       }
+      partner_shared_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_date: string
+          metric_type: string
+          metric_value: number
+          notes: string | null
+          partner_id: string
+          recorded_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_date: string
+          metric_type: string
+          metric_value?: number
+          notes?: string | null
+          partner_id: string
+          recorded_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          metric_type?: string
+          metric_value?: number
+          notes?: string | null
+          partner_id?: string
+          recorded_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_shared_metrics_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_student_followups: {
         Row: {
           created_at: string | null
