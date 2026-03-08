@@ -2546,23 +2546,39 @@ export const CoachVoiceChat = ({
       {/* 底部操作区 */}
       <div className="p-6 pb-safe flex justify-center">
         <Button
-          onClick={endCall}
+          onClick={(e) => {
+            if (isEnding) {
+              console.log('[VoiceChat] Force close triggered from bottom button');
+              try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+              try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              releaseLock();
+              onClose();
+              return;
+            }
+            endCall(e);
+          }}
           size="lg"
           className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
         >
-          <Phone className="w-6 h-6" />
+          {status === 'connected' || status === 'connecting' ? (
+            <PhoneOff className="w-6 h-6" />
+          ) : (
+            <Phone className="w-6 h-6" />
+          )}
         </Button>
       </div>
 
-      {/* 提示 */}
-      <div className="absolute bottom-24 left-0 right-0 text-center">
-        <p className="text-white/40 text-xs">
-          {skipBilling
-            ? `💡 直接说话即可 · 免费体验 · ${maxDurationMinutes === null ? '不限时' : `最长${maxDurationMinutes}分钟`}`
-            : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟 · ${maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}`
-          }
-        </p>
-      </div>
+      {/* 提示 - 仅在非通话状态显示 */}
+      {status !== 'connected' && status !== 'connecting' && (
+        <div className="absolute bottom-24 left-0 right-0 text-center">
+          <p className="text-white/40 text-xs">
+            {skipBilling
+              ? `💡 直接说话即可 · 免费体验 · ${maxDurationMinutes === null ? '不限时' : `最长${maxDurationMinutes}分钟`}`
+              : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟 · ${maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}`
+            }
+          </p>
+        </div>
+      )}
 
       {/* 🔧 AI来电续拨询问弹窗 */}
       <ContinueCallDialog
