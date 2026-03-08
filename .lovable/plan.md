@@ -1,23 +1,39 @@
 
 
-## 两个问题需要修复
+## 测评同步检测器 — 方案 A 实现计划
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 目标
+在管理后台"体验包管理"页面（`/admin/experience-items`）顶部新增 **AssessmentSyncChecker** 组件，自动检测 `partner_assessment_templates` 和 `energy_studio_tools` 中的活跃测评是否已在 `partner_experience_items` 中注册，支持一键同步或选择性跳过。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 实现细节
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+#### 1. 新建 `src/components/admin/AssessmentSyncChecker.tsx`
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+- **数据查询**：并行查询三张表
+  - `partner_assessment_templates`（`is_active = true`）→ 获取所有活跃测评的 `assessment_key`、`title`、`emoji`
+  - `partner_experience_items` → 获取已有的 `package_key` 列表
+  - `energy_studio_tools` → 获取已有的工具 ID 列表
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+- **对比逻辑**：找出在 `partner_assessment_templates` 中存在但在 `partner_experience_items` 中缺失的条目
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+- **UI 展示**：
+  - 全部已同步时：显示绿色 ✓ 提示"所有测评已同步"
+  - 有缺失项时：显示黄色警告卡片，列出未同步测评
+  - 每个缺失项显示：名称、emoji、两个按钮
+    - **"添加到产品中心"**：预填表单数据（从模板取 title → name，assessment_key → package_key，emoji → icon），插入 `partner_experience_items`，管理员可编辑价格描述后确认
+    - **"跳过/不同步"**：将该测评标记为"已忽略"，不再提示（使用 localStorage 存储忽略列表，key 为 `sync-ignored-keys`）
+
+#### 2. 修改 `src/components/admin/ExperiencePackageManagement.tsx`
+
+- 在页面顶部（标题下方）嵌入 `<AssessmentSyncChecker onSynced={invalidateQueries} />`
+
+#### 3. 同步到 `energy_studio_tools` 的检测
+
+- 同样对比 `energy_studio_tools` 表，显示缺失项
+- 一键添加时自动填充 `tool_id`、`title`、`category: 'exploration'`、`icon`、`gradient`
+
+### 不涉及的变更
+- 不修改数据库 schema（使用现有表）
+- 不影响前端产品中心展示逻辑
+- 不影响现有测评运行
 
