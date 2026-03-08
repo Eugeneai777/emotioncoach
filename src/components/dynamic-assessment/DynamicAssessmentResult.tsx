@@ -264,7 +264,7 @@ export function DynamicAssessmentResult({
         <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
           <Button
             onClick={handleAICoach}
-            className="w-full mb-4 gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+            className="w-full mb-4 gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground"
           >
             <Mic className="w-4 h-4" /> AI 教练深度解读
           </Button>
