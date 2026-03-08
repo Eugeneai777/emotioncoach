@@ -101,26 +101,26 @@ const Awakening: React.FC = () => {
       <SafeOGMeta />
 
       <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30" style={{ WebkitOverflowScrolling: 'touch' as any }}>
-        {/* Header */}
+        {/* Header - 更紧凑 */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/coach/wealth_coach_4_questions')}>
-              <ArrowLeft className="h-5 w-5" />
+          <div className="max-w-lg mx-auto px-3 py-2 flex items-center justify-between">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/coach/wealth_coach_4_questions')}>
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold">觉察日记</h1>
+            <h1 className="text-sm font-semibold">觉察日记</h1>
             <IntroShareDialog
               config={introShareConfigs.awakening}
               trigger={
-                <Button variant="ghost" size="icon">
-                  <Share2 className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Share2 className="h-4 w-4" />
                 </Button>
               }
             />
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-4 pb-24 space-y-4">
+        {/* Main Content - 更紧凑间距 */}
+        <main className="max-w-lg mx-auto px-3 py-3 pb-24 space-y-3">
           {/* Hero区：核心标语 */}
           <AwakeningHeroCard />
 
