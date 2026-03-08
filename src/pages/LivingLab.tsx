@@ -119,14 +119,14 @@ const LivingLab = () => {
   }
 
   return (
-    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: "touch" }}>
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-zinc-950 via-neutral-900 to-zinc-950" style={{ WebkitOverflowScrolling: "touch" }}>
       <DynamicOGMeta pageKey="energyStudio" />
-      <PageHeader title="每个人的生活教练" />
+      <PageHeader title="每个人的生活教练" className="text-white [&_h1]:text-white [&_span]:text-white" />
 
       <main className="container max-w-2xl mx-auto px-3 py-3 space-y-4">
         {activeTool ? (
           <div>
-            <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-sm">
+            <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-sm text-zinc-300 hover:text-white">
               <ArrowLeft className="w-4 h-4" />
               返回
             </Button>
@@ -142,7 +142,7 @@ const LivingLab = () => {
 
             {/* 3. 更多工具（折叠） */}
             <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
                 <span>还想探索更多？</span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>

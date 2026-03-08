@@ -1,30 +1,23 @@
 
 
-## Living Lab 深色背景设计优化方案
+## 两个问题需要修复
 
-### 整体方向
-将页面从浅色背景切换为**深色沉浸式背景**（深灰/近黑），所有文字、卡片、入口相应适配，营造高级感与舒适感。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 改动细节
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-#### 1. `LivingLab.tsx` — 深色页面背景
-- 页面容器改为 `bg-gradient-to-b from-zinc-950 via-neutral-900 to-zinc-950`，全页深色
-- PageHeader 标题文字改为白色
-- 折叠触发器文字适配浅色 `text-zinc-400`
-- 返回按钮适配浅色
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-#### 2. `SuperEntry.tsx` — 语音卡片 + 四入口适配深色
-- **语音卡片**：保持红色渐变，但增加微妙的边框 `border border-white/10`，圆角保持，装饰光圈更柔和（用 framer-motion 替代 animate-ping，呼吸感更慢更舒服）
-- **问候语**保持浅色，底部文案改为更温暖的「随时开口，我在」
-- **四入口**：文字从 `text-foreground` 改为 `text-white`，副标题 `text-zinc-400`；图标卡片保持渐变色不变，阴影增强在深色下的发光效果
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-#### 3. `QuickNavFooter.tsx` — 深色适配
-- 标题改为 `text-zinc-300`
-- 图标下方文字改为 `text-zinc-500`
-- 图标卡片增加 `bg-white/5 backdrop-blur` 毛玻璃底色
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 改动文件
-- `src/pages/LivingLab.tsx`
-- `src/components/living-lab/SuperEntry.tsx`
-- `src/components/living-lab/QuickNavFooter.tsx`
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

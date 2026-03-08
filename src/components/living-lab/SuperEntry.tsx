@@ -84,7 +84,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
     <div className="space-y-6">
       {/* Hero: Voice Coach CTA — 红色主题 */}
       <motion.div
-        className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-600 via-red-500 to-rose-500 p-6 pb-5"
+        className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-600 via-red-500 to-rose-500 p-6 pb-5 border border-white/10"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -102,9 +102,17 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
             className="relative group focus:outline-none touch-manipulation mb-4"
             aria-label="开始语音对话"
           >
-            {/* Outer ring pulse */}
-            <div className="absolute inset-[-16px] rounded-full border-2 border-white/20 animate-ping" style={{ animationDuration: '2.5s' }} />
-            <div className="absolute inset-[-8px] rounded-full border border-white/30 animate-pulse" />
+            {/* Soft breathing glow */}
+            <motion.div
+              className="absolute inset-[-16px] rounded-full border-2 border-white/15"
+              animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="absolute inset-[-8px] rounded-full border border-white/20"
+              animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.7, 0.4] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            />
             
             {/* Button */}
             <div className="relative w-[88px] h-[88px] bg-white rounded-full flex flex-col items-center justify-center
@@ -116,7 +124,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
             </div>
           </button>
 
-          <p className="text-white/70 text-xs">语音 · 文字 · 什么都可以聊</p>
+          <p className="text-white/60 text-xs tracking-wide">随时开口，我在</p>
         </div>
       </motion.div>
 
@@ -134,14 +142,14 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
               transition={{ delay: 0.4 + i * 0.08, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${path.gradient} flex items-center justify-center
-                              shadow-lg ${path.glow}
+                              shadow-lg shadow-current/20 ${path.glow}
                               group-hover:scale-110 group-hover:shadow-xl group-active:scale-95
                               transition-all duration-200 ease-out`}>
                 <Icon className="w-6 h-6 text-white drop-shadow-sm" />
               </div>
               <div className="text-center">
-                <p className="text-xs font-semibold text-foreground leading-tight">{path.label}</p>
-                <p className="text-[10px] text-muted-foreground">{path.sub}</p>
+                <p className="text-xs font-semibold text-white leading-tight">{path.label}</p>
+                <p className="text-[10px] text-zinc-400">{path.sub}</p>
               </div>
             </motion.button>
           );
