@@ -13,7 +13,7 @@ const paths = [
     icon: Phone,
     label: "我现在不太舒服",
     sub: "AI教练语音陪你，说出来就好一些",
-    route: "/emotion-coach",
+    route: "/emotion-button",
     bg: "bg-rose-50 dark:bg-rose-950/30",
     border: "border-rose-200/60 dark:border-rose-800/40",
     accent: "text-rose-600 dark:text-rose-400",
