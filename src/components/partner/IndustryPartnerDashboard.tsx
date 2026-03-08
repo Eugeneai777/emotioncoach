@@ -47,6 +47,7 @@ const TAB_GROUPS = [
     tabs: [
       { value: "reminders", label: "跟进提醒" },
       { value: "training", label: "培训中心" },
+      { value: "data-dashboard", label: "数据看板" },
     ],
   },
   {
