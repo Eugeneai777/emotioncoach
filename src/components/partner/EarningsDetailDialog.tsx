@@ -226,7 +226,7 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
         </div>
 
         {/* Commission filter tabs */}
-        {(type === "earnings" || type === "available") && (
+        {type === "earnings" && (
           <Tabs value={commissionFilter} onValueChange={(v) => setCommissionFilter(v as any)}>
             <TabsList className="w-full">
               <ResponsiveTabsTrigger value="all" label="全部" />
