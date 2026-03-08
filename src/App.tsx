@@ -182,6 +182,7 @@ const WealthJournal = lazyRetry(() => import("./pages/WealthJournal"));
 const WealthJournalDetail = lazyRetry(() => import("./pages/WealthJournalDetail"));
 const WealthCoachIntro = lazyRetry(() => import("./pages/WealthCoachIntro"));
 const WealthCoachChat = lazyRetry(() => import("./pages/WealthCoachChat"));
+const WealthCoachVoice = lazyRetry(() => import("./pages/WealthCoachVoice"));
 const ShareInvite = lazyRetry(() => import("./pages/ShareInvite"));
 const WealthCampIntro = lazyRetry(() => import("./pages/WealthCampIntro"));
 const WealthAwakeningProgress = lazyRetry(() => import("./pages/WealthAwakeningProgress"));
