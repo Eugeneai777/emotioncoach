@@ -57,6 +57,7 @@ import { NextStepActionCard } from "./NextStepActionCard";
 import { BloomInviteCodeEntry } from "./BloomInviteCodeEntry";
 import { ShareInfoCard } from "./ShareInfoCard";
 import { WealthAdvisorQRCard } from "./WealthAdvisorQRCard";
+import { CampPersonalizedCard } from "./CampPersonalizedCard";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { Share2, ChevronRight } from "lucide-react";
 
