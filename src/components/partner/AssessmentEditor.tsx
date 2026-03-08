@@ -506,17 +506,51 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
               </CardContent>
             </Card>
 
-            {/* AI Coach Prompt */}
+            {/* AI Coach Selection + Prompt */}
             <Card>
               <CardContent className="p-4 space-y-3">
-                <h4 className="font-semibold text-sm text-muted-foreground">AI 教练解读提示词</h4>
-                <Textarea
-                  value={template.coach_prompt || ""}
-                  onChange={(e) => updateField("coach_prompt", e.target.value)}
-                  rows={4}
-                  className="text-sm"
-                  placeholder="配置后结果页将显示'AI教练深度解读'按钮，留空则不显示"
-                />
+                <h4 className="font-semibold text-sm text-muted-foreground">AI 教练配置</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm mb-1.5 block">选择 AI 教练</Label>
+                    <Select
+                      value={template.coach_type || "__none__"}
+                      onValueChange={(v) => {
+                        const key = v === "__none__" ? "" : v;
+                        updateField("coach_type", key);
+                        if (key) {
+                          const coach = coachTemplates.find((c: any) => c.coach_key === key);
+                          if (coach?.system_prompt && !template.coach_prompt) {
+                            updateField("coach_prompt", coach.system_prompt);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="选择教练…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">无教练</SelectItem>
+                        {coachTemplates.map((c: any) => (
+                          <SelectItem key={c.coach_key} value={c.coach_key}>
+                            {c.emoji} {c.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">选择后结果页将显示"AI教练深度解读"按钮</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm mb-1.5 block">教练解读提示词（可覆写）</Label>
+                    <Textarea
+                      value={template.coach_prompt || ""}
+                      onChange={(e) => updateField("coach_prompt", e.target.value)}
+                      rows={4}
+                      className="text-sm"
+                      placeholder="自定义教练的 system prompt，留空则使用教练模板默认提示词"
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
