@@ -31,6 +31,7 @@ const WeChatOAuthCallback = lazyRetry(() => import("./pages/WeChatOAuthCallback"
 const DynamicCoach = lazyRetry(() => import("./pages/DynamicCoach"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
 const ChangePassword = lazyRetry(() => import("./pages/ChangePassword"));
+const LifeCoachVoice = lazyRetry(() => import("./pages/LifeCoachVoice"));
 
 // 历史和社区
 const History = lazyRetry(() => import("./pages/History"));
@@ -394,6 +395,7 @@ const App = () => (
               <Route path="/women-competitiveness" element={<Navigate to="/assessment/women_competitiveness" replace />} />
               <Route path="/assessment/:assessmentKey" element={<DynamicAssessmentPage />} />
               <Route path="/product-brochure" element={<ProductBrochure />} />
+              <Route path="/life-coach-voice" element={<LifeCoachVoice />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
