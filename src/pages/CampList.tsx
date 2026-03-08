@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } from "lucide-react";
+import { TrendingUp, Sparkles, Filter, Home, ChevronRight, Users } from "lucide-react";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
@@ -49,7 +49,7 @@ const CampList = () => {
   const { user } = useAuth();
   
   const [activeCategory, setActiveCategory] = useState('youjin');
-  const [sortBy, setSortBy] = useState<'popular' | 'duration' | 'newest'>('popular');
+  const [sortBy, setSortBy] = useState<'duration' | 'newest'>('duration');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
 
@@ -98,48 +98,15 @@ const CampList = () => {
     }
   });
 
-  // 查询报名人数
-  const { data: enrollmentStats } = useQuery({
-    queryKey: ['camp-enrollment-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('training_camps')
-        .select('camp_type');
-      if (error) throw error;
-
-      const stats: Record<string, number> = {};
-      data.forEach((camp: any) => {
-        stats[camp.camp_type] = (stats[camp.camp_type] || 0) + 1;
-      });
-      return stats;
-    }
-  });
-
-  // 计算统计数据
-  const stats = useMemo(() => {
-    const totalCamps = campTemplates?.length || 0;
-    const totalEnrolled = Object.values(enrollmentStats || {}).reduce((sum, count) => sum + count, 0);
-    const categoryCamps = campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory).length || 0;
-    const categoryEnrolled = campTemplates
-      ?.filter(camp => (camp.category || 'youjin') === activeCategory)
-      .reduce((sum, camp) => sum + (enrollmentStats?.[camp.camp_type] || 0), 0) || 0;
-
-    return {
-      total: { camps: totalCamps, enrolled: totalEnrolled },
-      category: { camps: categoryCamps, enrolled: categoryEnrolled }
-    };
-  }, [campTemplates, enrollmentStats, activeCategory]);
+  const categoryCampCount = useMemo(() => {
+    return campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory).length || 0;
+  }, [campTemplates, activeCategory]);
 
   // 筛选和排序
   const filteredAndSortedCamps = useMemo(() => {
     let camps = campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory) || [];
 
-    // 排序
-    if (sortBy === 'popular') {
-      camps = [...camps].sort((a, b) => 
-        (enrollmentStats?.[b.camp_type] || 0) - (enrollmentStats?.[a.camp_type] || 0)
-      );
-    } else if (sortBy === 'duration') {
+    if (sortBy === 'duration') {
       camps = [...camps].sort((a, b) => a.duration_days - b.duration_days);
     } else if (sortBy === 'newest') {
       camps = [...camps].sort((a, b) => 
@@ -148,7 +115,7 @@ const CampList = () => {
     }
 
     return camps;
-  }, [campTemplates, activeCategory, sortBy, enrollmentStats]);
+  }, [campTemplates, activeCategory, sortBy]);
 
   const currentCategory = campCategories.find(cat => cat.id === activeCategory)!;
 
@@ -213,19 +180,19 @@ const CampList = () => {
             </p>
           </div>
 
-          {/* Global Stats */}
+          {/* Feature Highlights */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-teal-50/80 to-cyan-50/60 border-teal-200/50 dark:from-teal-950/30 dark:to-cyan-950/20 dark:border-teal-800/30">
-              <div className="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">{stats.total.camps}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">训练营总数</div>
+              <div className="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">系统</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">科学课程体系</div>
             </Card>
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-cyan-50/80 to-blue-50/60 border-cyan-200/50 dark:from-cyan-950/30 dark:to-blue-950/20 dark:border-cyan-800/30">
-              <div className="text-2xl sm:text-3xl font-bold text-cyan-600 dark:text-cyan-400">{stats.total.enrolled}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">学员报名</div>
+              <div className="text-2xl sm:text-3xl font-bold text-cyan-600 dark:text-cyan-400">陪伴</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">专业导师指导</div>
             </Card>
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50/80 to-teal-50/60 border-blue-200/50 dark:from-blue-950/30 dark:to-teal-950/20 dark:border-blue-800/30">
-              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">专业</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">导师陪伴</div>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">社群</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">共同成长</div>
             </Card>
           </div>
         </section>
@@ -236,12 +203,7 @@ const CampList = () => {
             bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-200/30
             dark:bg-teal-950/30 dark:border-teal-800/30">
             {campCategories.map(category => {
-              const categoryStats = {
-                camps: campTemplates?.filter(c => (c.category || 'youjin') === category.id).length || 0,
-                enrolled: campTemplates
-                  ?.filter(c => (c.category || 'youjin') === category.id)
-                  .reduce((sum, c) => sum + (enrollmentStats?.[c.camp_type] || 0), 0) || 0
-              };
+              const catCampCount = campTemplates?.filter(c => (c.category || 'youjin') === category.id).length || 0;
 
               return (
                 <TabsTrigger
@@ -263,7 +225,7 @@ const CampList = () => {
                     </div>
                   </div>
                   <Badge variant="secondary" className="hidden sm:flex bg-white/20 text-white border-0 mt-2 text-xs">
-                    {categoryStats.camps}个训练营
+                    {catCampCount}个训练营
                   </Badge>
                 </TabsTrigger>
               );
@@ -280,7 +242,7 @@ const CampList = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="w-4 h-4 text-teal-500" />
-                <span>共 {stats.category.camps} 个训练营</span>
+                <span>共 {categoryCampCount} 个训练营</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -290,7 +252,6 @@ const CampList = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popular">🔥 最热门</SelectItem>
                     <SelectItem value="duration">⏱️ 时长排序</SelectItem>
                     <SelectItem value="newest">✨ 最新发布</SelectItem>
                   </SelectContent>
@@ -308,7 +269,7 @@ const CampList = () => {
                     key={camp.id}
                     camp={camp}
                     index={index}
-                    enrolledCount={enrollmentStats?.[camp.camp_type] || 0}
+                    enrolledCount={0}
                     onClick={() => {
                       if (camp.camp_type === 'parent_emotion_21') {
                         navigate('/parent-camp');
