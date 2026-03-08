@@ -123,8 +123,8 @@ export function AssessmentVoiceCoach({ result, aiInsight, healthScore, disabled 
         >
           {!disabled && (
             <>
-              <span className="absolute -inset-1 rounded-full bg-rose-400/30 animate-pulse" />
-              <span className="absolute -inset-2.5 rounded-full bg-rose-300/15 animate-pulse [animation-delay:0.5s]" />
+              <span className="absolute -inset-1 rounded-full bg-rose-400/30 animate-pulse pointer-events-none" />
+              <span className="absolute -inset-2.5 rounded-full bg-rose-300/15 animate-pulse [animation-delay:0.5s] pointer-events-none" />
             </>
           )}
           <ButtonIcon className="w-5 h-5 relative z-10" />
