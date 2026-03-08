@@ -36,7 +36,8 @@ import {
   Filter,
   PieChart,
   Network,
-  Brain
+  Brain,
+  ClipboardList
 } from "lucide-react";
 import {
   Sidebar,
