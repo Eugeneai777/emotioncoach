@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight, Phone, BookOpen, BarChart3, Rocket } from "lucide-react";
+import { ChevronRight, Phone, BookOpen, BarChart3, Rocket, Sparkles } from "lucide-react";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
 
 interface SuperEntryProps {
@@ -68,6 +68,26 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
         </h2>
       </div>
 
+      {/* Life Coach Voice CTA */}
+      <motion.button
+        onClick={() => navigate("/coach/vibrant_life_sage")}
+        className="w-full relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/90 to-accent/90 p-5 text-left shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-bold text-white">有劲生活教练</p>
+            <p className="text-sm text-white/80 mt-0.5">语音对话，什么都可以聊</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-white/60 shrink-0" />
+        </div>
+      </motion.button>
+
       {/* 4 paths */}
       <div className="space-y-2.5">
         {paths.map((path, i) => {
@@ -79,7 +99,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
               className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border ${path.border} ${path.bg} hover:shadow-md active:scale-[0.98] transition-all text-left`}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, duration: 0.3, ease: "easeOut" }}
+              transition={{ delay: (i + 1) * 0.06, duration: 0.3, ease: "easeOut" }}
             >
               <div className={`w-10 h-10 rounded-xl ${path.iconBg} flex items-center justify-center shrink-0`}>
                 <Icon className={`w-5 h-5 ${path.accent}`} />
