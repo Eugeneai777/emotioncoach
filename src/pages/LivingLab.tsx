@@ -113,45 +113,57 @@ const LivingLab = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
         <div className="text-center">
-          <Sparkles className="w-6 h-6 animate-pulse mx-auto mb-2 text-primary" />
-          <p className="text-sm text-muted-foreground">加载中...</p>
+          <Sparkles className="w-5 h-5 animate-pulse mx-auto mb-2 text-amber-400" />
+          <p className="text-xs text-stone-500">加载中...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-stone-950 via-stone-900 to-amber-950/30" style={{ WebkitOverflowScrolling: "touch" }}>
+    <div className="h-screen overflow-y-auto overscroll-contain bg-stone-950" style={{ WebkitOverflowScrolling: "touch" }}>
       <DynamicOGMeta pageKey="energyStudio" />
-      <PageHeader title="每个人的生活教练" className="text-amber-50 [&_h1]:text-amber-50 [&_span]:text-amber-50" />
+      
+      {/* Custom dark header */}
+      <header className="sticky top-0 z-50 bg-stone-950/90 backdrop-blur-lg border-b border-stone-800/50">
+        <div className="flex items-center justify-between h-11 px-3 max-w-2xl mx-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
+            className="h-8 w-8 text-stone-400 hover:text-stone-200 hover:bg-stone-800/50"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h1 className="text-sm font-medium text-amber-100/90 tracking-wide">每个人的生活教练</h1>
+          <div className="w-8" />
+        </div>
+      </header>
 
-      <main className="container max-w-2xl mx-auto px-3 py-3 space-y-4">
+      <main className="max-w-2xl mx-auto px-3 py-4 space-y-5">
         {activeTool ? (
           <div>
-            <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-sm text-zinc-300 hover:text-white">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="ghost" size="sm" onClick={() => setActiveTool(null)} className="mb-3 gap-1.5 text-xs text-stone-400 hover:text-stone-200 hover:bg-stone-800/50">
+              <ArrowLeft className="w-3.5 h-3.5" />
               返回
             </Button>
             {renderTool()}
           </div>
         ) : (
           <>
-            {/* 1. Super Entry - 超级入口 */}
-            <div className="pt-4">
-              <SuperEntry onInlineTool={handleToolClick} />
-            </div>
+            {/* 1. Super Entry */}
+            <SuperEntry onInlineTool={handleToolClick} />
 
-
-            {/* 3. 更多工具（折叠） */}
+            {/* 2. 探索更多（折叠） */}
             <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1.5 py-3 text-sm text-stone-400 hover:text-stone-300 transition-colors">
+              <CollapsibleTrigger className="w-full flex items-center justify-center gap-1 py-2.5 text-xs text-stone-500 hover:text-stone-400 transition-colors">
                 <span>还想探索更多？</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="space-y-6 pb-6">
+                <div className="space-y-5 pb-6">
                   <PathDetailCards />
                   <UseCasesSection />
                   <TestimonialsSection />
@@ -161,7 +173,6 @@ const LivingLab = () => {
                       navigate("/auth");
                       return;
                     }
-                    // Scroll to top where SuperEntry voice button is
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }} />
                 </div>
