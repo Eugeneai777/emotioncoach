@@ -141,7 +141,7 @@ export function DynamicAssessmentHistory({
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">{prev?.score ?? "-"} → {d.score}</span>
                       {diff !== 0 && (
-                        <span className={diff > 0 ? "text-green-500" : "text-red-500"}>
+                        <span className={diff > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}>
                           {diff > 0 ? "+" : ""}{diff}
                         </span>
                       )}
