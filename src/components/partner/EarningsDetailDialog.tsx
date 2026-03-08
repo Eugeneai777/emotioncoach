@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Search, Loader2, TrendingUp, Wallet, Users, ArrowDownCircle } from "lucide-react";
 
-type DetailType = "earnings" | "available" | "withdrawn" | "referrals_l1" | "referrals_l2";
+export type DetailType = "earnings" | "pending" | "available" | "withdrawn" | "referrals_l1" | "referrals_l2";
 
 interface EarningsDetailDialogProps {
   open: boolean;
