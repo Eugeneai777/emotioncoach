@@ -49,7 +49,7 @@ const CampList = () => {
   const { user } = useAuth();
   
   const [activeCategory, setActiveCategory] = useState('youjin');
-  const [sortBy, setSortBy] = useState<'popular' | 'duration' | 'newest'>('popular');
+  const [sortBy, setSortBy] = useState<'duration' | 'newest'>('duration');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
 
