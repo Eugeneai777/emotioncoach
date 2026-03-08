@@ -184,6 +184,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         <TabsContent value="team-members">
           <PartnerTeamManager partnerId={partner.id} />
         </TabsContent>
+        <TabsContent value="data-dashboard">
+          <PartnerSharedDataDashboard partnerId={partner.id} />
+        </TabsContent>
       </Tabs>
     </div>
   );
