@@ -55,6 +55,7 @@ const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 // 能量空间
 const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
 const EnergyStudioIntro = lazyRetry(() => import("./pages/EnergyStudioIntro"));
+const LivingLab = lazyRetry(() => import("./pages/LivingLab"));
 const CoachSpace = lazyRetry(() => import("./pages/CoachSpace"));
 const CoachSpaceIntro = lazyRetry(() => import("./pages/CoachSpaceIntro"));
 const PlatformIntro = lazyRetry(() => import("./pages/PlatformIntro"));
