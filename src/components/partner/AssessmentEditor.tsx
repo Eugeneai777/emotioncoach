@@ -37,6 +37,12 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
     result_patterns: assessment.result_patterns || [],
     scoring_logic: assessment.scoring_logic || "",
     ai_insight_prompt: assessment.ai_insight_prompt || "",
+    require_auth: (assessment as any).require_auth ?? true,
+    require_payment: (assessment as any).require_payment ?? false,
+    package_key: (assessment as any).package_key || "",
+    qr_image_url: (assessment as any).qr_image_url || "",
+    qr_title: (assessment as any).qr_title || "",
+    coach_prompt: (assessment as any).coach_prompt || "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -97,6 +103,12 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
           ai_insight_prompt: template.ai_insight_prompt || null,
           max_score: totalMaxScore,
           question_count: (template.questions || []).length,
+          require_auth: template.require_auth,
+          require_payment: template.require_payment,
+          package_key: template.package_key || null,
+          qr_image_url: template.qr_image_url || null,
+          qr_title: template.qr_title || null,
+          coach_prompt: template.coach_prompt || null,
         } as any,
       });
       toast.success("测评已保存");
@@ -331,6 +343,79 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
                   rows={4}
                   className="text-sm"
                   placeholder="AI 根据答题结果生成个性化分析时使用的 system prompt"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Payment & Auth Settings */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">付费与认证设置</h4>
+                <div className="grid grid-cols-[auto_1fr] gap-3 items-center">
+                  <Label className="text-right text-sm">需要登录</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={template.require_auth ?? true}
+                      onChange={(e) => updateField("require_auth", e.target.checked)}
+                      className="rounded"
+                    />
+                    <span className="text-xs text-muted-foreground">答题完成后需登录才能查看结果</span>
+                  </div>
+                  <Label className="text-right text-sm">需要付费</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={template.require_payment ?? false}
+                      onChange={(e) => updateField("require_payment", e.target.checked)}
+                      className="rounded"
+                    />
+                    <span className="text-xs text-muted-foreground">付费后解锁完整报告</span>
+                  </div>
+                  <Label className="text-right text-sm">产品标识</Label>
+                  <Input
+                    value={template.package_key || ""}
+                    onChange={(e) => updateField("package_key", e.target.value)}
+                    placeholder="关联 packages 表的 package_key"
+                    className="text-sm"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* QR Code */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">二维码引导</h4>
+                <div className="grid grid-cols-[auto_1fr] gap-3 items-center">
+                  <Label className="text-right text-sm">二维码 URL</Label>
+                  <Input
+                    value={template.qr_image_url || ""}
+                    onChange={(e) => updateField("qr_image_url", e.target.value)}
+                    placeholder="二维码图片链接"
+                    className="text-sm"
+                  />
+                  <Label className="text-right text-sm">引导文案</Label>
+                  <Input
+                    value={template.qr_title || ""}
+                    onChange={(e) => updateField("qr_title", e.target.value)}
+                    placeholder="如：扫码添加专属顾问"
+                    className="text-sm"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Coach Prompt */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">AI 教练解读提示词</h4>
+                <Textarea
+                  value={template.coach_prompt || ""}
+                  onChange={(e) => updateField("coach_prompt", e.target.value)}
+                  rows={4}
+                  className="text-sm"
+                  placeholder="配置后结果页将显示'AI教练深度解读'按钮，留空则不显示"
                 />
               </CardContent>
             </Card>

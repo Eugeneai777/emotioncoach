@@ -6250,6 +6250,7 @@ export type Database = {
         Row: {
           ai_insight_prompt: string | null
           assessment_key: string
+          coach_prompt: string | null
           created_at: string
           created_by_partner_id: string
           description: string | null
@@ -6259,9 +6260,14 @@ export type Database = {
           id: string
           is_active: boolean
           max_score: number
+          package_key: string | null
           page_route: string | null
+          qr_image_url: string | null
+          qr_title: string | null
           question_count: number
           questions: Json
+          require_auth: boolean
+          require_payment: boolean
           result_patterns: Json
           scoring_logic: string | null
           subtitle: string | null
@@ -6271,6 +6277,7 @@ export type Database = {
         Insert: {
           ai_insight_prompt?: string | null
           assessment_key: string
+          coach_prompt?: string | null
           created_at?: string
           created_by_partner_id: string
           description?: string | null
@@ -6280,9 +6287,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_score?: number
+          package_key?: string | null
           page_route?: string | null
+          qr_image_url?: string | null
+          qr_title?: string | null
           question_count?: number
           questions?: Json
+          require_auth?: boolean
+          require_payment?: boolean
           result_patterns?: Json
           scoring_logic?: string | null
           subtitle?: string | null
@@ -6292,6 +6304,7 @@ export type Database = {
         Update: {
           ai_insight_prompt?: string | null
           assessment_key?: string
+          coach_prompt?: string | null
           created_at?: string
           created_by_partner_id?: string
           description?: string | null
@@ -6301,9 +6314,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_score?: number
+          package_key?: string | null
           page_route?: string | null
+          qr_image_url?: string | null
+          qr_title?: string | null
           question_count?: number
           questions?: Json
+          require_auth?: boolean
+          require_payment?: boolean
           result_patterns?: Json
           scoring_logic?: string | null
           subtitle?: string | null
