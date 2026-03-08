@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface SuperEntryProps {
   onInlineTool: (toolId: string) => void;
@@ -53,7 +52,7 @@ const paths = [
 
 const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
   const navigate = useNavigate();
-  const { greeting, isLoading } = usePersonalizedGreeting();
+  const { greeting } = usePersonalizedGreeting();
 
   const handlePathClick = (path: (typeof paths)[0]) => {
     if (path.route) {
@@ -68,18 +67,14 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
   return (
     <div className="space-y-5">
       {/* Greeting + guiding question */}
-      <div className="text-center space-y-2 pt-2">
-        {isLoading ? (
-          <Skeleton className="h-6 w-40 mx-auto" />
-        ) : (
-          <p className="text-base text-foreground/70">{greeting}</p>
-        )}
+      <div className="text-center space-y-1.5 pt-2">
+        <p className="text-sm text-muted-foreground">{greeting}</p>
         <h2 className="text-xl font-bold text-foreground">
           此刻，你想要什么？
         </h2>
       </div>
 
-      {/* 4 paths - directly visible */}
+      {/* 4 paths */}
       <div className="space-y-2.5">
         {paths.map((path, i) => (
           <motion.button
@@ -88,7 +83,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
             className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border ${path.border} ${path.bg} hover:shadow-md active:scale-[0.98] transition-all text-left`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08, duration: 0.35, ease: "easeOut" }}
+            transition={{ delay: i * 0.06, duration: 0.3, ease: "easeOut" }}
           >
             <span className="text-2xl shrink-0">{path.emoji}</span>
             <div className="flex-1 min-w-0">
