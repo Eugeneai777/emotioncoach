@@ -77,6 +77,7 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
         return;
       }
       setGeneratedContent(data.content);
+      setGeneratedImageUrl(""); // Reset image when new copy is generated
       if (data.saved) {
         setCopies((prev) => [data.saved, ...prev]);
       }
@@ -85,6 +86,27 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
       toast.error("生成失败: " + (err.message || "请重试"));
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!generatedContent) return;
+    setGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-partner-image", {
+        body: { partner_id: partnerId, copy_content: generatedContent, copy_type: selectedType },
+      });
+      if (error) throw error;
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+      setGeneratedImageUrl(data.image_url);
+      toast.success("配图生成成功！");
+    } catch (err: any) {
+      toast.error("配图生成失败: " + (err.message || "请重试"));
+    } finally {
+      setGeneratingImage(false);
     }
   };
 
