@@ -174,6 +174,7 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
           recommended_camp_types: template.recommended_camp_types || [],
           coach_type: template.coach_type || null,
           coach_options: template.coach_options || [],
+          scoring_type: template.scoring_type || "additive",
         } as any,
       });
       toast.success("测评已保存");
@@ -318,6 +319,17 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
                   <Input value={template.description || ""} onChange={(e) => updateField("description", e.target.value)} />
                   <Label className="text-right text-sm">Emoji</Label>
                   <Input value={template.emoji || ""} onChange={(e) => updateField("emoji", e.target.value)} className="w-20" />
+                  <Label className="text-right text-sm">评分类型</Label>
+                  <Select value={template.scoring_type || "additive"} onValueChange={(v) => updateField("scoring_type", v)}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="additive">标准加分</SelectItem>
+                      <SelectItem value="weighted">加权计分</SelectItem>
+                      <SelectItem value="clinical">临床量表</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>
