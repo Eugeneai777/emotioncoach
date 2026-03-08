@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipboardList, ExternalLink, Pencil, Users } from "lucide-react";
+import { ClipboardList, ExternalLink, Pencil, Users, Link, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { AssessmentEditor } from "../partner/AssessmentEditor";
@@ -66,6 +66,17 @@ export default function AssessmentsManagement() {
   const { data: partnerNames = {} } = usePartnerNames(partnerIds);
   const toggleAssessment = useToggleAssessment();
   const [editing, setEditing] = useState<PartnerAssessmentTemplate | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const getExternalUrl = (key: string) => `https://wechat.eugenewe.net/assessment/${key}`;
+
+  const handleCopy = (assessment: PartnerAssessmentTemplate & { created_by_partner_id: string }) => {
+    navigator.clipboard.writeText(getExternalUrl(assessment.assessment_key)).then(() => {
+      setCopiedId(assessment.id);
+      toast.success("外部链接已复制");
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
   if (editing) {
     return <AssessmentEditor assessment={editing} onBack={() => setEditing(null)} />;
@@ -112,8 +123,21 @@ export default function AssessmentsManagement() {
                         <Users className="w-3 h-3" />
                         {partnerNames[assessment.created_by_partner_id] || "未知合伙人"}
                       </span>
-                      <span>·</span>
-                      <span>/assessment/{assessment.assessment_key}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <code className="text-[11px] bg-muted/60 px-2 py-0.5 rounded text-muted-foreground truncate max-w-[280px]">
+                        {getExternalUrl(assessment.assessment_key)}
+                      </code>
+                      <button
+                        onClick={() => handleCopy(assessment)}
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors shrink-0"
+                      >
+                        {copiedId === assessment.id ? (
+                          <><Check className="w-3 h-3" /> 已复制</>
+                        ) : (
+                          <><Link className="w-3 h-3" /> 复制</>
+                        )}
+                      </button>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -121,9 +145,19 @@ export default function AssessmentsManagement() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => window.open(`/assessment/${assessment.assessment_key}`, '_blank')}
+                      onClick={() => window.open(getExternalUrl(assessment.assessment_key), '_blank')}
+                      title="在外部打开"
                     >
                       <ExternalLink className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => setEditing(assessment)}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      编辑
                     </Button>
                     <Button
                       variant="outline"
