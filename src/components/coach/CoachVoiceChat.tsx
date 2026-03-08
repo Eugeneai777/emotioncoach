@@ -2177,8 +2177,18 @@ export const CoachVoiceChat = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => endCall(e)}
-            disabled={isEnding}
+            onClick={(e) => {
+              if (isEnding) {
+                // 强制关闭：如果已经在结束中但卡住了，5秒后允许再次点击直接关闭
+                console.log('[VoiceChat] Force close triggered');
+                try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+                try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+                releaseLock();
+                onClose();
+                return;
+              }
+              endCall(e);
+            }}
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
             {isEnding ? (
@@ -2186,7 +2196,7 @@ export const CoachVoiceChat = ({
             ) : (
               <PhoneOff className="w-4 h-4 mr-1" />
             )}
-            {isEnding ? '结束中...' : '挂断'}
+            {isEnding ? '强制关闭' : '挂断'}
           </Button>
         </div>
       </div>
