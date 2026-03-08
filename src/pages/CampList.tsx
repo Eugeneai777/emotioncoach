@@ -203,12 +203,7 @@ const CampList = () => {
             bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-200/30
             dark:bg-teal-950/30 dark:border-teal-800/30">
             {campCategories.map(category => {
-              const categoryStats = {
-                camps: campTemplates?.filter(c => (c.category || 'youjin') === category.id).length || 0,
-                enrolled: campTemplates
-                  ?.filter(c => (c.category || 'youjin') === category.id)
-                  .reduce((sum, c) => sum + (enrollmentStats?.[c.camp_type] || 0), 0) || 0
-              };
+              const catCampCount = campTemplates?.filter(c => (c.category || 'youjin') === category.id).length || 0;
 
               return (
                 <TabsTrigger
