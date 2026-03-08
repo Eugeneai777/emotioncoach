@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, Trash2, ArrowLeft, Send, Sparkles, Bot, User, Check, X, Upload, Image } from "lucide-react";
 import { useUpdatePartnerAssessment, PartnerAssessmentTemplate } from "@/hooks/usePartnerAssessments";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,13 +49,15 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
     recommended_camp_types: (assessment as any).recommended_camp_types || [],
     coach_type: (assessment as any).coach_type || "",
     coach_options: (assessment as any).coach_options || [],
+    scoring_type: (assessment as any).scoring_type || "additive",
   });
   const [saving, setSaving] = useState(false);
   const [campTemplates, setCampTemplates] = useState<any[]>([]);
+  const [coachTemplates, setCoachTemplates] = useState<any[]>([]);
   const [uploadingQR, setUploadingQR] = useState(false);
   const qrInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch camp templates
+  // Fetch camp templates + coach templates
   useEffect(() => {
     const fetchCamps = async () => {
       const { data } = await supabase
@@ -64,7 +67,16 @@ export function AssessmentEditor({ assessment, onBack }: AssessmentEditorProps) 
         .order('display_order');
       if (data) setCampTemplates(data);
     };
+    const fetchCoaches = async () => {
+      const { data } = await supabase
+        .from('coach_templates')
+        .select('coach_key, title, emoji, page_route, system_prompt')
+        .eq('is_active', true)
+        .order('display_order');
+      if (data) setCoachTemplates(data);
+    };
     fetchCamps();
+    fetchCoaches();
   }, []);
 
   const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
