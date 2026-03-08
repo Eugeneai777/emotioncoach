@@ -112,6 +112,7 @@ const NAV_GROUPS = [
     items: [
       { key: "coaches", label: "教练模板", path: "/admin/coaches", icon: GraduationCap },
       { key: "human-coaches", label: "真人教练", path: "/admin/human-coaches", icon: UserCheck },
+      { key: "assessments", label: "测评管理", path: "/admin/assessments", icon: ClipboardList },
       { key: "camps", label: "训练营管理", path: "/admin/camps", icon: Tent },
       { key: "videos", label: "视频课程", path: "/admin/videos", icon: Video },
       { key: "knowledge", label: "知识库", path: "/admin/knowledge", icon: BookOpen },
