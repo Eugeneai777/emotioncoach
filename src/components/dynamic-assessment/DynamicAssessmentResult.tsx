@@ -21,6 +21,8 @@ interface DimensionScore {
   maxScore: number;
   label: string;
   emoji: string;
+  average?: number;
+  severity?: string;
 }
 
 interface ResultData {
@@ -29,6 +31,7 @@ interface ResultData {
   percentage: number;
   dimensionScores: DimensionScore[];
   primaryPattern: any;
+  meta?: Record<string, any>;
 }
 
 interface CampInfo {
@@ -51,6 +54,7 @@ interface DynamicAssessmentResultProps {
     coach_type?: string | null;
     assessment_key: string;
   };
+  scoringType?: string;
   aiInsight: string | null;
   loadingInsight: boolean;
   onRetake: () => void;
@@ -70,6 +74,7 @@ const fadeUp = {
 export function DynamicAssessmentResult({
   result,
   template,
+  scoringType,
   aiInsight,
   loadingInsight,
   onRetake,
