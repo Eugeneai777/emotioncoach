@@ -1,11 +1,12 @@
-import { CardContent } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Partner } from "@/hooks/usePartner";
 import { usePartnerLevels } from "@/hooks/usePartnerLevels";
-import { Wallet, ArrowRight, Clock, AlertTriangle } from "lucide-react";
+import { Wallet, ArrowRight, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CompactConversionFunnel } from "./CompactConversionFunnel";
+import { EarningsDetailDialog } from "./EarningsDetailDialog";
 
 interface PartnerOverviewCardProps {
   partner: Partner;
@@ -15,10 +16,14 @@ interface PartnerOverviewCardProps {
   onStudentsClick?: () => void;
 }
 
+type DetailType = "earnings" | "available" | "withdrawn" | "referrals_l1" | "referrals_l2";
+
 export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWithdraw, onStudentsClick }: PartnerOverviewCardProps) {
   const navigate = useNavigate();
   const { getYoujinLevels } = usePartnerLevels('youjin');
   const youjinLevels = getYoujinLevels();
+  const [detailType, setDetailType] = useState<DetailType>("earnings");
+  const [detailOpen, setDetailOpen] = useState(false);
   
   const currentLevelIndex = youjinLevels.findIndex(l => l.level_name === partner.partner_level);
   const currentLevel = youjinLevels[currentLevelIndex] || null;
@@ -31,7 +36,6 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
 
   const remaining = nextLevel ? nextLevel.min_prepurchase - partner.prepurchase_count : 0;
 
-  // 到期信息内联到等级条副标题
   const getSubtitleContent = () => {
     if (isExpired) {
       return { text: '已过期 · 续费后恢复佣金权益', urgent: true };
@@ -51,100 +55,125 @@ export function PartnerOverviewCard({ partner, isExpired, daysUntilExpiry, onWit
   const subtitle = getSubtitleContent();
   const showRenewButton = isExpired || (daysUntilExpiry !== null && daysUntilExpiry !== undefined && daysUntilExpiry <= 30);
 
+  const openDetail = (type: DetailType) => {
+    setDetailType(type);
+    setDetailOpen(true);
+  };
+
   return (
-    <div className="rounded-2xl border-0 shadow-lg overflow-hidden">
-      {/* 顶部等级条 */}
-      <div className={`bg-gradient-to-r ${currentLevel?.gradient || 'from-orange-500 to-amber-500'} p-3 text-white ${isExpired ? 'opacity-75' : ''}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl">{currentLevel?.icon || '💪'}</span>
-            <div>
-              <h3 className="font-bold text-sm flex items-center gap-1.5">
-                有劲合伙人 · {currentLevel?.level_name || 'L1'}
-                {isExpired && <span className="text-xs font-normal bg-white/20 px-1.5 py-0.5 rounded">已过期</span>}
-              </h3>
-              <p className="text-white/80 text-xs flex items-center gap-1">
-                {subtitle.urgent && (
-                  <AlertTriangle className="w-3 h-3" />
+    <>
+      <div className="rounded-2xl border-0 shadow-lg overflow-hidden">
+        {/* 顶部等级条 */}
+        <div className={`bg-gradient-to-r ${currentLevel?.gradient || 'from-orange-500 to-amber-500'} p-3 text-white ${isExpired ? 'opacity-75' : ''}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">{currentLevel?.icon || '💪'}</span>
+              <div>
+                <h3 className="font-bold text-sm flex items-center gap-1.5">
+                  有劲合伙人 · {currentLevel?.level_name || 'L1'}
+                  {isExpired && <span className="text-xs font-normal bg-white/20 px-1.5 py-0.5 rounded">已过期</span>}
+                </h3>
+                <p className="text-white/80 text-xs flex items-center gap-1">
+                  {subtitle.urgent && <AlertTriangle className="w-3 h-3" />}
+                  {subtitle.text}
+                  {showRenewButton && (
+                    <button 
+                      onClick={() => navigate('/partner/youjin-intro')}
+                      className="underline ml-1 hover:text-white"
+                    >
+                      {isExpired ? '续费' : '去续费'}
+                    </button>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-white/80">佣金比例</div>
+              <div className="text-lg font-bold">
+                {((currentLevel?.commission_rate_l1 || 0.2) * 100).toFixed(0)}%
+                {(currentLevel?.commission_rate_l2 || 0) > 0 && (
+                  <span className="text-xs font-normal ml-1">
+                    +{((currentLevel?.commission_rate_l2 || 0) * 100).toFixed(0)}%
+                  </span>
                 )}
-                {subtitle.text}
-                {showRenewButton && (
-                  <button 
-                    onClick={() => navigate('/partner/youjin-intro')}
-                    className="underline ml-1 hover:text-white"
-                  >
-                    {isExpired ? '续费' : '去续费'}
-                  </button>
-                )}
-              </p>
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-white/80">佣金比例</div>
-            <div className="text-lg font-bold">
-              {((currentLevel?.commission_rate_l1 || 0.2) * 100).toFixed(0)}%
-              {(currentLevel?.commission_rate_l2 || 0) > 0 && (
-                <span className="text-xs font-normal ml-1">
-                  +{((currentLevel?.commission_rate_l2 || 0) * 100).toFixed(0)}%
-                </span>
-              )}
+          
+          {nextLevel && !isExpired && (
+            <div className="mt-2">
+              <Progress value={progress} className="h-1.5 bg-white/20" />
             </div>
-          </div>
+          )}
         </div>
-        
-        {nextLevel && !isExpired && (
+
+        {/* 核心数据 - 2x2 紧凑布局，可点击下钻 */}
+        <div className="p-3">
+          <div className="space-y-1.5">
+            <div className="flex justify-between">
+              <button
+                onClick={() => openDetail("earnings")}
+                className="flex items-baseline gap-1 hover:bg-muted/50 rounded px-1 -mx-1 py-0.5 transition-colors text-left"
+              >
+                <span className="text-lg font-bold text-orange-600">¥{partner.total_earnings.toFixed(0)}</span>
+                <span className="text-[10px] text-muted-foreground underline decoration-dashed">累计收益 ›</span>
+              </button>
+              <button
+                onClick={() => openDetail("available")}
+                className="flex items-baseline gap-1 hover:bg-muted/50 rounded px-1 -mx-1 py-0.5 transition-colors text-right"
+              >
+                <span className="text-lg font-bold text-orange-600">¥{partner.available_balance.toFixed(0)}</span>
+                <span className="text-[10px] text-muted-foreground underline decoration-dashed">可提现 ›</span>
+              </button>
+            </div>
+            <div className="flex justify-between">
+              <button
+                onClick={() => openDetail("referrals_l1")}
+                className="flex items-baseline gap-1 hover:bg-muted/50 rounded px-1 -mx-1 py-0.5 transition-colors text-left"
+              >
+                <span className="text-lg font-bold text-orange-600">{partner.total_referrals}</span>
+                <span className="text-[10px] text-muted-foreground underline decoration-dashed">直推用户 ›</span>
+              </button>
+              <button
+                onClick={() => openDetail("referrals_l2")}
+                className="flex items-baseline gap-1 hover:bg-muted/50 rounded px-1 -mx-1 py-0.5 transition-colors text-right"
+              >
+                <span className="text-lg font-bold text-orange-600">{partner.prepurchase_count}</span>
+                <span className="text-[10px] text-muted-foreground underline decoration-dashed">剩余名额 ›</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 可提现快捷操作 */}
+          {partner.available_balance > 0 && (
+            <Button 
+              onClick={onWithdraw}
+              size="sm"
+              className="w-full mt-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+            >
+              <Wallet className="w-3.5 h-3.5 mr-1.5" />
+              立即提现 ¥{partner.available_balance.toFixed(2)}
+              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+            </Button>
+          )}
+
+          {/* 内嵌转化漏斗 */}
           <div className="mt-2">
-            <Progress value={progress} className="h-1.5 bg-white/20" />
-          </div>
-        )}
-      </div>
-
-      {/* 核心数据 - 2x2 紧凑布局 */}
-      <div className="p-3">
-        <div className="space-y-1.5">
-          <div className="flex justify-between">
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-orange-600">¥{partner.total_earnings.toFixed(0)}</span>
-              <span className="text-[10px] text-muted-foreground">累计收益</span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-orange-600">¥{partner.available_balance.toFixed(0)}</span>
-              <span className="text-[10px] text-muted-foreground">可提现</span>
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-orange-600">{partner.total_referrals}</span>
-              <span className="text-[10px] text-muted-foreground">直推用户</span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-orange-600">{partner.prepurchase_count}</span>
-              <span className="text-[10px] text-muted-foreground">剩余名额</span>
-            </div>
+            <CompactConversionFunnel 
+              partnerId={partner.id} 
+              onClick={onStudentsClick}
+            />
           </div>
         </div>
-
-        {/* 可提现快捷操作 */}
-        {partner.available_balance > 0 && (
-          <Button 
-            onClick={onWithdraw}
-            size="sm"
-            className="w-full mt-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-          >
-            <Wallet className="w-3.5 h-3.5 mr-1.5" />
-            立即提现 ¥{partner.available_balance.toFixed(2)}
-            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-          </Button>
-        )}
-
-        {/* 内嵌转化漏斗 */}
-        <div className="mt-2">
-          <CompactConversionFunnel 
-            partnerId={partner.id} 
-            onClick={onStudentsClick}
-          />
-        </div>
       </div>
-    </div>
+
+      {/* 数据下钻弹窗 */}
+      <EarningsDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        partnerId={partner.id}
+        type={detailType}
+      />
+    </>
   );
 }
