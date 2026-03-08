@@ -38,6 +38,8 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
   const [copies, setCopies] = useState<MarketingCopy[]>([]);
   const [loadingCopies, setLoadingCopies] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState("");
 
   useEffect(() => {
     loadCopies();
