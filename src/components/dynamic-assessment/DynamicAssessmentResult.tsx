@@ -114,6 +114,20 @@ export function DynamicAssessmentResult({
     fetchCamps();
   }, [recommendedCampTypes]);
 
+  // Fetch user profile for share card
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const sb = supabase as any;
+      const { data } = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
+      setProfileData({
+        displayName: data?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+        avatarUrl: getProxiedAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url),
+      });
+    };
+    fetchProfile();
+  }, [user]);
+
   const handleAICoach = () => {
     const targetRoute = coachRoute || "/assessment-coach";
     navigate(targetRoute, {
@@ -134,25 +148,16 @@ export function DynamicAssessmentResult({
   };
 
   const handleShare = async () => {
-    setSharing(true);
-    try {
-      const shareData = {
-        title: `${template.emoji} ${template.title} - 我的测评结果`,
-        text: `我在「${template.title}」中获得 ${result.totalScore}/${result.maxScore} 分，类型：${result.primaryPattern?.label || ""}`,
-        url: window.location.href,
-      };
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-        const { toast } = await import("sonner");
-        toast.success("已复制分享内容");
-      }
-    } catch {
-      // user cancelled
-    } finally {
-      setSharing(false);
-    }
+    if (isSharing || !shareCardRef.current) return;
+    setIsSharing(true);
+    await executeOneClickShare({
+      cardRef: shareCardRef,
+      cardName: `${template.title}测评报告`,
+      onShowPreview: (url) => setSharePreviewUrl(url),
+      onSuccess: () => toast.success('分享卡片已生成'),
+      onError: (err) => toast.error(err),
+    });
+    setIsSharing(false);
   };
 
   // Score percentage for the ring
