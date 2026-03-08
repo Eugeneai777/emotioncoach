@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Building2 } from "lucide-react";
 import { PartnerCoachManager } from "./PartnerCoachManager";
 import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
+import { PartnerAssessmentAnalytics } from "./PartnerAssessmentAnalytics";
 import { PartnerMarketingHub } from "./PartnerMarketingHub";
 import { PartnerPromotionManager } from "./PartnerPromotionManager";
 import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
@@ -26,6 +27,7 @@ const TAB_GROUPS = [
     tabs: [
       { value: "coaches", label: "AI教练" },
       { value: "assessments", label: "测评" },
+      { value: "assessment-analytics", label: "测评分析" },
     ],
   },
   {
@@ -150,6 +152,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         </TabsContent>
         <TabsContent value="assessments">
           <PartnerAssessmentManager partnerId={partner.id} partnerCode={partner.partner_code} />
+        </TabsContent>
+        <TabsContent value="assessment-analytics">
+          <PartnerAssessmentAnalytics partnerId={partner.id} />
         </TabsContent>
         <TabsContent value="marketing">
           <PartnerMarketingHub partnerId={partner.id} />
