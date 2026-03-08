@@ -179,6 +179,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         <TabsContent value="training">
           <PartnerTrainingCenter partnerId={partner.id} />
         </TabsContent>
+        <TabsContent value="team-members">
+          <PartnerTeamManager partnerId={partner.id} />
+        </TabsContent>
       </Tabs>
     </div>
   );
