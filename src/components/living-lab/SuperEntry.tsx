@@ -64,10 +64,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
         <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-teal-300/15 blur-xl" />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <p className="text-emerald-100 text-sm mb-1">{greeting}</p>
-          <h2 className="text-white text-xl font-bold mb-6 tracking-tight">
-            你的AI生活教练
-          </h2>
+          <p className="text-emerald-100 text-sm mb-4">{greeting}</p>
 
           {/* Pulsing voice button */}
           <button
