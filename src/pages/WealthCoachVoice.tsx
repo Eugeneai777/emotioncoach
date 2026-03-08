@@ -19,32 +19,21 @@ const WealthCoachVoice = () => {
   const locationState = location.state as LocationState | null;
   const [showPostCallDialog, setShowPostCallDialog] = useState(false);
 
-  console.log('[WealthCoachVoice] Rendered', { 
-    hasUser: !!user, 
-    loading,
-    locationState,
-    pathname: location.pathname 
-  });
-
+  // 未登录时重定向（等 loading 结束再判断）
   useEffect(() => {
     if (!loading && !user) {
-      console.log('[WealthCoachVoice] No user, redirecting to auth');
       navigate("/auth", { replace: true });
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
-    console.log('[WealthCoachVoice] Auth loading...');
-    return <div className="min-h-screen bg-black flex items-center justify-center text-white">加载中...</div>;
-  }
-
-  if (!user) return null;
+  // loading 或无用户时，不阻塞渲染 CoachVoiceChat
+  // CoachVoiceChat 内部有完整的 auth 检查和处理
+  // 只在确认无用户时返回空
+  if (!loading && !user) return null;
 
   const isFromAssessment = locationState?.fromAssessment;
 
   const handleClose = () => {
-    console.log('[WealthCoachVoice] handleClose called', { isFromAssessment, hasReactionPattern: !!locationState?.reactionPattern, hasDominantPoor: !!locationState?.dominantPoor });
-    // 如果是从测评页跳转来的，通话结束后显示顾问推荐弹窗
     if (isFromAssessment && locationState?.reactionPattern && locationState?.dominantPoor) {
       setShowPostCallDialog(true);
     } else {
@@ -65,7 +54,7 @@ const WealthCoachVoice = () => {
         coachTitle="财富觉醒教练"
         primaryColor="amber"
         tokenEndpoint={isFromAssessment ? "wealth-assessment-realtime-token" : undefined}
-        userId={user.id}
+        userId={user?.id}
         mode="general"
         featureKey="realtime_voice_wealth_assessment"
         extraBody={isFromAssessment && locationState?.assessmentData ? { assessmentData: locationState.assessmentData } : undefined}
@@ -73,7 +62,6 @@ const WealthCoachVoice = () => {
         skipBilling={isFromAssessment ? true : undefined}
       />
 
-      {/* 测评后通话结束 - 顾问推荐弹窗 */}
       {locationState?.reactionPattern && locationState?.dominantPoor && (
         <PostCallAdvisorDialog
           open={showPostCallDialog}
