@@ -83,11 +83,11 @@ export function useIndustryPartners() {
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles" as any)
-          .select("id, nickname")
+          .select("id, display_name")
           .in("id", userIds);
         if (profiles) {
           (profiles as any[]).forEach((p: any) => {
-            nicknameMap[p.id] = p.nickname || "";
+            nicknameMap[p.id] = p.display_name || "";
           });
         }
       }
