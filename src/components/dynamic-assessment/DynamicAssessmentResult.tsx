@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2 } from "lucide-react";
+import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
 import { DimensionRadarChart } from "./DimensionRadarChart";
+import { cn } from "@/lib/utils";
 
 interface DimensionScore {
   score: number;
@@ -54,10 +55,10 @@ interface DynamicAssessmentResultProps {
 }
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: [0, 0, 0.2, 1] as const },
+    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
   }),
 };
 
@@ -145,178 +146,283 @@ export function DynamicAssessmentResult({
     }
   };
 
+  // Score percentage for the ring
+  const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
+
   return (
-    <div className="min-h-screen bg-background p-4 max-w-lg mx-auto pb-24">
-      {/* Score Header */}
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
+      {/* Hero Section with score ring */}
       <motion.div
-        className="text-center mb-6"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative overflow-hidden pt-8 pb-6 px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
       >
-        <div className="text-5xl mb-3">{result.primaryPattern?.emoji || template.emoji}</div>
-        <h2 className="text-xl font-bold mb-1">{result.primaryPattern?.label || "测评结果"}</h2>
-        {result.primaryPattern?.description && (
-          <p className="text-muted-foreground text-sm">{result.primaryPattern.description}</p>
-        )}
-        <div className="mt-3 flex items-center justify-center gap-2">
-          <Badge variant="outline" className="text-lg px-4 py-1">
-            {result.totalScore} / {result.maxScore} 分
-          </Badge>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleShare}
-            disabled={sharing}
+        {/* Decorative blurs */}
+        <div className="absolute top-0 left-1/4 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute top-10 right-1/4 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
+
+        <div className="relative text-center max-w-lg mx-auto">
+          {/* Score ring */}
+          <motion.div
+            className="relative inline-flex items-center justify-center mb-4"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
           >
-            <Share2 className="w-4 h-4" />
-          </Button>
+            <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+              <motion.circle
+                cx="50" cy="50" r="42"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="6"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 42}
+                initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
+                transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl">{result.primaryPattern?.emoji || template.emoji}</span>
+            </div>
+          </motion.div>
+
+          {/* Score text */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
+            <h2 className="text-xl font-bold text-foreground mb-1">
+              {result.primaryPattern?.label || "测评结果"}
+            </h2>
+            {result.primaryPattern?.description && (
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
+                {result.primaryPattern.description}
+              </p>
+            )}
+            <div className="flex items-center justify-center gap-2">
+              <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                {result.totalScore} / {result.maxScore} 分
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                onClick={handleShare}
+                disabled={sharing}
+              >
+                <Share2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
 
-      {/* Radar Chart */}
-      {result.dimensionScores.length >= 3 && (
-        <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="mb-4">
-            <CardContent className="p-4 pt-2">
-              <h3 className="font-semibold text-sm mb-1">能力雷达</h3>
-              <DimensionRadarChart dimensionScores={result.dimensionScores} />
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Dimension Scores */}
-      <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
-        <Card className="mb-4">
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-sm">维度得分</h3>
-            {result.dimensionScores.map((d) => (
-              <div key={d.label}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{d.emoji} {d.label}</span>
-                  <span className="text-muted-foreground">{d.score}/{d.maxScore}</span>
+      <div className="max-w-lg mx-auto px-4 space-y-4">
+        {/* Radar Chart */}
+        {result.dimensionScores.length >= 3 && (
+          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
+              <CardContent className="p-4 pt-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Target className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">能力雷达</h3>
                 </div>
-                <Progress value={d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0} className="h-2" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </motion.div>
+                <DimensionRadarChart dimensionScores={result.dimensionScores} />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-      {/* Traits */}
-      {result.primaryPattern?.traits?.length > 0 && (
-        <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="mb-4">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-sm mb-2">你的特征</h3>
-              <ul className="space-y-1">
-                {result.primaryPattern.traits.map((t: string, i: number) => (
-                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-0.5">•</span> {t}
-                  </li>
-                ))}
-              </ul>
+        {/* Dimension Scores */}
+        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+          <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">维度得分</h3>
+              </div>
+              {result.dimensionScores.map((d, i) => {
+                const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                return (
+                  <motion.div
+                    key={d.label}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.06 }}
+                  >
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">
+                        {d.emoji} {d.label}
+                      </span>
+                      <span className={cn(
+                        "tabular-nums text-xs font-medium",
+                        pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
+                      )}>
+                        {d.score}/{d.maxScore}
+                      </span>
+                    </div>
+                    <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                      <motion.div
+                        className={cn(
+                          "h-full rounded-full",
+                          pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
+                        )}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </CardContent>
           </Card>
         </motion.div>
-      )}
 
-      {/* Tips */}
-      {result.primaryPattern?.tips?.length > 0 && (
-        <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="mb-4">
+        {/* Traits */}
+        {result.primaryPattern?.traits?.length > 0 && (
+          <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">你的特征</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {result.primaryPattern.traits.map((t: string, i: number) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + i * 0.05 }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/8 text-primary text-xs font-medium rounded-full border border-primary/15"
+                    >
+                      {t}
+                    </motion.span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Tips */}
+        {result.primaryPattern?.tips?.length > 0 && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className="w-4 h-4 text-amber-500" />
+                  <h3 className="font-semibold text-sm">改善建议</h3>
+                </div>
+                <ul className="space-y-2">
+                  {result.primaryPattern.tips.map((t: string, i: number) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.06 }}
+                      className="text-sm text-muted-foreground flex items-start gap-2.5 p-2 rounded-lg bg-amber-50/50 border border-amber-100/50"
+                    >
+                      <span className="text-amber-500 mt-0.5 shrink-0">💡</span>
+                      <span>{t}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* AI Insight */}
+        <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
             <CardContent className="p-4">
-              <h3 className="font-semibold text-sm mb-2">改善建议</h3>
-              <ul className="space-y-1">
-                {result.primaryPattern.tips.map((t: string, i: number) => (
-                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-0.5">💡</span> {t}
-                  </li>
-                ))}
-              </ul>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-sm">AI 个性化洞察</h3>
+              </div>
+              {loadingInsight ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <span>AI 正在分析你的结果...</span>
+                </div>
+              ) : aiInsight ? (
+                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">暂无</p>
+              )}
             </CardContent>
           </Card>
         </motion.div>
-      )}
 
-      {/* AI Insight */}
-      <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
-        <Card className="mb-4">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-sm mb-2">🤖 AI 个性化建议</h3>
-            {loadingInsight ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" /> 正在生成...
-              </div>
-            ) : aiInsight ? (
-              <p className="text-sm text-muted-foreground whitespace-pre-line">{aiInsight}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">暂无</p>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* AI Coach Button */}
-      {(template.coach_prompt || template.coach_type) && (
-        <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
-          <Button
-            onClick={handleAICoach}
-            className="w-full mb-4 gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground"
-          >
-            <Mic className="w-4 h-4" /> AI 教练深度解读
-          </Button>
-        </motion.div>
-      )}
-
-      {/* Recommended Training Camps */}
-      {recommendedCamps.length > 0 && (
-        <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 mb-4">
-          <h3 className="font-semibold text-sm px-1">🏕️ 推荐训练营</h3>
-          {recommendedCamps.map((camp) => (
-            <div
-              key={camp.id}
-              className="bg-card rounded-xl p-4 border border-border/30 hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
-              onClick={() => navigate('/training-camps')}
+        {/* AI Coach Button */}
+        {(template.coach_prompt || template.coach_type) && (
+          <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
+            <Button
+              onClick={handleAICoach}
+              className="w-full h-12 gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg shadow-primary/20"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-xl">{camp.icon || '🏕️'}</span>
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm text-foreground truncate">{camp.camp_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {camp.duration_days}天系统训练 · {camp.price === 0 ? '免费参加' : `¥${camp.price}`}
-                    </p>
+              <Mic className="w-5 h-5" /> AI 教练深度解读
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Recommended Training Camps */}
+        {recommendedCamps.length > 0 && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-2">
+            <h3 className="font-semibold text-sm px-1 flex items-center gap-2">
+              🏕️ 推荐训练营
+            </h3>
+            {recommendedCamps.map((camp) => (
+              <div
+                key={camp.id}
+                className="bg-card/90 backdrop-blur-sm rounded-xl p-4 border border-border/40 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer active:scale-[0.98]"
+                onClick={() => navigate('/training-camps')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-xl">{camp.icon || '🏕️'}</span>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm text-foreground truncate">{camp.camp_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {camp.duration_days}天系统训练 · {camp.price === 0 ? '免费参加' : `¥${camp.price}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
+                    <ArrowRight className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
-                  <ArrowRight className="w-4 h-4" />
-                </div>
               </div>
-            </div>
-          ))}
-        </motion.div>
-      )}
-
-      {/* QR Card */}
-      <DynamicAssessmentQRCard
-        qrImageUrl={template.qr_image_url}
-        qrTitle={template.qr_title}
-      />
-
-      {/* Action Buttons */}
-      <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
-        {hasHistory && onShowHistory && (
-          <Button variant="outline" className="w-full gap-2" onClick={onShowHistory}>
-            <History className="w-4 h-4" /> 查看历史记录
-          </Button>
+            ))}
+          </motion.div>
         )}
-        <Button variant="outline" className="w-full gap-2" onClick={onRetake}>
-          <RotateCcw className="w-4 h-4" /> 重新测评
-        </Button>
-      </motion.div>
+
+        {/* QR Card */}
+        <DynamicAssessmentQRCard
+          qrImageUrl={template.qr_image_url}
+          qrTitle={template.qr_title}
+        />
+
+        {/* Action Buttons */}
+        <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
+          {hasHistory && onShowHistory && (
+            <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
+              <History className="w-4 h-4" /> 查看历史记录
+            </Button>
+          )}
+          <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
+            <RotateCcw className="w-4 h-4" /> 重新测评
+          </Button>
+        </motion.div>
+      </div>
     </div>
   );
 }
