@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, BookOpen, BarChart3, Rocket, Mic } from "lucide-react";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
+import { useAuth } from "@/hooks/useAuth";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 interface SuperEntryProps {
   onInlineTool: (toolId: string) => void;
@@ -49,26 +53,52 @@ const paths = [
 const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
   const navigate = useNavigate();
   const { greeting } = usePersonalizedGreeting();
+  const { user } = useAuth();
+  const [showVoice, setShowVoice] = useState(false);
+
+  const handleVoiceClick = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    setShowVoice(true);
+  };
+
+  if (showVoice && user) {
+    return (
+      <CoachVoiceChat
+        onClose={() => setShowVoice(false)}
+        coachEmoji="❤️"
+        coachTitle="有劲AI生活教练"
+        primaryColor="rose"
+        tokenEndpoint="vibrant-life-realtime-token"
+        userId={user.id}
+        mode="general"
+        featureKey="realtime_voice"
+        voiceType={getSavedVoiceType()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Hero: Voice Coach CTA */}
+      {/* Hero: Voice Coach CTA — 红色主题 */}
       <motion.div
-        className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 p-6 pb-5"
+        className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-600 via-red-500 to-rose-500 p-6 pb-5"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Decorative circles */}
         <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-teal-300/15 blur-xl" />
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-pink-300/15 blur-xl" />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <p className="text-emerald-100 text-sm mb-4">{greeting}</p>
+          <p className="text-rose-100 text-sm mb-4">{greeting}</p>
 
           {/* Pulsing voice button */}
           <button
-            onClick={() => navigate("/life-coach-voice")}
+            onClick={handleVoiceClick}
             className="relative group focus:outline-none touch-manipulation mb-4"
             aria-label="开始语音对话"
           >
@@ -81,8 +111,8 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
                             shadow-2xl shadow-black/20
                             group-hover:scale-110 group-active:scale-95
                             transition-transform duration-200 ease-out">
-              <Mic className="w-8 h-8 text-emerald-600 mb-0.5" />
-              <span className="text-[10px] font-bold text-emerald-700">点击对话</span>
+              <Mic className="w-8 h-8 text-rose-600 mb-0.5" />
+              <span className="text-[10px] font-bold text-rose-700">点击对话</span>
             </div>
           </button>
 
