@@ -245,7 +245,7 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
           ) : (
             <>
               {/* Commissions */}
-              {(type === "earnings" || type === "available") && (
+        {(type === "earnings" || type === "pending" || type === "available") && (
                 <>
                   {filteredCommissions.length === 0 ? (
                     <EmptyState />
