@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2 } from "lucide-react";
 import { PartnerCoachManager } from "./PartnerCoachManager";
+import { PartnerTeamManager } from "@/components/admin/industry-partners/PartnerTeamManager";
 import { PartnerAssessmentManager } from "./PartnerAssessmentManager";
 import { PartnerAssessmentAnalytics } from "./PartnerAssessmentAnalytics";
 import { PartnerMarketingHub } from "./PartnerMarketingHub";
@@ -45,6 +46,13 @@ const TAB_GROUPS = [
     tabs: [
       { value: "reminders", label: "跟进提醒" },
       { value: "training", label: "培训中心" },
+    ],
+  },
+  {
+    key: "team",
+    label: "团队管理",
+    tabs: [
+      { value: "team-members", label: "团队成员" },
     ],
   },
 ];
@@ -170,6 +178,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         </TabsContent>
         <TabsContent value="training">
           <PartnerTrainingCenter partnerId={partner.id} />
+        </TabsContent>
+        <TabsContent value="team-members">
+          <PartnerTeamManager partnerId={partner.id} />
         </TabsContent>
       </Tabs>
     </div>
