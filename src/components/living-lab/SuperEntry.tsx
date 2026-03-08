@@ -88,7 +88,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
     <div className="space-y-7">
       {/* Hero Voice CTA — 珊瑚粉渐变 */}
       <motion.div
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-400 via-pink-500 to-fuchsia-500 p-8 pb-7"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 via-rose-500 to-pink-500 p-8 pb-7"
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
