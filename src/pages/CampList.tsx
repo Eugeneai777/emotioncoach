@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } from "lucide-react";
+import { TrendingUp, Sparkles, Filter, Home, ChevronRight } from "lucide-react";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
