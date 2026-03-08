@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 const entries = [
+  { label: "情绪按钮", emoji: "🆘", route: "/emotion-button" },
   { label: "教练空间", emoji: "🧭", route: "/coach-space" },
   { label: "学习课程", emoji: "📚", route: "/courses" },
   { label: "训练营", emoji: "🏕️", route: "/camps" },
@@ -16,7 +17,7 @@ const QuickNavFooter = () => {
       <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
         <span>🚀</span> 更多服务
       </h3>
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 gap-1.5">
         {entries.map((entry) => (
           <button
             key={entry.label}
