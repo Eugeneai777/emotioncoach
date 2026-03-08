@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Search, Loader2, TrendingUp, Wallet, Users, ArrowDownCircle } from "lucide-react";
 
-type DetailType = "earnings" | "available" | "withdrawn" | "referrals_l1" | "referrals_l2";
+export type DetailType = "earnings" | "pending" | "available" | "withdrawn" | "referrals_l1" | "referrals_l2";
 
 interface EarningsDetailDialogProps {
   open: boolean;
@@ -49,6 +49,7 @@ interface Referral {
 
 const TYPE_CONFIG: Record<DetailType, { title: string; icon: React.ReactNode }> = {
   earnings: { title: "累计收益明细", icon: <TrendingUp className="w-5 h-5 text-orange-500" /> },
+  pending: { title: "待确认佣金明细", icon: <TrendingUp className="w-5 h-5 text-amber-500" /> },
   available: { title: "可提现明细", icon: <Wallet className="w-5 h-5 text-orange-500" /> },
   withdrawn: { title: "已提现记录", icon: <ArrowDownCircle className="w-5 h-5 text-orange-500" /> },
   referrals_l1: { title: "直推用户明细", icon: <Users className="w-5 h-5 text-orange-500" /> },
@@ -80,7 +81,7 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
   const loadData = async () => {
     setLoading(true);
     try {
-      if (type === "earnings" || type === "available") {
+      if (type === "earnings" || type === "pending" || type === "available") {
         const query = supabase
           .from("partner_commissions")
           .select("id, order_type, order_amount, commission_level, commission_rate, commission_amount, status, created_at")
@@ -89,6 +90,8 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
 
         if (type === "available") {
           query.eq("status", "confirmed");
+        } else if (type === "pending") {
+          query.eq("status", "pending");
         }
 
         const { data } = await query;
@@ -223,7 +226,7 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
         </div>
 
         {/* Commission filter tabs */}
-        {(type === "earnings" || type === "available") && (
+        {type === "earnings" && (
           <Tabs value={commissionFilter} onValueChange={(v) => setCommissionFilter(v as any)}>
             <TabsList className="w-full">
               <ResponsiveTabsTrigger value="all" label="全部" />
@@ -242,7 +245,7 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
           ) : (
             <>
               {/* Commissions */}
-              {(type === "earnings" || type === "available") && (
+        {(type === "earnings" || type === "pending" || type === "available") && (
                 <>
                   {filteredCommissions.length === 0 ? (
                     <EmptyState />
