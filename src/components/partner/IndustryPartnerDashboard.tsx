@@ -12,6 +12,7 @@ import { PartnerPromotionManager } from "./PartnerPromotionManager";
 import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
 import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
+import { PartnerSharedDataDashboard } from "./PartnerSharedDataDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
