@@ -202,6 +202,7 @@ export default function DynamicAssessmentPage() {
     return (
       <DynamicAssessmentQuestions
         questions={questions}
+        scoreOptions={tpl?.score_options}
         onComplete={handleQuestionsComplete}
         onExit={() => setPhase("intro")}
       />

@@ -6,11 +6,12 @@ import { ArrowLeft, ArrowRight, X } from "lucide-react";
 
 interface DynamicAssessmentQuestionsProps {
   questions: any[];
+  scoreOptions?: any[]; // Template-level shared options
   onComplete: (answers: Record<number, number>) => void;
   onExit: () => void;
 }
 
-export function DynamicAssessmentQuestions({ questions, onComplete, onExit }: DynamicAssessmentQuestionsProps) {
+export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete, onExit }: DynamicAssessmentQuestionsProps) {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
@@ -19,6 +20,25 @@ export function DynamicAssessmentQuestions({ questions, onComplete, onExit }: Dy
   const q = questions[currentQ];
 
   if (!q) return null;
+
+  // Resolve options: per-question options > template-level scoreOptions with positive/reverse handling
+  const getOptionsForQuestion = (question: any) => {
+    if (question.options?.length > 0) return question.options;
+    if (!scoreOptions?.length) return [];
+    
+    // If question has positive=false (reversed), flip the scores
+    if (question.positive === false) {
+      const maxScore = Math.max(...scoreOptions.map((o: any) => o.score));
+      const minScore = Math.min(...scoreOptions.map((o: any) => o.score));
+      return scoreOptions.map((o: any) => ({
+        ...o,
+        score: maxScore + minScore - o.score,
+      }));
+    }
+    return scoreOptions;
+  };
+
+  const options = getOptionsForQuestion(q);
 
   const handleAnswer = (questionIndex: number, score: number) => {
     setAnswers((prev) => ({ ...prev, [questionIndex]: score }));
@@ -52,7 +72,7 @@ export function DynamicAssessmentQuestions({ questions, onComplete, onExit }: Dy
 
       {/* Options */}
       <div className="space-y-3">
-        {(q.options || []).map((opt: any, oi: number) => (
+        {options.map((opt: any, oi: number) => (
           <Button
             key={oi}
             variant={answers[currentQ] === opt.score ? "default" : "outline"}
