@@ -279,6 +279,7 @@ const App = () => (
               <Route path="/packages" element={<Packages />} />
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
+              <Route path="/living-lab" element={<LivingLab />} />
               <Route path="/coach-space" element={<CoachSpace />} />
               <Route path="/coach-space-intro" element={<CoachSpaceIntro />} />
               <Route path="/platform-intro" element={<PlatformIntro />} />
