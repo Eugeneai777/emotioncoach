@@ -811,6 +811,17 @@ export const CoachVoiceChat = ({
       setCampRecommendations(event.camps || []);
       if (event.camps?.length > 0) {
         toast({ title: `🏕️ 为你推荐 ${event.camps.length} 个训练营`, description: "点击卡片了解详情" });
+        // 财富教练场景：用户提到训练营时，自动结束通话并跳转
+        if (featureKey?.includes('wealth')) {
+          setTimeout(() => {
+            try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+            if (durationRef.current) clearInterval(durationRef.current);
+            recordSession().then(() => {
+              releaseLock();
+              navigate('/wealth-camp-intro');
+            });
+          }, 1500); // 给1.5秒让用户看到toast
+        }
       }
     } else if (event.type === 'coach_recommendation') {
       setCoachRecommendation({ coach_type: event.coach_type, coach_name: event.coach_name, coach_route: event.coach_route, description: event.description, reason: event.reason });
