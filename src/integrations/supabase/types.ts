@@ -6272,8 +6272,10 @@ export type Database = {
           require_auth: boolean
           require_payment: boolean
           result_patterns: Json
+          result_renderer: string
           score_options: Json | null
           scoring_logic: string | null
+          scoring_type: string
           source_type: string | null
           subtitle: string | null
           title: string
@@ -6304,8 +6306,10 @@ export type Database = {
           require_auth?: boolean
           require_payment?: boolean
           result_patterns?: Json
+          result_renderer?: string
           score_options?: Json | null
           scoring_logic?: string | null
+          scoring_type?: string
           source_type?: string | null
           subtitle?: string | null
           title: string
@@ -6336,8 +6340,10 @@ export type Database = {
           require_auth?: boolean
           require_payment?: boolean
           result_patterns?: Json
+          result_renderer?: string
           score_options?: Json | null
           scoring_logic?: string | null
+          scoring_type?: string
           source_type?: string | null
           subtitle?: string | null
           title?: string

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDynamicAssessmentPurchase } from "@/hooks/useDynamicAssessmentPurchase";
 import { useDynamicAssessmentHistory, useDeleteDynamicAssessmentRecord } from "@/hooks/useDynamicAssessmentHistory";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateScore, type ScoringResult } from "@/lib/scoring-engine";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,18 +24,17 @@ export default function DynamicAssessmentPage() {
   const saveResult = useSaveAssessmentResult();
 
   const [phase, setPhase] = useState<Phase>("intro");
-  const [result, setResult] = useState<any>(null);
-  const [pendingAnswers, setPendingAnswers] = useState<Record<number, number>>({});
+  const [result, setResult] = useState<ScoringResult | null>(null);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
-  // Cast template to access new fields
+  // Cast template to access extended fields
   const tpl = template as any;
   const requireAuth = tpl?.require_auth ?? true;
   const requirePayment = tpl?.require_payment ?? false;
   const packageKey = tpl?.package_key;
+  const scoringType = tpl?.scoring_type || "additive";
 
   const { data: purchaseRecord, refetch: refetchPurchase } = useDynamicAssessmentPurchase(
     requirePayment ? packageKey : undefined
@@ -67,41 +67,10 @@ export default function DynamicAssessmentPage() {
   const patterns = template.result_patterns || [];
 
   const calculateAndShowResult = (answers: Record<number, number>) => {
-    // Calculate dimension scores
-    const dimScores: Record<string, { score: number; maxScore: number; label: string; emoji: string }> = {};
-    dimensions.forEach((d: any) => {
-      dimScores[d.key] = { score: 0, maxScore: d.maxScore || 0, label: d.label, emoji: d.emoji };
-    });
+    // Use pluggable scoring engine
+    const scoringResult = calculateScore(scoringType, answers, questions, dimensions, patterns);
 
-    questions.forEach((q: any, i: number) => {
-      const ans = answers[i];
-      if (ans !== undefined && dimScores[q.dimension]) {
-        dimScores[q.dimension].score += ans;
-      }
-    });
-
-    const totalScore = Object.values(dimScores).reduce((s, d) => s + d.score, 0);
-    const maxScore = Object.values(dimScores).reduce((s, d) => s + d.maxScore, 0);
-    const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
-
-    let matchedPattern = patterns[0];
-    for (const p of patterns) {
-      if (p.scoreRange && percentage >= p.scoreRange.min && percentage <= p.scoreRange.max) {
-        matchedPattern = p;
-        break;
-      }
-    }
-
-    const dimensionScoresArray = Object.values(dimScores);
-    const resultData = {
-      totalScore,
-      maxScore,
-      percentage,
-      dimensionScores: dimensionScoresArray,
-      primaryPattern: matchedPattern,
-    };
-
-    setResult(resultData);
+    setResult(scoringResult);
     setPhase("result");
 
     // Save result
@@ -110,23 +79,20 @@ export default function DynamicAssessmentPage() {
         user_id: user.id,
         template_id: template.id,
         answers,
-        dimension_scores: dimensionScoresArray,
-        total_score: totalScore,
-        primary_pattern: matchedPattern?.label || "",
+        dimension_scores: scoringResult.dimensionScores,
+        total_score: scoringResult.totalScore,
+        primary_pattern: scoringResult.primaryPattern?.label || "",
       });
     }
 
     // Generate AI insight
-    generateInsight(dimensionScoresArray, matchedPattern, totalScore, maxScore);
+    generateInsight(scoringResult);
   };
 
   const handleQuestionsComplete = useCallback((answers: Record<number, number>) => {
-    setPendingAnswers(answers);
-
     // Check auth requirement
     if (requireAuth && !user) {
       toast.info("请先登录后查看结果");
-      // Redirect to auth page with return URL
       const returnUrl = window.location.pathname;
       window.location.href = `/auth?returnUrl=${encodeURIComponent(returnUrl)}`;
       return;
@@ -134,26 +100,26 @@ export default function DynamicAssessmentPage() {
 
     // Check payment requirement
     if (requirePayment && !hasPurchased) {
-      // Still calculate to show basic result, but trigger pay dialog
       calculateAndShowResult(answers);
       setShowPayDialog(true);
       return;
     }
 
     calculateAndShowResult(answers);
-  }, [requireAuth, user, requirePayment, hasPurchased, template, questions, dimensions, patterns]);
+  }, [requireAuth, user, requirePayment, hasPurchased, template, questions, dimensions, patterns, scoringType]);
 
-  const generateInsight = async (dimScores: any[], pattern: any, totalScore: number, maxScore: number) => {
+  const generateInsight = async (scoringResult: ScoringResult) => {
     setLoadingInsight(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-partner-assessment-insight", {
         body: {
-          dimensionScores: dimScores,
-          primaryPattern: pattern?.label,
-          totalScore,
-          maxScore,
+          dimensionScores: scoringResult.dimensionScores,
+          primaryPattern: scoringResult.primaryPattern?.label,
+          totalScore: scoringResult.totalScore,
+          maxScore: scoringResult.maxScore,
           aiInsightPrompt: template.ai_insight_prompt,
           title: template.title,
+          meta: scoringResult.meta, // Pass extra scoring data for clinical insights
         },
       });
       if (error) throw error;
@@ -168,7 +134,6 @@ export default function DynamicAssessmentPage() {
   const handleRetake = useCallback(() => {
     setResult(null);
     setAiInsight(null);
-    setPendingAnswers({});
     setPhase("questions");
   }, []);
 
@@ -244,7 +209,6 @@ export default function DynamicAssessmentPage() {
           hasHistory={historyRecords.length > 0}
         />
 
-        {/* Pay dialog for premium content */}
         {requirePayment && packageKey && (
           <AssessmentPayDialog
             open={showPayDialog}
