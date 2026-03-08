@@ -263,6 +263,7 @@ export function DynamicAssessmentResult({
             dimensionScores={result.dimensionScores}
             meta={result.meta}
           />
+        )}
 
         {/* Dimension Scores */}
         <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
