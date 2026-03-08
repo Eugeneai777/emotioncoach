@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen } from "lucide-react";
+import { ArrowLeft, Loader2, TrendingUp, Share2, UserPlus, Bot, ClipboardList, Settings, Users, Store, ShoppingCart, Zap, Package, Sparkles, Megaphone, BarChart3, Bell, BookOpen, LineChart } from "lucide-react";
 import { IndustryPartner } from "./types";
 import { BindUserDialog } from "./BindUserDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -27,6 +27,7 @@ const PartnerPromotionManager = lazy(() => import("@/components/partner/PartnerP
 const PartnerChannelAttribution = lazy(() => import("@/components/partner/PartnerChannelAttribution").then((m) => ({ default: m.PartnerChannelAttribution })));
 const PartnerFollowupReminders = lazy(() => import("@/components/partner/PartnerFollowupReminders").then((m) => ({ default: m.PartnerFollowupReminders })));
 const PartnerTrainingCenter = lazy(() => import("@/components/partner/PartnerTrainingCenter").then((m) => ({ default: m.PartnerTrainingCenter })));
+const PartnerSharedDataDashboard = lazy(() => import("@/components/partner/PartnerSharedDataDashboard").then((m) => ({ default: m.PartnerSharedDataDashboard })));
 
 const TabLoading = () => (
   <div className="flex justify-center py-12">
@@ -57,6 +58,7 @@ const TAB_DEFINITIONS: TabDef[] = [
   { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "crm" },
   { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "crm" },
   { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "crm" },
+  { value: "data-dashboard", label: "数据看板", shortLabel: "看板", icon: LineChart, group: "crm" },
   { value: "store", label: "商城商品", shortLabel: "商品", icon: Store, group: "organization" },
   { value: "orders", label: "商城订单", shortLabel: "订单", icon: ShoppingCart, group: "organization" },
 ];
@@ -279,6 +281,9 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
           </TabsContent>
           <TabsContent value="training">
             <PartnerTrainingCenter partnerId={partner.id} />
+          </TabsContent>
+          <TabsContent value="data-dashboard">
+            <PartnerSharedDataDashboard partnerId={partner.id} isAdmin />
           </TabsContent>
           <TabsContent value="team">
             <PartnerTeamManager partnerId={partner.id} />

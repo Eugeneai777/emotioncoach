@@ -12,6 +12,7 @@ import { PartnerPromotionManager } from "./PartnerPromotionManager";
 import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
 import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
+import { PartnerSharedDataDashboard } from "./PartnerSharedDataDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -46,6 +47,7 @@ const TAB_GROUPS = [
     tabs: [
       { value: "reminders", label: "跟进提醒" },
       { value: "training", label: "培训中心" },
+      { value: "data-dashboard", label: "数据看板" },
     ],
   },
   {
@@ -181,6 +183,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         </TabsContent>
         <TabsContent value="team-members">
           <PartnerTeamManager partnerId={partner.id} />
+        </TabsContent>
+        <TabsContent value="data-dashboard">
+          <PartnerSharedDataDashboard partnerId={partner.id} />
         </TabsContent>
       </Tabs>
     </div>

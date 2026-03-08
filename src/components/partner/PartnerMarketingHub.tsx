@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Copy, Check, Trash2, Star, Loader2, MessageSquare, BookOpen, Video, Image } from "lucide-react";
+import { Sparkles, Copy, Check, Trash2, Star, Loader2, MessageSquare, BookOpen, Video, Image, ImagePlus, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -38,6 +38,8 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
   const [copies, setCopies] = useState<MarketingCopy[]>([]);
   const [loadingCopies, setLoadingCopies] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState("");
 
   useEffect(() => {
     loadCopies();
@@ -75,6 +77,7 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
         return;
       }
       setGeneratedContent(data.content);
+      setGeneratedImageUrl(""); // Reset image when new copy is generated
       if (data.saved) {
         setCopies((prev) => [data.saved, ...prev]);
       }
@@ -83,6 +86,27 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
       toast.error("生成失败: " + (err.message || "请重试"));
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!generatedContent) return;
+    setGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-partner-image", {
+        body: { partner_id: partnerId, copy_content: generatedContent, copy_type: selectedType },
+      });
+      if (error) throw error;
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+      setGeneratedImageUrl(data.image_url);
+      toast.success("配图生成成功！");
+    } catch (err: any) {
+      toast.error("配图生成失败: " + (err.message || "请重试"));
+    } finally {
+      setGeneratingImage(false);
     }
   };
 
@@ -211,6 +235,49 @@ export function PartnerMarketingHub({ partnerId }: PartnerMarketingHubProps) {
                 <div className="whitespace-pre-wrap text-sm leading-relaxed">
                   {generatedContent}
                 </div>
+                {/* Generate Image Button */}
+                <div className="mt-4 pt-3 border-t border-primary/20">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="w-full sm:w-auto"
+                  >
+                    {generatingImage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        AI正在生成配图...
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="w-4 h-4 mr-2" />
+                        生成配图
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {/* Generated Image Preview */}
+                {generatedImageUrl && (
+                  <div className="mt-3 space-y-2">
+                    <img
+                      src={generatedImageUrl}
+                      alt="AI生成的营销配图"
+                      className="w-full max-w-md rounded-lg border"
+                    />
+                    <a
+                      href={generatedImageUrl}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-1" />
+                        下载配图
+                      </Button>
+                    </a>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
