@@ -225,7 +225,7 @@ const CampList = () => {
                     </div>
                   </div>
                   <Badge variant="secondary" className="hidden sm:flex bg-white/20 text-white border-0 mt-2 text-xs">
-                    {categoryStats.camps}个训练营
+                    {catCampCount}个训练营
                   </Badge>
                 </TabsTrigger>
               );
