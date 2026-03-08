@@ -226,7 +226,7 @@ export function DynamicAssessmentResult({
                 size="icon"
                 className="h-9 w-9 rounded-full"
                 onClick={handleShare}
-                disabled={sharing}
+                disabled={isSharing}
               >
                 <Share2 className="w-4 h-4" />
               </Button>
@@ -437,6 +437,30 @@ export function DynamicAssessmentResult({
           </Button>
         </motion.div>
       </div>
+
+      {/* Hidden share card */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <DynamicAssessmentShareCard
+          ref={shareCardRef}
+          totalScore={result.totalScore}
+          maxScore={result.maxScore}
+          dimensionScores={result.dimensionScores}
+          primaryPattern={result.primaryPattern}
+          templateEmoji={template.emoji}
+          templateTitle={template.title}
+          displayName={profileData.displayName}
+          avatarUrl={profileData.avatarUrl}
+        />
+      </div>
+
+      {/* Share image preview */}
+      <ShareImagePreview
+        open={!!sharePreviewUrl}
+        onClose={() => setSharePreviewUrl(null)}
+        imageUrl={sharePreviewUrl}
+        onRegenerate={handleShare}
+        isRegenerating={isSharing}
+      />
     </div>
   );
 }
