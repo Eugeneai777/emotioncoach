@@ -81,7 +81,7 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
   const loadData = async () => {
     setLoading(true);
     try {
-      if (type === "earnings" || type === "available") {
+      if (type === "earnings" || type === "pending" || type === "available") {
         const query = supabase
           .from("partner_commissions")
           .select("id, order_type, order_amount, commission_level, commission_rate, commission_amount, status, created_at")
@@ -90,6 +90,8 @@ export function EarningsDetailDialog({ open, onOpenChange, partnerId, type }: Ea
 
         if (type === "available") {
           query.eq("status", "confirmed");
+        } else if (type === "pending") {
+          query.eq("status", "pending");
         }
 
         const { data } = await query;
