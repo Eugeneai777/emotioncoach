@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
+import { ClinicalResultSection } from "./ClinicalResultSection";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
 import ShareImagePreview from "@/components/ui/share-image-preview";
@@ -21,6 +22,8 @@ interface DimensionScore {
   maxScore: number;
   label: string;
   emoji: string;
+  average?: number;
+  severity?: string;
 }
 
 interface ResultData {
@@ -29,6 +32,7 @@ interface ResultData {
   percentage: number;
   dimensionScores: DimensionScore[];
   primaryPattern: any;
+  meta?: Record<string, any>;
 }
 
 interface CampInfo {
@@ -51,6 +55,7 @@ interface DynamicAssessmentResultProps {
     coach_type?: string | null;
     assessment_key: string;
   };
+  scoringType?: string;
   aiInsight: string | null;
   loadingInsight: boolean;
   onRetake: () => void;
@@ -70,6 +75,7 @@ const fadeUp = {
 export function DynamicAssessmentResult({
   result,
   template,
+  scoringType,
   aiInsight,
   loadingInsight,
   onRetake,
@@ -249,6 +255,14 @@ export function DynamicAssessmentResult({
               </CardContent>
             </Card>
           </motion.div>
+        )}
+
+        {/* Clinical Factor Analysis (for SCL-90 etc.) */}
+        {scoringType === "clinical" && (
+          <ClinicalResultSection
+            dimensionScores={result.dimensionScores}
+            meta={result.meta}
+          />
         )}
 
         {/* Dimension Scores */}
