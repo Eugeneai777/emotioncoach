@@ -1,14 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
 import { DimensionRadarChart } from "./DimensionRadarChart";
+import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
+import ShareImagePreview from "@/components/ui/share-image-preview";
+import { executeOneClickShare } from "@/utils/oneClickShare";
+import { useAuth } from "@/hooks/useAuth";
+import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface DimensionScore {
