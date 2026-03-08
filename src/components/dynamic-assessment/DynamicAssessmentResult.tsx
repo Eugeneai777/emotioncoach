@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, RotateCcw, History, Mic } from "lucide-react";
+import { Loader2, RotateCcw, History, Mic, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
 
 interface DimensionScore {
@@ -22,6 +23,15 @@ interface ResultData {
   primaryPattern: any;
 }
 
+interface CampInfo {
+  id: string;
+  camp_name: string;
+  camp_type: string;
+  icon: string | null;
+  duration_days: number;
+  price: number;
+}
+
 interface DynamicAssessmentResultProps {
   result: ResultData;
   template: {
@@ -37,6 +47,7 @@ interface DynamicAssessmentResultProps {
   onRetake: () => void;
   onShowHistory?: () => void;
   hasHistory?: boolean;
+  recommendedCampTypes?: string[];
 }
 
 export function DynamicAssessmentResult({
@@ -47,8 +58,23 @@ export function DynamicAssessmentResult({
   onRetake,
   onShowHistory,
   hasHistory,
+  recommendedCampTypes,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
+  const [recommendedCamps, setRecommendedCamps] = useState<CampInfo[]>([]);
+
+  useEffect(() => {
+    if (!recommendedCampTypes?.length) return;
+    const fetchCamps = async () => {
+      const { data } = await supabase
+        .from('camp_templates')
+        .select('id, camp_name, camp_type, icon, duration_days, price')
+        .in('camp_type', recommendedCampTypes)
+        .eq('is_active', true);
+      if (data) setRecommendedCamps(data);
+    };
+    fetchCamps();
+  }, [recommendedCampTypes]);
 
   const handleAICoach = () => {
     navigate("/assessment-coach", {
@@ -156,6 +182,35 @@ export function DynamicAssessmentResult({
         >
           <Mic className="w-4 h-4" /> AI 教练深度解读
         </Button>
+      )}
+
+      {/* Recommended Training Camps */}
+      {recommendedCamps.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <h3 className="font-semibold text-sm px-1">🏕️ 推荐训练营</h3>
+          {recommendedCamps.map((camp) => (
+            <div
+              key={camp.id}
+              className="bg-card rounded-xl p-4 border border-border/30 hover:shadow-md transition-all cursor-pointer"
+              onClick={() => navigate('/training-camps')}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <span className="text-xl">{camp.icon || '🏕️'}</span>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground truncate">{camp.camp_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {camp.duration_days}天系统训练 · {camp.price === 0 ? '免费参加' : `¥${camp.price}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* QR Card */}
