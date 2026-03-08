@@ -121,7 +121,7 @@ const LivingLab = () => {
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: "touch" }}>
       <DynamicOGMeta pageKey="energyStudio" />
-      <PageHeader title="有劲生活馆" />
+      <PageHeader title="每个人的生活教练" />
 
       <main className="container max-w-2xl mx-auto px-3 py-3 space-y-4">
         {activeTool ? (
