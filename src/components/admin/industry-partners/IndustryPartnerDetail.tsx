@@ -27,6 +27,7 @@ const PartnerPromotionManager = lazy(() => import("@/components/partner/PartnerP
 const PartnerChannelAttribution = lazy(() => import("@/components/partner/PartnerChannelAttribution").then((m) => ({ default: m.PartnerChannelAttribution })));
 const PartnerFollowupReminders = lazy(() => import("@/components/partner/PartnerFollowupReminders").then((m) => ({ default: m.PartnerFollowupReminders })));
 const PartnerTrainingCenter = lazy(() => import("@/components/partner/PartnerTrainingCenter").then((m) => ({ default: m.PartnerTrainingCenter })));
+const PartnerSharedDataDashboard = lazy(() => import("@/components/partner/PartnerSharedDataDashboard").then((m) => ({ default: m.PartnerSharedDataDashboard })));
 
 const TabLoading = () => (
   <div className="flex justify-center py-12">
