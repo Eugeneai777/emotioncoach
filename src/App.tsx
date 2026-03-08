@@ -55,6 +55,7 @@ const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 // 能量空间
 const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
 const EnergyStudioIntro = lazyRetry(() => import("./pages/EnergyStudioIntro"));
+const LivingLab = lazyRetry(() => import("./pages/LivingLab"));
 const CoachSpace = lazyRetry(() => import("./pages/CoachSpace"));
 const CoachSpaceIntro = lazyRetry(() => import("./pages/CoachSpaceIntro"));
 const PlatformIntro = lazyRetry(() => import("./pages/PlatformIntro"));
@@ -278,6 +279,7 @@ const App = () => (
               <Route path="/packages" element={<Packages />} />
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
+              <Route path="/living-lab" element={<LivingLab />} />
               <Route path="/coach-space" element={<CoachSpace />} />
               <Route path="/coach-space-intro" element={<CoachSpaceIntro />} />
               <Route path="/platform-intro" element={<PlatformIntro />} />

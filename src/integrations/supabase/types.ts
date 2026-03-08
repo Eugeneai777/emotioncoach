@@ -9359,6 +9359,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tool_usage: {
+        Row: {
+          id: string
+          tool_id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          tool_id: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          tool_id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_training_weights: {
         Row: {
           adjustment_reason: string | null
