@@ -68,7 +68,7 @@ const SuperEntry = ({ onInlineTool }: SuperEntryProps) => {
 
           {/* Pulsing voice button */}
           <button
-            onClick={() => navigate("/coach/vibrant_life_sage")}
+            onClick={() => navigate("/life-coach-voice")}
             className="relative group focus:outline-none touch-manipulation mb-4"
             aria-label="开始语音对话"
           >
