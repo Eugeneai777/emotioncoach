@@ -1,44 +1,23 @@
 
 
-## 实施计划：A 历史页视觉升级 + B 分享海报功能
+## 两个问题需要修复
 
----
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### A. 历史记录页视觉升级
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**文件**: `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-改动要点：
-- 外层容器改为渐变背景 `bg-gradient-to-b from-primary/5 via-background to-background`，与介绍页/结果页统一
-- 卡片改为 glassmorphism 风格：`backdrop-blur-sm bg-card/90 border-primary/10`
-- 列表项用 `framer-motion` 添加交错 fadeUp 动画（`staggerChildren`）
-- 对比面板也应用 glassmorphism + 入场动画
-- 空状态插画加大 emoji 并增加 scale-in 动画
-- 加载骨架屏改为 shimmer 效果
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
----
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### B. 分享海报功能
-
-参照现有 `CompetitivenessShareCard` + `ShareImagePreview` + `executeOneClickShare` 的成熟模式。
-
-**1. 新建分享卡片组件**
-- 文件: `src/components/dynamic-assessment/DynamicAssessmentShareCard.tsx`
-- 使用 `forwardRef`，固定宽度 340px，inline styles（html2canvas 兼容）
-- 内容：评分环形图、维度得分条、主要类型标签、品牌标识
-- 接收 props：`totalScore, maxScore, dimensionScores, primaryPattern, emoji, title, displayName, avatarUrl`
-
-**2. 修改结果页集成分享**
-- 文件: `src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
-- 替换现有简单 `handleShare`（仅复制文字）为图片海报分享流程
-- 添加隐藏的 `DynamicAssessmentShareCard`（`position: absolute, left: -9999px`）
-- 使用 `executeOneClickShare` + `generateCardBlob` 生成图片
-- 使用 `ShareImagePreview` 组件展示生成的海报（支持长按保存）
-- 获取用户头像/昵称（从 profiles 表）
-
-**3. 复用现有基础设施**
-- `src/utils/shareCardConfig.ts` — `generateCardBlob`
-- `src/utils/oneClickShare.ts` — `executeOneClickShare`
-- `src/components/ui/share-image-preview.tsx` — 全屏预览
-- `src/utils/avatarUtils.ts` — 头像代理
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

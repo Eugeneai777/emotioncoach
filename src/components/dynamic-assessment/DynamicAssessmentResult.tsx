@@ -1,14 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
 import { DimensionRadarChart } from "./DimensionRadarChart";
+import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
+import ShareImagePreview from "@/components/ui/share-image-preview";
+import { executeOneClickShare } from "@/utils/oneClickShare";
+import { useAuth } from "@/hooks/useAuth";
+import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface DimensionScore {
@@ -73,9 +78,13 @@ export function DynamicAssessmentResult({
   recommendedCampTypes,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [recommendedCamps, setRecommendedCamps] = useState<CampInfo[]>([]);
   const [coachRoute, setCoachRoute] = useState<string | null>(null);
-  const [sharing, setSharing] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [profileData, setProfileData] = useState<{ displayName?: string; avatarUrl?: string }>({});
 
   // Fetch coach route
   useEffect(() => {
@@ -105,6 +114,20 @@ export function DynamicAssessmentResult({
     fetchCamps();
   }, [recommendedCampTypes]);
 
+  // Fetch user profile for share card
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const sb = supabase as any;
+      const { data } = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
+      setProfileData({
+        displayName: data?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+        avatarUrl: getProxiedAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url),
+      });
+    };
+    fetchProfile();
+  }, [user]);
+
   const handleAICoach = () => {
     const targetRoute = coachRoute || "/assessment-coach";
     navigate(targetRoute, {
@@ -125,25 +148,16 @@ export function DynamicAssessmentResult({
   };
 
   const handleShare = async () => {
-    setSharing(true);
-    try {
-      const shareData = {
-        title: `${template.emoji} ${template.title} - 我的测评结果`,
-        text: `我在「${template.title}」中获得 ${result.totalScore}/${result.maxScore} 分，类型：${result.primaryPattern?.label || ""}`,
-        url: window.location.href,
-      };
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-        const { toast } = await import("sonner");
-        toast.success("已复制分享内容");
-      }
-    } catch {
-      // user cancelled
-    } finally {
-      setSharing(false);
-    }
+    if (isSharing || !shareCardRef.current) return;
+    setIsSharing(true);
+    await executeOneClickShare({
+      cardRef: shareCardRef,
+      cardName: `${template.title}测评报告`,
+      onShowPreview: (url) => setSharePreviewUrl(url),
+      onSuccess: () => toast.success('分享卡片已生成'),
+      onError: (err) => toast.error(err),
+    });
+    setIsSharing(false);
   };
 
   // Score percentage for the ring
@@ -212,7 +226,7 @@ export function DynamicAssessmentResult({
                 size="icon"
                 className="h-9 w-9 rounded-full"
                 onClick={handleShare}
-                disabled={sharing}
+                disabled={isSharing}
               >
                 <Share2 className="w-4 h-4" />
               </Button>
@@ -423,6 +437,30 @@ export function DynamicAssessmentResult({
           </Button>
         </motion.div>
       </div>
+
+      {/* Hidden share card */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <DynamicAssessmentShareCard
+          ref={shareCardRef}
+          totalScore={result.totalScore}
+          maxScore={result.maxScore}
+          dimensionScores={result.dimensionScores}
+          primaryPattern={result.primaryPattern}
+          templateEmoji={template.emoji}
+          templateTitle={template.title}
+          displayName={profileData.displayName}
+          avatarUrl={profileData.avatarUrl}
+        />
+      </div>
+
+      {/* Share image preview */}
+      <ShareImagePreview
+        open={!!sharePreviewUrl}
+        onClose={() => setSharePreviewUrl(null)}
+        imageUrl={sharePreviewUrl}
+        onRegenerate={handleShare}
+        isRegenerating={isSharing}
+      />
     </div>
   );
 }
