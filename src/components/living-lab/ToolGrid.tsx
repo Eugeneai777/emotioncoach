@@ -13,7 +13,7 @@ interface Tool {
   category: string;
 }
 
-// Quick relief tools (large cards)
+// Quick relief + emotion button tools
 const quickReliefIds = ["breathing", "alive-check", "declaration", "panic"];
 
 interface ToolGridProps {
@@ -28,7 +28,8 @@ const getIcon = (iconName: string) => {
 
 const ToolGrid = ({ tools, onToolClick }: ToolGridProps) => {
   const quickRelief = tools.filter((t) => quickReliefIds.includes(t.tool_id));
-  const deepExplore = tools.filter((t) => !quickReliefIds.includes(t.tool_id));
+  const emotionTools = tools.filter((t) => !quickReliefIds.includes(t.tool_id) && ["emotion-button", "emotion-sos", "emotion"].some(k => t.tool_id.includes(k)));
+
 
   return (
     <div className="space-y-4">
@@ -63,27 +64,31 @@ const ToolGrid = ({ tools, onToolClick }: ToolGridProps) => {
         </div>
       )}
 
-      {/* Deep Explore Section */}
-      {deepExplore.length > 0 && (
+      {/* Emotion tools */}
+      {emotionTools.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-            <span>🔍</span> 深度探索
+            <span>💚</span> 情绪按钮
           </h3>
-          <div className="space-y-1.5">
-            {deepExplore.map((tool) => (
+          <div className="grid grid-cols-2 gap-2">
+            {emotionTools.map((tool) => (
               <button
                 key={tool.id}
                 onClick={() => onToolClick(tool.tool_id)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 hover:border-primary/30 active:scale-[0.98] transition-all text-left"
+                className={cn(
+                  "flex flex-col items-start gap-2 p-3.5 rounded-xl border border-border/50",
+                  "bg-card hover:border-primary/30 active:scale-[0.97] transition-all text-left"
+                )}
               >
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${tool.gradient} text-white shrink-0`}>
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${tool.gradient} text-white`}>
                   {getIcon(tool.icon_name)}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div>
                   <p className="text-sm font-medium text-foreground">{tool.title}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{tool.description}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                    {tool.description}
+                  </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
               </button>
             ))}
           </div>
