@@ -242,7 +242,7 @@ const CampList = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="w-4 h-4 text-teal-500" />
-                <span>共 {stats.category.camps} 个训练营</span>
+                <span>共 {categoryCampCount} 个训练营</span>
               </div>
 
               <div className="flex items-center gap-2">
