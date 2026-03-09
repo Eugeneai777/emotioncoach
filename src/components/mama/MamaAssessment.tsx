@@ -410,33 +410,55 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(30 100% 97%)" }}>
       {/* Header */}
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-4 pt-3 pb-1 flex items-center justify-between">
         <button onClick={onBack} className="flex items-center text-sm min-h-[44px]" style={{ color: "hsl(30 20% 44%)" }}>
           <ArrowLeft className="w-4 h-4 mr-1" /> 返回
         </button>
+        <span className="text-xs font-medium" style={{ color: "hsl(30 15% 56%)" }}>
+          {currentStep + 1} / {dimensions.length}
+        </span>
       </div>
 
-      {/* Progress dots */}
-      <div className="flex justify-center gap-2 px-4 mb-4">
-        {dimensions.map((d, i) => (
-          <button
-            key={d.key}
-            onClick={() => i <= currentStep && setCurrentStep(i)}
-            className="flex flex-col items-center gap-1"
-          >
-            <motion.div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-              style={{
-                background: scores[d.key] > 0 ? (i === currentStep ? "hsl(16 86% 68%)" : "hsl(16 86% 88%)") : "hsl(30 50% 93%)",
-                color: scores[d.key] > 0 ? (i === currentStep ? "white" : "hsl(16 86% 55%)") : "hsl(30 20% 60%)",
-              }}
-              animate={{ scale: i === currentStep ? 1.1 : 1 }}
-            >
-              {scores[d.key] > 0 ? d.emoji : (i + 1)}
-            </motion.div>
-            <span className="text-[9px]" style={{ color: i === currentStep ? "hsl(16 86% 55%)" : "hsl(30 15% 56%)" }}>{d.label}</span>
-          </button>
-        ))}
+      {/* Progress bar */}
+      <div className="px-4 mb-3">
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(30 50% 93%)" }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: "linear-gradient(90deg, hsl(16 86% 68%), hsl(340 60% 68%))" }}
+            animate={{ width: `${((currentStep + (scores[currentDim.key] > 0 ? 1 : 0.3)) / dimensions.length) * 100}%` }}
+            transition={{ type: "spring", damping: 20 }}
+          />
+        </div>
+        {/* Dimension pills */}
+        <div className="flex justify-between mt-2 px-1">
+          {dimensions.map((d, i) => {
+            const scored = scores[d.key] > 0;
+            const active = i === currentStep;
+            return (
+              <button
+                key={d.key}
+                onClick={() => (scored || i <= currentStep) && setCurrentStep(i)}
+                className="flex flex-col items-center gap-0.5 transition-all"
+              >
+                <motion.span
+                  className="text-base"
+                  animate={{ 
+                    scale: active ? 1.3 : 1,
+                    opacity: active ? 1 : scored ? 0.8 : 0.4,
+                  }}
+                >
+                  {d.emoji}
+                </motion.span>
+                <span className="text-[9px] font-medium" style={{ 
+                  color: active ? "hsl(16 86% 55%)" : scored ? "hsl(30 20% 44%)" : "hsl(30 30% 70%)" 
+                }}>
+                  {d.label}
+                  {scored && !active && <span className="ml-0.5" style={{ color: "hsl(152 42% 49%)" }}>✓</span>}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Main scoring area */}
@@ -447,65 +469,76 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.2 }}
             className="flex-1 flex flex-col"
           >
             {/* Question card */}
-            <div className="text-center mb-6 mt-2">
-              <span className="text-5xl block mb-3">{currentDim.emoji}</span>
-              <h2 className="text-lg font-bold mb-1" style={{ color: "hsl(25 25% 17%)" }}>{currentDim.label}</h2>
-              <p className="text-sm" style={{ color: "hsl(30 20% 44%)" }}>{currentDim.desc}</p>
-            </div>
+            <motion.div
+              className="text-center mb-4 mt-1 p-4 rounded-2xl"
+              style={{ background: "white", border: "1px solid hsl(30 50% 92%)" }}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+            >
+              <span className="text-4xl block mb-2">{currentDim.emoji}</span>
+              <h2 className="text-base font-bold mb-0.5" style={{ color: "hsl(25 25% 17%)" }}>{currentDim.desc}</h2>
+              <div className="flex items-center justify-center gap-3 mt-2">
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "hsl(340 60% 95%)", color: "hsl(340 60% 55%)" }}>
+                  {currentDim.low}
+                </span>
+                <span className="text-[10px]" style={{ color: "hsl(30 15% 70%)" }}>←→</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "hsl(152 42% 93%)", color: "hsl(152 42% 40%)" }}>
+                  {currentDim.high}
+                </span>
+              </div>
+            </motion.div>
 
-            {/* Score hints */}
-            <div className="flex justify-between px-2 mb-2">
-              <span className="text-[10px]" style={{ color: "hsl(340 60% 68%)" }}>{currentDim.low}</span>
-              <span className="text-[10px]" style={{ color: "hsl(152 42% 49%)" }}>{currentDim.high}</span>
-            </div>
-
-            {/* Emoji score selector - 2 rows of 5 */}
-            <div className="grid grid-cols-5 gap-2 mb-4">
+            {/* Emoji score selector - 2 rows of 5, compact */}
+            <div className="grid grid-cols-5 gap-1.5 mb-3">
               {scoreEmojis.map((item) => {
                 const isSelected = scores[currentDim.key] === item.score;
                 return (
                   <motion.button
                     key={item.score}
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.85 }}
+                    animate={isSelected ? { scale: 1.05 } : { scale: 1 }}
                     onClick={() => handleScoreSelect(item.score)}
-                    className="flex flex-col items-center gap-0.5 py-2.5 rounded-xl border-2 transition-all min-h-[60px]"
+                    className="flex flex-col items-center gap-0 py-2 rounded-xl border-2 transition-all min-h-[52px]"
                     style={{
-                      borderColor: isSelected ? "hsl(16 86% 68%)" : "hsl(30 50% 90%)",
-                      background: isSelected ? "hsl(16 86% 95%)" : "white",
+                      borderColor: isSelected ? "hsl(16 86% 68%)" : "hsl(30 50% 92%)",
+                      background: isSelected 
+                        ? "linear-gradient(135deg, hsl(16 86% 95%), hsl(16 86% 90%))" 
+                        : "white",
+                      boxShadow: isSelected ? "0 2px 8px hsl(16 86% 68% / 0.25)" : "none",
                     }}
                   >
-                    <span className={isSelected ? "text-2xl" : "text-xl"}>{item.emoji}</span>
-                    <span className="text-[10px] font-semibold" style={{ 
-                      color: isSelected ? "hsl(16 86% 55%)" : "hsl(30 20% 44%)" 
+                    <span className={isSelected ? "text-xl" : "text-lg"}>{item.emoji}</span>
+                    <span className="text-[10px] font-bold" style={{ 
+                      color: isSelected ? "hsl(16 86% 50%)" : "hsl(30 20% 55%)" 
                     }}>{item.label}</span>
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Current selection feedback */}
-            {scores[currentDim.key] > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center mb-4"
-              >
-                <span className="text-3xl">{scoreEmojis[scores[currentDim.key] - 1].emoji}</span>
-                <p className="text-sm font-medium mt-1" style={{
-                  color: scores[currentDim.key] <= 3 ? "hsl(340 60% 68%)" : scores[currentDim.key] <= 6 ? "hsl(45 90% 55%)" : "hsl(152 42% 49%)"
-                }}>
-                  {currentDim.label}：{scores[currentDim.key]} 分
-                </p>
-              </motion.div>
-            )}
+            {/* Current selection feedback - inline */}
+            <div className="h-10 flex items-center justify-center">
+              {scores[currentDim.key] > 0 && (
+                <motion.p
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm font-medium"
+                  style={{
+                    color: scores[currentDim.key] <= 3 ? "hsl(340 60% 60%)" : scores[currentDim.key] <= 6 ? "hsl(45 80% 45%)" : "hsl(152 42% 42%)"
+                  }}
+                >
+                  {currentDim.label} {scores[currentDim.key]} 分 {scores[currentDim.key] <= 3 ? "— 需要关注 💛" : scores[currentDim.key] >= 8 ? "— 状态很棒 🌟" : ""}
+                </motion.p>
+              )}
+            </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation */}
+        {/* Navigation - fixed at bottom */}
         <div className="pb-6 pt-2 flex gap-2">
           {currentStep > 0 && (
             <Button
