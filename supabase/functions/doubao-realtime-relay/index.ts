@@ -30,7 +30,7 @@ const KEEPALIVE_SILENCE_BYTES = 12800;
 
 // ✅ 保活噪声幅度：给上行注入“几乎不可闻”的微弱能量，避免被 VAD 判定为纯静音而忽略
 // PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3;
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 50;
 
 // ✅ 保活间隔：5s（从 10s 缩短），更激进地防止上游空闲断开
 const KEEPALIVE_INTERVAL_MS = 3_000;
