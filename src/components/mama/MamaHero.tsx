@@ -3,21 +3,21 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const scenarios = [
-  { label: "孩子不听话", emoji: "😤", route: "/coach/parent_emotion_coach" },
-  { label: "不爱学习", emoji: "📚", route: "/assessment/communication_parent" },
-  { label: "今天很累", emoji: "😩", route: "/emotion-button" },
-  { label: "沟通不好", emoji: "💬", route: "/coach/parent_emotion_coach" },
-  { label: "有点迷茫", emoji: "🌫️", route: "/assessment/women_competitiveness" },
+  { label: "孩子不听话", emoji: "😤", route: "/coach/parent_emotion_coach", color: "from-[hsl(16,86%,68%)]/10 to-[hsl(16,86%,68%)]/5" },
+  { label: "不爱学习", emoji: "📚", route: "/assessment/communication_parent", color: "from-[hsl(220,80%,65%)]/10 to-[hsl(220,80%,65%)]/5" },
+  { label: "今天很累", emoji: "😩", route: "/emotion-button", color: "from-[hsl(340,60%,68%)]/10 to-[hsl(340,60%,68%)]/5" },
+  { label: "沟通不好", emoji: "💬", route: "/coach/parent_emotion_coach", color: "from-[hsl(152,42%,49%)]/10 to-[hsl(152,42%,49%)]/5" },
+  { label: "有点迷茫", emoji: "🌫️", route: "/assessment/women_competitiveness", color: "from-[hsl(35,38%,56%)]/10 to-[hsl(35,38%,56%)]/5" },
 ];
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
+  show: { transition: { staggerChildren: 0.05 } },
 };
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0, 0, 0.2, 1] as const } },
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0, 0, 0.2, 1] as const } },
 };
 
 const MamaHero = () => {
@@ -25,19 +25,23 @@ const MamaHero = () => {
 
   return (
     <motion.div
-      className="text-center px-3 pt-6 pb-4 bg-gradient-to-b from-[#FFE8D6] to-[#FFF8F0]"
+      className="text-center px-4 pt-5 pb-3"
+      style={{ background: "linear-gradient(180deg, hsl(25 100% 92%) 0%, hsl(30 100% 97%) 100%)" }}
       variants={container}
       initial="hidden"
       animate="show"
     >
-      <motion.div variants={fadeUp} className="flex items-center justify-center gap-1.5 mb-1">
-        <Heart className="w-5 h-5 text-[#F4845F] fill-[#F4845F]" />
-        <h1 className="text-xl font-bold text-[#3D3028]">宝妈AI生活助手</h1>
+      <motion.div variants={fadeUp} className="flex items-center justify-center gap-1.5 mb-0.5">
+        <Heart className="w-4 h-4 fill-[hsl(16,86%,68%)] text-[hsl(16,86%,68%)]" />
+        <h1 className="text-lg font-bold" style={{ color: "hsl(25 25% 17%)" }}>宝妈AI生活助手</h1>
       </motion.div>
-      <motion.p variants={fadeUp} className="text-[#8B7355] text-sm mb-0.5">懂妈妈的AI助手</motion.p>
-      <motion.p variants={fadeUp} className="text-[#A89580] text-xs mb-5">情绪 · 亲子 · 关系 · 成长</motion.p>
+      <motion.p variants={fadeUp} className="text-xs mb-4" style={{ color: "hsl(30 20% 44%)" }}>
+        情绪 · 亲子 · 关系 · 成长
+      </motion.p>
 
-      <motion.p variants={fadeUp} className="text-base font-medium text-[#3D3028] mb-3">今天最困扰的是什么？</motion.p>
+      <motion.p variants={fadeUp} className="text-sm font-medium mb-2.5" style={{ color: "hsl(25 25% 17%)" }}>
+        今天最困扰的是什么？
+      </motion.p>
 
       <motion.div variants={container} className="flex flex-wrap justify-center gap-2">
         {scenarios.map((s) => (
@@ -46,7 +50,8 @@ const MamaHero = () => {
             variants={fadeUp}
             whileTap={{ scale: 0.93 }}
             onClick={() => navigate(s.route)}
-            className="px-3.5 py-2.5 bg-white rounded-xl shadow-sm border border-[#F5E6D3] text-[#3D3028] text-sm font-medium active:bg-[#FFF3EB] transition-all min-h-[44px]"
+            className={`px-3 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-[0_1px_3px_hsl(25_30%_70%/0.15)] border border-[hsl(30_50%_90%)] text-sm font-medium active:bg-white transition-all min-h-[44px]`}
+            style={{ color: "hsl(25 25% 17%)" }}
           >
             {s.emoji} {s.label}
           </motion.button>
