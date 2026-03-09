@@ -24,15 +24,16 @@ const DOUBAO_PATH = '/api/v3/realtime/dialogue';
 // （不影响语音音频流；persona 校验仍在后端完成）
 const FORWARD_ASSISTANT_TEXT = false;
 
-// ✅ 静默保活帧大小：200ms @16kHz = 3200 samples = 6400 bytes PCM16
-// 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
-const KEEPALIVE_SILENCE_BYTES = 12800;
+// ✅ 静默保活帧大小：1000ms @16kHz = 16000 samples = 32000 bytes PCM16
+// 需要足够大的帧让上游 VAD 有充分样本来检测"活动"
+const KEEPALIVE_SILENCE_BYTES = 32000;
 
-// ✅ 保活噪声幅度：给上行注入“几乎不可闻”的微弱能量，避免被 VAD 判定为纯静音而忽略
-// PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 50;
+// ✅ 保活噪声幅度：500 / 32768 ≈ -36dB
+// 远低于正常说话 (~-20dB)，但比之前的 50 (-56dB) 高很多，
+// 确保上游 VAD 明确检测到"有活跃上行音频"
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 500;
 
-// ✅ 保活间隔：5s（从 10s 缩短），更激进地防止上游空闲断开
+// ✅ 保活间隔：2s
 const KEEPALIVE_INTERVAL_MS = 2_000;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
@@ -1585,7 +1586,7 @@ Deno.serve(async (req) => {
             // 避免刷屏：最多每 30 秒打一次日志
             if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (400ms, amp=50)', {
+               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (1000ms, amp=500)', {
                  idleClientMs: now - lastClientAudioAt,
                 seq: audioSequence,
                   ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
