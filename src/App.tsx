@@ -83,6 +83,7 @@ const TeenBind = lazyRetry(() => import("./pages/TeenBind"));
 const TeenCoach = lazyRetry(() => import("./pages/TeenCoach"));
 const TeenChat = lazyRetry(() => import("./pages/TeenChat"));
 const ParentChildDiary = lazyRetry(() => import("./pages/ParentChildDiary"));
+const ParentLite = lazyRetry(() => import("./pages/ParentLite"));
 
 // 沟通教练
 const CommunicationCoach = lazyRetry(() => import("./pages/CommunicationCoach"));
@@ -304,6 +305,7 @@ const App = () => (
               <Route path="/communication-assessment" element={<Navigate to="/assessment/communication_parent" replace />} />
               <Route path="/parent-ability-assessment" element={<Navigate to="/assessment/parent_ability" replace />} />
               <Route path="/parent-diary" element={<ParentChildDiary />} />
+              <Route path="/parent-lite" element={<ParentLite />} />
               <Route path="/camp-intro/:campType" element={<CampIntro />} />
               <Route path="/camp/:campId" element={<TrainingCampDetail />} />
               <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
