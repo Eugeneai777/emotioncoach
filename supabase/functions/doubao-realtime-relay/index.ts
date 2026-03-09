@@ -26,7 +26,7 @@ const FORWARD_ASSISTANT_TEXT = false;
 
 // ✅ 静默保活帧大小：200ms @16kHz = 3200 samples = 6400 bytes PCM16
 // 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
-const KEEPALIVE_SILENCE_BYTES = 3200;
+const KEEPALIVE_SILENCE_BYTES = 12800;
 
 // ✅ 保活噪声幅度：给上行注入“几乎不可闻”的微弱能量，避免被 VAD 判定为纯静音而忽略
 // PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
