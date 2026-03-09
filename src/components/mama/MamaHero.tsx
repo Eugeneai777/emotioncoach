@@ -33,14 +33,14 @@ const MamaHero = () => {
     >
       <motion.div variants={fadeUp} className="flex items-center justify-center gap-1.5 mb-0.5">
         <Heart className="w-4 h-4 fill-[hsl(16,86%,68%)] text-[hsl(16,86%,68%)]" />
-        <h1 className="text-lg font-bold" style={{ color: "hsl(25 25% 17%)" }}>宝妈AI生活助手</h1>
+        <h1 className="text-lg font-bold" style={{ color: "hsl(25 25% 17%)" }}>嘿，妈妈</h1>
       </motion.div>
       <motion.p variants={fadeUp} className="text-xs mb-4" style={{ color: "hsl(30 20% 44%)" }}>
-        情绪 · 亲子 · 关系 · 成长
+        今天辛苦了，我在这里陪你 💛
       </motion.p>
 
       <motion.p variants={fadeUp} className="text-sm font-medium mb-2.5" style={{ color: "hsl(25 25% 17%)" }}>
-        今天最困扰的是什么？
+        此刻最想说的是？
       </motion.p>
 
       <motion.div variants={container} className="flex flex-wrap justify-center gap-2">

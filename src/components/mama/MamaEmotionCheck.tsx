@@ -18,8 +18,8 @@ const MamaEmotionCheck = () => {
     >
       <span className="text-xl">🆘</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold" style={{ color: "hsl(25 25% 17%)" }}>情绪急救站</p>
-        <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>30秒释放情绪，给自己一个拥抱</p>
+        <p className="text-sm font-semibold" style={{ color: "hsl(25 25% 17%)" }}>此刻，你还好吗？</p>
+        <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>不需要坚强，这里可以放下所有</p>
       </div>
       <ArrowRight className="w-4 h-4 shrink-0" style={{ color: "hsl(340 60% 68%)" }} />
     </motion.button>

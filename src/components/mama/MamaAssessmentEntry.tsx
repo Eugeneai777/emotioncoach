@@ -86,7 +86,7 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
           className="w-full py-2.5 text-white rounded-xl text-sm font-medium transition-all min-h-[44px] active:opacity-90"
           style={{ background: "hsl(16 86% 68%)" }}
         >
-          开始今日检测 →
+          看看我的能量 →
         </motion.button>
       </motion.div>
 

@@ -112,7 +112,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
           className="mt-2 w-full rounded-xl min-h-[44px] text-white"
           style={{ background: "hsl(16 86% 68%)", color: "white" }}
         >
-          {justSubmitted ? "已记录 ✓" : "记录感恩 💛"}
+          {justSubmitted ? "已记录 ✓" : "记下这份温暖 ✨"}
         </Button>
       )}
     </motion.div>

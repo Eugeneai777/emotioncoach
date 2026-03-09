@@ -30,7 +30,7 @@ const MamaCampEntry = () => {
           className="w-full py-2.5 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-1 transition-all min-h-[44px] active:opacity-90"
           style={{ background: "hsl(16 86% 68%)" }}
         >
-          了解详情 <ArrowRight className="w-4 h-4" />
+          我想试试 <ArrowRight className="w-4 h-4" />
         </motion.button>
       </div>
     </motion.div>
