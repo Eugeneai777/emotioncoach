@@ -47,19 +47,20 @@ const MamaAssistant = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0]" style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))" }}>
+    <div className="min-h-screen bg-[#FFF8F0]" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}>
       <MamaHero onConcernClick={openChat} />
 
       {lastChat && (
         <button
           onClick={() => openChat(`我想继续聊上次的话题：${lastChat.summary}`)}
-          className="mx-4 mb-3 w-[calc(100%-2rem)] p-3 bg-white/80 backdrop-blur rounded-xl border border-[#F5E6D3] text-left text-sm text-[#8B7355] hover:bg-white transition-all"
+          className="mx-3 mb-2 w-[calc(100%-1.5rem)] p-2.5 bg-white/80 backdrop-blur rounded-xl border border-[#F5E6D3] text-left text-xs text-[#8B7355] active:bg-white transition-all min-h-[44px] flex items-center"
         >
-          💬 上次聊过：{lastChat.summary}...  <span className="text-[#F4845F]">继续 →</span>
+          <span className="truncate flex-1">💬 上次聊过：{lastChat.summary}...</span>
+          <span className="text-[#F4845F] shrink-0 ml-2">继续 →</span>
         </button>
       )}
 
-      <div className="space-y-5">
+      <div className="space-y-3">
         <MamaTiredEntry onReasonClick={openChat} />
         <MamaEmotionCheck onEmotionClick={openChat} />
         <MamaDailyEnergy

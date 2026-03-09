@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Send, Mic, MicOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MamaConversionCard from "./MamaConversionCard";
@@ -22,12 +21,12 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mama-ai-coac
 const LAST_CHAT_KEY = "mama_last_chat";
 
 const TypingDots = () => (
-  <div className="flex gap-1 items-center px-4 py-3">
+  <div className="flex gap-1 items-center px-3 py-2.5">
     {[0, 1, 2].map((i) => (
       <motion.span
         key={i}
-        className="w-2 h-2 bg-[#F4845F] rounded-full"
-        animate={{ y: [0, -6, 0] }}
+        className="w-1.5 h-1.5 bg-[#F4845F] rounded-full"
+        animate={{ y: [0, -5, 0] }}
         transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
       />
     ))}
@@ -41,6 +40,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
   const [hasStarted, setHasStarted] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -58,6 +58,21 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Handle mobile keyboard - scroll into view when input focused
+  useEffect(() => {
+    const handleResize = () => {
+      if (document.activeElement === inputRef.current) {
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+        }, 100);
+      }
+    };
+    
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", handleResize);
+    return () => vv?.removeEventListener("resize", handleResize);
+  }, []);
 
   // Save last chat summary
   useEffect(() => {
@@ -165,6 +180,8 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
     const updated = [...messages, userMsg];
     setMessages(updated);
     setInput("");
+    // Blur input on send to dismiss keyboard on mobile
+    inputRef.current?.blur();
     streamChat(updated);
   };
 
@@ -197,17 +214,17 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl bg-[#FFF8F0] p-0 flex flex-col">
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-[#F5E6D3]">
-          <SheetTitle className="text-[#3D3028] text-lg">💛 AI妈妈教练</SheetTitle>
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl bg-[#FFF8F0] p-0 flex flex-col">
+        <SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
+          <SheetTitle className="text-[#3D3028] text-base">💛 AI妈妈教练</SheetTitle>
         </SheetHeader>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3">
           {messages.map((msg, i) => (
             <div key={i}>
               <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === "user"
                       ? "bg-[#F4845F] text-white rounded-br-md"
                       : "bg-white text-[#3D3028] border border-[#F5E6D3] rounded-bl-md"
@@ -220,15 +237,15 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
               {msg.role === "assistant" && msg.followUps && msg.followUps.length > 0 && !isLoading && i === messages.length - 1 && (
                 <AnimatePresence>
                   <motion.div
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-wrap gap-2 mt-2 ml-1"
+                    className="flex flex-wrap gap-1.5 mt-2 ml-1"
                   >
                     {msg.followUps.map((q, j) => (
                       <button
                         key={j}
                         onClick={() => handleSend(q)}
-                        className="px-3 py-1.5 bg-[#FFF3EB] text-[#F4845F] text-xs rounded-full border border-[#F4845F]/20 hover:bg-[#FFE8D6] transition-all"
+                        className="px-3 py-2 bg-[#FFF3EB] text-[#F4845F] text-xs rounded-full border border-[#F4845F]/20 active:bg-[#FFE8D6] transition-all min-h-[36px]"
                       >
                         {q}
                       </button>
@@ -255,23 +272,27 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
           )}
         </div>
 
-        <div className="px-4 pb-6 pt-3 border-t border-[#F5E6D3] bg-white" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
-          <div className="flex gap-2">
+        <div
+          className="px-3 pb-3 pt-2 border-t border-[#F5E6D3] bg-white shrink-0"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="flex gap-1.5 items-end">
             {hasSpeechAPI && (
               <Button
                 onClick={toggleVoice}
                 variant="ghost"
                 size="icon"
-                className={`shrink-0 h-11 w-11 rounded-xl ${isListening ? "text-[#F4845F] bg-[#FFF3EB]" : "text-[#A89580]"}`}
+                className={`shrink-0 h-10 w-10 rounded-xl ${isListening ? "text-[#F4845F] bg-[#FFF3EB]" : "text-[#A89580]"}`}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </Button>
             )}
-            <Textarea
+            <textarea
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="继续问AI妈妈教练..."
-              className="border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[44px] max-h-[100px] rounded-xl resize-none flex-1"
+              placeholder="问AI妈妈教练..."
+              className="border border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[40px] max-h-[80px] rounded-xl resize-none flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -279,11 +300,16 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
                   handleSend();
                 }
               }}
+              onFocus={() => {
+                setTimeout(() => {
+                  scrollRef.current?.scrollTo({ top: scrollRef.current!.scrollHeight, behavior: "smooth" });
+                }, 300);
+              }}
             />
             <Button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className="bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl h-11 w-11 p-0 shrink-0"
+              className="bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl h-10 w-10 p-0 shrink-0"
               size="icon"
             >
               <Send className="w-4 h-4" />
