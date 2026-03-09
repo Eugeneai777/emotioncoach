@@ -11,6 +11,8 @@ import { toast } from "@/hooks/use-toast";
 
 interface MamaDailyEnergyProps {
   onGratitudeSubmit: (text: string) => void;
+  lastChat?: { summary: string; time: number } | null;
+  onContinueChat?: (context: string) => void;
 }
 
 const GRATITUDE_COUNT_KEY = "mama_gratitude_count";
