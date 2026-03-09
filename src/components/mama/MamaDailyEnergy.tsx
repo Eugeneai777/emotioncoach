@@ -78,37 +78,37 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5 }}
-      className="mx-4 p-5 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]"
+      viewport={{ once: true, margin: "-30px" }}
+      transition={{ duration: 0.4 }}
+      className="mx-3 p-4 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]"
     >
-      <p className="text-lg font-medium text-[#3D3028] mb-3">☀️ 今日妈妈一句话</p>
+      <p className="text-base font-medium text-[#3D3028] mb-2">☀️ 今日妈妈一句话</p>
 
-      <div className="bg-[#FFF8F0] rounded-xl p-4 mb-4">
-        <p className="text-[#5D4E37] text-base leading-relaxed italic">
+      <div className="bg-[#FFF8F0] rounded-xl p-3 mb-3">
+        <p className="text-[#5D4E37] text-sm leading-relaxed italic">
           "{todayQuote}"
         </p>
       </div>
 
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-[#8B7355]">📝 记录今天的一件小感恩</p>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-xs text-[#8B7355]">📝 记录一件小感恩</p>
         {gratitudeCount > 0 && (
-          <span className="text-xs text-[#A89580]">已记录 {gratitudeCount} 条 💛</span>
+          <span className="text-[10px] text-[#A89580]">已记录 {gratitudeCount} 条 💛</span>
         )}
       </div>
       <Textarea
         value={gratitudeText}
         onChange={(e) => setGratitudeText(e.target.value)}
         placeholder="今天孩子让我感动的一件事..."
-        className="border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[60px] rounded-xl resize-none"
+        className="border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[44px] max-h-[80px] rounded-xl resize-none text-sm"
         rows={2}
       />
       {gratitudeText.trim() && (
         <Button
           onClick={handleSubmit}
-          className="mt-3 w-full bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl"
+          className="mt-2 w-full bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl min-h-[44px]"
         >
           {justSubmitted ? "已记录 ✓" : "记录感恩 💛"}
         </Button>
