@@ -101,7 +101,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
       <Textarea
         value={gratitudeText}
         onChange={(e) => setGratitudeText(e.target.value)}
-        placeholder="今天孩子让我感动的一件事..."
+        placeholder="也许是孩子突然说了句暖心话..."
         className="border-[hsl(30_50%_90%)] bg-[hsl(30_100%_99%)] min-h-[44px] max-h-[80px] rounded-xl resize-none text-sm"
         style={{ color: "hsl(25 25% 17%)" }}
         rows={2}
