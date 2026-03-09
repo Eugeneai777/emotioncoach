@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Mic, MicOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import MamaConversionCard from "./MamaConversionCard";
 
 interface Message {
   role: "user" | "assistant";
@@ -243,6 +244,14 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
                 <TypingDots />
               </div>
             </div>
+          )}
+          {/* Conversion card after conversation */}
+          {!isLoading && messages.length >= 4 && messages[messages.length - 1]?.role === "assistant" && (
+            <MamaConversionCard
+              context={messages.map((m) => m.content).join(" ")}
+              messageCount={messages.length}
+              onClose={() => onOpenChange(false)}
+            />
           )}
         </div>
 

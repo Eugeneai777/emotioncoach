@@ -5,6 +5,7 @@ import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
 import MamaDailyEnergy from "@/components/mama/MamaDailyEnergy";
 import MamaToolGrid from "@/components/mama/MamaToolGrid";
 import MamaAssessmentEntry from "@/components/mama/MamaAssessmentEntry";
+import MamaCampEntry from "@/components/mama/MamaCampEntry";
 import MamaAIChat from "@/components/mama/MamaAIChat";
 import MamaAssessment from "@/components/mama/MamaAssessment";
 
@@ -66,8 +67,9 @@ const MamaAssistant = () => {
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
         />
-        <MamaToolGrid onToolClick={openChat} />
         <MamaAssessmentEntry onStart={() => setShowAssessment(true)} />
+        <MamaToolGrid onToolClick={openChat} />
+        <MamaCampEntry />
       </div>
 
       <MamaAIChat
