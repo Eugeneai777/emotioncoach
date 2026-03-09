@@ -15,6 +15,7 @@ interface MamaAIChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialContext?: string;
+  initialInput?: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mama-ai-coach`;
@@ -33,7 +34,7 @@ const TypingDots = () => (
   </div>
 );
 
-const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => {
+const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,17 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
       streamChat([], initialContext);
     }
   }, [open, initialContext]);
+
+  // Handle initialInput from bottom bar
+  useEffect(() => {
+    if (open && initialInput && !hasStarted) {
+      setHasStarted(true);
+      setMessages([]);
+      const userMsg: Message = { role: "user", content: initialInput };
+      setMessages([userMsg]);
+      streamChat([userMsg]);
+    }
+  }, [open, initialInput]);
 
   useEffect(() => {
     if (!open) setHasStarted(false);
