@@ -483,7 +483,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       memory_connection: { type: 'insight', priority: 4 },
       incomplete_emotion_session: { type: 'reminder', priority: 3 },
       incomplete_coach_session: { type: 'reminder', priority: 3 },
-      wechat_bind_reminder: { type: 'reminder', priority: 3 }
+      wechat_bind_reminder: { type: 'reminder', priority: 3 },
+      mama_daily_encouragement: { type: 'encouragement', priority: 1 }
     };
 
     // 场景到教练类型的映射
