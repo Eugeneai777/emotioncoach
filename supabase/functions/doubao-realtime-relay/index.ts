@@ -1596,7 +1596,7 @@ Deno.serve(async (req) => {
           }
         }
       }
-    }, 5000);
+    }, KEEPALIVE_INTERVAL_MS);
   };
 
   // 🔧 增强诊断：明确记录是谁先断开（微信端断 / relay 断 / doubao 断）
