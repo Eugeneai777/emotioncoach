@@ -26,14 +26,14 @@ const FORWARD_ASSISTANT_TEXT = false;
 
 // ✅ 静默保活帧大小：200ms @16kHz = 3200 samples = 6400 bytes PCM16
 // 原先 10ms (320 bytes) 可能不足以阻止上游 90s idle 断开
-const KEEPALIVE_SILENCE_BYTES = 3200;
+const KEEPALIVE_SILENCE_BYTES = 12800;
 
 // ✅ 保活噪声幅度：给上行注入“几乎不可闻”的微弱能量，避免被 VAD 判定为纯静音而忽略
 // PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3;
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 50;
 
 // ✅ 保活间隔：5s（从 10s 缩短），更激进地防止上游空闲断开
-const KEEPALIVE_INTERVAL_MS = 3_000;
+const KEEPALIVE_INTERVAL_MS = 2_000;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
   // byteLength 必须为偶数（Int16）
@@ -1585,7 +1585,7 @@ Deno.serve(async (req) => {
             // 避免刷屏：最多每 30 秒打一次日志
             if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (100ms, amp=3)', {
+               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (400ms, amp=50)', {
                  idleClientMs: now - lastClientAudioAt,
                 seq: audioSequence,
                   ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
