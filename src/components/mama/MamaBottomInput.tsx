@@ -29,8 +29,14 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
   };
 
   const handleInputFocus = () => {
-    onFocusInput();
+    if (lastChat && onContinueChat) {
+      onContinueChat(`我想继续聊上次的话题：${lastChat.summary}`);
+    } else {
+      onFocusInput();
+    }
   };
+
+  const placeholder = lastChat ? `继续聊：${lastChat.summary}...` : "想找人说说话...";
 
   // --- Voice recording ---
   const startRecording = useCallback(async () => {
