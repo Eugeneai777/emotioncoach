@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft } from 'lucide-react';
 import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
@@ -224,13 +224,14 @@ export const CoachVoiceChat = ({
     quota: 1000
   };
 
-  // 颜色映射
-  const colorMap: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-    rose: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-500', glow: 'shadow-rose-500/30' },
-    green: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-green-500', glow: 'shadow-green-500/30' },
-    blue: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-blue-500', glow: 'shadow-blue-500/30' },
-    purple: { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-500', glow: 'shadow-purple-500/30' },
-    orange: { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-orange-500', glow: 'shadow-orange-500/30' },
+  // 颜色映射 — 增加深色背景渐变
+  const colorMap: Record<string, { bg: string; border: string; text: string; glow: string; deepBg: string }> = {
+    rose: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-500', glow: 'shadow-rose-500/30', deepBg: 'from-stone-950 via-rose-950/30 to-stone-950' },
+    green: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-green-500', glow: 'shadow-green-500/30', deepBg: 'from-stone-950 via-emerald-950/30 to-stone-950' },
+    blue: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-blue-500', glow: 'shadow-blue-500/30', deepBg: 'from-stone-950 via-blue-950/30 to-stone-950' },
+    purple: { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-500', glow: 'shadow-purple-500/30', deepBg: 'from-stone-950 via-purple-950/30 to-stone-950' },
+    orange: { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-orange-500', glow: 'shadow-orange-500/30', deepBg: 'from-stone-950 via-orange-950/30 to-stone-950' },
+    amber: { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-amber-500', glow: 'shadow-amber-500/30', deepBg: 'from-stone-950 via-amber-950/30 to-stone-950' },
   };
 
   const colors = colorMap[primaryColor] || colorMap.rose;
@@ -2174,18 +2175,28 @@ export const CoachVoiceChat = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+    <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col`}>
       {/* 顶部状态栏 */}
       <div className="flex items-center justify-between p-4 pt-safe">
-        <div className="text-white/70 text-sm flex items-center gap-3">
+        {/* 左侧：返回按钮 */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+
+        {/* 中间：通话信息 */}
+        <div className="text-white/70 text-xs flex items-center gap-2">
           {status === 'connected' && (
             <>
-              <span>{formatDuration(duration)}</span>
+              <span className="font-mono">{formatDuration(duration)}</span>
               <span className="flex items-center gap-1 text-amber-400">
                 <Coins className="w-3 h-3" />
                 {billedMinutes * POINTS_PER_MINUTE}点
               </span>
-              {/* 🔧 网络状态徽章 */}
               <ConnectionStatusBadge
                 networkQuality={networkQuality}
                 rtt={networkRtt}
@@ -2193,55 +2204,66 @@ export const CoachVoiceChat = ({
               />
             </>
           )}
-          {status === 'error' && '连接失败'}
-          {status === 'disconnected' && '已断开'}
+          {status === 'error' && <span className="text-red-400">连接失败</span>}
+          {status === 'disconnected' && <span className="text-white/50">已断开</span>}
         </div>
-        <div className="flex items-center gap-2">
-          {remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 3 && (
-            <span className="text-amber-400 text-xs">余额 {remainingQuota} 点</span>
+
+        {/* 右侧：挂断按钮 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            if (isEnding) {
+              console.log('[VoiceChat] Force close triggered');
+              try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+              try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              releaseLock();
+              onClose();
+              return;
+            }
+            endCall(e);
+          }}
+          className="rounded-full px-3 h-8 bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 backdrop-blur-sm text-xs font-medium"
+        >
+          {isEnding ? (
+            <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+          ) : (
+            <PhoneOff className="w-3.5 h-3.5 mr-1" />
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              if (isEnding) {
-                // 强制关闭：如果已经在结束中但卡住了，5秒后允许再次点击直接关闭
-                console.log('[VoiceChat] Force close triggered');
-                try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
-                try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
-                releaseLock();
-                onClose();
-                return;
-              }
-              endCall(e);
-            }}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            {isEnding ? (
-              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-            ) : (
-              <PhoneOff className="w-4 h-4 mr-1" />
-            )}
-            {isEnding ? '强制关闭' : '挂断'}
-          </Button>
-        </div>
+          {isEnding ? '强制关闭' : '挂断'}
+        </Button>
       </div>
 
       {/* 中心区域 - 教练头像和状态 */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         {/* 教练头像 */}
-        <div className={`relative mb-6 ${speakingStatus === 'assistant-speaking' ? 'animate-pulse' : ''}`}>
-          <div className={`w-32 h-32 rounded-full ${colors.bg} flex items-center justify-center text-6xl shadow-2xl ${colors.glow}`}>
+        <div className="relative mb-6">
+          {/* 外层呼吸光环 */}
+          {status === 'connected' && (
+            <>
+              <span className={`absolute -inset-3 rounded-full ${colors.bg} opacity-10 animate-pulse pointer-events-none`} />
+              <span className={`absolute -inset-6 rounded-full ${colors.bg} opacity-5 animate-pulse [animation-delay:0.5s] pointer-events-none`} />
+            </>
+          )}
+          <div className={`relative w-32 h-32 rounded-full ${colors.bg} flex items-center justify-center text-6xl shadow-2xl ${colors.glow} ring-4 ring-white/10`}>
             {coachEmoji}
           </div>
-          {/* 说话状态指示环 */}
+          {/* 说话涟漪 */}
           {speakingStatus === 'assistant-speaking' && (
-            <div className={`absolute inset-0 rounded-full border-4 ${colors.border} animate-ping opacity-50`} />
+            <>
+              <div className={`absolute inset-0 rounded-full border-2 ${colors.border} animate-ping opacity-40`} />
+              <div className={`absolute -inset-2 rounded-full border ${colors.border} animate-ping opacity-20 [animation-delay:0.3s]`} />
+            </>
           )}
         </div>
 
-        {/* 教练名称 - 增强可读性 */}
-        <h2 className="text-white text-2xl font-semibold mb-2 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>{coachTitle}</h2>
+        {/* 教练名称 */}
+        <h2 className="text-white text-xl font-semibold mb-2 tracking-wide" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{coachTitle}</h2>
+
+        {/* 余额提示 */}
+        {remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 3 && (
+          <span className="text-amber-400/80 text-[11px] mb-2">余额 {remainingQuota} 点</span>
+        )}
         
         {/* 🔧 音频波形可视化 */}
         <div className="mb-4 w-24">
@@ -2570,7 +2592,7 @@ export const CoachVoiceChat = ({
       </div>
 
       {/* 底部操作区 */}
-      <div className="p-6 pb-safe flex justify-center">
+      <div className="p-6 pb-safe flex flex-col items-center gap-3">
         <Button
           onClick={(e) => {
             if (isEnding) {
@@ -2584,7 +2606,7 @@ export const CoachVoiceChat = ({
             endCall(e);
           }}
           size="lg"
-          className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
+          className={`w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 ${status === 'connected' ? 'ring-2 ring-red-400/30' : ''}`}
         >
           {status === 'connected' ? (
             <PhoneOff className="w-6 h-6" />
@@ -2592,19 +2614,17 @@ export const CoachVoiceChat = ({
             <Phone className="w-6 h-6" />
           )}
         </Button>
-      </div>
 
-      {/* 提示 - 仅在非通话状态显示 */}
-      {status !== 'connected' && (
-        <div className="absolute bottom-24 left-0 right-0 text-center">
-          <p className="text-white/40 text-xs">
+        {/* 提示 - 仅在非通话状态显示 */}
+        {status !== 'connected' && (
+          <p className="text-white/30 text-[11px]">
             {skipBilling
-              ? `💡 直接说话即可 · 免费体验 · ${maxDurationMinutes === null ? '不限时' : `最长${maxDurationMinutes}分钟`}`
-              : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟 · ${maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}`
+              ? `💡 直接说话即可 · 免费体验`
+              : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟`
             }
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 🔧 AI来电续拨询问弹窗 */}
       <ContinueCallDialog

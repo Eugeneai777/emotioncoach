@@ -1,42 +1,23 @@
 
 
-## 财富觉醒教练语音界面设计优化
+## 两个问题需要修复
 
-### 现状分析
-当前 `CoachVoiceChat.tsx` 使用 `from-slate-900 via-slate-800 to-slate-900` 深灰背景，整体视觉较暗沉。截图中可见：顶部状态栏（已断开/结束中）、大钻石头像（红色圆底）、标题、波形点、底部红色挂断按钮。布局功能完整，但视觉层次和色彩表现力可提升。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 优化方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**1. 背景渐变升级**
-- 将单调的 `slate-900` 背景替换为与教练主题色呼应的深色渐变
-- 财富教练（amber）: `from-stone-950 via-amber-950/30 to-stone-950`
-- 通用教练: 根据 `primaryColor` 动态映射渐变底色
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**2. 顶部状态栏重设计**
-- 左上角添加返回箭头（`X` 或 `ChevronLeft`），点击触发 `onClose` 返回报告页
-- 右上角保留挂断按钮，改为更醒目的圆角标签式设计（红色背景 + 白色图标）
-- 通话时长和积分信息居中显示，增加 `backdrop-blur` 毛玻璃效果
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-**3. 中心教练头像区域优化**
-- 头像圆增加外层呼吸光环动画（`ring` + `animate-pulse`），用主题色
-- 说话状态时增加涟漪扩散效果（多层 `ping` 动画）
-- 头像下方标题使用渐变文字（`bg-clip-text text-transparent`）
-- 波形可视化区域加宽，增强动态感
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**4. 底部操作区优化**
-- 挂断按钮增加阴影光晕，与主题色呼应
-- 非通话状态提示文字样式精简，使用 `text-[11px]` 减少视觉干扰
-- 安全区域底部间距适配（`pb-safe`）
-
-**5. 连接中状态增强**
-- `ConnectionProgress` 组件在连接中显示更明确的动画和阶段提示
-- "已断开" / "结束中..." 状态文字增加图标和颜色区分
-
-### 涉及文件
-- `src/components/coach/CoachVoiceChat.tsx` — 主界面渲染部分（约 line 2176-2617）
-
-### 设计原则
-- 保持深色调基础，通过主题色点缀提升质感
-- 所有交互元素（返回、挂断）保持清晰可点击
-- 字体大小适配手机屏幕，避免溢出
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
