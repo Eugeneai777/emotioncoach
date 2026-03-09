@@ -162,6 +162,7 @@ export const pathToKeyMap: Record<string, string> = {
   '/parent-diary': 'parentChildDiary',
   '/parent/intake': 'parentIntake',
   '/parent-camp': 'parentCampLanding',
+  '/parent-lite': 'parentLite',
   // Lite 轻入口
   '/wealth-assessment-lite': 'wealthAssessmentLite',
   '/emotion-health-lite': 'emotionHealthLite',
