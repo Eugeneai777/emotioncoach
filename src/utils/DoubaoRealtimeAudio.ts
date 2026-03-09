@@ -128,9 +128,7 @@ export class DoubaoRealtimeChat {
   // AI 正在回复时绝对不超时，只有在 AI 回复结束后用户长时间不说话才超时
   private isAssistantSpeaking: boolean = false;
   private lastResponseEndTime: number = 0; // AI 最后一次回复结束的时间
-  // ✅ 禁用用户空闲超时：用户可能在听 AI 回复后思考很久才说话，不应自动断开
-  // 连接应由用户主动挂断，或心跳超时（真正的网络断连）来终止
-  private static readonly USER_IDLE_TIMEOUT = Infinity; // 永不因用户空闲而断开
+  private static readonly USER_IDLE_TIMEOUT = 180000; // 用户空闲超时：3 分钟
   
   // 🔧 iOS 微信：WebSocket 可能被系统静默回收，需要主动检测 readyState
   private lastReadyStateCheck: number = 0;
