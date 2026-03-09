@@ -84,7 +84,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
       transition={{ duration: 0.35 }}
       className="mx-4 p-3.5 bg-white rounded-2xl shadow-[0_2px_8px_hsl(30_30%_70%/0.1)] border border-[hsl(30_50%_90%)]"
     >
-      <p className="text-sm font-semibold mb-2" style={{ color: "hsl(25 25% 17%)" }}>☀️ 今日妈妈一句话</p>
+      <p className="text-sm font-semibold mb-2" style={{ color: "hsl(25 25% 17%)" }}>💌 今天，想对你说</p>
 
       <div className="rounded-xl p-2.5 mb-2.5" style={{ background: "hsl(30 100% 97%)" }}>
         <p className="text-[13px] leading-relaxed italic" style={{ color: "hsl(30 30% 28%)" }}>
