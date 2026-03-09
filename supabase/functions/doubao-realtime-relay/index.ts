@@ -532,6 +532,13 @@ function buildStartSessionRequest(
     },
     tts,
     request,
+    // ✅ 关键修复：设置 input_mod=keep_alive，避免上游因"无音频上行"在~90s超时断开
+    // 官方文档: https://www.volcengine.com/docs/6561/1594356
+    dialog: {
+      extra: {
+        input_mod: 'keep_alive'
+      }
+    },
   };
 
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
