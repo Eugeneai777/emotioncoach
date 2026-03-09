@@ -12,7 +12,7 @@ interface MamaBottomInputProps {
   onContinueChat?: (context: string) => void;
 }
 
-const MamaBottomInput = ({ onSendText, onFocusInput }: MamaBottomInputProps) => {
+const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }: MamaBottomInputProps) => {
   const [mode, setMode] = useState<"text" | "voice">("text");
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
