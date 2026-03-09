@@ -88,6 +88,8 @@ const MamaAssistant = () => {
       <MamaBottomInput
         onSendText={handleBottomSendText}
         onFocusInput={handleBottomFocus}
+        lastChat={lastChat}
+        onContinueChat={(ctx) => openChat(ctx)}
       />
 
       <MamaAIChat
