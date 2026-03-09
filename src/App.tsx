@@ -307,6 +307,7 @@ const App = () => (
               <Route path="/parent-ability-assessment" element={<Navigate to="/assessment/parent_ability" replace />} />
               <Route path="/parent-diary" element={<ParentChildDiary />} />
               <Route path="/parent-lite" element={<ParentLite />} />
+              <Route path="/mama" element={<MamaAssistant />} />
               <Route path="/camp-intro/:campType" element={<CampIntro />} />
               <Route path="/camp/:campId" element={<TrainingCampDetail />} />
               <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
