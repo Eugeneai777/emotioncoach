@@ -1,23 +1,57 @@
 
 
-## 两个问题需要修复
+# 将悬浮按钮改为固定底部输入栏（文字+按住说话）
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 现状
+当前"想找人说说话"是一个悬浮按钮，点击后弹出 Sheet 聊天窗口。用户需要两步才能开始输入。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## 方案
+参考附件设计，将悬浮按钮替换为固定在页面底部的输入栏，包含：
+- 文字输入框（点击后展开为完整聊天 Sheet）
+- 按住说话按钮（长按录音，松开发送语音转文字）
+- 发送按钮
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+不需要"深度思考"和"智能搜索"功能标签。
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 改动
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**1. `src/pages/MamaAssistant.tsx`**
+- 删除悬浮按钮
+- 新增固定底部输入栏组件 `MamaBottomInput`
+- 输入栏包含：左侧麦克风（按住说话）、中间文字输入框、右侧发送按钮
+- 点击输入框或开始输入时，打开聊天 Sheet 并将输入内容带入
+- 按住说话：长按触发录音，松开后语音转文字并打开聊天
 
-| 文件 | 修改 |
+**2. 新建 `src/components/mama/MamaBottomInput.tsx`**
+- 固定定位在底部，圆角白色卡片样式
+- 两种模式切换：文字输入 / 按住说话
+  - 默认显示文字输入框 + 切换到语音的按钮
+  - 点击麦克风图标切换为"按住说话"大按钮
+- 文字模式：输入框获取焦点时直接打开 Sheet，输入内容传递过去
+- 语音模式：长按录音区域，松开后调用 `voice-to-text` 边缘函数转文字，然后打开聊天并带入文字
+- 适配 safe-area-inset-bottom
+
+**3. `src/components/mama/MamaAIChat.tsx`**
+- 新增 `initialInput` prop，Sheet 打开时自动填入输入框文字
+
+### 布局
+
+```text
+┌─────────────────────────────┐
+│  🎙️  │  想找人说说话...    │ ➤ │   ← 文字模式
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│  ⌨️  │    按住说话          │   │   ← 语音模式
+└─────────────────────────────┘
+```
+
+点击 🎙️ 切换到语音模式，点击 ⌨️ 切换回文字模式。
+
+### 改动文件
+| 文件 | 改动 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/mama/MamaBottomInput.tsx` | 新建 |
+| `src/pages/MamaAssistant.tsx` | 删除悬浮按钮，引入底部输入栏 |
+| `src/components/mama/MamaAIChat.tsx` | 新增 initialInput prop |
 
