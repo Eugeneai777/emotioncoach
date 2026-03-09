@@ -2175,18 +2175,28 @@ export const CoachVoiceChat = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+    <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col`}>
       {/* 顶部状态栏 */}
       <div className="flex items-center justify-between p-4 pt-safe">
-        <div className="text-white/70 text-sm flex items-center gap-3">
+        {/* 左侧：返回按钮 */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+
+        {/* 中间：通话信息 */}
+        <div className="text-white/70 text-xs flex items-center gap-2">
           {status === 'connected' && (
             <>
-              <span>{formatDuration(duration)}</span>
+              <span className="font-mono">{formatDuration(duration)}</span>
               <span className="flex items-center gap-1 text-amber-400">
                 <Coins className="w-3 h-3" />
                 {billedMinutes * POINTS_PER_MINUTE}点
               </span>
-              {/* 🔧 网络状态徽章 */}
               <ConnectionStatusBadge
                 networkQuality={networkQuality}
                 rtt={networkRtt}
@@ -2194,38 +2204,34 @@ export const CoachVoiceChat = ({
               />
             </>
           )}
-          {status === 'error' && '连接失败'}
-          {status === 'disconnected' && '已断开'}
+          {status === 'error' && <span className="text-red-400">连接失败</span>}
+          {status === 'disconnected' && <span className="text-white/50">已断开</span>}
         </div>
-        <div className="flex items-center gap-2">
-          {remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 3 && (
-            <span className="text-amber-400 text-xs">余额 {remainingQuota} 点</span>
+
+        {/* 右侧：挂断按钮 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            if (isEnding) {
+              console.log('[VoiceChat] Force close triggered');
+              try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+              try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              releaseLock();
+              onClose();
+              return;
+            }
+            endCall(e);
+          }}
+          className="rounded-full px-3 h-8 bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 backdrop-blur-sm text-xs font-medium"
+        >
+          {isEnding ? (
+            <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+          ) : (
+            <PhoneOff className="w-3.5 h-3.5 mr-1" />
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              if (isEnding) {
-                // 强制关闭：如果已经在结束中但卡住了，5秒后允许再次点击直接关闭
-                console.log('[VoiceChat] Force close triggered');
-                try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
-                try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
-                releaseLock();
-                onClose();
-                return;
-              }
-              endCall(e);
-            }}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            {isEnding ? (
-              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-            ) : (
-              <PhoneOff className="w-4 h-4 mr-1" />
-            )}
-            {isEnding ? '强制关闭' : '挂断'}
-          </Button>
-        </div>
+          {isEnding ? '强制关闭' : '挂断'}
+        </Button>
       </div>
 
       {/* 中心区域 - 教练头像和状态 */}
