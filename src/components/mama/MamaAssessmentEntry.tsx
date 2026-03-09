@@ -77,7 +77,7 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
         </div>
 
         <p className="text-[10px] mb-3" style={{ color: "hsl(30 15% 56%)" }}>
-          📈 追踪趋势 · 🎯 个性化推荐 · 💬 教练建议
+          测完后会推荐最适合你的工具和支持 💛
         </p>
 
         <motion.button
