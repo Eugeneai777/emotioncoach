@@ -2237,18 +2237,33 @@ export const CoachVoiceChat = ({
       {/* 中心区域 - 教练头像和状态 */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         {/* 教练头像 */}
-        <div className={`relative mb-6 ${speakingStatus === 'assistant-speaking' ? 'animate-pulse' : ''}`}>
-          <div className={`w-32 h-32 rounded-full ${colors.bg} flex items-center justify-center text-6xl shadow-2xl ${colors.glow}`}>
+        <div className="relative mb-6">
+          {/* 外层呼吸光环 */}
+          {status === 'connected' && (
+            <>
+              <span className={`absolute -inset-3 rounded-full ${colors.bg} opacity-10 animate-pulse pointer-events-none`} />
+              <span className={`absolute -inset-6 rounded-full ${colors.bg} opacity-5 animate-pulse [animation-delay:0.5s] pointer-events-none`} />
+            </>
+          )}
+          <div className={`relative w-32 h-32 rounded-full ${colors.bg} flex items-center justify-center text-6xl shadow-2xl ${colors.glow} ring-4 ring-white/10`}>
             {coachEmoji}
           </div>
-          {/* 说话状态指示环 */}
+          {/* 说话涟漪 */}
           {speakingStatus === 'assistant-speaking' && (
-            <div className={`absolute inset-0 rounded-full border-4 ${colors.border} animate-ping opacity-50`} />
+            <>
+              <div className={`absolute inset-0 rounded-full border-2 ${colors.border} animate-ping opacity-40`} />
+              <div className={`absolute -inset-2 rounded-full border ${colors.border} animate-ping opacity-20 [animation-delay:0.3s]`} />
+            </>
           )}
         </div>
 
-        {/* 教练名称 - 增强可读性 */}
-        <h2 className="text-white text-2xl font-semibold mb-2 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>{coachTitle}</h2>
+        {/* 教练名称 */}
+        <h2 className="text-white text-xl font-semibold mb-2 tracking-wide" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{coachTitle}</h2>
+
+        {/* 余额提示 */}
+        {remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 3 && (
+          <span className="text-amber-400/80 text-[11px] mb-2">余额 {remainingQuota} 点</span>
+        )}
         
         {/* 🔧 音频波形可视化 */}
         <div className="mb-4 w-24">
