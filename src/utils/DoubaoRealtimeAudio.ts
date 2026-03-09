@@ -170,8 +170,8 @@ export class DoubaoRealtimeChat {
   private lastLocalRms = 0;
   private lastLocalPeak = 0;
   private static readonly LOCAL_SPEECH_CONFIRM_WINDOW_MS = 800;
-  private static readonly LOCAL_SPEECH_PEAK_THRESHOLD = 0.015;
-  private static readonly LOCAL_SPEECH_RMS_THRESHOLD = 0.005;
+  private static readonly LOCAL_SPEECH_PEAK_THRESHOLD = 0.008;
+  private static readonly LOCAL_SPEECH_RMS_THRESHOLD = 0.003;
 
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
