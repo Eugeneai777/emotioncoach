@@ -69,7 +69,7 @@ const MamaAssistant = () => {
       }}
     >
       <PageHeader title="宝妈AI助手" />
-      <MamaHero />
+      
 
       <div className="space-y-3 mt-3">
         <MamaEmotionCheck />
