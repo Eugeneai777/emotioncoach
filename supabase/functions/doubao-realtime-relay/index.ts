@@ -32,7 +32,7 @@ const KEEPALIVE_SILENCE_BYTES = 16000;
 // PCM16: 1/32768 ≈ -90dB，幅度 2~4 对人声几乎不可感知，但通常足以让 VAD 认为“有上行活动”
 const KEEPALIVE_NOISE_AMPLITUDE_I16 = 200;
 
-// ✅ 保活间隔：10s，确保在 90s 超时前有更多有效包到达上游
+// ✅ 保活间隔：5s（从 10s 缩短），更激进地防止上游空闲断开
 const KEEPALIVE_INTERVAL_MS = 5_000;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
