@@ -15,6 +15,7 @@ interface MamaAIChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialContext?: string;
+  initialInput?: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mama-ai-coach`;

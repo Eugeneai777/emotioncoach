@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
-import { motion } from "framer-motion";
 import MamaHero from "@/components/mama/MamaHero";
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
 import MamaDailyEnergy from "@/components/mama/MamaDailyEnergy";
@@ -9,12 +7,14 @@ import MamaAssessmentEntry from "@/components/mama/MamaAssessmentEntry";
 import MamaCampEntry from "@/components/mama/MamaCampEntry";
 import MamaAIChat from "@/components/mama/MamaAIChat";
 import MamaAssessment from "@/components/mama/MamaAssessment";
+import MamaBottomInput from "@/components/mama/MamaBottomInput";
 
 const LAST_CHAT_KEY = "mama_last_chat";
 
 const MamaAssistant = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
+  const [initialInput, setInitialInput] = useState<string | undefined>();
   const [showAssessment, setShowAssessment] = useState(false);
   const [lastChat, setLastChat] = useState<{ summary: string; time: number } | null>(null);
 
@@ -32,6 +32,19 @@ const MamaAssistant = () => {
 
   const openChat = (context?: string) => {
     setChatContext(context);
+    setInitialInput(undefined);
+    setChatOpen(true);
+  };
+
+  const handleBottomSendText = (text: string) => {
+    setInitialInput(text);
+    setChatContext(undefined);
+    setChatOpen(true);
+  };
+
+  const handleBottomFocus = () => {
+    setInitialInput(undefined);
+    setChatContext(undefined);
     setChatOpen(true);
   };
 
@@ -71,31 +84,23 @@ const MamaAssistant = () => {
         <MamaCampEntry />
       </div>
 
-      {/* Floating coach button — sole AI chat entry */}
-      <motion.button
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.4, type: "spring", stiffness: 220, damping: 18 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => openChat()}
-        className="fixed right-4 z-40 flex items-center gap-2 px-5 py-3 text-white rounded-full min-h-[48px] active:opacity-90 transition-opacity"
-        style={{
-          bottom: "max(1.5rem, env(safe-area-inset-bottom))",
-          background: "linear-gradient(135deg, hsl(16 86% 68%) 0%, hsl(16 86% 58%) 100%)",
-          boxShadow: "0 4px 16px hsl(16 86% 68% / 0.35), 0 2px 4px hsl(16 86% 68% / 0.2)",
-        }}
-      >
-        <MessageCircle className="w-5 h-5" />
-        <span className="text-sm font-medium">想找人说说话</span>
-      </motion.button>
+      {/* Fixed bottom input bar */}
+      <MamaBottomInput
+        onSendText={handleBottomSendText}
+        onFocusInput={handleBottomFocus}
+      />
 
       <MamaAIChat
         open={chatOpen}
         onOpenChange={(v) => {
           setChatOpen(v);
-          if (!v) setChatContext(undefined);
+          if (!v) {
+            setChatContext(undefined);
+            setInitialInput(undefined);
+          }
         }}
         initialContext={chatContext}
+        initialInput={initialInput}
       />
     </div>
   );
