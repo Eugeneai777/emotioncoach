@@ -52,9 +52,9 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
         {/* Decorative battery icon */}
         <div className="absolute right-3 top-3 text-3xl opacity-15 select-none">🔋</div>
 
-        <p className="text-sm font-semibold mb-1" style={{ color: "hsl(25 25% 17%)" }}>🔋 今日能量检测</p>
+        <p className="text-sm font-semibold mb-1" style={{ color: "hsl(25 25% 17%)" }}>🔋 今天的你，能量还够吗？</p>
         <p className="text-[11px] leading-relaxed mb-2" style={{ color: "hsl(30 20% 44%)" }}>
-          每天1分钟，为5个维度打分
+          1分钟了解自己的状态，找到最需要的支持
         </p>
 
         {/* 5 dimension preview pills */}
@@ -77,7 +77,7 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
         </div>
 
         <p className="text-[10px] mb-3" style={{ color: "hsl(30 15% 56%)" }}>
-          📈 追踪趋势 · 🎯 个性化推荐 · 💬 教练建议
+          测完后会推荐最适合你的工具和支持 💛
         </p>
 
         <motion.button
@@ -86,7 +86,7 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
           className="w-full py-2.5 text-white rounded-xl text-sm font-medium transition-all min-h-[44px] active:opacity-90"
           style={{ background: "hsl(16 86% 68%)" }}
         >
-          开始今日检测 →
+          看看我的能量 →
         </motion.button>
       </motion.div>
 

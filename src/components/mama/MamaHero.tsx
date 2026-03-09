@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const scenarios = [
-  { label: "孩子不听话", emoji: "😤", route: "/coach/parent_emotion_coach", color: "from-[hsl(16,86%,68%)]/10 to-[hsl(16,86%,68%)]/5" },
-  { label: "不爱学习", emoji: "📚", route: "/assessment/communication_parent", color: "from-[hsl(220,80%,65%)]/10 to-[hsl(220,80%,65%)]/5" },
-  { label: "今天很累", emoji: "😩", route: "/emotion-button", color: "from-[hsl(340,60%,68%)]/10 to-[hsl(340,60%,68%)]/5" },
-  { label: "沟通不好", emoji: "💬", route: "/coach/parent_emotion_coach", color: "from-[hsl(152,42%,49%)]/10 to-[hsl(152,42%,49%)]/5" },
-  { label: "有点迷茫", emoji: "🌫️", route: "/assessment/women_competitiveness", color: "from-[hsl(35,38%,56%)]/10 to-[hsl(35,38%,56%)]/5" },
+  { label: "又跟孩子吵了", emoji: "😤", route: "/coach/parent_emotion_coach", color: "from-[hsl(16,86%,68%)]/10 to-[hsl(16,86%,68%)]/5" },
+  { label: "催作业催崩了", emoji: "📚", route: "/assessment/communication_parent", color: "from-[hsl(220,80%,65%)]/10 to-[hsl(220,80%,65%)]/5" },
+  { label: "好累，想躺平", emoji: "😩", route: "/emotion-button", color: "from-[hsl(340,60%,68%)]/10 to-[hsl(340,60%,68%)]/5" },
+  { label: "说什么都没用", emoji: "💬", route: "/coach/parent_emotion_coach", color: "from-[hsl(152,42%,49%)]/10 to-[hsl(152,42%,49%)]/5" },
+  { label: "不知道为了什么", emoji: "🌫️", route: "/assessment/women_competitiveness", color: "from-[hsl(35,38%,56%)]/10 to-[hsl(35,38%,56%)]/5" },
 ];
 
 const container = {
@@ -33,14 +33,14 @@ const MamaHero = () => {
     >
       <motion.div variants={fadeUp} className="flex items-center justify-center gap-1.5 mb-0.5">
         <Heart className="w-4 h-4 fill-[hsl(16,86%,68%)] text-[hsl(16,86%,68%)]" />
-        <h1 className="text-lg font-bold" style={{ color: "hsl(25 25% 17%)" }}>宝妈AI生活助手</h1>
+        <h1 className="text-lg font-bold" style={{ color: "hsl(25 25% 17%)" }}>嘿，妈妈</h1>
       </motion.div>
       <motion.p variants={fadeUp} className="text-xs mb-4" style={{ color: "hsl(30 20% 44%)" }}>
-        情绪 · 亲子 · 关系 · 成长
+        今天辛苦了，我在这里陪你 💛
       </motion.p>
 
       <motion.p variants={fadeUp} className="text-sm font-medium mb-2.5" style={{ color: "hsl(25 25% 17%)" }}>
-        今天最困扰的是什么？
+        此刻最想说的是？
       </motion.p>
 
       <motion.div variants={container} className="flex flex-wrap justify-center gap-2">

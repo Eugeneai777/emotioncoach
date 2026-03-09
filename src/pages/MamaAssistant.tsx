@@ -93,7 +93,7 @@ const MamaAssistant = () => {
         }}
       >
         <MessageCircle className="w-5 h-5" />
-        <span className="text-sm font-medium">找教练聊聊</span>
+        <span className="text-sm font-medium">想找人说说话</span>
       </motion.button>
 
       <MamaAIChat

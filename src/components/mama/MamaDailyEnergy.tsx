@@ -84,7 +84,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
       transition={{ duration: 0.35 }}
       className="mx-4 p-3.5 bg-white rounded-2xl shadow-[0_2px_8px_hsl(30_30%_70%/0.1)] border border-[hsl(30_50%_90%)]"
     >
-      <p className="text-sm font-semibold mb-2" style={{ color: "hsl(25 25% 17%)" }}>☀️ 今日妈妈一句话</p>
+      <p className="text-sm font-semibold mb-2" style={{ color: "hsl(25 25% 17%)" }}>💌 今天，想对你说</p>
 
       <div className="rounded-xl p-2.5 mb-2.5" style={{ background: "hsl(30 100% 97%)" }}>
         <p className="text-[13px] leading-relaxed italic" style={{ color: "hsl(30 30% 28%)" }}>
@@ -93,7 +93,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
       </div>
 
       <div className="flex items-center justify-between mb-1.5">
-        <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>📝 记录一件小感恩</p>
+        <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>📝 记录一个让你微笑的瞬间</p>
         {gratitudeCount > 0 && (
           <span className="text-[10px]" style={{ color: "hsl(30 15% 56%)" }}>已记录 {gratitudeCount} 条 💛</span>
         )}
@@ -101,7 +101,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
       <Textarea
         value={gratitudeText}
         onChange={(e) => setGratitudeText(e.target.value)}
-        placeholder="今天孩子让我感动的一件事..."
+        placeholder="也许是孩子突然说了句暖心话..."
         className="border-[hsl(30_50%_90%)] bg-[hsl(30_100%_99%)] min-h-[44px] max-h-[80px] rounded-xl resize-none text-sm"
         style={{ color: "hsl(25 25% 17%)" }}
         rows={2}
@@ -112,7 +112,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
           className="mt-2 w-full rounded-xl min-h-[44px] text-white"
           style={{ background: "hsl(16 86% 68%)", color: "white" }}
         >
-          {justSubmitted ? "已记录 ✓" : "记录感恩 💛"}
+          {justSubmitted ? "已记录 ✓" : "记下这份温暖 ✨"}
         </Button>
       )}
     </motion.div>
