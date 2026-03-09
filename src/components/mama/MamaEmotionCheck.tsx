@@ -1,42 +1,27 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
-const emotions = [
-  { label: "开心", emoji: "😊", context: "我今天心情很好，感觉很开心" },
-  { label: "有点烦", emoji: "😒", context: "我今天有点烦躁，心里不太舒服" },
-  { label: "很累", emoji: "😴", context: "我今天感觉很累很疲惫" },
-  { label: "有压力", emoji: "😰", context: "我今天压力很大，感觉喘不过气" },
-  { label: "很焦虑", emoji: "😟", context: "我今天很焦虑，一直在担心各种事情" },
-];
+const MamaEmotionCheck = () => {
+  const navigate = useNavigate();
 
-interface MamaEmotionCheckProps {
-  onEmotionClick: (context: string) => void;
-}
-
-const MamaEmotionCheck = ({ onEmotionClick }: MamaEmotionCheckProps) => {
   return (
-    <motion.div
+    <motion.button
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
-      transition={{ duration: 0.4, delay: 0.05 }}
-      className="mx-3 p-4 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]"
+      transition={{ duration: 0.4 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => navigate("/emotion-button")}
+      className="mx-3 w-[calc(100%-1.5rem)] p-4 bg-gradient-to-r from-[#FFF0F5] to-[#FFE8D6] rounded-2xl shadow-sm border border-[#F5E6D3] flex items-center gap-3 text-left active:shadow-md transition-all min-h-[56px]"
     >
-      <p className="text-base font-medium text-[#3D3028] mb-0.5">💛 妈妈今天的情绪</p>
-      <p className="text-xs text-[#A89580] mb-3">30秒情绪释放，给自己一个拥抱</p>
-
-      <div className="flex flex-wrap gap-2">
-        {emotions.map((e) => (
-          <motion.button
-            key={e.label}
-            whileTap={{ scale: 0.93 }}
-            onClick={() => onEmotionClick(e.context)}
-            className="px-3.5 py-2.5 bg-[#FFF0F5] rounded-xl text-[#3D3028] text-sm active:bg-[#FFE0EB] transition-all min-h-[44px]"
-          >
-            {e.emoji} {e.label}
-          </motion.button>
-        ))}
+      <span className="text-2xl">🆘</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-[#3D3028]">情绪急救站</p>
+        <p className="text-xs text-[#8B7355]">30秒释放情绪，给自己一个拥抱</p>
       </div>
-    </motion.div>
+      <ArrowRight className="w-4 h-4 text-[#E879A0] shrink-0" />
+    </motion.button>
   );
 };
 

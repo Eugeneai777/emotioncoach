@@ -1,17 +1,14 @@
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
-const concerns = [
-  { label: "孩子不听话", emoji: "😤", context: "我的孩子不听话，我不知道该怎么办" },
-  { label: "不爱学习", emoji: "📚", context: "我的孩子不爱学习，我很着急" },
-  { label: "今天很累", emoji: "😩", context: "我今天当妈妈当得很累，感觉身心俱疲" },
-  { label: "沟通不好", emoji: "💬", context: "我和老公沟通不好，经常吵架或者冷战" },
-  { label: "有点迷茫", emoji: "🌫️", context: "作为妈妈，我对未来感到迷茫，不知道自己的方向在哪里" },
+const scenarios = [
+  { label: "孩子不听话", emoji: "😤", route: "/coach/parent_emotion_coach" },
+  { label: "不爱学习", emoji: "📚", route: "/assessment/communication_parent" },
+  { label: "今天很累", emoji: "😩", route: "/emotion-button" },
+  { label: "沟通不好", emoji: "💬", route: "/coach/parent_emotion_coach" },
+  { label: "有点迷茫", emoji: "🌫️", route: "/assessment/women_competitiveness" },
 ];
-
-interface MamaHeroProps {
-  onConcernClick: (context: string) => void;
-}
 
 const container = {
   hidden: {},
@@ -23,7 +20,9 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0, 0, 0.2, 1] as const } },
 };
 
-const MamaHero = ({ onConcernClick }: MamaHeroProps) => {
+const MamaHero = () => {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       className="text-center px-3 pt-6 pb-4 bg-gradient-to-b from-[#FFE8D6] to-[#FFF8F0]"
@@ -41,15 +40,15 @@ const MamaHero = ({ onConcernClick }: MamaHeroProps) => {
       <motion.p variants={fadeUp} className="text-base font-medium text-[#3D3028] mb-3">今天最困扰的是什么？</motion.p>
 
       <motion.div variants={container} className="flex flex-wrap justify-center gap-2">
-        {concerns.map((c) => (
+        {scenarios.map((s) => (
           <motion.button
-            key={c.label}
+            key={s.label}
             variants={fadeUp}
             whileTap={{ scale: 0.93 }}
-            onClick={() => onConcernClick(c.context)}
+            onClick={() => navigate(s.route)}
             className="px-3.5 py-2.5 bg-white rounded-xl shadow-sm border border-[#F5E6D3] text-[#3D3028] text-sm font-medium active:bg-[#FFF3EB] transition-all min-h-[44px]"
           >
-            {c.emoji} {c.label}
+            {s.emoji} {s.label}
           </motion.button>
         ))}
       </motion.div>
