@@ -83,27 +83,6 @@ const MamaAssistant = () => {
     >
       <PageHeader title="宝妈AI助手" />
 
-      {/* Conversational greeting bubble */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mx-4 mt-3 flex items-start gap-2.5"
-      >
-        {/* AI avatar */}
-        <div className="shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--mama-accent))] flex items-center justify-center text-white text-sm font-bold shadow-sm">
-          AI
-        </div>
-        {/* Bubble */}
-        <div className="flex-1 bg-[hsl(var(--mama-card))] rounded-2xl rounded-tl-md p-3 shadow-sm border border-[hsl(var(--mama-border))]">
-          <p className="text-sm text-[hsl(var(--mama-heading))]">
-            {greeting.emoji} {greeting.text}，妈妈
-          </p>
-          <p className="text-[11px] text-[hsl(var(--mama-body))] mt-0.5">
-            今天想聊聊什么，或者先看看下面的工具？
-          </p>
-        </div>
-      </motion.div>
 
       {/* Section: 今日关怀 */}
       <div className="px-4 mt-4 space-y-3">
