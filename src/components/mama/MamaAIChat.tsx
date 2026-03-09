@@ -52,6 +52,17 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
     }
   }, [open, initialContext]);
 
+  // Handle initialInput from bottom bar
+  useEffect(() => {
+    if (open && initialInput && !hasStarted) {
+      setHasStarted(true);
+      setMessages([]);
+      const userMsg: Message = { role: "user", content: initialInput };
+      setMessages([userMsg]);
+      streamChat([userMsg]);
+    }
+  }, [open, initialInput]);
+
   useEffect(() => {
     if (!open) setHasStarted(false);
   }, [open]);
