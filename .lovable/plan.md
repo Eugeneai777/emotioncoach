@@ -1,23 +1,119 @@
 
 
-## 两个问题需要修复
+# /mama 转化优化方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 现状问题
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+当前 `/mama` 页面所有互动都只导向 AI 对话（`openChat`），缺乏明确的产品转化路径。用户与 AI 聊完后没有下一步引导，测评/工具/训练营入口弱且分散。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 优化策略：三层转化漏斗
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+```text
+第一层：免费体验（当前已有）
+  ↓ AI对话中自然植入
+第二层：测评/工具（轻量付费 ¥9.9）
+  ↓ 测评结果中引导
+第三层：训练营（高价值转化）
+```
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+## 具体改动
 
-| 文件 | 修改 |
+### 1. AI 对话内嵌转化卡片（最关键改动）
+
+**文件：`MamaAIChat.tsx`**
+
+在 AI 回复结束后，根据对话 context 类型，自动在消息流底部渲染一张「推荐卡片」：
+
+| 对话主题 | 推荐产品 | 卡片内容 |
+|---------|---------|---------|
+| 孩子不听话/不爱学习 | 亲子沟通测评 + 训练营 | "想更系统了解亲子关系？→ 免费测一测" |
+| 情绪/累/压力/焦虑 | 情绪健康测评 | "3分钟了解你的情绪状态 → 情绪健康测评" |
+| 老公/家庭关系 | 亲子训练营 | "21天系统提升家庭关系 → 了解训练营" |
+| 迷茫/成长 | 女性竞争力测评 | "找到你的成长方向 → 竞争力测评" |
+
+实现方式：
+- 新建 `MamaConversionCard.tsx` 组件，根据 context 关键词匹配显示对应卡片
+- 卡片样式与聊天气泡一致（温暖风格），不突兀
+- 点击导航到对应路由（`/assessment/communication_parent`、`/parent-camp`、`/assessment-picker` 等）
+
+### 2. Edge Function 提示词增加转化引导
+
+**文件：`supabase/functions/mama-ai-coach/index.ts`**
+
+在系统提示词中增加：当对话进行 2 轮以上时，自然地在回复中提到"如果想更系统地了解自己/孩子..."，为转化卡片做铺垫。不要硬推销，保持温柔教练风格。
+
+### 3. 工具区升级为产品导航
+
+**文件：`MamaToolGrid.tsx`**
+
+当前 4 个工具卡都只是打开 AI 聊天。优化为：
+- **亲子沟通教练** → 导航到 `/coach/parent_emotion_coach`（如已有）或打开 AI 聊天
+- **情绪支持教练** → 导航到 `/emotion-button`（情绪急救按钮）
+- **关系沟通教练** → 保持 AI 聊天
+- **妈妈成长教练** → 保持 AI 聊天
+
+每个工具卡底部新增小字链接：如"做个测评 →"，导航到对应测评页
+
+### 4. 测评入口增强
+
+**文件：`MamaAssessmentEntry.tsx`**
+
+当前只有一个"妈妈能量测评"（纯前端趣味测评），增加真正的产品测评入口：
+
+新增一个卡片区域"专业测评"，包含 2-3 个测评卡片：
+- 📋 亲子沟通能力测评 → `/assessment/communication_parent`
+- 💛 情绪健康自评 → `/assessment/emotion_health`（或 `/emotion-health-lite`）
+- ✨ 女性竞争力测评 → `/assessment/women_competitiveness`
+
+保留原有趣味测评在上方，专业测评在下方，文案强调"3分钟""免费"降低门槛。
+
+### 5. 训练营转化入口
+
+**文件：新建 `MamaCampEntry.tsx`**
+
+在页面底部（测评入口下方）新增训练营推荐卡片：
+- 标题："🌈 21天亲子关系训练营"
+- 描述："每天15分钟，系统提升亲子沟通能力"
+- 按钮："了解详情 →" 导航到 `/parent-camp` 或 `/camp-intro/parent_emotion_21`
+- 视觉：渐变背景卡片，温暖风格
+
+### 6. MamaAssessment 结果页转化
+
+**文件：`MamaAssessment.tsx`**
+
+测评结果页当前只有"找AI聊聊"和"分享"。增加：
+- 根据结果类型推荐不同产品：
+  - 焦虑型 → 情绪健康测评
+  - 温暖型/成长型 → 亲子训练营
+  - 责任型 → 女性竞争力测评
+- 卡片文案个性化："作为温暖型妈妈，你适合通过系统训练让爱更有方法"
+
+### 7. 主页面布局调整
+
+**文件：`MamaAssistant.tsx`**
+
+调整模块顺序，优化转化漏斗：
+1. Hero（困扰按钮）— 吸引互动
+2. 妈妈今天好累 — 高频入口
+3. 情绪释放 — 情感连接
+4. 每日能量 — 养成习惯
+5. **专业测评区（新增）** — 轻量转化
+6. 工具区 — 深度使用
+7. 妈妈能量趣味测评 — 传播裂变
+8. **训练营推荐（新增）** — 高价值转化
+
+---
+
+## 文件改动清单
+
+| 文件 | 改动 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `MamaAIChat.tsx` | 对话结束后显示转化推荐卡片 |
+| `MamaConversionCard.tsx` | **新建** — 基于 context 的转化卡片组件 |
+| `MamaCampEntry.tsx` | **新建** — 训练营推荐入口卡片 |
+| `MamaToolGrid.tsx` | 工具卡底部增加测评/产品链接 |
+| `MamaAssessmentEntry.tsx` | 增加专业测评入口卡片 |
+| `MamaAssessment.tsx` | 结果页增加个性化产品推荐 |
+| `MamaAssistant.tsx` | 调整模块顺序，集成新组件 |
+| `mama-ai-coach/index.ts` | 提示词增加自然转化引导 |
 
