@@ -384,6 +384,21 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
         >
           💬 找教练聊聊
         </Button>
+        {todayAlreadyDone && (
+          <Button
+            onClick={() => {
+              setSubmitted(false);
+              setTodayAlreadyDone(false);
+              setCurrentStep(0);
+              setScores({ energy_body: 0, energy_emotion: 0, energy_patience: 0, energy_connection: 0, energy_self: 0 });
+            }}
+            variant="outline"
+            className="w-full rounded-2xl min-h-[44px] mb-2 border-[hsl(30_50%_90%)]"
+            style={{ color: "hsl(30 20% 44%)" }}
+          >
+            🔄 重新测评
+          </Button>
+        )}
         <Button onClick={onBack} variant="ghost" className="w-full rounded-2xl" style={{ color: "hsl(30 20% 44%)" }}>
           返回首页
         </Button>
