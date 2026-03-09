@@ -33,7 +33,7 @@ const KEEPALIVE_SILENCE_BYTES = 16000;
 const KEEPALIVE_NOISE_AMPLITUDE_I16 = 200;
 
 // ✅ 保活间隔：10s，确保在 90s 超时前有更多有效包到达上游
-const KEEPALIVE_INTERVAL_MS = 10_000;
+const KEEPALIVE_INTERVAL_MS = 5_000;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
   // byteLength 必须为偶数（Int16）
