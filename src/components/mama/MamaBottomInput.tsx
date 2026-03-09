@@ -38,7 +38,6 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
 
   const placeholder = lastChat ? `继续聊：${lastChat.summary}...` : "想找人说说话...";
 
-  // --- Voice recording ---
   const startRecording = useCallback(async () => {
     try {
       const stream = await acquireMicrophone();
@@ -97,7 +96,6 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
     }
   };
 
-  // Touch handlers for hold-to-speak
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     startRecording();
@@ -110,7 +108,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
 
   return (
     <div
-      className="fixed left-0 right-0 z-40 px-3 pt-2 pb-2 bg-[#FFF8F0] border-t border-[#F5E6D3]"
+      className="fixed left-0 right-0 z-40 px-3 pt-2 pb-2 bg-[hsl(var(--mama-bg))] border-t border-[hsl(var(--mama-border))]"
       style={{ bottom: 0, paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
     >
       <AnimatePresence mode="wait">
@@ -125,7 +123,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
           >
             <button
               onClick={() => setMode("voice")}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-white border border-[#F5E6D3] text-[#A89580] active:bg-[#FFF3EB] transition-colors"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-[hsl(var(--mama-card))] border border-[hsl(var(--mama-border))] text-[hsl(var(--mama-muted))] active:bg-[hsl(var(--mama-card-alt))] transition-colors"
             >
               <Mic className="w-5 h-5" />
             </button>
@@ -135,7 +133,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
               placeholder={placeholder}
-              className="flex-1 h-10 min-h-[40px] rounded-full bg-white border border-[#F5E6D3] px-4 text-sm text-[#3D3028] placeholder:text-[#C4B49A] focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
+              className="flex-1 h-10 min-h-[40px] rounded-full bg-[hsl(var(--mama-card))] border border-[hsl(var(--mama-border))] px-4 text-sm text-[hsl(var(--mama-heading))] placeholder:text-[hsl(var(--mama-muted))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--mama-accent)/0.3)]"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -146,7 +144,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-[#F4845F] text-white disabled:opacity-40 active:bg-[#E5734E] transition-colors"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-[hsl(var(--mama-accent))] text-white disabled:opacity-40 active:bg-[hsl(var(--mama-accent-hover))] transition-colors"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -162,7 +160,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
           >
             <button
               onClick={() => setMode("text")}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-white border border-[#F5E6D3] text-[#A89580] active:bg-[#FFF3EB] transition-colors"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-[hsl(var(--mama-card))] border border-[hsl(var(--mama-border))] text-[hsl(var(--mama-muted))] active:bg-[hsl(var(--mama-card-alt))] transition-colors"
             >
               <Keyboard className="w-5 h-5" />
             </button>
@@ -175,10 +173,10 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
               disabled={isTranscribing}
               className={`flex-1 h-10 min-h-[40px] rounded-full border text-sm font-medium select-none transition-all ${
                 isRecording
-                  ? "bg-[#F4845F] text-white border-[#F4845F] scale-105"
+                  ? "bg-[hsl(var(--mama-accent))] text-white border-[hsl(var(--mama-accent))] scale-105"
                   : isTranscribing
-                  ? "bg-[#FFF3EB] text-[#C4B49A] border-[#F5E6D3]"
-                  : "bg-white text-[#3D3028] border-[#F5E6D3] active:bg-[#FFF3EB]"
+                  ? "bg-[hsl(var(--mama-card-alt))] text-[hsl(var(--mama-muted))] border-[hsl(var(--mama-border))]"
+                  : "bg-[hsl(var(--mama-card))] text-[hsl(var(--mama-heading))] border-[hsl(var(--mama-border))] active:bg-[hsl(var(--mama-card-alt))]"
               }`}
             >
               {isRecording ? "松开 发送" : isTranscribing ? "识别中..." : "按住 说话"}
