@@ -47,16 +47,23 @@ const MamaAssistant = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pb-24" style={{ paddingBottom: "max(6rem, calc(4rem + env(safe-area-inset-bottom)))" }}>
+    <div
+      className="min-h-screen"
+      style={{
+        background: "hsl(30 100% 97%)",
+        paddingBottom: "max(5rem, calc(3.5rem + env(safe-area-inset-bottom)))",
+      }}
+    >
       <MamaHero />
 
       {lastChat && (
         <button
           onClick={() => openChat(`我想继续聊上次的话题：${lastChat.summary}`)}
-          className="mx-3 mt-2 w-[calc(100%-1.5rem)] p-2.5 bg-white/80 backdrop-blur rounded-xl border border-[#F5E6D3] text-left text-xs text-[#8B7355] active:bg-white transition-all min-h-[44px] flex items-center"
+          className="mx-4 mt-2 w-[calc(100%-2rem)] p-2.5 bg-white/80 backdrop-blur-sm rounded-xl border border-[hsl(30_50%_90%)] text-left text-xs active:bg-white transition-all min-h-[44px] flex items-center shadow-[0_1px_3px_hsl(30_30%_70%/0.08)]"
+          style={{ color: "hsl(30 20% 44%)" }}
         >
           <span className="truncate flex-1">💬 上次聊过：{lastChat.summary}...</span>
-          <span className="text-[#F4845F] shrink-0 ml-2">继续 →</span>
+          <span className="shrink-0 ml-2 font-medium" style={{ color: "hsl(16 86% 68%)" }}>继续 →</span>
         </button>
       )}
 
@@ -75,11 +82,15 @@ const MamaAssistant = () => {
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+        transition={{ delay: 0.4, type: "spring", stiffness: 220, damping: 18 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => openChat()}
-        className="fixed right-4 bottom-6 z-40 flex items-center gap-2 px-5 py-3.5 bg-[#F4845F] text-white rounded-full shadow-lg shadow-[#F4845F]/30 active:bg-[#E5734E] transition-colors min-h-[52px]"
-        style={{ bottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+        className="fixed right-4 z-40 flex items-center gap-2 px-5 py-3 text-white rounded-full min-h-[48px] active:opacity-90 transition-opacity"
+        style={{
+          bottom: "max(1.5rem, env(safe-area-inset-bottom))",
+          background: "linear-gradient(135deg, hsl(16 86% 68%) 0%, hsl(16 86% 58%) 100%)",
+          boxShadow: "0 4px 16px hsl(16 86% 68% / 0.35), 0 2px 4px hsl(16 86% 68% / 0.2)",
+        }}
       >
         <MessageCircle className="w-5 h-5" />
         <span className="text-sm font-medium">找教练聊聊</span>
