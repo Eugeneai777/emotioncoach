@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Mic, MicOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import MamaConversionCard from "./MamaConversionCard";
 
 interface Message {
   role: "user" | "assistant";
