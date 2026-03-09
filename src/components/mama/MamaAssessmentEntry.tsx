@@ -49,8 +49,8 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
         className="p-3.5 rounded-2xl border border-[hsl(30_50%_90%)] shadow-[0_2px_8px_hsl(16_86%_68%/0.08)]"
         style={{ background: "linear-gradient(135deg, hsl(25 100% 96%) 0%, hsl(340 60% 97%) 100%)" }}
       >
-        <p className="text-sm font-medium mb-0.5" style={{ color: "hsl(25 25% 17%)" }}>🎯 妈妈能量测评</p>
-        <p className="text-[11px] mb-2.5" style={{ color: "hsl(30 20% 44%)" }}>你是哪一种妈妈？5题快速测评</p>
+        <p className="text-sm font-medium mb-0.5" style={{ color: "hsl(25 25% 17%)" }}>🔋 今日能量检测</p>
+        <p className="text-[11px] mb-2.5" style={{ color: "hsl(30 20% 44%)" }}>5维度打分，追踪每日状态变化</p>
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={onStartFunAssessment}
