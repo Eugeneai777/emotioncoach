@@ -1,23 +1,100 @@
 
 
-## 两个问题需要修复
+# 宝妈AI生活助手 — 全新页面方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 概述
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+将现有 `/parent-lite` 测评漏斗页重新设计为一个**温暖、极简、即用型**的宝妈AI助手主页，包含多个功能模块。新建 `/mama` 路由，保留原 `/parent-lite` 不变。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 页面结构（单页滚动）
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+```text
+┌─────────────────────────────┐
+│  宝妈AI生活助手              │
+│  懂妈妈的AI助手              │
+│  情绪·亲子·关系·成长          │
+├─────────────────────────────┤
+│  今天妈妈最困扰的是什么？      │
+│  [孩子不听话] [孩子不爱学习]   │
+│  [我今天很累] [和老公沟通不好]  │
+│  [我有点迷茫]                │
+├─────────────────────────────┤
+│  🫂 妈妈今天好累（高频入口）    │
+│  点击 → 选择累的原因 → AI回应  │
+├─────────────────────────────┤
+│  妈妈今天的情绪               │
+│  [开心][有点烦][很累][有压力]   │
+│  [很焦虑]                    │
+├─────────────────────────────┤
+│  ☀️ 今日妈妈一句话 + 感恩记录  │
+├─────────────────────────────┤
+│  🛠️ 妈妈AI工具区（4个教练卡）  │
+├─────────────────────────────┤
+│  📊 妈妈能量测评入口           │
+│  → 5题 → 结果 → 分享         │
+└─────────────────────────────┘
+```
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+## 技术方案
 
-| 文件 | 修改 |
+### 1. 新建文件
+
+| 文件 | 说明 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/MamaAssistant.tsx` | 主页面，管理各模块状态与 AI 对话 |
+| `src/components/mama/MamaHero.tsx` | 顶部标题 + 5个困扰按钮 |
+| `src/components/mama/MamaTiredEntry.tsx` | "妈妈今天好累"高频入口（5个原因按钮） |
+| `src/components/mama/MamaEmotionCheck.tsx` | 30秒情绪释放（5个情绪按钮） |
+| `src/components/mama/MamaDailyEnergy.tsx` | 每日一句话 + 感恩输入 |
+| `src/components/mama/MamaToolGrid.tsx` | 4个AI工具卡片 |
+| `src/components/mama/MamaAssessmentEntry.tsx` | 测评入口卡片 |
+| `src/components/mama/MamaAIChat.tsx` | 底部弹出的AI对话面板（Sheet） |
+| `src/components/mama/MamaAssessment.tsx` | 5题妈妈能量测评 + 结果页 |
+| `supabase/functions/mama-ai-coach/index.ts` | 宝妈专属AI教练后端函数 |
+
+### 2. AI 对话机制
+
+- 创建 `mama-ai-coach` 边缘函数，**无需登录**即可使用（匿名调用）
+- 系统提示词定义"温柔教练"角色：回答简短、温暖、有具体建议
+- 用户点击困扰/情绪/疲惫按钮 → 将预设 context 发送给 AI → 弹出底部 Sheet 显示回复
+- 对话可继续追问（"继续问AI妈妈教练"按钮）
+- 使用 Lovable AI（`openai/gpt-5-mini`）调用，无需额外 API Key
+
+### 3. 每日妈妈一句话
+
+- 预置 30+ 条温暖语录，按日期取模轮播
+- 感恩记录：纯前端输入 → 发送给 AI 获得温暖回应（存 localStorage）
+
+### 4. 妈妈能量测评
+
+- 5题快速测评，复用 `ParentLiteQuestions` 的交互模式
+- 结果分为 4 类：温暖型/成长型/责任型/焦虑型妈妈
+- 结果页包含分享按钮 + "AI妈妈教练"CTA
+
+### 5. 视觉风格
+
+- 暖色系：奶油白背景 `bg-[#FFF8F0]`，温柔橙 `#F4845F`，淡粉 `#F8B4B4`，浅绿 `#A7D7C5`
+- 卡片圆角大（`rounded-2xl`），柔和阴影
+- 无科技感元素，多用 emoji
+
+### 6. 路由与首页入口
+
+- `src/App.tsx`：注册 `/mama` 路由
+- `src/pages/Index.tsx`：在首页添加"宝妈AI生活助手"入口卡片
+- OG 配置：添加 mama 页面元数据
+
+### 7. 首页入口卡片
+
+在首页合适位置添加：
+```
+👩 宝妈AI生活助手
+当妈妈不容易，有劲AI陪你一起成长
+[进入妈妈AI助手]
+```
+
+## 不需要数据库变更
+
+- AI 对话通过边缘函数直接调用，不持久化（免登录）
+- 感恩记录存 localStorage
+- 测评结果纯前端计算
 
