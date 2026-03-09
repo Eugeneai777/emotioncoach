@@ -58,20 +58,11 @@ const MamaAssistant = () => {
       <PageHeader title="宝妈AI助手" />
       <MamaHero />
 
-      {lastChat && (
-        <button
-          onClick={() => openChat(`我想继续聊上次的话题：${lastChat.summary}`)}
-          className="mx-4 mt-2 w-[calc(100%-2rem)] p-2.5 bg-white/80 backdrop-blur-sm rounded-xl border border-[hsl(30_50%_90%)] text-left text-xs active:bg-white transition-all min-h-[44px] flex items-center shadow-[0_1px_3px_hsl(30_30%_70%/0.08)]"
-          style={{ color: "hsl(30 20% 44%)" }}
-        >
-          <span className="truncate flex-1">💬 上次聊过：{lastChat.summary}...</span>
-          <span className="shrink-0 ml-2 font-medium" style={{ color: "hsl(16 86% 68%)" }}>继续 →</span>
-        </button>
-      )}
-
       <div className="space-y-3 mt-3">
         <MamaEmotionCheck />
         <MamaDailyEnergy
+          lastChat={lastChat}
+          onContinueChat={(ctx) => openChat(ctx)}
           onGratitudeSubmit={(text) =>
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
