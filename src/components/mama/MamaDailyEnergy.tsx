@@ -5,6 +5,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useMamaDailyQuote } from "@/hooks/useMamaDailyQuote";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 interface MamaDailyEnergyProps {
   onGratitudeSubmit: (text: string) => void;
