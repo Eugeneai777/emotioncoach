@@ -52,9 +52,9 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
         {/* Decorative battery icon */}
         <div className="absolute right-3 top-3 text-3xl opacity-15 select-none">🔋</div>
 
-        <p className="text-sm font-semibold mb-1" style={{ color: "hsl(25 25% 17%)" }}>🔋 今日能量检测</p>
+        <p className="text-sm font-semibold mb-1" style={{ color: "hsl(25 25% 17%)" }}>🔋 今天的你，能量还够吗？</p>
         <p className="text-[11px] leading-relaxed mb-2" style={{ color: "hsl(30 20% 44%)" }}>
-          每天1分钟，为5个维度打分
+          1分钟了解自己的状态，找到最需要的支持
         </p>
 
         {/* 5 dimension preview pills */}
