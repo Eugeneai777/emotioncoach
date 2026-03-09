@@ -496,3 +496,6 @@ verify_jwt = false
 
 [functions.refine-assessment-template]
 verify_jwt = false
+
+[functions.mama-ai-coach]
+verify_jwt = false
