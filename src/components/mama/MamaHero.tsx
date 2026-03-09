@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const scenarios = [
-  { label: "孩子不听话", emoji: "😤", route: "/coach/parent_emotion_coach", color: "from-[hsl(16,86%,68%)]/10 to-[hsl(16,86%,68%)]/5" },
-  { label: "不爱学习", emoji: "📚", route: "/assessment/communication_parent", color: "from-[hsl(220,80%,65%)]/10 to-[hsl(220,80%,65%)]/5" },
-  { label: "今天很累", emoji: "😩", route: "/emotion-button", color: "from-[hsl(340,60%,68%)]/10 to-[hsl(340,60%,68%)]/5" },
-  { label: "沟通不好", emoji: "💬", route: "/coach/parent_emotion_coach", color: "from-[hsl(152,42%,49%)]/10 to-[hsl(152,42%,49%)]/5" },
-  { label: "有点迷茫", emoji: "🌫️", route: "/assessment/women_competitiveness", color: "from-[hsl(35,38%,56%)]/10 to-[hsl(35,38%,56%)]/5" },
+  { label: "又跟孩子吵了", emoji: "😤", route: "/coach/parent_emotion_coach", color: "from-[hsl(16,86%,68%)]/10 to-[hsl(16,86%,68%)]/5" },
+  { label: "催作业催崩了", emoji: "📚", route: "/assessment/communication_parent", color: "from-[hsl(220,80%,65%)]/10 to-[hsl(220,80%,65%)]/5" },
+  { label: "好累，想躺平", emoji: "😩", route: "/emotion-button", color: "from-[hsl(340,60%,68%)]/10 to-[hsl(340,60%,68%)]/5" },
+  { label: "说什么都没用", emoji: "💬", route: "/coach/parent_emotion_coach", color: "from-[hsl(152,42%,49%)]/10 to-[hsl(152,42%,49%)]/5" },
+  { label: "不知道为了什么", emoji: "🌫️", route: "/assessment/women_competitiveness", color: "from-[hsl(35,38%,56%)]/10 to-[hsl(35,38%,56%)]/5" },
 ];
 
 const container = {
