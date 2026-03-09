@@ -295,7 +295,23 @@ ${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string)
 4. 更安全的账号保障
 
 请用温暖、邀请式的语气提醒他们绑定微信，
-强调"密码找回"这个实用价值，让用户感受到这是为了保护他们的账号安全。`
+强调"密码找回"这个实用价值，让用户感受到这是为了保护他们的账号安全。`,
+      mama_daily_encouragement: `这是宝妈AI助手的每日温暖寄语。请为宝妈生成一条温暖的个性化消息。
+
+当前时间段：${context?.time_of_day === 'morning' ? '早上' : context?.time_of_day === 'afternoon' ? '下午' : '晚上'}
+
+请从以下4种风格中随机选择一种：
+1. 💪 鼓励型：给妈妈力量和信心，肯定她的努力
+2. 💛 肯定型：肯定妈妈的付出和价值，让她知道自己做得很好
+3. 🤗 同理型：理解妈妈的辛苦和不易，给予共情和陪伴
+4. 🌸 温馨型：温柔的提醒妈妈照顾好自己，注意休息
+
+要求：
+- 长度40-80字，温暖口吻
+- 贴近宝妈的真实生活场景（带娃、家务、工作平衡、情绪管理等）
+- 不要空洞的鸡汤，要有具体的画面感
+- 在返回的JSON中额外加一个 "style" 字段，值为 "encourage"/"affirm"/"empathy"/"warmth" 之一
+- 结合时间段（早上/下午/晚上）调整内容`
     };
 
     const styleDescriptions: Record<EncouragementStyle, string> = {
