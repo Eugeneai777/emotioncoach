@@ -608,3 +608,25 @@ input:focus, textarea:focus, select:focus {
 .motion-fallback {
   animation: fallback-fade-in 0.5s ease-out 1s forwards;
 }
+
+/* Mama energy slider */
+.mama-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid hsl(16 86% 68%);
+  box-shadow: 0 2px 6px hsl(16 86% 68% / 0.3);
+  cursor: pointer;
+}
+.mama-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid hsl(16 86% 68%);
+  box-shadow: 0 2px 6px hsl(16 86% 68% / 0.3);
+  cursor: pointer;
+}
