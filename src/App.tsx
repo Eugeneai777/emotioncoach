@@ -84,6 +84,7 @@ const TeenCoach = lazyRetry(() => import("./pages/TeenCoach"));
 const TeenChat = lazyRetry(() => import("./pages/TeenChat"));
 const ParentChildDiary = lazyRetry(() => import("./pages/ParentChildDiary"));
 const ParentLite = lazyRetry(() => import("./pages/ParentLite"));
+const MamaAssistant = lazyRetry(() => import("./pages/MamaAssistant"));
 
 // 沟通教练
 const CommunicationCoach = lazyRetry(() => import("./pages/CommunicationCoach"));
