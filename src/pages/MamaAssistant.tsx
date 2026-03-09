@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
+import { MessageCircle } from "lucide-react";
+import { motion } from "framer-motion";
 import MamaHero from "@/components/mama/MamaHero";
-import MamaTiredEntry from "@/components/mama/MamaTiredEntry";
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
 import MamaDailyEnergy from "@/components/mama/MamaDailyEnergy";
-import MamaToolGrid from "@/components/mama/MamaToolGrid";
 import MamaAssessmentEntry from "@/components/mama/MamaAssessmentEntry";
 import MamaCampEntry from "@/components/mama/MamaCampEntry";
 import MamaAIChat from "@/components/mama/MamaAIChat";
@@ -29,7 +29,7 @@ const MamaAssistant = () => {
     } catch {}
   }, []);
 
-  const openChat = (context: string) => {
+  const openChat = (context?: string) => {
     setChatContext(context);
     setChatOpen(true);
   };
@@ -47,31 +47,43 @@ const MamaAssistant = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0]" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}>
-      <MamaHero onConcernClick={openChat} />
+    <div className="min-h-screen bg-[#FFF8F0] pb-24" style={{ paddingBottom: "max(6rem, calc(4rem + env(safe-area-inset-bottom)))" }}>
+      <MamaHero />
 
       {lastChat && (
         <button
           onClick={() => openChat(`我想继续聊上次的话题：${lastChat.summary}`)}
-          className="mx-3 mb-2 w-[calc(100%-1.5rem)] p-2.5 bg-white/80 backdrop-blur rounded-xl border border-[#F5E6D3] text-left text-xs text-[#8B7355] active:bg-white transition-all min-h-[44px] flex items-center"
+          className="mx-3 mt-2 w-[calc(100%-1.5rem)] p-2.5 bg-white/80 backdrop-blur rounded-xl border border-[#F5E6D3] text-left text-xs text-[#8B7355] active:bg-white transition-all min-h-[44px] flex items-center"
         >
           <span className="truncate flex-1">💬 上次聊过：{lastChat.summary}...</span>
           <span className="text-[#F4845F] shrink-0 ml-2">继续 →</span>
         </button>
       )}
 
-      <div className="space-y-3">
-        <MamaTiredEntry onReasonClick={openChat} />
-        <MamaEmotionCheck onEmotionClick={openChat} />
+      <div className="space-y-3 mt-3">
+        <MamaEmotionCheck />
         <MamaDailyEnergy
           onGratitudeSubmit={(text) =>
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
         />
-        <MamaAssessmentEntry onStart={() => setShowAssessment(true)} />
-        <MamaToolGrid onToolClick={openChat} />
+        <MamaAssessmentEntry onStartFunAssessment={() => setShowAssessment(true)} />
         <MamaCampEntry />
       </div>
+
+      {/* Floating coach button — sole AI chat entry */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => openChat()}
+        className="fixed right-4 bottom-6 z-40 flex items-center gap-2 px-5 py-3.5 bg-[#F4845F] text-white rounded-full shadow-lg shadow-[#F4845F]/30 active:bg-[#E5734E] transition-colors min-h-[52px]"
+        style={{ bottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+      >
+        <MessageCircle className="w-5 h-5" />
+        <span className="text-sm font-medium">找教练聊聊</span>
+      </motion.button>
 
       <MamaAIChat
         open={chatOpen}
