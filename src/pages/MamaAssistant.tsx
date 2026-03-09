@@ -55,6 +55,7 @@ const MamaAssistant = () => {
         paddingBottom: "max(5rem, calc(3.5rem + env(safe-area-inset-bottom)))",
       }}
     >
+      <PageHeader title="宝妈AI助手" />
       <MamaHero />
 
       {lastChat && (
