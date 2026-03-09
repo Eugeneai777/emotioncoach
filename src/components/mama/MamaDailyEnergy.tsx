@@ -11,13 +11,11 @@ import { toast } from "@/hooks/use-toast";
 
 interface MamaDailyEnergyProps {
   onGratitudeSubmit: (text: string) => void;
-  lastChat?: { summary: string; time: number } | null;
-  onContinueChat?: (context: string) => void;
 }
 
 const GRATITUDE_COUNT_KEY = "mama_gratitude_count";
 
-const MamaDailyEnergy = ({ onGratitudeSubmit, lastChat, onContinueChat }: MamaDailyEnergyProps) => {
+const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
   const [gratitudeText, setGratitudeText] = useState("");
   const [gratitudeCount, setGratitudeCount] = useState(0);
   const [justSubmitted, setJustSubmitted] = useState(false);
@@ -109,17 +107,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit, lastChat, onContinueChat }: MamaDa
         )}
       </div>
 
-      {/* Last chat continuation */}
-      {lastChat && onContinueChat && (
-        <button
-          onClick={() => onContinueChat(`我想继续聊上次的话题：${lastChat.summary}`)}
-          className="w-full flex items-center p-2 rounded-xl border border-[hsl(30_50%_90%)] text-left text-xs active:bg-[hsl(30_100%_95%)] transition-colors min-h-[40px] mb-2.5"
-          style={{ background: "hsl(30 100% 98%)", color: "hsl(30 20% 44%)" }}
-        >
-          <span className="truncate flex-1">💬 上次聊过：{lastChat.summary}...</span>
-          <span className="shrink-0 ml-2 font-medium" style={{ color: "hsl(16 86% 68%)" }}>继续 →</span>
-        </button>
-      )}
+      
       <div className="flex items-center justify-between mb-1.5">
         <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>📝 记录一个让你微笑的瞬间</p>
         {gratitudeCount > 0 && (

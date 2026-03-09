@@ -74,8 +74,6 @@ const MamaAssistant = () => {
       <div className="space-y-3 mt-3">
         <MamaEmotionCheck />
         <MamaDailyEnergy
-          lastChat={lastChat}
-          onContinueChat={(ctx) => openChat(ctx)}
           onGratitudeSubmit={(text) =>
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
@@ -88,6 +86,8 @@ const MamaAssistant = () => {
       <MamaBottomInput
         onSendText={handleBottomSendText}
         onFocusInput={handleBottomFocus}
+        lastChat={lastChat}
+        onContinueChat={(ctx) => openChat(ctx)}
       />
 
       <MamaAIChat

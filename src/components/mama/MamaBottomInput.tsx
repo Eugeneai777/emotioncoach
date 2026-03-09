@@ -8,9 +8,11 @@ import { toast } from "sonner";
 interface MamaBottomInputProps {
   onSendText: (text: string) => void;
   onFocusInput: () => void;
+  lastChat?: { summary: string; time: number } | null;
+  onContinueChat?: (context: string) => void;
 }
 
-const MamaBottomInput = ({ onSendText, onFocusInput }: MamaBottomInputProps) => {
+const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }: MamaBottomInputProps) => {
   const [mode, setMode] = useState<"text" | "voice">("text");
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -27,8 +29,14 @@ const MamaBottomInput = ({ onSendText, onFocusInput }: MamaBottomInputProps) => 
   };
 
   const handleInputFocus = () => {
-    onFocusInput();
+    if (lastChat && onContinueChat) {
+      onContinueChat(`我想继续聊上次的话题：${lastChat.summary}`);
+    } else {
+      onFocusInput();
+    }
   };
+
+  const placeholder = lastChat ? `继续聊：${lastChat.summary}...` : "想找人说说话...";
 
   // --- Voice recording ---
   const startRecording = useCallback(async () => {
@@ -126,7 +134,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput }: MamaBottomInputProps) => 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
-              placeholder="想找人说说话..."
+              placeholder={placeholder}
               className="flex-1 h-10 min-h-[40px] rounded-full bg-white border border-[#F5E6D3] px-4 text-sm text-[#3D3028] placeholder:text-[#C4B49A] focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
