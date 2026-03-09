@@ -20,16 +20,37 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
   const [gratitudeCount, setGratitudeCount] = useState(0);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const { quote, loading, styleLabels } = useMamaDailyQuote();
+  const { user } = useAuth();
 
   useEffect(() => {
     setGratitudeCount(parseInt(localStorage.getItem(GRATITUDE_COUNT_KEY) || "0", 10));
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!gratitudeText.trim()) return;
     const newCount = gratitudeCount + 1;
     setGratitudeCount(newCount);
     localStorage.setItem(GRATITUDE_COUNT_KEY, String(newCount));
+
+    // Save to gratitude_entries if logged in
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from("gratitude_entries")
+          .insert({
+            user_id: user.id,
+            content: gratitudeText.trim(),
+            category: "other",
+            themes: [],
+            date: new Date().toISOString().split("T")[0],
+          });
+        if (!error) {
+          toast({ title: "已同步到感恩日记 📔" });
+        }
+      } catch (e) {
+        console.warn("Failed to save gratitude entry:", e);
+      }
+    }
 
     confetti({
       particleCount: 60,
