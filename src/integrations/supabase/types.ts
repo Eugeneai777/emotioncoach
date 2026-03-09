@@ -4939,6 +4939,48 @@ export type Database = {
           },
         ]
       }
+      mama_energy_logs: {
+        Row: {
+          created_at: string
+          energy_body: number
+          energy_connection: number
+          energy_emotion: number
+          energy_patience: number
+          energy_self: number
+          id: string
+          log_date: string
+          note: string | null
+          total_score: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          energy_body?: number
+          energy_connection?: number
+          energy_emotion?: number
+          energy_patience?: number
+          energy_self?: number
+          id?: string
+          log_date?: string
+          note?: string | null
+          total_score?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          energy_body?: number
+          energy_connection?: number
+          energy_emotion?: number
+          energy_patience?: number
+          energy_self?: number
+          id?: string
+          log_date?: string
+          note?: string | null
+          total_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       meditation_sessions: {
         Row: {
           background_sound: string | null
