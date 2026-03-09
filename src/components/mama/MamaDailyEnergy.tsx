@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 
 const quotes = [
   "孩子需要的不是完美妈妈，而是一个真实、温暖的妈妈。",
@@ -39,30 +41,63 @@ interface MamaDailyEnergyProps {
   onGratitudeSubmit: (text: string) => void;
 }
 
+const GRATITUDE_COUNT_KEY = "mama_gratitude_count";
+
 const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
   const [gratitudeText, setGratitudeText] = useState("");
+  const [gratitudeCount, setGratitudeCount] = useState(0);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+
+  useEffect(() => {
+    setGratitudeCount(parseInt(localStorage.getItem(GRATITUDE_COUNT_KEY) || "0", 10));
+  }, []);
 
   const today = new Date();
-  const dayIndex = Math.floor((today.getTime() / 86400000)) % quotes.length;
+  const dayIndex = Math.floor(today.getTime() / 86400000) % quotes.length;
   const todayQuote = quotes[dayIndex];
 
   const handleSubmit = () => {
     if (!gratitudeText.trim()) return;
+    const newCount = gratitudeCount + 1;
+    setGratitudeCount(newCount);
+    localStorage.setItem(GRATITUDE_COUNT_KEY, String(newCount));
+    
+    confetti({
+      particleCount: 60,
+      spread: 55,
+      origin: { y: 0.7 },
+      colors: ["#F4845F", "#F8B4B4", "#FFE8D6", "#A7D7C5"],
+    });
+    
+    setJustSubmitted(true);
+    setTimeout(() => setJustSubmitted(false), 2000);
+    
     onGratitudeSubmit(gratitudeText.trim());
     setGratitudeText("");
   };
 
   return (
-    <div className="mx-4 p-5 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5 }}
+      className="mx-4 p-5 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]"
+    >
       <p className="text-lg font-medium text-[#3D3028] mb-3">☀️ 今日妈妈一句话</p>
-      
+
       <div className="bg-[#FFF8F0] rounded-xl p-4 mb-4">
         <p className="text-[#5D4E37] text-base leading-relaxed italic">
           "{todayQuote}"
         </p>
       </div>
 
-      <p className="text-sm text-[#8B7355] mb-2">📝 记录今天的一件小感恩</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-[#8B7355]">📝 记录今天的一件小感恩</p>
+        {gratitudeCount > 0 && (
+          <span className="text-xs text-[#A89580]">已记录 {gratitudeCount} 条 💛</span>
+        )}
+      </div>
       <Textarea
         value={gratitudeText}
         onChange={(e) => setGratitudeText(e.target.value)}
@@ -75,10 +110,10 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
           onClick={handleSubmit}
           className="mt-3 w-full bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl"
         >
-          记录感恩 💛
+          {justSubmitted ? "已记录 ✓" : "记录感恩 💛"}
         </Button>
       )}
-    </div>
+    </motion.div>
   );
 };
 

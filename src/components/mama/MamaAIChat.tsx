@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send } from "lucide-react";
+import { Send, Mic, MicOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  followUps?: string[];
 }
 
 interface MamaAIChatProps {
@@ -16,15 +18,30 @@ interface MamaAIChatProps {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mama-ai-coach`;
+const LAST_CHAT_KEY = "mama_last_chat";
+
+const TypingDots = () => (
+  <div className="flex gap-1 items-center px-4 py-3">
+    {[0, 1, 2].map((i) => (
+      <motion.span
+        key={i}
+        className="w-2 h-2 bg-[#F4845F] rounded-full"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+      />
+    ))}
+  </div>
+);
 
 const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
-  // When opened with a new context, start the conversation
   useEffect(() => {
     if (open && initialContext && !hasStarted) {
       setHasStarted(true);
@@ -33,17 +50,39 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
     }
   }, [open, initialContext]);
 
-  // Reset on close
   useEffect(() => {
-    if (!open) {
-      setHasStarted(false);
-    }
+    if (!open) setHasStarted(false);
   }, [open]);
 
-  // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Save last chat summary
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastUser = messages.filter((m) => m.role === "user").pop();
+      if (lastUser) {
+        localStorage.setItem(LAST_CHAT_KEY, JSON.stringify({
+          summary: lastUser.content.slice(0, 30),
+          time: Date.now(),
+        }));
+      }
+    }
+  }, [messages]);
+
+  const parseFollowUps = (text: string): { clean: string; followUps: string[] } => {
+    const marker = "【追问建议】";
+    const idx = text.indexOf(marker);
+    if (idx === -1) return { clean: text, followUps: [] };
+    const clean = text.slice(0, idx).trim();
+    const followUpText = text.slice(idx + marker.length).trim();
+    const followUps = followUpText
+      .split(/\n|[;；]/)
+      .map((s) => s.replace(/^\d+[.、)\]]\s*/, "").trim())
+      .filter((s) => s.length > 0 && s.length < 30);
+    return { clean, followUps: followUps.slice(0, 3) };
+  };
 
   const streamChat = async (history: Message[], context?: string) => {
     setIsLoading(true);
@@ -57,7 +96,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: history,
+          messages: history.map((m) => ({ role: m.role, content: m.content })),
           context: context || undefined,
         }),
       });
@@ -90,12 +129,15 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantSoFar += content;
+              const { clean, followUps } = parseFollowUps(assistantSoFar);
               setMessages((prev) => {
                 const last = prev[prev.length - 1];
                 if (last?.role === "assistant") {
-                  return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+                  return prev.map((m, i) =>
+                    i === prev.length - 1 ? { ...m, content: clean, followUps } : m
+                  );
                 }
-                return [...prev, { role: "assistant", content: assistantSoFar }];
+                return [...prev, { role: "assistant", content: clean, followUps }];
               });
             }
           } catch {
@@ -115,14 +157,42 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
     }
   };
 
-  const handleSend = () => {
-    if (!input.trim() || isLoading) return;
-    const userMsg: Message = { role: "user", content: input.trim() };
+  const handleSend = (text?: string) => {
+    const msg = text || input.trim();
+    if (!msg || isLoading) return;
+    const userMsg: Message = { role: "user", content: msg };
     const updated = [...messages, userMsg];
     setMessages(updated);
     setInput("");
     streamChat(updated);
   };
+
+  const toggleVoice = () => {
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (e: any) => {
+      const text = e.results[0]?.[0]?.transcript;
+      if (text) setInput((prev) => prev + text);
+    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  };
+
+  const hasSpeechAPI = typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -133,29 +203,61 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                  msg.role === "user"
-                    ? "bg-[#F4845F] text-white rounded-br-md"
-                    : "bg-white text-[#3D3028] border border-[#F5E6D3] rounded-bl-md"
-                }`}
-              >
-                {msg.content}
+            <div key={i}>
+              <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                    msg.role === "user"
+                      ? "bg-[#F4845F] text-white rounded-br-md"
+                      : "bg-white text-[#3D3028] border border-[#F5E6D3] rounded-bl-md"
+                  }`}
+                >
+                  {msg.content}
+                </div>
               </div>
+              {/* Follow-up chips */}
+              {msg.role === "assistant" && msg.followUps && msg.followUps.length > 0 && !isLoading && i === messages.length - 1 && (
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-wrap gap-2 mt-2 ml-1"
+                  >
+                    {msg.followUps.map((q, j) => (
+                      <button
+                        key={j}
+                        onClick={() => handleSend(q)}
+                        className="px-3 py-1.5 bg-[#FFF3EB] text-[#F4845F] text-xs rounded-full border border-[#F4845F]/20 hover:bg-[#FFE8D6] transition-all"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              )}
             </div>
           ))}
           {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex justify-start">
-              <div className="bg-white border border-[#F5E6D3] rounded-2xl rounded-bl-md px-4 py-3">
-                <Loader2 className="w-4 h-4 animate-spin text-[#F4845F]" />
+              <div className="bg-white border border-[#F5E6D3] rounded-2xl rounded-bl-md">
+                <TypingDots />
               </div>
             </div>
           )}
         </div>
 
-        <div className="px-4 pb-6 pt-3 border-t border-[#F5E6D3] bg-white">
+        <div className="px-4 pb-6 pt-3 border-t border-[#F5E6D3] bg-white" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
           <div className="flex gap-2">
+            {hasSpeechAPI && (
+              <Button
+                onClick={toggleVoice}
+                variant="ghost"
+                size="icon"
+                className={`shrink-0 h-11 w-11 rounded-xl ${isListening ? "text-[#F4845F] bg-[#FFF3EB]" : "text-[#A89580]"}`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </Button>
+            )}
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -170,7 +272,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
               }}
             />
             <Button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
               className="bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl h-11 w-11 p-0 shrink-0"
               size="icon"

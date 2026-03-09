@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 const tiredReasons = [
   { label: "孩子", emoji: "👶", context: "今天带孩子让我很累，孩子太难带了" },
   { label: "老公", emoji: "💔", context: "今天老公让我很累，感觉不被理解" },
@@ -12,22 +14,29 @@ interface MamaTiredEntryProps {
 
 const MamaTiredEntry = ({ onReasonClick }: MamaTiredEntryProps) => {
   return (
-    <div className="mx-4 p-5 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5 }}
+      className="mx-4 p-5 bg-white rounded-2xl shadow-sm border border-[#F5E6D3]"
+    >
       <p className="text-lg font-medium text-[#3D3028] mb-1">🫂 妈妈今天好累</p>
       <p className="text-sm text-[#A89580] mb-4">今天是什么让你最累？</p>
 
       <div className="flex flex-wrap gap-2">
         {tiredReasons.map((r) => (
-          <button
+          <motion.button
             key={r.label}
+            whileTap={{ scale: 0.93 }}
             onClick={() => onReasonClick(r.context)}
-            className="px-4 py-2.5 bg-[#FFF3EB] rounded-xl text-[#3D3028] text-sm hover:bg-[#FFE8D6] active:scale-95 transition-all"
+            className="px-4 py-2.5 bg-[#FFF3EB] rounded-xl text-[#3D3028] text-sm hover:bg-[#FFE8D6] transition-all"
           >
             {r.emoji} {r.label}
-          </button>
+          </motion.button>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

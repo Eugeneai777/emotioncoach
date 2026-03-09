@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 interface MamaAssessmentProps {
   onBack: () => void;
@@ -86,6 +89,7 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [resultType, setResultType] = useState<string | null>(null);
+  const shareRef = useRef<HTMLDivElement>(null);
 
   const handleAnswer = (type: string) => {
     const newAnswers = [...answers, type];
@@ -94,7 +98,6 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
     if (currentQ < questions.length - 1) {
       setTimeout(() => setCurrentQ(currentQ + 1), 300);
     } else {
-      // Calculate result
       const counts: Record<string, number> = {};
       newAnswers.forEach((a) => (counts[a] = (counts[a] || 0) + 1));
       const winner = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
@@ -102,27 +105,66 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
     }
   };
 
+  const handleShare = async () => {
+    if (!shareRef.current) return;
+    try {
+      const canvas = await html2canvas(shareRef.current, {
+        backgroundColor: "#FFF8F0",
+        scale: 2,
+      });
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        if (navigator.share && navigator.canShare?.({ files: [new File([blob], "mama-result.png", { type: "image/png" })] })) {
+          navigator.share({
+            files: [new File([blob], "mama-result.png", { type: "image/png" })],
+            title: "我的妈妈类型测评结果",
+          });
+        } else {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "mama-result.png";
+          link.click();
+          toast.success("图片已保存");
+        }
+      }, "image/png");
+    } catch {
+      toast.error("生成分享图片失败");
+    }
+  };
+
   if (resultType) {
     const r = results[resultType];
     return (
       <div className="min-h-screen bg-[#FFF8F0] flex flex-col items-center justify-center px-6">
-        <div className="text-center max-w-sm">
+        <motion.div
+          ref={shareRef}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center max-w-sm bg-[#FFF8F0] p-6 rounded-2xl"
+        >
           <span className="text-6xl">{r.emoji}</span>
           <h2 className="text-2xl font-bold text-[#3D3028] mt-4 mb-2">你是：{r.title}</h2>
           <p className="text-[#5D4E37] leading-relaxed mb-3">{r.desc}</p>
-          <p className="text-[#F4845F] text-sm mb-8">{r.advice}</p>
+          <p className="text-[#F4845F] text-sm mb-4">{r.advice}</p>
+          <p className="text-xs text-[#C4B49A]">— 宝妈AI生活助手 —</p>
+        </motion.div>
 
+        <div className="w-full max-w-sm mt-4 space-y-3">
           <Button
             onClick={() => onOpenChat(`我刚刚做了妈妈能量测评，结果是"${r.title}"。请根据这个结果给我一些温暖的建议和鼓励。`)}
-            className="w-full bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl py-3 mb-3"
+            className="w-full bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl py-3"
           >
             💬 找AI妈妈教练聊聊
           </Button>
           <Button
-            onClick={onBack}
-            variant="ghost"
-            className="w-full text-[#8B7355] rounded-xl"
+            onClick={handleShare}
+            variant="outline"
+            className="w-full border-[#F5E6D3] text-[#3D3028] rounded-xl py-3"
           >
+            <Share2 className="w-4 h-4 mr-2" /> 分享我的结果
+          </Button>
+          <Button onClick={onBack} variant="ghost" className="w-full text-[#8B7355] rounded-xl">
             返回首页
           </Button>
         </div>
@@ -140,26 +182,37 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
       <div className="text-center mb-2">
         <p className="text-xs text-[#A89580]">{currentQ + 1} / {questions.length}</p>
         <div className="w-full bg-[#F5E6D3] rounded-full h-1.5 mt-2 mb-6">
-          <div
-            className="bg-[#F4845F] h-1.5 rounded-full transition-all"
-            style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
+          <motion.div
+            className="bg-[#F4845F] h-1.5 rounded-full"
+            animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
+            transition={{ duration: 0.4 }}
           />
         </div>
       </div>
 
-      <p className="text-lg font-medium text-[#3D3028] text-center mb-6">{q.q}</p>
-
-      <div className="space-y-3 max-w-sm mx-auto">
-        {q.options.map((opt, i) => (
-          <button
-            key={i}
-            onClick={() => handleAnswer(opt.type)}
-            className="w-full p-4 bg-white rounded-2xl border border-[#F5E6D3] text-left text-[#3D3028] text-sm hover:border-[#F4845F]/40 hover:shadow-sm active:scale-[0.97] transition-all"
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentQ}
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -30 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p className="text-lg font-medium text-[#3D3028] text-center mb-6">{q.q}</p>
+          <div className="space-y-3 max-w-sm mx-auto">
+            {q.options.map((opt, i) => (
+              <motion.button
+                key={i}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleAnswer(opt.type)}
+                className="w-full p-4 bg-white rounded-2xl border border-[#F5E6D3] text-left text-[#3D3028] text-sm hover:border-[#F4845F]/40 hover:shadow-sm transition-all"
+              >
+                {opt.label}
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };
