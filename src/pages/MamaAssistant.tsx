@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import PageHeader from "@/components/PageHeader";
 
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
@@ -11,12 +12,24 @@ import MamaBottomInput from "@/components/mama/MamaBottomInput";
 
 const LAST_CHAT_KEY = "mama_last_chat";
 
+/** Time-based greeting */
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 6) return { text: "夜深了，辛苦了", emoji: "🌙" };
+  if (h < 11) return { text: "早上好", emoji: "☀️" };
+  if (h < 14) return { text: "中午好", emoji: "🌤" };
+  if (h < 18) return { text: "下午好", emoji: "🍵" };
+  return { text: "晚上好", emoji: "🌙" };
+};
+
 const MamaAssistant = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [initialInput, setInitialInput] = useState<string | undefined>();
   const [showAssessment, setShowAssessment] = useState(false);
   const [lastChat, setLastChat] = useState<{ summary: string; time: number } | null>(null);
+
+  const greeting = getGreeting();
 
   useEffect(() => {
     try {
@@ -64,20 +77,46 @@ const MamaAssistant = () => {
     <div
       className="min-h-screen"
       style={{
-        background: "hsl(30 100% 97%)",
+        background: "hsl(var(--mama-bg))",
         paddingBottom: "max(5rem, calc(3.5rem + env(safe-area-inset-bottom)))",
       }}
     >
       <PageHeader title="宝妈AI助手" />
-      
 
-      <div className="space-y-3 mt-3">
+      {/* Conversational greeting bubble */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mx-4 mt-3 flex items-start gap-2.5"
+      >
+        {/* AI avatar */}
+        <div className="shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--mama-accent))] flex items-center justify-center text-white text-sm font-bold shadow-sm">
+          AI
+        </div>
+        {/* Bubble */}
+        <div className="flex-1 bg-[hsl(var(--mama-card))] rounded-2xl rounded-tl-md p-3 shadow-sm border border-[hsl(var(--mama-border))]">
+          <p className="text-sm text-[hsl(var(--mama-heading))]">
+            {greeting.emoji} {greeting.text}，妈妈
+          </p>
+          <p className="text-[11px] text-[hsl(var(--mama-body))] mt-0.5">
+            今天想聊聊什么，或者先看看下面的工具？
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Section: 今日关怀 */}
+      <div className="px-4 mt-4 space-y-3">
         <MamaEmotionCheck />
         <MamaDailyEnergy
           onGratitudeSubmit={(text) =>
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
         />
+      </div>
+
+      {/* Section: 成长工具箱 */}
+      <div className="px-4 mt-5 space-y-3">
         <MamaAssessmentEntry onStartFunAssessment={() => setShowAssessment(true)} />
         <MamaCampEntry />
       </div>
