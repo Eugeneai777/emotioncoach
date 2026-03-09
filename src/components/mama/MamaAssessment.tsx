@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Share2, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
 
@@ -58,30 +59,60 @@ const questions = [
   },
 ];
 
-const results: Record<string, { title: string; emoji: string; desc: string; advice: string }> = {
+const results: Record<string, {
+  title: string;
+  emoji: string;
+  desc: string;
+  advice: string;
+  recommendation: { title: string; desc: string; route: string; accent: string };
+}> = {
   warm: {
     title: "温暖型妈妈",
     emoji: "🌸",
     desc: "你是一个用爱包围孩子的妈妈。你的温柔和耐心，是孩子最大的安全感来源。",
     advice: "记得在爱孩子的同时，也要好好爱自己哦。",
+    recommendation: {
+      title: "21天亲子关系训练营",
+      desc: "作为温暖型妈妈，通过系统训练让爱更有方法",
+      route: "/parent-camp",
+      accent: "#4CAF7D",
+    },
   },
   growth: {
     title: "成长型妈妈",
     emoji: "🌱",
     desc: "你是一个不断学习的妈妈。你相信妈妈和孩子可以一起成长，你的视野会带给孩子更大的世界。",
     advice: "偶尔也放下学习，享受当下的美好时光。",
+    recommendation: {
+      title: "21天亲子关系训练营",
+      desc: "系统化提升亲子沟通，与孩子一起成长",
+      route: "/parent-camp",
+      accent: "#4CAF7D",
+    },
   },
   duty: {
     title: "责任型妈妈",
     emoji: "🏡",
     desc: "你是一个有担当的妈妈。你把一切安排得井井有条，家人都因你而安心。",
     advice: "你已经做得很好了，允许自己偶尔偷个懒。",
+    recommendation: {
+      title: "女性竞争力测评",
+      desc: "发现你的核心优势，找到个人成长方向",
+      route: "/assessment/women_competitiveness",
+      accent: "#5B8DEF",
+    },
   },
   anxious: {
     title: "焦虑型妈妈",
     emoji: "💜",
     desc: "你是一个对自己要求很高的妈妈。你的焦虑来源于对孩子深深的爱。",
     advice: "你不需要做完美妈妈，60分就已经足够好了。",
+    recommendation: {
+      title: "情绪健康自评",
+      desc: "3分钟了解你的情绪状态，获得专业建议",
+      route: "/assessment/emotion_health",
+      accent: "#E879A0",
+    },
   },
 };
 
@@ -90,6 +121,7 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [resultType, setResultType] = useState<string | null>(null);
   const shareRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const handleAnswer = (type: string) => {
     const newAnswers = [...answers, type];
@@ -151,6 +183,25 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
         </motion.div>
 
         <div className="w-full max-w-sm mt-4 space-y-3">
+          {/* Personalized recommendation */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="p-4 bg-white rounded-2xl border border-[#F5E6D3]"
+          >
+            <p className="text-xs text-[#A89580] mb-1.5">💡 为你推荐</p>
+            <p className="text-sm font-medium text-[#3D3028]">{r.recommendation.title}</p>
+            <p className="text-xs text-[#8B7355] mt-0.5 mb-3">{r.recommendation.desc}</p>
+            <Button
+              onClick={() => navigate(r.recommendation.route)}
+              className="w-full rounded-xl py-2.5 text-white text-sm"
+              style={{ backgroundColor: r.recommendation.accent }}
+            >
+              了解一下 <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </motion.div>
+
           <Button
             onClick={() => onOpenChat(`我刚刚做了妈妈能量测评，结果是"${r.title}"。请根据这个结果给我一些温暖的建议和鼓励。`)}
             className="w-full bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl py-3"

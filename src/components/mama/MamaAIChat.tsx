@@ -245,6 +245,14 @@ const MamaAIChat = ({ open, onOpenChange, initialContext }: MamaAIChatProps) => 
               </div>
             </div>
           )}
+          {/* Conversion card after conversation */}
+          {!isLoading && messages.length >= 4 && messages[messages.length - 1]?.role === "assistant" && (
+            <MamaConversionCard
+              context={messages.map((m) => m.content).join(" ")}
+              messageCount={messages.length}
+              onClose={() => onOpenChange(false)}
+            />
+          )}
         </div>
 
         <div className="px-4 pb-6 pt-3 border-t border-[#F5E6D3] bg-white" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
