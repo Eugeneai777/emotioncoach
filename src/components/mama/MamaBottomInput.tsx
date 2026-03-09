@@ -134,7 +134,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
-              placeholder="想找人说说话..."
+              placeholder={placeholder}
               className="flex-1 h-10 min-h-[40px] rounded-full bg-white border border-[#F5E6D3] px-4 text-sm text-[#3D3028] placeholder:text-[#C4B49A] focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
