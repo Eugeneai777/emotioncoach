@@ -93,7 +93,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
       </div>
 
       <div className="flex items-center justify-between mb-1.5">
-        <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>📝 记录一件小感恩</p>
+        <p className="text-[11px]" style={{ color: "hsl(30 20% 44%)" }}>📝 记录一个让你微笑的瞬间</p>
         {gratitudeCount > 0 && (
           <span className="text-[10px]" style={{ color: "hsl(30 15% 56%)" }}>已记录 {gratitudeCount} 条 💛</span>
         )}
