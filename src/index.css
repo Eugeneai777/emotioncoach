@@ -209,22 +209,6 @@ All colors MUST be HSL.
     --gentle: 150 30% 82%;
     --gentle-foreground: 150 45% 35%;
 
-    /* Mama theme tokens */
-    --mama-bg: 30 100% 97%;
-    --mama-card: 0 0% 100%;
-    --mama-card-alt: 30 100% 97%;
-    --mama-heading: 25 25% 17%;
-    --mama-body: 30 20% 44%;
-    --mama-muted: 30 15% 56%;
-    --mama-accent: 16 86% 68%;
-    --mama-accent-hover: 16 86% 58%;
-    --mama-rose: 340 60% 68%;
-    --mama-rose-light: 340 60% 96%;
-    --mama-border: 30 50% 90%;
-    --mama-border-strong: 30 50% 88%;
-    --mama-bubble-bg: 30 60% 98%;
-    --mama-avatar: 16 86% 68%;
-
     /* Unified Card Design System */
     --card-radius: 0.75rem; /* 12px - standard card radius */
     --card-radius-lg: 1rem; /* 16px - large card radius */
