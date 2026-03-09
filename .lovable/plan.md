@@ -1,23 +1,99 @@
 
 
-## 两个问题需要修复
+# /mama 页面去重 & 结构重组方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 现状问题分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+当前页面有 **6个模块都触发 AI 对话**，功能高度重复：
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+| 模块 | 当前行为 | 问题 |
+|------|---------|------|
+| Hero 困扰按钮 | → AI聊天 | 与TiredEntry/ToolGrid重复 |
+| 妈妈今天好累 | → AI聊天 | 与Hero"今天很累"重复 |
+| 妈妈今天情绪 | → AI聊天 | 应该跳情绪按钮页 |
+| 工具区(4卡) | → AI聊天 | 本质也是教练对话，与Hero重复 |
+| 专业测评 | → 测评路由 | 与工具区的子链接重复 |
+| 训练营 | → 训练营路由 | 独立，无重复 |
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 重组方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+合并为 **4个清晰板块**，每个板块功能不重叠：
 
-| 文件 | 修改 |
+```text
+┌─────────────────────────┐
+│  Hero + 场景按钮          │  ← 合并困扰/疲惫为统一场景入口
+│  (每个场景明确去向)        │
+├─────────────────────────┤
+│  🆘 情绪急救              │  ← 直接跳 /emotion-button
+├─────────────────────────┤
+│  🌟 每日感恩              │  ← 保留
+├─────────────────────────┤
+│  📊 测评 & 工具           │  ← 合并测评+工具为一个区域
+│  (趣味测评 + 3个专业测评)  │     全部导航到具体页面
+├─────────────────────────┤
+│  💬 找教练聊聊            │  ← 新增：一个大按钮打开AI对话
+│  (悬浮或固定底部)          │     唯一的AI聊天入口
+├─────────────────────────┤
+│  🌈 训练营                │  ← 保留
+└─────────────────────────┘
+```
+
+## 具体改动
+
+### 1. MamaHero — 场景按钮化（不再全部打开聊天）
+
+场景按钮重新设计，每个按钮有明确去向：
+
+| 场景 | 去向 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| 😤 孩子不听话 | `/coach/parent_emotion_coach` (亲子教练) |
+| 📚 不爱学习 | `/assessment/communication_parent` (测评) |
+| 😩 今天很累 | `/emotion-button` (情绪急救) |
+| 💬 沟通不好 | `/coach/parent_emotion_coach` (教练) |
+| 🌫️ 有点迷茫 | `/assessment/women_competitiveness` (测评) |
+
+### 2. 删除 MamaTiredEntry 和 MamaEmotionCheck
+
+- **MamaTiredEntry** 的场景已合并到 Hero
+- **MamaEmotionCheck** 替换为一个简洁的情绪急救入口卡片，点击跳转 `/emotion-button`
+
+### 3. 合并测评 & 工具为 `MamaToolsAndAssessments`
+
+- 删除 **MamaToolGrid**（原来4个卡全是打开聊天）
+- 删除 **MamaAssessmentEntry** 中重复的专业测评
+- 合并为一个新组件，包含：
+  - 趣味测评（妈妈能量测评）
+  - 3个专业测评卡片（亲子沟通/情绪健康/女性竞争力）
+  - 情绪急救按钮入口
+  - 全部导航到具体页面，不打开聊天
+
+### 4. 新增「找教练聊聊」悬浮按钮
+
+- 页面右下角固定悬浮按钮 `💬 找教练聊聊`
+- 这是页面唯一的 AI 对话入口
+- 点击打开 MamaAIChat Sheet
+
+### 5. MamaAssistant 主页面精简
+
+新布局顺序：
+1. Hero（场景导航按钮）
+2. 上次对话提示（如有）
+3. 情绪急救入口（一行卡片，跳 `/emotion-button`）
+4. 每日感恩
+5. 测评 & 工具（合并区）
+6. 训练营
+7. 悬浮教练按钮
+
+---
+
+## 文件改动清单
+
+| 文件 | 改动 |
+|------|------|
+| `MamaHero.tsx` | 场景按钮改为导航到具体页面 |
+| `MamaEmotionCheck.tsx` | 重写为简洁的情绪急救入口卡片，跳 `/emotion-button` |
+| `MamaTiredEntry.tsx` | **删除** — 功能合并到 Hero |
+| `MamaToolGrid.tsx` | **删除** — 功能合并到新组件 |
+| `MamaAssessmentEntry.tsx` | 重写为「测评 & 工具」合并组件 |
+| `MamaAssistant.tsx` | 精简布局，新增悬浮教练按钮 |
 
