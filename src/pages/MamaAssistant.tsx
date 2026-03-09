@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { motion } from "framer-motion";
 import MamaHero from "@/components/mama/MamaHero";
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
@@ -54,6 +55,7 @@ const MamaAssistant = () => {
         paddingBottom: "max(5rem, calc(3.5rem + env(safe-area-inset-bottom)))",
       }}
     >
+      <PageHeader title="宝妈AI助手" />
       <MamaHero />
 
       {lastChat && (
