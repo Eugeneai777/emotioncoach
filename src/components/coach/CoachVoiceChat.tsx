@@ -2592,7 +2592,7 @@ export const CoachVoiceChat = ({
       </div>
 
       {/* 底部操作区 */}
-      <div className="p-6 pb-safe flex justify-center">
+      <div className="p-6 pb-safe flex flex-col items-center gap-3">
         <Button
           onClick={(e) => {
             if (isEnding) {
@@ -2606,7 +2606,7 @@ export const CoachVoiceChat = ({
             endCall(e);
           }}
           size="lg"
-          className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
+          className={`w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 ${status === 'connected' ? 'ring-2 ring-red-400/30' : ''}`}
         >
           {status === 'connected' ? (
             <PhoneOff className="w-6 h-6" />
@@ -2614,19 +2614,17 @@ export const CoachVoiceChat = ({
             <Phone className="w-6 h-6" />
           )}
         </Button>
-      </div>
 
-      {/* 提示 - 仅在非通话状态显示 */}
-      {status !== 'connected' && (
-        <div className="absolute bottom-24 left-0 right-0 text-center">
-          <p className="text-white/40 text-xs">
+        {/* 提示 - 仅在非通话状态显示 */}
+        {status !== 'connected' && (
+          <p className="text-white/30 text-[11px]">
             {skipBilling
-              ? `💡 直接说话即可 · 免费体验 · ${maxDurationMinutes === null ? '不限时' : `最长${maxDurationMinutes}分钟`}`
-              : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟 · ${maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}`
+              ? `💡 直接说话即可 · 免费体验`
+              : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟`
             }
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 🔧 AI来电续拨询问弹窗 */}
       <ContinueCallDialog
