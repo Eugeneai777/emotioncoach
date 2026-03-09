@@ -40,24 +40,53 @@ const MamaAssessmentEntry = ({ onStartFunAssessment }: MamaAssessmentEntryProps)
     <div className="mx-4 space-y-2.5">
       <p className="text-sm font-semibold" style={{ color: "hsl(25 25% 17%)" }}>📊 测评 & 工具</p>
 
-      {/* Fun assessment */}
+      {/* Daily energy check */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-30px" }}
         transition={{ duration: 0.35 }}
-        className="p-3.5 rounded-2xl border border-[hsl(30_50%_90%)] shadow-[0_2px_8px_hsl(16_86%_68%/0.08)]"
+        className="p-4 rounded-2xl border border-[hsl(30_50%_90%)] shadow-[0_2px_8px_hsl(16_86%_68%/0.08)] overflow-hidden relative"
         style={{ background: "linear-gradient(135deg, hsl(25 100% 96%) 0%, hsl(340 60% 97%) 100%)" }}
       >
-        <p className="text-sm font-medium mb-0.5" style={{ color: "hsl(25 25% 17%)" }}>🔋 今日能量检测</p>
-        <p className="text-[11px] mb-2.5" style={{ color: "hsl(30 20% 44%)" }}>5维度打分，追踪每日状态变化</p>
+        {/* Decorative battery icon */}
+        <div className="absolute right-3 top-3 text-3xl opacity-15 select-none">🔋</div>
+
+        <p className="text-sm font-semibold mb-1" style={{ color: "hsl(25 25% 17%)" }}>🔋 今日能量检测</p>
+        <p className="text-[11px] leading-relaxed mb-2" style={{ color: "hsl(30 20% 44%)" }}>
+          每天1分钟，为5个维度打分
+        </p>
+
+        {/* 5 dimension preview pills */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {[
+            { emoji: "💪", label: "体力" },
+            { emoji: "💛", label: "情绪" },
+            { emoji: "🧘", label: "耐心" },
+            { emoji: "🤝", label: "连接" },
+            { emoji: "🌸", label: "自我" },
+          ].map((d) => (
+            <span
+              key={d.label}
+              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              style={{ background: "white", color: "hsl(30 20% 44%)", border: "1px solid hsl(30 50% 90%)" }}
+            >
+              {d.emoji} {d.label}
+            </span>
+          ))}
+        </div>
+
+        <p className="text-[10px] mb-3" style={{ color: "hsl(30 15% 56%)" }}>
+          📈 追踪趋势 · 🎯 个性化推荐 · 💬 教练建议
+        </p>
+
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={onStartFunAssessment}
           className="w-full py-2.5 text-white rounded-xl text-sm font-medium transition-all min-h-[44px] active:opacity-90"
           style={{ background: "hsl(16 86% 68%)" }}
         >
-          开始测评 →
+          开始今日检测 →
         </motion.button>
       </motion.div>
 
