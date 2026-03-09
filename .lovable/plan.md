@@ -1,23 +1,55 @@
 
 
-## 两个问题需要修复
+# 将"今天，想对你说"改为 AI 智能鼓励通知
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 现状
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+当前 `MamaDailyEnergy` 使用一个 30 条静态数组，按日期取模选择当天语录。同一天所有用户看到相同内容，无个性化。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+利用已有的 `generate-smart-notification` 边缘函数，新增场景 `mama_daily_encouragement`，每次进入 `/mama` 页面时生成一条个性化的鼓励/肯定/同理/温馨消息。
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 改动
 
-| 文件 | 修改 |
+**1. 新建 Hook `useMamaDailyQuote.ts`**
+- 进入页面时调用 `generate-smart-notification`，scenario = `mama_daily_encouragement`
+- 传入 context：当前时间段（早/中/晚）、用户最近情绪状态等
+- 用 sessionStorage 缓存本次会话的结果（同一次登录不重复调用）
+- AI 失败时 fallback 到静态语录数组（保留现有 quotes 作为兜底）
+
+**2. 更新 `generate-smart-notification` 边缘函数**
+- 在场景映射中新增 `mama_daily_encouragement`
+- Prompt 指导 AI 生成 4 种风格随机之一：鼓励型、肯定型、同理型、温馨提醒型
+- 结合用户 profile（昵称、偏好风格）个性化内容
+- 限制长度 40-80 字，温暖口吻
+
+**3. 更新 `MamaDailyEnergy.tsx`**
+- 引入 `useMamaDailyQuote` hook
+- 加载中显示骨架动画（淡入效果）
+- 显示 AI 生成的内容，附带风格标签（如 💪 鼓励、💛 肯定、🤗 同理、🌸 温馨）
+- 删除静态 quotes 数组
+
+### 技术细节
+
+```text
+用户进入 /mama
+  → useMamaDailyQuote 检查 sessionStorage
+    → 有缓存 → 直接显示
+    → 无缓存 → 调用 generate-smart-notification
+      → 成功 → 显示 + 缓存到 sessionStorage
+      → 失败 → fallback 静态语录
+```
+
+边缘函数新增 prompt 模板：
+- 随机选择风格：鼓励/肯定/同理/温馨提醒
+- 结合时间段（早上好/下午好/晚上好）
+- 若有用户昵称则使用亲切称呼
+
+改动文件：
+| 文件 | 改动 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/hooks/useMamaDailyQuote.ts` | 新建 |
+| `src/components/mama/MamaDailyEnergy.tsx` | 使用新 hook，加载态 |
+| `supabase/functions/generate-smart-notification/index.ts` | 新增场景 |
 
