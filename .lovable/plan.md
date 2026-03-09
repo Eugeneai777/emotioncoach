@@ -1,33 +1,23 @@
 
 
-# 将妈妈页感恩记录同步到感恩日记数据库
+## 两个问题需要修复
 
-## 现状
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-当前 `MamaDailyEnergy` 的 `onGratitudeSubmit` 只是打开 AI 聊天窗口，感恩内容**没有**保存到 `gratitude_entries` 表。计数也只存在 `localStorage`。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-在 `MamaDailyEnergy` 提交时，同时将内容写入 `gratitude_entries` 表（已登录用户），保持现有的 AI 聊天触发不变。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 改动
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**`src/components/mama/MamaDailyEnergy.tsx`**：
-1. 引入 `supabase` 客户端和 `useAuth`
-2. 提交时：已登录 → 写入 `gratitude_entries` 表；未登录 → 仅保留本地计数
-3. 保留现有 `onGratitudeSubmit` 回调（打开 AI 聊天）
-
-逻辑：
-```text
-用户点击"记下这份温暖"
-  → 已登录？
-    → 插入 gratitude_entries(user_id, content, category='other', date=today)
-    → toast "已同步到感恩日记"
-  → 未登录？
-    → 仅本地计数
-  → 触发 onGratitudeSubmit（打开AI聊天）
-  → confetti + 清空输入
-```
-
-单文件改动。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
