@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
-import MamaHero from "@/components/mama/MamaHero";
+
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
 import MamaDailyEnergy from "@/components/mama/MamaDailyEnergy";
 import MamaAssessmentEntry from "@/components/mama/MamaAssessmentEntry";
@@ -69,7 +69,7 @@ const MamaAssistant = () => {
       }}
     >
       <PageHeader title="宝妈AI助手" />
-      <MamaHero />
+      
 
       <div className="space-y-3 mt-3">
         <MamaEmotionCheck />
