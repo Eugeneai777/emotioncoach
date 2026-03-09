@@ -17,7 +17,7 @@ interface MamaDailyEnergyProps {
 
 const GRATITUDE_COUNT_KEY = "mama_gratitude_count";
 
-const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
+const MamaDailyEnergy = ({ onGratitudeSubmit, lastChat, onContinueChat }: MamaDailyEnergyProps) => {
   const [gratitudeText, setGratitudeText] = useState("");
   const [gratitudeCount, setGratitudeCount] = useState(0);
   const [justSubmitted, setJustSubmitted] = useState(false);
