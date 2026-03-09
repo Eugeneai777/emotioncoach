@@ -1586,7 +1586,7 @@ Deno.serve(async (req) => {
             // 避免刷屏：最多每 30 秒打一次日志
             if (now - lastKeepaliveLogAt > 30_000) {
               lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (400ms, amp=50)', {
+               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (1000ms, amp=500)', {
                  idleClientMs: now - lastClientAudioAt,
                 seq: audioSequence,
                   ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
