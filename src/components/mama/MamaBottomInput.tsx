@@ -8,6 +8,8 @@ import { toast } from "sonner";
 interface MamaBottomInputProps {
   onSendText: (text: string) => void;
   onFocusInput: () => void;
+  lastChat?: { summary: string; time: number } | null;
+  onContinueChat?: (context: string) => void;
 }
 
 const MamaBottomInput = ({ onSendText, onFocusInput }: MamaBottomInputProps) => {
