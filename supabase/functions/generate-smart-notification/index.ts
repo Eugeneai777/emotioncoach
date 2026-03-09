@@ -524,7 +524,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       memory_connection: 'general',
       incomplete_emotion_session: 'emotion_coach',
       incomplete_coach_session: context?.coachKey ? `${context.coachKey}_coach` : 'general',
-      wechat_bind_reminder: 'general'
+      wechat_bind_reminder: 'general',
+      mama_daily_encouragement: 'mama_coach'
     };
 
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
