@@ -17,8 +17,8 @@ const MamaCampEntry = () => {
       }}
     >
       <div className="relative z-10">
-        <p className="text-sm font-semibold mb-0.5" style={{ color: "hsl(25 25% 17%)" }}>🌈 21天亲子关系训练营</p>
-        <p className="text-[11px] mb-1.5" style={{ color: "hsl(30 20% 44%)" }}>每天15分钟，系统提升亲子沟通能力</p>
+        <p className="text-sm font-semibold mb-0.5" style={{ color: "hsl(25 25% 17%)" }}>🌈 21天，和孩子重新靠近</p>
+        <p className="text-[11px] mb-1.5" style={{ color: "hsl(30 20% 44%)" }}>不是学技巧，而是找回你和孩子之间的温度</p>
         <div className="flex items-center gap-1.5 my-2 flex-wrap">
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ color: "hsl(16 86% 58%)", background: "hsl(16 86% 68% / 0.12)" }}>专业教练</span>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ color: "hsl(152 42% 39%)", background: "hsl(152 42% 49% / 0.12)" }}>社群支持</span>
