@@ -5,7 +5,8 @@ import {
   Home, MessageCircle, Sparkles, Package, Users, Settings, 
   Rocket, X, BookOpen, ClipboardCheck, Handshake, 
   Edit3, Star, Heart, Baby, Coins, Gamepad2,
-  Flower2, AlertCircle, HeartPulse, GraduationCap
+  Flower2, AlertCircle, HeartPulse, GraduationCap,
+  User, ShoppingBag, BookMarked, BookOpenCheck
 } from 'lucide-react';
 import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import { QuickMenuSettingsDialog } from '@/components/QuickMenuSettingsDialog';
