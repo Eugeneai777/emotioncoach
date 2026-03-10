@@ -193,6 +193,9 @@ const WealthAwakeningArchive = lazyRetry(() => import("./pages/WealthAwakeningAr
 // 成长路径
 const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 
+// 推广页
+const PromoPage = lazyRetry(() => import("./pages/PromoPage"));
+
 // 婚因有道
 const MarriageHome = lazyRetry(() => import("./pages/marriage/MarriageHome"));
 const MarriageAssessments = lazyRetry(() => import("./pages/marriage/MarriageAssessments"));
