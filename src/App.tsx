@@ -64,6 +64,7 @@ const PlatformIntro = lazyRetry(() => import("./pages/PlatformIntro"));
 
 // 训练营相关
 const CampIntro = lazyRetry(() => import("./pages/CampIntro"));
+const StressMeditation = lazyRetry(() => import("./pages/StressMeditation"));
 const CampList = lazyRetry(() => import("./pages/CampList"));
 const CampTemplateDetail = lazyRetry(() => import("./pages/CampTemplateDetail"));
 const CampCheckIn = lazyRetry(() => import("./pages/CampCheckIn"));
@@ -406,6 +407,7 @@ const App = () => (
               <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
               <Route path="/wealth-awakening-archive" element={<WealthAwakeningArchive />} />
               <Route path="/meditation-library" element={<MeditationLibrary />} />
+              <Route path="/stress-meditation/:dayNumber" element={<StressMeditation />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/terms/youjin-partner" element={<YoujinPartnerTerms />} />
               <Route path="/terms/bloom-partner" element={<BloomPartnerTerms />} />
