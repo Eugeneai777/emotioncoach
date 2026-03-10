@@ -5017,6 +5017,36 @@ export type Database = {
         }
         Relationships: []
       }
+      marriage_diary_entries: {
+        Row: {
+          ai_result: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          source: string
+          user_id: string
+          user_input: string | null
+        }
+        Insert: {
+          ai_result?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          source: string
+          user_id: string
+          user_input?: string | null
+        }
+        Update: {
+          ai_result?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          source?: string
+          user_id?: string
+          user_input?: string | null
+        }
+        Relationships: []
+      }
       meditation_sessions: {
         Row: {
           background_sound: string | null
