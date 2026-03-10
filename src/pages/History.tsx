@@ -261,9 +261,16 @@ const History = () => {
 
         <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
-            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground pb-3 md:pb-4 border-b border-border/50">
-              <Calendar className="w-3 h-3 md:w-4 md:h-4" />
-              {formatDate(selectedBriefing.created_at)}
+            <div className="flex items-center justify-between pb-3 md:pb-4 border-b border-border/50">
+              <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                {formatDate(selectedBriefing.created_at)}
+              </div>
+              {selectedBriefing.camp_source && (
+                <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                  🏕️ {selectedBriefing.camp_source}
+                </Badge>
+              )}
             </div>
 
             <div className="space-y-4 md:space-y-6">
