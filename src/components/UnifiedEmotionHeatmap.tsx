@@ -41,6 +41,7 @@ interface DayData {
     intensity: number;
     tags?: Array<{ name: string; sentiment: string | null }>;
     time: string;
+    campSource?: string | null;
   }>;
 }
 
