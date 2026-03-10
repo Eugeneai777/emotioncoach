@@ -1,53 +1,23 @@
 
 
-# 推广页视觉优化：减少文字，增加数据冲击力和情感触动
+## 两个问题需要修复
 
-## 问题诊断
-- Hero 区文字堆叠，缺少视觉冲击
-- 卖点用文字列表，没有数据支撑
-- 用户评价缺少具体数字和前后对比
-- 整体"说教感"强，"触动感"弱
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 改动方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 1. Hero 区：用数据代替口号
-- 去掉长副标题，改为三个动态数字卡片（类似计数器）：
-  - `89%` 用户 7 天内睡眠改善
-  - `2.3万+` 职场人已使用
-  - `4.8/5` 用户满意度
-- 标题精简为情绪化短句："**别再硬扛了**"
-- 副标题一句话："职场压力急救，身心同步见效"
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 2. 产品卡片：增加"见效时间线"
-- 训练营卡片加一个迷你时间线：Day 1 → Day 7 → Day 21，每阶段标注预期效果
-- 胶囊卡片加"起效时间"高亮："30分钟内感受舒缓"
-- 去掉冗余 highlights，每个产品最多保留 2 个核心亮点
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 3. 用户反馈：改为"前后对比"卡片
-- 每个用户展示 Before → After 格式：
-  - Before: "连续失眠 2 周" → After: "第 3 天恢复正常睡眠"
-  - Before: "焦虑评分 8/10" → After: "降至 3/10"
-- 增加使用天数标签："使用 7 天后"
-- 减少文字叙述，用数字说话
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 4. 新增"数据证明"区块
-- 插在卖点和评价之间
-- 三个大数字横排展示：
-  - 睡眠改善率 89%
-  - 焦虑缓解率 92%
-  - 复购推荐率 96%
-- 小字注明"基于 XX 位用户调研"
-
-### 5. 底部 CTA 优化
-- 加倒计时紧迫感元素（视觉装饰，不做真实倒计时）
-- 按钮文案从"立即抢购"改为"立即领取急救包"
-
-## 实现方式
-- 纯前端改动，重写 `PromoPage.tsx` 的各个 section
-- 同时更新数据库 seed 数据中的 testimonials 为 before/after 格式
-- 新增 `selling_stats` 字段到 promo_pages 的 theme JSON 中（无需加列）
-
-## 涉及文件
-- `src/pages/PromoPage.tsx` — 重构页面结构
-- 数据库 migration — 更新 testimonials 和 theme 数据
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
