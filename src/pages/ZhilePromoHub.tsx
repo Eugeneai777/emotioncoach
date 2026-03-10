@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Brain, Heart, MessageCircle, BookOpen, Users, Shield, Pill, BarChart3, Zap, Eye } from "lucide-react";
+import { ArrowRight, Sparkles, Users, Shield, Pill, BarChart3, Zap } from "lucide-react";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 
 interface PromoCard {
@@ -25,70 +25,6 @@ const promoCards: PromoCard[] = [
     path: '/promo/synergy',
     category: 'bundle',
     tag: '限时特惠',
-  },
-  // AI教练
-  {
-    id: 'vibrant-life',
-    title: 'AI生活教练',
-    subtitle: '24小时智能陪伴，5大生活场景',
-    emoji: '🌟',
-    gradient: 'from-indigo-500 to-purple-500',
-    path: '/vibrant-life-intro',
-    category: 'coach',
-  },
-  {
-    id: 'parent-coach',
-    title: '亲子情绪教练',
-    subtitle: '读懂情绪，连结孩子',
-    emoji: '💜',
-    gradient: 'from-pink-600 to-rose-500',
-    path: '/parent-coach-intro',
-    category: 'coach',
-  },
-  {
-    id: 'parent-teen',
-    title: '亲子双轨模式',
-    subtitle: '父母与孩子各有独立空间',
-    emoji: '👨‍👩‍👧',
-    gradient: 'from-violet-500 to-purple-500',
-    path: '/parent-teen-intro',
-    category: 'coach',
-  },
-  {
-    id: 'wealth-coach',
-    title: '财富觉醒教练',
-    subtitle: '看见卡点，突破限制',
-    emoji: '💰',
-    gradient: 'from-amber-500 to-orange-600',
-    path: '/wealth-coach-intro',
-    category: 'coach',
-  },
-  {
-    id: 'story-coach',
-    title: '故事教练',
-    subtitle: '把经历变成力量',
-    emoji: '📖',
-    gradient: 'from-cyan-600 to-blue-600',
-    path: '/story-coach-intro',
-    category: 'coach',
-  },
-  {
-    id: 'communication-coach',
-    title: '沟通教练',
-    subtitle: '化解冲突，高效表达',
-    emoji: '💬',
-    gradient: 'from-blue-600 to-indigo-600',
-    path: '/communication-intro',
-    category: 'coach',
-  },
-  {
-    id: 'coach-space',
-    title: 'AI教练空间',
-    subtitle: '7位AI教练，随时待命',
-    emoji: '🎯',
-    gradient: 'from-sky-500 to-cyan-500',
-    path: '/coach-space-intro',
-    category: 'coach',
   },
   // 工具
   {
@@ -207,14 +143,13 @@ const promoCards: PromoCard[] = [
 
 const categoryLabels: Record<string, { label: string; icon: React.ReactNode }> = {
   bundle: { label: '组合套餐', icon: <Pill className="w-4 h-4" /> },
-  coach: { label: 'AI教练', icon: <Brain className="w-4 h-4" /> },
   tool: { label: '工具 & 平台', icon: <Zap className="w-4 h-4" /> },
   assessment: { label: '测评诊断', icon: <BarChart3 className="w-4 h-4" /> },
   camp: { label: '训练营', icon: <Shield className="w-4 h-4" /> },
   partner: { label: '合伙人', icon: <Users className="w-4 h-4" /> },
 };
 
-const categoryOrder = ['bundle', 'coach', 'assessment', 'tool', 'camp', 'partner'];
+const categoryOrder = ['bundle', 'assessment', 'tool', 'camp', 'partner'];
 
 export default function ZhilePromoHub() {
   const navigate = useNavigate();
