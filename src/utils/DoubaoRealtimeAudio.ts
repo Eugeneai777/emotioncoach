@@ -1242,7 +1242,124 @@ export class DoubaoRealtimeChat {
     }
   }
 
-  private shouldInterruptAssistantOnSpeechStarted(): boolean {
+  // ✅ 主动预防性重连：在 Edge Function 被平台超时杀死之前，主动切换到新实例
+  // 这是解决"豆包语音 ~2 分钟自动断开"的根本方案
+  private startSessionRotation(): void {
+    this.stopSessionRotation();
+    console.log(`[DoubaoChat] 🔄 Session rotation scheduled in ${DoubaoRealtimeChat.SESSION_ROTATION_INTERVAL_MS / 1000}s`);
+    this.sessionRotationTimer = window.setTimeout(() => {
+      void this.proactiveRotate();
+    }, DoubaoRealtimeChat.SESSION_ROTATION_INTERVAL_MS);
+  }
+
+  private stopSessionRotation(): void {
+    if (this.sessionRotationTimer) {
+      clearTimeout(this.sessionRotationTimer);
+      this.sessionRotationTimer = null;
+    }
+  }
+
+  private async proactiveRotate(): Promise<void> {
+    // 防止在用户已断开、正在重连、或 AI 正在说话时触发
+    if (this.isDisconnected || this.reconnectInProgress || this.isProactiveRotating) {
+      console.log('[DoubaoChat] 🔄 Skipping proactive rotation:', { 
+        isDisconnected: this.isDisconnected, 
+        reconnectInProgress: this.reconnectInProgress,
+        isProactiveRotating: this.isProactiveRotating
+      });
+      return;
+    }
+
+    // 如果 AI 正在说话，延迟 5 秒再检查
+    if (this.isAssistantSpeaking) {
+      console.log('[DoubaoChat] 🔄 AI is speaking, deferring rotation by 5s');
+      this.sessionRotationTimer = window.setTimeout(() => {
+        void this.proactiveRotate();
+      }, 5000);
+      return;
+    }
+
+    this.isProactiveRotating = true;
+    const sessionAge = Date.now() - this.sessionConnectedAt;
+    console.log(`[DoubaoChat] 🔄 Proactive session rotation starting (session age: ${Math.round(sessionAge / 1000)}s)`);
+
+    // 保存对话历史
+    this.flushTranscriptBuffersToHistory();
+    this.wasAssistantSpeakingWhenDisconnected = false;
+
+    try {
+      // 停止心跳和录音
+      this.stopHeartbeat();
+      this.stopRecording();
+      this.clearAudioQueueAndStopPlayback();
+
+      // 关闭旧 WebSocket
+      if (this.ws) {
+        try {
+          if (this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ type: 'session.close' }));
+          }
+          this.ws.close();
+        } catch { /* ignore */ }
+        this.ws = null;
+      }
+
+      // 重建音频管道
+      await this.rebuildAudioPipeline('proactive_rotation');
+
+      // 获取新的 relay session
+      const historyForReconnect = this.conversationHistory.length > 0 
+        ? this.conversationHistory.slice(-16)
+        : undefined;
+      
+      const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
+        body: { 
+          mode: this.mode,
+          conversation_history: historyForReconnect,
+          is_reconnect: true,
+        },
+      });
+
+      if (error || !data) {
+        throw new Error((data as any)?.message || (data as any)?.error || error?.message || 'Failed to get relay config');
+      }
+
+      this.config = data as DoubaoConfig;
+      this.inputSampleRate = this.config.audio_config?.input_sample_rate || 16000;
+      this.hasSessionClosed = false;
+
+      // 连接新的 relay（标记为重连，跳过开场白）
+      const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}&is_reconnect=true`;
+      this.ws = new WebSocket(wsUrl);
+      await this.setupWebSocket();
+
+      const sessionConnectedPromise = this.waitForSessionConnected();
+      this.sendSessionInit();
+      this.startHeartbeat();
+      await sessionConnectedPromise;
+
+      // 重新启动录音
+      if (!this.processor && !this.source) {
+        await this.startRecording();
+      }
+
+      console.log(`[DoubaoChat] 🔄 ✅ Proactive rotation complete! New session started.`);
+      this.onMessage?.({ type: 'debug.rotation', status: 'success', sessionAge: Math.round(sessionAge / 1000) });
+
+    } catch (e) {
+      console.error('[DoubaoChat] 🔄 ❌ Proactive rotation failed, falling back to reactive reconnect:', e);
+      this.onMessage?.({ type: 'debug.rotation', status: 'failed', error: String(e) });
+      // 失败了就走正常重连逻辑
+      if (!this.isDisconnected && this.everConnected) {
+        this.isProactiveRotating = false;
+        void this.scheduleReconnect('proactive_rotation_failed', { error: String(e) });
+        return;
+      }
+    } finally {
+      this.isProactiveRotating = false;
+    }
+  }
+
     // 没在播 AI，没必要打断
     if (!this.isAssistantSpeaking) return false;
 
