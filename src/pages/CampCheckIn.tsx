@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight, Trophy, Flame } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight, Trophy, Flame, Users, Phone } from "lucide-react";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
