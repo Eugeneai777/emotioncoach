@@ -333,7 +333,7 @@ const CampCheckIn = () => {
 
       const { error } = await supabase
         .from("camp_daily_progress")
-        .upsert(updates, { onConflict: "camp_id,progress_date" });
+        .upsert(updates as any, { onConflict: "camp_id,progress_date" });
 
       if (error) throw error;
       await loadTodayProgress();
