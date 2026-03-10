@@ -1360,6 +1360,7 @@ export class DoubaoRealtimeChat {
     }
   }
 
+  private shouldInterruptAssistantOnSpeechStarted(): boolean {
     // 没在播 AI，没必要打断
     if (!this.isAssistantSpeaking) return false;
 
