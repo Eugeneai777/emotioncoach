@@ -175,9 +175,7 @@ export const handleShareWithFallback = async (
         return reportShare({ success: false, method: 'webshare', cancelled: true });
       }
       // Fall through to preview on Android if share fails
-      const blobUrl = URL.createObjectURL(blob);
-      options.onShowPreview?.(blobUrl);
-      return reportShare({ success: true, method: 'preview', blobUrl });
+      return showUploadedPreview();
     }
   }
   
