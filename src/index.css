@@ -636,3 +636,15 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 2px 6px hsl(16 86% 68% / 0.3);
   cursor: pointer;
 }
+
+/* ========================================
+   老哥AI 设计令牌
+   ======================================== */
+:root {
+  --laoge-bg: 215 30% 12%;
+  --laoge-card: 215 25% 18%;
+  --laoge-border: 215 20% 25%;
+  --laoge-text: 210 20% 95%;
+  --laoge-text-muted: 215 15% 60%;
+  --laoge-accent: 212 90% 64%;
+}

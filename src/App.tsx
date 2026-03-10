@@ -208,6 +208,9 @@ const MarriageServices = lazyRetry(() => import("./pages/marriage/MarriageServic
 const MarriageAbout = lazyRetry(() => import("./pages/marriage/MarriageAbout"));
 const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
 
+// 老哥AI
+const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
+
 // 法律条款
 const TermsOfService = lazyRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyRetry(() => import("./pages/PrivacyPolicy"));
