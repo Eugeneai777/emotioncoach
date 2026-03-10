@@ -12,6 +12,7 @@ interface Briefing {
   emotion_theme: string;
   emotion_intensity: number | null;
   created_at: string;
+  camp_source?: string | null;
   briefing_tags?: Array<{
     tags: {
       name: string;
