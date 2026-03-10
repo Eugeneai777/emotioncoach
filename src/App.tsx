@@ -208,6 +208,9 @@ const MarriageServices = lazyRetry(() => import("./pages/marriage/MarriageServic
 const MarriageAbout = lazyRetry(() => import("./pages/marriage/MarriageAbout"));
 const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
 
+// 老哥AI
+const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
+
 // 法律条款
 const TermsOfService = lazyRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyRetry(() => import("./pages/PrivacyPolicy"));
@@ -430,6 +433,7 @@ const App = () => (
               <Route path="/marriage/services" element={<MarriageServices />} />
               <Route path="/marriage/about" element={<MarriageAbout />} />
               <Route path="/marriage/help" element={<MarriageHelp />} />
+              <Route path="/laoge" element={<LaogeAI />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
