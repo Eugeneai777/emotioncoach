@@ -140,7 +140,7 @@ export default function StressMeditation() {
   if (!meditation) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader title="冥想未找到" onBack={() => navigate(-1)} />
+        <PageHeader title="冥想未找到" showBack />
         <div className="p-6 text-center text-muted-foreground">
           <p>第 {day} 天的冥想内容暂未上线</p>
           <Button onClick={() => navigate(-1)} className="mt-4">返回</Button>

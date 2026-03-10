@@ -407,6 +407,7 @@ const App = () => (
               <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
               <Route path="/wealth-awakening-archive" element={<WealthAwakeningArchive />} />
               <Route path="/meditation-library" element={<MeditationLibrary />} />
+              <Route path="/stress-meditation/:dayNumber" element={<StressMeditation />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/terms/youjin-partner" element={<YoujinPartnerTerms />} />
               <Route path="/terms/bloom-partner" element={<BloomPartnerTerms />} />
