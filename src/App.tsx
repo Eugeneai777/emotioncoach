@@ -10,6 +10,7 @@ import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 import { UserPresenceTracker } from "./hooks/useUserPresence";
 import { lazyRetry } from "./utils/lazyRetry";
+import { useVersionCheck } from "./hooks/useVersionCheck";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
 const SmartHomeRedirect = lazyRetry(() => import("./components/SmartHomeRedirect"));
 // 页面加载状态组件
