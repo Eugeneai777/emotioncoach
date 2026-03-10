@@ -558,7 +558,7 @@ const CampCheckIn = () => {
                           step={1}
                           title="每日冥想"
                           description="5-10分钟引导冥想，释放压力"
-                          completed={false}
+                          completed={!!todayProgress?.declaration_completed}
                           icon="🧘"
                           badgeText="推荐"
                           badgeColor="emerald"
