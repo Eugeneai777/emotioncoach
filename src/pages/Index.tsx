@@ -44,8 +44,12 @@ const Index = () => {
   
   
   // AI 来电状态 - 从 navigation state 获取
-  const incomingCallState = location.state as { isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string; autoStartVoice?: boolean } | null;
+  const incomingCallState = location.state as { 
+    isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string; autoStartVoice?: boolean;
+    meditationReflection?: { thought: string; emotionImpact: string; dayNumber: number };
+  } | null;
   
+  const meditationReflection = incomingCallState?.meditationReflection;
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
   
