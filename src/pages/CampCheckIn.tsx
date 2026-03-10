@@ -606,6 +606,7 @@ const CampCheckIn = () => {
                         icon={<Share2 className="w-5 h-5" />}
                         actionLabel="开始分享"
                         actionIcon={<Share2 className="w-3 h-3 mr-1" />}
+                        isOptional
                         onAction={handleShare}
                       />
 
