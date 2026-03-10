@@ -35,7 +35,7 @@ export const MarriageAIToolCards: React.FC = () => {
     <section className="px-5 py-8">
       <div className="max-w-lg mx-auto">
         <h2 className="text-lg font-bold text-foreground text-center mb-1">
-          AI关系工具
+          AI婚姻教练
         </h2>
         <p className="text-xs text-muted-foreground text-center mb-5">
           帮助你梳理情绪，复盘冲突，改善沟通

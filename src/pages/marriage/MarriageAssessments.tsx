@@ -399,7 +399,7 @@ const MarriageAssessments: React.FC = () => {
                 onClick={() => navigate("/marriage/ai-tools")}
                 className="w-full rounded-xl bg-marriage-primary hover:bg-marriage-primary/90 text-white"
               >
-                体验AI关系工具
+                体验AI婚姻教练
               </Button>
               <Button
                 variant="outline"
