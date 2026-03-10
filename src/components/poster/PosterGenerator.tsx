@@ -182,37 +182,18 @@ export function PosterGenerator({
         return;
       }
 
-      const isAndroid = /android/i.test(navigator.userAgent);
+      // Blob-first: show preview immediately, upload in background
+      const blobUrl = URL.createObjectURL(blob);
+      setPreviewImageUrl(blobUrl);
+      setShowImagePreview(true);
 
-      if (isAndroid) {
-        // Android: must upload first — blob: URLs can't be long-press saved
-        toast.loading("正在准备图片...");
-        try {
-          const { uploadShareImage } = await import('@/utils/shareImageUploader');
-          const httpsUrl = await uploadShareImage(blob);
-          toast.dismiss();
+      // Background upload for WeChat Android compatibility
+      import('@/utils/shareImageUploader').then(({ uploadShareImage }) => {
+        uploadShareImage(blob).then((httpsUrl) => {
           setPreviewImageUrl(httpsUrl);
-          setShowImagePreview(true);
-        } catch {
-          toast.dismiss();
-          // Fallback: blob URL + download button
-          const blobUrl = URL.createObjectURL(blob);
-          setPreviewImageUrl(blobUrl);
-          setShowImagePreview(true);
-        }
-      } else {
-        // iOS/Desktop: blob-first for instant preview, background upload
-        const blobUrl = URL.createObjectURL(blob);
-        setPreviewImageUrl(blobUrl);
-        setShowImagePreview(true);
-
-        import('@/utils/shareImageUploader').then(({ uploadShareImage }) => {
-          uploadShareImage(blob).then((httpsUrl) => {
-            setPreviewImageUrl(httpsUrl);
-            URL.revokeObjectURL(blobUrl);
-          }).catch(() => { /* keep blob URL */ });
-        });
-      }
+          URL.revokeObjectURL(blobUrl);
+        }).catch(() => { /* keep blob URL */ });
+      });
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss();
