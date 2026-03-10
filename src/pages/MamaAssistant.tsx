@@ -79,9 +79,9 @@ const MamaAssistant = () => {
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
         />
-        <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
         <MamaAssessmentEntry onStartFunAssessment={() => setShowAssessment(true)} />
         <MamaCampEntry />
+        <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
       </div>
 
       {/* Fixed bottom input bar */}
