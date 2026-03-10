@@ -23,17 +23,8 @@ import { zhCN } from "date-fns/locale";
 import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceStart } from "@/utils/dateUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { TrainingCamp } from "@/types/trainingCamp";
-import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
-import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
-import CampShareDialog from "@/components/camp/CampShareDialog";
-import DayDetailDialog from "@/components/camp/DayDetailDialog";
-import { ParentCoachEmbedded } from "@/components/parent-coach/ParentCoachEmbedded";
-import { ParentWaterfallSteps } from "@/components/camp/ParentWaterfallSteps";
-import { performCheckIn } from "@/utils/campCheckInValidator";
-import { format, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
-import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceStart } from "@/utils/dateUtils";
+
+
 
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
