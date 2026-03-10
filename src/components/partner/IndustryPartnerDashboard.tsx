@@ -40,6 +40,7 @@ const TAB_GROUPS = [
       { value: "marketing", label: "AI文案" },
       { value: "promotions", label: "营销活动" },
       { value: "channels", label: "渠道归因" },
+      { value: "promo-pages", label: "推广页面" },
     ],
   },
   {
