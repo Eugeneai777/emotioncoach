@@ -1051,6 +1051,7 @@ export class DoubaoRealtimeChat {
 
     this.reconnectInProgress = true;
     this.reconnectAttempts = 0;
+    this.stopSessionRotation(); // 停止主动轮换定时器，避免冲突
     
     // ✅ 静默重连：记录开始时间，用于判断是否超过静默阈值
     this.isReconnectingSilently = true;
