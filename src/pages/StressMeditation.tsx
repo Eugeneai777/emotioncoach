@@ -28,6 +28,7 @@ interface StressMeditationData {
 export default function StressMeditation() {
   const { dayNumber } = useParams<{ dayNumber: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const day = parseInt(dayNumber || '1', 10);
 
   const [isPlaying, setIsPlaying] = useState(false);
