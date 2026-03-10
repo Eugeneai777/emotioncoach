@@ -101,6 +101,13 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
             <p className="text-sm font-bold text-destructive">¥{price}</p>
           </div>
 
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <span className="text-sm shrink-0 mt-0.5">📦</span>
+            <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+              知乐胶囊由香港直邮，预计 <strong>4-7 个工作日</strong> 送达。建议收到后再开启训练营，心智+身体同步效果更佳。
+            </p>
+          </div>
+
           <p className="text-xs text-muted-foreground">💡 粘贴完整地址可自动识别姓名和电话</p>
 
           <div>
