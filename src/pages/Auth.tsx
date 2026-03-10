@@ -228,7 +228,7 @@ const Auth = () => {
               if (profile?.preferred_coach === 'wealth') {
                 targetRedirect = "/coach/wealth_coach_4_questions";
               } else if (profile?.preferred_coach === 'emotion') {
-                targetRedirect = "/";
+                targetRedirect = "/emotion-coach";
               } else if (profile?.preferred_coach === 'communication') {
                 targetRedirect = "/communication";
               } else if (profile?.preferred_coach === 'parent') {

@@ -55,9 +55,7 @@ const SmartHomeRedirect = () => {
               .maybeSingle(),
           ]);
 
-          const isActivePartner = !!partnerRes.data;
           const hasPaidAssessment = !!assessmentRes.data;
-          const hasActiveCamp = !!campRes.data;
 
           // 已购买测评但未完成：触发即时提醒
           if (hasPaidAssessment) {
@@ -66,6 +64,20 @@ const SmartHomeRedirect = () => {
 
           // 所有 wealth 用户统一跳转到财富教练页面
           setTargetPath("/coach/wealth_coach_4_questions");
+        } else if (preferredCoach === "emotion") {
+          // 检查是否有活跃的情绪训练营
+          const { data: emotionCamp } = await supabase
+            .from("training_camps")
+            .select("id")
+            .eq("user_id", user.id)
+            .in("camp_type", ["emotion_stress_7", "emotion_journal_21", "emotion_bloom", "identity_bloom"])
+            .eq("status", "active")
+            .limit(1)
+            .maybeSingle();
+
+          setTargetPath(emotionCamp ? "/emotion-coach" : DEFAULT_COACH);
+        } else if (preferredCoach === "parent") {
+          setTargetPath("/parent-emotion");
         } else {
           setTargetPath(DEFAULT_COACH);
         }

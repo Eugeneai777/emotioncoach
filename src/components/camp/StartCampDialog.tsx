@@ -261,6 +261,8 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
         'wealth_awakening_21': 'wealth',
         'emotion_bloom': 'emotion',
         'identity_bloom': 'emotion',
+        'emotion_stress_7': 'emotion',
+        'emotion_journal_21': 'emotion',
         'parent_emotion_21': 'parent',
       };
       
