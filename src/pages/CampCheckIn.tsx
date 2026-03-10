@@ -61,6 +61,115 @@ const ProgressRing = ({ completed, total }: { completed: number; total: number }
   );
 };
 
+// 任务卡片组件
+interface TaskCardProps {
+  step: number;
+  title: string;
+  description: string;
+  completed: boolean;
+  icon: React.ReactNode;
+  badgeText?: string;
+  badgeColor?: string;
+  actionLabel: string;
+  actionIcon?: React.ReactNode;
+  isPrimary?: boolean;
+  extraBadge?: string;
+  onAction: () => void;
+}
+
+const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, onAction }: TaskCardProps) => {
+  return (
+    <motion.div
+      initial={false}
+      animate={completed ? { scale: [1, 1.02, 1] } : {}}
+      transition={{ duration: 0.3 }}
+    >
+      <Card
+        className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
+          completed
+            ? "border-emerald-200/60 dark:border-emerald-800/40"
+            : "border-teal-200/40 hover:border-teal-400/60 hover:shadow-md cursor-pointer active:scale-[0.99]"
+        }`}
+        onClick={() => !completed && onAction()}
+      >
+        <div className="flex items-start gap-3">
+          {/* 步骤编号 + 完成状态 */}
+          <div className="relative flex-shrink-0">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-all ${
+              completed
+                ? "bg-gradient-to-br from-emerald-400 to-emerald-500"
+                : isPrimary
+                  ? "bg-gradient-to-br from-teal-500 to-cyan-500"
+                  : "bg-teal-100/80 dark:bg-teal-900/30"
+            }`}>
+              {completed ? (
+                <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200 }}>
+                  <CheckCircle2 className="w-5 h-5 text-white" />
+                </motion.div>
+              ) : typeof icon === 'string' ? (
+                <span className="text-lg">{icon}</span>
+              ) : (
+                <div className={isPrimary ? "text-white" : "text-teal-600 dark:text-teal-400"}>{icon}</div>
+              )}
+            </div>
+            {/* 步骤编号角标 */}
+            <div className={`absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              completed
+                ? "bg-emerald-500 text-white"
+                : "bg-teal-500 text-white"
+            }`}>
+              {step}
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+              <h4 className={`text-sm font-semibold ${completed ? "text-emerald-700 dark:text-emerald-300 line-through decoration-emerald-300/50" : "text-teal-800 dark:text-teal-200"}`}>
+                {title}
+              </h4>
+              {badgeText && (
+                <Badge className={`border-0 h-4 px-1.5 text-[10px] ${
+                  badgeColor === 'emerald'
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                    : "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300"
+                }`}>{badgeText}</Badge>
+              )}
+              {completed && (
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-0 h-4 px-1.5 text-[10px] dark:bg-emerald-900/50 dark:text-emerald-300">
+                    ✅ 已完成
+                  </Badge>
+                </motion.div>
+              )}
+              {extraBadge && (
+                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{extraBadge}</Badge>
+              )}
+            </div>
+            <p className={`text-xs leading-relaxed ${completed ? "text-emerald-600/60 dark:text-emerald-400/60" : "text-muted-foreground"}`}>
+              {description}
+            </p>
+            {!completed && (
+              <Button
+                onClick={(e) => { e.stopPropagation(); onAction(); }}
+                size="sm"
+                variant={isPrimary ? "default" : "outline"}
+                className={`mt-2.5 h-7 text-xs ${
+                  isPrimary
+                    ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                    : "border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
+                }`}
+              >
+                {actionIcon}
+                {actionLabel}
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+    </motion.div>
+  );
+};
+
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
   const navigate = useNavigate();
