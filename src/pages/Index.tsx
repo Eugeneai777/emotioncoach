@@ -84,6 +84,25 @@ const Index = () => {
     }
   }, [incomingCallState?.isIncomingCall]);
 
+  // 冥想反思：自动发送反思内容作为开场
+  const meditationReflectionSentRef = useRef(false);
+  useEffect(() => {
+    if (meditationReflection && !meditationReflectionSentRef.current && sendMessage) {
+      meditationReflectionSentRef.current = true;
+      const parts: string[] = [];
+      parts.push(`我刚完成了第${meditationReflection.dayNumber}天的解压冥想。`);
+      if (meditationReflection.thought) {
+        parts.push(`冥想时脑海里出现了这个想法：${meditationReflection.thought}`);
+      }
+      if (meditationReflection.emotionImpact) {
+        parts.push(`这让我的情绪感受是：${meditationReflection.emotionImpact}`);
+      }
+      const msg = parts.join('\n');
+      // Delay slightly to ensure chat is initialized
+      setTimeout(() => sendMessage(msg), 500);
+    }
+  }, [meditationReflection, sendMessage]);
+
   // 购买引导
   const {
     showDialog: showPurchaseDialog,
