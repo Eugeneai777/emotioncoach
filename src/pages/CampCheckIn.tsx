@@ -145,6 +145,9 @@ const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeC
               {extraBadge && (
                 <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{extraBadge}</Badge>
               )}
+              {isOptional && !completed && (
+                <Badge variant="outline" className="h-4 px-1.5 text-[10px] border-muted-foreground/30 text-muted-foreground">选做</Badge>
+              )}
             </div>
             <p className={`text-xs leading-relaxed ${completed ? "text-emerald-600/60 dark:text-emerald-400/60" : "text-muted-foreground"}`}>
               {description}
