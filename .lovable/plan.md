@@ -1,23 +1,37 @@
 
 
-## 两个问题需要修复
+## 购买训练营后，对应教练页成为入口页
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 问题
+当前购买情绪类训练营（如 `emotion_stress_7`）后，`preferred_coach` 未被正确设置，且即使设为 `emotion`，`SmartHomeRedirect` 和 `Auth.tsx` 都只是跳转到 `/`（默认的 vibrant_life_sage），而非情绪教练页 `/emotion-coach`。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 方案
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+**1. `src/components/camp/StartCampDialog.tsx`** — 补全 coachTypeMap
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+在 `coachTypeMap` 中增加 `emotion_stress_7` → `emotion` 和 `emotion_journal_21` → `emotion` 的映射，确保开营时自动更新 `preferred_coach`。
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**2. `src/components/SmartHomeRedirect.tsx`** — 增加 emotion 路由
 
-| 文件 | 修改 |
+当 `preferredCoach === 'emotion'` 时，查询用户是否有活跃的情绪训练营。若有，跳转到 `/emotion-coach`；若无，跳转默认教练页。
+
+```text
+preferred_coach 路由表：
+  wealth  → /coach/wealth_coach_4_questions
+  emotion → /emotion-coach （有活跃训练营时）
+  parent  → /parent-emotion
+  其他    → /coach/vibrant_life_sage
+```
+
+**3. `src/pages/Auth.tsx`** — 同步更新登录后跳转
+
+将 `emotion` 的跳转目标从 `/` 改为 `/emotion-coach`。
+
+### 具体改动
+
+| 文件 | 改动 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `StartCampDialog.tsx` | coachTypeMap 增加 `emotion_stress_7: 'emotion'`, `emotion_journal_21: 'emotion'` |
+| `SmartHomeRedirect.tsx` | 新增 `else if (preferredCoach === 'emotion')` 分支，查询活跃情绪训练营后跳转 `/emotion-coach` |
+| `Auth.tsx` | `emotion` 分支跳转改为 `/emotion-coach` |
 
