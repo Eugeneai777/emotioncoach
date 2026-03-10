@@ -8382,6 +8382,45 @@ export type Database = {
           },
         ]
       }
+      stress_meditations: {
+        Row: {
+          audio_url: string | null
+          camp_type: string
+          created_at: string
+          day_number: number
+          description: string | null
+          duration_seconds: number
+          id: string
+          script: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          camp_type?: string
+          created_at?: string
+          day_number: number
+          description?: string | null
+          duration_seconds?: number
+          id?: string
+          script: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          camp_type?: string
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          duration_seconds?: number
+          id?: string
+          script?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           combo_amount: number | null
