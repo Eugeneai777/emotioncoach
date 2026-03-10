@@ -73,12 +73,12 @@ const MamaAssistant = () => {
       
 
       <div className="space-y-3 mt-3">
-        <MamaEmotionCheck />
         <MamaDailyEnergy
           onGratitudeSubmit={(text) =>
             openChat(`我今天记录了一件感恩的小事：${text}。请给我一个温暖的回应。`)
           }
         />
+        <MamaEmotionCheck />
         <MamaAssessmentEntry onStartFunAssessment={() => setShowAssessment(true)} />
         <MamaCampEntry />
         <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
