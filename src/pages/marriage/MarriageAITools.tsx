@@ -7,7 +7,9 @@ import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageQuarrelTool } from "@/components/marriage/MarriageQuarrelTool";
 import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { MarriageDiary } from "@/components/marriage/MarriageDiary";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const tabs = [
@@ -31,6 +33,16 @@ const MarriageAITools: React.FC = () => {
     setShowVoice(true);
   };
 
+  const handleVoiceBriefingSaved = async (briefingId: string, briefingData: any) => {
+    if (!user) return;
+    await supabase.from("marriage_diary_entries").insert({
+      user_id: user.id,
+      source: "voice",
+      user_input: briefingData.emotion_theme || "语音教练对话",
+      ai_result: briefingData.insight || briefingData.growth_story || null,
+    });
+  };
+
   if (showVoice) {
     return (
       <CoachVoiceChat
@@ -43,6 +55,7 @@ const MarriageAITools: React.FC = () => {
         mode="general"
         featureKey="realtime_voice"
         skipBilling={true}
+        onBriefingSaved={handleVoiceBriefingSaved}
       />
     );
   }
@@ -130,16 +143,7 @@ const MarriageAITools: React.FC = () => {
               </div>
             )}
 
-            {activeTab === "diary" && (
-              <div className="text-center py-12">
-                <BookHeart className="h-12 w-12 text-marriage-primary/30 mx-auto mb-4" />
-                <h2 className="text-base font-bold text-foreground mb-1">AI关系日记</h2>
-                <p className="text-xs text-muted-foreground">
-                  每天记录关系状态，AI帮助分析关系趋势
-                </p>
-                <p className="text-xs text-muted-foreground mt-4">功能即将上线，敬请期待</p>
-              </div>
-            )}
+            {activeTab === "diary" && <MarriageDiary />}
           </motion.div>
         </div>
         <MarriageNav />
