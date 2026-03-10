@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
 
+import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
 import MamaDailyEnergy from "@/components/mama/MamaDailyEnergy";
 import MamaAssessmentEntry from "@/components/mama/MamaAssessmentEntry";
