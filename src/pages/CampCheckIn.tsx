@@ -352,252 +352,142 @@ const CampCheckIn = () => {
               <ResponsiveTabsTrigger value="tasks" label="任务清单" shortLabel="任务" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
             </TabsList>
 
-            <TabsContent value="checkin" className="space-y-3 mt-4">
-              {/* 打卡状态卡片 */}
-              <Card className="p-4 bg-white/70 backdrop-blur-sm border-teal-200/40 dark:bg-background/70">
-                <div className="flex items-center gap-3">
-                  {todayProgress?.is_checked_in ? (
-                    <>
-                      <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <CheckCircle2 className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-teal-800 dark:text-teal-200">今日已打卡</h3>
-                        <p className="text-xs text-muted-foreground">
-                          已完成 {camp.completed_days || 0} 天打卡
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Circle className="w-6 h-6 text-amber-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-teal-800 dark:text-teal-200">待完成打卡</h3>
-                        <p className="text-xs text-muted-foreground">
-                          完成情绪对话自动打卡
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Card>
+            <TabsContent value="checkin" className="space-y-4 mt-4">
+              {(() => {
+                // 计算任务完成状态
+                const hasMeditation = camp.camp_type === 'emotion_stress_7';
+                const tasks = [
+                  ...(hasMeditation ? [{ done: false, label: '冥想' }] : []),
+                  { done: !!todayProgress?.is_checked_in, label: '对话' },
+                  { done: !!todayProgress?.has_shared_to_community, label: '分享' },
+                  { done: !!todayProgress?.video_learning_completed, label: '课程' },
+                ];
+                const completedCount = tasks.filter(t => t.done).length;
+                const totalCount = tasks.length;
+                const allDone = completedCount === totalCount;
 
-              {/* 任务卡片 */}
-              <div className="space-y-3">
-                {/* 0. 冥想任务 - 仅 emotion_stress_7 */}
-                {camp.camp_type === 'emotion_stress_7' && (
-                  <Card 
-                    className="p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 border-emerald-200/40 hover:border-emerald-400/60 hover:shadow-md cursor-pointer active:scale-[0.99]"
-                    onClick={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm">
-                        <span className="text-lg">🧘</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <h4 className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">每日冥想</h4>
-                          <Badge className="bg-emerald-100 text-emerald-700 border-0 h-4 px-1.5 text-[10px] dark:bg-emerald-900/50 dark:text-emerald-300">推荐</Badge>
+                return (
+                  <>
+                    {/* 进度总览卡片 */}
+                    <Card className="p-5 bg-white/80 backdrop-blur-sm border-teal-200/40 dark:bg-background/80 overflow-hidden relative">
+                      <AnimatePresence>
+                        {allDone && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30"
+                          />
+                        )}
+                      </AnimatePresence>
+                      <div className="relative flex items-center gap-4">
+                        <ProgressRing completed={completedCount} total={totalCount} />
+                        <div className="flex-1 min-w-0">
+                          {allDone ? (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                              <h3 className="text-lg font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                                🎉 今日全部完成！
+                              </h3>
+                              <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
+                                已坚持 {camp.completed_days || 0} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                              </p>
+                              <div className="flex items-center gap-1 mt-1.5">
+                                <Flame className="w-3.5 h-3.5 text-orange-500" />
+                                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">连续打卡中，继续保持！</span>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <>
+                              <h3 className="text-base font-semibold text-foreground">
+                                今日进度
+                              </h3>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                已完成 {completedCount}/{totalCount} 个任务 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                              </p>
+                              {/* 迷你进度条 */}
+                              <div className="flex gap-1 mt-2">
+                                {tasks.map((t, i) => (
+                                  <motion.div
+                                    key={i}
+                                    className={`h-1.5 rounded-full flex-1 ${t.done ? 'bg-primary' : 'bg-muted/40'}`}
+                                    initial={false}
+                                    animate={{ backgroundColor: t.done ? undefined : undefined }}
+                                    transition={{ duration: 0.3 }}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">5-10分钟引导冥想，释放压力</p>
-                        <Button 
-                          onClick={(e) => { e.stopPropagation(); navigate(`/stress-meditation/${displayCurrentDay || 1}`); }}
-                          size="sm"
-                          variant="outline"
-                          className="mt-2.5 h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300"
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          开始冥想
-                        </Button>
                       </div>
-                    </div>
-                  </Card>
-                )}
+                    </Card>
 
-                {/* 1. 情绪教练对话 - 核心任务 */}
-                <Card 
-                  className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
-                    todayProgress?.is_checked_in 
-                      ? "border-teal-300/50 dark:border-teal-700/50" 
-                      : "border-teal-200/40 hover:border-teal-400/60 hover:shadow-md cursor-pointer active:scale-[0.99]"
-                  }`}
-                  onClick={() => {
-                    if (!todayProgress?.is_checked_in) {
-                      if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
-                        navigate("/emotion-coach");
-                      } else {
-                        navigate("/");
-                      }
-                    }
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
-                      todayProgress?.is_checked_in 
-                        ? "bg-gradient-to-br from-teal-400 to-cyan-500" 
-                        : "bg-gradient-to-br from-teal-500 to-cyan-500"
-                    }`}>
-                      {todayProgress?.is_checked_in ? (
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                      ) : (
-                        <MessageSquare className="w-5 h-5 text-white" />
+                    {/* 任务卡片列表 - 带步骤编号 */}
+                    <div className="space-y-2.5">
+                      {/* 冥想任务 - 仅 emotion_stress_7 */}
+                      {hasMeditation && (
+                        <TaskCard
+                          step={1}
+                          title="每日冥想"
+                          description="5-10分钟引导冥想，释放压力"
+                          completed={false}
+                          icon="🧘"
+                          badgeText="推荐"
+                          badgeColor="emerald"
+                          actionLabel="开始冥想"
+                          onAction={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
+                        />
                       )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
-                          情绪教练对话
-                        </h4>
-                        <Badge className="bg-teal-100 text-teal-700 border-0 h-4 px-1.5 text-[10px] dark:bg-teal-900/50 dark:text-teal-300">核心</Badge>
-                        {todayProgress?.emotion_logs_count > 0 && (
-                          <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-                            {todayProgress.emotion_logs_count}次
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {todayProgress?.is_checked_in 
-                          ? "今日简报已生成" 
-                          : "完成四步曲生成简报即可打卡"}
-                      </p>
-                      {!todayProgress?.is_checked_in && (
-                        <Button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
-                              navigate("/emotion-coach");
-                            } else {
-                              navigate("/");
-                            }
-                          }}
-                          size="sm"
-                          className="mt-2.5 h-7 text-xs bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-                        >
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          开始对话
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
 
-                {/* 2. 每日反思分享 */}
-                <Card 
-                  className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
-                    todayProgress?.has_shared_to_community 
-                      ? "border-teal-300/50 dark:border-teal-700/50" 
-                      : "border-teal-200/40 hover:shadow-md hover:border-teal-400/60 cursor-pointer active:scale-[0.99]"
-                  }`}
-                  onClick={() => {
-                    if (!todayProgress?.has_shared_to_community) {
-                      handleShare();
-                    }
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      todayProgress?.has_shared_to_community 
-                        ? "bg-gradient-to-br from-teal-400 to-cyan-500 shadow-sm" 
-                        : "bg-teal-100/80 dark:bg-teal-900/30"
-                    }`}>
-                      {todayProgress?.has_shared_to_community ? (
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                      ) : (
-                        <Share2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">每日反思分享</h4>
-                        {todayProgress?.has_shared_to_community && (
-                          <Badge className="bg-teal-100 text-teal-700 border-0 h-4 px-1.5 text-[10px] dark:bg-teal-900/50 dark:text-teal-300">
-                            已分享
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {todayProgress?.has_shared_to_community 
-                          ? "今日反思已分享到社区" 
-                          : "分享成长心得，获得社区支持"}
-                      </p>
-                      {!todayProgress?.has_shared_to_community && (
-                        <Button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShare();
-                          }}
-                          size="sm"
-                          variant="outline"
-                          className="mt-2.5 h-7 text-xs border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
-                        >
-                          <Share2 className="w-3 h-3 mr-1" />
-                          开始分享
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
+                      {/* 情绪教练对话 */}
+                      <TaskCard
+                        step={hasMeditation ? 2 : 1}
+                        title="情绪教练对话"
+                        description={todayProgress?.is_checked_in ? "今日简报已生成 ✨" : "完成四步曲生成简报即可打卡"}
+                        completed={!!todayProgress?.is_checked_in}
+                        icon={<MessageSquare className="w-5 h-5" />}
+                        badgeText="核心"
+                        badgeColor="teal"
+                        actionLabel="开始对话"
+                        actionIcon={<Sparkles className="w-3 h-3 mr-1" />}
+                        isPrimary
+                        extraBadge={todayProgress?.emotion_logs_count > 0 ? `${todayProgress.emotion_logs_count}次` : undefined}
+                        onAction={() => {
+                          if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
+                            navigate("/emotion-coach");
+                          } else {
+                            navigate("/");
+                          }
+                        }}
+                      />
 
-                {/* 3. 今日成长课程 */}
-                <Card 
-                  className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
-                    todayProgress?.video_learning_completed 
-                      ? "border-teal-300/50 dark:border-teal-700/50" 
-                      : "border-teal-200/40 hover:shadow-md hover:border-teal-400/60 cursor-pointer active:scale-[0.99]"
-                  }`}
-                  onClick={() => !todayProgress?.video_learning_completed && setActiveTab("tasks")}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      todayProgress?.video_learning_completed 
-                        ? "bg-gradient-to-br from-teal-400 to-cyan-500 shadow-sm" 
-                        : "bg-teal-100/80 dark:bg-teal-900/30"
-                    }`}>
-                      {todayProgress?.video_learning_completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                      ) : (
-                        <Play className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">今日成长课程</h4>
-                        {todayProgress?.videos_watched_count > 0 && (
-                          <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-                            {todayProgress.videos_watched_count}个
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {todayProgress?.video_learning_completed 
-                          ? "已完成今日课程学习" 
-                          : "观看推荐课程，加速成长"}
-                      </p>
-                      {!todayProgress?.video_learning_completed && (
-                        <Button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveTab("tasks");
-                          }}
-                          size="sm"
-                          variant="outline"
-                          className="mt-2.5 h-7 text-xs border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          查看推荐
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              </div>
+                      {/* 每日反思分享 */}
+                      <TaskCard
+                        step={hasMeditation ? 3 : 2}
+                        title="每日反思分享"
+                        description={todayProgress?.has_shared_to_community ? "今日反思已分享到社区" : "分享成长心得，获得社区支持"}
+                        completed={!!todayProgress?.has_shared_to_community}
+                        icon={<Share2 className="w-5 h-5" />}
+                        actionLabel="开始分享"
+                        actionIcon={<Share2 className="w-3 h-3 mr-1" />}
+                        onAction={handleShare}
+                      />
 
-              {/* 提示信息 */}
-              <Card className="p-3 bg-teal-50/50 border-dashed border-teal-200/50 dark:bg-teal-950/20 dark:border-teal-800/30">
-                <p className="text-xs text-teal-700/70 dark:text-teal-300/70 text-center leading-relaxed">
-                  💡 完成打卡自动生成，分享反思获得更多社区支持
+                      {/* 今日成长课程 */}
+                      <TaskCard
+                        step={hasMeditation ? 4 : 3}
+                        title="今日成长课程"
+                        description={todayProgress?.video_learning_completed ? "已完成今日课程学习" : "观看推荐课程，加速成长"}
+                        completed={!!todayProgress?.video_learning_completed}
+                        icon={<Play className="w-5 h-5" />}
+                        extraBadge={todayProgress?.videos_watched_count > 0 ? `${todayProgress.videos_watched_count}个` : undefined}
+                        actionLabel="查看推荐"
+                        actionIcon={<Play className="w-3 h-3 mr-1" />}
+                        onAction={() => setActiveTab("tasks")}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
                 </p>
               </Card>
             </TabsContent>
