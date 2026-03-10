@@ -49,6 +49,7 @@ const CampList = () => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
