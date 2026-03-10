@@ -4981,6 +4981,42 @@ export type Database = {
         }
         Relationships: []
       }
+      marriage_assessment_history: {
+        Row: {
+          answers: Json | null
+          assessment_title: string
+          assessment_type: string
+          created_at: string
+          id: string
+          max_score: number | null
+          result_markdown: string | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          assessment_title: string
+          assessment_type: string
+          created_at?: string
+          id?: string
+          max_score?: number | null
+          result_markdown?: string | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          assessment_title?: string
+          assessment_type?: string
+          created_at?: string
+          id?: string
+          max_score?: number | null
+          result_markdown?: string | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       meditation_sessions: {
         Row: {
           background_sound: string | null
