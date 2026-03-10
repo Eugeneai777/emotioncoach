@@ -74,10 +74,11 @@ interface TaskCardProps {
   actionIcon?: React.ReactNode;
   isPrimary?: boolean;
   extraBadge?: string;
+  isOptional?: boolean;
   onAction: () => void;
 }
 
-const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, onAction }: TaskCardProps) => {
+const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, isOptional, onAction }: TaskCardProps) => {
   return (
     <motion.div
       initial={false}
@@ -144,6 +145,9 @@ const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeC
               {extraBadge && (
                 <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{extraBadge}</Badge>
               )}
+              {isOptional && !completed && (
+                <Badge variant="outline" className="h-4 px-1.5 text-[10px] border-muted-foreground/30 text-muted-foreground">选做</Badge>
+              )}
             </div>
             <p className={`text-xs leading-relaxed ${completed ? "text-emerald-600/60 dark:text-emerald-400/60" : "text-muted-foreground"}`}>
               {description}
@@ -196,13 +200,12 @@ const CampCheckIn = () => {
   useEffect(() => {
     if (!todayProgress || !camp || hasTriggeredConfetti) return;
     const hasMeditation = camp.camp_type === 'emotion_stress_7';
-    const tasks = [
+    // 只有必做任务（冥想+对话）决定打卡完成
+    const requiredTasks = [
       ...(hasMeditation ? [!!todayProgress.declaration_completed] : []),
       !!todayProgress.is_checked_in,
-      !!todayProgress.has_shared_to_community,
-      !!todayProgress.video_learning_completed,
     ];
-    const allDone = tasks.every(Boolean) && tasks.length > 0;
+    const allDone = requiredTasks.every(Boolean) && requiredTasks.length > 0;
     if (allDone) {
       setHasTriggeredConfetti(true);
       setTimeout(() => {
@@ -485,15 +488,19 @@ const CampCheckIn = () => {
               {(() => {
                 // 计算任务完成状态
                 const hasMeditation = camp.camp_type === 'emotion_stress_7';
-                const tasks = [
+                const requiredTasks = [
                   ...(hasMeditation ? [{ done: !!todayProgress?.declaration_completed, label: '冥想' }] : []),
                   { done: !!todayProgress?.is_checked_in, label: '对话' },
+                ];
+                const optionalTasks = [
                   { done: !!todayProgress?.has_shared_to_community, label: '分享' },
                   { done: !!todayProgress?.video_learning_completed, label: '课程' },
                 ];
-                const completedCount = tasks.filter(t => t.done).length;
-                const totalCount = tasks.length;
-                const allDone = completedCount === totalCount;
+                const allTasks = [...requiredTasks, ...optionalTasks];
+                const requiredDone = requiredTasks.filter(t => t.done).length;
+                const requiredTotal = requiredTasks.length;
+                const allDone = requiredDone === requiredTotal;
+                const bonusDone = optionalTasks.filter(t => t.done).length;
 
                 return (
                   <>
@@ -509,19 +516,20 @@ const CampCheckIn = () => {
                         )}
                       </AnimatePresence>
                       <div className="relative flex items-center gap-4">
-                        <ProgressRing completed={completedCount} total={totalCount} />
+                        <ProgressRing completed={requiredDone} total={requiredTotal} />
                         <div className="flex-1 min-w-0">
                           {allDone ? (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                               <h3 className="text-lg font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-                                🎉 今日全部完成！
+                                🎉 今日打卡完成！
                               </h3>
                               <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
                                 已坚持 {camp.completed_days || 0} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                {bonusDone > 0 && ` · 额外完成 ${bonusDone} 项`}
                               </p>
                               <div className="flex items-center gap-1 mt-1.5">
                                 <Flame className="w-3.5 h-3.5 text-orange-500" />
-                                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">连续打卡中，继续保持！</span>
+                                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">继续完成选做任务，加速成长！</span>
                               </div>
                             </motion.div>
                           ) : (
@@ -530,16 +538,16 @@ const CampCheckIn = () => {
                                 今日进度
                               </h3>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                已完成 {completedCount}/{totalCount} 个任务 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                已完成 {requiredDone}/{requiredTotal} 个必做任务 · 第 {displayCurrentDay}/{camp.duration_days} 天
                               </p>
                               {/* 迷你进度条 */}
                               <div className="flex gap-1 mt-2">
-                                {tasks.map((t, i) => (
+                                {allTasks.map((t, i) => (
                                   <motion.div
                                     key={i}
-                                    className={`h-1.5 rounded-full flex-1 ${t.done ? 'bg-primary' : 'bg-muted/40'}`}
+                                    className={`h-1.5 rounded-full flex-1 ${t.done ? 'bg-primary' : i < requiredTotal ? 'bg-muted/40' : 'bg-muted/20'}`}
                                     initial={false}
-                                    animate={{ backgroundColor: t.done ? undefined : undefined }}
+                                    animate={{}}
                                     transition={{ duration: 0.3 }}
                                   />
                                 ))}
@@ -598,6 +606,7 @@ const CampCheckIn = () => {
                         icon={<Share2 className="w-5 h-5" />}
                         actionLabel="开始分享"
                         actionIcon={<Share2 className="w-3 h-3 mr-1" />}
+                        isOptional
                         onAction={handleShare}
                       />
 
@@ -611,6 +620,7 @@ const CampCheckIn = () => {
                         extraBadge={todayProgress?.videos_watched_count > 0 ? `${todayProgress.videos_watched_count}个` : undefined}
                         actionLabel="查看推荐"
                         actionIcon={<Play className="w-3 h-3 mr-1" />}
+                        isOptional
                         onAction={() => setActiveTab("tasks")}
                       />
                     </div>
