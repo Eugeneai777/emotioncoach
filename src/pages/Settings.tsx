@@ -182,7 +182,7 @@ export default function Settings() {
             isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
           )}>
             <ResponsiveTabsTrigger value="profile" label="个人资料" shortLabel="资料" />
-            <ResponsiveTabsTrigger value="account" label="账户" />
+            <ResponsiveTabsTrigger value="account" label={searchParams.get('view') === 'orders' ? '已购订单' : '账户'} />
             <ResponsiveTabsTrigger value="reminders" label="提醒设置" shortLabel="提醒" />
             <ResponsiveTabsTrigger value="notifications" label="通知偏好" shortLabel="通知" />
             {isAdmin && (
@@ -363,10 +363,7 @@ export default function Settings() {
 
           <TabsContent value="account" className="space-y-6">
             {searchParams.get('view') === 'orders' ? (
-              <>
-                <PurchaseHistory />
-                <ShippingTracker />
-              </>
+              <PurchaseHistory />
             ) : (
               <>
                 <AccountBalance />
