@@ -74,7 +74,7 @@ export default function StressMeditation() {
     if (!audio) return;
     const onTime = () => setCurrentTime(audio.currentTime);
     const onMeta = () => setDuration(audio.duration || meditation?.duration_seconds || 0);
-    const onEnd = () => setIsPlaying(false);
+    const onEnd = () => { setIsPlaying(false); setHasListened(true); };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
