@@ -10,6 +10,7 @@ import { PartnerAssessmentAnalytics } from "./PartnerAssessmentAnalytics";
 import { PartnerMarketingHub } from "./PartnerMarketingHub";
 import { PartnerPromotionManager } from "./PartnerPromotionManager";
 import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
+import { PartnerPromoPages } from "./PartnerPromoPages";
 import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
 import { PartnerSharedDataDashboard } from "./PartnerSharedDataDashboard";
@@ -39,6 +40,7 @@ const TAB_GROUPS = [
       { value: "marketing", label: "AI文案" },
       { value: "promotions", label: "营销活动" },
       { value: "channels", label: "渠道归因" },
+      { value: "promo-pages", label: "推广页面" },
     ],
   },
   {
@@ -174,6 +176,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         </TabsContent>
         <TabsContent value="channels">
           <PartnerChannelAttribution partnerId={partner.id} />
+        </TabsContent>
+        <TabsContent value="promo-pages">
+          <PartnerPromoPages partnerId={partner.id} partnerCode={partner.partner_code} />
         </TabsContent>
         <TabsContent value="reminders">
           <PartnerFollowupReminders partnerId={partner.id} />
