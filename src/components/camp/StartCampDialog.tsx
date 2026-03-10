@@ -27,6 +27,8 @@ interface StartCampDialogProps {
     price_note?: string;
   };
   onSuccess?: (campId: string) => void;
+  /** Override internal purchase check (e.g. when purchase was verified externally via orders table) */
+  isPurchased?: boolean;
 }
 
 export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }: StartCampDialogProps) {
