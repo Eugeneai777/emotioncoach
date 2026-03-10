@@ -200,13 +200,12 @@ const CampCheckIn = () => {
   useEffect(() => {
     if (!todayProgress || !camp || hasTriggeredConfetti) return;
     const hasMeditation = camp.camp_type === 'emotion_stress_7';
-    const tasks = [
+    // 只有必做任务（冥想+对话）决定打卡完成
+    const requiredTasks = [
       ...(hasMeditation ? [!!todayProgress.declaration_completed] : []),
       !!todayProgress.is_checked_in,
-      !!todayProgress.has_shared_to_community,
-      !!todayProgress.video_learning_completed,
     ];
-    const allDone = tasks.every(Boolean) && tasks.length > 0;
+    const allDone = requiredTasks.every(Boolean) && requiredTasks.length > 0;
     if (allDone) {
       setHasTriggeredConfetti(true);
       setTimeout(() => {
