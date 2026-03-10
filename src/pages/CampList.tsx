@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -49,6 +49,7 @@ const CampList = () => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
@@ -74,6 +75,8 @@ const CampList = () => {
     onSuccess: () => {
       toast.success("购买成功！", { description: "即将开启你的训练营之旅" });
       setPayDialogOpen(false);
+      // Invalidate purchase queries so cards update
+      queryClient.invalidateQueries({ queryKey: ['camp-card-purchase'] });
     },
     showToast: false,
     showConfetti: true,
@@ -291,13 +294,37 @@ const CampList = () => {
         open={payDialogOpen}
         onOpenChange={setPayDialogOpen}
         packageInfo={selectedCamp ? {
-          key: `camp-${selectedCamp.id}`,
+          key: `camp-${selectedCamp.camp_type}`,
           name: selectedCamp.camp_name,
           price: selectedCamp.price || 0,
         } : null}
-        onSuccess={() => {
-          toast.success("购买成功！", { description: "即将开启你的训练营之旅" });
+        onSuccess={async () => {
+          // 1. Insert purchase record
+          if (user && selectedCamp) {
+            try {
+              await supabase.from('user_camp_purchases').insert({
+                user_id: user.id,
+                camp_type: selectedCamp.camp_type,
+                camp_name: selectedCamp.camp_name,
+                purchase_price: selectedCamp.price || 0,
+                payment_method: 'wechat',
+                payment_status: 'completed',
+                transaction_id: `CAMP-LIST-${Date.now()}`,
+                purchased_at: new Date().toISOString(),
+              });
+            } catch (e) {
+              console.error('Insert camp purchase error (may already exist):', e);
+            }
+          }
+          // 2. Close dialog
           setPayDialogOpen(false);
+          // 3. Invalidate purchase queries so card updates
+          queryClient.invalidateQueries({ queryKey: ['camp-card-purchase'] });
+          // 4. Navigate to camp intro for start date selection
+          if (selectedCamp) {
+            toast.success("购买成功！", { description: "请选择开始日期" });
+            navigate(`/camp-intro/${selectedCamp.camp_type}`);
+          }
         }}
       />
     </>
