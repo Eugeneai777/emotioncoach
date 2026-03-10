@@ -109,34 +109,43 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
 
     console.log('[oneClickShare] Image generated successfully, blob size:', blob.size);
 
-    const blobUrl = URL.createObjectURL(blob);
     const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
+
+    // Helper: upload blob and show preview with HTTPS URL
+    const showUploadedPreview = async () => {
+      try {
+        const { uploadShareImage } = await import('./shareImageUploader');
+        const httpsUrl = await uploadShareImage(blob);
+        onProgress?.('preview');
+        onShowPreview?.(httpsUrl);
+        onSuccess?.();
+        return true;
+      } catch (uploadErr) {
+        console.warn('[oneClickShare] Upload failed, falling back to blob URL', uploadErr);
+        const blobUrl = URL.createObjectURL(blob);
+        onProgress?.('preview');
+        onShowPreview?.(blobUrl);
+        onSuccess?.();
+        return true;
+      }
+    };
 
     // 1. Mini Program: Only image preview is supported
     if (env.isMiniProgram) {
       console.log('[oneClickShare] Mini Program - showing preview');
-      onProgress?.('preview');
-      onShowPreview?.(blobUrl);
-      onSuccess?.();
-      return true;
+      return showUploadedPreview();
     }
 
     // 2. WeChat H5: Skip unreliable navigator.share, show image preview
     if (env.isWeChat && !env.isMiniProgram) {
       console.log('[oneClickShare] WeChat H5 - showing preview (skip unreliable navigator.share)');
-      onProgress?.('preview');
-      onShowPreview?.(blobUrl);
-      onSuccess?.();
-      return true;
+      return showUploadedPreview();
     }
 
     // 2. iOS: Skip unreliable navigator.share, show image preview
     if (env.isIOS) {
       console.log('[oneClickShare] iOS - showing preview (skip unreliable navigator.share)');
-      onProgress?.('preview');
-      onShowPreview?.(blobUrl);
-      onSuccess?.();
-      return true;
+      return showUploadedPreview();
     }
 
     // 3. Android (including WeChat H5): Try native share
