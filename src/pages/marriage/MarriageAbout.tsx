@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Heart, Award, Users, MapPin, Sparkles } from "lucide-react";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 
 const timeline = [
   { year: "2004", event: "创立婚因有道，开始深耕婚姻家庭服务领域", icon: Heart },

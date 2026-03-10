@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 import { assessments } from "@/components/marriage/MarriageAssessmentCards";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";

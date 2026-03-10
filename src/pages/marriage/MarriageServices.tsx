@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Users, Shield, ClipboardCheck, Phone, BarChart3, 
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 
 const services = [
   { icon: Heart, title: "婚姻关系修复咨询", desc: "专业咨询师1对1帮助修复夫妻关系" },

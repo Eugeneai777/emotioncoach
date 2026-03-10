@@ -6,6 +6,7 @@ import { QrCode, FileText, Phone, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 
 const resources = [
   { icon: FileText, title: "婚姻关系改善指南", desc: "系统了解关系修复的方法与步骤" },

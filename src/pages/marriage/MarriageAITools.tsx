@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { MessageSquareWarning, MessagesSquare, BookHeart, ArrowLeft } from "lucide-react";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageQuarrelTool } from "@/components/marriage/MarriageQuarrelTool";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 
 const tabs = [
   { id: "quarrel", label: "吵架复盘", icon: MessageSquareWarning },
