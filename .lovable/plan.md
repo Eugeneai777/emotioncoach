@@ -1,23 +1,61 @@
 
 
-## 两个问题需要修复
+# 计划：构建 老哥AI — 中年男人AI参谋
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 概述
+创建一个独立的移动优先AI工具页面，面向35-55岁男性用户。深蓝+白色配色，简洁硬朗设计。首页包含5个AI工具 + 每日一句话功能。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## 新建文件
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 1. 页面：`src/pages/LaogeAI.tsx`
+- 深蓝渐变背景的英雄区（老哥AI品牌）
+- 5个CTA按钮，点击展开对应工具的输入表单
+- 底部"今日老哥一句话"每日互动区
+- 所有工具在同一页面内以卡片/对话框形式展开
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 2. 组件：`src/components/laoge/LaogeToolCard.tsx`
+每个工具的输入表单 + AI回复展示的可复用卡片组件。
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 3. 组件：`src/components/laoge/LaogeChat.tsx`
+共享AI交互组件：收集用户输入 → 调用边缘函数 → 用Markdown展示"老哥风格"回复。
 
-| 文件 | 修改 |
+### 4. 边缘函数：`supabase/functions/laoge-ai/index.ts`
+单一函数，通过 `tool` 参数分支处理5个工具 + 每日一句：
+- `decision` — 决策顾问（情况 + A/B方案）
+- `opportunity` — 赚钱雷达（行业、城市、资源）
+- `career` — 事业卡点诊断（行业、收入、痛点）
+- `stress` — 压力指数测试（5项评分 → 计算指数 + 建议）
+- `health` — 健康风险扫描（年龄、睡眠、运动、体重）
+- `daily` — 每日一句话（短输入 → 短回复）
+
+使用 Lovable AI 网关（`google/gemini-3-flash-preview`），无需API密钥。
+
+### 5. 路由：`App.tsx` 添加 `/laoge` 路由
+
+## 设计细节
+- **配色**：深蓝 `#1a2332` / `#2a3a4f` + 白色文字 + 强调蓝 `#4a9eff`
+- **字体**：粗体、干净、无装饰
+- **布局**：单页移动优先，工具以卡片表单内联展开
+- **每个工具**：输入表单 → 提交 → 结构化AI回复卡片
+- **每日区域**：单行输入 + 简短AI回复
+
+## AI人格（系统提示词）
+```
+你是"老哥"，一个有丰富阅历的中年男人AI参谋。
+风格：直接、冷静、务实、像大哥一样说话。
+禁止：心理咨询腔、学术用语、长篇大论。
+要求：每段建议简短有力，说人话，给可执行的建议。
+```
+
+## 汇总
+| 文件 | 操作 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/LaogeAI.tsx` | 新建主页面 |
+| `src/components/laoge/LaogeToolCard.tsx` | 新建工具卡片组件 |
+| `src/components/laoge/LaogeChat.tsx` | 新建AI交互组件 |
+| `supabase/functions/laoge-ai/index.ts` | 新建边缘函数 |
+| `src/App.tsx` | 添加 `/laoge` 路由 |
+| `supabase/config.toml` | 添加函数配置（不编辑，系统自动处理） |
+
+无需新建数据库表（无状态工具）。
 
