@@ -78,7 +78,7 @@ interface TaskCardProps {
   onAction: () => void;
 }
 
-const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, onAction }: TaskCardProps) => {
+const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, isOptional, onAction }: TaskCardProps) => {
   return (
     <motion.div
       initial={false}
