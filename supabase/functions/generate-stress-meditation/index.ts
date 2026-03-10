@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,9 +18,9 @@ serve(async (req) => {
       throw new Error('day_number is required');
     }
 
-    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error('ELEVENLABS_API_KEY is not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -55,34 +54,26 @@ serve(async (req) => {
       .replace(/（停顿）/g, '...')
       .replace(/……/g, '...');
 
-    // Use ElevenLabs TTS with Sarah (soft female voice)
-    const voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Sarah
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: cleanScript,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.75,
-            similarity_boost: 0.75,
-            style: 0.3,
-            use_speaker_boost: true,
-            speed: 0.85, // Slower for meditation
-          },
-        }),
-      }
-    );
+    // Use OpenAI TTS with shimmer voice (soft, calm female) at half speed
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: cleanScript,
+        voice: 'shimmer',
+        speed: 0.5,
+        response_format: 'mp3',
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('ElevenLabs API error:', response.status, errorText);
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      console.error('OpenAI TTS API error:', response.status, errorText);
+      throw new Error(`OpenAI TTS API error: ${response.status}`);
     }
 
     const audioBuffer = await response.arrayBuffer();

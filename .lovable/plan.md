@@ -1,39 +1,23 @@
 
 
-# Plan: Switch to OpenAI TTS and Regenerate All 7 Meditation Audios at Half Speed
+## 两个问题需要修复
 
-## Overview
-Update the `generate-stress-meditation` edge function to use OpenAI TTS (`tts-1`) instead of ElevenLabs, with speed set to **0.5** (half speed). Then regenerate all 7 days of audio.
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## Changes
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### Step 1: Update Edge Function
-Modify `supabase/functions/generate-stress-meditation/index.ts`:
-- Replace ElevenLabs API call with OpenAI TTS API (`https://api.openai.com/v1/audio/speech`)
-- Use model `tts-1`, voice `shimmer` (soft female, good for meditation)
-- Set speed to `0.5`
-- Remove ElevenLabs-specific imports and logic
-- Keep existing script cleaning, storage upload, and DB update logic unchanged
-- `OPENAI_API_KEY` is already configured in secrets
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### Step 2: Clear Existing Audio URLs
-Run a database migration to set `audio_url = NULL` for all 7 days so the function will regenerate them (it skips rows where `audio_url` is not null).
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-```sql
-UPDATE stress_meditations 
-SET audio_url = NULL, updated_at = NOW() 
-WHERE camp_type = 'emotion_stress_7';
-```
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### Step 3: Regenerate All 7 Days
-Call the edge function sequentially for days 1-7. Each call will:
-1. Read script from DB
-2. Call OpenAI TTS at speed 0.5
-3. Upload MP3 to `stress-meditations` bucket (overwriting existing files)
-4. Update `audio_url` in database
-
-## Technical Details
-- OpenAI TTS speed range: 0.25–4.0 (vs ElevenLabs 0.7–1.2)
-- Voice `shimmer`: warm, calm female voice suitable for meditation
-- No new secrets needed — `OPENAI_API_KEY` already exists
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

@@ -1,0 +1,1 @@
+UPDATE stress_meditations SET audio_url = NULL, updated_at = NOW() WHERE camp_type = 'emotion_stress_7';
