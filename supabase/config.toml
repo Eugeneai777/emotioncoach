@@ -502,3 +502,6 @@ verify_jwt = false
 
 [functions.marriage-ai-tool]
 verify_jwt = false
+
+[functions.marriage-realtime-token]
+verify_jwt = false

@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { Helmet } from "react-helmet";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageSquareWarning, MessagesSquare, BookHeart, ArrowLeft } from "lucide-react";
+import { MessageSquareWarning, MessagesSquare, BookHeart, Mic } from "lucide-react";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageQuarrelTool } from "@/components/marriage/MarriageQuarrelTool";
 import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const tabs = [
   { id: "quarrel", label: "吵架复盘", icon: MessageSquareWarning },
@@ -17,6 +20,32 @@ const MarriageAITools: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTool = searchParams.get("tool") || "quarrel";
   const [activeTab, setActiveTab] = useState(initialTool);
+  const [showVoice, setShowVoice] = useState(false);
+  const { user } = useAuth();
+
+  const handleVoiceClick = () => {
+    if (!user) {
+      toast.error("请先登录后使用语音教练");
+      return;
+    }
+    setShowVoice(true);
+  };
+
+  if (showVoice) {
+    return (
+      <CoachVoiceChat
+        onClose={() => setShowVoice(false)}
+        coachEmoji="💜"
+        coachTitle="AI婚姻教练"
+        primaryColor="purple"
+        tokenEndpoint="marriage-realtime-token"
+        userId={user?.id}
+        mode="general"
+        featureKey="realtime_voice"
+        skipBilling={true}
+      />
+    );
+  }
 
   return (
     <>
@@ -29,6 +58,26 @@ const MarriageAITools: React.FC = () => {
         <div className="px-5 pt-8 max-w-lg mx-auto">
           <h1 className="text-xl font-bold text-foreground text-center mb-1">AI婚姻教练</h1>
           <p className="text-xs text-muted-foreground text-center mb-5">帮助你梳理情绪，复盘冲突，改善沟通</p>
+
+          {/* Voice Call CTA */}
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleVoiceClick}
+            className="w-full mb-5 bg-gradient-to-r from-marriage-primary to-purple-500 rounded-2xl p-4 shadow-lg shadow-marriage-primary/20 flex items-center gap-3"
+          >
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Mic className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <h3 className="text-sm font-bold text-white">语音婚姻教练</h3>
+              <p className="text-[11px] text-white/80 mt-0.5">像和朋友聊天一样，说出你的困扰</p>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+              <div className="w-3 h-3 rounded-full bg-white" />
+            </div>
+          </motion.button>
 
           {/* Tabs */}
           <div className="flex gap-2 mb-6 bg-marriage-light rounded-xl p-1">
