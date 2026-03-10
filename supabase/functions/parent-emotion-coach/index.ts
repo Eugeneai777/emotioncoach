@@ -306,7 +306,7 @@ serve(async (req) => {
 - "你选择了这个行动，说明你内心深处相信孩子是有力量的。这份信任，孩子一定能感受到。"
 
 判断成功:
-当父母提出具体可执行的小行动时，记录洞察，调用complete_stage，然后立即调用generate_parent_briefing生成简报。不需要等用户确认生成简报。`;
+当父母提出具体可执行的小行动时，记录洞察，调用complete_stage，然后必须立即调用generate_parent_briefing生成简报。绝对不要回复"简报正在生成中"这样的文字，而是直接调用工具。`;
         default:
           return '';
       }
@@ -757,7 +757,229 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
           }
         }
 
-        // Add follow-up message to history (if no tool call)
+        // If stage 4 was just completed but AI didn't call generate_parent_briefing, force retry
+        if (functionName === 'complete_stage' && args.stage === 4) {
+          console.log('Stage 4 completed but no briefing tool call in follow-up. Forcing retry...');
+          
+          // Add follow-up message to history
+          conversationHistory.push({
+            role: "assistant",
+            content: followUpMessage.content || ""
+          });
+
+          // Force a third round with explicit instruction
+          const forceResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                { role: "system", content: `你是「劲老师」🌿。四个阶段已全部完成。你现在必须立即调用 generate_parent_briefing 工具生成简报。不要回复任何文字，只调用工具。根据对话历史中的内容填充所有字段。` },
+                ...conversationHistory
+              ],
+              tools: [getAvailableTools(4).find((t: any) => t.function.name === 'generate_parent_briefing') || getAvailableTools(4)[1]],
+              tool_choice: { type: "function", function: { name: "generate_parent_briefing" } },
+              temperature: 0.3,
+            }),
+          });
+
+          let briefingGenerated = false;
+
+          if (forceResponse.ok) {
+            const forceData = await forceResponse.json();
+            const forceMsg = forceData.choices[0].message;
+
+            if (forceMsg.tool_calls && forceMsg.tool_calls.length > 0) {
+              const forceTool = forceMsg.tool_calls[0];
+              if (forceTool.function.name === 'generate_parent_briefing') {
+                const forceArgs = JSON.parse(forceTool.function.arguments);
+                console.log('Forced briefing generation succeeded:', forceArgs);
+
+                // Create conversation record
+                const { data: conversationData } = await supabaseClient
+                  .from('conversations')
+                  .insert({ user_id: user.id })
+                  .select()
+                  .single();
+
+                // Create briefing
+                const { data: briefingData } = await supabaseClient
+                  .from('briefings')
+                  .insert({
+                    conversation_id: conversationData.id,
+                    emotion_theme: forceArgs.emotion_theme,
+                    emotion_intensity: forceArgs.emotion_intensity || 5,
+                    stage_1_content: forceArgs.stage_1_content,
+                    stage_2_content: forceArgs.stage_2_content,
+                    stage_3_content: forceArgs.stage_3_content,
+                    stage_4_content: forceArgs.stage_4_content,
+                    insight: forceArgs.insight,
+                    action: forceArgs.action,
+                    growth_story: forceArgs.growth_story
+                  })
+                  .select()
+                  .single();
+
+                // Create tags
+                if (forceArgs.emotion_tags) {
+                  for (const tagName of forceArgs.emotion_tags) {
+                    const { data: tagData } = await supabaseClient
+                      .from('parent_tags')
+                      .select('id')
+                      .eq('user_id', user.id)
+                      .eq('name', tagName)
+                      .single();
+                    let tagId = tagData?.id;
+                    if (!tagId) {
+                      const { data: newTag } = await supabaseClient
+                        .from('parent_tags')
+                        .insert({ user_id: user.id, name: tagName })
+                        .select()
+                        .single();
+                      tagId = newTag?.id;
+                    }
+                    if (tagId) {
+                      await supabaseClient
+                        .from('parent_session_tags')
+                        .insert({ session_id: sessionId, tag_id: tagId });
+                    }
+                  }
+                }
+
+                // Update session as completed
+                await supabaseClient
+                  .from('parent_coaching_sessions')
+                  .update({
+                    status: 'completed',
+                    briefing_id: briefingData.id,
+                    conversation_id: conversationData.id,
+                    summary: forceArgs.growth_story,
+                    micro_action: forceArgs.action,
+                    messages: conversationHistory,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', sessionId);
+
+                // Update camp progress
+                if (session?.camp_id) {
+                  const today = new Date().toISOString().split('T')[0];
+                  await supabaseClient
+                    .from('camp_daily_progress')
+                    .upsert({
+                      user_id: user.id,
+                      camp_id: session.camp_id,
+                      progress_date: today,
+                      reflection_completed: true,
+                      reflection_briefing_id: briefingData.id,
+                      reflection_completed_at: new Date().toISOString(),
+                      is_checked_in: true,
+                      checked_in_at: new Date().toISOString()
+                    });
+                }
+
+                briefingGenerated = true;
+                console.log('Forced briefing created:', briefingData.id);
+
+                return new Response(JSON.stringify({
+                  content: followUpMessage.content || "简报已生成",
+                  toolCall: { name: 'generate_parent_briefing', args: forceArgs },
+                  briefingId: briefingData.id,
+                  briefing: forceArgs,
+                  completed: true
+                }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+              }
+            }
+          }
+
+          // Ultimate fallback: construct briefing from session data
+          if (!briefingGenerated) {
+            console.log('Force retry also failed. Using fallback briefing from session data...');
+            
+            const fallbackArgs = {
+              emotion_theme: '亲子情绪觉察',
+              emotion_intensity: 5,
+              emotion_tags: ['觉察', '成长'],
+              stage_1_content: session.feel_it?.insight || updatedSession?.feel_it?.insight || '觉察到了内在的情绪',
+              stage_2_content: session.see_it?.insight || updatedSession?.see_it?.insight || '看见了情绪背后的需求',
+              stage_3_content: session.sense_it?.insight || updatedSession?.sense_it?.insight || '选择了新的应对方式',
+              stage_4_content: args.insight || '找到了具体的行动方向',
+              insight: '在觉察中看见了自己和孩子的成长可能',
+              action: '今天试着用新的方式回应孩子',
+              growth_story: '每一次觉察都是亲子关系松动的开始',
+            };
+
+            const { data: conversationData } = await supabaseClient
+              .from('conversations')
+              .insert({ user_id: user.id })
+              .select()
+              .single();
+
+            const { data: briefingData } = await supabaseClient
+              .from('briefings')
+              .insert({
+                conversation_id: conversationData.id,
+                emotion_theme: fallbackArgs.emotion_theme,
+                emotion_intensity: fallbackArgs.emotion_intensity,
+                stage_1_content: fallbackArgs.stage_1_content,
+                stage_2_content: fallbackArgs.stage_2_content,
+                stage_3_content: fallbackArgs.stage_3_content,
+                stage_4_content: fallbackArgs.stage_4_content,
+                insight: fallbackArgs.insight,
+                action: fallbackArgs.action,
+                growth_story: fallbackArgs.growth_story
+              })
+              .select()
+              .single();
+
+            await supabaseClient
+              .from('parent_coaching_sessions')
+              .update({
+                status: 'completed',
+                briefing_id: briefingData.id,
+                conversation_id: conversationData.id,
+                summary: fallbackArgs.growth_story,
+                micro_action: fallbackArgs.action,
+                messages: conversationHistory,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', sessionId);
+
+            if (session?.camp_id) {
+              const today = new Date().toISOString().split('T')[0];
+              await supabaseClient
+                .from('camp_daily_progress')
+                .upsert({
+                  user_id: user.id,
+                  camp_id: session.camp_id,
+                  progress_date: today,
+                  reflection_completed: true,
+                  reflection_briefing_id: briefingData.id,
+                  reflection_completed_at: new Date().toISOString(),
+                  is_checked_in: true,
+                  checked_in_at: new Date().toISOString()
+                });
+            }
+
+            console.log('Fallback briefing created:', briefingData.id);
+
+            return new Response(JSON.stringify({
+              content: followUpMessage.content || "简报已生成",
+              toolCall: { name: 'generate_parent_briefing', args: fallbackArgs },
+              briefingId: briefingData.id,
+              briefing: fallbackArgs,
+              completed: true
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+
+        // Add follow-up message to history (if no tool call, non-stage-4 case)
         conversationHistory.push({
           role: "assistant",
           content: followUpMessage.content || ""
