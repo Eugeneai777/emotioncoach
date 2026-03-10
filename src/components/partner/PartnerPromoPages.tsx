@@ -32,8 +32,10 @@ const promoCards: PromoCard[] = [
 export function PartnerPromoPages({ partnerCode }: PartnerPromoPagesProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const PRODUCTION_DOMAIN = "https://feel-name-transform-coach.lovable.app";
+
   const generateLink = (path: string) => {
-    return `${window.location.origin}${path}?ref=${partnerCode}`;
+    return `${PRODUCTION_DOMAIN}${path}?ref=${partnerCode}`;
   };
 
   const handleCopy = async (card: PromoCard) => {
