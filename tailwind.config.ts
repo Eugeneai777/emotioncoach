@@ -56,6 +56,12 @@ export default {
           DEFAULT: "hsl(var(--warm))",
           foreground: "hsl(var(--warm-foreground))",
         },
+        marriage: {
+          primary: "hsl(var(--marriage-primary))",
+          light: "hsl(var(--marriage-light))",
+          accent: "hsl(var(--marriage-accent))",
+          border: "hsl(var(--marriage-border))",
+        },
         gentle: {
           DEFAULT: "hsl(var(--gentle))",
           foreground: "hsl(var(--gentle-foreground))",
