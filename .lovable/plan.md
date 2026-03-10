@@ -1,62 +1,23 @@
 
 
-## Problem
+## 两个问题需要修复
 
-`ProductComparisonTable.tsx` renders training camp cards on the `/packages` page but never checks whether the user has already purchased or is actively enrolled in a camp. The button always shows "立即报名" regardless of purchase/enrollment status.
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-This affects both "有劲训练营" (youjin-camp, lines 389-513) and "绽放训练营" (bloom-camp, lines 793+) sections.
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## Fix Plan
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 1. Add user camp purchase + enrollment query in `ProductComparisonTable.tsx`
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-Add a query that fetches all of the current user's camp purchases and active training camps:
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-```typescript
-const { data: userCampPurchases } = useQuery({
-  queryKey: ['user-camp-purchases-packages', user?.id],
-  queryFn: async () => {
-    if (!user) return { purchases: [], camps: [] };
-    const [purchaseRes, campRes] = await Promise.all([
-      supabase.from('user_camp_purchases').select('camp_type')
-        .eq('user_id', user.id).eq('payment_status', 'completed'),
-      supabase.from('training_camps').select('camp_type, status')
-        .eq('user_id', user.id).in('status', ['active', 'completed']),
-    ]);
-    return {
-      purchases: purchaseRes.data || [],
-      camps: campRes.data || [],
-    };
-  },
-  enabled: !!user && (category === 'youjin-camp' || category === 'bloom-camp'),
-});
-```
-
-Create a helper to determine camp status:
-```typescript
-function getCampStatus(campType: string) {
-  const purchased = userCampPurchases?.purchases?.some(p => p.camp_type === campType);
-  const activeCamp = userCampPurchases?.camps?.find(c => c.camp_type === campType);
-  if (activeCamp?.status === 'active') return 'active';
-  if (activeCamp?.status === 'completed') return 'completed';
-  if (purchased) return 'purchased';
-  return 'none';
-}
-```
-
-### 2. Update youjin-camp card buttons (lines 476-508)
-
-Replace the current button logic with status-aware rendering:
-- **`active`**: Show "继续训练 →" button, navigate to `/camp-intro/${camp.camp_type}`
-- **`completed`**: Show "已完成 ✅" badge + "查看记录" button
-- **`purchased`**: Show "开始训练 →" button, navigate to `/camp-intro/${camp.camp_type}`
-- **`none`**: Keep current "立即报名" behavior
-
-### 3. Update bloom-camp card buttons (lines 888-908)
-
-Apply the same status-aware button logic as youjin-camp.
-
-### 4. Handle compatibility mapping
-
-Include the same compatibility logic used elsewhere: `wealth_block_7` also matches `wealth_block_21`, `emotion_journal_21` also matches `synergy_bundle`.
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
