@@ -418,15 +418,19 @@ const CampIntro = () => {
           price: campTemplate.price || 0
         }}
         onSuccess={async () => {
-          // 记录购买到 user_camp_purchases
+          // 记录购买到 user_camp_purchases（容错处理，避免插入失败阻断后续流程）
           if (user) {
-            await supabase.from('user_camp_purchases').insert({
-              user_id: user.id,
-              camp_type: campType,
-              camp_name: campTemplate.camp_name,
-              purchase_price: campTemplate.price || 0,
-              payment_status: 'completed'
-            });
+            try {
+              await supabase.from('user_camp_purchases').insert({
+                user_id: user.id,
+                camp_type: campType,
+                camp_name: campTemplate.camp_name,
+                purchase_price: campTemplate.price || 0,
+                payment_status: 'completed'
+              });
+            } catch (e) {
+              console.error('Insert camp purchase error:', e);
+            }
           }
           setShowPayDialog(false);
           refetchPurchase();
