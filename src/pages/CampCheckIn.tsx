@@ -488,8 +488,6 @@ const CampCheckIn = () => {
                   </>
                 );
               })()}
-                </p>
-              </Card>
             </TabsContent>
 
             <TabsContent value="calendar">
