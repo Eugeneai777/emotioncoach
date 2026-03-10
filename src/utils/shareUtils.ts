@@ -131,13 +131,29 @@ export const handleShareWithFallback = async (
     return result;
   };
 
-  // Helper: blob-first preview, then background upload for WeChat Android compatibility
+  // Helper: show preview with saveable URL
+  // Android: upload first (blob: URLs can't be long-press saved)
+  // iOS/other: blob-first for speed, background upload for WeChat compatibility
   const showUploadedPreview = async () => {
-    // Show preview immediately with local blob URL
+    if (isAndroid || isWeChat) {
+      // Must upload first — blob: URLs can't be long-press saved on Android/WeChat
+      try {
+        const { uploadShareImage } = await import('./shareImageUploader');
+        const httpsUrl = await uploadShareImage(blob);
+        options.onShowPreview?.(httpsUrl);
+        return reportShare({ success: true, method: 'preview', blobUrl: httpsUrl });
+      } catch (uploadErr) {
+        console.warn('[shareUtils] Upload failed, falling back to blob URL', uploadErr);
+        const blobUrl = URL.createObjectURL(blob);
+        options.onShowPreview?.(blobUrl);
+        return reportShare({ success: true, method: 'preview', blobUrl });
+      }
+    }
+
+    // iOS/Desktop: instant blob preview, background HTTPS upgrade
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
 
-    // Background upload: replace blob URL with HTTPS URL when ready
     import('./shareImageUploader').then(({ uploadShareImage }) => {
       uploadShareImage(blob).then((httpsUrl) => {
         options.onShowPreview?.(httpsUrl);

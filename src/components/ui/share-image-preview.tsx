@@ -185,8 +185,14 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           <div className="flex items-center gap-3 w-full max-w-sm">
             <div className="flex items-center gap-2 text-muted-foreground text-xs flex-1">
               <span>👆</span>
-              <span>长按图片保存 · 分享给好友</span>
+              <span>{isAndroid ? '点击下方按钮保存图片' : '长按图片保存 · 分享给好友'}</span>
             </div>
+            {isAndroid && (
+              <Button variant="default" size="sm" onClick={handleDownload} className="gap-1">
+                <Download className="h-3.5 w-3.5" />
+                保存
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleClose}>返回</Button>
           </div>
         ) : (
