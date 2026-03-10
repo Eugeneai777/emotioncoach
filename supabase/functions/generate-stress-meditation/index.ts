@@ -65,7 +65,7 @@ serve(async (req) => {
         model: 'tts-1',
         input: cleanScript,
         voice: 'shimmer',
-        speed: 0.5,
+        speed: 0.7,
         response_format: 'mp3',
       }),
     });
