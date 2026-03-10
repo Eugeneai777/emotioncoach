@@ -1,58 +1,23 @@
 
 
-## 问题本质
+## 两个问题需要修复
 
-微信浏览器会**强缓存 `index.html`**。虽然 Vite 生成的 JS/CSS 文件名自带 hash（内容变了文件名就变），但微信拿到的 `index.html` 是旧的，里面引用的 JS 文件名也是旧的，所以用户看到旧版本。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-`<meta http-equiv="Cache-Control">` 标签只对部分浏览器有效，**微信内置浏览器基本忽略它们**。真正有效的方案是在**应用层做版本检测 + 强制刷新**。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 方案：运行时版本自检 + 自动刷新
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-在每次打包时生成一个版本号文件，应用启动时从服务器拉取最新版本号，与内嵌版本号对比，不一致则强制刷新。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 步骤
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-| # | 文件 | 改动 |
-|---|------|------|
-| 1 | `vite.config.ts` | 添加插件：每次 build 时生成 `public/version.json`，内容为 `{ "version": "<build timestamp>" }` |
-| 2 | `src/hooks/useVersionCheck.ts` | 新建 Hook：每 60 秒 fetch `/version.json?t=<now>`（绕过缓存），对比本地内嵌版本号，不一致时 `window.location.reload(true)` |
-| 3 | `src/App.tsx` | 在顶层调用 `useVersionCheck()` |
-
-### 关键实现细节
-
-**vite.config.ts** — 添加自定义插件在 `closeBundle` 阶段写入 `dist/version.json`：
-```js
-{
-  name: 'version-json',
-  closeBundle() {
-    fs.writeFileSync('dist/version.json', JSON.stringify({ version: Date.now().toString() }));
-  }
-}
-```
-同时定义 `define: { '__APP_VERSION__': JSON.stringify(Date.now().toString()) }` 把版本号注入代码。
-
-**useVersionCheck.ts** — 核心逻辑：
-```ts
-const CHECK_INTERVAL = 60_000; // 60秒
-useEffect(() => {
-  const check = async () => {
-    const res = await fetch(`/version.json?t=${Date.now()}`);
-    const { version } = await res.json();
-    if (version !== __APP_VERSION__) {
-      window.location.reload();
-    }
-  };
-  const timer = setInterval(check, CHECK_INTERVAL);
-  // 页面可见时也检查（微信从后台切回前台）
-  const onVisible = () => { if (document.visibilityState === 'visible') check(); };
-  document.addEventListener('visibilitychange', onVisible);
-  return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
-}, []);
-```
-
-### 效果
-- 你 Publish → Update 后，新的 `version.json` 部署到 CDN
-- 微信用户打开页面（即使 HTML 被缓存），JS 运行后 60 秒内会 fetch 到新版本号
-- 版本不一致 → 自动刷新 → 拿到最新 HTML → 加载最新 JS
-- 用户从后台切回微信时也会立刻检查
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

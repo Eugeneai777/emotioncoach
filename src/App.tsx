@@ -10,6 +10,7 @@ import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 import { UserPresenceTracker } from "./hooks/useUserPresence";
 import { lazyRetry } from "./utils/lazyRetry";
+import { useVersionCheck } from "./hooks/useVersionCheck";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
 const SmartHomeRedirect = lazyRetry(() => import("./components/SmartHomeRedirect"));
 // 页面加载状态组件
@@ -257,6 +258,8 @@ const ScrollToTopOnNavigate = lazyRetry(() =>
   import("./components/ScrollToTopOnNavigate").then(m => ({ default: m.ScrollToTopOnNavigate }))
 );
 
+const VersionChecker = () => { useVersionCheck(); return null; };
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -272,6 +275,7 @@ const App = () => (
               <ScrollToTopOnNavigate />
             </Suspense>
             <UserPresenceTracker />
+            <VersionChecker />
           {/* 全局浮动组件延迟加载 */}
           <Suspense fallback={null}>
             <FloatingVoiceButton />
