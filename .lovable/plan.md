@@ -1,23 +1,27 @@
 
 
-## 两个问题需要修复
+# Plan: Add Day 2-7 Meditation Scripts and Generate Audio
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## Overview
+Insert meditation scripts for days 2-7 into the `stress_meditations` table, then trigger the existing `generate-stress-meditation` edge function to generate audio for each day using ElevenLabs TTS (Sarah voice, speed 0.85).
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## Steps
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### Step 1: Insert Day 2-7 Scripts via Database Migration
+Insert 6 rows into `stress_meditations` with:
+- `camp_type`: `emotion_stress_7`
+- `title`: Day themes (回到呼吸, 允许情绪, 放下思绪, 接纳自己, 找回力量, 回到安定)
+- `script`: Full meditation text as provided
+- `duration_seconds`: Estimated ~480-600 seconds each (8-10 min)
+- `audio_url`: NULL (will be filled by edge function)
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### Step 2: Generate Audio for Each Day
+Call the `generate-stress-meditation` edge function 6 times (days 2-7). The function already:
+- Reads the script from DB
+- Cleans pause markers (（停顿）→ `...`)
+- Calls ElevenLabs TTS with Sarah voice (`EXAVITQu4vr4xnSDxMaL`), speed 0.85
+- Uploads MP3 to `stress-meditations` storage bucket
+- Updates the `audio_url` in the database
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
-
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+No code changes needed — the existing edge function handles everything.
 
