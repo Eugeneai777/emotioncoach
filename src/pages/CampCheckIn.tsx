@@ -26,6 +26,41 @@ import confetti from "canvas-confetti";
 
 
 
+// 进度环组件
+const ProgressRing = ({ completed, total }: { completed: number; total: number }) => {
+  const radius = 28;
+  const circumference = 2 * Math.PI * radius;
+  const progress = total > 0 ? completed / total : 0;
+  const strokeDashoffset = circumference * (1 - progress);
+  const allDone = completed === total && total > 0;
+
+  return (
+    <div className="relative w-16 h-16 flex items-center justify-center">
+      <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r={radius} fill="none" stroke="currentColor" strokeWidth="4" className="text-muted/20" />
+        <motion.circle
+          cx="32" cy="32" r={radius} fill="none"
+          strokeWidth="4" strokeLinecap="round"
+          className={allDone ? "text-emerald-500" : "text-primary"}
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        {allDone ? (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.3 }}>
+            <Trophy className="w-5 h-5 text-emerald-500" />
+          </motion.div>
+        ) : (
+          <span className="text-sm font-bold text-foreground">{completed}/{total}</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
   const navigate = useNavigate();
