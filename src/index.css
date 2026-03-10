@@ -209,6 +209,12 @@ All colors MUST be HSL.
     --gentle: 150 30% 82%;
     --gentle-foreground: 150 45% 35%;
 
+    /* Marriage (婚因有道) Design Tokens */
+    --marriage-primary: 264 38% 48%;
+    --marriage-light: 264 40% 96%;
+    --marriage-accent: 264 30% 70%;
+    --marriage-border: 264 20% 90%;
+
     /* Unified Card Design System */
     --card-radius: 0.75rem; /* 12px - standard card radius */
     --card-radius-lg: 1rem; /* 16px - large card radius */

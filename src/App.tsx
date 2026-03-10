@@ -193,6 +193,14 @@ const WealthAwakeningArchive = lazyRetry(() => import("./pages/WealthAwakeningAr
 // 成长路径
 const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 
+// 婚因有道
+const MarriageHome = lazyRetry(() => import("./pages/marriage/MarriageHome"));
+const MarriageAssessments = lazyRetry(() => import("./pages/marriage/MarriageAssessments"));
+const MarriageAITools = lazyRetry(() => import("./pages/marriage/MarriageAITools"));
+const MarriageServices = lazyRetry(() => import("./pages/marriage/MarriageServices"));
+const MarriageAbout = lazyRetry(() => import("./pages/marriage/MarriageAbout"));
+const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
+
 // 法律条款
 const TermsOfService = lazyRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyRetry(() => import("./pages/PrivacyPolicy"));
@@ -402,6 +410,12 @@ const App = () => (
               <Route path="/assessment/:assessmentKey" element={<DynamicAssessmentPage />} />
               <Route path="/product-brochure" element={<ProductBrochure />} />
               <Route path="/life-coach-voice" element={<LifeCoachVoice />} />
+              <Route path="/marriage" element={<MarriageHome />} />
+              <Route path="/marriage/assessments" element={<MarriageAssessments />} />
+              <Route path="/marriage/ai-tools" element={<MarriageAITools />} />
+              <Route path="/marriage/services" element={<MarriageServices />} />
+              <Route path="/marriage/about" element={<MarriageAbout />} />
+              <Route path="/marriage/help" element={<MarriageHelp />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
