@@ -111,23 +111,26 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
 
     const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
 
-    // Helper: upload blob and show preview with HTTPS URL
+    // Helper: show blob URL immediately, upload in background and replace with HTTPS URL
     const showUploadedPreview = async () => {
+      // 1. Instant preview with blob URL
+      const blobUrl = URL.createObjectURL(blob);
+      onProgress?.('preview');
+      onShowPreview?.(blobUrl);
+      onSuccess?.();
+
+      // 2. Background upload → replace blob URL with HTTPS URL for long-press saving
       try {
         const { uploadShareImage } = await import('./shareImageUploader');
         const httpsUrl = await uploadShareImage(blob);
-        onProgress?.('preview');
+        console.log('[oneClickShare] Background upload done, replacing with HTTPS URL');
         onShowPreview?.(httpsUrl);
-        onSuccess?.();
-        return true;
+        // Revoke the blob URL after replacement
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       } catch (uploadErr) {
-        console.warn('[oneClickShare] Upload failed, falling back to blob URL', uploadErr);
-        const blobUrl = URL.createObjectURL(blob);
-        onProgress?.('preview');
-        onShowPreview?.(blobUrl);
-        onSuccess?.();
-        return true;
+        console.warn('[oneClickShare] Background upload failed, keeping blob URL', uploadErr);
       }
+      return true;
     };
 
     // 1. Mini Program: Only image preview is supported
