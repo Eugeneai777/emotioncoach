@@ -1,23 +1,18 @@
 
 
-## 两个问题需要修复
+# 允许未登录用户使用婚姻语音教练
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 当前问题
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+`MarriageAITools.tsx` 第30行有登录检查，未登录用户点击语音教练会弹出"请先登录"提示，无法使用。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 修改方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 文件：`src/pages/marriage/MarriageAITools.tsx`
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+1. **移除语音按钮的登录拦截**：删除 `handleVoiceClick` 中的 `if (!user)` 检查，直接 `setShowVoice(true)`
+2. **日记保存保持登录检查**：`handleVoiceBriefingSaved` 中已有 `if (!user) return`，未登录时跳过日记保存即可
+3. **传递 userId 兼容**：`CoachVoiceChat` 的 `userId` prop 已经是可选的（`userId?: string`），传 `undefined` 不会报错
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+改动非常小，只需去掉3行登录拦截代码。
 
