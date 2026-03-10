@@ -308,18 +308,25 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
                 记录详情 ({selectedDay?.count})
               </div>
               {selectedDay?.records.map((record, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 bg-card border border-border rounded-lg space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      {record.label}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {record.time}
-                    </span>
-                  </div>
+                 <div
+                   key={idx}
+                   className="p-3 bg-card border border-border rounded-lg space-y-2"
+                 >
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-1.5 flex-wrap">
+                       <Badge variant="secondary" className="text-xs">
+                         {record.label}
+                       </Badge>
+                       {record.campSource && (
+                         <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                           🏕️ {record.campSource}
+                         </Badge>
+                       )}
+                     </div>
+                     <span className="text-xs text-muted-foreground">
+                       {record.time}
+                     </span>
+                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">强度:</span>
                     <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
