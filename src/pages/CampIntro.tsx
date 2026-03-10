@@ -32,6 +32,7 @@ import { CampDualTrackSection } from "@/components/camp/CampDualTrackSection";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { toast } from "sonner";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 const iconMap: Record<string, any> = {
   TrendingDown, Brain, Moon, Zap, Heart, MessageCircle, Shield, Award, Users, Video, BarChart3
