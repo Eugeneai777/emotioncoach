@@ -61,6 +61,7 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
           label: b.emotion_theme,
           tags: b.briefing_tags?.map(bt => bt.tags).filter((t): t is { name: string; sentiment: string | null } => t !== null) || [],
           time: new Date(b.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+          campSource: b.camp_source || null,
         })),
       ...quickLogs.map(q => ({
         date: new Date(q.created_at),
@@ -68,6 +69,7 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
         label: q.note || "快速记录",
         tags: [],
         time: new Date(q.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        campSource: null,
       }))
     ];
   }, [briefings, quickLogs]);
