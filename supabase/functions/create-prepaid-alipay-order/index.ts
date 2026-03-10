@@ -124,7 +124,9 @@ serve(async (req) => {
     
     // 回调地址
     const notifyUrl = `${supabaseUrl}/functions/v1/alipay-callback`;
-    const finalReturnUrl = returnUrl || 'https://feel-name-transform-coach.lovable.app/packages?payment_success=1';
+    const baseReturnUrl = returnUrl || 'https://feel-name-transform-coach.lovable.app/packages?payment_success=1';
+    const separator = baseReturnUrl.includes('?') ? '&' : '?';
+    const finalReturnUrl = `${baseReturnUrl}${separator}order=${orderNo}`;
     
     // 业务参数
     const bizContent = JSON.stringify({

@@ -129,8 +129,10 @@ serve(async (req) => {
     
     // 回调地址
     const notifyUrl = `${supabaseUrl}/functions/v1/alipay-callback`;
-    // 支付成功后的前端跳转地址
-    const finalReturnUrl = returnUrl || 'https://feel-name-transform-coach.lovable.app/packages?payment_success=1';
+    // 支付成功后的前端跳转地址（追加 order 参数，确保前端能识别回调）
+    const baseReturnUrl = returnUrl || 'https://feel-name-transform-coach.lovable.app/packages?payment_success=1';
+    const separator = baseReturnUrl.includes('?') ? '&' : '?';
+    const finalReturnUrl = `${baseReturnUrl}${separator}order=${orderNo}`;
     
     // 业务参数
     const bizContent = JSON.stringify({
