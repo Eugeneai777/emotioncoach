@@ -43,7 +43,7 @@ const audiences = [
     emoji: "🧭",
     label: "中年觉醒",
     subtitle: "转型·意义重建",
-    route: "/midlife-awakening",
+    route: "/laoge",
     gradient: "from-amber-500 to-yellow-600",
     bgColor: "hsl(40 80% 95%)",
   },
