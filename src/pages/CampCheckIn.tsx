@@ -312,6 +312,41 @@ const CampCheckIn = () => {
     }
   };
 
+  const handleToggleTask = async (field: string, checked: boolean) => {
+    if (!user || !campId) return;
+    const today = getTodayCST();
+    try {
+      const updates: Record<string, any> = {
+        camp_id: campId,
+        user_id: user.id,
+        progress_date: today,
+        [field]: checked,
+      };
+      // Add timestamp fields
+      if (field === 'declaration_completed') {
+        updates.declaration_completed_at = checked ? new Date().toISOString() : null;
+      } else if (field === 'is_checked_in') {
+        updates.checked_in_at = checked ? new Date().toISOString() : null;
+      } else if (field === 'has_shared_to_community') {
+        updates.shared_at = checked ? new Date().toISOString() : null;
+      }
+
+      const { error } = await supabase
+        .from("camp_daily_progress")
+        .upsert(updates, { onConflict: "camp_id,progress_date" });
+
+      if (error) throw error;
+      await loadTodayProgress();
+    } catch (error) {
+      console.error("更新任务状态失败:", error);
+      toast({
+        title: "更新失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleShare = () => {
     setShowShareDialog(true);
   };
