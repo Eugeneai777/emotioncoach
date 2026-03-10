@@ -504,6 +504,19 @@ export default function SynergyPromoPage() {
               </div>
             ))}
           </div>
+
+          {/* Shipping & camp start note */}
+          <div className="mt-5 p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
+            <div className="flex items-start gap-2.5">
+              <Package className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-amber-300">📦 香港直邮 · 预计4-7个工作日送达</p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  建议收到知乐胶囊后再开启训练营，心智训练与身体修复同步进行，效果更佳。购买后可在「设置 → 账户」中查看物流状态。
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
 
