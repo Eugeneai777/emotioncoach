@@ -556,8 +556,13 @@ const History = () => {
                         <div className="space-y-2 md:space-y-3">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
                             <div className="flex-1 space-y-2">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 flex-wrap">
                                 <h3 className="font-semibold text-foreground text-sm md:text-base">{briefing.emotion_theme}</h3>
+                                {briefing.camp_source && (
+                                  <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                                    🏕️ {briefing.camp_source}
+                                  </Badge>
+                                )}
                                 {briefing.emotion_intensity && (
                                   <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
                                     briefing.emotion_intensity <= 3 ? 'bg-green-500/10' :
