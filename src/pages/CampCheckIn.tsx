@@ -364,7 +364,7 @@ const CampCheckIn = () => {
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">5-10分钟引导冥想，释放压力</p>
                         <Button 
-                          onClick={(e) => { e.stopPropagation(); navigate(`/stress-meditation/${currentDay || 1}`); }}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/stress-meditation/${displayCurrentDay || 1}`); }}
                           size="sm"
                           variant="outline"
                           className="mt-2.5 h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300"
