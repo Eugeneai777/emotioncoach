@@ -184,12 +184,32 @@ const CampCheckIn = () => {
   const [activeTab, setActiveTab] = useState("checkin");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
+  const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
 
   useEffect(() => {
     if (user && campId) {
       loadCampData();
     }
   }, [user, campId]);
+
+  // 全部完成时触发庆祝动画
+  useEffect(() => {
+    if (!todayProgress || !camp || hasTriggeredConfetti) return;
+    const hasMeditation = camp.camp_type === 'emotion_stress_7';
+    const tasks = [
+      ...(hasMeditation ? [false] : []),
+      !!todayProgress.is_checked_in,
+      !!todayProgress.has_shared_to_community,
+      !!todayProgress.video_learning_completed,
+    ];
+    const allDone = tasks.every(Boolean) && tasks.length > 0;
+    if (allDone) {
+      setHasTriggeredConfetti(true);
+      setTimeout(() => {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      }, 500);
+    }
+  }, [todayProgress, camp, hasTriggeredConfetti]);
 
   const loadCampData = async () => {
     if (!campId || !user) return;
