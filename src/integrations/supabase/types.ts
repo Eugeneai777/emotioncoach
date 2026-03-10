@@ -5616,6 +5616,9 @@ export type Database = {
       orders: {
         Row: {
           amount: number
+          buyer_address: string | null
+          buyer_name: string | null
+          buyer_phone: string | null
           created_at: string | null
           expired_at: string | null
           id: string
@@ -5627,6 +5630,8 @@ export type Database = {
           pay_type: string | null
           product_name: string | null
           qr_code_url: string | null
+          shipping_note: string | null
+          shipping_status: string | null
           status: string | null
           trade_no: string | null
           updated_at: string | null
@@ -5634,6 +5639,9 @@ export type Database = {
         }
         Insert: {
           amount: number
+          buyer_address?: string | null
+          buyer_name?: string | null
+          buyer_phone?: string | null
           created_at?: string | null
           expired_at?: string | null
           id?: string
@@ -5645,6 +5653,8 @@ export type Database = {
           pay_type?: string | null
           product_name?: string | null
           qr_code_url?: string | null
+          shipping_note?: string | null
+          shipping_status?: string | null
           status?: string | null
           trade_no?: string | null
           updated_at?: string | null
@@ -5652,6 +5662,9 @@ export type Database = {
         }
         Update: {
           amount?: number
+          buyer_address?: string | null
+          buyer_name?: string | null
+          buyer_phone?: string | null
           created_at?: string | null
           expired_at?: string | null
           id?: string
@@ -5663,6 +5676,8 @@ export type Database = {
           pay_type?: string | null
           product_name?: string | null
           qr_code_url?: string | null
+          shipping_note?: string | null
+          shipping_status?: string | null
           status?: string | null
           trade_no?: string | null
           updated_at?: string | null
@@ -9561,6 +9576,48 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_shipping_addresses: {
+        Row: {
+          city: string
+          created_at: string | null
+          detail: string
+          district: string
+          id: string
+          is_default: boolean | null
+          name: string
+          phone: string
+          province: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          detail: string
+          district: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          phone: string
+          province: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          detail?: string
+          district?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          phone?: string
+          province?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
