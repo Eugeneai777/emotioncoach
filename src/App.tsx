@@ -258,6 +258,8 @@ const ScrollToTopOnNavigate = lazyRetry(() =>
   import("./components/ScrollToTopOnNavigate").then(m => ({ default: m.ScrollToTopOnNavigate }))
 );
 
+const VersionChecker = () => { useVersionCheck(); return null; };
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

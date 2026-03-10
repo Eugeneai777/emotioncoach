@@ -26,6 +26,9 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [react(), mode === "development" && componentTagger(), versionJsonPlugin()].filter(Boolean),
+  define: {
+    __APP_VERSION__: JSON.stringify(BUILD_VERSION),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
