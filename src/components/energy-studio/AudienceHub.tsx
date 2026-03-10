@@ -66,7 +66,7 @@ const AudienceHub = () => {
       <h2 className="text-xs font-semibold text-muted-foreground mb-2.5 tracking-wide">
         🎯 找到适合你的入口
       </h2>
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 gap-2">
         {audiences.map((a, i) => (
           <motion.button
             key={a.id}
