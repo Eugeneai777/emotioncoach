@@ -31,6 +31,7 @@ const MarriageServices: React.FC = () => {
         <title>专业婚姻家庭咨询服务 - 婚因有道</title>
       </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+        <MarriageBackButton />
         <div className="px-5 pt-10 max-w-lg mx-auto">
           <h1 className="text-xl font-bold text-foreground text-center mb-6">专业婚姻家庭咨询服务</h1>
 

@@ -25,6 +25,7 @@ const MarriageAITools: React.FC = () => {
         <meta name="description" content="AI吵架复盘器、AI沟通教练，帮助你梳理情绪、改善沟通。" />
       </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+        <MarriageBackButton />
         <div className="px-5 pt-8 max-w-lg mx-auto">
           <h1 className="text-xl font-bold text-foreground text-center mb-1">AI关系工具</h1>
           <p className="text-xs text-muted-foreground text-center mb-5">帮助你梳理情绪，复盘冲突，改善沟通</p>

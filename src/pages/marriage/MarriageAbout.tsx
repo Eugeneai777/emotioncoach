@@ -36,6 +36,7 @@ const MarriageAbout: React.FC = () => {
         <meta name="description" content="婚因有道深耕婚姻家庭服务领域20年，致力于帮助更多家庭建立更健康、更稳定、更有希望的关系。" />
       </Helmet>
       <div className="min-h-screen bg-white pb-24">
+        <MarriageBackButton />
         {/* Hero */}
         <section className="relative px-5 pt-12 pb-10 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-marriage-light via-marriage-light/40 to-white" />
