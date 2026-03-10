@@ -545,14 +545,14 @@ export const generateCanvas = async (
   return queueRender(() => generateCanvasInternal(cardRef, options));
 };
 
-/** Canvas 转 Blob - 优化版 */
-export const canvasToBlob = (canvas: HTMLCanvasElement, quality = 0.92): Promise<Blob | null> => {
+/** Canvas 转 Blob - JPEG 优化版（体积比 PNG 小 3-5 倍） */
+export const canvasToBlob = (canvas: HTMLCanvasElement, quality = 0.85): Promise<Blob | null> => {
   return new Promise((resolve) => {
-    // 根据尺寸选择压缩质量
+    // 大图自适应降低质量，进一步压缩体积
     const pixels = canvas.width * canvas.height;
-    const adaptiveQuality = pixels > 1000000 ? 0.85 : quality;
+    const adaptiveQuality = pixels > 1000000 ? 0.75 : quality;
     
-    canvas.toBlob((blob) => resolve(blob), 'image/png', adaptiveQuality);
+    canvas.toBlob((blob) => resolve(blob), 'image/jpeg', adaptiveQuality);
   });
 };
 

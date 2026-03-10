@@ -224,6 +224,7 @@ export default function PosterCenter() {
       const blob = await generateCardBlob(posterRef, {
         explicitWidth: selectedPosterSize.width,
         explicitHeight: selectedPosterSize.height,
+        forceScale: 2,
       });
 
       toast.dismiss();
