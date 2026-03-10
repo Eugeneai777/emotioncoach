@@ -499,3 +499,6 @@ verify_jwt = false
 
 [functions.mama-ai-coach]
 verify_jwt = false
+
+[functions.marriage-ai-tool]
+verify_jwt = false
