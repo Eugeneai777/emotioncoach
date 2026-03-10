@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { generateCardBlob } from '@/utils/shareCardConfig';
 import { executeOneClickShare } from '@/utils/oneClickShare';
 import ShareImagePreview from '@/components/ui/share-image-preview';
-import { handleShareWithFallback } from '@/utils/shareUtils';
+
 
 interface PosterGeneratorProps {
   templateKey: string;
