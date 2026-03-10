@@ -187,6 +187,9 @@ const EnergyStudio = () => {
           </div>
         ) : (
           <>
+            {/* 人群专区入口 */}
+            <AudienceHub />
+
             {/* 快捷入口 - 2x2 网格 */}
             <div className="grid grid-cols-5 gap-1.5">
               {quickEntries.map((entry) => (
