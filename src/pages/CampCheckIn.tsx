@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight, Trophy, Flame } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight, Trophy, Flame, Users, Phone } from "lucide-react";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
@@ -329,6 +329,8 @@ const CampCheckIn = () => {
         updates.checked_in_at = checked ? new Date().toISOString() : null;
       } else if (field === 'has_shared_to_community') {
         updates.shared_at = checked ? new Date().toISOString() : null;
+      } else if (field === 'human_coach_completed') {
+        updates.human_coach_completed_at = checked ? new Date().toISOString() : null;
       }
 
       const { error } = await supabase
@@ -663,34 +665,78 @@ const CampCheckIn = () => {
                         onToggle={(checked) => handleToggleTask('is_checked_in', checked)}
                       />
 
-                      {/* 每日反思分享 */}
-                      <TaskCard
-                        step={hasMeditation ? 3 : 2}
-                        title="每日反思分享"
-                        description={todayProgress?.has_shared_to_community ? "今日反思已分享到社区" : "分享成长心得，获得社区支持"}
-                        completed={!!todayProgress?.has_shared_to_community}
-                        icon={<Share2 className="w-5 h-5" />}
-                        actionLabel="开始分享"
-                        actionIcon={<Share2 className="w-3 h-3 mr-1" />}
-                        isOptional
-                        onAction={handleShare}
-                        onToggle={(checked) => handleToggleTask('has_shared_to_community', checked)}
-                      />
+                      {/* 第3天特别活动：团队海沃塔 */}
+                      {hasMeditation && displayCurrentDay === 3 && (
+                        <TaskCard
+                          step={3}
+                          title="团队海沃塔"
+                          description="加入团队教练对话，与同伴一起成长"
+                          completed={!!todayProgress?.human_coach_completed}
+                          icon={<Users className="w-5 h-5" />}
+                          badgeText="特别活动"
+                          badgeColor="emerald"
+                          actionLabel="查看活动"
+                          isPrimary
+                          isOptional
+                          onAction={() => navigate('/team-coaching')}
+                          onToggle={(checked) => handleToggleTask('human_coach_completed', checked)}
+                        />
+                      )}
 
-                      {/* 今日成长课程 */}
-                      <TaskCard
-                        step={hasMeditation ? 4 : 3}
-                        title="今日成长课程"
-                        description={todayProgress?.video_learning_completed ? "已完成今日课程学习" : "观看推荐课程，加速成长"}
-                        completed={!!todayProgress?.video_learning_completed}
-                        icon={<Play className="w-5 h-5" />}
-                        extraBadge={todayProgress?.videos_watched_count > 0 ? `${todayProgress.videos_watched_count}个` : undefined}
-                        actionLabel="查看推荐"
-                        actionIcon={<Play className="w-3 h-3 mr-1" />}
-                        isOptional
-                        onAction={() => setActiveTab("tasks")}
-                        onToggle={(checked) => handleToggleTask('video_learning_completed', checked)}
-                      />
+                      {/* 第7天毕业福利：一对一教练 */}
+                      {hasMeditation && displayCurrentDay === 7 && (
+                        <TaskCard
+                          step={3}
+                          title="一对一教练"
+                          description="与真人教练深度对话，巩固7天成果"
+                          completed={!!todayProgress?.human_coach_completed}
+                          icon={<Phone className="w-5 h-5" />}
+                          badgeText="毕业福利"
+                          badgeColor="emerald"
+                          actionLabel="预约教练"
+                          isPrimary
+                          isOptional
+                          onAction={() => navigate('/human-coach')}
+                          onToggle={(checked) => handleToggleTask('human_coach_completed', checked)}
+                        />
+                      )}
+
+                      {/* 每日反思分享 + 今日成长课程（步骤编号动态调整） */}
+                      {(() => {
+                        const hasExtraCard = hasMeditation && (displayCurrentDay === 3 || displayCurrentDay === 7);
+                        const shareStep = hasMeditation ? (hasExtraCard ? 4 : 3) : 2;
+                        const courseStep = hasMeditation ? (hasExtraCard ? 5 : 4) : 3;
+                        return (
+                          <>
+                            <TaskCard
+                              step={shareStep}
+                              title="每日反思分享"
+                              description={todayProgress?.has_shared_to_community ? "今日反思已分享到社区" : "分享成长心得，获得社区支持"}
+                              completed={!!todayProgress?.has_shared_to_community}
+                              icon={<Share2 className="w-5 h-5" />}
+                              actionLabel="开始分享"
+                              actionIcon={<Share2 className="w-3 h-3 mr-1" />}
+                              isOptional
+                              onAction={handleShare}
+                              onToggle={(checked) => handleToggleTask('has_shared_to_community', checked)}
+                            />
+
+                            <TaskCard
+                              step={courseStep}
+                              title="今日成长课程"
+                              description={todayProgress?.video_learning_completed ? "已完成今日课程学习" : "观看推荐课程，加速成长"}
+                              completed={!!todayProgress?.video_learning_completed}
+                              icon={<Play className="w-5 h-5" />}
+                              extraBadge={todayProgress?.videos_watched_count > 0 ? `${todayProgress.videos_watched_count}个` : undefined}
+                              actionLabel="查看推荐"
+                              actionIcon={<Play className="w-3 h-3 mr-1" />}
+                              isOptional
+                              onAction={() => setActiveTab("tasks")}
+                              onToggle={(checked) => handleToggleTask('video_learning_completed', checked)}
+                            />
+                          </>
+                        );
+                      })()}
                     </div>
                   </>
                 );
