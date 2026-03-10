@@ -25,6 +25,7 @@ const iconMap: Record<string, React.ElementType> = {
   BookOpen, ClipboardCheck, Handshake, Star,
   Heart, Baby, Coins, Gamepad2, Rocket,
   Flower2, AlertCircle, HeartPulse, GraduationCap,
+  User, ShoppingBag, BookMarked, BookOpenCheck,
 };
 
 export const FloatingQuickMenu = () => {
