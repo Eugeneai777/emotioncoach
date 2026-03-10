@@ -363,10 +363,7 @@ export default function Settings() {
 
           <TabsContent value="account" className="space-y-6">
             {searchParams.get('view') === 'orders' ? (
-              <>
-                <PurchaseHistory />
-                <ShippingTracker />
-              </>
+              <PurchaseHistory />
             ) : (
               <>
                 <AccountBalance />
