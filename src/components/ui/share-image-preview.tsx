@@ -68,7 +68,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `share-card-${Date.now()}.png`;
+      link.download = `share-card-${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

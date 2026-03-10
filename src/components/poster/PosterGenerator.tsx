@@ -172,6 +172,7 @@ export function PosterGenerator({
       const blob = await generateCardBlob(posterRef, {
         explicitWidth: posterWidth,
         explicitHeight: posterHeight,
+        forceScale: 2,
       });
 
       toast.dismiss();
@@ -181,20 +182,18 @@ export function PosterGenerator({
         return;
       }
 
-      const result = await handleShareWithFallback(blob, `${template.name}-推广海报.png`, {
-        title: `${template.name}-推广海报`,
-        onShowPreview: (blobUrl) => {
-          setPreviewImageUrl(blobUrl);
-          setShowImagePreview(true);
-        },
-        onDownload: () => {
-          toast.success("海报已保存！");
-        },
-      });
+      // Blob-first: show preview immediately, upload in background
+      const blobUrl = URL.createObjectURL(blob);
+      setPreviewImageUrl(blobUrl);
+      setShowImagePreview(true);
 
-      if (result.method === 'webshare' && result.success) {
-        toast.success("分享成功");
-      }
+      // Background upload for WeChat Android compatibility
+      import('@/utils/shareImageUploader').then(({ uploadShareImage }) => {
+        uploadShareImage(blob).then((httpsUrl) => {
+          setPreviewImageUrl(httpsUrl);
+          URL.revokeObjectURL(blobUrl);
+        }).catch(() => { /* keep blob URL */ });
+      });
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss();
