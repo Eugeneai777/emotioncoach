@@ -502,6 +502,7 @@ const CampCheckIn = () => {
                 const allDone = requiredDone === requiredTotal;
                 const bonusDone = optionalTasks.filter(t => t.done).length;
 
+                return (
                   <>
                     {/* 进度总览卡片 */}
                     <Card className="p-5 bg-white/80 backdrop-blur-sm border-teal-200/40 dark:bg-background/80 overflow-hidden relative">
@@ -515,19 +516,20 @@ const CampCheckIn = () => {
                         )}
                       </AnimatePresence>
                       <div className="relative flex items-center gap-4">
-                        <ProgressRing completed={completedCount} total={totalCount} />
+                        <ProgressRing completed={requiredDone} total={requiredTotal} />
                         <div className="flex-1 min-w-0">
                           {allDone ? (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                               <h3 className="text-lg font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-                                🎉 今日全部完成！
+                                🎉 今日打卡完成！
                               </h3>
                               <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
                                 已坚持 {camp.completed_days || 0} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                {bonusDone > 0 && ` · 额外完成 ${bonusDone} 项`}
                               </p>
                               <div className="flex items-center gap-1 mt-1.5">
                                 <Flame className="w-3.5 h-3.5 text-orange-500" />
-                                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">连续打卡中，继续保持！</span>
+                                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">继续完成选做任务，加速成长！</span>
                               </div>
                             </motion.div>
                           ) : (
@@ -536,16 +538,16 @@ const CampCheckIn = () => {
                                 今日进度
                               </h3>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                已完成 {completedCount}/{totalCount} 个任务 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                已完成 {requiredDone}/{requiredTotal} 个必做任务 · 第 {displayCurrentDay}/{camp.duration_days} 天
                               </p>
                               {/* 迷你进度条 */}
                               <div className="flex gap-1 mt-2">
-                                {tasks.map((t, i) => (
+                                {allTasks.map((t, i) => (
                                   <motion.div
                                     key={i}
-                                    className={`h-1.5 rounded-full flex-1 ${t.done ? 'bg-primary' : 'bg-muted/40'}`}
+                                    className={`h-1.5 rounded-full flex-1 ${t.done ? 'bg-primary' : i < requiredTotal ? 'bg-muted/40' : 'bg-muted/20'}`}
                                     initial={false}
-                                    animate={{ backgroundColor: t.done ? undefined : undefined }}
+                                    animate={{}}
                                     transition={{ duration: 0.3 }}
                                   />
                                 ))}
