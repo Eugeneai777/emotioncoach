@@ -292,13 +292,37 @@ const CampList = () => {
         open={payDialogOpen}
         onOpenChange={setPayDialogOpen}
         packageInfo={selectedCamp ? {
-          key: `camp-${selectedCamp.id}`,
+          key: `camp-${selectedCamp.camp_type}`,
           name: selectedCamp.camp_name,
           price: selectedCamp.price || 0,
         } : null}
-        onSuccess={() => {
-          toast.success("购买成功！", { description: "即将开启你的训练营之旅" });
+        onSuccess={async () => {
+          // 1. Insert purchase record
+          if (user && selectedCamp) {
+            try {
+              await supabase.from('user_camp_purchases').insert({
+                user_id: user.id,
+                camp_type: selectedCamp.camp_type,
+                camp_name: selectedCamp.camp_name,
+                purchase_price: selectedCamp.price || 0,
+                payment_method: 'wechat',
+                payment_status: 'completed',
+                transaction_id: `CAMP-LIST-${Date.now()}`,
+                purchased_at: new Date().toISOString(),
+              });
+            } catch (e) {
+              console.error('Insert camp purchase error (may already exist):', e);
+            }
+          }
+          // 2. Close dialog
           setPayDialogOpen(false);
+          // 3. Invalidate purchase queries so card updates
+          queryClient.invalidateQueries({ queryKey: ['camp-card-purchase'] });
+          // 4. Navigate to camp intro for start date selection
+          if (selectedCamp) {
+            toast.success("购买成功！", { description: "请选择开始日期" });
+            navigate(`/camp-intro/${selectedCamp.camp_type}`);
+          }
         }}
       />
     </>
