@@ -153,7 +153,33 @@ const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeC
             <p className={`text-xs leading-relaxed ${completed ? "text-emerald-600/60 dark:text-emerald-400/60" : "text-muted-foreground"}`}>
               {description}
             </p>
-            {!completed && (
+            {onToggle ? (
+              <div className="flex items-center gap-2 mt-2.5">
+                <Checkbox
+                  checked={completed}
+                  onCheckedChange={(checked) => onToggle(!!checked)}
+                  className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                />
+                <span className={`text-xs ${completed ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                  {completed ? '已完成' : '点击勾选完成'}
+                </span>
+                {!completed && (
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); onAction(); }}
+                    size="sm"
+                    variant={isPrimary ? "default" : "outline"}
+                    className={`ml-auto h-7 text-xs ${
+                      isPrimary
+                        ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                        : "border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
+                    }`}
+                  >
+                    {actionIcon}
+                    {actionLabel}
+                  </Button>
+                )}
+              </div>
+            ) : !completed ? (
               <Button
                 onClick={(e) => { e.stopPropagation(); onAction(); }}
                 size="sm"
@@ -167,7 +193,7 @@ const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeC
                 {actionIcon}
                 {actionLabel}
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </Card>
