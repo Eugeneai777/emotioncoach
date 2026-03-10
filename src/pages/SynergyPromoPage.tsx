@@ -205,15 +205,25 @@ export default function SynergyPromoPage() {
 
   // Step 3: Payment success → save shipping info & check auth
   const handlePaySuccess = async () => {
-    // Save shipping info to order metadata
-    if (checkoutInfo) {
+    // Save shipping info to order
+    if (checkoutInfo && orderNo) {
       try {
-        // We'll store shipping info in orders metadata via edge function or direct update
-        // For now, store in localStorage as fallback
-        localStorage.setItem('synergy_shipping_info', JSON.stringify(checkoutInfo));
+        await supabase
+          .from('orders')
+          .update({
+            buyer_name: checkoutInfo.buyerName,
+            buyer_phone: checkoutInfo.buyerPhone,
+            buyer_address: checkoutInfo.buyerAddress,
+            shipping_status: 'pending',
+          })
+          .eq('order_no', orderNo);
       } catch (e) {
         console.error('Save shipping info error:', e);
       }
+    }
+    // Also store in localStorage as fallback for guest checkout
+    if (checkoutInfo) {
+      localStorage.setItem('synergy_shipping_info', JSON.stringify(checkoutInfo));
     }
 
     if (user) {
