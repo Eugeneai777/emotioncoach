@@ -1,23 +1,38 @@
 
 
-## 两个问题需要修复
+# 加速安卓手机保存 AI 海报
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+安卓保存慢有三个瓶颈：
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+1. **快速模式 `PosterGenerator.tsx`**：缺少 `forceScale: 2`，且使用 `handleShareWithFallback` 串行上传后才显示预览
+2. **上传阻塞预览**：`shareUtils.ts` 的 `showUploadedPreview` 必须等上传完成才显示图片
+3. **下载文件名仍为 `.png`**：`share-image-preview.tsx` 下载时写死 `.png`
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 修改方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 1. `src/components/poster/PosterGenerator.tsx` — 快速模式对齐专家模式
 
-| 文件 | 修改 |
+`handleDownload` 改为 blob-first 模式（与 `PosterCenter.tsx` 的 `handleDownload` 一致）：
+- 添加 `forceScale: 2`
+- 去掉 `handleShareWithFallback`，改为先 `URL.createObjectURL` 立即预览，后台异步上传替换
+
+### 2. `src/utils/shareUtils.ts` — `showUploadedPreview` 改为 blob-first
+
+先用 `URL.createObjectURL` 立即回调 `onShowPreview`，然后后台上传，上传成功后再次回调替换 URL。避免等上传。
+
+### 3. `src/components/ui/share-image-preview.tsx` — 下载文件名 `.png` → `.jpg`
+
+```
+link.download = `share-card-${Date.now()}.jpg`;
+```
+
+### 文件变更
+
+| 文件 | 变更 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/poster/PosterGenerator.tsx` | 加 `forceScale: 2`，改 blob-first 预览 |
+| `src/utils/shareUtils.ts` | `showUploadedPreview` blob-first + 后台上传 |
+| `src/components/ui/share-image-preview.tsx` | 下载文件名改 `.jpg` |
 
