@@ -11,6 +11,7 @@ import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { SmartReminderSettings } from "@/components/SmartReminderSettings";
 import { SmartNotificationPreferences } from "@/components/SmartNotificationPreferences";
 import { AccountBalance } from "@/components/AccountBalance";
+import { ShippingTracker } from "@/components/ShippingTracker";
 import { BillingExplanation } from "@/components/BillingExplanation";
 import { PackageSelector } from "@/components/PackageSelector";
 import { PurchaseHistory } from "@/components/PurchaseHistory";
