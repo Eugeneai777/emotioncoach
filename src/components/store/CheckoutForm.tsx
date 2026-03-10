@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { RegionPicker } from "./RegionPicker";
 
 export interface CheckoutInfo {
   buyerName: string;
@@ -28,11 +29,9 @@ function parseAddress(raw: string): { name: string; phone: string; address: stri
   if (!phoneMatch) return null;
 
   const phone = phoneMatch[0];
-  // Remove phone (with possible separators) from original text
   const phonePattern = phone.split('').join('[\\s\\-·]?');
   const withoutPhone = raw.replace(new RegExp(phonePattern), ' ').trim();
 
-  // Extract name: 2-4 Chinese characters, typically near the start or labeled
   const labeledName = withoutPhone.match(/(?:收货人|姓名|联系人)[：:]\s*([\u4e00-\u9fa5]{2,4})/);
   const nameMatch = labeledName
     ? labeledName[1]
@@ -40,7 +39,6 @@ function parseAddress(raw: string): { name: string; phone: string; address: stri
 
   const name = nameMatch || '';
 
-  // Address: remove name, clean up labels and extra punctuation
   let address = withoutPhone;
   if (name) address = address.replace(name, '');
   address = address
@@ -54,9 +52,12 @@ function parseAddress(raw: string): { name: string; phone: string; address: stri
 export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm, loading }: CheckoutFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [province, setProvince] = useState("");
+  const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
+  const [detailAddress, setDetailAddress] = useState("");
 
-  const canSubmit = name.trim() && phone.trim() && address.trim();
+  const canSubmit = name.trim() && phone.trim() && province && city && district && detailAddress.trim();
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData('text');
@@ -66,22 +67,28 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
     e.preventDefault();
     if (result.name) setName(result.name);
     setPhone(result.phone);
-    if (result.address) setAddress(result.address);
-    toast({ title: "✅ 已自动识别收货信息" });
+    if (result.address) setDetailAddress(result.address);
+    toast({ title: "✅ 已自动识别收货信息", description: "请选择省市区后确认" });
   };
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    // Validate phone
+    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
+      toast({ title: "请输入正确的手机号", variant: "destructive" });
+      return;
+    }
+    const fullAddress = `${province}${city}${district} ${detailAddress.trim()}`;
     onConfirm({
       buyerName: name.trim(),
       buyerPhone: phone.trim(),
-      buyerAddress: address.trim(),
+      buyerAddress: fullAddress,
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5" />
@@ -94,7 +101,7 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
             <p className="text-sm font-bold text-destructive">¥{price}</p>
           </div>
 
-          <p className="text-xs text-muted-foreground">💡 粘贴完整地址可自动识别</p>
+          <p className="text-xs text-muted-foreground">💡 粘贴完整地址可自动识别姓名和电话</p>
 
           <div>
             <Label>收货人 *</Label>
@@ -102,11 +109,21 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
           </div>
           <div>
             <Label>联系电话 *</Label>
-            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="请输入手机号" type="tel" />
+            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="请输入手机号" type="tel" maxLength={11} />
           </div>
+
+          <RegionPicker
+            province={province}
+            city={city}
+            district={district}
+            onProvinceChange={setProvince}
+            onCityChange={setCity}
+            onDistrictChange={setDistrict}
+          />
+
           <div>
-            <Label>收货地址 *</Label>
-            <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="请输入详细地址" />
+            <Label>详细地址 *</Label>
+            <Input value={detailAddress} onChange={e => setDetailAddress(e.target.value)} placeholder="街道、楼栋、门牌号等" />
           </div>
 
           <Button onClick={handleSubmit} disabled={!canSubmit || loading} className="w-full">
