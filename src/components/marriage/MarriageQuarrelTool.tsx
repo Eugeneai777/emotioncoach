@@ -37,7 +37,20 @@ export const MarriageQuarrelTool: React.FC<QuarrelToolProps> = ({ mode }) => {
       });
 
       if (error) throw error;
-      setResult(data?.result || "暂时无法生成分析结果，请稍后再试。");
+      const aiResult = data?.result || "暂时无法生成分析结果，请稍后再试。";
+      setResult(aiResult);
+
+      // Auto-save to diary
+      if (user) {
+        supabase.from("marriage_diary_entries").insert({
+          user_id: user.id,
+          source: mode,
+          user_input: input.trim(),
+          ai_result: aiResult,
+        }).then(({ error: saveErr }) => {
+          if (saveErr) console.warn("Diary save failed:", saveErr);
+        });
+      }
     } catch (e: any) {
       console.error("AI tool error:", e);
       if (e?.message?.includes("429") || e?.status === 429) {

@@ -7,7 +7,9 @@ import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageQuarrelTool } from "@/components/marriage/MarriageQuarrelTool";
 import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { MarriageDiary } from "@/components/marriage/MarriageDiary";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const tabs = [
