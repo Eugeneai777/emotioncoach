@@ -16,7 +16,7 @@ const audiences = [
     emoji: "💼",
     label: "职场解压",
     subtitle: "压力·倦怠恢复",
-    route: "/coach-space",
+    route: "/promo/synergy",
     gradient: "from-blue-400 to-indigo-500",
     bgColor: "hsl(220 80% 96%)",
   },
