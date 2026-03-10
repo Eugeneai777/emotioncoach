@@ -1,44 +1,23 @@
 
 
-# 计划：构建「有劲陪长辈」老年关怀轻入口页
+## 两个问题需要修复
 
-## 概述
-创建一个温暖、极简、大字大按钮的移动优先落地页，面向老年用户和子女用户。暖白+浅橙+柔绿+淡蓝配色，卡片式布局，强调陪伴感。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 新建文件
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 1. 页面：`src/pages/ElderCarePage.tsx`
-单页落地页，包含以下7个区块：
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**Hero首屏** — 暖色渐变背景，大标题+两个CTA按钮
-**痛点区** — 4个痛点卡片（大emoji图标+文字）
-**核心功能区** — 4张大卡片（聊天、问候、提醒、心情记录），每张带按钮
-**记忆陪伴区** — 温暖插图+文案
-**子女关怀区** — 面向子女的说明+CTA
-**信任感区** — 3个信任点（大字、简单、温和）
-**底部CTA** — 两个行动按钮
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 2. 路由：`App.tsx` 添加 `/elder-care` 路由
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 3. AudienceHub更新
-将"老年关怀"按钮的 route 从 `/midlife-awakening` 改为 `/elder-care`
-
-## 设计规范
-- **配色**：暖白 `#FFF8F0`、浅橙 `#FFE8D6`、柔绿 `#E8F5E9`、淡蓝 `#E3F2FD`、强调橙 `#FF8A65`
-- **字体**：标题 24-32px，正文 18-20px，按钮 18px — 全部大号易读
-- **按钮**：圆角大按钮，min-height 56px，明显颜色对比
-- **卡片**：大圆角、大内边距、大emoji图标
-- **布局**：单列移动优先，充足留白，每屏信息精简
-
-## 交互
-- 功能按钮暂时跳转到现有AI对话页面（如 `/coach/elder-companion`）或显示"即将开放"提示
-- 不需要后端/数据库，纯前端静态页面
-- 不需要边缘函数
-
-## 文件汇总
-| 文件 | 操作 |
+| 文件 | 修改 |
 |------|------|
-| `src/pages/ElderCarePage.tsx` | 新建落地页 |
-| `src/App.tsx` | 添加 `/elder-care` 路由 |
-| `src/components/energy-studio/AudienceHub.tsx` | 更新老年关怀路由 |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
