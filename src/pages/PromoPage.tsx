@@ -3,7 +3,8 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { motion } from "framer-motion";
-import { Check, ShieldCheck, Clock, Gift, ArrowRight, TrendingUp } from "lucide-react";
+import { Check, ShieldCheck, Clock, Gift, ArrowRight, TrendingUp, Sun, Coffee, Moon, Zap } from "lucide-react";
+import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import { Button } from "@/components/ui/button";
 
 interface PromoProduct {
