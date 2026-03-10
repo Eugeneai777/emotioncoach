@@ -275,6 +275,7 @@ const App = () => (
               <ScrollToTopOnNavigate />
             </Suspense>
             <UserPresenceTracker />
+            <VersionChecker />
           {/* 全局浮动组件延迟加载 */}
           <Suspense fallback={null}>
             <FloatingVoiceButton />
