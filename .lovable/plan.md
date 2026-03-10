@@ -1,27 +1,24 @@
 
 
-# Plan: Add Day 2-7 Meditation Scripts and Generate Audio
+# Plan: Replace "对比分析" Tab with "冥想专区" Meditation Library
 
 ## Overview
-Insert meditation scripts for days 2-7 into the `stress_meditations` table, then trigger the existing `generate-stress-meditation` edge function to generate audio for each day using ElevenLabs TTS (Sarah voice, speed 0.85).
+In the History page (`src/pages/History.tsx`), replace the "对比分析" (Compare) tab with a new "冥想专区" (Meditation Zone) tab that displays all 7 stress meditation audios in a browsable, playable list.
 
-## Steps
+## Changes
 
-### Step 1: Insert Day 2-7 Scripts via Database Migration
-Insert 6 rows into `stress_meditations` with:
-- `camp_type`: `emotion_stress_7`
-- `title`: Day themes (回到呼吸, 允许情绪, 放下思绪, 接纳自己, 找回力量, 回到安定)
-- `script`: Full meditation text as provided
-- `duration_seconds`: Estimated ~480-600 seconds each (8-10 min)
-- `audio_url`: NULL (will be filled by edge function)
+### 1. Create `MeditationZone` component
+New file: `src/components/MeditationZone.tsx`
+- Fetch all rows from `stress_meditations` table ordered by `day_number`
+- Display cards for each day with title, duration, and play button
+- Inline audio player: clicking a card loads and plays that meditation
+- Show playback controls (play/pause, progress bar, time display)
+- Use existing `useAudioCache` hook for offline support
+- Reuse the amber/gold styling from `MeditationLibraryCard`
 
-### Step 2: Generate Audio for Each Day
-Call the `generate-stress-meditation` edge function 6 times (days 2-7). The function already:
-- Reads the script from DB
-- Cleans pause markers (（停顿）→ `...`)
-- Calls ElevenLabs TTS with Sarah voice (`EXAVITQu4vr4xnSDxMaL`), speed 0.85
-- Uploads MP3 to `stress-meditations` storage bucket
-- Updates the `audio_url` in the database
-
-No code changes needed — the existing edge function handles everything.
+### 2. Update `src/pages/History.tsx`
+- Replace `EmotionComparison` import with `MeditationZone`
+- Change tab label from "对比分析"/"对比" to "冥想专区"/"冥想"
+- Replace the `compare` TabsContent to render `<MeditationZone />`
+- Remove the `EmotionComparison` import (no longer used)
 
