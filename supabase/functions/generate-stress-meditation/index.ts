@@ -55,8 +55,8 @@ serve(async (req) => {
       .replace(/（停顿）/g, '...')
       .replace(/……/g, '...');
 
-    // Use ElevenLabs TTS with Brian (warm Chinese male voice)
-    const voiceId = 'nPczCjzI2devNBz1zQrb'; // Brian
+    // Use ElevenLabs TTS with Sarah (soft female voice)
+    const voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Sarah
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
       {
