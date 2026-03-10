@@ -161,30 +161,22 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
         console.log('[oneClickShare] Android share successful');
         onProgress?.('done');
         onSuccess?.();
-        URL.revokeObjectURL(blobUrl);
         return true;
       } catch (shareError) {
         console.log('[oneClickShare] Android share failed:', (shareError as Error).name);
         if ((shareError as Error).name === 'AbortError') {
-          URL.revokeObjectURL(blobUrl);
           return false;
         }
         // Fall back to image preview
         console.log('[oneClickShare] Falling back to preview');
-        onProgress?.('preview');
-        onShowPreview?.(blobUrl);
-        onSuccess?.();
-        return true;
+        return showUploadedPreview();
       }
     }
 
     // 4. WeChat H5 without navigator.share support: Show image preview
     if (env.isWeChat) {
       console.log('[oneClickShare] WeChat H5 without share support - showing preview');
-      onProgress?.('preview');
-      onShowPreview?.(blobUrl);
-      onSuccess?.();
-      return true;
+      return showUploadedPreview();
     }
 
     // 5. Desktop: Try Web Share, fallback to download
@@ -198,11 +190,9 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
         });
         onProgress?.('done');
         onSuccess?.();
-        URL.revokeObjectURL(blobUrl);
         return true;
       } catch (shareError) {
         if ((shareError as Error).name === 'AbortError') {
-          URL.revokeObjectURL(blobUrl);
           return false;
         }
       }
@@ -210,6 +200,7 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
 
     // 6. Final fallback: Download
     console.log('[oneClickShare] Falling back to download');
+    const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.download = `${cardName}.png`;
     link.href = blobUrl;
