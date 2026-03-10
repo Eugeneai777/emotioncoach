@@ -205,24 +205,38 @@ export default function SynergyPromoPage() {
 
   // Step 3: Payment success → save shipping info & check auth
   const handlePaySuccess = async () => {
-    // Save shipping info to order
-    if (checkoutInfo && orderNo) {
+    // Save shipping info to the most recent order
+    if (checkoutInfo) {
       try {
-        await supabase
-          .from('orders')
-          .update({
-            buyer_name: checkoutInfo.buyerName,
-            buyer_phone: checkoutInfo.buyerPhone,
-            buyer_address: checkoutInfo.buyerAddress,
-            shipping_status: 'pending',
-          })
-          .eq('order_no', orderNo);
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) {
+          // Find the most recent paid order for this package
+          const { data: recentOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .eq('package_key', packageInfo.key)
+            .eq('status', 'paid')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (recentOrder) {
+            await supabase
+              .from('orders')
+              .update({
+                buyer_name: checkoutInfo.buyerName,
+                buyer_phone: checkoutInfo.buyerPhone,
+                buyer_address: checkoutInfo.buyerAddress,
+                shipping_status: 'pending',
+              })
+              .eq('id', recentOrder.id);
+          }
+        }
       } catch (e) {
         console.error('Save shipping info error:', e);
       }
-    }
-    // Also store in localStorage as fallback for guest checkout
-    if (checkoutInfo) {
+      // Also store in localStorage as fallback for guest checkout
       localStorage.setItem('synergy_shipping_info', JSON.stringify(checkoutInfo));
     }
 
