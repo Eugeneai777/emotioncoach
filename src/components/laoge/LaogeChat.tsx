@@ -1,0 +1,125 @@
+import { useState, useCallback } from "react";
+import { Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/laoge-ai`;
+
+interface LaogeChatProps {
+  tool: string;
+  inputs: Record<string, string>;
+  onReset?: () => void;
+}
+
+export function LaogeChat({ tool, inputs, onReset }: LaogeChatProps) {
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const startChat = useCallback(async () => {
+    setLoading(true);
+    setResponse("");
+    setDone(false);
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ tool, inputs }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        toast.error(err.error || "请求失败，请稍后重试");
+        setLoading(false);
+        return;
+      }
+
+      if (!resp.body) {
+        toast.error("连接中断");
+        setLoading(false);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { done: streamDone, value } = await reader.read();
+        if (streamDone) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulated += content;
+              setResponse(accumulated);
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      setDone(true);
+    } catch (e) {
+      console.error(e);
+      toast.error("网络错误，请检查连接后重试");
+    } finally {
+      setLoading(false);
+    }
+  }, [tool, inputs]);
+
+  if (!done && !loading && !response) {
+    // Auto-start on mount
+    startChat();
+  }
+
+  return (
+    <div className="space-y-4">
+      {loading && !response && (
+        <div className="flex items-center gap-3 text-[hsl(var(--laoge-text-muted))]">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>老哥正在思考...</span>
+        </div>
+      )}
+
+      {response && (
+        <div className="bg-[hsl(var(--laoge-card))] rounded-xl p-5 border border-[hsl(var(--laoge-border))]">
+          <div className="prose prose-sm prose-invert max-w-none 
+            prose-headings:text-[hsl(var(--laoge-text))] prose-headings:font-bold
+            prose-p:text-[hsl(var(--laoge-text-muted))] prose-p:leading-relaxed
+            prose-strong:text-[hsl(var(--laoge-accent))]
+            prose-li:text-[hsl(var(--laoge-text-muted))]">
+            <ReactMarkdown>{response}</ReactMarkdown>
+          </div>
+        </div>
+      )}
+
+      {done && onReset && (
+        <button
+          onClick={onReset}
+          className="w-full py-3 rounded-lg border border-[hsl(var(--laoge-border))] text-[hsl(var(--laoge-text-muted))] hover:bg-[hsl(var(--laoge-card))] transition-colors text-sm"
+        >
+          再问老哥一次
+        </button>
+      )}
+    </div>
+  );
+}
