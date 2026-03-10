@@ -363,6 +363,7 @@ export default function Settings() {
 
           <TabsContent value="account" className="space-y-6">
             <AccountBalance />
+            <ShippingTracker />
             <PurchaseHistory />
             <PackageSelector />
             <BillingExplanation />
