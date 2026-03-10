@@ -487,28 +487,28 @@ const MamaAssessment = ({ onBack, onOpenChat }: MamaAssessmentProps) => {
               </div>
             </motion.div>
 
-            {/* Emoji score selector - 2 rows of 5, compact */}
-            <div className="grid grid-cols-5 gap-1.5 mb-3">
+            {/* Emoji score selector - 5 options, single row */}
+            <div className="flex justify-between gap-2 mb-3">
               {scoreEmojis.map((item) => {
                 const isSelected = scores[currentDim.key] === item.score;
                 return (
                   <motion.button
                     key={item.score}
                     whileTap={{ scale: 0.85 }}
-                    animate={isSelected ? { scale: 1.05 } : { scale: 1 }}
+                    animate={isSelected ? { scale: 1.08 } : { scale: 1 }}
                     onClick={() => handleScoreSelect(item.score)}
-                    className="flex flex-col items-center gap-0 py-2 rounded-xl border-2 transition-all min-h-[52px]"
+                    className="flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border-2 transition-all min-h-[68px]"
                     style={{
                       borderColor: isSelected ? "hsl(16 86% 68%)" : "hsl(30 50% 92%)",
                       background: isSelected 
                         ? "linear-gradient(135deg, hsl(16 86% 95%), hsl(16 86% 90%))" 
                         : "white",
-                      boxShadow: isSelected ? "0 2px 8px hsl(16 86% 68% / 0.25)" : "none",
+                      boxShadow: isSelected ? "0 4px 12px hsl(16 86% 68% / 0.3)" : "none",
                     }}
                   >
-                    <span className={isSelected ? "text-xl" : "text-lg"}>{item.emoji}</span>
-                    <span className="text-[10px] font-bold" style={{ 
-                      color: isSelected ? "hsl(16 86% 50%)" : "hsl(30 20% 55%)" 
+                    <span className={isSelected ? "text-2xl" : "text-xl"}>{item.emoji}</span>
+                    <span className="text-[11px] font-medium" style={{ 
+                      color: isSelected ? "hsl(16 86% 45%)" : "hsl(30 20% 50%)" 
                     }}>{item.label}</span>
                   </motion.button>
                 );
