@@ -537,6 +537,7 @@ const History = () => {
                     emotion_theme: b.emotion_theme,
                     emotion_intensity: b.emotion_intensity,
                     created_at: b.created_at,
+                    camp_source: b.camp_source,
                     briefing_tags: b.tags?.map(t => ({ tags: { name: t.name, sentiment: null } })) || []
                   }))}
                   quickLogs={quickLogs}
