@@ -24,6 +24,11 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const [imageError, setImageError] = useState(false);
   const [visible, setVisible] = useState(false);
 
+  // Detect if the image is a blob URL (not yet saveable via long-press on Android/WeChat)
+  const isImageReady = useMemo(() => {
+    return !!imageUrl && !imageUrl.startsWith('blob:');
+  }, [imageUrl]);
+
   const isWeChat = typeof navigator !== 'undefined' && 
     navigator.userAgent.toLowerCase().includes('micromessenger');
   const isIOS = typeof navigator !== 'undefined' && 
