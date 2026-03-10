@@ -109,6 +109,44 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   // 检查限购套餐是否已购买
   const { data: basicPurchased, isLoading: isCheckingBasic } = usePackagePurchased('basic', category === 'youjin-member');
   
+  // 用户训练营购买和参与状态查询
+  const { data: userCampStatus } = useQuery({
+    queryKey: ['user-camp-status-packages', user?.id],
+    queryFn: async () => {
+      if (!user) return { purchases: [], camps: [] };
+      const [purchaseRes, campRes] = await Promise.all([
+        supabase.from('user_camp_purchases').select('camp_type')
+          .eq('user_id', user.id).eq('payment_status', 'completed'),
+        supabase.from('training_camps').select('camp_type, status')
+          .eq('user_id', user.id).in('status', ['active', 'completed']),
+      ]);
+      return {
+        purchases: purchaseRes.data || [],
+        camps: campRes.data || [],
+      };
+    },
+    enabled: !!user && (category === 'youjin-camp' || category === 'bloom-camp'),
+  });
+
+  // 兼容性映射
+  const getCompatibleTypes = (campType: string): string[] => {
+    if (campType === 'wealth_block_7') return ['wealth_block_7', 'wealth_block_21'];
+    if (campType === 'emotion_journal_21') return ['emotion_journal_21', 'synergy_bundle'];
+    return [campType];
+  };
+
+  const getCampStatus = (campType: string): 'active' | 'completed' | 'purchased' | 'none' => {
+    if (!userCampStatus) return 'none';
+    const types = getCompatibleTypes(campType);
+    const activeCamp = userCampStatus.camps.find(c => types.includes(c.camp_type) && c.status === 'active');
+    if (activeCamp) return 'active';
+    const completedCamp = userCampStatus.camps.find(c => types.includes(c.camp_type) && c.status === 'completed');
+    if (completedCamp) return 'completed';
+    const purchased = userCampStatus.purchases.some(p => types.includes(p.camp_type));
+    if (purchased) return 'purchased';
+    return 'none';
+  };
+
   // 训练营数据查询 - 用于动态渲染有劲训练营和绽放训练营
   const { data: campTemplates, isLoading: isCampsLoading } = useQuery({
     queryKey: ['camp-templates-for-packages'],
