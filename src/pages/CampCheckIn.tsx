@@ -611,7 +611,7 @@ const CampCheckIn = () => {
                         extraBadge={todayProgress?.videos_watched_count > 0 ? `${todayProgress.videos_watched_count}个` : undefined}
                         actionLabel="查看推荐"
                         actionIcon={<Play className="w-3 h-3 mr-1" />}
-                        onAction={() => setActiveTab("tasks")}
+                        onAction={() => navigate("/courses")}
                       />
                     </div>
                   </>
