@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff, MessageCircle, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff, MessageCircle, Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
