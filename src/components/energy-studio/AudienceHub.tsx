@@ -39,10 +39,19 @@ const audiences = [
     bgColor: "hsl(35 90% 95%)",
   },
   {
+    id: "midlife",
+    emoji: "🧭",
+    label: "中年觉醒",
+    subtitle: "转型·意义重建",
+    route: "/midlife-awakening",
+    gradient: "from-amber-500 to-yellow-600",
+    bgColor: "hsl(40 80% 95%)",
+  },
+  {
     id: "senior",
     emoji: "🌿",
-    label: "中老年",
-    subtitle: "退休适应·健康",
+    label: "老年关怀",
+    subtitle: "健康·退休适应",
     route: "/midlife-awakening",
     gradient: "from-emerald-400 to-teal-500",
     bgColor: "hsl(160 60% 95%)",
@@ -57,7 +66,7 @@ const AudienceHub = () => {
       <h2 className="text-xs font-semibold text-muted-foreground mb-2.5 tracking-wide">
         🎯 找到适合你的入口
       </h2>
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 gap-2">
         {audiences.map((a, i) => (
           <motion.button
             key={a.id}
