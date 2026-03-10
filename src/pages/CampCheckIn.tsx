@@ -478,7 +478,7 @@ const CampCheckIn = () => {
             <TabsList className="grid w-full grid-cols-3 h-9 bg-white/60 backdrop-blur-sm border border-teal-200/30 dark:bg-background/60">
               <ResponsiveTabsTrigger value="checkin" label="今日打卡" shortLabel="打卡" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
               <ResponsiveTabsTrigger value="calendar" label="打卡日历" shortLabel="日历" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
-              <ResponsiveTabsTrigger value="tasks" label="任务清单" shortLabel="任务" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
+              <ResponsiveTabsTrigger value="tasks" label="成长中心" shortLabel="成长" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
             </TabsList>
 
             <TabsContent value="checkin" className="space-y-4 mt-4">
