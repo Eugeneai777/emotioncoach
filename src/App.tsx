@@ -410,6 +410,12 @@ const App = () => (
               <Route path="/assessment/:assessmentKey" element={<DynamicAssessmentPage />} />
               <Route path="/product-brochure" element={<ProductBrochure />} />
               <Route path="/life-coach-voice" element={<LifeCoachVoice />} />
+              <Route path="/marriage" element={<MarriageHome />} />
+              <Route path="/marriage/assessments" element={<MarriageAssessments />} />
+              <Route path="/marriage/ai-tools" element={<MarriageAITools />} />
+              <Route path="/marriage/services" element={<MarriageServices />} />
+              <Route path="/marriage/about" element={<MarriageAbout />} />
+              <Route path="/marriage/help" element={<MarriageHelp />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
