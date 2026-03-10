@@ -48,7 +48,7 @@ export const MarriageHero: React.FC = () => {
               onClick={() => navigate("/marriage/ai-tools")}
               className="w-full h-11 rounded-xl border-marriage-primary/30 text-marriage-primary hover:bg-marriage-light"
             >
-              体验AI沟通教练
+              体验AI婚姻教练
             </Button>
           </div>
         </motion.div>
