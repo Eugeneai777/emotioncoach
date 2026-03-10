@@ -659,9 +659,9 @@ const History = () => {
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="compare">
+            <TabsContent value="meditation">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <EmotionComparison briefings={briefings} />
+                <MeditationZone />
               </ScrollArea>
             </TabsContent>
 
