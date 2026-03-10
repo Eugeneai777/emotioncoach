@@ -140,8 +140,8 @@ export class DoubaoRealtimeChat {
   private reconnectInProgress = false;
   private reconnectAttempts = 0;
   private reconnectTimer: number | null = null;
-  private static readonly MAX_RECONNECT_ATTEMPTS = 8; // 增加重试次数
-  private static readonly RECONNECT_BACKOFF_MS = [200, 400, 800, 1200, 2000, 3000, 4000, 5000]; // 更快的初始重试
+  private static readonly MAX_RECONNECT_ATTEMPTS = 10; // 增加重试次数到 10
+  private static readonly RECONNECT_BACKOFF_MS = [100, 200, 400, 600, 1000, 1500, 2000, 3000, 4000, 5000]; // 更快的初始重试
   
   // ✅ 静默重连增强：重连期间保持 UI 状态不变，用户完全无感
   private isReconnectingSilently = false;

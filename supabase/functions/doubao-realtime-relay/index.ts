@@ -28,13 +28,13 @@ const FORWARD_ASSISTANT_TEXT = false;
 // 需要足够大的帧让上游 VAD 有充分样本来检测"活动"
 const KEEPALIVE_SILENCE_BYTES = 32000;
 
-// ✅ 保活噪声幅度：2000 / 32768 ≈ -24dB
-// 接近安静说话水平，确保上游 VAD 和连接管理都能检测到"有活跃上行音频"
-// 之前 500 (-36dB) 仍然在 ~90s 被上游判定为空闲断开
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 2000;
+// ✅ 保活噪声幅度：3000 / 32768 ≈ -21dB
+// 进一步提升幅度，确保上游 VAD 和连接管理都能检测到"有活跃上行音频"
+// 之前 2000 (-24dB) 仍然在 ~60s 被上游判定为空闲断开
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3000;
 
-// ✅ 保活间隔：2s
-const KEEPALIVE_INTERVAL_MS = 2_000;
+// ✅ 保活间隔：1.5s（从 2s 缩短，更积极地保持连接）
+const KEEPALIVE_INTERVAL_MS = 1_500;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
   // byteLength 必须为偶数（Int16）
@@ -948,6 +948,16 @@ Deno.serve(async (req) => {
         port: 443,
       });
       
+      // ✅ 关键修复：启用 TCP 层保活，防止中间网关/平台因 TCP 空闲而断开连接
+      // 这是解决"1分多钟自动断开"的核心措施之一
+      try {
+        doubaoConn.setKeepAlive(true);
+        doubaoConn.setNoDelay(true);
+        console.log('[DoubaoRelay] ✅ TCP keepAlive=true, noDelay=true set on TLS connection');
+      } catch (e) {
+        console.warn('[DoubaoRelay] Failed to set TCP options (non-fatal):', e);
+      }
+      
       console.log('[DoubaoRelay] TLS connection established');
       
       // 发送 WebSocket 握手请求
@@ -1077,7 +1087,9 @@ Deno.serve(async (req) => {
             if (n === null || n === 0) {
               const idleClientSec = Math.round((now - lastClientAudioAt) / 1000);
               const idleUpstreamSec = Math.round((now - lastDoubaoActivityAt) / 1000);
-              console.log(`[DoubaoRelay] Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms, idleClient=${idleClientSec}s, idleUpstream=${idleUpstreamSec}s)`);
+              const totalSessionSec = Math.round((now - lastKeepaliveAt) / 1000);
+              const keepaliveSent = audioSequence;
+              console.error(`[DoubaoRelay] ❌ Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms, idleClient=${idleClientSec}s, idleUpstream=${idleUpstreamSec}s, totalKeepalivesSent=${keepaliveSent}, sessionAge=${Math.round((now - (lastDoubaoActivityAt - idleUpstreamSec * 1000)) / 1000)}s)`);
               isConnected = false;
 
               // ✅ 把“谁先断开 + 空闲时长”传回前端，便于定位微信 1分40 挂断
@@ -1590,14 +1602,15 @@ Deno.serve(async (req) => {
             await doubaoConn.write(frame);
             lastKeepaliveAt = now;
 
-            // 避免刷屏：最多每 30 秒打一次日志
-            if (now - lastKeepaliveLogAt > 30_000) {
+            // 避免刷屏：最多每 20 秒打一次日志
+            if (now - lastKeepaliveLogAt > 20_000) {
               lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (1000ms, amp=2000)', {
+               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (1000ms, amp=3000)', {
                  idleClientMs: now - lastClientAudioAt,
                 seq: audioSequence,
                   ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
-              });
+                  sessionAgeSec: Math.round((now - lastClientAudioAt) / 1000),
+               });
             }
           } catch (e) {
             console.warn('[DoubaoRelay] Failed to send silent keepalive:', e);
