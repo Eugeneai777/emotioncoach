@@ -16,6 +16,7 @@ export const MarriageQuarrelTool: React.FC<QuarrelToolProps> = ({ mode }) => {
   const [input, setInput] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const placeholder =
     mode === "quarrel"
