@@ -1,36 +1,23 @@
 
 
-# 修复：返回按钮应自动挂断语音通话
+## 两个问题需要修复
 
-## 问题
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-`CoachVoiceChat.tsx` 左上角返回按钮（ChevronLeft）直接调用 `onClose`（即 `navigate(-1)`），没有执行挂断流程（断开连接、退款、记录会话等）。导致页面跳转了但语音连接仍在后台运行。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 修复方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-将返回按钮的 `onClick` 从直接调用 `onClose` 改为调用 `endCall`，让它走和挂断按钮相同的流程。`endCall` → `performEndCall` 内部最终会调用 `onClose` 完成导航。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 文件变更
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-| 文件 | 变更 |
+| 文件 | 修改 |
 |------|------|
-| `src/components/coach/CoachVoiceChat.tsx` | 返回按钮 onClick 改为调用 `endCall`，通话未连接时保留直接 `onClose` |
-
-### 核心逻辑（约第 2182-2189 行）
-
-```tsx
-// 之前
-onClick={onClose}
-
-// 之后
-onClick={(e) => {
-  if (status === 'idle' || status === 'disconnected' || status === 'error') {
-    onClose();
-  } else {
-    endCall(e);
-  }
-}}
-```
-
-当通话处于 `connected` 或 `connecting` 状态时，走 `endCall` 流程（断开连接 → 退款 → 记录 → `onClose`）。当通话已结束或未开始时，直接返回。
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
