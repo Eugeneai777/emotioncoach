@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight, Trophy, Flame } from "lucide-react";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
@@ -76,9 +77,10 @@ interface TaskCardProps {
   extraBadge?: string;
   isOptional?: boolean;
   onAction: () => void;
+  onToggle?: (checked: boolean) => void;
 }
 
-const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, isOptional, onAction }: TaskCardProps) => {
+const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, isOptional, onAction, onToggle }: TaskCardProps) => {
   return (
     <motion.div
       initial={false}
@@ -152,7 +154,33 @@ const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeC
             <p className={`text-xs leading-relaxed ${completed ? "text-emerald-600/60 dark:text-emerald-400/60" : "text-muted-foreground"}`}>
               {description}
             </p>
-            {!completed && (
+            {onToggle ? (
+              <div className="flex items-center gap-2 mt-2.5">
+                <Checkbox
+                  checked={completed}
+                  onCheckedChange={(checked) => onToggle(!!checked)}
+                  className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                />
+                <span className={`text-xs ${completed ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                  {completed ? '已完成' : '点击勾选完成'}
+                </span>
+                {!completed && (
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); onAction(); }}
+                    size="sm"
+                    variant={isPrimary ? "default" : "outline"}
+                    className={`ml-auto h-7 text-xs ${
+                      isPrimary
+                        ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                        : "border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
+                    }`}
+                  >
+                    {actionIcon}
+                    {actionLabel}
+                  </Button>
+                )}
+              </div>
+            ) : !completed ? (
               <Button
                 onClick={(e) => { e.stopPropagation(); onAction(); }}
                 size="sm"
@@ -166,7 +194,7 @@ const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeC
                 {actionIcon}
                 {actionLabel}
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </Card>
@@ -281,6 +309,41 @@ const CampCheckIn = () => {
       }
     } catch (error) {
       console.error("Error loading latest briefing:", error);
+    }
+  };
+
+  const handleToggleTask = async (field: string, checked: boolean) => {
+    if (!user || !campId) return;
+    const today = getTodayCST();
+    try {
+      const updates: Record<string, any> = {
+        camp_id: campId,
+        user_id: user.id,
+        progress_date: today,
+        [field]: checked,
+      };
+      // Add timestamp fields
+      if (field === 'declaration_completed') {
+        updates.declaration_completed_at = checked ? new Date().toISOString() : null;
+      } else if (field === 'is_checked_in') {
+        updates.checked_in_at = checked ? new Date().toISOString() : null;
+      } else if (field === 'has_shared_to_community') {
+        updates.shared_at = checked ? new Date().toISOString() : null;
+      }
+
+      const { error } = await supabase
+        .from("camp_daily_progress")
+        .upsert(updates as any, { onConflict: "camp_id,progress_date" });
+
+      if (error) throw error;
+      await loadTodayProgress();
+    } catch (error) {
+      console.error("更新任务状态失败:", error);
+      toast({
+        title: "更新失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
     }
   };
 
@@ -573,6 +636,7 @@ const CampCheckIn = () => {
                           badgeColor="emerald"
                           actionLabel="开始冥想"
                           onAction={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
+                          onToggle={(checked) => handleToggleTask('declaration_completed', checked)}
                         />
                       )}
 
@@ -596,6 +660,7 @@ const CampCheckIn = () => {
                             navigate("/");
                           }
                         }}
+                        onToggle={(checked) => handleToggleTask('is_checked_in', checked)}
                       />
 
                       {/* 每日反思分享 */}
@@ -609,6 +674,7 @@ const CampCheckIn = () => {
                         actionIcon={<Share2 className="w-3 h-3 mr-1" />}
                         isOptional
                         onAction={handleShare}
+                        onToggle={(checked) => handleToggleTask('has_shared_to_community', checked)}
                       />
 
                       {/* 今日成长课程 */}
@@ -623,6 +689,7 @@ const CampCheckIn = () => {
                         actionIcon={<Play className="w-3 h-3 mr-1" />}
                         isOptional
                         onAction={() => setActiveTab("tasks")}
+                        onToggle={(checked) => handleToggleTask('video_learning_completed', checked)}
                       />
                     </div>
                   </>
