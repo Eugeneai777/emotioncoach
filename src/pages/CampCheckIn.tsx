@@ -197,7 +197,7 @@ const CampCheckIn = () => {
     if (!todayProgress || !camp || hasTriggeredConfetti) return;
     const hasMeditation = camp.camp_type === 'emotion_stress_7';
     const tasks = [
-      ...(hasMeditation ? [false] : []),
+      ...(hasMeditation ? [!!todayProgress.declaration_completed] : []),
       !!todayProgress.is_checked_in,
       !!todayProgress.has_shared_to_community,
       !!todayProgress.video_learning_completed,
