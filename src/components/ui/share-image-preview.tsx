@@ -186,9 +186,8 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         className="shrink-0 flex flex-col items-center gap-3 px-4 pb-6"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
-      {isMobile ? (
+        {isMobile ? (
           <div className="flex flex-col items-center gap-2 w-full max-w-sm">
-            {/* Status indicator: blob vs https */}
             <div className="flex items-center gap-2 text-xs">
               {isImageReady ? (
                 <span className="flex items-center gap-1.5 text-primary">
@@ -202,18 +201,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 w-full">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleDownload}
-                className="flex-1 gap-1.5"
-              >
-                <Download className="h-4 w-4" />
-                保存图片
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleClose}>返回</Button>
-            </div>
+            <Button variant="outline" size="sm" onClick={handleClose} className="w-full">返回</Button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 max-w-sm w-full">
