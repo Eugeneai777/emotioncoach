@@ -1,71 +1,23 @@
 
 
-# 修复：海报中心"下载海报"慢且长按无法保存
+## 两个问题需要修复
 
-## 问题分析
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-PosterCenter 的 `handleDownload` 流程：
-1. `generateCardBlob` 生成大尺寸海报（如 1080×1920）→ 慢
-2. `handleShareWithFallback` → `showUploadedPreview` → 先上传到 Storage 获取 HTTPS URL → 再显示预览
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-整个流程是**串行**的：生成图片 → 上传到云端 → 才显示预览。大海报生成 + 上传双重耗时，用户体验差。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-对比训练营邀请卡（正常工作）：卡片尺寸小，上传快。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-## 修复方案
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**核心思路：先显示 blob 预览（即时），后台上传，上传完成后替换为 HTTPS URL**
-
-### 文件变更
-
-| 文件 | 变更 |
+| 文件 | 修改 |
 |------|------|
-| `src/pages/PosterCenter.tsx` | `handleDownload` 改为先用 blob URL 显示预览，后台异步上传并替换 URL |
-| `src/components/ui/share-image-preview.tsx` | 支持 `imageUrl` 动态更新（已支持，无需改） |
-
-### PosterCenter.tsx `handleDownload` 改写逻辑
-
-```typescript
-const handleDownload = async () => {
-  if (!posterRef.current) return;
-  setIsDownloading(true);
-  toast.loading('正在生成海报...');
-
-  try {
-    const blob = await generateCardBlob(posterRef, {
-      explicitWidth: selectedPosterSize.width,
-      explicitHeight: selectedPosterSize.height,
-    });
-    toast.dismiss();
-    if (!blob) { toast.error('生成海报失败'); return; }
-
-    // 1. 立即用 blob URL 显示预览（毫秒级）
-    const blobUrl = URL.createObjectURL(blob);
-    setPosterPreviewUrl(blobUrl);
-    setShowPosterPreview(true);
-
-    // 2. 后台上传，完成后替换为 HTTPS URL（安卓微信长按保存需要）
-    import('./shareImageUploader').then(async ({ uploadShareImage }) => {
-      try {
-        const httpsUrl = await uploadShareImage(blob);
-        setPosterPreviewUrl(httpsUrl);
-        URL.revokeObjectURL(blobUrl);
-      } catch (e) {
-        console.warn('Upload failed, keeping blob URL', e);
-      }
-    });
-  } catch (error) {
-    toast.dismiss();
-    toast.error('保存失败，请重试');
-  } finally {
-    setIsDownloading(false);
-  }
-};
-```
-
-这样用户点击"下载海报"后：
-- **立即**看到图片预览（blob URL，毫秒级）
-- 后台静默上传到 Storage
-- 上传完成后自动替换为 HTTPS URL → 安卓微信长按保存生效
-- 即使上传失败，用户仍能看到图片
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
