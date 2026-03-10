@@ -46,7 +46,29 @@ const CampIntro = () => {
 
   // 检查用户是否已购买该付费训练营
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase(campType || '');
-  const hasPurchased = !!purchaseRecord;
+  
+  // 额外检查 orders 表（synergy_bundle 购买记录在 orders 表中）
+  const { data: orderPurchase } = useQuery({
+    queryKey: ['camp-order-purchase', campType, user?.id],
+    queryFn: async () => {
+      if (!user || !campType) return null;
+      // emotion_journal_21 可能通过 synergy_bundle 购买
+      const packageKeys = campType === 'emotion_journal_21' 
+        ? ['synergy_bundle', 'camp-emotion_journal_21'] 
+        : [`camp-${campType}`];
+      const { data } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('package_key', packageKeys)
+        .eq('status', 'paid')
+        .limit(1);
+      return data && data.length > 0 ? data[0] : null;
+    },
+    enabled: !!user && !!campType
+  });
+  
+  const hasPurchased = !!purchaseRecord || !!orderPurchase;
 
   const { data: campTemplate, isLoading } = useQuery({
     queryKey: ['camp-template', campType],
