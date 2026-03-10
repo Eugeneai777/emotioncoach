@@ -63,7 +63,7 @@ const MamaBottomInput = ({ onSendText, onFocusInput, lastChat, onContinueChat }:
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
-    releaseMicrophone();
+    // Don't release microphone here - keep stream alive for next recording
   }, []);
 
   const transcribe = async (blob: Blob) => {
