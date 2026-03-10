@@ -32,6 +32,7 @@ import { CampDualTrackSection } from "@/components/camp/CampDualTrackSection";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { toast } from "sonner";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 const iconMap: Record<string, any> = {
   TrendingDown, Brain, Moon, Zap, Heart, MessageCircle, Shield, Award, Users, Video, BarChart3
@@ -46,6 +47,36 @@ const CampIntro = () => {
 
   // 检查用户是否已购买该付费训练营
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase(campType || '');
+
+  // 处理支付宝H5支付回调（用户从支付宝返回后触发）
+  usePaymentCallback({
+    onSuccess: async (orderNo, packageKey) => {
+      if (user && campType) {
+        // 检查是否已有购买记录，避免重复插入
+        const { data: existing } = await supabase
+          .from('user_camp_purchases')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('camp_type', campType)
+          .eq('payment_status', 'completed')
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from('user_camp_purchases').insert({
+            user_id: user.id,
+            camp_type: campType,
+            camp_name: campTemplate?.camp_name || campType,
+            purchase_price: campTemplate?.price || 0,
+            payment_status: 'completed'
+          });
+        }
+        refetchPurchase();
+      }
+      setShowStartDialog(true);
+    },
+    showToast: true,
+    showConfetti: true,
+  });
   
   // 额外检查 orders 表（synergy_bundle 购买记录在 orders 表中）
   const { data: orderPurchase } = useQuery({
