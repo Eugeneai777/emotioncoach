@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
 
+import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
 import MamaEmotionCheck from "@/components/mama/MamaEmotionCheck";
 import MamaDailyEnergy from "@/components/mama/MamaDailyEnergy";
 import MamaAssessmentEntry from "@/components/mama/MamaAssessmentEntry";
@@ -70,6 +71,8 @@ const MamaAssistant = () => {
     >
       <PageHeader title="宝妈AI助手" />
       
+
+      <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
 
       <div className="space-y-3 mt-3">
         <MamaEmotionCheck />

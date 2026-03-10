@@ -1,39 +1,23 @@
 
 
-# 添加触动感场景快捷按钮
+## 两个问题需要修复
 
-## 现状
-页面从 PageHeader 直接进入功能模块（情绪急救→感恩→测评→训练营），缺少一个快速触达常见场景的入口，用户需要滚动才能找到对应功能。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 方案
-在 PageHeader 下方、EmotionCheck 上方新增一组**场景快捷按钮区域**，用情感化的短句+emoji 横向滚动排列，点击直接进入 AI 聊天并带入对应场景上下文。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 场景设计（贴近宝妈真实痛点）
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-| Emoji | 短句 | 聊天上下文 |
-|-------|------|-----------|
-| 😤 | 又吼孩子了 | 我刚才又对孩子发了脾气，现在很自责... |
-| 😴 | 好累好累 | 我感觉身心俱疲，什么都不想做... |
-| 💔 | 没人理解我 | 我觉得没有人理解我的感受和付出... |
-| 🥺 | 想哭一会儿 | 我现在很想哭，心里很难受... |
-| 😰 | 孩子不听话 | 孩子怎么说都不听，我快崩溃了... |
-| 🌙 | 睡不着 | 半夜了还是睡不着，脑子停不下来... |
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 视觉风格
-- 横向滚动胶囊按钮，圆角药丸形
-- 每个按钮有微妙的渐变背景 + 左侧大 emoji
-- 点击时有 `whileTap scale` 反馈
-- 整体色调延续页面暖色系
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 改动
-
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| 新建 `src/components/mama/MamaQuickScenarios.tsx` | 场景按钮组件，横向滚动，点击触发 `onSelect(context)` |
-| `src/pages/MamaAssistant.tsx` | 在 PageHeader 下方插入 MamaQuickScenarios，点击调用 `openChat(context)` |
-
-### 交互流程
-1. 用户看到横向滚动的场景按钮
-2. 点击某个场景 → 直接打开 AI 聊天 → 自动带入该场景的上下文提示词
-3. AI 以温暖共情的方式回应
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
