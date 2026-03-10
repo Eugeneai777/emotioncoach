@@ -32,6 +32,7 @@ export default function StressMeditation() {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [showScript, setShowScript] = useState(false);
+  const [hasListened, setHasListened] = useState(false);
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
