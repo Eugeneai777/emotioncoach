@@ -154,6 +154,13 @@ export class DoubaoRealtimeChat {
   // ✅ 重连通知回调（可选）：允许上层展示轻量提示
   private onReconnectProgress?: (stage: 'start' | 'retrying' | 'success' | 'failed', attempt?: number) => void;
 
+  // ✅ 主动预防性重连：在平台 wall-clock 超时杀死 Edge Function 之前，主动切换到新实例
+  // Supabase Edge Function 硬性超时约 150 秒，我们在 85 秒时主动轮换
+  private sessionRotationTimer: number | null = null;
+  private sessionConnectedAt: number = 0;
+  private isProactiveRotating: boolean = false;
+  private static readonly SESSION_ROTATION_INTERVAL_MS = 85_000; // 85秒，远在平台超时前
+
   // ✅ 给上层“用户活动检测”喂低频事件，避免被误判无活动自动挂断
   private lastUserAudioActivityEventAt = 0;
 
