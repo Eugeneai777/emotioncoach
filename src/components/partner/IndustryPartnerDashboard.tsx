@@ -177,6 +177,9 @@ export function IndustryPartnerDashboard({ partner }: IndustryPartnerDashboardPr
         <TabsContent value="channels">
           <PartnerChannelAttribution partnerId={partner.id} />
         </TabsContent>
+        <TabsContent value="promo-pages">
+          <PartnerPromoPages partnerId={partner.id} partnerCode={partner.partner_code} />
+        </TabsContent>
         <TabsContent value="reminders">
           <PartnerFollowupReminders partnerId={partner.id} />
         </TabsContent>
