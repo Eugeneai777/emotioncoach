@@ -570,21 +570,6 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== PRODUCT SPECS ===== */}
-      <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 产品参数</h2>
-        <p className="text-slate-400 text-sm text-center mb-6">国家食药监认证 · 安全无依赖</p>
-        <div className="max-w-lg mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {specs.map((s, i) => (
-              <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-                <p className="text-lg font-bold text-cyan-400">{s.value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
 
       {/* ===== TESTIMONIALS ===== */}
       <Section className="bg-slate-900/50">
