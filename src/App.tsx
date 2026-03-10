@@ -341,6 +341,7 @@ const App = () => (
               <Route path="/partner/benefits-all" element={<PartnerBenefitsUnified />} />
               <Route path="/claim" element={<Claim />} />
               <Route path="/pay-entry" element={<PayEntry />} />
+              <Route path="/promo/synergy" element={<SynergyPromoPage />} />
               <Route path="/promo/:slug" element={<PromoPage />} />
               <Route path="/story-coach" element={<StoryCoach />} />
               <Route path="/story-coach-intro" element={<StoryCoachIntro />} />
