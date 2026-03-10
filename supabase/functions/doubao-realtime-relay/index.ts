@@ -28,13 +28,13 @@ const FORWARD_ASSISTANT_TEXT = false;
 // 需要足够大的帧让上游 VAD 有充分样本来检测"活动"
 const KEEPALIVE_SILENCE_BYTES = 32000;
 
-// ✅ 保活噪声幅度：2000 / 32768 ≈ -24dB
-// 接近安静说话水平，确保上游 VAD 和连接管理都能检测到"有活跃上行音频"
-// 之前 500 (-36dB) 仍然在 ~90s 被上游判定为空闲断开
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 2000;
+// ✅ 保活噪声幅度：3000 / 32768 ≈ -21dB
+// 进一步提升幅度，确保上游 VAD 和连接管理都能检测到"有活跃上行音频"
+// 之前 2000 (-24dB) 仍然在 ~60s 被上游判定为空闲断开
+const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3000;
 
-// ✅ 保活间隔：2s
-const KEEPALIVE_INTERVAL_MS = 2_000;
+// ✅ 保活间隔：1.5s（从 2s 缩短，更积极地保持连接）
+const KEEPALIVE_INTERVAL_MS = 1_500;
 
 function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
   // byteLength 必须为偶数（Int16）
