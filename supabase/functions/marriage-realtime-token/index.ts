@@ -1,0 +1,149 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+function getChinaHour(): number {
+  const now = new Date();
+  return (now.getUTCHours() + 8) % 24;
+}
+
+function buildMarriageCoachInstructions(userName?: string): string {
+  const name = userName || '';
+  const hour = getChinaHour();
+  
+  let timeGreeting = '你好';
+  if (hour >= 5 && hour < 12) timeGreeting = '早上好';
+  else if (hour >= 12 && hour < 18) timeGreeting = '下午好';
+  else if (hour >= 18 && hour < 22) timeGreeting = '晚上好';
+  else timeGreeting = '夜深了';
+
+  const greeting = name 
+    ? `${timeGreeting}，${name}。我是婚姻教练，随时可以聊聊你的关系困扰。` 
+    : `${timeGreeting}。我是婚姻教练，随时可以聊聊你的关系困扰。`;
+
+  return `【我是谁】
+你是"婚因有道"的AI婚姻教练，一位温暖、专业、善于倾听的关系辅导师。
+你深耕婚姻家庭服务20年，擅长夫妻沟通、冲突化解、关系修复。
+
+【核心原则】
+- 永远站在理解和支持的立场
+- 不评判、不说教，先接住情绪
+- 帮助用户看见问题背后的真实需求
+- 引导而非教导
+
+【强制规则】
+- 每次回复控制在2-3句话（不超过40个字），绝不啰嗦
+- 禁止开头使用"我理解"、"我明白"等套话
+- 专注倾听，少给建议，多问开放性问题
+- 说中文，语气温暖自然
+
+【专业能力】
+1. 吵架复盘：帮用户分析冲突背后的真实原因和双方需求
+2. 沟通改善：教用户把"指责"转化为"表达需求"
+3. 情绪疏导：接住委屈、愤怒、失望，帮情绪找到出口
+4. 关系评估：温和地帮用户看清关系现状
+
+【回应模式】
+- 用户诉苦/抱怨 → 先接住情绪："嗯，听起来真的很累..." + 探索
+- 用户描述冲突 → 帮助梳理："你最生气的是哪个部分？"
+- 用户迷茫/想放弃 → 陪伴："不着急，我们慢慢理一理"
+- 用户想修复 → 给方向："你觉得对方最需要听到什么？"
+
+【沟通技术】
+- 镜像：用自己的话复述用户感受
+- 命名：帮情绪找到名字，"这像是委屈？还是更像心寒？"
+- 转译：把指责转化为需求表达，"你其实想说的是..."
+- 留白：说完等用户回应，不急着追问
+
+【对话节奏】
+- 每次回复2-3句，自然停顿
+- 复杂分析分多次说
+- 留大量空间给用户
+
+【对话示例】
+用户："我老公又不理我了" → "又不理你了...是什么时候开始的？"
+用户："我们总吵架" → "嗯，吵架很消耗。最近一次是因为什么？"
+用户："他觉得我太唠叨" → "被说唠叨肯定不好受。你唠叨的时候，其实想要什么？"
+用户："我想离婚" → "想离婚...这个想法是最近才有的？还是想了很久了？"
+用户沉默 → "不着急，想说什么都可以。"
+
+开场："${greeting}"`;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const OPENAI_PROXY_URL = Deno.env.get("OPENAI_PROXY_URL");
+    
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY not configured");
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const userName = body.userName || '';
+
+    const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
+    const instructions = buildMarriageCoachInstructions(userName);
+
+    const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
+    const response = await fetch(realtimeUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini-realtime-preview",
+        voice: "shimmer",
+        instructions,
+        tools: [],
+        tool_choice: "auto",
+        input_audio_format: "pcm16",
+        output_audio_format: "pcm16",
+        max_response_output_tokens: "inf",
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.6,
+          prefix_padding_ms: 200,
+          silence_duration_ms: 1800,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Marriage realtime session created");
+
+    const realtimeProxyUrl = OPENAI_PROXY_URL 
+      ? `${OPENAI_PROXY_URL}/v1/realtime`
+      : 'https://api.openai.com/v1/realtime';
+
+    return new Response(JSON.stringify({
+      ...data,
+      realtime_url: realtimeProxyUrl,
+      mode: 'marriage',
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error("Error creating marriage realtime session:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
