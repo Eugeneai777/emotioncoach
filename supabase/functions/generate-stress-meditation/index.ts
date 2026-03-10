@@ -86,7 +86,7 @@ serve(async (req) => {
     }
 
     const audioBuffer = await response.arrayBuffer();
-    const fileName = `day-${day_number}-${meditation.title}.mp3`;
+    const fileName = `day-${day_number}.mp3`;
 
     // Upload to storage
     const { error: uploadError } = await supabase.storage
