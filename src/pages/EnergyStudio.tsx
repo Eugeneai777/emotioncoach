@@ -29,6 +29,7 @@ import { AliveCheck } from "@/components/tools/AliveCheck";
 import EmotionSOSPreviewCard from "@/components/tools/EmotionSOSPreviewCard";
 import { MobileCard } from "@/components/ui/mobile-card";
 import { HealthStoreGrid } from "@/components/store/HealthStoreGrid";
+import AudienceHub from "@/components/energy-studio/AudienceHub";
 
 interface ToolCard {
   id: string;
