@@ -1,23 +1,33 @@
 
 
-## 两个问题需要修复
+## Problem Analysis
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+After examining the code, I found **two critical bugs** in `CampList.tsx` and `CampTemplateCard.tsx`:
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### Bug 1: Payment success callback does nothing useful
+In `CampList.tsx` (line 298-301), the `onSuccess` handler only shows a toast and closes the dialog. It does NOT:
+- Create a `user_camp_purchases` record in the database
+- Navigate the user to the camp setup flow
+- Show a "choose start date" dialog
+- Invalidate/refresh any queries so the UI updates
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### Bug 2: Card never checks purchase status
+`CampTemplateCard.tsx` determines whether to show "购买" based solely on `isPaidCamp = camp.price > 0`. It never queries whether the current user has already purchased, so the button always shows "购买" even after a successful payment.
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+---
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+## Fix Plan
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+### 1. Fix `CampTemplateCard.tsx` — Add purchase status check
+- Query `user_camp_purchases` for the current user + camp_type
+- If purchased, show "开始训练" or "继续训练" button instead of "购买" button
+- Navigate to `/camp-intro/${camp.camp_type}` (or directly to start dialog) when clicked
+
+### 2. Fix `CampList.tsx` — Complete the `onSuccess` handler
+- After payment success, insert a `user_camp_purchases` record (with try/catch for idempotency)
+- Invalidate the purchase query so the card updates immediately
+- Navigate user to the camp intro page where they can select a start date, OR show a `StartCampDialog` directly
+
+### 3. Fix package key format
+- Currently using `camp-${selectedCamp.id}` (template UUID) — verify this matches backend order creation expectations (should likely be `camp-${selectedCamp.camp_type}`)
 
