@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Users, Shield, Pill, BarChart3, Zap } from "lucide-react";
+import { ArrowRight, Sparkles, Pill } from "lucide-react";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 
 interface PromoCard {
@@ -26,130 +26,13 @@ const promoCards: PromoCard[] = [
     category: 'bundle',
     tag: '限时特惠',
   },
-  // 工具
-  {
-    id: 'energy-studio',
-    title: '有劲生活馆',
-    subtitle: '情绪梳理一站式入口',
-    emoji: '✨',
-    gradient: 'from-teal-500 to-emerald-500',
-    path: '/energy-studio-intro',
-    category: 'tool',
-  },
-  {
-    id: 'awakening',
-    title: '觉察系统',
-    subtitle: '6维深度觉察训练',
-    emoji: '🔮',
-    gradient: 'from-violet-600 to-purple-600',
-    path: '/awakening-intro',
-    category: 'tool',
-  },
-  {
-    id: 'alive-check',
-    title: '安全打卡',
-    subtitle: '让关心你的人安心',
-    emoji: '💗',
-    gradient: 'from-pink-500 to-rose-500',
-    path: '/alive-check-intro',
-    category: 'tool',
-  },
-  // 测评
-  {
-    id: 'scl90',
-    title: 'SCL-90 心理健康自评',
-    subtitle: '专业90题量表，10大因子',
-    emoji: '🧠',
-    gradient: 'from-purple-600 to-indigo-600',
-    path: '/scl90',
-    category: 'assessment',
-  },
-  {
-    id: 'emotion-health',
-    title: '情绪健康测评',
-    subtitle: '32题三层诊断，找到情绪卡点',
-    emoji: '❤️‍🩹',
-    gradient: 'from-violet-500 to-pink-500',
-    path: '/emotion-health',
-    category: 'assessment',
-  },
-  {
-    id: 'wealth-block',
-    title: '财富卡点测评',
-    subtitle: '30个场景深度扫描财富盲点',
-    emoji: '💎',
-    gradient: 'from-amber-600 to-purple-600',
-    path: '/wealth-block-intro',
-    category: 'assessment',
-  },
-  // 训练营
-  {
-    id: 'wealth-camp',
-    title: '财富觉醒训练营',
-    subtitle: '7天突破财富天花板',
-    emoji: '🏕️',
-    gradient: 'from-orange-500 to-amber-500',
-    path: '/wealth-camp-intro',
-    category: 'camp',
-  },
-  // 合伙人
-  {
-    id: 'partner-intro',
-    title: '有劲合伙人',
-    subtitle: '边成长边赚钱，零门槛',
-    emoji: '💪',
-    gradient: 'from-orange-500 to-red-600',
-    path: '/partner-intro',
-    category: 'partner',
-  },
-  {
-    id: 'youjin-partner',
-    title: '有劲合伙人计划',
-    subtitle: '高额佣金，专属培训支持',
-    emoji: '🚀',
-    gradient: 'from-orange-600 to-red-600',
-    path: '/partner/youjin-intro',
-    category: 'partner',
-  },
-  {
-    id: 'bloom-partner',
-    title: '财富觉醒3部曲',
-    subtitle: '测评→训练营→成为合伙人',
-    emoji: '🌸',
-    gradient: 'from-purple-500 to-violet-600',
-    path: '/bloom-partner-intro',
-    category: 'partner',
-  },
-  // 平台介绍
-  {
-    id: 'platform-intro',
-    title: '有劲AI · 每个人的生活教练',
-    subtitle: '温暖陪伴 × 系统工具 × 成长社群',
-    emoji: '🌟',
-    gradient: 'from-indigo-500 to-pink-500',
-    path: '/platform-intro',
-    category: 'tool',
-  },
-  {
-    id: 'introduction',
-    title: '有劲AI 介绍',
-    subtitle: '7位AI教练24小时在线',
-    emoji: '📋',
-    gradient: 'from-pink-500 to-violet-500',
-    path: '/introduction',
-    category: 'tool',
-  },
 ];
 
 const categoryLabels: Record<string, { label: string; icon: React.ReactNode }> = {
   bundle: { label: '组合套餐', icon: <Pill className="w-4 h-4" /> },
-  tool: { label: '工具 & 平台', icon: <Zap className="w-4 h-4" /> },
-  assessment: { label: '测评诊断', icon: <BarChart3 className="w-4 h-4" /> },
-  camp: { label: '训练营', icon: <Shield className="w-4 h-4" /> },
-  partner: { label: '合伙人', icon: <Users className="w-4 h-4" /> },
 };
 
-const categoryOrder = ['bundle', 'assessment', 'tool', 'camp', 'partner'];
+const categoryOrder = ['bundle'];
 
 export default function ZhilePromoHub() {
   const navigate = useNavigate();
