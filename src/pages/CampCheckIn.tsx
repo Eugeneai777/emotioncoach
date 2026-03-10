@@ -74,6 +74,7 @@ interface TaskCardProps {
   actionIcon?: React.ReactNode;
   isPrimary?: boolean;
   extraBadge?: string;
+  isOptional?: boolean;
   onAction: () => void;
 }
 
