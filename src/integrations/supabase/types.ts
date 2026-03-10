@@ -1208,6 +1208,8 @@ export type Database = {
           declaration_completed_at: string | null
           emotion_logs_count: number | null
           has_shared_to_community: boolean | null
+          human_coach_completed: boolean | null
+          human_coach_completed_at: string | null
           id: string
           is_checked_in: boolean | null
           last_emotion_log_at: string | null
@@ -1232,6 +1234,8 @@ export type Database = {
           declaration_completed_at?: string | null
           emotion_logs_count?: number | null
           has_shared_to_community?: boolean | null
+          human_coach_completed?: boolean | null
+          human_coach_completed_at?: string | null
           id?: string
           is_checked_in?: boolean | null
           last_emotion_log_at?: string | null
@@ -1256,6 +1260,8 @@ export type Database = {
           declaration_completed_at?: string | null
           emotion_logs_count?: number | null
           has_shared_to_community?: boolean | null
+          human_coach_completed?: boolean | null
+          human_coach_completed_at?: string | null
           id?: string
           is_checked_in?: boolean | null
           last_emotion_log_at?: string | null
