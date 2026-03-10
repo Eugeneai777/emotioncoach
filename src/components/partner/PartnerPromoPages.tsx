@@ -32,7 +32,7 @@ const promoCards: PromoCard[] = [
 export function PartnerPromoPages({ partnerCode }: PartnerPromoPagesProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const PRODUCTION_DOMAIN = "https://feel-name-transform-coach.lovable.app";
+  const PRODUCTION_DOMAIN = "https://wechat.eugenewe.net";
 
   const generateLink = (path: string) => {
     return `${PRODUCTION_DOMAIN}${path}?ref=${partnerCode}`;
