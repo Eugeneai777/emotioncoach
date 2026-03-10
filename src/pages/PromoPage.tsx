@@ -273,9 +273,12 @@ const PromoPage = () => {
           <p className="text-center text-xs text-muted-foreground mb-4">训练营练心，知乐护体，<span className="font-semibold text-orange-600">24小时全覆盖</span></p>
           
           <div className="bg-card rounded-2xl border shadow-sm p-5">
-            {/* Product image */}
-            <div className="flex items-center justify-center mb-4">
-              <img src={zhileCapsules} alt="知乐胶囊产品" className="w-24 h-24 object-cover rounded-xl shadow-md" />
+            {/* Product image - prominent */}
+            <div className="flex items-center justify-center mb-5">
+              <div className="relative">
+                <img src={zhileCapsules} alt="知乐胶囊产品" className="w-44 h-44 object-cover rounded-2xl shadow-lg border-2 border-emerald-100" />
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">每日3粒</div>
+              </div>
             </div>
 
             <div className="space-y-4">
