@@ -524,7 +524,7 @@ const History = () => {
                 <ResponsiveTabsTrigger value="analytics" label="数据分析" shortLabel="分析" />
                 <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
                 <ResponsiveTabsTrigger value="patterns" label="模式洞察" shortLabel="模式" />
-                <ResponsiveTabsTrigger value="compare" label="对比分析" shortLabel="对比" />
+                <ResponsiveTabsTrigger value="meditation" label="冥想专区" shortLabel="冥想" />
                 <ResponsiveTabsTrigger value="review" label="情绪复盘" shortLabel="复盘" />
               </TabsList>
             
