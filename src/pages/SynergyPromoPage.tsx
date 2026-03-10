@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
@@ -111,8 +111,7 @@ const specs = [
   { label: "核心成分", value: "GABA + 茶氨酸" },
 ];
 
-/* ========== Main Page ========== */
-/* ========== Success Panel (inline, dark themed) ========== */
+/* ========== Success Panel ========== */
 function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
   return (
     <motion.div
@@ -137,17 +136,25 @@ function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
 
         <div className="space-y-3 text-left">
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-            <Package className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+            <Truck className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-slate-200">知乐胶囊已安排发货</p>
-              <p className="text-xs text-slate-500">预计3个工作日内寄出，请保持电话畅通</p>
+              <p className="text-sm font-medium text-slate-200">📦 知乐胶囊已安排发货</p>
+              <p className="text-xs text-slate-500">香港直邮，预计 4-7 个工作日送达</p>
+              <p className="text-xs text-amber-400/80 mt-1">💡 建议收到胶囊后再开始训练营，获得最佳协同效果</p>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
             <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-slate-200">训练营已开通</p>
-              <p className="text-xs text-slate-500">21天心智训练，从今天开始蜕变</p>
+              <p className="text-sm font-medium text-slate-200">21天情绪日记训练营已开通</p>
+              <p className="text-xs text-slate-500">系统化情绪管理训练，从今天开始蜕变</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+            <Package className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-slate-200">📱 物流状态查看</p>
+              <p className="text-xs text-slate-500">可在「设置 → 账户」中查看物流配送进度</p>
             </div>
           </div>
         </div>
@@ -158,7 +165,7 @@ function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
             className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
           >
             <Rocket className="w-5 h-5 mr-2" />
-            进入抗压训练营
+            进入21天情绪日记训练营
           </Button>
           <p className="text-xs text-slate-600">也可稍后从首页进入训练营</p>
         </div>
@@ -172,7 +179,6 @@ export default function SynergyPromoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Multi-step flow: browse → checkout → payment → register → success
   const [step, setStep] = useState<'browse' | 'checkout' | 'payment' | 'register' | 'success'>('browse');
   const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
   const [orderNo, setOrderNo] = useState('');
@@ -185,49 +191,49 @@ export default function SynergyPromoPage() {
     quota: 1,
   };
 
-  // Step 1: User clicks buy → open checkout form
   const handleBuyClick = () => {
     setStep('checkout');
   };
 
-  // Step 2: Checkout info collected → open payment
   const handleCheckoutConfirm = (info: CheckoutInfo) => {
     setCheckoutInfo(info);
     setStep('payment');
   };
 
-  // Step 3: Payment success → save shipping info & check auth
+  // Payment success → save shipping info to orders table
   const handlePaySuccess = async () => {
-    // Save shipping info to order metadata
-    if (checkoutInfo) {
+    if (checkoutInfo && orderNo) {
       try {
-        // We'll store shipping info in orders metadata via edge function or direct update
-        // For now, store in localStorage as fallback
-        localStorage.setItem('synergy_shipping_info', JSON.stringify(checkoutInfo));
+        await supabase
+          .from('orders')
+          .update({
+            buyer_name: checkoutInfo.buyerName,
+            buyer_phone: checkoutInfo.buyerPhone,
+            buyer_address: checkoutInfo.buyerAddress,
+            shipping_status: 'pending',
+          } as any)
+          .eq('order_no', orderNo);
       } catch (e) {
         console.error('Save shipping info error:', e);
       }
     }
 
     if (user) {
-      // Already logged in → skip register, go to success
       setStep('success');
     } else {
       setStep('register');
     }
   };
 
-  // Step 4: Registration success
   const handleRegisterSuccess = (userId: string) => {
     setStep('success');
   };
 
-  // Step 5: Enter camp
+  // Navigate to emotion journal camp
   const handleEnterCamp = () => {
-    navigate('/camp-intro/workplace_stress_21');
+    navigate('/camp-intro/emotion_journal_21');
   };
 
-  // Show success panel overlay
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-[#0a0e1a]">
@@ -236,7 +242,6 @@ export default function SynergyPromoPage() {
     );
   }
 
-  // Show register step as full-screen overlay
   if (step === 'register') {
     return (
       <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center px-4">
@@ -312,7 +317,6 @@ export default function SynergyPromoPage() {
           <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
         </motion.div>
 
-        {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
       </section>
 
@@ -369,7 +373,6 @@ export default function SynergyPromoPage() {
             <p className="text-xs text-slate-500 mt-3">✦ 从根源改变压力应对模式，效果持久</p>
           </div>
 
-          {/* Plus */}
           <div className="flex justify-center">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">+</div>
           </div>
@@ -391,6 +394,10 @@ export default function SynergyPromoPage() {
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-3">✦ 从生理层面快速降低应激反应</p>
+            {/* Shipping notice */}
+            <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <p className="text-xs text-amber-300">📦 香港直邮，预计 4-7 个工作日到达</p>
+            </div>
           </div>
         </div>
       </Section>
@@ -419,9 +426,7 @@ export default function SynergyPromoPage() {
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">24小时全天守护</h2>
         <p className="text-slate-400 text-sm text-center mb-8">从早到晚，无缝保护</p>
         <div className="max-w-lg mx-auto relative">
-          {/* Vertical line */}
           <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500/50 via-cyan-500/50 to-violet-500/50" />
-
           <div className="space-y-0">
             {timeline.map((t, i) => {
               const isMind = t.type === "mind";
@@ -434,11 +439,8 @@ export default function SynergyPromoPage() {
                   transition={{ delay: i * 0.08 }}
                   className="flex items-start gap-4 py-3 relative"
                 >
-                  {/* Node */}
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 z-10 border-2 ${
-                    isMind
-                      ? "bg-violet-950 border-violet-500/60"
-                      : "bg-cyan-950 border-cyan-500/60"
+                    isMind ? "bg-violet-950 border-violet-500/60" : "bg-cyan-950 border-cyan-500/60"
                   }`}>
                     {isMind ? <Brain className="w-5 h-5 text-violet-400" /> : <Pill className="w-5 h-5 text-cyan-400" />}
                   </div>
@@ -472,6 +474,11 @@ export default function SynergyPromoPage() {
               </div>
             ))}
           </div>
+          {/* Shipping notice */}
+          <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+            <p className="text-sm text-amber-300">📦 香港直邮，预计 4-7 个工作日到达</p>
+            <p className="text-xs text-slate-500 mt-1">下单后即安排发货，请确保收货地址准确</p>
+          </div>
         </div>
       </Section>
 
@@ -496,8 +503,6 @@ export default function SynergyPromoPage() {
                   <p className="text-xs text-slate-500">{t.role} · 使用{t.duration}</p>
                 </div>
               </div>
-
-              {/* Data card */}
               <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 mb-3">
                 <div className="text-center">
                   <p className="text-xs text-slate-500">{t.metric}</p>
@@ -513,7 +518,6 @@ export default function SynergyPromoPage() {
                   <p className="text-[10px] text-slate-600">使用后</p>
                 </div>
               </div>
-
               <p className="text-sm text-slate-300 italic">"{t.quote}"</p>
               <div className="flex gap-0.5 mt-2">
                 {Array.from({ length: 5 }).map((_, j) => (
@@ -563,10 +567,8 @@ export default function SynergyPromoPage() {
         </div>
       </div>
 
-      {/* Bottom spacer for sticky bar */}
       <div className="h-20" />
 
-      {/* Checkout form dialog */}
       <CheckoutForm
         open={step === 'checkout'}
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
@@ -575,7 +577,6 @@ export default function SynergyPromoPage() {
         onConfirm={handleCheckoutConfirm}
       />
 
-      {/* Pay dialog */}
       <UnifiedPayDialog
         open={step === 'payment'}
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
