@@ -1,23 +1,26 @@
 
 
-## 两个问题需要修复
+# 将知乐推广页面集成到行业合伙人飞轮
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 思路
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+在行业合伙人面板的"营销获客"分组中新增一个 Tab —— "推广页面"，直接内嵌 `/zhile-promo` 页面的卡片列表内容（复用 `promoCards` 数据），让合伙人无需离开后台即可查看和跳转所有推广页。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+1. **提取推广卡片数据为独立模块** — 将 `ZhilePromoHub.tsx` 中的 `promoCards` 数据和卡片渲染逻辑提取为一个可复用组件 `PartnerPromoPages`，接收 `partnerCode` 参数以便自动为链接追加 `?ref=` 归因参数。
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+2. **在 IndustryPartnerDashboard 中新增 Tab** — 在"营销获客"分组中添加 `{ value: "promo-pages", label: "推广页面" }` Tab，渲染 `PartnerPromoPages` 组件。
 
-| 文件 | 修改 |
+3. **组件功能**：
+   - 展示所有推广页卡片（与 `/zhile-promo` 保持一致）
+   - 每个卡片支持"复制推广链接"（自动带 `?ref=partnerCode`）和"打开页面"
+   - 轻量级设计，适配后台浅色主题
+
+### 文件变更
+
+| 文件 | 操作 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/partner/PartnerPromoPages.tsx` | 新建 — 推广页面卡片列表组件 |
+| `src/components/partner/IndustryPartnerDashboard.tsx` | 新增 Tab 和 TabsContent |
 
