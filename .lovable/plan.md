@@ -1,55 +1,23 @@
 
 
-# 安卓微信保存图片失败的根因与修复方案
+## 两个问题需要修复
 
-## 问题分析
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-当前流程：
-1. 用户点击"下载海报" → `handleDownload` 生成 Blob
-2. `handleShareWithFallback` 检测到安卓 → 尝试 `navigator.share()`（Web Share API）
-3. 如果 Web Share API 失败/取消 → fallback 显示 `ShareImagePreview`，传入 `blob:` URL
-4. 用户在微信中长按 `blob:` URL 的图片 → **微信无法保存**
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**根因**：微信安卓端的长按保存功能不支持 `blob:` 协议的图片 URL，只能保存 `https://` 远程图片。iOS 的 Safari WebView 对 `blob:` URL 有更好的支持，所以 iOS 能保存成功。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-## 修复方案
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-将生成的 Blob 上传到 Storage 的 `partner-assets` bucket（已存在，public），获取 HTTPS 公开 URL 后传给 `ShareImagePreview`。
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 文件变更
-
-| 文件 | 操作 |
+| 文件 | 修改 |
 |------|------|
-| `src/utils/shareImageUploader.ts` | **新建** — 封装 Blob → 上传 Storage → 返回 HTTPS URL |
-| `src/utils/shareUtils.ts` | **修改** — 在 WeChat/Android 的 preview 分支中先上传再回调 `onShowPreview` |
-
-### 核心逻辑
-
-```typescript
-// shareImageUploader.ts
-export async function uploadShareImage(blob: Blob): Promise<string> {
-  const path = `temp-share/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-  const { error } = await supabase.storage
-    .from('partner-assets')
-    .upload(path, blob, { contentType: 'image/png' });
-  if (error) throw error;
-  const { data } = supabase.storage
-    .from('partner-assets')
-    .getPublicUrl(path);
-  return data.publicUrl;
-}
-```
-
-在 `shareUtils.ts` 的 WeChat H5、iOS、Android fallback 三个分支中：
-```typescript
-// 替换原来的 blob URL
-const httpsUrl = await uploadShareImage(blob);
-options.onShowPreview?.(httpsUrl);
-```
-
-这样微信长按保存的是 `https://` 图片，安卓和 iOS 都能正常保存。
-
-### 清理
-
-上传到 `partner-assets/temp-share/` 的临时图片可后续通过定时任务清理，暂不影响功能。
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

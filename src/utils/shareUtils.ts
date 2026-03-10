@@ -131,25 +131,34 @@ export const handleShareWithFallback = async (
     return result;
   };
 
+  // Helper: upload blob and show preview with HTTPS URL (WeChat Android can't save blob: URLs)
+  const showUploadedPreview = async () => {
+    try {
+      const { uploadShareImage } = await import('./shareImageUploader');
+      const httpsUrl = await uploadShareImage(blob);
+      options.onShowPreview?.(httpsUrl);
+      return reportShare({ success: true, method: 'preview', blobUrl: httpsUrl });
+    } catch (uploadErr) {
+      console.warn('[shareUtils] Upload failed, falling back to blob URL', uploadErr);
+      const blobUrl = URL.createObjectURL(blob);
+      options.onShowPreview?.(blobUrl);
+      return reportShare({ success: true, method: 'preview', blobUrl });
+    }
+  };
+
   // Mini Program environment: Always use image preview (no Web Share API support)
   if (isMiniProgram) {
-    const blobUrl = URL.createObjectURL(blob);
-    options.onShowPreview?.(blobUrl);
-    return reportShare({ success: true, method: 'preview', blobUrl });
+    return showUploadedPreview();
   }
   
   // WeChat H5: Skip navigator.share (unreliable), show image preview
   if (isWeChat && !isMiniProgram) {
-    const blobUrl = URL.createObjectURL(blob);
-    options.onShowPreview?.(blobUrl);
-    return reportShare({ success: true, method: 'preview', blobUrl });
+    return showUploadedPreview();
   }
   
   // iOS: Skip unreliable navigator.share, show image preview
   if (isIOS) {
-    const blobUrl = URL.createObjectURL(blob);
-    options.onShowPreview?.(blobUrl);
-    return reportShare({ success: true, method: 'preview', blobUrl });
+    return showUploadedPreview();
   }
   
   // Android: Try Web Share API first
@@ -166,9 +175,7 @@ export const handleShareWithFallback = async (
         return reportShare({ success: false, method: 'webshare', cancelled: true });
       }
       // Fall through to preview on Android if share fails
-      const blobUrl = URL.createObjectURL(blob);
-      options.onShowPreview?.(blobUrl);
-      return reportShare({ success: true, method: 'preview', blobUrl });
+      return showUploadedPreview();
     }
   }
   
