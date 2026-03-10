@@ -11,6 +11,7 @@ interface Briefing {
   emotion_theme: string;
   emotion_intensity: number | null;
   created_at: string;
+  camp_source?: string | null;
   briefing_tags?: Array<{
     tags: {
       name: string;
@@ -40,6 +41,7 @@ interface DayData {
     intensity: number;
     tags?: Array<{ name: string; sentiment: string | null }>;
     time: string;
+    campSource?: string | null;
   }>;
 }
 
@@ -59,6 +61,7 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
           label: b.emotion_theme,
           tags: b.briefing_tags?.map(bt => bt.tags).filter((t): t is { name: string; sentiment: string | null } => t !== null) || [],
           time: new Date(b.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+          campSource: b.camp_source || null,
         })),
       ...quickLogs.map(q => ({
         date: new Date(q.created_at),
@@ -66,6 +69,7 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
         label: q.note || "快速记录",
         tags: [],
         time: new Date(q.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        campSource: null,
       }))
     ];
   }, [briefings, quickLogs]);
@@ -121,6 +125,7 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
         intensity: r.intensity,
         tags: r.tags,
         time: r.time,
+        campSource: r.campSource,
       }))
     };
   };
@@ -303,18 +308,25 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
                 记录详情 ({selectedDay?.count})
               </div>
               {selectedDay?.records.map((record, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 bg-card border border-border rounded-lg space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      {record.label}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {record.time}
-                    </span>
-                  </div>
+                 <div
+                   key={idx}
+                   className="p-3 bg-card border border-border rounded-lg space-y-2"
+                 >
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-1.5 flex-wrap">
+                       <Badge variant="secondary" className="text-xs">
+                         {record.label}
+                       </Badge>
+                       {record.campSource && (
+                         <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                           🏕️ {record.campSource}
+                         </Badge>
+                       )}
+                     </div>
+                     <span className="text-xs text-muted-foreground">
+                       {record.time}
+                     </span>
+                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">强度:</span>
                     <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">

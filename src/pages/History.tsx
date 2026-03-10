@@ -56,6 +56,7 @@ export interface Briefing {
   intensity_keywords: string[] | null;
   created_at: string;
   tags?: TagType[];
+  camp_source?: string | null;
 }
 
 const History = () => {
@@ -192,7 +193,26 @@ const History = () => {
         b => !parentBriefingIds.has(b.id)
       );
 
-      setBriefings(emotionDiaryBriefings);
+      // 查询简报对应的训练营来源
+      const briefingIds = emotionDiaryBriefings.map(b => b.id);
+      const { data: campLinks } = await supabase
+        .from('camp_daily_progress')
+        .select('reflection_briefing_id, camp_id, training_camps!camp_daily_progress_camp_id_fkey(camp_name)')
+        .in('reflection_briefing_id', briefingIds.length > 0 ? briefingIds : ['__none__']);
+
+      const campSourceMap = new Map<string, string>();
+      campLinks?.forEach((link: any) => {
+        if (link.reflection_briefing_id && link.training_camps?.camp_name) {
+          campSourceMap.set(link.reflection_briefing_id, link.training_camps.camp_name);
+        }
+      });
+
+      const briefingsWithCampSource = emotionDiaryBriefings.map(b => ({
+        ...b,
+        camp_source: campSourceMap.get(b.id) || null,
+      }));
+
+      setBriefings(briefingsWithCampSource);
       
       // Load all available tags for filtering
       const { data: tagsData } = await supabase
@@ -241,9 +261,16 @@ const History = () => {
 
         <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
-            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground pb-3 md:pb-4 border-b border-border/50">
-              <Calendar className="w-3 h-3 md:w-4 md:h-4" />
-              {formatDate(selectedBriefing.created_at)}
+            <div className="flex items-center justify-between pb-3 md:pb-4 border-b border-border/50">
+              <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                {formatDate(selectedBriefing.created_at)}
+              </div>
+              {selectedBriefing.camp_source && (
+                <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                  🏕️ {selectedBriefing.camp_source}
+                </Badge>
+              )}
             </div>
 
             <div className="space-y-4 md:space-y-6">
@@ -510,6 +537,7 @@ const History = () => {
                     emotion_theme: b.emotion_theme,
                     emotion_intensity: b.emotion_intensity,
                     created_at: b.created_at,
+                    camp_source: b.camp_source,
                     briefing_tags: b.tags?.map(t => ({ tags: { name: t.name, sentiment: null } })) || []
                   }))}
                   quickLogs={quickLogs}
@@ -536,8 +564,13 @@ const History = () => {
                         <div className="space-y-2 md:space-y-3">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
                             <div className="flex-1 space-y-2">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 flex-wrap">
                                 <h3 className="font-semibold text-foreground text-sm md:text-base">{briefing.emotion_theme}</h3>
+                                {briefing.camp_source && (
+                                  <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                                    🏕️ {briefing.camp_source}
+                                  </Badge>
+                                )}
                                 {briefing.emotion_intensity && (
                                   <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
                                     briefing.emotion_intensity <= 3 ? 'bg-green-500/10' :
