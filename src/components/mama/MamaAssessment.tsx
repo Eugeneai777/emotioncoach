@@ -20,16 +20,11 @@ const dimensions = [
 ];
 
 const scoreEmojis = [
-  { score: 1, emoji: "😫", label: "1" },
-  { score: 2, emoji: "😞", label: "2" },
-  { score: 3, emoji: "😔", label: "3" },
-  { score: 4, emoji: "😐", label: "4" },
-  { score: 5, emoji: "🙂", label: "5" },
-  { score: 6, emoji: "😊", label: "6" },
-  { score: 7, emoji: "😄", label: "7" },
-  { score: 8, emoji: "😁", label: "8" },
-  { score: 9, emoji: "🤩", label: "9" },
-  { score: 10, emoji: "🌟", label: "10" },
+  { score: 2, emoji: "😫", label: "很差" },
+  { score: 4, emoji: "😔", label: "不太好" },
+  { score: 6, emoji: "🙂", label: "还行" },
+  { score: 8, emoji: "😊", label: "不错" },
+  { score: 10, emoji: "🌟", label: "很棒" },
 ];
 
 const getEnergyLevel = (total: number) => {
