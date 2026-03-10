@@ -397,7 +397,8 @@ export default function SynergyPromoPage() {
                 <div key={i} className="py-2 px-1 rounded-lg bg-cyan-500/10 text-xs text-cyan-300">{t}</div>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-3">✦ 从生理层面快速降低应激反应</p>
+        <p className="text-xs text-slate-500 mt-3">✦ 从生理层面快速降低应激反应</p>
+            <p className="text-xs text-amber-400/80 mt-2">📦 香港直邮，预计下单后 4-7 个工作日送达</p>
           </div>
         </div>
       </Section>
