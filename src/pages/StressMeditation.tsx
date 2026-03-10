@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff, MessageCircle, Check, Sparkles } from 'lucide-react';
@@ -9,9 +9,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useAudioCache } from '@/hooks/useAudioCache';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getTodayCST } from '@/utils/dateUtils';
 
 interface StressMeditationData {
   id: string;
