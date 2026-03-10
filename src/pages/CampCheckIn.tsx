@@ -347,6 +347,36 @@ const CampCheckIn = () => {
 
               {/* 任务卡片 */}
               <div className="space-y-3">
+                {/* 0. 冥想任务 - 仅 emotion_stress_7 */}
+                {camp.camp_type === 'emotion_stress_7' && (
+                  <Card 
+                    className="p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 border-emerald-200/40 hover:border-emerald-400/60 hover:shadow-md cursor-pointer active:scale-[0.99]"
+                    onClick={() => navigate("/tools")}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm">
+                        <span className="text-lg">🧘</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <h4 className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">每日冥想</h4>
+                          <Badge className="bg-emerald-100 text-emerald-700 border-0 h-4 px-1.5 text-[10px] dark:bg-emerald-900/50 dark:text-emerald-300">推荐</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">5-10分钟引导冥想，释放压力</p>
+                        <Button 
+                          onClick={(e) => { e.stopPropagation(); navigate("/tools"); }}
+                          size="sm"
+                          variant="outline"
+                          className="mt-2.5 h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300"
+                        >
+                          <Play className="w-3 h-3 mr-1" />
+                          开始冥想
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
                 {/* 1. 情绪教练对话 - 核心任务 */}
                 <Card 
                   className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
@@ -356,7 +386,7 @@ const CampCheckIn = () => {
                   }`}
                   onClick={() => {
                     if (!todayProgress?.is_checked_in) {
-                      if (camp.camp_type === 'emotion_journal_21') {
+                      if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
                         navigate("/emotion-coach");
                       } else {
                         navigate("/");
