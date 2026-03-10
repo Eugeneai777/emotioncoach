@@ -2182,7 +2182,13 @@ export const CoachVoiceChat = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={(e) => {
+            if (status === 'idle' || status === 'disconnected' || status === 'error') {
+              onClose();
+            } else {
+              endCall(e);
+            }
+          }}
           className="text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10"
         >
           <ChevronLeft className="w-5 h-5" />
