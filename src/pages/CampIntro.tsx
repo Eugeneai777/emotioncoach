@@ -374,6 +374,7 @@ const CampIntro = () => {
         onOpenChange={setShowStartDialog}
         campTemplate={campTemplate}
         onSuccess={(campId) => navigate(`/camp-checkin/${campId}`)}
+        isPurchased={hasPurchased}
       />
 
       {/* 付费弹窗 */}

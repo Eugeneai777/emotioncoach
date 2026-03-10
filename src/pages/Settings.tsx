@@ -362,11 +362,20 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="account" className="space-y-6">
-            <AccountBalance />
-            <ShippingTracker />
-            <PurchaseHistory />
-            <PackageSelector />
-            <BillingExplanation />
+            {searchParams.get('view') === 'orders' ? (
+              <>
+                <PurchaseHistory />
+                <ShippingTracker />
+              </>
+            ) : (
+              <>
+                <AccountBalance />
+                <ShippingTracker />
+                <PurchaseHistory />
+                <PackageSelector />
+                <BillingExplanation />
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="reminders">
