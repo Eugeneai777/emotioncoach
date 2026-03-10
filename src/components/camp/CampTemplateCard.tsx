@@ -1,15 +1,23 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Lock, ShoppingCart } from "lucide-react";
+import { ArrowRight, Lock, ShoppingCart, Play } from "lucide-react";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 function formatMoney(value: number | null | undefined): string {
   const num = Number(value) || 0;
   return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(num);
 }
+
+// 兼容性映射
+const getCompatibleCampTypes = (campType: string): string[] => {
+  if (campType === 'wealth_block_7') return ['wealth_block_7', 'wealth_block_21'];
+  if (campType === 'emotion_journal_21') return ['emotion_journal_21', 'synergy_bundle'];
+  return [campType];
+};
 
 interface CampTemplateCardProps {
   camp: CampTemplate;
@@ -20,6 +28,7 @@ interface CampTemplateCardProps {
 }
 
 export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPurchase }: CampTemplateCardProps) {
+  const { user } = useAuth();
   const isBloomCamp = ['emotion_bloom', 'identity_bloom', 'life_bloom'].includes(camp.camp_type);
   const isParentCamp = camp.camp_type === 'parent_emotion_21';
 
@@ -27,7 +36,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
     queryKey: ['prerequisite-check', camp.camp_type],
     queryFn: async () => {
       if (!camp.prerequisites?.required_camp) return true;
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
       const { data } = await supabase
         .from('training_camps')
@@ -41,10 +49,30 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
     enabled: !isBloomCamp && !!camp.prerequisites?.required_camp
   });
 
+  // Check if user already purchased this camp
+  const { data: purchaseStatus } = useQuery({
+    queryKey: ['camp-card-purchase', camp.camp_type, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const campTypes = getCompatibleCampTypes(camp.camp_type);
+      const { data: purchase } = await supabase
+        .from('user_camp_purchases')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('camp_type', campTypes)
+        .eq('payment_status', 'completed')
+        .limit(1)
+        .maybeSingle();
+      return purchase;
+    },
+    enabled: !!user && !!(camp.price && camp.price > 0),
+  });
+
   const isLocked = !isBloomCamp && camp.prerequisites?.required_camp && !hasPrerequisite;
   const isPopular = enrolledCount >= 5;
   const isRecommended = camp.camp_type === 'emotion_journal_21';
   const isPaidCamp = camp.price && camp.price > 0;
+  const hasPurchased = !!purchaseStatus;
 
   return (
     <Card
@@ -62,10 +90,10 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           : ''
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
-      onClick={!isLocked && !isPaidCamp ? onClick : undefined}
-      role={!isLocked && !isPaidCamp ? "button" : undefined}
+      onClick={!isLocked && (!isPaidCamp || hasPurchased) ? onClick : undefined}
+      role={!isLocked && (!isPaidCamp || hasPurchased) ? "button" : undefined}
     >
-      {/* 渐变头图 - 手机端压缩 */}
+      {/* 渐变头图 */}
       <div className={`relative h-24 sm:h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
 
@@ -76,7 +104,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           </div>
         )}
 
-        {/* 标签 - 手机端只显示1个 */}
         <div className="absolute top-2 right-2 flex flex-wrap gap-1.5 justify-end">
           {isBloomCamp && (
             <div className="px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-semibold text-purple-600 shadow-sm">
@@ -88,7 +115,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
               👨‍👩‍👧 亲子专题
             </div>
           )}
-          {/* 深度转化标签仅桌面端显示 */}
           {isBloomCamp && (
             <div className="hidden sm:block px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
               🎯 深度转化
@@ -117,7 +143,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
       </div>
 
       <CardHeader className="relative z-10 pt-2 pb-1 sm:pt-3 sm:pb-2">
-        {/* 标题行：标题 + 天数徽章 */}
         <div className="flex items-center gap-2">
           <CardTitle className="text-base sm:text-xl line-clamp-1 text-teal-800 dark:text-teal-200 flex-1 min-w-0">
             {camp.camp_name}
@@ -126,7 +151,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
             {camp.duration_days}天
           </Badge>
         </div>
-        {/* subtitle：始终显示 */}
         {camp.camp_subtitle && (
           <p className="text-xs sm:text-sm text-teal-600/80 dark:text-teal-400/80 line-clamp-1 mt-0.5">
             {camp.camp_subtitle}
@@ -135,22 +159,20 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
       </CardHeader>
 
       <CardContent className="relative z-10 space-y-2 flex-1 pt-0">
-        {/* description：仅桌面端显示 */}
         {camp.description && (
           <p className="hidden sm:block text-sm text-muted-foreground leading-relaxed line-clamp-2">
             {camp.description}
           </p>
         )}
 
-        {/* 阶课程徽章 */}
         {camp.stages && camp.stages.length > 0 && (
           <Badge variant="outline" className="border-teal-300/50 text-teal-600 dark:border-teal-700/50 dark:text-teal-400 text-[10px] sm:text-xs">
             {camp.stages.length}阶课程
           </Badge>
         )}
 
-        {/* 价格信息 */}
-        {camp.price !== undefined && camp.price !== null && (
+        {/* 价格信息 - 已购买时不显示价格 */}
+        {camp.price !== undefined && camp.price !== null && !hasPurchased && (
           <div className="flex items-baseline gap-1.5 flex-wrap">
             {Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0 && (
               <span className="text-muted-foreground line-through text-xs">
@@ -168,6 +190,13 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           </div>
         )}
 
+        {/* 已购买标记 */}
+        {hasPurchased && (
+          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
+            ✅ 已购买
+          </Badge>
+        )}
+
         {isLocked && camp.prerequisites?.message && (
           <div className="bg-teal-50/50 dark:bg-teal-950/30 p-2 rounded-lg border border-teal-200/50 dark:border-teal-800/50">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -183,7 +212,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           <Button disabled className="w-full gap-2" size="sm">
             暂未解锁
           </Button>
-        ) : isPaidCamp ? (
+        ) : isPaidCamp && !hasPurchased ? (
           <Button
             onClick={(e) => {
               e.stopPropagation();
@@ -202,14 +231,30 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
               onClick();
             }}
             className={`w-full gap-2 ${
-              isBloomCamp
+              hasPurchased
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white'
+                : isBloomCamp
                 ? 'bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500 bg-[length:200%_100%] animate-shimmer text-white hover:opacity-90'
                 : 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white'
             }`}
             size="sm"
           >
-            {isBloomCamp ? '✨ 开启绽放之旅' : '立即开启'}
-            <ArrowRight className="w-4 h-4" />
+            {hasPurchased ? (
+              <>
+                <Play className="w-4 h-4" />
+                开始训练
+              </>
+            ) : isBloomCamp ? (
+              <>
+                ✨ 开启绽放之旅
+                <ArrowRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                立即开启
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
         )}
       </CardFooter>
