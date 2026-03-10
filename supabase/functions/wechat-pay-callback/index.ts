@@ -234,6 +234,33 @@ serve(async (req) => {
       }
     }
 
+    // === synergy_bundle 特殊处理：补写训练营购买记录 ===
+    if (order.package_key === 'synergy_bundle') {
+      try {
+        const { error: campPurchaseError } = await supabase
+          .from('user_camp_purchases')
+          .upsert({
+            user_id: order.user_id,
+            camp_type: 'emotion_journal_21',
+            camp_name: '21天情绪日记训练营',
+            purchase_price: order.amount,
+            payment_method: 'wechat',
+            payment_status: 'completed',
+            transaction_id: tradeNo,
+            purchased_at: new Date().toISOString(),
+            expires_at: null,
+          }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
+
+        if (campPurchaseError) {
+          console.error('[WechatCallback] synergy_bundle camp purchase error:', campPurchaseError);
+        } else {
+          console.log('[WechatCallback] synergy_bundle camp purchase recorded for emotion_journal_21');
+        }
+      } catch (e) {
+        console.error('[WechatCallback] synergy_bundle camp purchase exception:', e);
+      }
+    }
+
     // === 新增：写入 subscriptions 表（非训练营订单） ===
     if (!order.package_key.startsWith('camp-')) {
       try {

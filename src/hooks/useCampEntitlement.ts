@@ -7,6 +7,9 @@ const getCompatibleCampTypes = (campType: string): string[] => {
   if (campType === 'wealth_block_7') {
     return ['wealth_block_7', 'wealth_block_21'];
   }
+  if (campType === 'emotion_journal_21') {
+    return ['emotion_journal_21', 'synergy_bundle'];
+  }
   return [campType];
 };
 

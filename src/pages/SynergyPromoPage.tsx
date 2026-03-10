@@ -184,6 +184,8 @@ export default function SynergyPromoPage() {
   const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
   const [orderNo, setOrderNo] = useState('');
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
+  const [alreadyPurchased, setAlreadyPurchased] = useState(false);
+  const [purchaseChecked, setPurchaseChecked] = useState(false);
 
   const packageInfo = {
     key: "synergy_bundle",
@@ -191,6 +193,32 @@ export default function SynergyPromoPage() {
     price: 0.01,
     quota: 1,
   };
+
+  // 检查用户是否已购买过 synergy_bundle
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user) {
+        setPurchaseChecked(true);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('package_key', 'synergy_bundle')
+          .eq('status', 'paid')
+          .limit(1);
+        if (data && data.length > 0) {
+          setAlreadyPurchased(true);
+        }
+      } catch (e) {
+        console.error('Check purchase error:', e);
+      }
+      setPurchaseChecked(true);
+    };
+    checkPurchase();
+  }, [user]);
 
   // Step 1: User clicks buy → open checkout form
   const handleBuyClick = () => {
