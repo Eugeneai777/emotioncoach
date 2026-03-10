@@ -56,6 +56,7 @@ export interface Briefing {
   intensity_keywords: string[] | null;
   created_at: string;
   tags?: TagType[];
+  camp_source?: string | null;
 }
 
 const History = () => {
