@@ -153,7 +153,7 @@ export default function StressMeditation() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
-      <PageHeader title={`Day ${day} · ${meditation.title}`} onBack={() => navigate(-1)} />
+      <PageHeader title={`Day ${day} · ${meditation.title}`} showBack />
 
       <div className="p-4 space-y-4 max-w-lg mx-auto">
         {/* Audio element */}
