@@ -948,6 +948,16 @@ Deno.serve(async (req) => {
         port: 443,
       });
       
+      // ✅ 关键修复：启用 TCP 层保活，防止中间网关/平台因 TCP 空闲而断开连接
+      // 这是解决"1分多钟自动断开"的核心措施之一
+      try {
+        doubaoConn.setKeepAlive(true);
+        doubaoConn.setNoDelay(true);
+        console.log('[DoubaoRelay] ✅ TCP keepAlive=true, noDelay=true set on TLS connection');
+      } catch (e) {
+        console.warn('[DoubaoRelay] Failed to set TCP options (non-fatal):', e);
+      }
+      
       console.log('[DoubaoRelay] TLS connection established');
       
       // 发送 WebSocket 握手请求
