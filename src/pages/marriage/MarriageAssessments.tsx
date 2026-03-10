@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, History, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
@@ -11,8 +11,8 @@ import { assessments } from "@/components/marriage/MarriageAssessmentCards";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
-// Simple assessment questions per type
 const questionBank: Record<string, { q: string; options: string[] }[]> = {
   happiness: [
     { q: "你们最近一个月争吵频率如何？", options: ["很少", "偶尔", "经常", "几乎每天"] },
@@ -51,17 +51,109 @@ const questionBank: Record<string, { q: string; options: string[] }[]> = {
   ],
 };
 
+interface HistoryRecord {
+  id: string;
+  assessment_type: string;
+  assessment_title: string;
+  score: number;
+  max_score: number;
+  result_markdown: string;
+  created_at: string;
+}
+
 const MarriageAssessments: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const activeId = searchParams.get("id");
+  const viewHistoryType = searchParams.get("history");
+  const viewRecordId = searchParams.get("record");
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<HistoryRecord | null>(null);
+  const [historyCountMap, setHistoryCountMap] = useState<Record<string, number>>({});
 
   const activeAssessment = assessments.find((a) => a.id === activeId);
   const questions = activeId ? questionBank[activeId] || [] : [];
+
+  // Load history counts for list view
+  useEffect(() => {
+    const loadCounts = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("marriage_assessment_history")
+        .select("assessment_type")
+        .eq("user_id", user.id);
+      if (data) {
+        const counts: Record<string, number> = {};
+        data.forEach((r: any) => {
+          counts[r.assessment_type] = (counts[r.assessment_type] || 0) + 1;
+        });
+        setHistoryCountMap(counts);
+      }
+    };
+    if (!activeId && !viewHistoryType) loadCounts();
+  }, [activeId, viewHistoryType]);
+
+  // Load history for a specific type
+  useEffect(() => {
+    if (!viewHistoryType) return;
+    const load = async () => {
+      setHistoryLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("请先登录");
+        setHistoryLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("marriage_assessment_history")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("assessment_type", viewHistoryType)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (!error && data) setHistory(data as HistoryRecord[]);
+      setHistoryLoading(false);
+    };
+    load();
+  }, [viewHistoryType]);
+
+  // Load a specific record
+  useEffect(() => {
+    if (!viewRecordId) { setSelectedRecord(null); return; }
+    const load = async () => {
+      const { data } = await supabase
+        .from("marriage_assessment_history")
+        .select("*")
+        .eq("id", viewRecordId)
+        .single();
+      if (data) setSelectedRecord(data as HistoryRecord);
+    };
+    load();
+  }, [viewRecordId]);
+
+  const saveResult = async (resultText: string, score: number, maxScore: number, newAnswers: number[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from("marriage_assessment_history").insert({
+        user_id: user.id,
+        assessment_type: activeId!,
+        assessment_title: activeAssessment?.title || "",
+        score,
+        max_score: maxScore,
+        answers: questions.map((q, i) => ({ question: q.q, answer: q.options[newAnswers[i]] })),
+        result_markdown: resultText,
+      });
+    } catch (e) {
+      console.error("Save history failed:", e);
+    }
+  };
 
   const handleAnswer = async (optionIdx: number) => {
     const newAnswers = [...answers, optionIdx];
@@ -70,11 +162,10 @@ const MarriageAssessments: React.FC = () => {
     if (currentQ < questions.length - 1) {
       setCurrentQ((p) => p + 1);
     } else {
-      // Generate result
       setGenerating(true);
       try {
         const score = newAnswers.reduce((sum, a) => sum + a, 0);
-        const maxScore = (questions.length - 1) * 3;
+        const maxScore = questions.length * 3;
         const { data, error } = await supabase.functions.invoke("marriage-ai-tool", {
           body: {
             mode: "assessment-result",
@@ -90,14 +181,18 @@ const MarriageAssessments: React.FC = () => {
           },
         });
         if (error) throw error;
-        setResult(data?.result || "暂无结果");
+        const resultText = data?.result || "暂无结果";
+        setResult(resultText);
+        await saveResult(resultText, score, maxScore, newAnswers);
       } catch (e) {
         console.error(e);
         toast.error("生成结果失败");
-        // Fallback
         const score = newAnswers.reduce((sum, a) => sum + a, 0);
-        const pct = Math.round((1 - score / (questions.length * 3)) * 100);
-        setResult(`**测评得分：${pct}/100**\n\n根据您的回答，建议您关注关系中的沟通方式和情绪管理。点击下方按钮，体验AI关系工具或预约专业咨询获取更详细的建议。`);
+        const maxScore = questions.length * 3;
+        const pct = Math.round((1 - score / maxScore) * 100);
+        const fallback = `**测评得分：${pct}/100**\n\n根据您的回答，建议您关注关系中的沟通方式和情绪管理。点击下方按钮，体验AI关系工具或预约专业咨询获取更详细的建议。`;
+        setResult(fallback);
+        await saveResult(fallback, score, maxScore, newAnswers);
       } finally {
         setGenerating(false);
       }
@@ -110,6 +205,117 @@ const MarriageAssessments: React.FC = () => {
     setResult(null);
     navigate("/marriage/assessments");
   };
+
+  // View a single history record
+  if (viewRecordId && selectedRecord) {
+    const meta = assessments.find((a) => a.id === selectedRecord.assessment_type);
+    return (
+      <>
+        <Helmet><title>历史记录 - 婚因有道</title></Helmet>
+        <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+          <div className="px-5 pt-8 max-w-lg mx-auto">
+            <button
+              onClick={() => navigate(`/marriage/assessments?history=${selectedRecord.assessment_type}`)}
+              className="flex items-center gap-1 text-sm text-muted-foreground mb-4"
+            >
+              <ArrowLeft className="h-4 w-4" /> 返回历史列表
+            </button>
+            <div className="text-center mb-6">
+              <span className="text-4xl">{meta?.emoji}</span>
+              <h2 className="text-lg font-bold text-foreground mt-2">{selectedRecord.assessment_title}</h2>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(selectedRecord.created_at), "yyyy年M月d日 HH:mm")}
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl p-5 border border-marriage-border shadow-sm mb-6">
+              <div className="prose prose-sm max-w-none text-sm leading-relaxed">
+                <ReactMarkdown>{selectedRecord.result_markdown}</ReactMarkdown>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/marriage/assessments?id=${selectedRecord.assessment_type}`)}
+              className="w-full rounded-xl border-marriage-primary/30 text-marriage-primary"
+            >
+              重新测评
+            </Button>
+          </div>
+          <MarriageNav />
+        </div>
+      </>
+    );
+  }
+
+  // History list for a type
+  if (viewHistoryType) {
+    const meta = assessments.find((a) => a.id === viewHistoryType);
+    return (
+      <>
+        <Helmet><title>{meta?.title} 历史记录 - 婚因有道</title></Helmet>
+        <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+          <div className="px-5 pt-8 max-w-lg mx-auto">
+            <button
+              onClick={() => navigate("/marriage/assessments")}
+              className="flex items-center gap-1 text-sm text-muted-foreground mb-4"
+            >
+              <ArrowLeft className="h-4 w-4" /> 返回测评列表
+            </button>
+            <div className="text-center mb-6">
+              <span className="text-3xl">{meta?.emoji}</span>
+              <h2 className="text-base font-bold text-foreground mt-1">{meta?.title}</h2>
+              <p className="text-xs text-muted-foreground">历史记录</p>
+            </div>
+
+            {historyLoading ? (
+              <div className="text-center py-12">
+                <div className="w-6 h-6 border-2 border-marriage-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              </div>
+            ) : history.length === 0 ? (
+              <div className="text-center py-12">
+                <History className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">暂无历史记录</p>
+                <Button
+                  onClick={() => navigate(`/marriage/assessments?id=${viewHistoryType}`)}
+                  className="mt-4 rounded-xl bg-marriage-primary hover:bg-marriage-primary/90 text-white"
+                >
+                  开始测评
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {history.map((h) => {
+                  const pct = h.max_score > 0 ? Math.round((1 - h.score / h.max_score) * 100) : 0;
+                  return (
+                    <motion.button
+                      key={h.id}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate(`/marriage/assessments?record=${h.id}`)}
+                      className="w-full bg-white rounded-xl p-4 border border-marriage-border shadow-sm text-left flex items-center gap-3"
+                    >
+                      <div className="w-11 h-11 rounded-xl bg-marriage-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-marriage-primary">{pct}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">得分 {pct}/100</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <Clock className="h-3 w-3 text-muted-foreground/50" />
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(h.created_at), "yyyy/M/d HH:mm")}
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <MarriageNav />
+        </div>
+      </>
+    );
+  }
 
   // Assessment list view
   if (!activeId) {
@@ -126,21 +332,34 @@ const MarriageAssessments: React.FC = () => {
 
             <div className="space-y-3">
               {assessments.map((a) => (
-                <motion.button
+                <motion.div
                   key={a.id}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(`/marriage/assessments?id=${a.id}`)}
-                  className={`w-full bg-gradient-to-r ${a.color} rounded-2xl p-4 border ${a.borderColor} shadow-sm text-left`}
+                  className={`w-full bg-gradient-to-r ${a.color} rounded-2xl p-4 border ${a.borderColor} shadow-sm`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{a.emoji}</span>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-bold text-foreground">{a.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p>
+                  <button
+                    onClick={() => navigate(`/marriage/assessments?id=${a.id}`)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{a.emoji}</span>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-foreground">{a.title}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
-                  </div>
-                </motion.button>
+                  </button>
+                  {(historyCountMap[a.id] || 0) > 0 && (
+                    <button
+                      onClick={() => navigate(`/marriage/assessments?history=${a.id}`)}
+                      className="mt-2 flex items-center gap-1 text-[10px] text-marriage-primary font-medium ml-12"
+                    >
+                      <History className="h-3 w-3" />
+                      查看 {historyCountMap[a.id]} 条历史记录
+                    </button>
+                  )}
+                </motion.div>
               ))}
             </div>
           </div>
@@ -189,6 +408,14 @@ const MarriageAssessments: React.FC = () => {
               >
                 预约专业咨询
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/marriage/assessments?history=${activeId}`)}
+                className="w-full rounded-xl border-marriage-border text-muted-foreground"
+              >
+                <History className="h-4 w-4 mr-1" />
+                查看历史记录
+              </Button>
               <Button variant="ghost" onClick={resetAssessment} className="text-muted-foreground text-sm">
                 重新测评
               </Button>
@@ -212,7 +439,6 @@ const MarriageAssessments: React.FC = () => {
             <ArrowLeft className="h-4 w-4" /> 返回
           </button>
 
-          {/* Progress */}
           <div className="flex items-center gap-2 mb-6">
             <div className="flex-1 h-1.5 bg-marriage-border rounded-full overflow-hidden">
               <div
