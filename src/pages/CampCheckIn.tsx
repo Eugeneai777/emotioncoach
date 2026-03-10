@@ -636,6 +636,7 @@ const CampCheckIn = () => {
                           badgeColor="emerald"
                           actionLabel="开始冥想"
                           onAction={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
+                          onToggle={(checked) => handleToggleTask('declaration_completed', checked)}
                         />
                       )}
 
@@ -659,6 +660,7 @@ const CampCheckIn = () => {
                             navigate("/");
                           }
                         }}
+                        onToggle={(checked) => handleToggleTask('is_checked_in', checked)}
                       />
 
                       {/* 每日反思分享 */}
@@ -672,6 +674,7 @@ const CampCheckIn = () => {
                         actionIcon={<Share2 className="w-3 h-3 mr-1" />}
                         isOptional
                         onAction={handleShare}
+                        onToggle={(checked) => handleToggleTask('has_shared_to_community', checked)}
                       />
 
                       {/* 今日成长课程 */}
@@ -686,6 +689,7 @@ const CampCheckIn = () => {
                         actionIcon={<Play className="w-3 h-3 mr-1" />}
                         isOptional
                         onAction={() => setActiveTab("tasks")}
+                        onToggle={(checked) => handleToggleTask('video_learning_completed', checked)}
                       />
                     </div>
                   </>
