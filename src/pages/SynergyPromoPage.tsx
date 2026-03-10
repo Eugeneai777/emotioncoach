@@ -140,14 +140,21 @@ function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
             <Package className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-slate-200">知乐胶囊已安排发货</p>
-              <p className="text-xs text-slate-500">预计3个工作日内寄出，请保持电话畅通</p>
+              <p className="text-xs text-slate-500">香港直邮，预计 4-7 个工作日送达</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-900/30 border border-amber-500/30">
+            <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-200">💡 建议收到胶囊后再开启训练营</p>
+              <p className="text-xs text-slate-400">心智训练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
             <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-slate-200">训练营已开通</p>
-              <p className="text-xs text-slate-500">21天心智训练，从今天开始蜕变</p>
+              <p className="text-sm font-medium text-slate-200">21天情绪日记训练营已开通</p>
+              <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
             </div>
           </div>
         </div>
@@ -158,9 +165,9 @@ function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
             className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
           >
             <Rocket className="w-5 h-5 mr-2" />
-            进入抗压训练营
+            进入情绪日记训练营
           </Button>
-          <p className="text-xs text-slate-600">也可稍后从首页进入训练营</p>
+          <p className="text-xs text-slate-600">物流状态可在「设置 → 账户」中查看</p>
         </div>
       </div>
     </motion.div>
