@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 import { assessments } from "@/components/marriage/MarriageAssessmentCards";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,6 +119,7 @@ const MarriageAssessments: React.FC = () => {
           <title>婚姻关系测评中心 - 婚因有道</title>
         </Helmet>
         <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+          <MarriageBackButton />
           <div className="px-5 pt-10 pb-6 max-w-lg mx-auto">
             <h1 className="text-xl font-bold text-foreground text-center mb-1">婚姻关系测评中心</h1>
             <p className="text-xs text-muted-foreground text-center mb-6">选择一个更适合你当前问题的测评</p>

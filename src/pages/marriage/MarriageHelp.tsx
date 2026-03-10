@@ -6,6 +6,7 @@ import { QrCode, FileText, Phone, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 
 const resources = [
   { icon: FileText, title: "婚姻关系改善指南", desc: "系统了解关系修复的方法与步骤" },
@@ -22,6 +23,7 @@ const MarriageHelp: React.FC = () => {
         <title>获取帮助 - 婚因有道</title>
       </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+        <MarriageBackButton />
         <div className="px-5 pt-10 max-w-lg mx-auto">
           <h1 className="text-xl font-bold text-foreground text-center mb-1">获取帮助</h1>
           <p className="text-xs text-muted-foreground text-center mb-8">

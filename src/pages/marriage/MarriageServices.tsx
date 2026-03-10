@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Users, Shield, ClipboardCheck, Phone, BarChart3, 
 import { Button } from "@/components/ui/button";
 import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
+import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 
 const services = [
   { icon: Heart, title: "婚姻关系修复咨询", desc: "专业咨询师1对1帮助修复夫妻关系" },
@@ -30,6 +31,7 @@ const MarriageServices: React.FC = () => {
         <title>专业婚姻家庭咨询服务 - 婚因有道</title>
       </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-marriage-light to-white pb-24">
+        <MarriageBackButton />
         <div className="px-5 pt-10 max-w-lg mx-auto">
           <h1 className="text-xl font-bold text-foreground text-center mb-6">专业婚姻家庭咨询服务</h1>
 
