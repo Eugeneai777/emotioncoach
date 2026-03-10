@@ -1087,7 +1087,9 @@ Deno.serve(async (req) => {
             if (n === null || n === 0) {
               const idleClientSec = Math.round((now - lastClientAudioAt) / 1000);
               const idleUpstreamSec = Math.round((now - lastDoubaoActivityAt) / 1000);
-              console.log(`[DoubaoRelay] Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms, idleClient=${idleClientSec}s, idleUpstream=${idleUpstreamSec}s)`);
+              const totalSessionSec = Math.round((now - lastKeepaliveAt) / 1000);
+              const keepaliveSent = audioSequence;
+              console.error(`[DoubaoRelay] ❌ Connection closed by Doubao (n=${n}, elapsed=${elapsed}ms, idleClient=${idleClientSec}s, idleUpstream=${idleUpstreamSec}s, totalKeepalivesSent=${keepaliveSent}, sessionAge=${Math.round((now - (lastDoubaoActivityAt - idleUpstreamSec * 1000)) / 1000)}s)`);
               isConnected = false;
 
               // ✅ 把“谁先断开 + 空闲时长”传回前端，便于定位微信 1分40 挂断
