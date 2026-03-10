@@ -512,37 +512,69 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               
               {/* 按钮区 - 白色背景 */}
               <div className="flex gap-2 p-4 bg-card">
-                {isPaid ? (
-                  <>
+                {(() => {
+                  const status = getCampStatus(camp.camp_type);
+                  if (status === 'active') return (
                     <Button 
                       className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
                       size="lg"
-                      onClick={() => handlePurchase({ 
-                        key: `camp-${camp.camp_type}`, 
-                        name: camp.camp_name, 
-                        price: camp.price || 0 
-                      })}
+                      onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
                     >
-                      <ShoppingCart className="w-4 h-4 mr-1.5" />
-                      立即报名
+                      继续训练 →
                     </Button>
+                  );
+                  if (status === 'completed') return (
                     <Button 
-                      variant="outline" 
-                      className="bg-white/90 hover:bg-white border-border"
+                      className="flex-1 bg-green-600 text-white shadow-lg hover:bg-green-700"
+                      size="lg"
+                      onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
+                    >
+                      ✅ 已完成 · 查看记录
+                    </Button>
+                  );
+                  if (status === 'purchased') return (
+                    <Button 
+                      className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                      size="lg"
+                      onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
+                    >
+                      开始训练 →
+                    </Button>
+                  );
+                  // status === 'none'
+                  if (isPaid) return (
+                    <>
+                      <Button 
+                        className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                        size="lg"
+                        onClick={() => handlePurchase({ 
+                          key: `camp-${camp.camp_type}`, 
+                          name: camp.camp_name, 
+                          price: camp.price || 0 
+                        })}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-1.5" />
+                        立即报名
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="bg-white/90 hover:bg-white border-border"
+                        onClick={() => navigate(`/camp-template/${camp.id}`)}
+                      >
+                        了解更多
+                      </Button>
+                    </>
+                  );
+                  return (
+                    <Button 
+                      className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
+                      size="lg"
                       onClick={() => navigate(`/camp-template/${camp.id}`)}
                     >
-                      了解更多
+                      免费参加 →
                     </Button>
-                  </>
-                ) : (
-                  <Button 
-                    className={`flex-1 bg-gradient-to-r ${gradient} text-white shadow-lg hover:opacity-90`}
-                    size="lg"
-                    onClick={() => navigate(`/camp-template/${camp.id}`)}
-                  >
-                    免费参加 →
-                  </Button>
-                )}
+                  );
+                })()}
               </div>
             </MobileCard>
           );
