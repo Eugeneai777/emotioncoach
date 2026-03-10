@@ -41,11 +41,15 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const partnerId = searchParams.get('partner');
-  
-  
+
+
   // AI 来电状态 - 从 navigation state 获取
-  const incomingCallState = location.state as { isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string; autoStartVoice?: boolean } | null;
+  const incomingCallState = location.state as { 
+    isIncomingCall?: boolean; aiCallId?: string; openingMessage?: string; autoStartVoice?: boolean;
+    meditationReflection?: { thought: string; emotionImpact: string; dayNumber: number };
+  } | null;
   
+  const meditationReflection = incomingCallState?.meditationReflection;
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
   
@@ -114,6 +118,24 @@ const Index = () => {
   } = useSmartNotification('emotion_coach');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // 冥想反思：自动发送反思内容作为开场
+  const meditationReflectionSentRef = useRef(false);
+  useEffect(() => {
+    if (meditationReflection && !meditationReflectionSentRef.current) {
+      meditationReflectionSentRef.current = true;
+      const parts: string[] = [];
+      parts.push(`我刚完成了第${meditationReflection.dayNumber}天的解压冥想。`);
+      if (meditationReflection.thought) {
+        parts.push(`冥想时脑海里出现了这个想法：${meditationReflection.thought}`);
+      }
+      if (meditationReflection.emotionImpact) {
+        parts.push(`这让我的情绪感受是：${meditationReflection.emotionImpact}`);
+      }
+      const msg = parts.join('\n');
+      setTimeout(() => sendMessage(msg), 500);
+    }
+  }, [meditationReflection, sendMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({

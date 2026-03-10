@@ -1,39 +1,23 @@
 
 
-## 冥想页面增加反思记录框 + 跳转情绪教练
+## 两个问题需要修复
 
-### 方案
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-在冥想播放页面（`StressMeditation.tsx`）的播放器下方，始终显示一个"冥想反思"卡片，包含两个问题：
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-1. **"刚刚冥想的时候，有没有一个想法或事情在你脑海里出现？"** — 文本输入框
-2. **"这个想法和事情如何影响你的情绪？"** — 文本输入框
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-底部放一个 CTA 按钮 **"情绪教练梳理"**，点击后携带用户填写的内容作为上下文，跳转到情绪教练页面（`/emotion-coach`），并在教练对话中自动以此内容开场。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 具体改动
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-1. **`src/pages/StressMeditation.tsx`**
-   - 在播放器卡片下方新增"冥想反思"卡片（始终显示，不依赖 `hasListened`）
-   - 两个 `Textarea` 输入框 + "情绪教练梳理" 按钮
-   - 点击按钮时通过 `navigate('/emotion-coach', { state: { meditationReflection: { thought, emotionImpact, dayNumber } } })` 传递数据
-   - 移除或调整原有的 `hasListened` 完成卡片，将其与反思卡片合并
-
-2. **`src/pages/Index.tsx`（情绪教练页）**
-   - 读取 `location.state.meditationReflection`
-   - 若存在，自动组装一条上下文消息（如"我刚完成第X天冥想，脑海中出现了...这让我感到..."）作为首条用户消息发送给教练
-   - 教练即以此为起点展开对话
-
-### 用户体验流程
-
-```text
-冥想页面
-├── 播放器（音频播放）
-├── 冥想反思卡片（始终可见）
-│   ├── 问题1：脑海中出现的想法
-│   ├── 问题2：如何影响情绪
-│   └── [情绪教练梳理] 按钮
-└── 点击 → 跳转 /emotion-coach（携带反思内容）
-        └── 教练自动以反思内容开场对话
-```
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

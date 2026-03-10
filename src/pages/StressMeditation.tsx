@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff, MessageCircle, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff, MessageCircle, Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioCache } from '@/hooks/useAudioCache';
 import { toast } from 'sonner';
@@ -34,6 +35,8 @@ export default function StressMeditation() {
   const [showScript, setShowScript] = useState(false);
   const [hasListened, setHasListened] = useState(false);
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
+  const [thought, setThought] = useState('');
+  const [emotionImpact, setEmotionImpact] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { isCached, cacheAudio, getCachedAudio, isSupported: isCacheSupported, isLoading: isCaching } = useAudioCache();
@@ -260,50 +263,71 @@ export default function StressMeditation() {
           </CardContent>
         </Card>
 
-        {/* Meditation Complete Card */}
-        <AnimatePresence>
-          {hasListened && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+        {/* Meditation Reflection Card */}
+        <Card className="border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <h3 className="text-base font-semibold text-teal-800 dark:text-teal-200">冥想反思</h3>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-teal-700 dark:text-teal-300">
+                刚刚冥想的时候，有没有一个想法或事情在你脑海里出现？
+              </label>
+              <Textarea
+                value={thought}
+                onChange={(e) => setThought(e.target.value)}
+                placeholder="比如：工作压力、和家人的关系、对未来的担忧..."
+                className="bg-white/70 dark:bg-white/5 border-teal-200 dark:border-teal-700 focus-visible:ring-teal-400 min-h-[72px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-teal-700 dark:text-teal-300">
+                这个想法和事情如何影响你的情绪？
+              </label>
+              <Textarea
+                value={emotionImpact}
+                onChange={(e) => setEmotionImpact(e.target.value)}
+                placeholder="比如：让我感到焦虑、有点难过、心里不踏实..."
+                className="bg-white/70 dark:bg-white/5 border-teal-200 dark:border-teal-700 focus-visible:ring-teal-400 min-h-[72px]"
+              />
+            </div>
+
+            <Button
+              onClick={() => navigate('/emotion-coach', {
+                state: {
+                  meditationReflection: {
+                    thought: thought.trim(),
+                    emotionImpact: emotionImpact.trim(),
+                    dayNumber: day,
+                  }
+                }
+              })}
+              disabled={!thought.trim() && !emotionImpact.trim()}
+              className="w-full bg-teal-500 hover:bg-teal-600 text-white py-5 text-base"
             >
-              <Card className="border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40">
-                <CardContent className="p-6 space-y-4">
-                  <div className="text-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                      className="w-14 h-14 mx-auto bg-teal-500 rounded-full flex items-center justify-center mb-3"
-                    >
-                      <Check className="w-7 h-7 text-white" />
-                    </motion.div>
-                    <h3 className="text-lg font-semibold text-teal-800 dark:text-teal-200">冥想完成 🎉</h3>
-                    <p className="text-sm text-muted-foreground mt-1">接下来，和 AI 情绪教练聊聊今天的感受</p>
-                  </div>
+              <MessageCircle className="w-5 h-5 mr-2" />
+              情绪教练梳理
+            </Button>
 
-                  <Button
-                    onClick={() => navigate('/emotion-coach')}
-                    className="w-full bg-teal-500 hover:bg-teal-600 text-white py-5 text-base"
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    开始情绪教练对话
-                  </Button>
-
+            <AnimatePresence>
+              {hasListened && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <Button
                     variant="ghost"
-                    onClick={() => setHasListened(false)}
+                    onClick={() => { setHasListened(false); restart(); }}
                     className="w-full text-sm text-teal-600 dark:text-teal-400"
                   >
                     <RotateCcw className="w-4 h-4 mr-1" />
                     再听一次
                   </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
 
         {/* Script toggle */}
         <Button variant="outline" onClick={() => setShowScript(!showScript)}
