@@ -427,7 +427,7 @@ const CampCheckIn = () => {
                         <Button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (camp.camp_type === 'emotion_journal_21') {
+                            if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
                               navigate("/emotion-coach");
                             } else {
                               navigate("/");
