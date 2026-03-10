@@ -306,7 +306,7 @@ serve(async (req) => {
 - "你选择了这个行动，说明你内心深处相信孩子是有力量的。这份信任，孩子一定能感受到。"
 
 判断成功:
-当父母提出具体可执行的小行动时，记录洞察，调用complete_stage，然后立即调用generate_parent_briefing生成简报。不需要等用户确认生成简报。`;
+当父母提出具体可执行的小行动时，记录洞察，调用complete_stage，然后必须立即调用generate_parent_briefing生成简报。绝对不要回复"简报正在生成中"这样的文字，而是直接调用工具。`;
         default:
           return '';
       }
