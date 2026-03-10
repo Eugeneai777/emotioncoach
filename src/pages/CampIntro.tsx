@@ -91,11 +91,15 @@ const CampIntro = () => {
     queryKey: ['existing-camp', campType, user?.id],
     queryFn: async () => {
       if (!user || !campType) return null;
+      // Also check synergy_bundle camp type for emotion_journal_21
+      const campTypes = campType === 'emotion_journal_21' 
+        ? ['emotion_journal_21', 'synergy_bundle'] 
+        : [campType];
       const { data } = await supabase
         .from('training_camps')
         .select('id, camp_name, current_day')
         .eq('user_id', user.id)
-        .eq('camp_type', campType)
+        .in('camp_type', campTypes)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
