@@ -20,8 +20,6 @@ import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { AccountCredentials } from "@/components/profile/AccountCredentials";
 import { PhoneNumberManager } from "@/components/profile/PhoneNumberManager";
 import { WeChatBindStatus } from "@/components/profile/WeChatBindStatus";
-import { MyCourses } from "@/components/settings/MyCourses";
-import { ShippingTracker } from "@/components/settings/ShippingTracker";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, CheckCircle2, AlertCircle, Home, Zap } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -47,6 +45,7 @@ export default function Settings() {
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   
+  // 流畅模式 Hook
   const { prefersReducedMotion, setReducedMotion, systemPreference } = useReducedMotion();
   
   const defaultTab = searchParams.get("tab") || "reminders";
@@ -55,15 +54,18 @@ export default function Settings() {
     loadSettings();
   }, []);
 
+  // 修复移动端键盘弹出时输入框位置问题
   useEffect(() => {
     const handleFocus = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        // 延迟滚动，等待键盘完全弹出
         setTimeout(() => {
           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 300);
       }
     };
+
     document.addEventListener('focusin', handleFocus);
     return () => document.removeEventListener('focusin', handleFocus);
   }, []);
@@ -78,6 +80,7 @@ export default function Settings() {
 
       setUserId(user.id);
 
+      // 检查用户是否为管理员
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -234,6 +237,7 @@ export default function Settings() {
                   );
                 })()}
 
+                {/* 头像上传 */}
                 <div className="flex flex-col items-center py-4">
                   <AvatarUploader
                     currentUrl={avatarUrl}
@@ -242,6 +246,7 @@ export default function Settings() {
                   />
                 </div>
 
+                {/* 用户名称 */}
                 <div className="space-y-2">
                   <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
                     用户昵称 <span className="text-destructive">*</span>
@@ -260,6 +265,7 @@ export default function Settings() {
                   </p>
                 </div>
 
+                {/* 个性签名 */}
                 <div className="space-y-2">
                   <Label htmlFor="bio" className="text-xs md:text-sm text-foreground">
                     个性签名（可选）
@@ -278,6 +284,7 @@ export default function Settings() {
                   </p>
                 </div>
 
+                {/* 用户 ID */}
                 <div className="space-y-2">
                   <Label className="text-xs md:text-sm text-foreground">
                     用户 ID
@@ -308,6 +315,7 @@ export default function Settings() {
 
                 <TimezoneSelector value={timezone} onChange={setTimezone} />
 
+                {/* 流畅模式开关 */}
                 <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
@@ -342,16 +350,19 @@ export default function Settings() {
               </CardContent>
             </Card>
 
+            {/* 微信绑定状态 */}
             <WeChatBindStatus className="mt-6" />
+
+            {/* 手机号管理 */}
             <PhoneNumberManager />
+
+            {/* 账号与密码管理 */}
             <AccountCredentials />
           </TabsContent>
 
           <TabsContent value="account" className="space-y-6">
             <AccountBalance />
             <PurchaseHistory />
-            {userId && <MyCourses userId={userId} />}
-            {userId && <ShippingTracker userId={userId} />}
             <PackageSelector />
             <BillingExplanation />
           </TabsContent>
