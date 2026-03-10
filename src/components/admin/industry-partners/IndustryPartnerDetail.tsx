@@ -56,6 +56,7 @@ const TAB_DEFINITIONS: TabDef[] = [
   { value: "flywheel", label: "创建活动", shortLabel: "活动", icon: Zap, group: "marketing" },
   { value: "marketing", label: "AI文案", shortLabel: "文案", icon: Sparkles, group: "marketing" },
   { value: "channels", label: "渠道归因", shortLabel: "渠道", icon: BarChart3, group: "marketing" },
+  { value: "promo-pages", label: "推广页面", shortLabel: "推广页", icon: FileText, group: "marketing" },
   { value: "students", label: "学员管理", shortLabel: "学员", icon: UserPlus, group: "crm" },
   { value: "reminders", label: "跟进提醒", shortLabel: "提醒", icon: Bell, group: "crm" },
   { value: "training", label: "培训中心", shortLabel: "培训", icon: BookOpen, group: "crm" },
