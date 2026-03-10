@@ -113,7 +113,7 @@ const specs = [
 
 /* ========== Main Page ========== */
 /* ========== Success Panel (inline, dark themed) ========== */
-function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
+function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => void; onViewLogistics: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -167,7 +167,14 @@ function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
             <Rocket className="w-5 h-5 mr-2" />
             进入情绪日记训练营
           </Button>
-          <p className="text-xs text-slate-600">物流状态可在「设置 → 账户」中查看</p>
+          <Button
+            onClick={onViewLogistics}
+            variant="outline"
+            className="w-full h-10 text-sm rounded-full border-slate-600 text-slate-300 hover:bg-slate-800"
+          >
+            <Truck className="w-4 h-4 mr-2" />
+            查看订单与物流
+          </Button>
         </div>
       </div>
     </motion.div>
