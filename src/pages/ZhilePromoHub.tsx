@@ -143,14 +143,13 @@ const promoCards: PromoCard[] = [
 
 const categoryLabels: Record<string, { label: string; icon: React.ReactNode }> = {
   bundle: { label: '组合套餐', icon: <Pill className="w-4 h-4" /> },
-  coach: { label: 'AI教练', icon: <Brain className="w-4 h-4" /> },
   tool: { label: '工具 & 平台', icon: <Zap className="w-4 h-4" /> },
   assessment: { label: '测评诊断', icon: <BarChart3 className="w-4 h-4" /> },
   camp: { label: '训练营', icon: <Shield className="w-4 h-4" /> },
   partner: { label: '合伙人', icon: <Users className="w-4 h-4" /> },
 };
 
-const categoryOrder = ['bundle', 'coach', 'assessment', 'tool', 'camp', 'partner'];
+const categoryOrder = ['bundle', 'assessment', 'tool', 'camp', 'partner'];
 
 export default function ZhilePromoHub() {
   const navigate = useNavigate();
