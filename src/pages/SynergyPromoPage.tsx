@@ -293,11 +293,15 @@ export default function SynergyPromoPage() {
     navigate('/camp-intro/emotion_journal_21');
   };
 
+  const handleViewLogistics = () => {
+    navigate('/settings?tab=account');
+  };
+
   // Show success panel overlay
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-[#0a0e1a]">
-        <SuccessPanel onEnterCamp={handleEnterCamp} />
+        <SuccessPanel onEnterCamp={handleEnterCamp} onViewLogistics={handleViewLogistics} />
       </div>
     );
   }
