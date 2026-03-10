@@ -177,12 +177,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           }}
           onLoad={() => { setImageLoaded(true); setImageError(false); }}
           onError={() => { setImageError(true); setImageLoaded(false); }}
-          onContextMenu={(e) => {
-            e.stopPropagation();
-            if (isImageReady && !imageSaved) {
-              setTimeout(() => setImageSaved(true), 3000);
-            }
-          }}
+          onContextMenu={(e) => e.stopPropagation()}
         />
       </div>
 
@@ -194,12 +189,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         {isMobile ? (
           <div className="flex flex-col items-center gap-2 w-full max-w-sm">
             <div className="flex items-center gap-2 text-xs">
-              {imageSaved ? (
-                <span className="flex items-center gap-1.5 text-primary">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  已保存到相册
-                </span>
-              ) : isImageReady ? (
+              {isImageReady ? (
                 <span className="flex items-center gap-1.5 text-primary">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   长按图片保存 · 分享给好友
