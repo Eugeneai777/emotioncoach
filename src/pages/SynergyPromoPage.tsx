@@ -558,14 +558,11 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== PRODUCT IMAGE + SPECS ===== */}
+      {/* ===== PRODUCT SPECS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 产品详情</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 产品参数</h2>
         <p className="text-slate-400 text-sm text-center mb-6">国家食药监认证 · 安全无依赖</p>
         <div className="max-w-lg mx-auto">
-          <div className="rounded-2xl overflow-hidden mb-6 border border-slate-700/50">
-            <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
-          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {specs.map((s, i) => (
               <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
@@ -573,19 +570,6 @@ export default function SynergyPromoPage() {
                 <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
               </div>
             ))}
-          </div>
-
-          {/* Shipping & camp start note */}
-          <div className="mt-5 p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
-            <div className="flex items-start gap-2.5">
-              <Package className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-amber-300">📦 香港直邮 · 预计4-7个工作日送达</p>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  建议收到知乐胶囊后再开启训练营，心智训练与身体修复同步进行，效果更佳。购买后可在「设置 → 账户」中查看物流状态。
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </Section>

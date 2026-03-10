@@ -46,49 +46,39 @@ export const FloatingQuickMenu = () => {
   // Build menu items from config - feedback first, then custom slots
   const menuItems = [
     { 
+      id: 'my-profile', 
+      icon: User, 
+      label: '我的', 
+      path: '/settings?tab=account', 
+      color: 'bg-blue-500',
+    },
+    { 
+      id: 'my-orders', 
+      icon: ShoppingBag, 
+      label: '已购订单', 
+      path: '/settings?tab=orders', 
+      color: 'bg-amber-500',
+    },
+    { 
+      id: 'learned-courses', 
+      icon: BookOpenCheck, 
+      label: '已学课程', 
+      path: '/camps?filter=completed', 
+      color: 'bg-emerald-500',
+    },
+    { 
+      id: 'pending-courses', 
+      icon: BookMarked, 
+      label: '待学课程', 
+      path: '/camps?filter=active', 
+      color: 'bg-violet-500',
+    },
+    { 
       id: 'feedback', 
       icon: iconMap['MessageCircle'], 
       label: '建议', 
       path: '/customer-support', 
-      color: 'bg-blue-500',
-    },
-    { 
-      id: 'custom1', 
-      icon: iconMap[config.customSlot1.icon] || Star, 
-      label: config.customSlot1.label, 
-      path: config.customSlot1.path, 
-      color: config.customSlot1.color,
-      isCustom: true,
-    },
-    { 
-      id: 'custom2', 
-      icon: iconMap[config.customSlot2.icon] || Star, 
-      label: config.customSlot2.label, 
-      path: config.customSlot2.path, 
-      color: config.customSlot2.color,
-      isCustom: true,
-    },
-    { 
-      id: 'custom3', 
-      icon: iconMap[config.customSlot3?.icon] || Star, 
-      label: config.customSlot3?.label || '感恩教练', 
-      path: config.customSlot3?.path || '/gratitude', 
-      color: config.customSlot3?.color || 'bg-green-500',
-      isCustom: true,
-    },
-    { 
-      id: 'products', 
-      icon: iconMap['Package'], 
-      label: '产品中心', 
-      path: '/packages', 
-      color: 'bg-emerald-500',
-    },
-    { 
-      id: 'coach-space', 
-      icon: iconMap['Users'], 
-      label: '教练空间', 
-      path: '/coach-space', 
-      color: 'bg-rose-500',
+      color: 'bg-slate-500',
     },
   ];
 
