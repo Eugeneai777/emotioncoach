@@ -190,7 +190,7 @@ const MarriageAssessments: React.FC = () => {
         const score = newAnswers.reduce((sum, a) => sum + a, 0);
         const maxScore = questions.length * 3;
         const pct = Math.round((1 - score / maxScore) * 100);
-        const fallback = `**测评得分：${pct}/100**\n\n根据您的回答，建议您关注关系中的沟通方式和情绪管理。点击下方按钮，体验AI关系工具或预约专业咨询获取更详细的建议。`;
+        const fallback = `**测评得分：${pct}/100**\n\n根据您的回答，建议您关注关系中的沟通方式和情绪管理。点击下方按钮，体验AI婚姻教练或预约专业咨询获取更详细的建议。`;
         setResult(fallback);
         await saveResult(fallback, score, maxScore, newAnswers);
       } finally {
@@ -399,7 +399,7 @@ const MarriageAssessments: React.FC = () => {
                 onClick={() => navigate("/marriage/ai-tools")}
                 className="w-full rounded-xl bg-marriage-primary hover:bg-marriage-primary/90 text-white"
               >
-                体验AI关系工具
+                体验AI婚姻教练
               </Button>
               <Button
                 variant="outline"

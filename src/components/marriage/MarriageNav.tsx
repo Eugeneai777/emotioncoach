@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { path: "/marriage", label: "首页", icon: Home },
   { path: "/marriage/assessments", label: "测评", icon: ClipboardCheck },
-  { path: "/marriage/ai-tools", label: "AI工具", icon: Bot },
+  { path: "/marriage/ai-tools", label: "AI教练", icon: Bot },
   { path: "/marriage/services", label: "服务", icon: Briefcase },
   { path: "/marriage/about", label: "关于", icon: Info },
   { path: "/marriage/help", label: "帮助", icon: MessageCircle },
