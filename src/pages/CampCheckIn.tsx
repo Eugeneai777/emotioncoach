@@ -329,6 +329,8 @@ const CampCheckIn = () => {
         updates.checked_in_at = checked ? new Date().toISOString() : null;
       } else if (field === 'has_shared_to_community') {
         updates.shared_at = checked ? new Date().toISOString() : null;
+      } else if (field === 'human_coach_completed') {
+        updates.human_coach_completed_at = checked ? new Date().toISOString() : null;
       }
 
       const { error } = await supabase
