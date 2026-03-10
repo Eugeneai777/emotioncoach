@@ -74,13 +74,48 @@ export default function StressMeditation() {
     };
   }, [meditation?.audio_url]);
 
+  // Mark meditation as completed in camp_daily_progress
+  const markMeditationCompleted = useCallback(async () => {
+    if (!user) return;
+    try {
+      const today = getTodayCST();
+      const { data: activeCamp } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('camp_type', 'emotion_stress_7')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!activeCamp) return;
+
+      await supabase
+        .from('camp_daily_progress')
+        .upsert({
+          camp_id: activeCamp.id,
+          user_id: user.id,
+          progress_date: today,
+          declaration_completed: true,
+          declaration_completed_at: new Date().toISOString(),
+        }, {
+          onConflict: 'camp_id,progress_date',
+        });
+    } catch (error) {
+      console.error('标记冥想完成失败:', error);
+    }
+  }, [user]);
+
   // Audio event listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const onTime = () => setCurrentTime(audio.currentTime);
     const onMeta = () => setDuration(audio.duration || meditation?.duration_seconds || 0);
-    const onEnd = () => { setIsPlaying(false); setHasListened(true); };
+    const onEnd = () => {
+      setIsPlaying(false);
+      setHasListened(true);
+      markMeditationCompleted();
+    };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
@@ -89,7 +124,7 @@ export default function StressMeditation() {
       audio.removeEventListener('loadedmetadata', onMeta);
       audio.removeEventListener('ended', onEnd);
     };
-  }, [meditation]);
+  }, [meditation, markMeditationCompleted]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
