@@ -52,7 +52,7 @@ const WealthCoachVoice = () => {
         onClose={handleClose}
         coachEmoji="💎"
         coachTitle="财富觉醒教练"
-        primaryColor="amber"
+        primaryColor="rose"
         tokenEndpoint={isFromAssessment ? "wealth-assessment-realtime-token" : undefined}
         userId={user?.id}
         mode="general"
