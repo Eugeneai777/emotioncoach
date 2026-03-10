@@ -26,12 +26,8 @@ const MarriageAITools: React.FC = () => {
   const { user } = useAuth();
 
   const handleVoiceClick = useCallback(() => {
-    if (!user) {
-      toast.error("请先登录后使用语音教练");
-      return;
-    }
     setShowVoice(true);
-  }, [user]);
+  }, []);
 
   const handleVoiceBriefingSaved = useCallback(async (briefingId: string, briefingData: any) => {
     if (!user) return;
