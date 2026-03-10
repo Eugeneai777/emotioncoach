@@ -10,6 +10,7 @@ import { PartnerAssessmentAnalytics } from "./PartnerAssessmentAnalytics";
 import { PartnerMarketingHub } from "./PartnerMarketingHub";
 import { PartnerPromotionManager } from "./PartnerPromotionManager";
 import { PartnerChannelAttribution } from "./PartnerChannelAttribution";
+import { PartnerPromoPages } from "./PartnerPromoPages";
 import { PartnerFollowupReminders } from "./PartnerFollowupReminders";
 import { PartnerTrainingCenter } from "./PartnerTrainingCenter";
 import { PartnerSharedDataDashboard } from "./PartnerSharedDataDashboard";
