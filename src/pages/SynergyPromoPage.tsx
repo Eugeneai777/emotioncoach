@@ -224,7 +224,7 @@ export default function SynergyPromoPage() {
 
   // Step 5: Enter camp
   const handleEnterCamp = () => {
-    navigate('/camp-intro/workplace_stress_21');
+    navigate('/camp-intro/emotion_journal_21');
   };
 
   // Show success panel overlay
