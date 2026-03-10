@@ -45,10 +45,29 @@ const campCategories = [
 
 const CampList = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
+
+  // Query user's training camps when filter is active/completed
+  const { data: userCamps, isLoading: isLoadingUserCamps } = useQuery({
+    queryKey: ['user-training-camps', filterParam, user?.id],
+    queryFn: async () => {
+      if (!user || !filterParam) return null;
+      const { data, error } = await supabase
+        .from('training_camps')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', filterParam === 'active' ? 'active' : 'completed')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!filterParam
+  });
 
   const { isPaymentCallback } = usePaymentCallback({
     onSuccess: () => {

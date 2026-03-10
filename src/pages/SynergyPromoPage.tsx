@@ -288,8 +288,25 @@ export default function SynergyPromoPage() {
     setStep('success');
   };
 
-  // Step 5: Enter camp
-  const handleEnterCamp = () => {
+  // Step 5: Enter camp - smart redirect
+  const handleEnterCamp = async () => {
+    if (user) {
+      // Check for active training camp first
+      const { data: activeCamp } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('camp_type', ['emotion_journal_21', 'synergy_bundle'])
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (activeCamp) {
+        navigate(`/camp-checkin/${activeCamp.id}`);
+        return;
+      }
+    }
     navigate('/camp-intro/emotion_journal_21');
   };
 
