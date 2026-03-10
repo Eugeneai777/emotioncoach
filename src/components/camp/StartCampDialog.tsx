@@ -31,17 +31,17 @@ interface StartCampDialogProps {
   isPurchased?: boolean;
 }
 
-export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }: StartCampDialogProps) {
+export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, isPurchased }: StartCampDialogProps) {
   const navigate = useNavigate();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
   const { toast } = useToast();
   
-  // 检查用户购买状态
+  // 检查用户购买状态（外部传入的 isPurchased 优先级最高）
   const { data: purchaseRecord } = useCampPurchase(campTemplate.camp_type);
   const isFree = campTemplate.price === 0 || campTemplate.price === undefined || campTemplate.price === null;
-  const hasPurchased = !!purchaseRecord;
+  const hasPurchased = isPurchased || !!purchaseRecord;
   const needsPurchase = !isFree && !hasPurchased;
 
   // 如果需要购买但未购买，不允许开启
