@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
@@ -45,10 +46,29 @@ const campCategories = [
 
 const CampList = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
+
+  // Query user's training camps when filter is active/completed
+  const { data: userCamps, isLoading: isLoadingUserCamps } = useQuery({
+    queryKey: ['user-training-camps', filterParam, user?.id],
+    queryFn: async () => {
+      if (!user || !filterParam) return null;
+      const { data, error } = await supabase
+        .from('training_camps')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', filterParam === 'active' ? 'active' : 'completed')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!filterParam
+  });
 
   const { isPaymentCallback } = usePaymentCallback({
     onSuccess: () => {
@@ -92,6 +112,57 @@ const CampList = () => {
   }, [campTemplates, activeCategory]);
 
   const currentCategory = campCategories.find(cat => cat.id === activeCategory)!;
+
+  // If filter mode, show user's camps
+  if (filterParam) {
+    const filterTitle = filterParam === 'active' ? '待学课程' : '已学课程';
+    const isFilterLoading = isLoadingUserCamps;
+    
+    return (
+      <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <PageHeader title={filterTitle} showBack />
+        <main className="container max-w-2xl mx-auto px-4 py-6">
+          {isFilterLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => <CampCardSkeleton key={i} />)}
+            </div>
+          ) : !userCamps || userCamps.length === 0 ? (
+            <div className="text-center py-16 space-y-3">
+              <p className="text-4xl">{filterParam === 'active' ? '📚' : '🎓'}</p>
+              <p className="text-muted-foreground">
+                {filterParam === 'active' ? '暂无进行中的课程' : '暂无已完成的课程'}
+              </p>
+              <Button variant="outline" onClick={() => navigate('/camps')}>
+                浏览训练营
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {userCamps.map((camp: any) => (
+                <Card 
+                  key={camp.id} 
+                  className="p-4 cursor-pointer hover:shadow-md transition-shadow border-border/40"
+                  onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-foreground">{camp.camp_name}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        第 {camp.current_day}/{camp.duration_days} 天 · 已打卡 {camp.completed_days} 天
+                      </p>
+                    </div>
+                    <Badge variant={camp.status === 'active' ? 'default' : 'secondary'}>
+                      {camp.status === 'active' ? '进行中' : '已完成'}
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

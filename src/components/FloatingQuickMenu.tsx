@@ -56,7 +56,7 @@ export const FloatingQuickMenu = () => {
       id: 'my-orders', 
       icon: ShoppingBag, 
       label: '已购订单', 
-      path: '/settings?tab=orders', 
+      path: '/settings?tab=account', 
       color: 'bg-amber-500',
     },
     { 

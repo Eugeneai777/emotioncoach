@@ -288,8 +288,25 @@ export default function SynergyPromoPage() {
     setStep('success');
   };
 
-  // Step 5: Enter camp
-  const handleEnterCamp = () => {
+  // Step 5: Enter camp - smart redirect
+  const handleEnterCamp = async () => {
+    if (user) {
+      // Check for active training camp first
+      const { data: activeCamp } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('camp_type', ['emotion_journal_21', 'synergy_bundle'])
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (activeCamp) {
+        navigate(`/camp-checkin/${activeCamp.id}`);
+        return;
+      }
+    }
     navigate('/camp-intro/emotion_journal_21');
   };
 
@@ -483,6 +500,18 @@ export default function SynergyPromoPage() {
           <div className="mt-6 rounded-2xl overflow-hidden border border-cyan-500/20">
             <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
           </div>
+
+          {/* Product specs - inline */}
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {specs.map((s, i) => (
+              <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+                <p className="text-lg font-bold text-cyan-400">{s.value}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2 text-center">国家食药监认证 · 安全无依赖</p>
+
           <div className="mt-3 p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
             <div className="flex items-start gap-2.5">
               <Package className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
@@ -558,21 +587,6 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== PRODUCT SPECS ===== */}
-      <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 产品参数</h2>
-        <p className="text-slate-400 text-sm text-center mb-6">国家食药监认证 · 安全无依赖</p>
-        <div className="max-w-lg mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {specs.map((s, i) => (
-              <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-                <p className="text-lg font-bold text-cyan-400">{s.value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
 
       {/* ===== TESTIMONIALS ===== */}
       <Section className="bg-slate-900/50">
