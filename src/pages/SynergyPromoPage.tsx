@@ -112,8 +112,71 @@ const specs = [
 ];
 
 /* ========== Main Page ========== */
+/* ========== Success Panel (inline, dark themed) ========== */
+function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0e1a]/95 px-4"
+    >
+      <div className="max-w-sm w-full text-center space-y-6">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring" }}
+          className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30"
+        >
+          <CheckCircle className="w-10 h-10 text-white" />
+        </motion.div>
+
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">🎉 购买成功！</h2>
+          <p className="text-slate-400 text-sm">你的全天候抗压之旅即将开始</p>
+        </div>
+
+        <div className="space-y-3 text-left">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+            <Package className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-slate-200">知乐胶囊已安排发货</p>
+              <p className="text-xs text-slate-500">预计3个工作日内寄出，请保持电话畅通</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+            <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-slate-200">训练营已开通</p>
+              <p className="text-xs text-slate-500">21天心智训练，从今天开始蜕变</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 pt-2">
+          <Button
+            onClick={onEnterCamp}
+            className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
+          >
+            <Rocket className="w-5 h-5 mr-2" />
+            进入抗压训练营
+          </Button>
+          <p className="text-xs text-slate-600">也可稍后从首页进入训练营</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ========== Main Page ========== */
 export default function SynergyPromoPage() {
-  const [payOpen, setPayOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Multi-step flow: browse → checkout → payment → register → success
+  const [step, setStep] = useState<'browse' | 'checkout' | 'payment' | 'register' | 'success'>('browse');
+  const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
+  const [orderNo, setOrderNo] = useState('');
+  const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
 
   const packageInfo = {
     key: "synergy_bundle",
@@ -121,6 +184,74 @@ export default function SynergyPromoPage() {
     price: 599,
     quota: 1,
   };
+
+  // Step 1: User clicks buy → open checkout form
+  const handleBuyClick = () => {
+    setStep('checkout');
+  };
+
+  // Step 2: Checkout info collected → open payment
+  const handleCheckoutConfirm = (info: CheckoutInfo) => {
+    setCheckoutInfo(info);
+    setStep('payment');
+  };
+
+  // Step 3: Payment success → save shipping info & check auth
+  const handlePaySuccess = async () => {
+    // Save shipping info to order metadata
+    if (checkoutInfo) {
+      try {
+        // We'll store shipping info in orders metadata via edge function or direct update
+        // For now, store in localStorage as fallback
+        localStorage.setItem('synergy_shipping_info', JSON.stringify(checkoutInfo));
+      } catch (e) {
+        console.error('Save shipping info error:', e);
+      }
+    }
+
+    if (user) {
+      // Already logged in → skip register, go to success
+      setStep('success');
+    } else {
+      setStep('register');
+    }
+  };
+
+  // Step 4: Registration success
+  const handleRegisterSuccess = (userId: string) => {
+    setStep('success');
+  };
+
+  // Step 5: Enter camp
+  const handleEnterCamp = () => {
+    navigate('/camp-intro/workplace_stress_21');
+  };
+
+  // Show success panel overlay
+  if (step === 'success') {
+    return (
+      <div className="min-h-screen bg-[#0a0e1a]">
+        <SuccessPanel onEnterCamp={handleEnterCamp} />
+      </div>
+    );
+  }
+
+  // Show register step as full-screen overlay
+  if (step === 'register') {
+    return (
+      <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center px-4">
+        <div className="max-w-sm w-full bg-slate-900 rounded-2xl border border-slate-700/50 p-6">
+          <h2 className="text-lg font-bold text-white text-center mb-4">完成注册</h2>
+          <p className="text-sm text-slate-400 text-center mb-6">注册后可管理训练营进度和订单</p>
+          <QuickRegisterStep
+            orderNo={orderNo}
+            paymentOpenId={paymentOpenId}
+            onSuccess={handleRegisterSuccess}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 overflow-x-hidden">
@@ -172,7 +303,7 @@ export default function SynergyPromoPage() {
           </div>
 
           <Button
-            onClick={() => setPayOpen(true)}
+            onClick={handleBuyClick}
             className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
           >
             立即解锁套餐 ¥599
@@ -404,7 +535,7 @@ export default function SynergyPromoPage() {
           </div>
           <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 30天套餐</p>
           <Button
-            onClick={() => setPayOpen(true)}
+            onClick={handleBuyClick}
             className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
           >
             立即开启全天候守护
@@ -424,7 +555,7 @@ export default function SynergyPromoPage() {
             <p className="text-[10px] text-slate-500 truncate">心智训练营 + 知乐胶囊 30天</p>
           </div>
           <Button
-            onClick={() => setPayOpen(true)}
+            onClick={handleBuyClick}
             className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0 text-sm shrink-0"
           >
             立即购买
@@ -435,12 +566,21 @@ export default function SynergyPromoPage() {
       {/* Bottom spacer for sticky bar */}
       <div className="h-20" />
 
+      {/* Checkout form dialog */}
+      <CheckoutForm
+        open={step === 'checkout'}
+        onOpenChange={(open) => { if (!open) setStep('browse'); }}
+        productName={packageInfo.name}
+        price={packageInfo.price}
+        onConfirm={handleCheckoutConfirm}
+      />
+
       {/* Pay dialog */}
       <UnifiedPayDialog
-        open={payOpen}
-        onOpenChange={setPayOpen}
+        open={step === 'payment'}
+        onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
-        onSuccess={() => setPayOpen(false)}
+        onSuccess={handlePaySuccess}
       />
     </div>
   );
