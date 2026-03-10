@@ -33,6 +33,16 @@ const MarriageAITools: React.FC = () => {
     setShowVoice(true);
   };
 
+  const handleVoiceBriefingSaved = async (briefingId: string, briefingData: any) => {
+    if (!user) return;
+    await supabase.from("marriage_diary_entries").insert({
+      user_id: user.id,
+      source: "voice",
+      user_input: briefingData.emotion_theme || "语音教练对话",
+      ai_result: briefingData.insight || briefingData.growth_story || null,
+    });
+  };
+
   if (showVoice) {
     return (
       <CoachVoiceChat
@@ -45,6 +55,7 @@ const MarriageAITools: React.FC = () => {
         mode="general"
         featureKey="realtime_voice"
         skipBilling={true}
+        onBriefingSaved={handleVoiceBriefingSaved}
       />
     );
   }
