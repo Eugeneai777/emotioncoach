@@ -177,7 +177,12 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           }}
           onLoad={() => { setImageLoaded(true); setImageError(false); }}
           onError={() => { setImageError(true); setImageLoaded(false); }}
-          onContextMenu={(e) => e.stopPropagation()}
+          onContextMenu={(e) => {
+            e.stopPropagation();
+            if (isImageReady && !imageSaved) {
+              setTimeout(() => setImageSaved(true), 3000);
+            }
+          }}
         />
       </div>
 
