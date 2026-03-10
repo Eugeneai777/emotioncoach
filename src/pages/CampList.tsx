@@ -75,6 +75,8 @@ const CampList = () => {
     onSuccess: () => {
       toast.success("购买成功！", { description: "即将开启你的训练营之旅" });
       setPayDialogOpen(false);
+      // Invalidate purchase queries so cards update
+      queryClient.invalidateQueries({ queryKey: ['camp-card-purchase'] });
     },
     showToast: false,
     showConfetti: true,
