@@ -1,23 +1,29 @@
 
 
-## 两个问题需要修复
+# 收货地址自动提取 — 更自动的方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 方案
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+监听粘贴事件，用户在任意输入框粘贴时自动检测并解析，无需额外按钮或文本框。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 实现
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+在 `CheckoutForm` 中给整个表单区域添加 `onPaste` 监听：
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+1. 用户复制一段地址文本（如 `张三 13800138000 北京市朝阳区xxx路`）
+2. 在任意输入框粘贴时，自动检测粘贴内容是否包含手机号
+3. 如果检测到，自动拆分并填充三个字段，显示 toast 提示"已自动识别"
+4. 如果只是普通文字（如只粘贴名字），则正常粘贴不拦截
 
-| 文件 | 修改 |
+### 解析规则（纯前端正则）
+
+- 手机号：`1[3-9]\d{9}`（去除分隔符后匹配）
+- 姓名：手机号前/后的2-4个连续中文字符
+- 地址：去除姓名和手机号后的剩余文本，清理多余标点
+
+### 文件变更
+
+| 文件 | 操作 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/store/CheckoutForm.tsx` | 添加 `onPaste` 处理 + 解析函数，无 UI 变化 |
 
