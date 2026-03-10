@@ -488,17 +488,20 @@ const CampCheckIn = () => {
               {(() => {
                 // 计算任务完成状态
                 const hasMeditation = camp.camp_type === 'emotion_stress_7';
-                const tasks = [
+                const requiredTasks = [
                   ...(hasMeditation ? [{ done: !!todayProgress?.declaration_completed, label: '冥想' }] : []),
                   { done: !!todayProgress?.is_checked_in, label: '对话' },
+                ];
+                const optionalTasks = [
                   { done: !!todayProgress?.has_shared_to_community, label: '分享' },
                   { done: !!todayProgress?.video_learning_completed, label: '课程' },
                 ];
-                const completedCount = tasks.filter(t => t.done).length;
-                const totalCount = tasks.length;
-                const allDone = completedCount === totalCount;
+                const allTasks = [...requiredTasks, ...optionalTasks];
+                const requiredDone = requiredTasks.filter(t => t.done).length;
+                const requiredTotal = requiredTasks.length;
+                const allDone = requiredDone === requiredTotal;
+                const bonusDone = optionalTasks.filter(t => t.done).length;
 
-                return (
                   <>
                     {/* 进度总览卡片 */}
                     <Card className="p-5 bg-white/80 backdrop-blur-sm border-teal-200/40 dark:bg-background/80 overflow-hidden relative">
