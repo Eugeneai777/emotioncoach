@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { TagManager } from "@/components/TagManager";
 import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
-import { EmotionComparison } from "@/components/EmotionComparison";
+import { MeditationZone } from "@/components/MeditationZone";
 import { EmotionReview } from "@/components/EmotionReview";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
