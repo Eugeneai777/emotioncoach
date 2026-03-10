@@ -245,7 +245,7 @@ const PromoPage = () => {
           ))}
         </div>
 
-        {/* Bundle value */}
+        {/* Bundle value - synergy messaging */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -254,11 +254,104 @@ const PromoPage = () => {
         >
           <div className="flex items-center justify-center gap-2 mb-1">
             <Gift className="w-4 h-4 text-orange-600" />
-            <span className="font-bold text-orange-700">超值组合</span>
+            <span className="font-bold text-orange-700">训练营练心智 × 知乐护身体 = 全天候抗压力</span>
           </div>
           <p className="text-sm text-foreground/70">
-            买训练营 ¥399，<span className="font-semibold text-orange-600">免费送</span>知乐胶囊一瓶（价值¥399）
+            单独使用效果有限，<span className="font-semibold text-orange-600">组合使用效果翻倍</span>
           </p>
+        </motion.div>
+      </section>
+
+      {/* ===== Daily Usage Scenario: 24h Protection ===== */}
+      <section className="px-4 mt-8 max-w-lg mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+        >
+          <h2 className="text-base font-bold text-center text-foreground mb-1">一天怎么用？</h2>
+          <p className="text-center text-xs text-muted-foreground mb-4">训练营练心，知乐护体，<span className="font-semibold text-orange-600">24小时全覆盖</span></p>
+          
+          <div className="bg-card rounded-2xl border shadow-sm p-5">
+            {/* Product image */}
+            <div className="flex items-center justify-center mb-4">
+              <img src={zhileCapsules} alt="知乐胶囊产品" className="w-24 h-24 object-cover rounded-xl shadow-md" />
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { time: "早上 7:30", icon: <Sun className="w-4 h-4 text-amber-500" />, action: "10分钟训练营", desc: "调整心态，满血出门", type: "camp" },
+                { time: "早餐后", icon: <Coffee className="w-4 h-4 text-orange-500" />, action: "知乐胶囊 1粒", desc: "激活身体防护", type: "capsule" },
+                { time: "午餐后", icon: <Zap className="w-4 h-4 text-yellow-500" />, action: "知乐胶囊 1粒", desc: "对抗午后焦虑", type: "capsule" },
+                { time: "晚餐后", icon: <Moon className="w-4 h-4 text-indigo-400" />, action: "知乐胶囊 1粒", desc: "安稳入睡", type: "capsule" },
+              ].map((step, i) => (
+                <div key={i} className="flex items-start gap-3 relative">
+                  {/* Timeline connector */}
+                  {i < 3 && <div className="absolute left-[15px] top-8 w-0.5 h-6 bg-border" />}
+                  
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                    step.type === 'camp' ? 'bg-orange-100' : 'bg-emerald-100'
+                  }`}>
+                    {step.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-foreground">{step.time}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        step.type === 'camp' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {step.type === 'camp' ? '🧠 心智' : '💊 身体'}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{step.action}</p>
+                    <p className="text-xs text-muted-foreground">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ===== Synergy Comparison Table ===== */}
+      <section className="px-4 mt-8 max-w-lg mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h2 className="text-base font-bold text-center text-foreground mb-1">为什么要组合用？</h2>
+          <p className="text-center text-xs text-muted-foreground mb-4">1 + 1 &gt; 2 的科学配方</p>
+          
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-sm min-w-[340px]">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="py-2.5 px-2 text-left text-xs font-medium text-muted-foreground w-[80px]"></th>
+                  <th className="py-2.5 px-2 text-center text-xs font-medium text-muted-foreground">只练训练营</th>
+                  <th className="py-2.5 px-2 text-center text-xs font-medium text-muted-foreground">只吃知乐</th>
+                  <th className="py-2.5 px-2 text-center text-xs font-medium bg-orange-50 rounded-t-lg">
+                    <span className="text-orange-700 font-bold">组合使用 🔥</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { label: "压力缓解", solo1: "60%", solo2: "55%", combo: "92%" },
+                  { label: "起效速度", solo1: "7天", solo2: "30分钟", combo: "即刻+持续" },
+                  { label: "睡眠改善", solo1: "中等", solo2: "中等", combo: "显著" },
+                  { label: "持久效果", solo1: "需坚持", solo2: "需持续", combo: "习惯养成" },
+                ].map((row, i) => (
+                  <tr key={i} className="border-b border-border/30 last:border-0">
+                    <td className="py-2.5 px-2 text-xs font-medium text-foreground">{row.label}</td>
+                    <td className="py-2.5 px-2 text-center text-xs text-muted-foreground">{row.solo1}</td>
+                    <td className="py-2.5 px-2 text-center text-xs text-muted-foreground">{row.solo2}</td>
+                    <td className="py-2.5 px-2 text-center text-xs font-bold text-orange-700 bg-orange-50">{row.combo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </motion.div>
       </section>
 
