@@ -193,7 +193,26 @@ const History = () => {
         b => !parentBriefingIds.has(b.id)
       );
 
-      setBriefings(emotionDiaryBriefings);
+      // 查询简报对应的训练营来源
+      const briefingIds = emotionDiaryBriefings.map(b => b.id);
+      const { data: campLinks } = await supabase
+        .from('camp_daily_progress')
+        .select('reflection_briefing_id, camp_id, training_camps!camp_daily_progress_camp_id_fkey(camp_name)')
+        .in('reflection_briefing_id', briefingIds.length > 0 ? briefingIds : ['__none__']);
+
+      const campSourceMap = new Map<string, string>();
+      campLinks?.forEach((link: any) => {
+        if (link.reflection_briefing_id && link.training_camps?.camp_name) {
+          campSourceMap.set(link.reflection_briefing_id, link.training_camps.camp_name);
+        }
+      });
+
+      const briefingsWithCampSource = emotionDiaryBriefings.map(b => ({
+        ...b,
+        camp_source: campSourceMap.get(b.id) || null,
+      }));
+
+      setBriefings(briefingsWithCampSource);
       
       // Load all available tags for filtering
       const { data: tagsData } = await supabase
