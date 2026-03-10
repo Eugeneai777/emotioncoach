@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, ChevronLeft, ChevronRight, Loader2, Download, CloudOff, MessageCircle, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ export default function StressMeditation() {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [showScript, setShowScript] = useState(false);
+  const [hasListened, setHasListened] = useState(false);
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -73,7 +74,7 @@ export default function StressMeditation() {
     if (!audio) return;
     const onTime = () => setCurrentTime(audio.currentTime);
     const onMeta = () => setDuration(audio.duration || meditation?.duration_seconds || 0);
-    const onEnd = () => setIsPlaying(false);
+    const onEnd = () => { setIsPlaying(false); setHasListened(true); };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
@@ -258,6 +259,51 @@ export default function StressMeditation() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Meditation Complete Card */}
+        <AnimatePresence>
+          {hasListened && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40">
+                <CardContent className="p-6 space-y-4">
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+                      className="w-14 h-14 mx-auto bg-teal-500 rounded-full flex items-center justify-center mb-3"
+                    >
+                      <Check className="w-7 h-7 text-white" />
+                    </motion.div>
+                    <h3 className="text-lg font-semibold text-teal-800 dark:text-teal-200">冥想完成 🎉</h3>
+                    <p className="text-sm text-muted-foreground mt-1">接下来，和 AI 情绪教练聊聊今天的感受</p>
+                  </div>
+
+                  <Button
+                    onClick={() => navigate('/emotion-coach')}
+                    className="w-full bg-teal-500 hover:bg-teal-600 text-white py-5 text-base"
+                  >
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    开始情绪教练对话
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => setHasListened(false)}
+                    className="w-full text-sm text-teal-600 dark:text-teal-400"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-1" />
+                    再听一次
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Script toggle */}
         <Button variant="outline" onClick={() => setShowScript(!showScript)}

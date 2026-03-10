@@ -351,7 +351,7 @@ const CampCheckIn = () => {
                 {camp.camp_type === 'emotion_stress_7' && (
                   <Card 
                     className="p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 border-emerald-200/40 hover:border-emerald-400/60 hover:shadow-md cursor-pointer active:scale-[0.99]"
-                    onClick={() => navigate("/tools")}
+                    onClick={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm">
