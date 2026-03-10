@@ -155,7 +155,7 @@ const CampDailyTaskList = ({ campId, date = new Date(), briefingData }: CampDail
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">每日任务清单</CardTitle>
+          <CardTitle className="text-lg">每日成长中心</CardTitle>
           {tasks.length > 0 && (
             <span className="text-sm text-muted-foreground">
               {completedCount}/{tasks.length} 已完成
