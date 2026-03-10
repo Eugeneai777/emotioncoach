@@ -454,6 +454,7 @@ const CampCheckIn = () => {
             emotionIntensity={latestBriefing?.emotion_intensity}
             insight={latestBriefing?.insight}
             action={latestBriefing?.action}
+            onShared={loadTodayProgress}
           />
         )}
 
