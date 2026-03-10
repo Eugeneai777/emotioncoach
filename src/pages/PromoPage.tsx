@@ -186,7 +186,7 @@ const PromoPage = () => {
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                   idx === 0 ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                  {product.tag}
+                  {idx === 0 ? '🧠 练心智' : '💊 护身体'}
                 </span>
               </div>
 
