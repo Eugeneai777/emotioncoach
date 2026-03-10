@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { TagManager } from "@/components/TagManager";
 import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
-import { EmotionComparison } from "@/components/EmotionComparison";
+import { MeditationZone } from "@/components/MeditationZone";
 import { EmotionReview } from "@/components/EmotionReview";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
@@ -524,7 +524,7 @@ const History = () => {
                 <ResponsiveTabsTrigger value="analytics" label="数据分析" shortLabel="分析" />
                 <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
                 <ResponsiveTabsTrigger value="patterns" label="模式洞察" shortLabel="模式" />
-                <ResponsiveTabsTrigger value="compare" label="对比分析" shortLabel="对比" />
+                <ResponsiveTabsTrigger value="meditation" label="冥想专区" shortLabel="冥想" />
                 <ResponsiveTabsTrigger value="review" label="情绪复盘" shortLabel="复盘" />
               </TabsList>
             
@@ -659,9 +659,9 @@ const History = () => {
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="compare">
+            <TabsContent value="meditation">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <EmotionComparison briefings={briefings} />
+                <MeditationZone />
               </ScrollArea>
             </TabsContent>
 
