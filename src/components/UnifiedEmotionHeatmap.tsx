@@ -125,6 +125,7 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
         intensity: r.intensity,
         tags: r.tags,
         time: r.time,
+        campSource: r.campSource,
       }))
     };
   };
