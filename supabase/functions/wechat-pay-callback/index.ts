@@ -147,6 +147,35 @@ serve(async (req) => {
         }
       }
 
+      // 自愈逻辑：synergy_bundle 补写 user_camp_purchases
+      if (order.user_id && order.package_key === 'synergy_bundle') {
+        try {
+          const { data: existingCamp } = await supabase
+            .from('user_camp_purchases')
+            .select('id')
+            .eq('user_id', order.user_id)
+            .eq('camp_type', 'emotion_journal_21')
+            .eq('payment_status', 'completed')
+            .maybeSingle();
+
+          if (!existingCamp) {
+            await supabase.from('user_camp_purchases').insert({
+              user_id: order.user_id,
+              camp_type: 'emotion_journal_21',
+              camp_name: '21天情绪日记训练营',
+              purchase_price: order.amount,
+              payment_method: 'wechat',
+              payment_status: 'completed',
+              purchased_at: order.paid_at || new Date().toISOString(),
+              expires_at: null,
+            });
+            console.log('[WechatCallback] Repaired missing synergy_bundle camp purchase:', order.user_id);
+          }
+        } catch (repairErr) {
+          console.error('[WechatCallback] synergy_bundle camp repair error:', repairErr);
+        }
+      }
+
       return new Response(JSON.stringify({ code: 'SUCCESS', message: '成功' }), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -231,6 +260,33 @@ serve(async (req) => {
             console.log('User quota updated:', order.user_id, '+', quota);
           }
         }
+      }
+    }
+
+    // === synergy_bundle 特殊处理：补写训练营购买记录 ===
+    if (order.package_key === 'synergy_bundle') {
+      try {
+        const { error: campPurchaseError } = await supabase
+          .from('user_camp_purchases')
+          .upsert({
+            user_id: order.user_id,
+            camp_type: 'emotion_journal_21',
+            camp_name: '21天情绪日记训练营',
+            purchase_price: order.amount,
+            payment_method: 'wechat',
+            payment_status: 'completed',
+            transaction_id: tradeNo,
+            purchased_at: new Date().toISOString(),
+            expires_at: null,
+          }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
+
+        if (campPurchaseError) {
+          console.error('[WechatCallback] synergy_bundle camp purchase error:', campPurchaseError);
+        } else {
+          console.log('[WechatCallback] synergy_bundle camp purchase recorded for emotion_journal_21');
+        }
+      } catch (e) {
+        console.error('[WechatCallback] synergy_bundle camp purchase exception:', e);
       }
     }
 

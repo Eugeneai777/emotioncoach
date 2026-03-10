@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
@@ -113,7 +113,7 @@ const specs = [
 
 /* ========== Main Page ========== */
 /* ========== Success Panel (inline, dark themed) ========== */
-function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
+function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => void; onViewLogistics: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -167,7 +167,14 @@ function SuccessPanel({ onEnterCamp }: { onEnterCamp: () => void }) {
             <Rocket className="w-5 h-5 mr-2" />
             进入情绪日记训练营
           </Button>
-          <p className="text-xs text-slate-600">物流状态可在「设置 → 账户」中查看</p>
+          <Button
+            onClick={onViewLogistics}
+            variant="outline"
+            className="w-full h-10 text-sm rounded-full border-slate-600 text-slate-300 hover:bg-slate-800"
+          >
+            <Truck className="w-4 h-4 mr-2" />
+            查看订单与物流
+          </Button>
         </div>
       </div>
     </motion.div>
@@ -184,6 +191,8 @@ export default function SynergyPromoPage() {
   const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
   const [orderNo, setOrderNo] = useState('');
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
+  const [alreadyPurchased, setAlreadyPurchased] = useState(false);
+  const [purchaseChecked, setPurchaseChecked] = useState(false);
 
   const packageInfo = {
     key: "synergy_bundle",
@@ -191,6 +200,32 @@ export default function SynergyPromoPage() {
     price: 0.01,
     quota: 1,
   };
+
+  // 检查用户是否已购买过 synergy_bundle
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user) {
+        setPurchaseChecked(true);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('package_key', 'synergy_bundle')
+          .eq('status', 'paid')
+          .limit(1);
+        if (data && data.length > 0) {
+          setAlreadyPurchased(true);
+        }
+      } catch (e) {
+        console.error('Check purchase error:', e);
+      }
+      setPurchaseChecked(true);
+    };
+    checkPurchase();
+  }, [user]);
 
   // Step 1: User clicks buy → open checkout form
   const handleBuyClick = () => {
@@ -258,11 +293,15 @@ export default function SynergyPromoPage() {
     navigate('/camp-intro/emotion_journal_21');
   };
 
+  const handleViewLogistics = () => {
+    navigate('/settings?tab=account');
+  };
+
   // Show success panel overlay
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-[#0a0e1a]">
-        <SuccessPanel onEnterCamp={handleEnterCamp} />
+        <SuccessPanel onEnterCamp={handleEnterCamp} onViewLogistics={handleViewLogistics} />
       </div>
     );
   }
@@ -333,14 +372,29 @@ export default function SynergyPromoPage() {
             </div>
           </div>
 
-          <Button
-            onClick={handleBuyClick}
-            className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
-          >
-            立即解锁套餐 ¥0.01
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-          <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
+          {alreadyPurchased ? (
+            <>
+              <Button
+                onClick={handleEnterCamp}
+                className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/25 border-0"
+              >
+                进入训练营
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+              <p className="text-emerald-400/60 text-xs mt-3">✅ 已购买 · 训练营已开通</p>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleBuyClick}
+                className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
+              >
+                立即解锁套餐 ¥0.01
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+              <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
+            </>
+          )}
         </motion.div>
 
         {/* Bottom fade */}
@@ -573,38 +627,83 @@ export default function SynergyPromoPage() {
       {/* ===== FINAL CTA ===== */}
       <section className="px-4 py-12 text-center">
         <div className="max-w-lg mx-auto">
-          <p className="text-slate-400 text-sm mb-2">限时特惠</p>
-          <div className="flex items-baseline justify-center gap-2 mb-1">
-            <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
-            <span className="text-slate-500 line-through text-sm">¥899</span>
-          </div>
-          <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 30天套餐</p>
-          <Button
-            onClick={handleBuyClick}
-            className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
-          >
-            立即开启全天候守护
-          </Button>
-          <p className="text-xs text-slate-600 mt-3">支持微信支付 · 支付宝</p>
+          {alreadyPurchased ? (
+            <>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm mb-6">
+                <CheckCircle className="w-4 h-4" />
+                您已购买此套餐
+              </div>
+              <div className="space-y-3 max-w-xs mx-auto">
+                <Button
+                  onClick={handleEnterCamp}
+                  className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
+                >
+                  <Rocket className="w-5 h-5 mr-2" />
+                  进入情绪日记训练营
+                </Button>
+                <Button
+                  onClick={handleViewLogistics}
+                  variant="outline"
+                  className="w-full h-11 rounded-full border-slate-600 text-slate-300 hover:bg-slate-800"
+                >
+                  <Truck className="w-4 h-4 mr-2" />
+                  查看订单与物流
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-slate-400 text-sm mb-2">限时特惠</p>
+              <div className="flex items-baseline justify-center gap-2 mb-1">
+                <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
+                <span className="text-slate-500 line-through text-sm">¥899</span>
+              </div>
+              <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 30天套餐</p>
+              <Button
+                onClick={handleBuyClick}
+                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
+              >
+                立即开启全天候守护
+              </Button>
+              <p className="text-xs text-slate-600 mt-3">支持微信支付 · 支付宝</p>
+            </>
+          )}
         </div>
       </section>
 
       {/* ===== STICKY BOTTOM BAR ===== */}
       <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/95 to-transparent pt-4">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-black text-amber-400">¥0.01</span>
-              <span className="text-xs text-slate-500 line-through">¥899</span>
-            </div>
-            <p className="text-[10px] text-slate-500 truncate">心智训练营 + 知乐胶囊 30天</p>
-          </div>
-          <Button
-            onClick={handleBuyClick}
-            className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0 text-sm shrink-0"
-          >
-            立即购买
-          </Button>
+          {alreadyPurchased ? (
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-emerald-400 font-medium">✅ 已购买</p>
+                <p className="text-[10px] text-slate-500 truncate">训练营已开通 · 知乐胶囊配送中</p>
+              </div>
+              <Button
+                onClick={handleEnterCamp}
+                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0 text-sm shrink-0"
+              >
+                进入训练营
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-black text-amber-400">¥0.01</span>
+                  <span className="text-xs text-slate-500 line-through">¥899</span>
+                </div>
+                <p className="text-[10px] text-slate-500 truncate">心智训练营 + 知乐胶囊 30天</p>
+              </div>
+              <Button
+                onClick={handleBuyClick}
+                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0 text-sm shrink-0"
+              >
+                立即购买
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
