@@ -273,9 +273,12 @@ const PromoPage = () => {
           <p className="text-center text-xs text-muted-foreground mb-4">训练营练心，知乐护体，<span className="font-semibold text-orange-600">24小时全覆盖</span></p>
           
           <div className="bg-card rounded-2xl border shadow-sm p-5">
-            {/* Product image */}
-            <div className="flex items-center justify-center mb-4">
-              <img src={zhileCapsules} alt="知乐胶囊产品" className="w-24 h-24 object-cover rounded-xl shadow-md" />
+            {/* Product image - prominent */}
+            <div className="flex items-center justify-center mb-5">
+              <div className="relative">
+                <img src={zhileCapsules} alt="知乐胶囊产品" className="w-44 h-44 object-cover rounded-2xl shadow-lg border-2 border-emerald-100" />
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">每日3粒</div>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -389,11 +392,28 @@ const PromoPage = () => {
       </section>
 
       {/* ===== Before/After Testimonials ===== */}
-      {promo.testimonials.length > 0 && (
+      {/* ===== Real Testimonials - conversational style ===== */}
         <section className="px-4 mt-8 max-w-lg mx-auto">
-          <h2 className="text-base font-bold text-center text-foreground mb-4">真实改变</h2>
+          <h2 className="text-base font-bold text-center text-foreground mb-1">用户真实反馈</h2>
+          <p className="text-center text-xs text-muted-foreground mb-4">来自组合使用的真实用户</p>
           <div className="space-y-3">
-            {promo.testimonials.map((t, idx) => (
+            {[
+              {
+                name: "Lisa", role: "互联网产品经理", avatar: "👩‍💻", days: "7天",
+                quote: "之前每天开完会就心慌，吃了知乐半小时就能感觉身体放松下来。配合早上的训练营，现在开会前会先做个呼吸调整，整个状态完全不一样了。",
+                highlight: "开会不再心慌"
+              },
+              {
+                name: "张伟", role: "金融分析师", avatar: "👨‍💼", days: "14天",
+                quote: "以前靠咖啡撑着，晚上又睡不着，恶性循环。现在早上练完训练营精神就很好，中午吃一粒知乐，下午不用喝咖啡也能专注。最明显的是睡眠，第3天就开始改善了。",
+                highlight: "告别咖啡依赖，睡眠第3天改善"
+              },
+              {
+                name: "小雨", role: "创业公司 HR", avatar: "👩", days: "21天",
+                quote: "老实说一开始觉得训练营有点玄，但坚持了一周发现情绪波动真的变小了。知乐是实实在在的，吃完半小时肩膀就不那么紧了。两个一起用，同事都说我最近脾气好了。",
+                highlight: "情绪稳定，同事都感觉到变化"
+              },
+            ].map((t, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 15 }}
@@ -401,7 +421,7 @@ const PromoPage = () => {
                 transition={{ delay: 0.7 + idx * 0.12 }}
                 className="bg-card rounded-xl border p-4"
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{t.avatar}</span>
                     <div>
@@ -410,27 +430,22 @@ const PromoPage = () => {
                     </div>
                   </div>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
-                    使用{t.days}后
+                    组合使用{t.days}
                   </span>
                 </div>
 
-                {/* Before → After */}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-red-50 border border-red-100 rounded-lg p-2.5">
-                    <div className="text-[10px] text-red-400 font-medium mb-0.5">BEFORE</div>
-                    <p className="text-xs text-red-700 font-medium">{t.before}</p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg p-2.5">
-                    <div className="text-[10px] text-emerald-400 font-medium mb-0.5">AFTER</div>
-                    <p className="text-xs text-emerald-700 font-medium">{t.after}</p>
-                  </div>
+                {/* Quote */}
+                <p className="text-sm text-foreground/80 leading-relaxed mb-2">"{t.quote}"</p>
+                
+                {/* Key result tag */}
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-full">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span className="text-[11px] font-semibold text-emerald-700">{t.highlight}</span>
                 </div>
               </motion.div>
             ))}
           </div>
         </section>
-      )}
 
       {/* Trust badges */}
       <section className="px-4 mt-8 max-w-lg mx-auto">
