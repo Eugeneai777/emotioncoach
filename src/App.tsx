@@ -193,6 +193,14 @@ const WealthAwakeningArchive = lazyRetry(() => import("./pages/WealthAwakeningAr
 // 成长路径
 const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 
+// 婚因有道
+const MarriageHome = lazyRetry(() => import("./pages/marriage/MarriageHome"));
+const MarriageAssessments = lazyRetry(() => import("./pages/marriage/MarriageAssessments"));
+const MarriageAITools = lazyRetry(() => import("./pages/marriage/MarriageAITools"));
+const MarriageServices = lazyRetry(() => import("./pages/marriage/MarriageServices"));
+const MarriageAbout = lazyRetry(() => import("./pages/marriage/MarriageAbout"));
+const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
+
 // 法律条款
 const TermsOfService = lazyRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyRetry(() => import("./pages/PrivacyPolicy"));
