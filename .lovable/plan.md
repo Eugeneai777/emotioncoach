@@ -1,23 +1,26 @@
 
 
-## 两个问题需要修复
+## 问题分析
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+当第4阶段完成后，系统依赖 AI 在后续回复中调用 `generate_parent_briefing` 工具。但 AI 有时只回复文字"简报正在生成中"，而不实际调用工具，导致简报永远不生成。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## 解决方案
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+在 `parent-emotion-coach/index.ts` 的 `complete_stage` 处理逻辑中，当 stage 4 完成后，如果 AI 的 follow-up 回复**没有**调用 `generate_parent_briefing` 工具，则**自动发起第三轮 AI 调用**，强制要求生成简报。如果第三轮仍未调用，则**直接在代码中生成简报**（fallback）。
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 具体改动
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**`supabase/functions/parent-emotion-coach/index.ts`**
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+1. 在 follow-up 消息处理部分（约 line 760-780），当 `complete_stage` 的 `args.stage === 4` 且 follow-up 没有调用 `generate_parent_briefing` 时：
+   - 将 follow-up 消息加入历史
+   - 再发一轮 AI 请求，系统提示强制要求："你必须立即调用 generate_parent_briefing 工具"
+   - 如果第三轮仍无工具调用，用对话历史中已有的信息直接在代码中构造简报数据并存库（fallback 保底）
+
+2. 修改 stage 4 的 prompt，更强调"不要说正在生成，直接调用工具"
+
+### 用户体验
+
+- 完成第4阶段后，简报一定会生成，不再出现"简报正在生成中"却无结果的情况
+- 用户无需额外操作
 
