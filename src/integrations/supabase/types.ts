@@ -7870,6 +7870,57 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_pages: {
+        Row: {
+          bundle_price: number
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          original_price: number
+          products: Json | null
+          selling_points: Json | null
+          slug: string
+          subtitle: string | null
+          target_audience: string | null
+          testimonials: Json | null
+          theme: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bundle_price?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          original_price?: number
+          products?: Json | null
+          selling_points?: Json | null
+          slug: string
+          subtitle?: string | null
+          target_audience?: string | null
+          testimonials?: Json | null
+          theme?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bundle_price?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          original_price?: number
+          products?: Json | null
+          selling_points?: Json | null
+          slug?: string
+          subtitle?: string | null
+          target_audience?: string | null
+          testimonials?: Json | null
+          theme?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       prompt_change_logs: {
         Row: {
           change_note: string | null

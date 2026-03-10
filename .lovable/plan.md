@@ -1,97 +1,23 @@
 
 
-# 职场压力套餐推广页：情绪训练营 + 知乐胶囊 ¥399
+## 两个问题需要修复
 
-## 概述
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-创建一个独立的推广页 `/promo/workplace-stress`，面向职场压力大人群，主打"买训练营送知乐胶囊"的超值组合，售价 ¥399。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 页面结构
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-```text
-┌──────────────────────────────┐
-│  🔥 限时特惠 · 职场压力急救包   │  ← Hero区：痛点共鸣标题
-│  "压力大到失眠？焦虑到心悸？"   │
-├──────────────────────────────┤
-│  套餐内容展示                   │
-│  ┌─────────┐  ┌─────────┐    │
-│  │训练营    │  │知乐胶囊  │    │  ← 两个产品卡片
-│  │¥399     │  │¥399     │    │
-│  │21天系统  │  │立刻见效  │    │
-│  └─────────┘  └─────────┘    │
-│                              │
-│  原价 ¥798 → 限时 ¥399       │  ← 价格对比区
-│  买训练营，送知乐胶囊一瓶！     │
-├──────────────────────────────┤
-│  ✓ 7天内改善睡眠质量           │
-│  ✓ 科学情绪管理方法            │  ← 效果承诺
-│  ✓ AI教练全程陪伴             │
-│  ✓ 知乐胶囊快速缓解身体症状    │
-├──────────────────────────────┤
-│  用户评价 / 社会证明            │
-├──────────────────────────────┤
-│  [立即抢购 ¥399] 按钮          │  ← 底部固定CTA
-│  已有 X 人购买                 │
-└──────────────────────────────┘
-```
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-## 技术方案
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 1. 数据库：新增 `promo_pages` 表
-
-存储推广页配置，支持后续创建更多推广页：
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | uuid PK | |
-| slug | text UNIQUE | URL标识，如 `workplace-stress` |
-| title | text | 页面标题 |
-| subtitle | text | 副标题/痛点描述 |
-| target_audience | text | 目标人群 |
-| bundle_price | numeric | 套餐价 399 |
-| original_price | numeric | 原价 798 |
-| products | jsonb | 包含的产品列表（训练营+胶囊） |
-| selling_points | jsonb | 卖点列表 |
-| testimonials | jsonb | 用户评价 |
-| theme | jsonb | 视觉主题配置 |
-| is_active | boolean | 是否上线 |
-| created_at | timestamptz | |
-
-RLS：公开可读（推广页面向所有人），仅管理员可写。
-
-### 2. 新页面：`src/pages/PromoPage.tsx`
-
-- 路由：`/promo/:slug`
-- 从 `promo_pages` 按 slug 加载配置
-- 移动端优先的沉浸式设计
-- 产品双卡展示 + 价格划线对比
-- 底部固定购买按钮
-- 点击购买 → 弹出 `UnifiedPayDialog`（复用现有支付流程）
-- 支持 `?ref=xxx` 合伙人推广追踪
-
-### 3. 新组件：`src/components/promo/PromoProductCard.tsx`
-
-产品卡片组件，展示训练营和胶囊各自的价值。
-
-### 4. 首个推广页数据（通过 migration 插入）
-
-预置"职场压力急救包"数据：
-- slug: `workplace-stress`
-- bundle_price: 399
-- original_price: 798
-- products: 情绪管理训练营（21天AI教练陪伴） + 知乐胶囊（1瓶）
-- selling_points: 7天改善睡眠、科学情绪管理、AI全程陪伴、胶囊快速缓解
-
-### 5. 支付对接
-
-复用 `UnifiedPayDialog`，创建订单时 `product_type` 设为 `promo_bundle`，`metadata` 记录 promo slug 和包含的产品 ID，支付成功后需要同时：
-- 激活训练营权限
-- 记录胶囊发货信息（写入 orders 表备注）
-
-## 实现顺序
-
-1. 创建 `promo_pages` 表 + 插入首条数据
-2. 实现 `PromoPage.tsx` 页面 + 路由注册
-3. 对接支付流程
-4. 添加管理后台入口（可选，后续迭代）
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
