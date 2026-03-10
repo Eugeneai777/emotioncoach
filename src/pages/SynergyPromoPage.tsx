@@ -372,14 +372,29 @@ export default function SynergyPromoPage() {
             </div>
           </div>
 
-          <Button
-            onClick={handleBuyClick}
-            className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
-          >
-            立即解锁套餐 ¥0.01
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-          <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
+          {alreadyPurchased ? (
+            <>
+              <Button
+                onClick={handleEnterCamp}
+                className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/25 border-0"
+              >
+                进入训练营
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+              <p className="text-emerald-400/60 text-xs mt-3">✅ 已购买 · 训练营已开通</p>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleBuyClick}
+                className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
+              >
+                立即解锁套餐 ¥0.01
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+              <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
+            </>
+          )}
         </motion.div>
 
         {/* Bottom fade */}
