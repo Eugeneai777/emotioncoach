@@ -72,6 +72,8 @@ const MamaAssistant = () => {
       <PageHeader title="宝妈AI助手" />
       
 
+      <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
+
       <div className="space-y-3 mt-3">
         <MamaEmotionCheck />
         <MamaDailyEnergy
