@@ -76,6 +76,7 @@ interface TaskCardProps {
   extraBadge?: string;
   isOptional?: boolean;
   onAction: () => void;
+  onToggle?: (checked: boolean) => void;
 }
 
 const TaskCard = ({ step, title, description, completed, icon, badgeText, badgeColor = 'teal', actionLabel, actionIcon, isPrimary, extraBadge, isOptional, onAction }: TaskCardProps) => {
