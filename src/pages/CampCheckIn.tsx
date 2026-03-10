@@ -486,7 +486,7 @@ const CampCheckIn = () => {
                 // 计算任务完成状态
                 const hasMeditation = camp.camp_type === 'emotion_stress_7';
                 const tasks = [
-                  ...(hasMeditation ? [{ done: false, label: '冥想' }] : []),
+                  ...(hasMeditation ? [{ done: !!todayProgress?.declaration_completed, label: '冥想' }] : []),
                   { done: !!todayProgress?.is_checked_in, label: '对话' },
                   { done: !!todayProgress?.has_shared_to_community, label: '分享' },
                   { done: !!todayProgress?.video_learning_completed, label: '课程' },
