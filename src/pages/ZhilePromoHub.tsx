@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Brain, Heart, MessageCircle, BookOpen, Users, Shield, Pill, BarChart3, Zap, Eye } from "lucide-react";
+import { ArrowRight, Sparkles, Users, Shield, Pill, BarChart3, Zap } from "lucide-react";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 
 interface PromoCard {
