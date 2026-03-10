@@ -233,20 +233,21 @@ export default function PosterCenter() {
         return;
       }
 
-      const result = await handleShareWithFallback(blob, `promotion-poster-${selectedPosterSize.key}-${Date.now()}.png`, {
-        title: 'AI定制海报',
-        onShowPreview: (blobUrl) => {
-          setPosterPreviewUrl(blobUrl);
-          setShowPosterPreview(true);
-        },
-        onDownload: () => {
-          toast.success('海报已保存');
-        },
-      });
+      // 1. 立即用 blob URL 显示预览（毫秒级）
+      const blobUrl = URL.createObjectURL(blob);
+      setPosterPreviewUrl(blobUrl);
+      setShowPosterPreview(true);
 
-      if (result.method === 'webshare' && result.success) {
-        toast.success('分享成功');
-      }
+      // 2. 后台上传，完成后替换为 HTTPS URL（安卓微信长按保存需要）
+      import('@/utils/shareImageUploader').then(async ({ uploadShareImage }) => {
+        try {
+          const httpsUrl = await uploadShareImage(blob);
+          setPosterPreviewUrl(httpsUrl);
+          URL.revokeObjectURL(blobUrl);
+        } catch (e) {
+          console.warn('[PosterCenter] Upload failed, keeping blob URL', e);
+        }
+      });
     } catch (error) {
       console.error('Download error:', error);
       toast.dismiss();
