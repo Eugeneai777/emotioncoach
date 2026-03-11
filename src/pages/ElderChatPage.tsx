@@ -97,8 +97,8 @@ const ElderChatPage = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold" style={{ color: "hsl(25 40% 30%)" }}>💬 陪我聊聊天</h1>
-          <p className="text-xs" style={{ color: "hsl(25 30% 55%)" }}>小劲在这里陪着您</p>
+          <h1 className="text-lg font-bold" style={{ color: "hsl(25 40% 30%)" }}>💬 大劲AI</h1>
+          <p className="text-xs" style={{ color: "hsl(25 30% 55%)" }}>大劲在这里陪着您</p>
         </div>
       </div>
 
