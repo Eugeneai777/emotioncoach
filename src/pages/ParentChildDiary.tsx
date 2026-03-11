@@ -18,6 +18,7 @@ import { ParentCycleAnalysis } from "@/components/parentDiary/ParentCycleAnalysi
 import { ParentEmotionReview } from "@/components/parentDiary/ParentEmotionReview";
 import { ParentSessionDetail } from "@/components/parentDiary/ParentSessionDetail";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
+import { XiaojinMoodReport } from "@/components/parent-coach/XiaojinMoodReport";
 
 interface ParentTag {
   id: string;
