@@ -82,7 +82,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       : [];
 
     // Dynamic scale factor for font sizes based on dimensions
-    const scaleFactor = Math.min(width / 300, height / 533);
+    const scaleFactor = Math.min(width / 300, height / 560);
     
     // Common styles
     const containerStyle: React.CSSProperties = {
