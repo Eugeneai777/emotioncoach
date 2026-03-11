@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
 import { TeenModeEntryCard } from "@/components/parent-coach/TeenModeEntryCard";
+import { ElderModeEntryCard } from "@/components/parent-coach/ElderModeEntryCard";
 import { ParentVoiceCallCTA } from "@/components/parent-coach/ParentVoiceCallCTA";
 import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardingGuide";
 import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
@@ -264,7 +265,7 @@ ${briefingData.growth_story || '暂无记录'}
   // Teen Mode Module
   const teenModeModule = (
     <div className="w-full mt-6 space-y-4">
-      {/* 双轨模式入口卡片 */}
+      {/* 青少年双轨模式入口卡片 */}
       <TeenModeEntryCard
         hasActiveBinding={activeBindings && activeBindings.length > 0}
         bindingData={activeBindings?.[0] ? {
@@ -275,6 +276,9 @@ ${briefingData.growth_story || '暂无记录'}
           // TeenModeEntryCard 内部已有 TeenModeOnboarding
         }}
       />
+
+      {/* 银发陪伴入口卡片 */}
+      <ElderModeEntryCard />
 
       {/* Problem Type Card */}
       {existingProfile && (

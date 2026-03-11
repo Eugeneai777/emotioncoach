@@ -5,6 +5,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { uploadElderMoodLog } from "@/utils/elderMoodUpload";
 
 const MOODS = [
   { emoji: "😊", label: "开心", value: "happy", color: "hsl(45 80% 92%)" },
@@ -83,6 +84,15 @@ const ElderMoodPage = () => {
 
     setSaved(true);
     toast({ title: "心情已记录 💛" });
+
+    // Upload mood log for child reference tracking
+    const moodInfo = MOODS.find(m => m.value === selected);
+    uploadElderMoodLog({
+      moodLabel: moodInfo?.label || selected,
+      intensity: 3,
+      featureUsed: "mood_record",
+    });
+
     setTimeout(() => {
       setSaved(false);
       loadRecords();

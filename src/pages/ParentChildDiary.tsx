@@ -19,6 +19,7 @@ import { ParentEmotionReview } from "@/components/parentDiary/ParentEmotionRevie
 import { ParentSessionDetail } from "@/components/parentDiary/ParentSessionDetail";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import { XiaojinMoodReport } from "@/components/parent-coach/XiaojinMoodReport";
+import { ElderMoodReport } from "@/components/parent-coach/ElderMoodReport";
 
 interface ParentTag {
   id: string;
@@ -196,10 +197,11 @@ const ParentChildDiary = () => {
           </div>
         ) : (
           <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-6 h-auto">
+            <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
               <ResponsiveTabsTrigger value="list" label="亲子简报" shortLabel="简报" />
               <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
               <ResponsiveTabsTrigger value="child" label="孩子动态" shortLabel="孩子" />
+              <ResponsiveTabsTrigger value="elder" label="长辈动态" shortLabel="长辈" />
               <ResponsiveTabsTrigger value="insights" label="模式洞察" shortLabel="洞察" />
             </TabsList>
 
@@ -306,7 +308,16 @@ const ParentChildDiary = () => {
               </ScrollArea>
             </TabsContent>
 
-            {/* Tab 4: 洞察 = PatternInsights + EmotionReview */}
+            {/* Tab 4: 长辈动态 = 大劲情绪周报 */}
+            <TabsContent value="elder">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <div className="space-y-4 md:space-y-6">
+                  <ElderMoodReport />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            {/* Tab 5: 洞察 = PatternInsights + EmotionReview */}
             <TabsContent value="insights">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">

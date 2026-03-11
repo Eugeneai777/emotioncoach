@@ -1,12 +1,23 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageCircle, Sun, Bell, Smile, Share2, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/PageHeader";
+import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Parse and store child reference from URL
+  useEffect(() => {
+    const from = searchParams.get("from");
+    if (from) {
+      parseAndStoreChildRef(from);
+    }
+  }, [searchParams]);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/elder-care`;
