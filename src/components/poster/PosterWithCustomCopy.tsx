@@ -104,7 +104,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
 
     // Brand footer component
     const BrandFooter = () => (
-      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+      <div style={{ textAlign: 'center', marginTop: '4px' }}>
         <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
           Powered by 有劲AI
         </span>
