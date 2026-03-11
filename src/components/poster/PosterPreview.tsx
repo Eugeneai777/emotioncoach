@@ -671,7 +671,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 background: 'rgba(255,255,255,0.18)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '12px',
-                padding: '8px 12px',
+                padding: '7px 10px',
                 fontSize: '12px',
                 lineHeight: 1.4,
                 display: 'flex',
