@@ -14,6 +14,7 @@ import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AdminTableContainer } from "@/components/admin/shared/AdminTableContainer";
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: '待发货', color: 'bg-amber-100 text-amber-800' },
@@ -283,7 +284,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8 text-sm">暂无订单数据</p>
           ) : (
-            <div className="overflow-x-auto">
+            <AdminTableContainer minWidth={1200}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -393,7 +394,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </AdminTableContainer>
           )}
         </CardContent>
       </Card>
