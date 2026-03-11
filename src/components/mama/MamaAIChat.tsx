@@ -42,9 +42,11 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
   const [isLoading, setIsLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
+  const { deduct, refresh } = useMamaQuota();
 
   useEffect(() => {
     if (open && initialContext && !hasStarted) {
