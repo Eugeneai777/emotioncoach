@@ -288,13 +288,14 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             {copy.selling_points.slice(0, 4).map((point, i) => (
               <div key={i} style={{
-                background: 'rgba(255,255,255,0.95)', borderRadius: '8px', padding: '10px',
+                background: 'rgba(255,255,255,0.95)', borderRadius: '8px', padding: '12px 10px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                overflow: 'hidden',
               }}>
                 <span style={{ fontSize: '16px', marginBottom: '4px' }}>
                   {['📊', '💡', '🎯', '⭐'][i]}
                 </span>
-                <span style={{ fontSize: '10px', color: '#1a1a1a', fontWeight: 500 }}>{point}</span>
+                <span style={{ fontSize: '10px', color: '#1a1a1a', fontWeight: 500, overflow: 'hidden', maxHeight: '28px', wordBreak: 'break-all' as const }}>{point}</span>
               </div>
             ))}
           </div>

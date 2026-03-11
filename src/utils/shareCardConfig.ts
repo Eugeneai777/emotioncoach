@@ -454,6 +454,9 @@ const generateCanvasInternal = async (
               animation: none !important;
               transition: none !important;
               font-family: inherit, "PingFang SC", "Microsoft YaHei", "Heiti SC", "Noto Sans SC", sans-serif !important;
+              -webkit-font-smoothing: antialiased !important;
+              -moz-osx-font-smoothing: grayscale !important;
+              text-rendering: optimizeLegibility !important;
             }
           `;
           doc.head.appendChild(styleTag);
