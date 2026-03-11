@@ -39,7 +39,7 @@ export function PurchaseHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('未登录');
 
-      const [ordersResult, subscriptionsResult] = await Promise.all([
+      const [ordersResult, subscriptionsResult, storeOrdersResult] = await Promise.all([
         supabase
           .from('orders')
           .select('id, order_no, package_name, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
@@ -51,6 +51,13 @@ export function PurchaseHistory() {
           .from('subscriptions')
           .select('id, combo_name, combo_amount, total_quota, status, created_at')
           .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('store_orders' as any)
+          .select('id, order_no, product_name, price, quantity, status, paid_at, created_at, buyer_name, buyer_phone, buyer_address, tracking_number')
+          .eq('buyer_id', user.id)
+          .in('status', ['paid', 'shipped', 'completed'])
           .order('created_at', { ascending: false })
           .limit(50)
       ]);
