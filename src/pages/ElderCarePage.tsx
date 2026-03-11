@@ -5,13 +5,14 @@ import { MessageCircle, Sun, Bell, Smile, Share2, ChevronRight } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/PageHeader";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
+import { useDajinQuota } from "@/hooks/useDajinQuota";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { remaining } = useDajinQuota();
 
-  // Parse and store child reference from URL
   useEffect(() => {
     const from = searchParams.get("from");
     if (from) {
@@ -70,6 +71,11 @@ const ElderCarePage = () => {
         <span className="text-4xl block mb-2">🌿</span>
         <h2 className="text-xl font-bold text-orange-900">大劲AI</h2>
         <p className="text-sm text-orange-600/70 mt-1">陪长辈，有大劲</p>
+        {/* 剩余点数 */}
+        <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs"
+          style={{ backgroundColor: "hsl(45 60% 92%)", color: "hsl(25 50% 40%)" }}>
+          ⚡ 免费体验点数：{remaining}
+        </div>
       </motion.div>
 
       {/* 中心大圆按钮 */}
@@ -84,14 +90,12 @@ const ElderCarePage = () => {
           className="relative group focus:outline-none"
           aria-label="开始聊天"
         >
-          {/* 外圈呼吸动画 */}
           <div className="absolute inset-[-16px] bg-gradient-to-r from-orange-300 to-amber-300 rounded-full animate-pulse opacity-30" />
           <div
             className="absolute inset-[-8px] bg-gradient-to-r from-orange-400 to-amber-400 rounded-full animate-ping opacity-20"
             style={{ animationDuration: "2s" }}
           />
 
-          {/* 主按钮 */}
           <div className="relative w-[140px] h-[140px] bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 
                           rounded-full flex flex-col items-center justify-center 
                           shadow-2xl shadow-orange-400/40 

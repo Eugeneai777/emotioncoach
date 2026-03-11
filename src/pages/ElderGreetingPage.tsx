@@ -3,13 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sun, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useDajinQuota } from "@/hooks/useDajinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 const ElderGreetingPage = () => {
   const navigate = useNavigate();
   const [greeting, setGreeting] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const { remaining, deduct, refresh } = useDajinQuota();
 
-  const fetchGreeting = async () => {
+  const fetchGreeting = async (checkQuota = true) => {
+    if (checkQuota && !deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("elder-chat", {
@@ -31,9 +40,7 @@ const ElderGreetingPage = () => {
 
       if (error) throw error;
 
-      // Non-streaming response - parse the text
       if (typeof data === "string") {
-        // SSE stream response
         const lines = data.split("\n");
         let result = "";
         for (const line of lines) {
@@ -61,7 +68,7 @@ const ElderGreetingPage = () => {
   };
 
   useEffect(() => {
-    fetchGreeting();
+    fetchGreeting(true);
   }, []);
 
   const now = new Date();
@@ -77,11 +84,13 @@ const ElderGreetingPage = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-lg font-bold" style={{ color: "hsl(25 40% 30%)" }}>☀️ 每日暖心问候</h1>
+        <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ backgroundColor: "hsl(45 60% 92%)", color: "hsl(25 50% 40%)" }}>
+          剩余 {remaining} 点
+        </span>
       </div>
 
       <div className="px-5 pt-8 pb-12">
         <div className="max-w-md mx-auto text-center">
-          {/* Date */}
           <p className="text-base mb-1" style={{ color: "hsl(25 30% 50%)" }}>
             {dateStr} {weekdays[now.getDay()]}
           </p>
@@ -89,7 +98,6 @@ const ElderGreetingPage = () => {
             {timeGreeting}！🌿
           </h2>
 
-          {/* Greeting card */}
           <div
             className="rounded-3xl p-8 mb-8 shadow-sm"
             style={{ backgroundColor: "hsl(45 60% 95%)" }}
@@ -108,7 +116,7 @@ const ElderGreetingPage = () => {
           </div>
 
           <Button
-            onClick={fetchGreeting}
+            onClick={() => fetchGreeting(true)}
             disabled={isLoading}
             variant="outline"
             className="text-base rounded-2xl gap-2 px-6"
@@ -123,6 +131,13 @@ const ElderGreetingPage = () => {
           </Button>
         </div>
       </div>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        triggerFeature="每日暖心问候"
+        onSuccess={() => { setShowUpgrade(false); refresh(); }}
+      />
     </div>
   );
 };
