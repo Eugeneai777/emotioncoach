@@ -136,9 +136,9 @@ export default function ZhileProductsPage() {
             await supabase
               .from('orders')
               .update({
-                shipping_name: checkoutInfo.name,
-                shipping_phone: checkoutInfo.phone,
-                shipping_address: `${checkoutInfo.region} ${checkoutInfo.address}`,
+                shipping_name: checkoutInfo.buyerName,
+                shipping_phone: checkoutInfo.buyerPhone,
+                shipping_address: checkoutInfo.buyerAddress,
                 shipping_status: 'pending',
               } as any)
               .eq('id', recentOrder[0].id);
