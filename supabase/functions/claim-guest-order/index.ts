@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderNo } = await req.json();
+    const { orderNo, shippingInfo } = await req.json();
 
     if (!orderNo) {
       throw new Error('缺少订单号');
@@ -96,10 +96,17 @@ serve(async (req) => {
       );
     }
 
-    // 绑定用户
+    // 绑定用户（同时写入收货信息）
+    const updateData: Record<string, any> = { user_id: userId, updated_at: new Date().toISOString() };
+    if (shippingInfo) {
+      updateData.buyer_name = shippingInfo.buyerName;
+      updateData.buyer_phone = shippingInfo.buyerPhone;
+      updateData.buyer_address = shippingInfo.buyerAddress;
+      updateData.shipping_status = 'pending';
+    }
     const { error: updateError } = await supabase
       .from('orders')
-      .update({ user_id: userId, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('order_no', orderNo)
       .is('user_id', null); // 双重保护：只更新 user_id 为 null 的
 

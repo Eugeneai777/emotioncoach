@@ -108,7 +108,7 @@ const specs = [
   { label: "每瓶", value: "84粒" },
   { label: "每日用量", value: "3次" },
   { label: "持续天数", value: "28天" },
-  { label: "核心成分", value: "16味草本精华科学配比" },
+  { label: "核心成分", value: "16味草本" },
 ];
 
 /* ========== Success Panel (wealth themed) ========== */
@@ -246,25 +246,38 @@ export default function WealthSynergyPromoPage() {
 
   const handleCheckoutConfirm = (info: CheckoutInfo) => {
     setCheckoutInfo(info);
+    localStorage.setItem('synergy_shipping_info', JSON.stringify(info));
     setStep('payment');
   };
 
   const handlePaySuccess = async () => {
     if (checkoutInfo) {
       try {
+        const pendingOrderNo = localStorage.getItem('pending_claim_order');
+        if (pendingOrderNo) {
+          await supabase
+            .from('orders')
+            .update({
+              buyer_name: checkoutInfo.buyerName,
+              buyer_phone: checkoutInfo.buyerPhone,
+              buyer_address: checkoutInfo.buyerAddress,
+              shipping_status: 'pending',
+            })
+            .eq('order_no', pendingOrderNo);
+        }
+
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser) {
-          const { data: recentOrder } = await supabase
+          const { data: recentOrders } = await supabase
             .from('orders')
             .select('id')
             .eq('user_id', currentUser.id)
             .eq('package_key', packageInfo.key)
-            .eq('status', 'paid')
+            .is('buyer_name', null)
             .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .limit(1);
 
-          if (recentOrder) {
+          if (recentOrders?.[0]) {
             await supabase
               .from('orders')
               .update({
@@ -273,11 +286,10 @@ export default function WealthSynergyPromoPage() {
                 buyer_address: checkoutInfo.buyerAddress,
                 shipping_status: 'pending',
               })
-              .eq('id', recentOrder.id);
+              .eq('id', recentOrders[0].id);
           }
         }
       } catch (e) { console.error('Save shipping info error:', e); }
-      localStorage.setItem('wealth_synergy_shipping_info', JSON.stringify(checkoutInfo));
     }
     if (user) { setStep('success'); } else { setStep('register'); }
   };
@@ -486,7 +498,7 @@ export default function WealthSynergyPromoPage() {
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {specs.map((s, i) => (
               <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-                <p className="text-lg font-bold text-cyan-400">{s.value}</p>
+                <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
               </div>
             ))}
