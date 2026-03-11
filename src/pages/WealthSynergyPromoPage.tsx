@@ -217,6 +217,31 @@ export default function WealthSynergyPromoPage() {
     checkPurchase();
   }, [user]);
 
+  // 微信支付 openId 预加载：进入 checkout 时提前获取，避免支付时延迟
+  useEffect(() => {
+    if (step !== 'checkout' && step !== 'payment') return;
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    if (!isWechat || paymentOpenId) return;
+
+    // 1. 检查 sessionStorage 缓存
+    const cached = sessionStorage.getItem('wechat_payment_openid');
+    if (cached) { setPaymentOpenId(cached); return; }
+
+    // 2. 已登录用户查数据库
+    if (user) {
+      supabase.from('wechat_user_mappings')
+        .select('openid')
+        .eq('system_user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.openid) {
+            setPaymentOpenId(data.openid);
+            sessionStorage.setItem('wechat_payment_openid', data.openid);
+          }
+        });
+    }
+  }, [step, user, paymentOpenId]);
+
   const handleBuyClick = () => setStep('checkout');
 
   const handleCheckoutConfirm = (info: CheckoutInfo) => {

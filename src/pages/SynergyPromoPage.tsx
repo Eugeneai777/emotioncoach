@@ -244,6 +244,29 @@ export default function SynergyPromoPage() {
     checkPurchase();
   }, [user]);
 
+  // 微信支付 openId 预加载：进入 checkout 时提前获取，避免支付时延迟
+  useEffect(() => {
+    if (step !== 'checkout' && step !== 'payment') return;
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    if (!isWechat || paymentOpenId) return;
+
+    const cached = sessionStorage.getItem('wechat_payment_openid');
+    if (cached) { setPaymentOpenId(cached); return; }
+
+    if (user) {
+      supabase.from('wechat_user_mappings')
+        .select('openid')
+        .eq('system_user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.openid) {
+            setPaymentOpenId(data.openid);
+            sessionStorage.setItem('wechat_payment_openid', data.openid);
+          }
+        });
+    }
+  }, [step, user, paymentOpenId]);
+
   // Step 1: User clicks buy → open checkout form
   const handleBuyClick = () => {
     setStep('checkout');
