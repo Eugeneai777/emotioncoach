@@ -46,11 +46,11 @@ export default function XiaojinHome() {
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/parent-coach")}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
           >
             <Home className="w-3.5 h-3.5" />
-            <span>有劲生活馆</span>
+            <span>亲子教练</span>
           </motion.button>
 
           <IntroShareDialog
