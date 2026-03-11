@@ -1,74 +1,23 @@
 
 
-# 同步支付优化：AssessmentPayDialog 缺少设备感知路由
+## 两个问题需要修复
 
-## 问题
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-项目中有两套独立的支付组件：
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-| 组件 | 已优化？ | 使用页面 |
-|------|----------|----------|
-| `WechatPayDialog`（通过 `UnifiedPayDialog` 调用） | ✅ 已修复 | 推广页、训练营、合伙人、语音教练等 |
-| `AssessmentPayDialog` | ❌ **未同步** | 财富卡点测评、情绪健康测评、死了吗、情绪SOS按钮、中年觉醒、觉醒测评 |
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-`AssessmentPayDialog` 的支付路由逻辑（第 482-492 行）：
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-```text
-当前逻辑（有缺陷）:
-  微信 + openId → jsapi ✅
-  移动端 + 非微信 → alipay ✅
-  其他（含微信无openId）→ native ← 问题！
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-正确逻辑（需同步）:
-  微信 + openId → jsapi
-  微信 + 无openId + 手机 → h5（按钮，避免长按拦截）
-  微信 + 无openId + 电脑 → native（QR码，手机扫）
-  移动端 + 非微信 → alipay
-  桌面端 + 非微信 → native
-```
-
-**影响**：手机微信浏览器用户如果没有 openId（新用户、静默授权失败），会看到 native QR 码，而微信内长按 QR 码会被拦截 → 支付失败。
-
-## 修改方案
-
-### 文件：`src/components/wealth-block/AssessmentPayDialog.tsx`
-
-**改动 1：支付路由逻辑（第 482-492 行）**
-
-在 `isWechat && !!userOpenId` 和 `isMobile && !isWechat` 之间，插入微信无 openId 的设备区分：
-
-```typescript
-} else if (isWechat && !!userOpenId) {
-  console.log("[Payment] WeChat browser with openId, using jsapi");
-  selectedPayType = "jsapi";
-} else if (isWechat && !userOpenId && isMobile) {
-  // 手机微信无 openId → H5 支付按钮，避免长按 QR 被拦截
-  console.log("[Payment] Mobile WeChat without openId, using H5 payment");
-  selectedPayType = "h5";
-} else if (isWechat && !userOpenId && !isMobile) {
-  // 电脑微信无 openId → Native QR，用户手机扫码
-  console.log("[Payment] Desktop WeChat without openId, using native QR");
-  selectedPayType = "native";
-} else if (isMobile && !isWechat) {
-  console.log("[Payment] Mobile non-WeChat browser, using alipay");
-  selectedPayType = "alipay";
-} else {
-  selectedPayType = "native";
-}
-```
-
-**改动 2：QR 码提示文案（第 1138 行）**
-
-将"请使用微信长按二维码或扫码支付"改为根据环境动态显示：
-- 电脑微信环境 → "请使用手机微信扫一扫支付"
-- 其他环境 → "请使用微信扫码支付"
-
-## 受影响页面（无需改动，自动生效）
-
-- `/wealth-block`（财富卡点测评）
-- `/emotion-health-lite`（情绪健康测评）
-- `/alive-check`（死了吗）
-- `/emotion-button-lite`（情绪SOS按钮）
-- `/midlife-awakening`（中年觉醒）
-- `/awakening-lite`（觉醒测评）
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
