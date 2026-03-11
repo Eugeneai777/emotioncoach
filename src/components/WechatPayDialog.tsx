@@ -779,6 +779,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     } else if (isWechat && !!userOpenId) {
       console.log('[Payment] WeChat browser with openId, using jsapi');
       selectedPayType = 'jsapi';
+    } else if (isWechat && !userOpenId) {
+      // 微信浏览器但无 openId → 用 H5 支付，避免 Native QR 码长按被拦截
+      console.log('[Payment] WeChat browser without openId, using H5 payment');
+      selectedPayType = 'h5';
     } else if (isMobile && !isWechat) {
       selectedPayType = 'h5';
     } else {
