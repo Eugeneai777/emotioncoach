@@ -12,9 +12,28 @@ export function usePurchaseOnboarding(options: UsePurchaseOnboardingOptions = {}
   const [triggerFeature, setTriggerFeature] = useState<string>('');
   const pendingActionRef = useRef<(() => void) | null>(null);
 
+  // 检查用户是否有活跃训练营（有则免费使用）
+  const checkActiveCamp = useCallback(async (userId: string): Promise<boolean> => {
+    try {
+      const { data } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .limit(1);
+      return !!(data && data.length > 0);
+    } catch {
+      return false;
+    }
+  }, []);
+
   // 检查用户是否有有效套餐
   const checkUserQuota = useCallback(async (userId: string): Promise<boolean> => {
     try {
+      // 先检查是否有活跃训练营，有则直接放行
+      const hasActiveCamp = await checkActiveCamp(userId);
+      if (hasActiveCamp) return true;
+
       const { data, error } = await supabase
         .from('user_accounts')
         .select('remaining_quota, quota_expires_at')
@@ -37,7 +56,7 @@ export function usePurchaseOnboarding(options: UsePurchaseOnboardingOptions = {}
       console.error('Error checking user quota:', error);
       return false;
     }
-  }, []);
+  }, [checkActiveCamp]);
 
   // 需要购买才能继续的操作
   const requirePurchase = useCallback(async (

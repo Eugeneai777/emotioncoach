@@ -596,8 +596,8 @@ const Index = () => {
         onStartCamp={() => setShowStartCamp(true)}
         onViewDetails={() => navigate("/camps")}
         colorTheme="green"
-        campName="21天情绪日记训练营"
-        campDescription="用21天养成情绪记录习惯，获得专属徽章和成长洞察"
+        campName={campInfo.name}
+        campDescription={campInfo.desc}
       />
     </div>
   ) : null;
