@@ -449,7 +449,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             display: 'flex', flexDirection: 'column', boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
           }}>
             <div style={{ fontSize: '24px', marginBottom: '12px', textAlign: 'center' }}>{emoji}</div>
-            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0' }}>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0', overflow: 'hidden', maxHeight: '48px' }}>
               {copy.headline}
             </h1>
             <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginBottom: '16px' }}>
