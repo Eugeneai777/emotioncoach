@@ -60,7 +60,6 @@ const ElderCarePage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-1"
         >
-          <span className="text-4xl block mb-2">🌿</span>
           <span className="text-[22px] font-extrabold tracking-wider text-orange-900">
             大劲AI
           </span>
