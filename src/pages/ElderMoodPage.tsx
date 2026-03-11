@@ -84,6 +84,15 @@ const ElderMoodPage = () => {
 
     setSaved(true);
     toast({ title: "心情已记录 💛" });
+
+    // Upload mood log for child reference tracking
+    const moodInfo = MOODS.find(m => m.value === selected);
+    uploadElderMoodLog({
+      moodLabel: moodInfo?.label || selected,
+      intensity: 3,
+      featureUsed: "mood_record",
+    });
+
     setTimeout(() => {
       setSaved(false);
       loadRecords();
