@@ -21,13 +21,14 @@ interface UnifiedPurchaseRecord {
   quota?: number;
   status: string;
   created_at: string;
-  // shipping fields (only for orders with buyer_address)
   order_no?: string;
   buyer_name?: string;
   buyer_phone?: string;
   buyer_address?: string;
   shipping_status?: string;
   shipping_note?: string;
+  package_key?: string;
+  is_physical?: boolean; // 是否含实物商品
 }
 
 export function PurchaseHistory() {
@@ -42,7 +43,7 @@ export function PurchaseHistory() {
       const [ordersResult, subscriptionsResult, storeOrdersResult] = await Promise.all([
         supabase
           .from('orders')
-          .select('id, order_no, package_name, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
+          .select('id, order_no, package_name, package_key, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
           .eq('user_id', user.id)
           .eq('status', 'paid')
           .order('created_at', { ascending: false })
@@ -62,6 +63,8 @@ export function PurchaseHistory() {
           .limit(50)
       ]);
 
+      const PHYSICAL_PACKAGE_KEYS = ['synergy_bundle', 'wealth_synergy_bundle', 'zhile_capsule', 'zhile_capsules'];
+
       const records: UnifiedPurchaseRecord[] = [
         ...(ordersResult.data || []).map(o => ({
           id: o.id,
@@ -76,6 +79,8 @@ export function PurchaseHistory() {
           buyer_address: o.buyer_address,
           shipping_status: o.shipping_status,
           shipping_note: o.shipping_note,
+          package_key: (o as any).package_key,
+          is_physical: PHYSICAL_PACKAGE_KEYS.includes((o as any).package_key || ''),
         })),
         ...(subscriptionsResult.data || []).map(s => ({
           id: s.id,
@@ -99,6 +104,7 @@ export function PurchaseHistory() {
           buyer_address: so.buyer_address,
           shipping_status: so.status === 'paid' ? 'pending' : so.status === 'shipped' ? 'shipped' : so.status === 'completed' ? 'delivered' : 'pending',
           shipping_note: so.tracking_number,
+          is_physical: true, // store_orders 都是实物商品
         }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -126,7 +132,8 @@ export function PurchaseHistory() {
     return <Gift className="h-4 w-4 text-amber-600" />;
   };
 
-  const hasShipping = (p: UnifiedPurchaseRecord) => !!p.buyer_address;
+  // 知乐相关实物商品始终显示物流区域
+  const hasShipping = (p: UnifiedPurchaseRecord) => !!p.is_physical || !!p.buyer_address;
 
   if (isLoading) {
     return (
@@ -215,7 +222,7 @@ export function PurchaseHistory() {
                   {/* Inline shipping detail (expanded) */}
                   {expanded && shippable && (
                     <div className="border-t bg-muted/30 p-3 space-y-2.5 text-xs">
-                      {purchase.shipping_note && (
+                      {purchase.shipping_note ? (
                         <div className="flex items-start gap-2 bg-background p-2 rounded">
                           <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
                           <div className="flex-1 min-w-0">
@@ -223,14 +230,24 @@ export function PurchaseHistory() {
                             <span className="font-medium text-foreground select-all">{purchase.shipping_note}</span>
                           </div>
                         </div>
-                      )}
-                      <div className="flex items-start gap-2 text-muted-foreground">
-                        <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                        <div>
-                          <span>{purchase.buyer_name} {purchase.buyer_phone}</span>
-                          <p className="mt-0.5">{purchase.buyer_address}</p>
+                      ) : (purchase.shipping_status === 'pending' || !purchase.shipping_status) ? (
+                        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200/50 dark:border-amber-700/30">
+                          <Package className="w-4 h-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                          <div className="text-amber-800 dark:text-amber-300">
+                            <p className="font-medium">商品正在准备中</p>
+                            <p className="mt-0.5 text-amber-600 dark:text-amber-400/80">预计 3-5 个工作日内发货，届时可在此查看快递单号</p>
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
+                      {purchase.buyer_address && (
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                          <div>
+                            <span>{purchase.buyer_name} {purchase.buyer_phone}</span>
+                            <p className="mt-0.5">{purchase.buyer_address}</p>
+                          </div>
+                        </div>
+                      )}
                       {purchase.order_no && (
                         <div className="text-muted-foreground/70 pt-1 border-t border-border/50">
                           订单号: {purchase.order_no}
