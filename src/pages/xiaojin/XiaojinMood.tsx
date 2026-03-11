@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 const moods = [
   { emoji: "😊", label: "开心", color: "from-green-100 to-emerald-50" },
@@ -15,6 +17,8 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/xiaojin-mood
 
 export default function XiaojinMood() {
   const navigate = useNavigate();
+  const { remaining, deduct } = useXiaojinQuota();
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [step, setStep] = useState<"select" | "chat" | "breathing" | "card">("select");
   const [selectedMood, setSelectedMood] = useState("");
   const [userInput, setUserInput] = useState("");
@@ -29,6 +33,13 @@ export default function XiaojinMood() {
 
   const handleSendMessage = useCallback(async () => {
     if (!userInput.trim()) return;
+
+    // 扣费检查
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setIsStreaming(true);
     setAiResponse("");
 
@@ -77,7 +88,7 @@ export default function XiaojinMood() {
     } finally {
       setIsStreaming(false);
     }
-  }, [selectedMood, userInput]);
+  }, [selectedMood, userInput, deduct]);
 
   const startBreathing = () => {
     setStep("breathing");
@@ -97,9 +108,12 @@ export default function XiaojinMood() {
     <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-gray-50">
       <div className="max-w-md mx-auto px-5 pt-6 pb-8">
         {/* Header */}
-        <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm mb-6">
-          <ArrowLeft className="w-4 h-4" /> 返回
-        </button>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm">
+            <ArrowLeft className="w-4 h-4" /> 返回
+          </button>
+          <span className="text-xs text-gray-400">剩余 <span className={`font-bold ${remaining > 20 ? 'text-amber-500' : remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>{remaining}</span> 点</span>
+        </div>
 
         <AnimatePresence mode="wait">
           {step === "select" && (
@@ -197,6 +211,14 @@ export default function XiaojinMood() {
           )}
         </AnimatePresence>
       </div>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="免费体验点数已用完"
+        onSuccess={() => setShowUpgrade(false)}
+      />
     </div>
   );
 }

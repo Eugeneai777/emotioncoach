@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check } from "lucide-react";
+import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 const challenges = [
   { day: 1, q: "今天让你开心的一件小事是什么？" },
@@ -24,7 +26,9 @@ const challenges = [
 
 export default function XiaojinChallenge() {
   const navigate = useNavigate();
-  const [currentDay] = useState(1); // In real app, calc from start date
+  const { remaining, deduct } = useXiaojinQuota();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [currentDay] = useState(1);
   const [answer, setAnswer] = useState("");
   const [completed, setCompleted] = useState(false);
 
@@ -32,15 +36,22 @@ export default function XiaojinChallenge() {
 
   const handleComplete = () => {
     if (!answer.trim()) return;
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
     setCompleted(true);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-gray-50">
       <div className="max-w-md mx-auto px-5 pt-6 pb-8">
-        <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm mb-6">
-          <ArrowLeft className="w-4 h-4" /> 返回
-        </button>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm">
+            <ArrowLeft className="w-4 h-4" /> 返回
+          </button>
+          <span className="text-xs text-gray-400">剩余 <span className={`font-bold ${remaining > 20 ? 'text-amber-500' : remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>{remaining}</span> 点</span>
+        </div>
 
         <div className="text-center mb-8">
           <h1 className="text-xl font-bold text-gray-800 mb-2">🔥 成长100天挑战</h1>
@@ -64,7 +75,6 @@ export default function XiaojinChallenge() {
 
         {!completed ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            {/* Today's Question */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100 mb-4">
               <div className="text-xs text-orange-400 font-medium mb-3">Day {todayChallenge.day}</div>
               <h2 className="text-base font-semibold text-gray-800 mb-4">{todayChallenge.q}</h2>
@@ -119,6 +129,14 @@ export default function XiaojinChallenge() {
           </motion.div>
         )}
       </div>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="免费体验点数已用完"
+        onSuccess={() => setShowUpgrade(false)}
+      />
     </div>
   );
 }
