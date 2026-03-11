@@ -1,33 +1,23 @@
 
 
-# 修复知乐数据看板编辑权限和用户昵称可编辑
+## 两个问题需要修复
 
-## 问题分析
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-1. **物流状态切换失败**：当前 RLS 策略仅允许 `partner_admin` 更新 `orders` 表。账号 18898593978 的角色可能是 `content_admin`，无权更新。需要让所有能进入后台数据看板的角色（`admin`、`partner_admin`、`content_admin`）都能更新。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-2. **用户昵称不可编辑**：当前"用户"列只读展示 `profiles.display_name`，需改为可编辑 Input，编辑后更新对应用户的 `profiles.display_name`。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-## 修改方案
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 1. 数据库迁移 — 增加 `content_admin` 更新 orders 权限
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-```sql
-CREATE POLICY "Content admins can update order shipping"
-  ON public.orders FOR UPDATE
-  TO authenticated
-  USING (public.has_role(auth.uid(), 'content_admin'))
-  WITH CHECK (public.has_role(auth.uid(), 'content_admin'));
-```
-
-### 2. `ZhileOrdersDashboard.tsx` — 用户昵称列可编辑
-
-- 将"用户"列从纯文本改为 `Input`（与收货人列一致）
-- `onBlur` 时更新 `profiles.display_name`
-- 复用 `updateBuyerInfo` mutation 模式，新增针对 profiles 表的更新逻辑
-
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| 数据库迁移 | content_admin UPDATE 策略 on orders |
-| `src/components/partner/ZhileOrdersDashboard.tsx` | 用户昵称列可编辑 |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
