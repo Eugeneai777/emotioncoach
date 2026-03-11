@@ -459,8 +459,8 @@ export default function SynergyPromoPage() {
                 <Brain className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <h3 className="font-bold text-violet-300">🧠 心智训练营</h3>
-                <p className="text-xs text-slate-400">21天系统化心理训练</p>
+                <h3 className="font-bold text-violet-300">🧘 7天情绪解压训练营</h3>
+                <p className="text-xs text-slate-400">7天深度进阶冥想体系</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
