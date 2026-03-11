@@ -486,7 +486,7 @@ export default function WealthSynergyPromoPage() {
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {specs.map((s, i) => (
               <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-                <p className="text-lg font-bold text-cyan-400">{s.value}</p>
+                <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
               </div>
             ))}
