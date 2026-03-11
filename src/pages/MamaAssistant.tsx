@@ -7,7 +7,7 @@ import { introShareConfigs } from "@/config/introShareConfig";
 
 import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
 import MamaAIChat from "@/components/mama/MamaAIChat";
-import MamaAssessment from "@/components/mama/MamaAssessment";
+
 
 const quickEntries = [
   { emoji: "😊", title: "情绪检测", desc: "此刻还好吗", context: "我现在心情不太好，想聊聊..." },
