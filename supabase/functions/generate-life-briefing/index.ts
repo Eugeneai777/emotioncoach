@@ -43,7 +43,7 @@ const SERVICE_RECOMMENDATIONS: Record<string, {
     gradient: 'from-pink-50 to-rose-50'
   },
   alive_check: {
-    name: '死了吗签到',
+    name: '每日平安打卡',
     route: '/alive-check',
     description: '每日生命签到，唤醒生活热情',
     icon: '🌱',
@@ -172,7 +172,7 @@ serve(async (req) => {
 - parent: 亲子教练 - 改善亲子关系，理解孩子
 - wealth: 财富觉醒训练营 - 发现并突破财富卡点
 - gratitude: 感恩教练 - 记录感恩时刻，提升幸福感
-- alive_check: 死了吗签到 - 每日生命签到，唤醒生活热情
+- alive_check: 每日平安打卡 - 每日生命签到，唤醒生活热情
 - emotion_button: 情绪按钮 - 288条认知提醒，即时情绪疗愈
 - communication: 沟通教练 - 提升沟通技巧，改善人际关系
 - story: 故事教练 - 用故事疗愈心灵

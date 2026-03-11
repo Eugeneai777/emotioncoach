@@ -160,7 +160,7 @@ export default function LandingPage() {
     const productRoutes: [string[], string][] = [
       [['情绪健康'], '/emotion-health-lite'],
       [['SCL-90', '心理'], '/scl90-lite'],
-      [['死了吗'], '/alive-check-lite'],
+      [['平安打卡'], '/alive-check-lite'],
       [['觉察日记', '觉察'], '/awakening-lite'],
       [['情绪按钮', '情绪SOS'], '/emotion-button-lite'],
       [['财富'], '/wealth-assessment-lite'],

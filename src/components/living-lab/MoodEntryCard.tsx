@@ -29,7 +29,7 @@ const moods: MoodOption[] = [
     label: "低落",
     description: "提不起劲，什么都不想做",
     tools: [
-      { id: "alive-check", name: "死了吗", reason: "一个简单但有力的存在确认" },
+      { id: "alive-check", name: "每日平安打卡", reason: "一个简单但有力的安全确认" },
       { id: "gratitude", name: "感恩日记", reason: "记录3件小事，唤醒积极感受" },
       { id: "declaration", name: "能量宣言卡", reason: "给自己一句有力量的话" },
     ],

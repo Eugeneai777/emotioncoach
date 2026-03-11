@@ -29,7 +29,7 @@ const eveningTools: Recommendation[] = [
 ];
 
 const defaultTools: Recommendation[] = [
-  { toolId: "alive-check", name: "死了吗", emoji: "💀", tagline: "一个简单但震撼的存在确认", cta: "试一下" },
+  { toolId: "alive-check", name: "每日平安打卡", emoji: "💗", tagline: "一个简单但温暖的安全确认", cta: "试一下" },
 ];
 
 const DailyRecommendation = ({ onToolSelect }: DailyRecommendationProps) => {

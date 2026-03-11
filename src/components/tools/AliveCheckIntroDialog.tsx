@@ -69,7 +69,7 @@ const AliveCheckIntroDialog: React.FC<AliveCheckIntroDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <HeartHandshake className="w-6 h-6 text-rose-500" />
-            关于"死了吗"
+            关于"每日平安打卡"
           </DialogTitle>
         </DialogHeader>
 
