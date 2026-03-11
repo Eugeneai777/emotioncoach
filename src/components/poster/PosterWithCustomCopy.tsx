@@ -369,12 +369,12 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           </p>
 
           {/* Chat bubble style points */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '7px' }}>
             {copy.selling_points.slice(0, 3).map((point, i) => (
               <div key={i} style={{
                 background: i % 2 === 0 ? 'rgba(255,255,255,0.95)' : 'rgba(149, 236, 105, 0.95)',
                 borderRadius: '12px', borderTopLeftRadius: i % 2 === 0 ? '4px' : '12px', borderTopRightRadius: i % 2 === 0 ? '12px' : '4px',
-                padding: '10px 14px', marginLeft: i % 2 === 0 ? 0 : '20px', marginRight: i % 2 === 0 ? '20px' : 0,
+                padding: '8px 12px', marginLeft: i % 2 === 0 ? 0 : '20px', marginRight: i % 2 === 0 ? '20px' : 0,
               }}>
                 <span style={{ fontSize: '12px', color: '#1a1a1a' }}>{point}</span>
               </div>
