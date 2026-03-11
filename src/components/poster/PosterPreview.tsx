@@ -146,9 +146,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         {/* Emoji标识 */}
         <div style={{ 
-          fontSize: '42px', 
+          fontSize: '36px', 
           textAlign: 'center',
-          marginBottom: '6px',
+          marginBottom: '4px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
@@ -157,10 +157,10 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 产品名 + 定位语 */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '12px'
+          marginBottom: '8px'
         }}>
           <div style={{
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: '600',
             textShadow: '0 2px 8px rgba(0,0,0,0.4)',
             marginBottom: '4px'
