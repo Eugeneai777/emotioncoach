@@ -213,6 +213,10 @@ const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
 
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
+const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
+const ElderGreetingPage = lazyRetry(() => import("./pages/ElderGreetingPage"));
+const ElderRemindersPage = lazyRetry(() => import("./pages/ElderRemindersPage"));
+const ElderMoodPage = lazyRetry(() => import("./pages/ElderMoodPage"));
 
 // 法律条款
 const TermsOfService = lazyRetry(() => import("./pages/TermsOfService"));
