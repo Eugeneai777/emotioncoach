@@ -229,4 +229,14 @@ const ElderMoodPage = () => {
   );
 };
 
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        triggerFeature="心情记录"
+        onSuccess={() => { setShowUpgrade(false); refresh(); }}
+      />
+    </div>
+  );
+};
+
 export default ElderMoodPage;
