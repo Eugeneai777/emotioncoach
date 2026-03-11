@@ -74,11 +74,66 @@ export const BEST_TIMING: TimingSuggestion[] = [
   }
 ];
 
+export interface XiaojinFeature {
+  title: string;
+  description: string;
+  icon: string;
+  tag?: string;
+}
+
+export const XIAOJIN_FEATURES: XiaojinFeature[] = [
+  {
+    title: "今天心情",
+    description: "3分钟情绪探索，AI温暖倾听，帮孩子理清感受",
+    icon: "🙂",
+    tag: "情绪"
+  },
+  {
+    title: "我的天赋",
+    description: "发现隐藏超能力，看见自己的独特闪光点",
+    icon: "🧠",
+    tag: "成长"
+  },
+  {
+    title: "未来方向",
+    description: "AI帮你看未来，探索无限可能的自己",
+    icon: "🚀",
+    tag: "探索"
+  },
+  {
+    title: "随时聊",
+    description: "语音对话，像朋友一样倾听，24小时在线",
+    icon: "📞",
+    tag: "语音"
+  },
+  {
+    title: "成长100天",
+    description: "每天一个问题，遇见更好的自己",
+    icon: "🔥",
+    tag: "挑战"
+  }
+];
+
+export const FREE_QUOTA_INFO = {
+  totalPoints: 100,
+  description: "每位孩子免费获得100点体验额度",
+  rules: [
+    { label: "文字对话", cost: "1点/次", approx: "≈100次" },
+    { label: "语音对话", cost: "8点/分钟", approx: "≈12分钟" },
+  ],
+  upgradeNote: "用完后可升级365天套餐，持续成长"
+};
+
 export const DUAL_TRACK_BENEFITS = [
   {
     title: "隐性桥梁",
     description: "你和亲子教练的对话洞察，会帮助AI更好地理解孩子的家庭背景",
     icon: "🌉"
+  },
+  {
+    title: "情绪周报",
+    description: "家长可在亲子教练页查看AI生成的孩子情绪趋势摘要，了解状态不窥探隐私",
+    icon: "📊"
   },
   {
     title: "绝对隐私",
