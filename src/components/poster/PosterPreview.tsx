@@ -393,8 +393,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         <div style={{ flex: 1 }} />
 
-        {/* 底部二维码区 */}
-        {renderQRSection()}
+        <div style={{ flexShrink: 0 }}>
+          {renderQRSection()}
+        </div>
       </div>
     );
 
