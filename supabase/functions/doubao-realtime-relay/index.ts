@@ -24,32 +24,8 @@ const DOUBAO_PATH = '/api/v3/realtime/dialogue';
 // （不影响语音音频流；persona 校验仍在后端完成）
 const FORWARD_ASSISTANT_TEXT = false;
 
-// ✅ 静默保活帧大小：1000ms @16kHz = 16000 samples = 32000 bytes PCM16
-// 需要足够大的帧让上游 VAD 有充分样本来检测"活动"
-const KEEPALIVE_SILENCE_BYTES = 32000;
-
-// ✅ 保活噪声幅度：3000 / 32768 ≈ -21dB
-// 进一步提升幅度，确保上游 VAD 和连接管理都能检测到"有活跃上行音频"
-// 之前 2000 (-24dB) 仍然在 ~60s 被上游判定为空闲断开
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3000;
-
-// ✅ 保活间隔：1.5s（从 2s 缩短，更积极地保持连接）
-const KEEPALIVE_INTERVAL_MS = 1_500;
-
-function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
-  // byteLength 必须为偶数（Int16）
-  const buf = new Uint8Array(byteLength);
-  const samples = Math.floor(byteLength / 2);
-  for (let i = 0; i < samples; i++) {
-    // [-amplitude, amplitude] 的随机噪声
-    const v = Math.floor((Math.random() * 2 - 1) * amplitudeI16);
-    // little-endian PCM16
-    const off = i * 2;
-    buf[off] = v & 0xff;
-    buf[off + 1] = (v >> 8) & 0xff;
-  }
-  return buf;
-}
+// ✅ 心跳间隔：15s，保持前端 WebSocket 和 Doubao 连接活跃
+const HEARTBEAT_INTERVAL_MS = 15_000;
 
 // 固定的 App Key (豆包文档要求)
 const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
@@ -873,8 +849,6 @@ Deno.serve(async (req) => {
   // - lastKeepaliveAt: 最近一次向 Doubao 发送“静默音频 keepalive”的时间
   let lastClientAudioAt = Date.now();
   let lastDoubaoActivityAt = Date.now();
-  let lastKeepaliveAt = 0;
-  let lastKeepaliveLogAt = 0;
 
   // ✅ 音色降级：当 speaker id 不在 timber 内时（45000001），自动降级为“不指定音色”并重连一次。
   // 目的：避免前端卡在“正在聆听”但无回复。
@@ -1563,62 +1537,24 @@ Deno.serve(async (req) => {
   clientSocket.onopen = () => {
     console.log('[DoubaoRelay] Client connected');
     
-    // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
-    // 微信 WebView 对空闲 WebSocket 的超时控制较严格
-    // 同时向 Doubao 发送 WebSocket ping 帧，保持双向连接活跃
+    // ✅ 心跳：每 15s 向前端发 heartbeat + 向豆包发 WebSocket ping
+    // audio.keep_alive=true + dialog.extra.input_mod='keep_alive' 已由 StartSession 设置，
+    // 豆包平台会在协议层自动保持长连接，无需再注入噪声音频帧
     heartbeatInterval = setInterval(async () => {
       // 1. 向前端发送心跳
       if (clientSocket.readyState === WebSocket.OPEN) {
         clientSocket.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
       }
-      // 2. 🔧 关键修复：同时向 Doubao 发送 WebSocket ping 帧
-      // 防止 relay->Doubao 连接因空闲被云网关或 Doubao 服务端断开
+      // 2. 向 Doubao 发送 WebSocket ping 帧，防止中间网关断开
       if (doubaoConn && isConnected) {
         try {
-          const pingFrame = buildWebSocketFrame(new Uint8Array([]), 0x09); // opcode 0x09 = ping
+          const pingFrame = buildWebSocketFrame(new Uint8Array([]), 0x09);
           await doubaoConn.write(pingFrame);
         } catch (e) {
           console.warn('[DoubaoRelay] Failed to send ping to Doubao:', e);
         }
       }
-
-      // 3. ✅ 额外 keepalive：微信场景下，部分上游会在“没有音频上行”时提前断开（~100s 级别）
-      // 仅在 session 已 ready 且一段时间没有用户音频输入时，发送极短静默 PCM16，避免触发 VAD。
-      if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
-        const now = Date.now();
-         // 🔧 修复：无条件每 15 秒发送一次保活帧，不再依赖用户空闲检测
-         // 即使 AI 正在回复，上游网关也可能因为"上行空闲 90s"而断开连接
-        // 使用顶部定义的 KEEPALIVE_INTERVAL_MS
-
-         if (now - lastKeepaliveAt > KEEPALIVE_INTERVAL_MS) {
-          try {
-            // ✅ 200ms 上行保活帧：从“纯 0 静音”改为“极低幅度噪声”
-            // 原因：部分上游网关/VAD 会忽略纯静音，导致仍在 ~90s 被判 idle
-            const keepaliveNoise = makePcm16NoiseBytes(
-              KEEPALIVE_SILENCE_BYTES,
-              KEEPALIVE_NOISE_AMPLITUDE_I16,
-            );
-            const audioPacket = buildAudioUploadRequest(keepaliveNoise, audioSequence++, doubaoSessionId);
-            const frame = buildWebSocketFrame(audioPacket);
-            await doubaoConn.write(frame);
-            lastKeepaliveAt = now;
-
-            // 避免刷屏：最多每 20 秒打一次日志
-            if (now - lastKeepaliveLogAt > 20_000) {
-              lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (1000ms, amp=3000)', {
-                 idleClientMs: now - lastClientAudioAt,
-                seq: audioSequence,
-                  ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
-                  sessionAgeSec: Math.round((now - lastClientAudioAt) / 1000),
-               });
-            }
-          } catch (e) {
-            console.warn('[DoubaoRelay] Failed to send silent keepalive:', e);
-          }
-        }
-      }
-    }, KEEPALIVE_INTERVAL_MS);
+    }, HEARTBEAT_INTERVAL_MS);
   };
 
   // 🔧 增强诊断：明确记录是谁先断开（微信端断 / relay 断 / doubao 断）
