@@ -201,7 +201,7 @@ export default function SynergyPromoPage() {
     quota: 1,
   };
 
-  // 检查用户是否已购买过 synergy_bundle
+  // 检查用户是否已购买过 synergy_bundle（兼容多种购买路径）
   useEffect(() => {
     const checkPurchase = async () => {
       if (!user) {
@@ -209,14 +209,31 @@ export default function SynergyPromoPage() {
         return;
       }
       try {
-        const { data } = await supabase
+        // 1. 检查 orders 表（支持 synergy_bundle 和 camp-emotion_stress_7 两种 key）
+        const { data: orderData } = await supabase
           .from('orders')
           .select('id')
           .eq('user_id', user.id)
-          .eq('package_key', 'synergy_bundle')
+          .in('package_key', ['synergy_bundle', 'camp-emotion_stress_7'])
           .eq('status', 'paid')
           .limit(1);
-        if (data && data.length > 0) {
+        
+        if (orderData && orderData.length > 0) {
+          setAlreadyPurchased(true);
+          setPurchaseChecked(true);
+          return;
+        }
+
+        // 2. 检查 user_camp_purchases 表（直接购买训练营的场景）
+        const { data: campData } = await supabase
+          .from('user_camp_purchases')
+          .select('id')
+          .eq('user_id', user.id)
+          .in('camp_type', ['emotion_stress_7', 'synergy_bundle'])
+          .eq('payment_status', 'completed')
+          .limit(1);
+
+        if (campData && campData.length > 0) {
           setAlreadyPurchased(true);
         }
       } catch (e) {
@@ -311,7 +328,7 @@ export default function SynergyPromoPage() {
   };
 
   const handleViewLogistics = () => {
-    navigate('/settings?tab=account');
+    navigate('/settings?tab=account&view=orders');
   };
 
   // Show success panel overlay
@@ -653,7 +670,7 @@ export default function SynergyPromoPage() {
                   className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  进入情绪日记训练营
+                  进入情绪解压训练营
                 </Button>
                 <Button
                   onClick={handleViewLogistics}
