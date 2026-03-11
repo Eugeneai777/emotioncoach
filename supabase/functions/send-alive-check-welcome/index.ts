@@ -59,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
                 🔔 这个功能是什么？
               </p>
               <p style="margin: 0; color: #92400e; font-size: 14px;">
-                用户每天进行安全打卡，证明"我活得很好"。如果连续 <strong>${threshold}</strong> 天未打卡，系统会自动发邮件提醒您关心 TA 的安全状况。
+                用户每天进行安全打卡，用户每天进行安全打卡，确认"今天很好"。如果连续 <strong>${threshold}</strong> 天未打卡，系统会自动发邮件提醒您关心 TA 的安全状况。。如果连续 <strong>${threshold}</strong> 天未打卡，系统会自动发邮件提醒您关心 TA 的安全状况。
               </p>
             </div>
             
