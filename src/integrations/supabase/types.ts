@@ -3701,6 +3701,66 @@ export type Database = {
         }
         Relationships: []
       }
+      elder_mood_records: {
+        Row: {
+          created_at: string | null
+          id: string
+          mood: string
+          note: string | null
+          recorded_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mood: string
+          note?: string | null
+          recorded_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mood?: string
+          note?: string | null
+          recorded_date?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      elder_reminders: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          reminder_time: string
+          reminder_type: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          reminder_time: string
+          reminder_type?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          reminder_time?: string
+          reminder_type?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       emergency_alert_logs: {
         Row: {
           alert_level: string
