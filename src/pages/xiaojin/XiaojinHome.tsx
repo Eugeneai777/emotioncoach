@@ -111,7 +111,6 @@ export default function XiaojinHome() {
             transition={{ delay: 0.4 }}
             className="text-center mt-5"
           >
-            <p className="text-sm font-semibold text-gray-700">AI小劲 · 随时聊</p>
             <p className="text-[11px] text-gray-400 mt-1">语音对话，像朋友一样倾听你 💛</p>
           </motion.div>
         </motion.div>
