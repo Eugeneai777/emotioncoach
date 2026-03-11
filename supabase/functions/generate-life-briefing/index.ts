@@ -43,7 +43,7 @@ const SERVICE_RECOMMENDATIONS: Record<string, {
     gradient: 'from-pink-50 to-rose-50'
   },
   alive_check: {
-    name: '死了吗签到',
+    name: '每日平安打卡',
     route: '/alive-check',
     description: '每日生命签到，唤醒生活热情',
     icon: '🌱',
