@@ -111,7 +111,7 @@ const getPaymentAuthCode = (): string | undefined => {
   return undefined;
 };
 
-export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
+export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId, shippingInfo }: WechatPayDialogProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

@@ -33,7 +33,7 @@ interface AlipayPayDialogProps {
 
 type PaymentStatus = 'idle' | 'loading' | 'redirecting' | 'ready' | 'polling' | 'success' | 'guest_success' | 'failed' | 'expired';
 
-export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl }: AlipayPayDialogProps) {
+export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, shippingInfo }: AlipayPayDialogProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<PaymentStatus>('idle');
