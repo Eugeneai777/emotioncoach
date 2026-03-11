@@ -63,6 +63,7 @@ const XiaojinMood = lazyRetry(() => import("./pages/xiaojin/XiaojinMood"));
 const XiaojinTalent = lazyRetry(() => import("./pages/xiaojin/XiaojinTalent"));
 const XiaojinFuture = lazyRetry(() => import("./pages/xiaojin/XiaojinFuture"));
 const XiaojinChallenge = lazyRetry(() => import("./pages/xiaojin/XiaojinChallenge"));
+const XiaojinVoice = lazyRetry(() => import("./pages/xiaojin/XiaojinVoice"));
 const HealthStore = lazyRetry(() => import("./pages/HealthStore"));
 const EnergyStudioIntro = lazyRetry(() => import("./pages/EnergyStudioIntro"));
 const LivingLab = lazyRetry(() => import("./pages/LivingLab"));
