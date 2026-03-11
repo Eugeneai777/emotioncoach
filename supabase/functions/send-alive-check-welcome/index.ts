@@ -51,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
             
             <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-              <strong>${displayName}</strong> 在"有劲AI"开启了「每日平安打卡」功能，并将您设为紧急联系人。
+              <strong>${displayName}</strong> 在"有劲AI"开启了「每日安全守护」功能，并将您设为紧急联系人。
             </p>
             
             <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
