@@ -406,7 +406,7 @@ export default function SynergyPromoPage() {
                 onClick={handleBuyClick}
                 className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
               >
-                立即解锁套餐 ¥0.01
+                免费体验套餐
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
               <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
