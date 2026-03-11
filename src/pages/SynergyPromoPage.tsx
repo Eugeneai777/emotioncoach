@@ -765,7 +765,7 @@ export default function SynergyPromoPage() {
                   <span className="text-xl font-black text-amber-400">¥0.01</span>
                   <span className="text-xs text-slate-500 line-through">¥899</span>
                 </div>
-                <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 30天</p>
+                <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 28天</p>
               </div>
               <Button
                 onClick={handleBuyClick}
