@@ -2122,7 +2122,7 @@ export class DoubaoRealtimeChat {
     console.log('[DoubaoChat] Disconnecting...');
     this.isDisconnected = true;
     this.stopHeartbeat();
-    this.stopSessionRotation();
+    
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
