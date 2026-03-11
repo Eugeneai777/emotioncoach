@@ -175,7 +175,7 @@ const quickLinks = [
     { name: '生活馆介绍', route: '/energy-studio-intro' },
     { name: '觉醒系统', route: '/awakening-intro' },
     { name: '感恩日记', route: '/gratitude-journal-intro' },
-    { name: '安全打卡', route: '/alive-check-intro' },
+    { name: '每日平安打卡', route: '/alive-check-intro' },
     { name: '四层支持', route: '/transformation-flow' },
   ]},
   { category: '训练营', links: [

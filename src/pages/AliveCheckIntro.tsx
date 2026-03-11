@@ -66,7 +66,7 @@ const AliveCheckIntro = () => {
       <DynamicOGMeta pageKey="aliveCheckIntro" />
       
       {/* Header */}
-      <PageHeader title="安全打卡介绍" showBack rightActions={
+      <PageHeader title="每日平安打卡介绍" showBack rightActions={
         introShareConfigs.aliveCheck && (
           <IntroShareDialog config={introShareConfigs.aliveCheck} />
         )
