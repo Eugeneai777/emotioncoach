@@ -22,7 +22,7 @@ const AliveCheckIntro = () => {
     {
       icon: <HeartHandshake className="w-6 h-6" />,
       title: "每日安全确认",
-      description: "一键打卡表示「我活得很好」，建立安全确认习惯",
+      description: "一键打卡表示「今天很好」，建立安全确认习惯",
       gradient: "from-rose-500 to-pink-500"
     },
     {
@@ -57,7 +57,7 @@ const AliveCheckIntro = () => {
   // 使用流程
   const steps = [
     { num: "01", title: "设置联系人", desc: "添加1-5位紧急联系人的姓名和邮箱" },
-    { num: "02", title: "每天打卡", desc: "点击「我活得很好」按钮完成安全确认" },
+    { num: "02", title: "每天打卡", desc: "点击「今天很好」按钮完成安全确认" },
     { num: "03", title: "自动守护", desc: "连续未打卡超过阈值天数时，联系人收到提醒" }
   ];
 

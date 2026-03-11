@@ -540,7 +540,7 @@ export const AliveCheck = () => {
             </div>
           </div>
           <p className="text-xs text-center text-muted-foreground">
-            💡 每天打卡表示"我活得很好"，连续未打卡时会通知您设定的紧急联系人
+            💡 每天打卡表示"今天很好"，连续未打卡时会通知您设定的紧急联系人，连续未打卡时会通知您设定的紧急联系人
           </p>
         </CardContent>
       </Card>
@@ -641,7 +641,7 @@ export const AliveCheck = () => {
                 ) : (
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                 )}
-                {generatingWitness ? '生成见证中...' : '我活得很好 ✓'}
+                {generatingWitness ? '生成见证中...' : '今天很好 ✓'}
               </Button>
             </div>
           )}
@@ -867,7 +867,7 @@ export const AliveCheck = () => {
         <CardContent className="pt-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
             💡 这是一个为独居或需要被关注的人设计的安全功能。
-            每天简单打卡表示"我活得很好"，如果连续 {daysThreshold} 天未打卡，
+            每天简单打卡表示"今天很好"，如果连续 {daysThreshold} 天未打卡，，如果连续 {daysThreshold} 天未打卡，
             系统会自动发送邮件通知您设定的{contacts.length > 1 ? `${contacts.length}位` : ""}紧急联系人，让他们来关心您。
           </p>
         </CardContent>
