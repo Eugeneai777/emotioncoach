@@ -670,7 +670,7 @@ export default function SynergyPromoPage() {
                   className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  进入情绪日记训练营
+                  进入情绪解压训练营
                 </Button>
                 <Button
                   onClick={handleViewLogistics}
