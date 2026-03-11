@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Send, Mic, MicOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MamaConversionCard from "./MamaConversionCard";
+import { useMamaQuota } from "@/hooks/useMamaQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 interface Message {
   role: "user" | "assistant";
@@ -40,9 +42,11 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
   const [isLoading, setIsLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
+  const { deduct, refresh } = useMamaQuota();
 
   useEffect(() => {
     if (open && initialContext && !hasStarted) {
@@ -188,6 +192,10 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
   const handleSend = (text?: string) => {
     const msg = text || input.trim();
     if (!msg || isLoading) return;
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
     const userMsg: Message = { role: "user", content: msg };
     const updated = [...messages, userMsg];
     setMessages(updated);
@@ -204,6 +212,11 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
+      return;
+    }
+
+    if (!deduct(8)) {
+      setShowUpgrade(true);
       return;
     }
 
@@ -225,111 +238,122 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
   const hasSpeechAPI = typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl bg-[#FFF8F0] p-0 flex flex-col">
-        <SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
-          <SheetTitle className="text-[#3D3028] text-base">💛 AI妈妈教练</SheetTitle>
-        </SheetHeader>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl bg-[#FFF8F0] p-0 flex flex-col">
+          <SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
+            <SheetTitle className="text-[#3D3028] text-base">💛 AI妈妈教练</SheetTitle>
+          </SheetHeader>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3">
-          {messages.map((msg, i) => (
-            <div key={i}>
-              <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                    msg.role === "user"
-                      ? "bg-[#F4845F] text-white rounded-br-md"
-                      : "bg-white text-[#3D3028] border border-[#F5E6D3] rounded-bl-md"
-                  }`}
-                >
-                  {msg.content}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3">
+            {messages.map((msg, i) => (
+              <div key={i}>
+                <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                      msg.role === "user"
+                        ? "bg-[#F4845F] text-white rounded-br-md"
+                        : "bg-white text-[#3D3028] border border-[#F5E6D3] rounded-bl-md"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+                {msg.role === "assistant" && msg.followUps && msg.followUps.length > 0 && !isLoading && i === messages.length - 1 && (
+                  <AnimatePresence>
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex flex-wrap gap-1.5 mt-2 ml-1"
+                    >
+                      {msg.followUps.map((q, j) => (
+                        <button
+                          key={j}
+                          onClick={() => handleSend(q)}
+                          className="px-3 py-2 bg-[#FFF3EB] text-[#F4845F] text-xs rounded-full border border-[#F4845F]/20 active:bg-[#FFE8D6] transition-all min-h-[36px]"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
+                )}
+              </div>
+            ))}
+            {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-[#F5E6D3] rounded-2xl rounded-bl-md">
+                  <TypingDots />
                 </div>
               </div>
-              {/* Follow-up chips */}
-              {msg.role === "assistant" && msg.followUps && msg.followUps.length > 0 && !isLoading && i === messages.length - 1 && (
-                <AnimatePresence>
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-wrap gap-1.5 mt-2 ml-1"
-                  >
-                    {msg.followUps.map((q, j) => (
-                      <button
-                        key={j}
-                        onClick={() => handleSend(q)}
-                        className="px-3 py-2 bg-[#FFF3EB] text-[#F4845F] text-xs rounded-full border border-[#F4845F]/20 active:bg-[#FFE8D6] transition-all min-h-[36px]"
-                      >
-                        {q}
-                      </button>
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
-              )}
-            </div>
-          ))}
-          {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-            <div className="flex justify-start">
-              <div className="bg-white border border-[#F5E6D3] rounded-2xl rounded-bl-md">
-                <TypingDots />
-              </div>
-            </div>
-          )}
-          {/* Conversion card after conversation */}
-          {!isLoading && messages.length >= 4 && messages[messages.length - 1]?.role === "assistant" && (
-            <MamaConversionCard
-              context={messages.map((m) => m.content).join(" ")}
-              messageCount={messages.length}
-              onClose={() => onOpenChange(false)}
-            />
-          )}
-        </div>
-
-        <div
-          className="px-3 pb-3 pt-2 border-t border-[#F5E6D3] bg-white shrink-0"
-          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
-        >
-          <div className="flex gap-1.5 items-end">
-            {hasSpeechAPI && (
-              <Button
-                onClick={toggleVoice}
-                variant="ghost"
-                size="icon"
-                className={`shrink-0 h-10 w-10 rounded-xl ${isListening ? "text-[#F4845F] bg-[#FFF3EB]" : "text-[#A89580]"}`}
-              >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              </Button>
             )}
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="问AI妈妈教练..."
-              className="border border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[40px] max-h-[80px] rounded-xl resize-none flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
-              rows={1}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              onFocus={() => {
-                setTimeout(() => {
-                  scrollRef.current?.scrollTo({ top: scrollRef.current!.scrollHeight, behavior: "smooth" });
-                }, 300);
-              }}
-            />
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              className="bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl h-10 w-10 p-0 shrink-0"
-              size="icon"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
+            {!isLoading && messages.length >= 4 && messages[messages.length - 1]?.role === "assistant" && (
+              <MamaConversionCard
+                context={messages.map((m) => m.content).join(" ")}
+                messageCount={messages.length}
+                onClose={() => onOpenChange(false)}
+              />
+            )}
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+
+          <div
+            className="px-3 pb-3 pt-2 border-t border-[#F5E6D3] bg-white shrink-0"
+            style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+          >
+            <div className="flex gap-1.5 items-end">
+              {hasSpeechAPI && (
+                <Button
+                  onClick={toggleVoice}
+                  variant="ghost"
+                  size="icon"
+                  className={`shrink-0 h-10 w-10 rounded-xl ${isListening ? "text-[#F4845F] bg-[#FFF3EB]" : "text-[#A89580]"}`}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </Button>
+              )}
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="问AI妈妈教练..."
+                className="border border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[40px] max-h-[80px] rounded-xl resize-none flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollRef.current?.scrollTo({ top: scrollRef.current!.scrollHeight, behavior: "smooth" });
+                  }, 300);
+                }}
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isLoading}
+                className="bg-[#F4845F] hover:bg-[#E5734E] text-white rounded-xl h-10 w-10 p-0 shrink-0"
+                size="icon"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="宝妈AI聊天"
+        onSuccess={() => {
+          setShowUpgrade(false);
+          refresh();
+        }}
+      />
+    </>
   );
 };
 
