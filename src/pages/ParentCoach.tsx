@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
 import { TeenModeEntryCard } from "@/components/parent-coach/TeenModeEntryCard";
+import { ElderModeEntryCard } from "@/components/parent-coach/ElderModeEntryCard";
 import { ParentVoiceCallCTA } from "@/components/parent-coach/ParentVoiceCallCTA";
 import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardingGuide";
 import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
