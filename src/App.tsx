@@ -465,6 +465,7 @@ const App = () => (
               <Route path="/xiaojin/talent" element={<XiaojinTalent />} />
               <Route path="/xiaojin/future" element={<XiaojinFuture />} />
               <Route path="/xiaojin/challenge" element={<XiaojinChallenge />} />
+              <Route path="/xiaojin/voice" element={<XiaojinVoice />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
