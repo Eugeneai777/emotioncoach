@@ -238,8 +238,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         <div style={{ flex: 1 }} />
 
-        {/* 底部二维码区 */}
-        {renderQRSection()}
+        <div style={{ flexShrink: 0 }}>
+          {renderQRSection()}
+        </div>
       </div>
     );
 
@@ -392,8 +393,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         <div style={{ flex: 1 }} />
 
-        {/* 底部二维码区 */}
-        {renderQRSection()}
+        <div style={{ flexShrink: 0 }}>
+          {renderQRSection()}
+        </div>
       </div>
     );
 
@@ -573,8 +575,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         <div style={{ flex: 1 }} />
 
-        {/* 底部二维码区 */}
-        {renderQRSection()}
+        <div style={{ flexShrink: 0 }}>
+          {renderQRSection()}
+        </div>
       </div>
     );
 
@@ -591,15 +594,15 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 100%)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '24px 18px 16px',
+        padding: '20px 16px 14px',
         color: 'white',
         boxSizing: 'border-box'
       }}>
         {/* Emoji标识 */}
         <div style={{ 
-          fontSize: '40px', 
+          fontSize: '34px', 
           textAlign: 'center',
-          marginBottom: '10px',
+          marginBottom: '6px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
@@ -607,7 +610,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         {/* 产品名 */}
         <h2 style={{ 
-          fontSize: '22px', 
+          fontSize: '20px', 
           fontWeight: 'bold', 
           textAlign: 'center',
           marginBottom: '4px',
@@ -620,7 +623,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 产品定位语 */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '10px'
+          marginBottom: '6px'
         }}>
           <span style={{
             fontSize: '12px',
@@ -640,7 +643,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           lineHeight: 1.5,
           opacity: 0.95,
           textShadow: '0 1px 4px rgba(0,0,0,0.4)',
-          margin: '0 0 16px 0',
+          margin: '0 0 10px 0',
           padding: '0 8px'
         }}>
           {displayTagline}
@@ -650,8 +653,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px',
-          marginBottom: '14px'
+          gap: '6px',
+          marginBottom: '10px'
         }}>
           {displaySellingPoints.slice(0, 4).map((point, idx) => (
             <div 
@@ -660,12 +663,12 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 background: 'rgba(255,255,255,0.18)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '12px',
-                padding: '10px 14px',
+                padding: '8px 12px',
                 fontSize: '12px',
                 lineHeight: 1.4,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
                 border: '1px solid rgba(255,255,255,0.15)'
               }}
             >
@@ -678,7 +681,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{ flex: 1 }} />
 
         {/* 底部二维码区 */}
-        {renderQRSection()}
+        <div style={{ flexShrink: 0 }}>
+          {renderQRSection()}
+        </div>
       </div>
     );
 
@@ -688,10 +693,10 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '14px',
-          padding: '12px',
+          padding: '10px',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: '10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
         }}>
           {qrCodeUrl && (
@@ -699,8 +704,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               src={qrCodeUrl} 
               alt="QR Code"
               style={{ 
-                width: '60px', 
-                height: '60px', 
+                width: '55px', 
+                height: '55px', 
                 borderRadius: '8px', 
                 flexShrink: 0,
                 border: '2px solid #f0f0f0'
@@ -728,7 +733,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 品牌Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '10px',
+          marginTop: '6px',
           fontSize: '10px',
           opacity: 0.85,
           textShadow: '0 1px 3px rgba(0,0,0,0.3)'

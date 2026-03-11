@@ -104,7 +104,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
 
     // Brand footer component
     const BrandFooter = () => (
-      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+      <div style={{ textAlign: 'center', marginTop: '4px' }}>
         <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
           Powered by 有劲AI
         </span>
@@ -113,7 +113,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
 
     // Product badge component
     const ProductBadge = () => (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '6px' }}>
         <span style={{ fontSize: '14px' }}>{emoji}</span>
         <span style={{
           background: 'rgba(255,255,255,0.25)',
@@ -134,13 +134,13 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       <div style={{
         background: 'rgba(255,255,255,0.95)',
         borderRadius: '12px',
-        padding: '12px',
+        padding: '10px',
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: '10px',
       }}>
         {qrCodeUrl && (
-          <img src={qrCodeUrl} alt="QR Code" style={{ width: '65px', height: '65px', borderRadius: '8px' }} />
+          <img src={qrCodeUrl} alt="QR Code" style={{ width: '55px', height: '55px', borderRadius: '8px' }} />
         )}
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a', margin: '0 0 4px 0' }}>
@@ -159,11 +159,11 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         <div style={backgroundStyle} />
         <div style={{
           position: 'absolute', inset: 0, background: overlayGradient,
-          display: 'flex', flexDirection: 'column', padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', padding: '20px 18px',
         }}>
           <ProductBadge />
           <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', lineHeight: 1.3, margin: 0 }}>
+            <h1 style={{ fontSize: '19px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', lineHeight: 1.3, margin: 0 }}>
               {copy.headline}
             </h1>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', marginTop: '6px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
@@ -185,11 +185,11 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           )}
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
             {copy.selling_points.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: '10px',
-                padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px',
               }}>
                 <span style={{ fontSize: '14px' }}>✨</span>
                 <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{point}</span>
@@ -205,8 +205,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           )}
 
-          <QRSection />
-          <BrandFooter />
+          <div style={{ flexShrink: 0 }}>
+            <QRSection />
+            <BrandFooter />
+          </div>
         </div>
       </div>
     );
@@ -244,8 +246,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           )}
 
-          <QRSection />
-          <BrandFooter />
+          <div style={{ flexShrink: 0 }}>
+            <QRSection />
+            <BrandFooter />
+          </div>
         </div>
       </div>
     );
@@ -318,8 +322,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           )}
 
-          <QRSection />
-          <BrandFooter />
+          <div style={{ flexShrink: 0 }}>
+            <QRSection />
+            <BrandFooter />
+          </div>
         </div>
       </div>
     );
@@ -382,8 +388,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           )}
 
-          <QRSection />
-          <BrandFooter />
+          <div style={{ flexShrink: 0 }}>
+            <QRSection />
+            <BrandFooter />
+          </div>
         </div>
       </div>
     );
@@ -416,8 +424,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </p>
           )}
 
-          <QRSection />
-          <BrandFooter />
+          <div style={{ flexShrink: 0 }}>
+            <QRSection />
+            <BrandFooter />
+          </div>
         </div>
       </div>
     );
