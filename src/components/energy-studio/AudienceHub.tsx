@@ -50,8 +50,8 @@ const audiences = [
   {
     id: "senior",
     emoji: "🌿",
-    label: "老年关怀",
-    subtitle: "健康·退休适应",
+    label: "大劲AI",
+    subtitle: "长辈陪伴·关怀",
     route: "/elder-care",
     gradient: "from-emerald-400 to-teal-500",
     bgColor: "hsl(160 60% 95%)",

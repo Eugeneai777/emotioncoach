@@ -150,7 +150,7 @@ const ElderCarePage = () => {
 
       {/* Footer */}
       <div className="text-center pb-10">
-        <p className="text-xs text-muted-foreground/50">有劲AI · 让陪伴更简单</p>
+        <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
       </div>
     </div>
   );

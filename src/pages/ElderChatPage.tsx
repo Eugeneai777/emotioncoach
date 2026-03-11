@@ -136,7 +136,7 @@ const ElderChatPage = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="想和小劲说点什么..."
+            placeholder="想和大劲说点什么..."
             className="flex-1 rounded-2xl px-4 py-3 text-base border-none outline-none"
             style={{ backgroundColor: "hsl(30 40% 95%)", color: "hsl(25 35% 25%)" }}
           />

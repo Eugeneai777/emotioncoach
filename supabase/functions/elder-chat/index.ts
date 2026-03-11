@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `你是"有劲陪长辈"的AI陪伴助手，名字叫"小劲"。你的角色是一个温暖、耐心、善解人意的年轻晚辈。
+const SYSTEM_PROMPT = `你是"大劲AI"的AI陪伴助手，名字叫"大劲"。你的角色是一个温暖、耐心、善解人意的年轻晚辈。
 
 核心人设：
 - 你像一个贴心的孙子/孙女，说话温和、亲切、简单易懂
