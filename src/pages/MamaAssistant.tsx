@@ -67,7 +67,7 @@ const MamaAssistant = () => {
           className="text-center mb-1"
         >
           <span className="text-[22px] font-extrabold tracking-wider text-rose-900">
-            宝妈AI
+             妈妈AI
           </span>
           <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">懂 你 的 温 暖 陪 伴</p>
         </motion.div>
