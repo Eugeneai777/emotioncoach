@@ -1,23 +1,52 @@
 
 
-## 两个问题需要修复
+# 将「专业教练团队」移至训练营卡片下方
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 产品经理评估
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+**同意您的判断**。当前「专业教练团队」作为独立 Section 夹在「双引擎解决方案」和「24小时全天守护」之间，位置确实不合理：
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+- 教练资质（ICF/EMCC认证、海沃塔体系、服务学员数）是**训练营的信任背书**，应紧跟训练营介绍
+- 知乐胶囊不需要教练，放在胶囊下方会让用户困惑"教练跟胶囊什么关系"
+- 移到训练营卡片下方后，阅读流程变为：**训练营介绍 → 谁来带你练 → + 胶囊**，逻辑更通顺
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 优化方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+将教练团队内容从独立 Section **精简后嵌入训练营卡片内部**，作为卡片的补充信息，而非占一整屏。
 
-| 文件 | 修改 |
+### 改动后的结构（两个页面都改）
+
+```text
+双引擎解决方案
+├── 🧘 训练营卡片
+│   ├── 标签（身心放松/情绪释放/内在安定）
+│   ├── ✦ 听-思-聊闭环...
+│   └── 🏅 教练资质（新位置，紧凑3行）  ← 移入此处
+│       ├── 🛡 ICF/EMCC 国际认证
+│       ├── 🧠 海沃塔对话体系
+│       └── 📊 已服务 2000+ 学员
+├── ＋
+├── 💊 知乐胶囊卡片
+└── 产品图/规格/物流
+```
+
+### 具体修改
+
+| 文件 | 操作 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/SynergyPromoPage.tsx` | 删除独立的 COACH AUTHORITY Section（约614-661行），将3条教练信息以紧凑列表形式插入训练营卡片底部（约556行之后） |
+| `src/pages/WealthSynergyPromoPage.tsx` | 同样处理，删除独立 Section，嵌入对应训练营卡片内 |
+
+### 嵌入样式
+
+不再用大标题+卡片，改为训练营卡片内的紧凑分隔线+小图标列表，视觉上属于训练营的一部分：
+
+```tsx
+<div className="mt-3 pt-3 border-t border-violet-500/20 space-y-2">
+  <p className="text-xs text-slate-400 font-medium">🏅 教练团队</p>
+  {items.map(...)}  // 每行: icon + 标题 + 简短描述，单行展示
+</div>
+```
+
+这样既保留了信任背书的完整信息，又不会让页面多出一个独立区块打断购买节奏。
 
