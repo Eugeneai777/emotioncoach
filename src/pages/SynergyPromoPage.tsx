@@ -554,6 +554,19 @@ export default function SynergyPromoPage() {
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-3">✦ 听-思-聊闭环，7天重建情绪弹性</p>
+            <div className="mt-3 pt-3 border-t border-violet-500/20 space-y-2">
+              <p className="text-xs text-slate-400 font-medium">🏅 教练团队</p>
+              {[
+                { icon: "🛡", text: "ICF/EMCC 国际认证，平均执教 8 年+" },
+                { icon: "🧠", text: "海沃塔对话体系，深度沟通与自信重塑" },
+                { icon: "📊", text: "已服务 2000+ 学员，93% 反馈显著提升" },
+              ].map((c, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-xs">{c.icon}</span>
+                  <span className="text-xs text-slate-400">{c.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Plus */}
