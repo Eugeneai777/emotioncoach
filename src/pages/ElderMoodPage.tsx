@@ -225,10 +225,6 @@ const ElderMoodPage = () => {
           </div>
         )}
       </div>
-    </div>
-  );
-};
-
       <PurchaseOnboardingDialog
         open={showUpgrade}
         onOpenChange={setShowUpgrade}
