@@ -221,6 +221,53 @@ export default function ZhileProductsPage() {
         </motion.div>
       </section>
 
+      {/* 身心深度修复计划 */}
+      <div className="px-4 sm:px-6 max-w-2xl mx-auto mt-6">
+        <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-slate-800/80 to-slate-900/80 overflow-hidden">
+          <div className="px-4 py-3 border-b border-violet-500/20 bg-violet-500/5">
+            <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              🔬 身心深度修复计划
+            </h2>
+            <p className="text-[11px] text-slate-400 mt-0.5">训练营 + 知乐胶囊 · 双引擎协同 · 从根源解决问题</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 p-3">
+            {[
+              {
+                emoji: "🧠",
+                title: "协同抗压套餐",
+                desc: "21天情绪解压训练营 + 知乐胶囊",
+                route: "/promo/synergy",
+                gradient: "from-blue-500/20 to-indigo-500/20",
+                border: "border-blue-500/20",
+              },
+              {
+                emoji: "💰",
+                title: "身心觉醒套餐",
+                desc: "7天财富觉醒训练营 + 知乐胶囊",
+                route: "/promo/wealth-synergy",
+                gradient: "from-amber-500/20 to-yellow-500/20",
+                border: "border-amber-500/20",
+              },
+            ].map((item) => (
+              <motion.button
+                key={item.route}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => navigate(item.route)}
+                className={`flex flex-col items-center gap-2 p-3.5 rounded-xl bg-gradient-to-br ${item.gradient} border ${item.border} hover:brightness-125 transition-all text-center`}
+              >
+                <span className="text-2xl">{item.emoji}</span>
+                <h3 className="text-xs font-bold text-slate-200">{item.title}</h3>
+                <p className="text-[10px] text-slate-400 leading-tight">{item.desc}</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">限时特惠</span>
+                <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
+                  查看详情 <ArrowRight className="w-3 h-3" />
+                </span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Audience selector */}
       <div className="px-4 sm:px-6 max-w-2xl mx-auto mt-6">
         <h2 className="text-xs font-semibold text-slate-400 mb-3 tracking-wide flex items-center gap-1.5">
