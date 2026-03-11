@@ -39,7 +39,7 @@ export function PurchaseHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('未登录');
 
-      const [ordersResult, subscriptionsResult] = await Promise.all([
+      const [ordersResult, subscriptionsResult, storeOrdersResult] = await Promise.all([
         supabase
           .from('orders')
           .select('id, order_no, package_name, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
@@ -51,6 +51,13 @@ export function PurchaseHistory() {
           .from('subscriptions')
           .select('id, combo_name, combo_amount, total_quota, status, created_at')
           .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('store_orders' as any)
+          .select('id, order_no, product_name, price, quantity, status, paid_at, created_at, buyer_name, buyer_phone, buyer_address, tracking_number')
+          .eq('buyer_id', user.id)
+          .in('status', ['paid', 'shipped', 'completed'])
           .order('created_at', { ascending: false })
           .limit(50)
       ]);
@@ -78,6 +85,20 @@ export function PurchaseHistory() {
           quota: s.total_quota,
           status: s.status,
           created_at: s.created_at,
+        })),
+        ...((storeOrdersResult.data as any[]) || []).map((so: any) => ({
+          id: so.id,
+          source: 'wechat_pay' as const,
+          name: so.product_name || '商城购买',
+          amount: so.price || 0,
+          status: so.status === 'completed' ? 'paid' : so.status,
+          created_at: so.paid_at || so.created_at,
+          order_no: so.order_no,
+          buyer_name: so.buyer_name,
+          buyer_phone: so.buyer_phone,
+          buyer_address: so.buyer_address,
+          shipping_status: so.status === 'paid' ? 'pending' : so.status === 'shipped' ? 'shipped' : so.status === 'completed' ? 'delivered' : 'pending',
+          shipping_note: so.tracking_number,
         }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -195,9 +216,12 @@ export function PurchaseHistory() {
                   {expanded && shippable && (
                     <div className="border-t bg-muted/30 p-3 space-y-2.5 text-xs">
                       {purchase.shipping_note && (
-                        <div className="flex items-start gap-2 text-muted-foreground bg-background p-2 rounded">
+                        <div className="flex items-start gap-2 bg-background p-2 rounded">
                           <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
-                          <span>{purchase.shipping_note}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-muted-foreground">快递单号：</span>
+                            <span className="font-medium text-foreground select-all">{purchase.shipping_note}</span>
+                          </div>
                         </div>
                       )}
                       <div className="flex items-start gap-2 text-muted-foreground">

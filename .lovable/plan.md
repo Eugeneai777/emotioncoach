@@ -1,41 +1,23 @@
 
 
-# 物流单号同步：管理后台 → 用户已购订单
+## 两个问题需要修复
 
-## 问题
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-当前用户的"已购订单"（`PurchaseHistory`）和"物流配送"（`ShippingTracker`）**只查询 `orders` 表**，而商城购买的知乐产品存储在 `store_orders` 表中。因此：
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-1. 用户在商城购买的知乐胶囊，在已购订单页面**完全不显示**
-2. 合作方在后台填写的快递单号（写入 `store_orders.tracking_number`）用户无法看到
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-## 方案
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 1. `PurchaseHistory.tsx` — 合并 `store_orders` 数据
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-在查询中增加对 `store_orders` 表的查询（按 `buyer_id = user.id`），将结果合并到统一的购买记录列表中。映射字段：
-
-| store_orders 字段 | → UnifiedPurchaseRecord 字段 |
-|---|---|
-| `product_name` | `name` |
-| `price` | `amount` |
-| `tracking_number` | `shipping_note` |
-| `status` (paid/shipped/completed) | `shipping_status` (pending/shipped/delivered) |
-
-### 2. `ShippingTracker.tsx` — 合并 `store_orders` 物流数据
-
-同样增加对 `store_orders` 表中有 `buyer_address` 记录的查询，让商城订单的物流信息也显示在物流配送组件中。
-
-### 3. 物流单号显示优化
-
-在展开的物流详情中，将 `shipping_note`（即快递单号）以更醒目的方式展示，加上"快递单号："前缀标签，方便用户复制去查询物流。
-
-## 涉及文件
-
-| 文件 | 改动 |
-|---|---|
-| `src/components/PurchaseHistory.tsx` | 增加 store_orders 查询并合并 |
-| `src/components/ShippingTracker.tsx` | 增加 store_orders 物流数据 |
-
-无需数据库变更，管理后台写入 `store_orders.tracking_number` 的逻辑已正确工作。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
