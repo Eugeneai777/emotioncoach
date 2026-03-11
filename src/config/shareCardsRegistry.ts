@@ -187,12 +187,12 @@ const resultCards: ShareCardRegistryItem[] = [
   },
   {
     id: 'alive-check-share',
-    title: '安全打卡分享',
-    category: 'tool',
-    emoji: '💗',
-    type: 'result',
-    componentName: 'AliveCheckShareDialog',
-    description: '安全打卡功能分享',
+     title: '每日平安打卡分享',
+     category: 'tool',
+     emoji: '💗',
+     type: 'result',
+     componentName: 'AliveCheckShareDialog',
+     description: '每日平安打卡功能分享',
   },
   {
     id: 'wealth-journal-share',

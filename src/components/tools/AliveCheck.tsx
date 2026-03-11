@@ -587,7 +587,7 @@ export const AliveCheck = () => {
             </div>
           </div>
           <CardDescription>
-            每日安全打卡，让关心你的人安心
+            每日平安打卡，让关心你的人安心
           </CardDescription>
         </CardHeader>
         <CardContent>

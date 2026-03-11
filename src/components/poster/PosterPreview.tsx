@@ -61,7 +61,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         experience_pack: '超值体验包',
         scl90: '专业测评',
         emotion_health: '专业测评',
-        alive_check: '安全工具'
+        alive_check: '平安工具'
       };
       return categories[key] || '有劲生活';
     };
