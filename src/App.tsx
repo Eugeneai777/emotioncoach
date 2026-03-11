@@ -459,6 +459,11 @@ const App = () => (
               <Route path="/elder-care/greeting" element={<ElderGreetingPage />} />
               <Route path="/elder-care/reminders" element={<ElderRemindersPage />} />
               <Route path="/elder-care/mood" element={<ElderMoodPage />} />
+              <Route path="/xiaojin" element={<XiaojinHome />} />
+              <Route path="/xiaojin/mood" element={<XiaojinMood />} />
+              <Route path="/xiaojin/talent" element={<XiaojinTalent />} />
+              <Route path="/xiaojin/future" element={<XiaojinFuture />} />
+              <Route path="/xiaojin/challenge" element={<XiaojinChallenge />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
