@@ -33,6 +33,7 @@ function needsIdCard(product: Product): boolean {
 }
 
 export function HealthStoreGrid() {
+  const wechatOpenId = useWechatOpenId();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
