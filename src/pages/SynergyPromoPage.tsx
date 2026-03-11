@@ -705,7 +705,7 @@ export default function SynergyPromoPage() {
             <>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-amber-400">¥0.01</span>
+                  <span className="text-xl font-black text-amber-400">¥0</span>
                   <span className="text-xs text-slate-500 line-through">¥899</span>
                 </div>
                 <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 30天</p>
