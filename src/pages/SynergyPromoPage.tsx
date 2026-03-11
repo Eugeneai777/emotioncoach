@@ -88,11 +88,11 @@ const synergyData = [
 /* ========== Timeline ========== */
 const timeline = [
   { time: "7:00", label: "晨间训练", type: "mind" as const, desc: "5分钟正念冥想" },
-  { time: "8:00", label: "早餐后服用", type: "body" as const, desc: "知乐胶囊 × 1粒" },
+  { time: "8:00", label: "早餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "10:00", label: "会前准备", type: "mind" as const, desc: "2分钟呼吸调节" },
-  { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1粒" },
+  { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "15:00", label: "午后重启", type: "mind" as const, desc: "认知重塑练习" },
-  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1粒" },
+  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "22:00", label: "睡前放松", type: "mind" as const, desc: "身体扫描冥想" },
 ];
 
