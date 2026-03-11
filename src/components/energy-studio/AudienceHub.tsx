@@ -34,7 +34,7 @@ const audiences = [
     emoji: "🎓",
     label: "青少年",
     subtitle: "学业·情绪·自信",
-    route: "/emotion-health",
+    route: "/xiaojin",
     gradient: "from-amber-400 to-orange-500",
     bgColor: "hsl(35 90% 95%)",
   },
