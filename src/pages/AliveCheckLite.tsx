@@ -35,7 +35,7 @@ const AliveCheckLite = () => {
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="aliveCheckLite" />
 
-      <PageHeader title="💗 死了吗" showBack rightActions={
+      <PageHeader title="💗 每日平安打卡" showBack rightActions={
         <Button variant="ghost" size="icon" onClick={() => navigate("/alive-check-intro")}>
           <Info className="w-5 h-5" />
         </Button>
