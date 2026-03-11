@@ -153,7 +153,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
             <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-slate-200">21天情绪日记训练营已开通</p>
+              <p className="text-sm font-medium text-slate-200">7天情绪解压训练营已开通</p>
               <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
             </div>
           </div>
@@ -165,7 +165,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
             className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
           >
             <Rocket className="w-5 h-5 mr-2" />
-            进入情绪日记训练营
+            进入情绪解压训练营
           </Button>
           <Button
             onClick={onViewLogistics}
@@ -434,6 +434,46 @@ export default function SynergyPromoPage() {
         {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
       </section>
+
+      {/* ===== QUICK ACCESS FOR PURCHASED USERS ===== */}
+      {alreadyPurchased && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky top-0 z-50 mx-auto max-w-2xl px-4 py-3"
+        >
+          <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-emerald-900/40 border border-emerald-500/30 backdrop-blur-md shadow-lg shadow-emerald-900/20">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-200">已购买此套餐</p>
+                <p className="text-xs text-slate-400">可随时进入训练营学习</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleViewLogistics}
+                variant="outline"
+                size="sm"
+                className="rounded-full border-slate-600 text-slate-300 hover:bg-slate-800 text-xs h-8"
+              >
+                <Truck className="w-3.5 h-3.5 mr-1" />
+                订单
+              </Button>
+              <Button
+                onClick={handleEnterCamp}
+                size="sm"
+                className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0 text-xs h-8"
+              >
+                <Rocket className="w-3.5 h-3.5 mr-1" />
+                进入训练营
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ===== PAIN POINTS ===== */}
       <Section>
