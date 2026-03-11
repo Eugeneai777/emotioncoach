@@ -779,10 +779,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     } else if (isWechat && !!userOpenId) {
       console.log('[Payment] WeChat browser with openId, using jsapi');
       selectedPayType = 'jsapi';
-    } else if (isWechat && !userOpenId) {
-      // 微信浏览器但无 openId → 用 H5 支付，避免 Native QR 码长按被拦截
-      console.log('[Payment] WeChat browser without openId, using H5 payment');
+    } else if (isWechat && !userOpenId && isMobile) {
+      // 手机微信浏览器无 openId → H5 支付，避免长按 QR 被拦截
+      console.log('[Payment] Mobile WeChat without openId, using H5 payment');
       selectedPayType = 'h5';
+    } else if (isWechat && !userOpenId && !isMobile) {
+      // 电脑微信无 openId → Native QR 码，用户手机扫码支付
+      console.log('[Payment] Desktop WeChat without openId, using native QR');
+      selectedPayType = 'native';
     } else if (isMobile && !isWechat) {
       selectedPayType = 'h5';
     } else {
