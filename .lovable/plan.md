@@ -1,53 +1,23 @@
 
 
-# 修复推广页：收货信息同步 + 购后导航 + 教练权威一致性
+## 两个问题需要修复
 
-## 问题清单
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-| # | 问题 | 影响 |
-|---|------|------|
-| 1 | 两个推广页 `UnifiedPayDialog` 均未传 `shippingInfo` prop | 收货信息无法写入订单 → 后台看板看不到物流 |
-| 2 | WealthSynergyPromoPage `handleEnterCamp` fallback 导航到 `/coach/wealth_coach_4_questions` | 用户购买后点"进入训练营"看到的是截图中的教练页，不是训练营 |
-| 3 | WealthSynergyPromoPage 缺少"专业教练团队"板块 | 与 SynergyPromoPage 不一致，缺海沃塔亮点 |
-| 4 | WealthSynergyPromoPage 已购检测只查 `orders` 表 | 通过其他路径购买的用户无法识别为已购 |
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 修改方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 文件 1：`src/pages/WealthSynergyPromoPage.tsx`
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-**A. 传递 shippingInfo（第 714-720 行）**
-```tsx
-<UnifiedPayDialog
-  ...
-  shippingInfo={checkoutInfo ? {
-    buyerName: checkoutInfo.buyerName,
-    buyerPhone: checkoutInfo.buyerPhone,
-    buyerAddress: checkoutInfo.buyerAddress,
-  } : undefined}
-/>
-```
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**B. 修复 handleEnterCamp fallback（第 306 行）**
-```
-navigate('/coach/wealth_coach_4_questions')
-→ navigate('/camp-intro/wealth_block_7')
-```
-
-**C. 新增"专业教练团队"板块**
-在协同数据板块之前（约第 516 行），插入与 SynergyPromoPage 完全一致的三项内容（国际认证资质、海沃塔对话体系、已服务 2000+ 学员），配色调整为 amber/gold 主题。
-
-**D. 补全已购检测（第 202-218 行）**
-增加查询 `user_camp_purchases` 表（camp_type in `['wealth_block_7', 'wealth_synergy_bundle']`），与 SynergyPromoPage 逻辑对齐。
-
-### 文件 2：`src/pages/SynergyPromoPage.tsx`
-
-**A. 传递 shippingInfo（第 852-858 行）**
-同上，补充 `shippingInfo` prop。
-
-## 验证点
-
-- 购买成功后，`orders` 表中 `buyer_name/buyer_phone/buyer_address` 有值
-- 后台知乐飞轮数据看板能看到收货信息
-- 购买后点"进入训练营"→ 进入 `/camp-intro/wealth_block_7`（不是教练页）
-- 两个推广页都有"专业教练团队"和"海沃塔对话体系"板块
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
