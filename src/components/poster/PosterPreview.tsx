@@ -620,7 +620,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 产品定位语 */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '10px'
+          marginBottom: '6px'
         }}>
           <span style={{
             fontSize: '12px',
