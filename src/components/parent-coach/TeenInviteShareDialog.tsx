@@ -135,7 +135,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
     
     setIsGenerating(true);
     try {
-      const blob = await generateCardBlob(exportRef, { isWeChat: isWeChatOrIOS() });
+      const blob = await generateCardBlob(exportRef, { isWeChat: isWeChatOrIOS(), explicitWidth: 380 });
       
       if (!blob) {
         throw new Error('生成图片失败');
@@ -294,7 +294,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
         ) : null}
 
         {/* Hidden export card */}
-        <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none', minWidth: '380px' }}>
           {accessToken && (
             <TeenInviteShareCard 
               ref={exportRef} 
