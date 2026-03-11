@@ -289,7 +289,10 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
             <PartnerTrainingCenter partnerId={partner.id} />
           </TabsContent>
           <TabsContent value="data-dashboard">
-            <PartnerSharedDataDashboard partnerId={partner.id} isAdmin />
+            <div className="space-y-6">
+              <PartnerSharedDataDashboard partnerId={partner.id} isAdmin />
+              <ZhileOrdersDashboard isAdmin />
+            </div>
           </TabsContent>
           <TabsContent value="team">
             <PartnerTeamManager partnerId={partner.id} />
