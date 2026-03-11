@@ -1,57 +1,23 @@
 
 
-# 复刻协同抗压页 → 7天财富训练营+知乐胶囊推广页
+## 两个问题需要修复
 
-## 概述
-以 `SynergyPromoPage.tsx` 为蓝本，创建一个全新的 `WealthSynergyPromoPage.tsx`，保持完全一致的排版结构和购买交互链路，但内容替换为面向**中年男性**的**7天财富觉醒训练营 + 知乐胶囊**组合。视觉风格从蓝紫冷色调转为**深金/琥珀暖色调**，传达财富、力量、沉稳感。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 新页面路由
-- `/promo/wealth-synergy`
-- 在 `App.tsx` 中注册
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 页面结构（与原版1:1对应）
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 1. Hero 区
-- 标语：`炼财商 × 护根基 = 全方位蓄力`
-- 副标题：击中中年男性痛点——"赚得多但守不住、焦虑但找不到出路"
-- 公式视觉：训练营(💰) × 知乐胶囊(💊) = 全面蓄力(🛡️)
-- 渐变色：深墨绿→深金→暗棕（`#0a1a0e → #1a1508 → #1a1210`）
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 2. 痛点区
-面向中年男性的3大痛点：
-- 72% 中年男性有"隐性财务焦虑"——表面稳重，内心对未来充满不确定
-- 68% 长期高压导致决策质量下降——越忙越乱，越乱越焦虑
-- 81% 睡前反复算账——躺下就想钱的事，失眠恶性循环
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 3. 双引擎区（完整保留知乐胶囊板块）
-- **引擎1**：🏆 7天财富觉醒训练营 → 财富卡点诊断 / 认知重塑 / 行动突破
-- **引擎2**：💊 知乐胶囊（与原版完全一致：图片、规格、香港直邮提示）
-
-### 4. 协同数据区
-- 指标改为：财务决策力、焦虑缓解、睡眠质量、执行力、长期规划清晰度
-
-### 5. 24小时时间线
-- 融合财富训练（晨间财富冥想、午间认知练习、晚间复盘）+ 知乐胶囊三餐服用
-
-### 6. 用户见证区
-- 3位中年男性案例（企业主、中层管理、自由职业者）
-
-### 7. 底部CTA + Sticky购买栏
-- 套餐名：`财商觉醒 × 身心蓄力 全方位套餐`
-- `packageKey`: `wealth_synergy_bundle`
-- 价格、购买流程与原版完全一致
-
-### 8. 购买交互链路（100%复用）
-- browse → checkout(CheckoutForm) → payment(UnifiedPayDialog) → register(QuickRegisterStep) → success(SuccessPanel)
-- 成功后跳转财富训练营：检查 `wealth_block_7` 类型的 active camp
-
-## 视觉差异化
-- 主色：amber/gold 替代 violet/blue
-- 背景：深墨色 `#0a0f0a` 替代 `#0a0e1a`
-- 粒子颜色：金色 `amber-400/30`
-- 卡片边框：`amber-500/30`、`cyan-500/30`（胶囊部分不变）
-
-## 文件变更
-1. **新建** `src/pages/WealthSynergyPromoPage.tsx` — 基于 SynergyPromoPage 复刻
-2. **修改** `src/App.tsx` — 添加路由 `/promo/wealth-synergy`
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
