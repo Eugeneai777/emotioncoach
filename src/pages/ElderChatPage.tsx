@@ -10,7 +10,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elder-chat`;
 const ElderChatPage = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", content: "您好呀！😊 我是小劲，很高兴陪您聊天。您今天感觉怎么样？" },
+    { role: "assistant", content: "您好呀！😊 我是大劲，很高兴陪您聊天。您今天感觉怎么样？" },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,8 +97,8 @@ const ElderChatPage = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold" style={{ color: "hsl(25 40% 30%)" }}>💬 陪我聊聊天</h1>
-          <p className="text-xs" style={{ color: "hsl(25 30% 55%)" }}>小劲在这里陪着您</p>
+          <h1 className="text-lg font-bold" style={{ color: "hsl(25 40% 30%)" }}>💬 大劲AI</h1>
+          <p className="text-xs" style={{ color: "hsl(25 30% 55%)" }}>大劲在这里陪着您</p>
         </div>
       </div>
 
@@ -136,7 +136,7 @@ const ElderChatPage = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="想和小劲说点什么..."
+            placeholder="想和大劲说点什么..."
             className="flex-1 rounded-2xl px-4 py-3 text-base border-none outline-none"
             style={{ backgroundColor: "hsl(30 40% 95%)", color: "hsl(25 35% 25%)" }}
           />

@@ -16,7 +16,7 @@ const ElderCarePage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "有劲陪长辈 — 给爸妈一个更安心的陪伴入口",
+          title: "大劲AI — 给爸妈一个更安心的陪伴入口",
           text: "会聊天、会问候、会提醒、会关怀，简单到长辈一看就懂",
           url,
         });
@@ -36,7 +36,7 @@ const ElderCarePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
       <PageHeader
-        title="有劲陪长辈"
+        title="大劲AI"
         showBack
         rightActions={
           <button
@@ -57,8 +57,8 @@ const ElderCarePage = () => {
         className="text-center pt-6 pb-2"
       >
         <span className="text-4xl block mb-2">🌿</span>
-        <h2 className="text-xl font-bold text-orange-900">有劲陪长辈</h2>
-        <p className="text-sm text-orange-600/70 mt-1">让陪伴更简单更温暖</p>
+        <h2 className="text-xl font-bold text-orange-900">大劲AI</h2>
+        <p className="text-sm text-orange-600/70 mt-1">陪长辈，有大劲</p>
       </motion.div>
 
       {/* 中心大圆按钮 */}
@@ -150,7 +150,7 @@ const ElderCarePage = () => {
 
       {/* Footer */}
       <div className="text-center pb-10">
-        <p className="text-xs text-muted-foreground/50">有劲AI · 让陪伴更简单</p>
+        <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
       </div>
     </div>
   );
