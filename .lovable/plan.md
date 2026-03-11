@@ -1,23 +1,57 @@
 
 
-## 两个问题需要修复
+## 更新 `/parent-teen-intro` 页面 — 融入小劲AI功能介绍
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 问题
+当前介绍页内容停留在抽象的"双轨模式"概念，没有展示小劲AI的具体功能（心情探索、天赋发现、未来方向、语音聊天、成长100天挑战、100点免费体验）。家长看完不知道孩子端具体有什么。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 变更内容
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+#### 1. 更新 `teenModeGuidance.ts` 配置
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+**新增** `XIAOJIN_FEATURES` 数组，展示孩子端5大功能：
+- 🙂 今天心情 — 3分钟情绪探索，AI温暖倾听
+- 🧠 我的天赋 — 发现隐藏超能力
+- 🚀 未来方向 — AI帮你看未来
+- 📞 随时聊 — 语音对话，像朋友一样倾听
+- 🔥 成长100天 — 每天一个问题，遇见更好的自己
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**新增** `FREE_QUOTA_INFO` 对象：
+- 100点免费体验（≈100次文字 或 ≈12分钟语音）
+- 用完后可升级365套餐
 
-| 文件 | 修改 |
+**更新** `DUAL_TRACK_BENEFITS`：加入"情绪周报"说明（家长可在亲子教练看到AI生成的周度情绪趋势）
+
+**更新** `HOW_IT_WORKS_STEPS`：简化为3步（生成邀请卡片 → 分享给孩子 → 查看情绪周报）
+
+**更新** `PRIVACY_COMMITMENTS`：增加"家长仅能看到AI生成的情绪趋势摘要"
+
+#### 2. 更新 `ParentTeenIntro.tsx` 页面
+
+新增以下板块：
+
+- **小劲AI功能展示区**（"什么是双轨模式"下方）：展示5大功能卡片，替代当前简陋的"家长版/青少年版"两列
+- **免费体验说明区**：100点免费 + 扣费标准说明
+- **情绪周报预览区**：展示家长能看到的周报样例截图/描述
+- 底部CTA文案更新："分享小劲AI给孩子"
+
+#### 3. 更新 `introShareConfig.ts`
+
+更新 `parentTeen` 配置的 highlights 和 subtitle：
+```
+highlights: [
+  '5大AI功能免费体验100点',
+  '情绪/天赋/未来/语音全覆盖',  
+  '家长可看AI情绪周报',
+]
+subtitle: '小劲AI · 孩子的专属成长陪伴'
+```
+
+### 文件变更清单
+
+| 文件 | 变更 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/config/teenModeGuidance.ts` | 新增 XIAOJIN_FEATURES、FREE_QUOTA_INFO；更新 DUAL_TRACK_BENEFITS、HOW_IT_WORKS_STEPS |
+| `src/pages/ParentTeenIntro.tsx` | 新增功能展示区、免费体验说明、情绪周报预览；更新CTA |
+| `src/config/introShareConfig.ts` | 更新 parentTeen 的 highlights/subtitle |
 
