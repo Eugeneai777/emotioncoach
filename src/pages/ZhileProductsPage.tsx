@@ -1,0 +1,195 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, ArrowRight, Pill } from "lucide-react";
+import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+
+interface AudienceType {
+  id: string;
+  emoji: string;
+  label: string;
+  subtitle: string;
+  gradient: string;
+}
+
+interface ProductCard {
+  title: string;
+  description: string;
+  route: string;
+  tag: string;
+  tagColor: string;
+  emoji: string;
+}
+
+const audiences: AudienceType[] = [
+  { id: "mama", emoji: "👩‍👧", label: "宝妈", subtitle: "带娃不焦虑", gradient: "from-rose-400 to-pink-500" },
+  { id: "workplace", emoji: "💼", label: "职场", subtitle: "压力·倦怠", gradient: "from-blue-400 to-indigo-500" },
+  { id: "couple", emoji: "💑", label: "夫妻", subtitle: "亲密关系", gradient: "from-purple-400 to-violet-500" },
+  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "学业·情绪", gradient: "from-amber-400 to-orange-500" },
+  { id: "midlife", emoji: "🧭", label: "中年", subtitle: "转型·觉醒", gradient: "from-amber-500 to-yellow-600" },
+  { id: "senior", emoji: "🌿", label: "长辈", subtitle: "健康·陪伴", gradient: "from-emerald-400 to-teal-500" },
+];
+
+const productsByAudience: Record<string, ProductCard[]> = {
+  mama: [
+    { title: "知乐胶囊", description: "天然植物配方，缓解焦虑、改善睡眠", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    { title: "宝妈AI助手", description: "专属情绪陪伴，育儿压力疏导", route: "/mama", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "🤱" },
+    { title: "情绪健康测评", description: "3分钟了解你的情绪状态", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
+  ],
+  workplace: [
+    { title: "心智×身体 协同抗压套餐", description: "训练营 + 知乐胶囊，双引擎协同", route: "/promo/synergy", tag: "限时特惠", tagColor: "bg-amber-500/20 text-amber-400", emoji: "🔥" },
+    { title: "知乐胶囊", description: "职场高压人群必备，提升抗压力", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    { title: "情绪健康测评", description: "了解你的职场倦怠指数", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
+  ],
+  couple: [
+    { title: "知乐胶囊", description: "情绪稳定是亲密关系的基石", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    { title: "婚姻关系页", description: "亲密关系沟通技巧与情感修复", route: "/marriage", tag: "查看", tagColor: "bg-violet-500/20 text-violet-400", emoji: "💑" },
+    { title: "情绪健康测评", description: "了解双方的情绪互动模式", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
+  ],
+  youth: [
+    { title: "情绪健康测评", description: "了解青少年情绪与压力状态", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
+    { title: "知乐胶囊", description: "安全温和配方，适合青少年使用", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    { title: "协同抗压套餐", description: "学业压力大？身心双管齐下", route: "/promo/synergy", tag: "套餐", tagColor: "bg-amber-500/20 text-amber-400", emoji: "🔥" },
+  ],
+  midlife: [
+    { title: "知乐胶囊", description: "中年转型期的身心能量补给", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    { title: "中年觉醒页", description: "人生下半场，重新定义意义", route: "/laoge", tag: "查看", tagColor: "bg-yellow-500/20 text-yellow-400", emoji: "🧭" },
+    { title: "协同抗压套餐", description: "训练营 + 胶囊，全方位支持", route: "/promo/synergy", tag: "套餐", tagColor: "bg-amber-500/20 text-amber-400", emoji: "🔥" },
+  ],
+  senior: [
+    { title: "知乐胶囊", description: "改善睡眠质量，提升日常活力", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    { title: "陪伴聊天", description: "AI智能陪聊，排解孤独感", route: "/elder-care/chat", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "💬" },
+    { title: "每日平安打卡", description: "子女远程关怀，每日确认安好", route: "/alive-check", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "💗" },
+  ],
+};
+
+export default function ZhileProductsPage() {
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const products = selected ? productsByAudience[selected] ?? [] : [];
+
+  return (
+    <div className="min-h-screen bg-[#0a0e1a] text-slate-100 pb-12">
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden px-4 pt-14 pb-8 text-center"
+        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #172554 100%)" }}
+      >
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1.5 h-1.5 rounded-full bg-blue-400/20"
+              style={{ left: `${10 + i * 11}%`, top: `${20 + (i % 3) * 25}%` }}
+              animate={{ y: [-6, 6, -6], opacity: [0.2, 0.5, 0.2] }}
+              transition={{ duration: 4 + i * 0.4, repeat: Infinity }}
+            />
+          ))}
+        </div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs mb-4">
+            <Pill className="w-3.5 h-3.5" />
+            知乐产品中心
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-black mb-2">
+            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+              找到适合你的方案
+            </span>
+          </h1>
+          <p className="text-slate-400 text-sm max-w-sm mx-auto">选择你的人群 · 获取专属产品推荐</p>
+
+          <div className="mt-5 flex justify-center">
+            <img
+              src={zhileCapsules}
+              alt="知乐胶囊"
+              className="w-24 h-24 object-cover rounded-2xl border-2 border-cyan-500/30 shadow-lg shadow-cyan-500/10"
+            />
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Audience selector */}
+      <div className="px-4 sm:px-6 max-w-2xl mx-auto mt-6">
+        <h2 className="text-xs font-semibold text-slate-400 mb-3 tracking-wide flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5" />
+          你是哪类人群？
+        </h2>
+        <div className="grid grid-cols-3 gap-2">
+          {audiences.map((a) => {
+            const isActive = selected === a.id;
+            return (
+              <motion.button
+                key={a.id}
+                whileTap={{ scale: 0.94 }}
+                onClick={() => setSelected(isActive ? null : a.id)}
+                className={`flex flex-col items-center gap-1 rounded-xl py-3 px-2 border transition-all ${
+                  isActive
+                    ? "border-cyan-500/50 bg-cyan-500/10 shadow-md shadow-cyan-500/10"
+                    : "border-slate-700/40 bg-slate-800/60 hover:border-slate-600/60"
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${a.gradient} flex items-center justify-center shadow-sm`}>
+                  <span className="text-lg">{a.emoji}</span>
+                </div>
+                <span className="text-xs font-semibold text-slate-200">{a.label}</span>
+                <span className="text-[10px] text-slate-500">{a.subtitle}</span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Product recommendations */}
+      <AnimatePresence mode="wait">
+        {selected && products.length > 0 && (
+          <motion.div
+            key={selected}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="px-4 sm:px-6 max-w-2xl mx-auto mt-6"
+          >
+            <h2 className="text-xs font-semibold text-slate-400 mb-3 tracking-wide">
+              🎯 为你推荐
+            </h2>
+            <div className="space-y-2.5">
+              {products.map((p, i) => (
+                <motion.button
+                  key={p.title + i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  onClick={() => navigate(p.route)}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/40 hover:border-slate-600/60 hover:bg-slate-800/80 transition-all text-left group"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 flex items-center justify-center shrink-0">
+                    <span className="text-xl">{p.emoji}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-200 truncate">{p.title}</h3>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${p.tagColor}`}>
+                        {p.tag}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{p.description}</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer */}
+      <div className="text-center mt-10 px-4">
+        <p className="text-xs text-slate-600">💊 知乐 · 让每一天都有好状态</p>
+      </div>
+    </div>
+  );
+}

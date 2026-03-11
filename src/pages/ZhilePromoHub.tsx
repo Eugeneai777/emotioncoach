@@ -26,6 +26,16 @@ const promoCards: PromoCard[] = [
     category: 'bundle',
     tag: '限时特惠',
   },
+  {
+    id: 'zhile-products',
+    title: '知乐产品推荐',
+    subtitle: '按人群匹配最适合你的方案',
+    emoji: '🎯',
+    gradient: 'from-cyan-500 to-teal-500',
+    path: '/zhile-products',
+    category: 'bundle',
+    tag: '新',
+  },
 ];
 
 const categoryLabels: Record<string, { label: string; icon: React.ReactNode }> = {
