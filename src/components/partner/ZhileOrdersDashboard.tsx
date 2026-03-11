@@ -106,33 +106,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
   });
 
-  // 更新收货信息（收货人/手机号/地址）
-  const updateBuyerInfo = useMutation({
-    mutationFn: async ({ orderId, field, value, source }: { orderId: string; field: string; value: string; source?: string }) => {
-      if (source === 'store_orders') {
-        const { data, error } = await supabase
-          .from("store_orders" as any)
-          .update({ [field]: value })
-          .eq("id", orderId)
-          .select("id");
-        if (error) throw error;
-        if (!data || (data as any[]).length === 0) throw new Error("无权限更新");
-      } else {
-        const { data, error } = await supabase
-          .from("orders")
-          .update({ [field]: value })
-          .eq("id", orderId)
-          .select("id");
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error("无权限更新");
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
-      toast.success("已更新");
-    },
-    onError: (err: Error) => toast.error(err.message || "更新失败"),
-  });
+  // 更新收货信息（收货人/手机号/地址）— kept for potential future use but currently read-only in UI
 
   const filtered = orders.filter(o => {
     const matchSearch = !searchTerm || 
@@ -293,49 +267,13 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                           ) : (order.user_display_name || '-')}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[80px]"
-                              placeholder="收货人"
-                              defaultValue={order.buyer_name || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.buyer_name || '')) {
-                                  updateBuyerInfo.mutate({ orderId: order.id, field: 'buyer_name', value: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (order.buyer_name || '-')}
+                          {order.buyer_name || '-'}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[110px]"
-                              placeholder="手机号"
-                              defaultValue={order.buyer_phone || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.buyer_phone || '')) {
-                                  updateBuyerInfo.mutate({ orderId: order.id, field: 'buyer_phone', value: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (order.buyer_phone || '-')}
+                          {order.buyer_phone || '-'}
                         </TableCell>
-                        <TableCell className="text-xs max-w-[200px]">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[160px]"
-                              placeholder="收货地址"
-                              defaultValue={order.buyer_address || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.buyer_address || '')) {
-                                  updateBuyerInfo.mutate({ orderId: order.id, field: 'buyer_address', value: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (order.buyer_address || '-')}
+                        <TableCell className="text-xs max-w-[200px] truncate">
+                          {order.buyer_address || '-'}
                         </TableCell>
                         <TableCell className="text-xs">
                           {order.id_card_name ? (
