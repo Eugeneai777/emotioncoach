@@ -28,6 +28,7 @@ const PartnerChannelAttribution = lazy(() => import("@/components/partner/Partne
 const PartnerFollowupReminders = lazy(() => import("@/components/partner/PartnerFollowupReminders").then((m) => ({ default: m.PartnerFollowupReminders })));
 const PartnerTrainingCenter = lazy(() => import("@/components/partner/PartnerTrainingCenter").then((m) => ({ default: m.PartnerTrainingCenter })));
 const PartnerSharedDataDashboard = lazy(() => import("@/components/partner/PartnerSharedDataDashboard").then((m) => ({ default: m.PartnerSharedDataDashboard })));
+const ZhileOrdersDashboard = lazy(() => import("@/components/partner/ZhileOrdersDashboard").then((m) => ({ default: m.ZhileOrdersDashboard })));
 const PartnerPromoPages = lazy(() => import("@/components/partner/PartnerPromoPages").then((m) => ({ default: m.PartnerPromoPages })));
 
 const TabLoading = () => (
