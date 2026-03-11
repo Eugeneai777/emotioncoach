@@ -85,6 +85,20 @@ export function PurchaseHistory() {
           quota: s.total_quota,
           status: s.status,
           created_at: s.created_at,
+        })),
+        ...((storeOrdersResult.data as any[]) || []).map((so: any) => ({
+          id: so.id,
+          source: 'wechat_pay' as const,
+          name: so.product_name || '商城购买',
+          amount: so.price || 0,
+          status: so.status === 'completed' ? 'paid' : so.status,
+          created_at: so.paid_at || so.created_at,
+          order_no: so.order_no,
+          buyer_name: so.buyer_name,
+          buyer_phone: so.buyer_phone,
+          buyer_address: so.buyer_address,
+          shipping_status: so.status === 'paid' ? 'pending' : so.status === 'shipped' ? 'shipped' : so.status === 'completed' ? 'delivered' : 'pending',
+          shipping_note: so.tracking_number,
         }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
