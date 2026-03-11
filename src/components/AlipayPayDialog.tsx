@@ -22,7 +22,7 @@ interface ShippingInfo {
   buyerAddress: string;
 }
 
-interface AlipayPayDialogProps {
+export interface AlipayPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;

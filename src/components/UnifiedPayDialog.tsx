@@ -10,8 +10,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { WechatPayDialog } from './WechatPayDialog';
-import { AlipayPayDialog } from './AlipayPayDialog';
+import { WechatPayDialog, type WechatPayDialogProps } from './WechatPayDialog';
+import { AlipayPayDialog, type AlipayPayDialogProps } from './AlipayPayDialog';
 import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
 import {
   Dialog,

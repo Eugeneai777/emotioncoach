@@ -38,7 +38,7 @@ interface ShippingInfo {
   buyerAddress: string;
 }
 
-interface WechatPayDialogProps {
+export interface WechatPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;
@@ -450,8 +450,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         return;
       }
 
-      console.log('[Payment] No openId available, triggering silent auth');
-      triggerSilentAuth();
+      // 微信浏览器中没有 openId：直接降级为二维码支付，避免 OAuth 重定向循环
+      console.log('[Payment] WeChat browser without openId — falling back to QR code (Native) payment');
+      setOpenIdResolved(true);
     };
 
     fetchUserOpenId();
