@@ -59,6 +59,50 @@ export default function XiaojinHome() {
           ))}
         </div>
 
+        {/* Voice Chat Circle Button */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-col items-center mb-10"
+        >
+          <button
+            onClick={() => navigate("/xiaojin/voice")}
+            className="relative group focus:outline-none touch-manipulation"
+            aria-label="开始AI小劲语音对话"
+          >
+            {/* Outer glow */}
+            <motion.div
+              className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400/30 to-amber-400/30 blur-xl"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              style={{ width: '140px', height: '140px', margin: '-10px' }}
+            />
+
+            {/* Pulsing ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-orange-400/50"
+              animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+              style={{ width: '120px', height: '120px' }}
+            />
+
+            {/* Main button */}
+            <motion.div
+              className="relative w-[120px] h-[120px] rounded-full bg-gradient-to-br from-orange-400 via-amber-400 to-orange-500 shadow-2xl flex flex-col items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{ boxShadow: '0 10px 40px -10px rgba(251, 146, 60, 0.5), 0 0 60px rgba(251, 191, 36, 0.2)' }}
+            >
+              <Phone className="h-8 w-8 text-white mb-1" />
+              <span className="text-xs font-semibold text-white">随时聊</span>
+            </motion.div>
+          </button>
+
+          <p className="mt-4 text-sm font-medium text-gray-600">AI小劲 · 随时聊</p>
+          <p className="text-xs text-gray-400 mt-0.5">语音对话，像朋友一样倾听</p>
+        </motion.div>
+
         {/* Daily Challenge Entry */}
         <motion.button
           initial={{ opacity: 0 }}
