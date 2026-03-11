@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", color: "from-orange-100 to-amber-50" },
