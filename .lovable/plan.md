@@ -1,23 +1,31 @@
 
 
-## 两个问题需要修复
+## 将「有劲陪长辈」重命名为「大劲AI」
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+用户选择了「大劲AI」作为长辈陪伴产品的品牌名，与小劲AI（青少年）、老哥AI（中年男性）形成家族系列。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 需要修改的文件
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+| 文件 | 变更内容 |
+|------|----------|
+| `src/pages/ElderCarePage.tsx` | 标题、品牌区、分享文案、footer 中的"有劲陪长辈"全部替换为"大劲AI"，副标题改为"陪长辈，有大劲" |
+| `src/pages/ElderChatPage.tsx` | 聊天页顶部标题改为"大劲AI" |
+| `src/pages/ElderGreetingPage.tsx` | 若有品牌文字则同步更新 |
+| `src/pages/ElderMoodPage.tsx` | 同上 |
+| `src/pages/ElderRemindersPage.tsx` | 同上 |
+| `supabase/functions/elder-chat/index.ts` | system prompt 中"有劲陪长辈"改为"大劲AI" |
+| `src/components/energy-studio/AudienceHub.tsx` | label 从"老年关怀"改为"大劲AI" |
+| `src/pages/ZhileProductsPage.tsx` | 若有相关文案则同步 |
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 品牌文案调整
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+- 品牌名：**大劲AI**
+- 品牌 emoji：🌿（保留）
+- 副标题：「陪长辈，有大劲」
+- 中心按钮文字：保持「陪我聊聊」
+- 按钮下方提示：「像有人在身边陪着你」
+- Footer：「大劲AI · 让陪伴更简单」
+- 分享标题：「大劲AI — 给爸妈一个更安心的陪伴入口」
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+路由路径 `/elder-care` 保持不变，避免破坏链接。
 
