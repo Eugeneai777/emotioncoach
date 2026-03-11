@@ -11,7 +11,7 @@ import MamaAIChat from "@/components/mama/MamaAIChat";
 
 const quickEntries = [
   { emoji: "😊", title: "情绪检测", desc: "此刻还好吗", context: "我现在心情不太好，想聊聊..." },
-  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/packages" as string | undefined, context: undefined as string | undefined },
+  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined },
   { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事..." },
 ];
 
@@ -155,7 +155,7 @@ const MamaAssistant = () => {
           className="pb-8"
         >
           <button
-            onClick={() => navigate("/packages")}
+            onClick={() => navigate("/assessment-tools")}
             className="w-full flex items-center justify-between 
                        px-5 py-4 rounded-2xl 
                        bg-gradient-to-r from-pink-50 to-rose-50 
