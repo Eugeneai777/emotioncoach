@@ -173,7 +173,7 @@ export default function ParentTeenIntro() {
               <div className="space-y-2">
                 {[
                   { icon: "📊", text: "7天互动趋势图 — 了解孩子的使用频率" },
-                  { icon: "💬", text: "AI情绪摘要 — 如"本周情绪整体稳定，有2次轻微焦虑"" },
+                  { icon: "💬", text: 'AI情绪摘要 — 如"本周情绪整体稳定，有2次轻微焦虑"' },
                   { icon: "🔐", text: "仅显示趋势，不含任何对话内容" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2 p-2 bg-white/50 rounded-lg">
