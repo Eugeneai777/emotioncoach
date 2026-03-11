@@ -284,8 +284,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8 text-sm">暂无订单数据</p>
           ) : (
-            <AdminTableContainer minWidth={1200}>
-              <Table>
+              <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="whitespace-nowrap">下单时间</TableHead>
