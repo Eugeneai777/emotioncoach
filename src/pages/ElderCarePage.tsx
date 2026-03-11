@@ -125,7 +125,7 @@ const ElderCarePage = () => {
           </div>
         </motion.div>
 
-        {/* 平安打卡 CTA */}
+        {/* 安全守护 CTA */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
