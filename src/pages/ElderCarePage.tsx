@@ -250,7 +250,7 @@ const ElderCarePage = () => {
                   border: "none",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 }}
-                onClick={() => handleComingSoon(f.title)}
+                onClick={() => navigate(f.route)}
               >
                 {f.btn}
               </Button>
