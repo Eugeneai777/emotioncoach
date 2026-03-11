@@ -185,11 +185,11 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           )}
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
             {copy.selling_points.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: '10px',
-                padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px',
               }}>
                 <span style={{ fontSize: '14px' }}>✨</span>
                 <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{point}</span>
