@@ -269,7 +269,7 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
   },
   mama: {
     pageKey: 'mama',
-    title: '妈妈AI助手',
+    title: '宝妈AI助手',
     subtitle: '懂你的温暖陪伴',
     targetUrl: '/mama',
     emoji: '💖',

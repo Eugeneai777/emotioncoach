@@ -175,7 +175,7 @@ const MamaAssistant = () => {
 
         {/* Footer */}
         <div className="text-center pb-6">
-          <p className="text-xs text-muted-foreground/50">妈妈AI · 温暖陪伴每一天</p>
+          <p className="text-xs text-muted-foreground/50">宝妈AI · 温暖陪伴每一天</p>
         </div>
       </div>
 
