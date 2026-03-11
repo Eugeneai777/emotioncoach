@@ -748,7 +748,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         ref={ref}
         style={{
           width: '300px',
-          height: '533px',
+          height: '560px',
           position: 'relative',
           overflow: 'hidden',
           borderRadius: '20px',
