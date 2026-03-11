@@ -99,7 +99,7 @@ const productsByAudience: Record<string, ProductCard[]> = {
   senior: [
     makeCapsule("改善睡眠质量，提升日常活力"),
     { title: "陪伴聊天", description: "AI智能陪聊，排解孤独感", route: "/elder-care/chat", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "💬" },
-    { title: "每日平安打卡", description: "子女远程关怀，每日确认安好", route: "/alive-check", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "💗" },
+    { title: "每日安全守护", description: "子女远程关怀，每日确认安好", route: "/alive-check", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "💗" },
   ],
 };
 

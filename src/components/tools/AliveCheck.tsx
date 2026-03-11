@@ -505,9 +505,9 @@ export const AliveCheck = () => {
           <div className="mx-auto w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center mb-4">
             <HeartHandshake className="w-8 h-8 text-rose-500" />
           </div>
-           <CardTitle className="text-xl">登录后使用每日平安打卡</CardTitle>
+           <CardTitle className="text-xl">登录后使用每日安全守护</CardTitle>
            <CardDescription className="text-base">
-             这是你的个人平安打卡与联系人设置，需要登录后查看和使用
+             这是你的个人安全守护与联系人设置，需要登录后查看和使用
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -557,7 +557,7 @@ export const AliveCheck = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <HeartHandshake className="w-5 h-5 text-rose-500" />
-              <CardTitle className="text-lg">每日平安打卡</CardTitle>
+              <CardTitle className="text-lg">每日安全守护</CardTitle>
             </div>
             <div className="flex items-center gap-1">
               <Button 
@@ -587,7 +587,7 @@ export const AliveCheck = () => {
             </div>
           </div>
           <CardDescription>
-            每日平安打卡，让关心你的人安心
+            每日安全守护，让关心你的人安心
           </CardDescription>
         </CardHeader>
         <CardContent>

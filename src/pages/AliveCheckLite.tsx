@@ -35,7 +35,7 @@ const AliveCheckLite = () => {
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="aliveCheckLite" />
 
-      <PageHeader title="💗 每日平安打卡" showBack rightActions={
+      <PageHeader title="💗 每日安全守护" showBack rightActions={
         <Button variant="ghost" size="icon" onClick={() => navigate("/alive-check-intro")}>
           <Info className="w-5 h-5" />
         </Button>
@@ -65,7 +65,7 @@ const AliveCheckLite = () => {
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageKey="alive_check"
-        packageName="每日平安打卡"
+        packageName="每日安全守护"
         onSuccess={handlePaymentSuccess}
       />
     </div>

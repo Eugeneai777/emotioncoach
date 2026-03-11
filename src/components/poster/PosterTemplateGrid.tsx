@@ -161,25 +161,25 @@ const posterTemplates: PosterTemplate[] = [
   },
   {
     key: 'alive_check',
-     name: '每日平安打卡',
+     name: '每日安全守护',
      emoji: '💗',
      tagline: '每日一键确认平安，让关心你的人安心',
      gradient: 'from-pink-400 to-rose-500',
      sellingPoints: ['每日一键平安确认', '超时自动通知紧急联系人', '最多5位联系人，默默守护'],
      sceneVariants: {
        moments: {
-         tagline: '有了这个平安打卡功能，妈妈终于不用每天打电话确认我有没有事了',
-         sellingPoints: ['一键打卡，家人自动收到平安通知', '忘打卡会自动提醒联系人', '独居/异地/老人都适用'],
-         tone: '温暖故事+家人关怀'
-       },
-       xiaohongshu: {
-         tagline: '独居女生必备｜平安打卡功能，超时自动通知紧急联系人',
-         sellingPoints: ['每天点一下确认平安', '超时未打卡自动通知家人', '最多设置5位紧急联系人'],
-         tone: '安全种草+独居必备'
-       },
-       wechat_group: {
-         tagline: '群里独居的朋友看过来，这个平安打卡功能真的能救命',
-         sellingPoints: ['每天一键打卡确认平安', '忘了打卡会自动通知你设定的联系人', '免费使用，设置很简单'],
+          tagline: '有了这个安全守护功能，妈妈终于不用每天打电话确认我有没有事了',
+          sellingPoints: ['一键打卡，家人自动收到安全通知', '忘打卡会自动提醒联系人', '独居/异地/老人都适用'],
+          tone: '温暖故事+家人关怀'
+        },
+        xiaohongshu: {
+          tagline: '独居女生必备｜安全守护功能，超时自动通知紧急联系人',
+          sellingPoints: ['每天点一下确认安全', '超时未打卡自动通知家人', '最多设置5位紧急联系人'],
+          tone: '安全种草+独居必备'
+        },
+        wechat_group: {
+          tagline: '群里独居的朋友看过来，这个安全守护功能真的能救命',
+          sellingPoints: ['每天一键打卡确认安全', '忘了打卡会自动通知你设定的联系人', '免费使用，设置很简单'],
          tone: '群友关怀+安全感'
        }
     }

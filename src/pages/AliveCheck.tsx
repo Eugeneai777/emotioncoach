@@ -16,7 +16,7 @@ const AliveCheck = () => {
       
       {/* 装饰性背景元素已移除以优化手机性能 */}
 
-      <PageHeader title="💗 每日平安打卡" showBack rightActions={
+      <PageHeader title="💗 每日安全守护" showBack rightActions={
         <Button variant="ghost" size="icon" onClick={() => navigate("/energy-studio-intro")}>
           <Info className="w-5 h-5" />
         </Button>

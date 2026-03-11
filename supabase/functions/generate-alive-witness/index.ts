@@ -92,7 +92,7 @@ serve(async (req) => {
     const awakeningInfo = awakening_type ? awakeningLabels[awakening_type] : null;
     const timeLabel = timeOfDayLabels[time_of_day] || '今天';
     
-    const systemPrompt = `你是一位温暖的生命见证者。用户刚刚完成了"每日平安打卡"，表示他今天活得很好。
+    const systemPrompt = `你是一位温暖的生命见证者。用户刚刚完成了"每日安全守护"，表示他今天活得很好。
 
 请为用户生成一句简短的"存活见证语"（20-50字），要求：
 1. 肯定他"今天活着"这个事实的意义

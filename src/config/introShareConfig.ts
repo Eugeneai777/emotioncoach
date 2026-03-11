@@ -199,7 +199,7 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
   },
   aliveCheck: {
     pageKey: 'aliveCheck',
-    title: '每日平安打卡',
+    title: '每日安全守护',
     subtitle: '让关心你的人安心',
     targetUrl: '/alive-check-intro',
     emoji: '💗',
