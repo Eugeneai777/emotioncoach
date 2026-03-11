@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
               <p style="margin: 0; color: #92400e; font-size: 15px;">
-                ⚠️ 该用户已连续 <strong>${daysMissed}</strong> 天未在"有劲AI"进行平安打卡。
+                ⚠️ 该用户已连续 <strong>${daysMissed}</strong> 天未在"有劲AI"进行安全守护打卡。
               </p>
             </div>
             

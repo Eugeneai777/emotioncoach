@@ -50,7 +50,7 @@ export const defaultConfig: QuickMenuConfig = {
   },
   customSlot2: {
     id: 'custom2',
-    label: '平安打卡',
+    label: '安全守护',
     path: '/alive-check',
     icon: 'HeartPulse',
     color: 'bg-rose-500',

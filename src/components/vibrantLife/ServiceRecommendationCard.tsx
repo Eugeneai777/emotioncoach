@@ -45,7 +45,7 @@ const SERVICE_CONFIG: Record<string, {
     iconColor: 'text-pink-600'
   },
   alive_check: {
-    name: '每日平安打卡',
+    name: '每日安全守护',
     route: '/alive-check',
     description: '每日生命签到，唤醒生活热情',
     icon: Target,

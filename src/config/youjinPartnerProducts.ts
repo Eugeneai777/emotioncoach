@@ -71,7 +71,7 @@ export const experiencePackageItems: ExperiencePackageItem[] = [
   },
   {
     key: 'alive_check',
-    name: '每日平安打卡',
+    name: '每日安全守护',
     value: '永久',
     icon: '🫀',
     description: '每天1秒确认活着，唤醒生命热情',

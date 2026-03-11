@@ -84,7 +84,7 @@ const AliveCheckIntro = () => {
           
           <div className="space-y-2">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">
-              「每日平安打卡」
+              「每日安全守护」
             </h1>
             <p className="text-rose-600 font-medium">
               让关心你的人安心，让你关心的人放心

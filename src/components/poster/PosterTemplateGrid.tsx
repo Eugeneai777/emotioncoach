@@ -161,7 +161,7 @@ const posterTemplates: PosterTemplate[] = [
   },
   {
     key: 'alive_check',
-     name: '每日平安打卡',
+     name: '每日安全守护',
      emoji: '💗',
      tagline: '每日一键确认平安，让关心你的人安心',
      gradient: 'from-pink-400 to-rose-500',
