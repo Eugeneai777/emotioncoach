@@ -1,23 +1,35 @@
 
 
-## 两个问题需要修复
+# 修复：商品名称/金额已生效 + 日期列被截断
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+1. **"改动没有生效"** — 数据库查询确认 `product_name` 已正确返回（如"知乐胶囊草本调理16种草本成分..."），前端代码和类型定义都已更新。可能是浏览器缓存，刷新后应能看到。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+2. **日期内容看不完整** — 表格有 11 列，内容超出视口宽度。虽然有 `overflow-x-auto`，但 `Table` 组件内部自带一层 `overflow-auto` div，嵌套后滚动条可能不可见或不好操作。
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 修复方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 文件：`src/components/partner/ZhileOrdersDashboard.tsx`
 
-| 文件 | 修改 |
+用 `AdminTableContainer`（项目已有的表格容器组件）替换当前的 `<div className="overflow-x-auto">`，设置 `minWidth={1200}` 确保所有列完整显示，底部出现明确的水平滚动条。
+
+```tsx
+// 替换第 286 行的 <div className="overflow-x-auto">
+<AdminTableContainer minWidth={1200}>
+  <Table>
+    ...
+  </Table>
+</AdminTableContainer>
+```
+
+同时给关键列添加 `min-w` 和 `whitespace-nowrap` 确保日期、金额不换行不截断：
+- 下单时间列：`min-w-[100px] whitespace-nowrap`（已有）
+- 商品名称列：保持 `max-w-[150px] truncate` 但加 `title` 属性显示完整名称
+- 金额列：`whitespace-nowrap`
+
+| 改动 | 效果 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| 使用 AdminTableContainer | 底部出现水平滚动条，所有列可滚动查看 |
+| 列宽约束 | 日期、金额等关键字段不再被截断 |
 
