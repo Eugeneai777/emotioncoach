@@ -1,23 +1,34 @@
 
 
-## 两个问题需要修复
+## 给大劲AI添加100个免费体验点数（复制小劲AI模式）
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 方案
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+复制 `useXiaojinQuota` 的 localStorage 免费点数模式，创建 `useDajinQuota` hook，然后在大劲AI的各子页面（聊天、问候、心情、提醒）接入点数扣费逻辑。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 具体改动
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+**1. 新建 `src/hooks/useDajinQuota.ts`**
+- 复制 `useXiaojinQuota` 结构，key 改为 `dajin_quota`，初始 100 点
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**2. 修改 `src/pages/ElderChatPage.tsx`**
+- 引入 `useDajinQuota`，每次发送消息扣 1 点
+- 点数不足时弹出 `PurchaseOnboardingDialog`
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+**3. 修改 `src/pages/ElderCarePage.tsx`**
+- 引入 `useDajinQuota`，在首页显示剩余点数
+- 点数为 0 时各入口显示提示
+
+**4. 修改 `src/pages/ElderMoodPage.tsx`**
+- 心情记录扣 1 点
+
+**5. 修改 `src/pages/ElderGreetingPage.tsx`**
+- 问候功能扣 1 点
+
+**6. 修改 `src/pages/ElderRemindersPage.tsx`**
+- 提醒功能如涉及 AI 交互则扣点
+
+### 扣费标准（与小劲一致）
+- 文字交互：1 点/次
+- 语音通话（如有）：8 点/分钟
 
