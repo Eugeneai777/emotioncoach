@@ -73,7 +73,7 @@ function makeCapsule(desc: string): ProductCard {
 const productsByAudience: Record<string, ProductCard[]> = {
   mama: [
     makeCapsule("天然植物配方，缓解焦虑、改善睡眠"),
-    { title: "宝妈AI助手", description: "专属情绪陪伴，育儿压力疏导", route: "/mama", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "🤱" },
+    { title: "妈妈AI助手", description: "专属情绪陪伴，育儿压力疏导", route: "/mama", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "🤱" },
     { title: "情绪健康测评", description: "3分钟了解你的情绪状态", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
   ],
   workplace: [
