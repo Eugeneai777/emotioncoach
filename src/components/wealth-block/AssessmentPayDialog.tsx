@@ -483,6 +483,14 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
         console.log("[Payment] WeChat browser with openId, using jsapi");
         selectedPayType = "jsapi";
+      } else if (isWechat && !userOpenId && isMobile) {
+        // 手机微信无 openId → H5 支付按钮，避免长按 QR 被拦截
+        console.log("[Payment] Mobile WeChat without openId, using H5 payment");
+        selectedPayType = "h5";
+      } else if (isWechat && !userOpenId && !isMobile) {
+        // 电脑微信无 openId → Native QR，用户手机扫码
+        console.log("[Payment] Desktop WeChat without openId, using native QR");
+        selectedPayType = "native";
       } else if (isMobile && !isWechat) {
         // 移动端非微信浏览器：使用支付宝
         console.log("[Payment] Mobile non-WeChat browser, using alipay");
