@@ -267,6 +267,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #f97316, #f59e0b)',
     category: 'coach'
   },
+  dajin: {
+    pageKey: 'dajin',
+    title: '大劲AI',
+    subtitle: '长辈专属AI陪伴',
+    targetUrl: '/elder-care?from=child',
+    emoji: '🌿',
+    highlights: [
+      '温暖陪伴聊天',
+      '每日暖心问候',
+      '心情记录+提醒',
+    ],
+    gradient: 'linear-gradient(135deg, #f97316, #d97706)',
+    category: 'coach'
+  },
 };
 
 /**
