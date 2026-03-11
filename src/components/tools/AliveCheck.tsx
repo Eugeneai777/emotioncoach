@@ -540,7 +540,7 @@ export const AliveCheck = () => {
             </div>
           </div>
           <p className="text-xs text-center text-muted-foreground">
-            💡 每天打卡表示"我活得很好"，连续未打卡时会通知您设定的紧急联系人
+            💡 每天打卡表示"今天很好"，连续未打卡时会通知您设定的紧急联系人，连续未打卡时会通知您设定的紧急联系人
           </p>
         </CardContent>
       </Card>
