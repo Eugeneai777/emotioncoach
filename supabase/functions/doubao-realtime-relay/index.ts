@@ -24,32 +24,8 @@ const DOUBAO_PATH = '/api/v3/realtime/dialogue';
 // （不影响语音音频流；persona 校验仍在后端完成）
 const FORWARD_ASSISTANT_TEXT = false;
 
-// ✅ 静默保活帧大小：1000ms @16kHz = 16000 samples = 32000 bytes PCM16
-// 需要足够大的帧让上游 VAD 有充分样本来检测"活动"
-const KEEPALIVE_SILENCE_BYTES = 32000;
-
-// ✅ 保活噪声幅度：3000 / 32768 ≈ -21dB
-// 进一步提升幅度，确保上游 VAD 和连接管理都能检测到"有活跃上行音频"
-// 之前 2000 (-24dB) 仍然在 ~60s 被上游判定为空闲断开
-const KEEPALIVE_NOISE_AMPLITUDE_I16 = 3000;
-
-// ✅ 保活间隔：1.5s（从 2s 缩短，更积极地保持连接）
-const KEEPALIVE_INTERVAL_MS = 1_500;
-
-function makePcm16NoiseBytes(byteLength: number, amplitudeI16: number): Uint8Array {
-  // byteLength 必须为偶数（Int16）
-  const buf = new Uint8Array(byteLength);
-  const samples = Math.floor(byteLength / 2);
-  for (let i = 0; i < samples; i++) {
-    // [-amplitude, amplitude] 的随机噪声
-    const v = Math.floor((Math.random() * 2 - 1) * amplitudeI16);
-    // little-endian PCM16
-    const off = i * 2;
-    buf[off] = v & 0xff;
-    buf[off + 1] = (v >> 8) & 0xff;
-  }
-  return buf;
-}
+// ✅ 心跳间隔：15s，保持前端 WebSocket 和 Doubao 连接活跃
+const HEARTBEAT_INTERVAL_MS = 15_000;
 
 // 固定的 App Key (豆包文档要求)
 const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
