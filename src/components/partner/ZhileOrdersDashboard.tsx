@@ -88,6 +88,24 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "更新失败"),
   });
 
+  // 更新用户昵称（profiles.display_name）
+  const updateNickname = useMutation({
+    mutationFn: async ({ userId, value }: { userId: string; value: string }) => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ display_name: value })
+        .eq("id", userId)
+        .select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("无权限更新昵称");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
+      toast.success("昵称已更新");
+    },
+    onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
+  });
+
   // 更新收货信息（收货人/手机号/地址）
   const updateBuyerInfo = useMutation({
     mutationFn: async ({ orderId, field, value, source }: { orderId: string; field: string; value: string; source?: string }) => {
