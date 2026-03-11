@@ -43,7 +43,7 @@ export function PurchaseHistory() {
       const [ordersResult, subscriptionsResult, storeOrdersResult] = await Promise.all([
         supabase
           .from('orders')
-          .select('id, order_no, package_name, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
+          .select('id, order_no, package_name, package_key, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
           .eq('user_id', user.id)
           .eq('status', 'paid')
           .order('created_at', { ascending: false })
