@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import BrandLogo from "@/components/brand/BrandLogo";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", color: "from-orange-100 to-amber-50" },
@@ -13,15 +12,7 @@ export default function XiaojinHome() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-gray-50">
-      <div className="max-w-md mx-auto px-5 pt-6 pb-8">
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-4"
-        >
-          <BrandLogo size="lg" showText />
-        </motion.div>
+      <div className="max-w-md mx-auto px-5 pt-12 pb-8">
         {/* Brand */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
