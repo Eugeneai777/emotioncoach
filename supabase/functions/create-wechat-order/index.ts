@@ -519,6 +519,7 @@ serve(async (req) => {
         amount: amount,
         order_no: orderNo,
         status: 'pending',
+        pay_type: actualPayType || null,
         qr_code_url: payUrl || null,
         expired_at: expiredAt.toISOString(),
         buyer_name: buyerName || null,
