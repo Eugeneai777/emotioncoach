@@ -88,11 +88,11 @@ const synergyData = [
 /* ========== Timeline ========== */
 const timeline = [
   { time: "7:00", label: "晨间训练", type: "mind" as const, desc: "5分钟正念冥想" },
-  { time: "8:00", label: "早餐后服用", type: "body" as const, desc: "知乐胶囊 × 1粒" },
+  { time: "8:00", label: "早餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "10:00", label: "会前准备", type: "mind" as const, desc: "2分钟呼吸调节" },
-  { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1粒" },
+  { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "15:00", label: "午后重启", type: "mind" as const, desc: "认知重塑练习" },
-  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1粒" },
+  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "22:00", label: "睡前放松", type: "mind" as const, desc: "身体扫描冥想" },
 ];
 
@@ -106,7 +106,7 @@ const testimonials = [
 /* ========== Product specs ========== */
 const specs = [
   { label: "每瓶", value: "90粒" },
-  { label: "每日用量", value: "3粒" },
+  { label: "每日用量", value: "3次" },
   { label: "持续天数", value: "30天" },
   { label: "核心成分", value: "GABA + 茶氨酸" },
 ];
@@ -484,7 +484,7 @@ export default function SynergyPromoPage() {
               </div>
               <div>
                 <h3 className="font-bold text-cyan-300">💊 知乐胶囊</h3>
-                <p className="text-xs text-slate-400">每日3粒 · 30天调理周期</p>
+                <p className="text-xs text-slate-400"><p className="text-xs text-slate-400">每日3次 · 30天调理周期</p></p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">

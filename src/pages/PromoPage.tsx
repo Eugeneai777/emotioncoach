@@ -277,16 +277,16 @@ const PromoPage = () => {
             <div className="flex items-center justify-center mb-5">
               <div className="relative">
                 <img src={zhileCapsules} alt="知乐胶囊产品" className="w-44 h-44 object-cover rounded-2xl shadow-lg border-2 border-emerald-100" />
-                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">每日3粒</div>
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow"><div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">每日3次</div></div>
               </div>
             </div>
 
             <div className="space-y-4">
               {[
                 { time: "早上 7:30", icon: <Sun className="w-4 h-4 text-amber-500" />, action: "10分钟训练营", desc: "调整心态，满血出门", type: "camp" },
-                { time: "早餐后", icon: <Coffee className="w-4 h-4 text-orange-500" />, action: "知乐胶囊 1粒", desc: "激活身体防护", type: "capsule" },
-                { time: "午餐后", icon: <Zap className="w-4 h-4 text-yellow-500" />, action: "知乐胶囊 1粒", desc: "对抗午后焦虑", type: "capsule" },
-                { time: "晚餐后", icon: <Moon className="w-4 h-4 text-indigo-400" />, action: "知乐胶囊 1粒", desc: "安稳入睡", type: "capsule" },
+                { time: "早餐后", icon: <Coffee className="w-4 h-4 text-orange-500" />, action: "知乐胶囊 1次", desc: "激活身体防护", type: "capsule" },
+                { time: "午餐后", icon: <Zap className="w-4 h-4 text-yellow-500" />, action: "知乐胶囊 1次", desc: "对抗午后焦虑", type: "capsule" },
+                { time: "晚餐后", icon: <Moon className="w-4 h-4 text-indigo-400" />, action: "知乐胶囊 1次", desc: "安稳入睡", type: "capsule" },
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3 relative">
                   {/* Timeline connector */}
