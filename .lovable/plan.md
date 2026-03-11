@@ -1,23 +1,67 @@
 
 
-## 两个问题需要修复
+# 安卓海报所有版本布局修复 + 容器增大 + 字体清晰度优化
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+所有版本（默认、朋友圈、小红书、微信群）的海报都存在相同问题：
+1. **容器高度 533px 太小**，安卓中文字体行高更大，内容溢出导致底部二维码和品牌 footer 被裁剪
+2. **字体不够清晰**，`onclone` 中缺少 `-webkit-font-smoothing` 和 `text-rendering` 优化
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 修改方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 1. 增大标准容器尺寸
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**`src/components/poster/PosterSizeSelector.tsx`**
+- 标准：`300×533` → `300×560`
+- 小红书：`360×480` → `360×510`
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+**`src/components/poster/PosterPreview.tsx`**（L750-751）
+- 容器 `height: '533px'` → `'560px'`
+
+**`src/components/poster/PosterWithCustomCopy.tsx`**（L60）
+- 默认 `height = 533` → `height = 560`
+
+**`src/components/poster/PosterGenerator.tsx`**（L170）
+- `posterHeight = 533` → `posterHeight = 560`
+
+**`src/components/poster/PosterWithCustomCopy.tsx`**（L85）
+- scaleFactor 基准 `height / 533` → `height / 560`
+
+### 2. 字体清晰度优化
+
+**`src/utils/shareCardConfig.ts`**（onclone 中的 styleTag，约 L452）
+
+在注入的全局样式中添加字体渲染优化：
+```css
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+```
+
+同时提升安卓 scale：`getOptimalScale` 中标准浏览器低端设备 `2.5` → `3`，非低端 `3` → `3.5`。
+
+### 3. 各版本间距微调（PosterPreview.tsx）
+
+由于容器增高 27px，各版本有更多空间，主要确保底部不截断：
+
+- **朋友圈版**（renderMomentsLayout）：保持现有间距（有 flex:1 弹性空间，增高后自动适配）
+- **小红书版**（renderXiaohongshuLayout）：数据卡片 padding `10px 8px` → `12px 10px`，数字 fontSize `20px` → `18px`，文字添加 `overflow: hidden` + `maxHeight`
+- **微信群版**（renderWechatGroupLayout）：保持（有 flex:1 弹性，增高后自动适配）
+- **默认版**（renderDefaultLayout）：保持（有 flex:1 弹性）
+
+### 4. PosterWithCustomCopy 各版本同步
+
+- **小红书版**数据卡片同样添加 `overflow: hidden` 防止文字溢出白框
+- **朋友圈版** padding `28px 24px` → `24px 20px`（保持紧凑）
+
+## 涉及文件
+
+- `src/components/poster/PosterSizeSelector.tsx` — 尺寸常量
+- `src/components/poster/PosterPreview.tsx` — 容器高度 + 小红书卡片修复
+- `src/components/poster/PosterWithCustomCopy.tsx` — 默认高度 + 小红书卡片修复
+- `src/components/poster/PosterGenerator.tsx` — 下载时的尺寸
+- `src/utils/shareCardConfig.ts` — 字体渲染 + scale 优化
 
