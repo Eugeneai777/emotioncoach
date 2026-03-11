@@ -342,7 +342,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           <ProductBadge />
 
           {/* Avatar group */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex' }}>
               {[0, 1, 2, 3, 4].map((i) => (
                 <div key={i} style={{
