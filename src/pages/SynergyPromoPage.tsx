@@ -92,7 +92,7 @@ const timeline = [
   { time: "10:00", label: "会前准备", type: "mind" as const, desc: "2分钟呼吸调节" },
   { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "15:00", label: "午后重启", type: "mind" as const, desc: "认知重塑练习" },
-  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
+  { time: "17:00", label: "下午服用", type: "body" as const, desc: "知乐胶囊 × 1次（建议17-18点）" },
   { time: "22:00", label: "睡前放松", type: "mind" as const, desc: "身体扫描冥想" },
 ];
 
