@@ -17,9 +17,17 @@ const entries = [
 export default function XiaojinHome() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isFromParent = searchParams.get("from") === "parent";
+  const fromParam = searchParams.get("from");
+  const isFromParent = fromParam === "parent" || (fromParam?.startsWith("parent_") ?? false);
   const { remaining, canAfford } = useXiaojinQuota();
   const [showUpgrade, setShowUpgrade] = useState(false);
+
+  // Parse and store parent reference for mood upload
+  useEffect(() => {
+    if (fromParam) {
+      parseAndStoreParentRef(fromParam);
+    }
+  }, [fromParam]);
 
   const handleVoiceClick = () => {
     if (!canAfford(8)) {
