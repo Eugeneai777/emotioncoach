@@ -1297,7 +1297,30 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
             {(status === 'ready' || status === 'polling') && payType === 'h5' && (
               <div className="flex flex-col items-center gap-2">
-                {qrCodeDataUrl ? (
+                {isWechat ? (
+                  /* 微信浏览器内：不显示二维码（长按会被拦截），显示跳转按钮 */
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-[#07C160]/10 flex items-center justify-center">
+                      <ExternalLink className="h-8 w-8 text-[#07C160]" />
+                    </div>
+                    <span className="font-medium">订单已创建</span>
+                    <span className="text-sm text-muted-foreground">点击下方按钮跳转支付</span>
+                    <Button
+                      className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
+                      onClick={() => {
+                        const link = h5PayLink || h5Url || payUrl;
+                        if (link) {
+                          window.location.href = link;
+                        } else {
+                          toast.error('支付链接未生成，请稍后重试');
+                        }
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      立即支付
+                    </Button>
+                  </div>
+                ) : qrCodeDataUrl ? (
                   <>
                     <img src={qrCodeDataUrl} alt="微信支付二维码" className="w-48 h-48" />
                     <span className="text-xs text-muted-foreground">长按识别二维码支付</span>
