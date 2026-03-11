@@ -65,6 +65,7 @@ export function UnifiedPayDialog({
   onSuccess,
   returnUrl,
   openId,
+  shippingInfo,
 }: UnifiedPayDialogProps) {
   const isMiniProgram = isWeChatMiniProgram();
   const [payMethod, setPayMethod] = useState<PayMethod>(getDefaultPayMethod);
