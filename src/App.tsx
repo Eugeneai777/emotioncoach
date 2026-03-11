@@ -199,6 +199,7 @@ const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 const PromoPage = lazyRetry(() => import("./pages/PromoPage"));
 const SynergyPromoPage = lazyRetry(() => import("./pages/SynergyPromoPage"));
 const ZhilePromoHub = lazyRetry(() => import("./pages/ZhilePromoHub"));
+const ZhileProductsPage = lazyRetry(() => import("./pages/ZhileProductsPage"));
 
 // 婚因有道
 const MarriageHome = lazyRetry(() => import("./pages/marriage/MarriageHome"));
