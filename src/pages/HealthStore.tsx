@@ -41,11 +41,10 @@ const HealthStore = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DynamicOGMeta
-        title="有劲健康商城"
-        description="精选健康好物，守护你的身心能量"
-        path="/health-store"
-      />
+      <Helmet>
+        <title>有劲健康商城</title>
+        <meta name="description" content="精选健康好物，守护你的身心能量" />
+      </Helmet>
 
       <PageHeader
         title="🛒 健康商城"
