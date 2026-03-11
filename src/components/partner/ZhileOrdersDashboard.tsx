@@ -393,7 +393,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                   })}
                 </TableBody>
               </Table>
-            </AdminTableContainer>
           )}
         </CardContent>
       </Card>
