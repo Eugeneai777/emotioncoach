@@ -57,7 +57,7 @@ const AliveCheckIntro = () => {
   // 使用流程
   const steps = [
     { num: "01", title: "设置联系人", desc: "添加1-5位紧急联系人的姓名和邮箱" },
-    { num: "02", title: "每天打卡", desc: "{ num: "02", title: "每天打卡", desc: "点击「今天很好」按钮完成安全确认" }," },
+    { num: "02", title: "每天打卡", desc: "点击「今天很好」按钮完成安全确认" },
     { num: "03", title: "自动守护", desc: "连续未打卡超过阈值天数时，联系人收到提醒" }
   ];
 
