@@ -26,6 +26,11 @@ interface Product {
   detail_images: string[] | null;
 }
 
+function needsIdCard(product: Product): boolean {
+  const info = (product.shipping_info || '') + (product.product_name || '');
+  return /跨境|清关|香港|直邮|海关/.test(info);
+}
+
 export function HealthStoreGrid() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -64,7 +69,6 @@ export function HealthStoreGrid() {
     setCheckoutLoading(true);
 
     try {
-      // Check auth
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("请先登录后再购买");
@@ -72,10 +76,8 @@ export function HealthStoreGrid() {
         return;
       }
 
-      // Store checkout info for after payment
       setPendingCheckoutInfo(info);
 
-      // Open payment dialog
       setPayPackage({
         key: `store_product_${selectedProduct.id}`,
         name: selectedProduct.product_name,
@@ -97,25 +99,34 @@ export function HealthStoreGrid() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Generate order number
       const orderNo = `SO${Date.now()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+      const insertData: Record<string, any> = {
+        order_no: orderNo,
+        buyer_id: user.id,
+        product_id: selectedProduct.id,
+        partner_id: selectedProduct.partner_id,
+        product_name: selectedProduct.product_name,
+        price: selectedProduct.price,
+        quantity: 1,
+        status: "paid",
+        buyer_name: pendingCheckoutInfo.buyerName,
+        buyer_phone: pendingCheckoutInfo.buyerPhone,
+        buyer_address: pendingCheckoutInfo.buyerAddress,
+        paid_at: new Date().toISOString(),
+      };
+
+      // Add ID card info if provided
+      if (pendingCheckoutInfo.idCardName) {
+        insertData.id_card_name = pendingCheckoutInfo.idCardName;
+      }
+      if (pendingCheckoutInfo.idCardNumber) {
+        insertData.id_card_number = pendingCheckoutInfo.idCardNumber;
+      }
 
       const { error } = await supabase
         .from("store_orders" as any)
-        .insert({
-          order_no: orderNo,
-          buyer_id: user.id,
-          product_id: selectedProduct.id,
-          partner_id: selectedProduct.partner_id,
-          product_name: selectedProduct.product_name,
-          price: selectedProduct.price,
-          quantity: 1,
-          status: "paid",
-          buyer_name: pendingCheckoutInfo.buyerName,
-          buyer_phone: pendingCheckoutInfo.buyerPhone,
-          buyer_address: pendingCheckoutInfo.buyerAddress,
-          paid_at: new Date().toISOString(),
-        });
+        .insert(insertData);
 
       if (error) {
         console.error("Create store order error:", error);
@@ -138,7 +149,7 @@ export function HealthStoreGrid() {
         // Non-blocking
       }
 
-      // Settle commissions for partner types
+      // Settle commissions
       try {
         await supabase.functions.invoke("settle-store-commission", {
           body: {
@@ -188,7 +199,6 @@ export function HealthStoreGrid() {
     );
   }
 
-  // Group by category
   const grouped = products.reduce<Record<string, Product[]>>((acc, p) => {
     const cat = p.category || "其他";
     (acc[cat] ||= []).push(p);
@@ -250,7 +260,6 @@ export function HealthStoreGrid() {
         ))}
       </div>
 
-      {/* Product Detail Dialog */}
       <ProductDetailDialog
         product={selectedProduct}
         open={detailOpen}
@@ -258,7 +267,6 @@ export function HealthStoreGrid() {
         onBuy={handleBuy}
       />
 
-      {/* Checkout Form */}
       {selectedProduct && (
         <CheckoutForm
           open={checkoutOpen}
@@ -267,10 +275,11 @@ export function HealthStoreGrid() {
           price={selectedProduct.price}
           onConfirm={handleCheckoutConfirm}
           loading={checkoutLoading}
+          shippingNote={selectedProduct.shipping_info || undefined}
+          needIdCard={needsIdCard(selectedProduct)}
         />
       )}
 
-      {/* Payment Dialog */}
       <UnifiedPayDialog
         open={payOpen}
         onOpenChange={setPayOpen}

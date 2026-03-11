@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { RegionPicker } from "./RegionPicker";
 
@@ -11,6 +11,8 @@ export interface CheckoutInfo {
   buyerName: string;
   buyerPhone: string;
   buyerAddress: string;
+  idCardName?: string;
+  idCardNumber?: string;
 }
 
 interface CheckoutFormProps {
@@ -20,6 +22,8 @@ interface CheckoutFormProps {
   price: number;
   onConfirm: (info: CheckoutInfo) => void;
   loading?: boolean;
+  shippingNote?: string;
+  needIdCard?: boolean;
 }
 
 function parseAddress(raw: string): { name: string; phone: string; address: string } | null {
@@ -49,15 +53,23 @@ function parseAddress(raw: string): { name: string; phone: string; address: stri
   return { name, phone, address };
 }
 
-export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm, loading }: CheckoutFormProps) {
+function validateIdCard(num: string): boolean {
+  return /^\d{17}[\dXx]$/.test(num);
+}
+
+export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm, loading, shippingNote, needIdCard }: CheckoutFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [province, setProvince] = useState("");
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [detailAddress, setDetailAddress] = useState("");
+  const [idCardName, setIdCardName] = useState("");
+  const [idCardNumber, setIdCardNumber] = useState("");
 
-  const canSubmit = name.trim() && phone.trim() && province && city && district && detailAddress.trim();
+  const baseCanSubmit = name.trim() && phone.trim() && province && city && district && detailAddress.trim();
+  const idCardValid = !needIdCard || (idCardName.trim() && validateIdCard(idCardNumber.trim()));
+  const canSubmit = baseCanSubmit && idCardValid;
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData('text');
@@ -68,14 +80,21 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
     if (result.name) setName(result.name);
     setPhone(result.phone);
     if (result.address) setDetailAddress(result.address);
+    // Auto-fill id card name from buyer name
+    if (needIdCard && result.name && !idCardName) {
+      setIdCardName(result.name);
+    }
     toast({ title: "✅ 已自动识别收货信息", description: "请选择省市区后确认" });
   };
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    // Validate phone
     if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
       toast({ title: "请输入正确的手机号", variant: "destructive" });
+      return;
+    }
+    if (needIdCard && !validateIdCard(idCardNumber.trim())) {
+      toast({ title: "请输入正确的18位身份证号", variant: "destructive" });
       return;
     }
     const fullAddress = `${province}${city}${district} ${detailAddress.trim()}`;
@@ -83,8 +102,11 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
       buyerName: name.trim(),
       buyerPhone: phone.trim(),
       buyerAddress: fullAddress,
+      ...(needIdCard ? { idCardName: idCardName.trim(), idCardNumber: idCardNumber.trim().toUpperCase() } : {}),
     });
   };
+
+  const displayShippingNote = shippingNote || "由香港直邮，预计 4-7 个工作日送达";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,10 +123,11 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
             <p className="text-sm font-bold text-destructive">¥{price}</p>
           </div>
 
+          {/* Shipping note */}
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <span className="text-sm shrink-0 mt-0.5">📦</span>
             <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-              知乐胶囊由香港直邮，预计 <strong>4-7 个工作日</strong> 送达。建议收到后再开启训练营，心智+身体同步效果更佳。
+              <strong>配送说明：</strong>{displayShippingNote}
             </p>
           </div>
 
@@ -132,6 +155,35 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
             <Label>详细地址 *</Label>
             <Input value={detailAddress} onChange={e => setDetailAddress(e.target.value)} placeholder="街道、楼栋、门牌号等" />
           </div>
+
+          {/* ID Card section for cross-border customs */}
+          {needIdCard && (
+            <div className="space-y-3 p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+              <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+                <ShieldCheck className="w-4 h-4" />
+                清关信息
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                因海关清关需要，请填写与收件人一致的身份信息（仅用于清关，不会用于其他用途）
+              </p>
+              <div>
+                <Label>身份证姓名 *</Label>
+                <Input value={idCardName} onChange={e => setIdCardName(e.target.value)} placeholder="请输入身份证上的姓名" />
+              </div>
+              <div>
+                <Label>身份证号码 *</Label>
+                <Input
+                  value={idCardNumber}
+                  onChange={e => setIdCardNumber(e.target.value)}
+                  placeholder="请输入18位身份证号码"
+                  maxLength={18}
+                />
+                {idCardNumber && !validateIdCard(idCardNumber) && (
+                  <p className="text-xs text-destructive mt-1">请输入正确的18位身份证号码</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <Button onClick={handleSubmit} disabled={!canSubmit || loading} className="w-full">
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
