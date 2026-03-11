@@ -296,6 +296,10 @@ serve(async (req) => {
             status: 'pending',
             qr_code_url: null,
             expired_at: expiredAt.toISOString(),
+            buyer_name: buyerName || null,
+            buyer_phone: buyerPhone || null,
+            buyer_address: buyerAddress || null,
+            shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
           });
 
         if (insertError) {
