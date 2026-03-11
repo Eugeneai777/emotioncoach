@@ -8376,6 +8376,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          id_card_name: string | null
+          id_card_number: string | null
           order_no: string
           paid_at: string | null
           partner_id: string | null
@@ -8397,6 +8399,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          id_card_name?: string | null
+          id_card_number?: string | null
           order_no: string
           paid_at?: string | null
           partner_id?: string | null
@@ -8418,6 +8422,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          id_card_name?: string | null
+          id_card_number?: string | null
           order_no?: string
           paid_at?: string | null
           partner_id?: string | null
@@ -11023,33 +11029,22 @@ export type Database = {
         Args: never
         Returns: {
           amount: number
-          buyer_address: string | null
-          buyer_name: string | null
-          buyer_phone: string | null
-          created_at: string | null
-          expired_at: string | null
+          buyer_address: string
+          buyer_name: string
+          buyer_phone: string
+          created_at: string
           id: string
+          id_card_name: string
+          id_card_number: string
           order_no: string
-          order_type: string | null
-          package_key: string
-          package_name: string
-          paid_at: string | null
-          pay_type: string | null
-          product_name: string | null
-          qr_code_url: string | null
-          shipping_note: string | null
-          shipping_status: string | null
-          status: string | null
-          trade_no: string | null
-          updated_at: string | null
-          user_id: string | null
+          paid_at: string
+          pay_type: string
+          shipping_note: string
+          shipping_status: string
+          source: string
+          status: string
+          user_id: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "orders"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       has_role: {
         Args: {

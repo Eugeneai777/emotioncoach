@@ -283,7 +283,7 @@ export default function ZhileProductsPage() {
                     <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
                   )}
                 </motion.button>
-              ))
+              ))}
             </div>
           </motion.div>
         )}
