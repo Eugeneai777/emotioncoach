@@ -685,6 +685,7 @@ export default function WealthSynergyPromoPage() {
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
+        openId={paymentOpenId}
       />
     </div>
   );

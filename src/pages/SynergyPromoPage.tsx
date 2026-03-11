@@ -796,6 +796,7 @@ export default function SynergyPromoPage() {
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
+        openId={paymentOpenId}
       />
     </div>
   );
