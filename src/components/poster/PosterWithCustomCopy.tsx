@@ -407,13 +407,13 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         }}>
           <ProductBadge />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: 'white', lineHeight: 1.4, margin: '0 0 16px 0', letterSpacing: '1px' }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: 'white', lineHeight: 1.4, margin: '0 0 16px 0', letterSpacing: '1px', overflow: 'hidden', maxHeight: '80px' }}>
               {copy.headline}
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '32px' }}>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '20px' }}>
               {copy.subtitle}
             </p>
-            <div style={{ width: '60px', height: '1px', background: 'rgba(255,255,255,0.3)', marginBottom: '32px' }} />
+            <div style={{ width: '60px', height: '1px', background: 'rgba(255,255,255,0.3)', marginBottom: '20px' }} />
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', maxWidth: '200px' }}>
               {copy.selling_points[0]}
             </p>
