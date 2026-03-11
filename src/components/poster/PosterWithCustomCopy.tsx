@@ -223,14 +223,14 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         }}>
           <ProductBadge />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>{emoji}</div>
-            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.4)', lineHeight: 1.4, margin: '0 0 10px 0', overflow: 'hidden', maxHeight: '80px' }}>
+            <div style={{ fontSize: '28px', marginBottom: '16px' }}>{emoji}</div>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.4)', lineHeight: 1.4, margin: '0 0 12px 0' }}>
               「{copy.headline}」
             </h1>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', fontStyle: 'italic', marginBottom: '12px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', fontStyle: 'italic', marginBottom: '20px', lineHeight: 1.6 }}>
               {copy.subtitle}
             </p>
-            <div style={{ width: '40px', height: '2px', background: 'rgba(255,255,255,0.5)', marginBottom: '12px' }} />
+            <div style={{ width: '40px', height: '2px', background: 'rgba(255,255,255,0.5)', marginBottom: '20px' }} />
             <div style={{ textAlign: 'left', width: '100%' }}>
               {copy.selling_points.slice(0, 3).map((point, i) => (
                 <p key={i} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)', marginBottom: '8px', paddingLeft: '12px', borderLeft: '2px solid rgba(255,255,255,0.4)' }}>

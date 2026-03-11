@@ -146,9 +146,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         {/* Emoji标识 */}
         <div style={{ 
-          fontSize: '36px', 
+          fontSize: '42px', 
           textAlign: 'center',
-          marginBottom: '4px',
+          marginBottom: '6px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
@@ -157,10 +157,10 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 产品名 + 定位语 */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '8px'
+          marginBottom: '12px'
         }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '18px',
             fontWeight: '600',
             textShadow: '0 2px 8px rgba(0,0,0,0.4)',
             marginBottom: '4px'
@@ -182,15 +182,13 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 主标语 - 故事感大字 */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '12px',
-          padding: '0 8px',
-          overflow: 'hidden',
-          maxHeight: '80px'
+          marginBottom: '20px',
+          padding: '0 8px'
         }}>
           <p style={{
-            fontSize: '15px',
+            fontSize: '18px',
             fontWeight: '600',
-            lineHeight: 1.4,
+            lineHeight: 1.5,
             textShadow: '0 2px 12px rgba(0,0,0,0.5)',
             margin: 0,
             letterSpacing: '0.5px'
@@ -203,8 +201,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '7px',
-          marginBottom: '10px',
+          gap: '10px',
+          marginBottom: '16px',
           padding: '0 12px'
         }}>
           {displaySellingPoints.slice(0, 3).map((point, idx) => (
@@ -214,8 +212,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 background: 'rgba(255,255,255,0.15)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '20px',
-                padding: '8px 12px',
-                fontSize: '12px',
+                padding: '10px 14px',
+                fontSize: '13px',
                 lineHeight: 1.4,
                 textAlign: 'center',
                 border: '1px solid rgba(255,255,255,0.2)',
@@ -232,7 +230,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           textAlign: 'center',
           fontSize: '11px',
           opacity: 0.85,
-          marginBottom: '8px',
+          marginBottom: '12px',
           fontStyle: 'italic'
         }}>
           — 愿你也能找到内心的力量 —
