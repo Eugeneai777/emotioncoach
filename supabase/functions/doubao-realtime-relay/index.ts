@@ -528,7 +528,8 @@ function buildStartSessionRequest(
       format: 'pcm',
       sample_rate: 16000,
       bits: 16,
-      channel: 1
+      channel: 1,
+      keep_alive: true
     },
     tts,
     request,
