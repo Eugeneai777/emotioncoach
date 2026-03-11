@@ -641,7 +641,7 @@ export const AliveCheck = () => {
                 ) : (
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                 )}
-                {generatingWitness ? '生成见证中...' : '我活得很好 ✓'}
+                {generatingWitness ? '生成见证中...' : '今天很好 ✓'}
               </Button>
             </div>
           )}
