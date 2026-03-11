@@ -219,7 +219,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         <div style={backgroundStyle} />
         <div style={{
           position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '28px 24px',
+          display: 'flex', flexDirection: 'column', padding: '24px 20px',
         }}>
           <ProductBadge />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
