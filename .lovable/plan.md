@@ -1,23 +1,18 @@
 
 
-## 两个问题需要修复
+## 在亲子日记页显示孩子情绪趋势
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 当前状态
+`XiaojinMoodReport` 组件目前只嵌在 `/parent-coach` 的 `TeenModeEntryCard` 中。`/parent-diary` 页面有三个 Tab（简报、情绪趋势、模式洞察），但都只展示家长自己的教练对话数据，没有孩子端数据。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 方案
+在「情绪趋势」Tab 中，将 `XiaojinMoodReport` 组件添加到最顶部，作为第一个卡片显示。这样家长在查看自己的情绪热力图之前，先看到孩子的情绪周报。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 文件变更
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
-
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
-
-| 文件 | 修改 |
+| 文件 | 变更 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/ParentChildDiary.tsx` | 导入 `XiaojinMoodReport`，在「趋势」Tab 的 `space-y` 容器最前面插入该组件 |
+
+只需在第 272 行的 `<div className="space-y-4">` 内、`UnifiedEmotionHeatmap` 之前加入 `<XiaojinMoodReport />`。
 
