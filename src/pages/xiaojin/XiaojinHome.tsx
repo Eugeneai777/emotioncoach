@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, ChevronRight, Flame, Sparkles, Home, Share2, Lock } from "lucide-react";
+import { Phone, ChevronRight, Flame, Sparkles, Home, Share2 } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", gradient: "from-amber-400 to-orange-400", bg: "bg-amber-50" },
@@ -14,10 +17,12 @@ export default function XiaojinHome() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isFromParent = searchParams.get("from") === "parent";
+  const { remaining, canAfford } = useXiaojinQuota();
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleVoiceClick = () => {
-    if (isFromParent) {
-      // 孩子通过家长分享链接访问，语音功能需付费解锁
+    if (!canAfford(8)) {
+      setShowUpgrade(true);
       return;
     }
     navigate("/xiaojin/voice");
@@ -54,7 +59,7 @@ export default function XiaojinHome() {
           />
         </div>
 
-        {/* 孩子端欢迎横幅 */}
+        {/* 孩子端欢迎横幅 + 剩余点数 */}
         {isFromParent && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -71,6 +76,27 @@ export default function XiaojinHome() {
             </p>
           </motion.div>
         )}
+
+        {/* 剩余点数指示器 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mb-4 flex items-center justify-between px-1"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">免费体验点数</span>
+            <span className={`text-xs font-bold ${remaining > 20 ? 'text-amber-500' : remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>
+              {remaining} 点
+            </span>
+          </div>
+          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${remaining > 20 ? 'bg-amber-400' : remaining > 0 ? 'bg-orange-400' : 'bg-red-400'}`}
+              style={{ width: `${Math.min(100, remaining)}%` }}
+            />
+          </div>
+        </motion.div>
 
         {/* Header */}
         <motion.div
@@ -102,51 +128,34 @@ export default function XiaojinHome() {
           >
             {/* Soft glow */}
             <motion.div
-              className={`absolute rounded-full blur-2xl ${isFromParent ? 'bg-gradient-to-r from-gray-300/20 to-gray-200/20' : 'bg-gradient-to-r from-orange-300/25 to-amber-300/25'}`}
+              className="absolute rounded-full blur-2xl bg-gradient-to-r from-orange-300/25 to-amber-300/25"
               animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.3, 0.6] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
               style={{ width: '160px', height: '160px', top: '-20px', left: '-20px' }}
             />
 
             {/* Pulsing ring */}
-            {!isFromParent && (
-              <motion.div
-                className="absolute rounded-full border-[1.5px] border-orange-300/60"
-                animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-                style={{ width: '120px', height: '120px', top: 0, left: 0 }}
-              />
-            )}
+            <motion.div
+              className="absolute rounded-full border-[1.5px] border-orange-300/60"
+              animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+              style={{ width: '120px', height: '120px', top: 0, left: 0 }}
+            />
 
             {/* Main circle */}
             <motion.div
               className="relative w-[120px] h-[120px] rounded-full flex flex-col items-center justify-center"
-              whileHover={{ scale: isFromParent ? 1 : 1.06 }}
-              whileTap={{ scale: isFromParent ? 1 : 0.93 }}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.93 }}
               style={{
-                background: isFromParent
-                  ? 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 50%, #6b7280 100%)'
-                  : 'linear-gradient(135deg, #fb923c 0%, #f59e0b 50%, #f97316 100%)',
-                boxShadow: isFromParent
-                  ? '0 8px 24px -8px rgba(107, 114, 128, 0.3)'
-                  : '0 12px 36px -8px rgba(249, 115, 22, 0.45), 0 0 0 4px rgba(251, 191, 36, 0.12)',
+                background: 'linear-gradient(135deg, #fb923c 0%, #f59e0b 50%, #f97316 100%)',
+                boxShadow: '0 12px 36px -8px rgba(249, 115, 22, 0.45), 0 0 0 4px rgba(251, 191, 36, 0.12)',
               }}
             >
-              {isFromParent ? (
-                <>
-                  <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
-                    <Lock className="h-7 w-7 text-white drop-shadow" />
-                  </div>
-                  <span className="text-[11px] font-bold text-white/90 drop-shadow-sm">需解锁</span>
-                </>
-              ) : (
-                <>
-                  <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
-                    <Phone className="h-7 w-7 text-white drop-shadow" />
-                  </div>
-                  <span className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">随时聊</span>
-                </>
-              )}
+              <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
+                <Phone className="h-7 w-7 text-white drop-shadow" />
+              </div>
+              <span className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">随时聊</span>
             </motion.div>
           </button>
 
@@ -156,18 +165,12 @@ export default function XiaojinHome() {
             transition={{ delay: 0.4 }}
             className="text-center mt-5"
           >
-            {isFromParent ? (
-              <>
-                <p className="text-sm font-semibold text-gray-500">🔒 语音对话 · 需家长解锁</p>
-                <p className="text-[11px] text-gray-400 mt-1">请让爸妈充值后即可畅聊 💛</p>
-              </>
-            ) : (
-              <p className="text-[11px] text-gray-400 mt-1">语音对话，像朋友一样倾听你 💛</p>
-            )}
+            <p className="text-[11px] text-gray-400 mt-1">语音对话，像朋友一样倾听你 💛</p>
+            <p className="text-[10px] text-gray-300 mt-0.5">每分钟消耗 8 点</p>
           </motion.div>
         </motion.div>
 
-        {/* Entry Cards — compact horizontal row */}
+        {/* Entry Cards */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           {entries.map((item, i) => (
             <motion.button
@@ -226,6 +229,15 @@ export default function XiaojinHome() {
           <p className="text-[10px] text-gray-300 tracking-wider">有劲AI · 让你天天都有劲</p>
         </motion.div>
       </div>
+
+      {/* 365套餐升级弹窗 */}
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="免费体验点数已用完"
+        onSuccess={() => setShowUpgrade(false)}
+      />
     </div>
   );
 }

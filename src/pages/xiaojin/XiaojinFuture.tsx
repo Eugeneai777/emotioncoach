@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/xiaojin-future`;
 
@@ -15,6 +17,8 @@ const initialQuestion = "如果未来没有任何限制，你最想尝试的事�
 
 export default function XiaojinFuture() {
   const navigate = useNavigate();
+  const { remaining, deduct } = useXiaojinQuota();
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: initialQuestion }
   ]);
@@ -26,13 +30,18 @@ export default function XiaojinFuture() {
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isStreaming) return;
+
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
+
     const userMsg: Message = { role: "user", content: input };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
     setIsStreaming(true);
 
-    // After 5 user messages, show result
     if (userMsgCount + 1 >= 5) {
       try {
         const resp = await fetch(CHAT_URL, {
@@ -53,7 +62,6 @@ export default function XiaojinFuture() {
       return;
     }
 
-    // Stream AI response
     let accumulated = "";
     try {
       const resp = await fetch(CHAT_URL, {
@@ -71,7 +79,6 @@ export default function XiaojinFuture() {
         return;
       }
 
-      // Add placeholder assistant message
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
 
       const reader = resp.body.getReader();
@@ -109,14 +116,17 @@ export default function XiaojinFuture() {
     } finally {
       setIsStreaming(false);
     }
-  }, [input, messages, isStreaming, userMsgCount]);
+  }, [input, messages, isStreaming, userMsgCount, deduct]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50/80 via-white to-gray-50 flex flex-col">
       <div className="max-w-md mx-auto w-full flex-1 flex flex-col px-5 pt-6 pb-4">
-        <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm mb-4">
-          <ArrowLeft className="w-4 h-4" /> 返回
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm">
+            <ArrowLeft className="w-4 h-4" /> 返回
+          </button>
+          <span className="text-xs text-gray-400">剩余 <span className={`font-bold ${remaining > 20 ? 'text-amber-500' : remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>{remaining}</span> 点</span>
+        </div>
 
         <h1 className="text-lg font-bold text-gray-800 mb-1">AI帮你发现未来方向</h1>
         <p className="text-xs text-gray-400 mb-4">和小劲聊聊，{5 - userMsgCount > 0 ? `还有${5 - userMsgCount}轮对话` : "即将生成结果"}</p>
@@ -124,7 +134,6 @@ export default function XiaojinFuture() {
         <AnimatePresence mode="wait">
           {!showResult ? (
             <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto space-y-3 mb-4">
                 {messages.map((m, i) => (
                   <motion.div
@@ -146,7 +155,6 @@ export default function XiaojinFuture() {
                 ))}
               </div>
 
-              {/* Input */}
               <div className="flex gap-2">
                 <input
                   value={input}
@@ -196,6 +204,14 @@ export default function XiaojinFuture() {
           )}
         </AnimatePresence>
       </div>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="免费体验点数已用完"
+        onSuccess={() => setShowUpgrade(false)}
+      />
     </div>
   );
 }

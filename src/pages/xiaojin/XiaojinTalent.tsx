@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 interface Question {
   q: string;
@@ -60,11 +62,21 @@ const talentResults: Record<string, { name: string; emoji: string; desc: string;
 
 export default function XiaojinTalent() {
   const navigate = useNavigate();
+  const { remaining, deduct } = useXiaojinQuota();
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [current, setCurrent] = useState(0);
   const [scores, setScores] = useState<Record<string, number>>({ explorer: 0, creator: 0, helper: 0, builder: 0 });
   const [done, setDone] = useState(false);
 
   const handleAnswer = (type: string) => {
+    // 天赋测试整体扣1点（在最后一题时扣费）
+    if (current === questions.length - 1) {
+      if (!deduct(1)) {
+        setShowUpgrade(true);
+        return;
+      }
+    }
+
     const newScores = { ...scores, [type]: scores[type] + 1 };
     setScores(newScores);
     if (current < questions.length - 1) {
@@ -80,14 +92,16 @@ export default function XiaojinTalent() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 via-white to-gray-50">
       <div className="max-w-md mx-auto px-5 pt-6 pb-8">
-        <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm mb-6">
-          <ArrowLeft className="w-4 h-4" /> 返回
-        </button>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => navigate("/xiaojin")} className="flex items-center gap-1 text-gray-400 text-sm">
+            <ArrowLeft className="w-4 h-4" /> 返回
+          </button>
+          <span className="text-xs text-gray-400">剩余 <span className={`font-bold ${remaining > 20 ? 'text-amber-500' : remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>{remaining}</span> 点</span>
+        </div>
 
         <AnimatePresence mode="wait">
           {!done ? (
             <motion.div key={current} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.3 }}>
-              {/* Progress */}
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <motion.div
@@ -145,6 +159,14 @@ export default function XiaojinTalent() {
           )}
         </AnimatePresence>
       </div>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="免费体验点数已用完"
+        onSuccess={() => setShowUpgrade(false)}
+      />
     </div>
   );
 }
