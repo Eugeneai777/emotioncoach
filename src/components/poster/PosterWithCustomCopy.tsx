@@ -134,13 +134,13 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       <div style={{
         background: 'rgba(255,255,255,0.95)',
         borderRadius: '12px',
-        padding: '12px',
+        padding: '10px',
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: '10px',
       }}>
         {qrCodeUrl && (
-          <img src={qrCodeUrl} alt="QR Code" style={{ width: '65px', height: '65px', borderRadius: '8px' }} />
+          <img src={qrCodeUrl} alt="QR Code" style={{ width: '55px', height: '55px', borderRadius: '8px' }} />
         )}
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a', margin: '0 0 4px 0' }}>
