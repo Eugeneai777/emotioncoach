@@ -351,7 +351,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
           <Button
             variant="outline"
             onClick={handleCopyLink}
-            disabled={!accessToken}
+            disabled={!parentUserId}
             className="h-12 px-4"
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
