@@ -267,49 +267,13 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                           ) : (order.user_display_name || '-')}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[80px]"
-                              placeholder="收货人"
-                              defaultValue={order.buyer_name || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.buyer_name || '')) {
-                                  updateBuyerInfo.mutate({ orderId: order.id, field: 'buyer_name', value: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (order.buyer_name || '-')}
+                          {order.buyer_name || '-'}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[110px]"
-                              placeholder="手机号"
-                              defaultValue={order.buyer_phone || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.buyer_phone || '')) {
-                                  updateBuyerInfo.mutate({ orderId: order.id, field: 'buyer_phone', value: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (order.buyer_phone || '-')}
+                          {order.buyer_phone || '-'}
                         </TableCell>
-                        <TableCell className="text-xs max-w-[200px]">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[160px]"
-                              placeholder="收货地址"
-                              defaultValue={order.buyer_address || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.buyer_address || '')) {
-                                  updateBuyerInfo.mutate({ orderId: order.id, field: 'buyer_address', value: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (order.buyer_address || '-')}
+                        <TableCell className="text-xs max-w-[200px] truncate">
+                          {order.buyer_address || '-'}
                         </TableCell>
                         <TableCell className="text-xs">
                           {order.id_card_name ? (
