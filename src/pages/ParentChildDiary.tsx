@@ -201,6 +201,7 @@ const ParentChildDiary = () => {
               <ResponsiveTabsTrigger value="list" label="亲子简报" shortLabel="简报" />
               <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
               <ResponsiveTabsTrigger value="child" label="孩子动态" shortLabel="孩子" />
+              <ResponsiveTabsTrigger value="elder" label="长辈动态" shortLabel="长辈" />
               <ResponsiveTabsTrigger value="insights" label="模式洞察" shortLabel="洞察" />
             </TabsList>
 
