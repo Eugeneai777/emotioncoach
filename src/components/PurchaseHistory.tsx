@@ -63,6 +63,8 @@ export function PurchaseHistory() {
           .limit(50)
       ]);
 
+      const PHYSICAL_PACKAGE_KEYS = ['synergy_bundle', 'wealth_synergy_bundle', 'zhile_capsule', 'zhile_capsules'];
+
       const records: UnifiedPurchaseRecord[] = [
         ...(ordersResult.data || []).map(o => ({
           id: o.id,
@@ -77,6 +79,8 @@ export function PurchaseHistory() {
           buyer_address: o.buyer_address,
           shipping_status: o.shipping_status,
           shipping_note: o.shipping_note,
+          package_key: (o as any).package_key,
+          is_physical: PHYSICAL_PACKAGE_KEYS.includes((o as any).package_key || ''),
         })),
         ...(subscriptionsResult.data || []).map(s => ({
           id: s.id,
@@ -100,6 +104,7 @@ export function PurchaseHistory() {
           buyer_address: so.buyer_address,
           shipping_status: so.status === 'paid' ? 'pending' : so.status === 'shipped' ? 'shipped' : so.status === 'completed' ? 'delivered' : 'pending',
           shipping_note: so.tracking_number,
+          is_physical: true, // store_orders 都是实物商品
         }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
