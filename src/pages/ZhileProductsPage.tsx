@@ -8,6 +8,22 @@ import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface OrderShippingInfo {
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
+interface Order {
+  id: string;
+  order_no: string;
+  user_id: string;
+  amount: number;
+  status: string;
+  shipping_status: string;
+  shipping_info: OrderShippingInfo;
+}
+
 interface AudienceType {
   id: string;
   emoji: string;
@@ -97,7 +113,6 @@ export default function ZhileProductsPage() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
 
-  // Capsule purchase flow
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
@@ -268,7 +283,7 @@ export default function ZhileProductsPage() {
                     <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
                   )}
                 </motion.button>
-              ))}
+              ))
             </div>
           </motion.div>
         )}
@@ -279,13 +294,15 @@ export default function ZhileProductsPage() {
         <p className="text-xs text-slate-600">💊 知乐 · 让每一天都有好状态</p>
       </div>
 
-      {/* Checkout Form */}
+      {/* Checkout Form - with cross-border ID card requirement */}
       <CheckoutForm
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
         productName="知乐胶囊"
         price={capsulePackageInfo.price}
         onConfirm={handleCheckoutConfirm}
+        shippingNote="香港直邮，预计 4-7 个工作日送达"
+        needIdCard={true}
       />
 
       {/* Payment Dialog */}

@@ -11,8 +11,6 @@ import { Package, Truck, CheckCircle, Clock, Download, Search, Loader2 } from "l
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-const ZHILE_PACKAGE_KEYS = ['synergy_bundle', 'wealth_synergy_bundle', 'zhile_capsules'];
-
 const STATUS_OPTIONS = [
   { value: 'pending', label: '待发货', color: 'bg-amber-100 text-amber-800' },
   { value: 'shipped', label: '已发货', color: 'bg-blue-100 text-blue-800' },
@@ -31,12 +29,9 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["zhile-orders"],
     queryFn: async () => {
-      // 使用 security definer 函数绕过 RLS，确保管理员/合伙人能看到所有知乐订单
       const { data, error } = await supabase.rpc("get_zhile_orders") as { data: any[]; error: any };
-
       if (error) throw error;
 
-      // Fetch user profiles for display names
       const userIds = [...new Set((data || []).map(o => o.user_id).filter(Boolean))];
       let profileMap: Record<string, string> = {};
       if (userIds.length > 0) {
@@ -57,15 +52,32 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   });
 
   const updateShipping = useMutation({
-    mutationFn: async ({ orderId, status, note }: { orderId: string; status: string; note?: string }) => {
-      const updateData: Record<string, string> = { shipping_status: status };
-      if (note !== undefined) updateData.shipping_note = note;
-      
-      const { error } = await supabase
-        .from("orders")
-        .update(updateData)
-        .eq("id", orderId);
-      if (error) throw error;
+    mutationFn: async ({ orderId, status, note, source }: { orderId: string; status: string; note?: string; source?: string }) => {
+      if (source === 'store_orders') {
+        // Update store_orders table
+        const updateData: Record<string, string> = {
+          status: status === 'shipped' ? 'shipped' : status === 'delivered' ? 'completed' : 'paid',
+        };
+        if (note !== undefined) updateData.tracking_number = note;
+        if (status === 'shipped') updateData.shipped_at = new Date().toISOString();
+        if (status === 'delivered') updateData.completed_at = new Date().toISOString();
+
+        const { error } = await supabase
+          .from("store_orders" as any)
+          .update(updateData)
+          .eq("id", orderId);
+        if (error) throw error;
+      } else {
+        // Update orders table
+        const updateData: Record<string, string> = { shipping_status: status };
+        if (note !== undefined) updateData.shipping_note = note;
+
+        const { error } = await supabase
+          .from("orders")
+          .update(updateData)
+          .eq("id", orderId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
@@ -74,17 +86,16 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: () => toast.error("更新失败"),
   });
 
-  // Filter orders
   const filtered = orders.filter(o => {
     const matchSearch = !searchTerm || 
       o.order_no?.includes(searchTerm) ||
       o.buyer_name?.includes(searchTerm) ||
-      o.buyer_phone?.includes(searchTerm);
+      o.buyer_phone?.includes(searchTerm) ||
+      o.id_card_name?.includes(searchTerm);
     const matchStatus = statusFilter === "all" || (o.shipping_status || 'pending') === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  // Summary stats
   const stats = {
     total: orders.length,
     pending: orders.filter(o => !o.shipping_status || o.shipping_status === 'pending').length,
@@ -92,19 +103,21 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     delivered: orders.filter(o => o.shipping_status === 'delivered').length,
   };
 
-  // CSV export
   const exportCSV = () => {
-    const headers = ['订单号', '用户昵称', '收货人', '手机号', '收货地址', '金额', '物流状态', '快递单号/备注', '支付方式', '下单时间'];
+    const headers = ['订单号', '来源', '用户昵称', '收货人', '手机号', '收货地址', '身份证姓名', '身份证号码', '金额', '物流状态', '快递单号/备注', '支付方式', '下单时间'];
     const rows = filtered.map(o => [
       o.order_no,
+      o.source === 'store_orders' ? '商城' : '订单',
       o.user_display_name,
       o.buyer_name || '',
       o.buyer_phone || '',
       o.buyer_address || '',
+      o.id_card_name || '',
+      o.id_card_number || '',
       o.amount,
       STATUS_OPTIONS.find(s => s.value === (o.shipping_status || 'pending'))?.label || '待发货',
       o.shipping_note || '',
-      o.pay_type === 'alipay' ? '支付宝' : '微信支付',
+      o.pay_type === 'alipay' ? '支付宝' : o.pay_type ? '微信支付' : '-',
       o.paid_at ? format(new Date(o.paid_at), 'yyyy-MM-dd HH:mm') : '',
     ]);
     
@@ -196,6 +209,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                     <TableHead>收货人</TableHead>
                     <TableHead>手机号</TableHead>
                     <TableHead className="min-w-[160px]">收货地址</TableHead>
+                    <TableHead>清关信息</TableHead>
                     <TableHead>金额</TableHead>
                     <TableHead>物流状态</TableHead>
                     <TableHead className="min-w-[140px]">快递单号</TableHead>
@@ -209,17 +223,30 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
 
                     return (
                       <TableRow key={order.id}>
-                        <TableCell className="font-mono text-xs">{order.order_no}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {order.order_no}
+                          {order.source === 'store_orders' && (
+                            <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm">{order.user_display_name || '-'}</TableCell>
                         <TableCell className="text-sm">{order.buyer_name || '-'}</TableCell>
                         <TableCell className="text-sm">{order.buyer_phone || '-'}</TableCell>
                         <TableCell className="text-xs max-w-[200px] truncate">{order.buyer_address || '-'}</TableCell>
+                        <TableCell className="text-xs">
+                          {order.id_card_name ? (
+                            <div>
+                              <p>{order.id_card_name}</p>
+                              <p className="text-muted-foreground">{order.id_card_number || '-'}</p>
+                            </div>
+                          ) : '-'}
+                        </TableCell>
                         <TableCell className="font-medium">¥{order.amount}</TableCell>
                         <TableCell>
                           {isAdmin ? (
                             <Select
                               value={currentStatus}
-                              onValueChange={(val) => updateShipping.mutate({ orderId: order.id, status: val })}
+                              onValueChange={(val) => updateShipping.mutate({ orderId: order.id, status: val, source: order.source })}
                             >
                               <SelectTrigger className="h-7 text-xs w-[90px]">
                                 <SelectValue />
@@ -243,7 +270,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                               onBlur={(e) => {
                                 const val = e.target.value.trim();
                                 if (val !== (order.shipping_note || '')) {
-                                  updateShipping.mutate({ orderId: order.id, status: currentStatus, note: val });
+                                  updateShipping.mutate({ orderId: order.id, status: currentStatus, note: val, source: order.source });
                                 }
                               }}
                             />

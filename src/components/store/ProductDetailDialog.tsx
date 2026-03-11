@@ -95,103 +95,108 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-          {/* Product image */}
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.product_name}
-              className="w-full aspect-square object-cover"
-            />
-          ) : (
-            <div className="w-full aspect-square bg-muted flex items-center justify-center">
-              <ShoppingCart className="w-12 h-12 text-muted-foreground/30" />
-            </div>
-          )}
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden max-h-[90vh] flex flex-col">
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Product image */}
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.product_name}
+                className="w-full aspect-square object-cover"
+              />
+            ) : (
+              <div className="w-full aspect-square bg-muted flex items-center justify-center">
+                <ShoppingCart className="w-12 h-12 text-muted-foreground/30" />
+              </div>
+            )}
 
-          <div className="p-4 space-y-3">
-            <DialogHeader className="space-y-1">
-              <DialogTitle className="text-lg leading-tight">{product.product_name}</DialogTitle>
-            </DialogHeader>
+            <div className="p-4 space-y-3">
+              <DialogHeader className="space-y-1">
+                <DialogTitle className="text-lg leading-tight">{product.product_name}</DialogTitle>
+              </DialogHeader>
 
-            {/* Price */}
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-destructive">¥{product.price}</span>
-              {product.original_price && product.original_price > product.price && (
-                <span className="text-sm text-muted-foreground line-through">¥{product.original_price}</span>
+              {/* Price */}
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-destructive">¥{product.price}</span>
+                {product.original_price && product.original_price > product.price && (
+                  <span className="text-sm text-muted-foreground line-through">¥{product.original_price}</span>
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">已售 {product.sales_count || 0}</span>
+              </div>
+
+              {/* Tags */}
+              {product.tags && product.tags.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {product.tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                  ))}
+                </div>
               )}
-              <span className="text-xs text-muted-foreground ml-auto">已售 {product.sales_count || 0}</span>
+
+              {/* Description */}
+              {product.description && (() => {
+                const sections = parseDescription(product.description);
+                if (!sections) return <p className="text-sm text-muted-foreground">{product.description}</p>;
+                return (
+                  <div className="space-y-3">
+                    {sections.map((sec, i) => (
+                      <div key={i} className="rounded-xl overflow-hidden border">
+                        <div className={`px-4 py-2 text-base font-semibold flex items-center gap-2 ${sec.bg}`}>
+                          <span className={sec.iconColor}>{sec.icon}</span>
+                          <span>{sec.title}</span>
+                        </div>
+                        <div className="px-4 py-3 space-y-2">
+                          {sec.content.map((line, j) => {
+                            const isBullet = /^[✅•]/.test(line);
+                            return isBullet ? (
+                              <p key={j} className="text-sm text-foreground/80 pl-1 leading-relaxed">{line}</p>
+                            ) : (
+                              <p key={j} className="text-sm text-muted-foreground leading-relaxed" style={{ textIndent: '2em' }}>{line}</p>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Detail images */}
+              {detailImages.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">商品详情</p>
+                  <div className="space-y-1">
+                    {detailImages.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`详情图 ${idx + 1}`}
+                        className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setPreviewImage(url)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Shipping info */}
+              {product.shipping_info && (
+                <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+                  <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>{product.shipping_info}</span>
+                </div>
+              )}
+
+              {/* Stock warning */}
+              {product.stock > 0 && product.stock <= 10 && (
+                <p className="text-xs text-destructive">仅剩 {product.stock} 件</p>
+              )}
             </div>
+          </div>
 
-            {/* Tags */}
-            {product.tags && product.tags.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
-                {product.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Description */}
-            {product.description && (() => {
-              const sections = parseDescription(product.description);
-              if (!sections) return <p className="text-sm text-muted-foreground">{product.description}</p>;
-              return (
-                <div className="space-y-3">
-                  {sections.map((sec, i) => (
-                    <div key={i} className="rounded-xl overflow-hidden border">
-                      <div className={`px-4 py-2 text-base font-semibold flex items-center gap-2 ${sec.bg}`}>
-                        <span className={sec.iconColor}>{sec.icon}</span>
-                        <span>{sec.title}</span>
-                      </div>
-                      <div className="px-4 py-3 space-y-2">
-                        {sec.content.map((line, j) => {
-                          const isBullet = /^[✅•]/.test(line);
-                          return isBullet ? (
-                            <p key={j} className="text-sm text-foreground/80 pl-1 leading-relaxed">{line}</p>
-                          ) : (
-                            <p key={j} className="text-sm text-muted-foreground leading-relaxed" style={{ textIndent: '2em' }}>{line}</p>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-
-
-            {/* Detail images */}
-            {detailImages.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">商品详情</p>
-                <div className="space-y-1">
-                  {detailImages.map((url, idx) => (
-                    <img
-                      key={idx}
-                      src={url}
-                      alt={`详情图 ${idx + 1}`}
-                      className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setPreviewImage(url)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Shipping info */}
-            {product.shipping_info && (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
-                <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                <span>{product.shipping_info}</span>
-              </div>
-            )}
-
-            {/* Stock warning */}
-            {product.stock > 0 && product.stock <= 10 && (
-              <p className="text-xs text-destructive">仅剩 {product.stock} 件</p>
-            )}
-
+          {/* Sticky buy button at bottom */}
+          <div className="p-4 border-t bg-background shrink-0">
             <Button
               onClick={() => onBuy(product)}
               disabled={outOfStock}
@@ -199,7 +204,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
               size="lg"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {outOfStock ? "已售罄" : "立即购买"}
+              {outOfStock ? "已售罄" : `立即购买 ¥${product.price}`}
             </Button>
           </div>
         </DialogContent>
