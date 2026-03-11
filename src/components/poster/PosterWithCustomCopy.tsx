@@ -163,7 +163,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         }}>
           <ProductBadge />
           <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', lineHeight: 1.3, margin: 0 }}>
+            <h1 style={{ fontSize: '19px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', lineHeight: 1.3, margin: 0 }}>
               {copy.headline}
             </h1>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', marginTop: '6px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
