@@ -86,26 +86,6 @@ export default function XiaojinHome() {
           </motion.div>
         )}
 
-        {/* 剩余点数指示器 */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="mb-4 flex items-center justify-between px-1"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">免费体验点数</span>
-            <span className={`text-xs font-bold ${remaining > 20 ? 'text-amber-500' : remaining > 0 ? 'text-orange-500' : 'text-red-500'}`}>
-              {remaining} 点
-            </span>
-          </div>
-          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${remaining > 20 ? 'bg-amber-400' : remaining > 0 ? 'bg-orange-400' : 'bg-red-400'}`}
-              style={{ width: `${Math.min(100, remaining)}%` }}
-            />
-          </div>
-        </motion.div>
 
         {/* Header */}
         <motion.div
