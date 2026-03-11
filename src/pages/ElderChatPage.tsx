@@ -10,7 +10,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elder-chat`;
 const ElderChatPage = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", content: "您好呀！😊 我是小劲，很高兴陪您聊天。您今天感觉怎么样？" },
+    { role: "assistant", content: "您好呀！😊 我是大劲，很高兴陪您聊天。您今天感觉怎么样？" },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
