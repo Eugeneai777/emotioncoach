@@ -38,7 +38,7 @@ interface ShippingInfo {
   buyerAddress: string;
 }
 
-interface WechatPayDialogProps {
+export interface WechatPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;
