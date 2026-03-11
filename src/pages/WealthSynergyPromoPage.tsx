@@ -440,7 +440,7 @@ export default function WealthSynergyPromoPage() {
               </div>
               <div>
                 <h3 className="font-bold text-cyan-300">💊 知乐胶囊</h3>
-                <p className="text-xs text-slate-400">每日3次 · 30天调理周期</p>
+                <p className="text-xs text-slate-400">每日3次 · 28天调理周期</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
