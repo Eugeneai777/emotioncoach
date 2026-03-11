@@ -197,7 +197,7 @@ const ParentChildDiary = () => {
           </div>
         ) : (
           <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-6 h-auto">
+            <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
               <ResponsiveTabsTrigger value="list" label="亲子简报" shortLabel="简报" />
               <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
               <ResponsiveTabsTrigger value="child" label="孩子动态" shortLabel="孩子" />
