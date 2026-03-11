@@ -71,9 +71,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 /* ========== Pain Points ========== */
 const painPoints = [
-  { icon: Activity, stat: "78%", label: "职场人有会议恐惧", desc: "心跳加速、手心出汗、脑子一片空白", color: "#f87171" },
-  { icon: Moon, stat: "65%", label: "因工作压力失眠", desc: "躺下就开始复盘、越想越焦虑", color: "#a78bfa" },
-  { icon: Coffee, stat: "83%", label: "下午效率暴跌", desc: "午后犯困、注意力涣散、靠咖啡续命", color: "#fbbf24" },
+  { icon: Activity, stat: "78%", label: "中年男性职场压力超负荷", desc: "晋升焦虑、绩效压力、开会心跳加速", color: "#f87171" },
+  { icon: Moon, stat: "65%", label: "夫妻关系紧张难以入睡", desc: "沟通不畅、争吵后躺下越想越焦虑", color: "#a78bfa" },
+  { icon: Coffee, stat: "83%", label: "亲子代沟加剧倦怠感", desc: "孩子不听话、沟通无效、靠忍耐硬撑", color: "#fbbf24" },
 ];
 
 /* ========== Synergy Data ========== */
