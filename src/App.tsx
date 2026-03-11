@@ -393,6 +393,7 @@ const App = () => (
               <Route path="/assessment-coach" element={<AssessmentCoachPage />} />
               <Route path="/midlife-awakening" element={<MidlifeAwakeningPage />} />
               <Route path="/assessment-picker" element={<AssessmentPicker />} />
+              <Route path="/assessment-tools" element={<AssessmentTools />} />
               <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
               <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
               <Route path="/gratitude-journal" element={<GratitudeHistory />} />
