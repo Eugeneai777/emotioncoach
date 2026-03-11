@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderNo } = await req.json();
+    const { orderNo, shippingInfo } = await req.json();
 
     if (!orderNo) {
       throw new Error('缺少订单号');
