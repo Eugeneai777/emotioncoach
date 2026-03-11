@@ -360,6 +360,7 @@ const App = () => (
               <Route path="/claim" element={<Claim />} />
               <Route path="/pay-entry" element={<PayEntry />} />
               <Route path="/promo/synergy" element={<SynergyPromoPage />} />
+              <Route path="/promo/wealth-synergy" element={<WealthSynergyPromoPage />} />
               <Route path="/zhile-promo" element={<ZhilePromoHub />} />
               <Route path="/zhile-products" element={<ZhileProductsPage />} />
               <Route path="/promo/:slug" element={<PromoPage />} />
