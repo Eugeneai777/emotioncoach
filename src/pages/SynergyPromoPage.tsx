@@ -669,7 +669,7 @@ export default function SynergyPromoPage() {
             <>
               <p className="text-slate-400 text-sm mb-2">限时特惠</p>
               <div className="flex items-baseline justify-center gap-2 mb-1">
-                <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0</span>
+                <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
                 <span className="text-slate-500 line-through text-sm">¥899</span>
               </div>
               <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 30天套餐</p>
