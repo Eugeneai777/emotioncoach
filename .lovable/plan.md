@@ -1,23 +1,61 @@
 
 
-## 两个问题需要修复
+# 修复知乐订单收货信息缺失
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 根因分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+**所有 6 条已支付订单的 buyer_name/buyer_phone/buyer_address 均为 NULL。**
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+原因是 `handlePaySuccess` 在支付成功后通过**客户端 SDK** 直接 `.update()` orders 表，但 orders 表的 RLS UPDATE 策略要求 `auth.uid() = user_id` 或 admin。两种场景都失败：
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+1. **游客用户**：无 auth session → 所有 RLS 策略都不匹配 → 更新被静默拒绝
+2. **已登录用户**：订单可能此时还未被支付回调标记为 `paid`（时序问题），或 `user_id` 仍为 null
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**同时 ZhileProductsPage 使用了错误的列名** (`shipping_name` 而非 `buyer_name`)。
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+## 解决方案
+
+创建一个 **edge function `update-order-shipping`**，使用 service_role 绕过 RLS 更新收货信息。所有页面改为调用此函数。
+
+### 1. 新建 Edge Function `supabase/functions/update-order-shipping/index.ts`
+
+接收 `{ orderNo, shippingInfo }` 参数，用 service_role 更新 orders 表：
+- 按 order_no 查找订单
+- 写入 buyer_name、buyer_phone、buyer_address、shipping_status='pending'
+- 无需用户身份验证（支付完成时可能是游客状态）
+- 但验证 order_no 存在且为 paid 状态
+
+### 2. 修改 `src/pages/SynergyPromoPage.tsx` — handlePaySuccess
+
+将直接 `.update()` 替换为调用 `update-order-shipping` 边缘函数：
+```typescript
+const handlePaySuccess = async () => {
+  if (checkoutInfo) {
+    const pendingOrderNo = localStorage.getItem('pending_claim_order');
+    if (pendingOrderNo) {
+      await supabase.functions.invoke('update-order-shipping', {
+        body: { orderNo: pendingOrderNo, shippingInfo: checkoutInfo }
+      });
+    }
+  }
+  // ...rest unchanged
+};
+```
+
+### 3. 修改 `src/pages/WealthSynergyPromoPage.tsx` — 同上
+
+### 4. 修改 `src/pages/ZhileProductsPage.tsx` — 同上
+
+修复列名错误 + 改用 edge function。
+
+### 5. 一次性数据修补
+
+现有 6 条已支付订单的收货信息需要从 localStorage 无法恢复（已过期），但未来新订单将正确写入。
+
+## 涉及文件
+
+- 新建 `supabase/functions/update-order-shipping/index.ts`
+- `src/pages/SynergyPromoPage.tsx` — handlePaySuccess
+- `src/pages/WealthSynergyPromoPage.tsx` — handlePaySuccess  
+- `src/pages/ZhileProductsPage.tsx` — handlePaySuccess + 修复列名
 
