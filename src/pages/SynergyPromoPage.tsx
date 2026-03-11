@@ -98,9 +98,9 @@ const timeline = [
 
 /* ========== Testimonials ========== */
 const testimonials = [
-  { name: "张女士", role: "互联网产品经理", avatar: "👩‍💼", metric: "焦虑评分", before: "8.2", after: "3.1", duration: "21天", quote: "开会不再手抖了，甚至主动要求做汇报" },
-  { name: "李先生", role: "金融分析师", avatar: "👨‍💻", metric: "睡眠时长", before: "5h", after: "7.5h", duration: "14天", quote: "终于不用靠安眠药入睡了" },
-  { name: "王女士", role: "创业公司CEO", avatar: "👩‍🦰", metric: "压力指数", before: "9.0", after: "4.2", duration: "30天", quote: "决策更冷静，团队都说我变了个人" },
+  { name: "陈先生", role: "外企部门总监·42岁", avatar: "👨‍💼", metric: "焦虑评分", before: "8.5", after: "3.0", duration: "21天", quote: "开会终于不心慌了，升职答辩一次通过" },
+  { name: "刘先生", role: "民营企业主·38岁", avatar: "👨‍💻", metric: "睡眠时长", before: "4.5h", after: "7h", duration: "14天", quote: "和老婆吵完架也能睡着了，关系缓和很多" },
+  { name: "赵先生", role: "工程项目经理·45岁", avatar: "👨", metric: "压力指数", before: "9.2", after: "4.0", duration: "30天", quote: "儿子说爸爸不再乱发脾气了，这句话值千金" },
 ];
 
 /* ========== Product specs ========== */
