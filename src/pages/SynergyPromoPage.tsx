@@ -435,6 +435,46 @@ export default function SynergyPromoPage() {
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
       </section>
 
+      {/* ===== QUICK ACCESS FOR PURCHASED USERS ===== */}
+      {alreadyPurchased && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky top-0 z-50 mx-auto max-w-2xl px-4 py-3"
+        >
+          <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-emerald-900/40 border border-emerald-500/30 backdrop-blur-md shadow-lg shadow-emerald-900/20">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-200">已购买此套餐</p>
+                <p className="text-xs text-slate-400">可随时进入训练营学习</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleViewLogistics}
+                variant="outline"
+                size="sm"
+                className="rounded-full border-slate-600 text-slate-300 hover:bg-slate-800 text-xs h-8"
+              >
+                <Truck className="w-3.5 h-3.5 mr-1" />
+                订单
+              </Button>
+              <Button
+                onClick={handleEnterCamp}
+                size="sm"
+                className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0 text-xs h-8"
+              >
+                <Rocket className="w-3.5 h-3.5 mr-1" />
+                进入训练营
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">你是否正在经历？</h2>
