@@ -119,10 +119,10 @@ const MamaAssistant = () => {
               <button
                 key={entry.title}
                 onClick={() => {
-                  if (entry.context) {
+                  if (entry.route) {
+                    navigate(entry.route);
+                  } else if (entry.context) {
                     openChat(entry.context);
-                  } else {
-                    setShowAssessment(true);
                   }
                 }}
                 className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
