@@ -47,7 +47,20 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
             date: new Date().toISOString().split("T")[0],
           });
         if (!error) {
-          toast({ title: "已同步到感恩日记 📔" });
+          toast({
+            title: "已同步到感恩日记 📔",
+            description: "点击查看全部记录",
+            action: (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => navigate("/gratitude-journal")}
+              >
+                查看全部 →
+              </Button>
+            ),
+          });
         }
       } catch (e) {
         console.warn("Failed to save gratitude entry:", e);
