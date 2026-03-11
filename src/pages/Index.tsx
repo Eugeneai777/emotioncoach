@@ -545,6 +545,20 @@ const Index = () => {
   ) : null;
 
   // Build training camp content
+  const getCampDisplayInfo = (campType: string) => {
+    switch (campType) {
+      case 'emotion_stress_7':
+        return { name: '7天情绪解压训练营', desc: '用7天释放压力，找回内心平静与清晰' };
+      case 'wealth_block_7':
+      case 'wealth_block_21':
+        return { name: '7天财富觉醒训练营', desc: '用7天突破财富卡点，重塑金钱关系' };
+      default:
+        return { name: '21天情绪日记训练营', desc: '用21天养成情绪记录习惯，获得专属徽章和成长洞察' };
+    }
+  };
+
+  const campInfo = activeCamp ? getCampDisplayInfo(activeCamp.camp_type) : getCampDisplayInfo('');
+
   const trainingCampContent = activeCamp ? (
     <div className="w-full mt-6 space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
       <CoachTrainingCamp
@@ -553,8 +567,8 @@ const Index = () => {
         onViewDetails={() => navigate("/camps")}
         onCheckIn={handleCheckIn}
         colorTheme="green"
-        campName="21天情绪日记训练营"
-        campDescription="用21天养成情绪记录习惯，获得专属徽章和成长洞察"
+        campName={campInfo.name}
+        campDescription={campInfo.desc}
       />
       
       <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
@@ -582,8 +596,8 @@ const Index = () => {
         onStartCamp={() => setShowStartCamp(true)}
         onViewDetails={() => navigate("/camps")}
         colorTheme="green"
-        campName="21天情绪日记训练营"
-        campDescription="用21天养成情绪记录习惯，获得专属徽章和成长洞察"
+        campName={campInfo.name}
+        campDescription={campInfo.desc}
       />
     </div>
   ) : null;

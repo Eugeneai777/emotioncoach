@@ -473,6 +473,19 @@ export const CoachVoiceChat = ({
         return false;
       }
 
+      // 检查是否有活跃训练营，有则免费使用语音教练
+      const { data: activeCamps } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(1);
+
+      if (activeCamps && activeCamps.length > 0) {
+        console.log('[VoiceChat] User has active camp, skipping quota check');
+        return true;
+      }
+
       const { data: account } = await supabase
         .from('user_accounts')
         .select('remaining_quota')

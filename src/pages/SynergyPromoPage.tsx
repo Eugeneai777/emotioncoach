@@ -296,7 +296,7 @@ export default function SynergyPromoPage() {
         .from('training_camps')
         .select('id')
         .eq('user_id', user.id)
-        .in('camp_type', ['emotion_journal_21', 'synergy_bundle'])
+        .in('camp_type', ['emotion_stress_7', 'emotion_journal_21', 'synergy_bundle'])
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -307,7 +307,7 @@ export default function SynergyPromoPage() {
         return;
       }
     }
-    navigate('/camp-intro/emotion_journal_21');
+    navigate('/camp-intro/emotion_stress_7');
   };
 
   const handleViewLogistics = () => {
