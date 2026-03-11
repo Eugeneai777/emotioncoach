@@ -257,7 +257,7 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     pageKey: 'xiaojin',
     title: '小劲AI',
     subtitle: '青少年成长陪伴',
-    targetUrl: '/xiaojin',
+    targetUrl: '/xiaojin?from=parent',
     emoji: '✨',
     highlights: [
       '3分钟情绪探索',

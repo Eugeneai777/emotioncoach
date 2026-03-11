@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, ChevronRight, Flame, Sparkles, Home, Share2 } from "lucide-react";
+import { Phone, ChevronRight, Flame, Sparkles, Home, Share2, Lock } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 
@@ -12,6 +12,16 @@ const entries = [
 
 export default function XiaojinHome() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isFromParent = searchParams.get("from") === "parent";
+
+  const handleVoiceClick = () => {
+    if (isFromParent) {
+      // 孩子通过家长分享链接访问，语音功能需付费解锁
+      return;
+    }
+    navigate("/xiaojin/voice");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
@@ -38,11 +48,29 @@ export default function XiaojinHome() {
                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
               >
                 <Share2 className="w-3.5 h-3.5" />
-                <span>分享</span>
+                <span>分享给孩子</span>
               </motion.button>
             }
           />
         </div>
+
+        {/* 孩子端欢迎横幅 */}
+        {isFromParent && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 rounded-2xl p-4 border border-amber-200/60"
+            style={{ background: 'linear-gradient(135deg, #fef3c7, #fff7ed)' }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">👋</span>
+              <span className="text-sm font-bold text-amber-800">嘿，欢迎来到小劲AI！</span>
+            </div>
+            <p className="text-xs text-amber-600/80 leading-relaxed">
+              爸妈把这个分享给你啦～试试下面的功能，探索你的情绪和天赋吧 ✨
+            </p>
+          </motion.div>
+        )}
 
         {/* Header */}
         <motion.div
@@ -68,40 +96,57 @@ export default function XiaojinHome() {
           className="flex flex-col items-center py-10"
         >
           <button
-            onClick={() => navigate("/xiaojin/voice")}
+            onClick={handleVoiceClick}
             className="relative group focus:outline-none touch-manipulation"
             aria-label="开始AI小劲语音对话"
           >
             {/* Soft glow */}
             <motion.div
-              className="absolute rounded-full bg-gradient-to-r from-orange-300/25 to-amber-300/25 blur-2xl"
+              className={`absolute rounded-full blur-2xl ${isFromParent ? 'bg-gradient-to-r from-gray-300/20 to-gray-200/20' : 'bg-gradient-to-r from-orange-300/25 to-amber-300/25'}`}
               animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.3, 0.6] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
               style={{ width: '160px', height: '160px', top: '-20px', left: '-20px' }}
             />
 
             {/* Pulsing ring */}
-            <motion.div
-              className="absolute rounded-full border-[1.5px] border-orange-300/60"
-              animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-              style={{ width: '120px', height: '120px', top: 0, left: 0 }}
-            />
+            {!isFromParent && (
+              <motion.div
+                className="absolute rounded-full border-[1.5px] border-orange-300/60"
+                animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+                style={{ width: '120px', height: '120px', top: 0, left: 0 }}
+              />
+            )}
 
             {/* Main circle */}
             <motion.div
               className="relative w-[120px] h-[120px] rounded-full flex flex-col items-center justify-center"
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.93 }}
+              whileHover={{ scale: isFromParent ? 1 : 1.06 }}
+              whileTap={{ scale: isFromParent ? 1 : 0.93 }}
               style={{
-                background: 'linear-gradient(135deg, #fb923c 0%, #f59e0b 50%, #f97316 100%)',
-                boxShadow: '0 12px 36px -8px rgba(249, 115, 22, 0.45), 0 0 0 4px rgba(251, 191, 36, 0.12)',
+                background: isFromParent
+                  ? 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 50%, #6b7280 100%)'
+                  : 'linear-gradient(135deg, #fb923c 0%, #f59e0b 50%, #f97316 100%)',
+                boxShadow: isFromParent
+                  ? '0 8px 24px -8px rgba(107, 114, 128, 0.3)'
+                  : '0 12px 36px -8px rgba(249, 115, 22, 0.45), 0 0 0 4px rgba(251, 191, 36, 0.12)',
               }}
             >
-              <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
-                <Phone className="h-7 w-7 text-white drop-shadow" />
-              </div>
-              <span className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">随时聊</span>
+              {isFromParent ? (
+                <>
+                  <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
+                    <Lock className="h-7 w-7 text-white drop-shadow" />
+                  </div>
+                  <span className="text-[11px] font-bold text-white/90 drop-shadow-sm">需解锁</span>
+                </>
+              ) : (
+                <>
+                  <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
+                    <Phone className="h-7 w-7 text-white drop-shadow" />
+                  </div>
+                  <span className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">随时聊</span>
+                </>
+              )}
             </motion.div>
           </button>
 
@@ -111,7 +156,14 @@ export default function XiaojinHome() {
             transition={{ delay: 0.4 }}
             className="text-center mt-5"
           >
-            <p className="text-[11px] text-gray-400 mt-1">语音对话，像朋友一样倾听你 💛</p>
+            {isFromParent ? (
+              <>
+                <p className="text-sm font-semibold text-gray-500">🔒 语音对话 · 需家长解锁</p>
+                <p className="text-[11px] text-gray-400 mt-1">请让爸妈充值后即可畅聊 💛</p>
+              </>
+            ) : (
+              <p className="text-[11px] text-gray-400 mt-1">语音对话，像朋友一样倾听你 💛</p>
+            )}
           </motion.div>
         </motion.div>
 
