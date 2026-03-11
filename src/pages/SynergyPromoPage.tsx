@@ -71,9 +71,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 /* ========== Pain Points ========== */
 const painPoints = [
-  { icon: Activity, stat: "78%", label: "职场人有会议恐惧", desc: "心跳加速、手心出汗、脑子一片空白", color: "#f87171" },
-  { icon: Moon, stat: "65%", label: "因工作压力失眠", desc: "躺下就开始复盘、越想越焦虑", color: "#a78bfa" },
-  { icon: Coffee, stat: "83%", label: "下午效率暴跌", desc: "午后犯困、注意力涣散、靠咖啡续命", color: "#fbbf24" },
+  { icon: Activity, stat: "78%", label: "中年男性职场压力超负荷", desc: "晋升焦虑、绩效压力、开会心跳加速", color: "#f87171" },
+  { icon: Moon, stat: "65%", label: "夫妻关系紧张难以入睡", desc: "沟通不畅、争吵后躺下越想越焦虑", color: "#a78bfa" },
+  { icon: Coffee, stat: "83%", label: "亲子代沟加剧倦怠感", desc: "孩子不听话、沟通无效、靠忍耐硬撑", color: "#fbbf24" },
 ];
 
 /* ========== Synergy Data ========== */
@@ -98,9 +98,9 @@ const timeline = [
 
 /* ========== Testimonials ========== */
 const testimonials = [
-  { name: "张女士", role: "互联网产品经理", avatar: "👩‍💼", metric: "焦虑评分", before: "8.2", after: "3.1", duration: "21天", quote: "开会不再手抖了，甚至主动要求做汇报" },
-  { name: "李先生", role: "金融分析师", avatar: "👨‍💻", metric: "睡眠时长", before: "5h", after: "7.5h", duration: "14天", quote: "终于不用靠安眠药入睡了" },
-  { name: "王女士", role: "创业公司CEO", avatar: "👩‍🦰", metric: "压力指数", before: "9.0", after: "4.2", duration: "30天", quote: "决策更冷静，团队都说我变了个人" },
+  { name: "陈先生", role: "外企部门总监·42岁", avatar: "👨‍💼", metric: "焦虑评分", before: "8.5", after: "3.0", duration: "21天", quote: "开会终于不心慌了，升职答辩一次通过" },
+  { name: "刘先生", role: "民营企业主·38岁", avatar: "👨‍💻", metric: "睡眠时长", before: "4.5h", after: "7h", duration: "14天", quote: "和老婆吵完架也能睡着了，关系缓和很多" },
+  { name: "赵先生", role: "工程项目经理·45岁", avatar: "👨", metric: "压力指数", before: "9.2", after: "4.0", duration: "30天", quote: "儿子说爸爸不再乱发脾气了，这句话值千金" },
 ];
 
 /* ========== Product specs ========== */
@@ -412,8 +412,8 @@ export default function SynergyPromoPage() {
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-            单独使用效果有限，组合使用效果翻倍。<br />
-            心理训练 + 生理调节，全方位守护你的职场战斗力。
+            专为中年男性设计，解决职场·家庭·健康三重压力。<br />
+            心理训练 + 生理调节，重塑你的自信与掌控力。
           </p>
 
           {/* Formula visual */}
@@ -506,7 +506,7 @@ export default function SynergyPromoPage() {
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">你是否正在经历？</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">职场压力的三大隐形杀手</p>
+        <p className="text-slate-400 text-sm text-center mb-8">中年男性的三大隐形压力源</p>
         <div className="grid gap-4 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
@@ -595,7 +595,7 @@ export default function SynergyPromoPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-500 mt-2 text-center">国家食药监认证 · 安全无依赖</p>
+          <p className="text-xs text-slate-500 mt-2 text-center">香港HKC认证 · 安全无依赖</p>
 
           <div className="mt-3 p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
             <div className="flex items-start gap-2.5">
@@ -611,7 +611,37 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== SYNERGY DATA DASHBOARD ===== */}
+      {/* ===== COACH AUTHORITY ===== */}
+      <Section>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">专业教练团队</h2>
+        <p className="text-slate-400 text-sm text-center mb-8">权威认证 · 实战经验 · 值得信赖</p>
+        <div className="max-w-lg mx-auto space-y-4">
+          {[
+            { icon: Shield, title: "国际认证资质", desc: "团队持有 ICF/EMCC 等国际教练认证，平均执教经验超 8 年", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+            { icon: Brain, title: "海沃塔对话体系", desc: "源自以色列的深度对话方法，专注沟通力与自信重塑，帮助中年男性突破表达障碍", color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/20" },
+            { icon: TrendingUp, title: "已服务 2000+ 学员", desc: "学员涵盖企业高管、创业者、职场中层，93% 反馈沟通能力显著提升", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className={`flex items-start gap-4 p-4 rounded-2xl border ${item.bg}`}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-slate-800/60">
+                <item.icon className={`w-5 h-5 ${item.color}`} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-200 mb-1">{item.title}</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">协同效果数据</h2>
         <p className="text-slate-400 text-sm text-center mb-8">1 + 1 &gt; 2 的科学验证</p>

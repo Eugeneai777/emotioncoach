@@ -497,7 +497,7 @@ export default function WealthSynergyPromoPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-500 mt-2 text-center">国家食药监认证 · 安全无依赖</p>
+          <p className="text-xs text-slate-500 mt-2 text-center">香港HKC认证 · 安全无依赖</p>
 
           <div className="mt-3 p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
             <div className="flex items-start gap-2.5">
