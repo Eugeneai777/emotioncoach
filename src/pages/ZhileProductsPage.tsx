@@ -121,28 +121,18 @@ export default function ZhileProductsPage() {
   const handlePaySuccess = async () => {
     if (checkoutInfo) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: recentOrder } = await supabase
-            .from('orders')
-            .select('id, order_no')
-            .eq('user_id', user.id)
-            .eq('package_key', 'zhile_capsule')
-            .eq('status', 'paid')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (recentOrder && recentOrder.length > 0) {
-            await supabase
-              .from('orders')
-              .update({
-                shipping_name: checkoutInfo.buyerName,
-                shipping_phone: checkoutInfo.buyerPhone,
-                shipping_address: checkoutInfo.buyerAddress,
-                shipping_status: 'pending',
-              } as any)
-              .eq('id', recentOrder[0].id);
-          }
+        const pendingOrderNo = localStorage.getItem('pending_claim_order');
+        if (pendingOrderNo) {
+          await supabase.functions.invoke('update-order-shipping', {
+            body: {
+              orderNo: pendingOrderNo,
+              shippingInfo: {
+                buyerName: checkoutInfo.buyerName,
+                buyerPhone: checkoutInfo.buyerPhone,
+                buyerAddress: checkoutInfo.buyerAddress,
+              },
+            },
+          });
         }
       } catch (e) {
         console.error('Save shipping info error:', e);
