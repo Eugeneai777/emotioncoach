@@ -849,8 +849,6 @@ Deno.serve(async (req) => {
   // - lastKeepaliveAt: 最近一次向 Doubao 发送“静默音频 keepalive”的时间
   let lastClientAudioAt = Date.now();
   let lastDoubaoActivityAt = Date.now();
-  let lastKeepaliveAt = 0;
-  let lastKeepaliveLogAt = 0;
 
   // ✅ 音色降级：当 speaker id 不在 timber 内时（45000001），自动降级为“不指定音色”并重连一次。
   // 目的：避免前端卡在“正在聆听”但无回复。
