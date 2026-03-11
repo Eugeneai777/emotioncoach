@@ -1,64 +1,23 @@
 
 
-# 修复所有海报版本在安卓上内容显示不完整
+## 两个问题需要修复
 
-## 问题
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-所有版本（默认、小红书、微信群、极简、卡片）的海报在安卓上都存在内容溢出/截断问题，朋友圈版已在上次修复。核心原因相同：安卓中文字体行高更大，内容区域撑满后底部QR码和品牌footer被裁剪。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 修改方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### PosterPreview.tsx — 3个版本压缩
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-**默认版 (renderDefaultLayout)**
-- 主标语：添加 `overflow: 'hidden'`, `maxHeight: '60px'`
-- 卖点：显示最多3条（slice 0,3），gap `6px` → `5px`，padding `8px 12px` → `7px 10px`
-- Emoji fontSize `34px` → `30px`
-- 整体 padding `20px 16px 14px` → `18px 16px 14px`
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**小红书版 (renderXiaohongshuLayout)**
-- 主标语：添加 `overflow: 'hidden'`, `maxHeight: '60px'`
-- 标签栏 marginBottom `14px` → `10px`
-- 产品名 fontSize `20px` → `18px`
-- 主标语 marginBottom `14px` → `10px`
-- 数据卡片 gap `8px` → `6px`，marginBottom `14px` → `10px`
-
-**微信群版 (renderWechatGroupLayout)**
-- 主标语气泡：添加 `overflow: 'hidden'`, `maxHeight: '60px'`
-- 卖点列表 padding `12px 14px` → `10px 12px`，gap `8px` → `6px`
-- 头像区 marginBottom `14px` → `10px`
-- 标语气泡 marginBottom `14px` → `10px`
-
-### PosterWithCustomCopy.tsx — 5个版本压缩
-
-**默认版**
-- headline：添加 `overflow: 'hidden'`, `maxHeight: '52px'`
-- subtitle marginBottom `6px` → 内联已有
-- 卖点显示最多3条，padding `8px 12px` → `7px 10px`
-
-**小红书版**
-- headline：添加 `overflow: 'hidden'`, `maxHeight: '48px'`
-- 标签区 marginBottom `12px` → `8px`
-- subtitle marginBottom `12px` → `8px`
-- 数据卡片 gap `8px` → `6px`
-
-**微信群版**
-- headline：添加 `overflow: 'hidden'`, `maxHeight: '52px'`
-- subtitle marginBottom `16px` → `10px`
-- 气泡 gap `10px` → `7px`，padding `10px 14px` → `8px 12px`
-- avatars marginBottom `12px` → `8px`
-
-**极简版**
-- headline：添加 `overflow: 'hidden'`, `maxHeight: '80px'`
-- 分割线 marginBottom `32px` → `20px`
-
-**卡片版**
-- headline：添加 `overflow: 'hidden'`, `maxHeight: '48px'`
-- 内容卡片 padding `20px` → `16px`
-- 卖点显示最多3条，gap `8px` → `6px`，padding `10px 12px` → `8px 10px`
-
-## 涉及文件
-
-- `src/components/poster/PosterPreview.tsx`
-- `src/components/poster/PosterWithCustomCopy.tsx`
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

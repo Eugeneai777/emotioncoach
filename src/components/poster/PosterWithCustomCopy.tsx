@@ -163,7 +163,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         }}>
           <ProductBadge />
           <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-            <h1 style={{ fontSize: '19px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', lineHeight: 1.3, margin: 0 }}>
+            <h1 style={{ fontSize: '19px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', lineHeight: 1.3, margin: 0, overflow: 'hidden', maxHeight: '52px' }}>
               {copy.headline}
             </h1>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', marginTop: '6px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
@@ -186,10 +186,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           )}
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-            {copy.selling_points.map((point, i) => (
+            {copy.selling_points.slice(0, 3).map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: '10px',
-                padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '7px 10px', display: 'flex', alignItems: 'center', gap: '6px',
               }}>
                 <span style={{ fontSize: '14px' }}>✨</span>
                 <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{point}</span>
@@ -265,7 +265,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           <ProductBadge />
           
           {/* Tags */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
             <span style={{ background: 'rgba(255,255,255,0.9)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: '#e11d48', fontWeight: 600 }}>
               #{productName}
             </span>
@@ -277,15 +277,15 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </span>
           </div>
 
-          <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.4)', lineHeight: 1.3, margin: '0 0 8px 0' }}>
+          <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.4)', lineHeight: 1.3, margin: '0 0 8px 0', overflow: 'hidden', maxHeight: '48px' }}>
             {copy.headline}
           </h1>
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginBottom: '12px' }}>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginBottom: '8px' }}>
             {copy.subtitle}
           </p>
 
           {/* Data cards grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '10px' }}>
             {copy.selling_points.slice(0, 4).map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.95)', borderRadius: '8px', padding: '12px 10px',
@@ -342,7 +342,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           <ProductBadge />
 
           {/* Avatar group */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex' }}>
               {[0, 1, 2, 3, 4].map((i) => (
                 <div key={i} style={{
@@ -357,24 +357,24 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           </div>
 
-          <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '16px' }}>
+          <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>
             已有 1,000+ 小伙伴加入学习
           </p>
 
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0', overflow: 'hidden', maxHeight: '52px' }}>
             {copy.headline}
           </h1>
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: '16px' }}>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: '10px' }}>
             {copy.subtitle}
           </p>
 
           {/* Chat bubble style points */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '7px' }}>
             {copy.selling_points.slice(0, 3).map((point, i) => (
               <div key={i} style={{
                 background: i % 2 === 0 ? 'rgba(255,255,255,0.95)' : 'rgba(149, 236, 105, 0.95)',
                 borderRadius: '12px', borderTopLeftRadius: i % 2 === 0 ? '4px' : '12px', borderTopRightRadius: i % 2 === 0 ? '12px' : '4px',
-                padding: '10px 14px', marginLeft: i % 2 === 0 ? 0 : '20px', marginRight: i % 2 === 0 ? '20px' : 0,
+                padding: '8px 12px', marginLeft: i % 2 === 0 ? 0 : '20px', marginRight: i % 2 === 0 ? '20px' : 0,
               }}>
                 <span style={{ fontSize: '12px', color: '#1a1a1a' }}>{point}</span>
               </div>
@@ -407,13 +407,13 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         }}>
           <ProductBadge />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: 'white', lineHeight: 1.4, margin: '0 0 16px 0', letterSpacing: '1px' }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: 'white', lineHeight: 1.4, margin: '0 0 16px 0', letterSpacing: '1px', overflow: 'hidden', maxHeight: '80px' }}>
               {copy.headline}
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '32px' }}>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '20px' }}>
               {copy.subtitle}
             </p>
-            <div style={{ width: '60px', height: '1px', background: 'rgba(255,255,255,0.3)', marginBottom: '32px' }} />
+            <div style={{ width: '60px', height: '1px', background: 'rgba(255,255,255,0.3)', marginBottom: '20px' }} />
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', maxWidth: '200px' }}>
               {copy.selling_points[0]}
             </p>
@@ -445,21 +445,21 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
 
           {/* Main content card */}
           <div style={{
-            flex: 1, background: 'rgba(255,255,255,0.98)', borderRadius: '16px', padding: '20px',
+            flex: 1, background: 'rgba(255,255,255,0.98)', borderRadius: '16px', padding: '16px',
             display: 'flex', flexDirection: 'column', boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
           }}>
             <div style={{ fontSize: '24px', marginBottom: '12px', textAlign: 'center' }}>{emoji}</div>
-            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0' }}>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0', overflow: 'hidden', maxHeight: '48px' }}>
               {copy.headline}
             </h1>
             <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginBottom: '16px' }}>
               {copy.subtitle}
             </p>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {copy.selling_points.map((point, i) => (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {copy.selling_points.slice(0, 3).map((point, i) => (
                 <div key={i} style={{
-                  background: '#f8fafc', borderRadius: '8px', padding: '10px 12px',
+                  background: '#f8fafc', borderRadius: '8px', padding: '8px 10px',
                   display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '3px solid',
                   borderColor: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899'][i % 4],
                 }}>
