@@ -678,7 +678,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{ flex: 1 }} />
 
         {/* 底部二维码区 */}
-        {renderQRSection()}
+        <div style={{ flexShrink: 0 }}>
+          {renderQRSection()}
+        </div>
       </div>
     );
 
@@ -688,10 +690,10 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '14px',
-          padding: '12px',
+          padding: '10px',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: '10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
         }}>
           {qrCodeUrl && (
@@ -699,8 +701,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               src={qrCodeUrl} 
               alt="QR Code"
               style={{ 
-                width: '60px', 
-                height: '60px', 
+                width: '55px', 
+                height: '55px', 
                 borderRadius: '8px', 
                 flexShrink: 0,
                 border: '2px solid #f0f0f0'
