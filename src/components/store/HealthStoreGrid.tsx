@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ProductDetailDialog } from "./ProductDetailDialog";
 import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 
 interface Product {
   id: string;
@@ -32,6 +33,7 @@ function needsIdCard(product: Product): boolean {
 }
 
 export function HealthStoreGrid() {
+  const wechatOpenId = useWechatOpenId();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -285,6 +287,7 @@ export function HealthStoreGrid() {
         onOpenChange={setPayOpen}
         packageInfo={payPackage}
         onSuccess={handlePaySuccess}
+        openId={wechatOpenId}
       />
     </>
   );

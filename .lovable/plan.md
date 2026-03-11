@@ -1,48 +1,23 @@
 
 
-# 修复商城支付流程（微信浏览器内无法完成支付）
+## 两个问题需要修复
 
-## 问题根因
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-从截图和代码分析，支付卡在"正在调起支付..."的原因是：
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**微信浏览器内 JSAPI 支付需要 `openId`，但 `HealthStoreGrid` 和 `ZhileProductsPage` 都没有传 `openId` 给 `UnifiedPayDialog`。**
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-当 `WechatPayDialog` 发现没有 openId 时，会触发静默授权重定向（跳转微信 OAuth 页面），导致：
-- 页面刷新，所有 React 状态丢失（已选商品、收货信息、支付弹窗状态）
-- 用户回到页面后什么都没发生，支付链路断裂
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-## 修复方案
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 1. 创建 `useWechatOpenId` Hook
-
-新建 `src/hooks/useWechatOpenId.ts`，在微信浏览器环境下从数据库预加载 openId：
-- 检测是否在微信环境
-- 已登录用户：从 `wechat_user_mappings` 表查询 openId
-- 缓存到 state 中，避免重复查询
-
-### 2. 修复 `HealthStoreGrid.tsx`
-
-- 引入 `useWechatOpenId` hook
-- 将 openId 传给 `UnifiedPayDialog`
-- 在 checkout 阶段用 sessionStorage 暂存 selectedProduct 和 checkoutInfo，防止重定向后丢失
-- 页面加载时检查是否有 `payment_resume` 参数，恢复购买状态
-
-### 3. 修复 `ZhileProductsPage.tsx`
-
-- 同样引入 `useWechatOpenId` 并传给 `UnifiedPayDialog`
-- 暂存 checkoutInfo 到 sessionStorage
-
-### 4. 修复 `UnifiedPayDialog.tsx`
-
-- 接收并透传 `openId` prop 到 `WechatPayDialog`
-
-## 涉及文件
-
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| `src/hooks/useWechatOpenId.ts` | 新建：预加载微信 openId |
-| `src/components/UnifiedPayDialog.tsx` | 透传 openId prop |
-| `src/components/store/HealthStoreGrid.tsx` | 使用 hook + 传 openId + 状态恢复 |
-| `src/pages/ZhileProductsPage.tsx` | 使用 hook + 传 openId |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

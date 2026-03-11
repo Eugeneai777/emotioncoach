@@ -7,6 +7,7 @@ import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 
 interface OrderShippingInfo {
   buyerName: string;
@@ -111,6 +112,7 @@ const capsulePackageInfo = {
 
 export default function ZhileProductsPage() {
   const navigate = useNavigate();
+  const wechatOpenId = useWechatOpenId();
   const [selected, setSelected] = useState<string | null>(null);
 
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -311,6 +313,7 @@ export default function ZhileProductsPage() {
         onOpenChange={setPayOpen}
         packageInfo={capsulePackageInfo}
         onSuccess={handlePaySuccess}
+        openId={wechatOpenId}
       />
     </div>
   );
