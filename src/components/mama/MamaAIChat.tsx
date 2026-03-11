@@ -245,7 +245,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl bg-[#FFF8F0] p-0 flex flex-col">
           <SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
             <div className="flex items-center justify-between">
-              <SheetTitle className="text-[#3D3028] text-base">💛 妈妈AI教练</SheetTitle>
+              <SheetTitle className="text-[#3D3028] text-base">💛 宝妈AI教练</SheetTitle>
               <button
                 onClick={() => { onOpenChange(false); navigate("/gratitude-journal"); }}
                 className="text-xs px-3 py-1.5 rounded-full border border-[#F4845F]/30 text-[#F4845F] bg-[#FFF3EB] hover:bg-[#FFE8D6] transition-colors"
