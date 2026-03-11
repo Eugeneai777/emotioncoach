@@ -135,7 +135,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
     
     setIsGenerating(true);
     try {
-      const blob = await generateCardBlob(exportRef, { isWeChat: isWeChatOrIOS() });
+      const blob = await generateCardBlob(exportRef, { isWeChat: isWeChatOrIOS(), explicitWidth: 380 });
       
       if (!blob) {
         throw new Error('生成图片失败');
