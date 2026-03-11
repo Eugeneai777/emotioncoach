@@ -10,6 +10,9 @@ const getCompatibleCampTypes = (campType: string): string[] => {
   if (campType === 'emotion_journal_21') {
     return ['emotion_journal_21', 'synergy_bundle'];
   }
+  if (campType === 'emotion_stress_7') {
+    return ['emotion_stress_7', 'synergy_bundle'];
+  }
   return [campType];
 };
 

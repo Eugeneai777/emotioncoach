@@ -84,8 +84,8 @@ const CampIntro = () => {
     queryFn: async () => {
       if (!user || !campType) return null;
       // emotion_journal_21 可能通过 synergy_bundle 购买
-      const packageKeys = campType === 'emotion_journal_21' 
-        ? ['synergy_bundle', 'camp-emotion_journal_21'] 
+      const packageKeys = ['emotion_journal_21', 'emotion_stress_7'].includes(campType!)
+        ? ['synergy_bundle', `camp-${campType}`]
         : [`camp-${campType}`];
       const { data } = await supabase
         .from('orders')
