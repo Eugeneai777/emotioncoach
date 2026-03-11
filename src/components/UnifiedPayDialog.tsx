@@ -29,6 +29,12 @@ interface PackageInfo {
   quota?: number;
 }
 
+interface ShippingInfo {
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
 interface UnifiedPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +42,7 @@ interface UnifiedPayDialogProps {
   onSuccess: () => void;
   returnUrl?: string;
   openId?: string;
+  shippingInfo?: ShippingInfo;
 }
 
 type PayMethod = 'wechat' | 'alipay';
