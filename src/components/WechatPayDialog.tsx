@@ -1402,15 +1402,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 </>
               ) : payType === 'h5' ? (
                 <>
-                  <p className="text-sm text-muted-foreground">请复制链接到微信中打开完成支付</p>
-                   {!isWechat && (
-                     <p className="text-xs text-muted-foreground">
-                       部分手机浏览器可能无法直接唤起微信；且复制到剪贴板后微信不会自动打开链接，需要在微信里粘贴后再打开。
-                     </p>
-                   )}
+                  {isWechat ? (
+                    <p className="text-sm text-muted-foreground">点击上方按钮跳转至微信支付</p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">请复制链接到微信中打开完成支付</p>
+                      <p className="text-xs text-muted-foreground">
+                        部分手机浏览器可能无法直接唤起微信；且复制到剪贴板后微信不会自动打开链接，需要在微信里粘贴后再打开。
+                      </p>
+                    </>
+                  )}
 
-                  {/* 桌面端显示立即支付按钮 */}
-                  {!isMobile && (
+                  {/* 桌面端显示立即支付按钮（非微信环境） */}
+                  {!isMobile && !isWechat && (
                     <Button asChild className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white">
                       <a
                         href={h5PayLink || '#'}
