@@ -540,36 +540,6 @@ export default function WealthSynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== COACH AUTHORITY ===== */}
-      <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">专业教练团队</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">权威认证 · 实战经验 · 值得信赖</p>
-        <div className="max-w-lg mx-auto space-y-4">
-          {[
-            { icon: Shield, title: "国际认证资质", desc: "团队持有 ICF/EMCC 等国际教练认证，平均执教经验超 8 年", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
-            { icon: Brain, title: "海沃塔对话体系", desc: "源自以色列的深度对话方法，专注沟通力与自信重塑，帮助中年男性突破表达障碍", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20" },
-            { icon: TrendingUp, title: "已服务 2000+ 学员", desc: "学员涵盖企业高管、创业者、职场中层，93% 反馈沟通能力显著提升", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className={`flex items-start gap-4 p-4 rounded-2xl border ${item.bg}`}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-slate-800/60">
-                <item.icon className={`w-5 h-5 ${item.color}`} />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-200 mb-1">{item.title}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </Section>
-
       {/* ===== SYNERGY DATA DASHBOARD ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">协同效果数据</h2>
