@@ -296,7 +296,7 @@ ${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string)
 
 请用温暖、邀请式的语气提醒他们绑定微信，
 强调"密码找回"这个实用价值，让用户感受到这是为了保护他们的账号安全。`,
-      mama_daily_encouragement: `这是妈妈AI助手的每日温暖寄语。请为妈妈生成一条温暖的个性化消息。
+      mama_daily_encouragement: `这是宝妈AI助手的每日温暖寄语。请为妈妈生成一条温暖的个性化消息。
 
 当前时间段：${context?.time_of_day === 'morning' ? '早上' : context?.time_of_day === 'afternoon' ? '下午' : '晚上'}
 

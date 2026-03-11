@@ -245,7 +245,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl bg-[#FFF8F0] p-0 flex flex-col">
           <SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
             <div className="flex items-center justify-between">
-              <SheetTitle className="text-[#3D3028] text-base">💛 妈妈AI教练</SheetTitle>
+              <SheetTitle className="text-[#3D3028] text-base">💛 宝妈AI教练</SheetTitle>
               <button
                 onClick={() => { onOpenChange(false); navigate("/gratitude-journal"); }}
                 className="text-xs px-3 py-1.5 rounded-full border border-[#F4845F]/30 text-[#F4845F] bg-[#FFF3EB] hover:bg-[#FFE8D6] transition-colors"
@@ -325,7 +325,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="问妈妈AI教练..."
+                placeholder="问宝妈AI教练..."
                 className="border border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[40px] max-h-[80px] rounded-xl resize-none flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
                 rows={1}
                 onKeyDown={(e) => {
@@ -357,7 +357,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
         open={showUpgrade}
         onOpenChange={setShowUpgrade}
         defaultPackage="member365"
-        triggerFeature="妈妈AI聊天"
+        triggerFeature="宝妈AI聊天"
         onSuccess={() => {
           setShowUpgrade(false);
           refresh();
