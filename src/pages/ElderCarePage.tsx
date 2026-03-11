@@ -143,7 +143,7 @@ const ElderCarePage = () => {
             <div className="flex items-center gap-3">
               <span className="text-xl">✅</span>
               <div className="text-left">
-                <p className="text-sm font-semibold text-emerald-800">每日平安打卡</p>
+                <p className="text-sm font-semibold text-emerald-800">每日安全守护</p>
                 <p className="text-[11px] text-emerald-600/70">轻点一下，让家人放心</p>
               </div>
             </div>

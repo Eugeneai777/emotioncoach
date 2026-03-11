@@ -23,7 +23,7 @@ const ENTRY_MAPPINGS: { keyword: string; label: string; path: string; icon: Reac
   { keyword: '情绪健康测评', label: '开始情绪健康测评', path: '/emotion-health', icon: <BarChart3 className="w-4 h-4" /> },
   { keyword: 'SCL-90', label: '开始SCL-90测评', path: '/scl90', icon: <ClipboardList className="w-4 h-4" /> },
   { keyword: '财富卡点', label: '开始财富卡点测评', path: '/wealth-block', icon: <BarChart3 className="w-4 h-4" /> },
-  { keyword: '平安打卡', label: '开启每日打卡', path: '/alive-check', icon: <Skull className="w-4 h-4" /> },
+  { keyword: '安全守护', label: '开启每日打卡', path: '/alive-check', icon: <Skull className="w-4 h-4" /> },
   { keyword: '觉察日记', label: '写觉察日记', path: '/awakening', icon: <BookOpen className="w-4 h-4" /> },
   { keyword: '情绪SOS', label: '试试情绪SOS', path: '/emotion-button', icon: <Siren className="w-4 h-4" /> },
 ];

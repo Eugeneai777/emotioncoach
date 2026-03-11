@@ -9,7 +9,7 @@ interface ShareCardSkeletonProps {
  * 分享卡片加载骨架屏
  * - standard: 320px 宽度，用于财富测评、训练营卡片
  * - compact: 300px 宽度，用于简洁版介绍卡片
- * - wide: 420px 宽度，用于平安打卡、情绪按钮等工具卡片
+ * - wide: 420px 宽度，用于安全守护、情绪按钮等工具卡片
  */
 export function ShareCardSkeleton({ variant = 'standard' }: ShareCardSkeletonProps) {
   const widthClass = {
