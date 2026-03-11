@@ -731,6 +731,11 @@ export default function WealthSynergyPromoPage() {
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
         openId={paymentOpenId}
+        shippingInfo={checkoutInfo ? {
+          buyerName: checkoutInfo.buyerName,
+          buyerPhone: checkoutInfo.buyerPhone,
+          buyerAddress: checkoutInfo.buyerAddress,
+        } : undefined}
       />
     </div>
   );
