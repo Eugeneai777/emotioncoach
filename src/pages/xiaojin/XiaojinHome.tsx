@@ -19,7 +19,7 @@ export default function XiaojinHome() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-2"
         >
-          <span className="text-lg font-semibold tracking-widest text-orange-400">小劲AI · 与光同行</span>
+          <span className="text-2xl font-bold tracking-widest text-orange-400">小劲AI · 与光同行</span>
         </motion.div>
 
         {/* Hero */}
