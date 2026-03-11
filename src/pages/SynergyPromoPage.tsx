@@ -468,7 +468,7 @@ export default function SynergyPromoPage() {
                 <div key={i} className="py-2 px-1 rounded-lg bg-violet-500/10 text-xs text-violet-300">{t}</div>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-3">✦ 从根源改变压力应对模式，效果持久</p>
+            <p className="text-xs text-slate-500 mt-3">✦ 听-思-聊闭环，7天重建情绪弹性</p>
           </div>
 
           {/* Plus */}
