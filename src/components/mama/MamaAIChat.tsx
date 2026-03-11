@@ -192,6 +192,10 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
   const handleSend = (text?: string) => {
     const msg = text || input.trim();
     if (!msg || isLoading) return;
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
     const userMsg: Message = { role: "user", content: msg };
     const updated = [...messages, userMsg];
     setMessages(updated);
@@ -208,6 +212,11 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
+      return;
+    }
+
+    if (!deduct(8)) {
+      setShowUpgrade(true);
       return;
     }
 
