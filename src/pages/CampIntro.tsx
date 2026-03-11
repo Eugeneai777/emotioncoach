@@ -86,6 +86,8 @@ const CampIntro = () => {
       // emotion_journal_21 可能通过 synergy_bundle 购买
       const packageKeys = ['emotion_journal_21', 'emotion_stress_7'].includes(campType!)
         ? ['synergy_bundle', `camp-${campType}`]
+        : campType === 'wealth_block_7'
+        ? ['wealth_synergy_bundle', `camp-${campType}`]
         : [`camp-${campType}`];
       const { data } = await supabase
         .from('orders')

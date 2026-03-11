@@ -5,7 +5,7 @@ import { useAuth } from "./useAuth";
 // 兼容性映射：wealth_block_7 同时也接受旧的 wealth_block_21 记录
 const getCompatibleCampTypes = (campType: string): string[] => {
   if (campType === 'wealth_block_7') {
-    return ['wealth_block_7', 'wealth_block_21'];
+    return ['wealth_block_7', 'wealth_block_21', 'wealth_synergy_bundle'];
   }
   if (campType === 'emotion_journal_21') {
     return ['emotion_journal_21', 'synergy_bundle'];
