@@ -22,7 +22,7 @@ const AliveCheckIntro = () => {
     {
       icon: <HeartHandshake className="w-6 h-6" />,
       title: "每日安全确认",
-      description: "一键打卡表示「我活得很好」，建立安全确认习惯",
+      description: "description: "一键打卡表示「今天很好」，建立安全确认习惯",，建立安全确认习惯",
       gradient: "from-rose-500 to-pink-500"
     },
     {
