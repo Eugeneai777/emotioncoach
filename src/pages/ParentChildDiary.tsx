@@ -297,7 +297,16 @@ const ParentChildDiary = () => {
               </ScrollArea>
             </TabsContent>
 
-            {/* Tab 3: 洞察 = PatternInsights + EmotionReview */}
+            {/* Tab 3: 孩子动态 = 小劲情绪周报 */}
+            <TabsContent value="child">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <div className="space-y-4 md:space-y-6">
+                  <XiaojinMoodReport />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            {/* Tab 4: 洞察 = PatternInsights + EmotionReview */}
             <TabsContent value="insights">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
