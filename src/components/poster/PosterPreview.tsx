@@ -308,7 +308,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           <span style={{ fontSize: '32px' }}>{template.emoji}</span>
           <div>
             <div style={{ 
-              fontSize: '20px', 
+              fontSize: '18px', 
               fontWeight: 'bold',
               textShadow: '0 2px 8px rgba(0,0,0,0.4)'
             }}>
