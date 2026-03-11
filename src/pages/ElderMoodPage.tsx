@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { uploadElderMoodLog } from "@/utils/elderMoodUpload";
+import { useDajinQuota } from "@/hooks/useDajinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 const MOODS = [
   { emoji: "😊", label: "开心", value: "happy", color: "hsl(45 80% 92%)" },
@@ -31,6 +33,8 @@ const ElderMoodPage = () => {
   const [saved, setSaved] = useState(false);
   const [todayRecord, setTodayRecord] = useState<MoodRecord | null>(null);
   const [recentRecords, setRecentRecords] = useState<MoodRecord[]>([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const { remaining, deduct, refresh } = useDajinQuota();
 
   useEffect(() => {
     loadRecords();
@@ -61,6 +65,13 @@ const ElderMoodPage = () => {
 
   const saveMood = async () => {
     if (!selected) return;
+
+    // Deduct quota for mood record
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({ title: "请先登录", variant: "destructive" });
@@ -214,6 +225,12 @@ const ElderMoodPage = () => {
           </div>
         )}
       </div>
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        triggerFeature="心情记录"
+        onSuccess={() => { setShowUpgrade(false); refresh(); }}
+      />
     </div>
   );
 };

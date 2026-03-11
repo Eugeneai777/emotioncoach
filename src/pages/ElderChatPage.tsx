@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { useDajinQuota } from "@/hooks/useDajinQuota";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -14,7 +16,9 @@ const ElderChatPage = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { remaining, deduct, refresh } = useDajinQuota();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -23,6 +27,13 @@ const ElderChatPage = () => {
   const send = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
+
+    // Check quota
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setInput("");
 
     const userMsg: Msg = { role: "user", content: text };
@@ -96,10 +107,13 @@ const ElderChatPage = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/elder-care")} className="rounded-full">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-bold" style={{ color: "hsl(25 40% 30%)" }}>💬 大劲AI</h1>
           <p className="text-xs" style={{ color: "hsl(25 30% 55%)" }}>大劲在这里陪着您</p>
         </div>
+        <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: "hsl(45 60% 92%)", color: "hsl(25 50% 40%)" }}>
+          剩余 {remaining} 点
+        </span>
       </div>
 
       {/* Messages */}
@@ -150,6 +164,13 @@ const ElderChatPage = () => {
           </Button>
         </div>
       </div>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        triggerFeature="大劲AI聊天"
+        onSuccess={() => { setShowUpgrade(false); refresh(); }}
+      />
     </div>
   );
 };
