@@ -159,7 +159,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         <div style={backgroundStyle} />
         <div style={{
           position: 'absolute', inset: 0, background: overlayGradient,
-          display: 'flex', flexDirection: 'column', padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', padding: '20px 18px',
         }}>
           <ProductBadge />
           <div style={{ textAlign: 'center', marginBottom: '12px' }}>
