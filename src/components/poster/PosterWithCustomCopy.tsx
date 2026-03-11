@@ -456,10 +456,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
               {copy.subtitle}
             </p>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {copy.selling_points.map((point, i) => (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {copy.selling_points.slice(0, 3).map((point, i) => (
                 <div key={i} style={{
-                  background: '#f8fafc', borderRadius: '8px', padding: '10px 12px',
+                  background: '#f8fafc', borderRadius: '8px', padding: '8px 10px',
                   display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '3px solid',
                   borderColor: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899'][i % 4],
                 }}>

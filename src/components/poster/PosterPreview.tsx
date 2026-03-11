@@ -536,8 +536,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           background: 'rgba(255,255,255,0.15)',
           backdropFilter: 'blur(10px)',
           borderRadius: '14px',
-          padding: '12px 14px',
-          marginBottom: '12px'
+          padding: '10px 12px',
+          marginBottom: '10px'
         }}>
           {displaySellingPoints.slice(0, 3).map((point, idx) => (
             <div 
@@ -545,7 +545,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
                 fontSize: '12px',
                 lineHeight: 1.4,
                 marginBottom: idx < displaySellingPoints.slice(0, 3).length - 1 ? '8px' : '0'
