@@ -106,33 +106,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
   });
 
-  // 更新收货信息（收货人/手机号/地址）
-  const updateBuyerInfo = useMutation({
-    mutationFn: async ({ orderId, field, value, source }: { orderId: string; field: string; value: string; source?: string }) => {
-      if (source === 'store_orders') {
-        const { data, error } = await supabase
-          .from("store_orders" as any)
-          .update({ [field]: value })
-          .eq("id", orderId)
-          .select("id");
-        if (error) throw error;
-        if (!data || (data as any[]).length === 0) throw new Error("无权限更新");
-      } else {
-        const { data, error } = await supabase
-          .from("orders")
-          .update({ [field]: value })
-          .eq("id", orderId)
-          .select("id");
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error("无权限更新");
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
-      toast.success("已更新");
-    },
-    onError: (err: Error) => toast.error(err.message || "更新失败"),
-  });
+  // 更新收货信息（收货人/手机号/地址）— kept for potential future use but currently read-only in UI
 
   const filtered = orders.filter(o => {
     const matchSearch = !searchTerm || 

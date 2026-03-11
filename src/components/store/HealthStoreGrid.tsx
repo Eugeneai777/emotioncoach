@@ -134,6 +134,34 @@ export function HealthStoreGrid() {
         console.error("Create store order error:", error);
       }
 
+      // Backfill shipping info to orders table for dashboard sync
+      try {
+        const { data: latestOrder } = await supabase
+          .from("orders")
+          .select("order_no")
+          .eq("user_id", user.id)
+          .eq("package_key", `store_product_${selectedProduct.id}`)
+          .eq("status", "paid")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestOrder?.order_no) {
+          await supabase.functions.invoke("update-order-shipping", {
+            body: {
+              orderNo: latestOrder.order_no,
+              shippingInfo: {
+                buyerName: pendingCheckoutInfo.buyerName,
+                buyerPhone: pendingCheckoutInfo.buyerPhone,
+                buyerAddress: pendingCheckoutInfo.buyerAddress,
+              },
+            },
+          });
+        }
+      } catch (backfillErr) {
+        console.error("Backfill orders shipping error:", backfillErr);
+      }
+
       // Notify partner via edge function
       try {
         await supabase.functions.invoke("notify-store-order", {
