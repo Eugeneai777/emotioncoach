@@ -325,7 +325,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="问AI妈妈教练..."
+                placeholder="问妈妈AI教练..."
                 className="border border-[#F5E6D3] bg-[#FFFCF8] text-[#3D3028] placeholder:text-[#C4B49A] min-h-[40px] max-h-[80px] rounded-xl resize-none flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#F4845F]/30"
                 rows={1}
                 onKeyDown={(e) => {
