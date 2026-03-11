@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,10 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, Truck, CheckCircle, Clock, Download, Search, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Package, Truck, CheckCircle, Clock, Download, Search, Loader2, CalendarIcon, X } from "lucide-react";
+import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: '待发货', color: 'bg-amber-100 text-amber-800' },
@@ -25,6 +29,8 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["zhile-orders"],
@@ -52,7 +58,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   });
 
   const updateShipping = useMutation({
-    mutationFn: async ({ orderId, status, note, source, field }: { orderId: string; status: string; note?: string; source?: string; field?: string; value?: string }) => {
+    mutationFn: async ({ orderId, status, note, source }: { orderId: string; status: string; note?: string; source?: string }) => {
       if (source === 'store_orders') {
         const updateData: Record<string, string> = {
           status: status === 'shipped' ? 'shipped' : status === 'delivered' ? 'completed' : 'paid',
@@ -88,7 +94,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "更新失败"),
   });
 
-  // 更新用户昵称（profiles.display_name）
   const updateNickname = useMutation({
     mutationFn: async ({ userId, value }: { userId: string; value: string }) => {
       const { data, error } = await supabase
@@ -106,17 +111,29 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
   });
 
-  // 更新收货信息（收货人/手机号/地址）— kept for potential future use but currently read-only in UI
-
-  const filtered = orders.filter(o => {
+  const filtered = useMemo(() => orders.filter(o => {
     const matchSearch = !searchTerm || 
       o.order_no?.includes(searchTerm) ||
       o.buyer_name?.includes(searchTerm) ||
       o.buyer_phone?.includes(searchTerm) ||
-      o.id_card_name?.includes(searchTerm);
+      o.id_card_name?.includes(searchTerm) ||
+      o.product_name?.includes(searchTerm);
     const matchStatus = statusFilter === "all" || (o.shipping_status || 'pending') === statusFilter;
-    return matchSearch && matchStatus;
-  });
+    
+    // Date range filter
+    let matchDate = true;
+    if (dateFrom || dateTo) {
+      const orderDate = o.paid_at ? new Date(o.paid_at) : o.created_at ? new Date(o.created_at) : null;
+      if (!orderDate) {
+        matchDate = false;
+      } else {
+        if (dateFrom && isBefore(orderDate, startOfDay(dateFrom))) matchDate = false;
+        if (dateTo && isAfter(orderDate, endOfDay(dateTo))) matchDate = false;
+      }
+    }
+    
+    return matchSearch && matchStatus && matchDate;
+  }), [orders, searchTerm, statusFilter, dateFrom, dateTo]);
 
   const stats = {
     total: orders.length,
@@ -125,9 +142,13 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     delivered: orders.filter(o => o.shipping_status === 'delivered').length,
   };
 
+  const hasDateFilter = dateFrom || dateTo;
+
   const exportCSV = () => {
-    const headers = ['订单号', '来源', '用户昵称', '收货人', '手机号', '收货地址', '身份证姓名', '身份证号码', '金额', '物流状态', '快递单号/备注', '支付方式', '下单时间'];
+    const headers = ['下单时间', '商品名称', '订单号', '来源', '用户昵称', '收货人', '手机号', '收货地址', '身份证姓名', '身份证号码', '金额', '物流状态', '快递单号/备注', '支付方式'];
     const rows = filtered.map(o => [
+      o.paid_at ? format(new Date(o.paid_at), 'yyyy-MM-dd HH:mm') : '',
+      o.product_name || '-',
       o.order_no,
       o.source === 'store_orders' ? '商城' : '订单',
       o.user_display_name,
@@ -140,7 +161,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
       STATUS_OPTIONS.find(s => s.value === (o.shipping_status || 'pending'))?.label || '待发货',
       o.shipping_note || '',
       o.pay_type === 'alipay' ? '支付宝' : o.pay_type ? '微信支付' : '-',
-      o.paid_at ? format(new Date(o.paid_at), 'yyyy-MM-dd HH:mm') : '',
     ]);
     
     const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -191,31 +211,72 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-2 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索订单号、收货人、手机号..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索订单号、商品名称、收货人、手机号..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="物流状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  {STATUS_OPTIONS.map(s => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={exportCSV} className="shrink-0">
+                <Download className="h-4 w-4 mr-1" />
+                导出CSV
+              </Button>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue placeholder="物流状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                {STATUS_OPTIONS.map(s => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={exportCSV} className="shrink-0">
-              <Download className="h-4 w-4 mr-1" />
-              导出CSV
-            </Button>
+
+            {/* Date range filter */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">下单日期:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1", !dateFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, 'yyyy-MM-dd') : '开始日期'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={zhCN} initialFocus />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">至</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1", !dateTo && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, 'yyyy-MM-dd') : '结束日期'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={zhCN} initialFocus />
+                </PopoverContent>
+              </Popover>
+              {hasDateFilter && (
+                <Button variant="ghost" size="sm" className="h-8 text-xs px-2" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  清除
+                </Button>
+              )}
+              {hasDateFilter && (
+                <span className="text-xs text-muted-foreground ml-auto">
+                  筛选结果: {filtered.length} 条
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Orders Table */}
@@ -226,6 +287,8 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="whitespace-nowrap">下单时间</TableHead>
+                    <TableHead className="whitespace-nowrap">商品名称</TableHead>
                     <TableHead className="min-w-[100px]">订单号</TableHead>
                     <TableHead>用户</TableHead>
                     <TableHead>收货人</TableHead>
@@ -235,7 +298,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                     <TableHead>金额</TableHead>
                     <TableHead>物流状态</TableHead>
                     <TableHead className="min-w-[140px]">快递单号</TableHead>
-                    <TableHead>下单时间</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -245,6 +307,12 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
 
                     return (
                       <TableRow key={order.id}>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium whitespace-nowrap max-w-[150px] truncate">
+                          {order.product_name || '-'}
+                        </TableCell>
                         <TableCell className="font-mono text-xs">
                           {order.order_no}
                           {order.source === 'store_orders' && (
@@ -319,9 +387,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                           ) : (
                             <span className="text-xs text-muted-foreground">{order.shipping_note || '-'}</span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
                         </TableCell>
                       </TableRow>
                     );
