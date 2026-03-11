@@ -343,6 +343,17 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
         </div>
       </SheetContent>
     </Sheet>
+
+      <PurchaseOnboardingDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        defaultPackage="member365"
+        triggerFeature="宝妈AI聊天"
+        onSuccess={() => {
+          setShowUpgrade(false);
+          refresh();
+        }}
+      />
   );
 };
 
