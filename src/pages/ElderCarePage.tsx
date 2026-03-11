@@ -16,7 +16,7 @@ const ElderCarePage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "有劲陪长辈 — 给爸妈一个更安心的陪伴入口",
+          title: "大劲AI — 给爸妈一个更安心的陪伴入口",
           text: "会聊天、会问候、会提醒、会关怀，简单到长辈一看就懂",
           url,
         });
