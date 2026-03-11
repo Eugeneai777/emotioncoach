@@ -57,8 +57,8 @@ const ElderCarePage = () => {
         className="text-center pt-6 pb-2"
       >
         <span className="text-4xl block mb-2">🌿</span>
-        <h2 className="text-xl font-bold text-orange-900">有劲陪长辈</h2>
-        <p className="text-sm text-orange-600/70 mt-1">让陪伴更简单更温暖</p>
+        <h2 className="text-xl font-bold text-orange-900">大劲AI</h2>
+        <p className="text-sm text-orange-600/70 mt-1">陪长辈，有大劲</p>
       </motion.div>
 
       {/* 中心大圆按钮 */}
