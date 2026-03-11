@@ -21,13 +21,14 @@ interface UnifiedPurchaseRecord {
   quota?: number;
   status: string;
   created_at: string;
-  // shipping fields (only for orders with buyer_address)
   order_no?: string;
   buyer_name?: string;
   buyer_phone?: string;
   buyer_address?: string;
   shipping_status?: string;
   shipping_note?: string;
+  package_key?: string;
+  is_physical?: boolean; // 是否含实物商品
 }
 
 export function PurchaseHistory() {
