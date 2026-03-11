@@ -506,7 +506,7 @@ export default function SynergyPromoPage() {
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">你是否正在经历？</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">职场压力的三大隐形杀手</p>
+        <p className="text-slate-400 text-sm text-center mb-8">中年男性的三大隐形压力源</p>
         <div className="grid gap-4 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
