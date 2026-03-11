@@ -28,6 +28,7 @@ const features = [
     btn: "开始聊天",
     color: "hsl(25 90% 95%)",
     iconColor: "hsl(25 80% 55%)",
+    route: "/elder-care/chat",
   },
   {
     icon: Sun,
@@ -36,6 +37,7 @@ const features = [
     btn: "查看今日问候",
     color: "hsl(45 90% 94%)",
     iconColor: "hsl(45 80% 45%)",
+    route: "/elder-care/greeting",
   },
   {
     icon: Bell,
@@ -44,6 +46,7 @@ const features = [
     btn: "设置提醒",
     color: "hsl(150 40% 94%)",
     iconColor: "hsl(150 50% 40%)",
+    route: "/elder-care/reminders",
   },
   {
     icon: Smile,
@@ -52,6 +55,7 @@ const features = [
     btn: "记录今天",
     color: "hsl(210 60% 95%)",
     iconColor: "hsl(210 60% 50%)",
+    route: "/elder-care/mood",
   },
 ];
 
@@ -122,7 +126,7 @@ const ElderCarePage = () => {
               color: "white",
               minHeight: 56,
             }}
-            onClick={() => handleComingSoon("长辈入口")}
+            onClick={() => navigate("/elder-care/chat")}
           >
             🧓 我是长辈，马上开始
           </Button>
@@ -246,7 +250,7 @@ const ElderCarePage = () => {
                   border: "none",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 }}
-                onClick={() => handleComingSoon(f.title)}
+                onClick={() => navigate(f.route)}
               >
                 {f.btn}
               </Button>
