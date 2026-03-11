@@ -1,23 +1,42 @@
 
 
-## 两个问题需要修复
+## 将 /mama 改造为有劲AI极简入口模式
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 当前状态
+/mama 使用 `PageHeader` + 多个功能模块卡片堆叠 + 底部固定输入栏，风格较重。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 目标
+复制小劲AI / 大劲AI的极简入口模式：顶部导航栏（左：返回链接，右：分享按钮）→ 品牌标题 → 居中大圆按钮（核心CTA）→ 3列功能入口 → 底部横幅CTA → Footer。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 具体改动
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+**1. 添加分享配置 `introShareConfigs.mama`**
+- 在 `src/config/introShareConfig.ts` 添加 mama 条目
+- title: "宝妈AI助手", emoji: "💖", targetUrl: "/mama"
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**2. 重写 `src/pages/MamaAssistant.tsx`**
+- 移除 `PageHeader`，改用与小劲/大劲一致的自定义顶栏
+  - 左上角：Home 图标 + "有劲生活馆"（链接到 `/`）
+  - 右上角：分享按钮（IntroShareDialog）
+- 品牌区：**宝妈AI** + 口号 "懂 你 的 温 暖 陪 伴"
+- 居中大圆按钮（粉/玫瑰色渐变，120-140px）：点击打开 MamaAIChat
+  - 图标：MessageCircle，文字："聊一聊"
+- 3列功能入口卡片：
+  - 😊 情绪检测 → MamaEmotionCheck（或直接打开chat with context）
+  - ⚡ 能量评估 → MamaDailyEnergy 的逻辑
+  - 📝 感恩日记 → 打开chat with gratitude context
+- 横幅CTA：趣味测评入口（MamaAssessmentEntry 的功能）
+- 保留 MamaAIChat 弹窗、MamaAssessment 子页面
+- 移除 MamaBottomInput 固定底栏、MamaCampEntry
+- 保留 MamaQuickScenarios 作为场景快捷按钮（放在功能卡片下方）
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+**3. 保留的核心交互**
+- 所有聊天仍通过 MamaAIChat drawer 打开
+- 测评仍通过 showAssessment 状态切换
+- lastChat 逻辑可移除（底部输入栏已去掉）
+
+### 视觉风格
+- 背景：`from-pink-50 via-rose-50/40 to-white`（粉色系，区别于小劲橙色和大劲暖橙）
+- 大按钮：玫瑰粉渐变 `from-pink-400 via-rose-500 to-pink-500`
+- 功能卡片：粉色系边框和背景
 
