@@ -34,7 +34,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         experience_pack: '9.9元解锁7项专业服务',
         scl90: '专业心理健康自评',
         emotion_health: '三层诊断情绪卡点',
-        alive_check: '每日安全守护',
+        alive_check: '每日平安守护',
         vibrant_life: '24小时智能生活陪伴',
         awakening: '6维深度觉察训练',
         parent_teen: '亲子双轨隐私陪伴'
