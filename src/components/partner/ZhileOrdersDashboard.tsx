@@ -31,12 +31,8 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["zhile-orders"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("id, order_no, package_key, package_name, amount, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note, status, paid_at, created_at, user_id, pay_type")
-        .in("package_key", ZHILE_PACKAGE_KEYS)
-        .eq("status", "paid")
-        .order("created_at", { ascending: false });
+      // 使用 security definer 函数绕过 RLS，确保管理员/合伙人能看到所有知乐订单
+      const { data, error } = await supabase.rpc("get_zhile_orders") as { data: any[]; error: any };
 
       if (error) throw error;
 

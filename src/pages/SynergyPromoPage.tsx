@@ -272,31 +272,45 @@ export default function SynergyPromoPage() {
     setStep('checkout');
   };
 
-  // Step 2: Checkout info collected → open payment
+  // Step 2: Checkout info collected → save to localStorage, open payment
   const handleCheckoutConfirm = (info: CheckoutInfo) => {
     setCheckoutInfo(info);
+    // 提前保存收货信息到 localStorage，供支付回调后和游客认领时使用
+    localStorage.setItem('synergy_shipping_info', JSON.stringify(info));
     setStep('payment');
   };
 
   // Step 3: Payment success → save shipping info & check auth
   const handlePaySuccess = async () => {
-    // Save shipping info to the most recent order
     if (checkoutInfo) {
       try {
+        // 优先用 order_no 精确匹配（从 localStorage 获取）
+        const pendingOrderNo = localStorage.getItem('pending_claim_order');
+        if (pendingOrderNo) {
+          await supabase
+            .from('orders')
+            .update({
+              buyer_name: checkoutInfo.buyerName,
+              buyer_phone: checkoutInfo.buyerPhone,
+              buyer_address: checkoutInfo.buyerAddress,
+              shipping_status: 'pending',
+            })
+            .eq('order_no', pendingOrderNo);
+        }
+
+        // fallback: 已登录用户按 user_id 查找最近的未填收货信息的订单
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser) {
-          // Find the most recent paid order for this package
-          const { data: recentOrder } = await supabase
+          const { data: recentOrders } = await supabase
             .from('orders')
             .select('id')
             .eq('user_id', currentUser.id)
             .eq('package_key', packageInfo.key)
-            .eq('status', 'paid')
+            .is('buyer_name', null)
             .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .limit(1);
 
-          if (recentOrder) {
+          if (recentOrders?.[0]) {
             await supabase
               .from('orders')
               .update({
@@ -305,18 +319,15 @@ export default function SynergyPromoPage() {
                 buyer_address: checkoutInfo.buyerAddress,
                 shipping_status: 'pending',
               })
-              .eq('id', recentOrder.id);
+              .eq('id', recentOrders[0].id);
           }
         }
       } catch (e) {
         console.error('Save shipping info error:', e);
       }
-      // Also store in localStorage as fallback for guest checkout
-      localStorage.setItem('synergy_shipping_info', JSON.stringify(checkoutInfo));
     }
 
     if (user) {
-      // Already logged in → skip register, go to success
       setStep('success');
     } else {
       setStep('register');

@@ -37,9 +37,15 @@ export const useAuth = () => {
           const pendingOrderNo = localStorage.getItem('pending_claim_order');
           if (pendingOrderNo) {
             localStorage.removeItem('pending_claim_order');
+            // 附带收货信息（如有）
+            const shippingRaw = localStorage.getItem('synergy_shipping_info');
+            let shippingInfo: any = null;
+            if (shippingRaw) {
+              try { shippingInfo = JSON.parse(shippingRaw); localStorage.removeItem('synergy_shipping_info'); } catch {}
+            }
             console.log('[useAuth] Claiming guest order:', pendingOrderNo);
             supabase.functions.invoke('claim-guest-order', {
-              body: { orderNo: pendingOrderNo },
+              body: { orderNo: pendingOrderNo, shippingInfo },
             }).then(({ data, error }) => {
               if (error) {
                 console.error('[useAuth] Claim guest order failed:', error);
