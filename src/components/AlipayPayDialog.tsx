@@ -16,12 +16,19 @@ interface PackageInfo {
   quota?: number;
 }
 
+interface ShippingInfo {
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
 interface AlipayPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;
   onSuccess: () => void;
   returnUrl?: string;
+  shippingInfo?: ShippingInfo;
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'redirecting' | 'ready' | 'polling' | 'success' | 'guest_success' | 'failed' | 'expired';
