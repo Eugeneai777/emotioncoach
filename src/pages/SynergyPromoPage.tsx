@@ -328,7 +328,7 @@ export default function SynergyPromoPage() {
   };
 
   const handleViewLogistics = () => {
-    navigate('/settings?tab=account');
+    navigate('/settings?tab=account&view=orders');
   };
 
   // Show success panel overlay
