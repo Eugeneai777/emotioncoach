@@ -18,6 +18,7 @@ import { ParentCycleAnalysis } from "@/components/parentDiary/ParentCycleAnalysi
 import { ParentEmotionReview } from "@/components/parentDiary/ParentEmotionReview";
 import { ParentSessionDetail } from "@/components/parentDiary/ParentSessionDetail";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
+import { XiaojinMoodReport } from "@/components/parent-coach/XiaojinMoodReport";
 
 interface ParentTag {
   id: string;
@@ -270,6 +271,7 @@ const ParentChildDiary = () => {
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
+                  <XiaojinMoodReport />
                   <UnifiedEmotionHeatmap
                     briefings={sessions.map(s => ({
                       id: s.id,
