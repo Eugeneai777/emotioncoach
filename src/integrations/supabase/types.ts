@@ -11039,6 +11039,7 @@ export type Database = {
           order_no: string
           paid_at: string
           pay_type: string
+          product_name: string
           shipping_note: string
           shipping_status: string
           source: string
