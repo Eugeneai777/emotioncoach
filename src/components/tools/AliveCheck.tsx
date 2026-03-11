@@ -557,7 +557,7 @@ export const AliveCheck = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <HeartHandshake className="w-5 h-5 text-rose-500" />
-              <CardTitle className="text-lg">每日平安打卡</CardTitle>
+              <CardTitle className="text-lg">每日安全守护</CardTitle>
             </div>
             <div className="flex items-center gap-1">
               <Button 
