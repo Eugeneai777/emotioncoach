@@ -74,11 +74,66 @@ export const BEST_TIMING: TimingSuggestion[] = [
   }
 ];
 
+export interface XiaojinFeature {
+  title: string;
+  description: string;
+  icon: string;
+  tag?: string;
+}
+
+export const XIAOJIN_FEATURES: XiaojinFeature[] = [
+  {
+    title: "今天心情",
+    description: "3分钟情绪探索，AI温暖倾听，帮孩子理清感受",
+    icon: "🙂",
+    tag: "情绪"
+  },
+  {
+    title: "我的天赋",
+    description: "发现隐藏超能力，看见自己的独特闪光点",
+    icon: "🧠",
+    tag: "成长"
+  },
+  {
+    title: "未来方向",
+    description: "AI帮你看未来，探索无限可能的自己",
+    icon: "🚀",
+    tag: "探索"
+  },
+  {
+    title: "随时聊",
+    description: "语音对话，像朋友一样倾听，24小时在线",
+    icon: "📞",
+    tag: "语音"
+  },
+  {
+    title: "成长100天",
+    description: "每天一个问题，遇见更好的自己",
+    icon: "🔥",
+    tag: "挑战"
+  }
+];
+
+export const FREE_QUOTA_INFO = {
+  totalPoints: 100,
+  description: "每位孩子免费获得100点体验额度",
+  rules: [
+    { label: "文字对话", cost: "1点/次", approx: "≈100次" },
+    { label: "语音对话", cost: "8点/分钟", approx: "≈12分钟" },
+  ],
+  upgradeNote: "用完后可升级365天套餐，持续成长"
+};
+
 export const DUAL_TRACK_BENEFITS = [
   {
     title: "隐性桥梁",
     description: "你和亲子教练的对话洞察，会帮助AI更好地理解孩子的家庭背景",
     icon: "🌉"
+  },
+  {
+    title: "情绪周报",
+    description: "家长可在亲子教练页查看AI生成的孩子情绪趋势摘要，了解状态不窥探隐私",
+    icon: "📊"
   },
   {
     title: "绝对隐私",
@@ -100,33 +155,28 @@ export const DUAL_TRACK_BENEFITS = [
 export const HOW_IT_WORKS_STEPS = [
   {
     step: 1,
-    title: "生成绑定码",
-    description: "在亲子教练页面生成专属6位绑定码",
+    title: "生成邀请卡片",
+    description: "一键生成专属邀请链接，包含你的家长标识",
     icon: "🔗"
   },
   {
     step: 2,
     title: "分享给孩子",
-    description: "用合适的话术，在恰当时机告诉孩子",
+    description: "孩子打开链接即可使用小劲AI，无需注册",
     icon: "💌"
   },
   {
     step: 3,
-    title: "孩子输入绑定码",
-    description: "孩子访问青少年入口，输入绑定码完成连接",
-    icon: "✅"
-  },
-  {
-    step: 4,
-    title: "各自开始对话",
-    description: "你继续使用亲子教练，孩子拥有专属青少年教练",
-    icon: "💬"
+    title: "查看情绪周报",
+    description: "在亲子教练页查看AI生成的孩子情绪趋势，了解状态",
+    icon: "📊"
   }
 ];
 
 export const PRIVACY_COMMITMENTS = [
   "孩子的对话内容100%保密，家长无法查看",
-  "家长只能看到孩子的使用频率和心情趋势图",
+  "家长仅能看到AI生成的情绪趋势摘要和使用频率",
   "AI不会向任何一方透露对方的对话内容",
+  "孩子无需注册登录，零门槛开始使用",
   "这是建立信任的基础，也是孩子愿意使用的前提"
 ];

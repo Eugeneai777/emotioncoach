@@ -46,13 +46,13 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
   parentTeen: {
     pageKey: 'parentTeen',
     title: '亲子双轨模式',
-    subtitle: '父母与孩子的专属空间',
+    subtitle: '小劲AI · 孩子的专属成长陪伴',
     targetUrl: '/parent-teen-intro',
     emoji: '👨‍👩‍👧',
     highlights: [
-      '父母与孩子各有独立空间',
-      '保护隐私的情绪陪伴',
-      '智能匹配成长建议',
+      '5大AI功能免费体验100点',
+      '情绪/天赋/未来/语音全覆盖',
+      '家长可看AI情绪周报',
     ],
     gradient: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
     category: 'coach'
