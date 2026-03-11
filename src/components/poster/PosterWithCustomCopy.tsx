@@ -424,8 +424,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </p>
           )}
 
-          <QRSection />
-          <BrandFooter />
+          <div style={{ flexShrink: 0 }}>
+            <QRSection />
+            <BrandFooter />
+          </div>
         </div>
       </div>
     );
