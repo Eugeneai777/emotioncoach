@@ -203,14 +203,28 @@ export default function WealthSynergyPromoPage() {
     const checkPurchase = async () => {
       if (!user) { setPurchaseChecked(true); return; }
       try {
-        const { data } = await supabase
+        // 1. 检查 orders 表
+        const { data: orderData } = await supabase
           .from('orders')
           .select('id')
           .eq('user_id', user.id)
-          .eq('package_key', 'wealth_synergy_bundle')
+          .in('package_key', ['wealth_synergy_bundle', 'camp-wealth_block_7'])
           .eq('status', 'paid')
           .limit(1);
-        if (data && data.length > 0) setAlreadyPurchased(true);
+        if (orderData && orderData.length > 0) {
+          setAlreadyPurchased(true);
+          setPurchaseChecked(true);
+          return;
+        }
+        // 2. 检查 user_camp_purchases 表
+        const { data: campData } = await supabase
+          .from('user_camp_purchases')
+          .select('id')
+          .eq('user_id', user.id)
+          .in('camp_type', ['wealth_block_7', 'wealth_synergy_bundle'])
+          .eq('payment_status', 'completed')
+          .limit(1);
+        if (campData && campData.length > 0) setAlreadyPurchased(true);
       } catch (e) { console.error('Check purchase error:', e); }
       setPurchaseChecked(true);
     };
