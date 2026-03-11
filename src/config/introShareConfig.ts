@@ -253,6 +253,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
     category: 'tool'
   },
+  xiaojin: {
+    pageKey: 'xiaojin',
+    title: '小劲AI',
+    subtitle: '青少年成长陪伴',
+    targetUrl: '/xiaojin',
+    emoji: '✨',
+    highlights: [
+      '3分钟情绪探索',
+      '发现天赋超能力',
+      'AI语音随时聊',
+    ],
+    gradient: 'linear-gradient(135deg, #f97316, #f59e0b)',
+    category: 'coach'
+  },
 };
 
 /**

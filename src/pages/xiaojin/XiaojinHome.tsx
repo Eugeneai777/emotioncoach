@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, ChevronRight, Flame, Sparkles, Home } from "lucide-react";
+import { Phone, ChevronRight, Flame, Sparkles, Home, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", gradient: "from-amber-400 to-orange-400", bg: "bg-amber-50" },
@@ -15,16 +17,32 @@ export default function XiaojinHome() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
 
-        {/* Back to main */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={() => navigate("/")}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-4 touch-manipulation"
-        >
-          <Home className="w-3.5 h-3.5" />
-          <span>有劲生活馆</span>
-        </motion.button>
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-4">
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>有劲生活馆</span>
+          </motion.button>
+
+          <IntroShareDialog
+            config={introShareConfigs.xiaojin}
+            trigger={
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>分享</span>
+              </motion.button>
+            }
+          />
+        </div>
 
         {/* Header */}
         <motion.div
