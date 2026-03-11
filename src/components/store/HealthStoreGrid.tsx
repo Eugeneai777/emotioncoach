@@ -287,6 +287,7 @@ export function HealthStoreGrid() {
         onOpenChange={setPayOpen}
         packageInfo={payPackage}
         onSuccess={handlePaySuccess}
+        openId={wechatOpenId}
       />
     </>
   );

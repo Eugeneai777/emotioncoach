@@ -313,6 +313,7 @@ export default function ZhileProductsPage() {
         onOpenChange={setPayOpen}
         packageInfo={capsulePackageInfo}
         onSuccess={handlePaySuccess}
+        openId={wechatOpenId}
       />
     </div>
   );
