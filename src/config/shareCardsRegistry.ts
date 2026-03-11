@@ -77,12 +77,12 @@ const resultCards: ShareCardRegistryItem[] = [
   },
   {
     id: 'alive-check',
-     title: '每日平安打卡状态',
+     title: '每日安全守护状态',
      category: 'result',
      emoji: '💗',
      type: 'result',
      componentName: 'AliveCheckShareCard',
-     description: '平安打卡连续天数',
+     description: '安全守护连续天数',
   },
   {
     id: 'community-post',
