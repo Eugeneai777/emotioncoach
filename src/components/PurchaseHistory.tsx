@@ -216,9 +216,12 @@ export function PurchaseHistory() {
                   {expanded && shippable && (
                     <div className="border-t bg-muted/30 p-3 space-y-2.5 text-xs">
                       {purchase.shipping_note && (
-                        <div className="flex items-start gap-2 text-muted-foreground bg-background p-2 rounded">
+                        <div className="flex items-start gap-2 bg-background p-2 rounded">
                           <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
-                          <span>{purchase.shipping_note}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-muted-foreground">快递单号：</span>
+                            <span className="font-medium text-foreground select-all">{purchase.shipping_note}</span>
+                          </div>
                         </div>
                       )}
                       <div className="flex items-start gap-2 text-muted-foreground">

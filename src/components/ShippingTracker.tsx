@@ -96,9 +96,12 @@ export function ShippingTracker() {
               </div>
 
               {order.shipping_note && (
-                <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                  <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                  <span>{order.shipping_note}</span>
+                <div className="flex items-start gap-2 text-xs bg-muted/50 p-2 rounded">
+                  <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
+                  <div className="min-w-0">
+                    <span className="text-muted-foreground">快递单号：</span>
+                    <span className="font-medium text-foreground select-all">{order.shipping_note}</span>
+                  </div>
                 </div>
               )}
 
