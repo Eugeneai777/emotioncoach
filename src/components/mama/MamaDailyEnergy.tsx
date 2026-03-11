@@ -8,7 +8,6 @@ import { useMamaDailyQuote } from "@/hooks/useMamaDailyQuote";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 
 interface MamaDailyEnergyProps {
   onGratitudeSubmit: (text: string) => void;
@@ -17,7 +16,6 @@ interface MamaDailyEnergyProps {
 const GRATITUDE_COUNT_KEY = "mama_gratitude_count";
 
 const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
-  const navigate = useNavigate();
   const [gratitudeText, setGratitudeText] = useState("");
   const [gratitudeCount, setGratitudeCount] = useState(0);
   const [justSubmitted, setJustSubmitted] = useState(false);
@@ -47,20 +45,7 @@ const MamaDailyEnergy = ({ onGratitudeSubmit }: MamaDailyEnergyProps) => {
             date: new Date().toISOString().split("T")[0],
           });
         if (!error) {
-          toast({
-            title: "已同步到感恩日记 📔",
-            description: "点击查看全部记录",
-            action: (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-                onClick={() => navigate("/gratitude-journal")}
-              >
-                查看全部 →
-              </Button>
-            ),
-          });
+          toast({ title: "已同步到感恩日记 📔" });
         }
       } catch (e) {
         console.warn("Failed to save gratitude entry:", e);
