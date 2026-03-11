@@ -116,6 +116,7 @@ export function UnifiedPayDialog({
           packageInfo={packageInfo}
           onSuccess={onSuccess}
           returnUrl={returnUrl}
+          shippingInfo={shippingInfo}
         />
       );
     }
