@@ -32,6 +32,12 @@ interface PackageInfo {
   quota?: number;
 }
 
+interface ShippingInfo {
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
 interface WechatPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,6 +47,8 @@ interface WechatPayDialogProps {
   returnUrl?: string;
   /** 用户的微信 openId，用于 JSAPI 支付 */
   openId?: string;
+  /** 收货信息，订单创建时直接写入 */
+  shippingInfo?: ShippingInfo;
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'guest_success' | 'failed' | 'expired';
@@ -103,7 +111,7 @@ const getPaymentAuthCode = (): string | undefined => {
   return undefined;
 };
 
-export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
+export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId, shippingInfo }: WechatPayDialogProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -790,6 +798,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
           isMiniProgram: isMiniProgram,
+          buyerName: shippingInfo?.buyerName,
+          buyerPhone: shippingInfo?.buyerPhone,
+          buyerAddress: shippingInfo?.buyerAddress,
         },
       });
 

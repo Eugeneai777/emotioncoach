@@ -69,9 +69,9 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', returnUrl } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', returnUrl, buyerName, buyerPhone, buyerAddress } = await req.json();
     
-    console.log('[AlipayOrder] Creating order:', { packageKey, packageName, amount, userId });
+    console.log('[AlipayOrder] Creating order:', { packageKey, packageName, amount, userId, hasBuyerInfo: !!(buyerName || buyerPhone) });
 
     // 验证参数
     if (!packageKey || !packageName || !amount) {
@@ -184,6 +184,10 @@ serve(async (req) => {
         status: 'pending',
         pay_type: 'alipay_h5',
         expired_at: expiredAt.toISOString(),
+        buyer_name: buyerName || null,
+        buyer_phone: buyerPhone || null,
+        buyer_address: buyerAddress || null,
+        shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
       });
 
     if (orderError) {

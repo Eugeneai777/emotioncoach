@@ -16,17 +16,24 @@ interface PackageInfo {
   quota?: number;
 }
 
+interface ShippingInfo {
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
 interface AlipayPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;
   onSuccess: () => void;
   returnUrl?: string;
+  shippingInfo?: ShippingInfo;
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'redirecting' | 'ready' | 'polling' | 'success' | 'guest_success' | 'failed' | 'expired';
 
-export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl }: AlipayPayDialogProps) {
+export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, shippingInfo }: AlipayPayDialogProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<PaymentStatus>('idle');
@@ -178,6 +185,9 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           amount: packageInfo.price,
           userId: user?.id || 'guest',
           returnUrl: redirectUrl,
+          buyerName: shippingInfo?.buyerName,
+          buyerPhone: shippingInfo?.buyerPhone,
+          buyerAddress: shippingInfo?.buyerAddress,
         },
       });
 

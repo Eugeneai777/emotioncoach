@@ -71,9 +71,9 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo, buyerName, buyerPhone, buyerAddress } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo, hasBuyerInfo: !!(buyerName || buyerPhone) });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
@@ -296,6 +296,10 @@ serve(async (req) => {
             status: 'pending',
             qr_code_url: null,
             expired_at: expiredAt.toISOString(),
+            buyer_name: buyerName || null,
+            buyer_phone: buyerPhone || null,
+            buyer_address: buyerAddress || null,
+            shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
           });
 
         if (insertError) {
@@ -514,8 +518,12 @@ serve(async (req) => {
         amount: amount,
         order_no: orderNo,
         status: 'pending',
-        qr_code_url: payUrl || null, // 存储支付URL（H5或Native），JSAPI为null
+        qr_code_url: payUrl || null,
         expired_at: expiredAt.toISOString(),
+        buyer_name: buyerName || null,
+        buyer_phone: buyerPhone || null,
+        buyer_address: buyerAddress || null,
+        shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
       });
 
     if (insertError) {

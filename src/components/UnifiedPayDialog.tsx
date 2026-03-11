@@ -29,6 +29,12 @@ interface PackageInfo {
   quota?: number;
 }
 
+interface ShippingInfo {
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
 interface UnifiedPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +42,7 @@ interface UnifiedPayDialogProps {
   onSuccess: () => void;
   returnUrl?: string;
   openId?: string;
+  shippingInfo?: ShippingInfo;
 }
 
 type PayMethod = 'wechat' | 'alipay';
@@ -58,6 +65,7 @@ export function UnifiedPayDialog({
   onSuccess,
   returnUrl,
   openId,
+  shippingInfo,
 }: UnifiedPayDialogProps) {
   const isMiniProgram = isWeChatMiniProgram();
   const [payMethod, setPayMethod] = useState<PayMethod>(getDefaultPayMethod);
@@ -93,6 +101,7 @@ export function UnifiedPayDialog({
         onSuccess={onSuccess}
         returnUrl={returnUrl}
         openId={openId}
+        shippingInfo={shippingInfo}
       />
     );
   }
@@ -107,6 +116,7 @@ export function UnifiedPayDialog({
           packageInfo={packageInfo}
           onSuccess={onSuccess}
           returnUrl={returnUrl}
+          shippingInfo={shippingInfo}
         />
       );
     }
@@ -118,6 +128,7 @@ export function UnifiedPayDialog({
         onSuccess={onSuccess}
         returnUrl={returnUrl}
         openId={openId}
+        shippingInfo={shippingInfo}
       />
     );
   }
