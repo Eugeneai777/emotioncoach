@@ -141,7 +141,6 @@ export function HealthStoreGrid() {
           .select("order_no")
           .eq("user_id", user.id)
           .eq("package_key", `store_product_${selectedProduct.id}`)
-          .eq("status", "paid")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
