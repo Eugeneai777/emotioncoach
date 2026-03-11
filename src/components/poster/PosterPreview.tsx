@@ -308,7 +308,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           <span style={{ fontSize: '32px' }}>{template.emoji}</span>
           <div>
             <div style={{ 
-              fontSize: '18px', 
+              fontSize: '20px', 
               fontWeight: 'bold',
               textShadow: '0 2px 8px rgba(0,0,0,0.4)'
             }}>
@@ -342,11 +342,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           fontSize: '15px',
           fontWeight: '500',
           lineHeight: 1.5,
-          marginBottom: '10px',
+          marginBottom: '14px',
           textShadow: '0 1px 6px rgba(0,0,0,0.4)',
-          padding: '0 4px',
-          overflow: 'hidden',
-          maxHeight: '60px'
+          padding: '0 4px'
         }}>
           {displayTagline}
         </div>
@@ -355,8 +353,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '6px',
-          marginBottom: '10px'
+          gap: '8px',
+          marginBottom: '14px'
         }}>
           {displaySellingPoints.slice(0, 4).map((point, idx) => {
             // 提取数字或关键词
@@ -429,7 +427,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          marginBottom: '10px'
+          marginBottom: '14px'
         }}>
           <div style={{
             display: 'flex',
@@ -519,11 +517,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '16px',
           borderTopLeftRadius: '4px',
-          padding: '10px 12px',
-          marginBottom: '10px',
+          padding: '12px 14px',
+          marginBottom: '14px',
           color: '#1f2937',
-          overflow: 'hidden',
-          maxHeight: '60px',
           fontSize: '14px',
           lineHeight: 1.5,
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
@@ -536,8 +532,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           background: 'rgba(255,255,255,0.15)',
           backdropFilter: 'blur(10px)',
           borderRadius: '14px',
-          padding: '10px 12px',
-          marginBottom: '10px'
+          padding: '12px 14px',
+          marginBottom: '12px'
         }}>
           {displaySellingPoints.slice(0, 3).map((point, idx) => (
             <div 
@@ -545,7 +541,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
                 fontSize: '12px',
                 lineHeight: 1.4,
                 marginBottom: idx < displaySellingPoints.slice(0, 3).length - 1 ? '8px' : '0'
@@ -610,9 +606,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       }}>
         {/* Emoji标识 */}
         <div style={{ 
-          fontSize: '30px', 
+          fontSize: '34px', 
           textAlign: 'center',
-          marginBottom: '4px',
+          marginBottom: '6px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
@@ -654,9 +650,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           opacity: 0.95,
           textShadow: '0 1px 4px rgba(0,0,0,0.4)',
           margin: '0 0 10px 0',
-          padding: '0 8px',
-          overflow: 'hidden',
-          maxHeight: '60px'
+          padding: '0 8px'
         }}>
           {displayTagline}
         </p>
@@ -665,17 +659,17 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '5px',
+          gap: '6px',
           marginBottom: '10px'
         }}>
-          {displaySellingPoints.slice(0, 3).map((point, idx) => (
+          {displaySellingPoints.slice(0, 4).map((point, idx) => (
             <div 
               key={idx}
               style={{
                 background: 'rgba(255,255,255,0.18)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '12px',
-                padding: '7px 10px',
+                padding: '8px 12px',
                 fontSize: '12px',
                 lineHeight: 1.4,
                 display: 'flex',
