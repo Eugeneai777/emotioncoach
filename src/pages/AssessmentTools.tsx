@@ -79,7 +79,7 @@ const dailyTools: Tool[] = [
   { id: "emotion-button", emoji: "🆘", title: "情绪SOS按钮", desc: "崩溃时按一下，3分钟恢复平静", route: "/emotion-button", accent: "hsl(25 95% 53%)", bg: "hsl(25 95% 53% / 0.08)" },
   { id: "alive-check", emoji: "💗", title: "每日安全守护", desc: "每日确认平安，守护你在乎的人", route: "/alive-check", accent: "hsl(350 80% 60%)", bg: "hsl(350 80% 60% / 0.08)" },
   { id: "awakening", emoji: "📔", title: "觉察日记", desc: "AI陪你写日记，看见情绪变化", route: "/awakening", accent: "hsl(250 60% 60%)", bg: "hsl(250 60% 60% / 0.08)" },
-  { id: "gratitude", emoji: "🌸", title: "感恩日记", desc: "记录美好，提升幸福感", route: "/gratitude", accent: "hsl(330 65% 55%)", bg: "hsl(330 65% 55% / 0.08)" },
+  { id: "gratitude", emoji: "🌸", title: "感恩日记", desc: "记录美好，提升幸福感", route: "/gratitude-journal-intro", accent: "hsl(330 65% 55%)", bg: "hsl(330 65% 55% / 0.08)" },
   { id: "breathing", emoji: "🧘", title: "呼吸练习", desc: "科学呼吸法，快速减压", route: "/breathing", accent: "hsl(180 55% 45%)", bg: "hsl(180 55% 45% / 0.08)" },
   { id: "declaration", emoji: "⚡", title: "能量宣言卡", desc: "给自己一句有力量的话", route: "/declaration", accent: "hsl(45 95% 50%)", bg: "hsl(45 95% 50% / 0.08)" },
 ];

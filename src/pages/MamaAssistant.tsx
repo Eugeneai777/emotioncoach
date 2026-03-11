@@ -12,7 +12,7 @@ import MamaAIChat from "@/components/mama/MamaAIChat";
 const quickEntries = [
   { emoji: "😊", title: "情绪检测", desc: "此刻还好吗", context: "我现在心情不太好，想聊聊..." },
   { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined },
-  { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事..." },
+  { emoji: "📝", title: "感恩日记", desc: "记录美好", route: "/gratitude-journal-intro" as string | undefined, context: undefined as string | undefined },
 ];
 
 const MamaAssistant = () => {
