@@ -267,6 +267,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #f97316, #f59e0b)',
     category: 'coach'
   },
+  mama: {
+    pageKey: 'mama',
+    title: '宝妈AI助手',
+    subtitle: '懂你的温暖陪伴',
+    targetUrl: '/mama',
+    emoji: '💖',
+    highlights: [
+      '情绪检测 · 能量评估',
+      '感恩日记 · AI陪聊',
+      '趣味亲子测评',
+    ],
+    gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+    category: 'coach'
+  },
   dajin: {
     pageKey: 'dajin',
     title: '大劲AI',
