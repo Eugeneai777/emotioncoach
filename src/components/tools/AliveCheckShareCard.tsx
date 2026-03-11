@@ -49,7 +49,7 @@ const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>
             color: '#881337',
             margin: '0 0 8px 0',
           }}>
-            死了吗
+            每日平安打卡
           </h1>
           <p style={{
             fontSize: '14px',

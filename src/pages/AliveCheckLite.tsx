@@ -65,7 +65,7 @@ const AliveCheckLite = () => {
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageKey="alive_check"
-        packageName="死了吗安全打卡"
+        packageName="每日平安打卡"
         onSuccess={handlePaymentSuccess}
       />
     </div>

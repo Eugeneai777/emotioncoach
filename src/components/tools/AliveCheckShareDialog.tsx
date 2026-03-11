@@ -31,7 +31,7 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
       title="生成分享卡片"
       titleIcon={<Share2 className="w-5 h-5 text-rose-600" />}
       shareUrl={shareUrl}
-      fileName="死了吗-分享卡片.png"
+      fileName="每日平安打卡-分享卡片.png"
       buttonGradient="bg-gradient-to-r from-rose-500 to-pink-500 hover:opacity-90 text-white"
       exportCardRef={exportRef}
       cardReady={cardReady}
