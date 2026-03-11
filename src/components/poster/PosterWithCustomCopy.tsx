@@ -57,7 +57,7 @@ const templateNames: Record<string, string> = {
 };
 
 export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomCopyProps>(
-  ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default', width = 300, height = 533 }, ref) => {
+  ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default', width = 300, height = 560 }, ref) => {
     let shareUrl = getPartnerShareUrl(partnerId, entryType);
     if (posterId) {
       shareUrl += (shareUrl.includes('?') ? '&' : '?') + `poster=${posterId}`;
