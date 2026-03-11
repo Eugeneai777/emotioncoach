@@ -1143,7 +1143,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                   </div>
                   <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                     <QrCode className="w-4 h-4" />
-                    <span>请使用微信长按二维码或扫码支付</span>
+                    <span>{isWechat && !isMobile ? "请使用手机微信扫一扫支付" : "请使用微信扫码支付"}</span>
                   </div>
                 </div>
               ) : payType === "h5" ? (
