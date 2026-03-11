@@ -7,7 +7,7 @@ const entries = [
   { label: "学习课程", icon: BookOpen, route: "/courses" },
   { label: "训练营", icon: Tent, route: "/camps" },
   { label: "合伙人", icon: Handshake, route: "/partner/type" },
-  { label: "健康商城", icon: ShoppingBag, route: "/energy-studio" },
+  { label: "健康商城", icon: ShoppingBag, route: "/health-store" },
 ];
 
 const QuickNavFooter = () => {
