@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { uploadMoodLog } from "@/utils/xiaojinMoodUpload";
 
 const moods = [
   { emoji: "😊", label: "开心", color: "from-green-100 to-emerald-50" },
