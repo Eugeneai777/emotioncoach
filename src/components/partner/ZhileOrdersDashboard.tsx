@@ -277,7 +277,21 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                             <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm">{order.user_display_name || '-'}</TableCell>
+                        <TableCell className="text-sm">
+                          {isAdmin ? (
+                            <Input
+                              className="h-7 text-xs w-[80px]"
+                              placeholder="昵称"
+                              defaultValue={order.user_display_name || ''}
+                              onBlur={(e) => {
+                                const val = e.target.value.trim();
+                                if (val !== (order.user_display_name || '') && order.user_id) {
+                                  updateNickname.mutate({ userId: order.user_id, value: val });
+                                }
+                              }}
+                            />
+                          ) : (order.user_display_name || '-')}
+                        </TableCell>
                         <TableCell className="text-sm">
                           {isAdmin ? (
                             <Input
