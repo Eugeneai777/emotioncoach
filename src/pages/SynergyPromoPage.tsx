@@ -518,7 +518,7 @@ export default function SynergyPromoPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-amber-300">📦 香港直邮 · 预计4-7个工作日送达</p>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  建议收到知乐胶囊后再开启训练营，心智训练与身体修复同步进行，效果更佳。
+                  建议收到知乐胶囊后再开启训练营，情绪解压训练与身体修复同步进行，效果更佳。
                 </p>
               </div>
             </div>
