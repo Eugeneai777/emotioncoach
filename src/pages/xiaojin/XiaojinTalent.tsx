@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { uploadMoodLog } from "@/utils/xiaojinMoodUpload";
 
 interface Question {
   q: string;
@@ -83,6 +84,9 @@ export default function XiaojinTalent() {
       setCurrent(current + 1);
     } else {
       setDone(true);
+      // Upload mood log on completion
+      const topResult = Object.entries(newScores).sort((a, b) => b[1] - a[1])[0][0];
+      uploadMoodLog({ moodLabel: talentResults[topResult].name, intensity: 2, featureUsed: "talent" });
     }
   };
 

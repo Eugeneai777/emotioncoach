@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, ChevronRight, Flame, Sparkles, Home, Share2 } from "lucide-react";
@@ -6,6 +6,7 @@ import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { parseAndStoreParentRef } from "@/utils/xiaojinMoodUpload";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", gradient: "from-amber-400 to-orange-400", bg: "bg-amber-50" },
@@ -16,9 +17,17 @@ const entries = [
 export default function XiaojinHome() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isFromParent = searchParams.get("from") === "parent";
+  const fromParam = searchParams.get("from");
+  const isFromParent = fromParam === "parent" || (fromParam?.startsWith("parent_") ?? false);
   const { remaining, canAfford } = useXiaojinQuota();
   const [showUpgrade, setShowUpgrade] = useState(false);
+
+  // Parse and store parent reference for mood upload
+  useEffect(() => {
+    if (fromParam) {
+      parseAndStoreParentRef(fromParam);
+    }
+  }, [fromParam]);
 
   const handleVoiceClick = () => {
     if (!canAfford(8)) {

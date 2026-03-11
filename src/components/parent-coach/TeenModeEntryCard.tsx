@@ -4,15 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Users, 
-  ArrowRight, 
   Sparkles, 
   Info,
   Heart,
   Share2
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { TeenUsageStats } from "./TeenUsageStats";
 import TeenInviteShareDialog from "./TeenInviteShareDialog";
+import { XiaojinMoodReport } from "./XiaojinMoodReport";
 
 interface TeenModeEntryCardProps {
   hasActiveBinding: boolean;
@@ -32,7 +31,6 @@ export function TeenModeEntryCard({
   const [showShareDialog, setShowShareDialog] = useState(false);
 
   if (hasActiveBinding && bindingData) {
-    // Show usage stats for bound teens
     return (
       <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-0 shadow-lg overflow-hidden">
         <CardContent className="p-5">
@@ -50,17 +48,28 @@ export function TeenModeEntryCard({
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/parent-teen-intro")}
-              className="text-violet-600"
-            >
-              <Info className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowShareDialog(true)}
+                className="text-violet-600"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/parent-teen-intro")}
+                className="text-violet-600"
+              >
+                <Info className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          <TeenUsageStats />
+          {/* 孩子情绪周报 */}
+          <XiaojinMoodReport />
         </CardContent>
       </Card>
     );

@@ -10800,6 +10800,36 @@ export type Database = {
         }
         Relationships: []
       }
+      xiaojin_mood_logs: {
+        Row: {
+          created_at: string
+          feature_used: string
+          id: string
+          intensity: number | null
+          mood_label: string
+          parent_user_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_used: string
+          id?: string
+          intensity?: number | null
+          mood_label: string
+          parent_user_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_used?: string
+          id?: string
+          intensity?: number | null
+          mood_label?: string
+          parent_user_id?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       assessment_changes: {

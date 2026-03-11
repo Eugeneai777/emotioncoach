@@ -505,3 +505,6 @@ verify_jwt = false
 
 [functions.marriage-realtime-token]
 verify_jwt = false
+
+[functions.xiaojin-mood-summary]
+verify_jwt = true

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Check } from "lucide-react";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { uploadMoodLog } from "@/utils/xiaojinMoodUpload";
 
 const challenges = [
   { day: 1, q: "今天让你开心的一件小事是什么？" },
@@ -41,6 +42,8 @@ export default function XiaojinChallenge() {
       return;
     }
     setCompleted(true);
+    // Upload mood log for challenge completion
+    uploadMoodLog({ moodLabel: "成长挑战", intensity: 2, featureUsed: "challenge" });
   };
 
   return (

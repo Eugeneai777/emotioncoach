@@ -47,9 +47,9 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
   const { toast } = useToast();
 
   const handleCopyLink = async () => {
-    if (!accessToken) return;
+    if (!parentUserId) return;
     try {
-      const url = `${getPromotionDomain()}/teen-space?token=${accessToken}`;
+      const url = `${getPromotionDomain()}/xiaojin?from=parent_${parentUserId}`;
       await navigator.clipboard.writeText(url);
       setCopied(true);
       toast({ title: "链接已复制" });
@@ -58,6 +58,16 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
       toast({ title: "复制失败", variant: "destructive" });
     }
   };
+
+  // Get current user ID for link generation
+  const { data: parentUserId } = useQuery({
+    queryKey: ['current-user-id'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.id || null;
+    },
+    enabled: open,
+  });
 
   // Generate random token
   const generateToken = () => {
@@ -341,7 +351,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
           <Button
             variant="outline"
             onClick={handleCopyLink}
-            disabled={!accessToken}
+            disabled={!parentUserId}
             className="h-12 px-4"
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

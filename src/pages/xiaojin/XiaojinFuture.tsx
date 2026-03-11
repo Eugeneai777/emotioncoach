@@ -5,6 +5,7 @@ import { ArrowLeft, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { uploadMoodLog } from "@/utils/xiaojinMoodUpload";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/xiaojin-future`;
 
@@ -59,6 +60,8 @@ export default function XiaojinFuture() {
       } catch { /* use defaults */ }
       setIsStreaming(false);
       setShowResult(true);
+      // Upload mood log on future direction completion
+      uploadMoodLog({ moodLabel: "探索未来", intensity: 2, featureUsed: "future" });
       return;
     }
 
