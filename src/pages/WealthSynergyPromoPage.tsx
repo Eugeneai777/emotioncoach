@@ -621,7 +621,7 @@ export default function WealthSynergyPromoPage() {
                 <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
                 <span className="text-slate-500 line-through text-sm">¥899</span>
               </div>
-              <p className="text-xs text-slate-500 mb-6">财富觉醒营 + 知乐胶囊 30天套餐</p>
+              <p className="text-xs text-slate-500 mb-6">财富觉醒营 + 知乐胶囊 28天套餐</p>
               <Button
                 onClick={handleBuyClick}
                 className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg shadow-amber-500/25 border-0"
