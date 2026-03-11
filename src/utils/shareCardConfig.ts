@@ -436,12 +436,10 @@ const generateCanvasInternal = async (
           element.style.width = `${elementWidth}px`;
           element.style.minWidth = `${elementWidth}px`;
           
-          // iOS: 限制高度防止克隆后撑开多余区域
-          if (isIOSDevice()) {
-            element.style.overflow = 'hidden';
-            element.style.maxHeight = `${elementHeight}px`;
-            element.style.height = `${elementHeight}px`;
-          }
+          // 所有设备：限制高度防止克隆后撑开多余区域（安卓字体行高更大，也会溢出）
+          element.style.overflow = 'hidden';
+          element.style.height = `${elementHeight}px`;
+          element.style.maxHeight = `${elementHeight}px`;
           
           // Force background color on cloned element
           if (bgColor) {
