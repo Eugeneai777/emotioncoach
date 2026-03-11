@@ -1,23 +1,44 @@
 
 
-## 两个问题需要修复
+# 修复：synergy_bundle 购买后 emotion_stress_7 仍显示需付费
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题根因
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+用户通过「协同抗压套餐」(`synergy_bundle`) 购买，但进入 `/camp-intro/emotion_stress_7` 时，系统不认为已购买，因为：
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+1. **CampIntro.tsx L87-89** — orders 表查询只把 `synergy_bundle` 映射给 `emotion_journal_21`，没有映射给 `emotion_stress_7`
+2. **useCampPurchase.ts** — `getCompatibleCampTypes` 没有 `emotion_stress_7` → `synergy_bundle` 的映射
+3. **useCampEntitlement.ts** — 同样缺少映射
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 修改方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 1. `src/pages/CampIntro.tsx`（L87-89）
 
-| 文件 | 修改 |
+将 packageKeys 逻辑扩展，`emotion_stress_7` 也兼容 `synergy_bundle`：
+
+```typescript
+const packageKeys = ['emotion_journal_21', 'emotion_stress_7'].includes(campType!)
+  ? ['synergy_bundle', `camp-${campType}`]
+  : [`camp-${campType}`];
+```
+
+### 2. `src/hooks/useCampPurchase.ts`（getCompatibleCampTypes）
+
+添加 `emotion_stress_7` → `synergy_bundle` 映射：
+
+```typescript
+if (campType === 'emotion_stress_7') {
+  return ['emotion_stress_7', 'synergy_bundle'];
+}
+```
+
+### 3. `src/hooks/useCampEntitlement.ts`（getCompatibleCampTypes）
+
+同步添加相同映射。
+
+| 文件 | 改动 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/CampIntro.tsx` | L87-89: packageKeys 增加 emotion_stress_7 对 synergy_bundle 的兼容 |
+| `src/hooks/useCampPurchase.ts` | getCompatibleCampTypes 增加 emotion_stress_7 映射 |
+| `src/hooks/useCampEntitlement.ts` | getCompatibleCampTypes 增加 emotion_stress_7 映射 |
 
