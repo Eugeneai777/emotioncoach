@@ -20,7 +20,7 @@ const MamaAssistant = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [initialInput, setInitialInput] = useState<string | undefined>();
-  const [showAssessment, setShowAssessment] = useState(false);
+  
 
   const openChat = (context?: string) => {
     setChatContext(context);
