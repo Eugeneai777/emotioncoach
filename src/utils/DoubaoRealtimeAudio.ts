@@ -1601,9 +1601,6 @@ export class DoubaoRealtimeChat {
           });
           this.onStatusChange('connected');
           
-          // ✅ 启动主动预防性重连定时器
-          this.startSessionRotation();
-          
           // 2. ✅ 问候语由后端 bot_first_speak: true 处理，前端不再触发
           // 避免双重问候（后端 welcome_message + 前端 triggerGreeting）
           const skipGreeting = message.skip_greeting === true;
