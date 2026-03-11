@@ -284,11 +284,30 @@ export default function SynergyPromoPage() {
   const handlePaySuccess = async () => {
     if (checkoutInfo) {
       try {
-        const pendingOrderNo = localStorage.getItem('pending_claim_order');
-        if (pendingOrderNo) {
+        // 1. 先尝试从 localStorage 获取游客订单号
+        let orderNo = localStorage.getItem('pending_claim_order');
+        
+        // 2. 已登录用户：查询最新已支付订单作为兜底
+        if (!orderNo) {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          if (currentUser) {
+            const { data: latestOrder } = await supabase
+              .from('orders')
+              .select('order_no')
+              .eq('user_id', currentUser.id)
+              .eq('package_key', 'synergy_bundle')
+              .eq('status', 'paid')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (latestOrder?.order_no) orderNo = latestOrder.order_no;
+          }
+        }
+
+        if (orderNo) {
           await supabase.functions.invoke('update-order-shipping', {
             body: {
-              orderNo: pendingOrderNo,
+              orderNo,
               shippingInfo: {
                 buyerName: checkoutInfo.buyerName,
                 buyerPhone: checkoutInfo.buyerPhone,

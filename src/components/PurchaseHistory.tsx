@@ -222,7 +222,7 @@ export function PurchaseHistory() {
                   {/* Inline shipping detail (expanded) */}
                   {expanded && shippable && (
                     <div className="border-t bg-muted/30 p-3 space-y-2.5 text-xs">
-                      {purchase.shipping_note && (
+                      {purchase.shipping_note ? (
                         <div className="flex items-start gap-2 bg-background p-2 rounded">
                           <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
                           <div className="flex-1 min-w-0">
@@ -230,14 +230,24 @@ export function PurchaseHistory() {
                             <span className="font-medium text-foreground select-all">{purchase.shipping_note}</span>
                           </div>
                         </div>
-                      )}
-                      <div className="flex items-start gap-2 text-muted-foreground">
-                        <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                        <div>
-                          <span>{purchase.buyer_name} {purchase.buyer_phone}</span>
-                          <p className="mt-0.5">{purchase.buyer_address}</p>
+                      ) : (purchase.shipping_status === 'pending' || !purchase.shipping_status) ? (
+                        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200/50 dark:border-amber-700/30">
+                          <Package className="w-4 h-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                          <div className="text-amber-800 dark:text-amber-300">
+                            <p className="font-medium">商品正在准备中</p>
+                            <p className="mt-0.5 text-amber-600 dark:text-amber-400/80">预计 3-5 个工作日内发货，届时可在此查看快递单号</p>
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
+                      {purchase.buyer_address && (
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                          <div>
+                            <span>{purchase.buyer_name} {purchase.buyer_phone}</span>
+                            <p className="mt-0.5">{purchase.buyer_address}</p>
+                          </div>
+                        </div>
+                      )}
                       {purchase.order_no && (
                         <div className="text-muted-foreground/70 pt-1 border-t border-border/50">
                           订单号: {purchase.order_no}
