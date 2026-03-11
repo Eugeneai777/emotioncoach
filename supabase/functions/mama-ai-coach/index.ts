@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SYSTEM_PROMPT = `你是"AI妈妈教练"，一位经验丰富、温柔而有智慧的好姐妹。你深深理解做妈妈的不容易。
+const SYSTEM_PROMPT = `你是"妈妈AI教练"，一位经验丰富、温柔而有智慧的好姐妹。你深深理解做妈妈的不容易。
 
 你的沟通风格：
 - 语气温暖亲切，像一个懂你的好姐妹在跟你聊天

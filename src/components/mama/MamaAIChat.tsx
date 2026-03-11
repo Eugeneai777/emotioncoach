@@ -357,7 +357,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
         open={showUpgrade}
         onOpenChange={setShowUpgrade}
         defaultPackage="member365"
-        triggerFeature="宝妈AI聊天"
+        triggerFeature="妈妈AI聊天"
         onSuccess={() => {
           setShowUpgrade(false);
           refresh();
