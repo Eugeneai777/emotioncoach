@@ -442,6 +442,10 @@ const App = () => (
               <Route path="/marriage/help" element={<MarriageHelp />} />
               <Route path="/laoge" element={<LaogeAI />} />
               <Route path="/elder-care" element={<ElderCarePage />} />
+              <Route path="/elder-care/chat" element={<ElderChatPage />} />
+              <Route path="/elder-care/greeting" element={<ElderGreetingPage />} />
+              <Route path="/elder-care/reminders" element={<ElderRemindersPage />} />
+              <Route path="/elder-care/mood" element={<ElderMoodPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
