@@ -30,7 +30,7 @@ export default function XiaojinHome() {
           className="text-center mb-10"
         >
           <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            青少年AI成长实验室
+            小劲AI
           </h1>
           <p className="text-sm text-gray-500 leading-relaxed">
             每天3分钟<br />
