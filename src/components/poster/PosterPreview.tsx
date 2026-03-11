@@ -607,7 +607,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
 
         {/* 产品名 */}
         <h2 style={{ 
-          fontSize: '22px', 
+          fontSize: '20px', 
           fontWeight: 'bold', 
           textAlign: 'center',
           marginBottom: '4px',
