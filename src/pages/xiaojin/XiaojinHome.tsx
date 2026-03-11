@@ -13,7 +13,15 @@ export default function XiaojinHome() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-gray-50">
-      <div className="max-w-md mx-auto px-5 pt-12 pb-8">
+      <div className="max-w-md mx-auto px-5 pt-6 pb-8">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-4"
+        >
+          <BrandLogo size="lg" showText />
+        </motion.div>
         {/* Brand */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
