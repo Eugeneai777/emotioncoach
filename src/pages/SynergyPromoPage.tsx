@@ -197,7 +197,7 @@ export default function SynergyPromoPage() {
   const packageInfo = {
     key: "synergy_bundle",
     name: "心智×身体 全天候抗压套餐",
-    price: 0,
+    price: 0.01,
     quota: 1,
   };
 
