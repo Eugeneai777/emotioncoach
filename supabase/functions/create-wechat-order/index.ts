@@ -294,6 +294,7 @@ serve(async (req) => {
             amount: amount,
             order_no: orderNo,
             status: 'pending',
+            pay_type: 'miniprogram',
             qr_code_url: null,
             expired_at: expiredAt.toISOString(),
             buyer_name: buyerName || null,
