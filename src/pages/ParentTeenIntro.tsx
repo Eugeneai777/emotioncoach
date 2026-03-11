@@ -7,9 +7,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  ArrowLeft, 
   ArrowRight, 
-  Heart, 
   Shield, 
   Users, 
   Sparkles,
@@ -18,9 +16,9 @@ import {
   ChevronDown,
   ChevronUp,
   Link2,
-  Eye,
   EyeOff,
-  Share2
+  Zap,
+  BarChart3
 } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
@@ -30,7 +28,9 @@ import {
   BEST_TIMING, 
   DUAL_TRACK_BENEFITS,
   HOW_IT_WORKS_STEPS,
-  PRIVACY_COMMITMENTS
+  PRIVACY_COMMITMENTS,
+  XIAOJIN_FEATURES,
+  FREE_QUOTA_INFO
 } from "@/config/teenModeGuidance";
 
 export default function ParentTeenIntro() {
@@ -64,7 +64,8 @@ export default function ParentTeenIntro() {
               让孩子也有一个安全角落
             </h2>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              亲子教练双轨模式：家长和孩子各自拥有专属AI陪伴，在安全空间中成长，让关系自然改善
+              小劲AI · 孩子的专属成长陪伴<br />
+              <span className="text-xs">家长和孩子各自拥有AI陪伴，在安全空间中成长</span>
             </p>
           </motion.div>
         </section>
@@ -81,18 +82,105 @@ export default function ParentTeenIntro() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
                   <div className="text-2xl mb-2">👨‍👩‍👧</div>
-                  <h4 className="font-medium text-sm mb-1">家长版</h4>
+                  <h4 className="font-medium text-sm mb-1">家长 · 亲子教练</h4>
                   <p className="text-xs text-muted-foreground">
-                    帮助你理解和调整情绪，学习更好的沟通方式
+                    帮助你理解情绪，学习沟通，查看孩子情绪周报
                   </p>
                 </div>
-                <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl">
-                  <div className="text-2xl mb-2">🧒</div>
-                  <h4 className="font-medium text-sm mb-1">青少年版</h4>
+                <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl">
+                  <div className="text-2xl mb-2">✨</div>
+                  <h4 className="font-medium text-sm mb-1">孩子 · 小劲AI</h4>
                   <p className="text-xs text-muted-foreground">
-                    给孩子一个不被评判的倾诉空间
+                    5大功能陪伴成长，100点免费体验
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Xiaojin Features Showcase */}
+        <section className="px-4 mb-8">
+          <h3 className="text-lg font-semibold mb-4 px-1 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-orange-500" />
+            小劲AI · 孩子的5大功能
+          </h3>
+          <div className="space-y-3">
+            {XIAOJIN_FEATURES.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: index * 0.08 }}
+              >
+                <Card className="bg-white/80 backdrop-blur border-0 shadow-sm">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <span className="text-2xl">{feature.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-sm">{feature.title}</h4>
+                        {feature.tag && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600">
+                            {feature.tag}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{feature.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Free Quota Info */}
+        <section className="px-4 mb-8">
+          <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                <Zap className="h-5 w-5 text-orange-500" />
+                免费体验额度
+              </h3>
+              <p className="text-sm text-foreground mb-4">{FREE_QUOTA_INFO.description}</p>
+              
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {FREE_QUOTA_INFO.rules.map((rule, i) => (
+                  <div key={i} className="p-3 bg-white/70 rounded-xl text-center">
+                    <p className="text-xs text-muted-foreground">{rule.label}</p>
+                    <p className="text-sm font-semibold text-orange-600">{rule.cost}</p>
+                    <p className="text-[10px] text-muted-foreground">{rule.approx}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <p className="text-xs text-muted-foreground text-center">{FREE_QUOTA_INFO.upgradeNote}</p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Mood Report Preview */}
+        <section className="px-4 mb-8">
+          <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                <BarChart3 className="h-5 w-5 text-violet-500" />
+                情绪周报 · 家长专属
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                孩子使用小劲AI后，您可以在亲子教练页看到：
+              </p>
+              <div className="space-y-2">
+                {[
+                  { icon: "📊", text: "7天互动趋势图 — 了解孩子的使用频率" },
+                  { icon: "💬", text: "AI情绪摘要 — 如"本周情绪整体稳定，有2次轻微焦虑"" },
+                  { icon: "🔐", text: "仅显示趋势，不含任何对话内容" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 bg-white/50 rounded-lg">
+                    <span className="text-base">{item.icon}</span>
+                    <p className="text-xs text-foreground">{item.text}</p>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -257,7 +345,7 @@ export default function ParentTeenIntro() {
           className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-lg"
         >
           <Link2 className="h-5 w-5 mr-2" />
-          开始邀请孩子
+          分享小劲AI给孩子
           <ArrowRight className="h-5 w-5 ml-2" />
         </Button>
       </div>
@@ -265,9 +353,7 @@ export default function ParentTeenIntro() {
       <TeenModeOnboarding
         open={showOnboarding}
         onOpenChange={setShowOnboarding}
-        onGenerateCode={() => {
-          // 生成绑定码后的回调
-        }}
+        onGenerateCode={() => {}}
       />
     </div>
   );
