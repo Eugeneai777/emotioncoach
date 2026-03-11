@@ -285,7 +285,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           </p>
 
           {/* Data cards grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '10px' }}>
             {copy.selling_points.slice(0, 4).map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.95)', borderRadius: '8px', padding: '12px 10px',
