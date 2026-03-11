@@ -366,13 +366,14 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 style={{
                   background: 'rgba(255,255,255,0.95)',
                   borderRadius: '12px',
-                  padding: '10px 8px',
+                  padding: '12px 10px',
                   textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  overflow: 'hidden'
                 }}
               >
                 <div style={{ 
-                  fontSize: '20px', 
+                  fontSize: '18px', 
                   fontWeight: 'bold',
                   color: '#0d9488',
                   marginBottom: '2px'
@@ -382,7 +383,10 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 <div style={{ 
                   fontSize: '10px', 
                   color: '#374151',
-                  lineHeight: 1.3
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  maxHeight: '28px',
+                  wordBreak: 'break-all' as const
                 }}>
                   {text || point}
                 </div>
@@ -748,7 +752,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         ref={ref}
         style={{
           width: '300px',
-          height: '533px',
+          height: '560px',
           position: 'relative',
           overflow: 'hidden',
           borderRadius: '20px',

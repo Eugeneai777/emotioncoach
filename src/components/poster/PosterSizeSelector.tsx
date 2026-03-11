@@ -10,9 +10,9 @@ export interface PosterSize {
 }
 
 export const POSTER_SIZES: PosterSize[] = [
-  { key: 'default', name: '标准', width: 300, height: 533, ratio: '9:16', platform: '通用' },
+  { key: 'default', name: '标准', width: 300, height: 560, ratio: '9:16', platform: '通用' },
   { key: 'moments', name: '朋友圈', width: 400, height: 400, ratio: '1:1', platform: '微信朋友圈' },
-  { key: 'xiaohongshu', name: '小红书', width: 360, height: 480, ratio: '3:4', platform: '小红书' },
+  { key: 'xiaohongshu', name: '小红书', width: 360, height: 510, ratio: '3:4', platform: '小红书' },
   { key: 'wechat_group', name: '微信群', width: 400, height: 300, ratio: '4:3', platform: '微信群分享' },
 ];
 

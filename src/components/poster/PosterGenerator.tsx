@@ -167,7 +167,7 @@ export function PosterGenerator({
       toast.loading("正在生成海报...");
 
       const posterWidth = 300;
-      const posterHeight = 533;
+      const posterHeight = 560;
 
       const blob = await generateCardBlob(posterRef, {
         explicitWidth: posterWidth,

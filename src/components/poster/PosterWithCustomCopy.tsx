@@ -57,7 +57,7 @@ const templateNames: Record<string, string> = {
 };
 
 export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomCopyProps>(
-  ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default', width = 300, height = 533 }, ref) => {
+  ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default', width = 300, height = 560 }, ref) => {
     let shareUrl = getPartnerShareUrl(partnerId, entryType);
     if (posterId) {
       shareUrl += (shareUrl.includes('?') ? '&' : '?') + `poster=${posterId}`;
@@ -82,7 +82,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       : [];
 
     // Dynamic scale factor for font sizes based on dimensions
-    const scaleFactor = Math.min(width / 300, height / 533);
+    const scaleFactor = Math.min(width / 300, height / 560);
     
     // Common styles
     const containerStyle: React.CSSProperties = {
@@ -219,7 +219,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         <div style={backgroundStyle} />
         <div style={{
           position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '28px 24px',
+          display: 'flex', flexDirection: 'column', padding: '24px 20px',
         }}>
           <ProductBadge />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
@@ -288,13 +288,14 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             {copy.selling_points.slice(0, 4).map((point, i) => (
               <div key={i} style={{
-                background: 'rgba(255,255,255,0.95)', borderRadius: '8px', padding: '10px',
+                background: 'rgba(255,255,255,0.95)', borderRadius: '8px', padding: '12px 10px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                overflow: 'hidden',
               }}>
                 <span style={{ fontSize: '16px', marginBottom: '4px' }}>
                   {['📊', '💡', '🎯', '⭐'][i]}
                 </span>
-                <span style={{ fontSize: '10px', color: '#1a1a1a', fontWeight: 500 }}>{point}</span>
+                <span style={{ fontSize: '10px', color: '#1a1a1a', fontWeight: 500, overflow: 'hidden', maxHeight: '28px', wordBreak: 'break-all' as const }}>{point}</span>
               </div>
             ))}
           </div>
