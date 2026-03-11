@@ -28,17 +28,6 @@ const MamaAssistant = () => {
     setChatOpen(true);
   };
 
-  if (showAssessment) {
-    return (
-      <MamaAssessment
-        onBack={() => setShowAssessment(false)}
-        onOpenChat={(ctx) => {
-          setShowAssessment(false);
-          openChat(ctx);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white">
