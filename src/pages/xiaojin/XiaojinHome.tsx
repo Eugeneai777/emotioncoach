@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, ChevronRight, Flame, Sparkles } from "lucide-react";
+import { Phone, ChevronRight, Flame, Sparkles, Home } from "lucide-react";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", gradient: "from-amber-400 to-orange-400", bg: "bg-amber-50" },
