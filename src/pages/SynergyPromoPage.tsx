@@ -464,7 +464,7 @@ export default function SynergyPromoPage() {
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
-              {["认知重塑", "情绪调节", "习惯养成"].map((t, i) => (
+              {["身心放松", "情绪释放", "内在安定"].map((t, i) => (
                 <div key={i} className="py-2 px-1 rounded-lg bg-violet-500/10 text-xs text-violet-300">{t}</div>
               ))}
             </div>
