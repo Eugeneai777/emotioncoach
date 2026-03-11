@@ -1,18 +1,26 @@
 /**
  * 统一支付弹窗组件
  * 
- * 根据终端类型自动选择支付方式：
- * - 移动端浏览器（非微信、非小程序）→ 支付宝H5支付
- * - 微信浏览器 → 微信JSAPI支付
- * - 微信小程序 → 微信小程序支付
- * - 桌面端 → 微信扫码支付
- * 
- * 使用方式：直接替换 WechatPayDialog，接口完全兼容
+ * 支持用户手动选择支付方式（微信支付 / 支付宝），
+ * 并根据终端类型设置智能默认值：
+ * - 移动端浏览器（非微信、非小程序）→ 默认支付宝
+ * - 微信浏览器 → 默认微信支付
+ * - 微信小程序 → 仅微信支付（不可选择）
+ * - 桌面端 → 默认微信支付
  */
 
+import { useState, useEffect, useCallback } from 'react';
 import { WechatPayDialog } from './WechatPayDialog';
 import { AlipayPayDialog } from './AlipayPayDialog';
 import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface PackageInfo {
   key: string;
@@ -26,28 +34,21 @@ interface UnifiedPayDialogProps {
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;
   onSuccess: () => void;
-  /** 支付成功后跳转的页面路径，默认为当前页面 */
   returnUrl?: string;
-  /** 用户的微信 openId，用于 JSAPI 支付（仅微信环境需要） */
   openId?: string;
 }
 
-/**
- * 判断是否应该使用支付宝支付
- * 条件：移动端 + 非微信浏览器 + 非小程序
- */
-function shouldUseAlipay(): boolean {
-  // 检测是否在移动端
+type PayMethod = 'wechat' | 'alipay';
+type Stage = 'select' | 'pay';
+
+function getDefaultPayMethod(): PayMethod {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
-  // 检测是否在微信环境
-  const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-  
-  // 检测是否在小程序
+  const isWechat = isWeChatBrowser();
   const isMiniProgram = isWeChatMiniProgram();
-  
-  // 移动端 + 非微信 + 非小程序 = 使用支付宝
-  return isMobile && !isWechat && !isMiniProgram;
+
+  if (isMiniProgram || isWechat) return 'wechat';
+  if (isMobile) return 'alipay';
+  return 'wechat';
 }
 
 export function UnifiedPayDialog({
@@ -58,31 +59,106 @@ export function UnifiedPayDialog({
   returnUrl,
   openId,
 }: UnifiedPayDialogProps) {
-  // 在组件渲染时决定使用哪种支付方式
-  const useAlipay = shouldUseAlipay();
+  const isMiniProgram = isWeChatMiniProgram();
+  const [payMethod, setPayMethod] = useState<PayMethod>(getDefaultPayMethod);
+  const [stage, setStage] = useState<Stage>('select');
 
-  if (useAlipay) {
-    // 移动端浏览器使用支付宝
+  // Reset when dialog opens
+  useEffect(() => {
+    if (open) {
+      setPayMethod(getDefaultPayMethod());
+      setStage('select');
+    }
+  }, [open]);
+
+  const handleSelect = useCallback((method: PayMethod) => {
+    setPayMethod(method);
+    setStage('pay');
+  }, []);
+
+  const handlePayDialogChange = useCallback((v: boolean) => {
+    if (!v) {
+      // 关闭支付弹窗时，回到选择阶段或直接关闭
+      onOpenChange(false);
+    }
+  }, [onOpenChange]);
+
+  // 小程序环境：只能用微信支付，直接渲染
+  if (isMiniProgram) {
     return (
-      <AlipayPayDialog
+      <WechatPayDialog
         open={open}
         onOpenChange={onOpenChange}
         packageInfo={packageInfo}
         onSuccess={onSuccess}
         returnUrl={returnUrl}
+        openId={openId}
       />
     );
   }
 
-  // 其他环境使用微信支付（桌面端、微信浏览器、小程序）
+  // 阶段二：打开对应的支付弹窗
+  if (stage === 'pay' && open) {
+    if (payMethod === 'alipay') {
+      return (
+        <AlipayPayDialog
+          open={true}
+          onOpenChange={handlePayDialogChange}
+          packageInfo={packageInfo}
+          onSuccess={onSuccess}
+          returnUrl={returnUrl}
+        />
+      );
+    }
+    return (
+      <WechatPayDialog
+        open={true}
+        onOpenChange={handlePayDialogChange}
+        packageInfo={packageInfo}
+        onSuccess={onSuccess}
+        returnUrl={returnUrl}
+        openId={openId}
+      />
+    );
+  }
+
+  // 阶段一：支付方式选择
   return (
-    <WechatPayDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      packageInfo={packageInfo}
-      onSuccess={onSuccess}
-      returnUrl={returnUrl}
-      openId={openId}
-    />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>选择支付方式</DialogTitle>
+          <DialogDescription>
+            {packageInfo ? `${packageInfo.name} — ¥${packageInfo.price}` : '请选择支付方式'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          {/* 微信支付 */}
+          <button
+            onClick={() => handleSelect('wechat')}
+            className={cn(
+              "flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all active:scale-[0.97]",
+              "border-muted hover:border-green-500/50 hover:bg-green-50/50 dark:hover:bg-green-950/20"
+            )}
+          >
+            <span className="text-3xl">💬</span>
+            <span className="text-sm font-medium">微信支付</span>
+          </button>
+
+          {/* 支付宝 */}
+          <button
+            onClick={() => handleSelect('alipay')}
+            className={cn(
+              "flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all active:scale-[0.97]",
+              "border-muted hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
+            )}
+          >
+            <span className="text-3xl">💙</span>
+            <span className="text-sm font-medium">支付宝</span>
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
