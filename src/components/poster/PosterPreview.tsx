@@ -429,7 +429,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          marginBottom: '14px'
+          marginBottom: '10px'
         }}>
           <div style={{
             display: 'flex',
