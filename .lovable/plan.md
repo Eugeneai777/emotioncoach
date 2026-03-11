@@ -1,32 +1,23 @@
 
 
-## Plan: Add Gratitude Records Button to MamaAIChat
+## 两个问题需要修复
 
-Based on the screenshot, the user is viewing the MamaAIChat sheet (AI妈妈教练) and wants a button to navigate to the gratitude journal history.
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### Changes
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**1. `src/components/mama/MamaAIChat.tsx`**
-- Add a "📔 感恩记录" button in the SheetHeader area (next to the title)
-- On click, close the chat sheet and navigate to `/gratitude-journal` (the GratitudeHistory page which shows all gratitude entries)
-- Use `useNavigate` from react-router-dom
-- Style: small outlined button matching the warm theme, placed on the right side of the header
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### Implementation Detail
-```tsx
-// In SheetHeader, add a button beside the title
-<SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
-  <div className="flex items-center justify-between">
-    <SheetTitle className="text-[#3D3028] text-base">💛 AI妈妈教练</SheetTitle>
-    <button
-      onClick={() => { onOpenChange(false); navigate("/gratitude-journal"); }}
-      className="text-xs px-3 py-1.5 rounded-full border border-[#F4845F]/30 text-[#F4845F] bg-[#FFF3EB] hover:bg-[#FFE8D6] transition-colors"
-    >
-      📔 感恩记录
-    </button>
-  </div>
-</SheetHeader>
-```
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-This routes to `/gratitude-journal` which renders `GratitudeHistory` -- the existing page that displays all saved gratitude entries from the `gratitude_entries` table.
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

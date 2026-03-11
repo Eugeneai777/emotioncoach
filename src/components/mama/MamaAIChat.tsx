@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Send, Mic, MicOff } from "lucide-react";
@@ -37,6 +38,7 @@ const TypingDots = () => (
 );
 
 const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAIChatProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -242,7 +244,15 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl bg-[#FFF8F0] p-0 flex flex-col">
           <SheetHeader className="px-4 pt-4 pb-2.5 border-b border-[#F5E6D3] shrink-0">
-            <SheetTitle className="text-[#3D3028] text-base">💛 AI妈妈教练</SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-[#3D3028] text-base">💛 AI妈妈教练</SheetTitle>
+              <button
+                onClick={() => { onOpenChange(false); navigate("/gratitude-journal"); }}
+                className="text-xs px-3 py-1.5 rounded-full border border-[#F4845F]/30 text-[#F4845F] bg-[#FFF3EB] hover:bg-[#FFE8D6] transition-colors"
+              >
+                📔 感恩记录
+              </button>
+            </div>
           </SheetHeader>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3">
