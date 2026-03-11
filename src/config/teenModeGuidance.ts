@@ -155,27 +155,21 @@ export const DUAL_TRACK_BENEFITS = [
 export const HOW_IT_WORKS_STEPS = [
   {
     step: 1,
-    title: "生成绑定码",
-    description: "在亲子教练页面生成专属6位绑定码",
+    title: "生成邀请卡片",
+    description: "一键生成专属邀请链接，包含你的家长标识",
     icon: "🔗"
   },
   {
     step: 2,
     title: "分享给孩子",
-    description: "用合适的话术，在恰当时机告诉孩子",
+    description: "孩子打开链接即可使用小劲AI，无需注册",
     icon: "💌"
   },
   {
     step: 3,
-    title: "孩子输入绑定码",
-    description: "孩子访问青少年入口，输入绑定码完成连接",
-    icon: "✅"
-  },
-  {
-    step: 4,
-    title: "各自开始对话",
-    description: "你继续使用亲子教练，孩子拥有专属青少年教练",
-    icon: "💬"
+    title: "查看情绪周报",
+    description: "在亲子教练页查看AI生成的孩子情绪趋势，了解状态",
+    icon: "📊"
   }
 ];
 
