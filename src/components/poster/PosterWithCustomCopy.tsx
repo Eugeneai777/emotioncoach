@@ -445,7 +445,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
 
           {/* Main content card */}
           <div style={{
-            flex: 1, background: 'rgba(255,255,255,0.98)', borderRadius: '16px', padding: '20px',
+            flex: 1, background: 'rgba(255,255,255,0.98)', borderRadius: '16px', padding: '16px',
             display: 'flex', flexDirection: 'column', boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
           }}>
             <div style={{ fontSize: '24px', marginBottom: '12px', textAlign: 'center' }}>{emoji}</div>
