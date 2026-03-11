@@ -317,7 +317,7 @@ export default function WealthSynergyPromoPage() {
         .maybeSingle();
       if (activeCamp) { navigate(`/camp-checkin/${activeCamp.id}`); return; }
     }
-    navigate('/coach/wealth_coach_4_questions');
+    navigate('/camp-intro/wealth_block_7');
   };
 
   const handleViewLogistics = () => navigate('/settings?tab=account');
