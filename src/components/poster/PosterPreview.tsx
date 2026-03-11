@@ -355,8 +355,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '8px',
-          marginBottom: '14px'
+          gap: '6px',
+          marginBottom: '10px'
         }}>
           {displaySellingPoints.slice(0, 4).map((point, idx) => {
             // 提取数字或关键词
