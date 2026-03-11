@@ -184,6 +184,10 @@ serve(async (req) => {
         status: 'pending',
         pay_type: 'alipay_h5',
         expired_at: expiredAt.toISOString(),
+        buyer_name: buyerName || null,
+        buyer_phone: buyerPhone || null,
+        buyer_address: buyerAddress || null,
+        shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
       });
 
     if (orderError) {

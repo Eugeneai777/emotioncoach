@@ -798,6 +798,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
           isMiniProgram: isMiniProgram,
+          buyerName: shippingInfo?.buyerName,
+          buyerPhone: shippingInfo?.buyerPhone,
+          buyerAddress: shippingInfo?.buyerAddress,
         },
       });
 

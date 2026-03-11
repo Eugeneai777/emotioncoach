@@ -315,6 +315,11 @@ export function HealthStoreGrid() {
         packageInfo={payPackage}
         onSuccess={handlePaySuccess}
         openId={wechatOpenId}
+        shippingInfo={pendingCheckoutInfo ? {
+          buyerName: pendingCheckoutInfo.buyerName,
+          buyerPhone: pendingCheckoutInfo.buyerPhone,
+          buyerAddress: pendingCheckoutInfo.buyerAddress,
+        } : undefined}
       />
     </>
   );

@@ -518,8 +518,12 @@ serve(async (req) => {
         amount: amount,
         order_no: orderNo,
         status: 'pending',
-        qr_code_url: payUrl || null, // 存储支付URL（H5或Native），JSAPI为null
+        qr_code_url: payUrl || null,
         expired_at: expiredAt.toISOString(),
+        buyer_name: buyerName || null,
+        buyer_phone: buyerPhone || null,
+        buyer_address: buyerAddress || null,
+        shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
       });
 
     if (insertError) {

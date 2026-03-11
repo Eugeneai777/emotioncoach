@@ -185,6 +185,9 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           amount: packageInfo.price,
           userId: user?.id || 'guest',
           returnUrl: redirectUrl,
+          buyerName: shippingInfo?.buyerName,
+          buyerPhone: shippingInfo?.buyerPhone,
+          buyerAddress: shippingInfo?.buyerAddress,
         },
       });
 
