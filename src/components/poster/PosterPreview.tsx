@@ -591,15 +591,15 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 100%)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '24px 18px 16px',
+        padding: '20px 16px 14px',
         color: 'white',
         boxSizing: 'border-box'
       }}>
         {/* Emoji标识 */}
         <div style={{ 
-          fontSize: '40px', 
+          fontSize: '34px', 
           textAlign: 'center',
-          marginBottom: '10px',
+          marginBottom: '6px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
