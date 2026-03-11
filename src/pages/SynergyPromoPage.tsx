@@ -284,43 +284,18 @@ export default function SynergyPromoPage() {
   const handlePaySuccess = async () => {
     if (checkoutInfo) {
       try {
-        // 优先用 order_no 精确匹配（从 localStorage 获取）
         const pendingOrderNo = localStorage.getItem('pending_claim_order');
         if (pendingOrderNo) {
-          await supabase
-            .from('orders')
-            .update({
-              buyer_name: checkoutInfo.buyerName,
-              buyer_phone: checkoutInfo.buyerPhone,
-              buyer_address: checkoutInfo.buyerAddress,
-              shipping_status: 'pending',
-            })
-            .eq('order_no', pendingOrderNo);
-        }
-
-        // fallback: 已登录用户按 user_id 查找最近的未填收货信息的订单
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser) {
-          const { data: recentOrders } = await supabase
-            .from('orders')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('package_key', packageInfo.key)
-            .is('buyer_name', null)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (recentOrders?.[0]) {
-            await supabase
-              .from('orders')
-              .update({
-                buyer_name: checkoutInfo.buyerName,
-                buyer_phone: checkoutInfo.buyerPhone,
-                buyer_address: checkoutInfo.buyerAddress,
-                shipping_status: 'pending',
-              })
-              .eq('id', recentOrders[0].id);
-          }
+          await supabase.functions.invoke('update-order-shipping', {
+            body: {
+              orderNo: pendingOrderNo,
+              shippingInfo: {
+                buyerName: checkoutInfo.buyerName,
+                buyerPhone: checkoutInfo.buyerPhone,
+                buyerAddress: checkoutInfo.buyerAddress,
+              },
+            },
+          });
         }
       } catch (e) {
         console.error('Save shipping info error:', e);

@@ -255,39 +255,16 @@ export default function WealthSynergyPromoPage() {
       try {
         const pendingOrderNo = localStorage.getItem('pending_claim_order');
         if (pendingOrderNo) {
-          await supabase
-            .from('orders')
-            .update({
-              buyer_name: checkoutInfo.buyerName,
-              buyer_phone: checkoutInfo.buyerPhone,
-              buyer_address: checkoutInfo.buyerAddress,
-              shipping_status: 'pending',
-            })
-            .eq('order_no', pendingOrderNo);
-        }
-
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser) {
-          const { data: recentOrders } = await supabase
-            .from('orders')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('package_key', packageInfo.key)
-            .is('buyer_name', null)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (recentOrders?.[0]) {
-            await supabase
-              .from('orders')
-              .update({
-                buyer_name: checkoutInfo.buyerName,
-                buyer_phone: checkoutInfo.buyerPhone,
-                buyer_address: checkoutInfo.buyerAddress,
-                shipping_status: 'pending',
-              })
-              .eq('id', recentOrders[0].id);
-          }
+          await supabase.functions.invoke('update-order-shipping', {
+            body: {
+              orderNo: pendingOrderNo,
+              shippingInfo: {
+                buyerName: checkoutInfo.buyerName,
+                buyerPhone: checkoutInfo.buyerPhone,
+                buyerAddress: checkoutInfo.buyerAddress,
+              },
+            },
+          });
         }
       } catch (e) { console.error('Save shipping info error:', e); }
     }
