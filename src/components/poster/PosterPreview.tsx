@@ -182,13 +182,15 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 主标语 - 故事感大字 */}
         <div style={{
           textAlign: 'center',
-          marginBottom: '20px',
-          padding: '0 8px'
+          marginBottom: '12px',
+          padding: '0 8px',
+          overflow: 'hidden',
+          maxHeight: '80px'
         }}>
           <p style={{
-            fontSize: '18px',
+            fontSize: '15px',
             fontWeight: '600',
-            lineHeight: 1.5,
+            lineHeight: 1.4,
             textShadow: '0 2px 12px rgba(0,0,0,0.5)',
             margin: 0,
             letterSpacing: '0.5px'
@@ -201,8 +203,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px',
-          marginBottom: '16px',
+          gap: '7px',
+          marginBottom: '10px',
           padding: '0 12px'
         }}>
           {displaySellingPoints.slice(0, 3).map((point, idx) => (
@@ -212,8 +214,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 background: 'rgba(255,255,255,0.15)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '20px',
-                padding: '10px 14px',
-                fontSize: '13px',
+                padding: '8px 12px',
+                fontSize: '12px',
                 lineHeight: 1.4,
                 textAlign: 'center',
                 border: '1px solid rgba(255,255,255,0.2)',
@@ -230,7 +232,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           textAlign: 'center',
           fontSize: '11px',
           opacity: 0.85,
-          marginBottom: '12px',
+          marginBottom: '8px',
           fontStyle: 'italic'
         }}>
           — 愿你也能找到内心的力量 —
