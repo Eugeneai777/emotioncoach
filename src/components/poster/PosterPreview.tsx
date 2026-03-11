@@ -606,9 +606,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       }}>
         {/* Emoji标识 */}
         <div style={{ 
-          fontSize: '34px', 
+          fontSize: '30px', 
           textAlign: 'center',
-          marginBottom: '6px',
+          marginBottom: '4px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
