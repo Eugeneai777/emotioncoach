@@ -272,7 +272,6 @@ const ParentChildDiary = () => {
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
-                  <XiaojinMoodReport />
                   <UnifiedEmotionHeatmap
                     briefings={sessions.map(s => ({
                       id: s.id,
