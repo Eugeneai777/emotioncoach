@@ -65,6 +65,13 @@ const ElderMoodPage = () => {
 
   const saveMood = async () => {
     if (!selected) return;
+
+    // Deduct quota for mood record
+    if (!deduct(1)) {
+      setShowUpgrade(true);
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({ title: "请先登录", variant: "destructive" });
