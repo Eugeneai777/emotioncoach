@@ -342,9 +342,11 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           fontSize: '15px',
           fontWeight: '500',
           lineHeight: 1.5,
-          marginBottom: '14px',
+          marginBottom: '10px',
           textShadow: '0 1px 6px rgba(0,0,0,0.4)',
-          padding: '0 4px'
+          padding: '0 4px',
+          overflow: 'hidden',
+          maxHeight: '60px'
         }}>
           {displayTagline}
         </div>
