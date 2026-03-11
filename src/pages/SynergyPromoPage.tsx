@@ -197,7 +197,7 @@ export default function SynergyPromoPage() {
   const packageInfo = {
     key: "synergy_bundle",
     name: "心智×身体 全天候抗压套餐",
-    price: 0,
+    price: 0.01,
     quota: 1,
   };
 
@@ -406,7 +406,7 @@ export default function SynergyPromoPage() {
                 onClick={handleBuyClick}
                 className="h-12 px-8 text-base font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
               >
-                免费体验套餐
+                立即解锁套餐 ¥0.01
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
               <p className="text-slate-500 text-xs mt-3">原价 ¥899 · 限时优惠</p>
@@ -669,7 +669,7 @@ export default function SynergyPromoPage() {
             <>
               <p className="text-slate-400 text-sm mb-2">限时特惠</p>
               <div className="flex items-baseline justify-center gap-2 mb-1">
-                <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0</span>
+                <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
                 <span className="text-slate-500 line-through text-sm">¥899</span>
               </div>
               <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 30天套餐</p>
@@ -705,7 +705,7 @@ export default function SynergyPromoPage() {
             <>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-amber-400">¥0</span>
+                  <span className="text-xl font-black text-amber-400">¥0.01</span>
                   <span className="text-xs text-slate-500 line-through">¥899</span>
                 </div>
                 <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 30天</p>
