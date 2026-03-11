@@ -5,6 +5,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { uploadElderMoodLog } from "@/utils/elderMoodUpload";
 
 const MOODS = [
   { emoji: "😊", label: "开心", value: "happy", color: "hsl(45 80% 92%)" },
