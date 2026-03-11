@@ -14,7 +14,7 @@ import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { AdminTableContainer } from "@/components/admin/shared/AdminTableContainer";
+
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: '待发货', color: 'bg-amber-100 text-amber-800' },
