@@ -33,6 +33,8 @@ const ElderMoodPage = () => {
   const [saved, setSaved] = useState(false);
   const [todayRecord, setTodayRecord] = useState<MoodRecord | null>(null);
   const [recentRecords, setRecentRecords] = useState<MoodRecord[]>([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const { remaining, deduct, refresh } = useDajinQuota();
 
   useEffect(() => {
     loadRecords();
