@@ -181,6 +181,7 @@ const WomenCompetitiveness = lazyRetry(() => import("./pages/WomenCompetitivenes
 
 // 动态测评
 const AssessmentPicker = lazyRetry(() => import("./pages/AssessmentPicker"));
+const AssessmentTools = lazyRetry(() => import("./pages/AssessmentTools"));
 const DynamicAssessmentPage = lazyRetry(() => import("./pages/DynamicAssessmentPage"));
 
 // 财富教练
