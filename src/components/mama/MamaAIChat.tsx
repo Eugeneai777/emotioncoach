@@ -38,6 +38,7 @@ const TypingDots = () => (
 );
 
 const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAIChatProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
