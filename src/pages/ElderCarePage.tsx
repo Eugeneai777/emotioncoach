@@ -36,7 +36,7 @@ const ElderCarePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
       <PageHeader
-        title="有劲陪长辈"
+        title="大劲AI"
         showBack
         rightActions={
           <button
