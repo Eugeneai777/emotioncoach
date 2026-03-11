@@ -1,138 +1,149 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone } from "lucide-react";
+import { Phone, ChevronRight, Flame, Sparkles } from "lucide-react";
 
 const entries = [
-  { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", color: "from-orange-100 to-amber-50" },
-  { emoji: "🧠", label: "我的天赋", desc: "发现隐藏超能力", path: "/xiaojin/talent", color: "from-blue-100 to-sky-50" },
-  { emoji: "🚀", label: "未来方向", desc: "AI帮你看未来", path: "/xiaojin/future", color: "from-purple-100 to-violet-50" },
+  { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", gradient: "from-amber-400 to-orange-400", bg: "bg-amber-50" },
+  { emoji: "🧠", label: "我的天赋", desc: "发现隐藏超能力", path: "/xiaojin/talent", gradient: "from-sky-400 to-blue-500", bg: "bg-sky-50" },
+  { emoji: "🚀", label: "未来方向", desc: "AI帮你看未来", path: "/xiaojin/future", gradient: "from-violet-400 to-purple-500", bg: "bg-violet-50" },
 ];
 
 export default function XiaojinHome() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-gray-50">
-      <div className="max-w-md mx-auto px-5 pt-12 pb-8">
-        {/* Brand */}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
+      <div className="max-w-md mx-auto px-5 pt-10 pb-8">
+
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-2"
+          className="text-center mb-1"
         >
-          <span className="text-2xl font-bold tracking-widest text-orange-400">小劲AI · 与光同行</span>
+          <div className="inline-flex items-center gap-1.5 mb-1">
+            <Sparkles className="w-5 h-5 text-amber-400" />
+            <span className="text-[22px] font-extrabold tracking-wider bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+              小劲AI
+            </span>
+            <Sparkles className="w-5 h-5 text-amber-400" />
+          </div>
+          <p className="text-[11px] text-gray-400 tracking-widest font-medium">与 光 同 行</p>
         </motion.div>
 
-        {/* Hero */}
+        {/* Voice CTA — Hero */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-center mb-10"
-        >
-          <p className="text-sm text-gray-500 leading-relaxed">
-            每天3分钟<br />
-            发现你的情绪 · 天赋 · 未来方向
-          </p>
-        </motion.div>
-
-        {/* Entry Cards */}
-        <div className="space-y-4 mb-10">
-          {entries.map((item, i) => (
-            <motion.button
-              key={item.path}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + i * 0.1 }}
-              onClick={() => navigate(item.path)}
-              className={`w-full bg-gradient-to-r ${item.color} rounded-2xl p-5 flex items-center gap-4 active:scale-[0.98] transition-transform shadow-sm hover:shadow-md`}
-            >
-              <span className="text-4xl">{item.emoji}</span>
-              <div className="text-left">
-                <div className="text-base font-semibold text-gray-800">{item.label}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{item.desc}</div>
-              </div>
-              <svg className="w-5 h-5 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </motion.button>
-          ))}
-        </div>
-
-        {/* Voice Chat Circle Button */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="flex flex-col items-center mb-10"
+          transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 20 }}
+          className="flex flex-col items-center py-10"
         >
           <button
             onClick={() => navigate("/xiaojin/voice")}
             className="relative group focus:outline-none touch-manipulation"
             aria-label="开始AI小劲语音对话"
           >
-            {/* Outer glow */}
+            {/* Soft glow */}
             <motion.div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400/30 to-amber-400/30 blur-xl"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              style={{ width: '140px', height: '140px', margin: '-10px' }}
+              className="absolute rounded-full bg-gradient-to-r from-orange-300/25 to-amber-300/25 blur-2xl"
+              animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.3, 0.6] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+              style={{ width: '160px', height: '160px', top: '-20px', left: '-20px' }}
             />
 
             {/* Pulsing ring */}
             <motion.div
-              className="absolute inset-0 rounded-full border-2 border-orange-400/50"
-              animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-              style={{ width: '120px', height: '120px' }}
+              className="absolute rounded-full border-[1.5px] border-orange-300/60"
+              animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+              style={{ width: '120px', height: '120px', top: 0, left: 0 }}
             />
 
-            {/* Main button */}
+            {/* Main circle */}
             <motion.div
-              className="relative w-[120px] h-[120px] rounded-full bg-gradient-to-br from-orange-400 via-amber-400 to-orange-500 shadow-2xl flex flex-col items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{ boxShadow: '0 10px 40px -10px rgba(251, 146, 60, 0.5), 0 0 60px rgba(251, 191, 36, 0.2)' }}
+              className="relative w-[120px] h-[120px] rounded-full flex flex-col items-center justify-center"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.93 }}
+              style={{
+                background: 'linear-gradient(135deg, #fb923c 0%, #f59e0b 50%, #f97316 100%)',
+                boxShadow: '0 12px 36px -8px rgba(249, 115, 22, 0.45), 0 0 0 4px rgba(251, 191, 36, 0.12)',
+              }}
             >
-              <Phone className="h-8 w-8 text-white mb-1" />
-              <span className="text-xs font-semibold text-white">随时聊</span>
+              <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm mb-1.5">
+                <Phone className="h-7 w-7 text-white drop-shadow" />
+              </div>
+              <span className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">随时聊</span>
             </motion.div>
           </button>
 
-          <p className="mt-4 text-sm font-medium text-gray-600">AI小劲 · 随时聊</p>
-          <p className="text-xs text-gray-400 mt-0.5">语音对话，像朋友一样倾听</p>
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-center mt-5"
+          >
+            <p className="text-sm font-semibold text-gray-700">AI小劲 · 随时聊</p>
+            <p className="text-[11px] text-gray-400 mt-1">语音对话，像朋友一样倾听你 💛</p>
+          </motion.div>
         </motion.div>
 
-        {/* Daily Challenge Entry */}
+        {/* Entry Cards — compact horizontal row */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {entries.map((item, i) => (
+            <motion.button
+              key={item.path}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.08 }}
+              onClick={() => navigate(item.path)}
+              className={`${item.bg} rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-[0.96] transition-all shadow-sm hover:shadow-md border border-white/60`}
+            >
+              <span className="text-3xl">{item.emoji}</span>
+              <span className="text-xs font-semibold text-gray-700">{item.label}</span>
+              <span className="text-[10px] text-gray-400 leading-tight text-center">{item.desc}</span>
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Challenge CTA */}
         <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           onClick={() => navigate("/xiaojin/challenge")}
-          className="w-full bg-gradient-to-r from-orange-400 to-amber-400 text-white rounded-2xl p-5 text-center active:scale-[0.98] transition-transform shadow-md hover:shadow-lg"
+          className="w-full rounded-2xl p-5 flex items-center gap-4 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl border border-orange-200/40"
+          style={{
+            background: 'linear-gradient(135deg, #fb923c 0%, #f59e0b 60%, #fbbf24 100%)',
+          }}
         >
-          <div className="text-lg font-bold mb-1">🔥 成长100天挑战</div>
-          <div className="text-xs opacity-90">每天一个问题，遇见更好的自己</div>
+          <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+            <Flame className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-left flex-1">
+            <div className="text-[15px] font-bold text-white">成长100天挑战</div>
+            <div className="text-[11px] text-white/80 mt-0.5">每天一个问题，遇见更好的自己</div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-white/60 shrink-0" />
         </motion.button>
 
         {/* Social Proof */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-center text-xs text-gray-400 mt-8"
+          transition={{ delay: 0.9 }}
+          className="text-center text-[11px] text-gray-300 mt-8"
         >
           已有 30,000+ 青少年参与成长挑战
         </motion.p>
 
-        {/* Footer Brand */}
+        {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center mt-6 pb-4"
+          transition={{ delay: 1.1 }}
+          className="text-center mt-5 pb-4"
         >
-          <p className="text-[10px] text-gray-300">有劲AI · 让你天天都有劲</p>
+          <p className="text-[10px] text-gray-300 tracking-wider">有劲AI · 让你天天都有劲</p>
         </motion.div>
       </div>
     </div>
