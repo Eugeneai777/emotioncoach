@@ -155,7 +155,7 @@ const MamaAssistant = () => {
           className="pb-8"
         >
           <button
-            onClick={() => setShowAssessment(true)}
+            onClick={() => navigate("/packages")}
             className="w-full flex items-center justify-between 
                        px-5 py-4 rounded-2xl 
                        bg-gradient-to-r from-pink-50 to-rose-50 
