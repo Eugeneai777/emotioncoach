@@ -132,7 +132,8 @@ export function PurchaseHistory() {
     return <Gift className="h-4 w-4 text-amber-600" />;
   };
 
-  const hasShipping = (p: UnifiedPurchaseRecord) => !!p.buyer_address;
+  // 知乐相关实物商品始终显示物流区域
+  const hasShipping = (p: UnifiedPurchaseRecord) => !!p.is_physical || !!p.buyer_address;
 
   if (isLoading) {
     return (
