@@ -176,7 +176,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, mode = "
     return { clean, followUps: followUps.slice(0, 3) };
   };
 
-  // ========== Emotion Coach (non-streaming JSON) ==========
+  // ========== Emotion Coach (SSE streaming) ==========
   const createEmotionSession = async (): Promise<string | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -211,6 +211,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, mode = "
 
   const sendEmotionMessage = async (text: string, currentMessages: Message[]) => {
     setIsLoading(true);
+    let assistantSoFar = "";
     try {
       let sid = emotionSessionId;
       if (!sid) {
@@ -232,7 +233,7 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, mode = "
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ sessionId: sid, message: text }),
+        body: JSON.stringify({ sessionId: sid, message: text, stream: true }),
       });
 
       if (!resp.ok) {
@@ -245,10 +246,55 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, mode = "
         throw new Error(errorData.error || "AI服务暂时不可用");
       }
 
-      const data = await resp.json();
-      const content = data.content || "让我们继续聊聊 🌿";
+      // SSE streaming
+      if (resp.headers.get("content-type")?.includes("text/event-stream") && resp.body) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let textBuffer = "";
 
-      setMessages((prev) => [...prev, { role: "assistant", content }]);
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          textBuffer += decoder.decode(value, { stream: true });
+
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              // tool_call metadata event (not a delta)
+              if (parsed.tool_call) continue;
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                assistantSoFar += content;
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === "assistant") {
+                    return prev.map((m, i) =>
+                      i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
+                    );
+                  }
+                  return [...prev, { role: "assistant", content: assistantSoFar }];
+                });
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+      } else {
+        // Fallback: non-streaming JSON response
+        const data = await resp.json();
+        const content = data.content || "让我们继续聊聊 🌿";
+        setMessages((prev) => [...prev, { role: "assistant", content }]);
+      }
     } catch (e) {
       console.error("emotion-chat error:", e);
       setMessages((prev) => [...prev, { role: "assistant", content: "抱歉，AI暂时忙碌中，请稍后再试 🙏" }]);
