@@ -1539,62 +1539,24 @@ Deno.serve(async (req) => {
   clientSocket.onopen = () => {
     console.log('[DoubaoRelay] Client connected');
     
-    // 🔧 修复微信环境连接中断：将心跳间隔从 30s 缩短到 15s
-    // 微信 WebView 对空闲 WebSocket 的超时控制较严格
-    // 同时向 Doubao 发送 WebSocket ping 帧，保持双向连接活跃
+    // ✅ 心跳：每 15s 向前端发 heartbeat + 向豆包发 WebSocket ping
+    // audio.keep_alive=true + dialog.extra.input_mod='keep_alive' 已由 StartSession 设置，
+    // 豆包平台会在协议层自动保持长连接，无需再注入噪声音频帧
     heartbeatInterval = setInterval(async () => {
       // 1. 向前端发送心跳
       if (clientSocket.readyState === WebSocket.OPEN) {
         clientSocket.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
       }
-      // 2. 🔧 关键修复：同时向 Doubao 发送 WebSocket ping 帧
-      // 防止 relay->Doubao 连接因空闲被云网关或 Doubao 服务端断开
+      // 2. 向 Doubao 发送 WebSocket ping 帧，防止中间网关断开
       if (doubaoConn && isConnected) {
         try {
-          const pingFrame = buildWebSocketFrame(new Uint8Array([]), 0x09); // opcode 0x09 = ping
+          const pingFrame = buildWebSocketFrame(new Uint8Array([]), 0x09);
           await doubaoConn.write(pingFrame);
         } catch (e) {
           console.warn('[DoubaoRelay] Failed to send ping to Doubao:', e);
         }
       }
-
-      // 3. ✅ 额外 keepalive：微信场景下，部分上游会在“没有音频上行”时提前断开（~100s 级别）
-      // 仅在 session 已 ready 且一段时间没有用户音频输入时，发送极短静默 PCM16，避免触发 VAD。
-      if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
-        const now = Date.now();
-         // 🔧 修复：无条件每 15 秒发送一次保活帧，不再依赖用户空闲检测
-         // 即使 AI 正在回复，上游网关也可能因为"上行空闲 90s"而断开连接
-        // 使用顶部定义的 KEEPALIVE_INTERVAL_MS
-
-         if (now - lastKeepaliveAt > KEEPALIVE_INTERVAL_MS) {
-          try {
-            // ✅ 200ms 上行保活帧：从“纯 0 静音”改为“极低幅度噪声”
-            // 原因：部分上游网关/VAD 会忽略纯静音，导致仍在 ~90s 被判 idle
-            const keepaliveNoise = makePcm16NoiseBytes(
-              KEEPALIVE_SILENCE_BYTES,
-              KEEPALIVE_NOISE_AMPLITUDE_I16,
-            );
-            const audioPacket = buildAudioUploadRequest(keepaliveNoise, audioSequence++, doubaoSessionId);
-            const frame = buildWebSocketFrame(audioPacket);
-            await doubaoConn.write(frame);
-            lastKeepaliveAt = now;
-
-            // 避免刷屏：最多每 20 秒打一次日志
-            if (now - lastKeepaliveLogAt > 20_000) {
-              lastKeepaliveLogAt = now;
-               console.log('[DoubaoRelay] 🔇 Sent keepalive-noise (1000ms, amp=3000)', {
-                 idleClientMs: now - lastClientAudioAt,
-                seq: audioSequence,
-                  ampI16: KEEPALIVE_NOISE_AMPLITUDE_I16,
-                  sessionAgeSec: Math.round((now - lastClientAudioAt) / 1000),
-               });
-            }
-          } catch (e) {
-            console.warn('[DoubaoRelay] Failed to send silent keepalive:', e);
-          }
-        }
-      }
-    }, KEEPALIVE_INTERVAL_MS);
+    }, HEARTBEAT_INTERVAL_MS);
   };
 
   // 🔧 增强诊断：明确记录是谁先断开（微信端断 / relay 断 / doubao 断）
