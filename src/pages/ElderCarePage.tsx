@@ -1,17 +1,14 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageCircle, Sun, Bell, Smile, Share2, ChevronRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import PageHeader from "@/components/PageHeader";
+import { MessageCircle, Share2, ChevronRight, Home } from "lucide-react";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
-import { useDajinQuota } from "@/hooks/useDajinQuota";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
-  const { remaining } = useDajinQuota();
 
   useEffect(() => {
     const from = searchParams.get("from");
@@ -19,25 +16,6 @@ const ElderCarePage = () => {
       parseAndStoreChildRef(from);
     }
   }, [searchParams]);
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/elder-care`;
-    const refCode = localStorage.getItem("share_ref_code");
-    const url = refCode ? `${shareUrl}?ref=${refCode}` : shareUrl;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "大劲AI — 给爸妈一个更安心的陪伴入口",
-          text: "会聊天、会问候、会提醒、会关怀，简单到长辈一看就懂",
-          url,
-        });
-      } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast({ title: "链接已复制 ✅", description: "发送给家人即可" });
-    }
-  };
 
   const quickEntries = [
     { emoji: "☀️", title: "问候", desc: "每日暖心", route: "/elder-care/greeting" },
@@ -47,125 +25,137 @@ const ElderCarePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
-      <PageHeader
-        title="大劲AI"
-        showBack
-        rightActions={
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 active:scale-95 transition-transform"
+      <div className="max-w-md mx-auto px-5 pt-4 pb-8">
+
+        {/* Top bar — same as XiaojinHome */}
+        <div className="flex items-center justify-between mb-4">
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
           >
-            <Share2 className="w-3.5 h-3.5" />
-            分享给家人
-          </button>
-        }
-      />
+            <Home className="w-3.5 h-3.5" />
+            <span>有劲生活馆</span>
+          </motion.button>
 
-      {/* 品牌区 */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center pt-6 pb-2"
-      >
-        <span className="text-4xl block mb-2">🌿</span>
-        <h2 className="text-xl font-bold text-orange-900">大劲AI</h2>
-        <p className="text-sm text-orange-600/70 mt-1">陪长辈，有大劲</p>
-        {/* 剩余点数 */}
-        <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs"
-          style={{ backgroundColor: "hsl(45 60% 92%)", color: "hsl(25 50% 40%)" }}>
-          ⚡ 免费体验点数：{remaining}
-        </div>
-      </motion.div>
-
-      {/* 中心大圆按钮 */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="flex flex-col items-center py-8"
-      >
-        <button
-          onClick={() => navigate("/elder-care/chat")}
-          className="relative group focus:outline-none"
-          aria-label="开始聊天"
-        >
-          <div className="absolute inset-[-16px] bg-gradient-to-r from-orange-300 to-amber-300 rounded-full animate-pulse opacity-30" />
-          <div
-            className="absolute inset-[-8px] bg-gradient-to-r from-orange-400 to-amber-400 rounded-full animate-ping opacity-20"
-            style={{ animationDuration: "2s" }}
+          <IntroShareDialog
+            config={introShareConfigs.dajin}
+            trigger={
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>分享给长辈</span>
+              </motion.button>
+            }
           />
-
-          <div className="relative w-[140px] h-[140px] bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 
-                          rounded-full flex flex-col items-center justify-center 
-                          shadow-2xl shadow-orange-400/40 
-                          hover:scale-105 active:scale-95 
-                          transition-all duration-200 ease-out">
-            <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <MessageCircle className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-white font-bold text-lg">陪我聊聊</span>
-          </div>
-        </button>
-
-        <p className="mt-6 text-sm text-muted-foreground">
-          像有人在身边陪着你 🌿
-        </p>
-      </motion.div>
-
-      {/* 3列功能入口 */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-        className="px-5 pb-6"
-      >
-        <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
-          {quickEntries.map((entry) => (
-            <button
-              key={entry.title}
-              onClick={() => navigate(entry.route)}
-              className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
-                         border border-orange-100/60 
-                         active:scale-95 transition-all duration-200"
-            >
-              <span className="text-2xl">{entry.emoji}</span>
-              <span className="text-sm font-semibold text-orange-900">{entry.title}</span>
-              <span className="text-[11px] text-orange-600/60">{entry.desc}</span>
-            </button>
-          ))}
         </div>
-      </motion.div>
 
-      {/* 平安打卡 CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-        className="px-5 pb-8"
-      >
-        <button
-          onClick={() => navigate("/alive-check")}
-          className="w-full max-w-md mx-auto flex items-center justify-between 
-                     px-5 py-4 rounded-2xl 
-                     bg-gradient-to-r from-emerald-50 to-teal-50 
-                     border border-emerald-200/60 
-                     active:scale-[0.98] transition-transform duration-200"
+        {/* Brand header */}
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-1"
         >
-          <div className="flex items-center gap-3">
-            <span className="text-xl">✅</span>
-            <div className="text-left">
-              <p className="text-sm font-semibold text-emerald-800">每日平安打卡</p>
-              <p className="text-[11px] text-emerald-600/70">轻点一下，让家人放心</p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-emerald-400" />
-        </button>
-      </motion.div>
+          <span className="text-4xl block mb-2">🌿</span>
+          <span className="text-[22px] font-extrabold tracking-wider text-orange-900">
+            大劲AI
+          </span>
+          <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">陪 长 辈 ， 有 大 劲</p>
+        </motion.div>
 
-      {/* Footer */}
-      <div className="text-center pb-10">
-        <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
+        {/* Voice CTA — Hero */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="flex flex-col items-center py-8"
+        >
+          <button
+            onClick={() => navigate("/elder-care/chat")}
+            className="relative group focus:outline-none touch-manipulation"
+            aria-label="开始聊天"
+          >
+            <div className="absolute inset-[-16px] bg-gradient-to-r from-orange-300 to-amber-300 rounded-full animate-pulse opacity-30" />
+            <div
+              className="absolute inset-[-8px] bg-gradient-to-r from-orange-400 to-amber-400 rounded-full animate-ping opacity-20"
+              style={{ animationDuration: "2s" }}
+            />
+
+            <div className="relative w-[140px] h-[140px] bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 
+                            rounded-full flex flex-col items-center justify-center 
+                            shadow-2xl shadow-orange-400/40 
+                            hover:scale-105 active:scale-95 
+                            transition-all duration-200 ease-out">
+              <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
+                <MessageCircle className="w-8 h-8 text-white" />
+              </div>
+              <span className="text-white font-bold text-lg">陪我聊聊</span>
+            </div>
+          </button>
+
+          <p className="mt-6 text-sm text-muted-foreground">
+            像有人在身边陪着你 🌿
+          </p>
+        </motion.div>
+
+        {/* 3列功能入口 */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="pb-6"
+        >
+          <div className="grid grid-cols-3 gap-3">
+            {quickEntries.map((entry) => (
+              <button
+                key={entry.title}
+                onClick={() => navigate(entry.route)}
+                className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
+                           border border-orange-100/60 
+                           active:scale-95 transition-all duration-200"
+              >
+                <span className="text-2xl">{entry.emoji}</span>
+                <span className="text-sm font-semibold text-orange-900">{entry.title}</span>
+                <span className="text-[11px] text-orange-600/60">{entry.desc}</span>
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* 平安打卡 CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="pb-8"
+        >
+          <button
+            onClick={() => navigate("/alive-check")}
+            className="w-full flex items-center justify-between 
+                       px-5 py-4 rounded-2xl 
+                       bg-gradient-to-r from-emerald-50 to-teal-50 
+                       border border-emerald-200/60 
+                       active:scale-[0.98] transition-transform duration-200"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">✅</span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-emerald-800">每日平安打卡</p>
+                <p className="text-[11px] text-emerald-600/70">轻点一下，让家人放心</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-emerald-400" />
+          </button>
+        </motion.div>
+
+        {/* Footer */}
+        <div className="text-center pb-6">
+          <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
+        </div>
       </div>
     </div>
   );
