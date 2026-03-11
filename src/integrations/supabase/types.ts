@@ -11019,6 +11019,38 @@ export type Database = {
           package_name: string
         }[]
       }
+      get_zhile_orders: {
+        Args: never
+        Returns: {
+          amount: number
+          buyer_address: string | null
+          buyer_name: string | null
+          buyer_phone: string | null
+          created_at: string | null
+          expired_at: string | null
+          id: string
+          order_no: string
+          order_type: string | null
+          package_key: string
+          package_name: string
+          paid_at: string | null
+          pay_type: string | null
+          product_name: string | null
+          qr_code_url: string | null
+          shipping_note: string | null
+          shipping_status: string | null
+          status: string | null
+          trade_no: string | null
+          updated_at: string | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
