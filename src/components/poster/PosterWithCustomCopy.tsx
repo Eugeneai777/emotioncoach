@@ -357,14 +357,14 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </div>
           </div>
 
-          <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '16px' }}>
+          <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>
             已有 1,000+ 小伙伴加入学习
           </p>
 
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3, margin: '0 0 8px 0', overflow: 'hidden', maxHeight: '52px' }}>
             {copy.headline}
           </h1>
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: '16px' }}>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: '10px' }}>
             {copy.subtitle}
           </p>
 
