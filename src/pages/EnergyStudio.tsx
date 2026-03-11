@@ -197,7 +197,7 @@ const EnergyStudio = () => {
                   key={entry.id}
                   interactive
                   className="text-center py-2.5 px-1"
-                  onClick={() => entry.id === 'store' ? setActiveCategory('store') : navigate(entry.route)}
+                  onClick={() => entry.route ? navigate(entry.route) : navigate('/health-store')}
                 >
                   <div className={`w-9 h-9 mx-auto rounded-xl bg-gradient-to-br ${entry.gradient} flex items-center justify-center mb-1`}>
                     <span className="text-base">{entry.emoji}</span>
