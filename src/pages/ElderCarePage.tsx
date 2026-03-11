@@ -126,7 +126,7 @@ const ElderCarePage = () => {
               color: "white",
               minHeight: 56,
             }}
-            onClick={() => handleComingSoon("长辈入口")}
+            onClick={() => navigate("/elder-care/chat")}
           >
             🧓 我是长辈，马上开始
           </Button>
