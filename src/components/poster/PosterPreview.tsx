@@ -661,10 +661,10 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '6px',
+          gap: '5px',
           marginBottom: '10px'
         }}>
-          {displaySellingPoints.slice(0, 4).map((point, idx) => (
+          {displaySellingPoints.slice(0, 3).map((point, idx) => (
             <div 
               key={idx}
               style={{
