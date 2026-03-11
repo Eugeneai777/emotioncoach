@@ -1,23 +1,44 @@
 
 
-## 两个问题需要修复
+# 修复青少年邀请卡片生成图片过窄问题
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+从截图可以看到两个问题：
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+1. **生成的图片本身非常窄** — 文字逐字换行（"Hey"、"测"、"试"各占一行），说明 html2canvas 捕获时卡片实际渲染宽度远小于 380px。原因：导出用的隐藏卡片放在 `fixed -left-[9999px]`，部分移动端浏览器会将屏幕外 fixed 元素的宽度压缩。
+2. **ShareImagePreview 图片没有铺满屏幕** — img 标签有 `max-w-[420px]` 硬限制，在小屏手机上虽然够用，但由于生成的图片本身就窄（宽高比极端），显示出来自然也窄。
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 修改方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 1. `src/components/parent-coach/TeenInviteShareDialog.tsx`
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+在调用 `generateCardBlob` 时传入 `explicitWidth: 380` 强制指定捕获宽度，防止 html2canvas 读到压缩后的元素尺寸：
+
+```typescript
+const blob = await generateCardBlob(exportRef, { 
+  isWeChat: isWeChatOrIOS(),
+  explicitWidth: 380,
+});
+```
+
+同时将隐藏导出卡片的容器改为使用 `min-width: 380px` 确保布局不被压缩：
+
+```html
+<div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none', minWidth: '380px' }}>
+```
+
+### 2. `src/components/ui/share-image-preview.tsx`
+
+将 img 的 `max-w-[420px]` 改为更宽的限制，让图片在移动端能填满可用宽度：
+
+```
+max-w-[420px] → max-w-full sm:max-w-[420px]
+```
+
+移动端去掉宽度上限，桌面端保持 420px 限制，与财富训练营分享页面一致。
+
+### 涉及文件
+- `src/components/parent-coach/TeenInviteShareDialog.tsx` — 传入 explicitWidth + 修复隐藏容器
+- `src/components/ui/share-image-preview.tsx` — 移动端图片宽度铺满
 
