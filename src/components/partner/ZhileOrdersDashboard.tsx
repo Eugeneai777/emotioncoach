@@ -394,7 +394,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </AdminTableContainer>
           )}
         </CardContent>
       </Card>
