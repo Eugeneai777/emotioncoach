@@ -284,9 +284,9 @@ const PromoPage = () => {
             <div className="space-y-4">
               {[
                 { time: "早上 7:30", icon: <Sun className="w-4 h-4 text-amber-500" />, action: "10分钟训练营", desc: "调整心态，满血出门", type: "camp" },
-                { time: "早餐后", icon: <Coffee className="w-4 h-4 text-orange-500" />, action: "知乐胶囊 1粒", desc: "激活身体防护", type: "capsule" },
-                { time: "午餐后", icon: <Zap className="w-4 h-4 text-yellow-500" />, action: "知乐胶囊 1粒", desc: "对抗午后焦虑", type: "capsule" },
-                { time: "晚餐后", icon: <Moon className="w-4 h-4 text-indigo-400" />, action: "知乐胶囊 1粒", desc: "安稳入睡", type: "capsule" },
+                { time: "早餐后", icon: <Coffee className="w-4 h-4 text-orange-500" />, action: "知乐胶囊 1次", desc: "激活身体防护", type: "capsule" },
+                { time: "午餐后", icon: <Zap className="w-4 h-4 text-yellow-500" />, action: "知乐胶囊 1次", desc: "对抗午后焦虑", type: "capsule" },
+                { time: "晚餐后", icon: <Moon className="w-4 h-4 text-indigo-400" />, action: "知乐胶囊 1次", desc: "安稳入睡", type: "capsule" },
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3 relative">
                   {/* Timeline connector */}
