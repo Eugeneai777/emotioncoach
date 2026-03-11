@@ -8,6 +8,7 @@ import { useMamaDailyQuote } from "@/hooks/useMamaDailyQuote";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface MamaDailyEnergyProps {
   onGratitudeSubmit: (text: string) => void;
