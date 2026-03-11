@@ -1,23 +1,47 @@
 
 
-## 两个问题需要修复
+# 修复安卓海报内容溢出问题
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题分析
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+从截图看，用户使用的是**朋友圈版（moments）**布局。在安卓设备上：
+- 主标语 `fontSize: '18px'` + `lineHeight: 1.5` 占用过多垂直空间，长文本（如"测完这个我才知道，原来我潜意识里一直在推开钱......"）导致下方内容溢出
+- 卖点气泡 `padding: '10px 14px'` + `gap: '10px'` 间距过大
+- QR 区域被推出容器底部，显示不完整
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+第二张图（iPhone）显示正确效果：标语字号适中，卖点紧凑，QR 完整显示。
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+## 修改方案
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### `src/components/poster/PosterPreview.tsx` — moments 布局压缩
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| 元素 | 当前值 | 修改为 |
+|------|--------|--------|
+| Emoji fontSize | 42px | 36px |
+| Emoji marginBottom | 6px | 4px |
+| 产品名 fontSize | 18px | 16px |
+| 产品名区 marginBottom | 12px | 8px |
+| **主标语 fontSize** | **18px** | **15px** |
+| 主标语 lineHeight | 1.5 | 1.4 |
+| 主标语 marginBottom | 20px | 12px |
+| 卖点 gap | 10px | 7px |
+| 卖点 padding | 10px 14px | 8px 12px |
+| 卖点 fontSize | 13px | 12px |
+| 卖点 marginBottom | 16px | 10px |
+| 情感引导语 marginBottom | 12px | 8px |
+
+同时对主标语容器添加 `overflow: 'hidden'`、`maxHeight` 限制，防止极长文本撑破布局。
+
+### `src/components/poster/PosterWithCustomCopy.tsx` — moments 布局同步
+
+朋友圈版的 headline `fontSize: '24px'` 也偏大，压缩到 `20px`，subtitle marginBottom `20px` → `12px`。
+
+### 其他版本检查
+
+默认版、小红书版、微信群版在上次修改中已有 `flex: 1` + `flexShrink: 0` 弹性空间，本次重点修复 moments 版。
+
+## 涉及文件
+
+- `src/components/poster/PosterPreview.tsx` — moments 布局间距压缩
+- `src/components/poster/PosterWithCustomCopy.tsx` — moments 布局同步压缩
 
