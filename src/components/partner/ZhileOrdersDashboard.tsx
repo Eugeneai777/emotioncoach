@@ -52,9 +52,8 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   });
 
   const updateShipping = useMutation({
-    mutationFn: async ({ orderId, status, note, source }: { orderId: string; status: string; note?: string; source?: string }) => {
+    mutationFn: async ({ orderId, status, note, source, field }: { orderId: string; status: string; note?: string; source?: string; field?: string; value?: string }) => {
       if (source === 'store_orders') {
-        // Update store_orders table
         const updateData: Record<string, string> = {
           status: status === 'shipped' ? 'shipped' : status === 'delivered' ? 'completed' : 'paid',
         };
@@ -62,28 +61,59 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
         if (status === 'shipped') updateData.shipped_at = new Date().toISOString();
         if (status === 'delivered') updateData.completed_at = new Date().toISOString();
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("store_orders" as any)
           .update(updateData)
-          .eq("id", orderId);
+          .eq("id", orderId)
+          .select("id");
         if (error) throw error;
+        if (!data || (data as any[]).length === 0) throw new Error("无权限更新此订单，请联系管理员");
       } else {
-        // Update orders table
         const updateData: Record<string, string> = { shipping_status: status };
         if (note !== undefined) updateData.shipping_note = note;
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("orders")
           .update(updateData)
-          .eq("id", orderId);
+          .eq("id", orderId)
+          .select("id");
         if (error) throw error;
+        if (!data || data.length === 0) throw new Error("无权限更新此订单，请联系管理员");
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
-      toast.success("物流状态已更新");
+      toast.success("已更新");
     },
-    onError: () => toast.error("更新失败"),
+    onError: (err: Error) => toast.error(err.message || "更新失败"),
+  });
+
+  // 更新收货信息（收货人/手机号/地址）
+  const updateBuyerInfo = useMutation({
+    mutationFn: async ({ orderId, field, value, source }: { orderId: string; field: string; value: string; source?: string }) => {
+      if (source === 'store_orders') {
+        const { data, error } = await supabase
+          .from("store_orders" as any)
+          .update({ [field]: value })
+          .eq("id", orderId)
+          .select("id");
+        if (error) throw error;
+        if (!data || (data as any[]).length === 0) throw new Error("无权限更新");
+      } else {
+        const { data, error } = await supabase
+          .from("orders")
+          .update({ [field]: value })
+          .eq("id", orderId)
+          .select("id");
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error("无权限更新");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
+      toast.success("已更新");
+    },
+    onError: (err: Error) => toast.error(err.message || "更新失败"),
   });
 
   const filtered = orders.filter(o => {
