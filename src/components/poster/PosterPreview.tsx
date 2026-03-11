@@ -730,7 +730,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         {/* 品牌Footer */}
         <div style={{
           textAlign: 'center',
-          marginTop: '10px',
+          marginTop: '6px',
           fontSize: '10px',
           opacity: 0.85,
           textShadow: '0 1px 3px rgba(0,0,0,0.3)'
