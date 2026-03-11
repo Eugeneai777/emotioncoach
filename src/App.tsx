@@ -63,6 +63,7 @@ const XiaojinMood = lazyRetry(() => import("./pages/xiaojin/XiaojinMood"));
 const XiaojinTalent = lazyRetry(() => import("./pages/xiaojin/XiaojinTalent"));
 const XiaojinFuture = lazyRetry(() => import("./pages/xiaojin/XiaojinFuture"));
 const XiaojinChallenge = lazyRetry(() => import("./pages/xiaojin/XiaojinChallenge"));
+const XiaojinVoice = lazyRetry(() => import("./pages/xiaojin/XiaojinVoice"));
 const HealthStore = lazyRetry(() => import("./pages/HealthStore"));
 const EnergyStudioIntro = lazyRetry(() => import("./pages/EnergyStudioIntro"));
 const LivingLab = lazyRetry(() => import("./pages/LivingLab"));
@@ -464,6 +465,7 @@ const App = () => (
               <Route path="/xiaojin/talent" element={<XiaojinTalent />} />
               <Route path="/xiaojin/future" element={<XiaojinFuture />} />
               <Route path="/xiaojin/challenge" element={<XiaojinChallenge />} />
+              <Route path="/xiaojin/voice" element={<XiaojinVoice />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
