@@ -7,6 +7,7 @@ import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 
 interface OrderShippingInfo {
   buyerName: string;
