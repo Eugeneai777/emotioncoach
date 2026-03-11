@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ProductDetailDialog } from "./ProductDetailDialog";
 import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 
 interface Product {
   id: string;
