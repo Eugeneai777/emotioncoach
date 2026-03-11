@@ -19,7 +19,7 @@ export default function XiaojinHome() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-2"
         >
-          <span className="text-xs tracking-widest text-orange-400 font-medium">小劲AI · 与光同行</span>
+          <span className="text-lg font-semibold tracking-widest text-orange-400">小劲AI · 与光同行</span>
         </motion.div>
 
         {/* Hero */}
@@ -29,9 +29,6 @@ export default function XiaojinHome() {
           transition={{ delay: 0.1 }}
           className="text-center mb-10"
         >
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            小劲AI
-          </h1>
           <p className="text-sm text-gray-500 leading-relaxed">
             每天3分钟<br />
             发现你的情绪 · 天赋 · 未来方向
