@@ -3,8 +3,8 @@ import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 import { HealthStoreGrid } from "@/components/store/HealthStoreGrid";
-import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { Helmet } from "react-helmet";
 import { usePartner } from "@/hooks/usePartner";
 import { toast } from "sonner";
 
