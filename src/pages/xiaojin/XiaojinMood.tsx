@@ -88,6 +88,13 @@ export default function XiaojinMood() {
       setAiResponse("网络好像不太好，再试一次吧 💛");
     } finally {
       setIsStreaming(false);
+      // Upload mood log after interaction
+      const intensityMap: Record<string, number> = { "开心": 1, "一般": 3, "有点烦": 4, "很烦": 5 };
+      uploadMoodLog({
+        moodLabel: selectedMood,
+        intensity: intensityMap[selectedMood] ?? 3,
+        featureUsed: "mood",
+      });
     }
   }, [selectedMood, userInput, deduct]);
 

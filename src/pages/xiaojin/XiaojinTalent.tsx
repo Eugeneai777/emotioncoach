@@ -84,6 +84,9 @@ export default function XiaojinTalent() {
       setCurrent(current + 1);
     } else {
       setDone(true);
+      // Upload mood log on completion
+      const topResult = Object.entries(newScores).sort((a, b) => b[1] - a[1])[0][0];
+      uploadMoodLog({ moodLabel: talentResults[topResult].name, intensity: 2, featureUsed: "talent" });
     }
   };
 

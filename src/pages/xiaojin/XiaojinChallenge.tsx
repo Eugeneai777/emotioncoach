@@ -42,6 +42,8 @@ export default function XiaojinChallenge() {
       return;
     }
     setCompleted(true);
+    // Upload mood log for challenge completion
+    uploadMoodLog({ moodLabel: "成长挑战", intensity: 2, featureUsed: "challenge" });
   };
 
   return (

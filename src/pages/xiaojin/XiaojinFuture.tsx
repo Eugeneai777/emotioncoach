@@ -60,6 +60,8 @@ export default function XiaojinFuture() {
       } catch { /* use defaults */ }
       setIsStreaming(false);
       setShowResult(true);
+      // Upload mood log on future direction completion
+      uploadMoodLog({ moodLabel: "探索未来", intensity: 2, featureUsed: "future" });
       return;
     }
 
