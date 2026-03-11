@@ -113,7 +113,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
 
     // Product badge component
     const ProductBadge = () => (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '6px' }}>
         <span style={{ fontSize: '14px' }}>{emoji}</span>
         <span style={{
           background: 'rgba(255,255,255,0.25)',
