@@ -101,6 +101,7 @@ export function UnifiedPayDialog({
         onSuccess={onSuccess}
         returnUrl={returnUrl}
         openId={openId}
+        shippingInfo={shippingInfo}
       />
     );
   }
