@@ -412,8 +412,8 @@ export default function SynergyPromoPage() {
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-            单独使用效果有限，组合使用效果翻倍。<br />
-            心理训练 + 生理调节，全方位守护你的职场战斗力。
+            专为中年男性设计，解决职场·家庭·健康三重压力。<br />
+            心理训练 + 生理调节，重塑你的自信与掌控力。
           </p>
 
           {/* Formula visual */}
