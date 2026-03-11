@@ -519,9 +519,11 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '16px',
           borderTopLeftRadius: '4px',
-          padding: '12px 14px',
-          marginBottom: '14px',
+          padding: '10px 12px',
+          marginBottom: '10px',
           color: '#1f2937',
+          overflow: 'hidden',
+          maxHeight: '60px',
           fontSize: '14px',
           lineHeight: 1.5,
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
