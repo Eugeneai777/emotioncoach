@@ -92,7 +92,7 @@ const timeline = [
   { time: "10:00", label: "财商认知练习", type: "mind" as const, desc: "卡点识别 + 认知重塑" },
   { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "15:00", label: "午后决策训练", type: "mind" as const, desc: "压力决策模拟练习" },
-  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
+  { time: "17:00", label: "下午服用", type: "body" as const, desc: "知乐胶囊 × 1次（建议17-18点）" },
   { time: "22:00", label: "财富日记复盘", type: "mind" as const, desc: "当日财务觉察 + 放松入睡" },
 ];
 
