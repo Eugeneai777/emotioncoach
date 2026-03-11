@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, Pill } from "lucide-react";
+import { Sparkles, ArrowRight, Pill, ShoppingCart } from "lucide-react";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AudienceType {
   id: string;
@@ -19,6 +23,9 @@ interface ProductCard {
   tag: string;
   tagColor: string;
   emoji: string;
+  isCapsule?: boolean;
+  price?: number;
+  originalPrice?: number;
 }
 
 const audiences: AudienceType[] = [
@@ -30,44 +37,121 @@ const audiences: AudienceType[] = [
   { id: "senior", emoji: "🌿", label: "长辈", subtitle: "健康·陪伴", gradient: "from-emerald-400 to-teal-500" },
 ];
 
+const CAPSULE_PRODUCT: ProductCard = {
+  title: "知乐胶囊",
+  description: "",
+  route: "",
+  tag: "推荐",
+  tagColor: "bg-cyan-500/20 text-cyan-400",
+  emoji: "💊",
+  isCapsule: true,
+  price: 0.01,
+  originalPrice: 299,
+};
+
+function makeCapsule(desc: string): ProductCard {
+  return { ...CAPSULE_PRODUCT, description: desc };
+}
+
 const productsByAudience: Record<string, ProductCard[]> = {
   mama: [
-    { title: "知乐胶囊", description: "天然植物配方，缓解焦虑、改善睡眠", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    makeCapsule("天然植物配方，缓解焦虑、改善睡眠"),
     { title: "宝妈AI助手", description: "专属情绪陪伴，育儿压力疏导", route: "/mama", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "🤱" },
     { title: "情绪健康测评", description: "3分钟了解你的情绪状态", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
   ],
   workplace: [
     { title: "心智×身体 协同抗压套餐", description: "训练营 + 知乐胶囊，双引擎协同", route: "/promo/synergy", tag: "限时特惠", tagColor: "bg-amber-500/20 text-amber-400", emoji: "🔥" },
-    { title: "知乐胶囊", description: "职场高压人群必备，提升抗压力", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    makeCapsule("职场高压人群必备，提升抗压力"),
     { title: "情绪健康测评", description: "了解你的职场倦怠指数", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
   ],
   couple: [
-    { title: "知乐胶囊", description: "情绪稳定是亲密关系的基石", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    makeCapsule("情绪稳定是亲密关系的基石"),
     { title: "婚姻关系页", description: "亲密关系沟通技巧与情感修复", route: "/marriage", tag: "查看", tagColor: "bg-violet-500/20 text-violet-400", emoji: "💑" },
     { title: "情绪健康测评", description: "了解双方的情绪互动模式", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
   ],
   youth: [
     { title: "情绪健康测评", description: "了解青少年情绪与压力状态", route: "/emotion-health", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "📊" },
-    { title: "知乐胶囊", description: "安全温和配方，适合青少年使用", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    makeCapsule("安全温和配方，适合青少年使用"),
     { title: "协同抗压套餐", description: "学业压力大？身心双管齐下", route: "/promo/synergy", tag: "套餐", tagColor: "bg-amber-500/20 text-amber-400", emoji: "🔥" },
   ],
   midlife: [
-    { title: "知乐胶囊", description: "中年转型期的身心能量补给", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    makeCapsule("中年转型期的身心能量补给"),
     { title: "中年觉醒页", description: "人生下半场，重新定义意义", route: "/laoge", tag: "查看", tagColor: "bg-yellow-500/20 text-yellow-400", emoji: "🧭" },
     { title: "协同抗压套餐", description: "训练营 + 胶囊，全方位支持", route: "/promo/synergy", tag: "套餐", tagColor: "bg-amber-500/20 text-amber-400", emoji: "🔥" },
   ],
   senior: [
-    { title: "知乐胶囊", description: "改善睡眠质量，提升日常活力", route: "/promo/synergy", tag: "推荐", tagColor: "bg-cyan-500/20 text-cyan-400", emoji: "💊" },
+    makeCapsule("改善睡眠质量，提升日常活力"),
     { title: "陪伴聊天", description: "AI智能陪聊，排解孤独感", route: "/elder-care/chat", tag: "免费体验", tagColor: "bg-green-500/20 text-green-400", emoji: "💬" },
     { title: "每日平安打卡", description: "子女远程关怀，每日确认安好", route: "/alive-check", tag: "免费", tagColor: "bg-green-500/20 text-green-400", emoji: "💗" },
   ],
+};
+
+const capsulePackageInfo = {
+  key: "zhile_capsule",
+  name: "知乐胶囊",
+  price: 0.01,
+  quota: 0,
 };
 
 export default function ZhileProductsPage() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
 
+  // Capsule purchase flow
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
+
   const products = selected ? productsByAudience[selected] ?? [] : [];
+
+  const handleProductClick = (p: ProductCard) => {
+    if (p.isCapsule) {
+      setCheckoutOpen(true);
+    } else {
+      navigate(p.route);
+    }
+  };
+
+  const handleCheckoutConfirm = (info: CheckoutInfo) => {
+    setCheckoutInfo(info);
+    setCheckoutOpen(false);
+    setPayOpen(true);
+  };
+
+  const handlePaySuccess = async () => {
+    if (checkoutInfo) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: recentOrder } = await supabase
+            .from('orders')
+            .select('id, order_no')
+            .eq('user_id', user.id)
+            .eq('package_key', 'zhile_capsule')
+            .eq('status', 'paid')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (recentOrder && recentOrder.length > 0) {
+            await supabase
+              .from('orders')
+              .update({
+                shipping_name: checkoutInfo.name,
+                shipping_phone: checkoutInfo.phone,
+                shipping_address: `${checkoutInfo.region} ${checkoutInfo.address}`,
+                shipping_status: 'pending',
+              } as any)
+              .eq('id', recentOrder[0].id);
+          }
+        }
+      } catch (e) {
+        console.error('Save shipping info error:', e);
+      }
+    }
+
+    setPayOpen(false);
+    toast.success("购买成功！胶囊将尽快为您发货 📦");
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 pb-12">
@@ -163,7 +247,7 @@ export default function ZhileProductsPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  onClick={() => navigate(p.route)}
+                  onClick={() => handleProductClick(p)}
                   className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/40 hover:border-slate-600/60 hover:bg-slate-800/80 transition-all text-left group"
                 >
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 flex items-center justify-center shrink-0">
@@ -176,9 +260,23 @@ export default function ZhileProductsPage() {
                         {p.tag}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">{p.description}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-slate-500 truncate">{p.description}</p>
+                      {p.isCapsule && p.price != null && (
+                        <span className="text-xs font-bold text-amber-400 shrink-0">
+                          ¥{p.price}
+                          {p.originalPrice && (
+                            <span className="text-[10px] text-slate-600 line-through ml-1">¥{p.originalPrice}</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
+                  {p.isCapsule ? (
+                    <ShoppingCart className="w-4 h-4 text-cyan-500 group-hover:text-cyan-400 transition-colors shrink-0" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
+                  )}
                 </motion.button>
               ))}
             </div>
@@ -190,6 +288,23 @@ export default function ZhileProductsPage() {
       <div className="text-center mt-10 px-4">
         <p className="text-xs text-slate-600">💊 知乐 · 让每一天都有好状态</p>
       </div>
+
+      {/* Checkout Form */}
+      <CheckoutForm
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        productName="知乐胶囊"
+        price={capsulePackageInfo.price}
+        onConfirm={handleCheckoutConfirm}
+      />
+
+      {/* Payment Dialog */}
+      <UnifiedPayDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        packageInfo={capsulePackageInfo}
+        onSuccess={handlePaySuccess}
+      />
     </div>
   );
 }
