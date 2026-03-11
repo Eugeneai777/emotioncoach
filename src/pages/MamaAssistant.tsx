@@ -7,11 +7,11 @@ import { introShareConfigs } from "@/config/introShareConfig";
 
 import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
 import MamaAIChat from "@/components/mama/MamaAIChat";
-import MamaAssessment from "@/components/mama/MamaAssessment";
+
 
 const quickEntries = [
   { emoji: "😊", title: "情绪检测", desc: "此刻还好吗", context: "我现在心情不太好，想聊聊..." },
-  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/mama" as string | undefined, context: undefined as string | undefined },
+  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/packages" as string | undefined, context: undefined as string | undefined },
   { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事..." },
 ];
 
@@ -20,7 +20,7 @@ const MamaAssistant = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [initialInput, setInitialInput] = useState<string | undefined>();
-  const [showAssessment, setShowAssessment] = useState(false);
+  
 
   const openChat = (context?: string) => {
     setChatContext(context);
@@ -28,17 +28,6 @@ const MamaAssistant = () => {
     setChatOpen(true);
   };
 
-  if (showAssessment) {
-    return (
-      <MamaAssessment
-        onBack={() => setShowAssessment(false)}
-        onOpenChat={(ctx) => {
-          setShowAssessment(false);
-          openChat(ctx);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white">
@@ -130,10 +119,10 @@ const MamaAssistant = () => {
               <button
                 key={entry.title}
                 onClick={() => {
-                  if (entry.context) {
+                  if (entry.route) {
+                    navigate(entry.route);
+                  } else if (entry.context) {
                     openChat(entry.context);
-                  } else {
-                    setShowAssessment(true);
                   }
                 }}
                 className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
@@ -166,7 +155,7 @@ const MamaAssistant = () => {
           className="pb-8"
         >
           <button
-            onClick={() => setShowAssessment(true)}
+            onClick={() => navigate("/packages")}
             className="w-full flex items-center justify-between 
                        px-5 py-4 rounded-2xl 
                        bg-gradient-to-r from-pink-50 to-rose-50 
