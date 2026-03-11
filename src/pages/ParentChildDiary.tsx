@@ -196,9 +196,10 @@ const ParentChildDiary = () => {
           </div>
         ) : (
           <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6 h-auto">
+            <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-6 h-auto">
               <ResponsiveTabsTrigger value="list" label="亲子简报" shortLabel="简报" />
               <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
+              <ResponsiveTabsTrigger value="child" label="孩子动态" shortLabel="孩子" />
               <ResponsiveTabsTrigger value="insights" label="模式洞察" shortLabel="洞察" />
             </TabsList>
 
@@ -271,7 +272,6 @@ const ParentChildDiary = () => {
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
-                  <XiaojinMoodReport />
                   <UnifiedEmotionHeatmap
                     briefings={sessions.map(s => ({
                       id: s.id,
@@ -297,7 +297,16 @@ const ParentChildDiary = () => {
               </ScrollArea>
             </TabsContent>
 
-            {/* Tab 3: 洞察 = PatternInsights + EmotionReview */}
+            {/* Tab 3: 孩子动态 = 小劲情绪周报 */}
+            <TabsContent value="child">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <div className="space-y-4 md:space-y-6">
+                  <XiaojinMoodReport />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            {/* Tab 4: 洞察 = PatternInsights + EmotionReview */}
             <TabsContent value="insights">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
