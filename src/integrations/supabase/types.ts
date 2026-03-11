@@ -3701,6 +3701,36 @@ export type Database = {
         }
         Relationships: []
       }
+      elder_mood_logs: {
+        Row: {
+          child_user_id: string
+          created_at: string
+          feature_used: string
+          id: string
+          intensity: number | null
+          mood_label: string
+          session_id: string
+        }
+        Insert: {
+          child_user_id: string
+          created_at?: string
+          feature_used: string
+          id?: string
+          intensity?: number | null
+          mood_label: string
+          session_id: string
+        }
+        Update: {
+          child_user_id?: string
+          created_at?: string
+          feature_used?: string
+          id?: string
+          intensity?: number | null
+          mood_label?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
       elder_mood_records: {
         Row: {
           created_at: string | null
