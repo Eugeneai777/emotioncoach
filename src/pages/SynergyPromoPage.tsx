@@ -105,10 +105,10 @@ const testimonials = [
 
 /* ========== Product specs ========== */
 const specs = [
-  { label: "每瓶", value: "90粒" },
+  { label: "每瓶", value: "84粒" },
   { label: "每日用量", value: "3次" },
-  { label: "持续天数", value: "30天" },
-  { label: "核心成分", value: "GABA + 茶氨酸" },
+  { label: "持续天数", value: "28天" },
+  { label: "核心成分", value: "16味草本精华科学配比" },
 ];
 
 /* ========== Main Page ========== */
