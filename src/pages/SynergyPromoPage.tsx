@@ -459,16 +459,16 @@ export default function SynergyPromoPage() {
                 <Brain className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <h3 className="font-bold text-violet-300">🧠 心智训练营</h3>
-                <p className="text-xs text-slate-400">21天系统化心理训练</p>
+                <h3 className="font-bold text-violet-300">🧘 7天情绪解压训练营</h3>
+                <p className="text-xs text-slate-400">7天深度进阶冥想体系</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
-              {["认知重塑", "情绪调节", "习惯养成"].map((t, i) => (
+              {["身心放松", "情绪释放", "内在安定"].map((t, i) => (
                 <div key={i} className="py-2 px-1 rounded-lg bg-violet-500/10 text-xs text-violet-300">{t}</div>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-3">✦ 从根源改变压力应对模式，效果持久</p>
+            <p className="text-xs text-slate-500 mt-3">✦ 听-思-聊闭环，7天重建情绪弹性</p>
           </div>
 
           {/* Plus */}
@@ -518,7 +518,7 @@ export default function SynergyPromoPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-amber-300">📦 香港直邮 · 预计4-7个工作日送达</p>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  建议收到知乐胶囊后再开启训练营，心智训练与身体修复同步进行，效果更佳。
+                  建议收到知乐胶囊后再开启训练营，情绪解压训练与身体修复同步进行，效果更佳。
                 </p>
               </div>
             </div>
@@ -708,7 +708,7 @@ export default function SynergyPromoPage() {
                   <span className="text-xl font-black text-amber-400">¥0.01</span>
                   <span className="text-xs text-slate-500 line-through">¥899</span>
                 </div>
-                <p className="text-[10px] text-slate-500 truncate">心智训练营 + 知乐胶囊 30天</p>
+                <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 30天</p>
               </div>
               <Button
                 onClick={handleBuyClick}
