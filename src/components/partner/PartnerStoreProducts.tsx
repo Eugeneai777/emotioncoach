@@ -129,16 +129,24 @@ export function PartnerStoreProducts({ partnerId }: PartnerStoreProductsProps) {
       if (imageUrl) payload.image_url = imageUrl;
 
       if (editingId) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from("health_store_products" as any)
           .update(payload)
-          .eq("id", editingId);
+          .eq("id", editingId)
+          .select();
         if (error) throw error;
+        if (!updated || (updated as any[]).length === 0) {
+          throw new Error("无权限修改此商品，请联系管理员");
+        }
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from("health_store_products" as any)
-          .insert(payload);
+          .insert(payload)
+          .select();
         if (error) throw error;
+        if (!inserted || (inserted as any[]).length === 0) {
+          throw new Error("无权限添加商品，请联系管理员");
+        }
       }
     },
     onSuccess: () => {
