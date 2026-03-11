@@ -92,7 +92,7 @@ const timeline = [
   { time: "10:00", label: "会前准备", type: "mind" as const, desc: "2分钟呼吸调节" },
   { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
   { time: "15:00", label: "午后重启", type: "mind" as const, desc: "认知重塑练习" },
-  { time: "19:00", label: "晚餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
+  { time: "17:00", label: "下午服用", type: "body" as const, desc: "知乐胶囊 × 1次（建议17-18点）" },
   { time: "22:00", label: "睡前放松", type: "mind" as const, desc: "身体扫描冥想" },
 ];
 
@@ -105,10 +105,10 @@ const testimonials = [
 
 /* ========== Product specs ========== */
 const specs = [
-  { label: "每瓶", value: "90粒" },
+  { label: "每瓶", value: "84粒" },
   { label: "每日用量", value: "3次" },
-  { label: "持续天数", value: "30天" },
-  { label: "核心成分", value: "GABA + 茶氨酸" },
+  { label: "持续天数", value: "28天" },
+  { label: "核心成分", value: "16味草本精华科学配比" },
 ];
 
 /* ========== Main Page ========== */
@@ -243,6 +243,29 @@ export default function SynergyPromoPage() {
     };
     checkPurchase();
   }, [user]);
+
+  // 微信支付 openId 预加载：进入 checkout 时提前获取，避免支付时延迟
+  useEffect(() => {
+    if (step !== 'checkout' && step !== 'payment') return;
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    if (!isWechat || paymentOpenId) return;
+
+    const cached = sessionStorage.getItem('wechat_payment_openid');
+    if (cached) { setPaymentOpenId(cached); return; }
+
+    if (user) {
+      supabase.from('wechat_user_mappings')
+        .select('openid')
+        .eq('system_user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.openid) {
+            setPaymentOpenId(data.openid);
+            sessionStorage.setItem('wechat_payment_openid', data.openid);
+          }
+        });
+    }
+  }, [step, user, paymentOpenId]);
 
   // Step 1: User clicks buy → open checkout form
   const handleBuyClick = () => {
@@ -541,7 +564,7 @@ export default function SynergyPromoPage() {
               </div>
               <div>
                 <h3 className="font-bold text-cyan-300">💊 知乐胶囊</h3>
-                <p className="text-xs text-slate-400"><p className="text-xs text-slate-400">每日3次 · 30天调理周期</p></p>
+                <p className="text-xs text-slate-400">每日3次 · 28天调理周期</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -729,7 +752,7 @@ export default function SynergyPromoPage() {
                 <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
                 <span className="text-slate-500 line-through text-sm">¥899</span>
               </div>
-              <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 30天套餐</p>
+              <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 28天套餐</p>
               <Button
                 onClick={handleBuyClick}
                 className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
@@ -765,7 +788,7 @@ export default function SynergyPromoPage() {
                   <span className="text-xl font-black text-amber-400">¥0.01</span>
                   <span className="text-xs text-slate-500 line-through">¥899</span>
                 </div>
-                <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 30天</p>
+                <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 28天</p>
               </div>
               <Button
                 onClick={handleBuyClick}
@@ -796,6 +819,7 @@ export default function SynergyPromoPage() {
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
+        openId={paymentOpenId}
       />
     </div>
   );
