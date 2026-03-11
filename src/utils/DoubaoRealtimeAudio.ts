@@ -2128,7 +2128,7 @@ export class DoubaoRealtimeChat {
       this.reconnectTimer = null;
     }
     this.reconnectInProgress = false;
-    this.isProactiveRotating = false;
+    
     this.reconnectAttempts = 0;
     this.removeLifecycleListeners();
     this.clearSessionConnectedWait();
