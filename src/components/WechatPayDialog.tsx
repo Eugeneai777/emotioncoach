@@ -521,8 +521,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
     codeExchangedRef.current = false; // 重置 code 换取标记
-    setUserOpenId(propOpenId || urlOpenId);
-    setOpenIdResolved(false);
+    // 🆕 保留 sessionStorage 中缓存的 openId，防止循环授权
+    const cachedId = propOpenId || urlOpenId || getCachedPaymentOpenId();
+    setUserOpenId(cachedId);
+    setOpenIdResolved(!!cachedId); // 如果有缓存的 openId，直接标记为已解析
     setIsRedirectingForOpenId(false);
     setIsExchangingCode(false);
 
