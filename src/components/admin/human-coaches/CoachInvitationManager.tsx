@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { Plus, Copy, Loader2, Link2, Trash2, Users } from "lucide-react";
+import { Plus, Copy, Loader2, Link2, Trash2, Users, Check, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +18,28 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+const CERT_OPTIONS = [
+  { value: "national_level2", label: "国家二级心理咨询师" },
+  { value: "national_level3", label: "国家三级心理咨询师" },
+  { value: "marriage_family", label: "婚姻家庭咨询师" },
+  { value: "sand_therapy", label: "沙盘治疗师" },
+  { value: "cbt_cert", label: "CBT 认知行为治疗认证" },
+  { value: "nlp_cert", label: "NLP 执行师认证" },
+  { value: "coaching_cert", label: "ICF 教练认证" },
+  { value: "eap_cert", label: "EAP 咨询师" },
+  { value: "psychology_degree", label: "心理学学位" },
+  { value: "education_degree", label: "教育学学位" },
+  { value: "social_work_cert", label: "社会工作师" },
+  { value: "mindfulness_cert", label: "正念导师认证" },
+];
+
 export function CoachInvitationManager() {
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [inviteeName, setInviteeName] = useState("");
   const [note, setNote] = useState("");
   const [defaultServiceName, setDefaultServiceName] = useState("绽放身份教练");
+  const [defaultCerts, setDefaultCerts] = useState<{ certType: string; certName: string }[]>([]);
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["coach-invitations"],
@@ -45,8 +61,9 @@ export function CoachInvitationManager() {
           invitee_name: inviteeName || null,
           note: note || null,
           default_service_name: defaultServiceName || null,
+          default_certifications: defaultCerts.length > 0 ? defaultCerts : [],
           created_by: (await supabase.auth.getUser()).data.user?.id,
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
@@ -60,6 +77,7 @@ export function CoachInvitationManager() {
       setInviteeName("");
       setNote("");
       setDefaultServiceName("绽放身份教练");
+      setDefaultCerts([]);
     },
     onError: (error) => {
       toast.error("创建失败: " + error.message);
@@ -222,6 +240,46 @@ export function CoachInvitationManager() {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>预设资质证书（可选）</Label>
+              <p className="text-xs text-muted-foreground">
+                选中的证书将在教练注册时自动带入，无需手动填写
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {CERT_OPTIONS.map((option) => {
+                  const selected = defaultCerts.some(c => c.certType === option.value);
+                  return (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant={selected ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full min-h-[36px] px-3 text-xs"
+                      onClick={() => {
+                        if (selected) {
+                          setDefaultCerts(defaultCerts.filter(c => c.certType !== option.value));
+                        } else {
+                          setDefaultCerts([...defaultCerts, { certType: option.value, certName: option.label }]);
+                        }
+                      }}
+                    >
+                      {selected && <Check className="h-3 w-3 mr-1" />}
+                      {option.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              {defaultCerts.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {defaultCerts.map(c => (
+                    <Badge key={c.certType} variant="secondary" className="gap-1">
+                      {c.certName}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setDefaultCerts(defaultCerts.filter(dc => dc.certType !== c.certType))} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">

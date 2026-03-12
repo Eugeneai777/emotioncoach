@@ -62,7 +62,7 @@ export default function BecomeCoach() {
     const validateInvite = async () => {
       const { data, error } = await supabase
         .from("coach_invitations")
-        .select("id, token, invitee_name, note, status, expires_at, default_service_name")
+        .select("id, token, invitee_name, note, status, expires_at, default_service_name, default_certifications")
         .eq("token", inviteToken)
         .eq("status", "pending")
         .single();
@@ -79,6 +79,19 @@ export default function BecomeCoach() {
 
       setInvitationData(data);
       setInviteStatus("valid");
+
+      // Pre-fill certifications from invitation
+      const presetCerts = (data as any).default_certifications;
+      if (Array.isArray(presetCerts) && presetCerts.length > 0) {
+        setCertifications(presetCerts.map((c: any) => ({
+          certType: c.certType,
+          certName: c.certName,
+          issuingAuthority: "",
+          certNumber: "",
+          imageUrl: "",
+          description: "",
+        })));
+      }
     };
 
     validateInvite();
@@ -348,6 +361,11 @@ export default function BecomeCoach() {
                 onChange={setCertifications}
                 onNext={() => setCurrentStep("submit")}
                 onBack={() => setCurrentStep("basic")}
+                presetCertTypes={
+                  Array.isArray((invitationData as any)?.default_certifications)
+                    ? (invitationData as any).default_certifications.map((c: any) => c.certType)
+                    : []
+                }
               />
             )}
 

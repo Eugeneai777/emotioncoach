@@ -1,40 +1,23 @@
 
 
-## 邀请链接预设资质证书
+## 两个问题需要修复
 
-### 需求
-管理员创建邀请链接时可预选资质证书（如"ICF 教练认证"），教练注册时这些证书自动带入且不可删除，其他证书可选填。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 改动
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-#### 1. 数据库：`coach_invitations` 加字段
-```sql
-ALTER TABLE public.coach_invitations 
-ADD COLUMN default_certifications JSONB DEFAULT '[]';
-```
-存储格式：`[{"certType": "coaching_cert", "certName": "ICF 教练认证"}, ...]`
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-#### 2. `CoachInvitationManager.tsx` — 增加预设证书选择
-- 在创建弹窗中增加证书多选区域，复用 `CERT_OPTIONS` 列表
-- 选中的证书以标签形式展示，存入 `default_certifications`
-- 新增 state：`defaultCerts`
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-#### 3. `BecomeCoach.tsx` — 邀请验证时读取预设证书
-- `validateInvite` 的 select 增加 `default_certifications`
-- 初始化 `certifications` state 时，将预设证书预填入
-- 将预设证书类型列表传给 `CertificationsStep`
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-#### 4. `CertificationsStep.tsx` — 预设证书不可删除，其他选填
-- 新增 prop：`presetCertTypes: string[]`（预设的证书 certType 列表）
-- 预设证书显示锁定标记，不显示删除按钮
-- 移除"至少选择1项"的校验（`isValid` 改为始终 `true`，因为预设证书已满足）
-- 下一步按钮文案改为"下一步：确认提交"
-
-### 涉及文件
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| migration SQL | `coach_invitations` 加 `default_certifications JSONB` |
-| `CoachInvitationManager.tsx` | 创建弹窗增加证书多选 |
-| `BecomeCoach.tsx` | 读取预设证书并初始化 |
-| `CertificationsStep.tsx` | 预设证书锁定，其他选填 |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
