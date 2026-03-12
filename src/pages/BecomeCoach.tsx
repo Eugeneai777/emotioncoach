@@ -103,16 +103,7 @@ export default function BecomeCoach() {
     yearsExperience: 0,
   });
 
-  // Pre-fill from invitation data
-  useEffect(() => {
-    if (invitationData) {
-      setBasicInfo((prev) => ({
-        ...prev,
-        displayName: invitationData.invitee_name || prev.displayName,
-        phone: invitationData.invitee_phone || prev.phone,
-      }));
-    }
-  }, [invitationData]);
+  // No pre-fill needed for batch invitations
 
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -192,15 +183,8 @@ export default function BecomeCoach() {
         if (serviceError) throw serviceError;
       }
 
-      // Mark invitation as used
-      await supabase
-        .from("coach_invitations")
-        .update({
-          status: "used",
-          used_by: user.id,
-          used_at: new Date().toISOString(),
-        })
-        .eq("id", invitationData.id);
+      // Increment invitation usage count
+      await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
 
       setCurrentStep("success");
       toast({ title: "申请提交成功！" });

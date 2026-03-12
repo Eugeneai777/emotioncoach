@@ -1928,12 +1928,10 @@ export type Database = {
           expires_at: string
           id: string
           invitee_name: string | null
-          invitee_phone: string | null
           note: string | null
           status: string
           token: string
-          used_at: string | null
-          used_by: string | null
+          used_count: number
         }
         Insert: {
           created_at?: string
@@ -1941,12 +1939,10 @@ export type Database = {
           expires_at?: string
           id?: string
           invitee_name?: string | null
-          invitee_phone?: string | null
           note?: string | null
           status?: string
           token?: string
-          used_at?: string | null
-          used_by?: string | null
+          used_count?: number
         }
         Update: {
           created_at?: string
@@ -1954,12 +1950,10 @@ export type Database = {
           expires_at?: string
           id?: string
           invitee_name?: string | null
-          invitee_phone?: string | null
           note?: string | null
           status?: string
           token?: string
-          used_at?: string | null
-          used_by?: string | null
+          used_count?: number
         }
         Relationships: []
       }
@@ -11155,6 +11149,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_coach_invitation_count: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
       }
       increment_session_count: {
         Args: { p_session_id: string }
