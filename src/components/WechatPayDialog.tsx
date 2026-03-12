@@ -403,10 +403,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         ? (propOpenId || mpOpenIdFromUrl || cachedMpOpenId)
         : (propOpenId || urlOpenId);
 
-      // 已有 openId（从 props 或 URL）：直接使用
-      if (existingOpenId) {
-        console.log('[Payment] Using existing openId:', propOpenId ? 'from props' : (isMiniProgram ? 'from mp_openid' : 'from URL'));
-        setUserOpenId(existingOpenId);
+      // 已有 openId（从 props、URL 或 sessionStorage 缓存）：直接使用
+      const cachedOpenId = getCachedPaymentOpenId();
+      if (existingOpenId || cachedOpenId) {
+        const resolvedId = existingOpenId || cachedOpenId!;
+        console.log('[Payment] Using existing openId:', propOpenId ? 'from props' : (isMiniProgram ? 'from mp_openid' : (existingOpenId ? 'from URL' : 'from cache')));
+        setUserOpenId(resolvedId);
+        cachePaymentOpenId(resolvedId);
         setOpenIdResolved(true);
 
         // 清理 URL 中的微信浏览器静默授权参数（不要清理 mp_openid）
