@@ -312,115 +312,160 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8 text-sm">暂无订单数据</p>
           ) : (
-              <Table className="min-w-[1200px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">下单时间</TableHead>
-                    <TableHead className="whitespace-nowrap">商品名称</TableHead>
-                    <TableHead className="min-w-[100px]">订单号</TableHead>
-                    <TableHead>用户</TableHead>
-                    <TableHead>收货人</TableHead>
-                    <TableHead>手机号</TableHead>
-                    <TableHead className="min-w-[160px]">收货地址</TableHead>
-                    <TableHead>清关信息</TableHead>
-                    <TableHead>金额</TableHead>
-                    <TableHead>物流状态</TableHead>
-                    <TableHead className="min-w-[140px]">快递单号</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(order => {
-                    const currentStatus = order.shipping_status || 'pending';
-                    const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <div style={{ minWidth: '1600px' }}>
+                  <TooltipProvider>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap min-w-[100px]">下单时间</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[140px]">商品名称</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[130px]">订单号</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[80px]">用户</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[70px]">收货人</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[100px]">手机号</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[180px]">收货地址</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[160px]">清关信息</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[60px]">金额</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[100px]">物流状态</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[140px]">快递单号</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.map(order => {
+                          const currentStatus = order.shipping_status || 'pending';
+                          const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
 
-                    return (
-                      <TableRow key={order.id}>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium whitespace-nowrap max-w-[150px] truncate">
-                          {order.product_name || '-'}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {order.order_no}
-                          {order.source === 'store_orders' && (
-                            <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[80px]"
-                              placeholder="昵称"
-                              defaultValue={order.user_display_name || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.user_display_name || '') && order.user_id) {
-                                  updateNickname.mutate({ userId: order.user_id, value: val });
-                                }
-                              }}
-                            />
-                          ) : (order.user_display_name || '-')}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {order.buyer_name || '-'}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {order.buyer_phone || '-'}
-                        </TableCell>
-                        <TableCell className="text-xs max-w-[200px] truncate">
-                          {order.buyer_address || '-'}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {order.id_card_name ? (
-                            <div>
-                              <p>{order.id_card_name}</p>
-                              <p className="text-muted-foreground">{order.id_card_number || '-'}</p>
-                            </div>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell className="font-medium">¥{order.amount}</TableCell>
-                        <TableCell>
-                          {isAdmin ? (
-                            <Select
-                              value={currentStatus}
-                              onValueChange={(val) => updateShipping.mutate({ orderId: order.id, status: val, source: order.source })}
-                            >
-                              <SelectTrigger className="h-7 text-xs w-[90px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {STATUS_OPTIONS.map(s => (
-                                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isAdmin ? (
-                            <Input
-                              className="h-7 text-xs w-[130px]"
-                              placeholder="输入快递单号"
-                              defaultValue={order.shipping_note || ''}
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                if (val !== (order.shipping_note || '')) {
-                                  updateShipping.mutate({ orderId: order.id, status: currentStatus, note: val, source: order.source });
-                                }
-                              }}
-                            />
-                          ) : (
-                            <span className="text-xs text-muted-foreground">{order.shipping_note || '-'}</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          return (
+                            <TableRow key={order.id}>
+                              <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-sm font-medium max-w-[140px] truncate block cursor-help">
+                                      {order.product_name || '-'}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-xs">
+                                    <p className="text-sm">{order.product_name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs whitespace-nowrap">
+                                {order.order_no}
+                                {order.source === 'store_orders' && (
+                                  <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm whitespace-nowrap">
+                                {isAdmin ? (
+                                  <Input
+                                    className="h-7 text-xs w-[80px]"
+                                    placeholder="昵称"
+                                    defaultValue={order.user_display_name || ''}
+                                    onBlur={(e) => {
+                                      const val = e.target.value.trim();
+                                      if (val !== (order.user_display_name || '') && order.user_id) {
+                                        updateNickname.mutate({ userId: order.user_id, value: val });
+                                      }
+                                    }}
+                                  />
+                                ) : (order.user_display_name || '-')}
+                              </TableCell>
+                              <TableCell className="text-sm whitespace-nowrap">
+                                {order.buyer_name || '-'}
+                              </TableCell>
+                              <TableCell className="text-sm whitespace-nowrap">
+                                {order.buyer_phone || '-'}
+                              </TableCell>
+                              <TableCell className="text-xs whitespace-nowrap">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="max-w-[180px] truncate block cursor-help">
+                                      {order.buyer_address || '-'}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-sm">
+                                    <p className="text-sm">{order.buyer_address}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="text-xs whitespace-nowrap">
+                                {isAdmin && (!order.id_card_name && !order.id_card_number) ? (
+                                  <div className="flex gap-1">
+                                    <Input
+                                      className="h-7 text-xs w-[60px]"
+                                      placeholder="姓名"
+                                      onBlur={(e) => {
+                                        const name = e.target.value.trim();
+                                        const numInput = e.target.parentElement?.querySelector<HTMLInputElement>('input:last-child');
+                                        const num = numInput?.value?.trim() || '';
+                                        if (name && num) {
+                                          updateCustomsInfo.mutate({ orderId: order.id, idCardName: name, idCardNumber: num, source: order.source });
+                                        }
+                                      }}
+                                    />
+                                    <Input
+                                      className="h-7 text-xs w-[90px]"
+                                      placeholder="证件号"
+                                    />
+                                  </div>
+                                ) : order.id_card_name ? (
+                                  <div>
+                                    <p>{order.id_card_name}</p>
+                                    <p className="text-muted-foreground">{order.id_card_number || '-'}</p>
+                                  </div>
+                                ) : <span className="text-muted-foreground">-</span>}
+                              </TableCell>
+                              <TableCell className="font-medium whitespace-nowrap">¥{order.amount}</TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                {isAdmin ? (
+                                  <Select
+                                    value={currentStatus}
+                                    onValueChange={(val) => updateShipping.mutate({ orderId: order.id, status: val, source: order.source })}
+                                  >
+                                    <SelectTrigger className="h-7 text-xs w-[90px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {STATUS_OPTIONS.map(s => (
+                                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                {isAdmin ? (
+                                  <Input
+                                    className="h-7 text-xs w-[130px]"
+                                    placeholder="输入快递单号"
+                                    defaultValue={order.shipping_note || ''}
+                                    onBlur={(e) => {
+                                      const val = e.target.value.trim();
+                                      if (val !== (order.shipping_note || '')) {
+                                        updateShipping.mutate({ orderId: order.id, status: currentStatus, note: val, source: order.source });
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">{order.shipping_note || '-'}</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TooltipProvider>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
