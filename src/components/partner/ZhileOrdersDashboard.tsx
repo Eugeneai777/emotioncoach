@@ -27,6 +27,7 @@ interface ZhileOrdersDashboardProps {
 
 export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardProps) {
   const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
