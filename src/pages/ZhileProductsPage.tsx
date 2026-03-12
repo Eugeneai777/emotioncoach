@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, Pill, ShoppingCart } from "lucide-react";
+import { Sparkles, ArrowRight, Pill, ShoppingCart, LogIn, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
