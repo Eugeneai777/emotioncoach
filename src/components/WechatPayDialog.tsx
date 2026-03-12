@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
 import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
+import { setPostAuthRedirect } from '@/lib/postAuthRedirect';
 
 // 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
@@ -983,7 +984,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           if (!user) {
             localStorage.setItem('pending_claim_order', data.orderNo || orderNo);
             const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
-            localStorage.setItem('post_auth_redirect', guestRedirectPath);
+            setPostAuthRedirect(guestRedirectPath);
             setStatus('guest_success');
             confetti({
               particleCount: 100,
@@ -1085,7 +1086,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           if (!user) {
             localStorage.setItem('pending_claim_order', pendingOrderNo);
             const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
-            localStorage.setItem('post_auth_redirect', guestRedirectPath);
+            setPostAuthRedirect(guestRedirectPath);
             setStatus('guest_success');
             confetti({
               particleCount: 100,
@@ -1363,7 +1364,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 <Button
                   onClick={() => {
                     const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
-                    localStorage.setItem('post_auth_redirect', guestRedirectPath);
+                    setPostAuthRedirect(guestRedirectPath);
                     onOpenChange(false);
                     navigate(`/auth?redirect=${encodeURIComponent(guestRedirectPath)}`);
                   }}

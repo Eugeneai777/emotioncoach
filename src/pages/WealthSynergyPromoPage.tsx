@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 
 /* ========== Animated Progress Bar ========== */
@@ -229,7 +230,7 @@ export default function WealthSynergyPromoPage() {
         } else {
           // 🆕 确保游客订单号和跳转路径已设置（Alipay H5 回跳场景）
           localStorage.setItem('pending_claim_order', callbackOrderNo);
-          localStorage.setItem('post_auth_redirect', '/camp-intro/wealth_block_7');
+          setPostAuthRedirect('/camp-intro/wealth_block_7');
           setStep('register');
         }
       }
@@ -391,14 +392,14 @@ export default function WealthSynergyPromoPage() {
       handleEnterCamp();
     } else {
       // 设置登录/注册后的跳转目标，防止被 OAuth 回调或首页重定向覆盖
-      localStorage.setItem('post_auth_redirect', '/camp-intro/wealth_block_7');
+      setPostAuthRedirect('/camp-intro/wealth_block_7');
       setStep('register');
     }
   };
 
   // 注册成功后直接跳转到训练营介绍页
   const handleRegisterSuccess = (userId: string) => {
-    localStorage.removeItem('post_auth_redirect');
+    clearPostAuthRedirect();
     navigate('/camp-intro/wealth_block_7');
   };
 

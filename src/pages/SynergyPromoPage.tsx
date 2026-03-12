@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 
 /* ========== Animated Progress Bar ========== */
@@ -233,7 +234,7 @@ export default function SynergyPromoPage() {
         } else {
           // 🆕 确保游客订单号和跳转路径已设置（Alipay H5 回跳场景）
           localStorage.setItem('pending_claim_order', callbackOrderNo);
-          localStorage.setItem('post_auth_redirect', '/camp-intro/emotion_stress_7');
+          setPostAuthRedirect('/camp-intro/emotion_stress_7');
           setStep('register');
         }
       }
@@ -415,7 +416,7 @@ export default function SynergyPromoPage() {
       handleEnterCamp();
     } else {
       // 设置登录/注册后的跳转目标，防止被 OAuth 回调或首页重定向覆盖
-      localStorage.setItem('post_auth_redirect', '/camp-intro/emotion_stress_7');
+      setPostAuthRedirect('/camp-intro/emotion_stress_7');
       setStep('register');
     }
   };
@@ -423,7 +424,7 @@ export default function SynergyPromoPage() {
   // Step 4: Registration success → 自动进入训练营
   const handleRegisterSuccess = (userId: string) => {
     // 清理跳转标记并跳转到训练营介绍页
-    localStorage.removeItem('post_auth_redirect');
+    clearPostAuthRedirect();
     navigate('/camp-intro/emotion_stress_7');
   };
 

@@ -73,7 +73,7 @@ const PartnerIntro = () => {
   const handlePurchase = () => {
     if (!user) {
       toast.error("请先登录");
-      navigate("/auth");
+      navigate("/auth?redirect=/partner-intro");
       return;
     }
     setPayDialogOpen(true);

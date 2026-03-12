@@ -105,7 +105,7 @@ export default function PosterCenter() {
       >
         <div className="text-center">
           <p className="text-muted-foreground mb-4">请先登录后使用海报中心</p>
-          <Button onClick={() => navigate('/auth')}>去登录</Button>
+          <Button onClick={() => navigate('/auth?redirect=/poster-center')}>去登录</Button>
         </div>
       </div>
     );

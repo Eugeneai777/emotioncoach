@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { consumePostAuthRedirect } from "@/lib/postAuthRedirect";
 
 const DEFAULT_COACH = "/coach/vibrant_life_sage";
 
@@ -12,10 +13,9 @@ const SmartHomeRedirect = () => {
   useEffect(() => {
     if (authLoading) return;
 
-    // 检查是否有 promo 页支付后的跳转目标
-    const postAuthRedirect = localStorage.getItem('post_auth_redirect');
+    // 检查是否有 promo 页支付后的跳转目标（带时效）
+    const postAuthRedirect = consumePostAuthRedirect();
     if (postAuthRedirect) {
-      localStorage.removeItem('post_auth_redirect');
       setTargetPath(postAuthRedirect);
       return;
     }
