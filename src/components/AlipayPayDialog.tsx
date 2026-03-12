@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
+import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
 
 interface PackageInfo {
   key: string;
