@@ -189,6 +189,14 @@ export default function SynergyPromoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // 环境检测：移动端非微信浏览器使用支付宝，微信环境使用微信支付
+  const shouldUseAlipay = useMemo(() => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isWechat = isWeChatBrowser();
+    const isMiniProgram = isWeChatMiniProgram();
+    return isMobile && !isWechat && !isMiniProgram;
+  }, []);
+
   // Multi-step flow: browse → checkout → payment → register → success
   const [step, setStep] = useState<'browse' | 'checkout' | 'payment' | 'register' | 'success'>('browse');
   const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
