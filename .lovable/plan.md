@@ -1,23 +1,59 @@
 
 
-## 两个问题需要修复
+## Plan: 宝妈AI对话结束时推荐课程中心视频
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 思路
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+在对话进行到一定轮数后（≥4条消息），调用现有的 `recommend-courses` Edge Function，基于对话内容匹配课程中心的视频，在聊天底部展示推荐卡片。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 改动
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
-
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
-
-| 文件 | 修改 |
+| 文件 | 内容 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/mama/MamaAIChat.tsx` | 对话 ≥4 条消息时，调用 `recommend-courses` 获取推荐视频，在 `MamaConversionCard` 下方展示视频推荐卡片 |
+| `src/components/mama/MamaCourseRecommendation.tsx` | **新建**：宝妈AI专用的课程推荐组件，展示1-2个匹配视频，点击跳转观看 |
+
+### 具体逻辑
+
+**1. `MamaAIChat.tsx`**
+- 新增 state: `courseRecommendations`
+- 当最后一条 assistant 消息流式完成 + 消息数 ≥4 时，调用 `recommend-courses`：
+  ```typescript
+  supabase.functions.invoke('recommend-courses', {
+    body: {
+      briefing: {
+        emotion_theme: messages.map(m => m.content).join(' '),
+        tags: [chatType === 'gratitude' ? '感恩' : '情绪管理']
+      },
+      coachType: 'mama'
+    }
+  })
+  ```
+- 将返回的 recommendations 存入 state，在聊天消息流末尾渲染 `MamaCourseRecommendation`
+
+**2. `MamaCourseRecommendation.tsx`（新建）**
+- 接收 recommendations 数组，展示前2个推荐
+- 每个卡片显示：标题、匹配度、推荐理由
+- 点击"观看课程"→ 跳转 `/courses` 或直接打开视频 URL
+- 风格与现有 MamaConversionCard 一致（暖色调、圆角卡片）
+- 包含"查看更多课程"按钮跳转 `/courses`
+
+```text
+┌──────────────────────────────────┐
+│ 🎬 为你推荐相关课程               │
+│                                  │
+│ ┌────────────┐ ┌────────────┐   │
+│ │ 匹配92%    │ │ 匹配85%    │   │
+│ │ 课程标题   │ │ 课程标题   │   │
+│ │ 推荐理由   │ │ 推荐理由   │   │
+│ │ [观看课程] │ │ [观看课程] │   │
+│ └────────────┘ └────────────┘   │
+│        [查看更多课程 →]          │
+└──────────────────────────────────┘
+```
+
+### 要点
+- 推荐请求在后台执行，不阻塞聊天
+- 仅在有推荐结果时显示卡片
+- 复用现有 `recommend-courses` 函数，无需新建后端接口
 
