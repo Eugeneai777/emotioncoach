@@ -52,12 +52,7 @@ export default function HumanCoaches() {
           <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
             我的后台
           </Button>
-        ) : (
-          <Button variant="outline" size="sm" onClick={() => navigate("/become-coach")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
-            <UserPlus className="w-4 h-4 mr-1" />
-            申请入驻
-          </Button>
-        )
+        ) : null
       } />
       
       {/* 搜索和筛选 */}

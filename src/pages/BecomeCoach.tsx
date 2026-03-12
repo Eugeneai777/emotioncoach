@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CheckCircle2, ShieldAlert } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { BasicInfoStep } from "@/components/coach-application/BasicInfoStep";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Step = "basic" | "certifications" | "services" | "submit" | "success";
 
@@ -48,10 +49,50 @@ const STEPS: { key: Step; label: string }[] = [
 
 export default function BecomeCoach() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<Step>("basic");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Invitation validation
+  const inviteToken = searchParams.get("invite");
+  const [inviteStatus, setInviteStatus] = useState<"loading" | "valid" | "invalid" | "none">(
+    inviteToken ? "loading" : "none"
+  );
+  const [invitationData, setInvitationData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!inviteToken) {
+      setInviteStatus("none");
+      return;
+    }
+
+    const validateInvite = async () => {
+      const { data, error } = await supabase
+        .from("coach_invitations")
+        .select("*")
+        .eq("token", inviteToken)
+        .eq("status", "pending")
+        .single();
+
+      if (error || !data) {
+        setInviteStatus("invalid");
+        return;
+      }
+
+      // Check expiration
+      if (new Date(data.expires_at) < new Date()) {
+        setInviteStatus("invalid");
+        return;
+      }
+
+      setInvitationData(data);
+      setInviteStatus("valid");
+    };
+
+    validateInvite();
+  }, [inviteToken]);
 
   const [basicInfo, setBasicInfo] = useState<BasicInfoData>({
     displayName: "",
@@ -62,6 +103,17 @@ export default function BecomeCoach() {
     yearsExperience: 0,
   });
 
+  // Pre-fill from invitation data
+  useEffect(() => {
+    if (invitationData) {
+      setBasicInfo((prev) => ({
+        ...prev,
+        displayName: invitationData.invitee_name || prev.displayName,
+        phone: invitationData.invitee_phone || prev.phone,
+      }));
+    }
+  }, [invitationData]);
+
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [services, setServices] = useState<Service[]>([]);
 
@@ -71,7 +123,12 @@ export default function BecomeCoach() {
   const handleSubmit = async () => {
     if (!user) {
       toast({ title: "请先登录", variant: "destructive" });
-      navigate("/auth");
+      navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
+
+    if (inviteStatus !== "valid" || !invitationData) {
+      toast({ title: "邀请链接无效", variant: "destructive" });
       return;
     }
 
@@ -135,6 +192,16 @@ export default function BecomeCoach() {
         if (serviceError) throw serviceError;
       }
 
+      // Mark invitation as used
+      await supabase
+        .from("coach_invitations")
+        .update({
+          status: "used",
+          used_by: user.id,
+          used_at: new Date().toISOString(),
+        })
+        .eq("id", invitationData.id);
+
       setCurrentStep("success");
       toast({ title: "申请提交成功！" });
     } catch (error) {
@@ -149,13 +216,63 @@ export default function BecomeCoach() {
     }
   };
 
+  // Loading invitation validation
+  if (inviteStatus === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-4 w-64 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  // No invite token or invalid
+  if (inviteStatus === "none" || inviteStatus === "invalid") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-md">
+          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+            <ShieldAlert className="h-10 w-10 text-amber-600" />
+          </div>
+          <h2 className="text-2xl font-semibold text-foreground">
+            {inviteStatus === "invalid" ? "邀请链接已失效" : "需要邀请链接"}
+          </h2>
+          <p className="text-muted-foreground">
+            {inviteStatus === "invalid"
+              ? "该邀请链接已过期或已被使用，请联系管理员获取新的邀请链接。"
+              : "成为教练需要通过邀请链接申请，请联系管理员获取邀请链接。"}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={() => navigate("/human-coaches")}>
+              浏览教练列表
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              返回首页
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Need login
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-semibold">请先登录</h2>
-          <p className="text-muted-foreground">登录后即可申请成为教练</p>
-          <Button onClick={() => navigate("/auth")}>前往登录</Button>
+          <p className="text-muted-foreground">登录后即可填写教练资料</p>
+          <Button
+            onClick={() =>
+              navigate(
+                `/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`
+              )
+            }
+          >
+            前往登录
+          </Button>
         </div>
       </div>
     );
@@ -189,93 +306,107 @@ export default function BecomeCoach() {
   return (
     <>
       <DynamicOGMeta pageKey="becomeCoach" />
-    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
-      {/* Header */}
-      <PageHeader title="申请成为教练" showBack />
+      <div
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {/* Header */}
+        <PageHeader title="申请成为教练" showBack />
 
-      {/* Progress */}
-      <div className="max-w-lg mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-2">
-          {STEPS.map((step, index) => {
-            const currentIndex = getCurrentStepIndex();
-            const isCompleted = index < currentIndex;
-            const isCurrent = index === currentIndex;
+        {/* Invitation info banner */}
+        {invitationData && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
+              ✨ 您已收到教练入驻邀请
+              {invitationData.invitee_name && `（${invitationData.invitee_name}）`}
+              ，请填写以下资料完成申请
+            </div>
+          </div>
+        )}
 
-            return (
-              <div key={step.key} className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                    isCompleted
-                      ? "bg-primary text-primary-foreground"
-                      : isCurrent
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {isCompleted ? "✓" : index + 1}
-                </div>
-                {index < STEPS.length - 1 && (
+        {/* Progress */}
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-2">
+            {STEPS.map((step, index) => {
+              const currentIndex = getCurrentStepIndex();
+              const isCompleted = index < currentIndex;
+              const isCurrent = index === currentIndex;
+
+              return (
+                <div key={step.key} className="flex items-center">
                   <div
-                    className={`w-12 h-0.5 mx-1 ${
-                      index < currentIndex ? "bg-primary" : "bg-muted"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                      isCompleted
+                        ? "bg-primary text-primary-foreground"
+                        : isCurrent
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
                     }`}
-                  />
-                )}
-              </div>
-            );
-          })}
+                  >
+                    {isCompleted ? "✓" : index + 1}
+                  </div>
+                  {index < STEPS.length - 1 && (
+                    <div
+                      className={`w-12 h-0.5 mx-1 ${
+                        index < currentIndex ? "bg-primary" : "bg-muted"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            {STEPS.map((step) => (
+              <span key={step.key} className="w-16 text-center">
+                {step.label}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
-          {STEPS.map((step) => (
-            <span key={step.key} className="w-16 text-center">
-              {step.label}
-            </span>
-          ))}
+
+        {/* Content */}
+        <div className="max-w-lg mx-auto px-4 pb-8">
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
+            {currentStep === "basic" && (
+              <BasicInfoStep
+                data={basicInfo}
+                onChange={setBasicInfo}
+                onNext={() => setCurrentStep("certifications")}
+              />
+            )}
+
+            {currentStep === "certifications" && (
+              <CertificationsStep
+                data={certifications}
+                onChange={setCertifications}
+                onNext={() => setCurrentStep("services")}
+                onBack={() => setCurrentStep("basic")}
+              />
+            )}
+
+            {currentStep === "services" && (
+              <ServicesStep
+                data={services}
+                onChange={setServices}
+                onNext={() => setCurrentStep("submit")}
+                onBack={() => setCurrentStep("certifications")}
+              />
+            )}
+
+            {currentStep === "submit" && (
+              <SubmitStep
+                basicInfo={basicInfo}
+                certifications={certifications}
+                services={services}
+                onSubmit={handleSubmit}
+                onBack={() => setCurrentStep("services")}
+                isSubmitting={isSubmitting}
+              />
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="max-w-lg mx-auto px-4 pb-8">
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
-          {currentStep === "basic" && (
-            <BasicInfoStep
-              data={basicInfo}
-              onChange={setBasicInfo}
-              onNext={() => setCurrentStep("certifications")}
-            />
-          )}
-
-          {currentStep === "certifications" && (
-            <CertificationsStep
-              data={certifications}
-              onChange={setCertifications}
-              onNext={() => setCurrentStep("services")}
-              onBack={() => setCurrentStep("basic")}
-            />
-          )}
-
-          {currentStep === "services" && (
-            <ServicesStep
-              data={services}
-              onChange={setServices}
-              onNext={() => setCurrentStep("submit")}
-              onBack={() => setCurrentStep("certifications")}
-            />
-          )}
-
-          {currentStep === "submit" && (
-            <SubmitStep
-              basicInfo={basicInfo}
-              certifications={certifications}
-              services={services}
-              onSubmit={handleSubmit}
-              onBack={() => setCurrentStep("services")}
-              isSubmitting={isSubmitting}
-            />
-          )}
-        </div>
-      </div>
-    </div>
     </>
   );
 }

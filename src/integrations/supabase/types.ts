@@ -1921,6 +1921,48 @@ export type Database = {
           },
         ]
       }
+      coach_invitations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          invitee_name: string | null
+          invitee_phone: string | null
+          note: string | null
+          status: string
+          token: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          invitee_name?: string | null
+          invitee_phone?: string | null
+          note?: string | null
+          status?: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          invitee_name?: string | null
+          invitee_phone?: string | null
+          note?: string | null
+          status?: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       coach_price_tiers: {
         Row: {
           created_at: string | null

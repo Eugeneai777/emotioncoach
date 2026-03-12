@@ -3,12 +3,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CoachApplicationsList } from "./CoachApplicationsList";
 import { ApprovedCoachesList } from "./ApprovedCoachesList";
+import { CoachInvitationManager } from "./CoachInvitationManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCheck, Clock, XCircle, Users } from "lucide-react";
+import { UserCheck, Clock, XCircle, Users, Link2 } from "lucide-react";
 
 export function HumanCoachesManagement() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("invitations");
 
   // 获取统计数据
   const { data: stats } = useQuery({
@@ -95,6 +96,10 @@ export function HumanCoachesManagement() {
       {/* Tab 内容 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
+          <TabsTrigger value="invitations" className="gap-2">
+            <Link2 className="h-4 w-4" />
+            邀请管理
+          </TabsTrigger>
           <TabsTrigger value="pending" className="gap-2">
             <Clock className="h-4 w-4" />
             待审核 {stats?.pending ? `(${stats.pending})` : ""}
@@ -108,6 +113,10 @@ export function HumanCoachesManagement() {
             已拒绝 {stats?.rejected ? `(${stats.rejected})` : ""}
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="invitations" className="mt-4">
+          <CoachInvitationManager />
+        </TabsContent>
 
         <TabsContent value="pending" className="mt-4">
           <CoachApplicationsList status="pending" />
