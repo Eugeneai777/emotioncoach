@@ -120,6 +120,12 @@ serve(async (req) => {
     // === 权益发放 ===
     const pkgKey = order.package_key;
 
+    // synergy_bundle / wealth_synergy_bundle 套餐训练营映射
+    const bundleCampMap: Record<string, { campType: string; campName: string }> = {
+      'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+      'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+    };
+
     // 训练营购买
     if (pkgKey.startsWith('camp-')) {
       const campType = pkgKey.replace('camp-', '');
@@ -147,6 +153,28 @@ serve(async (req) => {
         console.error('[ClaimGuestOrder] Camp purchase error:', purchaseError);
       } else {
         console.log('[ClaimGuestOrder] Camp purchase recorded:', campType);
+      }
+    } else if (bundleCampMap[pkgKey]) {
+      // 套餐训练营权益发放
+      const bundleCamp = bundleCampMap[pkgKey];
+      const { error: purchaseError } = await supabase
+        .from('user_camp_purchases')
+        .upsert({
+          user_id: userId,
+          camp_type: bundleCamp.campType,
+          camp_name: bundleCamp.campName,
+          purchase_price: order.amount,
+          payment_method: order.pay_type || 'wechat',
+          payment_status: 'completed',
+          transaction_id: order.trade_no,
+          purchased_at: order.paid_at || new Date().toISOString(),
+          expires_at: null,
+        }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
+
+      if (purchaseError) {
+        console.error(`[ClaimGuestOrder] ${pkgKey} camp purchase error:`, purchaseError);
+      } else {
+        console.log(`[ClaimGuestOrder] ${pkgKey} camp purchase recorded for ${bundleCamp.campType}`);
       }
     } else {
       // 非训练营：增加配额

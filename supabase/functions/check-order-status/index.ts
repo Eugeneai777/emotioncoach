@@ -206,32 +206,37 @@ serve(async (req) => {
         }
       }
 
-      // 自愈逻辑：synergy_bundle 补写 user_camp_purchases
-      if (order.user_id && order.package_key === 'synergy_bundle') {
+      // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases
+      const bundleCampMap: Record<string, { campType: string; campName: string }> = {
+        'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+        'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+      };
+      const bundleCamp = order.user_id ? bundleCampMap[order.package_key] : null;
+      if (bundleCamp) {
         try {
           const { data: existingCamp } = await supabase
             .from('user_camp_purchases')
             .select('id')
             .eq('user_id', order.user_id)
-            .eq('camp_type', 'emotion_journal_21')
+            .eq('camp_type', bundleCamp.campType)
             .eq('payment_status', 'completed')
             .maybeSingle();
 
           if (!existingCamp) {
             await supabase.from('user_camp_purchases').insert({
               user_id: order.user_id,
-              camp_type: 'emotion_journal_21',
-              camp_name: '21天情绪日记训练营',
+              camp_type: bundleCamp.campType,
+              camp_name: bundleCamp.campName,
               purchase_price: order.amount,
               payment_method: 'wechat',
               payment_status: 'completed',
               purchased_at: order.paid_at || new Date().toISOString(),
               expires_at: null,
             });
-            console.log('[CheckOrder] Repaired missing synergy_bundle camp purchase:', order.user_id);
+            console.log(`[CheckOrder] Repaired missing ${order.package_key} camp purchase:`, order.user_id);
           }
         } catch (repairErr) {
-          console.error('[CheckOrder] synergy_bundle camp repair error:', repairErr);
+          console.error(`[CheckOrder] ${order.package_key} camp repair error:`, repairErr);
         }
       }
 
@@ -307,20 +312,27 @@ serve(async (req) => {
                   expires_at: null,
                 });
                 console.log('[CheckOrder] Camp purchase recorded:', campType);
-              } else if (pkgKey === 'synergy_bundle') {
-                // synergy_bundle 特殊处理：补写训练营购买记录
-                await supabase.from('user_camp_purchases').upsert({
-                  user_id: fullOrder.user_id,
-                  camp_type: 'emotion_journal_21',
-                  camp_name: '21天情绪日记训练营',
-                  purchase_price: fullOrder.amount,
-                  payment_method: 'wechat',
-                  payment_status: 'completed',
-                  transaction_id: wechatResult.transaction_id,
-                  purchased_at: new Date().toISOString(),
-                  expires_at: null,
-                }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
-                console.log('[CheckOrder] synergy_bundle camp purchase recorded for emotion_journal_21');
+              } else {
+                // synergy_bundle / wealth_synergy_bundle 特殊处理
+                const bundleCampMapNew: Record<string, { campType: string; campName: string }> = {
+                  'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+                  'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+                };
+                const bundleCampNew = bundleCampMapNew[pkgKey];
+                if (bundleCampNew) {
+                  await supabase.from('user_camp_purchases').upsert({
+                    user_id: fullOrder.user_id,
+                    camp_type: bundleCampNew.campType,
+                    camp_name: bundleCampNew.campName,
+                    purchase_price: fullOrder.amount,
+                    payment_method: 'wechat',
+                    payment_status: 'completed',
+                    transaction_id: wechatResult.transaction_id,
+                    purchased_at: new Date().toISOString(),
+                    expires_at: null,
+                  }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
+                  console.log(`[CheckOrder] ${pkgKey} camp purchase recorded for ${bundleCampNew.campType}`);
+                }
               }
               
               if (!pkgKey.startsWith('camp-')) {

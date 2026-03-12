@@ -160,6 +160,39 @@ serve(async (req) => {
           }
         }
 
+        // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases
+        const bundleCampMapHeal: Record<string, { campType: string; campName: string }> = {
+          'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+          'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+        };
+        const healCamp = order.user_id ? bundleCampMapHeal[order.package_key] : null;
+        if (healCamp) {
+          try {
+            const { data: existingCamp } = await supabase
+              .from('user_camp_purchases')
+              .select('id')
+              .eq('user_id', order.user_id)
+              .eq('camp_type', healCamp.campType)
+              .eq('payment_status', 'completed')
+              .maybeSingle();
+            if (!existingCamp) {
+              await supabase.from('user_camp_purchases').insert({
+                user_id: order.user_id,
+                camp_type: healCamp.campType,
+                camp_name: healCamp.campName,
+                purchase_price: order.amount,
+                payment_method: 'alipay',
+                payment_status: 'completed',
+                purchased_at: order.paid_at || new Date().toISOString(),
+                expires_at: null,
+              });
+              console.log(`[AlipayCallback] Repaired missing ${order.package_key} camp purchase:`, order.user_id);
+            }
+          } catch (repairErr) {
+            console.error(`[AlipayCallback] ${order.package_key} camp repair error:`, repairErr);
+          }
+        }
+
         return new Response('success', { headers: corsHeaders });
       }
 
@@ -246,6 +279,37 @@ serve(async (req) => {
           }
         } catch (subErr) {
           console.error('[AlipayCallback] Subscription processing error:', subErr);
+        }
+
+        // === synergy_bundle / wealth_synergy_bundle 训练营购买记录 ===
+        const bundleCampMapNew: Record<string, { campType: string; campName: string }> = {
+          'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+          'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+        };
+        const bundleCampNew = bundleCampMapNew[order.package_key];
+        if (bundleCampNew) {
+          try {
+            const { error: campErr } = await supabase
+              .from('user_camp_purchases')
+              .upsert({
+                user_id: order.user_id,
+                camp_type: bundleCampNew.campType,
+                camp_name: bundleCampNew.campName,
+                purchase_price: order.amount,
+                payment_method: 'alipay',
+                payment_status: 'completed',
+                transaction_id: tradeNo,
+                purchased_at: new Date().toISOString(),
+                expires_at: null,
+              }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
+            if (campErr) {
+              console.error(`[AlipayCallback] ${order.package_key} camp purchase error:`, campErr);
+            } else {
+              console.log(`[AlipayCallback] ${order.package_key} camp purchase recorded for ${bundleCampNew.campType}`);
+            }
+          } catch (e) {
+            console.error(`[AlipayCallback] ${order.package_key} camp purchase exception:`, e);
+          }
         }
       }
     }
