@@ -137,9 +137,10 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (isPaid) {
         clearTimers();
         
-        // 未登录用户：存储订单号，显示引导登录界面
+        // 未登录用户：存储订单号并保存登录后回跳路径
         if (!user) {
           localStorage.setItem('pending_claim_order', orderNumber);
+          localStorage.setItem('post_auth_redirect', guestRedirectPath);
           setStatus('guest_success');
           confetti({
             particleCount: 100,
