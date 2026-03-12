@@ -274,34 +274,32 @@ serve(async (req) => {
     }
 
     // === synergy_bundle / wealth_synergy_bundle 特殊处理：补写训练营购买记录 ===
-    const bundleCampMapNew: Record<string, { campType: string; campName: string }> = {
-      'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
-      'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+    const bundleCampMapNew: Record<string, Array<{ campType: string; campName: string }>> = {
+      'synergy_bundle': [
+        { campType: 'emotion_stress_7', campName: '7天情绪解压训练营' },
+        { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+      ],
+      'wealth_synergy_bundle': [{ campType: 'wealth_block_7', campName: '财富觉醒训练营' }],
     };
-    const bundleCampNew = bundleCampMapNew[order.package_key];
-    if (bundleCampNew) {
-      try {
-        const { error: campPurchaseError } = await supabase
-          .from('user_camp_purchases')
-          .upsert({
+    const bundleCampsNew = bundleCampMapNew[order.package_key];
+    if (bundleCampsNew) {
+      for (const camp of bundleCampsNew) {
+        try {
+          await supabase.from('user_camp_purchases').insert({
             user_id: order.user_id,
-            camp_type: bundleCampNew.campType,
-            camp_name: bundleCampNew.campName,
+            camp_type: camp.campType,
+            camp_name: camp.campName,
             purchase_price: order.amount,
             payment_method: 'wechat',
             payment_status: 'completed',
             transaction_id: tradeNo,
             purchased_at: new Date().toISOString(),
             expires_at: null,
-          }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
-
-        if (campPurchaseError) {
-          console.error(`[WechatCallback] ${order.package_key} camp purchase error:`, campPurchaseError);
-        } else {
-          console.log(`[WechatCallback] ${order.package_key} camp purchase recorded for ${bundleCampNew.campType}`);
+          });
+          console.log(`[WechatCallback] ${order.package_key} camp purchase recorded for ${camp.campType}`);
+        } catch (e) {
+          console.error(`[WechatCallback] ${camp.campType} camp purchase exception:`, e);
         }
-      } catch (e) {
-        console.error(`[WechatCallback] ${order.package_key} camp purchase exception:`, e);
       }
     }
 
