@@ -61,8 +61,9 @@ export function CoachInvitationManager() {
           invitee_name: inviteeName || null,
           note: note || null,
           default_service_name: defaultServiceName || null,
+          default_certifications: defaultCerts.length > 0 ? defaultCerts : [],
           created_by: (await supabase.auth.getUser()).data.user?.id,
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
