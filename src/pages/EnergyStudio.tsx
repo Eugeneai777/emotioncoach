@@ -4,11 +4,11 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, ChevronRight } from "lucide-react";
+import { ArrowLeft, Sparkles, ChevronRight, Clock, CheckCircle2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { categories, getCategoryConfig } from "@/config/energyStudioTools";
+import { categories, assessmentToolIds, getToolById } from "@/config/energyStudioTools";
 import { cn } from "@/lib/utils";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MindfulnessPractice } from "@/components/tools/MindfulnessPractice";
@@ -37,7 +37,7 @@ interface ToolCard {
   title: string;
   description: string;
   icon_name: string;
-  category: "emotion" | "exploration" | "management";
+  category: string;
   gradient: string;
   is_available: boolean;
 }
@@ -56,7 +56,7 @@ const EnergyStudio = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  const [activeCategory, setActiveCategory] = useState<"emotion" | "exploration" | "management" | "store">("emotion");
+  const [activeTab, setActiveTab] = useState<"tools" | "assessments">("tools");
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
   // 根据 URL hash 跳转
@@ -80,7 +80,9 @@ const EnergyStudio = () => {
     }
   });
 
-  const filteredTools = tools.filter(tool => tool.category === activeCategory);
+  // 按 type 筛选：用 assessmentToolIds 判断
+  const toolItems = tools.filter(t => !assessmentToolIds.has(t.tool_id));
+  const assessmentItems = tools.filter(t => assessmentToolIds.has(t.tool_id));
 
   // 获取图标组件
   const getIcon = (iconName: string) => {
@@ -89,40 +91,19 @@ const EnergyStudio = () => {
   };
 
   const handleToolClick = (toolId: string) => {
-    if (toolId === 'awakening') {
-      navigate('/awakening');
-      return;
-    }
-    if (toolId === 'goals') {
-      navigate('/goals');
-      return;
-    }
-    if (toolId === 'wealth-block') {
-      navigate('/wealth-block');
-      return;
-    }
-    if (toolId === 'scl90') {
-      navigate('/scl90');
-      return;
-    }
-    if (toolId === 'emotion-health') {
-      navigate('/emotion-health');
-      return;
-    }
-    if (toolId === 'women-competitiveness') {
-      navigate('/women-competitiveness');
-      return;
-    }
-    if (toolId === 'comm-assessment') {
-      navigate('/communication-assessment');
-      return;
-    }
-    if (toolId === 'parent-ability') {
-      navigate('/parent-ability-assessment');
-      return;
-    }
-    if (toolId === 'midlife-awakening') {
-      navigate('/midlife-awakening');
+    const navRoutes: Record<string, string> = {
+      awakening: "/awakening",
+      goals: "/goals",
+      "wealth-block": "/wealth-block",
+      scl90: "/scl90",
+      "emotion-health": "/emotion-health",
+      "women-competitiveness": "/women-competitiveness",
+      "comm-assessment": "/communication-assessment",
+      "parent-ability": "/parent-ability-assessment",
+      "midlife-awakening": "/midlife-awakening",
+    };
+    if (navRoutes[toolId]) {
+      navigate(navRoutes[toolId]);
       return;
     }
     setActiveTool(toolId);
@@ -160,9 +141,7 @@ const EnergyStudio = () => {
     }
   };
 
-  const getCategoryDescription = (category: string) => {
-    return getCategoryConfig(category)?.description || "";
-  };
+  const currentCategory = categories.find(c => c.id === activeTab);
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -190,7 +169,7 @@ const EnergyStudio = () => {
             {/* 人群专区入口 */}
             <AudienceHub />
 
-            {/* 快捷入口 - 2x2 网格 */}
+            {/* 快捷入口 */}
             <div className="grid grid-cols-5 gap-1.5">
               {quickEntries.map((entry) => (
                 <MobileCard 
@@ -207,43 +186,36 @@ const EnergyStudio = () => {
               ))}
             </div>
 
-            {/* 分类选择 - 简洁横向滚动 */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-3 px-3">
-              {categories.map((category) => (
+            {/* 两个主标签：日常工具 / 专业测评 */}
+            <div className="flex gap-2">
+              {categories.map((cat) => (
                 <button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id as typeof activeCategory)}
+                  key={cat.id}
+                  onClick={() => setActiveTab(cat.id)}
                   className={cn(
-                    "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                    activeCategory === category.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                    "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all",
+                    activeTab === cat.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   )}
                 >
-                  <span className="mr-1">{category.emoji}</span>
-                  {category.name}
+                  <span className="mr-1">{cat.emoji}</span>
+                  {cat.name}
                 </button>
               ))}
             </div>
 
             {/* 分类描述 */}
             <p className="text-xs text-muted-foreground text-center">
-              {getCategoryDescription(activeCategory)}
+              {currentCategory?.description}
             </p>
 
-            {/* 健康商城 */}
-            {activeCategory === "store" ? (
-              <HealthStoreGrid />
-            ) : (
+            {/* 日常工具列表 */}
+            {activeTab === "tools" && (
               <>
-                {/* 情绪🆘按钮预览卡片 */}
-                {activeCategory === "emotion" && (
-                  <EmotionSOSPreviewCard />
-                )}
-
-                {/* 工具列表 - 紧凑卡片 */}
+                <EmotionSOSPreviewCard />
                 <div className="space-y-2">
-                  {filteredTools.map((tool, index) => (
+                  {toolItems.map((tool, index) => (
                     <MobileCard
                       key={tool.id}
                       interactive
@@ -276,10 +248,63 @@ const EnergyStudio = () => {
                 </div>
               </>
             )}
+
+            {/* 专业测评列表 */}
+            {activeTab === "assessments" && (
+              <div className="space-y-2">
+                {assessmentItems.map((tool, index) => {
+                  const config = getToolById(tool.tool_id);
+                  const tags = config?.tags || [];
+                  const duration = config?.duration;
+
+                  return (
+                    <MobileCard
+                      key={tool.id}
+                      interactive
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                      onClick={() => handleToolClick(tool.tool_id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-br ${tool.gradient} text-white`}>
+                          {getIcon(tool.icon_name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-medium">{tool.title}</span>
+                            {tags.map(tag => (
+                              <span
+                                key={tag}
+                                className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                                  tag === "热门" && "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+                                  tag === "新" && "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
+                                  tag === "推荐" && "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+                                  tag === "专业" && "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+                                )}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{tool.description}</p>
+                          {duration && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Clock className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground">{duration}</span>
+                            </div>
+                          )}
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      </div>
+                    </MobileCard>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </main>
-
     </div>
   );
 };
