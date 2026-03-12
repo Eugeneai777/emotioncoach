@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, User, FileCheck, Coins, Send, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, User, FileCheck, Clock, Send, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,17 +26,10 @@ interface Certification {
   description: string;
 }
 
-interface Service {
-  serviceName: string;
-  description: string;
-  durationMinutes: number;
-  price: number;
-}
-
 interface SubmitStepProps {
   basicInfo: BasicInfoData;
   certifications: Certification[];
-  services: Service[];
+  defaultServiceName?: string;
   onSubmit: () => Promise<void>;
   onBack: () => void;
   isSubmitting: boolean;
@@ -45,7 +38,7 @@ interface SubmitStepProps {
 export function SubmitStep({
   basicInfo,
   certifications,
-  services,
+  defaultServiceName,
   onSubmit,
   onBack,
   isSubmitting,
@@ -64,7 +57,6 @@ export function SubmitStep({
           action: "recommend_badge",
           basicInfo,
           certifications,
-          services,
         },
       });
       if (error) throw error;
@@ -74,7 +66,6 @@ export function SubmitStep({
           setRecommendedBadge(parsed.badge);
           setBadgeReason(parsed.reason);
         } catch {
-          // If not valid JSON, try to extract
           setRecommendedBadge("certified");
           setBadgeReason(data.result);
         }
@@ -165,28 +156,19 @@ export function SubmitStep({
         </div>
       </Card>
 
-      {/* Services Summary */}
-      <Card className="p-4 space-y-3">
+      {/* Default Service Info */}
+      <Card className="p-4 space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium">
-          <Coins className="h-4 w-4" />
-          服务项目 ({services.length}项)
+          <Clock className="h-4 w-4" />
+          默认服务
         </div>
-        <div className="space-y-2">
-          {services.map((service, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between py-2 border-b border-border last:border-0"
-            >
-              <div>
-                <div className="text-sm font-medium">{service.serviceName}</div>
-                <div className="text-xs text-muted-foreground">
-                  {service.durationMinutes}分钟
-                </div>
-              </div>
-              <div className="text-primary font-medium">¥{service.price}</div>
-            </div>
-          ))}
+        <div className="text-sm">
+          <span className="font-medium">{defaultServiceName || `${basicInfo.displayName} 咨询`}</span>
+          <span className="text-muted-foreground ml-2">· 60分钟</span>
         </div>
+        <p className="text-xs text-muted-foreground">
+          系统将自动为您创建默认服务，价格由平台审核后设定
+        </p>
       </Card>
 
       {/* AI Badge Recommendation */}

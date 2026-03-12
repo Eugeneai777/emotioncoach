@@ -1,0 +1,1 @@
+ALTER TABLE public.coach_invitations ADD COLUMN default_service_name TEXT;

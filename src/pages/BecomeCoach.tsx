@@ -5,7 +5,6 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { BasicInfoStep } from "@/components/coach-application/BasicInfoStep";
 import { CertificationsStep } from "@/components/coach-application/CertificationsStep";
-import { ServicesStep } from "@/components/coach-application/ServicesStep";
 import { SubmitStep } from "@/components/coach-application/SubmitStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type Step = "basic" | "certifications" | "services" | "submit" | "success";
+type Step = "basic" | "certifications" | "submit" | "success";
 
 interface BasicInfoData {
   displayName: string;
@@ -33,17 +32,9 @@ interface Certification {
   description: string;
 }
 
-interface Service {
-  serviceName: string;
-  description: string;
-  durationMinutes: number;
-  price: number;
-}
-
 const STEPS: { key: Step; label: string }[] = [
   { key: "basic", label: "基本信息" },
   { key: "certifications", label: "资质证书" },
-  { key: "services", label: "服务项目" },
   { key: "submit", label: "确认提交" },
 ];
 
@@ -71,7 +62,7 @@ export default function BecomeCoach() {
     const validateInvite = async () => {
       const { data, error } = await supabase
         .from("coach_invitations")
-        .select("id, token, invitee_name, note, status, expires_at")
+        .select("id, token, invitee_name, note, status, expires_at, default_service_name")
         .eq("token", inviteToken)
         .eq("status", "pending")
         .single();
@@ -81,7 +72,6 @@ export default function BecomeCoach() {
         return;
       }
 
-      // Check expiration
       if (new Date(data.expires_at) < new Date()) {
         setInviteStatus("invalid");
         return;
@@ -103,10 +93,7 @@ export default function BecomeCoach() {
     yearsExperience: 0,
   });
 
-  // No pre-fill needed for batch invitations
-
   const [certifications, setCertifications] = useState<Certification[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
 
   const getCurrentStepIndex = () =>
     STEPS.findIndex((s) => s.key === currentStep);
@@ -164,24 +151,21 @@ export default function BecomeCoach() {
         if (certError) throw certError;
       }
 
-      // Create services
-      if (services.length > 0) {
-        const serviceRecords = services.map((service, index) => ({
+      // Auto-create default service (60 min)
+      const serviceName = invitationData.default_service_name || `${basicInfo.displayName} 咨询`;
+      const { error: serviceError } = await supabase
+        .from("coach_services")
+        .insert({
           coach_id: coachData.id,
-          service_name: service.serviceName,
-          description: service.description || null,
-          duration_minutes: service.durationMinutes,
-          price: service.price,
+          service_name: serviceName,
+          description: null,
+          duration_minutes: 60,
+          price: 0,
           is_active: true,
-          display_order: index,
-        }));
+          display_order: 0,
+        });
 
-        const { error: serviceError } = await supabase
-          .from("coach_services")
-          .insert(serviceRecords);
-
-        if (serviceError) throw serviceError;
-      }
+      if (serviceError) throw serviceError;
 
       // Increment invitation usage count
       await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
@@ -241,7 +225,7 @@ export default function BecomeCoach() {
     );
   }
 
-  // Need login - valid invite but not authenticated
+  // Need login
   if (!user) {
     const currentUrl = `/become-coach?invite=${inviteToken}`;
     return (
@@ -294,10 +278,8 @@ export default function BecomeCoach() {
         className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {/* Header */}
         <PageHeader title="申请成为教练" showBack />
 
-        {/* Invitation info banner */}
         {invitationData && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
@@ -331,7 +313,7 @@ export default function BecomeCoach() {
                   </div>
                   {index < STEPS.length - 1 && (
                     <div
-                      className={`w-12 h-0.5 mx-1 ${
+                      className={`w-16 h-0.5 mx-1 ${
                         index < currentIndex ? "bg-primary" : "bg-muted"
                       }`}
                     />
@@ -342,7 +324,7 @@ export default function BecomeCoach() {
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             {STEPS.map((step) => (
-              <span key={step.key} className="w-16 text-center">
+              <span key={step.key} className="w-20 text-center">
                 {step.label}
               </span>
             ))}
@@ -364,17 +346,8 @@ export default function BecomeCoach() {
               <CertificationsStep
                 data={certifications}
                 onChange={setCertifications}
-                onNext={() => setCurrentStep("services")}
-                onBack={() => setCurrentStep("basic")}
-              />
-            )}
-
-            {currentStep === "services" && (
-              <ServicesStep
-                data={services}
-                onChange={setServices}
                 onNext={() => setCurrentStep("submit")}
-                onBack={() => setCurrentStep("certifications")}
+                onBack={() => setCurrentStep("basic")}
               />
             )}
 
@@ -382,9 +355,9 @@ export default function BecomeCoach() {
               <SubmitStep
                 basicInfo={basicInfo}
                 certifications={certifications}
-                services={services}
+                defaultServiceName={invitationData?.default_service_name}
                 onSubmit={handleSubmit}
-                onBack={() => setCurrentStep("services")}
+                onBack={() => setCurrentStep("certifications")}
                 isSubmitting={isSubmitting}
               />
             )}

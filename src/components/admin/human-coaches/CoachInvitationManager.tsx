@@ -23,6 +23,7 @@ export function CoachInvitationManager() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [inviteeName, setInviteeName] = useState("");
   const [note, setNote] = useState("");
+  const [defaultServiceName, setDefaultServiceName] = useState("绽放身份教练");
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["coach-invitations"],
@@ -43,6 +44,7 @@ export function CoachInvitationManager() {
         .insert({
           invitee_name: inviteeName || null,
           note: note || null,
+          default_service_name: defaultServiceName || null,
           created_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
@@ -57,6 +59,7 @@ export function CoachInvitationManager() {
       setShowCreateDialog(false);
       setInviteeName("");
       setNote("");
+      setDefaultServiceName("绽放身份教练");
     },
     onError: (error) => {
       toast.error("创建失败: " + error.message);
@@ -200,7 +203,18 @@ export function CoachInvitationManager() {
               />
             </div>
             <div>
-              <Label>备注（可选，如教练类型说明）</Label>
+              <Label>统一服务名称</Label>
+              <Input
+                placeholder="如：绽放身份教练"
+                value={defaultServiceName}
+                onChange={(e) => setDefaultServiceName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                教练注册时将自动创建此名称的60分钟服务
+              </p>
+            </div>
+            <div>
+              <Label>备注（可选）</Label>
               <Input
                 placeholder="如：擅长亲子关系的教练"
                 value={note}
