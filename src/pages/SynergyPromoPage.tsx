@@ -7,6 +7,7 @@ import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
 import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import { useAuth } from "@/hooks/useAuth";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
@@ -201,6 +202,25 @@ export default function SynergyPromoPage() {
     quota: 1,
   };
 
+  // ✅ 页面级支付回调：处理 H5 支付返回后的状态恢复
+  usePaymentCallback({
+    onSuccess: (callbackOrderNo, packageKey) => {
+      // 仅处理本页面相关的 synergy_bundle 订单
+      if (packageKey === 'synergy_bundle' || !packageKey) {
+        setOrderNo(callbackOrderNo);
+        setAlreadyPurchased(true);
+        if (user) {
+          setStep('success');
+        } else {
+          setStep('register');
+        }
+      }
+    },
+    showToast: true,
+    showConfetti: true,
+    priority: 'page',
+  });
+
   // 检查用户是否已购买过 synergy_bundle（兼容多种购买路径）
   useEffect(() => {
     const checkPurchase = async () => {
@@ -250,7 +270,8 @@ export default function SynergyPromoPage() {
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
     if (!isWechat || paymentOpenId) return;
 
-    const cached = sessionStorage.getItem('wechat_payment_openid');
+    // 统一使用 cached_wechat_openid（与 useWechatOpenId hook 保持一致）
+    const cached = sessionStorage.getItem('cached_wechat_openid');
     if (cached) { setPaymentOpenId(cached); return; }
 
     if (user) {
@@ -261,7 +282,7 @@ export default function SynergyPromoPage() {
         .then(({ data }) => {
           if (data?.openid) {
             setPaymentOpenId(data.openid);
-            sessionStorage.setItem('wechat_payment_openid', data.openid);
+            sessionStorage.setItem('cached_wechat_openid', data.openid);
           }
         });
     }
@@ -285,10 +306,10 @@ export default function SynergyPromoPage() {
     if (checkoutInfo) {
       try {
         // 1. 先尝试从 localStorage 获取游客订单号
-        let orderNo = localStorage.getItem('pending_claim_order');
+        let foundOrderNo = localStorage.getItem('pending_claim_order') || '';
         
         // 2. 已登录用户：查询最新已支付订单作为兜底
-        if (!orderNo) {
+        if (!foundOrderNo) {
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           if (currentUser) {
             const { data: latestOrder } = await supabase
@@ -300,14 +321,16 @@ export default function SynergyPromoPage() {
               .order('created_at', { ascending: false })
               .limit(1)
               .maybeSingle();
-            if (latestOrder?.order_no) orderNo = latestOrder.order_no;
+            if (latestOrder?.order_no) foundOrderNo = latestOrder.order_no;
           }
         }
 
-        if (orderNo) {
+        // ✅ 修复：将 orderNo 写入状态，供 QuickRegisterStep 使用
+        if (foundOrderNo) {
+          setOrderNo(foundOrderNo);
           await supabase.functions.invoke('update-order-shipping', {
             body: {
-              orderNo,
+              orderNo: foundOrderNo,
               shippingInfo: {
                 buyerName: checkoutInfo.buyerName,
                 buyerPhone: checkoutInfo.buyerPhone,
