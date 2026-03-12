@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { Trophy, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, DollarSign, Target, BarChart3, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -186,6 +186,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
 /* ========== Main Page ========== */
 export default function WealthSynergyPromoPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   // 环境检测：移动端非微信浏览器使用支付宝，微信环境使用微信支付
@@ -202,6 +203,12 @@ export default function WealthSynergyPromoPage() {
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [purchaseChecked, setPurchaseChecked] = useState(false);
+
+  // 🆕 payment_resume: 微信 OAuth 重定向回跳后恢复支付弹窗（参考产品中心逻辑）
+  const paymentResumeHandledRef = useRef(false);
+  const paymentResume = searchParams.get('payment_resume') === '1';
+  const urlPaymentOpenId = searchParams.get('payment_openid');
+  const paymentAuthError = searchParams.get('payment_auth_error') === '1';
 
   const packageInfo = {
     key: "wealth_synergy_bundle",
@@ -227,6 +234,51 @@ export default function WealthSynergyPromoPage() {
     showConfetti: true,
     priority: 'page',
   });
+
+  // 🆕 微信 OAuth 回跳后恢复支付弹窗（参考产品中心逻辑）
+  useEffect(() => {
+    if (paymentResumeHandledRef.current) return;
+
+    if (paymentAuthError) {
+      paymentResumeHandledRef.current = true;
+      toast.error("微信授权失败", { description: "请重新尝试支付" });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      url.searchParams.delete('payment_auth_error');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
+    if (paymentResume) {
+      paymentResumeHandledRef.current = true;
+      console.log('[WealthSynergyPromo] Payment resume detected, restoring payment dialog');
+
+      // 使用 URL 中的 payment_openid
+      if (urlPaymentOpenId) {
+        setPaymentOpenId(urlPaymentOpenId);
+      }
+
+      // 尝试恢复收货信息
+      try {
+        const cachedShipping = localStorage.getItem('synergy_shipping_info');
+        if (cachedShipping) {
+          setCheckoutInfo(JSON.parse(cachedShipping));
+        }
+      } catch (e) {
+        console.error('[WealthSynergyPromo] Failed to restore shipping info:', e);
+      }
+
+      // 直接进入支付步骤
+      setStep('payment');
+
+      // 清理 URL 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      url.searchParams.delete('payment_openid');
+      url.searchParams.delete('payment_auth_error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [paymentResume, paymentAuthError, urlPaymentOpenId]);
 
   useEffect(() => {
     const checkPurchase = async () => {
