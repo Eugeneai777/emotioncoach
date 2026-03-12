@@ -1925,6 +1925,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          default_certifications: Json | null
           default_service_name: string | null
           expires_at: string
           id: string
@@ -1937,6 +1938,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          default_certifications?: Json | null
           default_service_name?: string | null
           expires_at?: string
           id?: string
@@ -1949,6 +1951,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          default_certifications?: Json | null
           default_service_name?: string | null
           expires_at?: string
           id?: string

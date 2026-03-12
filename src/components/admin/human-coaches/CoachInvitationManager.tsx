@@ -241,6 +241,46 @@ export function CoachInvitationManager() {
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>预设资质证书（可选）</Label>
+              <p className="text-xs text-muted-foreground">
+                选中的证书将在教练注册时自动带入，无需手动填写
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {CERT_OPTIONS.map((option) => {
+                  const selected = defaultCerts.some(c => c.certType === option.value);
+                  return (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant={selected ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full min-h-[36px] px-3 text-xs"
+                      onClick={() => {
+                        if (selected) {
+                          setDefaultCerts(defaultCerts.filter(c => c.certType !== option.value));
+                        } else {
+                          setDefaultCerts([...defaultCerts, { certType: option.value, certName: option.label }]);
+                        }
+                      }}
+                    >
+                      {selected && <Check className="h-3 w-3 mr-1" />}
+                      {option.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              {defaultCerts.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {defaultCerts.map(c => (
+                    <Badge key={c.certType} variant="secondary" className="gap-1">
+                      {c.certName}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setDefaultCerts(defaultCerts.filter(dc => dc.certType !== c.certType))} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button

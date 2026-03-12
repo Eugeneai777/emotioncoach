@@ -1,0 +1,1 @@
+ALTER TABLE public.coach_invitations ADD COLUMN default_certifications JSONB DEFAULT '[]';
