@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MamaConversionCard from "./MamaConversionCard";
 import { useMamaQuota } from "@/hooks/useMamaQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -70,7 +71,22 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
   }, [open, initialInput]);
 
   useEffect(() => {
-    if (!open) setHasStarted(false);
+    if (!open && hasStarted) {
+      // Auto-save to emotion diary when closing with enough messages
+      if (messages.length >= 2) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            supabase.functions.invoke('save-mama-briefing', {
+              body: { messages: messages.map(m => ({ role: m.role, content: m.content })) }
+            }).then(({ error }) => {
+              if (error) console.warn('Auto-save mama briefing failed:', error);
+              else console.log('Mama briefing auto-saved');
+            }).catch(err => console.warn('Auto-save mama briefing error:', err));
+          }
+        });
+      }
+      setHasStarted(false);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -247,10 +263,10 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
             <div className="flex items-center justify-between">
               <SheetTitle className="text-[#3D3028] text-base">💛 宝妈AI教练</SheetTitle>
               <button
-                onClick={() => { onOpenChange(false); navigate("/gratitude-journal"); }}
+                onClick={() => { onOpenChange(false); navigate("/history"); }}
                 className="text-xs px-3 py-1.5 rounded-full border border-[#F4845F]/30 text-[#F4845F] bg-[#FFF3EB] hover:bg-[#FFE8D6] transition-colors"
               >
-                📔 感恩记录
+                📝 情绪日记
               </button>
             </div>
           </SheetHeader>

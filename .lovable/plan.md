@@ -1,36 +1,23 @@
 
 
-## Plan: 宝妈AI对话记录到情绪日记
+## 两个问题需要修复
 
-### 改动概要
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-1. **替换右上角按钮**：把"📔 感恩记录"改为"📝 情绪日记"，跳转 `/history`
-2. **关闭聊天时自动保存**：对话 ≥2 条消息时，调用 Edge Function 提取情绪摘要并写入 `conversations` + `briefings` 表
-3. **情绪日记页标注来源**：History 页面识别 `[宝妈AI]` 前缀，显示"💛 宝妈AI"徽章
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 具体改动
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-| 文件 | 内容 |
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+
+| 文件 | 修改 |
 |------|------|
-| `src/components/mama/MamaAIChat.tsx` | 按钮改为"📝 情绪日记"→`/history`；关闭时触发保存逻辑 |
-| `supabase/functions/save-mama-briefing/index.ts` | 新建 Edge Function：用 AI 从对话提取 emotion_theme/intensity/insight/action，写入 conversations（title 前缀 `[宝妈AI]`）和 briefings |
-| `src/pages/History.tsx` | 检测 title 以 `[宝妈AI]` 开头时显示来源徽章 |
-
-### Edge Function 逻辑
-
-```text
-输入: { messages, userId }
-  ↓
-AI 提取: emotion_theme, intensity(1-5), insight, action
-  ↓
-INSERT conversations (user_id, title="[宝妈AI] {theme}")
-  ↓
-INSERT briefings (conversation_id, emotion_theme, emotion_intensity, insight, action)
-  ↓
-返回 { success: true }
-```
-
-- 使用 `google/gemini-2.5-flash`，无需额外 API key
-- 保存在后台静默执行，不阻塞用户
-- 未登录用户静默跳过
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

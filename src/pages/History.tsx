@@ -57,6 +57,7 @@ export interface Briefing {
   created_at: string;
   tags?: TagType[];
   camp_source?: string | null;
+  mama_source?: boolean;
 }
 
 const History = () => {
@@ -96,7 +97,7 @@ const History = () => {
         .from("briefings")
         .select(`
           *,
-          conversations!inner(user_id)
+          conversations!inner(user_id, title)
         `)
         .eq('conversations.user_id', user.id)
         .order("created_at", { ascending: false });
@@ -207,10 +208,14 @@ const History = () => {
         }
       });
 
-      const briefingsWithCampSource = emotionDiaryBriefings.map(b => ({
-        ...b,
-        camp_source: campSourceMap.get(b.id) || null,
-      }));
+      const briefingsWithCampSource = emotionDiaryBriefings.map(b => {
+        const convTitle = (b as any).conversations?.title || '';
+        return {
+          ...b,
+          camp_source: campSourceMap.get(b.id) || null,
+          mama_source: convTitle.startsWith('[宝妈AI]'),
+        };
+      });
 
       setBriefings(briefingsWithCampSource);
       
@@ -269,6 +274,11 @@ const History = () => {
               {selectedBriefing.camp_source && (
                 <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                   🏕️ {selectedBriefing.camp_source}
+                </Badge>
+              )}
+              {selectedBriefing.mama_source && !selectedBriefing.camp_source && (
+                <Badge variant="secondary" className="text-xs" style={{ backgroundColor: '#FFF3EB', color: '#F4845F', borderColor: '#F4845F33' }}>
+                  💛 宝妈AI
                 </Badge>
               )}
             </div>
@@ -569,6 +579,11 @@ const History = () => {
                                 {briefing.camp_source && (
                                   <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                                     🏕️ {briefing.camp_source}
+                                  </Badge>
+                                )}
+                                {briefing.mama_source && !briefing.camp_source && (
+                                  <Badge variant="secondary" className="text-xs" style={{ backgroundColor: '#FFF3EB', color: '#F4845F', borderColor: '#F4845F33' }}>
+                                    💛 宝妈AI
                                   </Badge>
                                 )}
                                 {briefing.emotion_intensity && (
