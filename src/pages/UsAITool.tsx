@@ -15,7 +15,7 @@ const toolConfig: Record<string, { title: string; placeholder: string; mode: str
   },
   translate: {
     title: "情侣情绪翻译器",
-    placeholder: "输入TA说的话，比如"你怎么又这么晚回来？"",
+    placeholder: "输入TA说的话，比如：你怎么又这么晚回来？",
     mode: "us-translate",
   },
   repair: {
