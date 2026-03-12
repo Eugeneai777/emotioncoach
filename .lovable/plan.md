@@ -1,68 +1,23 @@
 
 
-## Plan: 重新设计有劲生活馆 — 工具与测评分区
+## 两个问题需要修复
 
-### 问题
-当前页面将所有工具和测评混在三个分类标签下（情绪工具/自我探索/生活管理），测评项目散落在不同分类中，用户难以快速找到。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 方案
-将分类标签改为按**功能类型**划分：**工具** 和 **测评**，让用户一目了然。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 新分类结构
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-```text
-┌─────────────────────────────────────┐
-│  [🛠 日常工具]  [📊 专业测评]       │  ← 两个主标签
-├─────────────────────────────────────┤
-│                                     │
-│  日常工具 tab:                      │
-│  ├ 情绪SOS按钮（置顶预览卡）        │
-│  ├ 能量宣言卡                       │
-│  ├ 呼吸练习                         │
-│  ├ 冥想计时器                       │
-│  ├ 正念练习                         │
-│  ├ 情绪急救箱                       │
-│  ├ 恐慌急救                         │
-│  ├ 感恩日记                         │
-│  ├ 觉察日记                         │
-│  ├ 习惯追踪 / 睡眠 / 运动 等       │
-│  └ ...                              │
-│                                     │
-│  专业测评 tab:                      │
-│  ├ 情绪健康测评 (PHQ-9+GAD-7)      │
-│  ├ SCL-90 心理筛查                  │
-│  ├ 中场觉醒力测评                   │
-│  ├ 财富卡点测评                     │
-│  ├ 女性竞争力                       │
-│  ├ 家长三力测评                     │
-│  ├ 亲子沟通测评（家长/青少年）      │
-│  └ 3分钟关系测评（我们AI）          │
-└─────────────────────────────────────┘
-```
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 改动文件
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-| 文件 | 内容 |
+| 文件 | 修改 |
 |------|------|
-| `src/config/energyStudioTools.ts` | 将 `categories` 改为 `tools`（日常工具）和 `assessments`（专业测评）两类；为每个 tool 添加 `type: "tool" \| "assessment"` 字段 |
-| `src/pages/EnergyStudio.tsx` | 标签从三分类改为两分类（工具/测评）；测评 tab 下展示测评列表（含已完成状态标记、标签如热门/新/推荐）；工具 tab 保持现有列表 + 情绪SOS置顶 |
-
-### 具体逻辑
-
-**1. `energyStudioTools.ts`**
-- categories 改为：
-  - `{ id: "tools", name: "日常工具", emoji: "🛠", description: "随时可用的情绪调节和生活管理工具" }`
-  - `{ id: "assessments", name: "专业测评", emoji: "📊", description: "科学量表，深度了解自己" }`
-- 每个 tool config 添加 `type` 字段区分工具和测评
-
-**2. `EnergyStudio.tsx`**
-- `activeCategory` state 改为 `"tools" | "assessments"`
-- 工具 tab：渲染 `type === "tool"` 的数据库工具，保留情绪SOS置顶卡
-- 测评 tab：渲染 `type === "assessment"` 的工具，复用 `AssessmentTools` 页面中的已完成状态检测逻辑和标签（热门/新/推荐），卡片样式与工具列表一致但增加完成标记和时长信息
-- 数据库的 `energy_studio_tools` 表中的 `category` 字段需兼容新分类（查询时用 tool config 的 type 做前端筛选即可，无需改数据库）
-
-### 要点
-- 无需数据库迁移 — 前端根据 tool_id 映射 type
-- 测评完成状态复用现有 `awakening_entries` 查询
-- 保持所有现有路由和工具组件不变
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
