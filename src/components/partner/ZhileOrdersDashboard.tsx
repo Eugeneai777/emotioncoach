@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-// Table component bypassed - using raw <table> to avoid nested overflow-auto wrapper
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Package, Truck, CheckCircle, Clock, Download, Search, Loader2, CalendarIcon, X } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, Download, Search, Loader2, CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { toast } from "sonner";
@@ -29,6 +27,7 @@ interface ZhileOrdersDashboardProps {
 
 export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardProps) {
   const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -313,173 +312,182 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
             <p className="text-center text-muted-foreground py-8 text-sm">暂无订单数据</p>
           ) : (
             <>
-              <p className="text-xs text-muted-foreground mb-1 sm:hidden">← 左右滑动查看全部字段 →</p>
+              {/* Scroll hint + manual scroll buttons */}
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs text-muted-foreground">← 左右滑动查看全部字段 →</p>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {/* Force visible scrollbar on all platforms */}
+              <style>{`
+                .zhile-scroll-table::-webkit-scrollbar { height: 12px; width: 10px; }
+                .zhile-scroll-table::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 6px; }
+                .zhile-scroll-table::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; min-height: 40px; }
+                .zhile-scroll-table::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+                .zhile-scroll-table { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); scrollbar-gutter: stable both-edges; }
+              `}</style>
               <div
-                className="border rounded-lg"
+                ref={scrollRef}
+                className="zhile-scroll-table border rounded-lg"
                 style={{
-                  overflow: 'auto',
-                  maxHeight: '70vh',
+                  overflowX: 'scroll',
+                  overflowY: 'auto',
+                  maxHeight: '52vh',
                   WebkitOverflowScrolling: 'touch',
                 }}
               >
-                {/* Force visible scrollbar on all platforms */}
-                <style>{`
-                  .zhile-scroll-table::-webkit-scrollbar { height: 10px; width: 10px; }
-                  .zhile-scroll-table::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 5px; }
-                  .zhile-scroll-table::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 5px; }
-                  .zhile-scroll-table::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
-                  .zhile-scroll-table { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
-                `}</style>
-                <div className="zhile-scroll-table" style={{ overflow: 'auto', maxHeight: '70vh' }}>
-                  <TooltipProvider>
-                    <table className="w-max caption-bottom text-sm" style={{ minWidth: '1900px' }}>
-                      <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
-                        <tr className="border-b">
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 110 }}>下单时间</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 160 }}>商品名称</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 150 }}>订单号</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 90 }}>用户</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 80 }}>收货人</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 120 }}>手机号</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 200 }}>收货地址</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 180 }}>清关信息</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 70 }}>金额</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 110 }}>物流状态</th>
-                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 160 }}>快递单号</th>
-                        </tr>
-                      </thead>
-                      <tbody className="[&_tr:last-child]:border-0">
-                        {filtered.map(order => {
-                          const currentStatus = order.shipping_status || 'pending';
-                          const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
+                <table className="w-max caption-bottom text-sm" style={{ minWidth: '1900px' }}>
+                  <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
+                    <tr className="border-b">
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 110 }}>下单时间</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 160 }}>商品名称</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 150 }}>订单号</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 90 }}>用户</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 80 }}>收货人</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 120 }}>手机号</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 200 }}>收货地址</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 180 }}>清关信息</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 70 }}>金额</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 110 }}>物流状态</th>
+                      <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 160 }}>快递单号</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_tr:last-child]:border-0">
+                    {filtered.map(order => {
+                      const currentStatus = order.shipping_status || 'pending';
+                      const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
 
-                          return (
-                            <tr key={order.id} className="border-b transition-colors hover:bg-muted/50">
-                              <td className="p-3 align-middle text-xs text-muted-foreground whitespace-nowrap">
-                                {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
-                              </td>
-                              <td className="p-3 align-middle whitespace-nowrap">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="text-sm font-medium max-w-[150px] truncate block cursor-help">
-                                      {order.product_name || '-'}
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="max-w-xs">
-                                    <p className="text-sm">{order.product_name}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </td>
-                              <td className="p-3 align-middle font-mono text-xs whitespace-nowrap">
-                                {order.order_no}
-                                {order.source === 'store_orders' && (
-                                  <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
-                                )}
-                              </td>
-                              <td className="p-3 align-middle text-sm whitespace-nowrap">
-                                {isAdmin ? (
-                                  <Input
-                                    className="h-7 text-xs w-[80px]"
-                                    placeholder="昵称"
-                                    defaultValue={order.user_display_name || ''}
-                                    onBlur={(e) => {
-                                      const val = e.target.value.trim();
-                                      if (val !== (order.user_display_name || '') && order.user_id) {
-                                        updateNickname.mutate({ userId: order.user_id, value: val });
-                                      }
-                                    }}
-                                  />
-                                ) : (order.user_display_name || '-')}
-                              </td>
-                              <td className="p-3 align-middle text-sm whitespace-nowrap">
-                                {order.buyer_name || '-'}
-                              </td>
-                              <td className="p-3 align-middle text-sm whitespace-nowrap">
-                                {order.buyer_phone || '-'}
-                              </td>
-                              <td className="p-3 align-middle text-xs whitespace-nowrap">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="max-w-[180px] truncate block cursor-help">
-                                      {order.buyer_address || '-'}
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="max-w-sm">
-                                    <p className="text-sm">{order.buyer_address}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </td>
-                              <td className="p-3 align-middle text-xs whitespace-nowrap">
-                                {isAdmin && (!order.id_card_name && !order.id_card_number) ? (
-                                  <div className="flex gap-1">
-                                    <Input
-                                      className="h-7 text-xs w-[60px]"
-                                      placeholder="姓名"
-                                      onBlur={(e) => {
-                                        const name = e.target.value.trim();
-                                        const numInput = e.target.parentElement?.querySelector<HTMLInputElement>('input:last-child');
-                                        const num = numInput?.value?.trim() || '';
-                                        if (name && num) {
-                                          updateCustomsInfo.mutate({ orderId: order.id, idCardName: name, idCardNumber: num, source: order.source });
-                                        }
-                                      }}
-                                    />
-                                    <Input
-                                      className="h-7 text-xs w-[90px]"
-                                      placeholder="证件号"
-                                    />
-                                  </div>
-                                ) : order.id_card_name ? (
-                                  <div>
-                                    <p>{order.id_card_name}</p>
-                                    <p className="text-muted-foreground">{order.id_card_number || '-'}</p>
-                                  </div>
-                                ) : <span className="text-muted-foreground">-</span>}
-                              </td>
-                              <td className="p-3 align-middle font-medium whitespace-nowrap">¥{order.amount}</td>
-                              <td className="p-3 align-middle whitespace-nowrap">
-                                {isAdmin ? (
-                                  <Select
-                                    value={currentStatus}
-                                    onValueChange={(val) => updateShipping.mutate({ orderId: order.id, status: val, source: order.source })}
-                                  >
-                                    <SelectTrigger className="h-7 text-xs w-[90px]">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {STATUS_OPTIONS.map(s => (
-                                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                ) : (
-                                  <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
-                                )}
-                              </td>
-                              <td className="p-3 align-middle whitespace-nowrap">
-                                {isAdmin ? (
-                                  <Input
-                                    className="h-7 text-xs w-[140px]"
-                                    placeholder="输入快递单号"
-                                    defaultValue={order.shipping_note || ''}
-                                    onBlur={(e) => {
-                                      const val = e.target.value.trim();
-                                      if (val !== (order.shipping_note || '')) {
-                                        updateShipping.mutate({ orderId: order.id, status: currentStatus, note: val, source: order.source });
-                                      }
-                                    }}
-                                  />
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">{order.shipping_note || '-'}</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </TooltipProvider>
-                </div>
+                      return (
+                        <tr key={order.id} className="border-b transition-colors hover:bg-muted/50">
+                          <td className="p-3 align-middle text-xs text-muted-foreground whitespace-nowrap">
+                            {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
+                          </td>
+                          <td className="p-3 align-middle whitespace-nowrap">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <span className="text-sm font-medium max-w-[150px] truncate block cursor-pointer hover:text-primary">
+                                  {order.product_name || '-'}
+                                </span>
+                              </PopoverTrigger>
+                              <PopoverContent side="top" className="max-w-xs p-2">
+                                <p className="text-sm">{order.product_name}</p>
+                              </PopoverContent>
+                            </Popover>
+                          </td>
+                          <td className="p-3 align-middle font-mono text-xs whitespace-nowrap">
+                            {order.order_no}
+                            {order.source === 'store_orders' && (
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
+                            )}
+                          </td>
+                          <td className="p-3 align-middle text-sm whitespace-nowrap">
+                            {isAdmin ? (
+                              <Input
+                                className="h-7 text-xs w-[80px]"
+                                placeholder="昵称"
+                                defaultValue={order.user_display_name || ''}
+                                onBlur={(e) => {
+                                  const val = e.target.value.trim();
+                                  if (val !== (order.user_display_name || '') && order.user_id) {
+                                    updateNickname.mutate({ userId: order.user_id, value: val });
+                                  }
+                                }}
+                              />
+                            ) : (order.user_display_name || '-')}
+                          </td>
+                          <td className="p-3 align-middle text-sm whitespace-nowrap">
+                            {order.buyer_name || '-'}
+                          </td>
+                          <td className="p-3 align-middle text-sm whitespace-nowrap">
+                            {order.buyer_phone || '-'}
+                          </td>
+                          <td className="p-3 align-middle text-xs whitespace-nowrap">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <span className="max-w-[180px] truncate block cursor-pointer hover:text-primary">
+                                  {order.buyer_address || '-'}
+                                </span>
+                              </PopoverTrigger>
+                              <PopoverContent side="top" className="max-w-sm p-2">
+                                <p className="text-sm">{order.buyer_address}</p>
+                              </PopoverContent>
+                            </Popover>
+                          </td>
+                          <td className="p-3 align-middle text-xs whitespace-nowrap">
+                            {isAdmin && (!order.id_card_name && !order.id_card_number) ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  className="h-7 text-xs w-[60px]"
+                                  placeholder="姓名"
+                                  onBlur={(e) => {
+                                    const name = e.target.value.trim();
+                                    const numInput = e.target.parentElement?.querySelector<HTMLInputElement>('input:last-child');
+                                    const num = numInput?.value?.trim() || '';
+                                    if (name && num) {
+                                      updateCustomsInfo.mutate({ orderId: order.id, idCardName: name, idCardNumber: num, source: order.source });
+                                    }
+                                  }}
+                                />
+                                <Input
+                                  className="h-7 text-xs w-[90px]"
+                                  placeholder="证件号"
+                                />
+                              </div>
+                            ) : order.id_card_name ? (
+                              <div>
+                                <p>{order.id_card_name}</p>
+                                <p className="text-muted-foreground">{order.id_card_number || '-'}</p>
+                              </div>
+                            ) : <span className="text-muted-foreground">-</span>}
+                          </td>
+                          <td className="p-3 align-middle font-medium whitespace-nowrap">¥{order.amount}</td>
+                          <td className="p-3 align-middle whitespace-nowrap">
+                            {isAdmin ? (
+                              <Select
+                                value={currentStatus}
+                                onValueChange={(val) => updateShipping.mutate({ orderId: order.id, status: val, source: order.source })}
+                              >
+                                <SelectTrigger className="h-7 text-xs w-[90px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_OPTIONS.map(s => (
+                                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                            )}
+                          </td>
+                          <td className="p-3 align-middle whitespace-nowrap">
+                            {isAdmin ? (
+                              <Input
+                                className="h-7 text-xs w-[140px]"
+                                placeholder="输入快递单号"
+                                defaultValue={order.shipping_note || ''}
+                                onBlur={(e) => {
+                                  const val = e.target.value.trim();
+                                  if (val !== (order.shipping_note || '')) {
+                                    updateShipping.mutate({ orderId: order.id, status: currentStatus, note: val, source: order.source });
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{order.shipping_note || '-'}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </>
           )}

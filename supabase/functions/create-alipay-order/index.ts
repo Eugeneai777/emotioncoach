@@ -71,7 +71,7 @@ serve(async (req) => {
   try {
     const { packageKey, packageName, amount, userId = 'guest', returnUrl, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = await req.json();
     
-    console.log('[AlipayOrder] Creating order:', { packageKey, packageName, amount, userId, hasBuyerInfo: !!(buyerName || buyerPhone) });
+    console.log('[AlipayOrder] Creating order:', { packageKey, packageName, amount, userId, hasBuyerInfo: !!(buyerName || buyerPhone), hasIdCard: !!(idCardName || idCardNumber), idCardName: idCardName ? '***' : null, idCardNumber: idCardNumber ? '***' : null });
 
     // 验证参数
     if (!packageKey || !packageName || !amount) {

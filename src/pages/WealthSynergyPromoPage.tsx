@@ -827,6 +827,8 @@ export default function WealthSynergyPromoPage() {
         productName={packageInfo.name}
         price={packageInfo.price}
         onConfirm={handleCheckoutConfirm}
+        shippingNote="香港直邮，预计 4-7 个工作日送达"
+        needIdCard={true}
       />
 
       {/* 微信支付对话框（微信浏览器/小程序/桌面端） */}
