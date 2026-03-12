@@ -210,10 +210,13 @@ const History = () => {
 
       const briefingsWithCampSource = emotionDiaryBriefings.map(b => {
         const convTitle = (b as any).conversations?.title || '';
+        const isMamaEmotion = convTitle.startsWith('[宝妈AI]') && !convTitle.startsWith('[宝妈AI-');
+        const isMamaGratitude = convTitle.startsWith('[宝妈AI-感恩]');
         return {
           ...b,
           camp_source: campSourceMap.get(b.id) || null,
-          mama_source: convTitle.startsWith('[宝妈AI]'),
+          mama_source: isMamaEmotion || isMamaGratitude,
+          mama_type: isMamaGratitude ? 'gratitude' : (isMamaEmotion ? 'emotion' : null),
         };
       });
 
