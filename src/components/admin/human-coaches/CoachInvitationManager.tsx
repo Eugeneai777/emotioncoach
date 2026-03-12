@@ -39,6 +39,7 @@ export function CoachInvitationManager() {
   const [inviteeName, setInviteeName] = useState("");
   const [note, setNote] = useState("");
   const [defaultServiceName, setDefaultServiceName] = useState("绽放身份教练");
+  const [defaultCerts, setDefaultCerts] = useState<{ certType: string; certName: string }[]>([]);
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["coach-invitations"],
