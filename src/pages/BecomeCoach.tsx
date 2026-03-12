@@ -71,7 +71,7 @@ export default function BecomeCoach() {
     const validateInvite = async () => {
       const { data, error } = await supabase
         .from("coach_invitations")
-        .select("*")
+        .select("id, token, invitee_name, note, status, expires_at")
         .eq("token", inviteToken)
         .eq("status", "pending")
         .single();
@@ -241,21 +241,21 @@ export default function BecomeCoach() {
     );
   }
 
-  // Need login
+  // Need login - valid invite but not authenticated
   if (!user) {
+    const currentUrl = `/become-coach?invite=${inviteToken}`;
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold">请先登录</h2>
-          <p className="text-muted-foreground">登录后即可填写教练资料</p>
+        <div className="text-center space-y-6 max-w-md">
+          <div className="text-5xl">✨</div>
+          <h2 className="text-xl font-semibold">您已收到教练入驻邀请</h2>
+          <p className="text-muted-foreground">请先登录或注册账号，然后填写教练资料</p>
           <Button
             onClick={() =>
-              navigate(
-                `/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`
-              )
+              navigate(`/auth?redirect=${encodeURIComponent(currentUrl)}`)
             }
           >
-            前往登录
+            登录 / 注册
           </Button>
         </div>
       </div>
