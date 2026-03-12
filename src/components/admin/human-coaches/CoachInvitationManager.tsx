@@ -59,6 +59,7 @@ export function CoachInvitationManager() {
       setShowCreateDialog(false);
       setInviteeName("");
       setNote("");
+      setDefaultServiceName("绽放身份教练");
     },
     onError: (error) => {
       toast.error("创建失败: " + error.message);
