@@ -815,6 +815,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           buyerName: shippingInfo?.buyerName,
           buyerPhone: shippingInfo?.buyerPhone,
           buyerAddress: shippingInfo?.buyerAddress,
+          idCardName: shippingInfo?.idCardName,
+          idCardNumber: shippingInfo?.idCardNumber,
         },
       });
 
