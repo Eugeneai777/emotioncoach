@@ -78,10 +78,10 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
             supabase.functions.invoke('save-mama-briefing', {
-              body: { messages: messages.map(m => ({ role: m.role, content: m.content })) }
+              body: { messages: messages.map(m => ({ role: m.role, content: m.content })), chatType }
             }).then(({ error }) => {
               if (error) console.warn('Auto-save mama briefing failed:', error);
-              else console.log('Mama briefing auto-saved');
+              else console.log('Mama briefing auto-saved, type:', chatType);
             }).catch(err => console.warn('Auto-save mama briefing error:', err));
           }
         });
