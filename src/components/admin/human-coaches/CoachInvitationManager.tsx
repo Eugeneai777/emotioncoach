@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { Plus, Copy, Loader2, Link2, Trash2, Users } from "lucide-react";
+import { Plus, Copy, Loader2, Link2, Trash2, Users, Check, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,21 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+const CERT_OPTIONS = [
+  { value: "national_level2", label: "国家二级心理咨询师" },
+  { value: "national_level3", label: "国家三级心理咨询师" },
+  { value: "marriage_family", label: "婚姻家庭咨询师" },
+  { value: "sand_therapy", label: "沙盘治疗师" },
+  { value: "cbt_cert", label: "CBT 认知行为治疗认证" },
+  { value: "nlp_cert", label: "NLP 执行师认证" },
+  { value: "coaching_cert", label: "ICF 教练认证" },
+  { value: "eap_cert", label: "EAP 咨询师" },
+  { value: "psychology_degree", label: "心理学学位" },
+  { value: "education_degree", label: "教育学学位" },
+  { value: "social_work_cert", label: "社会工作师" },
+  { value: "mindfulness_cert", label: "正念导师认证" },
+];
 
 export function CoachInvitationManager() {
   const queryClient = useQueryClient();
