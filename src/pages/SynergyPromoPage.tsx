@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { AlipayPayDialog } from "@/components/AlipayPayDialog";
 import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
@@ -461,22 +462,7 @@ export default function SynergyPromoPage() {
     );
   }
 
-  // Show register step as full-screen overlay
-  if (step === 'register') {
-    return (
-      <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center px-4">
-        <div className="max-w-sm w-full bg-slate-900 rounded-2xl border border-slate-700/50 p-6">
-          <h2 className="text-lg font-bold text-white text-center mb-4">完成注册</h2>
-          <p className="text-sm text-slate-400 text-center mb-6">注册后可管理训练营进度和订单</p>
-          <QuickRegisterStep
-            orderNo={orderNo}
-            paymentOpenId={paymentOpenId}
-            onSuccess={handleRegisterSuccess}
-          />
-        </div>
-      </div>
-    );
-  }
+  // Register dialog (rendered as overlay, not full-screen replacement)
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 overflow-x-hidden">
@@ -936,6 +922,23 @@ export default function SynergyPromoPage() {
           buyerAddress: checkoutInfo.buyerAddress,
         } : undefined}
       />
+
+      {/* 登录注册弹窗（支付成功后游客引导） */}
+      <Dialog open={step === 'register'} onOpenChange={(open) => { if (!open) setStep('browse'); }}>
+        <DialogContent size="sm" className="bg-slate-900 border-slate-700/50">
+          <DialogHeader>
+            <DialogTitle className="text-center text-white">请登录或注册以激活您的权益</DialogTitle>
+            <DialogDescription className="text-center text-slate-400">
+              注册后可管理训练营进度和订单
+            </DialogDescription>
+          </DialogHeader>
+          <QuickRegisterStep
+            orderNo={orderNo}
+            paymentOpenId={paymentOpenId}
+            onSuccess={handleRegisterSuccess}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* 支付宝对话框（移动端非微信浏览器） */}
       <AlipayPayDialog
