@@ -77,6 +77,7 @@ export function CoachInvitationManager() {
       setInviteeName("");
       setNote("");
       setDefaultServiceName("绽放身份教练");
+      setDefaultCerts([]);
     },
     onError: (error) => {
       toast.error("创建失败: " + error.message);
