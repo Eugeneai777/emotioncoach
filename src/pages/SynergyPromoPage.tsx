@@ -202,6 +202,25 @@ export default function SynergyPromoPage() {
     quota: 1,
   };
 
+  // ✅ 页面级支付回调：处理 H5 支付返回后的状态恢复
+  usePaymentCallback({
+    onSuccess: (callbackOrderNo, packageKey) => {
+      // 仅处理本页面相关的 synergy_bundle 订单
+      if (packageKey === 'synergy_bundle' || !packageKey) {
+        setOrderNo(callbackOrderNo);
+        setAlreadyPurchased(true);
+        if (user) {
+          setStep('success');
+        } else {
+          setStep('register');
+        }
+      }
+    },
+    showToast: true,
+    showConfetti: true,
+    priority: 'page',
+  });
+
   // 检查用户是否已购买过 synergy_bundle（兼容多种购买路径）
   useEffect(() => {
     const checkPurchase = async () => {
