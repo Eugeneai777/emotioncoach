@@ -200,6 +200,24 @@ export default function WealthSynergyPromoPage() {
     quota: 1,
   };
 
+  // ✅ 页面级支付回调：处理 H5 支付返回后的状态恢复
+  usePaymentCallback({
+    onSuccess: (callbackOrderNo, packageKey) => {
+      if (packageKey === 'wealth_synergy_bundle' || !packageKey) {
+        setOrderNo(callbackOrderNo);
+        setAlreadyPurchased(true);
+        if (user) {
+          setStep('success');
+        } else {
+          setStep('register');
+        }
+      }
+    },
+    showToast: true,
+    showConfetti: true,
+    priority: 'page',
+  });
+
   useEffect(() => {
     const checkPurchase = async () => {
       if (!user) { setPurchaseChecked(true); return; }
