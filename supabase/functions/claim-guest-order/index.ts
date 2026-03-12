@@ -214,26 +214,34 @@ serve(async (req) => {
         console.log('[ClaimGuestOrder] Camp purchase recorded:', campType);
       }
     } else if (bundleCampMap[pkgKey]) {
-      // 套餐训练营权益发放
-      const bundleCamp = bundleCampMap[pkgKey];
-      const { error: purchaseError } = await supabase
-        .from('user_camp_purchases')
-        .upsert({
-          user_id: userId,
-          camp_type: bundleCamp.campType,
-          camp_name: bundleCamp.campName,
-          purchase_price: order.amount,
-          payment_method: order.pay_type || 'wechat',
-          payment_status: 'completed',
-          transaction_id: order.trade_no,
-          purchased_at: order.paid_at || new Date().toISOString(),
-          expires_at: null,
-        }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
-
-      if (purchaseError) {
-        console.error(`[ClaimGuestOrder] ${pkgKey} camp purchase error:`, purchaseError);
-      } else {
-        console.log(`[ClaimGuestOrder] ${pkgKey} camp purchase recorded for ${bundleCamp.campType}`);
+      // 套餐训练营权益发放（多个训练营）
+      const bundleCamps = bundleCampMap[pkgKey];
+      for (const camp of bundleCamps) {
+        try {
+          const { data: alreadyHas } = await supabase
+            .from('user_camp_purchases')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('camp_type', camp.campType)
+            .eq('payment_status', 'completed')
+            .maybeSingle();
+          if (!alreadyHas) {
+            await supabase.from('user_camp_purchases').insert({
+              user_id: userId,
+              camp_type: camp.campType,
+              camp_name: camp.campName,
+              purchase_price: order.amount,
+              payment_method: order.pay_type || 'wechat',
+              payment_status: 'completed',
+              transaction_id: order.trade_no,
+              purchased_at: order.paid_at || new Date().toISOString(),
+              expires_at: null,
+            });
+            console.log(`[ClaimGuestOrder] ${pkgKey} camp purchase recorded for ${camp.campType}`);
+          }
+        } catch (e) {
+          console.error(`[ClaimGuestOrder] ${camp.campType} camp purchase error:`, e);
+        }
       }
     } else {
       // 非训练营：增加配额
