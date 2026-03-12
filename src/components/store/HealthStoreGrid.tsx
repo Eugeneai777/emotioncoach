@@ -116,12 +116,23 @@ export function HealthStoreGrid() {
     }
   }, [searchParams, products]);
 
+  const requireLogin = useCallback(() => {
+    if (!user) {
+      setPostAuthRedirect('/health-store');
+      navigate('/auth');
+      return true;
+    }
+    return false;
+  }, [user, navigate]);
+
   const handleProductClick = (product: Product) => {
+    if (requireLogin()) return;
     setSelectedProduct(product);
     setDetailOpen(true);
   };
 
   const handleBuy = (product: Product) => {
+    if (requireLogin()) return;
     setDetailOpen(false);
     setSelectedProduct(product);
     setCheckoutOpen(true);
