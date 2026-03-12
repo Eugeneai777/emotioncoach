@@ -153,6 +153,8 @@ export function HealthStoreGrid() {
                 buyerName: pendingCheckoutInfo.buyerName,
                 buyerPhone: pendingCheckoutInfo.buyerPhone,
                 buyerAddress: pendingCheckoutInfo.buyerAddress,
+                idCardName: pendingCheckoutInfo.idCardName,
+                idCardNumber: pendingCheckoutInfo.idCardNumber,
               },
             },
           });
