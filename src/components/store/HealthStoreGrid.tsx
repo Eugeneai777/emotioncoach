@@ -264,6 +264,7 @@ export function HealthStoreGrid() {
       setSelectedProduct(null);
       setPendingCheckoutInfo(null);
       setPayPackage(null);
+      clearCheckoutCache(); // 🆕 支付完成后清理缓存
     }
   };
 
