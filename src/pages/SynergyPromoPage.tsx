@@ -187,6 +187,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
 /* ========== Main Page ========== */
 export default function SynergyPromoPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   // 环境检测：移动端非微信浏览器使用支付宝，微信环境使用微信支付
@@ -204,6 +205,12 @@ export default function SynergyPromoPage() {
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [purchaseChecked, setPurchaseChecked] = useState(false);
+
+  // 🆕 payment_resume: 微信 OAuth 重定向回跳后恢复支付弹窗（参考产品中心逻辑）
+  const paymentResumeHandledRef = useRef(false);
+  const paymentResume = searchParams.get('payment_resume') === '1';
+  const urlPaymentOpenId = searchParams.get('payment_openid');
+  const paymentAuthError = searchParams.get('payment_auth_error') === '1';
 
   const packageInfo = {
     key: "synergy_bundle",
