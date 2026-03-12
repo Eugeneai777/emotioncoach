@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,10 @@ import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { AlipayPayDialog } from "@/components/AlipayPayDialog";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
+
+const STORE_CHECKOUT_CACHE_KEY = 'store_pending_checkout';
+const STORE_PACKAGE_CACHE_KEY = 'store_pending_package';
+const STORE_PRODUCT_CACHE_KEY = 'store_pending_product_id';
 
 interface Product {
   id: string;
@@ -36,6 +41,7 @@ function needsIdCard(product: Product): boolean {
 
 export function HealthStoreGrid() {
   const wechatOpenId = useWechatOpenId();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -43,6 +49,23 @@ export function HealthStoreGrid() {
   const [payOpen, setPayOpen] = useState(false);
   const [payPackage, setPayPackage] = useState<{ key: string; name: string; price: number } | null>(null);
   const [pendingCheckoutInfo, setPendingCheckoutInfo] = useState<CheckoutInfo | null>(null);
+
+  // 缓存结账信息（OAuth 跳转前保存，回来后恢复）
+  const cacheCheckoutState = useCallback((info: CheckoutInfo, pkg: { key: string; name: string; price: number }, productId: string) => {
+    try {
+      sessionStorage.setItem(STORE_CHECKOUT_CACHE_KEY, JSON.stringify(info));
+      sessionStorage.setItem(STORE_PACKAGE_CACHE_KEY, JSON.stringify(pkg));
+      sessionStorage.setItem(STORE_PRODUCT_CACHE_KEY, productId);
+    } catch (e) {
+      console.error('[HealthStore] Failed to cache checkout state:', e);
+    }
+  }, []);
+
+  const clearCheckoutCache = useCallback(() => {
+    sessionStorage.removeItem(STORE_CHECKOUT_CACHE_KEY);
+    sessionStorage.removeItem(STORE_PACKAGE_CACHE_KEY);
+    sessionStorage.removeItem(STORE_PRODUCT_CACHE_KEY);
+  }, []);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["health-store-products"],
@@ -56,6 +79,38 @@ export function HealthStoreGrid() {
       return (data as any[]) as Product[];
     },
   });
+
+  // 🆕 payment_resume 恢复：微信 OAuth 授权回跳后自动恢复支付弹窗
+  useEffect(() => {
+    const isPaymentResume = searchParams.get('payment_resume') === '1';
+    if (!isPaymentResume) return;
+    if (!products.length) return; // 等产品列表加载完
+
+    try {
+      const cachedCheckout = sessionStorage.getItem(STORE_CHECKOUT_CACHE_KEY);
+      const cachedPackage = sessionStorage.getItem(STORE_PACKAGE_CACHE_KEY);
+      const cachedProductId = sessionStorage.getItem(STORE_PRODUCT_CACHE_KEY);
+
+      if (cachedCheckout && cachedPackage && cachedProductId) {
+        const info = JSON.parse(cachedCheckout) as CheckoutInfo;
+        const pkg = JSON.parse(cachedPackage) as { key: string; name: string; price: number };
+        const product = products.find(p => p.id === cachedProductId);
+
+        console.log('[HealthStore] Restoring payment state after OAuth redirect');
+        setPendingCheckoutInfo(info);
+        setPayPackage(pkg);
+        if (product) setSelectedProduct(product);
+        setPayOpen(true);
+
+        // 清理 URL 中的 payment_resume（保留 payment_openid 给 WechatPayDialog）
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('payment_resume');
+        setSearchParams(newParams, { replace: true });
+      }
+    } catch (e) {
+      console.error('[HealthStore] Failed to restore payment state:', e);
+    }
+  }, [searchParams, products]);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -82,11 +137,16 @@ export function HealthStoreGrid() {
 
       setPendingCheckoutInfo(info);
 
-      setPayPackage({
+      const pkg = {
         key: `store_product_${selectedProduct.id}`,
         name: selectedProduct.product_name,
         price: selectedProduct.price,
-      });
+      };
+      setPayPackage(pkg);
+
+      // 🆕 缓存结账信息，微信 OAuth 跳转后可恢复
+      cacheCheckoutState(info, pkg, selectedProduct.id);
+
       setCheckoutOpen(false);
       setPayOpen(true);
     } catch (err: any) {
@@ -204,6 +264,7 @@ export function HealthStoreGrid() {
       setSelectedProduct(null);
       setPendingCheckoutInfo(null);
       setPayPackage(null);
+      clearCheckoutCache(); // 🆕 支付完成后清理缓存
     }
   };
 
