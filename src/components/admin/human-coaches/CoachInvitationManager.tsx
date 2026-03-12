@@ -40,6 +40,7 @@ export function CoachInvitationManager() {
   const [note, setNote] = useState("");
   const [defaultServiceName, setDefaultServiceName] = useState("绽放身份教练");
   const [defaultCerts, setDefaultCerts] = useState<{ certType: string; certName: string }[]>([]);
+  const [customCertName, setCustomCertName] = useState("");
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["coach-invitations"],
@@ -78,6 +79,7 @@ export function CoachInvitationManager() {
       setNote("");
       setDefaultServiceName("绽放身份教练");
       setDefaultCerts([]);
+      setCustomCertName("");
     },
     onError: (error) => {
       toast.error("创建失败: " + error.message);
@@ -269,6 +271,41 @@ export function CoachInvitationManager() {
                     </Button>
                   );
                 })}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="自定义资质名称..."
+                  value={customCertName}
+                  onChange={(e) => setCustomCertName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const name = customCertName.trim();
+                      if (name) {
+                        setDefaultCerts([...defaultCerts, { certType: `custom_${Date.now()}`, certName: name }]);
+                        setCustomCertName("");
+                      }
+                    }
+                  }}
+                  maxLength={30}
+                  className="text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  disabled={!customCertName.trim()}
+                  onClick={() => {
+                    const name = customCertName.trim();
+                    if (name) {
+                      setDefaultCerts([...defaultCerts, { certType: `custom_${Date.now()}`, certName: name }]);
+                      setCustomCertName("");
+                    }
+                  }}
+                >
+                  添加
+                </Button>
               </div>
               {defaultCerts.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
