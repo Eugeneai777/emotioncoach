@@ -7,8 +7,10 @@ import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { ProductDetailDialog } from "./ProductDetailDialog";
 import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
-import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { AlipayPayDialog } from "@/components/AlipayPayDialog";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
+import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
 
 interface Product {
   id: string;
