@@ -11,7 +11,7 @@ import MamaAIChat from "@/components/mama/MamaAIChat";
 
 const quickEntries = [
   { emoji: "😊", title: "情绪日记", desc: "记录此刻心情", context: "我现在心情不太好，想聊聊...", chatType: "emotion" as "emotion" | "gratitude" },
-  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
+  { emoji: "🆘", title: "情绪SOS", desc: "崩溃时按一下", route: "/emotion-button" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
   { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事...", chatType: "gratitude" as "emotion" | "gratitude" },
 ];
 
