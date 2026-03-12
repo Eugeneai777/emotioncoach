@@ -223,6 +223,10 @@ const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
 // 老哥AI
 const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
 
+// 我们AI
+const UsAI = lazyRetry(() => import("./pages/UsAI"));
+const UsAITool = lazyRetry(() => import("./pages/UsAITool"));
+
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
 const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
@@ -457,6 +461,8 @@ const App = () => (
               <Route path="/marriage/about" element={<MarriageAbout />} />
               <Route path="/marriage/help" element={<MarriageHelp />} />
               <Route path="/laoge" element={<LaogeAI />} />
+              <Route path="/us-ai" element={<UsAI />} />
+              <Route path="/us-ai/tool" element={<UsAITool />} />
               <Route path="/elder-care" element={<ElderCarePage />} />
               <Route path="/elder-care/chat" element={<ElderChatPage />} />
               <Route path="/elder-care/greeting" element={<ElderGreetingPage />} />

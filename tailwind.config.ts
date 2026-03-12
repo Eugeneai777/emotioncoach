@@ -66,6 +66,13 @@ export default {
           DEFAULT: "hsl(var(--gentle))",
           foreground: "hsl(var(--gentle-foreground))",
         },
+        usai: {
+          primary: "hsl(var(--usai-primary))",
+          light: "hsl(var(--usai-light))",
+          beige: "hsl(var(--usai-beige))",
+          accent: "hsl(var(--usai-accent))",
+          foreground: "hsl(var(--usai-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

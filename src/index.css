@@ -215,6 +215,13 @@ All colors MUST be HSL.
     --marriage-accent: 264 30% 70%;
     --marriage-border: 264 20% 90%;
 
+    /* UsAI (我们AI) Design Tokens */
+    --usai-primary: 16 88% 66%;
+    --usai-light: 16 100% 96%;
+    --usai-beige: 30 75% 97%;
+    --usai-accent: 16 70% 75%;
+    --usai-foreground: 25 30% 20%;
+
     /* Unified Card Design System */
     --card-radius: 0.75rem; /* 12px - standard card radius */
     --card-radius-lg: 1rem; /* 16px - large card radius */
