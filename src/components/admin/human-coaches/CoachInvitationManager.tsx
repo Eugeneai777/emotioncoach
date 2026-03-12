@@ -41,12 +41,6 @@ export function CoachInvitationManager() {
   const [defaultServiceName, setDefaultServiceName] = useState("绽放身份教练");
   const [defaultCerts, setDefaultCerts] = useState<{ certType: string; certName: string }[]>([]);
   const [customCertName, setCustomCertName] = useState("");
-  const queryClient = useQueryClient();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [inviteeName, setInviteeName] = useState("");
-  const [note, setNote] = useState("");
-  const [defaultServiceName, setDefaultServiceName] = useState("绽放身份教练");
-  const [defaultCerts, setDefaultCerts] = useState<{ certType: string; certName: string }[]>([]);
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["coach-invitations"],
