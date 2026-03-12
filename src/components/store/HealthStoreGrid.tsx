@@ -7,8 +7,10 @@ import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { ProductDetailDialog } from "./ProductDetailDialog";
 import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
-import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { AlipayPayDialog } from "@/components/AlipayPayDialog";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
+import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
 
 interface Product {
   id: string;
@@ -311,20 +313,44 @@ export function HealthStoreGrid() {
         />
       )}
 
-      <UnifiedPayDialog
-        open={payOpen}
-        onOpenChange={setPayOpen}
-        packageInfo={payPackage}
-        onSuccess={handlePaySuccess}
-        openId={wechatOpenId}
-        shippingInfo={pendingCheckoutInfo ? {
+      {/* 环境自适应支付：桌面→微信扫码，移动非微信→支付宝，微信内→微信支付 */}
+      {(() => {
+        const isWechat = isWeChatBrowser();
+        const isMiniProg = isWeChatMiniProgram();
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const useAlipay = isMobile && !isWechat && !isMiniProg;
+
+        const shippingInfo = pendingCheckoutInfo ? {
           buyerName: pendingCheckoutInfo.buyerName,
           buyerPhone: pendingCheckoutInfo.buyerPhone,
           buyerAddress: pendingCheckoutInfo.buyerAddress,
           idCardName: pendingCheckoutInfo.idCardName,
           idCardNumber: pendingCheckoutInfo.idCardNumber,
-        } : undefined}
-      />
+        } : undefined;
+
+        if (useAlipay) {
+          return (
+            <AlipayPayDialog
+              open={payOpen}
+              onOpenChange={setPayOpen}
+              packageInfo={payPackage}
+              onSuccess={handlePaySuccess}
+              shippingInfo={shippingInfo}
+            />
+          );
+        }
+
+        return (
+          <WechatPayDialog
+            open={payOpen}
+            onOpenChange={setPayOpen}
+            packageInfo={payPackage}
+            onSuccess={handlePaySuccess}
+            openId={wechatOpenId}
+            shippingInfo={shippingInfo}
+          />
+        );
+      })()}
     </>
   );
 }
