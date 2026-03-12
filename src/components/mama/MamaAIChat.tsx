@@ -341,11 +341,17 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType
               </div>
             )}
             {!isLoading && messages.length >= 4 && messages[messages.length - 1]?.role === "assistant" && (
-              <MamaConversionCard
-                context={messages.map((m) => m.content).join(" ")}
-                messageCount={messages.length}
-                onClose={() => onOpenChange(false)}
-              />
+              <>
+                <MamaConversionCard
+                  context={messages.map((m) => m.content).join(" ")}
+                  messageCount={messages.length}
+                  onClose={() => onOpenChange(false)}
+                />
+                <MamaCourseRecommendation
+                  recommendations={courseRecommendations}
+                  onClose={() => onOpenChange(false)}
+                />
+              </>
             )}
           </div>
 
