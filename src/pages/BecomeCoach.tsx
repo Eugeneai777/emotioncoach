@@ -103,16 +103,7 @@ export default function BecomeCoach() {
     yearsExperience: 0,
   });
 
-  // Pre-fill from invitation data
-  useEffect(() => {
-    if (invitationData) {
-      setBasicInfo((prev) => ({
-        ...prev,
-        displayName: invitationData.invitee_name || prev.displayName,
-        phone: invitationData.invitee_phone || prev.phone,
-      }));
-    }
-  }, [invitationData]);
+  // No pre-fill needed for batch invitations
 
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [services, setServices] = useState<Service[]>([]);
