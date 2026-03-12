@@ -112,7 +112,7 @@ const Auth = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
     const redirectTo = urlParams.get('redirect');
-    if (refCode) {
+    if (refCode && refCode !== 'share') {
       localStorage.setItem('referral_code', refCode);
     }
     // 🔒 SECURITY: Validate redirect URL before storing
