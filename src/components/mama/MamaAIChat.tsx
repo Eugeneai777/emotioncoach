@@ -20,6 +20,7 @@ interface MamaAIChatProps {
   onOpenChange: (open: boolean) => void;
   initialContext?: string;
   initialInput?: string;
+  chatType?: "emotion" | "gratitude";
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mama-ai-coach`;
@@ -38,7 +39,7 @@ const TypingDots = () => (
   </div>
 );
 
-const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAIChatProps) => {
+const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType = "emotion" }: MamaAIChatProps) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -77,10 +78,10 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
             supabase.functions.invoke('save-mama-briefing', {
-              body: { messages: messages.map(m => ({ role: m.role, content: m.content })) }
+              body: { messages: messages.map(m => ({ role: m.role, content: m.content })), chatType }
             }).then(({ error }) => {
               if (error) console.warn('Auto-save mama briefing failed:', error);
-              else console.log('Mama briefing auto-saved');
+              else console.log('Mama briefing auto-saved, type:', chatType);
             }).catch(err => console.warn('Auto-save mama briefing error:', err));
           }
         });
@@ -263,10 +264,10 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAI
             <div className="flex items-center justify-between">
               <SheetTitle className="text-[#3D3028] text-base">💛 宝妈AI教练</SheetTitle>
               <button
-                onClick={() => { onOpenChange(false); navigate("/history"); }}
+                onClick={() => { onOpenChange(false); navigate(chatType === "gratitude" ? "/gratitude-history" : "/history"); }}
                 className="text-xs px-3 py-1.5 rounded-full border border-[#F4845F]/30 text-[#F4845F] bg-[#FFF3EB] hover:bg-[#FFE8D6] transition-colors"
               >
-                📝 情绪日记
+                {chatType === "gratitude" ? "📔 感恩日记" : "📝 情绪日记"}
               </button>
             </div>
           </SheetHeader>

@@ -1,37 +1,23 @@
 
 
-## Plan: 按入口区分日记类型 + 确保宝妈AI来源标识
+## 两个问题需要修复
 
-### 改动
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-**1. `src/pages/MamaAssistant.tsx`**
-- 给 `quickEntries` 加 `chatType` 字段：情绪检测 → `"emotion"`，感恩日记 → `"gratitude"`
-- `openChat` 增加 `chatType` 参数，新增 `chatType` state 传给 `MamaAIChat`
-- 主按钮"聊一聊"默认 `chatType="emotion"`
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**2. `src/components/mama/MamaAIChat.tsx`**
-- 新增 prop `chatType?: "emotion" | "gratitude"`（默认 `"emotion"`）
-- 右上角按钮根据 `chatType` 动态切换：
-  - `emotion` → "📝 情绪日记"，跳转 `/history`
-  - `gratitude` → "📔 感恩日记"，跳转 `/gratitude-history`
-- 关闭时调用 `save-mama-briefing` 传入 `chatType` 参数
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**3. `supabase/functions/save-mama-briefing/index.ts`**
-- 接收 `chatType` 参数
-- `gratitude` 类型：title 前缀改为 `[宝妈AI-感恩]`，AI 提取 prompt 改为感恩主题
-- `emotion` 类型：保持现有 `[宝妈AI]` 前缀
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-**4. `src/pages/History.tsx`**
-- 已有 `mama_source` 检测和 "💛 宝妈AI" 徽章，无需改动（`[宝妈AI]` 前缀的情绪记录已正确显示）
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**5. `src/pages/GratitudeHistory.tsx`**
-- 类似 History.tsx，在加载感恩记录时检测 `[宝妈AI-感恩]` 前缀
-- 显示 "💛 宝妈AI" 徽章标识来源
-
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| `src/pages/MamaAssistant.tsx` | 传递 chatType |
-| `src/components/mama/MamaAIChat.tsx` | 按 chatType 切换按钮和跳转路由 |
-| `supabase/functions/save-mama-briefing/index.ts` | 按 chatType 区分保存前缀和 AI prompt |
-| `src/pages/GratitudeHistory.tsx` | 感恩记录显示宝妈AI来源徽章 |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

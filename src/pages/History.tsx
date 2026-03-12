@@ -58,6 +58,7 @@ export interface Briefing {
   tags?: TagType[];
   camp_source?: string | null;
   mama_source?: boolean;
+  mama_type?: 'emotion' | 'gratitude' | null;
 }
 
 const History = () => {
@@ -210,10 +211,13 @@ const History = () => {
 
       const briefingsWithCampSource = emotionDiaryBriefings.map(b => {
         const convTitle = (b as any).conversations?.title || '';
+        const isMamaEmotion = convTitle.startsWith('[宝妈AI]') && !convTitle.startsWith('[宝妈AI-');
+        const isMamaGratitude = convTitle.startsWith('[宝妈AI-感恩]');
         return {
           ...b,
           camp_source: campSourceMap.get(b.id) || null,
-          mama_source: convTitle.startsWith('[宝妈AI]'),
+          mama_source: isMamaEmotion || isMamaGratitude,
+          mama_type: (isMamaGratitude ? 'gratitude' : (isMamaEmotion ? 'emotion' : null)) as 'emotion' | 'gratitude' | null,
         };
       });
 
@@ -278,7 +282,7 @@ const History = () => {
               )}
               {selectedBriefing.mama_source && !selectedBriefing.camp_source && (
                 <Badge variant="secondary" className="text-xs" style={{ backgroundColor: '#FFF3EB', color: '#F4845F', borderColor: '#F4845F33' }}>
-                  💛 宝妈AI
+                  {selectedBriefing.mama_type === 'gratitude' ? '💛 宝妈AI·感恩' : '💛 宝妈AI·情绪'}
                 </Badge>
               )}
             </div>
@@ -583,7 +587,7 @@ const History = () => {
                                 )}
                                 {briefing.mama_source && !briefing.camp_source && (
                                   <Badge variant="secondary" className="text-xs" style={{ backgroundColor: '#FFF3EB', color: '#F4845F', borderColor: '#F4845F33' }}>
-                                    💛 宝妈AI
+                                    {briefing.mama_type === 'gratitude' ? '💛 宝妈AI·感恩' : '💛 宝妈AI·情绪'}
                                   </Badge>
                                 )}
                                 {briefing.emotion_intensity && (

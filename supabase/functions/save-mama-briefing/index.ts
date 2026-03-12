@@ -32,7 +32,9 @@ serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
+    const { messages, chatType } = await req.json();
+    const type = chatType === 'gratitude' ? 'gratitude' : 'emotion';
+    
     if (!messages || messages.length < 2) {
       return new Response(JSON.stringify({ error: '对话太短，无需保存' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -49,7 +51,20 @@ serve(async (req) => {
       .map((m: any) => `${m.role === 'user' ? '用户' : 'AI'}：${m.content}`)
       .join('\n');
 
-    const extractionPrompt = `请从以下宝妈AI教练对话中提取情绪摘要信息。
+    const extractionPrompt = type === 'gratitude'
+      ? `请从以下宝妈AI教练对话中提取感恩日记摘要信息。
+
+对话内容：
+${conversationText}
+
+请用以下JSON格式返回（不要包含markdown代码块标记）：
+{
+  "emotion_theme": "用一句简短的话概括用户感恩的核心内容（10-20字）",
+  "emotion_intensity": 1到5的整数，表示感恩的深度（1=日常小事，5=深刻感悟），
+  "insight": "从对话中提炼的一个关于感恩的洞察（30-60字）",
+  "action": "一个具体可行的感恩行动建议（20-40字）"
+}`
+      : `请从以下宝妈AI教练对话中提取情绪摘要信息。
 
 对话内容：
 ${conversationText}
@@ -101,13 +116,14 @@ ${conversationText}
     }
 
     const theme = extracted.emotion_theme || '宝妈日常聊天';
+    const titlePrefix = type === 'gratitude' ? '[宝妈AI-感恩]' : '[宝妈AI]';
 
     // Create conversation record
     const { data: conversation, error: convError } = await supabase
       .from('conversations')
       .insert({
         user_id: user.id,
-        title: `[宝妈AI] ${theme}`
+        title: `${titlePrefix} ${theme}`
       })
       .select()
       .single();
@@ -135,18 +151,19 @@ ${conversationText}
       throw briefingError;
     }
 
-    // Tag with "宝妈AI" tag
+    // Tag with appropriate tag based on type
+    const tagName = type === 'gratitude' ? '宝妈AI-感恩' : '宝妈AI';
     let { data: existingTag } = await supabase
       .from('tags')
       .select('id')
-      .eq('name', '宝妈AI')
+      .eq('name', tagName)
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (!existingTag) {
       const { data: newTag } = await supabase
         .from('tags')
-        .insert({ name: '宝妈AI', user_id: user.id, color: '#F4845F' })
+        .insert({ name: tagName, user_id: user.id, color: type === 'gratitude' ? '#10B981' : '#F4845F' })
         .select('id')
         .single();
       existingTag = newTag;

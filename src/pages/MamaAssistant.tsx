@@ -10,9 +10,9 @@ import MamaAIChat from "@/components/mama/MamaAIChat";
 
 
 const quickEntries = [
-  { emoji: "😊", title: "情绪检测", desc: "此刻还好吗", context: "我现在心情不太好，想聊聊..." },
-  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined },
-  { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事..." },
+  { emoji: "😊", title: "情绪检测", desc: "此刻还好吗", context: "我现在心情不太好，想聊聊...", chatType: "emotion" as "emotion" | "gratitude" },
+  { emoji: "⚡", title: "能量评估", desc: "1分钟自测", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
+  { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事...", chatType: "gratitude" as "emotion" | "gratitude" },
 ];
 
 const MamaAssistant = () => {
@@ -20,11 +20,12 @@ const MamaAssistant = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [initialInput, setInitialInput] = useState<string | undefined>();
-  
+  const [chatType, setChatType] = useState<"emotion" | "gratitude">("emotion");
 
-  const openChat = (context?: string) => {
+  const openChat = (context?: string, type: "emotion" | "gratitude" = "emotion") => {
     setChatContext(context);
     setInitialInput(undefined);
+    setChatType(type);
     setChatOpen(true);
   };
 
@@ -122,7 +123,7 @@ const MamaAssistant = () => {
                   if (entry.route) {
                     navigate(entry.route);
                   } else if (entry.context) {
-                    openChat(entry.context);
+                    openChat(entry.context, entry.chatType);
                   }
                 }}
                 className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
@@ -190,6 +191,7 @@ const MamaAssistant = () => {
         }}
         initialContext={chatContext}
         initialInput={initialInput}
+        chatType={chatType}
       />
     </div>
   );
