@@ -212,7 +212,6 @@ export function CoachInvitationManager() {
               生成的链接可发给多人，每人通过链接都可独立申请
             </p>
           </div>
-          </div>
           <DialogFooter>
             <Button
               variant="outline"
