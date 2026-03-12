@@ -399,8 +399,9 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               <p className="text-sm text-muted-foreground text-center">请登录或注册以激活您的权益</p>
               <Button
                 onClick={() => {
+                  localStorage.setItem('post_auth_redirect', guestRedirectPath);
                   onOpenChange(false);
-                  navigate('/auth');
+                  navigate(`/auth?redirect=${encodeURIComponent(guestRedirectPath)}`);
                 }}
                 className="w-full mt-2"
               >
