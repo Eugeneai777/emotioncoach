@@ -1,23 +1,35 @@
 
 
-## 两个问题需要修复
+## 方案：双轴滚动条改造（类似 Excel/Google Sheets 风格）
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+参考截图可以看出，你希望表格区域像电子表格一样，**水平滚动条在底部始终可见，垂直滚动条在右侧始终可见**，两者独立且同时存在。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 当前问题
+现在 `ZhileOrdersDashboard.tsx` 用单个 `div`（`overflow-x: scroll; overflow-y: auto; max-height: 52vh`）同时承载两个方向的滚动。由于 `max-height: 52vh` 在很多屏幕上偏高，水平滚动条被推到容器内部底部，必须先垂直滚到最后一行才能看到。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 修改方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+**仅改动文件**：`src/components/partner/ZhileOrdersDashboard.tsx`
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+将单容器改为**双层容器**，分别承载水平和垂直滚动：
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+```text
+┌─ 外层 div（overflow-x: scroll）─────────────────┐
+│  ┌─ 内层 div（overflow-y: auto, max-h: 60vh）─┐  │
+│  │  <table min-w: 1900px>                      │  │
+│  │    thead (sticky top-0)                     │  │
+│  │    tbody                                    │  │
+│  │  </table>                                   │  │
+│  │  ↕ 垂直滚动条（右侧始终可见）                  │  │
+│  └─────────────────────────────────────────────┘  │
+│  ↔ 水平滚动条（底部始终可见，紧跟表格区域）          │
+└──────────────────────────────────────────────────┘
+```
+
+具体改动：
+1. **外层 div**：`ref={scrollRef}`，`overflow-x: scroll`，无高度限制 — 水平滚动条在此容器底部，始终在视口内
+2. **内层 div**：`overflow-y: auto; max-height: 60vh` — 垂直滚动条在内层右侧
+3. **自定义 CSS** 同时对外层（水平条 12px）和内层（垂直条 10px）设置可见样式
+4. 滚动按钮 `scrollRef` 绑定到外层容器（水平滚动）
+5. 保留 `min-width: 1900px` 和 `sticky thead`
 
