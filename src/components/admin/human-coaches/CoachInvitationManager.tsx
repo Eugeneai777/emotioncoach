@@ -22,7 +22,7 @@ export function CoachInvitationManager() {
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [inviteeName, setInviteeName] = useState("");
-  const [inviteePhone, setInviteePhone] = useState("");
+  const [note, setNote] = useState("");
   const [note, setNote] = useState("");
 
   const { data: invitations, isLoading } = useQuery({
