@@ -923,6 +923,23 @@ export default function SynergyPromoPage() {
         } : undefined}
       />
 
+      {/* 登录注册弹窗（支付成功后游客引导） */}
+      <Dialog open={step === 'register'} onOpenChange={(open) => { if (!open) setStep('browse'); }}>
+        <DialogContent size="sm" className="bg-slate-900 border-slate-700/50">
+          <DialogHeader>
+            <DialogTitle className="text-center text-white">请登录或注册以激活您的权益</DialogTitle>
+            <DialogDescription className="text-center text-slate-400">
+              注册后可管理训练营进度和订单
+            </DialogDescription>
+          </DialogHeader>
+          <QuickRegisterStep
+            orderNo={orderNo}
+            paymentOpenId={paymentOpenId}
+            onSuccess={handleRegisterSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* 支付宝对话框（移动端非微信浏览器） */}
       <AlipayPayDialog
         open={step === 'payment' && shouldUseAlipay}
