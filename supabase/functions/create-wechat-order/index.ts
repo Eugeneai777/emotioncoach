@@ -73,7 +73,7 @@ serve(async (req) => {
   try {
     const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo, hasBuyerInfo: !!(buyerName || buyerPhone) });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo, hasBuyerInfo: !!(buyerName || buyerPhone), hasIdCard: !!(idCardName || idCardNumber), idCardName: idCardName ? '***' : null, idCardNumber: idCardNumber ? '***' : null });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
