@@ -20,6 +20,7 @@ interface MamaAIChatProps {
   onOpenChange: (open: boolean) => void;
   initialContext?: string;
   initialInput?: string;
+  chatType?: "emotion" | "gratitude";
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mama-ai-coach`;
