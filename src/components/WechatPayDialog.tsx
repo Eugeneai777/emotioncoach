@@ -892,13 +892,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
         const bridgeAvailable = await waitForWeixinJSBridge(1500);
         
+        // 缓存 JSAPI 参数，供取消后重新唤起
+        setJsapiPayParams(data.jsapiPayParams);
+        
         if (bridgeAvailable) {
           try {
             await invokeJsapiPay(data.jsapiPayParams);
             console.log('[Payment] JSAPI pay invoked successfully');
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
-            if (jsapiError?.message !== '用户取消支付') {
+            if (jsapiError?.message === '用户取消支付') {
+              // 用户取消：标记为已取消，允许用复用同一订单重新唤起
+              console.log('[Payment] User cancelled JSAPI, allowing retry with same order');
+              setJsapiCancelled(true);
+            } else {
               // JSAPI 失败，降级到扫码模式
               await fallbackToNativePayment(data.orderNo);
             }
