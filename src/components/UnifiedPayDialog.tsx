@@ -33,6 +33,8 @@ interface ShippingInfo {
   buyerName: string;
   buyerPhone: string;
   buyerAddress: string;
+  idCardName?: string;
+  idCardNumber?: string;
 }
 
 interface UnifiedPayDialogProps {

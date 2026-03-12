@@ -38,6 +38,8 @@ interface ShippingInfo {
   buyerName: string;
   buyerPhone: string;
   buyerAddress: string;
+  idCardName?: string;
+  idCardNumber?: string;
 }
 
 export interface WechatPayDialogProps {
