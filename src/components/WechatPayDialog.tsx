@@ -516,6 +516,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
+    setJsapiCancelled(false);
+    setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
     setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false; // 重置订单创建标记
