@@ -103,6 +103,8 @@ serve(async (req) => {
       updateData.buyer_phone = shippingInfo.buyerPhone;
       updateData.buyer_address = shippingInfo.buyerAddress;
       updateData.shipping_status = 'pending';
+      if (shippingInfo.idCardName) updateData.id_card_name = shippingInfo.idCardName;
+      if (shippingInfo.idCardNumber) updateData.id_card_number = shippingInfo.idCardNumber;
     }
     const { error: updateError } = await supabase
       .from('orders')

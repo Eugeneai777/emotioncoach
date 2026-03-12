@@ -71,7 +71,7 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo, buyerName, buyerPhone, buyerAddress } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = await req.json();
     
     console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo, hasBuyerInfo: !!(buyerName || buyerPhone) });
 
@@ -301,6 +301,8 @@ serve(async (req) => {
             buyer_phone: buyerPhone || null,
             buyer_address: buyerAddress || null,
             shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
+            id_card_name: idCardName || null,
+            id_card_number: idCardNumber || null,
           });
 
         if (insertError) {
@@ -526,6 +528,8 @@ serve(async (req) => {
         buyer_phone: buyerPhone || null,
         buyer_address: buyerAddress || null,
         shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
+        id_card_name: idCardName || null,
+        id_card_number: idCardNumber || null,
       });
 
     if (insertError) {

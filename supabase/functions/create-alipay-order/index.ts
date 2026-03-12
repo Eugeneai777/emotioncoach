@@ -69,7 +69,7 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', returnUrl, buyerName, buyerPhone, buyerAddress } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', returnUrl, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = await req.json();
     
     console.log('[AlipayOrder] Creating order:', { packageKey, packageName, amount, userId, hasBuyerInfo: !!(buyerName || buyerPhone) });
 
@@ -188,6 +188,8 @@ serve(async (req) => {
         buyer_phone: buyerPhone || null,
         buyer_address: buyerAddress || null,
         shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
+        id_card_name: idCardName || null,
+        id_card_number: idCardNumber || null,
       });
 
     if (orderError) {

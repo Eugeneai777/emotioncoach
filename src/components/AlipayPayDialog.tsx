@@ -22,6 +22,8 @@ interface ShippingInfo {
   buyerName: string;
   buyerPhone: string;
   buyerAddress: string;
+  idCardName?: string;
+  idCardNumber?: string;
 }
 
 export interface AlipayPayDialogProps {
@@ -192,6 +194,8 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           buyerName: shippingInfo?.buyerName,
           buyerPhone: shippingInfo?.buyerPhone,
           buyerAddress: shippingInfo?.buyerAddress,
+          idCardName: shippingInfo?.idCardName,
+          idCardNumber: shippingInfo?.idCardNumber,
         },
       });
 

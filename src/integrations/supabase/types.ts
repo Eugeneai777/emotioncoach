@@ -5754,6 +5754,8 @@ export type Database = {
           created_at: string | null
           expired_at: string | null
           id: string
+          id_card_name: string | null
+          id_card_number: string | null
           order_no: string
           order_type: string | null
           package_key: string
@@ -5777,6 +5779,8 @@ export type Database = {
           created_at?: string | null
           expired_at?: string | null
           id?: string
+          id_card_name?: string | null
+          id_card_number?: string | null
           order_no: string
           order_type?: string | null
           package_key: string
@@ -5800,6 +5804,8 @@ export type Database = {
           created_at?: string | null
           expired_at?: string | null
           id?: string
+          id_card_name?: string | null
+          id_card_number?: string | null
           order_no?: string
           order_type?: string | null
           package_key?: string

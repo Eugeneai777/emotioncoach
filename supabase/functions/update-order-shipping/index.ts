@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { buyerName, buyerPhone, buyerAddress } = shippingInfo;
+    const { buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = shippingInfo;
     if (!buyerName || !buyerPhone || !buyerAddress) {
       return new Response(
         JSON.stringify({ error: "Incomplete shipping info" }),
@@ -30,14 +30,18 @@ Deno.serve(async (req) => {
     );
 
     // Update order shipping info using service_role to bypass RLS
+    const updateData: Record<string, any> = {
+      buyer_name: buyerName,
+      buyer_phone: buyerPhone,
+      buyer_address: buyerAddress,
+      shipping_status: "pending",
+    };
+    if (idCardName) updateData.id_card_name = idCardName;
+    if (idCardNumber) updateData.id_card_number = idCardNumber;
+
     const { data, error } = await supabaseAdmin
       .from("orders")
-      .update({
-        buyer_name: buyerName,
-        buyer_phone: buyerPhone,
-        buyer_address: buyerAddress,
-        shipping_status: "pending",
-      })
+      .update(updateData)
       .eq("order_no", orderNo)
       .select("id")
       .maybeSingle();

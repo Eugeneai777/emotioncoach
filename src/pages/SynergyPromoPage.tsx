@@ -402,6 +402,8 @@ export default function SynergyPromoPage() {
                 buyerName: checkoutInfo.buyerName,
                 buyerPhone: checkoutInfo.buyerPhone,
                 buyerAddress: checkoutInfo.buyerAddress,
+                idCardName: checkoutInfo.idCardName,
+                idCardNumber: checkoutInfo.idCardNumber,
               },
             },
           });
@@ -921,6 +923,8 @@ export default function SynergyPromoPage() {
           buyerName: checkoutInfo.buyerName,
           buyerPhone: checkoutInfo.buyerPhone,
           buyerAddress: checkoutInfo.buyerAddress,
+          idCardName: checkoutInfo.idCardName,
+          idCardNumber: checkoutInfo.idCardNumber,
         } : undefined}
       />
 
@@ -951,6 +955,8 @@ export default function SynergyPromoPage() {
           buyerName: checkoutInfo.buyerName,
           buyerPhone: checkoutInfo.buyerPhone,
           buyerAddress: checkoutInfo.buyerAddress,
+          idCardName: checkoutInfo.idCardName,
+          idCardNumber: checkoutInfo.idCardNumber,
         } : undefined}
       />
     </div>
