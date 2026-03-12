@@ -73,6 +73,15 @@ const getPaymentOpenIdFromUrl = (): string | undefined => {
 const MP_OPENID_STORAGE_KEY = 'wechat_mp_openid';
 const MP_UNIONID_STORAGE_KEY = 'wechat_mp_unionid';
 
+// 🆕 缓存公众号 openId，防止 URL 清理后丢失导致循环授权
+const CACHED_PAYMENT_OPENID_KEY = 'cached_payment_openid';
+const cachePaymentOpenId = (openId: string) => {
+  try { sessionStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId); } catch { /* ignore */ }
+};
+const getCachedPaymentOpenId = (): string | undefined => {
+  try { return sessionStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || undefined; } catch { return undefined; }
+};
+
 // 🆕 小程序原生支付回跳时，用于恢复“等待支付”弹框状态
 //（部分小程序环境不会可靠地把 payment_success 参数带回到 URL，因此需要用缓存兜底）
 const MP_PENDING_ORDER_STORAGE_KEY = 'wechat_mp_pending_order';
@@ -318,6 +327,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       console.log('[Payment] Successfully got openId from code');
       setUserOpenId(data.openId);
+      cachePaymentOpenId(data.openId);
       setOpenIdResolved(true);
       setIsExchangingCode(false);
     } catch (err) {
@@ -393,10 +403,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         ? (propOpenId || mpOpenIdFromUrl || cachedMpOpenId)
         : (propOpenId || urlOpenId);
 
-      // 已有 openId（从 props 或 URL）：直接使用
-      if (existingOpenId) {
-        console.log('[Payment] Using existing openId:', propOpenId ? 'from props' : (isMiniProgram ? 'from mp_openid' : 'from URL'));
-        setUserOpenId(existingOpenId);
+      // 已有 openId（从 props、URL 或 sessionStorage 缓存）：直接使用
+      const cachedOpenId = getCachedPaymentOpenId();
+      if (existingOpenId || cachedOpenId) {
+        const resolvedId = existingOpenId || cachedOpenId!;
+        console.log('[Payment] Using existing openId:', propOpenId ? 'from props' : (isMiniProgram ? 'from mp_openid' : (existingOpenId ? 'from URL' : 'from cache')));
+        setUserOpenId(resolvedId);
+        cachePaymentOpenId(resolvedId);
         setOpenIdResolved(true);
 
         // 清理 URL 中的微信浏览器静默授权参数（不要清理 mp_openid）
@@ -440,6 +453,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           if (mapping?.openid) {
             console.log('[Payment] Found user openId from database');
             setUserOpenId(mapping.openid);
+            cachePaymentOpenId(mapping.openid);
             setOpenIdResolved(true);
             return;
           }
@@ -507,8 +521,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
     codeExchangedRef.current = false; // 重置 code 换取标记
-    setUserOpenId(propOpenId || urlOpenId);
-    setOpenIdResolved(false);
+    // 🆕 保留 sessionStorage 中缓存的 openId，防止循环授权
+    const cachedId = propOpenId || urlOpenId || getCachedPaymentOpenId();
+    setUserOpenId(cachedId);
+    setOpenIdResolved(!!cachedId); // 如果有缓存的 openId，直接标记为已解析
     setIsRedirectingForOpenId(false);
     setIsExchangingCode(false);
 
