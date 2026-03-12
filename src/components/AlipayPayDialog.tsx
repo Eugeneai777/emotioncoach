@@ -209,6 +209,8 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       setOrderNo(data.orderNo);
       setPayUrl(data.payUrl);
       setStatus('redirecting');
+      // 🆕 H5 支付重定向前存储订单号，供页面刷新后 usePaymentCallback 使用
+      localStorage.setItem('pending_alipay_order_no', data.orderNo);
       startPolling(data.orderNo);
       
       // 开始倒计时

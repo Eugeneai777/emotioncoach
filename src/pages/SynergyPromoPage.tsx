@@ -230,6 +230,9 @@ export default function SynergyPromoPage() {
           // 已登录：直接进入训练营
           handleEnterCamp();
         } else {
+          // 🆕 确保游客订单号和跳转路径已设置（Alipay H5 回跳场景）
+          localStorage.setItem('pending_claim_order', callbackOrderNo);
+          localStorage.setItem('post_auth_redirect', '/camp-intro/emotion_stress_7');
           setStep('register');
         }
       }

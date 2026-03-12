@@ -128,8 +128,10 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
   const location = useLocation();
   const processingRef = useRef(false);
 
-  const orderNo = searchParams.get('order');
+  // 支持从 URL 或 localStorage 获取订单号（Alipay H5 重定向只带 payment_success=1）
+  const urlOrderNo = searchParams.get('order');
   const paymentSuccess = searchParams.get('payment_success');
+  const orderNo = urlOrderNo || (paymentSuccess === '1' ? localStorage.getItem('pending_alipay_order_no') : null);
 
   const verifyAndHandlePayment = useCallback(async (orderNo: string) => {
     // 🆕 小程序支付回调：页面重新加载时，清理之前的处理标记
@@ -194,6 +196,8 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
         newParams.delete('order');
         newParams.delete('payment_success');
         setSearchParams(newParams, { replace: true });
+        // 清除 Alipay H5 缓存的订单号
+        localStorage.removeItem('pending_alipay_order_no');
 
         // 显示成功提示
         if (showToast) {
