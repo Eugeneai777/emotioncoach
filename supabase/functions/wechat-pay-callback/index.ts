@@ -268,15 +268,20 @@ serve(async (req) => {
       }
     }
 
-    // === synergy_bundle 特殊处理：补写训练营购买记录 ===
-    if (order.package_key === 'synergy_bundle') {
+    // === synergy_bundle / wealth_synergy_bundle 特殊处理：补写训练营购买记录 ===
+    const bundleCampMapNew: Record<string, { campType: string; campName: string }> = {
+      'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+      'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+    };
+    const bundleCampNew = bundleCampMapNew[order.package_key];
+    if (bundleCampNew) {
       try {
         const { error: campPurchaseError } = await supabase
           .from('user_camp_purchases')
           .upsert({
             user_id: order.user_id,
-            camp_type: 'emotion_journal_21',
-            camp_name: '21天情绪日记训练营',
+            camp_type: bundleCampNew.campType,
+            camp_name: bundleCampNew.campName,
             purchase_price: order.amount,
             payment_method: 'wechat',
             payment_status: 'completed',
@@ -286,12 +291,12 @@ serve(async (req) => {
           }, { onConflict: 'user_id,camp_type', ignoreDuplicates: true });
 
         if (campPurchaseError) {
-          console.error('[WechatCallback] synergy_bundle camp purchase error:', campPurchaseError);
+          console.error(`[WechatCallback] ${order.package_key} camp purchase error:`, campPurchaseError);
         } else {
-          console.log('[WechatCallback] synergy_bundle camp purchase recorded for emotion_journal_21');
+          console.log(`[WechatCallback] ${order.package_key} camp purchase recorded for ${bundleCampNew.campType}`);
         }
       } catch (e) {
-        console.error('[WechatCallback] synergy_bundle camp purchase exception:', e);
+        console.error(`[WechatCallback] ${order.package_key} camp purchase exception:`, e);
       }
     }
 
