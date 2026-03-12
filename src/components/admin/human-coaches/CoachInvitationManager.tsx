@@ -193,29 +193,25 @@ export function CoachInvitationManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>受邀教练姓名（可选）</Label>
+              <Label>链接名称（如：情绪教练招募）</Label>
               <Input
-                placeholder="如：张老师"
+                placeholder="如：亲子教练招募"
                 value={inviteeName}
                 onChange={(e) => setInviteeName(e.target.value)}
               />
             </div>
             <div>
-              <Label>手机号（可选）</Label>
+              <Label>备注（可选，如教练类型说明）</Label>
               <Input
-                placeholder="如：13800138000"
-                value={inviteePhone}
-                onChange={(e) => setInviteePhone(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>备注（可选）</Label>
-              <Input
-                placeholder="如：某培训机构推荐"
+                placeholder="如：擅长亲子关系的教练"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
+            <p className="text-xs text-muted-foreground">
+              生成的链接可发给多人，每人通过链接都可独立申请
+            </p>
+          </div>
           </div>
           <DialogFooter>
             <Button
