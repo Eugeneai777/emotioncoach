@@ -243,7 +243,7 @@ export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
       </div>
 
       <Button onClick={onNext} disabled={!isValid} className="w-full">
-        下一步：上传资质证书
+        下一步：选择资质证书
       </Button>
     </div>
   );
