@@ -113,6 +113,8 @@ const capsulePackageInfo = {
 
 export default function ZhileProductsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const wechatOpenId = useWechatOpenId();
   const [selected, setSelected] = useState<string | null>(null);
 
