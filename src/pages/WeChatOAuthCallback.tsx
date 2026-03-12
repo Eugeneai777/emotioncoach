@@ -90,7 +90,15 @@ export default function WeChatOAuthCallback() {
             }
           }
           
-        // 新用户跳转到关注页，老用户直接进入首页
+        // 检查是否有待跳转的目标路径（如 promo 页支付后注册）
+          const postAuthRedirect = localStorage.getItem('post_auth_redirect');
+          if (postAuthRedirect) {
+            localStorage.removeItem('post_auth_redirect');
+            navigate(postAuthRedirect);
+            return;
+          }
+
+          // 新用户跳转到关注页，老用户直接进入首页
           if (data.isNewUser) {
             navigate("/wechat-auth?mode=follow");
           } else {

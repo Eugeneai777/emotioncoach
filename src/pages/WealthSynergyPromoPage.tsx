@@ -395,6 +395,7 @@ export default function WealthSynergyPromoPage() {
 
   // 注册成功后直接跳转到训练营介绍页
   const handleRegisterSuccess = (userId: string) => {
+    localStorage.removeItem('post_auth_redirect');
     navigate('/camp-intro/wealth_block_7');
   };
 
