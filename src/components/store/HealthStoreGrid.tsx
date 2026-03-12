@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingCart } from "lucide-react";
@@ -40,6 +42,8 @@ function needsIdCard(product: Product): boolean {
 }
 
 export function HealthStoreGrid() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const wechatOpenId = useWechatOpenId();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -112,12 +116,23 @@ export function HealthStoreGrid() {
     }
   }, [searchParams, products]);
 
+  const requireLogin = useCallback(() => {
+    if (!user) {
+      setPostAuthRedirect('/health-store');
+      navigate('/auth');
+      return true;
+    }
+    return false;
+  }, [user, navigate]);
+
   const handleProductClick = (product: Product) => {
+    if (requireLogin()) return;
     setSelectedProduct(product);
     setDetailOpen(true);
   };
 
   const handleBuy = (product: Product) => {
+    if (requireLogin()) return;
     setDetailOpen(false);
     setSelectedProduct(product);
     setCheckoutOpen(true);
