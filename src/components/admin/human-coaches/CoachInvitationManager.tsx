@@ -272,7 +272,41 @@ export function CoachInvitationManager() {
                   );
                 })}
               </div>
-              {defaultCerts.length > 0 && (
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="自定义资质名称..."
+                  value={customCertName}
+                  onChange={(e) => setCustomCertName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const name = customCertName.trim();
+                      if (name) {
+                        setDefaultCerts([...defaultCerts, { certType: `custom_${Date.now()}`, certName: name }]);
+                        setCustomCertName("");
+                      }
+                    }
+                  }}
+                  maxLength={30}
+                  className="text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  disabled={!customCertName.trim()}
+                  onClick={() => {
+                    const name = customCertName.trim();
+                    if (name) {
+                      setDefaultCerts([...defaultCerts, { certType: `custom_${Date.now()}`, certName: name }]);
+                      setCustomCertName("");
+                    }
+                  }}
+                >
+                  添加
+                </Button>
+              </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {defaultCerts.map(c => (
                     <Badge key={c.certType} variant="secondary" className="gap-1">
