@@ -96,7 +96,7 @@ const History = () => {
         .from("briefings")
         .select(`
           *,
-          conversations!inner(user_id)
+          conversations!inner(user_id, title)
         `)
         .eq('conversations.user_id', user.id)
         .order("created_at", { ascending: false });
