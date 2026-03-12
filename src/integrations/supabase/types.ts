@@ -1925,6 +1925,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          default_service_name: string | null
           expires_at: string
           id: string
           invitee_name: string | null
@@ -1936,6 +1937,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          default_service_name?: string | null
           expires_at?: string
           id?: string
           invitee_name?: string | null
@@ -1947,6 +1949,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          default_service_name?: string | null
           expires_at?: string
           id?: string
           invitee_name?: string | null

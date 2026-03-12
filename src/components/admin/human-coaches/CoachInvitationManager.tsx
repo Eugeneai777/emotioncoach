@@ -203,7 +203,18 @@ export function CoachInvitationManager() {
               />
             </div>
             <div>
-              <Label>备注（可选，如教练类型说明）</Label>
+              <Label>统一服务名称</Label>
+              <Input
+                placeholder="如：绽放身份教练"
+                value={defaultServiceName}
+                onChange={(e) => setDefaultServiceName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                教练注册时将自动创建此名称的60分钟服务
+              </p>
+            </div>
+            <div>
+              <Label>备注（可选）</Label>
               <Input
                 placeholder="如：擅长亲子关系的教练"
                 value={note}
