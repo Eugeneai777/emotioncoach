@@ -96,11 +96,11 @@ export function CoachInvitationManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           生成邀请链接发送给教练，教练通过链接注册并填写资料
         </p>
-        <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+        <Button onClick={() => setShowCreateDialog(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           生成邀请链接
         </Button>
@@ -117,30 +117,49 @@ export function CoachInvitationManager() {
           {invitations.map((inv) => (
             <Card key={inv.id} className="overflow-hidden">
               <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
+                <div className="space-y-3">
+                  {/* 顶部：名称 + 状态 */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="font-medium truncate">
                         {inv.invitee_name || "未命名链接"}
                       </span>
                       <Badge
                         variant={inv.status === "used" ? "secondary" : "default"}
-                        className={inv.status !== "used" ? "bg-emerald-500/90 hover:bg-emerald-500" : ""}
+                        className={inv.status !== "used" ? "bg-emerald-500/90 hover:bg-emerald-500 shrink-0" : "shrink-0"}
                       >
                         {inv.status === "used" ? "已停用" : "有效"}
                       </Badge>
                     </div>
-                    {(inv as any).default_service_name && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 shrink-0" />
-                        {(inv as any).default_service_name}
-                      </p>
-                    )}
-                    {inv.note && (
-                      <p className="text-sm text-muted-foreground truncate">
-                        {inv.note}
-                      </p>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => deleteMutation.mutate(inv.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+
+                  {/* 中间：服务名称 + 备注 */}
+                  {((inv as any).default_service_name || inv.note) && (
+                    <div className="space-y-1">
+                      {(inv as any).default_service_name && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5 shrink-0" />
+                          {(inv as any).default_service_name}
+                        </p>
+                      )}
+                      {inv.note && (
+                        <p className="text-sm text-muted-foreground truncate">
+                          {inv.note}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 底部：日期 + 注册数 + 操作 */}
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>
                         {format(new Date(inv.created_at), "yyyy/MM/dd", { locale: zhCN })}
@@ -149,27 +168,17 @@ export function CoachInvitationManager() {
                         已注册 <strong className="text-foreground">{inv.used_count}</strong> 人
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
                     {inv.status === "pending" && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => copyLink(inv.token)}
-                        className="gap-1"
+                        className="gap-1.5 shrink-0"
                       >
                         <Copy className="h-3 w-3" />
-                        复制
+                        复制链接
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => deleteMutation.mutate(inv.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -179,7 +188,7 @@ export function CoachInvitationManager() {
       )}
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Link2 className="h-5 w-5" />
@@ -187,7 +196,7 @@ export function CoachInvitationManager() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
+            <div className="space-y-1.5">
               <Label>链接名称</Label>
               <Input
                 placeholder="如：亲子教练招募"
@@ -195,18 +204,18 @@ export function CoachInvitationManager() {
                 onChange={(e) => setInviteeName(e.target.value)}
               />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>统一服务名称</Label>
               <Input
                 placeholder="如：绽放身份教练"
                 value={defaultServiceName}
                 onChange={(e) => setDefaultServiceName(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 教练注册时将自动创建此名称的60分钟服务
               </p>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>备注（可选）</Label>
               <Input
                 placeholder="如：擅长亲子关系的教练"
@@ -215,16 +224,18 @@ export function CoachInvitationManager() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setShowCreateDialog(false)}
+              className="w-full sm:w-auto"
             >
               取消
             </Button>
             <Button
               onClick={() => createMutation.mutate()}
               disabled={createMutation.isPending}
+              className="w-full sm:w-auto"
             >
               {createMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
