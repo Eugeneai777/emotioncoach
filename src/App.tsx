@@ -223,6 +223,10 @@ const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
 // 老哥AI
 const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
 
+// 我们AI
+const UsAI = lazyRetry(() => import("./pages/UsAI"));
+const UsAITool = lazyRetry(() => import("./pages/UsAITool"));
+
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
 const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
