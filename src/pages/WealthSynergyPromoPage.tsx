@@ -280,6 +280,7 @@ export default function WealthSynergyPromoPage() {
     }
   }, [paymentResume, paymentAuthError, urlPaymentOpenId]);
 
+  useEffect(() => {
     const checkPurchase = async () => {
       if (!user) { setPurchaseChecked(true); return; }
       try {
