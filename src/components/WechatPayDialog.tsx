@@ -327,6 +327,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       console.log('[Payment] Successfully got openId from code');
       setUserOpenId(data.openId);
+      cachePaymentOpenId(data.openId);
       setOpenIdResolved(true);
       setIsExchangingCode(false);
     } catch (err) {
