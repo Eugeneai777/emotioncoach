@@ -142,6 +142,12 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* 教练照片上传 */}
+          <CoachPhotoUploader
+            currentUrl={formData.avatar_url}
+            coachId={coachId}
+            onUpload={(url) => setFormData(prev => ({ ...prev, avatar_url: url }))}
+          />
           {/* Price Tier Selection */}
           <div className="space-y-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
             <Label className="flex items-center gap-2">

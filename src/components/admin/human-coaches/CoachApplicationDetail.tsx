@@ -99,10 +99,17 @@ export function CoachApplicationDetail({
       <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={coach.avatar_url || ""} />
-              <AvatarFallback>{coach.name?.charAt(0) || "教"}</AvatarFallback>
-            </Avatar>
+            <div className="w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+              <AspectRatio ratio={3 / 4}>
+                {coach.avatar_url ? (
+                  <img src={coach.avatar_url} alt={coach.name || ""} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-base font-semibold text-muted-foreground">
+                    {coach.name?.charAt(0) || "教"}
+                  </div>
+                )}
+              </AspectRatio>
+            </div>
             <div>
               <div className="flex items-center gap-2">
                 <span>{coach.name}</span>

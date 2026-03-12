@@ -125,12 +125,17 @@ export function ApprovedCoachesList() {
           <Card key={coach.id} className="overflow-hidden">
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={coach.avatar_url || ""} />
-                  <AvatarFallback className="text-lg">
-                    {coach.name?.charAt(0) || "教"}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                  <AspectRatio ratio={3 / 4}>
+                    {coach.avatar_url ? (
+                      <img src={coach.avatar_url} alt={coach.name || ""} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
+                        {coach.name?.charAt(0) || "教"}
+                      </div>
+                    )}
+                  </AspectRatio>
+                </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
