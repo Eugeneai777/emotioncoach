@@ -1357,9 +1357,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             {/* JSAPI 支付状态 */}
             {(status === 'ready' || status === 'polling') && payType === 'jsapi' && (
               <div className="flex flex-col items-center gap-2 text-[#07C160]">
-                <Loader2 className="h-12 w-12 animate-spin" />
-                <span className="font-medium">等待支付完成...</span>
-                <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
+                {jsapiCancelled ? (
+                  <>
+                    <XCircle className="h-12 w-12 text-muted-foreground" />
+                    <span className="font-medium text-foreground">支付已取消</span>
+                    <span className="text-xs text-muted-foreground">您可以重新唤起支付或重新下单</span>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="h-12 w-12 animate-spin" />
+                    <span className="font-medium">等待支付完成...</span>
+                    <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
+                  </>
+                )}
               </div>
             )}
 
