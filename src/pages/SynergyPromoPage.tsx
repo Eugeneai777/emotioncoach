@@ -410,13 +410,16 @@ export default function SynergyPromoPage() {
       // 已登录用户：支付成功后直接进入训练营
       handleEnterCamp();
     } else {
+      // 设置登录/注册后的跳转目标，防止被 OAuth 回调或首页重定向覆盖
+      localStorage.setItem('post_auth_redirect', '/camp-intro/emotion_stress_7');
       setStep('register');
     }
   };
 
   // Step 4: Registration success → 自动进入训练营
   const handleRegisterSuccess = (userId: string) => {
-    // 注册成功后直接跳转到训练营介绍页
+    // 清理跳转标记并跳转到训练营介绍页
+    localStorage.removeItem('post_auth_redirect');
     navigate('/camp-intro/emotion_stress_7');
   };
 

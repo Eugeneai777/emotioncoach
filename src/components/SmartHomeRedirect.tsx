@@ -12,6 +12,14 @@ const SmartHomeRedirect = () => {
   useEffect(() => {
     if (authLoading) return;
 
+    // 检查是否有 promo 页支付后的跳转目标
+    const postAuthRedirect = localStorage.getItem('post_auth_redirect');
+    if (postAuthRedirect) {
+      localStorage.removeItem('post_auth_redirect');
+      setTargetPath(postAuthRedirect);
+      return;
+    }
+
     if (!user) {
       setTargetPath(DEFAULT_COACH);
       return;
