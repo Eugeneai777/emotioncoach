@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Loader2, X, Plus, Crown } from "lucide-react";
 import { useCoachPriceTiers, useUpdateCoachPriceTier } from "@/hooks/useCoachPriceTiers";
+import { CoachPhotoUploader } from "./CoachPhotoUploader";
 
 interface CoachEditDialogProps {
   coachId: string;
@@ -32,7 +33,8 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
     experience_years: 0,
     specialties: [] as string[],
     phone: "",
-    price_tier_id: ""
+    price_tier_id: "",
+    avatar_url: ""
   });
   const [newSpecialty, setNewSpecialty] = useState("");
 
@@ -62,11 +64,11 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
         experience_years: coach.experience_years || 0,
         specialties: coach.specialties || [],
         phone: (coach as any).phone || "",
-        price_tier_id: (coach as any).price_tier_id || ""
+        price_tier_id: (coach as any).price_tier_id || "",
+        avatar_url: coach.avatar_url || ""
       });
     }
   }, [coach]);
-
   const updateMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
@@ -78,6 +80,7 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
           experience_years: formData.experience_years,
           specialties: formData.specialties,
           phone: formData.phone,
+          avatar_url: formData.avatar_url || null,
           updated_at: new Date().toISOString()
         })
         .eq("id", coachId);
@@ -139,6 +142,12 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* 教练照片上传 */}
+          <CoachPhotoUploader
+            currentUrl={formData.avatar_url}
+            coachId={coachId}
+            onUpload={(url) => setFormData(prev => ({ ...prev, avatar_url: url }))}
+          />
           {/* Price Tier Selection */}
           <div className="space-y-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
             <Label className="flex items-center gap-2">

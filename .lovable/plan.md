@@ -1,33 +1,23 @@
 
 
-## 教练照片上传优化方案
+## 两个问题需要修复
 
-### 现状
-- `CoachEditDialog.tsx` 编辑弹窗中**没有头像/照片上传功能**
-- `human_coaches` 表已有 `avatar_url` 字段，但编辑时无法修改
-- 列表页通过 `Avatar` 组件显示圆形头像，未按 3:4 比例展示
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-#### 1. 创建 Storage Bucket
-新建 `coach-photos` 公开存储桶，用于存放教练照片。添加 RLS 策略允许管理员上传。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-#### 2. CoachEditDialog 增加照片上传
-- 在编辑弹窗顶部添加 3:4 比例的照片预览区域
-- 点击可选择图片文件，上传前自动压缩（复用 `compressImage` 逻辑）
-- 上传到 `coach-photos/{coachId}/` 路径
-- 保存时将 `avatar_url` 一并更新到数据库
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-#### 3. 列表页展示优化
-- `ApprovedCoachesList` 和 `CoachApplicationsList` 中将圆形 `Avatar` 替换为 3:4 比例的照片卡片（使用 `aspect-ratio: 3/4` + `object-cover`）
-- 无照片时显示首字母 fallback
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-#### 4. 涉及文件
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| 新建 migration SQL | 创建 `coach-photos` bucket + RLS |
-| `CoachEditDialog.tsx` | 添加照片上传组件、压缩、预览 |
-| `ApprovedCoachesList.tsx` | 照片改为 3:4 比例展示 |
-| `CoachApplicationsList.tsx` | 照片改为 3:4 比例展示 |
-| `CoachApplicationDetail.tsx` | 详情弹窗中照片 3:4 展示 |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
