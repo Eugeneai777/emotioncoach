@@ -208,10 +208,14 @@ const History = () => {
         }
       });
 
-      const briefingsWithCampSource = emotionDiaryBriefings.map(b => ({
-        ...b,
-        camp_source: campSourceMap.get(b.id) || null,
-      }));
+      const briefingsWithCampSource = emotionDiaryBriefings.map(b => {
+        const convTitle = (b as any).conversations?.title || '';
+        return {
+          ...b,
+          camp_source: campSourceMap.get(b.id) || null,
+          mama_source: convTitle.startsWith('[宝妈AI]'),
+        };
+      });
 
       setBriefings(briefingsWithCampSource);
       
