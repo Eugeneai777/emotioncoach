@@ -41,6 +41,7 @@ function needsIdCard(product: Product): boolean {
 
 export function HealthStoreGrid() {
   const wechatOpenId = useWechatOpenId();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -48,6 +49,23 @@ export function HealthStoreGrid() {
   const [payOpen, setPayOpen] = useState(false);
   const [payPackage, setPayPackage] = useState<{ key: string; name: string; price: number } | null>(null);
   const [pendingCheckoutInfo, setPendingCheckoutInfo] = useState<CheckoutInfo | null>(null);
+
+  // 缓存结账信息（OAuth 跳转前保存，回来后恢复）
+  const cacheCheckoutState = useCallback((info: CheckoutInfo, pkg: { key: string; name: string; price: number }, productId: string) => {
+    try {
+      sessionStorage.setItem(STORE_CHECKOUT_CACHE_KEY, JSON.stringify(info));
+      sessionStorage.setItem(STORE_PACKAGE_CACHE_KEY, JSON.stringify(pkg));
+      sessionStorage.setItem(STORE_PRODUCT_CACHE_KEY, productId);
+    } catch (e) {
+      console.error('[HealthStore] Failed to cache checkout state:', e);
+    }
+  }, []);
+
+  const clearCheckoutCache = useCallback(() => {
+    sessionStorage.removeItem(STORE_CHECKOUT_CACHE_KEY);
+    sessionStorage.removeItem(STORE_PACKAGE_CACHE_KEY);
+    sessionStorage.removeItem(STORE_PRODUCT_CACHE_KEY);
+  }, []);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["health-store-products"],
