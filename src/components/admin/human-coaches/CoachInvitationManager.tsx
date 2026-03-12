@@ -23,7 +23,6 @@ export function CoachInvitationManager() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [inviteeName, setInviteeName] = useState("");
   const [note, setNote] = useState("");
-  const [note, setNote] = useState("");
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["coach-invitations"],
