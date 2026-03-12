@@ -1250,8 +1250,34 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }
   }, [open]);
 
+  // 重新唤起 JSAPI 支付（复用已有订单，不重新下单）
+  const handleReInvokeJsapi = async () => {
+    if (!jsapiPayParams) return;
+    setJsapiCancelled(false);
+    console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
+    try {
+      const bridgeAvailable = await waitForWeixinJSBridge(1500);
+      if (bridgeAvailable) {
+        await invokeJsapiPay(jsapiPayParams);
+        console.log('[Payment] JSAPI re-invoke succeeded');
+      } else {
+        console.log('[Payment] Bridge not available on retry, falling back');
+        await fallbackToNativePayment(orderNo);
+      }
+    } catch (err: any) {
+      console.log('[Payment] JSAPI re-invoke error:', err?.message);
+      if (err?.message === '用户取消支付') {
+        setJsapiCancelled(true);
+      } else {
+        await fallbackToNativePayment(orderNo);
+      }
+    }
+  };
+
   const handleRetry = () => {
+    orderCreatedRef.current = true; // 防止 useEffect 重复创建
     resetState();
+    orderCreatedRef.current = false;
     createOrder();
   };
 
