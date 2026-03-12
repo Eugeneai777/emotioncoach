@@ -171,6 +171,24 @@ serve(async (req) => {
 
     console.log('用户微信映射成功:', tokenData.openid);
 
+    // 检查用户是否已注销（banned），如果是则自动恢复账号
+    if (finalUserId) {
+      const { data: checkUser } = await supabaseClient.auth.admin.getUserById(finalUserId);
+      if (checkUser?.user?.banned_until && new Date(checkUser.user.banned_until) > new Date()) {
+        console.log('用户已注销，正在恢复账号:', finalUserId);
+        await supabaseClient.auth.admin.updateUserById(finalUserId, { ban_duration: 'none' });
+        await supabaseClient
+          .from('profiles')
+          .update({
+            deleted_at: null,
+            display_name: userInfo.nickname || '微信用户',
+            avatar_url: userInfo.headimgurl || null,
+          })
+          .eq('id', finalUserId);
+        console.log('账号已恢复:', finalUserId);
+      }
+    }
+
     // 生成登录令牌（必须使用 finalUserId 对应的邮箱，否则会登录到错误账号）
     if (!finalUserId) {
       throw new Error('Missing finalUserId');

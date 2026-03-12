@@ -51,6 +51,17 @@ serve(async (req) => {
     if (scene.status === 'confirmed' && scene.user_id) {
       const { data: userData, error: userError } = await supabase.auth.admin.getUserById(scene.user_id);
 
+      // 检查用户是否已注销（banned），如果是则自动恢复账号
+      if (userData?.user?.banned_until && new Date(userData.user.banned_until) > new Date()) {
+        console.log('用户已注销，正在恢复账号:', scene.user_id);
+        await supabase.auth.admin.updateUserById(scene.user_id, { ban_duration: 'none' });
+        await supabase
+          .from('profiles')
+          .update({ deleted_at: null, display_name: '微信用户' })
+          .eq('id', scene.user_id);
+        console.log('账号已恢复:', scene.user_id);
+      }
+
       if (userError || !userData?.user?.email) {
         console.error('Failed to get user email:', userError);
         return new Response(
