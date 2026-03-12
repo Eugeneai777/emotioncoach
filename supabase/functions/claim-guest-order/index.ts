@@ -90,10 +90,64 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      return new Response(
-        JSON.stringify({ success: false, error: '订单已被其他用户认领' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+
+      // 检查订单绑定的是否为微信临时账号（无手机号的"微信用户"）
+      // 如果是，则允许当前手机号用户认领权益
+      const { data: ownerProfile } = await supabase
+        .from('profiles')
+        .select('phone, display_name')
+        .eq('id', order.user_id)
+        .maybeSingle();
+
+      const isWechatGuestAccount = !ownerProfile?.phone || ownerProfile?.display_name === '微信用户';
+      
+      if (!isWechatGuestAccount) {
+        return new Response(
+          JSON.stringify({ success: false, error: '订单已被其他用户认领' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 微信临时账号 → 允许同步权益到当前用户
+      console.log('[ClaimGuestOrder] Order bound to WeChat guest account, syncing to phone user:', userId);
+      
+      // 同步订单归属
+      await supabase.from('orders').update({ user_id: userId, updated_at: new Date().toISOString() }).eq('order_no', orderNo);
+
+      // 同步已有的 user_camp_purchases
+      const { data: existingPurchases } = await supabase
+        .from('user_camp_purchases')
+        .select('camp_type, camp_name, purchase_price, payment_method, payment_status, purchased_at, expires_at, transaction_id')
+        .eq('user_id', order.user_id)
+        .eq('payment_status', 'completed');
+
+      if (existingPurchases) {
+        for (const p of existingPurchases) {
+          const { data: alreadyHas } = await supabase
+            .from('user_camp_purchases')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('camp_type', p.camp_type)
+            .eq('payment_status', 'completed')
+            .maybeSingle();
+          if (!alreadyHas) {
+            await supabase.from('user_camp_purchases').insert({ ...p, user_id: userId });
+            console.log(`[ClaimGuestOrder] Synced camp purchase ${p.camp_type} to user ${userId}`);
+          }
+        }
+      }
+
+      // 同步 subscriptions
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', order.user_id)
+        .maybeSingle();
+      if (existingSub) {
+        const { id, ...subData } = existingSub;
+        await supabase.from('subscriptions').upsert({ ...subData, user_id: userId }, { onConflict: 'user_id' });
+        console.log('[ClaimGuestOrder] Synced subscription to user:', userId);
+      }
     }
 
     // 绑定用户（同时写入收货信息）
