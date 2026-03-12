@@ -129,15 +129,13 @@ export function CoachInvitationManager() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {inv.invitee_name || "未指定姓名"}
+                        {inv.invitee_name || "未命名链接"}
                       </span>
                       {getStatusBadge(inv)}
+                      <Badge variant="outline" className="text-xs">
+                        已使用 {inv.used_count} 次
+                      </Badge>
                     </div>
-                    {inv.invitee_phone && (
-                      <p className="text-sm text-muted-foreground">
-                        手机: {inv.invitee_phone}
-                      </p>
-                    )}
                     {inv.note && (
                       <p className="text-sm text-muted-foreground">
                         备注: {inv.note}
