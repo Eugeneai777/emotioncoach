@@ -424,7 +424,7 @@ export default function SynergyPromoPage() {
   // Step 4: Registration success → 自动进入训练营
   const handleRegisterSuccess = (userId: string) => {
     // 清理跳转标记并跳转到训练营介绍页
-    localStorage.removeItem('post_auth_redirect');
+    clearPostAuthRedirect();
     navigate('/camp-intro/emotion_stress_7');
   };
 

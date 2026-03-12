@@ -1364,7 +1364,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 <Button
                   onClick={() => {
                     const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
-                    localStorage.setItem('post_auth_redirect', guestRedirectPath);
+                    setPostAuthRedirect(guestRedirectPath);
                     onOpenChange(false);
                     navigate(`/auth?redirect=${encodeURIComponent(guestRedirectPath)}`);
                   }}
