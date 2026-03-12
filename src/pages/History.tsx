@@ -576,6 +576,11 @@ const History = () => {
                                     🏕️ {briefing.camp_source}
                                   </Badge>
                                 )}
+                                {briefing.mama_source && !briefing.camp_source && (
+                                  <Badge variant="secondary" className="text-xs" style={{ backgroundColor: '#FFF3EB', color: '#F4845F', borderColor: '#F4845F33' }}>
+                                    💛 宝妈AI
+                                  </Badge>
+                                )}
                                 {briefing.emotion_intensity && (
                                   <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
                                     briefing.emotion_intensity <= 3 ? 'bg-green-500/10' :
