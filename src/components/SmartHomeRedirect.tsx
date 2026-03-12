@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { consumePostAuthRedirect } from "@/lib/postAuthRedirect";
 
 const DEFAULT_COACH = "/coach/vibrant_life_sage";
 
