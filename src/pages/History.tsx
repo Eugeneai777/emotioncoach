@@ -57,6 +57,7 @@ export interface Briefing {
   created_at: string;
   tags?: TagType[];
   camp_source?: string | null;
+  mama_source?: boolean;
 }
 
 const History = () => {

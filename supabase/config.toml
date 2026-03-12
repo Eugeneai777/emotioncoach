@@ -508,3 +508,6 @@ verify_jwt = false
 
 [functions.xiaojin-mood-summary]
 verify_jwt = true
+
+[functions.save-mama-briefing]
+verify_jwt = false
