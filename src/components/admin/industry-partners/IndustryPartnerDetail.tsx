@@ -160,7 +160,7 @@ export function IndustryPartnerDetail({ partner, isPartnerAdmin, onBack, onBindU
         </Button>
       }
     >
-      <Tabs value={currentTab} onValueChange={setTab} className="space-y-4">
+      <Tabs value={currentTab} onValueChange={setTab} className="space-y-4 w-full min-w-0">
         {isMobile ? (
           <Select value={currentTab} onValueChange={setTab}>
             <SelectTrigger className="w-full">
