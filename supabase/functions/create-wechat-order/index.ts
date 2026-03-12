@@ -254,14 +254,16 @@ serve(async (req) => {
       }
     };
 
-    // H5支付需要额外的scene_info
+    // H5支付需要额外的scene_info（V3 API 仅需 type，不支持 wap_name/wap_url）
     if (isH5) {
+      // 尝试从请求头获取真实客户端 IP
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        || req.headers.get('x-real-ip')
+        || '127.0.0.1';
       requestBody.scene_info = {
-        payer_client_ip: '127.0.0.1', // 实际项目中应从请求头获取
+        payer_client_ip: clientIp,
         h5_info: {
           type: 'Wap',
-          wap_url: 'https://wechat.eugenewe.net',
-          wap_name: '有劲AI'
         }
       };
     }
