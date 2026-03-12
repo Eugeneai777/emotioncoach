@@ -79,6 +79,19 @@ export default function BecomeCoach() {
 
       setInvitationData(data);
       setInviteStatus("valid");
+
+      // Pre-fill certifications from invitation
+      const presetCerts = (data as any).default_certifications;
+      if (Array.isArray(presetCerts) && presetCerts.length > 0) {
+        setCertifications(presetCerts.map((c: any) => ({
+          certType: c.certType,
+          certName: c.certName,
+          issuingAuthority: "",
+          certNumber: "",
+          imageUrl: "",
+          description: "",
+        })));
+      }
     };
 
     validateInvite();
