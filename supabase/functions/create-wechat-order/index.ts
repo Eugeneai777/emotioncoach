@@ -528,6 +528,8 @@ serve(async (req) => {
         buyer_phone: buyerPhone || null,
         buyer_address: buyerAddress || null,
         shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
+        id_card_name: idCardName || null,
+        id_card_number: idCardNumber || null,
       });
 
     if (insertError) {
