@@ -287,10 +287,10 @@ export default function SynergyPromoPage() {
     if (checkoutInfo) {
       try {
         // 1. 先尝试从 localStorage 获取游客订单号
-        let orderNo = localStorage.getItem('pending_claim_order');
+        let foundOrderNo = localStorage.getItem('pending_claim_order') || '';
         
         // 2. 已登录用户：查询最新已支付订单作为兜底
-        if (!orderNo) {
+        if (!foundOrderNo) {
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           if (currentUser) {
             const { data: latestOrder } = await supabase
@@ -302,14 +302,16 @@ export default function SynergyPromoPage() {
               .order('created_at', { ascending: false })
               .limit(1)
               .maybeSingle();
-            if (latestOrder?.order_no) orderNo = latestOrder.order_no;
+            if (latestOrder?.order_no) foundOrderNo = latestOrder.order_no;
           }
         }
 
-        if (orderNo) {
+        // ✅ 修复：将 orderNo 写入状态，供 QuickRegisterStep 使用
+        if (foundOrderNo) {
+          setOrderNo(foundOrderNo);
           await supabase.functions.invoke('update-order-shipping', {
             body: {
-              orderNo,
+              orderNo: foundOrderNo,
               shippingInfo: {
                 buyerName: checkoutInfo.buyerName,
                 buyerPhone: checkoutInfo.buyerPhone,
