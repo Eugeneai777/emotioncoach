@@ -982,6 +982,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           // 未登录用户：存储订单号，显示引导登录界面
           if (!user) {
             localStorage.setItem('pending_claim_order', data.orderNo || orderNo);
+            const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
+            localStorage.setItem('post_auth_redirect', guestRedirectPath);
             setStatus('guest_success');
             confetti({
               particleCount: 100,
