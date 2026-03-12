@@ -312,40 +312,56 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8 text-sm">暂无订单数据</p>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <div style={{ minWidth: '1600px' }}>
+            <>
+              <p className="text-xs text-muted-foreground mb-1 sm:hidden">← 左右滑动查看全部字段 →</p>
+              <div
+                className="border rounded-lg"
+                style={{
+                  overflow: 'auto',
+                  maxHeight: '70vh',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                {/* Force visible scrollbar on all platforms */}
+                <style>{`
+                  .zhile-scroll-table::-webkit-scrollbar { height: 10px; width: 10px; }
+                  .zhile-scroll-table::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 5px; }
+                  .zhile-scroll-table::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 5px; }
+                  .zhile-scroll-table::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+                  .zhile-scroll-table { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
+                `}</style>
+                <div className="zhile-scroll-table" style={{ overflow: 'auto', maxHeight: '70vh' }}>
                   <TooltipProvider>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="whitespace-nowrap min-w-[100px]">下单时间</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[140px]">商品名称</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[130px]">订单号</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[80px]">用户</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[70px]">收货人</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[100px]">手机号</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[180px]">收货地址</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[160px]">清关信息</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[60px]">金额</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[100px]">物流状态</TableHead>
-                          <TableHead className="whitespace-nowrap min-w-[140px]">快递单号</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <table className="w-max caption-bottom text-sm" style={{ minWidth: '1900px' }}>
+                      <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
+                        <tr className="border-b">
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 110 }}>下单时间</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 160 }}>商品名称</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 150 }}>订单号</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 90 }}>用户</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 80 }}>收货人</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 120 }}>手机号</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 200 }}>收货地址</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 180 }}>清关信息</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 70 }}>金额</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 110 }}>物流状态</th>
+                          <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" style={{ minWidth: 160 }}>快递单号</th>
+                        </tr>
+                      </thead>
+                      <tbody className="[&_tr:last-child]:border-0">
                         {filtered.map(order => {
                           const currentStatus = order.shipping_status || 'pending';
                           const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
 
                           return (
-                            <TableRow key={order.id}>
-                              <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            <tr key={order.id} className="border-b transition-colors hover:bg-muted/50">
+                              <td className="p-3 align-middle text-xs text-muted-foreground whitespace-nowrap">
                                 {order.paid_at ? format(new Date(order.paid_at), 'MM-dd HH:mm') : '-'}
-                              </TableCell>
-                              <TableCell className="whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle whitespace-nowrap">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="text-sm font-medium max-w-[140px] truncate block cursor-help">
+                                    <span className="text-sm font-medium max-w-[150px] truncate block cursor-help">
                                       {order.product_name || '-'}
                                     </span>
                                   </TooltipTrigger>
@@ -353,14 +369,14 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                                     <p className="text-sm">{order.product_name}</p>
                                   </TooltipContent>
                                 </Tooltip>
-                              </TableCell>
-                              <TableCell className="font-mono text-xs whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle font-mono text-xs whitespace-nowrap">
                                 {order.order_no}
                                 {order.source === 'store_orders' && (
                                   <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">商城</Badge>
                                 )}
-                              </TableCell>
-                              <TableCell className="text-sm whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle text-sm whitespace-nowrap">
                                 {isAdmin ? (
                                   <Input
                                     className="h-7 text-xs w-[80px]"
@@ -374,14 +390,14 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                                     }}
                                   />
                                 ) : (order.user_display_name || '-')}
-                              </TableCell>
-                              <TableCell className="text-sm whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle text-sm whitespace-nowrap">
                                 {order.buyer_name || '-'}
-                              </TableCell>
-                              <TableCell className="text-sm whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle text-sm whitespace-nowrap">
                                 {order.buyer_phone || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle text-xs whitespace-nowrap">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span className="max-w-[180px] truncate block cursor-help">
@@ -392,8 +408,8 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                                     <p className="text-sm">{order.buyer_address}</p>
                                   </TooltipContent>
                                 </Tooltip>
-                              </TableCell>
-                              <TableCell className="text-xs whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle text-xs whitespace-nowrap">
                                 {isAdmin && (!order.id_card_name && !order.id_card_number) ? (
                                   <div className="flex gap-1">
                                     <Input
@@ -419,9 +435,9 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                                     <p className="text-muted-foreground">{order.id_card_number || '-'}</p>
                                   </div>
                                 ) : <span className="text-muted-foreground">-</span>}
-                              </TableCell>
-                              <TableCell className="font-medium whitespace-nowrap">¥{order.amount}</TableCell>
-                              <TableCell className="whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle font-medium whitespace-nowrap">¥{order.amount}</td>
+                              <td className="p-3 align-middle whitespace-nowrap">
                                 {isAdmin ? (
                                   <Select
                                     value={currentStatus}
@@ -439,11 +455,11 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                                 ) : (
                                   <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
                                 )}
-                              </TableCell>
-                              <TableCell className="whitespace-nowrap">
+                              </td>
+                              <td className="p-3 align-middle whitespace-nowrap">
                                 {isAdmin ? (
                                   <Input
-                                    className="h-7 text-xs w-[130px]"
+                                    className="h-7 text-xs w-[140px]"
                                     placeholder="输入快递单号"
                                     defaultValue={order.shipping_note || ''}
                                     onBlur={(e) => {
@@ -456,16 +472,16 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                                 ) : (
                                   <span className="text-xs text-muted-foreground">{order.shipping_note || '-'}</span>
                                 )}
-                              </TableCell>
-                            </TableRow>
+                              </td>
+                            </tr>
                           );
                         })}
-                      </TableBody>
-                    </Table>
+                      </tbody>
+                    </table>
                   </TooltipProvider>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
