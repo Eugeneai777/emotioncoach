@@ -183,15 +183,8 @@ export default function BecomeCoach() {
         if (serviceError) throw serviceError;
       }
 
-      // Mark invitation as used
-      await supabase
-        .from("coach_invitations")
-        .update({
-          status: "used",
-          used_by: user.id,
-          used_at: new Date().toISOString(),
-        })
-        .eq("id", invitationData.id);
+      // Increment invitation usage count
+      await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
 
       setCurrentStep("success");
       toast({ title: "申请提交成功！" });

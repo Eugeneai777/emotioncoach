@@ -11150,6 +11150,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coach_invitation_count: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
       increment_session_count: {
         Args: { p_session_id: string }
         Returns: undefined
