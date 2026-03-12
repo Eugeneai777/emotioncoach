@@ -151,18 +151,19 @@ ${conversationText}
       throw briefingError;
     }
 
-    // Tag with "宝妈AI" tag
+    // Tag with appropriate tag based on type
+    const tagName = type === 'gratitude' ? '宝妈AI-感恩' : '宝妈AI';
     let { data: existingTag } = await supabase
       .from('tags')
       .select('id')
-      .eq('name', '宝妈AI')
+      .eq('name', tagName)
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (!existingTag) {
       const { data: newTag } = await supabase
         .from('tags')
-        .insert({ name: '宝妈AI', user_id: user.id, color: '#F4845F' })
+        .insert({ name: tagName, user_id: user.id, color: type === 'gratitude' ? '#10B981' : '#F4845F' })
         .select('id')
         .single();
       existingTag = newTag;

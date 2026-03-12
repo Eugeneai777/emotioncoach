@@ -191,6 +191,7 @@ const MamaAssistant = () => {
         }}
         initialContext={chatContext}
         initialInput={initialInput}
+        chatType={chatType}
       />
     </div>
   );
