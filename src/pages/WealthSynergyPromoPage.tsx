@@ -382,10 +382,18 @@ export default function WealthSynergyPromoPage() {
         }
       } catch (e) { console.error('Save shipping info error:', e); }
     }
-    if (user) { setStep('success'); } else { setStep('register'); }
+    if (user) {
+      // 已登录用户：支付成功后直接进入训练营
+      handleEnterCamp();
+    } else {
+      setStep('register');
+    }
   };
 
-  const handleRegisterSuccess = (userId: string) => setStep('success');
+  // 注册成功后直接跳转到训练营介绍页
+  const handleRegisterSuccess = (userId: string) => {
+    navigate('/camp-intro/wealth_block_7');
+  };
 
   const handleEnterCamp = async () => {
     if (user) {
