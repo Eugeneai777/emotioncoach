@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Mic, MicOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MamaConversionCard from "./MamaConversionCard";
+import MamaCourseRecommendation from "./MamaCourseRecommendation";
 import { useMamaQuota } from "@/hooks/useMamaQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,8 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType
   const [hasStarted, setHasStarted] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [courseRecommendations, setCourseRecommendations] = useState<any[]>([]);
+  const [hasFetchedCourses, setHasFetchedCourses] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -87,8 +90,31 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType
         });
       }
       setHasStarted(false);
+      setCourseRecommendations([]);
+      setHasFetchedCourses(false);
     }
   }, [open]);
+
+  // Fetch course recommendations when chat has enough messages and streaming is done
+  useEffect(() => {
+    if (!isLoading && messages.length >= 4 && !hasFetchedCourses && messages[messages.length - 1]?.role === "assistant") {
+      setHasFetchedCourses(true);
+      const allContent = messages.map(m => m.content).join(' ');
+      supabase.functions.invoke('recommend-courses', {
+        body: {
+          briefing: {
+            emotion_theme: allContent,
+            insight: messages.filter(m => m.role === 'assistant').pop()?.content?.slice(0, 200) || '',
+          },
+          coachType: chatType === 'gratitude' ? 'emotion' : 'emotion'
+        }
+      }).then(({ data, error }) => {
+        if (!error && data?.recommendations?.length > 0) {
+          setCourseRecommendations(data.recommendations);
+        }
+      }).catch(err => console.warn('Course recommendation failed:', err));
+    }
+  }, [isLoading, messages, hasFetchedCourses, chatType]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -315,11 +341,17 @@ const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType
               </div>
             )}
             {!isLoading && messages.length >= 4 && messages[messages.length - 1]?.role === "assistant" && (
-              <MamaConversionCard
-                context={messages.map((m) => m.content).join(" ")}
-                messageCount={messages.length}
-                onClose={() => onOpenChange(false)}
-              />
+              <>
+                <MamaConversionCard
+                  context={messages.map((m) => m.content).join(" ")}
+                  messageCount={messages.length}
+                  onClose={() => onOpenChange(false)}
+                />
+                <MamaCourseRecommendation
+                  recommendations={courseRecommendations}
+                  onClose={() => onOpenChange(false)}
+                />
+              </>
             )}
           </div>
 
