@@ -1466,23 +1466,49 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             <div className="text-center space-y-3">
               {payType === 'jsapi' ? (
                 <>
-                  <p className="text-sm text-muted-foreground">正在等待支付结果...</p>
-                  {status === 'polling' && (
-                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      支付弹窗已打开，请完成支付
-                    </p>
+                  {jsapiCancelled ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleReInvokeJsapi}
+                        className="gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        重新唤起支付
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetry}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        重新下单
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">正在等待支付结果...</p>
+                      {status === 'polling' && (
+                        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          支付弹窗已打开，请完成支付
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetry}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        重新发起支付
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRetry}
-                    className="gap-2"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    重新发起支付
-                  </Button>
                 </>
               ) : payType === 'h5' ? (
                 <>
