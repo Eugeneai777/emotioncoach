@@ -227,7 +227,8 @@ export default function SynergyPromoPage() {
         setOrderNo(callbackOrderNo);
         setAlreadyPurchased(true);
         if (user) {
-          setStep('success');
+          // 已登录：直接进入训练营
+          handleEnterCamp();
         } else {
           setStep('register');
         }
