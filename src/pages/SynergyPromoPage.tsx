@@ -227,7 +227,8 @@ export default function SynergyPromoPage() {
         setOrderNo(callbackOrderNo);
         setAlreadyPurchased(true);
         if (user) {
-          setStep('success');
+          // 已登录：直接进入训练营
+          handleEnterCamp();
         } else {
           setStep('register');
         }
@@ -406,15 +407,17 @@ export default function SynergyPromoPage() {
     }
 
     if (user) {
-      setStep('success');
+      // 已登录用户：支付成功后直接进入训练营
+      handleEnterCamp();
     } else {
       setStep('register');
     }
   };
 
-  // Step 4: Registration success
+  // Step 4: Registration success → 自动进入训练营
   const handleRegisterSuccess = (userId: string) => {
-    setStep('success');
+    // 注册成功后直接跳转到训练营介绍页
+    navigate('/camp-intro/emotion_stress_7');
   };
 
   // Step 5: Enter camp - smart redirect
