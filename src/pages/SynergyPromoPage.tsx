@@ -251,7 +251,8 @@ export default function SynergyPromoPage() {
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
     if (!isWechat || paymentOpenId) return;
 
-    const cached = sessionStorage.getItem('wechat_payment_openid');
+    // 统一使用 cached_wechat_openid（与 useWechatOpenId hook 保持一致）
+    const cached = sessionStorage.getItem('cached_wechat_openid');
     if (cached) { setPaymentOpenId(cached); return; }
 
     if (user) {
@@ -262,7 +263,7 @@ export default function SynergyPromoPage() {
         .then(({ data }) => {
           if (data?.openid) {
             setPaymentOpenId(data.openid);
-            sessionStorage.setItem('wechat_payment_openid', data.openid);
+            sessionStorage.setItem('cached_wechat_openid', data.openid);
           }
         });
     }
