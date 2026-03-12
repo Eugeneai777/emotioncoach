@@ -59,6 +59,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false);
+  const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
 
   // 清理定时器
   const clearTimers = () => {
