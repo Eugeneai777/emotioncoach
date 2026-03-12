@@ -286,9 +286,9 @@ export default function WealthSynergyPromoPage() {
   const handlePaySuccess = async () => {
     if (checkoutInfo) {
       try {
-        let orderNo = localStorage.getItem('pending_claim_order');
+        let foundOrderNo = localStorage.getItem('pending_claim_order') || '';
         
-        if (!orderNo) {
+        if (!foundOrderNo) {
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           if (currentUser) {
             const { data: latestOrder } = await supabase
@@ -300,14 +300,16 @@ export default function WealthSynergyPromoPage() {
               .order('created_at', { ascending: false })
               .limit(1)
               .maybeSingle();
-            if (latestOrder?.order_no) orderNo = latestOrder.order_no;
+            if (latestOrder?.order_no) foundOrderNo = latestOrder.order_no;
           }
         }
 
-        if (orderNo) {
+        // ✅ 修复：将 orderNo 写入状态，供 QuickRegisterStep 使用
+        if (foundOrderNo) {
+          setOrderNo(foundOrderNo);
           await supabase.functions.invoke('update-order-shipping', {
             body: {
-              orderNo,
+              orderNo: foundOrderNo,
               shippingInfo: {
                 buyerName: checkoutInfo.buyerName,
                 buyerPhone: checkoutInfo.buyerPhone,
