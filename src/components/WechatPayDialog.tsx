@@ -450,9 +450,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         return;
       }
 
-      // 微信浏览器中没有 openId：直接降级为二维码支付，避免 OAuth 重定向循环
-      console.log('[Payment] WeChat browser without openId — falling back to QR code (Native) payment');
-      setOpenIdResolved(true);
+      // 微信浏览器中没有 openId：触发静默授权获取 openId，以便使用 JSAPI 自动拉起支付
+      // 授权完成后会通过 payment_resume 参数回跳，页面恢复支付弹窗状态
+      console.log('[Payment] WeChat browser without openId — triggering silent auth for JSAPI payment');
+      triggerSilentAuth();
     };
 
     fetchUserOpenId();
