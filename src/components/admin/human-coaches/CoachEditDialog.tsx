@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Loader2, X, Plus, Crown } from "lucide-react";
 import { useCoachPriceTiers, useUpdateCoachPriceTier } from "@/hooks/useCoachPriceTiers";
+import { CoachPhotoUploader } from "./CoachPhotoUploader";
 
 interface CoachEditDialogProps {
   coachId: string;
@@ -32,7 +33,8 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
     experience_years: 0,
     specialties: [] as string[],
     phone: "",
-    price_tier_id: ""
+    price_tier_id: "",
+    avatar_url: ""
   });
   const [newSpecialty, setNewSpecialty] = useState("");
 
@@ -62,11 +64,11 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
         experience_years: coach.experience_years || 0,
         specialties: coach.specialties || [],
         phone: (coach as any).phone || "",
-        price_tier_id: (coach as any).price_tier_id || ""
+        price_tier_id: (coach as any).price_tier_id || "",
+        avatar_url: coach.avatar_url || ""
       });
     }
   }, [coach]);
-
   const updateMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
