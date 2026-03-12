@@ -196,6 +196,8 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
         newParams.delete('order');
         newParams.delete('payment_success');
         setSearchParams(newParams, { replace: true });
+        // 清除 Alipay H5 缓存的订单号
+        localStorage.removeItem('pending_alipay_order_no');
 
         // 显示成功提示
         if (showToast) {
