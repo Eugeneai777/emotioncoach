@@ -80,6 +80,7 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
           experience_years: formData.experience_years,
           specialties: formData.specialties,
           phone: formData.phone,
+          avatar_url: formData.avatar_url || null,
           updated_at: new Date().toISOString()
         })
         .eq("id", coachId);
