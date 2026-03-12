@@ -213,7 +213,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
