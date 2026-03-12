@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { Trophy, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, DollarSign, Target, BarChart3, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { AlipayPayDialog } from "@/components/AlipayPayDialog";
+import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
 import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import { useAuth } from "@/hooks/useAuth";
@@ -185,6 +187,14 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
 export default function WealthSynergyPromoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // 环境检测：移动端非微信浏览器使用支付宝，微信环境使用微信支付
+  const shouldUseAlipay = useMemo(() => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isWechat = isWeChatBrowser();
+    const isMiniProgram = isWeChatMiniProgram();
+    return isMobile && !isWechat && !isMiniProgram;
+  }, []);
 
   const [step, setStep] = useState<'browse' | 'checkout' | 'payment' | 'register' | 'success'>('browse');
   const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
@@ -759,12 +769,26 @@ export default function WealthSynergyPromoPage() {
         onConfirm={handleCheckoutConfirm}
       />
 
-      <UnifiedPayDialog
-        open={step === 'payment'}
+      {/* 微信支付对话框（微信浏览器/小程序/桌面端） */}
+      <WechatPayDialog
+        open={step === 'payment' && !shouldUseAlipay}
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
         openId={paymentOpenId}
+        shippingInfo={checkoutInfo ? {
+          buyerName: checkoutInfo.buyerName,
+          buyerPhone: checkoutInfo.buyerPhone,
+          buyerAddress: checkoutInfo.buyerAddress,
+        } : undefined}
+      />
+
+      {/* 支付宝对话框（移动端非微信浏览器） */}
+      <AlipayPayDialog
+        open={step === 'payment' && shouldUseAlipay}
+        onOpenChange={(open) => { if (!open) setStep('browse'); }}
+        packageInfo={packageInfo}
+        onSuccess={handlePaySuccess}
         shippingInfo={checkoutInfo ? {
           buyerName: checkoutInfo.buyerName,
           buyerPhone: checkoutInfo.buyerPhone,
