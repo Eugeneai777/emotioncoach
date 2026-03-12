@@ -453,6 +453,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           if (mapping?.openid) {
             console.log('[Payment] Found user openId from database');
             setUserOpenId(mapping.openid);
+            cachePaymentOpenId(mapping.openid);
             setOpenIdResolved(true);
             return;
           }
