@@ -725,7 +725,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user?.id || 'guest',
+          userId: user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest',
           payType: 'native',
           existingOrderNo,
         },
