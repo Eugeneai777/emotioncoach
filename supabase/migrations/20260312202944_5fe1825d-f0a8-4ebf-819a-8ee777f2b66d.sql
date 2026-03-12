@@ -1,0 +1,1 @@
+ALTER TABLE public.coach_invitations ALTER COLUMN expires_at SET DEFAULT '2099-12-31T23:59:59Z'::timestamptz;

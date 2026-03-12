@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { Plus, Copy, Loader2, Link2, Trash2 } from "lucide-react";
+import { Plus, Copy, Loader2, Link2, Trash2, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -86,16 +86,6 @@ export function CoachInvitationManager() {
     toast.success("邀请链接已复制到剪贴板");
   };
 
-  const getStatusBadge = (invitation: any) => {
-    if (invitation.status === "used") {
-      return <Badge variant="secondary">已使用</Badge>;
-    }
-    if (new Date(invitation.expires_at) < new Date()) {
-      return <Badge variant="destructive">已过期</Badge>;
-    }
-    return <Badge className="bg-green-500">有效</Badge>;
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -125,58 +115,61 @@ export function CoachInvitationManager() {
       ) : (
         <div className="space-y-3">
           {invitations.map((inv) => (
-            <Card key={inv.id}>
+            <Card key={inv.id} className="overflow-hidden">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium truncate">
                         {inv.invitee_name || "未命名链接"}
                       </span>
-                      {getStatusBadge(inv)}
-                      <Badge variant="outline" className="text-xs">
-                        已使用 {inv.used_count} 次
+                      <Badge
+                        variant={inv.status === "used" ? "secondary" : "default"}
+                        className={inv.status !== "used" ? "bg-emerald-500/90 hover:bg-emerald-500" : ""}
+                      >
+                        {inv.status === "used" ? "已停用" : "有效"}
                       </Badge>
                     </div>
-                    {inv.note && (
-                      <p className="text-sm text-muted-foreground">
-                        备注: {inv.note}
+                    {(inv as any).default_service_name && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 shrink-0" />
+                        {(inv as any).default_service_name}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground">
-                      创建于{" "}
-                      {format(new Date(inv.created_at), "MM月dd日 HH:mm", {
-                        locale: zhCN,
-                      })}
-                      {" · "}
-                      过期于{" "}
-                      {format(new Date(inv.expires_at), "MM月dd日 HH:mm", {
-                        locale: zhCN,
-                      })}
-                    </p>
+                    {inv.note && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        {inv.note}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>
+                        {format(new Date(inv.created_at), "yyyy/MM/dd", { locale: zhCN })}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        已注册 <strong className="text-foreground">{inv.used_count}</strong> 人
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {inv.status === "pending" &&
-                      new Date(inv.expires_at) > new Date() && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyLink(inv.token)}
-                          className="gap-1"
-                        >
-                          <Copy className="h-3 w-3" />
-                          复制链接
-                        </Button>
-                      )}
-                    {inv.status !== "used" && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {inv.status === "pending" && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => deleteMutation.mutate(inv.id)}
+                        onClick={() => copyLink(inv.token)}
+                        className="gap-1"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Copy className="h-3 w-3" />
+                        复制
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => deleteMutation.mutate(inv.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -195,7 +188,7 @@ export function CoachInvitationManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>链接名称（如：情绪教练招募）</Label>
+              <Label>链接名称</Label>
               <Input
                 placeholder="如：亲子教练招募"
                 value={inviteeName}
@@ -221,9 +214,6 @@ export function CoachInvitationManager() {
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              生成的链接可发给多人，每人通过链接都可独立申请
-            </p>
           </div>
           <DialogFooter>
             <Button
