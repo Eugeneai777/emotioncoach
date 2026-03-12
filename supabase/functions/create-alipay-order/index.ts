@@ -69,7 +69,7 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', returnUrl, buyerName, buyerPhone, buyerAddress } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', returnUrl, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = await req.json();
     
     console.log('[AlipayOrder] Creating order:', { packageKey, packageName, amount, userId, hasBuyerInfo: !!(buyerName || buyerPhone) });
 
