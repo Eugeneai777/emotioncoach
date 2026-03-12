@@ -78,7 +78,7 @@ export function CoachInvitationManager() {
   });
 
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/become-coach?invite=${token}`;
+    const url = `https://wechat.eugenewe.net/become-coach?invite=${token}`;
     navigator.clipboard.writeText(url);
     toast.success("邀请链接已复制到剪贴板");
   };
