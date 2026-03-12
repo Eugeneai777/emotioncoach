@@ -73,6 +73,15 @@ const getPaymentOpenIdFromUrl = (): string | undefined => {
 const MP_OPENID_STORAGE_KEY = 'wechat_mp_openid';
 const MP_UNIONID_STORAGE_KEY = 'wechat_mp_unionid';
 
+// 🆕 缓存公众号 openId，防止 URL 清理后丢失导致循环授权
+const CACHED_PAYMENT_OPENID_KEY = 'cached_payment_openid';
+const cachePaymentOpenId = (openId: string) => {
+  try { sessionStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId); } catch { /* ignore */ }
+};
+const getCachedPaymentOpenId = (): string | undefined => {
+  try { return sessionStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || undefined; } catch { return undefined; }
+};
+
 // 🆕 小程序原生支付回跳时，用于恢复“等待支付”弹框状态
 //（部分小程序环境不会可靠地把 payment_success 参数带回到 URL，因此需要用缓存兜底）
 const MP_PENDING_ORDER_STORAGE_KEY = 'wechat_mp_pending_order';
