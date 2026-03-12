@@ -96,6 +96,10 @@ export function HumanCoachesManagement() {
       {/* Tab 内容 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
+          <TabsTrigger value="invitations" className="gap-2">
+            <Link2 className="h-4 w-4" />
+            邀请管理
+          </TabsTrigger>
           <TabsTrigger value="pending" className="gap-2">
             <Clock className="h-4 w-4" />
             待审核 {stats?.pending ? `(${stats.pending})` : ""}
@@ -109,6 +113,10 @@ export function HumanCoachesManagement() {
             已拒绝 {stats?.rejected ? `(${stats.rejected})` : ""}
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="invitations" className="mt-4">
+          <CoachInvitationManager />
+        </TabsContent>
 
         <TabsContent value="pending" className="mt-4">
           <CoachApplicationsList status="pending" />
