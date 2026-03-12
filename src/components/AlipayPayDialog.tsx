@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -382,10 +382,16 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             <div className="flex flex-col items-center gap-3 py-8">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">等待支付确认...</p>
-              <Button onClick={handlePay} variant="outline" size="sm" className="gap-2">
-                <ExternalLink className="w-4 h-4" />
-                重新打开支付页面
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handlePay} variant="outline" size="sm" className="gap-2">
+                  <ExternalLink className="w-4 h-4" />
+                  重新打开支付页面
+                </Button>
+                <Button onClick={() => { resetState(); }} variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                  <RefreshCw className="w-4 h-4" />
+                  重新下单
+                </Button>
+              </div>
             </div>
           )}
 

@@ -142,6 +142,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const authCode = getPaymentAuthCode();
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId || urlOpenId);
   const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
+  const [jsapiCancelled, setJsapiCancelled] = useState<boolean>(false);
   // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
@@ -515,6 +516,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
+    setJsapiCancelled(false);
+    setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
     setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false; // 重置订单创建标记
@@ -889,13 +892,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
         const bridgeAvailable = await waitForWeixinJSBridge(1500);
         
+        // 缓存 JSAPI 参数，供取消后重新唤起
+        setJsapiPayParams(data.jsapiPayParams);
+        
         if (bridgeAvailable) {
           try {
             await invokeJsapiPay(data.jsapiPayParams);
             console.log('[Payment] JSAPI pay invoked successfully');
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
-            if (jsapiError?.message !== '用户取消支付') {
+            if (jsapiError?.message === '用户取消支付') {
+              // 用户取消：标记为已取消，允许用复用同一订单重新唤起
+              console.log('[Payment] User cancelled JSAPI, allowing retry with same order');
+              setJsapiCancelled(true);
+            } else {
               // JSAPI 失败，降级到扫码模式
               await fallbackToNativePayment(data.orderNo);
             }
@@ -1240,8 +1250,34 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }
   }, [open]);
 
+  // 重新唤起 JSAPI 支付（复用已有订单，不重新下单）
+  const handleReInvokeJsapi = async () => {
+    if (!jsapiPayParams) return;
+    setJsapiCancelled(false);
+    console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
+    try {
+      const bridgeAvailable = await waitForWeixinJSBridge(1500);
+      if (bridgeAvailable) {
+        await invokeJsapiPay(jsapiPayParams);
+        console.log('[Payment] JSAPI re-invoke succeeded');
+      } else {
+        console.log('[Payment] Bridge not available on retry, falling back');
+        await fallbackToNativePayment(orderNo);
+      }
+    } catch (err: any) {
+      console.log('[Payment] JSAPI re-invoke error:', err?.message);
+      if (err?.message === '用户取消支付') {
+        setJsapiCancelled(true);
+      } else {
+        await fallbackToNativePayment(orderNo);
+      }
+    }
+  };
+
   const handleRetry = () => {
+    orderCreatedRef.current = true; // 防止 useEffect 重复创建
     resetState();
+    orderCreatedRef.current = false;
     createOrder();
   };
 
@@ -1321,9 +1357,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             {/* JSAPI 支付状态 */}
             {(status === 'ready' || status === 'polling') && payType === 'jsapi' && (
               <div className="flex flex-col items-center gap-2 text-[#07C160]">
-                <Loader2 className="h-12 w-12 animate-spin" />
-                <span className="font-medium">等待支付完成...</span>
-                <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
+                {jsapiCancelled ? (
+                  <>
+                    <XCircle className="h-12 w-12 text-muted-foreground" />
+                    <span className="font-medium text-foreground">支付已取消</span>
+                    <span className="text-xs text-muted-foreground">您可以重新唤起支付或重新下单</span>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="h-12 w-12 animate-spin" />
+                    <span className="font-medium">等待支付完成...</span>
+                    <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
+                  </>
+                )}
               </div>
             )}
 
@@ -1420,23 +1466,49 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             <div className="text-center space-y-3">
               {payType === 'jsapi' ? (
                 <>
-                  <p className="text-sm text-muted-foreground">正在等待支付结果...</p>
-                  {status === 'polling' && (
-                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      支付弹窗已打开，请完成支付
-                    </p>
+                  {jsapiCancelled ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleReInvokeJsapi}
+                        className="gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        重新唤起支付
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetry}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        重新下单
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">正在等待支付结果...</p>
+                      {status === 'polling' && (
+                        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          支付弹窗已打开，请完成支付
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetry}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        重新发起支付
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRetry}
-                    className="gap-2"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    重新发起支付
-                  </Button>
                 </>
               ) : payType === 'h5' ? (
                 <>
