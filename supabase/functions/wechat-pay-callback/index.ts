@@ -147,32 +147,37 @@ serve(async (req) => {
         }
       }
 
-      // 自愈逻辑：synergy_bundle 补写 user_camp_purchases
-      if (order.user_id && order.package_key === 'synergy_bundle') {
+      // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases
+      const bundleCampMap: Record<string, { campType: string; campName: string }> = {
+        'synergy_bundle': { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
+        'wealth_synergy_bundle': { campType: 'wealth_block_7', campName: '财富觉醒训练营' },
+      };
+      const bundleCamp = order.user_id ? bundleCampMap[order.package_key] : null;
+      if (bundleCamp) {
         try {
           const { data: existingCamp } = await supabase
             .from('user_camp_purchases')
             .select('id')
             .eq('user_id', order.user_id)
-            .eq('camp_type', 'emotion_journal_21')
+            .eq('camp_type', bundleCamp.campType)
             .eq('payment_status', 'completed')
             .maybeSingle();
 
           if (!existingCamp) {
             await supabase.from('user_camp_purchases').insert({
               user_id: order.user_id,
-              camp_type: 'emotion_journal_21',
-              camp_name: '21天情绪日记训练营',
+              camp_type: bundleCamp.campType,
+              camp_name: bundleCamp.campName,
               purchase_price: order.amount,
               payment_method: 'wechat',
               payment_status: 'completed',
               purchased_at: order.paid_at || new Date().toISOString(),
               expires_at: null,
             });
-            console.log('[WechatCallback] Repaired missing synergy_bundle camp purchase:', order.user_id);
+            console.log(`[WechatCallback] Repaired missing ${order.package_key} camp purchase:`, order.user_id);
           }
         } catch (repairErr) {
-          console.error('[WechatCallback] synergy_bundle camp repair error:', repairErr);
+          console.error(`[WechatCallback] ${order.package_key} camp repair error:`, repairErr);
         }
       }
 
