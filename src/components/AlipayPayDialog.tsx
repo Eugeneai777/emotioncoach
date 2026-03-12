@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
+import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
 
 interface PackageInfo {
   key: string;
@@ -58,6 +59,7 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false);
+  const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
 
   // 清理定时器
   const clearTimers = () => {
@@ -135,9 +137,10 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (isPaid) {
         clearTimers();
         
-        // 未登录用户：存储订单号，显示引导登录界面
+        // 未登录用户：存储订单号并保存登录后回跳路径
         if (!user) {
           localStorage.setItem('pending_claim_order', orderNumber);
+          localStorage.setItem('post_auth_redirect', guestRedirectPath);
           setStatus('guest_success');
           confetti({
             particleCount: 100,
@@ -396,8 +399,9 @@ export function AlipayPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               <p className="text-sm text-muted-foreground text-center">请登录或注册以激活您的权益</p>
               <Button
                 onClick={() => {
+                  localStorage.setItem('post_auth_redirect', guestRedirectPath);
                   onOpenChange(false);
-                  navigate('/auth');
+                  navigate(`/auth?redirect=${encodeURIComponent(guestRedirectPath)}`);
                 }}
                 className="w-full mt-2"
               >
