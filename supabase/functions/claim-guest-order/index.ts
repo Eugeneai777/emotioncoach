@@ -150,25 +150,37 @@ serve(async (req) => {
       }
     }
 
-    // 绑定用户（同时写入收货信息）
-    const updateData: Record<string, any> = { user_id: userId, updated_at: new Date().toISOString() };
-    if (shippingInfo) {
-      updateData.buyer_name = shippingInfo.buyerName;
-      updateData.buyer_phone = shippingInfo.buyerPhone;
-      updateData.buyer_address = shippingInfo.buyerAddress;
-      updateData.shipping_status = 'pending';
-      if (shippingInfo.idCardName) updateData.id_card_name = shippingInfo.idCardName;
-      if (shippingInfo.idCardNumber) updateData.id_card_number = shippingInfo.idCardNumber;
-    }
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update(updateData)
-      .eq('order_no', orderNo)
-      .is('user_id', null); // 双重保护：只更新 user_id 为 null 的
+    // 绑定用户（同时写入收货信息）— 仅当 user_id 为 null 时执行
+    // 如果是跨账号同步（微信临时账号），订单已在上面更新
+    if (order.user_id === null) {
+      const updateData: Record<string, any> = { user_id: userId, updated_at: new Date().toISOString() };
+      if (shippingInfo) {
+        updateData.buyer_name = shippingInfo.buyerName;
+        updateData.buyer_phone = shippingInfo.buyerPhone;
+        updateData.buyer_address = shippingInfo.buyerAddress;
+        updateData.shipping_status = 'pending';
+        if (shippingInfo.idCardName) updateData.id_card_name = shippingInfo.idCardName;
+        if (shippingInfo.idCardNumber) updateData.id_card_number = shippingInfo.idCardNumber;
+      }
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('order_no', orderNo)
+        .is('user_id', null);
 
-    if (updateError) {
-      console.error('[ClaimGuestOrder] Update error:', updateError);
-      throw new Error('订单认领失败');
+      if (updateError) {
+        console.error('[ClaimGuestOrder] Update error:', updateError);
+        throw new Error('订单认领失败');
+      }
+    } else if (shippingInfo) {
+      // 跨账号同步场景：补写收货信息
+      const shipUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (shippingInfo.buyerName) shipUpdate.buyer_name = shippingInfo.buyerName;
+      if (shippingInfo.buyerPhone) shipUpdate.buyer_phone = shippingInfo.buyerPhone;
+      if (shippingInfo.buyerAddress) shipUpdate.buyer_address = shippingInfo.buyerAddress;
+      if (shippingInfo.idCardName) shipUpdate.id_card_name = shippingInfo.idCardName;
+      if (shippingInfo.idCardNumber) shipUpdate.id_card_number = shippingInfo.idCardNumber;
+      await supabase.from('orders').update(shipUpdate).eq('order_no', orderNo);
     }
 
     console.log('[ClaimGuestOrder] Order claimed successfully:', orderNo, '-> user:', userId);
