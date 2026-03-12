@@ -462,22 +462,7 @@ export default function SynergyPromoPage() {
     );
   }
 
-  // Show register step as full-screen overlay
-  if (step === 'register') {
-    return (
-      <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center px-4">
-        <div className="max-w-sm w-full bg-slate-900 rounded-2xl border border-slate-700/50 p-6">
-          <h2 className="text-lg font-bold text-white text-center mb-4">完成注册</h2>
-          <p className="text-sm text-slate-400 text-center mb-6">注册后可管理训练营进度和订单</p>
-          <QuickRegisterStep
-            orderNo={orderNo}
-            paymentOpenId={paymentOpenId}
-            onSuccess={handleRegisterSuccess}
-          />
-        </div>
-      </div>
-    );
-  }
+  // Register dialog (rendered as overlay, not full-screen replacement)
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 overflow-x-hidden">
