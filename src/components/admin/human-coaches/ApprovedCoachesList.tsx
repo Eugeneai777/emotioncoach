@@ -14,7 +14,6 @@ import {
   Star, 
   Loader2,
   CheckCircle,
-  XCircle,
   Eye
 } from "lucide-react";
 import { CoachEditDialog } from "./CoachEditDialog";
@@ -103,7 +102,6 @@ export function ApprovedCoachesList() {
 
   return (
     <div className="space-y-4">
-      {/* 搜索栏 */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -124,8 +122,9 @@ export function ApprovedCoachesList() {
         filteredCoaches?.map((coach) => (
           <Card key={coach.id} className="overflow-hidden">
             <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+              <div className="flex items-start gap-3 sm:gap-4">
+                {/* 头像 */}
+                <div className="w-14 sm:w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                   <AspectRatio ratio={3 / 4}>
                     {coach.avatar_url ? (
                       <img src={coach.avatar_url} alt={coach.name || ""} className="h-full w-full object-cover" />
@@ -137,44 +136,41 @@ export function ApprovedCoachesList() {
                   </AspectRatio>
                 </div>
                 
+                {/* 信息 */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
                     <h3 className="font-semibold text-foreground">{coach.name}</h3>
                     {coach.is_verified && (
-                      <Badge className="bg-blue-500">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        已认证
+                      <Badge className="bg-blue-500 text-xs px-1.5">
+                        <CheckCircle className="h-3 w-3 mr-0.5" />
+                        认证
                       </Badge>
                     )}
-                    <Badge variant={coach.is_accepting_new ? "default" : "secondary"}>
-                      {coach.is_accepting_new ? "接单中" : "暂停接单"}
+                    <Badge variant={coach.is_accepting_new ? "default" : "secondary"} className="text-xs">
+                      {coach.is_accepting_new ? "接单中" : "暂停"}
                     </Badge>
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-2">{coach.title}</p>
+                  {coach.title && (
+                    <p className="text-sm text-muted-foreground mb-1.5 truncate">{coach.title}</p>
+                  )}
                   
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      <span>{coach.rating?.toFixed(1) || "5.0"}</span>
-                      <span className="text-muted-foreground">
-                        ({coach.total_reviews || 0}评价)
-                      </span>
-                    </div>
-                    <span className="text-muted-foreground">|</span>
-                    <span className="text-muted-foreground">
-                      {coach.total_sessions || 0}次咨询
+                  <div className="flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+                      {coach.rating?.toFixed(1) || "5.0"}
+                      <span className="hidden sm:inline">({coach.total_reviews || 0}评价)</span>
                     </span>
-                    <span className="text-muted-foreground">|</span>
-                    <span className="text-muted-foreground">
-                      {coach.experience_years || 0}年经验
-                    </span>
+                    <span>{coach.total_sessions || 0}次咨询</span>
+                    <span>{coach.experience_years || 0}年经验</span>
                   </div>
                 </div>
-                
-                <div className="flex flex-col gap-3">
-                  {/* 接单开关 */}
-                  <div className="flex items-center gap-2">
+              </div>
+
+              {/* 操作区 - 移动端堆叠 */}
+              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-2">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
                     <span className="text-xs text-muted-foreground">接单</span>
                     <Switch
                       checked={coach.is_accepting_new}
@@ -183,10 +179,8 @@ export function ApprovedCoachesList() {
                       }
                       disabled={toggleStatusMutation.isPending}
                     />
-                  </div>
-                  
-                  {/* 认证开关 */}
-                  <div className="flex items-center gap-2">
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
                     <span className="text-xs text-muted-foreground">认证</span>
                     <Switch
                       checked={coach.is_verified}
@@ -195,25 +189,25 @@ export function ApprovedCoachesList() {
                       }
                       disabled={toggleVerifiedMutation.isPending}
                     />
-                  </div>
-                  
-                  {/* 操作按钮 */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setViewingCoachId(coach.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingCoachId(coach.id)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </label>
+                </div>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setViewingCoachId(coach.id)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditingCoachId(coach.id)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -221,7 +215,6 @@ export function ApprovedCoachesList() {
         ))
       )}
 
-      {/* 编辑对话框 */}
       {editingCoachId && (
         <CoachEditDialog
           coachId={editingCoachId}
@@ -229,7 +222,6 @@ export function ApprovedCoachesList() {
         />
       )}
 
-      {/* 查看详情对话框 */}
       {viewingCoachId && (
         <CoachApplicationDetail
           coachId={viewingCoachId}
