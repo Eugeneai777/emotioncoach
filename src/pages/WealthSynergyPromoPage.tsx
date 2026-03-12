@@ -769,12 +769,26 @@ export default function WealthSynergyPromoPage() {
         onConfirm={handleCheckoutConfirm}
       />
 
-      <UnifiedPayDialog
-        open={step === 'payment'}
+      {/* 微信支付对话框（微信浏览器/小程序/桌面端） */}
+      <WechatPayDialog
+        open={step === 'payment' && !shouldUseAlipay}
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
         openId={paymentOpenId}
+        shippingInfo={checkoutInfo ? {
+          buyerName: checkoutInfo.buyerName,
+          buyerPhone: checkoutInfo.buyerPhone,
+          buyerAddress: checkoutInfo.buyerAddress,
+        } : undefined}
+      />
+
+      {/* 支付宝对话框（移动端非微信浏览器） */}
+      <AlipayPayDialog
+        open={step === 'payment' && shouldUseAlipay}
+        onOpenChange={(open) => { if (!open) setStep('browse'); }}
+        packageInfo={packageInfo}
+        onSuccess={handlePaySuccess}
         shippingInfo={checkoutInfo ? {
           buyerName: checkoutInfo.buyerName,
           buyerPhone: checkoutInfo.buyerPhone,
