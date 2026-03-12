@@ -7,6 +7,7 @@ import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
 import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import { useAuth } from "@/hooks/useAuth";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
