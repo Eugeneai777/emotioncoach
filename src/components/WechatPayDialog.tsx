@@ -226,6 +226,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     // 设置防抖标记
     sessionStorage.setItem("pay_auth_in_progress", "1");
     
+    // 🆕 缓存当前用户 ID，OAuth 重定向后 auth session 可能丢失
+    if (user?.id) {
+      sessionStorage.setItem('pending_payment_user_id', user.id);
+    }
+    
     // 🆕 缓存当前选中的套餐信息，授权回跳后恢复
     if (packageInfo) {
       try {
@@ -720,7 +725,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user?.id || 'guest',
+          userId: user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest',
           payType: 'native',
           existingOrderNo,
         },
@@ -808,7 +813,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user?.id || 'guest',
+          userId: user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest',
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
           isMiniProgram: isMiniProgram,
