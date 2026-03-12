@@ -62,7 +62,7 @@ export default function BecomeCoach() {
     const validateInvite = async () => {
       const { data, error } = await supabase
         .from("coach_invitations")
-        .select("id, token, invitee_name, note, status, expires_at, default_service_name")
+        .select("id, token, invitee_name, note, status, expires_at, default_service_name, default_certifications")
         .eq("token", inviteToken)
         .eq("status", "pending")
         .single();
