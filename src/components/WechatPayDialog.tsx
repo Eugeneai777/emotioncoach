@@ -11,6 +11,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
+import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
 
 // 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
