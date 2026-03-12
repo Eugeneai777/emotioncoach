@@ -276,6 +276,11 @@ const History = () => {
                   🏕️ {selectedBriefing.camp_source}
                 </Badge>
               )}
+              {selectedBriefing.mama_source && !selectedBriefing.camp_source && (
+                <Badge variant="secondary" className="text-xs" style={{ backgroundColor: '#FFF3EB', color: '#F4845F', borderColor: '#F4845F33' }}>
+                  💛 宝妈AI
+                </Badge>
+              )}
             </div>
 
             <div className="space-y-4 md:space-y-6">
