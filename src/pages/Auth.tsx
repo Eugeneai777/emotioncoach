@@ -209,11 +209,15 @@ const Auth = () => {
             }
           }
           
-          // 计算目标跳转路径
+          // 计算目标跳转路径：优先 post_auth_redirect（支付后跳转），其次 auth_redirect（URL redirect 参数）
+          const postAuthRedirect = localStorage.getItem('post_auth_redirect');
           const savedRedirect = localStorage.getItem('auth_redirect');
           let targetRedirect = '/';
           
-          if (savedRedirect) {
+          if (postAuthRedirect) {
+            localStorage.removeItem('post_auth_redirect');
+            targetRedirect = postAuthRedirect;
+          } else if (savedRedirect) {
             localStorage.removeItem('auth_redirect');
             targetRedirect = savedRedirect;
           } else {

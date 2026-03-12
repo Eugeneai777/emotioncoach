@@ -982,6 +982,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           // 未登录用户：存储订单号，显示引导登录界面
           if (!user) {
             localStorage.setItem('pending_claim_order', data.orderNo || orderNo);
+            const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
+            localStorage.setItem('post_auth_redirect', guestRedirectPath);
             setStatus('guest_success');
             confetti({
               particleCount: 100,
@@ -1082,6 +1084,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           // 未登录用户：存储订单号，显示引导登录界面
           if (!user) {
             localStorage.setItem('pending_claim_order', pendingOrderNo);
+            const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
+            localStorage.setItem('post_auth_redirect', guestRedirectPath);
             setStatus('guest_success');
             confetti({
               particleCount: 100,
@@ -1358,8 +1362,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 <p className="text-sm text-muted-foreground text-center">请登录或注册以激活您的权益</p>
                 <Button
                   onClick={() => {
+                    const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
+                    localStorage.setItem('post_auth_redirect', guestRedirectPath);
                     onOpenChange(false);
-                    navigate('/auth');
+                    navigate(`/auth?redirect=${encodeURIComponent(guestRedirectPath)}`);
                   }}
                   className="w-full mt-2"
                 >
