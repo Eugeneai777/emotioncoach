@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Mic, MicOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MamaConversionCard from "./MamaConversionCard";
+import MamaCourseRecommendation from "./MamaCourseRecommendation";
 import { useMamaQuota } from "@/hooks/useMamaQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 import { supabase } from "@/integrations/supabase/client";
