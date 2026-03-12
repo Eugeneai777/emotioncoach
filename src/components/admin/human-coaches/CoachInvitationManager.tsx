@@ -43,7 +43,6 @@ export function CoachInvitationManager() {
         .from("coach_invitations")
         .insert({
           invitee_name: inviteeName || null,
-          invitee_phone: inviteePhone || null,
           note: note || null,
           created_by: (await supabase.auth.getUser()).data.user?.id,
         })
