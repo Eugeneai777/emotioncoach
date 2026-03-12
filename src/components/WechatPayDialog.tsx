@@ -1086,7 +1086,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           if (!user) {
             localStorage.setItem('pending_claim_order', pendingOrderNo);
             const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
-            localStorage.setItem('post_auth_redirect', guestRedirectPath);
+            setPostAuthRedirect(guestRedirectPath);
             setStatus('guest_success');
             confetti({
               particleCount: 100,
