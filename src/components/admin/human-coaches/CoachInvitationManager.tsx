@@ -307,6 +307,7 @@ export function CoachInvitationManager() {
                   添加
                 </Button>
               </div>
+              {defaultCerts.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {defaultCerts.map(c => (
                     <Badge key={c.certType} variant="secondary" className="gap-1">
