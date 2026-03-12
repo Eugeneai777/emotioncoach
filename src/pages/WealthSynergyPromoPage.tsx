@@ -256,8 +256,8 @@ export default function WealthSynergyPromoPage() {
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
     if (!isWechat || paymentOpenId) return;
 
-    // 1. 检查 sessionStorage 缓存
-    const cached = sessionStorage.getItem('wechat_payment_openid');
+    // 1. 检查 sessionStorage 缓存（统一使用 cached_wechat_openid）
+    const cached = sessionStorage.getItem('cached_wechat_openid');
     if (cached) { setPaymentOpenId(cached); return; }
 
     // 2. 已登录用户查数据库
@@ -269,7 +269,7 @@ export default function WealthSynergyPromoPage() {
         .then(({ data }) => {
           if (data?.openid) {
             setPaymentOpenId(data.openid);
-            sessionStorage.setItem('wechat_payment_openid', data.openid);
+            sessionStorage.setItem('cached_wechat_openid', data.openid);
           }
         });
     }
