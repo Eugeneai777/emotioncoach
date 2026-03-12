@@ -361,6 +361,11 @@ export default function BecomeCoach() {
                 onChange={setCertifications}
                 onNext={() => setCurrentStep("submit")}
                 onBack={() => setCurrentStep("basic")}
+                presetCertTypes={
+                  Array.isArray((invitationData as any)?.default_certifications)
+                    ? (invitationData as any).default_certifications.map((c: any) => c.certType)
+                    : []
+                }
               />
             )}
 

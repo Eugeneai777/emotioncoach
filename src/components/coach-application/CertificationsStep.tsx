@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, FileCheck, Upload, X, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, FileCheck, Upload, X, Check, Lock } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,7 @@ interface CertificationsStepProps {
   onChange: (data: Certification[]) => void;
   onNext: () => void;
   onBack: () => void;
+  presetCertTypes?: string[];
 }
 
 const CERT_OPTIONS = [
@@ -43,15 +45,17 @@ export function CertificationsStep({
   onChange,
   onNext,
   onBack,
+  presetCertTypes = [],
 }: CertificationsStepProps) {
   const [uploading, setUploading] = useState<string | null>(null);
   const [customCertName, setCustomCertName] = useState("");
   const { toast } = useToast();
 
-  const isSelected = (value: string) =>
-    data.some((c) => c.certType === value);
+  const isPreset = (certType: string) => presetCertTypes.includes(certType);
+  const isSelected = (value: string) => data.some((c) => c.certType === value);
 
   const toggleCert = (option: (typeof CERT_OPTIONS)[0]) => {
+    if (isPreset(option.value)) return; // Cannot toggle preset certs
     if (isSelected(option.value)) {
       onChange(data.filter((c) => c.certType !== option.value));
     } else {
@@ -88,6 +92,7 @@ export function CertificationsStep({
   };
 
   const removeCert = (certType: string) => {
+    if (isPreset(certType)) return;
     onChange(data.filter((c) => c.certType !== certType));
   };
 
@@ -127,34 +132,45 @@ export function CertificationsStep({
     }
   };
 
-  const isValid = data.length > 0;
+  const hasPresets = presetCertTypes.length > 0;
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-semibold text-foreground">资质证书</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          选择您拥有的资质证书，可选择上传证书图片
+          {hasPresets
+            ? "以下资质已由管理员预设，您还可以添加其他资质证书"
+            : "选择您拥有的资质证书，可选择上传证书图片"}
         </p>
       </div>
 
       {/* Selectable cert options */}
       <div className="space-y-3">
-        <Label>选择您的资质（至少选择1项）</Label>
+        <Label>{hasPresets ? "资质证书（可继续添加）" : "选择您的资质（选填）"}</Label>
         <div className="flex flex-wrap gap-2">
-          {CERT_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              variant={isSelected(option.value) ? "default" : "outline"}
-              size="sm"
-              onClick={() => toggleCert(option)}
-              className="rounded-full min-h-[40px] px-4"
-            >
-              {isSelected(option.value) && <Check className="h-3.5 w-3.5 mr-1.5" />}
-              {option.label}
-            </Button>
-          ))}
+          {CERT_OPTIONS.map((option) => {
+            const preset = isPreset(option.value);
+            const selected = isSelected(option.value);
+            return (
+              <Button
+                key={option.value}
+                type="button"
+                variant={selected ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleCert(option)}
+                disabled={preset}
+                className={`rounded-full min-h-[40px] px-4 ${preset ? "opacity-90" : ""}`}
+              >
+                {preset ? (
+                  <Lock className="h-3.5 w-3.5 mr-1.5" />
+                ) : selected ? (
+                  <Check className="h-3.5 w-3.5 mr-1.5" />
+                ) : null}
+                {option.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
@@ -180,65 +196,78 @@ export function CertificationsStep({
       {data.length > 0 && (
         <div className="space-y-3">
           <Label className="text-muted-foreground">已选择的资质（可选上传证书图片）</Label>
-          {data.map((cert) => (
-            <Card key={cert.certType} className="p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-sm">{cert.certName}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => removeCert(cert.certType)}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              {cert.imageUrl ? (
-                <div className="relative w-full h-24 bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={cert.imageUrl}
-                    alt="证书"
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-contain"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="absolute bottom-1 right-1 h-7 text-xs"
-                    onClick={() => updateCert(cert.certType, { imageUrl: "" })}
-                  >
-                    移除图片
-                  </Button>
-                </div>
-              ) : (
-                <label className="flex items-center justify-center w-full h-16 border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                  {uploading === cert.certType ? (
-                    <span className="text-xs text-muted-foreground">上传中...</span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Upload className="h-3.5 w-3.5" />
-                      上传证书图片（选填）
-                    </span>
+          {data.map((cert) => {
+            const preset = isPreset(cert.certType);
+            return (
+              <Card key={cert.certType} className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-sm">{cert.certName}</span>
+                    {preset && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        <Lock className="h-2.5 w-2.5 mr-0.5" />
+                        预设
+                      </Badge>
+                    )}
+                  </div>
+                  {!preset && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => removeCert(cert.certType)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(cert.certType, e)}
-                    disabled={uploading !== null}
-                  />
-                </label>
-              )}
-            </Card>
-          ))}
+                </div>
+                {cert.imageUrl ? (
+                  <div className="relative w-full h-24 bg-muted rounded-lg overflow-hidden">
+                    <img
+                      src={cert.imageUrl}
+                      alt="证书"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-contain"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute bottom-1 right-1 h-7 text-xs"
+                      onClick={() => updateCert(cert.certType, { imageUrl: "" })}
+                    >
+                      移除图片
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center w-full h-16 border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                    {uploading === cert.certType ? (
+                      <span className="text-xs text-muted-foreground">上传中...</span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Upload className="h-3.5 w-3.5" />
+                        上传证书图片（选填）
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(cert.certType, e)}
+                      disabled={uploading !== null}
+                    />
+                  </label>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
 
       {data.length === 0 && (
         <div className="text-center py-6 text-muted-foreground">
           <FileCheck className="h-10 w-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">请至少选择一项资质证书</p>
+          <p className="text-sm">暂未选择资质证书（选填）</p>
         </div>
       )}
 
@@ -247,8 +276,8 @@ export function CertificationsStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           上一步
         </Button>
-        <Button onClick={onNext} disabled={!isValid} className="flex-1">
-          下一步：设置服务项目
+        <Button onClick={onNext} className="flex-1">
+          下一步：确认提交
         </Button>
       </div>
     </div>
