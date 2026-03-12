@@ -39,7 +39,7 @@ const TypingDots = () => (
   </div>
 );
 
-const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput }: MamaAIChatProps) => {
+const MamaAIChat = ({ open, onOpenChange, initialContext, initialInput, chatType = "emotion" }: MamaAIChatProps) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
