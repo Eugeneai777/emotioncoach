@@ -142,6 +142,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const authCode = getPaymentAuthCode();
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId || urlOpenId);
   const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
+  const [jsapiCancelled, setJsapiCancelled] = useState<boolean>(false);
   // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
