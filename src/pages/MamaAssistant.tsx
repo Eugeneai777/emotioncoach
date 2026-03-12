@@ -123,7 +123,7 @@ const MamaAssistant = () => {
                   if (entry.route) {
                     navigate(entry.route);
                   } else if (entry.context) {
-                    openChat(entry.context);
+                    openChat(entry.context, entry.chatType);
                   }
                 }}
                 className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
