@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Plus, X, Upload, FileCheck, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, FileCheck, Upload, X, Check } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,12 +23,19 @@ interface CertificationsStepProps {
   onBack: () => void;
 }
 
-const CERT_TYPES = [
-  { value: "psychological_counselor", label: "心理咨询师" },
-  { value: "marriage_counselor", label: "婚姻家庭咨询师" },
-  { value: "education", label: "学历证书" },
-  { value: "training", label: "培训证书" },
-  { value: "other", label: "其他资质" },
+const CERT_OPTIONS = [
+  { value: "national_level2", label: "国家二级心理咨询师", category: "psychological_counselor" },
+  { value: "national_level3", label: "国家三级心理咨询师", category: "psychological_counselor" },
+  { value: "marriage_family", label: "婚姻家庭咨询师", category: "marriage_counselor" },
+  { value: "sand_therapy", label: "沙盘治疗师", category: "training" },
+  { value: "cbt_cert", label: "CBT 认知行为治疗认证", category: "training" },
+  { value: "nlp_cert", label: "NLP 执行师认证", category: "training" },
+  { value: "coaching_cert", label: "ICF 教练认证", category: "training" },
+  { value: "eap_cert", label: "EAP 咨询师", category: "training" },
+  { value: "psychology_degree", label: "心理学学位", category: "education" },
+  { value: "education_degree", label: "教育学学位", category: "education" },
+  { value: "social_work_cert", label: "社会工作师", category: "other" },
+  { value: "mindfulness_cert", label: "正念导师认证", category: "training" },
 ];
 
 export function CertificationsStep({
@@ -38,61 +44,80 @@ export function CertificationsStep({
   onNext,
   onBack,
 }: CertificationsStepProps) {
-  const [uploading, setUploading] = useState<number | null>(null);
-  const [generating, setGenerating] = useState<number | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [customCertName, setCustomCertName] = useState("");
   const { toast } = useToast();
 
-  const addCertification = () => {
+  const isSelected = (value: string) =>
+    data.some((c) => c.certType === value);
+
+  const toggleCert = (option: (typeof CERT_OPTIONS)[0]) => {
+    if (isSelected(option.value)) {
+      onChange(data.filter((c) => c.certType !== option.value));
+    } else {
+      onChange([
+        ...data,
+        {
+          certType: option.value,
+          certName: option.label,
+          issuingAuthority: "",
+          certNumber: "",
+          imageUrl: "",
+          description: "",
+        },
+      ]);
+    }
+  };
+
+  const addCustomCert = () => {
+    const name = customCertName.trim();
+    if (!name) return;
+    const key = `custom_${Date.now()}`;
     onChange([
       ...data,
       {
-        certType: "psychological_counselor",
-        certName: "",
+        certType: key,
+        certName: name,
         issuingAuthority: "",
         certNumber: "",
         imageUrl: "",
         description: "",
       },
     ]);
+    setCustomCertName("");
   };
 
-  const removeCertification = (index: number) => {
-    onChange(data.filter((_, i) => i !== index));
+  const removeCert = (certType: string) => {
+    onChange(data.filter((c) => c.certType !== certType));
   };
 
-  const updateCertification = (index: number, updates: Partial<Certification>) => {
-    onChange(data.map((cert, i) => (i === index ? { ...cert, ...updates } : cert)));
+  const updateCert = (certType: string, updates: Partial<Certification>) => {
+    onChange(data.map((c) => (c.certType === certType ? { ...c, ...updates } : c)));
   };
 
   const handleImageUpload = async (
-    index: number,
+    certType: string,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       toast({ title: "请选择图片文件", variant: "destructive" });
       return;
     }
-
-    setUploading(index);
+    setUploading(certType);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `cert-${Date.now()}-${index}.${fileExt}`;
+      const fileName = `cert-${Date.now()}.${fileExt}`;
       const filePath = `certifications/${fileName}`;
-
       const { error: uploadError } = await supabase.storage
         .from("community-images")
         .upload(filePath, file);
-
       if (uploadError) throw uploadError;
-
       const { data: urlData } = supabase.storage
         .from("community-images")
         .getPublicUrl(filePath);
-
-      updateCertification(index, { imageUrl: urlData.publicUrl });
+      updateCert(certType, { imageUrl: urlData.publicUrl });
       toast({ title: "证书图片上传成功" });
     } catch (error) {
       console.error("Upload error:", error);
@@ -102,148 +127,74 @@ export function CertificationsStep({
     }
   };
 
-  const handleGenerateDescription = async (index: number) => {
-    const cert = data[index];
-    if (!cert.certName) return;
-    setGenerating(index);
-    try {
-      const { data: result, error } = await supabase.functions.invoke("ai-coach-application", {
-        body: {
-          action: "generate_cert_description",
-          certType: cert.certType,
-          certName: cert.certName,
-          issuingAuthority: cert.issuingAuthority,
-        },
-      });
-      if (error) throw error;
-      if (result?.result) {
-        updateCertification(index, { description: result.result });
-        toast({ title: "证书描述已生成" });
-      }
-    } catch (error) {
-      console.error("Generate cert description error:", error);
-      toast({ title: "生成失败，请重试", variant: "destructive" });
-    } finally {
-      setGenerating(null);
-    }
-  };
-
-  const [generatingImage, setGeneratingImage] = useState<number | null>(null);
-
-  const handleGenerateCertImage = async (index: number) => {
-    const cert = data[index];
-    if (!cert.certName) {
-      toast({ title: "请先填写证书名称", variant: "destructive" });
-      return;
-    }
-    setGeneratingImage(index);
-    try {
-      const { data: result, error } = await supabase.functions.invoke("ai-coach-application", {
-        body: {
-          action: "generate_cert_image",
-          certType: cert.certType,
-          certName: cert.certName,
-          issuingAuthority: cert.issuingAuthority,
-          coachName: "",
-        },
-      });
-      if (error) throw error;
-      if (result?.result) {
-        updateCertification(index, { imageUrl: result.result });
-        toast({ title: "AI 证书图片已生成" });
-      }
-    } catch (error) {
-      console.error("Generate cert image error:", error);
-      toast({ title: "生成失败，请重试", variant: "destructive" });
-    } finally {
-      setGeneratingImage(null);
-    }
-  };
-
-  const isValid = data.length > 0 && data.every((cert) => cert.certName && cert.imageUrl);
+  const isValid = data.length > 0;
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-semibold text-foreground">资质证书</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          上传您的专业资质证书，审核通过后将获得认证徽章
+          选择您拥有的资质证书，可选择上传证书图片
         </p>
       </div>
 
-      <div className="space-y-4">
-        {data.map((cert, index) => (
-          <Card key={index} className="p-4 space-y-4 relative">
+      {/* Selectable cert options */}
+      <div className="space-y-3">
+        <Label>选择您的资质（至少选择1项）</Label>
+        <div className="flex flex-wrap gap-2">
+          {CERT_OPTIONS.map((option) => (
             <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 h-6 w-6"
-              onClick={() => removeCertification(index)}
+              key={option.value}
+              type="button"
+              variant={isSelected(option.value) ? "default" : "outline"}
+              size="sm"
+              onClick={() => toggleCert(option)}
+              className="rounded-full min-h-[40px] px-4"
             >
-              <X className="h-4 w-4" />
+              {isSelected(option.value) && <Check className="h-3.5 w-3.5 mr-1.5" />}
+              {option.label}
             </Button>
+          ))}
+        </div>
+      </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>证书类型</Label>
-                <select
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  value={cert.certType}
-                  onChange={(e) =>
-                    updateCertification(index, { certType: e.target.value })
-                  }
+      {/* Custom cert input */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="其他资质名称..."
+          value={customCertName}
+          onChange={(e) => setCustomCertName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addCustomCert()}
+          maxLength={30}
+        />
+        <Button
+          variant="outline"
+          onClick={addCustomCert}
+          disabled={!customCertName.trim()}
+        >
+          添加
+        </Button>
+      </div>
+
+      {/* Selected certs - optional image upload */}
+      {data.length > 0 && (
+        <div className="space-y-3">
+          <Label className="text-muted-foreground">已选择的资质（可选上传证书图片）</Label>
+          {data.map((cert) => (
+            <Card key={cert.certType} className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-sm">{cert.certName}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => removeCert(cert.certType)}
                 >
-                  {CERT_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
-
-              <div className="space-y-2">
-                <Label>证书名称 *</Label>
-                <Input
-                  placeholder="如：二级心理咨询师"
-                  value={cert.certName}
-                  onChange={(e) =>
-                    updateCertification(index, { certName: e.target.value })
-                  }
-                  maxLength={50}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>颁发机构</Label>
-                <Input
-                  placeholder="颁发机构名称"
-                  value={cert.issuingAuthority}
-                  onChange={(e) =>
-                    updateCertification(index, { issuingAuthority: e.target.value })
-                  }
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>证书编号</Label>
-                <Input
-                  placeholder="证书编号（选填）"
-                  value={cert.certNumber}
-                  onChange={(e) =>
-                    updateCertification(index, { certNumber: e.target.value })
-                  }
-                  maxLength={50}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>证书图片 *</Label>
               {cert.imageUrl ? (
-                <div className="relative w-full h-32 bg-muted rounded-lg overflow-hidden">
+                <div className="relative w-full h-24 bg-muted rounded-lg overflow-hidden">
                   <img
                     src={cert.imageUrl}
                     alt="证书"
@@ -254,100 +205,40 @@ export function CertificationsStep({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="absolute bottom-2 right-2"
-                    onClick={() => updateCertification(index, { imageUrl: "" })}
+                    className="absolute bottom-1 right-1 h-7 text-xs"
+                    onClick={() => updateCert(cert.certType, { imageUrl: "" })}
                   >
-                    重新上传
+                    移除图片
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                    {uploading === index ? (
-                      <div className="text-sm text-muted-foreground">上传中...</div>
-                    ) : (
-                      <>
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          点击上传证书图片
-                        </span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(index, e)}
-                      disabled={uploading !== null}
-                    />
-                  </label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-1.5"
-                    onClick={() => handleGenerateCertImage(index)}
-                    disabled={!cert.certName || generatingImage !== null}
-                  >
-                    {generatingImage === index ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-3.5 w-3.5" />
-                    )}
-                    {generatingImage === index ? "AI 生成中..." : "AI 生成证书图片"}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* AI Description */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>证书描述</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleGenerateDescription(index)}
-                  disabled={!cert.certName || generating !== null}
-                  className="gap-1.5"
-                >
-                  {generating === index ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <label className="flex items-center justify-center w-full h-16 border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                  {uploading === cert.certType ? (
+                    <span className="text-xs text-muted-foreground">上传中...</span>
                   ) : (
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Upload className="h-3.5 w-3.5" />
+                      上传证书图片（选填）
+                    </span>
                   )}
-                  {generating === index ? "生成中..." : "AI 生成描述"}
-                </Button>
-              </div>
-              <Textarea
-                placeholder="证书的专业描述（可点击 AI 生成）"
-                value={cert.description}
-                onChange={(e) =>
-                  updateCertification(index, { description: e.target.value })
-                }
-                className="min-h-[60px]"
-                maxLength={200}
-              />
-            </div>
-          </Card>
-        ))}
-
-        <Button
-          variant="outline"
-          className="w-full border-dashed"
-          onClick={addCertification}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          添加资质证书
-        </Button>
-      </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(cert.certType, e)}
+                    disabled={uploading !== null}
+                  />
+                </label>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
 
       {data.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <FileCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p>请添加至少一个资质证书</p>
-          <p className="text-sm">资质证书将帮助用户了解您的专业背景</p>
+        <div className="text-center py-6 text-muted-foreground">
+          <FileCheck className="h-10 w-10 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">请至少选择一项资质证书</p>
         </div>
       )}
 
