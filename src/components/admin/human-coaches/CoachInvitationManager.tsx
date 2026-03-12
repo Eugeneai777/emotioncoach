@@ -57,7 +57,6 @@ export function CoachInvitationManager() {
       copyLink(data.token);
       setShowCreateDialog(false);
       setInviteeName("");
-      setInviteePhone("");
       setNote("");
     },
     onError: (error) => {
