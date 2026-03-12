@@ -392,7 +392,7 @@ export default function WealthSynergyPromoPage() {
       handleEnterCamp();
     } else {
       // 设置登录/注册后的跳转目标，防止被 OAuth 回调或首页重定向覆盖
-      localStorage.setItem('post_auth_redirect', '/camp-intro/wealth_block_7');
+      setPostAuthRedirect('/camp-intro/wealth_block_7');
       setStep('register');
     }
   };
