@@ -169,7 +169,7 @@ export const CoachHeader = ({
                 {/* Show login item when user is not logged in */}
                 {!user && (
                   <DropdownMenuItem
-                    onClick={() => navigate('/auth')}
+                    onClick={() => navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`)}
                     className="cursor-pointer hover:bg-accent text-primary font-medium"
                   >
                     <LogIn className="mr-2 h-4 w-4" />
