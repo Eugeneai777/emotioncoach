@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserCheck, Clock, XCircle, Users, Link2 } from "lucide-react";
 
 export function HumanCoachesManagement() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("invitations");
 
   // 获取统计数据
   const { data: stats } = useQuery({
