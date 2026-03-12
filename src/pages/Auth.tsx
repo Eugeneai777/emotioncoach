@@ -209,17 +209,16 @@ const Auth = () => {
             }
           }
           
-          // 计算目标跳转路径：优先 post_auth_redirect（支付后跳转），其次 auth_redirect（URL redirect 参数）
-          const postAuthRedirect = localStorage.getItem('post_auth_redirect');
+          // 计算目标跳转路径：优先 auth_redirect（显式传入的当前页面路径），其次 post_auth_redirect（支付后跳转，带时效）
           const savedRedirect = localStorage.getItem('auth_redirect');
+          const postAuthRedirect = consumePostAuthRedirect();
           let targetRedirect = '/';
           
-          if (postAuthRedirect) {
-            localStorage.removeItem('post_auth_redirect');
-            targetRedirect = postAuthRedirect;
-          } else if (savedRedirect) {
+          if (savedRedirect) {
             localStorage.removeItem('auth_redirect');
             targetRedirect = savedRedirect;
+          } else if (postAuthRedirect) {
+            targetRedirect = postAuthRedirect;
           } else {
             // 查询用户偏好教练类型，智能跳转
             try {
