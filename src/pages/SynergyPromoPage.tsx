@@ -238,7 +238,51 @@ export default function SynergyPromoPage() {
     priority: 'page',
   });
 
-  // 检查用户是否已购买过 synergy_bundle（兼容多种购买路径）
+  // 🆕 微信 OAuth 回跳后恢复支付弹窗（参考产品中心逻辑）
+  useEffect(() => {
+    if (paymentResumeHandledRef.current) return;
+
+    if (paymentAuthError) {
+      paymentResumeHandledRef.current = true;
+      toast.error("微信授权失败", { description: "请重新尝试支付" });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      url.searchParams.delete('payment_auth_error');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
+    if (paymentResume) {
+      paymentResumeHandledRef.current = true;
+      console.log('[SynergyPromo] Payment resume detected, restoring payment dialog');
+
+      // 使用 URL 中的 payment_openid
+      if (urlPaymentOpenId) {
+        setPaymentOpenId(urlPaymentOpenId);
+      }
+
+      // 尝试恢复收货信息
+      try {
+        const cachedShipping = localStorage.getItem('synergy_shipping_info');
+        if (cachedShipping) {
+          setCheckoutInfo(JSON.parse(cachedShipping));
+        }
+      } catch (e) {
+        console.error('[SynergyPromo] Failed to restore shipping info:', e);
+      }
+
+      // 直接进入支付步骤
+      setStep('payment');
+
+      // 清理 URL 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      url.searchParams.delete('payment_openid');
+      url.searchParams.delete('payment_auth_error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [paymentResume, paymentAuthError, urlPaymentOpenId]);
+
   useEffect(() => {
     const checkPurchase = async () => {
       if (!user) {
