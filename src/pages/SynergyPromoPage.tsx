@@ -410,6 +410,8 @@ export default function SynergyPromoPage() {
       // 已登录用户：支付成功后直接进入训练营
       handleEnterCamp();
     } else {
+      // 设置登录/注册后的跳转目标，防止被 OAuth 回调或首页重定向覆盖
+      localStorage.setItem('post_auth_redirect', '/camp-intro/emotion_stress_7');
       setStep('register');
     }
   };
