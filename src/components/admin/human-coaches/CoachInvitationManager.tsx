@@ -44,6 +44,7 @@ export function CoachInvitationManager() {
         .insert({
           invitee_name: inviteeName || null,
           note: note || null,
+          default_service_name: defaultServiceName || null,
           created_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
