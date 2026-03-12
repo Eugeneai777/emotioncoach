@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,10 @@ import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { AlipayPayDialog } from "@/components/AlipayPayDialog";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
+
+const STORE_CHECKOUT_CACHE_KEY = 'store_pending_checkout';
+const STORE_PACKAGE_CACHE_KEY = 'store_pending_package';
+const STORE_PRODUCT_CACHE_KEY = 'store_pending_product_id';
 
 interface Product {
   id: string;
