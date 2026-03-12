@@ -217,7 +217,7 @@ const History = () => {
           ...b,
           camp_source: campSourceMap.get(b.id) || null,
           mama_source: isMamaEmotion || isMamaGratitude,
-          mama_type: isMamaGratitude ? 'gratitude' : (isMamaEmotion ? 'emotion' : null),
+          mama_type: (isMamaGratitude ? 'gratitude' : (isMamaEmotion ? 'emotion' : null)) as 'emotion' | 'gratitude' | null,
         };
       });
 
