@@ -80,6 +80,38 @@ export function HealthStoreGrid() {
     },
   });
 
+  // 🆕 payment_resume 恢复：微信 OAuth 授权回跳后自动恢复支付弹窗
+  useEffect(() => {
+    const isPaymentResume = searchParams.get('payment_resume') === '1';
+    if (!isPaymentResume) return;
+    if (!products.length) return; // 等产品列表加载完
+
+    try {
+      const cachedCheckout = sessionStorage.getItem(STORE_CHECKOUT_CACHE_KEY);
+      const cachedPackage = sessionStorage.getItem(STORE_PACKAGE_CACHE_KEY);
+      const cachedProductId = sessionStorage.getItem(STORE_PRODUCT_CACHE_KEY);
+
+      if (cachedCheckout && cachedPackage && cachedProductId) {
+        const info = JSON.parse(cachedCheckout) as CheckoutInfo;
+        const pkg = JSON.parse(cachedPackage) as { key: string; name: string; price: number };
+        const product = products.find(p => p.id === cachedProductId);
+
+        console.log('[HealthStore] Restoring payment state after OAuth redirect');
+        setPendingCheckoutInfo(info);
+        setPayPackage(pkg);
+        if (product) setSelectedProduct(product);
+        setPayOpen(true);
+
+        // 清理 URL 中的 payment_resume（保留 payment_openid 给 WechatPayDialog）
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('payment_resume');
+        setSearchParams(newParams, { replace: true });
+      }
+    } catch (e) {
+      console.error('[HealthStore] Failed to restore payment state:', e);
+    }
+  }, [searchParams, products]);
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setDetailOpen(true);
@@ -105,11 +137,16 @@ export function HealthStoreGrid() {
 
       setPendingCheckoutInfo(info);
 
-      setPayPackage({
+      const pkg = {
         key: `store_product_${selectedProduct.id}`,
         name: selectedProduct.product_name,
         price: selectedProduct.price,
-      });
+      };
+      setPayPackage(pkg);
+
+      // 🆕 缓存结账信息，微信 OAuth 跳转后可恢复
+      cacheCheckoutState(info, pkg, selectedProduct.id);
+
       setCheckoutOpen(false);
       setPayOpen(true);
     } catch (err: any) {
