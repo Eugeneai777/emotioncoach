@@ -381,6 +381,8 @@ export default function WealthSynergyPromoPage() {
                 buyerName: checkoutInfo.buyerName,
                 buyerPhone: checkoutInfo.buyerPhone,
                 buyerAddress: checkoutInfo.buyerAddress,
+                idCardName: checkoutInfo.idCardName,
+                idCardNumber: checkoutInfo.idCardNumber,
               },
             },
           });
