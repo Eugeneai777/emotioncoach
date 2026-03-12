@@ -25,7 +25,7 @@ const audiences = [
     emoji: "💑",
     label: "情侣夫妻",
     subtitle: "亲密关系·沟通",
-    route: "/marriage",
+    route: "/us-ai",
     gradient: "from-purple-400 to-violet-500",
     bgColor: "hsl(270 70% 96%)",
   },
