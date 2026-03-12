@@ -91,10 +91,9 @@ export default function WeChatOAuthCallback() {
             }
           }
           
-        // 检查是否有待跳转的目标路径（如 promo 页支付后注册）
-          const postAuthRedirect = localStorage.getItem('post_auth_redirect');
+        // 检查是否有待跳转的目标路径（如 promo 页支付后注册，带时效）
+          const postAuthRedirect = consumePostAuthRedirect();
           if (postAuthRedirect) {
-            localStorage.removeItem('post_auth_redirect');
             navigate(postAuthRedirect);
             return;
           }
