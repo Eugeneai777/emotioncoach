@@ -213,7 +213,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -339,7 +339,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
               `}</style>
               <div
                 ref={scrollRef}
-                className="zhile-scroll-outer border rounded-lg"
+                className="zhile-scroll-outer border rounded-lg w-full max-w-full"
                 style={{
                   overflowX: 'scroll',
                   WebkitOverflowScrolling: 'touch',
@@ -350,7 +350,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                   style={{
                     overflowY: 'auto',
                     maxHeight: '60vh',
-                    minWidth: '1900px',
                   }}
                 >
                   <table className="w-max caption-bottom text-sm" style={{ minWidth: '1900px' }}>
