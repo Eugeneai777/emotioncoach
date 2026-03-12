@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, Pill, ShoppingCart } from "lucide-react";
+import { Sparkles, ArrowRight, Pill, ShoppingCart, LogIn, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
@@ -112,6 +113,8 @@ const capsulePackageInfo = {
 
 export default function ZhileProductsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const wechatOpenId = useWechatOpenId();
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -181,6 +184,27 @@ export default function ZhileProductsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 pb-12">
+      {/* 顶部登录按钮 */}
+      <div className="absolute top-4 right-4 z-20">
+        {user ? (
+          <button
+            onClick={() => navigate('/settings?tab=account')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-slate-200 text-xs backdrop-blur-sm hover:bg-white/20 transition-colors"
+          >
+            <User className="w-3.5 h-3.5" />
+            我的
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-slate-200 text-xs backdrop-blur-sm hover:bg-white/20 transition-colors"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            登录 / 注册
+          </button>
+        )}
+      </div>
+
       {/* Hero */}
       <section
         className="relative overflow-hidden px-4 pt-14 pb-8 text-center"
