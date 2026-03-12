@@ -96,6 +96,33 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "更新失败"),
   });
 
+  const updateCustomsInfo = useMutation({
+    mutationFn: async ({ orderId, idCardName, idCardNumber, source }: { orderId: string; idCardName: string; idCardNumber: string; source?: string }) => {
+      if (source === 'store_orders') {
+        const { data, error } = await supabase
+          .from("store_orders" as any)
+          .update({ id_card_name: idCardName, id_card_number: idCardNumber })
+          .eq("id", orderId)
+          .select("id");
+        if (error) throw error;
+        if (!data || (data as any[]).length === 0) throw new Error("无权限更新");
+      } else {
+        const { data, error } = await supabase
+          .from("orders")
+          .update({ id_card_name: idCardName, id_card_number: idCardNumber })
+          .eq("id", orderId)
+          .select("id");
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error("无权限更新");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["zhile-orders"] });
+      toast.success("清关信息已更新");
+    },
+    onError: (err: Error) => toast.error(err.message || "更新失败"),
+  });
+
   const updateNickname = useMutation({
     mutationFn: async ({ userId, value }: { userId: string; value: string }) => {
       const { data, error } = await supabase
