@@ -116,13 +116,14 @@ ${conversationText}
     }
 
     const theme = extracted.emotion_theme || '宝妈日常聊天';
+    const titlePrefix = type === 'gratitude' ? '[宝妈AI-感恩]' : '[宝妈AI]';
 
     // Create conversation record
     const { data: conversation, error: convError } = await supabase
       .from('conversations')
       .insert({
         user_id: user.id,
-        title: `[宝妈AI] ${theme}`
+        title: `${titlePrefix} ${theme}`
       })
       .select()
       .single();
