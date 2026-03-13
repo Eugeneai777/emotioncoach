@@ -261,7 +261,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           <UserHeader style={{ marginBottom: '8px' }}/>
 
           {/* Category Badge */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
             <span style={{
               background: 'rgba(255,255,255,0.25)',
               padding: '4px 12px',
