@@ -175,6 +175,37 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
 
   const hasDateFilter = dateFrom || dateTo;
 
+  useEffect(() => {
+    const updateScrollWidth = () => {
+      if (!scrollRef.current) return;
+      setScrollContentWidth(Math.max(scrollRef.current.scrollWidth, 1900));
+    };
+
+    updateScrollWidth();
+    window.addEventListener("resize", updateScrollWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateScrollWidth);
+    };
+  }, [filtered.length]);
+
+  const syncHorizontalScroll = (source: "main" | "bottom") => {
+    const main = scrollRef.current;
+    const bottom = bottomScrollRef.current;
+    if (!main || !bottom || syncLockRef.current) return;
+
+    syncLockRef.current = true;
+    if (source === "main") {
+      bottom.scrollLeft = main.scrollLeft;
+    } else {
+      main.scrollLeft = bottom.scrollLeft;
+    }
+
+    requestAnimationFrame(() => {
+      syncLockRef.current = false;
+    });
+  };
+
   const exportCSV = () => {
     const headers = ['下单时间', '商品名称', '订单号', '来源', '用户昵称', '收货人', '手机号', '收货地址', '身份证姓名', '身份证号码', '金额', '物流状态', '快递单号/备注', '支付方式'];
     const rows = filtered.map(o => [
