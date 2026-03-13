@@ -245,32 +245,27 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '20px 18px',
+          display: 'flex', flexDirection: 'column', padding: '16px 16px',
         }}>
-          {/* User Header */}
-          <UserHeader style={{ marginBottom: '8px' }}/>
-
-          {/* Category Badge */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <UserHeader style={{ marginBottom: '6px' }}/>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>
             <span style={{
               background: 'rgba(255,255,255,0.25)',
-              padding: '4px 12px',
+              padding: '3px 10px',
               borderRadius: '20px',
-              fontSize: '11px',
+              fontSize: '10px',
               color: 'white',
               fontWeight: 500,
             }}>
               {config.category === 'coach' ? '🎯 AI教练' : config.category === 'partner' ? '💪 合伙人' : config.category === 'camp' ? '🔥 训练营' : '✨ 工具'}
             </span>
           </div>
-
-          {/* Main Content */}
-          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '30px', marginBottom: '6px' }}>{config.emoji}</div>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 4px 0' }}>
               {config.title}
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontStyle: 'italic' }}>
               「{config.subtitle}」
             </p>
           </div>
