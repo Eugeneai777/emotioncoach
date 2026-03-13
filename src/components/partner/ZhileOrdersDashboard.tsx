@@ -553,6 +553,27 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                     下一页
                     <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                   </Button>
+                  {totalPages > 5 && (
+                    <div className="flex items-center gap-1 ml-2">
+                      <span className="text-xs text-muted-foreground">跳至</span>
+                      <Input
+                        className="h-7 w-14 text-xs text-center"
+                        value={jumpPage}
+                        onChange={(e) => setJumpPage(e.target.value.replace(/\D/g, ''))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const num = parseInt(jumpPage);
+                            if (num >= 1 && num <= totalPages) {
+                              setCurrentPage(num);
+                              setJumpPage("");
+                            }
+                          }
+                        }}
+                        placeholder={`${currentPage}`}
+                      />
+                      <span className="text-xs text-muted-foreground">页</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
