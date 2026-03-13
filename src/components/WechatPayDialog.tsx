@@ -231,7 +231,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   }, []);
 
 
-  // 触发静默授权获取 openId（用于未登录用户）
+  // 触发静默授权获取 openId
+  // 已登录用户使用 openid_only 模式，仅获取 openId 不创建/切换账号
   // 使用 wechat-pay-auth 函数，通过 /pay-entry 统一回调处理
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
