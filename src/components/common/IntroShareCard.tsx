@@ -135,7 +135,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
         )}
         <div>
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>
             {displayName || '朋友'} 推荐
           </p>
         </div>
