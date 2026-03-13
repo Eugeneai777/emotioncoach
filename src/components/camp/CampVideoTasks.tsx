@@ -12,7 +12,7 @@ interface CampVideoTasksProps {
 
 const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTasksProps) => {
   const dateStr = formatDateCST(date);
-  const { recommendations, loading, markAsWatched } = useCampVideoRecommendations(
+  const { recommendations, loading, isFallback, fallbackDate, markAsWatched } = useCampVideoRecommendations(
     campId,
     briefingData,
     dateStr
