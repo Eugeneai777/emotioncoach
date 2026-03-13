@@ -1,0 +1,1 @@
+UPDATE orders SET status = 'paid', shipping_note = NULL, shipping_status = 'pending', updated_at = NOW() WHERE order_no IN ('YJ20260313034213BY3TFZ', 'YJ20260313033720YRW6H3') AND status = 'duplicate_paid';
