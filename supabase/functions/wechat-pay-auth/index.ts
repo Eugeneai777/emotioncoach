@@ -31,12 +31,18 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source, state } = body;
+    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source, state, mode } = body;
 
     // 模式3：小程序直接使用 openId 注册/登录（无需 OAuth 跳转）
     if (directOpenId && source === 'miniprogram') {
       console.log('[WechatPayAuth] Direct openId registration from miniprogram');
       return await ensureUserFromOpenId(directOpenId, directUnionId);
+    }
+
+    // 模式4：仅换取 openId，不创建/登录用户（已登录用户临时获取支付用 openId）
+    if (code && mode === 'openid_only') {
+      console.log('[WechatPayAuth] openid_only mode — exchanging code without user creation');
+      return await exchangeCodeForOpenIdOnly(code);
     }
 
     // 模式2：用 code 换取 openId + 自动登录/注册
