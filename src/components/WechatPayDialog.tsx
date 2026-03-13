@@ -993,9 +993,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         startPolling(data.orderNo);
       }
 
-      // 设置5分钟超时
+      // 设置5分钟超时 + 倒计时
+      startQrCountdown(5 * 60);
       timeoutRef.current = setTimeout(() => {
         clearTimers();
+        setQrCountdown(0);
         setStatus('expired');
       }, 5 * 60 * 1000);
 
