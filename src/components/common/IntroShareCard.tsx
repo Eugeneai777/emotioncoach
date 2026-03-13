@@ -57,7 +57,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
     const containerStyle: React.CSSProperties = {
       width: '320px',
-      height: template === 'scenario' ? '500px' : template === 'value' ? '490px' : '440px',
+      height: template === 'scenario' ? '460px' : template === 'value' ? '440px' : '400px',
       position: 'relative',
       overflow: 'hidden',
       borderRadius: '16px',
@@ -108,21 +108,21 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
     // User Header Component - 总是显示，即使没有头像也显示默认
     const UserHeader = ({ style }: { style?: React.CSSProperties }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', ...style }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', ...style }}>
         {avatarUrl ? (
           <img 
             src={avatarUrl} 
             alt="" 
-            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} 
+            style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }}
             crossOrigin="anonymous"
             onLoad={handleAvatarLoad}
             onError={handleAvatarError}
           />
         ) : (
           <div style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '50%', 
+            width: '30px', 
+            height: '30px', 
+            borderRadius: '50%',
             background: 'rgba(255,255,255,0.3)', 
             display: 'flex', 
             alignItems: 'center', 
@@ -135,7 +135,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
         )}
         <div>
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>
             {displayName || '朋友'} 推荐
           </p>
         </div>
@@ -149,36 +149,32 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '28px 24px',
+          display: 'flex', flexDirection: 'column', padding: '20px 20px',
         }}>
-          {/* User Header */}
           <UserHeader />
-
-          {/* Emoji + Title */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '6px' }}>{config.emoji}</div>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
               {config.title}
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', marginTop: '8px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginTop: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
               {config.subtitle}
             </p>
           </div>
 
-          {/* Highlights */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
-                borderRadius: '10px',
-                padding: '10px 14px',
+                borderRadius: '8px',
+                padding: '8px 12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '8px',
               }}>
-                <span style={{ fontSize: '16px' }}>✨</span>
-                <span style={{ fontSize: '13px', color: 'white', fontWeight: 500 }}>{point}</span>
+                <span style={{ fontSize: '14px' }}>✨</span>
+                <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{point}</span>
               </div>
             ))}
           </div>
@@ -196,48 +192,42 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', padding: '18px 18px',
         }}>
-          {/* User Avatar + Recommends */}
           <UserHeader />
-
-          {/* Main Content */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '8px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '6px' }}>{config.emoji}</div>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 4px 0' }}>
               {config.title}
             </h1>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>
               {config.subtitle}
             </p>
           </div>
 
-          {/* Value Badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
-            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', color: 'white', fontWeight: 500 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginBottom: '10px' }}>
+            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', color: 'white', fontWeight: 500 }}>
               🎯 专业引导
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', color: 'white', fontWeight: 500 }}>
+            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', color: 'white', fontWeight: 500 }}>
               ⏰ 24小时
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', color: 'white', fontWeight: 500 }}>
+            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', color: 'white', fontWeight: 500 }}>
               📊 智能分析
             </span>
           </div>
-
-          {/* Highlights */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.15)',
                 borderRadius: '8px',
-                padding: '10px 14px',
+                padding: '8px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}>
-                <span style={{ fontSize: '14px' }}>{['💡', '🌟', '🚀'][i] || '✨'}</span>
-                <span style={{ fontSize: '12px', color: 'white' }}>{point}</span>
+                <span style={{ fontSize: '12px' }}>{['💡', '🌟', '🚀'][i] || '✨'}</span>
+                <span style={{ fontSize: '11px', color: 'white' }}>{point}</span>
               </div>
             ))}
           </div>
@@ -255,79 +245,74 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '20px 18px',
+          display: 'flex', flexDirection: 'column', padding: '16px 16px',
         }}>
-          {/* User Header */}
-          <UserHeader style={{ marginBottom: '8px' }}/>
-
-          {/* Category Badge */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <UserHeader style={{ marginBottom: '6px' }}/>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>
             <span style={{
               background: 'rgba(255,255,255,0.25)',
-              padding: '4px 12px',
+              padding: '3px 10px',
               borderRadius: '20px',
-              fontSize: '11px',
+              fontSize: '10px',
               color: 'white',
               fontWeight: 500,
             }}>
               {config.category === 'coach' ? '🎯 AI教练' : config.category === 'partner' ? '💪 合伙人' : config.category === 'camp' ? '🔥 训练营' : '✨ 工具'}
             </span>
           </div>
-
-          {/* Main Content */}
-          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '30px', marginBottom: '6px' }}>{config.emoji}</div>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 4px 0' }}>
               {config.title}
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontStyle: 'italic' }}>
               「{config.subtitle}」
             </p>
           </div>
 
           {/* Feature Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.95)',
-                borderRadius: '10px',
-                padding: '10px',
+                borderRadius: '8px',
+                padding: '8px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '18px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '16px', marginBottom: '2px' }}>
                   {['💡', '🌟', '🚀', '📊'][i] || '✨'}
                 </span>
-                <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
+                <span style={{ fontSize: '10px', color: '#1a1a1a', fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
               </div>
             ))}
             {/* 补充第4个格子 */}
             {config.highlights.length === 3 && (
               <div style={{
                 background: 'rgba(255,255,255,0.95)',
-                borderRadius: '10px',
-                padding: '10px',
+                borderRadius: '8px',
+                padding: '8px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '18px', marginBottom: '4px' }}>🎁</span>
+                <span style={{ fontSize: '16px', marginBottom: '2px' }}>🎁</span>
                 <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500 }}>免费体验</span>
               </div>
             )}
           </div>
 
           {/* CTA Text */}
-          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '6px' }}>
             <span style={{ 
               background: 'rgba(255,255,255,0.2)', 
               color: 'white', 
-              fontSize: '11px', 
+              fontSize: '10px', 
               fontWeight: 500, 
-              padding: '5px 14px', 
+              padding: '4px 12px', 
               borderRadius: '20px' 
             }}>
               ✨ 扫码开启你的成长之旅
