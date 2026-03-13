@@ -292,14 +292,14 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
             {config.highlights.length === 3 && (
               <div style={{
                 background: 'rgba(255,255,255,0.95)',
-                borderRadius: '10px',
-                padding: '10px',
+                borderRadius: '8px',
+                padding: '8px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '18px', marginBottom: '4px' }}>🎁</span>
+                <span style={{ fontSize: '16px', marginBottom: '2px' }}>🎁</span>
                 <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500 }}>免费体验</span>
               </div>
             )}
