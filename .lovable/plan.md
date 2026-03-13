@@ -1,23 +1,24 @@
 
 
-## 两个问题需要修复
+## 问题分析
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+`IntroShareCard.tsx` 中三个模板都使用了固定高度（concise: 420px, value: 480px, scenario: 540px）+ `overflow: hidden`。当内容较多时（用户头像 + emoji + 标题 + 3条亮点 + QR码 + 品牌footer），底部内容被截断，如截图所示 QR 码区域不可见。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## 修改方案
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+**文件**: `src/components/common/IntroShareCard.tsx`
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+1. **增加各模板高度**：
+   - concise: 420px → 480px（多出 60px 给 QR + footer）
+   - value: 480px → 540px
+   - scenario: 540px → 580px
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+2. **压缩内部间距**，防止高度增加后视觉过于松散：
+   - 缩小 emoji 字号（48px → 40px）
+   - 缩小 UserHeader marginBottom（16px → 12px）
+   - highlight 卡片 padding 微调（12px → 10px）
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+3. **QR + BrandFooter 区域加 `flexShrink: 0`**，确保不会被 flex 布局压缩。
+
+改动仅限 `IntroShareCard.tsx` 一个文件，不影响其他分享卡片组件。
 
