@@ -175,8 +175,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [agreedTerms, setAgreedTerms] = useState(!needsTerms);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
   const openIdFetchedRef = useRef<boolean>(false); // 防止重复获取 openId
+  const [qrCountdown, setQrCountdown] = useState<number>(0); // 二维码倒计时（秒）
   const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
   const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
 
