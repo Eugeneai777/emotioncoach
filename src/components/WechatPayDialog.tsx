@@ -305,16 +305,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   }, [packageInfo]);
 
   // 用 code 换取 openId（通过 wechat-pay-auth 函数）
+  // 已登录用户使用 openid_only 模式，避免创建重复账号或切换登录态
   const exchangeCodeForOpenId = useCallback(async (code: string) => {
     if (codeExchangedRef.current) return;
     codeExchangedRef.current = true;
     setIsExchangingCode(true);
 
     try {
-      console.log('[Payment] Exchanging code for openId via wechat-pay-auth');
+      const isLoggedIn = !!user;
+      console.log('[Payment] Exchanging code for openId via wechat-pay-auth, openid_only:', isLoggedIn);
       
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-        body: { code },
+        body: { code, ...(isLoggedIn ? { mode: 'openid_only' } : {}) },
       });
 
       // 清理 URL 中的 OAuth 参数
