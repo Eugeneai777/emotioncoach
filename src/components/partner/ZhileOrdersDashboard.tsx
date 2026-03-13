@@ -32,6 +32,8 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["zhile-orders"],
@@ -139,29 +141,37 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
   });
 
-  const filtered = useMemo(() => orders.filter(o => {
-    const matchSearch = !searchTerm || 
-      o.order_no?.includes(searchTerm) ||
-      o.buyer_name?.includes(searchTerm) ||
-      o.buyer_phone?.includes(searchTerm) ||
-      o.id_card_name?.includes(searchTerm) ||
-      o.product_name?.includes(searchTerm);
-    const matchStatus = statusFilter === "all" || (o.shipping_status || 'pending') === statusFilter;
-    
-    // Date range filter
-    let matchDate = true;
-    if (dateFrom || dateTo) {
-      const orderDate = o.paid_at ? new Date(o.paid_at) : o.created_at ? new Date(o.created_at) : null;
-      if (!orderDate) {
-        matchDate = false;
-      } else {
-        if (dateFrom && isBefore(orderDate, startOfDay(dateFrom))) matchDate = false;
-        if (dateTo && isAfter(orderDate, endOfDay(dateTo))) matchDate = false;
+  const filtered = useMemo(() => {
+    setCurrentPage(1);
+    return orders.filter(o => {
+      const matchSearch = !searchTerm || 
+        o.order_no?.includes(searchTerm) ||
+        o.buyer_name?.includes(searchTerm) ||
+        o.buyer_phone?.includes(searchTerm) ||
+        o.id_card_name?.includes(searchTerm) ||
+        o.product_name?.includes(searchTerm);
+      const matchStatus = statusFilter === "all" || (o.shipping_status || 'pending') === statusFilter;
+      
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const orderDate = o.paid_at ? new Date(o.paid_at) : o.created_at ? new Date(o.created_at) : null;
+        if (!orderDate) {
+          matchDate = false;
+        } else {
+          if (dateFrom && isBefore(orderDate, startOfDay(dateFrom))) matchDate = false;
+          if (dateTo && isAfter(orderDate, endOfDay(dateTo))) matchDate = false;
+        }
       }
-    }
-    
-    return matchSearch && matchStatus && matchDate;
-  }), [orders, searchTerm, statusFilter, dateFrom, dateTo]);
+      
+      return matchSearch && matchStatus && matchDate;
+    });
+  }, [orders, searchTerm, statusFilter, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   const stats = {
     total: orders.length,
@@ -370,7 +380,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                       </tr>
                     </thead>
                     <tbody className="[&_tr:last-child]:border-0">
-                      {filtered.map(order => {
+                      {paginatedData.map(order => {
                         const currentStatus = order.shipping_status || 'pending';
                         const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
 
@@ -499,6 +509,56 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                       })}
                     </tbody>
                   </table>
+                </div>
+              </div>
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-3 px-1">
+                <p className="text-xs text-muted-foreground">
+                  共 {filtered.length} 条，第 {currentPage}/{totalPages} 页
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                    上一页
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                    .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === '...' ? (
+                        <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">...</span>
+                      ) : (
+                        <Button
+                          key={item}
+                          variant={currentPage === item ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 w-7 text-xs p-0"
+                          onClick={() => setCurrentPage(item as number)}
+                        >
+                          {item}
+                        </Button>
+                      )
+                    )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    下一页
+                    <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                  </Button>
                 </div>
               </div>
             </>
