@@ -40,7 +40,7 @@ export function PurchaseHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('未登录');
 
-      const [ordersResult, subscriptionsResult, storeOrdersResult] = await Promise.all([
+      const [ordersResult, subscriptionsResult] = await Promise.all([
         supabase
           .from('orders')
           .select('id, order_no, package_name, package_key, amount, status, paid_at, created_at, pay_type, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note')
@@ -54,13 +54,6 @@ export function PurchaseHistory() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(50),
-        supabase
-          .from('store_orders' as any)
-          .select('id, order_no, product_name, price, quantity, status, paid_at, created_at, buyer_name, buyer_phone, buyer_address, tracking_number')
-          .eq('buyer_id', user.id)
-          .in('status', ['paid', 'shipped', 'completed'])
-          .order('created_at', { ascending: false })
-          .limit(50)
       ]);
 
       const PHYSICAL_PACKAGE_KEYS = ['synergy_bundle', 'wealth_synergy_bundle', 'zhile_capsule', 'zhile_capsules'];
@@ -80,7 +73,7 @@ export function PurchaseHistory() {
           shipping_status: o.shipping_status,
           shipping_note: o.shipping_note,
           package_key: (o as any).package_key,
-          is_physical: PHYSICAL_PACKAGE_KEYS.includes((o as any).package_key || ''),
+          is_physical: PHYSICAL_PACKAGE_KEYS.includes((o as any).package_key || '') || (o as any).package_key?.startsWith('store_product_'),
         })),
         ...(subscriptionsResult.data || []).map(s => ({
           id: s.id,
@@ -91,21 +84,6 @@ export function PurchaseHistory() {
           status: s.status,
           created_at: s.created_at,
         })),
-        ...((storeOrdersResult.data as any[]) || []).map((so: any) => ({
-          id: so.id,
-          source: 'wechat_pay' as const,
-          name: so.product_name || '商城购买',
-          amount: so.price || 0,
-          status: so.status === 'completed' ? 'paid' : so.status,
-          created_at: so.paid_at || so.created_at,
-          order_no: so.order_no,
-          buyer_name: so.buyer_name,
-          buyer_phone: so.buyer_phone,
-          buyer_address: so.buyer_address,
-          shipping_status: so.status === 'paid' ? 'pending' : so.status === 'shipped' ? 'shipped' : so.status === 'completed' ? 'delivered' : 'pending',
-          shipping_note: so.tracking_number,
-          is_physical: true, // store_orders 都是实物商品
-        }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       return records;
