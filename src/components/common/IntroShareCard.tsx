@@ -255,7 +255,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', padding: '20px 18px',
         }}>
           {/* User Header */}
           <UserHeader style={{ marginBottom: '12px' }}/>
