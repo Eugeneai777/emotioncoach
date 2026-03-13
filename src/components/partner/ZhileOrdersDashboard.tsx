@@ -524,7 +524,15 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                   </table>
                 </div>
               </div>
-            </>
+              {/* Always-visible fake scrollbar for Windows */}
+              <div
+                ref={fakeScrollRef}
+                className="zhile-fake-scrollbar w-full max-w-full"
+                onScroll={handleFakeScroll}
+                style={{ overflowX: 'scroll', marginTop: '-2px' }}
+              >
+                <div style={{ minWidth: '1900px', height: '1px' }} />
+              </div>
           )}
         </CardContent>
       </Card>
