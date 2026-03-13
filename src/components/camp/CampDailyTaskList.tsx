@@ -10,6 +10,7 @@ import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import CampVideoTasks from "./CampVideoTasks";
+import { MeditationOverviewCard } from "./MeditationOverviewCard";
 
 interface Task {
   id: string;
