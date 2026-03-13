@@ -205,32 +205,29 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
             </p>
           </div>
 
-          {/* Value Badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' }}>
-            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', color: 'white', fontWeight: 500 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginBottom: '10px' }}>
+            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', color: 'white', fontWeight: 500 }}>
               🎯 专业引导
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', color: 'white', fontWeight: 500 }}>
+            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', color: 'white', fontWeight: 500 }}>
               ⏰ 24小时
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', color: 'white', fontWeight: 500 }}>
+            <span style={{ background: 'rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: '20px', fontSize: '10px', color: 'white', fontWeight: 500 }}>
               📊 智能分析
             </span>
           </div>
-
-          {/* Highlights */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.15)',
                 borderRadius: '8px',
-                padding: '10px 14px',
+                padding: '8px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}>
-                <span style={{ fontSize: '14px' }}>{['💡', '🌟', '🚀'][i] || '✨'}</span>
-                <span style={{ fontSize: '12px', color: 'white' }}>{point}</span>
+                <span style={{ fontSize: '12px' }}>{['💡', '🌟', '🚀'][i] || '✨'}</span>
+                <span style={{ fontSize: '11px', color: 'white' }}>{point}</span>
               </div>
             ))}
           </div>
