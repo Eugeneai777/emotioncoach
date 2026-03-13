@@ -326,18 +326,6 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
             <p className="text-center text-muted-foreground py-8 text-sm">暂无订单数据</p>
           ) : (
             <>
-              {/* Scroll hint + manual scroll buttons */}
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-muted-foreground">← 左右滑动查看全部字段 →</p>
-                <div className="flex gap-1">
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
               {/* Force visible scrollbar on all platforms */}
               <style>{`
                 .zhile-scroll-outer { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); overflow-x: scroll !important; }
