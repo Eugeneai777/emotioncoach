@@ -25,7 +25,7 @@ interface IntroShareDialogProps {
 
 export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<CardTemplate>('concise');
+  const [selectedTemplate, setSelectedTemplate] = useState<CardTemplate>('value');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [cardReady, setCardReady] = useState(false);
