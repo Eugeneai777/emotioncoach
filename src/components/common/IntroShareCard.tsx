@@ -286,12 +286,12 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
 
           {/* Feature Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.95)',
                 borderRadius: '10px',
-                padding: '12px',
+                padding: '10px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
