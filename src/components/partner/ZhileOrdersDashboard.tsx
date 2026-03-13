@@ -380,7 +380,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                       </tr>
                     </thead>
                     <tbody className="[&_tr:last-child]:border-0">
-                      {filtered.map(order => {
+                      {paginatedData.map(order => {
                         const currentStatus = order.shipping_status || 'pending';
                         const statusInfo = STATUS_OPTIONS.find(s => s.value === currentStatus) || STATUS_OPTIONS[0];
 
