@@ -1500,6 +1500,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             )}
           </div>
 
+          {/* 二维码倒计时 */}
+          {(status === 'ready' || status === 'polling') && qrCountdown > 0 && payType !== 'jsapi' && (
+            <div className={`flex items-center justify-center gap-1.5 text-xs ${qrCountdown <= 60 ? 'text-destructive' : 'text-muted-foreground'}`}>
+              <Clock className="h-3 w-3" />
+              <span>
+                二维码有效期：{Math.floor(qrCountdown / 60).toString().padStart(2, '0')}:{(qrCountdown % 60).toString().padStart(2, '0')}
+              </span>
+              {qrCountdown <= 60 && <span className="font-medium">即将过期</span>}
+            </div>
+          )}
+
           {/* 状态提示 */}
           {(status === 'ready' || status === 'polling') && (
             <div className="text-center space-y-3">
