@@ -108,21 +108,28 @@ serve(async (req) => {
           );
         }
         
-        // 订单存在且未支付，返回现有订单信息（不创建新订单）
+        // 订单存在且未支付
         if (existingOrder.status === 'pending') {
-          console.log('[CreateOrder] Existing order still pending, returning existing info');
-          return new Response(
-            JSON.stringify({
-              success: true,
-              orderNo: existingOrderNo,
-              payUrl: existingOrder.qr_code_url,
-              qrCodeUrl: existingOrder.qr_code_url,
-              payType: 'native',
-              existingOrder: true,
-              message: '使用已有订单',
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          // 🔧 如果请求的是 native 支付但现有订单没有 QR 码（原订单可能是 jsapi 创建的），
+          // 不要直接返回空的 QR URL，而是跳过幂等检查，让后续逻辑重新向微信请求 Native QR 码
+          if (payType === 'native' && !existingOrder.qr_code_url) {
+            console.log('[CreateOrder] Existing order has no QR URL, will regenerate native QR for:', existingOrderNo);
+            // 不 return，继续往下走，使用同一个 orderNo 重新请求微信 Native API
+          } else {
+            console.log('[CreateOrder] Existing order still pending, returning existing info');
+            return new Response(
+              JSON.stringify({
+                success: true,
+                orderNo: existingOrderNo,
+                payUrl: existingOrder.qr_code_url,
+                qrCodeUrl: existingOrder.qr_code_url,
+                payType: 'native',
+                existingOrder: true,
+                message: '使用已有订单',
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
       }
     }
@@ -218,8 +225,9 @@ serve(async (req) => {
     // 继续使用之前初始化的 supabase 和 finalUserId
     // （已在幂等检查阶段初始化）
 
-    // 生成订单号
-    const orderNo = generateOrderNo();
+    // 生成订单号（或复用已有的待付款订单号）
+    const reuseExistingOrder = !!existingOrderNo && payType === 'native';
+    const orderNo = reuseExistingOrder ? existingOrderNo : generateOrderNo();
     const expiredAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
 
     // 构建微信支付请求体
@@ -514,29 +522,48 @@ serve(async (req) => {
 
     // 保存订单到数据库 - 使用 finalUserId（已绑定用户或guest）
     const isGuest = finalUserId === 'guest' || !finalUserId;
-    const { error: insertError } = await supabase
-      .from('orders')
-      .insert({
-        user_id: isGuest ? null : finalUserId,
-        package_key: packageKey,
-        package_name: packageName,
-        amount: amount,
-        order_no: orderNo,
-        status: 'pending',
-        pay_type: actualPayType || null,
-        qr_code_url: payUrl || null,
-        expired_at: expiredAt.toISOString(),
-        buyer_name: buyerName || null,
-        buyer_phone: buyerPhone || null,
-        buyer_address: buyerAddress || null,
-        shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
-        id_card_name: idCardName || null,
-        id_card_number: idCardNumber || null,
-      });
+    
+    if (reuseExistingOrder) {
+      // 🔧 复用已有订单：仅更新 QR 码和支付类型（订单已在数据库中）
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          pay_type: actualPayType || null,
+          qr_code_url: payUrl || null,
+          expired_at: expiredAt.toISOString(),
+        })
+        .eq('order_no', orderNo);
+      
+      if (updateError) {
+        console.error('Update order error:', updateError);
+        throw new Error('订单更新失败');
+      }
+      console.log('Order updated with native QR:', orderNo, 'payType:', actualPayType);
+    } else {
+      const { error: insertError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: isGuest ? null : finalUserId,
+          package_key: packageKey,
+          package_name: packageName,
+          amount: amount,
+          order_no: orderNo,
+          status: 'pending',
+          pay_type: actualPayType || null,
+          qr_code_url: payUrl || null,
+          expired_at: expiredAt.toISOString(),
+          buyer_name: buyerName || null,
+          buyer_phone: buyerPhone || null,
+          buyer_address: buyerAddress || null,
+          shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
+          id_card_name: idCardName || null,
+          id_card_number: idCardNumber || null,
+        });
 
-    if (insertError) {
-      console.error('Insert order error:', insertError);
-      throw new Error('订单创建失败');
+      if (insertError) {
+        console.error('Insert order error:', insertError);
+        throw new Error('订单创建失败');
+      }
     }
 
     console.log('Order created successfully:', orderNo, 'userId:', isGuest ? 'guest' : finalUserId, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '');

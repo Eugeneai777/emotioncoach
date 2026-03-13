@@ -813,17 +813,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     if (isMiniProgram) {
       console.log('[Payment] MiniProgram detected, mp_openid:', userOpenId || 'MISSING (will get from native)');
       selectedPayType = 'miniprogram';
+    } else if (isWechat && !isMobile) {
+      // 🔧 微信电脑端（PC WeChat）：WeixinJSBridge 不可用，直接走 Native QR 码
+      // 无论是否有 openId，PC 微信都不支持 JSAPI 弹窗支付
+      console.log('[Payment] Desktop WeChat detected, using native QR (Bridge unavailable on PC)');
+      selectedPayType = 'native';
     } else if (isWechat && !!userOpenId) {
-      console.log('[Payment] WeChat browser with openId, using jsapi');
+      // 手机微信浏览器有 openId → JSAPI 弹窗支付
+      console.log('[Payment] Mobile WeChat browser with openId, using jsapi');
       selectedPayType = 'jsapi';
-    } else if (isWechat && !userOpenId && isMobile) {
+    } else if (isWechat && !userOpenId) {
       // 手机微信浏览器无 openId → H5 支付，避免长按 QR 被拦截
       console.log('[Payment] Mobile WeChat without openId, using H5 payment');
       selectedPayType = 'h5';
-    } else if (isWechat && !userOpenId && !isMobile) {
-      // 电脑微信无 openId → Native QR 码，用户手机扫码支付
-      console.log('[Payment] Desktop WeChat without openId, using native QR');
-      selectedPayType = 'native';
     } else if (isMobile && !isWechat) {
       selectedPayType = 'h5';
     } else {
