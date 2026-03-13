@@ -136,6 +136,11 @@ export default function StoryCoach() {
   };
 
   const handleSignOut = async () => {
+    // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
+    localStorage.removeItem('cached_wechat_openid');
+    sessionStorage.removeItem('cached_wechat_openid');
+    localStorage.removeItem('cached_payment_openid');
+    sessionStorage.removeItem('cached_payment_openid');
     await supabase.auth.signOut();
     navigate("/auth");
   };
