@@ -297,7 +297,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '20px', marginBottom: '6px' }}>
+                <span style={{ fontSize: '18px', marginBottom: '4px' }}>
                   {['💡', '🌟', '🚀', '📊'][i] || '✨'}
                 </span>
                 <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
