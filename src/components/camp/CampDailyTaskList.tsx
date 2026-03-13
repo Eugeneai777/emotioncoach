@@ -10,6 +10,7 @@ import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import CampVideoTasks from "./CampVideoTasks";
+import { MeditationOverviewCard } from "./MeditationOverviewCard";
 
 interface Task {
   id: string;
@@ -170,6 +171,9 @@ const CampDailyTaskList = ({ campId, date = new Date(), briefingData }: CampDail
           </div>
         ) : (
           <>
+            {/* 7天冥想总览 */}
+            <MeditationOverviewCard />
+
             {/* 推荐视频课程 */}
             <CampVideoTasks 
               campId={campId} 
