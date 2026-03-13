@@ -15,6 +15,7 @@ interface StressMeditation {
 }
 
 export function MeditationOverviewCard() {
+  const [open, setOpen] = useState(false);
   const [meditations, setMeditations] = useState<StressMeditation[]>([]);
   const [loading, setLoading] = useState(true);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
