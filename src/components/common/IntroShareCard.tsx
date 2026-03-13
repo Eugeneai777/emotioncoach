@@ -108,12 +108,12 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
     // User Header Component - 总是显示，即使没有头像也显示默认
     const UserHeader = ({ style }: { style?: React.CSSProperties }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', ...style }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', ...style }}>
         {avatarUrl ? (
           <img 
             src={avatarUrl} 
             alt="" 
-            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} 
+            style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }}
             crossOrigin="anonymous"
             onLoad={handleAvatarLoad}
             onError={handleAvatarError}
