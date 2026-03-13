@@ -57,7 +57,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
     const containerStyle: React.CSSProperties = {
       width: '320px',
-      height: template === 'scenario' ? '580px' : template === 'value' ? '540px' : '480px',
+      height: template === 'scenario' ? '540px' : template === 'value' ? '540px' : '480px',
       position: 'relative',
       overflow: 'hidden',
       borderRadius: '16px',
@@ -255,13 +255,13 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', padding: '20px 18px',
         }}>
           {/* User Header */}
-          <UserHeader style={{ marginBottom: '12px' }}/>
+          <UserHeader style={{ marginBottom: '8px' }}/>
 
           {/* Category Badge */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
             <span style={{
               background: 'rgba(255,255,255,0.25)',
               padding: '4px 12px',
@@ -275,8 +275,8 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
 
           {/* Main Content */}
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
+          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{config.emoji}</div>
             <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
               {config.title}
             </h1>
@@ -286,18 +286,18 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
 
           {/* Feature Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.95)',
                 borderRadius: '10px',
-                padding: '12px',
+                padding: '10px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '20px', marginBottom: '6px' }}>
+                <span style={{ fontSize: '18px', marginBottom: '4px' }}>
                   {['💡', '🌟', '🚀', '📊'][i] || '✨'}
                 </span>
                 <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
@@ -308,26 +308,26 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
               <div style={{
                 background: 'rgba(255,255,255,0.95)',
                 borderRadius: '10px',
-                padding: '12px',
+                padding: '10px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '20px', marginBottom: '6px' }}>🎁</span>
+                <span style={{ fontSize: '18px', marginBottom: '4px' }}>🎁</span>
                 <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500 }}>免费体验</span>
               </div>
             )}
           </div>
 
           {/* CTA Text */}
-          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
             <span style={{ 
               background: 'rgba(255,255,255,0.2)', 
               color: 'white', 
-              fontSize: '12px', 
+              fontSize: '11px', 
               fontWeight: 500, 
-              padding: '6px 16px', 
+              padding: '5px 14px', 
               borderRadius: '20px' 
             }}>
               ✨ 扫码开启你的成长之旅
