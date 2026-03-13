@@ -156,7 +156,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
           {/* Emoji + Title */}
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>{config.emoji}</div>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
             <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
               {config.title}
             </h1>
