@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useState, useCallback } from 'react';
 import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
 import { useQRCode } from '@/utils/qrCodeUtils';
 
-export type CardTemplate = 'concise' | 'value' | 'scenario';
+export type CardTemplate = 'value' | 'scenario';
 
 interface IntroShareCardProps {
   config: IntroShareConfig;
@@ -14,7 +14,6 @@ interface IntroShareCardProps {
 }
 
 export const TEMPLATE_LABELS: Record<CardTemplate, string> = {
-  concise: '简洁版',
   value: '价值版',
   scenario: '场景版',
 };
@@ -142,48 +141,6 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
       </div>
     );
 
-    // Template A: 简洁版 (朋友圈)
-    const renderConciseTemplate = () => (
-      <div style={containerStyle} ref={ref}>
-        <div style={{ position: 'absolute', inset: 0, background: config.gradient }} />
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '20px 20px',
-        }}>
-          <UserHeader />
-          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '6px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
-              {config.title}
-            </h1>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginTop: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-              {config.subtitle}
-            </p>
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-            {config.highlights.map((point, i) => (
-              <div key={i} style={{
-                background: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{ fontSize: '14px' }}>✨</span>
-                <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{point}</span>
-              </div>
-            ))}
-          </div>
-
-          <QRSection />
-          <BrandFooter />
-        </div>
-      </div>
-    );
 
     // Template B: 价值版 (微信好友)
     const renderValueTemplate = () => (
@@ -328,13 +285,11 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
     );
 
     switch (template) {
-      case 'value':
-        return renderValueTemplate();
       case 'scenario':
         return renderScenarioTemplate();
-      case 'concise':
+      case 'value':
       default:
-        return renderConciseTemplate();
+        return renderValueTemplate();
     }
   }
 );

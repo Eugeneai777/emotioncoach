@@ -17,7 +17,7 @@ interface ShareCardPreviewDialogProps {
 
 export function ShareCardPreviewDialog({ open, onOpenChange, item }: ShareCardPreviewDialogProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [template, setTemplate] = useState<CardTemplate>('concise');
+  const [template, setTemplate] = useState<CardTemplate>('value');
   const [generating, setGenerating] = useState(false);
   const [generateStatus, setGenerateStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [generateTime, setGenerateTime] = useState<number | null>(null);

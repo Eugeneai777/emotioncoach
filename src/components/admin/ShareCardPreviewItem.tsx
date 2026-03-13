@@ -81,7 +81,7 @@ export function ShareCardPreviewItem({ item, onPreview }: ShareCardPreviewItemPr
             <IntroShareCard 
               ref={cardRef}
               config={item.introConfig} 
-              template="concise"
+              template="value"
               displayName="测试用户"
               onReady={() => setCardReady(true)}
             />
