@@ -310,8 +310,12 @@ export function AppointmentPayDialog({
         
         openIdForPayment = mpOpenId;
         selectedPayType = 'miniprogram';
+      } else if (isWechat && !isMobile) {
+        // 🔧 微信电脑端：WeixinJSBridge 不可用，直接走 Native QR 码
+        console.log('[AppointmentPay] Desktop WeChat detected, using native QR (Bridge unavailable on PC)');
+        selectedPayType = 'native';
       } else if (isWechat && !!userOpenId) {
-        // 微信浏览器：检测 WeixinJSBridge
+        // 手机微信浏览器有 openId → JSAPI 弹窗支付
         const bridgeReady = await new Promise<boolean>((resolve) => {
           if (typeof window.WeixinJSBridge !== 'undefined') return resolve(true);
           let done = false;
