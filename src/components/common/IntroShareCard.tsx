@@ -149,18 +149,15 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '28px 24px',
+          display: 'flex', flexDirection: 'column', padding: '20px 20px',
         }}>
-          {/* User Header */}
           <UserHeader />
-
-          {/* Emoji + Title */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '6px' }}>{config.emoji}</div>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
               {config.title}
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', marginTop: '8px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginTop: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
               {config.subtitle}
             </p>
           </div>
