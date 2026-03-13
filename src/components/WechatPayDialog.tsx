@@ -1655,7 +1655,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
           {/* 操作按钮 */}
           {(status === 'failed' || status === 'expired') && (
-            <Button type="button" onClick={handleRetry} variant="outline" className="gap-2">
+            <Button type="button" onClick={handleRetry} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
               <RefreshCw className="h-4 w-4" />
               重新生成二维码
             </Button>
