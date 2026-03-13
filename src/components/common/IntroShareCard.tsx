@@ -275,8 +275,8 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
 
           {/* Main Content */}
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
+          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{config.emoji}</div>
             <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
               {config.title}
             </h1>
