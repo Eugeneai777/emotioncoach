@@ -85,6 +85,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
+        flexShrink: 0,
       }}>
         {qrCodeUrl && (
           <img 
