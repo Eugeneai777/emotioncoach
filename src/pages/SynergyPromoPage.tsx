@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Sun, Coffee, Zap, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
@@ -15,29 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
-
-/* ========== Animated Progress Bar ========== */
-function AnimatedBar({ label, value, color, delay }: { label: string; value: number; color: string; delay: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
-  return (
-    <div ref={ref} className="space-y-1.5">
-      <div className="flex justify-between text-xs">
-        <span className="text-slate-300">{label}</span>
-        <span className="font-bold" style={{ color }}>{value}%</span>
-      </div>
-      <div className="h-2.5 rounded-full bg-slate-700/60 overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: color }}
-          initial={{ width: 0 }}
-          animate={inView ? { width: `${value}%` } : {}}
-          transition={{ duration: 1.2, delay, ease: "easeOut" }}
-        />
-      </div>
-    </div>
-  );
-}
 
 /* ========== Floating particles ========== */
 function Particles() {
@@ -74,37 +51,59 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
   );
 }
 
-/* ========== Pain Points ========== */
+/* ========== Pain Points (5 cards from PDF §3) ========== */
 const painPoints = [
-  { icon: Activity, stat: "78%", label: "中年男性职场压力超负荷", desc: "晋升焦虑、绩效压力、开会心跳加速", color: "#f87171" },
-  { icon: Moon, stat: "65%", label: "夫妻关系紧张难以入睡", desc: "沟通不畅、争吵后躺下越想越焦虑", color: "#a78bfa" },
-  { icon: Coffee, stat: "83%", label: "亲子代沟加剧倦怠感", desc: "孩子不听话、沟通无效、靠忍耐硬撑", color: "#fbbf24" },
+  { icon: Activity, label: "情绪内耗", desc: "焦虑、烦躁、压抑、易怒，明明很累却无人理解，长期情绪内耗", color: "#f87171" },
+  { icon: Heart, label: "关系紧张", desc: "夫妻沟通困难、亲密关系冷淡；亲子有代沟，不知道怎么有效沟通", color: "#f472b6" },
+  { icon: Briefcase, label: "职场高压", desc: "工作压力大、内卷严重、精力不足、效率下降，担心职业发展瓶颈", color: "#a78bfa" },
+  { icon: Moon, label: "身心失调", desc: "失眠、多梦、易醒、注意力差、身体紧绷、长期疲劳，健康亮起黄灯", color: "#38bdf8" },
+  { icon: Sprout, label: "成长受阻", desc: "想学习改变，但课程太复杂、太鸡汤，缺乏专业陪伴，单纯情绪疏导无法解决身体根源", color: "#4ade80" },
 ];
 
-/* ========== Synergy Data ========== */
-const synergyData = [
-  { label: "压力缓解效果", mind: 60, body: 55, combo: 92 },
-  { label: "起效速度", mind: 45, body: 70, combo: 88 },
-  { label: "睡眠质量改善", mind: 55, body: 65, combo: 90 },
-  { label: "情绪稳定度", mind: 65, body: 50, combo: 93 },
-  { label: "工作效率提升", mind: 58, body: 48, combo: 85 },
+/* ========== 6 Core Highlights (PDF §4) ========== */
+const coreHighlights = [
+  { icon: MessageCircle, title: "AI情绪教练", subtitle: "24小时个性化陪伴", desc: "专业冥想音频 + 自动捕捉情绪 + 引导式对话 + 个人成长简报", gradient: "from-violet-500/20 to-violet-900/20", border: "border-violet-500/30", textColor: "text-violet-300" },
+  { icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长中年男性情绪与关系问题", gradient: "from-amber-500/20 to-amber-900/20", border: "border-amber-500/30", textColor: "text-amber-300" },
+  { icon: Clock, title: "轻量打卡", subtitle: "每日10-15分钟", desc: "碎片时间即可完成，清晰打卡日历，系统自动推荐匹配个人状态的专属课程", gradient: "from-emerald-500/20 to-emerald-900/20", border: "border-emerald-500/30", textColor: "text-emerald-300" },
+  { icon: Users, title: "同频男性社区", subtitle: "安全不尴尬", desc: "专属男性成长社区，无评判放心倾诉，智能推荐同频用户，告别孤独", gradient: "from-blue-500/20 to-blue-900/20", border: "border-blue-500/30", textColor: "text-blue-300" },
+  { icon: Leaf, title: "知乐胶囊", subtitle: "草本调理根源", desc: "香港HKC-18181认证，16味草本，不含褪黑素/激素，无依赖，补心补肝益气安神", gradient: "from-cyan-500/20 to-cyan-900/20", border: "border-cyan-500/30", textColor: "text-cyan-300" },
+  { icon: Sparkles, title: "体系化闭环", subtitle: "从知道到做到", desc: "冥想→情绪觉察→AI对话→课程学习→社区分享→草本调理→成长报告", gradient: "from-rose-500/20 to-rose-900/20", border: "border-rose-500/30", textColor: "text-rose-300" },
 ];
 
-/* ========== Timeline ========== */
-const timeline = [
-  { time: "7:00", label: "晨间训练", type: "mind" as const, desc: "5分钟正念冥想" },
-  { time: "8:00", label: "早餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
-  { time: "10:00", label: "会前准备", type: "mind" as const, desc: "2分钟呼吸调节" },
-  { time: "12:30", label: "午餐后服用", type: "body" as const, desc: "知乐胶囊 × 1次" },
-  { time: "15:00", label: "午后重启", type: "mind" as const, desc: "认知重塑练习" },
-  { time: "17:00", label: "下午服用", type: "body" as const, desc: "知乐胶囊 × 1次（建议17-18点）" },
-  { time: "22:00", label: "睡前放松", type: "mind" as const, desc: "身体扫描冥想" },
+/* ========== Daily Loop (PDF §5) ========== */
+const dailyLoop = [
+  { step: 1, icon: Sun, title: "冥想放松", desc: "专业导师录制，3-8分钟轻冥想，快速缓解身体紧绷、平复焦虑情绪", color: "#a78bfa" },
+  { step: 2, icon: MessageCircle, title: "AI情绪教练对话", desc: "引导记录想法、识别情绪、拆解压力，给出个性化调节建议", color: "#60a5fa" },
+  { step: 3, icon: BookOpen, title: "每日反思", desc: "简单书写沉淀当天收获，强化改变，形成长期成长习惯", color: "#34d399" },
+  { step: 4, icon: Sparkles, title: "智能课程推荐", desc: "根据当天状态自动推送情绪管理、夫妻沟通、亲子教育等实用课程", color: "#fbbf24" },
+  { step: 5, icon: Leaf, title: "知乐胶囊调理", desc: "结合当日情绪与睡眠状态，个性化服用建议，加速身心改善", color: "#22d3ee" },
+];
+
+/* ========== Training Outcomes (PDF §6) ========== */
+const outcomes = [
+  { icon: "🧘", title: "情绪更稳定", desc: "学会识别、表达、释放情绪，不再易怒、压抑、崩溃" },
+  { icon: "❤️", title: "关系更和顺", desc: "掌握夫妻沟通、亲子交流方法，家庭更和睦" },
+  { icon: "🎯", title: "压力明显减少", desc: "每天放松训练+草本调理，缓解职场与生活双重压力" },
+  { icon: "😴", title: "睡眠质量提升", desc: "冥想+情绪疏导+知乐胶囊，入睡更快、睡得更沉" },
+  { icon: "🔧", title: "长期成长工具", desc: "学会一套可终身使用的情绪调节+自我关怀方法" },
+  { icon: "👥", title: "找到同频圈子", desc: "在安全、理解、支持的男性社区里，不再孤独硬扛" },
+  { icon: "🛡", title: "专业教练护航", desc: "多元背景资深教练团队，提供专业指导与陪伴" },
+  { icon: "🌿", title: "根源身体调理", desc: "知乐胶囊草本配方，补心补肝，调理情绪与睡眠根源" },
+];
+
+/* ========== Faculty (PDF §7) ========== */
+const faculty = [
+  { role: "总教练团队", desc: "资深生命教练、心理咨询师、督导师，10年+行业经验，统筹训练营方向与质量", icon: "🎓" },
+  { role: "导师/教练团队", desc: "涵盖领导力教练、心理咨询师、身心疗愈师、家庭教育指导师等多元背景", icon: "🧑‍🏫" },
+  { role: "AI情绪教练系统", desc: "24小时在线，个性化引导，自动生成成长报告", icon: "🤖" },
+  { role: "知乐胶囊专业支持", desc: "产品资质、服用指导、品质保障，确保用户安全使用", icon: "💊" },
+  { role: "运营陪伴团队", desc: "打卡提醒、社区维护、全程支持，确保学习体验", icon: "📋" },
 ];
 
 /* ========== Testimonials ========== */
 const testimonials = [
-  { name: "陈先生", role: "外企部门总监·42岁", avatar: "👨‍💼", metric: "焦虑评分", before: "8.5", after: "3.0", duration: "21天", quote: "开会终于不心慌了，升职答辩一次通过" },
-  { name: "刘先生", role: "民营企业主·38岁", avatar: "👨‍💻", metric: "睡眠时长", before: "4.5h", after: "7h", duration: "14天", quote: "和老婆吵完架也能睡着了，关系缓和很多" },
+  { name: "陈先生", role: "外企部门总监·42岁", avatar: "👨‍💼", metric: "焦虑评分", before: "8.5", after: "3.0", duration: "21天", quote: "开会终于不心慌了，和老婆的沟通也缓和了很多" },
+  { name: "刘先生", role: "民营企业主·38岁", avatar: "👨‍💻", metric: "睡眠时长", before: "4.5h", after: "7h", duration: "14天", quote: "知乐胶囊+冥想，睡眠改善太明显了，白天精力充沛" },
   { name: "赵先生", role: "工程项目经理·45岁", avatar: "👨", metric: "压力指数", before: "9.2", after: "4.0", duration: "30天", quote: "儿子说爸爸不再乱发脾气了，这句话值千金" },
 ];
 
@@ -137,7 +136,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
 
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">🎉 购买成功！</h2>
-          <p className="text-slate-400 text-sm">你的全天候抗压之旅即将开始</p>
+          <p className="text-slate-400 text-sm">你的三重陪伴成长之旅即将开始</p>
         </div>
 
         <div className="space-y-3 text-left">
@@ -152,13 +151,13 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
             <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-amber-200">💡 建议收到胶囊后再开启训练营</p>
-              <p className="text-xs text-slate-400">心智训练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
+              <p className="text-xs text-slate-400">AI教练 + 专业教练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
             <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-slate-200">7天情绪解压训练营已开通</p>
+              <p className="text-sm font-medium text-slate-200">7天情绪成长训练营已开通</p>
               <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
             </div>
           </div>
@@ -170,7 +169,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
             className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
           >
             <Rocket className="w-5 h-5 mr-2" />
-            进入情绪解压训练营
+            进入情绪成长训练营
           </Button>
           <Button
             onClick={onViewLogistics}
@@ -229,7 +228,7 @@ export default function SynergyPromoPage() {
         setOrderNo(callbackOrderNo);
         setAlreadyPurchased(true);
         if (user) {
-          // 已登录：直接进入训练营
+          // 已登录用户：支付成功后直接进入训练营
           handleEnterCamp();
         } else {
           // 🆕 确保游客订单号和跳转路径已设置（Alipay H5 回跳场景）
@@ -296,7 +295,6 @@ export default function SynergyPromoPage() {
         return;
       }
       try {
-        // 1. 检查 orders 表（支持 synergy_bundle 和 camp-emotion_stress_7 两种 key）
         const { data: orderData } = await supabase
           .from('orders')
           .select('id')
@@ -311,7 +309,6 @@ export default function SynergyPromoPage() {
           return;
         }
 
-        // 2. 检查 user_camp_purchases 表（直接购买训练营的场景）
         const { data: campData } = await supabase
           .from('user_camp_purchases')
           .select('id')
@@ -331,13 +328,12 @@ export default function SynergyPromoPage() {
     checkPurchase();
   }, [user]);
 
-  // 微信支付 openId 预加载：进入 checkout 时提前获取，避免支付时延迟
+  // 微信支付 openId 预加载
   useEffect(() => {
     if (step !== 'checkout' && step !== 'payment') return;
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
     if (!isWechat || paymentOpenId) return;
 
-    // 统一使用 cached_wechat_openid（与 useWechatOpenId hook 保持一致）
     const cached = sessionStorage.getItem('cached_wechat_openid');
     if (cached) { setPaymentOpenId(cached); return; }
 
@@ -355,27 +351,21 @@ export default function SynergyPromoPage() {
     }
   }, [step, user, paymentOpenId]);
 
-  // Step 1: User clicks buy → open checkout form
   const handleBuyClick = () => {
     setStep('checkout');
   };
 
-  // Step 2: Checkout info collected → save to localStorage, open payment
   const handleCheckoutConfirm = (info: CheckoutInfo) => {
     setCheckoutInfo(info);
-    // 提前保存收货信息到 localStorage，供支付回调后和游客认领时使用
     localStorage.setItem('synergy_shipping_info', JSON.stringify(info));
     setStep('payment');
   };
 
-  // Step 3: Payment success → save shipping info & check auth
   const handlePaySuccess = async () => {
     if (checkoutInfo) {
       try {
-        // 1. 先尝试从 localStorage 获取游客订单号
         let foundOrderNo = localStorage.getItem('pending_claim_order') || '';
         
-        // 2. 已登录用户：查询最新已支付订单作为兜底
         if (!foundOrderNo) {
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           if (currentUser) {
@@ -392,7 +382,6 @@ export default function SynergyPromoPage() {
           }
         }
 
-        // ✅ 修复：将 orderNo 写入状态，供 QuickRegisterStep 使用
         if (foundOrderNo) {
           setOrderNo(foundOrderNo);
           await supabase.functions.invoke('update-order-shipping', {
@@ -414,26 +403,20 @@ export default function SynergyPromoPage() {
     }
 
     if (user) {
-      // 已登录用户：支付成功后直接进入训练营
       handleEnterCamp();
     } else {
-      // 设置登录/注册后的跳转目标，防止被 OAuth 回调或首页重定向覆盖
       setPostAuthRedirect('/camp-intro/emotion_stress_7');
       setStep('register');
     }
   };
 
-  // Step 4: Registration success → 自动进入训练营
   const handleRegisterSuccess = (userId: string) => {
-    // 清理跳转标记并跳转到训练营介绍页
     clearPostAuthRedirect();
     navigate('/camp-intro/emotion_stress_7');
   };
 
-  // Step 5: Enter camp - smart redirect
   const handleEnterCamp = async () => {
     if (user) {
-      // Check for active training camp first
       const { data: activeCamp } = await supabase
         .from('training_camps')
         .select('id')
@@ -465,8 +448,6 @@ export default function SynergyPromoPage() {
     );
   }
 
-  // Register dialog (rendered as overlay, not full-screen replacement)
-
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 overflow-x-hidden">
 
@@ -482,37 +463,44 @@ export default function SynergyPromoPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs mb-6">
             <Shield className="w-3.5 h-3.5" />
-            科学实证 · 双引擎抗压方案
+            专为35-55岁中年男性设计
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
-            <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
-              练心智 × 护身体
+            <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              情绪解压 × 关系修复
             </span>
             <br />
-            <span className="text-white text-2xl sm:text-3xl md:text-4xl">= 24h 全天候抗压</span>
+            <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+              × 身心调理
+            </span>
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-            专为中年男性设计，解决职场·家庭·健康三重压力。<br />
-            心理训练 + 生理调节，重塑你的自信与掌控力。
+            7天 AI + 专业教练 + 知乐胶囊<br />
+            三重陪伴，一站式解决职场压力·夫妻矛盾·亲子代沟·情绪内耗·睡眠变差
           </p>
 
-          {/* Formula visual */}
-          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-8">
-            <div className="flex flex-col items-center gap-1 px-4 py-3 rounded-2xl bg-gradient-to-b from-violet-500/20 to-violet-900/20 border border-violet-500/30">
-              <Brain className="w-8 h-8 text-violet-400" />
-              <span className="text-xs text-violet-300 font-medium">训练营</span>
+          {/* Triple Engine Formula */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8">
+            <div className="flex flex-col items-center gap-1 px-3 py-3 rounded-2xl bg-gradient-to-b from-violet-500/20 to-violet-900/20 border border-violet-500/30">
+              <Brain className="w-7 h-7 text-violet-400" />
+              <span className="text-[10px] sm:text-xs text-violet-300 font-medium">AI教练</span>
             </div>
-            <span className="text-2xl font-bold text-slate-500">×</span>
-            <div className="flex flex-col items-center gap-1 px-4 py-3 rounded-2xl bg-gradient-to-b from-cyan-500/20 to-cyan-900/20 border border-cyan-500/30">
-              <Pill className="w-8 h-8 text-cyan-400" />
-              <span className="text-xs text-cyan-300 font-medium">知乐胶囊</span>
+            <span className="text-xl font-bold text-slate-500">+</span>
+            <div className="flex flex-col items-center gap-1 px-3 py-3 rounded-2xl bg-gradient-to-b from-amber-500/20 to-amber-900/20 border border-amber-500/30">
+              <Award className="w-7 h-7 text-amber-400" />
+              <span className="text-[10px] sm:text-xs text-amber-300 font-medium">专业教练</span>
             </div>
-            <span className="text-2xl font-bold text-slate-500">=</span>
-            <div className="flex flex-col items-center gap-1 px-4 py-3 rounded-2xl bg-gradient-to-b from-amber-500/20 to-amber-900/20 border border-amber-500/30">
-              <Shield className="w-8 h-8 text-amber-400" />
-              <span className="text-xs text-amber-300 font-medium">全天抗压</span>
+            <span className="text-xl font-bold text-slate-500">+</span>
+            <div className="flex flex-col items-center gap-1 px-3 py-3 rounded-2xl bg-gradient-to-b from-cyan-500/20 to-cyan-900/20 border border-cyan-500/30">
+              <Pill className="w-7 h-7 text-cyan-400" />
+              <span className="text-[10px] sm:text-xs text-cyan-300 font-medium">知乐胶囊</span>
+            </div>
+            <span className="text-xl font-bold text-slate-500">=</span>
+            <div className="flex flex-col items-center gap-1 px-3 py-3 rounded-2xl bg-gradient-to-b from-emerald-500/20 to-emerald-900/20 border border-emerald-500/30">
+              <Shield className="w-7 h-7 text-emerald-400" />
+              <span className="text-[10px] sm:text-xs text-emerald-300 font-medium">全面蜕变</span>
             </div>
           </div>
 
@@ -541,7 +529,6 @@ export default function SynergyPromoPage() {
           )}
         </motion.div>
 
-        {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
       </section>
 
@@ -585,104 +572,158 @@ export default function SynergyPromoPage() {
         </motion.div>
       )}
 
-      {/* ===== PAIN POINTS ===== */}
+      {/* ===== PAIN POINTS (5 cards) ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">你是否正在经历？</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">中年男性的三大隐形压力源</p>
-        <div className="grid gap-4 max-w-lg mx-auto">
+        <p className="text-slate-400 text-sm text-center mb-8">中年男性的五大隐形压力源</p>
+        <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="flex items-start gap-4 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50"
+              transition={{ delay: i * 0.1 }}
+              className="flex items-start gap-3 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50"
             >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${p.color}15` }}>
-                <p.icon className="w-6 h-6" style={{ color: p.color }} />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${p.color}15` }}>
+                <p.icon className="w-5 h-5" style={{ color: p.color }} />
               </div>
               <div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-2xl font-black" style={{ color: p.color }}>{p.stat}</span>
-                  <span className="text-sm text-slate-300">{p.label}</span>
-                </div>
-                <p className="text-xs text-slate-500">{p.desc}</p>
+                <span className="text-sm font-bold" style={{ color: p.color }}>{p.label}</span>
+                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{p.desc}</p>
               </div>
             </motion.div>
           ))}
         </div>
       </Section>
 
-      {/* ===== DUAL ENGINE ===== */}
+      {/* ===== 6 CORE HIGHLIGHTS (replaces dual engine) ===== */}
       <Section className="bg-slate-900/50">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">双引擎解决方案</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">心理 + 生理，缺一不可</p>
-        <div className="max-w-lg mx-auto space-y-4">
-          {/* Mind */}
-          <div className="relative p-5 rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-950/40 to-slate-900/40">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                <Brain className="w-5 h-5 text-violet-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-violet-300">🧘 7天情绪解压训练营</h3>
-                <p className="text-xs text-slate-400">7天深度进阶冥想体系</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {["身心放松", "情绪释放", "内在安定"].map((t, i) => (
-                <div key={i} className="py-2 px-1 rounded-lg bg-violet-500/10 text-xs text-violet-300">{t}</div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mt-3">✦ 听-思-聊闭环，7天重建情绪弹性</p>
-            <div className="mt-3 pt-3 border-t border-violet-500/20 space-y-2">
-              <p className="text-xs text-slate-400 font-medium">🏅 教练团队</p>
-              {[
-                { icon: "🛡", text: "ICF/EMCC 国际认证，平均执教 8 年+" },
-                { icon: "🧠", text: "海沃塔对话体系，深度沟通与自信重塑" },
-                { icon: "📊", text: "已服务 2000+ 学员，93% 反馈显著提升" },
-              ].map((c, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs">{c.icon}</span>
-                  <span className="text-xs text-slate-400">{c.text}</span>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">六大核心亮点</h2>
+        <p className="text-slate-400 text-sm text-center mb-8">一站式解决，从"知道"到"做到"</p>
+        <div className="grid gap-3 max-w-lg mx-auto">
+          {coreHighlights.map((h, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className={`p-4 rounded-2xl border bg-gradient-to-br ${h.gradient} ${h.border}`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${h.border} border bg-slate-900/40`}>
+                  <h.icon className={`w-5 h-5 ${h.textColor}`} />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Plus */}
-          <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">+</div>
-          </div>
-
-          {/* Body */}
-          <div className="relative p-5 rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 to-slate-900/40">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-                <Pill className="w-5 h-5 text-cyan-400" />
+                <div>
+                  <h3 className={`font-bold text-sm ${h.textColor}`}>{h.title}</h3>
+                  <p className="text-xs text-slate-400">{h.subtitle}</p>
+                </div>
               </div>
+              <p className="text-xs text-slate-300 leading-relaxed pl-[52px]">{h.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ===== DAILY LOOP (replaces 24h timeline) ===== */}
+      <Section>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">每日闭环流程</h2>
+        <p className="text-slate-400 text-sm text-center mb-8">每天10-15分钟，碎片时间即可完成</p>
+        <div className="max-w-lg mx-auto relative">
+          {/* Vertical connector */}
+          <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-violet-500/40 via-blue-500/40 via-emerald-500/40 via-amber-500/40 to-cyan-500/40" />
+
+          <div className="space-y-0">
+            {dailyLoop.map((d, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-start gap-4 py-3 relative"
+              >
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 z-10 border-2 bg-slate-900"
+                  style={{ borderColor: `${d.color}60` }}
+                >
+                  <d.icon className="w-5 h-5" style={{ color: d.color }} />
+                </div>
+                <div className="pt-1 flex-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style={{ background: d.color }}>
+                      {d.step}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-200">{d.title}</span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{d.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ===== TRAINING OUTCOMES (replaces synergy data) ===== */}
+      <Section className="bg-slate-900/50">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">训练营能给你带来什么</h2>
+        <p className="text-slate-400 text-sm text-center mb-8">8项结果承诺，看得见的改变</p>
+        <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
+          {outcomes.map((o, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06 }}
+              className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/40 text-center"
+            >
+              <span className="text-2xl mb-1 block">{o.icon}</span>
+              <h4 className="text-sm font-bold text-slate-200 mb-1">{o.title}</h4>
+              <p className="text-[10px] text-slate-400 leading-relaxed">{o.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ===== FACULTY (PDF §7) ===== */}
+      <Section>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">师资与支持力量</h2>
+        <p className="text-slate-400 text-sm text-center mb-8">多元背景专家团队，全程陪伴</p>
+        <div className="max-w-lg mx-auto space-y-3">
+          {faculty.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -15 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/50 border border-slate-700/40"
+            >
+              <span className="text-2xl shrink-0">{f.icon}</span>
               <div>
-                <h3 className="font-bold text-cyan-300">💊 知乐胶囊</h3>
-                <p className="text-xs text-slate-400">每日3次 · 28天调理周期</p>
+                <h4 className="text-sm font-bold text-slate-200">{f.role}</h4>
+                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{f.desc}</p>
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {["即时缓解", "神经修复", "睡眠改善"].map((t, i) => (
-                <div key={i} className="py-2 px-1 rounded-lg bg-cyan-500/10 text-xs text-cyan-300">{t}</div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mt-3">✦ 从生理层面快速降低应激反应</p>
-            <p className="text-xs text-amber-400/80 mt-2">📦 香港直邮，预计下单后 4-7 个工作日送达</p>
-          </div>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
 
-          {/* Capsule Product Image - right after dual engine */}
-          <div className="mt-6 rounded-2xl overflow-hidden border border-cyan-500/20">
+      {/* ===== CAPSULE DETAILS (enhanced from PDF §8) ===== */}
+      <Section className="bg-slate-900/50">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 草本身心调理</h2>
+        <p className="text-slate-400 text-sm text-center mb-6">情绪疏导 + 身体调理，内外兼修</p>
+        <div className="max-w-lg mx-auto space-y-4">
+          {/* Product Image */}
+          <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
             <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
           </div>
 
-          {/* Product specs - inline */}
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Specs grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {specs.map((s, i) => (
               <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
                 <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
@@ -690,15 +731,52 @@ export default function SynergyPromoPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-500 mt-2 text-center">香港HKC认证 · 安全无依赖</p>
 
-          <div className="mt-3 p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
+          {/* Certification highlights */}
+          <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/20 space-y-2.5">
+            <h4 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              产品资质与安全
+            </h4>
+            {[
+              "香港中成药注册编号 HKC-18181，通过香港卫生署严格审批",
+              "16味草本植物萃取（酸枣仁、五味子、党参等），不含褪黑素、激素",
+              "无依赖，全年龄段（10岁+）可使用，哺乳期也适用",
+              "通过GMP认证 + 急性毒性试验 + 原材料确定性试验",
+            ].map((text, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <CircleCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Usage & matching */}
+          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/40 space-y-2.5">
+            <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              精准匹配中年男性需求
+            </h4>
+            {[
+              "直击「情绪内耗+睡眠差+身体疲惫」核心痛点，与训练营高度互补",
+              "补心补肝、益气安神，从身体根源调理情绪与睡眠",
+              "服用方便（一次4粒，一日3次），不占用额外时间",
+            ].map((text, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <CircleCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Shipping note */}
+          <div className="p-4 rounded-xl bg-amber-900/20 border border-amber-500/20">
             <div className="flex items-start gap-2.5">
               <Package className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="text-sm font-medium text-amber-300">📦 香港直邮 · 预计4-7个工作日送达</p>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  建议收到知乐胶囊后再开启训练营，情绪解压训练与身体修复同步进行，效果更佳。
+                  建议收到知乐胶囊后再开启训练营，AI教练+专业教练+草本调理同步进行，效果更佳。
                 </p>
               </div>
             </div>
@@ -706,71 +784,10 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">协同效果数据</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">1 + 1 &gt; 2 的科学验证</p>
-        <div className="max-w-lg mx-auto space-y-6">
-          {synergyData.map((d, i) => (
-            <div key={i} className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/40">
-              <h4 className="text-sm font-semibold text-slate-200 mb-3">{d.label}</h4>
-              <div className="space-y-2.5">
-                <AnimatedBar label="仅训练营" value={d.mind} color="#a78bfa" delay={i * 0.1} />
-                <AnimatedBar label="仅知乐胶囊" value={d.body} color="#22d3ee" delay={i * 0.1 + 0.15} />
-                <AnimatedBar label="组合使用" value={d.combo} color="#fbbf24" delay={i * 0.1 + 0.3} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-xs text-slate-500 mt-4">* 数据来源于30天跟踪研究，样本量N=200</p>
-      </Section>
-
-      {/* ===== 24H TIMELINE ===== */}
-      <Section className="bg-slate-900/50">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">24小时全天守护</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">从早到晚，无缝保护</p>
-        <div className="max-w-lg mx-auto relative">
-          {/* Vertical line */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500/50 via-cyan-500/50 to-violet-500/50" />
-
-          <div className="space-y-0">
-            {timeline.map((t, i) => {
-              const isMind = t.type === "mind";
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="flex items-start gap-4 py-3 relative"
-                >
-                  {/* Node */}
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 z-10 border-2 ${
-                    isMind
-                      ? "bg-violet-950 border-violet-500/60"
-                      : "bg-cyan-950 border-cyan-500/60"
-                  }`}>
-                    {isMind ? <Brain className="w-5 h-5 text-violet-400" /> : <Pill className="w-5 h-5 text-cyan-400" />}
-                  </div>
-                  <div className="pt-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className={`text-xs font-mono font-bold ${isMind ? "text-violet-400" : "text-cyan-400"}`}>{t.time}</span>
-                      <span className="text-sm font-semibold text-slate-200">{t.label}</span>
-                    </div>
-                    <p className="text-xs text-slate-500">{t.desc}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </Section>
-
-
       {/* ===== TESTIMONIALS ===== */}
-      <Section className="bg-slate-900/50">
+      <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">真实改变，数据说话</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">来自真实用户的反馈</p>
+        <p className="text-slate-400 text-sm text-center mb-8">来自中年男性用户的真实反馈</p>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div
@@ -789,7 +806,6 @@ export default function SynergyPromoPage() {
                 </div>
               </div>
 
-              {/* Data card */}
               <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 mb-3">
                 <div className="text-center">
                   <p className="text-xs text-slate-500">{t.metric}</p>
@@ -817,6 +833,17 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
+      {/* ===== SLOGAN (PDF §9) ===== */}
+      <Section className="bg-slate-900/50">
+        <div className="max-w-lg mx-auto text-center">
+          <p className="text-base sm:text-lg text-slate-300 leading-relaxed font-medium italic">
+            "专为中年男性设计，7天AI+专业教练+知乐胶囊三重陪伴，<br className="hidden sm:block" />
+            帮你搞定情绪、修复关系、卸下身心压力，<br className="hidden sm:block" />
+            做更轻松、更稳定、更有力量的自己。"
+          </p>
+        </div>
+      </Section>
+
       {/* ===== FINAL CTA ===== */}
       <section className="px-4 py-12 text-center">
         <div className="max-w-lg mx-auto">
@@ -832,7 +859,7 @@ export default function SynergyPromoPage() {
                   className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  进入情绪解压训练营
+                  进入情绪成长训练营
                 </Button>
                 <Button
                   onClick={handleViewLogistics}
@@ -851,12 +878,12 @@ export default function SynergyPromoPage() {
                 <span className="text-4xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">¥0.01</span>
                 <span className="text-slate-500 line-through text-sm">¥899</span>
               </div>
-              <p className="text-xs text-slate-500 mb-6">训练营 + 知乐胶囊 28天套餐</p>
+              <p className="text-xs text-slate-500 mb-6">7天训练营 + 知乐胶囊 28天套餐</p>
               <Button
                 onClick={handleBuyClick}
                 className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-blue-500/25 border-0"
               >
-                立即开启全天候守护
+                立即开启三重陪伴之旅
               </Button>
               <p className="text-xs text-slate-600 mt-3">支持微信支付 · 支付宝</p>
             </>
@@ -887,7 +914,7 @@ export default function SynergyPromoPage() {
                   <span className="text-xl font-black text-amber-400">¥0.01</span>
                   <span className="text-xs text-slate-500 line-through">¥899</span>
                 </div>
-                <p className="text-[10px] text-slate-500 truncate">情绪解压营 + 知乐胶囊 28天</p>
+                <p className="text-[10px] text-slate-500 truncate">AI教练 + 专业教练 + 知乐胶囊 28天</p>
               </div>
               <Button
                 onClick={handleBuyClick}
@@ -914,7 +941,7 @@ export default function SynergyPromoPage() {
         needIdCard={true}
       />
 
-      {/* 微信支付对话框（微信浏览器/小程序/桌面端） */}
+      {/* 微信支付对话框 */}
       <WechatPayDialog
         open={step === 'payment' && !shouldUseAlipay}
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
@@ -930,7 +957,7 @@ export default function SynergyPromoPage() {
         } : undefined}
       />
 
-      {/* 登录注册弹窗（支付成功后游客引导） */}
+      {/* 登录注册弹窗 */}
       <Dialog open={step === 'register'} onOpenChange={(open) => { if (!open) setStep('browse'); }}>
         <DialogContent size="sm" className="bg-slate-900 border-slate-700/50">
           <DialogHeader>
@@ -947,7 +974,7 @@ export default function SynergyPromoPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 支付宝对话框（移动端非微信浏览器） */}
+      {/* 支付宝对话框 */}
       <AlipayPayDialog
         open={step === 'payment' && shouldUseAlipay}
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
