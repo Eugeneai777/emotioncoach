@@ -522,29 +522,48 @@ serve(async (req) => {
 
     // 保存订单到数据库 - 使用 finalUserId（已绑定用户或guest）
     const isGuest = finalUserId === 'guest' || !finalUserId;
-    const { error: insertError } = await supabase
-      .from('orders')
-      .insert({
-        user_id: isGuest ? null : finalUserId,
-        package_key: packageKey,
-        package_name: packageName,
-        amount: amount,
-        order_no: orderNo,
-        status: 'pending',
-        pay_type: actualPayType || null,
-        qr_code_url: payUrl || null,
-        expired_at: expiredAt.toISOString(),
-        buyer_name: buyerName || null,
-        buyer_phone: buyerPhone || null,
-        buyer_address: buyerAddress || null,
-        shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
-        id_card_name: idCardName || null,
-        id_card_number: idCardNumber || null,
-      });
+    
+    if (reuseExistingOrder) {
+      // 🔧 复用已有订单：仅更新 QR 码和支付类型（订单已在数据库中）
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          pay_type: actualPayType || null,
+          qr_code_url: payUrl || null,
+          expired_at: expiredAt.toISOString(),
+        })
+        .eq('order_no', orderNo);
+      
+      if (updateError) {
+        console.error('Update order error:', updateError);
+        throw new Error('订单更新失败');
+      }
+      console.log('Order updated with native QR:', orderNo, 'payType:', actualPayType);
+    } else {
+      const { error: insertError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: isGuest ? null : finalUserId,
+          package_key: packageKey,
+          package_name: packageName,
+          amount: amount,
+          order_no: orderNo,
+          status: 'pending',
+          pay_type: actualPayType || null,
+          qr_code_url: payUrl || null,
+          expired_at: expiredAt.toISOString(),
+          buyer_name: buyerName || null,
+          buyer_phone: buyerPhone || null,
+          buyer_address: buyerAddress || null,
+          shipping_status: (buyerName || buyerPhone) ? 'pending' : null,
+          id_card_name: idCardName || null,
+          id_card_number: idCardNumber || null,
+        });
 
-    if (insertError) {
-      console.error('Insert order error:', insertError);
-      throw new Error('订单创建失败');
+      if (insertError) {
+        console.error('Insert order error:', insertError);
+        throw new Error('订单创建失败');
+      }
     }
 
     console.log('Order created successfully:', orderNo, 'userId:', isGuest ? 'guest' : finalUserId, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '');
