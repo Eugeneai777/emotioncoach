@@ -514,6 +514,30 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  };
+
+  // 启动二维码倒计时（秒）
+  const startQrCountdown = (totalSeconds: number) => {
+    setQrCountdown(totalSeconds);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    countdownIntervalRef.current = setInterval(() => {
+      setQrCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   // 重置状态
