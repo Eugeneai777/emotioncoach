@@ -305,6 +305,8 @@ export const useCampVideoRecommendations = (
   return {
     recommendations,
     loading,
+    isFallback,
+    fallbackDate,
     markAsWatched,
     refreshRecommendations,
   };
