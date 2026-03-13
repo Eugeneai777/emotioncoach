@@ -108,21 +108,28 @@ serve(async (req) => {
           );
         }
         
-        // 订单存在且未支付，返回现有订单信息（不创建新订单）
+        // 订单存在且未支付
         if (existingOrder.status === 'pending') {
-          console.log('[CreateOrder] Existing order still pending, returning existing info');
-          return new Response(
-            JSON.stringify({
-              success: true,
-              orderNo: existingOrderNo,
-              payUrl: existingOrder.qr_code_url,
-              qrCodeUrl: existingOrder.qr_code_url,
-              payType: 'native',
-              existingOrder: true,
-              message: '使用已有订单',
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          // 🔧 如果请求的是 native 支付但现有订单没有 QR 码（原订单可能是 jsapi 创建的），
+          // 不要直接返回空的 QR URL，而是跳过幂等检查，让后续逻辑重新向微信请求 Native QR 码
+          if (payType === 'native' && !existingOrder.qr_code_url) {
+            console.log('[CreateOrder] Existing order has no QR URL, will regenerate native QR for:', existingOrderNo);
+            // 不 return，继续往下走，使用同一个 orderNo 重新请求微信 Native API
+          } else {
+            console.log('[CreateOrder] Existing order still pending, returning existing info');
+            return new Response(
+              JSON.stringify({
+                success: true,
+                orderNo: existingOrderNo,
+                payUrl: existingOrder.qr_code_url,
+                qrCodeUrl: existingOrder.qr_code_url,
+                payType: 'native',
+                existingOrder: true,
+                message: '使用已有订单',
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
       }
     }
