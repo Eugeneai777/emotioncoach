@@ -258,7 +258,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           display: 'flex', flexDirection: 'column', padding: '20px 18px',
         }}>
           {/* User Header */}
-          <UserHeader style={{ marginBottom: '12px' }}/>
+          <UserHeader style={{ marginBottom: '8px' }}/>
 
           {/* Category Badge */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
