@@ -545,6 +545,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     clearTimers();
     setStatus('idle');
     setQrCodeDataUrl('');
+    setQrCountdown(0);
     setPayUrl('');
     setH5Url('');
     setH5PayLink('');
