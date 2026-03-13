@@ -95,8 +95,8 @@ export const useCampVideoRecommendations = (
         setHasAttemptedGeneration(true);
         await generateRecommendations(briefingData);
       } else {
-        // 没有推荐且不生成时，设置为空数组
-        setRecommendations([]);
+        // 没有今日推荐，尝试加载最近一次的推荐
+        await loadFallbackRecommendations();
       }
     } catch (error) {
       console.error("加载视频推荐失败:", error);
