@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
-import { Play, Pause, Loader2, Headphones } from 'lucide-react';
+import { Play, Pause, Loader2, Headphones, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioCache } from '@/hooks/useAudioCache';
 
