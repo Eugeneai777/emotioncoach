@@ -12,7 +12,7 @@ interface CampVideoTasksProps {
 
 const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTasksProps) => {
   const dateStr = formatDateCST(date);
-  const { recommendations, loading, markAsWatched } = useCampVideoRecommendations(
+  const { recommendations, loading, isFallback, fallbackDate, markAsWatched } = useCampVideoRecommendations(
     campId,
     briefingData,
     dateStr
@@ -52,12 +52,18 @@ const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTa
     <div className="space-y-3 mb-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-          📚 今日推荐课程
+          📚 {isFallback ? '上次推荐课程' : '今日推荐课程'}
         </h3>
         <span className="text-xs text-muted-foreground">
+          {isFallback && fallbackDate ? `${fallbackDate} · ` : ''}
           {completedCount}/{recommendations.length} 已观看
         </span>
       </div>
+      {isFallback && (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          💡 今日尚未打卡，先看看上次的推荐课程吧
+        </p>
+      )}
 
       <div className="space-y-2">
         {recommendations.map((rec) => (

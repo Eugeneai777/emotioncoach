@@ -30,12 +30,16 @@ export const useCampVideoRecommendations = (
   const [recommendations, setRecommendations] = useState<VideoRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasAttemptedGeneration, setHasAttemptedGeneration] = useState(false);
+  const [isFallback, setIsFallback] = useState(false);
+  const [fallbackDate, setFallbackDate] = useState<string | null>(null);
 
   const dateStr = date || getTodayCST();
 
   useEffect(() => {
     if (campId && user) {
-      setHasAttemptedGeneration(false); // 日期变化时重置标志
+      setHasAttemptedGeneration(false);
+      setIsFallback(false);
+      setFallbackDate(null);
       loadRecommendations();
     }
   }, [campId, user, dateStr, briefingData?.id]);
@@ -95,13 +99,59 @@ export const useCampVideoRecommendations = (
         setHasAttemptedGeneration(true);
         await generateRecommendations(briefingData);
       } else {
-        // 没有推荐且不生成时，设置为空数组
-        setRecommendations([]);
+        // 没有今日推荐，尝试加载最近一次的推荐
+        await loadFallbackRecommendations();
       }
     } catch (error) {
       console.error("加载视频推荐失败:", error);
     } finally {
       setLoading(false);
+    }
+  };
+  const loadFallbackRecommendations = async () => {
+    if (!user) {
+      setRecommendations([]);
+      return;
+    }
+    try {
+      const { data: fallbackTasks, error } = await supabase
+        .from("camp_video_tasks")
+        .select(`
+          id, video_id, reason, match_score, is_completed, watched_at, progress_date,
+          video_courses ( id, title, video_url, description, category, source )
+        `)
+        .eq("camp_id", campId)
+        .eq("user_id", user.id)
+        .lt("progress_date", dateStr)
+        .order("progress_date", { ascending: false })
+        .order("match_score", { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+
+      if (fallbackTasks && fallbackTasks.length > 0) {
+        const formatted = fallbackTasks.map((task: any) => ({
+          id: task.id,
+          video_id: task.video_id,
+          title: task.video_courses?.title || "",
+          video_url: task.video_courses?.video_url || "",
+          description: task.video_courses?.description,
+          reason: task.reason || "",
+          match_score: task.match_score || 0,
+          is_completed: task.is_completed || false,
+          watched_at: task.watched_at,
+          category: task.video_courses?.category,
+          source: task.video_courses?.source,
+        }));
+        setRecommendations(formatted);
+        setIsFallback(true);
+        setFallbackDate(fallbackTasks[0].progress_date);
+      } else {
+        setRecommendations([]);
+      }
+    } catch (error) {
+      console.error("加载历史推荐失败:", error);
+      setRecommendations([]);
     }
   };
 
@@ -255,6 +305,8 @@ export const useCampVideoRecommendations = (
   return {
     recommendations,
     loading,
+    isFallback,
+    fallbackDate,
     markAsWatched,
     refreshRecommendations,
   };
