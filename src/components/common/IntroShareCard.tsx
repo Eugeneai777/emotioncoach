@@ -120,9 +120,9 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           />
         ) : (
           <div style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '50%', 
+            width: '30px', 
+            height: '30px', 
+            borderRadius: '50%',
             background: 'rgba(255,255,255,0.3)', 
             display: 'flex', 
             alignItems: 'center', 
