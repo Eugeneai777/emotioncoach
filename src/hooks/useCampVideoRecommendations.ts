@@ -30,6 +30,8 @@ export const useCampVideoRecommendations = (
   const [recommendations, setRecommendations] = useState<VideoRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasAttemptedGeneration, setHasAttemptedGeneration] = useState(false);
+  const [isFallback, setIsFallback] = useState(false);
+  const [fallbackDate, setFallbackDate] = useState<string | null>(null);
 
   const dateStr = date || getTodayCST();
 
