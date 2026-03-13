@@ -28,6 +28,26 @@ interface ZhileOrdersDashboardProps {
 export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardProps) {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fakeScrollRef = useRef<HTMLDivElement>(null);
+  const isSyncingScroll = useRef(false);
+
+  const handleTableScroll = useCallback(() => {
+    if (isSyncingScroll.current) return;
+    isSyncingScroll.current = true;
+    if (scrollRef.current && fakeScrollRef.current) {
+      fakeScrollRef.current.scrollLeft = scrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => { isSyncingScroll.current = false; });
+  }, []);
+
+  const handleFakeScroll = useCallback(() => {
+    if (isSyncingScroll.current) return;
+    isSyncingScroll.current = true;
+    if (scrollRef.current && fakeScrollRef.current) {
+      scrollRef.current.scrollLeft = fakeScrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => { isSyncingScroll.current = false; });
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
