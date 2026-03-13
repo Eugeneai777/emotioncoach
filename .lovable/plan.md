@@ -1,23 +1,40 @@
 
 
-## 诊断结果
+## 问题分析
 
-你有两个账号：
-- **微信账号** (`f9115340`): 有 12 个已支付订单（含 synergy_bundle、wealth_synergy_bundle、知乐胶囊等）、3 个活跃训练营、1 个活跃订阅、100 点 AI 额度
-- **手机号账号** (`07f04ecd`): 0 个订单、无训练营、50 点 AI 额度
+`cached_payment_openid` 存储在 `localStorage` 中，当前的清理逻辑依赖 `useWechatOpenId` hook 中的 `SIGNED_OUT` 事件监听。但该 hook 仅在少数页面挂载（HealthStoreGrid、ZhileProductsPage），如果用户从其他页面退出登录，缓存不会被清除。
 
-你用手机号登录时看不到微信账号下的购买记录，所以系统提示需要付费。
+下次登录的新账号会复用旧账号的 OpenID，导致支付异常。
 
 ## 修复方案
 
-将微信账号的所有权益迁移到手机号账号：
+### 1. 在 `useAuth.tsx` 的 signOut 中统一清理所有 OpenID 缓存
 
-1. **迁移 12 个已支付订单** — `orders` 表 `user_id` 改为手机号账号
-2. **迁移 3 个活跃训练营** — `training_camps` 表 `user_id` 改为手机号账号
-3. **迁移 1 个活跃订阅** — `subscriptions` 表 `user_id` 改为手机号账号
-4. **迁移 3 个商城订单** — `store_orders` 表 `buyer_id` 改为手机号账号
-5. **合并 AI 额度** — 手机号账号额度提升至 100（取较高值）
-6. **关联微信映射** — 将 `wechat_user_mappings` 中的 `system_user_id` 指向手机号账号
+在 `signOut` 函数中，退出前清除所有微信相关的本地缓存。这是全局入口，无论从哪个页面退出都会执行。
 
-这样你用手机号登录后，所有购买的产品权益都能正常识别。
+```typescript
+const signOut = async () => {
+  // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
+  localStorage.removeItem('cached_wechat_openid');
+  sessionStorage.removeItem('cached_wechat_openid');
+  localStorage.removeItem('cached_payment_openid');
+  sessionStorage.removeItem('cached_payment_openid');
+  await supabase.auth.signOut();
+};
+```
+
+### 2. 保留 `useWechatOpenId.ts` 中的 SIGNED_OUT 清理作为兜底
+
+不删除现有逻辑，作为双重保障（例如 token 过期导致的自动登出场景）。
+
+### 3. 处理直接调用 `supabase.auth.signOut()` 的地方
+
+`StoryCoach.tsx` 和 `CoachVoiceChat.tsx` 直接调用了 `supabase.auth.signOut()` 而非 `useAuth().signOut()`。需要统一改为使用 `useAuth` 的 `signOut`，或在这些位置也加上缓存清理。
+
+---
+
+**涉及文件**：
+- `src/hooks/useAuth.tsx` — signOut 函数增加缓存清理
+- `src/pages/StoryCoach.tsx` — 改用 useAuth 的 signOut
+- `src/components/coach/CoachVoiceChat.tsx` — 在 signOut 前清理缓存
 
