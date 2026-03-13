@@ -172,12 +172,36 @@ serve(async (req) => {
 
     console.log('[AlipayOrder] Generated pay URL for order:', orderNo);
 
+    // 🔧 方案B：创建新订单前，将同用户同 packageKey 的旧 pending 订单标记为 cancelled
+    const isGuest = !userId || userId === 'guest';
+    if (!isGuest) {
+      const { data: oldPendingOrders, error: oldPendingError } = await supabase
+        .from('orders')
+        .select('order_no')
+        .eq('user_id', userId)
+        .eq('package_key', packageKey)
+        .eq('status', 'pending')
+        .neq('order_no', orderNo);
+      
+      if (!oldPendingError && oldPendingOrders && oldPendingOrders.length > 0) {
+        const oldOrderNos = oldPendingOrders.map(o => o.order_no);
+        console.log('[AlipayOrder] Cancelling old pending orders:', oldOrderNos);
+        await supabase
+          .from('orders')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .eq('package_key', packageKey)
+          .eq('status', 'pending')
+          .neq('order_no', orderNo);
+      }
+    }
+
     // 保存订单到数据库
     const { error: orderError } = await supabase
       .from('orders')
       .insert({
         order_no: orderNo,
-        user_id: userId === 'guest' ? null : userId,
+        user_id: isGuest ? null : userId,
         package_key: packageKey,
         package_name: packageName,
         amount: amount,

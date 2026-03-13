@@ -540,6 +540,29 @@ serve(async (req) => {
       }
       console.log('Order updated with native QR:', orderNo, 'payType:', actualPayType);
     } else {
+      // 🔧 方案B：创建新订单前，将同用户同 packageKey 的旧 pending 订单标记为 cancelled
+      if (!isGuest && finalUserId) {
+        const { data: oldPendingOrders, error: oldPendingError } = await supabase
+          .from('orders')
+          .select('order_no')
+          .eq('user_id', finalUserId)
+          .eq('package_key', packageKey)
+          .eq('status', 'pending')
+          .neq('order_no', orderNo);
+        
+        if (!oldPendingError && oldPendingOrders && oldPendingOrders.length > 0) {
+          const oldOrderNos = oldPendingOrders.map(o => o.order_no);
+          console.log('[CreateOrder] Cancelling old pending orders:', oldOrderNos);
+          await supabase
+            .from('orders')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('user_id', finalUserId)
+            .eq('package_key', packageKey)
+            .eq('status', 'pending')
+            .neq('order_no', orderNo);
+        }
+      }
+
       const { error: insertError } = await supabase
         .from('orders')
         .insert({

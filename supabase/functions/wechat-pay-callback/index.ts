@@ -191,6 +191,37 @@ serve(async (req) => {
       });
     }
 
+    // 🔧 方案C：去重检查 - 同用户同 packageKey 是否已有其他已支付订单
+    if (order.user_id && order.package_key) {
+      const { data: existingPaidOrder } = await supabase
+        .from('orders')
+        .select('order_no')
+        .eq('user_id', order.user_id)
+        .eq('package_key', order.package_key)
+        .eq('status', 'paid')
+        .neq('order_no', orderNo)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingPaidOrder) {
+        console.log(`[WechatCallback] DUPLICATE PAYMENT DETECTED! Order ${orderNo} is duplicate of ${existingPaidOrder.order_no}. Marking as duplicate_paid.`);
+        await supabase
+          .from('orders')
+          .update({
+            status: 'duplicate_paid',
+            trade_no: tradeNo,
+            paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            shipping_note: `重复支付，已有订单 ${existingPaidOrder.order_no} 已支付`,
+          })
+          .eq('order_no', orderNo);
+
+        return new Response(JSON.stringify({ code: 'SUCCESS', message: '成功' }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     // 更新订单状态
     const { error: updateError } = await supabase
       .from('orders')
