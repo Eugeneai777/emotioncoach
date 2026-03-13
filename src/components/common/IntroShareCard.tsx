@@ -327,13 +327,11 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
     );
 
     switch (template) {
-      case 'value':
-        return renderValueTemplate();
       case 'scenario':
         return renderScenarioTemplate();
-      case 'concise':
+      case 'value':
       default:
-        return renderConciseTemplate();
+        return renderValueTemplate();
     }
   }
 );

@@ -170,7 +170,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
     }
   };
 
-  const templates: CardTemplate[] = ['concise', 'value', 'scenario'];
+  const templates: CardTemplate[] = ['value', 'scenario'];
 
   return (
     <>
