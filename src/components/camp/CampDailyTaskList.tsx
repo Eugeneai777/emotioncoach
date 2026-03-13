@@ -171,6 +171,9 @@ const CampDailyTaskList = ({ campId, date = new Date(), briefingData }: CampDail
           </div>
         ) : (
           <>
+            {/* 7天冥想总览 */}
+            <MeditationOverviewCard />
+
             {/* 推荐视频课程 */}
             <CampVideoTasks 
               campId={campId} 
