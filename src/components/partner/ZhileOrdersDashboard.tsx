@@ -370,9 +370,15 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                 .zhile-scroll-inner::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 6px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; min-height: 40px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+                .zhile-bottom-scroll { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); overflow-x: scroll !important; overflow-y: hidden; }
+                .zhile-bottom-scroll::-webkit-scrollbar { height: 14px; display: block !important; }
+                .zhile-bottom-scroll::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 7px; }
+                .zhile-bottom-scroll::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 7px; min-width: 60px; }
+                .zhile-bottom-scroll::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
               `}</style>
               <div
                 ref={scrollRef}
+                onScroll={() => syncHorizontalScroll("main")}
                 className="zhile-scroll-outer border rounded-lg w-full max-w-full"
                 style={{
                   display: 'grid',
