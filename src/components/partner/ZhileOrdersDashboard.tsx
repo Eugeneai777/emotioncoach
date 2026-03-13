@@ -326,16 +326,16 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
               </div>
               {/* Force visible scrollbar on all platforms */}
               <style>{`
-                .zhile-scroll-outer::-webkit-scrollbar { height: 12px; }
-                .zhile-scroll-outer::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 6px; }
-                .zhile-scroll-outer::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; }
+                .zhile-scroll-outer { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); overflow-x: scroll !important; }
+                .zhile-scroll-outer::-webkit-scrollbar { height: 14px; display: block !important; }
+                .zhile-scroll-outer::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 7px; }
+                .zhile-scroll-outer::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 7px; min-width: 60px; }
                 .zhile-scroll-outer::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
-                .zhile-scroll-outer { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
+                .zhile-scroll-inner { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
                 .zhile-scroll-inner::-webkit-scrollbar { width: 10px; }
                 .zhile-scroll-inner::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 6px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; min-height: 40px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
-                .zhile-scroll-inner { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
               `}</style>
               <div
                 ref={scrollRef}
