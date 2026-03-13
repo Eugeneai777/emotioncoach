@@ -56,8 +56,8 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
     }, []);
 
     const containerStyle: React.CSSProperties = {
-      width: template === 'scenario' ? '320px' : template === 'value' ? '320px' : '320px',
-      height: template === 'scenario' ? '540px' : template === 'value' ? '480px' : '420px',
+      width: '320px',
+      height: template === 'scenario' ? '580px' : template === 'value' ? '540px' : '480px',
       position: 'relative',
       overflow: 'hidden',
       borderRadius: '16px',
@@ -65,7 +65,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
     };
 
     const BrandFooter = () => (
-      <div style={{ textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+      <div style={{ textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexShrink: 0 }}>
         <img 
           src="/logo-youjin-ai.png" 
           alt="有劲AI" 
@@ -85,6 +85,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
+        flexShrink: 0,
       }}>
         {qrCodeUrl && (
           <img 
@@ -107,7 +108,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
     // User Header Component - 总是显示，即使没有头像也显示默认
     const UserHeader = ({ style }: { style?: React.CSSProperties }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', ...style }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', ...style }}>
         {avatarUrl ? (
           <img 
             src={avatarUrl} 
@@ -155,7 +156,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
           {/* Emoji + Title */}
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>{config.emoji}</div>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
             <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
               {config.title}
             </h1>
@@ -171,7 +172,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
                 background: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '10px',
-                padding: '12px 16px',
+                padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
@@ -275,7 +276,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
           {/* Main Content */}
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>{config.emoji}</div>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{config.emoji}</div>
             <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
               {config.title}
             </h1>
