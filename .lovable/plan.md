@@ -1,23 +1,23 @@
 
 
-## 两个问题需要修复
+## 诊断结果
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+你有两个账号：
+- **微信账号** (`f9115340`): 有 12 个已支付订单（含 synergy_bundle、wealth_synergy_bundle、知乐胶囊等）、3 个活跃训练营、1 个活跃订阅、100 点 AI 额度
+- **手机号账号** (`07f04ecd`): 0 个订单、无训练营、50 点 AI 额度
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+你用手机号登录时看不到微信账号下的购买记录，所以系统提示需要付费。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 修复方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+将微信账号的所有权益迁移到手机号账号：
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+1. **迁移 12 个已支付订单** — `orders` 表 `user_id` 改为手机号账号
+2. **迁移 3 个活跃训练营** — `training_camps` 表 `user_id` 改为手机号账号
+3. **迁移 1 个活跃订阅** — `subscriptions` 表 `user_id` 改为手机号账号
+4. **迁移 3 个商城订单** — `store_orders` 表 `buyer_id` 改为手机号账号
+5. **合并 AI 额度** — 手机号账号额度提升至 100（取较高值）
+6. **关联微信映射** — 将 `wechat_user_mappings` 中的 `system_user_id` 指向手机号账号
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+这样你用手机号登录后，所有购买的产品权益都能正常识别。
 
