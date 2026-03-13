@@ -192,18 +192,15 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)',
-          display: 'flex', flexDirection: 'column', padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', padding: '18px 18px',
         }}>
-          {/* User Avatar + Recommends */}
           <UserHeader />
-
-          {/* Main Content */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '8px' }}>{config.emoji}</div>
-            <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 8px 0' }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '6px' }}>{config.emoji}</div>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: '0 0 4px 0' }}>
               {config.title}
             </h1>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>
               {config.subtitle}
             </p>
           </div>
