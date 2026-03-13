@@ -1,40 +1,23 @@
 
 
-## 问题分析
+## 两个问题需要修复
 
-`cached_payment_openid` 存储在 `localStorage` 中，当前的清理逻辑依赖 `useWechatOpenId` hook 中的 `SIGNED_OUT` 事件监听。但该 hook 仅在少数页面挂载（HealthStoreGrid、ZhileProductsPage），如果用户从其他页面退出登录，缓存不会被清除。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-下次登录的新账号会复用旧账号的 OpenID，导致支付异常。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 修复方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 1. 在 `useAuth.tsx` 的 signOut 中统一清理所有 OpenID 缓存
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-在 `signOut` 函数中，退出前清除所有微信相关的本地缓存。这是全局入口，无论从哪个页面退出都会执行。
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-```typescript
-const signOut = async () => {
-  // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
-  localStorage.removeItem('cached_wechat_openid');
-  sessionStorage.removeItem('cached_wechat_openid');
-  localStorage.removeItem('cached_payment_openid');
-  sessionStorage.removeItem('cached_payment_openid');
-  await supabase.auth.signOut();
-};
-```
-
-### 2. 保留 `useWechatOpenId.ts` 中的 SIGNED_OUT 清理作为兜底
-
-不删除现有逻辑，作为双重保障（例如 token 过期导致的自动登出场景）。
-
-### 3. 处理直接调用 `supabase.auth.signOut()` 的地方
-
-`StoryCoach.tsx` 和 `CoachVoiceChat.tsx` 直接调用了 `supabase.auth.signOut()` 而非 `useAuth().signOut()`。需要统一改为使用 `useAuth` 的 `signOut`，或在这些位置也加上缓存清理。
-
----
-
-**涉及文件**：
-- `src/hooks/useAuth.tsx` — signOut 函数增加缓存清理
-- `src/pages/StoryCoach.tsx` — 改用 useAuth 的 signOut
-- `src/components/coach/CoachVoiceChat.tsx` — 在 signOut 前清理缓存
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

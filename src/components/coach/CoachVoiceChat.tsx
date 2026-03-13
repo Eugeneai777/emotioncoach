@@ -1209,6 +1209,11 @@ export const CoachVoiceChat = ({
         if (userError || !userData?.user) {
           console.error('[VoiceChat] ❌ Token validation failed after refresh error:', userError?.message);
           try {
+            // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
+            localStorage.removeItem('cached_wechat_openid');
+            sessionStorage.removeItem('cached_wechat_openid');
+            localStorage.removeItem('cached_payment_openid');
+            sessionStorage.removeItem('cached_payment_openid');
             await supabase.auth.signOut();
           } catch (e) {
             console.warn('[VoiceChat] signOut after token validation failure:', e);
