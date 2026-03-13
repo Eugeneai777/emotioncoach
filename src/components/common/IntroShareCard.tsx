@@ -14,7 +14,6 @@ interface IntroShareCardProps {
 }
 
 export const TEMPLATE_LABELS: Record<CardTemplate, string> = {
-  concise: '简洁版',
   value: '价值版',
   scenario: '场景版',
 };
