@@ -141,29 +141,37 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
   });
 
-  const filtered = useMemo(() => orders.filter(o => {
-    const matchSearch = !searchTerm || 
-      o.order_no?.includes(searchTerm) ||
-      o.buyer_name?.includes(searchTerm) ||
-      o.buyer_phone?.includes(searchTerm) ||
-      o.id_card_name?.includes(searchTerm) ||
-      o.product_name?.includes(searchTerm);
-    const matchStatus = statusFilter === "all" || (o.shipping_status || 'pending') === statusFilter;
-    
-    // Date range filter
-    let matchDate = true;
-    if (dateFrom || dateTo) {
-      const orderDate = o.paid_at ? new Date(o.paid_at) : o.created_at ? new Date(o.created_at) : null;
-      if (!orderDate) {
-        matchDate = false;
-      } else {
-        if (dateFrom && isBefore(orderDate, startOfDay(dateFrom))) matchDate = false;
-        if (dateTo && isAfter(orderDate, endOfDay(dateTo))) matchDate = false;
+  const filtered = useMemo(() => {
+    setCurrentPage(1);
+    return orders.filter(o => {
+      const matchSearch = !searchTerm || 
+        o.order_no?.includes(searchTerm) ||
+        o.buyer_name?.includes(searchTerm) ||
+        o.buyer_phone?.includes(searchTerm) ||
+        o.id_card_name?.includes(searchTerm) ||
+        o.product_name?.includes(searchTerm);
+      const matchStatus = statusFilter === "all" || (o.shipping_status || 'pending') === statusFilter;
+      
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const orderDate = o.paid_at ? new Date(o.paid_at) : o.created_at ? new Date(o.created_at) : null;
+        if (!orderDate) {
+          matchDate = false;
+        } else {
+          if (dateFrom && isBefore(orderDate, startOfDay(dateFrom))) matchDate = false;
+          if (dateTo && isAfter(orderDate, endOfDay(dateTo))) matchDate = false;
+        }
       }
-    }
-    
-    return matchSearch && matchStatus && matchDate;
-  }), [orders, searchTerm, statusFilter, dateFrom, dateTo]);
+      
+      return matchSearch && matchStatus && matchDate;
+    });
+  }, [orders, searchTerm, statusFilter, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   const stats = {
     total: orders.length,
