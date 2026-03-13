@@ -37,7 +37,9 @@ export const useCampVideoRecommendations = (
 
   useEffect(() => {
     if (campId && user) {
-      setHasAttemptedGeneration(false); // 日期变化时重置标志
+      setHasAttemptedGeneration(false);
+      setIsFallback(false);
+      setFallbackDate(null);
       loadRecommendations();
     }
   }, [campId, user, dateStr, briefingData?.id]);
