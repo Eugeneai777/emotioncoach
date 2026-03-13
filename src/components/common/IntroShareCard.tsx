@@ -162,20 +162,19 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
             </p>
           </div>
 
-          {/* Highlights */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
-                borderRadius: '10px',
-                padding: '10px 14px',
+                borderRadius: '8px',
+                padding: '8px 12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '8px',
               }}>
-                <span style={{ fontSize: '16px' }}>✨</span>
-                <span style={{ fontSize: '13px', color: 'white', fontWeight: 500 }}>{point}</span>
+                <span style={{ fontSize: '14px' }}>✨</span>
+                <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{point}</span>
               </div>
             ))}
           </div>
