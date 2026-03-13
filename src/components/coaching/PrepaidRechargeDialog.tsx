@@ -212,7 +212,7 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
         }
         openIdForPayment = mpOpenId;
         payType = 'miniprogram';
-      } else if (isWechat && !isMobile) {
+      } else if (isWechat && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         // 🔧 微信电脑端：WeixinJSBridge 不可用，直接走 Native QR 码
         console.log('[PrepaidRecharge] Desktop WeChat detected, using native QR');
         payType = 'native';
