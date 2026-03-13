@@ -225,8 +225,9 @@ serve(async (req) => {
     // 继续使用之前初始化的 supabase 和 finalUserId
     // （已在幂等检查阶段初始化）
 
-    // 生成订单号
-    const orderNo = generateOrderNo();
+    // 生成订单号（或复用已有的待付款订单号）
+    const reuseExistingOrder = !!existingOrderNo && payType === 'native';
+    const orderNo = reuseExistingOrder ? existingOrderNo : generateOrderNo();
     const expiredAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
 
     // 构建微信支付请求体
