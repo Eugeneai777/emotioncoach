@@ -141,8 +141,12 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
     onError: (err: Error) => toast.error(err.message || "昵称更新失败"),
   });
 
-  const filtered = useMemo(() => {
+  // Reset page when filters change
+  useEffect(() => {
     setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateFrom, dateTo]);
+
+  const filtered = useMemo(() => {
     return orders.filter(o => {
       const matchSearch = !searchTerm || 
         o.order_no?.includes(searchTerm) ||
