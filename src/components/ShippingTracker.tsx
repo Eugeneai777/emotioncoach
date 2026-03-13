@@ -18,45 +18,18 @@ export function ShippingTracker() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const [ordersRes, storeRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select("id, order_no, package_name, amount, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note, paid_at, created_at")
-          .eq("user_id", user.id)
-          .eq("status", "paid")
-          .not("buyer_address", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("store_orders" as any)
-          .select("id, order_no, product_name, price, buyer_name, buyer_phone, buyer_address, tracking_number, status, paid_at, created_at")
-          .eq("buyer_id", user.id)
-          .in("status", ["paid", "shipped", "completed"])
-          .not("buyer_address", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(20)
-      ]);
+      const ordersRes = await supabase
+        .from("orders")
+        .select("id, order_no, package_name, amount, buyer_name, buyer_phone, buyer_address, shipping_status, shipping_note, paid_at, created_at")
+        .eq("user_id", user.id)
+        .eq("status", "paid")
+        .not("buyer_address", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(20);
 
       if (ordersRes.error) throw ordersRes.error;
 
-      const standardOrders = ordersRes.data || [];
-      const storeOrders = ((storeRes.data as any[]) || []).map((so: any) => ({
-        id: so.id,
-        order_no: so.order_no,
-        package_name: so.product_name,
-        amount: so.price,
-        buyer_name: so.buyer_name,
-        buyer_phone: so.buyer_phone,
-        buyer_address: so.buyer_address,
-        shipping_status: so.status === 'paid' ? 'pending' : so.status === 'shipped' ? 'shipped' : so.status === 'completed' ? 'delivered' : 'pending',
-        shipping_note: so.tracking_number,
-        paid_at: so.paid_at,
-        created_at: so.created_at,
-      }));
-
-      return [...standardOrders, ...storeOrders].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      return ordersRes.data || [];
     },
   });
 
