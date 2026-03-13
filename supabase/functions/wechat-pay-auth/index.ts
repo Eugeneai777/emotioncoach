@@ -31,12 +31,18 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source, state } = body;
+    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source, state, mode } = body;
 
     // 模式3：小程序直接使用 openId 注册/登录（无需 OAuth 跳转）
     if (directOpenId && source === 'miniprogram') {
       console.log('[WechatPayAuth] Direct openId registration from miniprogram');
       return await ensureUserFromOpenId(directOpenId, directUnionId);
+    }
+
+    // 模式4：仅换取 openId，不创建/登录用户（已登录用户临时获取支付用 openId）
+    if (code && mode === 'openid_only') {
+      console.log('[WechatPayAuth] openid_only mode — exchanging code without user creation');
+      return await exchangeCodeForOpenIdOnly(code);
     }
 
     // 模式2：用 code 换取 openId + 自动登录/注册
@@ -716,6 +722,45 @@ async function exchangeCodeAndEnsureUser(code: string, state?: string): Promise<
       userId,
       isNewUser,
       tokenHash,
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+/**
+ * 模式4：仅用 code 换取 openId，不创建/登录用户
+ * 适用于已登录的手机号用户在微信浏览器内临时获取 openId 用于 JSAPI 支付
+ */
+async function exchangeCodeForOpenIdOnly(code: string): Promise<Response> {
+  const appId = Deno.env.get('WECHAT_APP_ID');
+  const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+
+  if (!appId || !appSecret) {
+    return new Response(
+      JSON.stringify({ error: 'WeChat not configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const tokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appId}&secret=${appSecret}&code=${code}&grant_type=authorization_code`;
+  const tokenResponse = await fetch(tokenUrl);
+  const tokenData = await tokenResponse.json();
+
+  if (tokenData.errcode || !tokenData.openid) {
+    console.error('[WechatPayAuth] openid_only: Failed to exchange code:', tokenData);
+    return new Response(
+      JSON.stringify({ error: 'Failed to get openId', errcode: tokenData.errcode, errmsg: tokenData.errmsg }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('[WechatPayAuth] openid_only: Got openId without user creation');
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      openId: tokenData.openid,
+      openIdOnly: true,
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );

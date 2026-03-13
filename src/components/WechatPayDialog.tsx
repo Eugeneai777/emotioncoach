@@ -73,13 +73,18 @@ const getPaymentOpenIdFromUrl = (): string | undefined => {
 const MP_OPENID_STORAGE_KEY = 'wechat_mp_openid';
 const MP_UNIONID_STORAGE_KEY = 'wechat_mp_unionid';
 
-// 🆕 缓存公众号 openId，防止 URL 清理后丢失导致循环授权
+// 🆕 持久缓存公众号 openId（localStorage），同一设备不再需要重复授权
 const CACHED_PAYMENT_OPENID_KEY = 'cached_payment_openid';
 const cachePaymentOpenId = (openId: string) => {
-  try { sessionStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId);
+    sessionStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId); // 兼容旧逻辑
+  } catch { /* ignore */ }
 };
 const getCachedPaymentOpenId = (): string | undefined => {
-  try { return sessionStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || undefined; } catch { return undefined; }
+  try {
+    return localStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || sessionStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || undefined;
+  } catch { return undefined; }
 };
 
 // 🆕 小程序原生支付回跳时，用于恢复“等待支付”弹框状态
@@ -226,7 +231,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   }, []);
 
 
-  // 触发静默授权获取 openId（用于未登录用户）
+  // 触发静默授权获取 openId
+  // 已登录用户使用 openid_only 模式，仅获取 openId 不创建/切换账号
   // 使用 wechat-pay-auth 函数，通过 /pay-entry 统一回调处理
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
@@ -299,16 +305,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   }, [packageInfo]);
 
   // 用 code 换取 openId（通过 wechat-pay-auth 函数）
+  // 已登录用户使用 openid_only 模式，避免创建重复账号或切换登录态
   const exchangeCodeForOpenId = useCallback(async (code: string) => {
     if (codeExchangedRef.current) return;
     codeExchangedRef.current = true;
     setIsExchangingCode(true);
 
     try {
-      console.log('[Payment] Exchanging code for openId via wechat-pay-auth');
+      const isLoggedIn = !!user;
+      console.log('[Payment] Exchanging code for openId via wechat-pay-auth, openid_only:', isLoggedIn);
       
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-        body: { code },
+        body: { code, ...(isLoggedIn ? { mode: 'openid_only' } : {}) },
       });
 
       // 清理 URL 中的 OAuth 参数
