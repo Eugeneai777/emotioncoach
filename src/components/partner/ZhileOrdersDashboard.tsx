@@ -533,6 +533,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
               >
                 <div style={{ minWidth: '1900px', height: '1px' }} />
               </div>
+            </>
           )}
         </CardContent>
       </Card>
