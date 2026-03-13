@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useState, useCallback } from 'react';
 import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
 import { useQRCode } from '@/utils/qrCodeUtils';
 
-export type CardTemplate = 'concise' | 'value' | 'scenario';
+export type CardTemplate = 'value' | 'scenario';
 
 interface IntroShareCardProps {
   config: IntroShareConfig;
