@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,9 @@ interface ZhileOrdersDashboardProps {
 export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardProps) {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const syncLockRef = useRef(false);
+  const [scrollContentWidth, setScrollContentWidth] = useState(1900);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -171,6 +174,37 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
   };
 
   const hasDateFilter = dateFrom || dateTo;
+
+  useEffect(() => {
+    const updateScrollWidth = () => {
+      if (!scrollRef.current) return;
+      setScrollContentWidth(Math.max(scrollRef.current.scrollWidth, 1900));
+    };
+
+    updateScrollWidth();
+    window.addEventListener("resize", updateScrollWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateScrollWidth);
+    };
+  }, [filtered.length]);
+
+  const syncHorizontalScroll = (source: "main" | "bottom") => {
+    const main = scrollRef.current;
+    const bottom = bottomScrollRef.current;
+    if (!main || !bottom || syncLockRef.current) return;
+
+    syncLockRef.current = true;
+    if (source === "main") {
+      bottom.scrollLeft = main.scrollLeft;
+    } else {
+      main.scrollLeft = bottom.scrollLeft;
+    }
+
+    requestAnimationFrame(() => {
+      syncLockRef.current = false;
+    });
+  };
 
   const exportCSV = () => {
     const headers = ['下单时间', '商品名称', '订单号', '来源', '用户昵称', '收货人', '手机号', '收货地址', '身份证姓名', '身份证号码', '金额', '物流状态', '快递单号/备注', '支付方式'];
@@ -336,9 +370,15 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                 .zhile-scroll-inner::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 6px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; min-height: 40px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+                .zhile-bottom-scroll { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); overflow-x: scroll !important; overflow-y: hidden; }
+                .zhile-bottom-scroll::-webkit-scrollbar { height: 14px; display: block !important; }
+                .zhile-bottom-scroll::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 7px; }
+                .zhile-bottom-scroll::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 7px; min-width: 60px; }
+                .zhile-bottom-scroll::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
               `}</style>
               <div
                 ref={scrollRef}
+                onScroll={() => syncHorizontalScroll("main")}
                 className="zhile-scroll-outer border rounded-lg w-full max-w-full"
                 style={{
                   display: 'grid',
@@ -500,6 +540,13 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                     </tbody>
                   </table>
                 </div>
+              </div>
+              <div
+                ref={bottomScrollRef}
+                onScroll={() => syncHorizontalScroll("bottom")}
+                className="zhile-bottom-scroll mt-2 w-full rounded-md border bg-background"
+              >
+                <div style={{ width: `${scrollContentWidth}px`, height: 1 }} />
               </div>
             </>
           )}
