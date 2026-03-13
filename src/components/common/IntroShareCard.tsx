@@ -57,7 +57,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
 
     const containerStyle: React.CSSProperties = {
       width: '320px',
-      height: template === 'scenario' ? '540px' : template === 'value' ? '540px' : '480px',
+      height: template === 'scenario' ? '500px' : template === 'value' ? '490px' : '440px',
       position: 'relative',
       overflow: 'hidden',
       borderRadius: '16px',
