@@ -321,13 +321,13 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
 
           {/* CTA Text */}
-          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
             <span style={{ 
               background: 'rgba(255,255,255,0.2)', 
               color: 'white', 
-              fontSize: '12px', 
+              fontSize: '11px', 
               fontWeight: 500, 
-              padding: '6px 16px', 
+              padding: '5px 14px', 
               borderRadius: '20px' 
             }}>
               ✨ 扫码开启你的成长之旅
