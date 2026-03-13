@@ -8,15 +8,17 @@ import { isWeChatBrowser, isWeChatMiniProgram } from '@/utils/platform';
  */
 export function useWechatOpenId() {
   const [openId, setOpenId] = useState<string | undefined>(() => {
-    // 尝试从 sessionStorage 恢复（支付重定向后）
-    return sessionStorage.getItem('cached_wechat_openid') || undefined;
+    // 优先从 localStorage 持久缓存恢复，其次 sessionStorage（兼容旧逻辑）
+    return localStorage.getItem('cached_wechat_openid') 
+      || sessionStorage.getItem('cached_wechat_openid') 
+      || undefined;
   });
 
   useEffect(() => {
     if (openId) return; // 已有缓存
-    if (!isWeChatBrowser() || isWeChatMiniProgram()) return; // 非微信浏览器环境不需要
+    if (!isWeChatBrowser() || isWeChatMiniProgram()) return;
 
-    const fetch = async () => {
+    const fetchOpenId = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -29,6 +31,8 @@ export function useWechatOpenId() {
 
         if (mapping?.openid) {
           setOpenId(mapping.openid);
+          // 持久缓存到 localStorage，同一设备不再需要重复获取
+          localStorage.setItem('cached_wechat_openid', mapping.openid);
           sessionStorage.setItem('cached_wechat_openid', mapping.openid);
         }
       } catch (e) {
@@ -36,8 +40,27 @@ export function useWechatOpenId() {
       }
     };
 
-    fetch();
+    fetchOpenId();
   }, [openId]);
+
+  // 监听用户切换：如果登录用户变了，清除旧缓存重新获取
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('cached_wechat_openid');
+        sessionStorage.removeItem('cached_wechat_openid');
+        setOpenId(undefined);
+      } else if (event === 'SIGNED_IN') {
+        // 登录后清除旧缓存，触发重新获取
+        const cached = localStorage.getItem('cached_wechat_openid');
+        if (!cached) {
+          setOpenId(undefined); // 触发 useEffect 重新 fetch
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return openId;
 }
