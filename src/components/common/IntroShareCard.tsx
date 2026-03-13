@@ -314,7 +314,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '20px', marginBottom: '6px' }}>🎁</span>
+                <span style={{ fontSize: '18px', marginBottom: '4px' }}>🎁</span>
                 <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500 }}>免费体验</span>
               </div>
             )}
