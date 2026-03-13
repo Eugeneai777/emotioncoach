@@ -271,21 +271,21 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           </div>
 
           {/* Feature Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
             {config.highlights.map((point, i) => (
               <div key={i} style={{
                 background: 'rgba(255,255,255,0.95)',
-                borderRadius: '10px',
-                padding: '10px',
+                borderRadius: '8px',
+                padding: '8px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: '18px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '16px', marginBottom: '2px' }}>
                   {['💡', '🌟', '🚀', '📊'][i] || '✨'}
                 </span>
-                <span style={{ fontSize: '11px', color: '#1a1a1a', fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
+                <span style={{ fontSize: '10px', color: '#1a1a1a', fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
               </div>
             ))}
             {/* 补充第4个格子 */}
