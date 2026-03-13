@@ -541,6 +541,13 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                   </table>
                 </div>
               </div>
+              <div
+                ref={bottomScrollRef}
+                onScroll={() => syncHorizontalScroll("bottom")}
+                className="zhile-bottom-scroll mt-2 w-full rounded-md border bg-background"
+              >
+                <div style={{ width: `${scrollContentWidth}px`, height: 1 }} />
+              </div>
             </>
           )}
         </CardContent>
