@@ -65,7 +65,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
     };
 
     const BrandFooter = () => (
-      <div style={{ textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+      <div style={{ textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexShrink: 0 }}>
         <img 
           src="/logo-youjin-ai.png" 
           alt="有劲AI" 
