@@ -339,7 +339,7 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
               `}</style>
               <div
                 ref={scrollRef}
-                className="zhile-scroll-outer border rounded-lg"
+                className="zhile-scroll-outer border rounded-lg w-full max-w-full"
                 style={{
                   overflowX: 'scroll',
                   WebkitOverflowScrolling: 'touch',
