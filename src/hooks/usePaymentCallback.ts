@@ -190,7 +190,7 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
         data = await checkStatus();
       }
 
-      if (data.status === 'paid') {
+      if (data.status === 'paid' || data.status === 'duplicate_paid') {
         // 清除 URL 参数
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('order');

@@ -192,7 +192,9 @@ serve(async (req) => {
     }
 
     // 🔧 方案C：去重检查 - 同用户同 packageKey 是否已有其他已支付订单
-    if (order.user_id && order.package_key) {
+    // 跳过健康商城商品（store_product_*），实物商品允许重复购买
+    const isStoreProduct = order.package_key?.startsWith('store_product_');
+    if (order.user_id && order.package_key && !isStoreProduct) {
       const { data: existingPaidOrder } = await supabase
         .from('orders')
         .select('order_no')
