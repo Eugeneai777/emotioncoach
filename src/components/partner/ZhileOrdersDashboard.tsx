@@ -28,6 +28,26 @@ interface ZhileOrdersDashboardProps {
 export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardProps) {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fakeScrollRef = useRef<HTMLDivElement>(null);
+  const isSyncingScroll = useRef(false);
+
+  const handleTableScroll = useCallback(() => {
+    if (isSyncingScroll.current) return;
+    isSyncingScroll.current = true;
+    if (scrollRef.current && fakeScrollRef.current) {
+      fakeScrollRef.current.scrollLeft = scrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => { isSyncingScroll.current = false; });
+  }, []);
+
+  const handleFakeScroll = useCallback(() => {
+    if (isSyncingScroll.current) return;
+    isSyncingScroll.current = true;
+    if (scrollRef.current && fakeScrollRef.current) {
+      scrollRef.current.scrollLeft = fakeScrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => { isSyncingScroll.current = false; });
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -325,21 +345,24 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                 </div>
               </div>
               {/* Force visible scrollbar on all platforms */}
-              <style>{`
-                .zhile-scroll-outer { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); overflow-x: scroll !important; }
-                .zhile-scroll-outer::-webkit-scrollbar { height: 14px; display: block !important; }
-                .zhile-scroll-outer::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 7px; }
-                .zhile-scroll-outer::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 7px; min-width: 60px; }
-                .zhile-scroll-outer::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+               <style>{`
+                .zhile-scroll-outer { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+                .zhile-scroll-outer::-webkit-scrollbar { display: none !important; }
                 .zhile-scroll-inner { scrollbar-width: auto; scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
                 .zhile-scroll-inner::-webkit-scrollbar { width: 10px; }
                 .zhile-scroll-inner::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 6px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; min-height: 40px; }
                 .zhile-scroll-inner::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+                .zhile-fake-scrollbar { overflow-x: scroll !important; scrollbar-width: auto; scrollbar-color: hsl(var(--muted-foreground)/0.4) hsl(var(--muted)); }
+                .zhile-fake-scrollbar::-webkit-scrollbar { height: 14px; display: block !important; }
+                .zhile-fake-scrollbar::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 7px; }
+                .zhile-fake-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground)/0.35); border-radius: 7px; border: 2px solid hsl(var(--muted)); min-width: 60px; }
+                .zhile-fake-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)/0.6); }
               `}</style>
               <div
                 ref={scrollRef}
                 className="zhile-scroll-outer border rounded-lg w-full max-w-full"
+                onScroll={handleTableScroll}
                 style={{
                   display: 'grid',
                   overflowX: 'scroll',
@@ -500,6 +523,15 @@ export function ZhileOrdersDashboard({ isAdmin = false }: ZhileOrdersDashboardPr
                     </tbody>
                   </table>
                 </div>
+              </div>
+              {/* Always-visible fake scrollbar for Windows */}
+              <div
+                ref={fakeScrollRef}
+                className="zhile-fake-scrollbar w-full max-w-full"
+                onScroll={handleFakeScroll}
+                style={{ overflowX: 'scroll', marginTop: '-2px' }}
+              >
+                <div style={{ minWidth: '1900px', height: '1px' }} />
               </div>
             </>
           )}
