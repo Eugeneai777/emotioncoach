@@ -172,7 +172,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
                 background: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '10px',
-                padding: '12px 16px',
+                padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
