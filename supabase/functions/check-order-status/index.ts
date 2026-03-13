@@ -167,8 +167,8 @@ serve(async (req) => {
       userOpenId = mapping?.openid || null;
     }
 
-    // 如果数据库显示已支付（包括 duplicate_paid），直接返回
-    if (order.status === 'paid' || order.status === 'duplicate_paid') {
+    // 如果数据库显示已支付，直接返回
+    if (order.status === 'paid') {
       // 自愈逻辑：检查 subscription 是否存在，不存在则补建
       if (order.user_id && order.package_key && !order.package_key.startsWith('camp-')) {
         try {
