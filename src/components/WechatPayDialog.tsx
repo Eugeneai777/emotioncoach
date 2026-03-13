@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -175,8 +175,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [agreedTerms, setAgreedTerms] = useState(!needsTerms);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
   const openIdFetchedRef = useRef<boolean>(false); // 防止重复获取 openId
+  const [qrCountdown, setQrCountdown] = useState<number>(0); // 二维码倒计时（秒）
   const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
   const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
 
@@ -512,6 +514,30 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  };
+
+  // 启动二维码倒计时（秒）
+  const startQrCountdown = (totalSeconds: number) => {
+    setQrCountdown(totalSeconds);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    countdownIntervalRef.current = setInterval(() => {
+      setQrCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   // 重置状态
@@ -519,6 +545,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     clearTimers();
     setStatus('idle');
     setQrCodeDataUrl('');
+    setQrCountdown(0);
     setPayUrl('');
     setH5Url('');
     setH5PayLink('');
@@ -966,9 +993,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         startPolling(data.orderNo);
       }
 
-      // 设置5分钟超时
+      // 设置5分钟超时 + 倒计时
+      startQrCountdown(5 * 60);
       timeoutRef.current = setTimeout(() => {
         clearTimers();
+        setQrCountdown(0);
         setStatus('expired');
       }, 5 * 60 * 1000);
 
@@ -1470,6 +1499,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               </div>
             )}
           </div>
+
+          {/* 二维码倒计时 */}
+          {(status === 'ready' || status === 'polling') && qrCountdown > 0 && payType !== 'jsapi' && (
+            <div className={`flex items-center justify-center gap-1.5 text-xs ${qrCountdown <= 60 ? 'text-destructive' : 'text-muted-foreground'}`}>
+              <Clock className="h-3 w-3" />
+              <span>
+                二维码有效期：{Math.floor(qrCountdown / 60).toString().padStart(2, '0')}:{(qrCountdown % 60).toString().padStart(2, '0')}
+              </span>
+              {qrCountdown <= 60 && <span className="font-medium">即将过期</span>}
+            </div>
+          )}
 
           {/* 状态提示 */}
           {(status === 'ready' || status === 'polling') && (
