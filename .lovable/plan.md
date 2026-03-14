@@ -1,18 +1,23 @@
 
 
-## 修改计划
+## 两个问题需要修复
 
-两个问题的根因相同：显示天数时缺少 `+ 1`。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 问题 1：TrainingCampCard "第24天" → 应显示 `completed_days + 1`
-**文件**：`src/components/camp/TrainingCampCard.tsx` 第 94-95 行
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-当前用日历天数（`getDaysSinceStart + 1`），应改为 `camp.completed_days + 1`。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 问题 2：WealthTrilogyCard "Day 0" → 应显示 `completed_days + 1`
-**文件**：`src/hooks/useTrilogyProgress.ts` 第 43、46 行
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-当前 `currentDay: camp.completed_days`，改为 `currentDay: camp.completed_days + 1`。
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-这样两处都统一为"已完成天数 + 1"逻辑。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

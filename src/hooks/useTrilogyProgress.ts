@@ -40,10 +40,10 @@ export function useTrilogyProgress(): TrilogyProgress & { isLoading: boolean } {
       // 对于7天营，用 status === 'completed' 判断毕业；21天营用 milestone_21_completed
       const isCompleted = camp.milestone_21_completed || camp.status === 'completed';
       if (isCompleted) {
-        return { status: 'completed' as const, currentDay: camp.completed_days };
+        return { status: 'completed' as const, currentDay: camp.completed_days + 1 };
       }
       if (camp.status === 'active') {
-        return { status: 'active' as const, currentDay: camp.completed_days };
+        return { status: 'active' as const, currentDay: camp.completed_days + 1 };
       }
       return { status: 'not_started' as const };
     },
