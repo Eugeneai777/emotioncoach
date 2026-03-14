@@ -1,34 +1,23 @@
 
 
-# 优化"探索更多工具"为瀑布式内联展示
+## 两个问题需要修复
 
-## 思路
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-将底部的"探索更多工具"按钮替换为直接在页面内展示的工具瀑布流，用户向下滚动即可看到日常工具和测评工具，无需跳转到 `/energy-studio`。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 改动（仅 `src/pages/MiniAppEntry.tsx`）
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 1. 移除底部"探索更多"按钮
-替换为分区标题 + 瀑布卡片列表。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 2. 新增"日常工具"区块
-- 标题行："🛠️ 日常工具"
-- 复用 `AssessmentTools` 页面中的 `dailyTools` 数据（情绪SOS、安全守护、觉察日记、感恩日记、呼吸练习、能量宣言卡）
-- 2列网格布局，每个卡片含 emoji + 标题 + 简述，玻璃态风格与上方人群卡片一致
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 3. 新增"专业测评"区块
-- 标题行："📋 专业测评"
-- 复用 `assessmentCategories` 数据，按分类展示
-- 每张卡片显示 emoji、标题、副标题、时长信息、热门/新/推荐标签
-- 2列网格布局
-
-### 4. 页面整体改为可滚动
-- 移除 `flex-1` 改为自然流式布局
-- 保持页面可整体滚动，人群入口在顶部，工具和测评在下方自然排列
-
-### 涉及文件
-
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| `src/pages/MiniAppEntry.tsx` | 移除底部按钮，内联工具和测评瀑布流 |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

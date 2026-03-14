@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Compass, ChevronRight } from "lucide-react";
+import { ChevronRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import logoImage from "@/assets/logo-youjin-ai.png";
 
@@ -61,11 +61,35 @@ const audiences = [
   },
 ];
 
+const dailyTools = [
+  { id: "emotion-button", emoji: "🆘", title: "情绪SOS按钮", desc: "崩溃时按一下，3分钟恢复平静", route: "/emotion-button" },
+  { id: "alive-check", emoji: "💗", title: "每日安全守护", desc: "每日确认平安，守护你在乎的人", route: "/alive-check" },
+  { id: "awakening", emoji: "📔", title: "觉察日记", desc: "AI陪你写日记，看见情绪变化", route: "/awakening" },
+  { id: "gratitude", emoji: "🌸", title: "感恩日记", desc: "记录美好，提升幸福感", route: "/gratitude" },
+  { id: "breathing", emoji: "🧘", title: "呼吸练习", desc: "科学呼吸法，快速减压", route: "/breathing" },
+  { id: "declaration", emoji: "⚡", title: "能量宣言卡", desc: "给自己一句有力量的话", route: "/declaration" },
+];
+
+const assessments = [
+  { id: "emotion-health", emoji: "💚", title: "情绪健康测评", sub: "焦虑/抑郁水平", detail: "5分钟", route: "/emotion-health", tag: "推荐" },
+  { id: "midlife-awakening", emoji: "🧭", title: "中场觉醒力测评", sub: "6维度人生卡点", detail: "8分钟", route: "/midlife-awakening", tag: "热门" },
+  { id: "wealth-block", emoji: "💰", title: "财富卡点测评", sub: "限制财富的信念", detail: "6分钟", route: "/wealth-block", tag: "新" },
+  { id: "scl90", emoji: "🔬", title: "SCL-90 心理筛查", sub: "10因子临床级", detail: "15分钟", route: "/scl90", tag: null },
+  { id: "women-competitiveness", emoji: "👑", title: "女性竞争力", sub: "独特优势与潜力", detail: "7分钟", route: "/assessment/women_competitiveness", tag: null },
+  { id: "parent-ability", emoji: "🎯", title: "家长应对能力", sub: "养育风格与应对策略", detail: "5分钟", route: "/assessment/parent_ability", tag: "推荐" },
+];
+
+const tagGradients: Record<string, string> = {
+  "热门": "from-red-400 to-rose-500",
+  "推荐": "from-emerald-400 to-teal-500",
+  "新": "from-amber-400 to-orange-500",
+};
+
 const MiniAppEntry = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/30 via-background to-background flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/30 via-background to-background relative overflow-x-hidden">
       {/* 装饰性光晕 */}
       <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-gradient-to-br from-amber-200/40 to-orange-200/20 blur-3xl pointer-events-none" />
       <div className="absolute top-40 -left-16 w-40 h-40 rounded-full bg-gradient-to-br from-rose-200/30 to-pink-200/10 blur-3xl pointer-events-none" />
@@ -75,7 +99,7 @@ const MiniAppEntry = () => {
         className="flex items-center gap-3 pb-5 px-5 relative z-10"
         style={{
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)',
-          paddingRight: '110px', // 避开右侧胶囊按钮区域
+          paddingRight: '110px',
         }}
       >
         <img
@@ -94,7 +118,7 @@ const MiniAppEntry = () => {
       </div>
 
       {/* 6 个人群入口 2x3 */}
-      <div className="flex-1 px-4 pb-6 relative z-10">
+      <div className="px-4 pb-6 relative z-10">
         <div className="grid grid-cols-2 gap-4">
           {audiences.map((a, i) => (
             <motion.button
@@ -107,30 +131,15 @@ const MiniAppEntry = () => {
               onClick={() => navigate(a.route)}
               className="relative flex items-center gap-3 rounded-2xl p-4 bg-background/60 backdrop-blur-md border border-border/40 shadow-sm overflow-hidden text-left transition-shadow hover:shadow-md"
             >
-              {/* 左侧渐变条 */}
               <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${a.gradient}`} />
-
-              {/* emoji */}
               <span className="text-5xl flex-shrink-0 ml-1">{a.emoji}</span>
-
-              {/* 文字区 */}
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-bold text-foreground block truncate">
-                  {a.label}
-                </span>
-                <span className="text-[11px] text-muted-foreground mt-0.5 block truncate">
-                  {a.subtitle}
-                </span>
+                <span className="text-sm font-bold text-foreground block truncate">{a.label}</span>
+                <span className="text-[11px] text-muted-foreground mt-0.5 block truncate">{a.subtitle}</span>
               </div>
-
-              {/* 右侧箭头 */}
               <ChevronRight className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
-
-              {/* 标签 badge */}
               {a.tag && (
-                <Badge
-                  className={`absolute top-2 right-2 text-[10px] px-1.5 py-0 h-4 border-0 bg-gradient-to-r ${a.gradient} text-white font-medium`}
-                >
+                <Badge className={`absolute top-2 right-2 text-[10px] px-1.5 py-0 h-4 border-0 bg-gradient-to-r ${a.gradient} text-white font-medium`}>
                   {a.tag}
                 </Badge>
               )}
@@ -139,15 +148,65 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* 底部探索入口 */}
-      <div className="pb-8 flex justify-center relative z-10">
-        <button
-          onClick={() => navigate("/energy-studio")}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 backdrop-blur-sm px-4 py-2 rounded-full hover:bg-muted transition-colors active:scale-95"
-        >
-          <Compass className="w-3.5 h-3.5" />
-          探索更多工具
-        </button>
+      {/* ═══ 日常工具 ═══ */}
+      <div className="px-4 pb-6 relative z-10">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-base">🛠</span>
+          <h2 className="text-sm font-bold text-foreground">日常工具</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {dailyTools.map((tool, i) => (
+            <motion.button
+              key={tool.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.36 + i * 0.05, type: "spring", stiffness: 260, damping: 22 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate(tool.route)}
+              className="flex items-center gap-2.5 rounded-2xl p-3 bg-background/60 backdrop-blur-md border border-border/40 shadow-sm text-left transition-shadow hover:shadow-md"
+            >
+              <span className="text-2xl flex-shrink-0">{tool.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-bold text-foreground block truncate">{tool.title}</span>
+                <span className="text-[10px] text-muted-foreground block truncate">{tool.desc}</span>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══ 专业测评 ═══ */}
+      <div className="px-4 pb-10 relative z-10">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-base">📋</span>
+          <h2 className="text-sm font-bold text-foreground">专业测评</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {assessments.map((a, i) => (
+            <motion.button
+              key={a.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.66 + i * 0.05, type: "spring", stiffness: 260, damping: 22 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate(a.route)}
+              className="relative flex flex-col items-start rounded-2xl p-3 bg-background/60 backdrop-blur-md border border-border/40 shadow-sm text-left transition-shadow hover:shadow-md overflow-hidden"
+            >
+              <span className="text-2xl mb-1.5">{a.emoji}</span>
+              <span className="text-xs font-bold text-foreground block truncate w-full">{a.title}</span>
+              <span className="text-[10px] text-muted-foreground block truncate w-full">{a.sub}</span>
+              <div className="flex items-center gap-1 mt-1.5 text-[10px] text-muted-foreground/70">
+                <Clock className="w-3 h-3" />
+                <span>{a.detail}</span>
+              </div>
+              {a.tag && (
+                <Badge className={`absolute top-2 right-2 text-[10px] px-1.5 py-0 h-4 border-0 bg-gradient-to-r ${tagGradients[a.tag] || "from-gray-400 to-gray-500"} text-white font-medium`}>
+                  {a.tag}
+                </Badge>
+              )}
+            </motion.button>
+          ))}
+        </div>
       </div>
     </div>
   );
