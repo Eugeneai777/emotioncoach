@@ -1,34 +1,23 @@
 
 
-# 优化色彩设计
+## 两个问题需要修复
 
-## 问题分析
-当前页面色彩过于淡雅统一（全是 `-50` 到 `-100` 的浅色系），导致视觉层次不足、各区块缺乏辨识度。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 改动方案（仅 `src/pages/MiniAppEntry.tsx`）
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 1. 人群卡片 — 提升色彩饱和度与差异化
-- 每张卡片使用更饱和的渐变背景（从 `-100/-200` 提升到 `-200/-300` 级别），增强视觉冲击
-- icon 背景同步加深，文字 accent 用 `-800` 级深色保证可读性
-- 标签颜色保持不变（已足够醒目）
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-| 卡片 | 现在 | 改为 |
-|------|------|------|
-| 宝妈 | rose-50→pink-100 | rose-100→pink-200 |
-| 职场 | sky-50→blue-100 | blue-100→indigo-200 |
-| 情侣 | violet-50→purple-100 | violet-200→purple-300 |
-| 青少年 | amber-50→orange-100 | amber-100→yellow-200 |
-| 中年 | orange-50→amber-100 | orange-200→red-100 |
-| 银发 | emerald-50→teal-100 | emerald-100→teal-200 |
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 2. 日常工具图标 — 加彩色底色
-- 每个工具 icon 容器从统一白色 `bg-card` 改为各自的柔和彩色底（如情绪SOS用 `bg-red-100`，呼吸练习用 `bg-cyan-100`）
-- 去掉 border，改用轻微 shadow
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 3. 测评列表 — 左侧彩色指示条
-- 每条测评项左侧加 3px 圆角彩色条（各自主题色），打破纯白列表的单调感
-- emoji 背景加柔和圆形底色
-
-### 4. 页面背景微调
-- 顶部渐变从 `amber-50/60` 改为 `rose-50/40 via-violet-50/20` 的多色柔和渐变，增加层次
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
