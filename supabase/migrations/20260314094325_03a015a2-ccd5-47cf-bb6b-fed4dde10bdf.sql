@@ -1,0 +1,1 @@
+UPDATE camp_templates SET camp_subtitle = '7天唤醒财富能量' WHERE camp_type = 'wealth_block_7';
