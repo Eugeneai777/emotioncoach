@@ -297,18 +297,20 @@ export default function WealthCampCheckIn() {
     }
   }, [campId, weightsLoading, currentDay, weekNumber, calculateWeights]);
 
-  const displayDay = makeupDayNumber || currentDay;
+  // displayDay 用于冥想播放器显示：已完成天数+1（即当前正在做的第几天）
+  const displayDay = makeupDayNumber || (camp ? camp.completed_days + 1 : currentDay);
 
-  // Fetch meditations - 使用循环天数（毕业用户）或当前天数（活跃用户）
-  // 即使不是 postCampMode，超过7天也应该循环使用冥想（因为数据库只有 Day 1-7）
+  // 冥想内容天数基于 completed_days：下一个要做的冥想 = completed_days + 1（循环1-7）
+  const nextMeditationDay = useMemo(() => {
+    if (!camp) return 1;
+    return ((camp.completed_days) % 7) + 1;
+  }, [camp?.completed_days]);
+
+  // Fetch meditations - 使用循环天数（毕业用户）或基于完成天数（活跃用户）
   const meditationDayNumber = useMemo(() => {
     if (isPostCampMode) return cycleMeditationDay;
-    // 活跃用户超过7天也循环使用冥想
-    if (currentDay > 7) {
-      return ((currentDay - 1) % 7) + 1;
-    }
-    return currentDay;
-  }, [isPostCampMode, cycleMeditationDay, currentDay]);
+    return nextMeditationDay;
+  }, [isPostCampMode, cycleMeditationDay, nextMeditationDay]);
   
   const { data: meditation } = useQuery({
     queryKey: ['wealth-meditation', meditationDayNumber],

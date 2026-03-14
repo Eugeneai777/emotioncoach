@@ -20,7 +20,7 @@ export function TrainingCampDetail() {
   const calculatedCurrentDay = camp ? Math.max(1,
     getDaysSinceStart(camp.start_date) + 1
   ) : 1;
-  const displayCurrentDay = camp ? Math.min(calculatedCurrentDay, camp.duration_days) : 1;
+  const displayCurrentDay = calculatedCurrentDay;
 
   useEffect(() => {
     loadCamp();

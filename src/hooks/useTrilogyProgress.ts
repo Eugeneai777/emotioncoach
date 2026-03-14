@@ -29,7 +29,7 @@ export function useTrilogyProgress(): TrilogyProgress & { isLoading: boolean } {
     queryFn: async () => {
       const { data } = await supabase
         .from('training_camps')
-        .select('status, current_day, milestone_21_completed')
+        .select('status, current_day, completed_days, milestone_21_completed, camp_type, duration_days')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -37,11 +37,13 @@ export function useTrilogyProgress(): TrilogyProgress & { isLoading: boolean } {
         return { status: 'not_started' as const };
       }
       const camp = data[0];
-      if (camp.milestone_21_completed) {
-        return { status: 'completed' as const, currentDay: camp.current_day };
+      // 对于7天营，用 status === 'completed' 判断毕业；21天营用 milestone_21_completed
+      const isCompleted = camp.milestone_21_completed || camp.status === 'completed';
+      if (isCompleted) {
+        return { status: 'completed' as const, currentDay: camp.completed_days };
       }
       if (camp.status === 'active') {
-        return { status: 'active' as const, currentDay: camp.current_day };
+        return { status: 'active' as const, currentDay: camp.completed_days };
       }
       return { status: 'not_started' as const };
     },
