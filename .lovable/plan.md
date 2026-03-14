@@ -1,23 +1,44 @@
 
 
-## 两个问题需要修复
+# /energy-studio 主页精简 + 小红书专属页
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 思路
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+将 `/energy-studio` 主页精简为只展示 6 个人群入口按钮（宝妈、职场、情侣、青少年、中年、银发），其余所有内容（快捷入口、工具、测评）移到一个新的小红书风格专属页。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 改动
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 1. 精简 `src/pages/EnergyStudio.tsx`
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+- 移除快捷入口、Tab 切换、工具列表、测评列表等
+- 仅保留 PageHeader + AudienceHub（6 个人群按钮）
+- AudienceHub 改为更大、更突出的卡片样式（占满屏幕），增加一个"探索更多工具"入口跳转到新页面
 
-| 文件 | 修改 |
+### 2. 改造 `src/components/energy-studio/AudienceHub.tsx`
+
+- 卡片放大：从 3x2 小卡片改为 2x3 大卡片，每个卡片更高（~120px）
+- 更大的 emoji 和文字，渐变封面更突出
+- 整体居中，视觉更聚焦
+
+### 3. 新建 `src/pages/EnergyStudioExplore.tsx`（小红书风格专属页）
+
+- 路由：`/energy-studio/explore`
+- 包含原来的：快捷入口、情绪 SOS、日常工具、专业测评（Tab 切换）
+- 采用小红书双列瀑布流卡片布局展示工具
+- 卡片样式：顶部渐变色块 + 底部白底文字 + 圆角阴影
+
+### 4. 路由注册
+
+- 在 App.tsx 中添加 `/energy-studio/explore` 路由
+
+### 涉及文件
+
+| 文件 | 改动 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/pages/EnergyStudio.tsx` | 精简为仅 6 按钮 + 探索入口 |
+| `src/components/energy-studio/AudienceHub.tsx` | 放大卡片样式 |
+| `src/pages/EnergyStudioExplore.tsx` | 新建，小红书风格工具页 |
+| `src/App.tsx` | 注册新路由 |
+
+无数据库改动。
 
