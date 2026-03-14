@@ -984,7 +984,7 @@ ${reflection}`;
                   key={`wealth-coach-${campId}-${makeupDayNumber ?? currentDay}`}
                   initialMessage={makeupDayNumber ? getMeditationContext(makeupDayNumber) : getMeditationContext()}
                   campId={campId || ''}
-                  dayNumber={makeupDayNumber || currentDay}
+                  dayNumber={makeupDayNumber || displayDay}
                   meditationTitle={makeupDayNumber ? undefined : meditation?.title}
                   onCoachingComplete={() => {
                     handleCoachingComplete();
