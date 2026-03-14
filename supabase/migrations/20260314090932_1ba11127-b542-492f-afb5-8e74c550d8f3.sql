@@ -1,0 +1,1 @@
+UPDATE profiles SET must_change_password = true WHERE id = '3145818b-575e-4c3b-a38d-d28067a41535';
