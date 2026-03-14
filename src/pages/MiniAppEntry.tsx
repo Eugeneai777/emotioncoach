@@ -46,7 +46,7 @@ const MiniAppEntry = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/60 via-background to-background">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50/40 via-violet-50/20 to-background">
       {/* ── 顶部品牌区（适配小程序胶囊） ── */}
       <div
         className="flex items-center gap-2.5 px-4 pb-3"
