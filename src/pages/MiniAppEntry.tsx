@@ -136,9 +136,12 @@ const MiniAppEntry = () => {
               variants={fadeUp}
               whileTap={{ backgroundColor: "rgba(0,0,0,0.02)" }}
               onClick={() => navigate(a.route)}
-              className="flex items-center gap-3 w-full px-3.5 py-3 text-left active:bg-muted/30"
+              className="flex items-center gap-3 w-full px-3.5 py-3 text-left active:bg-muted/30 relative"
             >
-              <span className="text-xl flex-shrink-0">{a.emoji}</span>
+              <div className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full ${a.bar}`} />
+              <div className={`w-8 h-8 rounded-full ${a.emojiBg} flex items-center justify-center flex-shrink-0`}>
+                <span className="text-base">{a.emoji}</span>
+              </div>
               <span className="text-[13px] font-medium text-foreground flex-1 truncate">{a.title}</span>
               {a.tag && (
                 <span className={`text-[9px] font-semibold text-white px-1.5 py-0.5 rounded-full ${tagColors[a.tag] || "bg-muted"}`}>
