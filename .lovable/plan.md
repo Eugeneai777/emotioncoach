@@ -1,28 +1,23 @@
 
 
-## 修改计划
+## 两个问题需要修复
 
-两处"Day 24"都因为使用了日历天数 `currentDay`（从 start_date 算起的天数）而非 `displayDay`（`completed_days + 1`）。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 文件：`src/pages/WealthCampCheckIn.tsx`
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**修改 1 — 第 987 行**：教练对话 Tab 中传给 `WealthCoachEmbedded` 的 `dayNumber`
-```ts
-// 之前
-dayNumber={makeupDayNumber || currentDay}
-// 之后
-dayNumber={makeupDayNumber || displayDay}
-```
-→ 修复教练头部 "Day 24 · 冥想梳理" → 显示 "Day 3 · 冥想梳理"
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**修改 2 — 第 626 行**：`getMeditationContext` 函数中的默认天数
-```ts
-// 之前
-const dayToUse = targetDay || currentDay;
-// 之后
-const dayToUse = targetDay || displayDay;
-```
-→ 修复绿色气泡 "今日冥想 · Day 24" → 显示 "今日冥想 · Day 3"
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-这样两处都会显示 `completed_days + 1`（已完成天数+1），与用户期望一致。
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

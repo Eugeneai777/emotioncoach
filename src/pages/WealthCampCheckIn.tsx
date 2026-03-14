@@ -623,7 +623,7 @@ export default function WealthCampCheckIn() {
   }, [coachingCompleted, meditationCompleted, hasShownCelebration, journalEntries, currentDay]);
 
   const getMeditationContext = (targetDay?: number) => {
-    const dayToUse = targetDay || currentDay;
+    const dayToUse = targetDay || displayDay;
     const targetEntry = journalEntries.find(e => e.day_number === dayToUse);
     
     let reflection = '';
@@ -984,7 +984,7 @@ ${reflection}`;
                   key={`wealth-coach-${campId}-${makeupDayNumber ?? currentDay}`}
                   initialMessage={makeupDayNumber ? getMeditationContext(makeupDayNumber) : getMeditationContext()}
                   campId={campId || ''}
-                  dayNumber={makeupDayNumber || currentDay}
+                  dayNumber={makeupDayNumber || displayDay}
                   meditationTitle={makeupDayNumber ? undefined : meditation?.title}
                   onCoachingComplete={() => {
                     handleCoachingComplete();
