@@ -93,6 +93,39 @@ export function PhoneNumberManager() {
 
       if (error) throw error;
 
+      // 微信用户绑定手机号后，自动同步 auth.users.email 为 phone_ 格式
+      if (phone) {
+        const userEmail = user.email || '';
+        const isTempWechatEmail = userEmail.includes('@temp.youjin365.com');
+        if (isTempWechatEmail) {
+          const prefix = countryCode.replace('+', '');
+          const newEmail = `phone_${prefix}${phone.trim()}@youjin.app`;
+          try {
+            // 先检查该手机号是否已被其他账号占用
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('phone', phone.trim())
+              .eq('phone_country_code', countryCode)
+              .neq('id', user.id)
+              .maybeSingle();
+
+            if (!existingProfile) {
+              await supabase.functions.invoke('cleanup-duplicate-user', {
+                body: {
+                  action: 'update-auth-user',
+                  updateUserId: user.id,
+                  email: newEmail,
+                },
+              });
+              console.log('[PhoneNumberManager] Auth email synced to:', newEmail);
+            }
+          } catch (syncErr) {
+            console.warn('[PhoneNumberManager] Auth email sync failed (non-blocking):', syncErr);
+          }
+        }
+      }
+
       setOriginalPhone(phone);
       setOriginalCountryCode(countryCode);
       setIsEditing(false);
