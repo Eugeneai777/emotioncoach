@@ -1,30 +1,19 @@
 
 
-## 账号迁移计划：账号A → 账号B
+## 修复 18898593978 登录问题
 
-### 当前状态
+### 问题
+用户 **炯谦**（ID: `5e5cdc49-f922-499a-916e-b5d2cda0d051`）的 auth 邮箱为微信临时邮箱，导致手机号登录无法匹配。
 
-| | 账号A（微信） | 账号B（手机注册） |
-|---|---|---|
-| **ID** | `10585904-2be7-4252-84d7-f5f3a59c51a4` | `69f66ed2-c71e-45e7-b6e1-1033bda0c2da` |
-| **AI额度** | 142/150（已用8） | 150/150（未使用） |
-| **合伙人** | BLOOM6F4383 | BPMLMPMOKP2IK |
-| **付费订单** | 知乐胶囊 ¥0.01 | 财富卡点测评 ¥0.00（免费） |
-| **微信绑定** | openid: ofx515...M2g8 | 无 |
+### 操作步骤
 
-### 迁移方向
+1. **调用 `cleanup-duplicate-user` Edge Function**，执行 `update-auth-user` 操作：
+   - 将 auth email 更新为 `phone_8618898593978@youjin.app`
+   - 设置初始密码 `123456`
+   - 确认邮箱（`email_confirm: true`）
 
-将账号A的所有权益迁移到账号B（手机号账号），然后清理账号A。
+2. **更新 profiles 表**：设置 `must_change_password = true`，触发用户首次登录后强制改密码
 
-### 操作步骤（数据库级别）
-
-1. **迁移付费订单**：将账号A的知乐胶囊订单 `user_id` 更新为账号B
-2. **合并AI额度**：将账号B的 `used_quota` 保持不变，`total_quota` 增加账号A已有的有效额度（+142），使账号B总额度变为 292
-3. **迁移微信映射**：将 `wechat_user_mappings` 中账号A的记录 `system_user_id` 改为账号B
-4. **合伙人处理**：账号A的合伙人（BLOOM6F4383）迁移到账号B，删除账号B原有的合伙人记录（BPMLMPMOKP2IK，无收益无推荐）
-5. **清理账号A**：
-   - 软删除 profile（设 `deleted_at`，清空手机号）
-   - 通过 edge function 禁用 auth user
-
-所有操作通过数据库 insert/update 工具完成，不需要代码改动。
+### 无需代码改动
+所有操作通过现有 Edge Function 和数据库更新完成。
 
