@@ -1,0 +1,1 @@
+UPDATE public.profiles SET must_change_password = true WHERE id = '5e5cdc49-f922-499a-916e-b5d2cda0d051';
