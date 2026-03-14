@@ -43,7 +43,7 @@ export function useTrilogyProgress(): TrilogyProgress & { isLoading: boolean } {
         return { status: 'completed' as const, currentDay: camp.completed_days + 1 };
       }
       if (camp.status === 'active') {
-        return { status: 'active' as const, currentDay: camp.completed_days };
+        return { status: 'active' as const, currentDay: camp.completed_days + 1 };
       }
       return { status: 'not_started' as const };
     },

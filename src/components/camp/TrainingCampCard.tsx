@@ -91,8 +91,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const hasCheckedInToday = camp.check_in_dates.includes(today);
   const progressPercent = (camp.completed_days / camp.duration_days) * 100;
   
-  const calculatedCurrentDay = Math.max(1, getDaysSinceStart(camp.start_date) + 1);
-  const displayCurrentDay = calculatedCurrentDay;
+  const displayCurrentDay = camp.completed_days + 1;
   
   const sortedDates = [...camp.check_in_dates].sort().reverse();
   let currentStreak = 0;
