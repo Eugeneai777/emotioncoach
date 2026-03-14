@@ -1,34 +1,23 @@
 
 
-## 优化方案：微信用户绑定手机号后自动同步 Auth 邮箱
+## 两个问题需要修复
 
-### 问题现状
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-微信注册用户的 `auth.users.email` 为 `wechat_xxx@temp.youjin365.com`。当用户在个人资料中绑定手机号后，`profiles.phone` 已更新，但 `auth.users.email` 仍是微信临时邮箱，导致该用户无法通过手机号+密码登录。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 解决方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-在 `PhoneNumberManager.tsx` 的 `handleSave` 中，手机号保存成功后，调用 `cleanup-duplicate-user` Edge Function 的 `update-auth-user` 操作，将 `auth.users.email` 更新为 `phone_{区号}{手机号}@youjin.app` 格式。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 具体改动
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**文件：`src/components/profile/PhoneNumberManager.tsx`**
-
-在手机号保存成功后（约第 94 行 `if (error) throw error` 之后），增加逻辑：
-
-1. 检查当前用户 email 是否为 `@temp.youjin365.com` 格式（即微信注册用户）
-2. 如果是，拼接新邮箱 `phone_{区号去+}{手机号}@youjin.app`
-3. 调用 `cleanup-duplicate-user` Edge Function，传入 `action: 'update-auth-user'`，更新 auth email 并设置 `email_confirm: true`
-4. 仅更新邮箱标识，不改密码（微信用户可能从未设置过密码）
-
-### 安全考虑
-
-- 先查询 `profiles` 表确认该手机号未被其他账号占用，避免邮箱冲突
-- 仅对 `@temp.youjin365.com` 用户执行，已有 `phone_` 邮箱的用户跳过
-- Edge Function 已有 service role 权限，能安全更新 auth 记录
-
-### 不需要改动的部分
-
-- Edge Function `cleanup-duplicate-user` 已支持 `update-auth-user` 操作，无需修改
-- 数据库无需新增表或字段
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
