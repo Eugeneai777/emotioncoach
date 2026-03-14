@@ -1,23 +1,30 @@
 
 
-## 两个问题需要修复
+## 账号迁移计划：账号A → 账号B
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 当前状态
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+| | 账号A（微信） | 账号B（手机注册） |
+|---|---|---|
+| **ID** | `10585904-2be7-4252-84d7-f5f3a59c51a4` | `69f66ed2-c71e-45e7-b6e1-1033bda0c2da` |
+| **AI额度** | 142/150（已用8） | 150/150（未使用） |
+| **合伙人** | BLOOM6F4383 | BPMLMPMOKP2IK |
+| **付费订单** | 知乐胶囊 ¥0.01 | 财富卡点测评 ¥0.00（免费） |
+| **微信绑定** | openid: ofx515...M2g8 | 无 |
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 迁移方向
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+将账号A的所有权益迁移到账号B（手机号账号），然后清理账号A。
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 操作步骤（数据库级别）
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+1. **迁移付费订单**：将账号A的知乐胶囊订单 `user_id` 更新为账号B
+2. **合并AI额度**：将账号B的 `used_quota` 保持不变，`total_quota` 增加账号A已有的有效额度（+142），使账号B总额度变为 292
+3. **迁移微信映射**：将 `wechat_user_mappings` 中账号A的记录 `system_user_id` 改为账号B
+4. **合伙人处理**：账号A的合伙人（BLOOM6F4383）迁移到账号B，删除账号B原有的合伙人记录（BPMLMPMOKP2IK，无收益无推荐）
+5. **清理账号A**：
+   - 软删除 profile（设 `deleted_at`，清空手机号）
+   - 通过 edge function 禁用 auth user
+
+所有操作通过数据库 insert/update 工具完成，不需要代码改动。
 
