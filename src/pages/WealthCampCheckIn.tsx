@@ -297,7 +297,8 @@ export default function WealthCampCheckIn() {
     }
   }, [campId, weightsLoading, currentDay, weekNumber, calculateWeights]);
 
-  const displayDay = makeupDayNumber || currentDay;
+  // displayDay 用于冥想播放器显示：已完成天数+1（即当前正在做的第几天）
+  const displayDay = makeupDayNumber || (camp ? camp.completed_days + 1 : currentDay);
 
   // 冥想内容天数基于 completed_days：下一个要做的冥想 = completed_days + 1（循环1-7）
   const nextMeditationDay = useMemo(() => {
