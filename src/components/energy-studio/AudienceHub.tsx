@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
 
 const audiences = [
   {
@@ -10,8 +9,7 @@ const audiences = [
     subtitle: "陪你一起带娃",
     route: "/mama",
     gradient: "from-rose-400 to-pink-500",
-    coverHeight: "h-24",
-    heat: "2.1k",
+    bgColor: "hsl(350 80% 96%)",
   },
   {
     id: "workplace",
@@ -20,8 +18,7 @@ const audiences = [
     subtitle: "压力·倦怠恢复",
     route: "/promo/synergy",
     gradient: "from-blue-400 to-indigo-500",
-    coverHeight: "h-16",
-    heat: "1.8k",
+    bgColor: "hsl(220 80% 96%)",
   },
   {
     id: "couple",
@@ -30,8 +27,7 @@ const audiences = [
     subtitle: "亲密关系·沟通",
     route: "/us-ai",
     gradient: "from-purple-400 to-violet-500",
-    coverHeight: "h-20",
-    heat: "3.2k",
+    bgColor: "hsl(270 70% 96%)",
   },
   {
     id: "youth",
@@ -40,8 +36,7 @@ const audiences = [
     subtitle: "学业·情绪·自信",
     route: "/xiaojin",
     gradient: "from-amber-400 to-orange-500",
-    coverHeight: "h-16",
-    heat: "1.5k",
+    bgColor: "hsl(35 90% 95%)",
   },
   {
     id: "midlife",
@@ -50,8 +45,7 @@ const audiences = [
     subtitle: "转型·意义重建",
     route: "/laoge",
     gradient: "from-amber-500 to-yellow-600",
-    coverHeight: "h-24",
-    heat: "2.8k",
+    bgColor: "hsl(40 80% 95%)",
   },
   {
     id: "senior",
@@ -60,8 +54,7 @@ const audiences = [
     subtitle: "长辈陪伴·关怀",
     route: "/elder-care",
     gradient: "from-emerald-400 to-teal-500",
-    coverHeight: "h-20",
-    heat: "1.2k",
+    bgColor: "hsl(160 60% 95%)",
   },
 ];
 
@@ -69,34 +62,27 @@ const AudienceHub = () => {
   const navigate = useNavigate();
 
   return (
-    <div>
+    <div className="rounded-2xl border border-border/40 bg-card/60 p-3">
       <h2 className="text-xs font-semibold text-muted-foreground mb-2.5 tracking-wide">
         🎯 找到适合你的入口
       </h2>
-      <div className="columns-2 gap-3 space-y-3">
+      <div className="grid grid-cols-3 gap-2">
         {audiences.map((a, i) => (
           <motion.button
             key={a.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, type: "spring", stiffness: 260, damping: 24 }}
-            whileTap={{ scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() => navigate(a.route)}
-            className="break-inside-avoid w-full rounded-2xl bg-card shadow-md border border-border/30 overflow-hidden text-left hover:shadow-lg transition-shadow"
+            className="flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-colors active:opacity-80"
+            style={{ backgroundColor: a.bgColor }}
           >
-            {/* Gradient cover */}
-            <div className={`w-full ${a.coverHeight} bg-gradient-to-br ${a.gradient} flex items-center justify-center`}>
-              <span className="text-3xl drop-shadow-sm">{a.emoji}</span>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${a.gradient} flex items-center justify-center shadow-sm`}>
+              <span className="text-lg">{a.emoji}</span>
             </div>
-            {/* Content */}
-            <div className="p-2.5">
-              <p className="text-sm font-semibold text-foreground leading-tight">{a.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{a.subtitle}</p>
-              <div className="flex items-center gap-1 mt-1.5">
-                <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
-                <span className="text-[10px] text-muted-foreground">{a.heat}</span>
-              </div>
-            </div>
+            <span className="text-[11px] font-semibold text-foreground leading-tight">{a.label}</span>
+            <span className="text-[9px] text-muted-foreground leading-tight">{a.subtitle}</span>
           </motion.button>
         ))}
       </div>
