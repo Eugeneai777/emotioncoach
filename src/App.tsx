@@ -56,6 +56,7 @@ const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 
 // 能量空间
 const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
+const EnergyStudioExplore = lazyRetry(() => import("./pages/EnergyStudioExplore"));
 
 // 小劲AI
 const XiaojinHome = lazyRetry(() => import("./pages/xiaojin/XiaojinHome"));
