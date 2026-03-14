@@ -110,7 +110,7 @@ const MiniAppEntry = () => {
               onClick={() => navigate(tool.route)}
               className="flex flex-col items-center gap-1.5 min-w-[64px] py-2.5 px-1"
             >
-              <div className="w-12 h-12 rounded-2xl bg-card border border-border/60 flex items-center justify-center shadow-sm">
+              <div className={`w-12 h-12 rounded-2xl ${tool.iconBg} flex items-center justify-center shadow-sm`}>
                 <span className="text-[22px]">{tool.emoji}</span>
               </div>
               <span className="text-[10px] font-medium text-foreground whitespace-nowrap">{tool.title}</span>
