@@ -1,23 +1,33 @@
 
 
-## 两个问题需要修复
+# MiniAppEntry 页面优化方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+当前页面问题：卡片较平，渐变色块缺乏层次感，品牌区占用空间大但信息密度低，整体像简单的按钮列表。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+## 改动（仅 `src/pages/MiniAppEntry.tsx`）
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 1. 品牌区精简
+- logo 缩小至 `w-12 h-12`，与标题水平排列（`flex-row`），节省纵向空间
+- 标语移到标题右侧或下方一行，整体更紧凑
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 2. 卡片设计升级
+- 改为「玻璃态」风格：半透明白底 + `backdrop-blur` + 左侧彩色渐变条（4px宽）
+- emoji 放大至 `text-5xl`，左对齐
+- 标题和副标题左对齐，增加热度标签（如"热门"、"推荐"小 badge）
+- 卡片高度自适应（去掉固定 `h-[140px]`），内容区域 `p-4`
+- 增加右侧箭头图标暗示可点击
+- 卡片间距加大至 `gap-4`
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 3. 背景增加微渐变
+- 页面背景从纯色改为 `bg-gradient-to-b from-amber-50/30 via-background to-background`
+- 顶部增加装饰性圆形光晕（绝对定位的模糊渐变圆）
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+### 4. 交互增强
+- 卡片入场动画保留，增加 `whileHover` 轻微上浮效果
+- 底部"探索更多"改为带背景的胶囊按钮，更显眼
+
+### 5. 为每个卡片增加差异化标签数据
+- audiences 数组增加 `tag` 字段（"热门"/"推荐"/"新"），展示为右上角小 badge
+
+无数据库改动，仅修改 `src/pages/MiniAppEntry.tsx` 一个文件。
 
