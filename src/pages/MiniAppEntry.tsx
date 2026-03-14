@@ -70,8 +70,14 @@ const MiniAppEntry = () => {
       <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-gradient-to-br from-amber-200/40 to-orange-200/20 blur-3xl pointer-events-none" />
       <div className="absolute top-40 -left-16 w-40 h-40 rounded-full bg-gradient-to-br from-rose-200/30 to-pink-200/10 blur-3xl pointer-events-none" />
 
-      {/* 顶部品牌区 — 紧凑水平布局 */}
-      <div className="flex items-center gap-3 pt-8 pb-5 px-5 relative z-10">
+      {/* 顶部品牌区 — 适配微信小程序胶囊按钮 */}
+      <div
+        className="flex items-center gap-3 pb-5 px-5 relative z-10"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)',
+          paddingRight: '110px', // 避开右侧胶囊按钮区域
+        }}
+      >
         <img
           src={logoImage}
           alt="有劲AI"
