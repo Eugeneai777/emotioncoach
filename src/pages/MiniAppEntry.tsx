@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -14,6 +15,22 @@ const audiences = [
 
 const MiniAppEntry = () => {
   const navigate = useNavigate();
+
+  // 检查是否设置了默认首页，自动跳转
+  React.useEffect(() => {
+    const skip = sessionStorage.getItem('skip_preferred_redirect');
+    if (skip) {
+      sessionStorage.removeItem('skip_preferred_redirect');
+      return;
+    }
+    const preferred = localStorage.getItem('preferred_audience');
+    if (preferred) {
+      const match = audiences.find(a => a.id === preferred);
+      if (match) {
+        navigate(match.route, { replace: true });
+      }
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">

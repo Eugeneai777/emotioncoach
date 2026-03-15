@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  User, Info, Sparkles, 
+  User, Home, Info, Sparkles, 
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
 const AwakeningBottomNav: React.FC = () => {
@@ -16,6 +16,7 @@ const AwakeningBottomNav: React.FC = () => {
     { id: 'courses', icon: GraduationCap, label: '学习课程', route: '/courses', color: 'from-green-400 to-green-500' },
     { id: 'products', icon: Package, label: '产品中心', route: '/packages', color: 'from-emerald-400 to-emerald-500' },
     { id: 'coach', icon: Users, label: '教练空间', route: '/coach-space', color: 'from-rose-400 to-rose-500' },
+    { id: 'about', icon: Info, label: '关于', route: '/awakening-system-intro', color: 'from-slate-400 to-slate-500' },
   ];
 
   const handleCenterClick = () => {
@@ -82,7 +83,23 @@ const AwakeningBottomNav: React.FC = () => {
         {/* 背景条 */}
         <div className="bg-background/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-8">
-            {/* 左侧 - 觉察日记 */}
+            {/* 左侧 - 首页 */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => {
+                sessionStorage.setItem('skip_preferred_redirect', 'true');
+                navigate('/mini-app');
+              }}
+              className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-xs">首页</span>
+            </motion.button>
+
+            {/* 中间占位 */}
+            <div className="w-16" />
+
+            {/* 右侧 - 我的 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate('/profile')}
@@ -90,19 +107,6 @@ const AwakeningBottomNav: React.FC = () => {
             >
               <User className="w-5 h-5" />
               <span className="text-xs">我的</span>
-            </motion.button>
-
-            {/* 中间占位 */}
-            <div className="w-16" />
-
-            {/* 右侧 - 关于 */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/awakening-system-intro')}
-              className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
-            >
-              <Info className="w-5 h-5" />
-              <span className="text-xs">关于</span>
             </motion.button>
           </div>
         </div>
