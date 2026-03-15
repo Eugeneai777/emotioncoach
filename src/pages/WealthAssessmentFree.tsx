@@ -67,9 +67,8 @@ export default function WealthAssessmentFreePage() {
           onRetake={handleRetake}
         />
       )}
-
-      {/* 公司信息和ICP备案 */}
-      <LiteFooter wechatUrl="https://mp.weixin.qq.com/s/your-wechat-url" />
+      {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}
+      <FreeFooter />
     </div>
   );
 }
