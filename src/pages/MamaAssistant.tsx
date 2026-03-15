@@ -7,6 +7,7 @@ import { introShareConfigs } from "@/config/introShareConfig";
 
 import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
 import MamaAIChat from "@/components/mama/MamaAIChat";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 
 const quickEntries = [
