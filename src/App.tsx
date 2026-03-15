@@ -189,7 +189,6 @@ const DynamicAssessmentPage = lazyRetry(() => import("./pages/DynamicAssessmentP
 const WealthBlockIntro = lazyRetry(() => import("./pages/WealthBlockIntro"));
 const WealthBlockAssessment = lazyRetry(() => import("./pages/WealthBlockAssessment"));
 const WealthAssessmentLite = lazyRetry(() => import("./pages/WealthAssessmentLite"));
-const WealthAssessmentFree = lazyRetry(() => import("./pages/WealthAssessmentFree"));
 const WealthBlockActivate = lazyRetry(() => import("./pages/WealthBlockActivate"));
 const WealthCampActivate = lazyRetry(() => import("./pages/WealthCampActivate"));
 const WealthCampCheckIn = lazyRetry(() => import("./pages/WealthCampCheckIn"));
@@ -428,7 +427,6 @@ const App = () => (
               <Route path="/wealth-block-activate" element={<WealthBlockActivate />} />
               <Route path="/wealth-camp-activate" element={<WealthCampActivate />} />
               <Route path="/wealth-assessment-lite" element={<WealthAssessmentLite />} />
-              <Route path="/wealth-assessment-free" element={<WealthAssessmentFree />} />
               <Route path="/wealth-camp-checkin" element={<WealthCampCheckIn />} />
               <Route path="/wealth-camp/:campId" element={<WealthCampCheckIn />} />
               <Route path="/wealth-journal" element={<WealthJournal />} />
