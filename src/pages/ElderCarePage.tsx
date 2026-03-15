@@ -152,11 +152,32 @@ const ElderCarePage = () => {
           </button>
         </motion.div>
 
+        {/* 设为默认首页 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="pb-4"
+        >
+          <button
+            onClick={() => {
+              localStorage.setItem('preferred_audience', 'senior');
+              const el = document.getElementById('set-home-toast-senior');
+              if (el) { el.textContent = '✅ 已设为默认首页'; setTimeout(() => { el.textContent = '⭐ 设为我的首页'; }, 2000); }
+            }}
+            className="w-full text-center py-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/50 text-sm text-emerald-600 active:scale-[0.98] transition-transform"
+          >
+            <span id="set-home-toast-senior">⭐ 设为我的首页</span>
+          </button>
+        </motion.div>
+
         {/* Footer */}
         <div className="text-center pb-6">
           <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
         </div>
       </div>
+
+      <AwakeningBottomNav />
     </div>
   );
 };

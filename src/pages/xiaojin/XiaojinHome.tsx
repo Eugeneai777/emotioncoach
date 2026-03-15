@@ -209,6 +209,25 @@ export default function XiaojinHome() {
           已有 30,000+ 青少年参与成长挑战
         </motion.p>
 
+        {/* 设为默认首页 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="pb-4 mt-6"
+        >
+          <button
+            onClick={() => {
+              localStorage.setItem('preferred_audience', 'youth');
+              const el = document.getElementById('set-home-toast-youth');
+              if (el) { el.textContent = '✅ 已设为默认首页'; setTimeout(() => { el.textContent = '⭐ 设为我的首页'; }, 2000); }
+            }}
+            className="w-full text-center py-2.5 rounded-xl border border-amber-200/60 bg-amber-50/50 text-sm text-amber-600 active:scale-[0.98] transition-transform"
+          >
+            <span id="set-home-toast-youth">⭐ 设为我的首页</span>
+          </button>
+        </motion.div>
+
         {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -228,6 +247,8 @@ export default function XiaojinHome() {
         triggerFeature="免费体验点数已用完"
         onSuccess={() => setShowUpgrade(false)}
       />
+
+      <AwakeningBottomNav />
     </div>
   );
 }
