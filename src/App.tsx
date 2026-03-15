@@ -375,7 +375,6 @@ const App = () => (
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/introduction" element={<Introduction />} />
               <Route path="/user-manual" element={<UserManual />} />
-              <Route path="/courses" element={<Courses />} />
               <Route path="/partner/type" element={<PartnerTypeSelector />} />
               <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
               <Route path="/partner/youjin-plan" element={<YoujinPartnerPlan />} />
