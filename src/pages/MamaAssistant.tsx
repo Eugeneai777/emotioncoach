@@ -175,6 +175,25 @@ const MamaAssistant = () => {
           </button>
         </motion.div>
 
+        {/* 设为默认首页 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="pb-4"
+        >
+          <button
+            onClick={() => {
+              localStorage.setItem('preferred_audience', 'mama');
+              const el = document.getElementById('set-home-toast');
+              if (el) { el.textContent = '✅ 已设为默认首页'; setTimeout(() => { el.textContent = '⭐ 设为我的首页'; }, 2000); }
+            }}
+            className="w-full text-center py-2.5 rounded-xl border border-pink-200/60 bg-pink-50/50 text-sm text-rose-600 active:scale-[0.98] transition-transform"
+          >
+            <span id="set-home-toast">⭐ 设为我的首页</span>
+          </button>
+        </motion.div>
+
         {/* Footer */}
         <div className="text-center pb-6">
           <p className="text-xs text-muted-foreground/50">宝妈AI · 温暖陪伴每一天</p>
