@@ -4,6 +4,7 @@ import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuest
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
+import { LiteFooter } from "@/components/wealth-block/LiteFooter";
 
 type PageState = "questions" | "result";
 
@@ -66,6 +67,9 @@ export default function WealthAssessmentFreePage() {
           onRetake={handleRetake}
         />
       )}
+
+      {/* 公司信息和ICP备案 */}
+      <LiteFooter wechatUrl="https://mp.weixin.qq.com/s/your-wechat-url" />
     </div>
   );
 }
