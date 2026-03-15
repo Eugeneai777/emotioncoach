@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,42 @@ export default function WealthAssessmentLitePage() {
   const { user } = useAuth();
   const { data: purchaseRecord, refetch: refetchPurchase } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
+
+  // 微信 OAuth 回调后恢复支付弹窗
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const shouldResume = url.searchParams.get('assessment_pay_resume') === '1';
+    const paymentOpenId = url.searchParams.get('payment_openid');
+
+    if (!shouldResume) return;
+
+    console.log('[WealthAssessmentLite] Resuming payment after WeChat OAuth, openId:', paymentOpenId ? 'present' : 'missing');
+
+    // 缓存 openId 以供 AssessmentPayDialog 使用
+    if (paymentOpenId) {
+      sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+    }
+
+    // 清理 URL 参数，避免重复触发
+    url.searchParams.delete('assessment_pay_resume');
+    url.searchParams.delete('payment_openid');
+    url.searchParams.delete('payment_token_hash');
+    url.searchParams.delete('payment_resume');
+    url.searchParams.delete('payment_auth_error');
+    url.searchParams.delete('is_new_user');
+    url.searchParams.delete('pay_flow');
+    window.history.replaceState({}, '', url.toString());
+
+    // 清除授权进行中标记
+    sessionStorage.removeItem('pay_auth_in_progress');
+
+    // 延迟打开支付弹窗，确保组件已渲染
+    if (!hasPurchased) {
+      setTimeout(() => {
+        setShowPayDialog(true);
+      }, 500);
+    }
+  }, [hasPurchased]);
   
   // 完成测评回调
   const handleComplete = useCallback((
