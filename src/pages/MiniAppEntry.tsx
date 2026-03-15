@@ -5,12 +5,12 @@ import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const audiences = [
-  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "陪你一起带娃", route: "/mama", gradient: "from-rose-500 to-pink-400" },
-  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "压力·倦怠恢复", route: "/promo/synergy", gradient: "from-blue-500 to-indigo-400" },
-  { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "亲密关系·沟通", route: "/us-ai", gradient: "from-purple-500 to-violet-400" },
-  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "学业·情绪·自信", route: "/xiaojin", gradient: "from-amber-500 to-orange-400" },
-  { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "转型·意义重建", route: "/laoge", gradient: "from-orange-500 to-red-400" },
-  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "长辈陪伴·关怀", route: "/elder-care", gradient: "from-emerald-500 to-teal-400" },
+  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
+  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/promo/synergy", gradient: "from-blue-500 to-indigo-400" },
+  { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "爱需要被听见", route: "/us-ai", gradient: "from-purple-500 to-violet-400" },
+  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400" },
+  { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400" },
+  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400" },
 ];
 
 const MiniAppEntry = () => {
@@ -35,9 +35,15 @@ const MiniAppEntry = () => {
 
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-3 pb-4">
-        <h2 className="text-xs font-semibold text-muted-foreground mb-2.5 tracking-wide">
-          🎯 找到适合你的入口
-        </h2>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-3"
+        >
+          <h2 className="text-sm font-semibold text-foreground">生活不易，你不必独自扛着</h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">选一个最懂你的入口 ↓</p>
+        </motion.div>
         <div className="grid grid-cols-3 gap-1.5">
           {audiences.map((a, i) => (
             <motion.button

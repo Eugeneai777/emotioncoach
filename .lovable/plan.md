@@ -1,38 +1,23 @@
 
 
-# 重写人群入口区 — 触动人心
+## 两个问题需要修复
 
-## 问题
-当前标题 "🎯 找到适合你的入口" 功能感太强，像工具导航，没有情感温度。整个区域缺少"被看见"的感觉。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**文件：`src/pages/MiniAppEntry.tsx`** — 重写第37-70行的人群入口区
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 1. 情感化标题区（替换原单行标题）
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-```
-主标题："生活不易，你不必独自扛着"
-副标题："选一个最懂你的入口 ↓"
-```
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-- 主标题用 `text-sm font-semibold text-foreground`，不用渐变色，保持温暖朴素感
-- 副标题 `text-[11px] text-muted-foreground`
-- 整体居中，`text-center`，淡入动画
-
-### 2. 每张卡片增加情感化副标题
-
-将 subtitle 从功能描述改为情感共鸣语：
-
-| 人群 | 原副标题 | 新副标题 |
-|------|----------|----------|
-| 宝妈专区 | 陪你一起带娃 | 你的辛苦，我都懂 |
-| 职场解压 | 压力·倦怠恢复 | 累了就歇一歇 |
-| 情侣夫妻 | 亲密关系·沟通 | 爱需要被听见 |
-| 青少年 | 学业·情绪·自信 | 长大不容易 |
-| 中年觉醒 | 转型·意义重建 | 人生下半场 |
-| 银发陪伴 | 长辈陪伴·关怀 | 陪您说说话 |
-
-### 3. 保持不变
-- 3列网格、渐变色、动画、底部导航等全部保留
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
