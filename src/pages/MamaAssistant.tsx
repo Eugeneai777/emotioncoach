@@ -32,7 +32,7 @@ const MamaAssistant = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white pb-20">
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
 
         {/* Top bar */}
