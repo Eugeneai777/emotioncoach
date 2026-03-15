@@ -2,6 +2,8 @@ import { useState } from "react";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
 import { LaogeChat } from "@/components/laoge/LaogeChat";
 import { Send } from "lucide-react";
+import { motion } from "framer-motion";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const TOOLS = [
   {
