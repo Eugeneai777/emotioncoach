@@ -189,6 +189,7 @@ const DynamicAssessmentPage = lazyRetry(() => import("./pages/DynamicAssessmentP
 const WealthBlockIntro = lazyRetry(() => import("./pages/WealthBlockIntro"));
 const WealthBlockAssessment = lazyRetry(() => import("./pages/WealthBlockAssessment"));
 const WealthAssessmentLite = lazyRetry(() => import("./pages/WealthAssessmentLite"));
+const WealthAssessmentFree = lazyRetry(() => import("./pages/WealthAssessmentFree"));
 const WealthBlockActivate = lazyRetry(() => import("./pages/WealthBlockActivate"));
 const WealthCampActivate = lazyRetry(() => import("./pages/WealthCampActivate"));
 const WealthCampCheckIn = lazyRetry(() => import("./pages/WealthCampCheckIn"));
