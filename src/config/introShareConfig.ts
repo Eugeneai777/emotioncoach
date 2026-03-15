@@ -295,6 +295,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)',
     category: 'coach'
   },
+  usai: {
+    pageKey: 'usai',
+    title: '我们AI',
+    subtitle: '两个人，更懂彼此',
+    targetUrl: '/us-ai',
+    emoji: '💑',
+    highlights: [
+      '情绪翻译 · 冲突修复',
+      '关系测评 · 每日对话',
+      'AI关系教练 · 温暖陪伴',
+    ],
+    gradient: 'linear-gradient(135deg, #F4845F, #e5734e)',
+    category: 'coach'
+  },
   dajin: {
     pageKey: 'dajin',
     title: '大劲AI',
