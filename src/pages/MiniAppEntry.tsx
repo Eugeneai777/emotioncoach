@@ -1,53 +1,23 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight, Clock } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const audiences = [
-  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "陪你一起带娃", route: "/mama", bg: "bg-gradient-to-br from-rose-100 to-pink-200/80", iconBg: "bg-rose-200", accent: "text-rose-800", tag: "热门", tagBg: "bg-rose-500" },
-  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "压力·倦怠恢复", route: "/promo/synergy", bg: "bg-gradient-to-br from-blue-100 to-indigo-200/80", iconBg: "bg-blue-200", accent: "text-blue-800", tag: "推荐", tagBg: "bg-sky-500" },
-  { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "亲密关系·沟通", route: "/us-ai", bg: "bg-gradient-to-br from-violet-200/90 to-purple-300/70", iconBg: "bg-violet-200", accent: "text-violet-800", tag: "热门", tagBg: "bg-violet-500" },
-  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "学业·情绪·自信", route: "/xiaojin", bg: "bg-gradient-to-br from-amber-100 to-yellow-200/80", iconBg: "bg-amber-200", accent: "text-amber-800", tag: "新", tagBg: "bg-amber-500" },
-  { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "转型·意义重建", route: "/laoge", bg: "bg-gradient-to-br from-orange-200/90 to-red-100/70", iconBg: "bg-orange-200", accent: "text-orange-800", tag: null, tagBg: "" },
-  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "长辈陪伴·关怀", route: "/elder-care", bg: "bg-gradient-to-br from-emerald-100 to-teal-200/80", iconBg: "bg-emerald-200", accent: "text-emerald-800", tag: "推荐", tagBg: "bg-emerald-500" },
+  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "陪你一起带娃", route: "/mama", gradient: "from-rose-500 to-pink-400" },
+  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "压力·倦怠恢复", route: "/promo/synergy", gradient: "from-blue-500 to-indigo-400" },
+  { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "亲密关系·沟通", route: "/us-ai", gradient: "from-purple-500 to-violet-400" },
+  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "学业·情绪·自信", route: "/xiaojin", gradient: "from-amber-500 to-orange-400" },
+  { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "转型·意义重建", route: "/laoge", gradient: "from-orange-500 to-red-400" },
+  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "长辈陪伴·关怀", route: "/elder-care", gradient: "from-emerald-500 to-teal-400" },
 ];
-
-const dailyTools = [
-  { id: "emotion-button", emoji: "🆘", title: "情绪SOS", route: "/emotion-button", iconBg: "bg-red-100" },
-  { id: "alive-check", emoji: "💗", title: "安全守护", route: "/alive-check", iconBg: "bg-pink-100" },
-  { id: "awakening", emoji: "📔", title: "觉察日记", route: "/awakening", iconBg: "bg-amber-100" },
-  { id: "gratitude", emoji: "🌸", title: "感恩日记", route: "/gratitude", iconBg: "bg-rose-100" },
-  { id: "breathing", emoji: "🧘", title: "呼吸练习", route: "/breathing", iconBg: "bg-cyan-100" },
-  { id: "declaration", emoji: "⚡", title: "能量宣言", route: "/declaration", iconBg: "bg-yellow-100" },
-];
-
-const assessments = [
-  { id: "emotion-health", emoji: "💚", title: "情绪健康测评", detail: "5分钟", route: "/emotion-health", tag: "推荐", bar: "bg-emerald-400", emojiBg: "bg-emerald-100" },
-  { id: "midlife-awakening", emoji: "🧭", title: "中场觉醒力测评", detail: "8分钟", route: "/midlife-awakening", tag: "热门", bar: "bg-orange-400", emojiBg: "bg-orange-100" },
-  { id: "wealth-block", emoji: "💰", title: "财富卡点测评", detail: "6分钟", route: "/wealth-block", tag: "新", bar: "bg-amber-400", emojiBg: "bg-amber-100" },
-  { id: "scl90", emoji: "🔬", title: "SCL-90 心理筛查", detail: "15分钟", route: "/scl90", tag: null, bar: "bg-blue-400", emojiBg: "bg-blue-100" },
-  { id: "women-competitiveness", emoji: "👑", title: "女性竞争力", detail: "7分钟", route: "/assessment/women_competitiveness", tag: null, bar: "bg-purple-400", emojiBg: "bg-purple-100" },
-  { id: "parent-ability", emoji: "🎯", title: "家长应对能力", detail: "5分钟", route: "/assessment/parent_ability", tag: "推荐", bar: "bg-rose-400", emojiBg: "bg-rose-100" },
-];
-
-const tagColors: Record<string, string> = {
-  "热门": "bg-rose-500",
-  "推荐": "bg-emerald-500",
-  "新": "bg-amber-500",
-};
-
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.035 } } };
-const fadeUp = {
-  hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 340, damping: 28 } },
-};
 
 const MiniAppEntry = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50/40 via-violet-50/20 to-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* ── 顶部品牌区（适配小程序胶囊） ── */}
       <div
         className="flex items-center gap-2.5 px-4 pb-3"
@@ -63,104 +33,54 @@ const MiniAppEntry = () => {
       {/* ── Hero 标语区 ── */}
       <AwakeningHeroCard />
 
-      {/* ── 人群入口 2x3 横向大卡 ── */}
-      <motion.div className="px-3 pb-4" variants={stagger} initial="hidden" animate="show">
-        <div className="grid grid-cols-2 gap-2.5">
-          {audiences.map((a) => (
+      {/* ── 人群入口 3列网格 ── */}
+      <div className="px-3 pb-4">
+        <h2 className="text-xs font-semibold text-muted-foreground mb-2.5 tracking-wide">
+          🎯 找到适合你的入口
+        </h2>
+        <div className="grid grid-cols-3 gap-1.5">
+          {audiences.map((a, i) => (
             <motion.button
               key={a.id}
-              variants={fadeUp}
-              whileTap={{ scale: 0.96 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate(a.route)}
-              className={`relative flex items-center gap-2.5 rounded-2xl p-3 ${a.bg} text-left active:opacity-90 overflow-hidden`}
+              style={{ transform: "translateZ(0)" }}
+              className={`relative overflow-hidden rounded-xl p-3 bg-gradient-to-br ${a.gradient} shadow-sm min-h-[88px] flex flex-col items-center justify-center gap-1 active:shadow-md transition-shadow duration-150`}
             >
-              <div className={`w-11 h-11 rounded-xl ${a.iconBg} flex items-center justify-center flex-shrink-0`}>
-                <span className="text-[22px]">{a.emoji}</span>
+              {/* 背景装饰 */}
+              <div className="absolute top-0 right-0 w-12 h-12 opacity-15">
+                <div className="absolute top-0.5 right-0.5 text-2xl opacity-40">
+                  {a.emoji}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <span className={`text-[13px] font-bold ${a.accent} block truncate`}>{a.label}</span>
-                <span className="text-[10px] text-muted-foreground block truncate mt-0.5">{a.subtitle}</span>
+              {/* 主要内容 */}
+              <div className="relative z-10 text-center">
+                <span className="text-xl block mb-1">{a.emoji}</span>
+                <h3 className="text-sm font-bold text-white leading-tight">{a.label}</h3>
+                <p className="text-[10px] text-white/70 mt-0.5 leading-tight line-clamp-1">{a.subtitle}</p>
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
-              {a.tag && (
-                <span className={`absolute top-0 right-0 text-[8px] font-semibold text-white px-2 py-0.5 rounded-bl-lg ${a.tagBg}`}>
-                  {a.tag}
-                </span>
-              )}
+              {/* 点击反馈 */}
+              <div className="absolute inset-0 bg-white/0 active:bg-white/15 transition-colors duration-150" />
             </motion.button>
           ))}
         </div>
-      </motion.div>
-
-      {/* ── 日常工具 横滑 ── */}
-      <div className="px-3 pb-4">
-        <h2 className="text-[13px] font-bold text-foreground mb-2 flex items-center gap-1">
-          <span>🛠</span> 日常工具
-        </h2>
-        <motion.div
-          className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-3 px-3"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
-          {dailyTools.map((tool) => (
-            <motion.button
-              key={tool.id}
-              variants={fadeUp}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(tool.route)}
-              className="flex flex-col items-center gap-1.5 min-w-[64px] py-2.5 px-1"
-            >
-              <div className={`w-12 h-12 rounded-2xl ${tool.iconBg} flex items-center justify-center shadow-sm`}>
-                <span className="text-[22px]">{tool.emoji}</span>
-              </div>
-              <span className="text-[10px] font-medium text-foreground whitespace-nowrap">{tool.title}</span>
-            </motion.button>
-          ))}
-        </motion.div>
       </div>
 
-      {/* ── 专业测评 列表 ── */}
-      <div className="px-3 pb-6">
-        <h2 className="text-[13px] font-bold text-foreground mb-2 flex items-center gap-1">
-          <span>📋</span> 专业测评
-        </h2>
-        <motion.div
-          className="bg-card rounded-2xl border border-border/50 overflow-hidden divide-y divide-border/40"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
-          {assessments.map((a) => (
-            <motion.button
-              key={a.id}
-              variants={fadeUp}
-              whileTap={{ backgroundColor: "rgba(0,0,0,0.02)" }}
-              onClick={() => navigate(a.route)}
-              className="flex items-center gap-3 w-full px-3.5 py-3 text-left active:bg-muted/30 relative"
-            >
-              <div className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full ${a.bar}`} />
-              <div className={`w-8 h-8 rounded-full ${a.emojiBg} flex items-center justify-center flex-shrink-0`}>
-                <span className="text-base">{a.emoji}</span>
-              </div>
-              <span className="text-[13px] font-medium text-foreground flex-1 truncate">{a.title}</span>
-              {a.tag && (
-                <span className={`text-[9px] font-semibold text-white px-1.5 py-0.5 rounded-full ${tagColors[a.tag] || "bg-muted"}`}>
-                  {a.tag}
-                </span>
-              )}
-              <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground flex-shrink-0">
-                <Clock className="w-3 h-3" />
-                {a.detail}
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
-            </motion.button>
-          ))}
-        </motion.div>
-      </div>
+      {/* ── 底部金句 ── */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-center text-xs text-muted-foreground pb-24 pt-4"
+      >
+        每个人的生活教练 ✨
+      </motion.p>
 
-      {/* safe area bottom */}
-      <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
+      {/* ── 底部导航 ── */}
+      <AwakeningBottomNav />
     </div>
   );
 };
