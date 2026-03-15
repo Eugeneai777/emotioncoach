@@ -328,13 +328,22 @@ const App = () => (
               <Route path="/goals" element={<Goals />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/admin/*" element={<Admin />} />
-              <Route path="/packages" element={<Packages />} />
+              {/* 带底部导航的路由组 */}
+              <Route element={<AwakeningLayout />}>
+                <Route path="/packages" element={<Packages />} />
+                <Route path="/mini-app" element={<MiniAppEntry />} />
+                <Route path="/coach-space" element={<CoachSpace />} />
+                <Route path="/customer-support" element={<CustomerSupport />} />
+                <Route path="/emotion-button" element={<EmotionButton />} />
+                <Route path="/alive-check" element={<AliveCheck />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/awakening" element={<Awakening />} />
+                <Route path="/awakening-lite" element={<AwakeningLite />} />
+              </Route>
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
-              <Route path="/mini-app" element={<MiniAppEntry />} />
               <Route path="/health-store" element={<HealthStore />} />
               <Route path="/living-lab" element={<LivingLab />} />
-              <Route path="/coach-space" element={<CoachSpace />} />
               <Route path="/coach-space-intro" element={<CoachSpaceIntro />} />
               <Route path="/platform-intro" element={<PlatformIntro />} />
               <Route path="/energy-studio-intro" element={<EnergyStudioIntro />} />
