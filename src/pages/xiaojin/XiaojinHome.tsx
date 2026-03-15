@@ -7,6 +7,7 @@ import { introShareConfigs } from "@/config/introShareConfig";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 import { parseAndStoreParentRef } from "@/utils/xiaojinMoodUpload";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const entries = [
   { emoji: "🙂", label: "今天心情", desc: "3分钟情绪探索", path: "/xiaojin/mood", gradient: "from-amber-400 to-orange-400", bg: "bg-amber-50" },
