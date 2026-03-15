@@ -398,7 +398,6 @@ const App = () => (
               <Route path="/panic-history" element={<PanicHistory />} />
               <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
               <Route path="/emotion-button-lite" element={<EmotionButtonLite />} />
-              <Route path="/alive-check" element={<AliveCheck />} />
               <Route path="/alive-check-lite" element={<AliveCheckLite />} />
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
 <Route path="/scl90" element={<SCL90Page />} />
