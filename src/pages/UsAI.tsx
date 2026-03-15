@@ -39,6 +39,20 @@ const UsAI = () => {
             <Home className="w-3.5 h-3.5" />
             <span>有劲生活馆</span>
           </motion.button>
+
+          <IntroShareDialog
+            config={introShareConfigs.usai}
+            trigger={
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>分享给TA</span>
+              </motion.button>
+            }
+          />
         </div>
 
         {/* Brand header */}
