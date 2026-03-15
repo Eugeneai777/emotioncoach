@@ -175,6 +175,7 @@ const AwakeningLite = lazyRetry(() => import("./pages/AwakeningLite"));
 const AwakeningIntro = lazyRetry(() => import("./pages/AwakeningIntro"));
 const AwakeningSystemIntro = lazyRetry(() => import("./pages/AwakeningSystemIntro"));
 const AwakeningJournal = lazyRetry(() => import("./pages/AwakeningJournal"));
+const AwakeningLayout = lazyRetry(() => import("./components/awakening/AwakeningLayout"));
 const TransformationFlow = lazyRetry(() => import("./pages/TransformationFlow"));
 
 // 女性竞争力测评
