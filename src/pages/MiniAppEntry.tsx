@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, Clock } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
+import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "陪你一起带娃", route: "/mama", bg: "bg-gradient-to-br from-rose-100 to-pink-200/80", iconBg: "bg-rose-200", accent: "text-rose-800", tag: "热门", tagBg: "bg-rose-500" },
@@ -58,6 +59,9 @@ const MiniAppEntry = () => {
           <p className="text-[10px] text-muted-foreground">每个人的生活教练</p>
         </div>
       </div>
+
+      {/* ── Hero 标语区 ── */}
+      <AwakeningHeroCard />
 
       {/* ── 人群入口 2x3 横向大卡 ── */}
       <motion.div className="px-3 pb-4" variants={stagger} initial="hidden" animate="show">

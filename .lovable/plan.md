@@ -1,21 +1,23 @@
 
 
-# 优化 /mini-app Hero 区文字
+## 两个问题需要修复
 
-## 当前状态
-Hero 区是品牌 Logo + "有劲AI" + "每个人的生活教练"，纯文本，无视觉亮点。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 优化方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**文件：`src/pages/MiniAppEntry.tsx`**
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-在品牌区下方（第60行后），添加一个 awakening 风格的 Hero 标语区：
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-- 使用 Sparkles 图标 + 渐变文字居中排版
-- 主标语：**"频繁记录自己，可以改命"**（渐变 `from-amber-600 to-orange-500`）
-- 副标语：**"这不是玄学，是神经科学"**（`text-muted-foreground`）
-- 淡入动画 + `translateZ(0)` GPU 加速
-- 直接导入并使用 `<AwakeningHeroCard />` 组件，无需重复代码
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-品牌区本身保持不变（Logo + 名称），Hero 标语作为独立区块置于品牌区和人群入口之间。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
