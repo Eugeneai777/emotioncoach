@@ -427,6 +427,7 @@ const App = () => (
               <Route path="/wealth-block-activate" element={<WealthBlockActivate />} />
               <Route path="/wealth-camp-activate" element={<WealthCampActivate />} />
               <Route path="/wealth-assessment-lite" element={<WealthAssessmentLite />} />
+              <Route path="/wealth-assessment-free" element={<WealthAssessmentFree />} />
               <Route path="/wealth-camp-checkin" element={<WealthCampCheckIn />} />
               <Route path="/wealth-camp/:campId" element={<WealthCampCheckIn />} />
               <Route path="/wealth-journal" element={<WealthJournal />} />
