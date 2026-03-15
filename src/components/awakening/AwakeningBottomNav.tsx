@@ -85,11 +85,11 @@ const AwakeningBottomNav: React.FC = () => {
             {/* 左侧 - 觉察日记 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/awakening-journal')}
+              onClick={() => navigate('/profile')}
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
-              <BookOpen className="w-5 h-5" />
-              <span className="text-xs">日记</span>
+              <User className="w-5 h-5" />
+              <span className="text-xs">我的</span>
             </motion.button>
 
             {/* 中间占位 */}
