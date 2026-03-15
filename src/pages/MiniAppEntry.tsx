@@ -104,7 +104,7 @@ const MiniAppEntry = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        onClick={() => navigate('/platform-intro')}
+        onClick={() => window.open('https://wechat.eugenewe.net/living-lab?ref=share', '_blank')}
         className="flex flex-col items-center gap-1 w-full pb-24 pt-6 text-muted-foreground hover:text-foreground transition-colors"
       >
         <span className="text-xs">还想探索更多？</span>
