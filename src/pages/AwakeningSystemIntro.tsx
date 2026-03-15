@@ -33,7 +33,7 @@ const supportLayers = [
 
 const outcomes = [
   { icon: Brain, label: "更了解自己的情绪模式", desc: "看清反复困住你的情绪反应" },
-  { icon: Target, label: "从"想改变"到"能行动"", desc: "每次记录都带一个微行动" },
+  { icon: Target, label: "从「想改变」到「能行动」", desc: "每次记录都带一个微行动" },
   { icon: MessagesSquare, label: "改善关系中的沟通方式", desc: "学会表达真实想法而不伤人" },
   { icon: Star, label: "找到属于自己的方向", desc: "在记录中逐渐看清人生主线" },
 ];
