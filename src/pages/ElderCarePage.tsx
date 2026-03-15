@@ -5,6 +5,7 @@ import { MessageCircle, Share2, ChevronRight, Home } from "lucide-react";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
