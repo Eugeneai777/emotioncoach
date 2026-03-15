@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, Clock } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
+import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "陪你一起带娃", route: "/mama", bg: "bg-gradient-to-br from-rose-100 to-pink-200/80", iconBg: "bg-rose-200", accent: "text-rose-800", tag: "热门", tagBg: "bg-rose-500" },
