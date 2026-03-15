@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
 import { LaogeChat } from "@/components/laoge/LaogeChat";
-import { Send } from "lucide-react";
+import { Send, Home, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const TOOLS = [
