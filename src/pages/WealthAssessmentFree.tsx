@@ -4,7 +4,22 @@ import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuest
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
-import { LiteFooter } from "@/components/wealth-block/LiteFooter";
+import { useFooterHeight } from "@/hooks/useFooterHeight";
+
+function FreeFooter() {
+  const { footerRef } = useFooterHeight();
+  return (
+    <div
+      ref={footerRef}
+      className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur border-t py-3 px-4"
+      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+    >
+      <p className="text-muted-foreground text-xs text-center">
+        北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
+      </p>
+    </div>
+  );
+}
 
 type PageState = "questions" | "result";
 
@@ -67,9 +82,8 @@ export default function WealthAssessmentFreePage() {
           onRetake={handleRetake}
         />
       )}
-
-      {/* 公司信息和ICP备案 */}
-      <LiteFooter wechatUrl="https://mp.weixin.qq.com/s/your-wechat-url" />
+      {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}
+      <FreeFooter />
     </div>
   );
 }
