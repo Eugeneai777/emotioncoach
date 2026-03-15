@@ -4,7 +4,7 @@ import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuest
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
-import { LiteFooter } from "@/components/wealth-block/LiteFooter";
+import { useFooterHeight } from "@/hooks/useFooterHeight";
 
 type PageState = "questions" | "result";
 
