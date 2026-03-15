@@ -213,6 +213,8 @@ const MamaAssistant = () => {
         initialInput={initialInput}
         chatType={chatType}
       />
+
+      <AwakeningBottomNav />
     </div>
   );
 };
