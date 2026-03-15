@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { Button } from "@/components/ui/button";
