@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Info } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
@@ -40,10 +41,17 @@ const MiniAppEntry = () => {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 48px)", paddingRight: "110px" }}
       >
         <img src={logoImage} alt="有劲AI" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-[15px] font-bold text-foreground">有劲AI</h1>
           <p className="text-[10px] text-muted-foreground">每个人的生活教练</p>
         </div>
+        <button
+          onClick={() => navigate('/platform-intro')}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0"
+        >
+          <Info className="w-3.5 h-3.5" />
+          <span>介绍</span>
+        </button>
       </div>
 
 

@@ -1,18 +1,23 @@
 
 
-# 在 /mini-app 页面添加"介绍"按钮
+## 两个问题需要修复
 
-## 改动
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-**文件：`src/pages/MiniAppEntry.tsx`**
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-在品牌区（logo + 标题）右侧添加一个"了解有劲AI"按钮，点击跳转 `/platform-intro`。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-具体做法：在顶部品牌区的 `div` 内，标题右侧添加一个小按钮，使用 `Info` 图标 + "介绍"文字，样式为轻量圆角胶囊按钮（`outline` 风格），与品牌区视觉协调。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-同时需要导入 `Info` 图标。
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| `src/pages/MiniAppEntry.tsx` | 品牌区添加"介绍"按钮，跳转 `/platform-intro` |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
