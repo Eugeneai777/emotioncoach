@@ -45,16 +45,6 @@ const AwakeningSystemIntro = () => {
       <PageHeader title="关于有劲AI" />
 
       <div className="px-4 pb-24 max-w-lg mx-auto">
-        {/* 品牌区 */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center pt-6 pb-2"
-        >
-          <img src={logoImage} alt="有劲AI" className="w-14 h-14 rounded-2xl object-cover mb-2" />
-          <h1 className="text-xl font-bold text-foreground">有劲AI</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">每个人的生活教练</p>
-        </motion.div>
 
         {/* 核心理念 + 是什么（合并为一个紧凑区域） */}
         <motion.div
