@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { Button } from "@/components/ui/button";
@@ -23,18 +23,27 @@ export default function WealthAssessmentLitePage() {
   const [showPayDialog, setShowPayDialog] = useState(false);
   
   const { user } = useAuth();
-  const { data: purchaseRecord, refetch: refetchPurchase } = useAssessmentPurchase();
+  const { data: purchaseRecord, refetch: refetchPurchase, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
+  const payResumeHandledRef = useRef(false);
 
-  // 微信 OAuth 回调后恢复支付弹窗
+  // 微信 OAuth 回调后恢复支付弹窗（等待购买状态查询完成后再决定）
   useEffect(() => {
+    // 避免重复处理
+    if (payResumeHandledRef.current) return;
+    // 等购买状态查询完成
+    if (isPurchaseLoading) return;
+
     const url = new URL(window.location.href);
     const shouldResume = url.searchParams.get('assessment_pay_resume') === '1';
     const paymentOpenId = url.searchParams.get('payment_openid');
 
     if (!shouldResume) return;
 
-    console.log('[WealthAssessmentLite] Resuming payment after WeChat OAuth, openId:', paymentOpenId ? 'present' : 'missing');
+    // 标记已处理
+    payResumeHandledRef.current = true;
+
+    console.log('[WealthAssessmentLite] Resuming payment after WeChat OAuth, openId:', paymentOpenId ? 'present' : 'missing', 'hasPurchased:', hasPurchased);
 
     // 缓存 openId 以供 AssessmentPayDialog 使用
     if (paymentOpenId) {
@@ -54,13 +63,17 @@ export default function WealthAssessmentLitePage() {
     // 清除授权进行中标记
     sessionStorage.removeItem('pay_auth_in_progress');
 
-    // 延迟打开支付弹窗，确保组件已渲染
-    if (!hasPurchased) {
-      setTimeout(() => {
-        setShowPayDialog(true);
-      }, 500);
+    if (hasPurchased) {
+      // 已购买：直接跳到结果页，不打开支付弹窗
+      console.log('[WealthAssessmentLite] Already purchased, skipping payment dialog');
+      return;
     }
-  }, [hasPurchased]);
+
+    // 未购买：延迟打开支付弹窗
+    setTimeout(() => {
+      setShowPayDialog(true);
+    }, 500);
+  }, [isPurchaseLoading, hasPurchased]);
   
   // 完成测评回调
   const handleComplete = useCallback((
