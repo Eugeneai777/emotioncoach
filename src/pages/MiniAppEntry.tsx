@@ -84,8 +84,6 @@ const MiniAppEntry = () => {
         每个人的生活教练 ✨
       </motion.p>
 
-      {/* ── 底部导航 ── */}
-      <AwakeningBottomNav />
     </div>
   );
 };

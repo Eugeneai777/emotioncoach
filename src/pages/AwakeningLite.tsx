@@ -179,8 +179,6 @@ const AwakeningLite: React.FC = () => {
           )}
         </main>
 
-        {/* 底部凸起导航 */}
-        <AwakeningBottomNav />
 
         {/* 输入抽屉 */}
         <AwakeningDrawer dimension={selectedDimension} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
