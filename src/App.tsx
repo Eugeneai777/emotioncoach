@@ -423,6 +423,7 @@ const App = () => (
               <Route path="/coach-dashboard" element={<CoachDashboard />} />
               <Route path="/coach/:coachKey" element={<DynamicCoach />} />
               <Route path="/teen-chat/:token" element={<TeenChat />} />
+              <Route path="/awakening-intro" element={<AwakeningIntro />} />
               <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
               <Route path="/awakening-journal" element={<AwakeningJournal />} />
               <Route path="/transformation-flow" element={<TransformationFlow />} />
