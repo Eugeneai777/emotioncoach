@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import logoImage from "@/assets/logo-youjin-ai.png";
-import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const audiences = [
@@ -30,8 +29,8 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── Hero 标语区 ── */}
-      <AwakeningHeroCard />
+
+
 
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-3 pb-4">
