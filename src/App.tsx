@@ -397,7 +397,6 @@ const App = () => (
               <Route path="/my-posts" element={<MyPosts />} />
               <Route path="/panic-history" element={<PanicHistory />} />
               <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
-              <Route path="/emotion-button" element={<EmotionButton />} />
               <Route path="/emotion-button-lite" element={<EmotionButtonLite />} />
               <Route path="/alive-check" element={<AliveCheck />} />
               <Route path="/alive-check-lite" element={<AliveCheckLite />} />
