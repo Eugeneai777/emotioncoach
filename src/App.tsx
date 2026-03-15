@@ -415,7 +415,6 @@ const App = () => (
               <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
               <Route path="/api-docs" element={<ApiDocs />} />
               <Route path="/poster-center" element={<PosterCenter />} />
-              <Route path="/customer-support" element={<CustomerSupport />} />
               <Route path="/human-coaches" element={<HumanCoaches />} />
               <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
               <Route path="/my-appointments" element={<MyAppointments />} />
