@@ -44,7 +44,6 @@ export const categories: CategoryConfig[] = [
 export const assessmentToolIds = new Set([
   "emotion-health",
   "scl90",
-  "awakening",
   "wealth-block",
   "women-competitiveness",
   "parent-ability",
