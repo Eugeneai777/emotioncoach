@@ -5,6 +5,7 @@ import { MessageCircle, Share2, ChevronRight, Home } from "lucide-react";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const ElderCarePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white pb-20">
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
 
         {/* Top bar — same as XiaojinHome */}
@@ -151,11 +152,32 @@ const ElderCarePage = () => {
           </button>
         </motion.div>
 
+        {/* 设为默认首页 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="pb-4"
+        >
+          <button
+            onClick={() => {
+              localStorage.setItem('preferred_audience', 'senior');
+              const el = document.getElementById('set-home-toast-senior');
+              if (el) { el.textContent = '✅ 已设为默认首页'; setTimeout(() => { el.textContent = '⭐ 设为我的首页'; }, 2000); }
+            }}
+            className="w-full text-center py-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/50 text-sm text-emerald-600 active:scale-[0.98] transition-transform"
+          >
+            <span id="set-home-toast-senior">⭐ 设为我的首页</span>
+          </button>
+        </motion.div>
+
         {/* Footer */}
         <div className="text-center pb-6">
           <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
         </div>
       </div>
+
+      <AwakeningBottomNav />
     </div>
   );
 };

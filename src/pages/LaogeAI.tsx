@@ -2,6 +2,8 @@ import { useState } from "react";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
 import { LaogeChat } from "@/components/laoge/LaogeChat";
 import { Send } from "lucide-react";
+import { motion } from "framer-motion";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const TOOLS = [
   {
@@ -69,7 +71,7 @@ export default function LaogeAI() {
   const [dailySubmitted, setDailySubmitted] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--laoge-bg))]">
+    <div className="min-h-screen bg-[hsl(var(--laoge-bg))] pb-20">
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--laoge-bg))] via-[hsl(var(--laoge-card))] to-[hsl(var(--laoge-bg))]" />
@@ -101,7 +103,7 @@ export default function LaogeAI() {
       </div>
 
       {/* Daily Section */}
-      <div className="px-4 pb-12 max-w-lg mx-auto">
+      <div className="px-4 pb-6 max-w-lg mx-auto">
         <div className="rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] p-5">
           <h2 className="text-base font-bold text-[hsl(var(--laoge-text))] mb-1">
             💬 今日老哥一句话
@@ -144,6 +146,28 @@ export default function LaogeAI() {
           )}
         </div>
       </div>
+
+      {/* 设为默认首页 */}
+      <div className="px-4 pb-12 max-w-lg mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <button
+            onClick={() => {
+              localStorage.setItem('preferred_audience', 'midlife');
+              const el = document.getElementById('set-home-toast-midlife');
+              if (el) { el.textContent = '✅ 已设为默认首页'; setTimeout(() => { el.textContent = '⭐ 设为我的首页'; }, 2000); }
+            }}
+            className="w-full text-center py-2.5 rounded-xl border border-[hsl(var(--laoge-border))] bg-[hsl(var(--laoge-card))] text-sm text-[hsl(var(--laoge-accent))] active:scale-[0.98] transition-transform"
+          >
+            <span id="set-home-toast-midlife">⭐ 设为我的首页</span>
+          </button>
+        </motion.div>
+      </div>
+
+      <AwakeningBottomNav />
     </div>
   );
 }
