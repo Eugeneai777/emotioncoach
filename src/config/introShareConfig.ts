@@ -309,6 +309,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #F4845F, #e5734e)',
     category: 'coach'
   },
+  laoge: {
+    pageKey: 'laoge',
+    title: '老哥AI',
+    subtitle: '有事问老哥',
+    targetUrl: '/laoge',
+    emoji: '🧔',
+    highlights: [
+      '事业决策 · 赚钱机会',
+      '压力管理 · 健康扫描',
+      '男人的AI参谋',
+    ],
+    gradient: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+    category: 'coach'
+  },
   dajin: {
     pageKey: 'dajin',
     title: '大劲AI',

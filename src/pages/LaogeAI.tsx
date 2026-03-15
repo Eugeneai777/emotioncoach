@@ -70,11 +70,41 @@ const TOOLS = [
 ];
 
 export default function LaogeAI() {
+  const navigate = useNavigate();
   const [dailyInput, setDailyInput] = useState("");
   const [dailySubmitted, setDailySubmitted] = useState(false);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--laoge-bg))] pb-20">
+      {/* Top bar */}
+      <div className="max-w-lg mx-auto px-5 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => { sessionStorage.setItem('skip_preferred_redirect', '1'); navigate("/mini-app"); }}
+            className="flex items-center gap-1 text-xs text-[hsl(var(--laoge-text-muted))] hover:text-[hsl(var(--laoge-text))] transition-colors touch-manipulation"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>主页</span>
+          </motion.button>
+
+          <IntroShareDialog
+            config={introShareConfigs.laoge}
+            trigger={
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1 text-xs text-[hsl(var(--laoge-text-muted))] hover:text-[hsl(var(--laoge-text))] transition-colors touch-manipulation"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>分享给兄弟</span>
+              </motion.button>
+            }
+          />
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--laoge-bg))] via-[hsl(var(--laoge-card))] to-[hsl(var(--laoge-bg))]" />
