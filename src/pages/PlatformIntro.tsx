@@ -87,13 +87,22 @@ const coachGradientMap: Record<string, string> = {
 };
 
 
-// 用户价值
+// 痛点共鸣
+const painPoints = [
+  { emoji: '😤', text: '情绪反复失控，却不知道为什么' },
+  { emoji: '😰', text: '总觉得累，但说不清问题在哪' },
+  { emoji: '🔄', text: '道理都懂，就是做不到' },
+  { emoji: '😶', text: '身边没人真正理解你' },
+  { emoji: '🌫️', text: '迷茫，找不到方向和动力' },
+];
+
+// 用户价值（改变）
 const userValues = [
-  { emoji: '🎯', text: '清晰方向' },
-  { emoji: '💪', text: '稳定心态' },
-  { emoji: '✅', text: '可执行行动' },
-  { emoji: '📈', text: '持续成长' },
-  { emoji: '🤗', text: '被理解、被陪伴的力量' },
+  { emoji: '🎯', text: '清晰方向', desc: '从混沌到清醒，找到自己的节奏' },
+  { emoji: '💪', text: '稳定心态', desc: '不再被情绪绑架，内心越来越安定' },
+  { emoji: '✅', text: '可执行行动', desc: '每天一个微小行动，真正动起来' },
+  { emoji: '📈', text: '持续成长', desc: '看见自己的变化，信心越来越强' },
+  { emoji: '🤗', text: '被理解陪伴', desc: '不再孤单面对，有人懂你支持你' },
 ];
 
 // 核心价值（3项）
@@ -408,23 +417,54 @@ const PlatformIntro = () => {
             </Card>
             
             
-            {/* 用户价值 - 紧凑两行居中 */}
+            {/* 痛点共鸣 */}
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              <Card className="p-3 sm:p-4 border border-slate-100 shadow-sm mb-4 bg-gradient-to-br from-slate-50 to-white transform-gpu">
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3 text-center">在生活里获得：</p>
-                <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
-                  {userValues.map((value, index) => (
-                    <motion.span 
-                      key={index} 
-                      variants={scaleVariants}
-                      className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-primary/10 text-slate-700 rounded-full text-[11px] sm:text-xs font-medium shadow-sm border border-primary/5 transform-gpu"
+              <Card className="p-3 sm:p-4 border border-destructive/15 shadow-sm mb-4 bg-gradient-to-br from-destructive/5 via-orange-50 to-white dark:from-destructive/10 dark:via-orange-950/20 dark:to-background transform-gpu">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5 sm:mb-3 flex items-center gap-1.5">
+                  <span className="text-base">💭</span> 你是否也有这些感受？
+                </p>
+                <div className="space-y-1.5 sm:space-y-2">
+                  {painPoints.map((point, index) => (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      className="flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white/60 dark:bg-white/5 border border-slate-100 dark:border-slate-700/30 transform-gpu"
                     >
-                      {value.emoji} {value.text}
-                    </motion.span>
+                      <span className="text-sm sm:text-base">{point.emoji}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">{point.text}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* 你会得到的改变 */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <Card className="p-3 sm:p-4 border border-primary/10 shadow-sm mb-4 bg-gradient-to-br from-primary/5 via-emerald-50 to-white dark:from-primary/10 dark:via-emerald-950/20 dark:to-background transform-gpu">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5 sm:mb-3 flex items-center gap-1.5">
+                  <span className="text-base">✨</span> 用了之后，你会得到
+                </p>
+                <div className="space-y-1.5 sm:space-y-2">
+                  {userValues.map((value, index) => (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      className="flex items-start gap-2.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white/60 dark:bg-white/5 border border-primary/5 dark:border-primary/10 transform-gpu"
+                    >
+                      <span className="text-sm sm:text-base mt-0.5">{value.emoji}</span>
+                      <div>
+                        <span className="text-xs sm:text-sm font-medium text-foreground">{value.text}</span>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{value.desc}</p>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               </Card>
