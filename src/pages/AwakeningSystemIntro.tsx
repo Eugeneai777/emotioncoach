@@ -40,8 +40,8 @@ const painPoints = [
 ];
 
 const outcomes = [
-  { icon: Brain, label: "建立情绪处理新回路", desc: "建立"我处理得了情绪"的新神经回路" },
-  { icon: Target, label: "学会有效表达", desc: "学会一句"对方愿意听"的表达方式" },
+  { icon: Brain, label: "建立情绪处理新回路", desc: "建立「我处理得了情绪」的新神经回路" },
+  { icon: Target, label: "学会有效表达", desc: "学会一句「对方愿意听」的表达方式" },
   { icon: MessagesSquare, label: "每天10分钟改变", desc: "每天10分钟，让情绪变成力量" },
   { icon: Star, label: "重新看见生活", desc: "重新看见生活里的温柔与意义" },
 ];
