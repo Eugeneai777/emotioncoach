@@ -35,9 +35,15 @@ const MiniAppEntry = () => {
 
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-3 pb-4">
-        <h2 className="text-xs font-semibold text-muted-foreground mb-2.5 tracking-wide">
-          🎯 找到适合你的入口
-        </h2>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-3"
+        >
+          <h2 className="text-sm font-semibold text-foreground">生活不易，你不必独自扛着</h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">选一个最懂你的入口 ↓</p>
+        </motion.div>
         <div className="grid grid-cols-3 gap-1.5">
           {audiences.map((a, i) => (
             <motion.button
