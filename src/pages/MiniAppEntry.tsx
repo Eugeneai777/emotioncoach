@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import logoImage from "@/assets/logo-youjin-ai.png";
-import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
