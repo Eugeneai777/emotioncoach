@@ -65,7 +65,7 @@ const AwakeningSystemIntro = () => {
         >
           <h2 className="text-base font-semibold text-foreground mb-1.5">生活不易，你不必独自扛着</h2>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            有劲AI是一套基于心理学的生活教练系统。通过频繁记录情绪、想法和行动，帮你看清自己的模式，打破自动驾驶，找到改变的切入点。
+            有劲AI是一套基于领导力的生活教练系统。通过频繁记录情绪、想法和行动，帮你看清自己的模式，打破自动驾驶，找到改变的切入点。
           </p>
           <p className="text-xs font-semibold text-foreground mt-2 inline-block px-3 py-1 rounded-full bg-primary/10">
             「频繁记录自己，可以改命」
