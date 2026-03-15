@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { MessageCircle, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart } from "lucide-react";
+import { MessageCircle, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import UsAICalmButton from "@/components/us-ai/UsAICalmButton";
 import UsAIDailyCard from "@/components/us-ai/UsAIDailyCard";
@@ -37,6 +39,20 @@ const UsAI = () => {
             <Home className="w-3.5 h-3.5" />
             <span>有劲生活馆</span>
           </motion.button>
+
+          <IntroShareDialog
+            config={introShareConfigs.usai}
+            trigger={
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>分享给TA</span>
+              </motion.button>
+            }
+          />
         </div>
 
         {/* Brand header */}
