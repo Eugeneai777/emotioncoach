@@ -253,13 +253,11 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     
     toast.success("感谢分享！", { duration: 1500 });
     
-    // 继续下一题，最后一题则自动提交
+    // 继续下一题
     if (!isLastQuestion) {
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
       }, 300);
-    } else if (Object.keys(answers).length === questions.length) {
-      setTimeout(() => handleSubmit(), 400);
     }
   };
 
@@ -269,13 +267,11 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     setCurrentFollowUp(null);
     setPendingNextQuestion(false);
     
-    // 继续下一题，最后一题则自动提交
+    // 继续下一题
     if (!isLastQuestion) {
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
       }, 300);
-    } else if (Object.keys(answers).length === questions.length) {
-      setTimeout(() => handleSubmit(), 400);
     }
   };
 
