@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, MessageCircle, Heart, Zap, GraduationCap, Package, Users } from "lucide-react";
+import { ArrowRight, Sparkles, MessageCircle, Heart, Zap, GraduationCap, Package, Users, ChevronDown, ChevronUp, Brain, Target, MessagesSquare, Star, Pen, Eye, Bot, UserCheck } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import { Button } from "@/components/ui/button";
