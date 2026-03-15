@@ -6,6 +6,21 @@ import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/weal
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useFooterHeight } from "@/hooks/useFooterHeight";
 
+function FreeFooter() {
+  const { footerRef } = useFooterHeight();
+  return (
+    <div
+      ref={footerRef}
+      className="fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur border-t py-3 px-4"
+      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+    >
+      <p className="text-muted-foreground text-xs text-center">
+        北京好企劲商务信息咨询有限公司 京ICP备2023001408号-5
+      </p>
+    </div>
+  );
+}
+
 type PageState = "questions" | "result";
 
 export default function WealthAssessmentFreePage() {
