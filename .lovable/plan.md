@@ -1,45 +1,23 @@
 
 
-# 新建职场解压轻入口页面（对齐 /mama 风格）
+## 两个问题需要修复
 
-## 问题分析
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-`/promo/synergy` 是一个 ~1000 行的重型销售页（Hero → 痛点 → 亮点 → 流程 → 成果 → 师资 → 胶囊 → 用户评价 → 购买），不适合作为轻入口。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**新建 `/workplace` 轻入口页面**，保留 `/promo/synergy` 作为详细销售页。同时更新 MiniAppEntry 和 AwakeningSystemIntro 中 "职场解压" 的路由指向 `/workplace`。
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-### 新建文件：`src/pages/WorkplacePage.tsx`
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-对齐 MamaAssistant 结构：
-
-1. **顶部栏**：左侧 Home 返回 + 右侧分享
-2. **品牌标题**：「职场解压」+ 副标题「累了就歇一歇」
-3. **中心大按钮**：蓝色渐变圆形，点击进入 AI 对话（职场压力主题），文字"聊一聊"
-4. **3列快捷入口**：
-   - 😮‍💨 压力释放（AI对话 → 职场压力场景）
-   - 🆘 情绪SOS（→ `/emotion-button`）
-   - 📝 情绪日记（AI对话 → 情绪记录）
-5. **场景卡片**：职场倦怠、开会焦虑、加班疲惫等快速对话入口
-6. **功能入口**：
-   - 🔋 能量测评（→ `/assessment-tools`）
-   - 🔥 协同抗压套餐（→ `/promo/synergy`，链接到完整销售页）
-7. **设为我的首页**按钮：`localStorage.setItem('preferred_audience', 'workplace')`
-8. **底部**：`<AwakeningBottomNav />`
-9. **AI对话 Drawer**：复用类似 MamaAIChat 的对话组件
-
-### 修改文件
-
-| 文件 | 改动 |
+| 文件 | 修改 |
 |------|------|
-| `src/pages/WorkplacePage.tsx` | **新建**，轻入口页面 |
-| `src/App.tsx` | 添加 `/workplace` 路由 |
-| `src/pages/MiniAppEntry.tsx` | 职场解压路由改为 `/workplace` |
-| `src/pages/AwakeningSystemIntro.tsx` | 职场解压路由改为 `/workplace` |
-| `src/components/energy-studio/AudienceHub.tsx` | 路由改为 `/workplace` |
-
-### AI 对话组件
-
-复用 MamaAIChat 模式，创建 `WorkplaceAIChat` 组件，系统提示词聚焦职场压力、倦怠、人际关系等场景。
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

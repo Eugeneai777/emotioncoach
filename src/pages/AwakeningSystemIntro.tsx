@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const audiences = [
   { emoji: "👩‍👧", label: "宝妈专区", route: "/mama", desc: "情绪日记·SOS·AI陪聊", gradient: "from-rose-400 to-pink-500" },
-  { emoji: "💼", label: "职场解压", route: "/promo/synergy", desc: "压力释放·倦怠恢复", gradient: "from-blue-400 to-indigo-500" },
+  { emoji: "💼", label: "职场解压", route: "/workplace", desc: "压力释放·倦怠恢复", gradient: "from-blue-400 to-indigo-500" },
   { emoji: "💑", label: "情侣夫妻", route: "/us-ai", desc: "沟通翻译·冲突修复", gradient: "from-purple-400 to-violet-500" },
   { emoji: "🎓", label: "青少年", route: "/xiaojin", desc: "心情探索·天赋发现", gradient: "from-amber-400 to-orange-500" },
   { emoji: "🧭", label: "中年觉醒", route: "/laoge", desc: "决策分析·方向探索", gradient: "from-amber-500 to-yellow-600" },

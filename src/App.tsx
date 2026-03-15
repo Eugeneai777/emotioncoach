@@ -229,6 +229,9 @@ const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
 const UsAI = lazyRetry(() => import("./pages/UsAI"));
 const UsAITool = lazyRetry(() => import("./pages/UsAITool"));
 
+// 职场解压
+const WorkplacePage = lazyRetry(() => import("./pages/WorkplacePage"));
+
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
 const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
@@ -377,6 +380,7 @@ const App = () => (
               <Route path="/partner/benefits-all" element={<PartnerBenefitsUnified />} />
               <Route path="/claim" element={<Claim />} />
               <Route path="/pay-entry" element={<PayEntry />} />
+              <Route path="/workplace" element={<WorkplacePage />} />
               <Route path="/promo/synergy" element={<SynergyPromoPage />} />
               <Route path="/promo/wealth-synergy" element={<WealthSynergyPromoPage />} />
               <Route path="/zhile-promo" element={<ZhilePromoHub />} />
