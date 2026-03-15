@@ -29,8 +29,8 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── Hero 标语区 ── */}
-      <AwakeningHeroCard />
+
+
 
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-3 pb-4">
