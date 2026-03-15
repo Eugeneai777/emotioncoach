@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import logoImage from "@/assets/logo-youjin-ai.png";
-import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
 const audiences = [
