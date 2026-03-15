@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
-
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import AwakeningHeroCard from "@/components/awakening/AwakeningHeroCard";
 import AwakeningPainPointCard from "@/components/awakening/AwakeningPainPointCard";
 
@@ -199,6 +199,8 @@ const Awakening: React.FC = () => {
           </motion.div>
         </main>
 
+        {/* 底部凸起导航 */}
+        <AwakeningBottomNav />
 
         {/* 输入抽屉 */}
         <AwakeningDrawer dimension={selectedDimension} isOpen={isDrawerOpen} onClose={handleDrawerClose} />

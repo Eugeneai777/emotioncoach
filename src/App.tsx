@@ -175,7 +175,6 @@ const AwakeningLite = lazyRetry(() => import("./pages/AwakeningLite"));
 const AwakeningIntro = lazyRetry(() => import("./pages/AwakeningIntro"));
 const AwakeningSystemIntro = lazyRetry(() => import("./pages/AwakeningSystemIntro"));
 const AwakeningJournal = lazyRetry(() => import("./pages/AwakeningJournal"));
-const AwakeningLayout = lazyRetry(() => import("./components/awakening/AwakeningLayout"));
 const TransformationFlow = lazyRetry(() => import("./pages/TransformationFlow"));
 
 // 女性竞争力测评
@@ -328,22 +327,13 @@ const App = () => (
               <Route path="/goals" element={<Goals />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/admin/*" element={<Admin />} />
-              {/* 带底部导航的路由组 */}
-              <Route element={<AwakeningLayout />}>
-                <Route path="/packages" element={<Packages />} />
-                <Route path="/mini-app" element={<MiniAppEntry />} />
-                <Route path="/coach-space" element={<CoachSpace />} />
-                <Route path="/customer-support" element={<CustomerSupport />} />
-                <Route path="/emotion-button" element={<EmotionButton />} />
-                <Route path="/alive-check" element={<AliveCheck />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/awakening" element={<Awakening />} />
-                <Route path="/awakening-lite" element={<AwakeningLite />} />
-              </Route>
+              <Route path="/packages" element={<Packages />} />
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
+              <Route path="/mini-app" element={<MiniAppEntry />} />
               <Route path="/health-store" element={<HealthStore />} />
               <Route path="/living-lab" element={<LivingLab />} />
+              <Route path="/coach-space" element={<CoachSpace />} />
               <Route path="/coach-space-intro" element={<CoachSpaceIntro />} />
               <Route path="/platform-intro" element={<PlatformIntro />} />
               <Route path="/energy-studio-intro" element={<EnergyStudioIntro />} />
@@ -375,6 +365,7 @@ const App = () => (
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/introduction" element={<Introduction />} />
               <Route path="/user-manual" element={<UserManual />} />
+              <Route path="/courses" element={<Courses />} />
               <Route path="/partner/type" element={<PartnerTypeSelector />} />
               <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
               <Route path="/partner/youjin-plan" element={<YoujinPartnerPlan />} />
@@ -397,7 +388,9 @@ const App = () => (
               <Route path="/my-posts" element={<MyPosts />} />
               <Route path="/panic-history" element={<PanicHistory />} />
               <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
+              <Route path="/emotion-button" element={<EmotionButton />} />
               <Route path="/emotion-button-lite" element={<EmotionButtonLite />} />
+              <Route path="/alive-check" element={<AliveCheck />} />
               <Route path="/alive-check-lite" element={<AliveCheckLite />} />
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
 <Route path="/scl90" element={<SCL90Page />} />
@@ -415,6 +408,7 @@ const App = () => (
               <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
               <Route path="/api-docs" element={<ApiDocs />} />
               <Route path="/poster-center" element={<PosterCenter />} />
+              <Route path="/customer-support" element={<CustomerSupport />} />
               <Route path="/human-coaches" element={<HumanCoaches />} />
               <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
               <Route path="/my-appointments" element={<MyAppointments />} />
@@ -423,6 +417,8 @@ const App = () => (
               <Route path="/coach-dashboard" element={<CoachDashboard />} />
               <Route path="/coach/:coachKey" element={<DynamicCoach />} />
               <Route path="/teen-chat/:token" element={<TeenChat />} />
+              <Route path="/awakening" element={<Awakening />} />
+              <Route path="/awakening-lite" element={<AwakeningLite />} />
               <Route path="/awakening-intro" element={<AwakeningIntro />} />
               <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
               <Route path="/awakening-journal" element={<AwakeningJournal />} />
