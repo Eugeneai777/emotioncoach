@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  User, Info, Sparkles, 
+  User, Home, Info, Sparkles, 
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
 const AwakeningBottomNav: React.FC = () => {
