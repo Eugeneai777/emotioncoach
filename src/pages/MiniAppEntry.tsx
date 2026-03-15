@@ -60,6 +60,9 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
+      {/* ── Hero 标语区 ── */}
+      <AwakeningHeroCard />
+
       {/* ── 人群入口 2x3 横向大卡 ── */}
       <motion.div className="px-3 pb-4" variants={stagger} initial="hidden" animate="show">
         <div className="grid grid-cols-2 gap-2.5">
