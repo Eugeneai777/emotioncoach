@@ -380,6 +380,7 @@ const App = () => (
               <Route path="/partner/benefits-all" element={<PartnerBenefitsUnified />} />
               <Route path="/claim" element={<Claim />} />
               <Route path="/pay-entry" element={<PayEntry />} />
+              <Route path="/workplace" element={<WorkplacePage />} />
               <Route path="/promo/synergy" element={<SynergyPromoPage />} />
               <Route path="/promo/wealth-synergy" element={<WealthSynergyPromoPage />} />
               <Route path="/zhile-promo" element={<ZhilePromoHub />} />
