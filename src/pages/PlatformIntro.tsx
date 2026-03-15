@@ -87,22 +87,20 @@ const coachGradientMap: Record<string, string> = {
 };
 
 
-// 痛点共鸣
+// 痛点共鸣 - 精简为4项，2列网格
 const painPoints = [
-  { emoji: '😤', text: '情绪反复失控，却不知道为什么' },
-  { emoji: '😰', text: '总觉得累，但说不清问题在哪' },
-  { emoji: '🔄', text: '道理都懂，就是做不到' },
-  { emoji: '😶', text: '身边没人真正理解你' },
-  { emoji: '🌫️', text: '迷茫，找不到方向和动力' },
+  { emoji: '😤', text: '情绪反复失控' },
+  { emoji: '😰', text: '总觉得累说不清' },
+  { emoji: '🔄', text: '道理都懂做不到' },
+  { emoji: '🌫️', text: '迷茫没有方向' },
 ];
 
-// 用户价值（改变）
+// 用户价值（改变）- 精简为4项，2x2网格
 const userValues = [
-  { emoji: '🎯', text: '清晰方向', desc: '从混沌到清醒，找到自己的节奏' },
-  { emoji: '💪', text: '稳定心态', desc: '不再被情绪绑架，内心越来越安定' },
-  { emoji: '✅', text: '可执行行动', desc: '每天一个微小行动，真正动起来' },
-  { emoji: '📈', text: '持续成长', desc: '看见自己的变化，信心越来越强' },
-  { emoji: '🤗', text: '被理解陪伴', desc: '不再孤单面对，有人懂你支持你' },
+  { emoji: '🎯', text: '清晰方向' },
+  { emoji: '💪', text: '稳定心态' },
+  { emoji: '✅', text: '行动力提升' },
+  { emoji: '🤗', text: '被理解陪伴' },
 ];
 
 // 核心价值（3项）
