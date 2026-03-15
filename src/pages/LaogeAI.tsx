@@ -71,7 +71,7 @@ export default function LaogeAI() {
   const [dailySubmitted, setDailySubmitted] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--laoge-bg))]">
+    <div className="min-h-screen bg-[hsl(var(--laoge-bg))] pb-20">
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--laoge-bg))] via-[hsl(var(--laoge-card))] to-[hsl(var(--laoge-bg))]" />
