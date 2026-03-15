@@ -1,23 +1,37 @@
 
 
-## 两个问题需要修复
+# 让6个快捷按钮目标页面保留底部导航
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+## 问题
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+点击 AwakeningBottomNav 中间按钮弹出的6个快捷入口（建议、情绪按钮、安全守护、学习课程、产品中心、教练空间）后，会 navigate 到各自的独立页面，这些页面没有包含 AwakeningBottomNav，所以底部导航消失了。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+## 方案
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+创建一个布局组件 `AwakeningLayout`，包裹需要显示底部导航的页面。在 App.tsx 中用嵌套路由实现：
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+```text
+<Route element={<AwakeningLayout />}>
+  <Route path="/mini-app" ... />
+  <Route path="/awakening" ... />
+  <Route path="/customer-support" ... />
+  <Route path="/emotion-button" ... />
+  <Route path="/alive-check" ... />
+  <Route path="/courses" ... />
+  <Route path="/packages" ... />
+  <Route path="/coach-space" ... />
+</Route>
+```
+
+### 具体修改
 
 | 文件 | 修改 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `src/components/awakening/AwakeningLayout.tsx` | 新建布局组件：`<Outlet />` + `<AwakeningBottomNav />` |
+| `src/App.tsx` | 将上述8个路由包裹在 `<Route element={<AwakeningLayout />}>` 嵌套路由中 |
+| `src/pages/MiniAppEntry.tsx` | 移除页面内的 `<AwakeningBottomNav />` |
+| `src/pages/AwakeningLite.tsx` | 移除页面内的 `<AwakeningBottomNav />` |
+| `src/pages/Awakening.tsx` | 移除页面内的 `<AwakeningBottomNav />` |
+
+这样所有被包裹的页面都会自动显示底部导航，点击6个快捷按钮后导航始终可见。
 
