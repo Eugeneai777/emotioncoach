@@ -281,6 +281,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
     category: 'coach'
   },
+  workplace: {
+    pageKey: 'workplace',
+    title: '职场解压',
+    subtitle: '累了就歇一歇',
+    targetUrl: '/workplace',
+    emoji: '💼',
+    highlights: [
+      '压力释放 · 情绪SOS',
+      '职场倦怠恢复',
+      'AI教练 · 随时倾诉',
+    ],
+    gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+    category: 'coach'
+  },
   dajin: {
     pageKey: 'dajin',
     title: '大劲AI',

@@ -43,7 +43,7 @@ const WorkplacePage = () => {
           </motion.button>
 
           <IntroShareDialog
-            config={introShareConfigs.mama}
+            config={introShareConfigs.workplace}
             trigger={
               <motion.button
                 initial={{ opacity: 0 }}
