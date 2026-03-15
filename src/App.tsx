@@ -229,6 +229,9 @@ const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
 const UsAI = lazyRetry(() => import("./pages/UsAI"));
 const UsAITool = lazyRetry(() => import("./pages/UsAITool"));
 
+// 职场解压
+const WorkplacePage = lazyRetry(() => import("./pages/WorkplacePage"));
+
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
 const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
