@@ -167,6 +167,109 @@ const MiniAppEntry = () => {
         </div>
       </motion.div>
 
+      {/* ── 了解更多折叠区 ── */}
+      <div className="px-4 pb-4">
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card border border-border/50 shadow-sm active:scale-[0.98] transition-transform"
+        >
+          <span className="text-sm font-medium text-foreground">✨ 还想探索更多？</span>
+          {isExpanded ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
+        </motion.button>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 space-y-3">
+                {/* 三大板块 */}
+                {exploreBlocks.map((block, i) => (
+                  <motion.div
+                    key={block.title}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                    className="rounded-xl bg-card border border-border/50 p-4 shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg ${block.bg} flex items-center justify-center shrink-0`}>
+                        <span className="text-lg">{block.emoji}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-foreground">{block.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{block.desc}</p>
+                        <button
+                          onClick={() => navigate(block.route)}
+                          className={`mt-2 text-xs font-medium ${block.color} active:opacity-70 transition-opacity`}
+                        >
+                          {block.btnText}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* 用户见证 */}
+                <div className="rounded-xl bg-card border border-border/50 p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">💬</span>
+                    <h4 className="text-sm font-bold text-foreground">用户见证</h4>
+                  </div>
+                  <div className="space-y-2.5">
+                    {testimonials.map((t, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.24 + i * 0.08 }}
+                        className="p-3 rounded-lg bg-muted/50 border border-border/30"
+                      >
+                        <span className="inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium mb-1.5">
+                          {t.tag}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                          <Quote className="inline w-3 h-3 mr-0.5 opacity-40" />
+                          {t.quote}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                            <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-medium">{t.name}</p>
+                            <p className="text-[9px] text-muted-foreground/60">{t.identity}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 收起按钮 */}
+                <button
+                  onClick={() => setIsExpanded(false)}
+                  className="w-full text-center text-xs text-muted-foreground py-2 active:opacity-70"
+                >
+                  收起 ↑
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* ── Powered by 有劲AI ── */}
       <motion.div
         initial={{ opacity: 0 }}
