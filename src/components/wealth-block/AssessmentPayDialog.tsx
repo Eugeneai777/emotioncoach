@@ -86,6 +86,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const pollingStartTimeRef = useRef<number>(0);
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
+  const createOrderCalledRef = useRef<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -975,7 +976,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       return;
     }
 
-    if (open && status === "idle") {
+    if (open && status === "idle" && !createOrderCalledRef.current) {
+      createOrderCalledRef.current = true;
       console.log("[AssessmentPay] Triggering createOrder...");
       createOrder();
     }
@@ -1036,6 +1038,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setPollingTimeout(false);
       setIsForceChecking(false);
       openIdFetchedRef.current = false;
+      createOrderCalledRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
     }

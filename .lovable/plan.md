@@ -1,49 +1,23 @@
 
 
-# 修复情绪健康测评微信支付闪现问题
+## 两个问题需要修复
 
-## 根因
-`AssessmentPayDialog` 的初始化 useEffect 缺少防重入保护（ref guard），导致 `openIdResolved` 状态变化时在 `status` 尚未切换前多次调用 `createOrder()`，3秒内创建5个订单。每个新订单取消前一个的 prepay_id，JSAPI 支付弹窗调起后立即失效 → 闪现消失。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 修复方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 文件：`src/components/wealth-block/AssessmentPayDialog.tsx`
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**变更1**：新增 `createOrderCalledRef`（类似 WechatPayDialog 的 `orderCreatedRef`）
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-在 state 声明区域添加：
-```typescript
-const createOrderCalledRef = useRef(false);
-```
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**变更2**：修改 L960 的初始化 useEffect，加入 ref guard
-
-```typescript
-useEffect(() => {
-  if (shouldWaitForOpenId && !openIdResolved) return;
-  if (open && status === "idle" && !createOrderCalledRef.current) {
-    createOrderCalledRef.current = true;
-    createOrder();
-  }
-}, [open, status, shouldWaitForOpenId, openIdResolved]);
-```
-
-**变更3**：在关闭弹窗时重置 ref（L1028 附近）
-
-```typescript
-useEffect(() => {
-  if (!open) {
-    stopPolling();
-    createOrderCalledRef.current = false; // 重置
-    // ... 其他重置逻辑
-  }
-}, [open]);
-```
-
-**变更4**：在重试逻辑中重置 ref（如有手动重试按钮）
-
-确保用户点击"重试"时 `createOrderCalledRef.current = false` 再调用 `createOrder()`。
-
-## 影响范围
-仅修改 `src/components/wealth-block/AssessmentPayDialog.tsx`，添加 ref 防重入保护。不影响其他支付组件（WechatPayDialog 已有此保护）。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
