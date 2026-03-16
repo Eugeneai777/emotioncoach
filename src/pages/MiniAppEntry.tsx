@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote } from "lucide-react";
+import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag } from "lucide-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
@@ -48,6 +48,16 @@ const exploreBlocks = [
     route: "/camps",
     color: "text-amber-400",
     bg: "bg-amber-500/10",
+  },
+  {
+    icon: ShoppingBag,
+    emoji: "🏪",
+    title: "健康商城",
+    desc: "精选健康好物，知乐胶囊、协同套餐……用科学守护身心平衡",
+    btnText: "去逛逛 →",
+    route: "/health-store",
+    color: "text-rose-400",
+    bg: "bg-rose-500/10",
   },
 ];
 
