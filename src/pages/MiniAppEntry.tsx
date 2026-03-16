@@ -35,10 +35,7 @@ const MiniAppEntry = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* ── 顶部标题 ── */}
-      <div
-        className="px-4 pb-3 pt-3"
-      >
-      >
+      <div className="px-4 pb-3 pt-3">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
