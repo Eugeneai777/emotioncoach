@@ -187,15 +187,14 @@ const MiniAppEntry = () => {
       style={{ WebkitOverflowScrolling: 'touch' as any, WebkitTapHighlightColor: 'transparent' } as React.CSSProperties}
     >
       {/* ── 顶部标题 ── */}
-      <div className="px-4 pb-3" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+      <div className="px-4 pb-1" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <motion.div
           initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
           className="text-center"
         >
-          <h1 className="text-lg font-bold text-foreground">有劲AI生活教练</h1>
-          <p className="text-[11px] text-muted-foreground mt-0.5">选一个最懂你的入口 ↓</p>
+          <p className="text-sm text-muted-foreground">选一个最懂你的入口 ↓</p>
         </motion.div>
       </div>
 
