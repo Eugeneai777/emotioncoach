@@ -365,7 +365,8 @@ const MiniAppEntry = () => {
                           {t.quote}
                         </p>
                       </motion.div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
