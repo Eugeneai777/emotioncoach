@@ -108,9 +108,12 @@ const MiniAppEntry = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30"
+      style={{ WebkitOverflowScrolling: 'touch' as any, WebkitTapHighlightColor: 'transparent' } as React.CSSProperties}
+    >
       {/* ── 顶部标题 ── */}
-      <div className="px-4 pb-3 pt-3">
+      <div className="px-4 pb-3" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
