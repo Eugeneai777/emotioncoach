@@ -373,7 +373,7 @@ const MiniAppEntry = () => {
                             </div>
                             <div>
                               <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
-                              <p className="text-[10px] text-muted-foreground leading-relaxed">{c.desc}</p>
+                              <p className="text-[10px] text-foreground/70 leading-relaxed">{c.desc}</p>
                             </div>
                           </div>
                         </motion.div>
