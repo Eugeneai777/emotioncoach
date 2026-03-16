@@ -134,7 +134,58 @@ serve(async (req) => {
       }
     }
 
-    // 🔑 防止重复支付：仅对限购套餐检查用户是否已有同 package_key 的已支付订单
+    // 🆕 后端去重：复用同用户同套餐15分钟内的 pending 订单，避免重复下单
+    if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
+      const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { data: recentPending } = await supabase
+        .from('orders')
+        .select('order_no, qr_code_url, pay_type, created_at')
+        .eq('user_id', finalUserId)
+        .eq('package_key', packageKey)
+        .eq('status', 'pending')
+        .gte('created_at', fifteenMinAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (recentPending) {
+        console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'created at:', recentPending.created_at);
+        
+        // 小程序支付且无 QR：返回已有订单号让原生端继续
+        if (payType === 'miniprogram' && !recentPending.qr_code_url) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              orderNo: recentPending.order_no,
+              payType: 'miniprogram',
+              needsNativePayment: true,
+              existingOrder: true,
+              message: '使用已有订单',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Native 支付且有 QR：直接返回
+        if (recentPending.qr_code_url) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              orderNo: recentPending.order_no,
+              payUrl: recentPending.qr_code_url,
+              qrCodeUrl: recentPending.qr_code_url,
+              payType: 'native',
+              existingOrder: true,
+              message: '使用已有订单',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // 其他情况（如 JSAPI/H5 pending 订单）：不复用，因为 prepay_id 可能已失效
+      }
+    }
+
     // 限购套餐列表（只能购买一次的产品）
     const limitedPurchasePackages = ['basic', 'wealth_block_assessment'];
     const isLimitedPackage = limitedPurchasePackages.includes(packageKey);
