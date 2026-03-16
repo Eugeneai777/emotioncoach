@@ -87,9 +87,15 @@ const MamaAssistant = () => {
           className="flex flex-col items-center py-8"
         >
           <button
-            onClick={() => openChat()}
+            onClick={() => {
+              if (!user) {
+                navigate("/auth");
+                return;
+              }
+              setShowVoice(true);
+            }}
             className="relative group focus:outline-none touch-manipulation"
-            aria-label="开始聊天"
+            aria-label="智能语音"
           >
             <div className="absolute inset-[-16px] bg-gradient-to-r from-pink-300 to-rose-300 rounded-full animate-pulse opacity-30" />
             <div
@@ -103,9 +109,9 @@ const MamaAssistant = () => {
                             hover:scale-105 active:scale-95 
                             transition-all duration-200 ease-out">
               <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                <MessageCircle className="w-8 h-8 text-white" />
+                <Mic className="w-8 h-8 text-white" />
               </div>
-              <span className="text-white font-bold text-lg">聊一聊</span>
+              <span className="text-white font-bold text-lg">智能语音</span>
             </div>
           </button>
 
