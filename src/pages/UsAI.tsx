@@ -66,9 +66,6 @@ const UsAI = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-1"
         >
-          <div className="inline-flex items-center gap-1.5 mb-2">
-            <Heart className="w-4 h-4 text-usai-primary" />
-          </div>
           <span className="block text-[22px] font-extrabold tracking-wider text-usai-foreground">
             我们AI
           </span>
