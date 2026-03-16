@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  Home, Info,
+  User, Info,
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -83,17 +83,14 @@ const AwakeningBottomNav: React.FC = () => {
         {/* 背景条 */}
         <div className="bg-background/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-8">
-            {/* 左侧 - 首页 */}
+            {/* 左侧 - 我的 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                sessionStorage.setItem('skip_preferred_redirect', 'true');
-                navigate('/mini-app');
-              }}
+              onClick={() => navigate('/profile')}
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
-              <Home className="w-5 h-5" />
-              <span className="text-xs">首页</span>
+              <User className="w-5 h-5" />
+              <span className="text-xs">我的</span>
             </motion.button>
 
             {/* 中间占位 */}
