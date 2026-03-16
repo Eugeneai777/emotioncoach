@@ -390,7 +390,7 @@ const MiniAppEntry = () => {
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
                     <span className="text-[10px] text-muted-foreground/50 ml-auto">{testimonials.length} 条真实分享</span>
                   </div>
-                  <div className="columns-2 gap-2.5 space-y-0">
+                  <div className="space-y-2.5">
                     {testimonials.map((t, i) => {
                       const gradients = [
                         "from-blue-500/10 to-indigo-500/5",
