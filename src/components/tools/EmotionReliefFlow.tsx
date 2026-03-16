@@ -31,7 +31,7 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
   const [cycleCount, setCycleCount] = useState(1);
   const [showReminderAnimation, setShowReminderAnimation] = useState(false);
-  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(!!autoOpenPurchase);
   
   // 免费试用追踪
   const { usageCount, freeLimit, isLimitReached, remainingFree, incrementUsage, trackEvent } = useFreeTrialTracking({
