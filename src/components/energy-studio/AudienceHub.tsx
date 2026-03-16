@@ -16,7 +16,7 @@ const audiences = [
   {
     id: "workplace",
     emoji: "💼",
-    label: "职场解压",
+    label: "解压AI",
     subtitle: "压力·倦怠恢复",
     route: "/workplace",
     gradient: "from-blue-400 to-indigo-500",
