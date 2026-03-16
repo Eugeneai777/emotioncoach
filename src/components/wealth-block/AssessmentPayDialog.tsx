@@ -86,6 +86,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const pollingStartTimeRef = useRef<number>(0);
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
+  const createOrderCalledRef = useRef<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
