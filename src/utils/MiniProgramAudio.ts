@@ -443,9 +443,10 @@ export class MiniProgramAudioClient {
         success: () => resolve(true),
         fail: () => {
           // 🔧 权限被拒：尝试引导用户前往设置页开启
-          if (wx?.openSetting) {
+          const wxAny = wx as any;
+          if (wxAny?.openSetting) {
             console.log('[MiniProgramAudio] Permission denied, opening settings');
-            wx.openSetting({
+            wxAny.openSetting({
               success: (res: any) => {
                 if (res?.authSetting?.['scope.record']) {
                   resolve(true);
