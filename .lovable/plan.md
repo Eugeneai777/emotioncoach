@@ -1,59 +1,23 @@
 
 
-## 计划：最简家庭相册（孩子上传，老人查看，限50张）
+## 两个问题需要修复
 
-### 数据库变更
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-**1. 创建 `family-photos` Storage bucket**
-```sql
-INSERT INTO storage.buckets (id, name, public) VALUES ('family-photos', 'family-photos', true);
-```
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**2. Storage RLS 策略**
-- authenticated 用户可上传到自己 `user_id/` 目录
-- 所有人可读（老人可能未登录）
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**3. 创建 `family_photos` 表**
-```sql
-CREATE TABLE public.family_photos (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  photo_url text NOT NULL,
-  caption text,
-  created_at timestamptz DEFAULT now()
-);
-ALTER TABLE public.family_photos ENABLE ROW LEVEL SECURITY;
-```
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-**4. RLS 策略**
-- SELECT: anon + authenticated 均可读（老人可能未登录，通过 `user_id` 过滤）
-- INSERT: authenticated，`user_id = auth.uid()`
-- DELETE: authenticated，`user_id = auth.uid()`
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### 前端组件
-
-**5. 新建 `src/components/elder-care/FamilyPhotoUploader.tsx`**
-- 孩子端上传组件，放在 ElderModeEntryCard 中
-- 复用已有图片压缩逻辑（参考 ImageUploader.tsx）
-- 上传前检查数量限制（查询当前照片数，≥50 则提示已满）
-- 上传到 `family-photos` bucket，写入 `family_photos` 表
-- 可选添加简短文字说明
-
-**6. 新建 `src/components/elder-care/ChildPhotosCard.tsx`**
-- 老人端查看组件，放在 ElderCarePage 中
-- 从 localStorage 读取 `child_user_id`（`getChildRef()`）
-- 查询 `family_photos` 表，`user_id = childRef`，按 `created_at DESC` 取最近照片
-- 横向滚动相册，大圆角，温暖配色，适合老人
-- 点击可放大查看
-- 无 childRef 或无照片时不显示
-
-**7. 修改 `ElderModeEntryCard.tsx`**
-- 在已有卡片中新增「上传照片给长辈」按钮，展开 FamilyPhotoUploader
-
-**8. 修改 `ElderCarePage.tsx`**
-- 在功能入口下方插入 `<ChildPhotosCard />`
-
-### 限制策略
-- 前端上传前查询 `SELECT count(*) FROM family_photos WHERE user_id = auth.uid()`，≥50 拒绝上传
-- 支持删除旧照片腾出空间
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

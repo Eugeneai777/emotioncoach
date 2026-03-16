@@ -9,6 +9,7 @@ import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+import { ChildPhotosCard } from "@/components/elder-care/ChildPhotosCard";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
@@ -137,7 +138,8 @@ const ElderCarePage = () => {
           </div>
         </motion.div>
 
-        {/* 安全守护 CTA */}
+        {/* 家人相册 */}
+        <ChildPhotosCard />
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

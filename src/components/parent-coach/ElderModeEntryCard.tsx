@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ElderMoodReport } from "./ElderMoodReport";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { FamilyPhotoUploader } from "@/components/elder-care/FamilyPhotoUploader";
 
 export function ElderModeEntryCard() {
   const navigate = useNavigate();
@@ -92,6 +93,7 @@ export function ElderModeEntryCard() {
             </div>
           </div>
           <ElderMoodReport />
+          <FamilyPhotoUploader />
         </CardContent>
       </Card>
     );
