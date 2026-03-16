@@ -183,30 +183,34 @@ const MiniAppEntry = () => {
       </div>
 
       {/* ── 人群入口 3列网格 ── */}
-      <div className="px-3 pb-4">
-        <div className="grid grid-cols-3 gap-1.5">
+      <div className="px-4 pb-4">
+        <div className="grid grid-cols-3 gap-2">
           {audiences.map((a, i) => (
             <motion.button
               key={a.id}
               initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => navigate(a.route)}
               style={{ transform: "translateZ(0)" }}
-              className={`relative overflow-hidden rounded-xl p-3 bg-gradient-to-br ${a.gradient} shadow-sm min-h-[88px] flex flex-col items-center justify-center gap-1 active:shadow-md transition-shadow duration-150`}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200`}
             >
-              <div className="absolute top-0 right-0 w-12 h-12 opacity-15">
-                <div className="absolute top-0.5 right-0.5 text-2xl opacity-40">
-                  {a.emoji}
-                </div>
+              {/* 顶部高光层 */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
+              {/* 右上角装饰水印 */}
+              <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
+              {/* 图标容器 */}
+              <div className="relative z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]">
+                <span className="text-lg">{a.emoji}</span>
               </div>
-              <div className="relative z-10 text-center">
-                <span className="text-xl block mb-1">{a.emoji}</span>
-                <h3 className="text-sm font-bold text-white leading-tight">{a.label}</h3>
-                <p className="text-[10px] text-white/70 mt-0.5 leading-tight line-clamp-1">{a.subtitle}</p>
+              {/* 文字区 */}
+              <div className="relative z-10 mt-auto">
+                <h3 className="text-[15px] font-extrabold text-white leading-tight tracking-wide">{a.label}</h3>
+                <p className="text-[10px] text-white/80 mt-0.5 leading-tight tracking-wider line-clamp-1">{a.subtitle}</p>
               </div>
-              <div className="absolute inset-0 bg-white/0 active:bg-white/15 transition-colors duration-150" />
+              {/* 按压反馈层 */}
+              <div className="absolute inset-0 bg-white/0 active:bg-white/10 transition-colors duration-150 pointer-events-none" />
             </motion.button>
           ))}
         </div>
