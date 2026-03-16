@@ -374,11 +374,15 @@ export function PaymentStep({
 
   const handleRetry = () => {
     clearTimers();
+    createOrderCalledRef.current = false;
     createOrder();
   };
 
   useEffect(() => {
-    createOrder();
+    if (!createOrderCalledRef.current) {
+      createOrderCalledRef.current = true;
+      createOrder();
+    }
     return () => clearTimers();
   }, []);
 
