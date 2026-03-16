@@ -71,6 +71,11 @@ export class MiniProgramAudioClient {
   // 🔧 心跳超时检测
   private missedPongs: number = 0;
   
+  // 🔧 音频健康监控
+  private audioHealthInterval: ReturnType<typeof setInterval> | null = null;
+  private lastAudioEnergyTime: number = 0; // 上次检测到音频能量的时间
+  private silentFrameCount: number = 0; // 连续静音帧计数
+  
   // 🔧 iOS 可见性监听
   private visibilityHandler: (() => void) | null = null;
 
