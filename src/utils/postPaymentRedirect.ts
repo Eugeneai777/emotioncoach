@@ -9,6 +9,10 @@ export function getPostPaymentRedirectPath(packageKey?: string | null, returnUrl
     return "/camp-intro/wealth_block_7";
   }
 
+  if (key === "zhile_havruta_bundle") {
+    return "/promo/zhile-havruta";
+  }
+
   if (key.startsWith("camp-")) {
     const campType = key.replace("camp-", "");
     if (campType) return `/camp-intro/${campType}`;

@@ -27,6 +27,14 @@ const promoCards: PromoCard[] = [
     path: "/promo/synergy",
     tag: "限时特惠",
   },
+  {
+    id: "zhile-havruta",
+    title: "知乐·海洛塔双效解压包",
+    subtitle: "知乐胶囊 + 90min海洛塔团队辅导",
+    emoji: "🧘",
+    path: "/promo/zhile-havruta",
+    tag: "¥399",
+  },
 ];
 
 export function PartnerPromoPages({ partnerCode }: PartnerPromoPagesProps) {
