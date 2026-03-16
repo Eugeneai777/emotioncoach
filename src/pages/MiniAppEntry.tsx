@@ -315,11 +315,11 @@ const MiniAppEntry = () => {
                             <img
                               src={illustrations[block.illustrationKey]}
                               alt=""
-                              className="absolute -right-3 -bottom-3 w-20 h-20 object-contain opacity-15 pointer-events-none select-none"
+                              className="absolute -right-3 -bottom-3 w-24 h-24 object-contain opacity-25 pointer-events-none select-none"
                               loading="lazy"
                             />
                           )}
-                          <div className={`relative z-10 w-8 h-8 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden`}>
+                          <div className={`relative z-10 w-11 h-11 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden bg-white/60 shadow-sm`}>
                             {illustrations[block.illustrationKey] ? (
                               <img src={illustrations[block.illustrationKey]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
                             ) : (
@@ -360,12 +360,12 @@ const MiniAppEntry = () => {
                             <img
                               src={illustrations[c.illustrationKey]}
                               alt=""
-                              className="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 object-contain opacity-10 pointer-events-none select-none"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-18 h-18 object-contain opacity-20 pointer-events-none select-none"
                               loading="lazy"
                             />
                           )}
                           <div className="flex items-start gap-3 relative z-10">
-                            <div className={`w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
+                            <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
                               {illustrations[c.illustrationKey] ? (
                                 <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
                               ) : (
@@ -413,7 +413,7 @@ const MiniAppEntry = () => {
                             {t.quote}
                           </p>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0">
                               {illustrations[`avatar_${i}`] ? (
                                 <img src={illustrations[`avatar_${i}`]} alt="" className="w-full h-full object-cover" loading="lazy" />
                               ) : (

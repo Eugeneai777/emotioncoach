@@ -6,7 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LINE_ART_STYLE = "minimalist single-color line art sketch on a transparent/white background, thin elegant strokes, no fill colors, no shading, simple and clean, suitable as a small icon or card decoration";
+// Three distinct visual styles for different sections
+const BLOCK_STYLE = "bold thick black line art with solid single-color fill (navy blue #1e3a5f), clean geometric shapes, high contrast on white background, no shading gradients, suitable as app icon at small size (48px), square composition";
+const SCENE_STYLE = "soft watercolor sketch style, gentle pastel color washes (lavender, peach, mint) with loose hand-drawn outlines, dreamy and emotional atmosphere, on white background, square composition";
+const AVATAR_STYLE = "flat cartoon avatar portrait, round face, warm skin tones, soft pastel colored background circle, friendly expression, simple features, suitable as small profile picture (32px), square composition";
 
 const AUDIENCE_PROMPTS: Record<string, string> = {
   // === 人群入口 (warm flat style) ===
@@ -17,31 +20,31 @@ const AUDIENCE_PROMPTS: Record<string, string> = {
   midlife: "Generate a warm flat-style illustration featuring a prominent middle-aged man character in the center, wearing smart casual clothes, standing tall at a mountain peak looking at the horizon with determination. The character should be the main focal point taking up most of the image. Warm orange and sunset red gradient background. No text, stylized face (not realistic), square composition, suitable for a mobile app card.",
   senior: "Generate a warm flat-style illustration featuring a prominent elderly couple character in the center, a grandfather and grandmother sitting together on a park bench, surrounded by green leaves and flowers. The characters should be the main focal point taking up most of the image. Soft emerald and teal gradient background. No text, stylized faces (not realistic), square composition, suitable for a mobile app card.",
 
-  // === 四大板块 (line art) ===
-  block_daily_tools: `${LINE_ART_STYLE}. A person meditating cross-legged with a small heart floating above, surrounded by tiny stars. Square composition.`,
-  block_assessments: `${LINE_ART_STYLE}. A clipboard with a checklist and a magnifying glass examining it, with a small brain icon. Square composition.`,
-  block_training: `${LINE_ART_STYLE}. A person climbing steps upward with a flag at the top, showing growth journey. Square composition.`,
-  block_health_store: `${LINE_ART_STYLE}. A shopping bag with a leaf and a pill capsule, representing health products. Square composition.`,
+  // === 四大板块 (bold icon style) ===
+  block_daily_tools: `${BLOCK_STYLE}. A person meditating cross-legged with a heart floating above, surrounded by tiny stars.`,
+  block_assessments: `${BLOCK_STYLE}. A clipboard with a checklist and a magnifying glass, with a brain icon.`,
+  block_training: `${BLOCK_STYLE}. A person climbing steps upward with a flag at the top, showing growth.`,
+  block_health_store: `${BLOCK_STYLE}. A shopping bag with a leaf and a pill capsule, health products.`,
 
-  // === 使用场景 (line art) ===
-  scene_anxiety: `${LINE_ART_STYLE}. A person sitting by a window at night with a crescent moon, holding a phone with gentle light. Square composition.`,
-  scene_workplace: `${LINE_ART_STYLE}. A person at a desk with thought bubbles showing question marks turning into lightbulbs. Square composition.`,
-  scene_relationship: `${LINE_ART_STYLE}. Two people sitting back-to-back with a broken heart between them being repaired. Square composition.`,
-  scene_growth: `${LINE_ART_STYLE}. A person watering a small plant that's growing from their head, symbolizing personal growth. Square composition.`,
+  // === 使用场景 (watercolor sketch) ===
+  scene_anxiety: `${SCENE_STYLE}. A person sitting by a window at night with a crescent moon, holding a phone with gentle light.`,
+  scene_workplace: `${SCENE_STYLE}. A person at a desk with thought bubbles showing question marks turning into lightbulbs.`,
+  scene_relationship: `${SCENE_STYLE}. Two people sitting back-to-back with a heart between them being gently repaired.`,
+  scene_growth: `${SCENE_STYLE}. A person watering a small plant growing from their head, symbolizing personal growth.`,
 
-  // === 用户见证头像 (line art portraits) ===
-  avatar_0: `${LINE_ART_STYLE}. Portrait of a young woman with short hair and gentle smile, front-facing bust. Square.`,
-  avatar_1: `${LINE_ART_STYLE}. Portrait of a man with short hair and confident expression, front-facing bust. Square.`,
-  avatar_2: `${LINE_ART_STYLE}. Portrait of a young woman with ponytail and soft eyes, front-facing bust. Square.`,
-  avatar_3: `${LINE_ART_STYLE}. Portrait of a woman with medium-length hair and warm smile, front-facing bust. Square.`,
-  avatar_4: `${LINE_ART_STYLE}. Portrait of a man with glasses and thoughtful expression, front-facing bust. Square.`,
-  avatar_5: `${LINE_ART_STYLE}. Portrait of a woman with hair bun and kind eyes, front-facing bust. Square.`,
-  avatar_6: `${LINE_ART_STYLE}. Portrait of a young man with messy hair and cheerful smile, front-facing bust. Square.`,
-  avatar_7: `${LINE_ART_STYLE}. Portrait of a man with crew cut and determined look, front-facing bust. Square.`,
-  avatar_8: `${LINE_ART_STYLE}. Portrait of an elderly man with reading glasses and wise smile, front-facing bust. Square.`,
-  avatar_9: `${LINE_ART_STYLE}. Portrait of a man with neat hair and friendly smile, front-facing bust. Square.`,
-  avatar_10: `${LINE_ART_STYLE}. Portrait of a teenage boy with backpack strap visible and hopeful eyes, front-facing bust. Square.`,
-  avatar_11: `${LINE_ART_STYLE}. Portrait of a young woman with earrings and professional look, front-facing bust. Square.`,
+  // === 用户见证头像 (flat cartoon avatars) ===
+  avatar_0: `${AVATAR_STYLE}. Young Chinese woman with short bob hair and gentle smile.`,
+  avatar_1: `${AVATAR_STYLE}. Chinese man with short hair and confident warm expression.`,
+  avatar_2: `${AVATAR_STYLE}. Young Chinese woman with ponytail and soft kind eyes.`,
+  avatar_3: `${AVATAR_STYLE}. Chinese woman with medium-length hair and warm smile.`,
+  avatar_4: `${AVATAR_STYLE}. Chinese man with glasses and thoughtful expression.`,
+  avatar_5: `${AVATAR_STYLE}. Chinese woman with hair bun and kind nurturing eyes.`,
+  avatar_6: `${AVATAR_STYLE}. Young Chinese man with messy hair and cheerful smile.`,
+  avatar_7: `${AVATAR_STYLE}. Chinese man with crew cut and determined look.`,
+  avatar_8: `${AVATAR_STYLE}. Elderly Chinese man with reading glasses and wise smile.`,
+  avatar_9: `${AVATAR_STYLE}. Chinese man with neat hair and friendly smile.`,
+  avatar_10: `${AVATAR_STYLE}. Chinese teenage boy with backpack strap and hopeful eyes.`,
+  avatar_11: `${AVATAR_STYLE}. Young Chinese woman with earrings and professional look.`,
 };
 
 serve(async (req) => {
