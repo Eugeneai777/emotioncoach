@@ -10,6 +10,7 @@ import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { ChildPhotosCard } from "@/components/elder-care/ChildPhotosCard";
+import { FamilyPhotoUploader } from "@/components/elder-care/FamilyPhotoUploader";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
