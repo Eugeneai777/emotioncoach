@@ -441,7 +441,24 @@ export class MiniProgramAudioClient {
       wx.authorize({
         scope: 'scope.record',
         success: () => resolve(true),
-        fail: () => resolve(false),
+        fail: () => {
+          // 🔧 权限被拒：尝试引导用户前往设置页开启
+          if (wx?.openSetting) {
+            console.log('[MiniProgramAudio] Permission denied, opening settings');
+            wx.openSetting({
+              success: (res: any) => {
+                if (res?.authSetting?.['scope.record']) {
+                  resolve(true);
+                } else {
+                  resolve(false);
+                }
+              },
+              fail: () => resolve(false),
+            });
+          } else {
+            resolve(false);
+          }
+        },
       });
     });
   }

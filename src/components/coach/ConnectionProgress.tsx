@@ -243,7 +243,7 @@ export const ConnectionStatusBadge = ({
 
       {/* 备用通道标识 */}
       {usingFallback && (
-        <span className="text-muted-foreground">备用</span>
+        <span className="text-muted-foreground">兼容</span>
       )}
     </div>
   );
