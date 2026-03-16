@@ -1,15 +1,20 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageCircle, Share2, ChevronRight, Home } from "lucide-react";
+import { Mic, Share2, ChevronRight, Home } from "lucide-react";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const [showVoice, setShowVoice] = useState(false);
 
   useEffect(() => {
     const from = searchParams.get("from");
@@ -28,7 +33,7 @@ const ElderCarePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50/40 to-white pb-20">
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
 
-        {/* Top bar — same as XiaojinHome */}
+        {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
           <motion.button
             initial={{ opacity: 0 }}
@@ -75,9 +80,15 @@ const ElderCarePage = () => {
           className="flex flex-col items-center py-8"
         >
           <button
-            onClick={() => navigate("/elder-care/chat")}
+            onClick={() => {
+              if (!user) {
+                navigate("/auth");
+                return;
+              }
+              setShowVoice(true);
+            }}
             className="relative group focus:outline-none touch-manipulation"
-            aria-label="开始聊天"
+            aria-label="智能语音"
           >
             <div className="absolute inset-[-16px] bg-gradient-to-r from-orange-300 to-amber-300 rounded-full animate-pulse opacity-30" />
             <div
@@ -91,9 +102,9 @@ const ElderCarePage = () => {
                             hover:scale-105 active:scale-95 
                             transition-all duration-200 ease-out">
               <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                <MessageCircle className="w-8 h-8 text-white" />
+                <Mic className="w-8 h-8 text-white" />
               </div>
-              <span className="text-white font-bold text-lg">陪我聊聊</span>
+              <span className="text-white font-bold text-lg">智能语音</span>
             </div>
           </button>
 
@@ -176,6 +187,20 @@ const ElderCarePage = () => {
           <p className="text-xs text-muted-foreground/50">大劲AI · 让陪伴更简单</p>
         </div>
       </div>
+
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="🧓"
+          coachTitle="大劲AI语音教练"
+          primaryColor="orange"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
 
       <AwakeningBottomNav />
     </div>
