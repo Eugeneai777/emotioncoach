@@ -218,25 +218,21 @@ const MiniAppEntry = () => {
                 {exploreBlocks.map((block, i) => (
                   <motion.div
                     key={block.title}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
-                    className="rounded-xl bg-card border border-border/50 p-4 shadow-sm"
+                    onClick={() => navigate(block.route)}
+                    className={`relative rounded-xl overflow-hidden bg-gradient-to-r ${block.gradient} border border-border/40 p-3.5 shadow-sm active:scale-[0.98] transition-transform cursor-pointer`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg ${block.bg} flex items-center justify-center shrink-0`}>
-                        <span className="text-lg">{block.emoji}</span>
-                      </div>
+                    {/* 左侧色条 */}
+                    <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-full ${block.accent}`} />
+                    <div className="flex items-center gap-3 pl-2.5">
+                      <span className="text-2xl shrink-0">{block.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-bold text-foreground">{block.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{block.desc}</p>
-                        <button
-                          onClick={() => navigate(block.route)}
-                          className={`mt-2 text-xs font-medium ${block.color} active:opacity-70 transition-opacity`}
-                        >
-                          {block.btnText}
-                        </button>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug line-clamp-1">{block.desc}</p>
                       </div>
+                      <span className={`text-xs font-medium ${block.color} shrink-0`}>{block.btnText}</span>
                     </div>
                   </motion.div>
                 ))}
