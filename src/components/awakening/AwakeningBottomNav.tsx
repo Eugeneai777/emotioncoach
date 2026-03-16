@@ -5,7 +5,7 @@ import {
   User, Info,
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
-import logoImage from "@/assets/logo-youjin-ai.png";
+import logoImage from "@/assets/youjin-ai-logo.png";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
@@ -211,7 +211,7 @@ const AwakeningBottomNav: React.FC = () => {
             animate={{ y: [0, -3, 0] }}
             transition={{ y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }}
           >
-            <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover scale-[1.15]" />
+            <img src={logoImage} alt="有劲AI" className="w-[115%] h-[115%] object-cover" />
           </motion.button>
           <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">开始对话</span>
         </div>
