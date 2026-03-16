@@ -1,23 +1,50 @@
 
 
-## 两个问题需要修复
+## 在 MiniAppEntry 添加"了解更多"可折叠介绍区
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+在个性化欢迎语下方添加一个可折叠的介绍性区域，聚焦**工具、测评、训练营**三大板块 + 用户见证。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 修改文件
+`src/pages/MiniAppEntry.tsx`
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+### 布局结构
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+```text
+┌─────────────────────────────┐
+│  ✨ 个性化欢迎语            │
+├─────────────────────────────┤
+│  [还想探索更多？  ▼]        │  ← 折叠触发器（卡片样式）
+├─────────────────────────────┤
+│  展开后：                    │
+│                              │
+│  ── 🛠 日常工具 ──           │  板块一
+│  标题 + 一句话介绍            │
+│  "情绪SOS、呼吸练习、感恩日记…"│
+│  [去看看 →] → /energy-studio │
+│                              │
+│  ── 📊 专业测评 ──           │  板块二
+│  标题 + 一句话介绍            │
+│  "PHQ-9、财富测评、关系测评…"  │
+│  [去测评 →] → /energy-studio │
+│                              │
+│  ── 🏕️ 系统训练营 ──         │  板块三
+│  标题 + 一句话介绍            │
+│  "21天情绪觉醒、财富信念重塑…" │
+│  [去报名 →] → /camps         │
+│                              │
+│  ── 💬 用户见证 ──           │  板块四
+│  2-3条真实用户引用卡片        │
+│  带 tag + 引文 + 用户信息     │
+│                              │
+│  [收起 ↑]                    │
+└─────────────────────────────┘
+```
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+### 实现细节
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+1. **折叠触发器**：`bg-card` 圆角卡片按钮，带 `ChevronDown`/`ChevronUp` 图标
+2. **三大板块**：每个板块用 `bg-card` 卡片包裹，左侧彩色 emoji/图标，标题+描述+功能按钮（跳转对应路由）
+3. **用户见证**：复用 `TestimonialsSection` 中的数据结构，3 条引用卡片
+4. **动画**：`AnimatePresence` + `motion.div` 实现展开/收起
+5. **路由**：工具→`/energy-studio`，测评→`/energy-studio`（切到测评tab），训练营→`/camps`
 
