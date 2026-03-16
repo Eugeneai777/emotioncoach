@@ -18,6 +18,9 @@ interface EmotionReliefFlowProps {
   autoOpenPurchase?: boolean;
 }
 
+type FlowStep = 'mode-select' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
+type StartMode = 'cognitive' | 'breathing';
+
 const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onClose, autoOpenPurchase }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
