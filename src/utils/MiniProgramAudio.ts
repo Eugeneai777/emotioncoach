@@ -361,8 +361,8 @@ export class MiniProgramAudioClient {
       // 创建音频源
       this.webSource = this.webAudioContext.createMediaStreamSource(this.webMediaStream);
       
-      // 创建处理节点（每帧 16384 样本，减少处理频率和数据碎片，提升音质）
-      this.webProcessor = this.webAudioContext.createScriptProcessor(16384, 1, 1);
+      // 创建处理节点（bufferSize=4096 约 170ms 延迟，平衡延迟和音质）
+      this.webProcessor = this.webAudioContext.createScriptProcessor(4096, 1, 1);
       
       this.webProcessor.onaudioprocess = (e) => {
         if (this.ws?.readyState !== WebSocket.OPEN) return;
@@ -441,7 +441,25 @@ export class MiniProgramAudioClient {
       wx.authorize({
         scope: 'scope.record',
         success: () => resolve(true),
-        fail: () => resolve(false),
+        fail: () => {
+          // 🔧 权限被拒：尝试引导用户前往设置页开启
+          const wxAny = wx as any;
+          if (wxAny?.openSetting) {
+            console.log('[MiniProgramAudio] Permission denied, opening settings');
+            wxAny.openSetting({
+              success: (res: any) => {
+                if (res?.authSetting?.['scope.record']) {
+                  resolve(true);
+                } else {
+                  resolve(false);
+                }
+              },
+              fail: () => resolve(false),
+            });
+          } else {
+            resolve(false);
+          }
+        },
       });
     });
   }
@@ -685,12 +703,25 @@ export class MiniProgramAudioClient {
 
   /**
    * 🔧 获取或创建播放用 AudioContext（复用以提升音质）
+   * iOS 静音开关兼容：首次创建时播放静音缓冲区解锁音频
    */
   private getPlaybackContext(): AudioContext {
     if (!this.playbackContext || this.playbackContext.state === 'closed') {
       this.playbackContext = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 24000
       });
+      
+      // 🔧 iOS 静音开关兼容：播放静音缓冲区解锁音频输出
+      try {
+        const silentBuffer = this.playbackContext.createBuffer(1, 1, 24000);
+        const silentSource = this.playbackContext.createBufferSource();
+        silentSource.buffer = silentBuffer;
+        silentSource.connect(this.playbackContext.destination);
+        silentSource.start(0);
+        console.log('[MiniProgramAudio] AudioContext unlocked with silent buffer');
+      } catch (e) {
+        console.warn('[MiniProgramAudio] Silent buffer unlock failed:', e);
+      }
     }
     // 确保 AudioContext 是运行状态
     if (this.playbackContext.state === 'suspended') {
@@ -726,7 +757,13 @@ export class MiniProgramAudioClient {
 
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
+      
+      // 🔧 音量增益：与 WebRTC 模式一致，放大到 4.0
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 4.0;
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
       source.onended = () => {
         this.isPlaying = false;
         this.playNextInQueue();
@@ -819,6 +856,12 @@ export class MiniProgramAudioClient {
         // 🔧 重置心跳计数（后台期间可能丢失了 pong）
         this.missedPongs = 0;
         this.lastPongTime = Date.now();
+        
+        // 🔧 断线恢复优化：主动检测 WebSocket 状态
+        if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+          console.warn('[MiniProgramAudio] WebSocket disconnected while in background, triggering reconnect');
+          this.handleDisconnect();
+        }
       }
     };
     

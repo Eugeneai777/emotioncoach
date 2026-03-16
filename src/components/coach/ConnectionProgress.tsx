@@ -139,7 +139,7 @@ export const ConnectionProgress = ({
               {phase === 'preparing' && '正在检查账户状态...'}
               {phase === 'requesting_mic' && '请允许麦克风权限...'}
               {phase === 'getting_token' && '正在连接语音服务器...'}
-              {phase === 'establishing' && (usingFallback ? '正在使用备用通道...' : '正在建立语音通道...')}
+              {phase === 'establishing' && (usingFallback ? '正在连接语音通道（兼容模式）...' : '正在建立语音通道...')}
             </motion.p>
 
             {/* 等待时间 */}
@@ -243,7 +243,7 @@ export const ConnectionStatusBadge = ({
 
       {/* 备用通道标识 */}
       {usingFallback && (
-        <span className="text-muted-foreground">备用</span>
+        <span className="text-muted-foreground">兼容</span>
       )}
     </div>
   );

@@ -2197,9 +2197,9 @@ export const CoachVoiceChat = ({
   }
 
   return (
-    <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col`}>
-      {/* 顶部状态栏 */}
-      <div className="flex items-center justify-between p-4 pt-safe">
+    <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col ${useMiniProgramMode ? 'pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,0px)]' : ''}`}>
+      {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
+      <div className={`flex items-center justify-between p-4 ${useMiniProgramMode ? 'pt-2' : 'pt-safe'}`}>
         {/* 左侧：返回按钮 */}
         <Button
           variant="ghost"
