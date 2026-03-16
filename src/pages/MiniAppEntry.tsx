@@ -305,17 +305,30 @@ const MiniAppEntry = () => {
                         <motion.button
                           key={block.title}
                           onClick={() => navigate(block.route)}
-                          className={`text-left p-3.5 rounded-2xl ${block.bg} ring-1 ${block.ring} shadow-lg ${block.glow} active:scale-[0.97] transition-all duration-150 hover:shadow-xl`}
+                          className={`relative text-left p-3.5 rounded-2xl ${block.bg} ring-1 ${block.ring} shadow-lg ${block.glow} active:scale-[0.97] transition-all duration-150 hover:shadow-xl overflow-hidden`}
                           initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.06, duration: 0.3 }}
                         >
-                          <div className={`w-8 h-8 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5`}>
-                            <Icon className={`w-4 h-4 ${block.iconColor}`} />
+                          {/* 右下角装饰插画 */}
+                          {illustrations[block.illustrationKey] && (
+                            <img
+                              src={illustrations[block.illustrationKey]}
+                              alt=""
+                              className="absolute -right-3 -bottom-3 w-20 h-20 object-contain opacity-15 pointer-events-none select-none"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className={`relative z-10 w-8 h-8 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden`}>
+                            {illustrations[block.illustrationKey] ? (
+                              <img src={illustrations[block.illustrationKey]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
+                            ) : (
+                              <Icon className={`w-4 h-4 ${block.iconColor}`} />
+                            )}
                           </div>
-                          <p className="text-[13px] font-bold text-foreground">{block.title}</p>
-                          <p className="text-[10px] text-muted-foreground/70 mb-1.5">{block.sub}</p>
-                          <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{block.desc}</p>
+                          <p className="relative z-10 text-[13px] font-bold text-foreground">{block.title}</p>
+                          <p className="relative z-10 text-[10px] text-muted-foreground/70 mb-1.5">{block.sub}</p>
+                          <p className="relative z-10 text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{block.desc}</p>
                         </motion.button>
                       );
                     })}
