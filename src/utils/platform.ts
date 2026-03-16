@@ -24,6 +24,7 @@ declare global {
         onError: (callback: (error: any) => void) => void;
       };
       authorize?: (options: any) => void;
+      openSetting?: (options: { success?: (res: any) => void; fail?: (err: any) => void }) => void;
       canIUse?: (api: string) => boolean;
       arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
       base64ToArrayBuffer?: (base64: string) => ArrayBuffer;
