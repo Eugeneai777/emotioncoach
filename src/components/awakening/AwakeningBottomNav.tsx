@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  Home, Info,
+  User, Info,
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
