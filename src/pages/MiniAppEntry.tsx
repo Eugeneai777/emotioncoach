@@ -341,7 +341,7 @@ const MiniAppEntry = () => {
                       <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
                       <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
                     </div>
-                    <p className="text-[11px] text-muted-foreground/60 ml-3">任何时刻，任何情绪，它都在</p>
+                    <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪，它都在</p>
                   </div>
                   <div className="space-y-2">
                     {useCases.map((c, i) => {
