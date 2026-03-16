@@ -48,6 +48,7 @@ const AwakeningSystemIntro = () => {
           <h2 className="text-xl font-extrabold text-foreground mb-2">
             生活不易，你不必独自扛着
           </h2>
+          <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold tracking-widest mb-1">AI 个人成长操作系统</p>
           <p className="text-sm text-muted-foreground leading-relaxed">
             有劲AI 是你的 AI 生活教练<br />
             帮你觉察情绪、理清想法、付诸行动
