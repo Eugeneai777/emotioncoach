@@ -585,8 +585,7 @@ export default function ZhileHavrutaPromoPage() {
 
       {/* ===== TESTIMONIALS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">学员真实感悟</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">来自绽放者联盟学员的分享</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-8">商品评价</h2>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}
