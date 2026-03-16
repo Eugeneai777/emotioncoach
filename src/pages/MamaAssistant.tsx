@@ -225,6 +225,20 @@ const MamaAssistant = () => {
         chatType={chatType}
       />
 
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="👩‍👧"
+          coachTitle="宝妈AI语音教练"
+          primaryColor="rose"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
+
       <AwakeningBottomNav />
     </div>
   );
