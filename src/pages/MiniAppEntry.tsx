@@ -360,7 +360,7 @@ const MiniAppEntry = () => {
                             <img
                               src={illustrations[c.illustrationKey]}
                               alt=""
-                              className="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 object-contain opacity-10 pointer-events-none select-none"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-18 h-18 object-contain opacity-20 pointer-events-none select-none"
                               loading="lazy"
                             />
                           )}
