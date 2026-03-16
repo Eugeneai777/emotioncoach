@@ -285,10 +285,8 @@ serve(async (req) => {
 
     // 生成订单号（或复用已有的待付款订单号）
     const reuseExistingOrder = !!existingOrderNo && payType === 'native';
-    // 如果去重阶段找到了可复用的小程序订单（有 openId 需要重新获取 prepay_id），也复用该 orderNo
-    const reuseMiniProgramOrderNo = (recentPending as any)?.order_no;
-    const orderNo = reuseExistingOrder ? existingOrderNo : (reuseMiniProgramOrderNo || generateOrderNo());
-    const shouldSkipInsert = !!reuseMiniProgramOrderNo; // 订单已在数据库中，无需重新 insert
+    const orderNo = reuseExistingOrder ? existingOrderNo : (reusedMiniProgramOrderNo || generateOrderNo());
+    const shouldSkipInsert = !!reusedMiniProgramOrderNo; // 订单已在数据库中，无需重新 insert
     const expiredAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
 
     // 构建微信支付请求体
