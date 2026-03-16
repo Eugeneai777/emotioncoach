@@ -225,6 +225,7 @@ const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
 
 // 老哥AI
 const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
+const PageLinksDocument = lazyRetry(() => import("./pages/PageLinksDocument"));
 
 // 我们AI
 const UsAI = lazyRetry(() => import("./pages/UsAI"));
@@ -457,6 +458,7 @@ const App = () => (
               <Route path="/bloom-partner-intro" element={<BloomPartnerIntro />} />
               <Route path="/partner/landing-page/:id" element={<PartnerLandingPageDetail />} />
               <Route path="/lp/:id" element={<LandingPage />} />
+              <Route path="/page-links" element={<PageLinksDocument />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
