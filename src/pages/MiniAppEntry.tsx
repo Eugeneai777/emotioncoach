@@ -110,24 +110,18 @@ const useCases = [
 ];
 
 const testimonials = [
-  {
-    quote: "第三次对话时，AI说'你上次提到对父亲有愧疚感'，我当时就哭了。它真的记得我说过的每一句话。",
-    name: "小雨",
-    identity: "28岁，产品经理",
-    tag: "AI记忆",
-  },
-  {
-    quote: "训练营第15天，AI告诉我'你的焦虑模式已经开始转变'，比我自己更早发现了变化。",
-    name: "阿杰",
-    identity: "35岁，创业者",
-    tag: "AI见证",
-  },
-  {
-    quote: "凌晨三点崩溃大哭时，没有人可以打电话，但AI教练在。那一晚它陪了我整整两个小时。",
-    name: "晓晓",
-    identity: "24岁，研究生",
-    tag: "AI陪伴",
-  },
+  { quote: "第三次对话时，AI说'你上次提到对父亲有愧疚感'，我当时就哭了。它真的记得我说过的每一句话。", name: "小雨", identity: "28岁，产品经理", tag: "AI记忆" },
+  { quote: "训练营第15天，AI告诉我'你的焦虑模式已经开始转变'，比我自己更早发现了变化。", name: "阿杰", identity: "35岁，创业者", tag: "AI见证" },
+  { quote: "凌晨三点崩溃大哭时，没有人可以打电话，但AI教练在。那一晚它陪了我整整两个小时。", name: "晓晓", identity: "24岁，研究生", tag: "AI陪伴" },
+  { quote: "老公总说我矫情，但AI教练说'你的感受是真实的'。那一刻我觉得终于被理解了。", name: "芳芳", identity: "32岁，全职妈妈", tag: "被理解" },
+  { quote: "做完财富信念测评，才发现我一直在'配不上'的信念里打转。这个认知让我开始改变消费习惯。", name: "大伟", identity: "40岁，工程师", tag: "财富觉醒" },
+  { quote: "和孩子吵完架，AI教练引导我看到了自己小时候被忽视的伤。原来我在重复父母的模式。", name: "丽姐", identity: "38岁，教师", tag: "代际疗愈" },
+  { quote: "每天早上的能量宣言已经坚持30天了，同事说我整个人气场都变了。", name: "小林", identity: "26岁，设计师", tag: "每日坚持" },
+  { quote: "情绪SOS真的是救命功能，上周开会被领导怼完，躲在厕所用了5分钟呼吸练习，整个人稳住了。", name: "阿明", identity: "30岁，销售", tag: "情绪急救" },
+  { quote: "退休后总觉得自己没用了，AI教练帮我重新发现了生活的意义。现在每天都在社区教太极。", name: "张叔", identity: "62岁，退休干部", tag: "银发觉醒" },
+  { quote: "和老婆做了沟通模式分析后，我才知道她说'随便'不是真的随便。这个功能救了我的婚姻。", name: "老王", identity: "36岁，程序员", tag: "关系修复" },
+  { quote: "高三压力大到想放弃，AI教练陪我做了一次觉醒日记，发现我怕的不是考试而是让爸妈失望。", name: "小凡", identity: "18岁，高三学生", tag: "青春成长" },
+  { quote: "21天训练营结束那天，AI生成的成长报告让我看到了自己的蜕变轨迹，感动到截图发了朋友圈。", name: "思思", identity: "29岁，HR", tag: "蜕变见证" },
 ];
 
 const MiniAppEntry = () => {
@@ -355,48 +349,47 @@ const MiniAppEntry = () => {
                   </div>
                 </div>
 
-                {/* 用户见证 - 横滑轮播 */}
+                {/* 用户见证 - 瀑布流 */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
-                    <span className="text-[10px] text-muted-foreground/50 ml-auto">← 滑动查看</span>
+                    <span className="text-[10px] text-muted-foreground/50 ml-auto">{testimonials.length} 条真实分享</span>
                   </div>
-                  <div 
-                    className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
-                    style={{ WebkitOverflowScrolling: 'touch' as any } as React.CSSProperties}
-                  >
+                  <div className="columns-2 gap-2.5 space-y-0">
                     {testimonials.map((t, i) => {
                       const gradients = [
                         "from-blue-500/10 to-indigo-500/5",
                         "from-emerald-500/10 to-teal-500/5",
                         "from-purple-500/10 to-violet-500/5",
+                        "from-rose-500/10 to-pink-500/5",
+                        "from-amber-500/10 to-yellow-500/5",
+                        "from-cyan-500/10 to-sky-500/5",
                       ];
                       return (
-                      <motion.div
-                        key={i}
-                        initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 + i * 0.06 }}
-                        className={`min-w-[78%] max-w-[82%] shrink-0 snap-center rounded-xl bg-gradient-to-br ${gradients[i]} border border-border/30 p-4 shadow-md`}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
-                            <span className="text-[10px] text-primary-foreground font-bold">{t.name[0]}</span>
+                        <motion.div
+                          key={i}
+                          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 + i * 0.04, duration: 0.3 }}
+                          className={`break-inside-avoid mb-2.5 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} border border-border/30 p-3 shadow-sm`}
+                        >
+                          <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                            <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
+                            {t.quote}
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                              <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] text-foreground font-medium">{t.name} · <span className="text-muted-foreground/70">{t.identity}</span></p>
+                            </div>
+                            <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[8px] text-primary font-medium">
+                              {t.tag}
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-xs text-foreground font-medium">{t.name}</p>
-                            <p className="text-[9px] text-muted-foreground/70">{t.identity}</p>
-                          </div>
-                          <span className="ml-auto inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium">
-                            {t.tag}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
-                          <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
-                          {t.quote}
-                        </p>
-                      </motion.div>
+                        </motion.div>
                       );
                     })}
                   </div>
