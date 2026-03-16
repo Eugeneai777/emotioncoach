@@ -123,7 +123,7 @@ const AwakeningBottomNav: React.FC = () => {
           {/* 主按钮 */}
           <motion.button
             onClick={handleCenterClick}
-            className={`relative w-14 h-14 rounded-full flex items-center justify-center
+            className={`relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
                        border-4 border-background shadow-lg
                        ${isMenuOpen 
                          ? 'bg-gradient-to-br from-rose-400 to-rose-500 shadow-rose-500/30' 
