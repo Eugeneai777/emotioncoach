@@ -838,6 +838,12 @@ export class MiniProgramAudioClient {
         // 🔧 重置心跳计数（后台期间可能丢失了 pong）
         this.missedPongs = 0;
         this.lastPongTime = Date.now();
+        
+        // 🔧 断线恢复优化：主动检测 WebSocket 状态
+        if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+          console.warn('[MiniProgramAudio] WebSocket disconnected while in background, triggering reconnect');
+          this.handleDisconnect();
+        }
       }
     };
     
