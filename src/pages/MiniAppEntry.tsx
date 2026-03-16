@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag } from "lucide-react";
+import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
@@ -21,47 +21,74 @@ const audiences = [
 const exploreBlocks = [
   {
     icon: Wrench,
-    emoji: "🛠",
     title: "日常工具",
-    desc: "情绪SOS、呼吸练习、感恩日记……随时充电",
-    btnText: "去看看 →",
+    sub: "随时充电",
+    desc: "情绪SOS、呼吸练习、感恩日记……在情绪涌上来的那一刻，给你即刻支持。",
     route: "/energy-studio",
-    gradient: "from-cyan-500/15 to-sky-500/5",
-    accent: "bg-cyan-500",
-    color: "text-cyan-600 dark:text-cyan-400",
+    iconColor: "text-cyan-400",
+    bg: "bg-cyan-500/8",
+    ring: "ring-cyan-500/15",
   },
   {
     icon: BarChart3,
-    emoji: "📊",
     title: "专业测评",
-    desc: "PHQ-9、SCL-90、财富信念……科学看清自己",
-    btnText: "去测评 →",
+    sub: "科学看清自己",
+    desc: "PHQ-9、SCL-90、财富信念……用科学工具深度了解你的情绪模式。",
     route: "/energy-studio?tab=assessments",
-    gradient: "from-violet-500/15 to-purple-500/5",
-    accent: "bg-violet-500",
-    color: "text-violet-600 dark:text-violet-400",
+    iconColor: "text-violet-400",
+    bg: "bg-violet-500/8",
+    ring: "ring-violet-500/15",
   },
   {
     icon: Target,
-    emoji: "🏕️",
     title: "系统训练营",
-    desc: "情绪觉醒、财富信念、身份探索……AI+真人陪伴",
-    btnText: "去报名 →",
+    sub: "AI+真人陪伴",
+    desc: "情绪觉醒、财富信念、身份探索……在双重陪伴下实现真正蜕变。",
     route: "/camps",
-    gradient: "from-amber-500/15 to-orange-500/5",
-    accent: "bg-amber-500",
-    color: "text-amber-600 dark:text-amber-400",
+    iconColor: "text-amber-400",
+    bg: "bg-amber-500/8",
+    ring: "ring-amber-500/15",
   },
   {
     icon: ShoppingBag,
-    emoji: "🏪",
     title: "健康商城",
-    desc: "知乐胶囊、协同套餐……科学守护身心平衡",
-    btnText: "去逛逛 →",
+    sub: "守护身心平衡",
+    desc: "知乐胶囊、协同套餐……科学配方，为你的情绪健康保驾护航。",
     route: "/health-store",
-    gradient: "from-rose-500/15 to-pink-500/5",
-    accent: "bg-rose-500",
-    color: "text-rose-600 dark:text-rose-400",
+    iconColor: "text-rose-400",
+    bg: "bg-rose-500/8",
+    ring: "ring-rose-500/15",
+  },
+];
+
+const useCases = [
+  {
+    icon: Moon,
+    title: "深夜焦虑时",
+    desc: "凌晨两点翻来覆去，你不想打扰任何人——AI教练24小时在线，随时接住你。",
+    iconColor: "text-indigo-400",
+    bg: "bg-indigo-500/8",
+  },
+  {
+    icon: Briefcase,
+    title: "职场迷茫时",
+    desc: "不知道该不该换工作、该不该开口……AI帮你看见选择背后的恐惧与渴望。",
+    iconColor: "text-amber-400",
+    bg: "bg-amber-500/8",
+  },
+  {
+    icon: Heart,
+    title: "关系困扰时",
+    desc: "吵完架的委屈、说不出口的话……在这里可以安全地说出一切，被理解不被评判。",
+    iconColor: "text-rose-400",
+    bg: "bg-rose-500/8",
+  },
+  {
+    icon: TrendingUp,
+    title: "想要成长时",
+    desc: "AI教练陪你一步步觉察、记录、突破，见证你的每一个进步。",
+    iconColor: "text-emerald-400",
+    bg: "bg-emerald-500/8",
   },
 ];
 
@@ -214,28 +241,63 @@ const MiniAppEntry = () => {
               className="overflow-hidden"
             >
               <div className="pt-3 space-y-3">
-                {/* 三大板块 */}
-                {exploreBlocks.map((block, i) => (
-                  <motion.div
-                    key={block.title}
-                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    onClick={() => navigate(block.route)}
-                    className={`relative rounded-xl overflow-hidden bg-gradient-to-r ${block.gradient} border border-border/40 p-3.5 shadow-sm active:scale-[0.98] transition-transform cursor-pointer`}
-                  >
-                    {/* 左侧色条 */}
-                    <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-full ${block.accent}`} />
-                    <div className="flex items-center gap-3 pl-2.5">
-                      <span className="text-2xl shrink-0">{block.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-foreground">{block.title}</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug line-clamp-1">{block.desc}</p>
-                      </div>
-                      <span className={`text-xs font-medium ${block.color} shrink-0`}>{block.btnText}</span>
-                    </div>
-                  </motion.div>
-                ))}
+               <div className="space-y-2.5">
+                  <h3 className="text-xs font-medium text-muted-foreground px-0.5">四大板块，助你持续成长</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {exploreBlocks.map((block, i) => {
+                      const Icon = block.icon;
+                      return (
+                        <motion.button
+                          key={block.title}
+                          onClick={() => navigate(block.route)}
+                          className={`text-left p-3 rounded-2xl ${block.bg} ring-1 ${block.ring} active:scale-[0.97] transition-transform duration-150`}
+                          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.06, duration: 0.3 }}
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Icon className={`w-4 h-4 ${block.iconColor} shrink-0`} />
+                            <div>
+                              <p className="text-xs font-semibold text-foreground">{block.title}</p>
+                              <p className="text-[9px] text-muted-foreground">{block.sub}</p>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground leading-relaxed">{block.desc}</p>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 使用场景引导 */}
+                <div className="space-y-2.5">
+                  <div className="px-0.5">
+                    <h3 className="text-xs font-medium text-muted-foreground">什么时候可以找有劲AI？</h3>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">任何时刻，任何情绪，它都在</p>
+                  </div>
+                  <div className="space-y-2">
+                    {useCases.map((c, i) => {
+                      const Icon = c.icon;
+                      return (
+                        <motion.div
+                          key={i}
+                          className={`p-3 rounded-xl ${c.bg} ring-1 ring-border/30`}
+                          initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.06, duration: 0.3 }}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <Icon className={`w-4 h-4 ${c.iconColor} shrink-0 mt-0.5`} />
+                            <div>
+                              <h4 className="text-[11px] font-semibold text-foreground mb-0.5">{c.title}</h4>
+                              <p className="text-[10px] text-muted-foreground leading-relaxed">{c.desc}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* 用户见证 - 横滑轮播 */}
                 <div>
