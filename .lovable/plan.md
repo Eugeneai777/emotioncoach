@@ -1,32 +1,23 @@
 
 
-## 计划：家人相册改为小红书瀑布流展示
+## 两个问题需要修复
 
-### 目标
-将 `/elder-care` 页面的家人相册从当前横向滚动改为小红书风格的双列瀑布流展示，类似有劲社区（CommunityWaterfall），同时保留上传功能在首页下方。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 实现方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**1. 新建 `src/components/elder-care/FamilyPhotoWaterfall.tsx`**
-- 双列瀑布流布局（参考 CommunityWaterfall 的左右两列结构）
-- 查询 `family_photos` 表，按 `created_at DESC` 排序
-- 每张照片卡片：圆角图片 + 可选 caption + 上传时间
-- 点击放大查看（复用现有 fullscreen viewer 逻辑）
-- 支持分页加载更多（每次加载 20 张）
-- 温暖的橙色系配色，适合老人界面
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**2. 修改 `src/components/elder-care/ChildPhotosCard.tsx`**
-- 替换现有横向滚动为新的瀑布流组件，或直接在此组件内改造
-- 保留 `targetUserId` 逻辑（支持查看自己或关联孩子的照片）
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-**3. 修改 `src/pages/ElderCarePage.tsx`**
-- 调整布局：上传按钮保持在功能入口下方
-- 瀑布流相册放在上传按钮下方，作为主内容区
-- 结构：功能入口 → 上传按钮 → 瀑布流相册 → 安全守护等
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**4. 瀑布流卡片设计**
-- 双列 masonry 布局，`grid grid-cols-2 gap-3`
-- 每张照片卡片：圆角白色卡片 + 图片 + caption（如有）+ 时间戳
-- 图片自适应高度（类似小红书不同高度的卡片效果）
-- 新上传的照片显示「新」标签
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

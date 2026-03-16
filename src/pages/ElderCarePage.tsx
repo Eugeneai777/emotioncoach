@@ -9,8 +9,8 @@ import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
-import { ChildPhotosCard } from "@/components/elder-care/ChildPhotosCard";
 import { FamilyPhotoUploader } from "@/components/elder-care/FamilyPhotoUploader";
+import { FamilyPhotoWaterfall } from "@/components/elder-care/FamilyPhotoWaterfall";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
@@ -139,18 +139,20 @@ const ElderCarePage = () => {
           </div>
         </motion.div>
 
-        {/* 家人相册 */}
-        <ChildPhotosCard />
-
         {/* 上传照片给长辈 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38 }}
+          transition={{ delay: 0.35 }}
           className="pb-4"
         >
           <FamilyPhotoUploader />
         </motion.div>
+
+        {/* 家人相册瀑布流 */}
+        <div className="pb-6">
+          <FamilyPhotoWaterfall />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
