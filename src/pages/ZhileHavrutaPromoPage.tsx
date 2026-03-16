@@ -377,7 +377,7 @@ export default function ZhileHavrutaPromoPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs mb-6">
             <Shield className="w-3.5 h-3.5" />
-            专为35-55岁中年男性设计
+            专为35-55岁高压人群设计
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
