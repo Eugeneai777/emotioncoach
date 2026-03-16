@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote } from "lucide-react";
@@ -7,6 +7,7 @@ import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
 import { Skeleton } from "@/components/ui/skeleton";
+import { detectPlatform } from "@/lib/platformDetector";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
