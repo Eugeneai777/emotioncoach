@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Info } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
@@ -16,6 +18,7 @@ const audiences = [
 
 const MiniAppEntry = () => {
   const navigate = useNavigate();
+  const { greeting, isLoading } = usePersonalizedGreeting();
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
@@ -89,6 +92,24 @@ const MiniAppEntry = () => {
           ))}
         </div>
       </div>
+
+      {/* ── 个性化欢迎语 ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="px-5 pb-3"
+      >
+        <div className="text-center">
+          {isLoading ? (
+            <Skeleton className="h-5 w-48 mx-auto rounded-full" />
+          ) : (
+            <p className="text-sm text-muted-foreground italic leading-relaxed">
+              "{greeting}"
+            </p>
+          )}
+        </div>
+      </motion.div>
 
       {/* ── 品牌 + 介绍 ── */}
       <motion.div
