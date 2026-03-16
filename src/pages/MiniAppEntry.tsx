@@ -237,37 +237,40 @@ const MiniAppEntry = () => {
                   </motion.div>
                 ))}
 
-                {/* 用户见证 */}
-                <div className="rounded-xl bg-card border border-border/50 p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
+                {/* 用户见证 - 横滑轮播 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
                     <span className="text-lg">💬</span>
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
                   </div>
-                  <div className="space-y-2.5">
+                  <div 
+                    className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+                    style={{ WebkitOverflowScrolling: 'touch' as any } as React.CSSProperties}
+                  >
                     {testimonials.map((t, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.24 + i * 0.08 }}
-                        className="p-3 rounded-lg bg-muted/50 border border-border/30"
+                        initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 + i * 0.06 }}
+                        className="min-w-[75%] max-w-[80%] shrink-0 snap-center rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/40 p-3.5 shadow-sm"
                       >
-                        <span className="inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium mb-1.5">
-                          {t.tag}
-                        </span>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
-                          <Quote className="inline w-3 h-3 mr-0.5 opacity-40" />
-                          {t.quote}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                            <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
+                            <span className="text-[10px] text-primary-foreground font-bold">{t.name[0]}</span>
                           </div>
                           <div>
-                            <p className="text-[10px] text-muted-foreground font-medium">{t.name}</p>
-                            <p className="text-[9px] text-muted-foreground/60">{t.identity}</p>
+                            <p className="text-xs text-foreground font-medium">{t.name}</p>
+                            <p className="text-[9px] text-muted-foreground/70">{t.identity}</p>
                           </div>
+                          <span className="ml-auto inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium">
+                            {t.tag}
+                          </span>
                         </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
+                          <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
+                          {t.quote}
+                        </p>
                       </motion.div>
                     ))}
                   </div>
