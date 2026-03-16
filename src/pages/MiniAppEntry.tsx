@@ -278,7 +278,7 @@ const MiniAppEntry = () => {
             <ChevronUp className="w-3.5 h-3.5 text-amber-500" />
           ) : (
             <motion.div animate={{ y: [0, 3, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-              <ChevronDown className="w-3.5 h-3.5 text-blue-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-amber-500" />
             </motion.div>
           )}
         </motion.div>
