@@ -32,6 +32,13 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
   const [cycleCount, setCycleCount] = useState(1);
   const [showReminderAnimation, setShowReminderAnimation] = useState(false);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(!!autoOpenPurchase);
+
+  // 支付授权回跳后：当父组件稍后把 autoOpenPurchase 置为 true 时，同步拉起购买弹窗
+  useEffect(() => {
+    if (autoOpenPurchase) {
+      setShowPurchaseDialog(true);
+    }
+  }, [autoOpenPurchase]);
   
   // 免费试用追踪
   const { usageCount, freeLimit, isLimitReached, remainingFree, incrementUsage, trackEvent } = useFreeTrialTracking({
