@@ -850,6 +850,105 @@ export class MiniProgramAudioClient {
   }
   
   /**
+   * 🔧 音频健康监控：每 10 秒检测麦克风流和 AudioContext 状态
+   * 解决长时间通话中 AudioContext 被系统静默挂起、MediaStream track 死亡的问题
+   */
+  private startAudioHealthMonitor(): void {
+    this.lastAudioEnergyTime = Date.now();
+    this.silentFrameCount = 0;
+    
+    this.audioHealthInterval = setInterval(() => {
+      if (this.status !== 'connected') return;
+      
+      // 1. 检查 MediaStream track 是否还活着
+      if (this.webMediaStream) {
+        const tracks = this.webMediaStream.getAudioTracks();
+        const deadTracks = tracks.filter(t => t.readyState === 'ended');
+        if (deadTracks.length > 0 || tracks.length === 0) {
+          console.error('[MiniProgramAudio] ⚠️ Microphone track died! Attempting recovery...');
+          this.recoverMicrophone();
+          return;
+        }
+        
+        // 检查 track 是否被 mute（某些浏览器在权限被撤销时会 mute）
+        const mutedTracks = tracks.filter(t => t.muted);
+        if (mutedTracks.length === tracks.length) {
+          console.warn('[MiniProgramAudio] ⚠️ All microphone tracks muted');
+        }
+      }
+      
+      // 2. 检查录音 AudioContext 是否被挂起
+      if (this.webAudioContext) {
+        if (this.webAudioContext.state === 'suspended') {
+          console.warn('[MiniProgramAudio] ⚠️ Recording AudioContext suspended, resuming...');
+          this.webAudioContext.resume().then(() => {
+            console.log('[MiniProgramAudio] ✅ Recording AudioContext resumed via health check');
+          }).catch(e => {
+            console.error('[MiniProgramAudio] ❌ Failed to resume AudioContext:', e);
+          });
+        } else if (this.webAudioContext.state === 'closed') {
+          console.error('[MiniProgramAudio] ❌ Recording AudioContext closed! Attempting recovery...');
+          this.recoverMicrophone();
+          return;
+        }
+      }
+      
+      // 3. 检查长时间无音频能量（超过 30 秒没有任何能量 → 可能是麦克风失效）
+      const silentDuration = Date.now() - this.lastAudioEnergyTime;
+      if (silentDuration > 30000 && this.lastAudioEnergyTime > 0) {
+        console.warn(`[MiniProgramAudio] ⚠️ No audio energy for ${Math.round(silentDuration / 1000)}s, checking...`);
+        // 尝试 resume AudioContext（可能是隐性挂起）
+        if (this.webAudioContext && this.webAudioContext.state !== 'running') {
+          this.webAudioContext.resume().catch(() => {});
+        }
+      }
+    }, 10000); // 每 10 秒检查一次
+  }
+  
+  private stopAudioHealthMonitor(): void {
+    if (this.audioHealthInterval) {
+      clearInterval(this.audioHealthInterval);
+      this.audioHealthInterval = null;
+    }
+  }
+  
+  /**
+   * 🔧 麦克风恢复：当检测到麦克风流死亡时，重新获取并重建音频管道
+   */
+  private async recoverMicrophone(): Promise<void> {
+    console.log('[MiniProgramAudio] 🔄 Recovering microphone...');
+    
+    try {
+      // 清理旧的音频管道
+      if (this.webSource) {
+        this.webSource.disconnect();
+        this.webSource = null;
+      }
+      if (this.webProcessor) {
+        this.webProcessor.disconnect();
+        this.webProcessor = null;
+      }
+      if (this.webMediaStream) {
+        this.webMediaStream.getTracks().forEach(t => t.stop());
+        this.webMediaStream = null;
+      }
+      if (this.webAudioContext && this.webAudioContext.state !== 'closed') {
+        this.webAudioContext.close().catch(() => {});
+      }
+      this.webAudioContext = null;
+      
+      // 重新初始化录音（复用 initRecorder 中的 Web Audio 逻辑）
+      await this.initRecorder();
+      
+      this.lastAudioEnergyTime = Date.now();
+      this.silentFrameCount = 0;
+      console.log('[MiniProgramAudio] ✅ Microphone recovered successfully');
+    } catch (error) {
+      console.error('[MiniProgramAudio] ❌ Microphone recovery failed:', error);
+    }
+  }
+  
+  /**
    * 🔧 iOS 小程序后台切换恢复：监听 visibilitychange 并 resume AudioContext
    */
   private setupVisibilityListener(): void {
