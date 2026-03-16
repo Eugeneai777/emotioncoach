@@ -131,9 +131,9 @@ const MiniAppEntry = () => {
           {audiences.map((a, i) => (
             <motion.button
               key={a.id}
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+              transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(a.route)}
               style={{ transform: "translateZ(0)" }}
