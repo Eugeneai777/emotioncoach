@@ -93,6 +93,7 @@ export function ElderModeEntryCard() {
             </div>
           </div>
           <ElderMoodReport />
+          <FamilyPhotoUploader />
         </CardContent>
       </Card>
     );
