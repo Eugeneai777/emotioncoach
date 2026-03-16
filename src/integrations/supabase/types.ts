@@ -400,6 +400,27 @@ export type Database = {
           },
         ]
       }
+      audience_illustrations: {
+        Row: {
+          audience_id: string
+          created_at: string | null
+          id: string
+          image_url: string
+        }
+        Insert: {
+          audience_id: string
+          created_at?: string | null
+          id?: string
+          image_url: string
+        }
+        Update: {
+          audience_id?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string
+        }
+        Relationships: []
+      }
       awakening_entries: {
         Row: {
           created_at: string

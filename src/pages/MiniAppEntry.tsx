@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
@@ -8,6 +8,7 @@ import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectPlatform } from "@/lib/platformDetector";
+import { supabase } from "@/integrations/supabase/client";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
@@ -135,6 +136,20 @@ const MiniAppEntry = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
+  const [illustrations, setIllustrations] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    supabase
+      .from('audience_illustrations')
+      .select('audience_id, image_url')
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
+          setIllustrations(map);
+        }
+      });
+  }, []);
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
@@ -198,11 +213,24 @@ const MiniAppEntry = () => {
             >
               {/* 顶部高光层 */}
               <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
-              {/* 右上角装饰水印 */}
-              <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
+              {/* 右侧插画或 emoji 水印 fallback */}
+              {illustrations[a.id] ? (
+                <img
+                  src={illustrations[a.id]}
+                  alt=""
+                  className="absolute -right-2 -top-2 w-20 h-20 object-cover opacity-30 pointer-events-none select-none rounded-full"
+                  loading="lazy"
+                />
+              ) : (
+                <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
+              )}
               {/* 图标容器 */}
-              <div className="relative z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]">
-                <span className="text-lg">{a.emoji}</span>
+              <div className="relative z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)] overflow-hidden">
+                {illustrations[a.id] ? (
+                  <img src={illustrations[a.id]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="text-lg">{a.emoji}</span>
+                )}
               </div>
               {/* 文字区 */}
               <div className="relative z-10 mt-auto">

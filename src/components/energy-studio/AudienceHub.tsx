@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const audiences = [
   {
@@ -60,6 +62,20 @@ const audiences = [
 
 const AudienceHub = () => {
   const navigate = useNavigate();
+  const [illustrations, setIllustrations] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    supabase
+      .from('audience_illustrations')
+      .select('audience_id, image_url')
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
+          setIllustrations(map);
+        }
+      });
+  }, []);
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-3">
@@ -78,8 +94,12 @@ const AudienceHub = () => {
             className="flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-colors active:opacity-80"
             style={{ backgroundColor: a.bgColor }}
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${a.gradient} flex items-center justify-center shadow-sm`}>
-              <span className="text-lg">{a.emoji}</span>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${a.gradient} flex items-center justify-center shadow-sm overflow-hidden`}>
+              {illustrations[a.id] ? (
+                <img src={illustrations[a.id]} alt="" className="w-full h-full object-cover" loading="lazy" />
+              ) : (
+                <span className="text-lg">{a.emoji}</span>
+              )}
             </div>
             <span className="text-[11px] font-semibold text-foreground leading-tight">{a.label}</span>
             <span className="text-[9px] text-muted-foreground leading-tight">{a.subtitle}</span>
