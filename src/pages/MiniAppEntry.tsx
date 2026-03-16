@@ -349,48 +349,47 @@ const MiniAppEntry = () => {
                   </div>
                 </div>
 
-                {/* 用户见证 - 横滑轮播 */}
+                {/* 用户见证 - 瀑布流 */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
-                    <span className="text-[10px] text-muted-foreground/50 ml-auto">← 滑动查看</span>
+                    <span className="text-[10px] text-muted-foreground/50 ml-auto">{testimonials.length} 条真实分享</span>
                   </div>
-                  <div 
-                    className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
-                    style={{ WebkitOverflowScrolling: 'touch' as any } as React.CSSProperties}
-                  >
+                  <div className="columns-2 gap-2.5 space-y-0">
                     {testimonials.map((t, i) => {
                       const gradients = [
                         "from-blue-500/10 to-indigo-500/5",
                         "from-emerald-500/10 to-teal-500/5",
                         "from-purple-500/10 to-violet-500/5",
+                        "from-rose-500/10 to-pink-500/5",
+                        "from-amber-500/10 to-yellow-500/5",
+                        "from-cyan-500/10 to-sky-500/5",
                       ];
                       return (
-                      <motion.div
-                        key={i}
-                        initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 + i * 0.06 }}
-                        className={`min-w-[78%] max-w-[82%] shrink-0 snap-center rounded-xl bg-gradient-to-br ${gradients[i]} border border-border/30 p-4 shadow-md`}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
-                            <span className="text-[10px] text-primary-foreground font-bold">{t.name[0]}</span>
+                        <motion.div
+                          key={i}
+                          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 + i * 0.04, duration: 0.3 }}
+                          className={`break-inside-avoid mb-2.5 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} border border-border/30 p-3 shadow-sm`}
+                        >
+                          <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                            <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
+                            {t.quote}
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                              <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] text-foreground font-medium">{t.name} · <span className="text-muted-foreground/70">{t.identity}</span></p>
+                            </div>
+                            <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[8px] text-primary font-medium">
+                              {t.tag}
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-xs text-foreground font-medium">{t.name}</p>
-                            <p className="text-[9px] text-muted-foreground/70">{t.identity}</p>
-                          </div>
-                          <span className="ml-auto inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium">
-                            {t.tag}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
-                          <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
-                          {t.quote}
-                        </p>
-                      </motion.div>
+                        </motion.div>
                       );
                     })}
                   </div>
