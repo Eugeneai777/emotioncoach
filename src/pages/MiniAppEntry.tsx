@@ -324,22 +324,29 @@ const MiniAppEntry = () => {
                 </div>
 
                 {/* 用户见证 - 横滑轮播 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <span className="text-lg">💬</span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
+                    <span className="text-[10px] text-muted-foreground/50 ml-auto">← 滑动查看</span>
                   </div>
                   <div 
                     className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
                     style={{ WebkitOverflowScrolling: 'touch' as any } as React.CSSProperties}
                   >
-                    {testimonials.map((t, i) => (
+                    {testimonials.map((t, i) => {
+                      const gradients = [
+                        "from-blue-500/10 to-indigo-500/5",
+                        "from-emerald-500/10 to-teal-500/5",
+                        "from-purple-500/10 to-violet-500/5",
+                      ];
+                      return (
                       <motion.div
                         key={i}
                         initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 + i * 0.06 }}
-                        className="min-w-[75%] max-w-[80%] shrink-0 snap-center rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/40 p-3.5 shadow-sm"
+                        className={`min-w-[78%] max-w-[82%] shrink-0 snap-center rounded-xl bg-gradient-to-br ${gradients[i]} border border-border/30 p-4 shadow-md`}
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
