@@ -131,6 +131,7 @@ export class MiniProgramAudioClient {
    */
   disconnect(): void {
     this.stopHeartbeat();
+    this.stopAudioHealthMonitor();
     this.stopRecording();
     this.stopAudioPlayback();
     this.removeVisibilityListener();
