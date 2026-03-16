@@ -99,11 +99,11 @@ const AwakeningBottomNav: React.FC = () => {
             {/* 右侧 - 我的 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/profile')}
+              onClick={handleCenterClick}
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
-              <User className="w-5 h-5" />
-              <span className="text-xs">我的</span>
+              <Zap className="w-5 h-5" />
+              <span className="text-xs">快捷</span>
             </motion.button>
           </div>
         </div>
