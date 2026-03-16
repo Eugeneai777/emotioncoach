@@ -1,20 +1,23 @@
 
 
-## 将中心Logo按钮改为「有劲AI语音教练」入口
+## 两个问题需要修复
 
-### 修改内容
-**文件**: `src/components/awakening/AwakeningBottomNav.tsx`
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-1. **中心按钮行为**：将 `onClick` 从 `handleCenterClick`（打开快捷菜单）改为直接导航到 `/coach/vibrant_life_sage`（智能语音教练页面）
-2. **视觉调整**：
-   - 保留Logo图片和光晕动画效果
-   - 在按钮下方添加「语音教练」文字标签
-   - 移除菜单开关相关的旋转动画（按钮不再控制菜单）
-3. **快捷菜单保留**：右侧「快捷」按钮仍可打开快捷菜单，中心按钮不再与菜单关联
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 技术细节
-- 中心按钮 `onClick` → `navigate('/coach/vibrant_life_sage')`
-- 移除中心按钮上 `isMenuOpen` 相关的样式切换和旋转动画
-- 在按钮下方添加小文字标签「语音教练」
-- 保留呼吸光晕和上下浮动动画
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
