@@ -9,8 +9,8 @@ import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
-import { ChildPhotosCard } from "@/components/elder-care/ChildPhotosCard";
 import { FamilyPhotoUploader } from "@/components/elder-care/FamilyPhotoUploader";
+import { FamilyPhotoWaterfall } from "@/components/elder-care/FamilyPhotoWaterfall";
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
