@@ -75,6 +75,45 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(2);
 
+    // 获取最近2条用户发送的教练对话消息
+    const { data: recentConversations } = await supabaseClient
+      .from('conversations')
+      .select('id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(2);
+
+    let recentUserMessages: string[] = [];
+    if (recentConversations && recentConversations.length > 0) {
+      const convIds = recentConversations.map(c => c.id);
+      const { data: msgs } = await supabaseClient
+        .from('messages')
+        .select('content')
+        .in('conversation_id', convIds)
+        .eq('role', 'user')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      if (msgs) {
+        recentUserMessages = msgs.map(m => m.content).filter(Boolean);
+      }
+    }
+
+    // 获取最近的呼吸练习记录
+    const { data: breathingSessions } = await supabaseClient
+      .from('breathing_sessions')
+      .select('pattern_type, duration, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    // 获取最近的训练营打卡进度
+    const { data: campProgress } = await supabaseClient
+      .from('camp_daily_progress')
+      .select('progress_date, is_checked_in, emotion_logs_count, reflection_completed')
+      .eq('user_id', user.id)
+      .order('progress_date', { ascending: false })
+      .limit(3);
+
     // 构建上下文
     const contextParts: string[] = [];
     
@@ -95,6 +134,23 @@ serve(async (req) => {
       const postTexts = recentPosts.map(p => p.content || p.insight || p.emotion_theme).filter(Boolean).join('; ');
       if (postTexts) {
         contextParts.push(`最近分享: ${postTexts}`);
+      }
+    }
+
+    if (recentUserMessages.length > 0) {
+      contextParts.push(`最近和教练说的话: ${recentUserMessages.join('; ')}`);
+    }
+
+    if (breathingSessions && breathingSessions.length > 0) {
+      const s = breathingSessions[0];
+      contextParts.push(`最近做了${Math.round(s.duration / 60)}分钟的呼吸练习`);
+    }
+
+    if (campProgress && campProgress.length > 0) {
+      const checkedDays = campProgress.filter(p => p.is_checked_in).length;
+      const emotionLogs = campProgress.reduce((sum, p) => sum + (p.emotion_logs_count || 0), 0);
+      if (checkedDays > 0 || emotionLogs > 0) {
+        contextParts.push(`最近${campProgress.length}天: 打卡${checkedDays}天, 情绪记录${emotionLogs}次`);
       }
     }
 
