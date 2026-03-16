@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag } from "lucide-react";
+import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
