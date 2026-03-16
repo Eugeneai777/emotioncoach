@@ -6,13 +6,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const LINE_ART_STYLE = "minimalist single-color line art sketch on a transparent/white background, thin elegant strokes, no fill colors, no shading, simple and clean, suitable as a small icon or card decoration";
+
 const AUDIENCE_PROMPTS: Record<string, string> = {
+  // === 人群入口 (warm flat style) ===
   mama: "Generate a flat-style illustration for a mental health mini-program card: a gentle mother holding a baby, soft pink and warm tones, minimalist cute style, no text, no real faces, square composition, suitable for a mobile card thumbnail. Warm pastel color palette.",
   workplace: "Generate a flat-style illustration for a mental health mini-program card: a person sitting at a desk with a laptop, taking a deep breath with eyes closed, soft blue and indigo tones, minimalist style, no text, no real faces, square composition, suitable for a mobile card thumbnail.",
   couple: "Generate a flat-style illustration for a mental health mini-program card: two people sitting together holding hands, soft purple and violet tones, minimalist romantic style, no text, no real faces, square composition, suitable for a mobile card thumbnail.",
   youth: "Generate a warm flat-style illustration featuring a prominent teenage student character in the center, wearing a school uniform with a backpack, standing confidently with arms slightly open, looking upward with hope. The character should be the main focal point taking up most of the image. Soft amber and orange gradient background. No text, stylized face (not realistic), square composition, suitable for a mobile app card.",
   midlife: "Generate a warm flat-style illustration featuring a prominent middle-aged man character in the center, wearing smart casual clothes, standing tall at a mountain peak looking at the horizon with determination. The character should be the main focal point taking up most of the image. Warm orange and sunset red gradient background. No text, stylized face (not realistic), square composition, suitable for a mobile app card.",
   senior: "Generate a warm flat-style illustration featuring a prominent elderly couple character in the center, a grandfather and grandmother sitting together on a park bench, surrounded by green leaves and flowers. The characters should be the main focal point taking up most of the image. Soft emerald and teal gradient background. No text, stylized faces (not realistic), square composition, suitable for a mobile app card.",
+
+  // === 四大板块 (line art) ===
+  block_daily_tools: `${LINE_ART_STYLE}. A person meditating cross-legged with a small heart floating above, surrounded by tiny stars. Square composition.`,
+  block_assessments: `${LINE_ART_STYLE}. A clipboard with a checklist and a magnifying glass examining it, with a small brain icon. Square composition.`,
+  block_training: `${LINE_ART_STYLE}. A person climbing steps upward with a flag at the top, showing growth journey. Square composition.`,
+  block_health_store: `${LINE_ART_STYLE}. A shopping bag with a leaf and a pill capsule, representing health products. Square composition.`,
+
+  // === 使用场景 (line art) ===
+  scene_anxiety: `${LINE_ART_STYLE}. A person sitting by a window at night with a crescent moon, holding a phone with gentle light. Square composition.`,
+  scene_workplace: `${LINE_ART_STYLE}. A person at a desk with thought bubbles showing question marks turning into lightbulbs. Square composition.`,
+  scene_relationship: `${LINE_ART_STYLE}. Two people sitting back-to-back with a broken heart between them being repaired. Square composition.`,
+  scene_growth: `${LINE_ART_STYLE}. A person watering a small plant that's growing from their head, symbolizing personal growth. Square composition.`,
+
+  // === 用户见证头像 (line art portraits) ===
+  avatar_0: `${LINE_ART_STYLE}. Portrait of a young woman with short hair and gentle smile, front-facing bust. Square.`,
+  avatar_1: `${LINE_ART_STYLE}. Portrait of a man with short hair and confident expression, front-facing bust. Square.`,
+  avatar_2: `${LINE_ART_STYLE}. Portrait of a young woman with ponytail and soft eyes, front-facing bust. Square.`,
+  avatar_3: `${LINE_ART_STYLE}. Portrait of a woman with medium-length hair and warm smile, front-facing bust. Square.`,
+  avatar_4: `${LINE_ART_STYLE}. Portrait of a man with glasses and thoughtful expression, front-facing bust. Square.`,
+  avatar_5: `${LINE_ART_STYLE}. Portrait of a woman with hair bun and kind eyes, front-facing bust. Square.`,
+  avatar_6: `${LINE_ART_STYLE}. Portrait of a young man with messy hair and cheerful smile, front-facing bust. Square.`,
+  avatar_7: `${LINE_ART_STYLE}. Portrait of a man with crew cut and determined look, front-facing bust. Square.`,
+  avatar_8: `${LINE_ART_STYLE}. Portrait of an elderly man with reading glasses and wise smile, front-facing bust. Square.`,
+  avatar_9: `${LINE_ART_STYLE}. Portrait of a man with neat hair and friendly smile, front-facing bust. Square.`,
+  avatar_10: `${LINE_ART_STYLE}. Portrait of a teenage boy with backpack strap visible and hopeful eyes, front-facing bust. Square.`,
+  avatar_11: `${LINE_ART_STYLE}. Portrait of a young woman with earrings and professional look, front-facing bust. Square.`,
 };
 
 serve(async (req) => {
@@ -99,7 +128,6 @@ serve(async (req) => {
 
       const fileName = `${audienceId}.${imageFormat}`;
 
-      // Delete old file if force regenerating
       if (forceRegenerate) {
         await supabase.storage.from("audience-illustrations").remove([fileName]);
       }
@@ -123,7 +151,6 @@ serve(async (req) => {
 
       const publicUrl = urlData.publicUrl;
 
-      // Upsert into DB
       await supabase
         .from('audience_illustrations')
         .upsert({

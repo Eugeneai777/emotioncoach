@@ -26,6 +26,7 @@ const exploreBlocks = [
     sub: "随时充电",
     desc: "情绪SOS、呼吸练习、感恩日记……在情绪涌上来的那一刻，给你即刻支持。",
     route: "/energy-studio",
+    illustrationKey: "block_daily_tools",
     iconColor: "text-cyan-300",
     iconBg: "bg-cyan-500/20",
     bg: "bg-gradient-to-br from-cyan-500/15 to-sky-500/8",
@@ -38,6 +39,7 @@ const exploreBlocks = [
     sub: "科学看清自己",
     desc: "PHQ-9、SCL-90、财富信念……用科学工具深度了解你的情绪模式。",
     route: "/energy-studio?tab=assessments",
+    illustrationKey: "block_assessments",
     iconColor: "text-violet-300",
     iconBg: "bg-violet-500/20",
     bg: "bg-gradient-to-br from-violet-500/15 to-purple-500/8",
@@ -50,6 +52,7 @@ const exploreBlocks = [
     sub: "AI+真人陪伴",
     desc: "情绪觉醒、财富信念、身份探索……在双重陪伴下实现真正蜕变。",
     route: "/camps",
+    illustrationKey: "block_training",
     iconColor: "text-amber-300",
     iconBg: "bg-amber-500/20",
     bg: "bg-gradient-to-br from-amber-500/15 to-orange-500/8",
@@ -62,6 +65,7 @@ const exploreBlocks = [
     sub: "守护身心平衡",
     desc: "知乐胶囊、协同套餐……科学配方，为你的情绪健康保驾护航。",
     route: "/health-store",
+    illustrationKey: "block_health_store",
     iconColor: "text-rose-300",
     iconBg: "bg-rose-500/20",
     bg: "bg-gradient-to-br from-rose-500/15 to-pink-500/8",
@@ -75,6 +79,7 @@ const useCases = [
     icon: Moon,
     title: "深夜焦虑时",
     desc: "凌晨两点翻来覆去，你不想打扰任何人——AI教练24小时在线，随时接住你。",
+    illustrationKey: "scene_anxiety",
     iconColor: "text-indigo-300",
     iconBg: "bg-indigo-500/20",
     accent: "border-l-indigo-400",
@@ -84,6 +89,7 @@ const useCases = [
     icon: Briefcase,
     title: "职场迷茫时",
     desc: "不知道该不该换工作、该不该开口……AI帮你看见选择背后的恐惧与渴望。",
+    illustrationKey: "scene_workplace",
     iconColor: "text-amber-300",
     iconBg: "bg-amber-500/20",
     accent: "border-l-amber-400",
@@ -93,6 +99,7 @@ const useCases = [
     icon: Heart,
     title: "关系困扰时",
     desc: "吵完架的委屈、说不出口的话……在这里可以安全地说出一切，被理解不被评判。",
+    illustrationKey: "scene_relationship",
     iconColor: "text-rose-300",
     iconBg: "bg-rose-500/20",
     accent: "border-l-rose-400",
@@ -102,6 +109,7 @@ const useCases = [
     icon: TrendingUp,
     title: "想要成长时",
     desc: "AI教练陪你一步步觉察、记录、突破，见证你的每一个进步。",
+    illustrationKey: "scene_growth",
     iconColor: "text-emerald-300",
     iconBg: "bg-emerald-500/20",
     accent: "border-l-emerald-400",
@@ -297,17 +305,30 @@ const MiniAppEntry = () => {
                         <motion.button
                           key={block.title}
                           onClick={() => navigate(block.route)}
-                          className={`text-left p-3.5 rounded-2xl ${block.bg} ring-1 ${block.ring} shadow-lg ${block.glow} active:scale-[0.97] transition-all duration-150 hover:shadow-xl`}
+                          className={`relative text-left p-3.5 rounded-2xl ${block.bg} ring-1 ${block.ring} shadow-lg ${block.glow} active:scale-[0.97] transition-all duration-150 hover:shadow-xl overflow-hidden`}
                           initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.06, duration: 0.3 }}
                         >
-                          <div className={`w-8 h-8 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5`}>
-                            <Icon className={`w-4 h-4 ${block.iconColor}`} />
+                          {/* 右下角装饰插画 */}
+                          {illustrations[block.illustrationKey] && (
+                            <img
+                              src={illustrations[block.illustrationKey]}
+                              alt=""
+                              className="absolute -right-3 -bottom-3 w-20 h-20 object-contain opacity-15 pointer-events-none select-none"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className={`relative z-10 w-8 h-8 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden`}>
+                            {illustrations[block.illustrationKey] ? (
+                              <img src={illustrations[block.illustrationKey]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
+                            ) : (
+                              <Icon className={`w-4 h-4 ${block.iconColor}`} />
+                            )}
                           </div>
-                          <p className="text-[13px] font-bold text-foreground">{block.title}</p>
-                          <p className="text-[10px] text-muted-foreground/70 mb-1.5">{block.sub}</p>
-                          <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{block.desc}</p>
+                          <p className="relative z-10 text-[13px] font-bold text-foreground">{block.title}</p>
+                          <p className="relative z-10 text-[10px] text-muted-foreground/70 mb-1.5">{block.sub}</p>
+                          <p className="relative z-10 text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{block.desc}</p>
                         </motion.button>
                       );
                     })}
@@ -329,14 +350,27 @@ const MiniAppEntry = () => {
                       return (
                         <motion.div
                           key={i}
-                          className={`p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent}`}
+                          className={`relative p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent} overflow-hidden`}
                           initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.06, duration: 0.3 }}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-7 h-7 rounded-lg ${c.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
-                              <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
+                          {/* 右侧装饰插画 */}
+                          {illustrations[c.illustrationKey] && (
+                            <img
+                              src={illustrations[c.illustrationKey]}
+                              alt=""
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 object-contain opacity-10 pointer-events-none select-none"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className="flex items-start gap-3 relative z-10">
+                            <div className={`w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
+                              {illustrations[c.illustrationKey] ? (
+                                <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
+                              )}
                             </div>
                             <div>
                               <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
@@ -379,8 +413,14 @@ const MiniAppEntry = () => {
                             {t.quote}
                           </p>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                              <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                            <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                              {illustrations[`avatar_${i}`] ? (
+                                <img src={illustrations[`avatar_${i}`]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                                  <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                                </div>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] text-foreground font-medium">{t.name} · <span className="text-muted-foreground/70">{t.identity}</span></p>
