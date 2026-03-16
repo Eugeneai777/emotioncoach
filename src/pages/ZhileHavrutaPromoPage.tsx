@@ -15,8 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
-import zhileCapsuleDetail1 from "@/assets/zhile-capsule-detail-1.png";
-import zhileCapsuleDetail2 from "@/assets/zhile-capsule-detail-2.png";
 
 /* ========== Floating particles ========== */
 function Particles() {
