@@ -235,7 +235,7 @@ const MamaAssistant = () => {
           userId={user.id}
           mode="general"
           featureKey="realtime_voice"
-          voiceType={getSavedVoiceType()}
+          voiceType="zh_female_xinlingjitang_moon_bigtts"
         />
       )}
 
