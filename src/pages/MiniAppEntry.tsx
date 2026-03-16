@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Info, ChevronDown } from "lucide-react";
+import { Info } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 
@@ -17,7 +17,6 @@ const audiences = [
 const MiniAppEntry = () => {
   const navigate = useNavigate();
 
-  // 检查是否设置了默认首页，自动跳转
   React.useEffect(() => {
     const skip = sessionStorage.getItem('skip_preferred_redirect');
     if (skip) {
@@ -35,39 +34,24 @@ const MiniAppEntry = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* ── 顶部品牌区（适配小程序胶囊） ── */}
+      {/* ── 顶部标题 ── */}
       <div
-        className="flex items-center gap-2.5 px-4 pb-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 48px)", paddingRight: "110px" }}
+        className="px-4 pb-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 48px)" }}
       >
-        <img src={logoImage} alt="有劲AI" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <h1 className="text-[15px] font-bold text-foreground">有劲AI</h1>
-          <p className="text-[10px] text-muted-foreground">每个人的生活教练</p>
-        </div>
-        <button
-          onClick={() => navigate('/awakening-system-intro')}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0"
-        >
-          <Info className="w-3.5 h-3.5" />
-          <span>介绍</span>
-        </button>
-      </div>
-
-
-
-
-      {/* ── 人群入口 3列网格 ── */}
-      <div className="px-3 pb-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-center mb-3"
+          transition={{ delay: 0.1 }}
+          className="text-center"
         >
-          <h2 className="text-sm font-semibold text-foreground">生活不易，你不必独自扛着</h2>
+          <h1 className="text-lg font-bold text-foreground">AI生活教练</h1>
           <p className="text-[11px] text-muted-foreground mt-0.5">选一个最懂你的入口 ↓</p>
         </motion.div>
+      </div>
+
+      {/* ── 人群入口 3列网格 ── */}
+      <div className="px-3 pb-4">
         <div className="grid grid-cols-3 gap-1.5">
           {audiences.map((a, i) => (
             <motion.button
@@ -80,25 +64,40 @@ const MiniAppEntry = () => {
               style={{ transform: "translateZ(0)" }}
               className={`relative overflow-hidden rounded-xl p-3 bg-gradient-to-br ${a.gradient} shadow-sm min-h-[88px] flex flex-col items-center justify-center gap-1 active:shadow-md transition-shadow duration-150`}
             >
-              {/* 背景装饰 */}
               <div className="absolute top-0 right-0 w-12 h-12 opacity-15">
                 <div className="absolute top-0.5 right-0.5 text-2xl opacity-40">
                   {a.emoji}
                 </div>
               </div>
-              {/* 主要内容 */}
               <div className="relative z-10 text-center">
                 <span className="text-xl block mb-1">{a.emoji}</span>
                 <h3 className="text-sm font-bold text-white leading-tight">{a.label}</h3>
                 <p className="text-[10px] text-white/70 mt-0.5 leading-tight line-clamp-1">{a.subtitle}</p>
               </div>
-              {/* 点击反馈 */}
               <div className="absolute inset-0 bg-white/0 active:bg-white/15 transition-colors duration-150" />
             </motion.button>
           ))}
         </div>
       </div>
 
+      {/* ── 品牌 + 介绍 ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="flex items-center justify-center gap-2 py-3"
+      >
+        <img src={logoImage} alt="有劲AI" className="w-6 h-6 rounded-lg object-cover" />
+        <span className="text-xs text-muted-foreground font-medium">有劲AI</span>
+        <span className="text-muted-foreground/40 text-xs">·</span>
+        <button
+          onClick={() => navigate('/awakening-system-intro')}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Info className="w-3 h-3" />
+          <span>介绍</span>
+        </button>
+      </motion.div>
 
       {/* ── 底部导航 ── */}
       <AwakeningBottomNav />
