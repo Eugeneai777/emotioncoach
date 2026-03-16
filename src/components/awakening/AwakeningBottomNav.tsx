@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  Home, Info, Sparkles, 
+  Home, Info,
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
+import logoImage from "@/assets/logo-youjin-ai.png";
 const AwakeningBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -136,7 +137,7 @@ const AwakeningBottomNav: React.FC = () => {
               : { y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }
             }
           >
-            <Sparkles className="w-6 h-6 text-white" />
+            <img src={logoImage} alt="有劲AI" className="w-7 h-7 rounded-full object-cover" />
           </motion.button>
         </div>
       </nav>
