@@ -2,31 +2,34 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getChildRef } from "@/utils/elderMoodUpload";
+import { useAuth } from "@/hooks/useAuth";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function ChildPhotosCard() {
   const [viewUrl, setViewUrl] = useState<string | null>(null);
+  const { session } = useAuth();
 
   const childRef = getChildRef();
-  // childRef format: "child_<uuid>" — extract the uuid
   const childUserId = childRef?.startsWith("child_") ? childRef.slice(6) : null;
+  // Show own photos if logged in, or child's photos if linked
+  const targetUserId = childUserId || session?.user?.id || null;
 
   const { data: photos } = useQuery({
-    queryKey: ["family-photos", childUserId],
+    queryKey: ["family-photos", targetUserId],
     queryFn: async () => {
       const { data } = await supabase
         .from("family_photos")
         .select("id, photo_url, caption, created_at")
-        .eq("user_id", childUserId!)
+        .eq("user_id", targetUserId!)
         .order("created_at", { ascending: false })
         .limit(20);
       return data ?? [];
     },
-    enabled: !!childUserId,
+    enabled: !!targetUserId,
   });
 
-  if (!childUserId || !photos?.length) return null;
+  if (!targetUserId || !photos?.length) return null;
 
   return (
     <>
