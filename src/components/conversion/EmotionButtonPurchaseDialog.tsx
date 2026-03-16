@@ -10,6 +10,8 @@ interface EmotionButtonPurchaseDialogProps {
   onOpenChange: (open: boolean) => void;
   usageCount: number;
   onTrackEvent: (eventType: string, metadata?: Record<string, any>) => void;
+  /** 微信 OAuth 授权回跳后，跳过营销弹窗直接打开支付 */
+  autoOpenPay?: boolean;
 }
 
 const EmotionButtonPurchaseDialog: React.FC<EmotionButtonPurchaseDialogProps> = ({
@@ -17,8 +19,17 @@ const EmotionButtonPurchaseDialog: React.FC<EmotionButtonPurchaseDialogProps> = 
   onOpenChange,
   usageCount,
   onTrackEvent,
+  autoOpenPay,
 }) => {
   const [showPayDialog, setShowPayDialog] = useState(false);
+
+  // 授权回跳后自动跳过营销弹窗，直接打开支付
+  useEffect(() => {
+    if (open && autoOpenPay && !showPayDialog) {
+      console.log('[EmotionButtonPurchaseDialog] autoOpenPay: skipping marketing, opening payment directly');
+      setShowPayDialog(true);
+    }
+  }, [open, autoOpenPay]);
   const [helpedCount, setHelpedCount] = useState<number>(0);
 
   // 获取使用人数作为社会证明
