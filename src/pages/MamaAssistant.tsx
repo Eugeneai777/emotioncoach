@@ -21,7 +21,9 @@ const quickEntries = [
 
 const MamaAssistant = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [chatOpen, setChatOpen] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [initialInput, setInitialInput] = useState<string | undefined>();
   const [chatType, setChatType] = useState<"emotion" | "gratitude">("emotion");
