@@ -361,8 +361,8 @@ export class MiniProgramAudioClient {
       // 创建音频源
       this.webSource = this.webAudioContext.createMediaStreamSource(this.webMediaStream);
       
-      // 创建处理节点（每帧 16384 样本，减少处理频率和数据碎片，提升音质）
-      this.webProcessor = this.webAudioContext.createScriptProcessor(16384, 1, 1);
+      // 创建处理节点（bufferSize=4096 约 170ms 延迟，平衡延迟和音质）
+      this.webProcessor = this.webAudioContext.createScriptProcessor(4096, 1, 1);
       
       this.webProcessor.onaudioprocess = (e) => {
         if (this.ws?.readyState !== WebSocket.OPEN) return;
