@@ -141,6 +141,10 @@ export default function StoryCoach() {
     sessionStorage.removeItem('cached_wechat_openid');
     localStorage.removeItem('cached_payment_openid');
     sessionStorage.removeItem('cached_payment_openid');
+    localStorage.removeItem('cached_payment_openid_gzh');
+    sessionStorage.removeItem('cached_payment_openid_gzh');
+    localStorage.removeItem('cached_payment_openid_mp');
+    sessionStorage.removeItem('cached_payment_openid_mp');
     await supabase.auth.signOut();
     navigate("/auth");
   };

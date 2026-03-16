@@ -60,8 +60,15 @@ type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'gue
 // 从 URL 中获取支付 openId（注意：小程序优先使用 mp_openid）
 const getPaymentOpenIdFromUrl = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
+  const inMiniProgram = isWeChatMiniProgram();
+  
+  // 小程序环境：优先 mp_openid
+  if (inMiniProgram) {
+    return urlParams.get('mp_openid') || undefined;
+  }
+  
+  // 微信浏览器 / 其他：只取公众号相关的 payment_openid / openid，不要取 mp_openid
   return (
-    urlParams.get('mp_openid') ||
     urlParams.get('payment_openid') ||
     urlParams.get('openid') ||
     urlParams.get('openId') ||
@@ -73,17 +80,28 @@ const getPaymentOpenIdFromUrl = (): string | undefined => {
 const MP_OPENID_STORAGE_KEY = 'wechat_mp_openid';
 const MP_UNIONID_STORAGE_KEY = 'wechat_mp_unionid';
 
-// 🆕 持久缓存公众号 openId（localStorage），同一设备不再需要重复授权
-const CACHED_PAYMENT_OPENID_KEY = 'cached_payment_openid';
+// 🔧 公众号 openId 和小程序 openId 使用不同缓存 key，避免交叉污染导致 "appid和openid不匹配"
+const CACHED_PAYMENT_OPENID_GZH_KEY = 'cached_payment_openid_gzh'; // 公众号
+const CACHED_PAYMENT_OPENID_MP_KEY = 'cached_payment_openid_mp';   // 小程序
+// 兼容旧 key（读取时检查，写入时不再使用）
+const CACHED_PAYMENT_OPENID_LEGACY_KEY = 'cached_payment_openid';
+
 const cachePaymentOpenId = (openId: string) => {
+  const inMiniProgram = isWeChatMiniProgram();
+  const key = inMiniProgram ? CACHED_PAYMENT_OPENID_MP_KEY : CACHED_PAYMENT_OPENID_GZH_KEY;
   try {
-    localStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId);
-    sessionStorage.setItem(CACHED_PAYMENT_OPENID_KEY, openId); // 兼容旧逻辑
+    localStorage.setItem(key, openId);
+    sessionStorage.setItem(key, openId);
+    // 清理旧的混合 key，防止下次被误读
+    localStorage.removeItem(CACHED_PAYMENT_OPENID_LEGACY_KEY);
+    sessionStorage.removeItem(CACHED_PAYMENT_OPENID_LEGACY_KEY);
   } catch { /* ignore */ }
 };
 const getCachedPaymentOpenId = (): string | undefined => {
+  const inMiniProgram = isWeChatMiniProgram();
+  const key = inMiniProgram ? CACHED_PAYMENT_OPENID_MP_KEY : CACHED_PAYMENT_OPENID_GZH_KEY;
   try {
-    return localStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || sessionStorage.getItem(CACHED_PAYMENT_OPENID_KEY) || undefined;
+    return localStorage.getItem(key) || sessionStorage.getItem(key) || undefined;
   } catch { return undefined; }
 };
 

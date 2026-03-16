@@ -51,6 +51,10 @@ export function useWechatOpenId() {
         sessionStorage.removeItem('cached_wechat_openid');
         localStorage.removeItem('cached_payment_openid');
         sessionStorage.removeItem('cached_payment_openid');
+        localStorage.removeItem('cached_payment_openid_gzh');
+        sessionStorage.removeItem('cached_payment_openid_gzh');
+        localStorage.removeItem('cached_payment_openid_mp');
+        sessionStorage.removeItem('cached_payment_openid_mp');
         setOpenId(undefined);
       } else if (event === 'SIGNED_IN') {
         // 登录后清除旧缓存，触发重新获取
