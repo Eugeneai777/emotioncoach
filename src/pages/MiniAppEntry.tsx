@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Info } from "lucide-react";
+
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
@@ -111,23 +111,16 @@ const MiniAppEntry = () => {
         </div>
       </motion.div>
 
-      {/* ── 品牌 + 介绍 ── */}
+      {/* ── Powered by 有劲AI ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="flex items-center justify-center gap-2 py-3"
+        className="flex items-center justify-center gap-1.5 py-3"
       >
-        <img src={logoImage} alt="有劲AI" className="w-6 h-6 rounded-lg object-cover" />
-        <span className="text-xs text-muted-foreground font-medium">有劲AI</span>
-        <span className="text-muted-foreground/40 text-xs">·</span>
-        <button
-          onClick={() => navigate('/awakening-system-intro')}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Info className="w-3 h-3" />
-          <span>介绍</span>
-        </button>
+        <span className="text-[11px] text-muted-foreground/60">Powered by</span>
+        <img src={logoImage} alt="有劲AI" className="w-4 h-4 rounded object-cover" />
+        <span className="text-[11px] text-muted-foreground/80 font-medium">有劲AI</span>
       </motion.div>
 
       {/* ── 底部导航 ── */}
