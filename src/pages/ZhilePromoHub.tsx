@@ -27,6 +27,16 @@ const promoCards: PromoCard[] = [
     tag: '限时特惠',
   },
   {
+    id: 'zhile-havruta',
+    title: '知乐·海洛塔双效解压包',
+    subtitle: '知乐胶囊 + 90min海洛塔团队辅导',
+    emoji: '🧘',
+    gradient: 'from-teal-500 to-cyan-600',
+    path: '/promo/zhile-havruta',
+    category: 'bundle',
+    tag: '¥399',
+  },
+  {
     id: 'zhile-products',
     title: '知乐产品推荐',
     subtitle: '按人群匹配最适合你的方案',
