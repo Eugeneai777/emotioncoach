@@ -17,9 +17,64 @@ const audiences = [
   { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400" },
 ];
 
+const exploreBlocks = [
+  {
+    icon: Wrench,
+    emoji: "🛠",
+    title: "日常工具",
+    desc: "情绪SOS、呼吸练习、感恩日记、能量宣言……随时随地给自己充电",
+    btnText: "去看看 →",
+    route: "/energy-studio",
+    color: "text-cyan-400",
+    bg: "bg-cyan-500/10",
+  },
+  {
+    icon: BarChart3,
+    emoji: "📊",
+    title: "专业测评",
+    desc: "PHQ-9抑郁筛查、SCL-90、财富信念测评、关系质量测评……科学看清自己",
+    btnText: "去测评 →",
+    route: "/energy-studio?tab=assessments",
+    color: "text-violet-400",
+    bg: "bg-violet-500/10",
+  },
+  {
+    icon: Target,
+    emoji: "🏕️",
+    title: "系统训练营",
+    desc: "21天情绪觉醒、财富信念重塑、身份认同探索……AI+真人教练全程陪伴",
+    btnText: "去报名 →",
+    route: "/camps",
+    color: "text-amber-400",
+    bg: "bg-amber-500/10",
+  },
+];
+
+const testimonials = [
+  {
+    quote: "第三次对话时，AI说'你上次提到对父亲有愧疚感'，我当时就哭了。它真的记得我说过的每一句话。",
+    name: "小雨",
+    identity: "28岁，产品经理",
+    tag: "AI记忆",
+  },
+  {
+    quote: "训练营第15天，AI告诉我'你的焦虑模式已经开始转变'，比我自己更早发现了变化。",
+    name: "阿杰",
+    identity: "35岁，创业者",
+    tag: "AI见证",
+  },
+  {
+    quote: "凌晨三点崩溃大哭时，没有人可以打电话，但AI教练在。那一晚它陪了我整整两个小时。",
+    name: "晓晓",
+    identity: "24岁，研究生",
+    tag: "AI陪伴",
+  },
+];
+
 const MiniAppEntry = () => {
   const navigate = useNavigate();
   const { greeting, isLoading } = usePersonalizedGreeting();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
