@@ -241,28 +241,63 @@ const MiniAppEntry = () => {
               className="overflow-hidden"
             >
               <div className="pt-3 space-y-3">
-                {/* 三大板块 */}
-                {exploreBlocks.map((block, i) => (
-                  <motion.div
-                    key={block.title}
-                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    onClick={() => navigate(block.route)}
-                    className={`relative rounded-xl overflow-hidden bg-gradient-to-r ${block.gradient} border border-border/40 p-3.5 shadow-sm active:scale-[0.98] transition-transform cursor-pointer`}
-                  >
-                    {/* 左侧色条 */}
-                    <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-full ${block.accent}`} />
-                    <div className="flex items-center gap-3 pl-2.5">
-                      <span className="text-2xl shrink-0">{block.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-foreground">{block.title}</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug line-clamp-1">{block.desc}</p>
-                      </div>
-                      <span className={`text-xs font-medium ${block.color} shrink-0`}>{block.btnText}</span>
-                    </div>
-                  </motion.div>
-                ))}
+               <div className="space-y-2.5">
+                  <h3 className="text-xs font-medium text-muted-foreground px-0.5">四大板块，助你持续成长</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {exploreBlocks.map((block, i) => {
+                      const Icon = block.icon;
+                      return (
+                        <motion.button
+                          key={block.title}
+                          onClick={() => navigate(block.route)}
+                          className={`text-left p-3 rounded-2xl ${block.bg} ring-1 ${block.ring} active:scale-[0.97] transition-transform duration-150`}
+                          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.06, duration: 0.3 }}
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Icon className={`w-4 h-4 ${block.iconColor} shrink-0`} />
+                            <div>
+                              <p className="text-xs font-semibold text-foreground">{block.title}</p>
+                              <p className="text-[9px] text-muted-foreground">{block.sub}</p>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground leading-relaxed">{block.desc}</p>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 使用场景引导 */}
+                <div className="space-y-2.5">
+                  <div className="px-0.5">
+                    <h3 className="text-xs font-medium text-muted-foreground">什么时候可以找有劲AI？</h3>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">任何时刻，任何情绪，它都在</p>
+                  </div>
+                  <div className="space-y-2">
+                    {useCases.map((c, i) => {
+                      const Icon = c.icon;
+                      return (
+                        <motion.div
+                          key={i}
+                          className={`p-3 rounded-xl ${c.bg} ring-1 ring-border/30`}
+                          initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.06, duration: 0.3 }}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <Icon className={`w-4 h-4 ${c.iconColor} shrink-0 mt-0.5`} />
+                            <div>
+                              <h4 className="text-[11px] font-semibold text-foreground mb-0.5">{c.title}</h4>
+                              <p className="text-[10px] text-muted-foreground leading-relaxed">{c.desc}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* 用户见证 - 横滑轮播 */}
                 <div>
