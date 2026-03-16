@@ -115,7 +115,7 @@ const MiniAppEntry = () => {
       {/* ── 顶部标题 ── */}
       <div className="px-4 pb-3" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
           className="text-center"
