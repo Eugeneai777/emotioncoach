@@ -458,6 +458,7 @@ const App = () => (
               <Route path="/bloom-partner-intro" element={<BloomPartnerIntro />} />
               <Route path="/partner/landing-page/:id" element={<PartnerLandingPageDetail />} />
               <Route path="/lp/:id" element={<LandingPage />} />
+              <Route path="/page-links" element={<PageLinksDocument />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
