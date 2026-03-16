@@ -273,7 +273,7 @@ const MiniAppEntry = () => {
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center justify-center gap-1.5 py-2 cursor-pointer"
         >
-          <span className="text-sm font-medium bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">还想探索更多？</span>
+          <span className="text-sm font-medium bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">还想探索更多？</span>
           {isExpanded ? (
             <ChevronUp className="w-3.5 h-3.5 text-blue-400" />
           ) : (
