@@ -1,23 +1,34 @@
 
 
-## 两个问题需要修复
+## 优化底部导航「语音教练」按钮文案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 当前状态
+中心按钮下方文字为 `语音教练`（9px），仅是功能名称，用户不清楚点击后会发生什么。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 方案选项
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+| 方案 | 文案 | 优点 |
+|------|------|------|
+| A | **开始对话** | 直接表达动作，用户一看就知道点了会发生什么 |
+| B | **聊一聊** | 口语化、亲切，降低心理门槛 |
+| C | **语音通话** | 明确告知是语音形式，区别于文字聊天 |
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 推荐：方案 A「开始对话」
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+理由：动词开头，行动导向；配合 logo 图标，用户能理解"点击 → 开始和 AI 对话"。
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+### 修改内容
+
+**文件：`src/components/awakening/AwakeningBottomNav.tsx`**
+
+第 215 行，将：
+```tsx
+<span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">语音教练</span>
+```
+改为：
+```tsx
+<span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">开始对话</span>
+```
+
+仅改一个字符串，无其他文件变动。
 
