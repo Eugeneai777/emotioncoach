@@ -98,14 +98,14 @@ const MiniAppEntry = () => {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="px-5 pb-3"
+        className="px-5 py-4"
       >
         <div className="text-center">
           {isLoading ? (
-            <Skeleton className="h-5 w-48 mx-auto rounded-full" />
+            <Skeleton className="h-7 w-56 mx-auto rounded-full" />
           ) : (
-            <p className="text-sm text-muted-foreground italic leading-relaxed">
-              "{greeting}"
+            <p className="text-base font-medium text-foreground/80 leading-relaxed">
+              ✨ {greeting}
             </p>
           )}
         </div>
