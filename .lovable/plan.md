@@ -1,23 +1,37 @@
 
 
-## 两个问题需要修复
+## 优化「探索更多」AI 插图方案
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 问题
+当前所有插图使用同一个 `LINE_ART_STYLE`（极简细线条、无填充），在小尺寸下几乎不可见，缺乏视觉层次。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 方案：为不同区域使用不同插图风格
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+| 区域 | 当前风格 | 新风格 | 理由 |
+|------|---------|--------|------|
+| 四大板块 | 细线条无填充 | **粗线条 + 单色块填充**（墨蓝色） | 作为图标需要高辨识度 |
+| 使用场景 | 细线条无填充 | **柔和水彩速写风** — 淡色填充 + 手绘笔触 | 营造情感氛围，装饰性更强 |
+| 用户头像 | 细线条肖像 | **彩色扁平卡通头像** — 圆形构图、柔和肤色 | 头像需要温暖亲切感 |
+| 背景装饰 | 与图标共用同一张图 | 保持不变，但提高 opacity | 装饰用途，提高可见度即可 |
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+### 具体修改
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**1. Edge Function — 更新 prompt 风格**
+`supabase/functions/generate-audience-illustrations/index.ts`
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+- 去掉统一的 `LINE_ART_STYLE`，改为三个分区风格常量：
+  - `BLOCK_STYLE`：`"bold thick black line art with solid single-color fill (navy blue), clean shapes, high contrast, suitable as app icon at small size"`
+  - `SCENE_STYLE`：`"soft watercolor sketch style, gentle pastel color washes with loose hand-drawn outlines, dreamy and emotional atmosphere"`  
+  - `AVATAR_STYLE`：`"flat cartoon avatar portrait, round face, warm skin tones, soft pastel background, friendly expression, suitable as small profile picture"`
+- 对应更新所有 `block_*`、`scene_*`、`avatar_*` 的 prompt
+
+**2. MiniAppEntry.tsx — 增大尺寸和透明度**
+
+- 四大板块：图标 `w-8 h-8` → `w-11 h-11`，装饰 `w-20 opacity-15` → `w-24 opacity-25`
+- 使用场景：图标 `w-7 h-7` → `w-10 h-10`，装饰 `w-14 opacity-10` → `w-18 opacity-20`
+- 用户头像：`w-6 h-6` → `w-8 h-8`
+- 图标容器添加 `bg-white/60 shadow-sm` 让插画浮起来
+
+**3. 触发重新生成**
+- 调用 Edge Function 时传 `force: true` 重新生成所有 `block_*`、`scene_*`、`avatar_*` 插图
 
