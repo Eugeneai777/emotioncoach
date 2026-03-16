@@ -819,6 +819,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const createOrder = async () => {
     if (!packageInfo) return;
 
+    // 🆕 防重入：如果已经在创建中或已创建，直接返回
+    if (status === 'loading' || status === 'polling' || status === 'success') {
+      console.log('[Payment] createOrder skipped, current status:', status);
+      return;
+    }
+
     // 仅合伙人套餐验证条款
     if (needsTerms && !agreedTerms) {
       toast.error('请先阅读并同意服务条款和隐私政策');
@@ -1314,6 +1320,22 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   const handleRetry = () => {
+    // 🆕 小程序环境：如果已有订单号，复用已有订单重新触发原生支付
+    const existingOrder = orderNo || getPendingOrderFromCache();
+    if (isMiniProgram && existingOrder && packageInfo) {
+      console.log('[Payment] MiniProgram retry: reusing existing order', existingOrder);
+      setStatus('polling');
+      setOrderNo(existingOrder);
+      startPolling(existingOrder);
+      triggerMiniProgramNativePay({
+        orderNo: existingOrder,
+        packageKey: packageInfo.key,
+        packageName: packageInfo.name,
+        amount: String(packageInfo.price),
+        needsNativePayment: 'true',
+      }, existingOrder);
+      return;
+    }
     orderCreatedRef.current = true; // 防止 useEffect 重复创建
     resetState();
     orderCreatedRef.current = false;
