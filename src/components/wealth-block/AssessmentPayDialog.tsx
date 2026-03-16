@@ -1038,6 +1038,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setPollingTimeout(false);
       setIsForceChecking(false);
       openIdFetchedRef.current = false;
+      createOrderCalledRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
     }
