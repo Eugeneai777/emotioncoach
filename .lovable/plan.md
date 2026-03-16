@@ -1,23 +1,34 @@
 
 
-## 两个问题需要修复
+## 优化6个人群入口按钮设计
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 现状
+当前6个按钮是3x2网格，每个按钮使用纯渐变背景+居中emoji+白色文字，视觉上较为扁平单调，缺乏小程序首页的精致感。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 优化方案（仅改 `src/pages/MiniAppEntry.tsx`）
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+**1. 卡片视觉升级**
+- 增大卡片高度（`min-h-[96px]`），给内容更多呼吸空间
+- 添加顶部高光层（`bg-gradient-to-b from-white/25 via-transparent to-black/5`），模拟3D立体质感
+- 右上角emoji改为更大的装饰水印（`text-3xl opacity-20`），营造品牌氛围
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+**2. 图标容器化**
+- emoji放入半透明圆形容器（`w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm`）
+- 增加微弱的内阴影，提升精致度
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**3. 文字层次强化**
+- 标题加粗加大（`text-[15px] font-extrabold`）
+- 副标题使用 `text-white/80` 提高可读性，字间距略增
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+**4. 交互反馈**
+- 添加按压时的内凹效果（`active:shadow-inner`）
+- hover 时微微上浮（`hover:-translate-y-0.5`）
+
+**5. 整体布局微调**
+- 网格间距从 `gap-1.5` 增大到 `gap-2`
+- 外边距 `px-3` 改为 `px-4` 与页面其他区域对齐
+- 卡片圆角加大到 `rounded-2xl`
+
+### 预期效果
+参照截图中的饱和渐变+立体感卡片风格，6个按钮更像"入口卡片"而非"平面按钮"，每个卡片有明确的视觉层次和品牌感。
 
