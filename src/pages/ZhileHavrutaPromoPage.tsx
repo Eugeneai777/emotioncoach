@@ -613,40 +613,6 @@ export default function ZhileHavrutaPromoPage() {
         </div>
       </Section>
 
-      {/* ===== CAPSULE DETAILS ===== */}
-      <Section className="bg-slate-900/50">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 草本身心调理</h2>
-        <p className="text-slate-400 text-sm text-center mb-6">从身体根源调理情绪与睡眠</p>
-        <div className="max-w-lg mx-auto space-y-4">
-          <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
-            <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {specs.map((s, i) => (
-              <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-                <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/20 space-y-2.5">
-            <h4 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
-              <Shield className="w-4 h-4" /> 产品资质与安全
-            </h4>
-            {[
-              "香港中成药注册编号 HKC-18181，通过香港卫生署严格审批",
-              "16味草本植物萃取（酸枣仁、五味子、党参等），不含褪黑素、激素",
-              "无依赖，全年龄段（10岁+）可使用，哺乳期也适用",
-              "通过GMP认证 + 急性毒性试验 + 原材料确定性试验",
-            ].map((text, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <CircleCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
 
       {/* ===== PURCHASE BENEFITS ===== */}
       <Section>
