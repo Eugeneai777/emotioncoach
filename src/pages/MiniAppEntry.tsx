@@ -275,7 +275,7 @@ const MiniAppEntry = () => {
         >
           <span className="text-sm font-medium bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">还想探索更多？</span>
           {isExpanded ? (
-            <ChevronUp className="w-3.5 h-3.5 text-blue-400" />
+            <ChevronUp className="w-3.5 h-3.5 text-amber-500" />
           ) : (
             <motion.div animate={{ y: [0, 3, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
               <ChevronDown className="w-3.5 h-3.5 text-blue-400" />
