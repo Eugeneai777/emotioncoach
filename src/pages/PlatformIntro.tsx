@@ -759,11 +759,8 @@ const PlatformIntro = () => {
           </motion.div>
         </section>
 
-        {/* 分隔线 */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-
         {/* 合伙人体系 */}
-        <section className="px-4 py-4 bg-gradient-to-b from-slate-50/80 to-white">
+        <section className="px-4 py-6 sm:py-8 bg-gradient-to-b from-muted/30 to-background">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
