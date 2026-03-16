@@ -15,12 +15,13 @@ import EmotionButtonPurchaseDialog from "@/components/conversion/EmotionButtonPu
 interface EmotionReliefFlowProps {
   emotionType: EmotionType;
   onClose: () => void;
+  autoOpenPurchase?: boolean;
 }
 
 type FlowStep = 'mode-select' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
 type StartMode = 'cognitive' | 'breathing';
 
-const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onClose }) => {
+const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onClose, autoOpenPurchase }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState<FlowStep>('mode-select');
@@ -30,7 +31,7 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
   const [cycleCount, setCycleCount] = useState(1);
   const [showReminderAnimation, setShowReminderAnimation] = useState(false);
-  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(!!autoOpenPurchase);
   
   // 免费试用追踪
   const { usageCount, freeLimit, isLimitReached, remainingFree, incrementUsage, trackEvent } = useFreeTrialTracking({

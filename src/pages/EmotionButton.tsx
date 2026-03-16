@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Info, History } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import { emotionTypes, EmotionType } from "@/config/emotionReliefConfig";
 import EmotionReliefFlow from "@/components/tools/EmotionReliefFlow";
@@ -9,15 +9,52 @@ import { useAuth } from "@/hooks/useAuth";
 
 const EmotionButton = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const paymentResumeHandledRef = useRef(false);
   
-  const [activeEmotion, setActiveEmotion] = useState<EmotionType | null>(null);
+  const [activeEmotion, setActiveEmotion] = useState<EmotionType | null>(() => {
+    // 从 URL type 参数恢复 activeEmotion（支持 payment_resume 回跳）
+    const typeParam = new URLSearchParams(window.location.search).get('type');
+    if (typeParam) {
+      return emotionTypes.find(e => e.id === typeParam) || null;
+    }
+    return null;
+  });
+
+  // payment_resume: 微信 OAuth 授权回跳后恢复支付弹窗
+  const [paymentResumeFlag, setPaymentResumeFlag] = useState(false);
+  
+  useEffect(() => {
+    if (paymentResumeHandledRef.current) return;
+    const isResume = searchParams.get('payment_resume') === '1';
+    if (!isResume) return;
+    
+    paymentResumeHandledRef.current = true;
+    console.log('[EmotionButton] payment_resume detected, restoring purchase dialog');
+    
+    // 恢复 activeEmotion（从 type 参数）
+    const typeParam = searchParams.get('type');
+    if (typeParam) {
+      const emotion = emotionTypes.find(e => e.id === typeParam);
+      if (emotion) setActiveEmotion(emotion);
+    }
+    
+    // 设置标记让 EmotionReliefFlow 自动打开购买弹窗
+    setPaymentResumeFlag(true);
+    
+    // 清理 URL 中的 payment_resume（保留 payment_openid 给 WechatPayDialog）
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('payment_resume');
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   if (activeEmotion) {
     return (
       <EmotionReliefFlow
         emotionType={activeEmotion}
         onClose={() => setActiveEmotion(null)}
+        autoOpenPurchase={paymentResumeFlag}
       />
     );
   }
