@@ -475,8 +475,65 @@ export default function ZhileHavrutaPromoPage() {
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">双效解压方案</h2>
         <p className="text-slate-400 text-sm text-center mb-8">身体 + 情绪，内外兼修</p>
         <div className="max-w-lg mx-auto space-y-4">
-          {dualSolution.map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+          {/* 知乐安神胶囊卡片 */}
+          {dualSolution.filter(s => s.title === '知乐安神胶囊').map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className={`p-5 rounded-2xl border bg-gradient-to-br ${s.gradient} ${s.border}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${s.border} border bg-slate-900/40`}>
+                  <s.icon className={`w-6 h-6 ${s.textColor}`} />
+                </div>
+                <div>
+                  <h3 className={`font-bold text-base ${s.textColor}`}>{s.title}</h3>
+                  <p className="text-xs text-slate-400">{s.subtitle}</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{s.desc}</p>
+            </motion.div>
+          ))}
+
+          {/* 知乐胶囊详情（图片+规格+资质）紧跟卡片 */}
+          <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-4">
+            <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
+              <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
+                <img src={zhileCapsuleDetail1} alt="知乐胶囊详情1" className="w-full object-cover" loading="lazy" />
+              </div>
+              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
+                <img src={zhileCapsuleDetail2} alt="知乐胶囊详情2" className="w-full object-cover" loading="lazy" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {specs.map((s, i) => (
+                <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+                  <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/20 space-y-2.5">
+              <h4 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                <Shield className="w-4 h-4" /> 产品资质与安全
+              </h4>
+              {[
+                "香港中成药注册编号 HKC-18181，通过香港卫生署严格审批",
+                "16味草本植物萃取（酸枣仁、五味子、党参等），不含褪黑素、激素",
+                "无依赖，全年龄段（10岁+）可使用，哺乳期也适用",
+                "通过GMP认证 + 急性毒性试验 + 原材料确定性试验",
+              ].map((text, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <CircleCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* 海洛塔辅导卡片 */}
+          {dualSolution.filter(s => s.title !== '知乐安神胶囊').map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               className={`p-5 rounded-2xl border bg-gradient-to-br ${s.gradient} ${s.border}`}>
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${s.border} border bg-slate-900/40`}>
