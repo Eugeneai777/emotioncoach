@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // Three distinct visual styles for different sections
-const BLOCK_STYLE = "bold thick black line art with solid single-color fill (navy blue #1e3a5f), clean geometric shapes, high contrast on white background, no shading gradients, suitable as app icon at small size (48px), square composition";
-const SCENE_STYLE = "soft watercolor sketch style, gentle pastel color washes (lavender, peach, mint) with loose hand-drawn outlines, dreamy and emotional atmosphere, on white background, square composition";
-const AVATAR_STYLE = "flat cartoon avatar portrait, round face, warm skin tones, soft pastel colored background circle, friendly expression, simple features, suitable as small profile picture (32px), square composition";
+const BLOCK_STYLE = "bold thick black line art with solid single-color fill (navy blue #1e3a5f), clean geometric shapes, high contrast on white background, no shading gradients, suitable as app icon at small size (48px), square composition, vibrant colors, NOT thin lines, NOT wireframe";
+const SCENE_STYLE = "soft watercolor sketch style, gentle pastel color washes (lavender, peach, mint) with loose hand-drawn outlines, dreamy and emotional atmosphere, on white background, square composition, visible at 40px thumbnail size, NOT thin outlines";
+const AVATAR_STYLE = "flat cartoon avatar portrait, round face, warm skin tones, soft pastel colored background circle, friendly expression, simple features, suitable as small profile picture (32px), square composition, bold features, high contrast";
 
 const AUDIENCE_PROMPTS: Record<string, string> = {
   // === 人群入口 (warm flat style) ===
