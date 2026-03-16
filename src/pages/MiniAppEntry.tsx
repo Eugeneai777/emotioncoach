@@ -45,7 +45,7 @@ const MiniAppEntry = () => {
           transition={{ delay: 0.1 }}
           className="text-center"
         >
-          <h1 className="text-lg font-bold text-foreground">AI生活教练</h1>
+          <h1 className="text-lg font-bold text-foreground">有劲AI生活教练</h1>
           <p className="text-[11px] text-muted-foreground mt-0.5">选一个最懂你的入口 ↓</p>
         </motion.div>
       </div>
