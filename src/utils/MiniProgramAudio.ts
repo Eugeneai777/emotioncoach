@@ -374,6 +374,19 @@ export class MiniProgramAudioClient {
         
         const inputData = e.inputBuffer.getChannelData(0);
         
+        // 🔧 音频能量检测：判断麦克风是否仍有信号
+        let maxAmplitude = 0;
+        for (let i = 0; i < inputData.length; i += 64) {
+          const abs = Math.abs(inputData[i]);
+          if (abs > maxAmplitude) maxAmplitude = abs;
+        }
+        if (maxAmplitude > 0.001) {
+          this.lastAudioEnergyTime = Date.now();
+          this.silentFrameCount = 0;
+        } else {
+          this.silentFrameCount++;
+        }
+        
         // 转换为 PCM16 格式
         const int16Array = new Int16Array(inputData.length);
         for (let i = 0; i < inputData.length; i++) {
