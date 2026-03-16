@@ -71,13 +71,13 @@ export function UnifiedPayDialog({
 }: UnifiedPayDialogProps) {
   const isMiniProgram = isWeChatMiniProgram();
   const [payMethod, setPayMethod] = useState<PayMethod>(getDefaultPayMethod);
-  const [stage, setStage] = useState<Stage>('select');
+  const [stage, setStage] = useState<Stage>('pay');
 
   // Reset when dialog opens
   useEffect(() => {
     if (open) {
       setPayMethod(getDefaultPayMethod());
-      setStage('select');
+      setStage('pay');
     }
   }, [open]);
 
