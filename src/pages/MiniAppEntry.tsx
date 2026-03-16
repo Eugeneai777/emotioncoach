@@ -17,6 +17,19 @@ const audiences = [
 const MiniAppEntry = () => {
   const navigate = useNavigate();
 
+  // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mpOpenId = params.get('mp_openid');
+    const mpUnionId = params.get('mp_unionid');
+    if (mpOpenId) {
+      sessionStorage.setItem('wechat_mp_openid', mpOpenId);
+    }
+    if (mpUnionId) {
+      sessionStorage.setItem('wechat_mp_unionid', mpUnionId);
+    }
+  }, []);
+
   React.useEffect(() => {
     const skip = sessionStorage.getItem('skip_preferred_redirect');
     if (skip) {
