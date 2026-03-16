@@ -221,9 +221,14 @@ const AwakeningBottomNav: React.FC = () => {
       {showVoiceChat && (
         <CoachVoiceChat
           onClose={() => setShowVoiceChat(false)}
-          coachEmoji="✨"
-          coachTitle="有劲AI语音教练"
-          primaryColor="amber"
+          coachEmoji="❤️"
+          coachTitle="有劲AI生活教练"
+          primaryColor="rose"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user?.id || ""}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
         />
       )}
 
