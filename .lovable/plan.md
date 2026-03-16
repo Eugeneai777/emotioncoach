@@ -1,23 +1,48 @@
 
 
-## 两个问题需要修复
+## 优化 MiniAppEntry 页面适配微信小程序（不改排版）
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 现状分析
+当前页面缺少小程序 WebView 的关键适配：无顶部安全区、无底部安全区内边距、动画未针对小程序优化、滚动未使用 `-webkit-overflow-scrolling`。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 优化项（仅改 `src/pages/MiniAppEntry.tsx`）
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+**1. 安全区适配**
+- 顶部添加 `pt-[env(safe-area-inset-top)]` 避免被小程序胶囊按钮遮挡
+- 底部内容区添加 `pb-[env(safe-area-inset-bottom)]` 或足够的 padding 避免被底部导航遮挡
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+**2. 滚动容器优化**
+- 外层 div 改为 `h-screen overflow-y-auto overscroll-contain`（与项目其他页面一致）
+- 添加 `style={{ WebkitOverflowScrolling: 'touch' }}` 提升 iOS WebView 滚动流畅度
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+**3. 动画精简**
+- 利用 `platformDetector` 检测小程序环境，在小程序中减少/禁用 `framer-motion` 入场动画（`initial` 设为 `false`）以避免 WebView 卡顿
+- 保留 `whileTap` 触感反馈
 
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+**4. 触控优化**
+- 人群卡片添加 `-webkit-tap-highlight-color: transparent` 消除 WebView 点击高亮
+- 确保所有可点击区域 ≥ 44px
+
+**5. 底部留白**
+- 在 AwakeningBottomNav 上方添加足够高度的占位（约 80px + safe-area），防止内容被固定底栏遮挡
+
+### 技术细节
+
+```text
+修改前:
+<div className="min-h-screen bg-gradient-to-br ...">
+
+修改后:
+<div 
+  className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br ..."
+  style={{ WebkitOverflowScrolling: 'touch', WebkitTapHighlightColor: 'transparent' }}
+>
+  <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    ...内容...
+    <div className="h-24" /> ← 底部占位
+  </div>
+</div>
+```
+
+引入 `detectPlatform` 判断是否为小程序环境，条件性简化动画。
 
