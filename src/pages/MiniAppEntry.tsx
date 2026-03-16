@@ -388,14 +388,10 @@ const MiniAppEntry = () => {
       </div>
 
       {/* ── Powered by 有劲AI ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="flex items-center justify-center py-3"
-      >
-        <span className="text-sm text-muted-foreground/60 tracking-wide">Powered by <span className="font-semibold text-muted-foreground/80">有劲AI</span></span>
-      </motion.div>
+      <div className="flex items-center justify-center gap-1.5 py-4">
+        <span className="text-xs text-muted-foreground/50 tracking-wider">Powered by</span>
+        <span className="text-sm font-bold bg-gradient-to-r from-primary/70 to-accent/70 bg-clip-text text-transparent tracking-wide">有劲AI</span>
+      </div>
 
       {/* ── 底部留白，避免被固定导航栏遮挡 ── */}
       <div className="h-24" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
