@@ -19,7 +19,9 @@ const quickEntries = [
 
 const WorkplacePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [chatOpen, setChatOpen] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [chatType, setChatType] = useState<"stress" | "diary">("stress");
 
