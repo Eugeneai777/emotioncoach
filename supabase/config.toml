@@ -511,3 +511,6 @@ verify_jwt = true
 
 [functions.save-mama-briefing]
 verify_jwt = false
+
+[functions.generate-audience-illustrations]
+verify_jwt = false

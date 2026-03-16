@@ -136,6 +136,20 @@ const MiniAppEntry = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
+  const [illustrations, setIllustrations] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    supabase
+      .from('audience_illustrations')
+      .select('audience_id, image_url')
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
+          setIllustrations(map);
+        }
+      });
+  }, []);
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
