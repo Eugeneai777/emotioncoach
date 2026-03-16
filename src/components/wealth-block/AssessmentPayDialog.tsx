@@ -976,7 +976,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       return;
     }
 
-    if (open && status === "idle") {
+    if (open && status === "idle" && !createOrderCalledRef.current) {
+      createOrderCalledRef.current = true;
       console.log("[AssessmentPay] Triggering createOrder...");
       createOrder();
     }
