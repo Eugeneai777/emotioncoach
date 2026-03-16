@@ -231,6 +231,20 @@ const WorkplacePage = () => {
         chatType={chatType}
       />
 
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="💼"
+          coachTitle="职场AI语音教练"
+          primaryColor="blue"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
+
       <AwakeningBottomNav />
     </div>
   );
