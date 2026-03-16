@@ -309,6 +309,7 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
         onOpenChange={setShowPurchaseDialog}
         usageCount={usageCount}
         onTrackEvent={trackEvent}
+        autoOpenPay={!!autoOpenPurchase}
       />
 
       {/* 呼吸引导 */}
