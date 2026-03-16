@@ -49,6 +49,16 @@ const exploreBlocks = [
     color: "text-amber-400",
     bg: "bg-amber-500/10",
   },
+  {
+    icon: ShoppingBag,
+    emoji: "🏪",
+    title: "健康商城",
+    desc: "精选健康好物，知乐胶囊、协同套餐……用科学守护身心平衡",
+    btnText: "去逛逛 →",
+    route: "/health-store",
+    color: "text-rose-400",
+    bg: "bg-rose-500/10",
+  },
 ];
 
 const testimonials = [
