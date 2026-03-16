@@ -739,7 +739,13 @@ export class MiniProgramAudioClient {
 
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
+      
+      // 🔧 音量增益：与 WebRTC 模式一致，放大到 4.0
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 4.0;
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
       source.onended = () => {
         this.isPlaying = false;
         this.playNextInQueue();
