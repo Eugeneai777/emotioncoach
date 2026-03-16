@@ -247,6 +247,20 @@ const UsAI = () => {
         </div>
       </div>
 
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="💑"
+          coachTitle="情侣AI语音教练"
+          primaryColor="purple"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
+
       <AwakeningBottomNav />
     </div>
   );
