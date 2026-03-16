@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageCircle, ChevronRight, Home, Share2 } from "lucide-react";
+import { Mic, ChevronRight, Home, Share2, MessageCircle } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 
 import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
 import MamaAIChat from "@/components/mama/MamaAIChat";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 
 const quickEntries = [
