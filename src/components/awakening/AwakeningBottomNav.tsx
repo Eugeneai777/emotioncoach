@@ -121,10 +121,10 @@ const AwakeningBottomNav: React.FC = () => {
           <motion.button
             onClick={handleCenterClick}
             className={`relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
-                       border-4 border-background shadow-lg
+                       border-0 shadow-lg
                        ${isMenuOpen 
                          ? 'bg-gradient-to-br from-rose-400 to-rose-500 shadow-rose-500/30' 
-                         : 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-orange-500/30'
+                         : 'shadow-orange-500/30'
                        }`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -134,7 +134,7 @@ const AwakeningBottomNav: React.FC = () => {
               : { y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }
             }
           >
-            <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover" />
+            <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover scale-[1.15]" />
           </motion.button>
         </div>
       </nav>
