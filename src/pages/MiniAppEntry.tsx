@@ -187,7 +187,7 @@ const MiniAppEntry = () => {
       style={{ WebkitOverflowScrolling: 'touch' as any, WebkitTapHighlightColor: 'transparent' } as React.CSSProperties}
     >
       {/* ── 顶部标题 ── */}
-      <div className="px-4 pb-1" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+      <div className="px-4 pb-4" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <motion.div
           initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
