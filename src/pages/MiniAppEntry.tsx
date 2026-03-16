@@ -319,7 +319,7 @@ const MiniAppEntry = () => {
                               loading="lazy"
                             />
                           )}
-                          <div className={`relative z-10 w-8 h-8 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden`}>
+                          <div className={`relative z-10 w-11 h-11 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden bg-white/60 shadow-sm`}>
                             {illustrations[block.illustrationKey] ? (
                               <img src={illustrations[block.illustrationKey]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
                             ) : (
