@@ -2,11 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
 import { LaogeChat } from "@/components/laoge/LaogeChat";
-import { Send, Home, Share2 } from "lucide-react";
+import { Send, Home, Share2, Mic } from "lucide-react";
 import { motion } from "framer-motion";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const TOOLS = [
   {
@@ -71,8 +74,10 @@ const TOOLS = [
 
 export default function LaogeAI() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dailyInput, setDailyInput] = useState("");
   const [dailySubmitted, setDailySubmitted] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--laoge-bg))] pb-20">
@@ -108,7 +113,7 @@ export default function LaogeAI() {
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--laoge-bg))] via-[hsl(var(--laoge-card))] to-[hsl(var(--laoge-bg))]" />
-        <div className="relative px-5 pt-12 pb-8 text-center">
+        <div className="relative px-5 pt-8 pb-4 text-center">
           <h1 className="text-4xl font-black text-[hsl(var(--laoge-text))] tracking-tight">
             老哥AI
           </h1>
@@ -126,6 +131,35 @@ export default function LaogeAI() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Voice CTA */}
+      <div className="flex flex-col items-center py-6">
+        <button
+          onClick={() => {
+            if (!user) { navigate("/auth"); return; }
+            setShowVoice(true);
+          }}
+          className="relative group focus:outline-none touch-manipulation"
+          aria-label="智能语音"
+        >
+          <div className="absolute inset-[-12px] bg-[hsl(var(--laoge-accent)/0.2)] rounded-full animate-pulse" />
+          <div
+            className="absolute inset-[-6px] bg-[hsl(var(--laoge-accent)/0.15)] rounded-full animate-ping"
+            style={{ animationDuration: "2s" }}
+          />
+          <div className="relative w-[100px] h-[100px] bg-[hsl(var(--laoge-accent))] 
+                          rounded-full flex flex-col items-center justify-center 
+                          shadow-lg
+                          hover:scale-105 active:scale-95 
+                          transition-all duration-200 ease-out">
+            <div className="mb-1 p-2 bg-white/20 rounded-full backdrop-blur-sm">
+              <Mic className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white font-bold text-sm">智能语音</span>
+          </div>
+        </button>
+        <p className="mt-3 text-xs text-[hsl(var(--laoge-text-muted))]">语音聊，更痛快 🎤</p>
       </div>
 
       {/* Tools */}
@@ -199,6 +233,20 @@ export default function LaogeAI() {
           </button>
         </motion.div>
       </div>
+
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="🤝"
+          coachTitle="老哥AI语音参谋"
+          primaryColor="stone"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
 
       <AwakeningBottomNav />
     </div>
