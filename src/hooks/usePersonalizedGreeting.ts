@@ -23,9 +23,9 @@ export const usePersonalizedGreeting = () => {
   const { user } = useAuth();
 
   const { data: greeting, isLoading } = useQuery({
-    queryKey: ['personalizedGreeting', user?.id],
+    queryKey: ['personalizedGreeting', user?.id ?? 'anonymous'],
     queryFn: fetchPersonalizedGreeting,
-    enabled: !!user,
+    enabled: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: false,
@@ -33,8 +33,8 @@ export const usePersonalizedGreeting = () => {
   });
 
   return {
-    greeting: user ? (greeting || DEFAULT_GREETING) : DEFAULT_GREETING,
-    isLoading: user ? isLoading : false,
+    greeting: greeting || DEFAULT_GREETING,
+    isLoading,
     DEFAULT_GREETING,
   };
 };
