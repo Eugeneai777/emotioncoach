@@ -413,7 +413,7 @@ const MiniAppEntry = () => {
                             {t.quote}
                           </p>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0">
                               {illustrations[`avatar_${i}`] ? (
                                 <img src={illustrations[`avatar_${i}`]} alt="" className="w-full h-full object-cover" loading="lazy" />
                               ) : (
