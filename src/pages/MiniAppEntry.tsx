@@ -23,41 +23,45 @@ const exploreBlocks = [
     icon: Wrench,
     emoji: "🛠",
     title: "日常工具",
-    desc: "情绪SOS、呼吸练习、感恩日记、能量宣言……随时随地给自己充电",
+    desc: "情绪SOS、呼吸练习、感恩日记……随时充电",
     btnText: "去看看 →",
     route: "/energy-studio",
-    color: "text-cyan-400",
-    bg: "bg-cyan-500/10",
+    gradient: "from-cyan-500/15 to-sky-500/5",
+    accent: "bg-cyan-500",
+    color: "text-cyan-600 dark:text-cyan-400",
   },
   {
     icon: BarChart3,
     emoji: "📊",
     title: "专业测评",
-    desc: "PHQ-9抑郁筛查、SCL-90、财富信念测评、关系质量测评……科学看清自己",
+    desc: "PHQ-9、SCL-90、财富信念……科学看清自己",
     btnText: "去测评 →",
     route: "/energy-studio?tab=assessments",
-    color: "text-violet-400",
-    bg: "bg-violet-500/10",
+    gradient: "from-violet-500/15 to-purple-500/5",
+    accent: "bg-violet-500",
+    color: "text-violet-600 dark:text-violet-400",
   },
   {
     icon: Target,
     emoji: "🏕️",
     title: "系统训练营",
-    desc: "21天情绪觉醒、财富信念重塑、身份认同探索……AI+真人教练全程陪伴",
+    desc: "情绪觉醒、财富信念、身份探索……AI+真人陪伴",
     btnText: "去报名 →",
     route: "/camps",
-    color: "text-amber-400",
-    bg: "bg-amber-500/10",
+    gradient: "from-amber-500/15 to-orange-500/5",
+    accent: "bg-amber-500",
+    color: "text-amber-600 dark:text-amber-400",
   },
   {
     icon: ShoppingBag,
     emoji: "🏪",
     title: "健康商城",
-    desc: "精选健康好物，知乐胶囊、协同套餐……用科学守护身心平衡",
+    desc: "知乐胶囊、协同套餐……科学守护身心平衡",
     btnText: "去逛逛 →",
     route: "/health-store",
-    color: "text-rose-400",
-    bg: "bg-rose-500/10",
+    gradient: "from-rose-500/15 to-pink-500/5",
+    accent: "bg-rose-500",
+    color: "text-rose-600 dark:text-rose-400",
   },
 ];
 
@@ -214,60 +218,59 @@ const MiniAppEntry = () => {
                 {exploreBlocks.map((block, i) => (
                   <motion.div
                     key={block.title}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
-                    className="rounded-xl bg-card border border-border/50 p-4 shadow-sm"
+                    onClick={() => navigate(block.route)}
+                    className={`relative rounded-xl overflow-hidden bg-gradient-to-r ${block.gradient} border border-border/40 p-3.5 shadow-sm active:scale-[0.98] transition-transform cursor-pointer`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg ${block.bg} flex items-center justify-center shrink-0`}>
-                        <span className="text-lg">{block.emoji}</span>
-                      </div>
+                    {/* 左侧色条 */}
+                    <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-full ${block.accent}`} />
+                    <div className="flex items-center gap-3 pl-2.5">
+                      <span className="text-2xl shrink-0">{block.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-bold text-foreground">{block.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{block.desc}</p>
-                        <button
-                          onClick={() => navigate(block.route)}
-                          className={`mt-2 text-xs font-medium ${block.color} active:opacity-70 transition-opacity`}
-                        >
-                          {block.btnText}
-                        </button>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug line-clamp-1">{block.desc}</p>
                       </div>
+                      <span className={`text-xs font-medium ${block.color} shrink-0`}>{block.btnText}</span>
                     </div>
                   </motion.div>
                 ))}
 
-                {/* 用户见证 */}
-                <div className="rounded-xl bg-card border border-border/50 p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
+                {/* 用户见证 - 横滑轮播 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
                     <span className="text-lg">💬</span>
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
                   </div>
-                  <div className="space-y-2.5">
+                  <div 
+                    className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+                    style={{ WebkitOverflowScrolling: 'touch' as any } as React.CSSProperties}
+                  >
                     {testimonials.map((t, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.24 + i * 0.08 }}
-                        className="p-3 rounded-lg bg-muted/50 border border-border/30"
+                        initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 + i * 0.06 }}
+                        className="min-w-[75%] max-w-[80%] shrink-0 snap-center rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/40 p-3.5 shadow-sm"
                       >
-                        <span className="inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium mb-1.5">
-                          {t.tag}
-                        </span>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
-                          <Quote className="inline w-3 h-3 mr-0.5 opacity-40" />
-                          {t.quote}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                            <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
+                            <span className="text-[10px] text-primary-foreground font-bold">{t.name[0]}</span>
                           </div>
                           <div>
-                            <p className="text-[10px] text-muted-foreground font-medium">{t.name}</p>
-                            <p className="text-[9px] text-muted-foreground/60">{t.identity}</p>
+                            <p className="text-xs text-foreground font-medium">{t.name}</p>
+                            <p className="text-[9px] text-muted-foreground/70">{t.identity}</p>
                           </div>
+                          <span className="ml-auto inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium">
+                            {t.tag}
+                          </span>
                         </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
+                          <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
+                          {t.quote}
+                        </p>
                       </motion.div>
                     ))}
                   </div>
