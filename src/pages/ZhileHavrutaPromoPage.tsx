@@ -15,8 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
-import zhileCapsuleDetail1 from "@/assets/zhile-capsule-detail-1.png";
-import zhileCapsuleDetail2 from "@/assets/zhile-capsule-detail-2.png";
 
 /* ========== Floating particles ========== */
 function Particles() {
@@ -94,8 +92,12 @@ const coaches = [
 
 /* ========== 学员见证 ========== */
 const testimonials = [
-  { name: "苏菲", role: "绽放联盟合伙人", emoji: "🌿", quote: "通过向内探索练习，重新与自我建立连接，不仅找回了自己，更与过去那个矛盾内耗的自己达成了和解。如今能享受与自己美好相处的时光。" },
-  { name: "张艳", role: "绽放联盟合伙人", emoji: "🌻", quote: "加入系统时正处人生最低潮。在群体伙伴的爱与接纳中，每一种生命状态都被允许、被包裹。现在每天都过得开心和幸福。" },
+  { name: "苏菲", role: "资深用户", emoji: "🌿", quote: "通过向内探索练习，重新与自我建立连接，不仅找回了自己，更与过去那个矛盾内耗的自己达成了和解。如今能享受与自己美好相处的时光。" },
+  { name: "张艳", role: "资深用户", emoji: "🌻", quote: "加入系统时正处人生最低潮。在群体伙伴的爱与接纳中，每一种生命状态都被允许、被包裹。现在每天都过得开心和幸福。" },
+  { name: "李明", role: "已购用户", emoji: "😴", quote: "吃了两周知乐胶囊，最明显的变化是入睡变快了，半夜醒来的次数也少了。配合海洛塔辅导梳理了工作焦虑，现在睡眠质量提升了很多。" },
+  { name: "陈颖", role: "已购用户", emoji: "💼", quote: "做中层管理压力很大，团队教练帮我看到了自己一直在用'扛'的方式面对问题。90分钟的辅导比我自己想了半年还有用，思路一下就通了。" },
+  { name: "王涛", role: "已购用户", emoji: "🏠", quote: "买的时候其实是冲着胶囊来的，没想到海洛塔辅导才是最大的收获。教练帮我理清了和家人之间的沟通模式，现在家庭氛围好了很多。" },
+  { name: "林小雨", role: "已购用户", emoji: "🦋", quote: "第一次参加团队教练辅导有点紧张，但教练非常温暖专业。结束后突然意识到很多情绪反应都有根源，开始学会觉察自己，不再盲目内耗了。" },
 ];
 
 /* ========== Product specs ========== */
@@ -497,14 +499,6 @@ export default function ZhileHavrutaPromoPage() {
             <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
               <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
-                <img src={zhileCapsuleDetail1} alt="知乐胶囊详情1" className="w-full object-cover" loading="lazy" />
-              </div>
-              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
-                <img src={zhileCapsuleDetail2} alt="知乐胶囊详情2" className="w-full object-cover" loading="lazy" />
-              </div>
-            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {specs.map((s, i) => (
                 <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
@@ -589,8 +583,7 @@ export default function ZhileHavrutaPromoPage() {
 
       {/* ===== TESTIMONIALS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">学员真实感悟</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">来自绽放者联盟学员的分享</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-8">商品评价</h2>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}
