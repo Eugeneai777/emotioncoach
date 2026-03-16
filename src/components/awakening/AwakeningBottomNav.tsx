@@ -212,7 +212,7 @@ const AwakeningBottomNav: React.FC = () => {
           >
             <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover scale-[1.15]" />
           </motion.button>
-          <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">语音教练</span>
+          <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">开始对话</span>
         </div>
       </nav>
 
