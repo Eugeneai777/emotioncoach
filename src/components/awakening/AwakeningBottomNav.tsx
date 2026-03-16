@@ -123,7 +123,7 @@ const AwakeningBottomNav: React.FC = () => {
           {/* 主按钮 */}
           <motion.button
             onClick={handleCenterClick}
-            className={`relative w-14 h-14 rounded-full flex items-center justify-center
+            className={`relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
                        border-4 border-background shadow-lg
                        ${isMenuOpen 
                          ? 'bg-gradient-to-br from-rose-400 to-rose-500 shadow-rose-500/30' 
@@ -137,7 +137,7 @@ const AwakeningBottomNav: React.FC = () => {
               : { y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }
             }
           >
-            <img src={logoImage} alt="有劲AI" className="w-7 h-7 rounded-full object-cover" />
+            <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover" />
           </motion.button>
         </div>
       </nav>
