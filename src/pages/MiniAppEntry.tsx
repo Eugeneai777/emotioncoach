@@ -286,6 +286,9 @@ const MiniAppEntry = () => {
         <span className="text-sm text-muted-foreground/60 tracking-wide">Powered by <span className="font-semibold text-muted-foreground/80">有劲AI</span></span>
       </motion.div>
 
+      {/* ── 底部留白，避免被固定导航栏遮挡 ── */}
+      <div className="h-24" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
+
       {/* ── 底部导航 ── */}
       <AwakeningBottomNav />
     </div>
