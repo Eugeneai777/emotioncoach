@@ -523,7 +523,7 @@ const PlatformIntro = () => {
         </section>
 
         {/* 四层支持系统 */}
-        <section className="px-4 py-4">
+        <section className="px-4 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
