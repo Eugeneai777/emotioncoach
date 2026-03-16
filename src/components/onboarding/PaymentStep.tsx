@@ -78,6 +78,7 @@ export function PaymentStep({
   const [isRedirecting, setIsRedirecting] = useState(false); // 是否正在跳转
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const createOrderCalledRef = useRef(false);
 
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const isWechat = isWeChatBrowser();
