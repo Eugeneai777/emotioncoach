@@ -137,7 +137,7 @@ const AwakeningBottomNav: React.FC = () => {
               : { y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }
             }
           >
-            <img src={logoImage} alt="有劲AI" className="w-7 h-7 rounded-full object-cover" />
+            <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover" />
           </motion.button>
         </div>
       </nav>
