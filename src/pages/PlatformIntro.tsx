@@ -87,22 +87,20 @@ const coachGradientMap: Record<string, string> = {
 };
 
 
-// 痛点共鸣
+// 痛点共鸣 - 精简为4项，2列网格
 const painPoints = [
-  { emoji: '😤', text: '情绪反复失控，却不知道为什么' },
-  { emoji: '😰', text: '总觉得累，但说不清问题在哪' },
-  { emoji: '🔄', text: '道理都懂，就是做不到' },
-  { emoji: '😶', text: '身边没人真正理解你' },
-  { emoji: '🌫️', text: '迷茫，找不到方向和动力' },
+  { emoji: '😤', text: '情绪反复失控' },
+  { emoji: '😰', text: '总觉得累说不清' },
+  { emoji: '🔄', text: '道理都懂做不到' },
+  { emoji: '🌫️', text: '迷茫没有方向' },
 ];
 
-// 用户价值（改变）
+// 用户价值（改变）- 精简为4项，2x2网格
 const userValues = [
-  { emoji: '🎯', text: '清晰方向', desc: '从混沌到清醒，找到自己的节奏' },
-  { emoji: '💪', text: '稳定心态', desc: '不再被情绪绑架，内心越来越安定' },
-  { emoji: '✅', text: '可执行行动', desc: '每天一个微小行动，真正动起来' },
-  { emoji: '📈', text: '持续成长', desc: '看见自己的变化，信心越来越强' },
-  { emoji: '🤗', text: '被理解陪伴', desc: '不再孤单面对，有人懂你支持你' },
+  { emoji: '🎯', text: '清晰方向' },
+  { emoji: '💪', text: '稳定心态' },
+  { emoji: '✅', text: '行动力提升' },
+  { emoji: '🤗', text: '被理解陪伴' },
 ];
 
 // 核心价值（3项）
@@ -385,180 +383,147 @@ const PlatformIntro = () => {
 
       {/* 内容区域 - 添加 transform 优化 */}
       <div style={pullStyle} className="will-change-transform">
-        {/* 第一章｜什么是有劲AI？ */}
-        <section className="relative px-4 pt-4 pb-4 overflow-hidden">
-          {/* 背景装饰 - 使用 GPU 加速 */}
+        {/* Hero 区 - 核心定义 */}
+        <section className="relative px-4 pt-8 pb-6 sm:pt-10 sm:pb-8 overflow-hidden">
+          {/* 背景装饰 */}
           <div 
-            className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 will-change-transform" 
-            style={{ transform: 'translate3d(50%, -50%, 0)' }}
+            className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/15 to-accent/15 rounded-full blur-3xl will-change-transform" 
+            style={{ transform: 'translate3d(30%, -40%, 0)' }}
           />
           <div 
-            className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-warm/20 to-primary/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 will-change-transform" 
-            style={{ transform: 'translate3d(-50%, 50%, 0)' }}
+            className="absolute bottom-0 left-0 w-36 h-36 bg-gradient-to-tr from-warm/15 to-primary/15 rounded-full blur-3xl will-change-transform" 
+            style={{ transform: 'translate3d(-30%, 40%, 0)' }}
           />
           
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative"
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="relative text-center"
           >
-            {/* 核心定义 - 突出视觉 */}
-            <Card className="p-3 sm:p-4 border border-primary/10 shadow-md bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-4 transform-gpu">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary via-accent to-warm flex items-center justify-center flex-shrink-0 shadow-lg">
-                  <span className="text-2xl sm:text-3xl">🌟</span>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-800">有劲AI是一位</p>
-                  <p className="text-primary font-bold text-base sm:text-lg">懂你、陪你、帮你成长的生活教练</p>
-                </div>
-              </div>
-            </Card>
-            
-            
-            {/* 痛点共鸣 */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <Card className="p-3 sm:p-4 border border-destructive/15 shadow-sm mb-4 bg-gradient-to-br from-destructive/5 via-orange-50 to-white dark:from-destructive/10 dark:via-orange-950/20 dark:to-background transform-gpu">
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5 sm:mb-3 flex items-center gap-1.5">
-                  <span className="text-base">💭</span> 你是否也有这些感受？
-                </p>
-                <div className="space-y-1.5 sm:space-y-2">
-                  {painPoints.map((point, index) => (
-                    <motion.div
-                      key={index}
-                      variants={itemVariants}
-                      className="flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white/60 dark:bg-white/5 border border-slate-100 dark:border-slate-700/30 transform-gpu"
-                    >
-                      <span className="text-sm sm:text-base">{point.emoji}</span>
-                      <span className="text-xs sm:text-sm text-muted-foreground">{point.text}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
+            <span className="text-4xl sm:text-5xl mb-3 block">🌟</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2 leading-tight">
+              懂你、陪你、帮你成长的
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent block mt-1">
+                生活教练
+              </span>
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-6">
+              基于领导力的生活教练系统
+            </p>
 
-            {/* 你会得到的改变 */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <Card className="p-3 sm:p-4 border border-primary/10 shadow-sm mb-4 bg-gradient-to-br from-primary/5 via-emerald-50 to-white dark:from-primary/10 dark:via-emerald-950/20 dark:to-background transform-gpu">
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5 sm:mb-3 flex items-center gap-1.5">
-                  <span className="text-base">✨</span> 用了之后，你会得到
-                </p>
-                <div className="space-y-1.5 sm:space-y-2">
-                  {userValues.map((value, index) => (
-                    <motion.div
-                      key={index}
-                      variants={itemVariants}
-                      className="flex items-start gap-2.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-white/60 dark:bg-white/5 border border-primary/5 dark:border-primary/10 transform-gpu"
-                    >
-                      <span className="text-sm sm:text-base mt-0.5">{value.emoji}</span>
-                      <div>
-                        <span className="text-xs sm:text-sm font-medium text-foreground">{value.text}</span>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{value.desc}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
-            
-            {/* 使命与愿景 - 增强视觉 */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
-              <Card 
-                className="p-3 sm:p-4 border border-rose-200 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white hover:shadow-lg transition-shadow cursor-pointer transform-gpu active:scale-[0.98]"
-                onClick={() => navigate('/introduction')}
-              >
-                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-sm">
-                    <span className="text-base sm:text-lg">🎯</span>
-                  </div>
-                  <p className="text-[10px] sm:text-xs font-bold text-rose-600">使命 Mission</p>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                  让好的行为变得简单，让更好的自己成为必然
-                </p>
-              </Card>
-              <Card 
-                className="p-3 sm:p-4 border border-blue-200 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white hover:shadow-lg transition-shadow cursor-pointer transform-gpu active:scale-[0.98]"
-                onClick={() => navigate('/introduction')}
-              >
-                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
-                    <span className="text-base sm:text-lg">🔭</span>
-                  </div>
-                  <p className="text-[10px] sm:text-xs font-bold text-blue-600">愿景 Vision</p>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                  让 AI 成为每一个人的生活教练，让成长可见、可感、可持续
-                </p>
-              </Card>
+            {/* 痛点 - 2列网格 */}
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              {painPoints.map((point, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 + index * 0.05, duration: 0.2 }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-destructive/5 border border-destructive/10 transform-gpu"
+                >
+                  <span className="text-base">{point.emoji}</span>
+                  <span className="text-xs text-muted-foreground text-left">{point.text}</span>
+                </motion.div>
+              ))}
             </div>
-            
-            {/* 核心价值（3项）- 真正横向滚动 */}
-            <motion.div 
-              className="mb-4 sm:mb-6"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                  核心价值
-                </p>
-                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                  左右滑动 <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
-                <div className="flex gap-2 sm:gap-3" style={{ width: 'max-content' }}>
-                  {platformCoreValues.map((value, index) => (
-                    <motion.div
-                      key={value.num}
-                      variants={scaleVariants}
-                      custom={index}
-                    >
-                      <Card 
-                        className={`w-[145px] xs:w-[165px] flex-shrink-0 p-3 sm:p-4 border-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-white cursor-pointer transform-gpu ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}
-                        onClick={() => navigate(value.route)}
-                      >
-                        <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-2 sm:mb-3 shadow-md`}>
-                          <span className="text-white text-sm sm:text-base font-bold">{value.num}</span>
-                        </div>
-                        <h4 className="font-bold text-xs sm:text-sm text-slate-800 mb-1 sm:mb-1.5">{value.title}</h4>
-                        <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">{value.desc}</p>
-                        <ChevronRight className="w-4 h-4 text-slate-300 mt-1.5 sm:mt-2" />
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-            
-            {/* CTA */}
+
+            {/* 改变 - 2x2网格 */}
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {userValues.map((value, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + index * 0.05, duration: 0.2 }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 transform-gpu"
+                >
+                  <span className="text-base">{value.emoji}</span>
+                  <span className="text-xs font-medium text-foreground text-left">{value.text}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTA - 首屏可见 */}
             <Button 
               onClick={() => navigate('/coach/vibrant_life_sage')}
               size="lg"
-              className="w-full min-h-[44px] bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-shadow text-sm sm:text-base transform-gpu active:scale-[0.98]"
+              className="w-full min-h-[48px] bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-shadow text-sm sm:text-base transform-gpu active:scale-[0.98]"
             >
               立即体验 <ArrowRight className="w-5 h-5 ml-1.5" />
             </Button>
           </motion.div>
         </section>
 
-        {/* 分隔线 */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+        {/* 使命与愿景 - 合并为单卡片 */}
+        <section className="px-4 py-5 sm:py-6">
+          <Card 
+            className="p-4 border border-border/50 shadow-sm bg-gradient-to-r from-rose-50/50 via-white to-blue-50/50 dark:from-rose-950/20 dark:via-background dark:to-blue-950/20 cursor-pointer transform-gpu active:scale-[0.99]"
+            onClick={() => navigate('/introduction')}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="w-9 h-9 mx-auto mb-2 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-sm">
+                  <span className="text-base">🎯</span>
+                </div>
+                <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 mb-1">使命</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">让好的行为变得简单，让更好的自己成为必然</p>
+              </div>
+              <div className="text-center border-l border-border/30 pl-4">
+                <div className="w-9 h-9 mx-auto mb-2 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
+                  <span className="text-base">🔭</span>
+                </div>
+                <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1">愿景</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">让 AI 成为每个人的生活教练</p>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* 核心价值 - 横向滚动保留 */}
+        <section className="px-4 pb-6 sm:pb-8">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                核心价值
+              </p>
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                左右滑动 <ArrowRight className="w-3 h-3" />
+              </span>
+            </div>
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
+              <div className="flex gap-2 sm:gap-3" style={{ width: 'max-content' }}>
+                {platformCoreValues.map((value, index) => (
+                  <motion.div
+                    key={value.num}
+                    variants={scaleVariants}
+                    custom={index}
+                  >
+                    <Card 
+                      className={`w-[145px] xs:w-[165px] flex-shrink-0 p-3 sm:p-4 border-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-card cursor-pointer transform-gpu ${value.num === 1 ? 'border-rose-200 dark:border-rose-800' : value.num === 2 ? 'border-blue-200 dark:border-blue-800' : 'border-amber-200 dark:border-amber-800'}`}
+                      onClick={() => navigate(value.route)}
+                    >
+                      <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-2 sm:mb-3 shadow-md`}>
+                        <span className="text-white text-sm sm:text-base font-bold">{value.num}</span>
+                      </div>
+                      <h4 className="font-bold text-xs sm:text-sm text-foreground mb-1 sm:mb-1.5">{value.title}</h4>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">{value.desc}</p>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/50 mt-1.5 sm:mt-2" />
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </section>
 
         {/* 四层支持系统 */}
-        <section className="px-4 py-4">
+        <section className="px-4 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -620,11 +585,8 @@ const PlatformIntro = () => {
           </motion.div>
         </section>
 
-        {/* 分隔线 */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-
         {/* 教练空间 */}
-        <section className="px-4 py-4 bg-gradient-to-b from-slate-50/80 to-white">
+        <section className="px-4 py-6 sm:py-8 bg-gradient-to-b from-muted/30 to-background">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -714,11 +676,8 @@ const PlatformIntro = () => {
           </Button>
         </section>
 
-        {/* 分隔线 */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-
         {/* 有劲生活馆 */}
-        <section className="px-4 py-4">
+        <section className="px-4 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -800,11 +759,8 @@ const PlatformIntro = () => {
           </motion.div>
         </section>
 
-        {/* 分隔线 */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-
         {/* 合伙人体系 */}
-        <section className="px-4 py-4 bg-gradient-to-b from-slate-50/80 to-white">
+        <section className="px-4 py-6 sm:py-8 bg-gradient-to-b from-muted/30 to-background">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -869,11 +825,8 @@ const PlatformIntro = () => {
           </motion.div>
         </section>
 
-        {/* 分隔线 */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-
         {/* 快捷入口导航 */}
-        <section className="px-4 py-4">
+        <section className="px-4 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
