@@ -170,19 +170,26 @@ serve(async (req) => {
       if (recentPending) {
         console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'created at:', recentPending.created_at);
         
-        // 小程序支付且无 QR：返回已有订单号让原生端继续
+        // 小程序支付且无 QR：
+        // - 如果当前请求已有 openId，不走快速返回，继续往下用该 orderNo 调微信 JSAPI 获取 prepay_id
+        // - 如果仍然没有 openId，才返回 needsNativePayment 让原生端处理
         if (payType === 'miniprogram' && !recentPending.qr_code_url) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              orderNo: recentPending.order_no,
-              payType: 'miniprogram',
-              needsNativePayment: true,
-              existingOrder: true,
-              message: '使用已有订单',
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          if (!openId) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                orderNo: recentPending.order_no,
+                payType: 'miniprogram',
+                needsNativePayment: true,
+                existingOrder: true,
+                message: '使用已有订单',
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          // 有 openId：跳过去重，使用已有 orderNo 继续调微信 API
+          console.log('[CreateOrder] MiniProgram has openId now, will call WeChat API with existing order:', recentPending.order_no);
+          // 不 return，继续往下走（使用 recentPending.order_no）
         }
         
         // Native 支付且有 QR：直接返回
