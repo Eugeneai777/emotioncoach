@@ -5,7 +5,7 @@ import {
   User, Info,
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
-import logoImage from "@/assets/logo-youjin-ai.png";
+import logoImage from "@/assets/youjin-ai-logo.png";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
