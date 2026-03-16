@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import zhileCapsuleDetail1 from "@/assets/zhile-capsule-detail-1.png";
+import zhileCapsuleDetail2 from "@/assets/zhile-capsule-detail-2.png";
 
 /* ========== Floating particles ========== */
 function Particles() {
@@ -375,7 +377,7 @@ export default function ZhileHavrutaPromoPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs mb-6">
             <Shield className="w-3.5 h-3.5" />
-            专为35-55岁中年男性设计
+            专为35-55岁高压人群设计
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
@@ -451,7 +453,7 @@ export default function ZhileHavrutaPromoPage() {
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">你是否正在经历？</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">中年男性的五大隐形压力源</p>
+        <p className="text-slate-400 text-sm text-center mb-8">五大隐形压力源</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
@@ -473,8 +475,65 @@ export default function ZhileHavrutaPromoPage() {
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">双效解压方案</h2>
         <p className="text-slate-400 text-sm text-center mb-8">身体 + 情绪，内外兼修</p>
         <div className="max-w-lg mx-auto space-y-4">
-          {dualSolution.map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+          {/* 知乐安神胶囊卡片 */}
+          {dualSolution.filter(s => s.title === '知乐安神胶囊').map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className={`p-5 rounded-2xl border bg-gradient-to-br ${s.gradient} ${s.border}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${s.border} border bg-slate-900/40`}>
+                  <s.icon className={`w-6 h-6 ${s.textColor}`} />
+                </div>
+                <div>
+                  <h3 className={`font-bold text-base ${s.textColor}`}>{s.title}</h3>
+                  <p className="text-xs text-slate-400">{s.subtitle}</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{s.desc}</p>
+            </motion.div>
+          ))}
+
+          {/* 知乐胶囊详情（图片+规格+资质）紧跟卡片 */}
+          <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-4">
+            <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
+              <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
+                <img src={zhileCapsuleDetail1} alt="知乐胶囊详情1" className="w-full object-cover" loading="lazy" />
+              </div>
+              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
+                <img src={zhileCapsuleDetail2} alt="知乐胶囊详情2" className="w-full object-cover" loading="lazy" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {specs.map((s, i) => (
+                <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+                  <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/20 space-y-2.5">
+              <h4 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                <Shield className="w-4 h-4" /> 产品资质与安全
+              </h4>
+              {[
+                "香港中成药注册编号 HKC-18181，通过香港卫生署严格审批",
+                "16味草本植物萃取（酸枣仁、五味子、党参等），不含褪黑素、激素",
+                "无依赖，全年龄段（10岁+）可使用，哺乳期也适用",
+                "通过GMP认证 + 急性毒性试验 + 原材料确定性试验",
+              ].map((text, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <CircleCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* 海洛塔辅导卡片 */}
+          {dualSolution.filter(s => s.title !== '知乐安神胶囊').map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               className={`p-5 rounded-2xl border bg-gradient-to-br ${s.gradient} ${s.border}`}>
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${s.border} border bg-slate-900/40`}>
@@ -554,40 +613,6 @@ export default function ZhileHavrutaPromoPage() {
         </div>
       </Section>
 
-      {/* ===== CAPSULE DETAILS ===== */}
-      <Section className="bg-slate-900/50">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">知乐胶囊 · 草本身心调理</h2>
-        <p className="text-slate-400 text-sm text-center mb-6">从身体根源调理情绪与睡眠</p>
-        <div className="max-w-lg mx-auto space-y-4">
-          <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
-            <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {specs.map((s, i) => (
-              <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-                <p className="text-base font-bold text-cyan-400 leading-tight">{s.value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/20 space-y-2.5">
-            <h4 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
-              <Shield className="w-4 h-4" /> 产品资质与安全
-            </h4>
-            {[
-              "香港中成药注册编号 HKC-18181，通过香港卫生署严格审批",
-              "16味草本植物萃取（酸枣仁、五味子、党参等），不含褪黑素、激素",
-              "无依赖，全年龄段（10岁+）可使用，哺乳期也适用",
-              "通过GMP认证 + 急性毒性试验 + 原材料确定性试验",
-            ].map((text, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <CircleCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-300 leading-relaxed">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
 
       {/* ===== PURCHASE BENEFITS ===== */}
       <Section>
