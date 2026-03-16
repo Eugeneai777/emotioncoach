@@ -134,6 +134,25 @@ serve(async (req) => {
       }
     }
 
+    // 🔑 防止重复支付：仅对限购套餐检查用户是否已有同 package_key 的已支付订单
+    // 限购套餐列表（只能购买一次的产品）
+    const limitedPurchasePackages = ['basic', 'wealth_block_assessment'];
+    const isLimitedPackage = limitedPurchasePackages.includes(packageKey);
+    
+    let finalUserId = userId;
+    if (openId) {
+      const { data: mapping } = await supabase
+        .from('wechat_user_mappings')
+        .select('system_user_id')
+        .eq('openid', openId)
+        .maybeSingle();
+      
+      if (mapping?.system_user_id) {
+        finalUserId = mapping.system_user_id;
+        console.log('Found bound user for openId:', openId, '-> userId:', finalUserId);
+      }
+    }
+
     // 🆕 后端去重：复用同用户同套餐15分钟内的 pending 订单，避免重复下单
     if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
@@ -183,24 +202,6 @@ serve(async (req) => {
         }
         
         // 其他情况（如 JSAPI/H5 pending 订单）：不复用，因为 prepay_id 可能已失效
-      }
-    }
-
-    // 限购套餐列表（只能购买一次的产品）
-    const limitedPurchasePackages = ['basic', 'wealth_block_assessment'];
-    const isLimitedPackage = limitedPurchasePackages.includes(packageKey);
-    
-    let finalUserId = userId;
-    if (openId) {
-      const { data: mapping } = await supabase
-        .from('wechat_user_mappings')
-        .select('system_user_id')
-        .eq('openid', openId)
-        .maybeSingle();
-      
-      if (mapping?.system_user_id) {
-        finalUserId = mapping.system_user_id;
-        console.log('Found bound user for openId:', openId, '-> userId:', finalUserId);
       }
     }
 
