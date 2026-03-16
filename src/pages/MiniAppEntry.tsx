@@ -176,7 +176,7 @@ const MiniAppEntry = () => {
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center justify-center gap-1.5 py-2 cursor-pointer"
         >
-          <span className="text-sm text-muted-foreground/70">还想探索更多？</span>
+          <span className="text-sm text-blue-800 dark:text-blue-300">还想探索更多？</span>
           {isExpanded ? (
             <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/50" />
           ) : (
