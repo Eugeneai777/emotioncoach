@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote } from "lucide-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
