@@ -1320,6 +1320,22 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   const handleRetry = () => {
+    // 🆕 小程序环境：如果已有订单号，复用已有订单重新触发原生支付
+    const existingOrder = orderNo || getPendingOrderFromCache();
+    if (isMiniProgram && existingOrder && packageInfo) {
+      console.log('[Payment] MiniProgram retry: reusing existing order', existingOrder);
+      setStatus('polling');
+      setOrderNo(existingOrder);
+      startPolling(existingOrder);
+      triggerMiniProgramNativePay({
+        orderNo: existingOrder,
+        packageKey: packageInfo.key,
+        packageName: packageInfo.name,
+        amount: String(packageInfo.price),
+        needsNativePayment: 'true',
+      }, existingOrder);
+      return;
+    }
     orderCreatedRef.current = true; // 防止 useEffect 重复创建
     resetState();
     orderCreatedRef.current = false;
