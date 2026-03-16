@@ -154,6 +154,7 @@ serve(async (req) => {
     }
 
     // 🆕 后端去重：复用同用户同套餐15分钟内的 pending 订单，避免重复下单
+    let reusedMiniProgramOrderNo: string | undefined;
     if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { data: recentPending } = await supabase
@@ -171,8 +172,6 @@ serve(async (req) => {
         console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'created at:', recentPending.created_at);
         
         // 小程序支付且无 QR：
-        // - 如果当前请求已有 openId，不走快速返回，继续往下用该 orderNo 调微信 JSAPI 获取 prepay_id
-        // - 如果仍然没有 openId，才返回 needsNativePayment 让原生端处理
         if (payType === 'miniprogram' && !recentPending.qr_code_url) {
           if (!openId) {
             return new Response(
@@ -187,13 +186,13 @@ serve(async (req) => {
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
-          // 有 openId：跳过去重，使用已有 orderNo 继续调微信 API
+          // 有 openId：标记复用该 orderNo，继续往下调微信 API 获取 prepay_id
           console.log('[CreateOrder] MiniProgram has openId now, will call WeChat API with existing order:', recentPending.order_no);
-          // 不 return，继续往下走（使用 recentPending.order_no）
+          reusedMiniProgramOrderNo = recentPending.order_no;
         }
         
-        // Native 支付且有 QR：直接返回
-        if (recentPending.qr_code_url) {
+        // Native 支付且有 QR：直接返回（但不拦截小程序复用路径）
+        if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
           return new Response(
             JSON.stringify({
               success: true,
