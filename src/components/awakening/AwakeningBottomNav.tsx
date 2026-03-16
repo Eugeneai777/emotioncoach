@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { hasActiveSession, getActiveSession } from "@/hooks/useVoiceSessionLock";
 import { preheatTokenEndpoint, prewarmMicrophoneStream } from "@/utils/RealtimeAudio";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const POINTS_PER_MINUTE = 8;
 const MEMBER_365_PACKAGE = {
