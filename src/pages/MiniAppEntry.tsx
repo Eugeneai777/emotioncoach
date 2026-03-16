@@ -407,7 +407,7 @@ const MiniAppEntry = () => {
                           transition={{ delay: 0.1 + i * 0.04, duration: 0.3 }}
                           className={`break-inside-avoid mb-2.5 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} border border-border/30 p-3 shadow-sm`}
                         >
-                          <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                          <p className="text-[11px] text-foreground/80 leading-relaxed mb-2">
                             <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
                             {t.quote}
                           </p>
