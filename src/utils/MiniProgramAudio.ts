@@ -685,12 +685,25 @@ export class MiniProgramAudioClient {
 
   /**
    * 🔧 获取或创建播放用 AudioContext（复用以提升音质）
+   * iOS 静音开关兼容：首次创建时播放静音缓冲区解锁音频
    */
   private getPlaybackContext(): AudioContext {
     if (!this.playbackContext || this.playbackContext.state === 'closed') {
       this.playbackContext = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 24000
       });
+      
+      // 🔧 iOS 静音开关兼容：播放静音缓冲区解锁音频输出
+      try {
+        const silentBuffer = this.playbackContext.createBuffer(1, 1, 24000);
+        const silentSource = this.playbackContext.createBufferSource();
+        silentSource.buffer = silentBuffer;
+        silentSource.connect(this.playbackContext.destination);
+        silentSource.start(0);
+        console.log('[MiniProgramAudio] AudioContext unlocked with silent buffer');
+      } catch (e) {
+        console.warn('[MiniProgramAudio] Silent buffer unlock failed:', e);
+      }
     }
     // 确保 AudioContext 是运行状态
     if (this.playbackContext.state === 'suspended') {
