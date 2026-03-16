@@ -16,7 +16,6 @@ const AwakeningBottomNav: React.FC = () => {
     { id: 'courses', icon: GraduationCap, label: '学习课程', route: '/courses', color: 'from-green-400 to-green-500' },
     { id: 'products', icon: Package, label: '产品中心', route: '/packages', color: 'from-emerald-400 to-emerald-500' },
     { id: 'coach', icon: Users, label: '教练空间', route: '/coach-space', color: 'from-rose-400 to-rose-500' },
-    { id: 'about', icon: Info, label: '关于', route: '/awakening-system-intro', color: 'from-slate-400 to-slate-500' },
   ];
 
   const handleCenterClick = () => {
