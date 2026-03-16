@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote } from "lucide-react";
@@ -7,6 +7,7 @@ import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
 import { Skeleton } from "@/components/ui/skeleton";
+import { detectPlatform } from "@/lib/platformDetector";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
@@ -75,6 +76,8 @@ const MiniAppEntry = () => {
   const navigate = useNavigate();
   const { greeting, isLoading } = usePersonalizedGreeting();
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
+  const reduceMotion = isMiniProgram;
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
@@ -105,11 +108,14 @@ const MiniAppEntry = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-muted/30"
+      style={{ WebkitOverflowScrolling: 'touch' as any, WebkitTapHighlightColor: 'transparent' } as React.CSSProperties}
+    >
       {/* ── 顶部标题 ── */}
-      <div className="px-4 pb-3 pt-3">
+      <div className="px-4 pb-3" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
           className="text-center"
@@ -125,9 +131,9 @@ const MiniAppEntry = () => {
           {audiences.map((a, i) => (
             <motion.button
               key={a.id}
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+              transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(a.route)}
               style={{ transform: "translateZ(0)" }}
@@ -279,6 +285,9 @@ const MiniAppEntry = () => {
       >
         <span className="text-sm text-muted-foreground/60 tracking-wide">Powered by <span className="font-semibold text-muted-foreground/80">有劲AI</span></span>
       </motion.div>
+
+      {/* ── 底部留白，避免被固定导航栏遮挡 ── */}
+      <div className="h-24" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
 
       {/* ── 底部导航 ── */}
       <AwakeningBottomNav />
