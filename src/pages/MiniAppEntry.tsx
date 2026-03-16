@@ -213,11 +213,24 @@ const MiniAppEntry = () => {
             >
               {/* 顶部高光层 */}
               <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
-              {/* 右上角装饰水印 */}
-              <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
+              {/* 右侧插画或 emoji 水印 fallback */}
+              {illustrations[a.id] ? (
+                <img
+                  src={illustrations[a.id]}
+                  alt=""
+                  className="absolute -right-2 -top-2 w-20 h-20 object-cover opacity-30 pointer-events-none select-none rounded-full"
+                  loading="lazy"
+                />
+              ) : (
+                <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
+              )}
               {/* 图标容器 */}
-              <div className="relative z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]">
-                <span className="text-lg">{a.emoji}</span>
+              <div className="relative z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)] overflow-hidden">
+                {illustrations[a.id] ? (
+                  <img src={illustrations[a.id]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="text-lg">{a.emoji}</span>
+                )}
               </div>
               {/* 文字区 */}
               <div className="relative z-10 mt-auto">
