@@ -350,14 +350,27 @@ const MiniAppEntry = () => {
                       return (
                         <motion.div
                           key={i}
-                          className={`p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent}`}
+                          className={`relative p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent} overflow-hidden`}
                           initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.06, duration: 0.3 }}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-7 h-7 rounded-lg ${c.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
-                              <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
+                          {/* 右侧装饰插画 */}
+                          {illustrations[c.illustrationKey] && (
+                            <img
+                              src={illustrations[c.illustrationKey]}
+                              alt=""
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 object-contain opacity-10 pointer-events-none select-none"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className="flex items-start gap-3 relative z-10">
+                            <div className={`w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
+                              {illustrations[c.illustrationKey] ? (
+                                <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
+                              )}
                             </div>
                             <div>
                               <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
