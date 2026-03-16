@@ -46,7 +46,7 @@ const MiniAppEntry = () => {
           <p className="text-[10px] text-muted-foreground">每个人的生活教练</p>
         </div>
         <button
-          onClick={() => navigate('/platform-intro')}
+          onClick={() => navigate('/awakening-system-intro')}
           className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0"
         >
           <Info className="w-3.5 h-3.5" />
