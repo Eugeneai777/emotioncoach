@@ -326,8 +326,8 @@ const MiniAppEntry = () => {
                             )}
                           </div>
                           <p className="relative z-10 text-[13px] font-bold text-foreground">{block.title}</p>
-                          <p className="relative z-10 text-[10px] text-muted-foreground/70 mb-1.5">{block.sub}</p>
-                          <p className="relative z-10 text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{block.desc}</p>
+                          <p className="relative z-10 text-[10px] text-foreground/70 font-medium mb-1.5">{block.sub}</p>
+                          <p className="relative z-10 text-[10px] text-foreground/60 leading-relaxed line-clamp-2">{block.desc}</p>
                         </motion.button>
                       );
                     })}
@@ -341,7 +341,7 @@ const MiniAppEntry = () => {
                       <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
                       <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
                     </div>
-                    <p className="text-[11px] text-muted-foreground/60 ml-3">任何时刻，任何情绪，它都在</p>
+                    <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪，它都在</p>
                   </div>
                   <div className="space-y-2">
                     {useCases.map((c, i) => {
@@ -373,7 +373,7 @@ const MiniAppEntry = () => {
                             </div>
                             <div>
                               <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
-                              <p className="text-[10px] text-muted-foreground leading-relaxed">{c.desc}</p>
+                              <p className="text-[10px] text-foreground/70 leading-relaxed">{c.desc}</p>
                             </div>
                           </div>
                         </motion.div>
@@ -387,7 +387,7 @@ const MiniAppEntry = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
-                    <span className="text-[10px] text-muted-foreground/50 ml-auto">{testimonials.length} 条真实分享</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto">{testimonials.length} 条真实分享</span>
                   </div>
                   <div className="space-y-2.5">
                     {testimonials.map((t, i) => {
@@ -407,7 +407,7 @@ const MiniAppEntry = () => {
                           transition={{ delay: 0.1 + i * 0.04, duration: 0.3 }}
                           className={`break-inside-avoid mb-2.5 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} border border-border/30 p-3 shadow-sm`}
                         >
-                          <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                          <p className="text-[11px] text-foreground/80 leading-relaxed mb-2">
                             <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
                             {t.quote}
                           </p>
