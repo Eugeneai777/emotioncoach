@@ -501,14 +501,6 @@ export default function ZhileHavrutaPromoPage() {
             <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
               <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
-                <img src={zhileCapsuleDetail1} alt="知乐胶囊详情1" className="w-full object-cover" loading="lazy" />
-              </div>
-              <div className="rounded-xl overflow-hidden border border-cyan-500/20">
-                <img src={zhileCapsuleDetail2} alt="知乐胶囊详情2" className="w-full object-cover" loading="lazy" />
-              </div>
-            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {specs.map((s, i) => (
                 <div key={i} className="text-center p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
