@@ -18,6 +18,7 @@ const audiences = [
 
 const MiniAppEntry = () => {
   const navigate = useNavigate();
+  const { greeting, isLoading } = usePersonalizedGreeting();
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
