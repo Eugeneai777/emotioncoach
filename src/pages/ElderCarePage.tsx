@@ -139,18 +139,20 @@ const ElderCarePage = () => {
           </div>
         </motion.div>
 
-        {/* 家人相册 */}
-        <ChildPhotosCard />
-
         {/* 上传照片给长辈 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38 }}
+          transition={{ delay: 0.35 }}
           className="pb-4"
         >
           <FamilyPhotoUploader />
         </motion.div>
+
+        {/* 家人相册瀑布流 */}
+        <div className="pb-6">
+          <FamilyPhotoWaterfall />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
