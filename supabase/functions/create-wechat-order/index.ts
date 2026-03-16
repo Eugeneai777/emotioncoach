@@ -154,6 +154,7 @@ serve(async (req) => {
     }
 
     // 🆕 后端去重：复用同用户同套餐15分钟内的 pending 订单，避免重复下单
+    let reusedMiniProgramOrderNo: string | undefined;
     if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { data: recentPending } = await supabase
@@ -170,23 +171,28 @@ serve(async (req) => {
       if (recentPending) {
         console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'created at:', recentPending.created_at);
         
-        // 小程序支付且无 QR：返回已有订单号让原生端继续
+        // 小程序支付且无 QR：
         if (payType === 'miniprogram' && !recentPending.qr_code_url) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              orderNo: recentPending.order_no,
-              payType: 'miniprogram',
-              needsNativePayment: true,
-              existingOrder: true,
-              message: '使用已有订单',
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          if (!openId) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                orderNo: recentPending.order_no,
+                payType: 'miniprogram',
+                needsNativePayment: true,
+                existingOrder: true,
+                message: '使用已有订单',
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          // 有 openId：标记复用该 orderNo，继续往下调微信 API 获取 prepay_id
+          console.log('[CreateOrder] MiniProgram has openId now, will call WeChat API with existing order:', recentPending.order_no);
+          reusedMiniProgramOrderNo = recentPending.order_no;
         }
         
-        // Native 支付且有 QR：直接返回
-        if (recentPending.qr_code_url) {
+        // Native 支付且有 QR：直接返回（但不拦截小程序复用路径）
+        if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
           return new Response(
             JSON.stringify({
               success: true,
@@ -279,7 +285,8 @@ serve(async (req) => {
 
     // 生成订单号（或复用已有的待付款订单号）
     const reuseExistingOrder = !!existingOrderNo && payType === 'native';
-    const orderNo = reuseExistingOrder ? existingOrderNo : generateOrderNo();
+    const orderNo = reuseExistingOrder ? existingOrderNo : (reusedMiniProgramOrderNo || generateOrderNo());
+    const shouldSkipInsert = !!reusedMiniProgramOrderNo; // 订单已在数据库中，无需重新 insert
     const expiredAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
 
     // 构建微信支付请求体
@@ -575,8 +582,8 @@ serve(async (req) => {
     // 保存订单到数据库 - 使用 finalUserId（已绑定用户或guest）
     const isGuest = finalUserId === 'guest' || !finalUserId;
     
-    if (reuseExistingOrder) {
-      // 🔧 复用已有订单：仅更新 QR 码和支付类型（订单已在数据库中）
+    if (reuseExistingOrder || shouldSkipInsert) {
+      // 🔧 复用已有订单：仅更新支付类型和过期时间（订单已在数据库中）
       const { error: updateError } = await supabase
         .from('orders')
         .update({
@@ -590,7 +597,7 @@ serve(async (req) => {
         console.error('Update order error:', updateError);
         throw new Error('订单更新失败');
       }
-      console.log('Order updated with native QR:', orderNo, 'payType:', actualPayType);
+      console.log('Order updated (reuse):', orderNo, 'payType:', actualPayType, 'skipInsert:', shouldSkipInsert);
     } else {
       // 🔧 方案B：创建新订单前，将同用户同 packageKey 的旧 pending 订单标记为 cancelled
       if (!isGuest && finalUserId) {
