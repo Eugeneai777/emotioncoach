@@ -365,7 +365,7 @@ const MiniAppEntry = () => {
                             />
                           )}
                           <div className="flex items-start gap-3 relative z-10">
-                            <div className={`w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
+                            <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
                               {illustrations[c.illustrationKey] ? (
                                 <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
                               ) : (
