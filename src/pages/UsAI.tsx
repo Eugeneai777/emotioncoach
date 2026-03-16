@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { MessageCircle, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2 } from "lucide-react";
+import { Mic, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2, MessageCircle } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import UsAICalmButton from "@/components/us-ai/UsAICalmButton";
 import UsAIDailyCard from "@/components/us-ai/UsAIDailyCard";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const quickEntries = [
   { emoji: "💬", title: "今日对话", desc: "聊聊彼此", route: "/us-ai/tool?type=chat" },
@@ -17,7 +20,9 @@ const quickEntries = [
 
 const UsAI = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showCalm, setShowCalm] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
 
   return (
@@ -78,9 +83,12 @@ const UsAI = () => {
           className="flex flex-col items-center py-8"
         >
           <button
-            onClick={() => navigate("/us-ai/tool?type=chat")}
+            onClick={() => {
+              if (!user) { navigate("/auth"); return; }
+              setShowVoice(true);
+            }}
             className="relative group focus:outline-none touch-manipulation"
-            aria-label="开始聊天"
+            aria-label="智能语音"
           >
             <div className="absolute inset-[-16px] bg-gradient-to-r from-usai-primary/30 to-usai-accent/30 rounded-full animate-pulse opacity-30" />
             <div
@@ -94,9 +102,9 @@ const UsAI = () => {
                             hover:scale-105 active:scale-95 
                             transition-all duration-200 ease-out">
               <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                <MessageCircle className="w-8 h-8 text-white" />
+                <Mic className="w-8 h-8 text-white" />
               </div>
-              <span className="text-white font-bold text-lg">聊一聊</span>
+              <span className="text-white font-bold text-lg">智能语音</span>
             </div>
           </button>
 
@@ -238,6 +246,20 @@ const UsAI = () => {
           <p className="text-xs text-muted-foreground/50">我们AI · 关系是可以练习的</p>
         </div>
       </div>
+
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="💑"
+          coachTitle="情侣AI语音教练"
+          primaryColor="purple"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
 
       <AwakeningBottomNav />
     </div>

@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageCircle, ChevronRight, Home, Share2 } from "lucide-react";
+import { Mic, ChevronRight, Home, Share2, MessageCircle } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import WorkplaceQuickScenarios from "@/components/workplace/WorkplaceQuickScenarios";
 import WorkplaceAIChat from "@/components/workplace/WorkplaceAIChat";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const quickEntries = [
   { emoji: "😮‍💨", title: "压力释放", desc: "说出来就好了", context: "我工作压力很大，感觉快撑不住了...", chatType: "stress" as const },
@@ -16,7 +19,9 @@ const quickEntries = [
 
 const WorkplacePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [chatOpen, setChatOpen] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
   const [chatContext, setChatContext] = useState<string | undefined>();
   const [chatType, setChatType] = useState<"stress" | "diary">("stress");
 
@@ -77,9 +82,12 @@ const WorkplacePage = () => {
           className="flex flex-col items-center py-8"
         >
           <button
-            onClick={() => openChat()}
+            onClick={() => {
+              if (!user) { navigate("/auth"); return; }
+              setShowVoice(true);
+            }}
             className="relative group focus:outline-none touch-manipulation"
-            aria-label="开始聊天"
+            aria-label="智能语音"
           >
             <div className="absolute inset-[-16px] bg-gradient-to-r from-blue-300 to-indigo-300 rounded-full animate-pulse opacity-30" />
             <div
@@ -93,9 +101,9 @@ const WorkplacePage = () => {
                             hover:scale-105 active:scale-95 
                             transition-all duration-200 ease-out">
               <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                <MessageCircle className="w-8 h-8 text-white" />
+                <Mic className="w-8 h-8 text-white" />
               </div>
-              <span className="text-white font-bold text-lg">聊一聊</span>
+              <span className="text-white font-bold text-lg">智能语音</span>
             </div>
           </button>
 
@@ -222,6 +230,20 @@ const WorkplacePage = () => {
         initialContext={chatContext}
         chatType={chatType}
       />
+
+      {showVoice && user && (
+        <CoachVoiceChat
+          onClose={() => setShowVoice(false)}
+          coachEmoji="💼"
+          coachTitle="职场AI语音教练"
+          primaryColor="blue"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user.id}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
+        />
+      )}
 
       <AwakeningBottomNav />
     </div>
