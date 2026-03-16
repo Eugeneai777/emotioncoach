@@ -4,12 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 const DEFAULT_GREETING = "嗨，今天感觉怎么样？";
 
 const fetchPersonalizedGreeting = async (): Promise<string> => {
-  // Check cache first
-  const cached = getCachedGreeting();
-  if (cached) {
-    return cached;
-  }
-
   try {
     const { data, error } = await supabase.functions.invoke('generate-greeting');
     
@@ -18,14 +12,7 @@ const fetchPersonalizedGreeting = async (): Promise<string> => {
       return DEFAULT_GREETING;
     }
 
-    const greeting = data?.greeting || DEFAULT_GREETING;
-    
-    // Only cache personalized greetings
-    if (data?.greeting) {
-      setCachedGreeting(greeting);
-    }
-    
-    return greeting;
+    return data?.greeting || DEFAULT_GREETING;
   } catch (error) {
     console.error("Error in fetchPersonalizedGreeting:", error);
     return DEFAULT_GREETING;
@@ -39,10 +26,10 @@ export const usePersonalizedGreeting = () => {
     queryKey: ['personalizedGreeting', user?.id],
     queryFn: fetchPersonalizedGreeting,
     enabled: !!user,
-    staleTime: CACHE_DURATION,
-    gcTime: CACHE_DURATION,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: 'always',
   });
 
   return {
