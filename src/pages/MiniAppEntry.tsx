@@ -225,9 +225,9 @@ const MiniAppEntry = () => {
                 <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
               )}
               {/* 图标容器 */}
-              <div className={`relative z-10 w-9 h-9 rounded-full overflow-hidden flex items-center justify-center ${illustrations[a.id] ? 'ring-2 ring-white/30' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
+              <div className={`relative z-10 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${illustrations[a.id] ? 'border-2 border-white/40 shadow-md' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
                 {illustrations[a.id] ? (
-                  <img src={illustrations[a.id]} alt="" className="w-full h-full object-cover scale-110" loading="lazy" />
+                  <img src={illustrations[a.id]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
                 ) : (
                   <span className="text-lg">{a.emoji}</span>
                 )}
