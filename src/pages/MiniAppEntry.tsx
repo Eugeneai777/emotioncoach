@@ -315,7 +315,7 @@ const MiniAppEntry = () => {
                             <img
                               src={illustrations[block.illustrationKey]}
                               alt=""
-                              className="absolute -right-3 -bottom-3 w-20 h-20 object-contain opacity-15 pointer-events-none select-none"
+                              className="absolute -right-3 -bottom-3 w-24 h-24 object-contain opacity-25 pointer-events-none select-none"
                               loading="lazy"
                             />
                           )}
