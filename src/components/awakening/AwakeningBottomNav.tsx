@@ -108,34 +108,28 @@ const AwakeningBottomNav: React.FC = () => {
           </div>
         </div>
 
-        {/* 凸起中心按钮 */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-7">
+        {/* 凸起中心按钮 - 语音教练入口 */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-7 flex flex-col items-center">
           {/* 光晕效果 */}
           <motion.div
-            className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400/40 to-orange-500/40 blur-xl"
+            className="absolute inset-0 w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/40 to-orange-500/40 blur-xl"
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
           
           {/* 主按钮 */}
           <motion.button
-            onClick={handleCenterClick}
-            className={`relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
-                       border-0 shadow-lg
-                       ${isMenuOpen 
-                         ? 'bg-gradient-to-br from-rose-400 to-rose-500 shadow-rose-500/30' 
-                         : 'shadow-orange-500/30'
-                       }`}
+            onClick={() => navigate('/coach/vibrant_life_sage')}
+            className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
+                       border-0 shadow-lg shadow-orange-500/30"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            animate={isMenuOpen ? { rotate: 45 } : { rotate: 0, y: [0, -3, 0] }}
-            transition={isMenuOpen 
-              ? { type: 'spring', stiffness: 300 } 
-              : { y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }
-            }
+            animate={{ y: [0, -3, 0] }}
+            transition={{ y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }}
           >
             <img src={logoImage} alt="有劲AI" className="w-full h-full object-cover scale-[1.15]" />
           </motion.button>
+          <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">语音教练</span>
         </div>
       </nav>
     </>
