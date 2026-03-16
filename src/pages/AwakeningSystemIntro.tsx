@@ -48,8 +48,8 @@ const AwakeningSystemIntro = () => {
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
             有劲AI是一套基于领导力的生活教练系统。<br />
-            通过频繁记录情绪、想法和行动，<br />
-            帮你看清自己的模式，找到改变的切入点。
+            帮你觉察情绪、理清想法、付诸行动，<br />
+            看清自己的模式，找到改变的切入点。
           </p>
           {/* 核心金句卡片 */}
           <div className="relative mx-auto max-w-xs">
@@ -57,7 +57,7 @@ const AwakeningSystemIntro = () => {
             <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-2xl px-5 py-4">
               <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
               <p className="text-sm font-bold text-foreground tracking-wide">
-                「频繁记录自己，可以改命」
+                「看见自己，就是改变的开始」
               </p>
             </div>
           </div>
