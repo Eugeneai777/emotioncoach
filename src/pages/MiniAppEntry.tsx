@@ -169,20 +169,20 @@ const MiniAppEntry = () => {
 
       {/* ── 了解更多折叠区 ── */}
       <div className="px-4 pb-4">
-        <motion.button
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card border border-border/50 shadow-sm active:scale-[0.98] transition-transform"
+          className="flex items-center justify-center gap-1.5 py-2 cursor-pointer"
         >
-          <span className="text-sm font-medium text-foreground">✨ 还想探索更多？</span>
+          <span className="text-sm text-muted-foreground/70">还想探索更多？</span>
           {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/50" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />
           )}
-        </motion.button>
+        </motion.div>
 
         <AnimatePresence>
           {isExpanded && (
