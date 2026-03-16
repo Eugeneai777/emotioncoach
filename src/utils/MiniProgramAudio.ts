@@ -113,6 +113,9 @@ export class MiniProgramAudioClient {
       
       // 7. 🔧 监听页面可见性变化（iOS 小程序后台恢复时 resume AudioContext）
       this.setupVisibilityListener();
+      
+      // 8. 🔧 启动音频健康监控（检测麦克风流/AudioContext 静默失效）
+      this.startAudioHealthMonitor();
 
       this.updateStatus('connected');
       this.reconnectAttempts = 0;
