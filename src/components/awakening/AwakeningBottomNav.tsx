@@ -96,14 +96,14 @@ const AwakeningBottomNav: React.FC = () => {
             {/* 中间占位 */}
             <div className="w-16" />
 
-            {/* 右侧 - 介绍 */}
+            {/* 右侧 - 我的 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/awakening-system-intro')}
+              onClick={() => navigate('/profile')}
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
-              <Info className="w-5 h-5" />
-              <span className="text-xs">介绍</span>
+              <User className="w-5 h-5" />
+              <span className="text-xs">我的</span>
             </motion.button>
           </div>
         </div>
