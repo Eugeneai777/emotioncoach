@@ -387,7 +387,7 @@ const MiniAppEntry = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
                     <h4 className="text-sm font-bold text-foreground">用户见证</h4>
-                    <span className="text-[10px] text-muted-foreground/50 ml-auto">{testimonials.length} 条真实分享</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto">{testimonials.length} 条真实分享</span>
                   </div>
                   <div className="space-y-2.5">
                     {testimonials.map((t, i) => {
