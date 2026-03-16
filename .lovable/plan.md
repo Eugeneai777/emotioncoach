@@ -1,37 +1,23 @@
 
 
-# /platform-intro 页面简化方案
+## 两个问题需要修复
 
-## 当前问题
-909行代码，包含 **8个板块**：Hero、使命愿景、核心价值、四层支持、教练空间、生活馆、合伙人、快捷入口。信息过载，用户难以抓住重点。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 简化策略：保留3个核心板块 + 1个导航
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 删除的板块
-| 板块 | 原因 |
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+
+| 文件 | 修改 |
 |------|------|
-| 使命与愿景卡片 | 对新用户无吸引力，可在"关于"页查看 |
-| 核心价值横向滚动 | 抽象概念，不如直接体验 |
-| 教练空间（含教练列表） | 四层支持已涵盖，教练空间有独立入口 |
-| 有劲生活馆（工具分类+功能入口） | 生活馆有独立入口，此处重复 |
-| 合伙人体系 | 非核心用户路径，适合独立页面 |
-| 底部 CTA 卡片 | Hero已有CTA，重复 |
-
-### 保留并优化的板块
-1. **Hero区**（核心定义 + 痛点 + 改变 + CTA）— 不变
-2. **四层支持系统** — 保留，这是核心差异化
-3. **快捷入口导航** — 保留，作为"更多了解"的统一出口
-
-### 同时删除的数据和代码
-- `platformCoreValues`、`coachCoreValues`、`coachEmojiMap`、`coachScenarios`、`coachGradientMap`、`studioKeyFeatures`、`partnerTypes` 数据数组
-- `useActiveCoachTemplates` hook 调用和相关 loading 逻辑
-- `toolCategories` import
-- 未使用的图标 imports（Clock, Lock, GraduationCap, BookOpen, Users 等）
-- `scaleVariants`、`slideVariants` 动画变体（如不再使用）
-- 骨架屏中对应的骨架区块精简
-
-### 文件改动
-| 文件 | 改动 |
-|------|------|
-| `src/pages/PlatformIntro.tsx` | 从909行精简至约350行，删除5个板块及相关数据/imports |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
