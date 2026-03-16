@@ -137,7 +137,7 @@ const AwakeningBottomNav: React.FC = () => {
               : { y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }
             }
           >
-            <Sparkles className="w-6 h-6 text-white" />
+            <img src={logoImage} alt="有劲AI" className="w-7 h-7 rounded-full object-cover" />
           </motion.button>
         </div>
       </nav>
