@@ -54,6 +54,7 @@ const EmotionButton = () => {
       <EmotionReliefFlow
         emotionType={activeEmotion}
         onClose={() => setActiveEmotion(null)}
+        autoOpenPurchase={paymentResumeFlag}
       />
     );
   }
