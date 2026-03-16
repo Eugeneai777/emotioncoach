@@ -453,7 +453,7 @@ export default function ZhileHavrutaPromoPage() {
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">你是否正在经历？</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">中年男性的五大隐形压力源</p>
+        <p className="text-slate-400 text-sm text-center mb-8">五大隐形压力源</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
