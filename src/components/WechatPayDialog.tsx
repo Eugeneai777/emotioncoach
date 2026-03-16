@@ -819,6 +819,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const createOrder = async () => {
     if (!packageInfo) return;
 
+    // 🆕 防重入：如果已经在创建中或已创建，直接返回
+    if (status === 'loading' || status === 'polling' || status === 'success') {
+      console.log('[Payment] createOrder skipped, current status:', status);
+      return;
+    }
+
     // 仅合伙人套餐验证条款
     if (needsTerms && !agreedTerms) {
       toast.error('请先阅读并同意服务条款和隐私政策');
