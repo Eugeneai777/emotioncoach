@@ -585,8 +585,8 @@ serve(async (req) => {
     // 保存订单到数据库 - 使用 finalUserId（已绑定用户或guest）
     const isGuest = finalUserId === 'guest' || !finalUserId;
     
-    if (reuseExistingOrder) {
-      // 🔧 复用已有订单：仅更新 QR 码和支付类型（订单已在数据库中）
+    if (reuseExistingOrder || shouldSkipInsert) {
+      // 🔧 复用已有订单：仅更新支付类型和过期时间（订单已在数据库中）
       const { error: updateError } = await supabase
         .from('orders')
         .update({
@@ -600,7 +600,7 @@ serve(async (req) => {
         console.error('Update order error:', updateError);
         throw new Error('订单更新失败');
       }
-      console.log('Order updated with native QR:', orderNo, 'payType:', actualPayType);
+      console.log('Order updated (reuse):', orderNo, 'payType:', actualPayType, 'skipInsert:', shouldSkipInsert);
     } else {
       // 🔧 方案B：创建新订单前，将同用户同 packageKey 的旧 pending 订单标记为 cancelled
       if (!isGuest && finalUserId) {
