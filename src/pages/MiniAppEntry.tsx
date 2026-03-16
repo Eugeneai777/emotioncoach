@@ -99,22 +99,6 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── 探索更多 ── */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        onClick={() => window.open('https://wechat.eugenewe.net/living-lab?ref=share', '_blank')}
-        className="flex flex-col items-center gap-1 w-full pb-24 pt-6 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <span className="text-xs">还想探索更多？</span>
-        <motion.span
-          animate={{ y: [0, 4, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-        >
-          <ChevronDown className="w-4 h-4" />
-        </motion.span>
-      </motion.button>
 
       {/* ── 底部导航 ── */}
       <AwakeningBottomNav />
