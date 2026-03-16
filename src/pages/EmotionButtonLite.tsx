@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Info } from "lucide-react";
@@ -16,6 +16,21 @@ const EmotionButtonLite = () => {
   
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
+
+  // 微信 OAuth 授权回调后自动恢复支付弹窗
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('assessment_pay_resume') === '1') {
+      console.log('[EmotionButtonLite] Resuming payment dialog after OAuth redirect');
+      setShowPayDialog(true);
+      // 清理 URL 参数
+      params.delete('assessment_pay_resume');
+      const cleanUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
 
   const isLoading = authLoading || purchaseLoading;
 
