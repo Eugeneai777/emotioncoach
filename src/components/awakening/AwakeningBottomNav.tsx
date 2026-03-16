@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { hasActiveSession, getActiveSession } from "@/hooks/useVoiceSessionLock";
 import { preheatTokenEndpoint, prewarmMicrophoneStream } from "@/utils/RealtimeAudio";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const POINTS_PER_MINUTE = 8;
 const MEMBER_365_PACKAGE = {
@@ -220,9 +221,14 @@ const AwakeningBottomNav: React.FC = () => {
       {showVoiceChat && (
         <CoachVoiceChat
           onClose={() => setShowVoiceChat(false)}
-          coachEmoji="✨"
-          coachTitle="有劲AI语音教练"
-          primaryColor="amber"
+          coachEmoji="❤️"
+          coachTitle="有劲AI生活教练"
+          primaryColor="rose"
+          tokenEndpoint="vibrant-life-realtime-token"
+          userId={user?.id || ""}
+          mode="general"
+          featureKey="realtime_voice"
+          voiceType={getSavedVoiceType()}
         />
       )}
 
