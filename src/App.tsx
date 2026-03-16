@@ -211,6 +211,7 @@ const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 const PromoPage = lazyRetry(() => import("./pages/PromoPage"));
 const SynergyPromoPage = lazyRetry(() => import("./pages/SynergyPromoPage"));
 const WealthSynergyPromoPage = lazyRetry(() => import("./pages/WealthSynergyPromoPage"));
+const ZhileHavrutaPromoPage = lazyRetry(() => import("./pages/ZhileHavrutaPromoPage"));
 const ZhilePromoHub = lazyRetry(() => import("./pages/ZhilePromoHub"));
 const ZhileProductsPage = lazyRetry(() => import("./pages/ZhileProductsPage"));
 
