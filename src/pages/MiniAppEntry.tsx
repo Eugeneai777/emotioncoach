@@ -413,8 +413,14 @@ const MiniAppEntry = () => {
                             {t.quote}
                           </p>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                              <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                            <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                              {illustrations[`avatar_${i}`] ? (
+                                <img src={illustrations[`avatar_${i}`]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                                  <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                                </div>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] text-foreground font-medium">{t.name} · <span className="text-muted-foreground/70">{t.identity}</span></p>
