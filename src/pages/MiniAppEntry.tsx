@@ -116,11 +116,9 @@ const MiniAppEntry = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="flex items-center justify-center gap-1.5 py-3"
+        className="flex items-center justify-center py-3"
       >
-        <span className="text-[11px] text-muted-foreground/60">Powered by</span>
-        <img src={logoImage} alt="有劲AI" className="w-4 h-4 rounded object-cover" />
-        <span className="text-[11px] text-muted-foreground/80 font-medium">有劲AI</span>
+        <span className="text-sm text-muted-foreground/60 tracking-wide">Powered by <span className="font-semibold text-muted-foreground/80">有劲AI</span></span>
       </motion.div>
 
       {/* ── 底部导航 ── */}
