@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { MessageCircle, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2 } from "lucide-react";
+import { Mic, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2, MessageCircle } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import UsAICalmButton from "@/components/us-ai/UsAICalmButton";
 import UsAIDailyCard from "@/components/us-ai/UsAIDailyCard";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const quickEntries = [
   { emoji: "💬", title: "今日对话", desc: "聊聊彼此", route: "/us-ai/tool?type=chat" },
