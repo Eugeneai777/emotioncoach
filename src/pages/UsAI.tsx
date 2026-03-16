@@ -20,7 +20,9 @@ const quickEntries = [
 
 const UsAI = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showCalm, setShowCalm] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
 
   return (
