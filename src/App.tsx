@@ -225,6 +225,7 @@ const MarriageHelp = lazyRetry(() => import("./pages/marriage/MarriageHelp"));
 
 // 老哥AI
 const LaogeAI = lazyRetry(() => import("./pages/LaogeAI"));
+const PageLinksDocument = lazyRetry(() => import("./pages/PageLinksDocument"));
 
 // 我们AI
 const UsAI = lazyRetry(() => import("./pages/UsAI"));
