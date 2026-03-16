@@ -326,8 +326,8 @@ const MiniAppEntry = () => {
                             )}
                           </div>
                           <p className="relative z-10 text-[13px] font-bold text-foreground">{block.title}</p>
-                          <p className="relative z-10 text-[10px] text-muted-foreground/70 mb-1.5">{block.sub}</p>
-                          <p className="relative z-10 text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{block.desc}</p>
+                          <p className="relative z-10 text-[10px] text-foreground/70 font-medium mb-1.5">{block.sub}</p>
+                          <p className="relative z-10 text-[10px] text-foreground/60 leading-relaxed line-clamp-2">{block.desc}</p>
                         </motion.button>
                       );
                     })}
