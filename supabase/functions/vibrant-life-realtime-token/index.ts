@@ -873,8 +873,43 @@ const SCENARIO_CONFIGS: Record<string, ScenarioConfig> = {
 
 // ============ 第二层：模式层 (Mode Layer) ============
 
+// 分析照片内容（用于老人陪伴场景）
+async function analyzePhotosForVoice(photoUrls: string[], apiKey: string): Promise<string[]> {
+  const descriptions: string[] = [];
+  for (const url of photoUrls.slice(0, 5)) {
+    try {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: "请用一句简短的中文描述这张照片里的人物和场景，不超过30个字。只描述你看到的内容，不要猜测人物关系。" },
+              { type: "image_url", image_url: { url } },
+            ],
+          }],
+          max_tokens: 100,
+        }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const desc = data.choices?.[0]?.message?.content?.trim();
+        if (desc) descriptions.push(desc);
+      }
+    } catch (e) {
+      console.error("Photo analysis error:", e);
+    }
+  }
+  return descriptions;
+}
+
 // 构建场景专属指令（增强版）
-function buildScenarioInstructions(scenario: string, userName: string): string {
+function buildScenarioInstructions(scenario: string, userName: string, photoContext?: string): string {
   const config = SCENARIO_CONFIGS[scenario];
   if (!config) return buildGeneralInstructions(userName);
   
@@ -895,6 +930,7 @@ ${config.deepGuidance.map((g, i) => `${i + 1}. ${g}`).join('\n')}
 ${config.examples.join('\n')}
 
 【对话节奏】每次2-4句，自然停顿，留空间给用户
+${photoContext || ''}
 
 用户问你是谁："我是劲老师，你的生活陪伴者🌿 ${scenario}的时候，我会用最适合的方式陪着你。"
 
