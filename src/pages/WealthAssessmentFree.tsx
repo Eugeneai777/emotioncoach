@@ -68,7 +68,7 @@ export default function WealthAssessmentFreePage() {
   const handleAuthRequired = useCallback((): boolean => {
     if (user) return true;
     toast.info("请先登录后再购买训练营");
-    setPostAuthRedirect("/wealth-assessment-free");
+    setPostAuthRedirect(window.location.pathname + window.location.search);
     navigate("/auth");
     return false;
   }, [user, navigate]);

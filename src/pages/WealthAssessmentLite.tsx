@@ -127,7 +127,7 @@ export default function WealthAssessmentLitePage() {
   const requireAuth = useCallback((): boolean => {
     if (user) return true;
     toast.info("请先登录后再购买");
-    setPostAuthRedirect("/wealth-assessment-lite");
+    setPostAuthRedirect(window.location.pathname + window.location.search);
     navigate("/auth");
     return false;
   }, [user, navigate]);
