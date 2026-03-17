@@ -792,6 +792,7 @@ const SCENARIO_CONFIGS: Record<string, ScenarioConfig> = {
     opening: "您好呀🌿 最近怎么样？",
     rules: [
       "语速稍慢，用词简单",
+      "称呼用户为'您'或'叔叔/阿姨'、'爷爷/奶奶'",
       "多用开放式问题：'今天有什么开心的事吗？''最近在忙些什么呢？'",
       "多倾听少打断，重复确认理解",
       "温暖回应：'嗯嗯''是这样的'"
@@ -799,11 +800,16 @@ const SCENARIO_CONFIGS: Record<string, ScenarioConfig> = {
     deepGuidance: [
       "当老人聊到子女时，温和问：'他们最近怎么样？'",
       "当老人表达孤独时：'想他们了是吗？这很正常的'",
-      "鼓励回忆美好时光：'以前有什么有趣的事吗？'"
+      "鼓励回忆美好时光：'以前有什么有趣的事吗？'",
+      "如果有家人相册照片描述，用开放性问题自然提及：'我看到相册里有张照片，里面有个小朋友在笑，那是谁呀？'",
+      "引导聊快乐回忆：'您和她最快乐的记忆是什么呢？那时候是什么感觉？'",
+      "每次只提一张照片，不要一次全部说完",
+      "不要假设照片中人物的身份，让老人自己告诉你"
     ],
     examples: [
       "用户：'孩子们都忙' → '嗯，孩子们各有各的事...您平时都怎么打发时间呢？'",
-      "用户：'一个人挺无聊的' → '是啊，一个人确实会觉得无聊...想聊聊以前的事吗？'"
+      "用户：'一个人挺无聊的' → '是啊，一个人确实会觉得无聊...想聊聊以前的事吗？'",
+      "有照片描述时 → '我看到相册里有一张特别温馨的照片，好像是在公园里拍的，能给我讲讲吗？'"
     ]
   },
   "职场压力": {
@@ -867,8 +873,43 @@ const SCENARIO_CONFIGS: Record<string, ScenarioConfig> = {
 
 // ============ 第二层：模式层 (Mode Layer) ============
 
+// 分析照片内容（用于老人陪伴场景）
+async function analyzePhotosForVoice(photoUrls: string[], apiKey: string): Promise<string[]> {
+  const descriptions: string[] = [];
+  for (const url of photoUrls.slice(0, 5)) {
+    try {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: "请用一句简短的中文描述这张照片里的人物和场景，不超过30个字。只描述你看到的内容，不要猜测人物关系。" },
+              { type: "image_url", image_url: { url } },
+            ],
+          }],
+          max_tokens: 100,
+        }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const desc = data.choices?.[0]?.message?.content?.trim();
+        if (desc) descriptions.push(desc);
+      }
+    } catch (e) {
+      console.error("Photo analysis error:", e);
+    }
+  }
+  return descriptions;
+}
+
 // 构建场景专属指令（增强版）
-function buildScenarioInstructions(scenario: string, userName: string): string {
+function buildScenarioInstructions(scenario: string, userName: string, photoContext?: string): string {
   const config = SCENARIO_CONFIGS[scenario];
   if (!config) return buildGeneralInstructions(userName);
   
@@ -889,6 +930,7 @@ ${config.deepGuidance.map((g, i) => `${i + 1}. ${g}`).join('\n')}
 ${config.examples.join('\n')}
 
 【对话节奏】每次2-4句，自然停顿，留空间给用户
+${photoContext || ''}
 
 用户问你是谁："我是劲老师，你的生活陪伴者🌿 ${scenario}的时候，我会用最适合的方式陪着你。"
 
@@ -1136,7 +1178,57 @@ serve(async (req) => {
 
     if (scenario && SCENARIO_CONFIGS[scenario]) {
       // 场景模式优先
-      instructions = buildScenarioInstructions(scenario, userName);
+      let photoContext = '';
+      
+      // 老人陪伴场景：获取家人相册照片并分析
+      if (scenario === '老人陪伴') {
+        try {
+          const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+          const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+          const supabaseUrl = Deno.env.get('SUPABASE_URL');
+          
+          if (LOVABLE_API_KEY && supabaseServiceKey && supabaseUrl) {
+            const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
+            const { data: photos } = await serviceSupabase
+              .from('family_photos')
+              .select('photo_url')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(5);
+            
+            if (photos?.length) {
+              console.log(`Found ${photos.length} family photos for elder companion`);
+              const descriptions = await analyzePhotosForVoice(
+                photos.map((p: any) => p.photo_url),
+                LOVABLE_API_KEY
+              );
+              
+              if (descriptions.length) {
+                const photoList = descriptions.map((d, i) => `${i + 1}. ${d}`).join('\n');
+                photoContext = `
+
+【家人相册近照 - 请在对话中自然地用开放性问题提及】
+${photoList}
+
+引导策略：
+- 用温暖的开放性问题提及照片："我看到相册里有一张特别温馨的照片，里面好像有个小朋友，那是谁呀？😊"
+- 追问快乐回忆："您和她/他最快乐的记忆是什么呢？那时候是什么感觉？"
+- 表达被照片触动："看起来好温馨呀！能给我讲讲吗？"
+- 每次只提一张照片，不要一次全部说完
+- 不要假设照片中人物的身份，让老人自己告诉你
+- 如果老人愿意聊，继续深入追问细节和感受
+- 如果老人不想聊某张照片，自然转换话题
+- 在对话的前几轮自然提起照片`;
+                console.log(`Photo descriptions injected: ${descriptions.length}`);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Elder photo fetch error:', e);
+        }
+      }
+      
+      instructions = buildScenarioInstructions(scenario, userName, photoContext);
       tools = commonTools;
       console.log('Scenario mode activated:', scenario);
     } else if (mode === 'emotion') {

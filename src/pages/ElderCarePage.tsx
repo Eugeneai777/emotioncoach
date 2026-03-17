@@ -204,6 +204,7 @@ const ElderCarePage = () => {
           tokenEndpoint="vibrant-life-realtime-token"
           userId={user.id}
           mode="general"
+          scenario="老人陪伴"
           featureKey="realtime_voice"
           voiceType={getSavedVoiceType()}
         />
