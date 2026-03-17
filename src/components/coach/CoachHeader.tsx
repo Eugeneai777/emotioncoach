@@ -124,9 +124,9 @@ export const CoachHeader = ({
                 sessionStorage.setItem('skip_preferred_redirect', '1');
                 navigate('/mini-app');
               }}
-              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 mr-0.5 active:scale-95"
+              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 mr-0.5 active:scale-95 whitespace-nowrap shrink-0"
             >
-              <Home className="w-3.5 h-3.5" />
+              <Home className="w-3.5 h-3.5 shrink-0" />
               <span>主页</span>
             </button>
 
