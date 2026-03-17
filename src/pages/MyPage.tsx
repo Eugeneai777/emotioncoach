@@ -1,29 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  User, Package, ChevronRight, ChevronDown,
+  Package, ChevronRight, ChevronDown,
   Info, Bell, Lock, HelpCircle, LogOut, Truck,
   ClipboardCheck, Flame, BookOpen, Settings, Sparkles
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// ---- 静态占位数据 ----
-const MOCK_ORDERS = [
-  { id: "ORD20260301", name: "知乐胶囊 × 2", status: "已发货", trackingNo: "SF1234567890", date: "2026-03-10" },
-  { id: "ORD20260215", name: "365会员", status: "已完成", trackingNo: null, date: "2026-02-15" },
-  { id: "ORD20260110", name: "情绪训练营", status: "已完成", trackingNo: null, date: "2026-01-10" },
-];
+interface ProfileData {
+  display_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+}
+
+interface OrderData {
+  id: string;
+  order_no: string | null;
+  package_name: string | null;
+  amount: number | null;
+  status: string | null;
+  shipping_status: string | null;
+  shipping_note: string | null;
+  created_at: string | null;
+}
 
 const LEARNING_MODULES = [
   {
     key: "assessment",
     icon: ClipboardCheck,
     label: "测评",
-    count: "2项已完成",
     gradient: "from-violet-500/15 to-violet-600/5",
     iconColor: "text-violet-600 dark:text-violet-400",
     route: "/assessment-picker",
@@ -32,7 +43,6 @@ const LEARNING_MODULES = [
     key: "camp",
     icon: Flame,
     label: "训练营",
-    count: "1个进行中",
     gradient: "from-amber-500/15 to-amber-600/5",
     iconColor: "text-amber-600 dark:text-amber-400",
     route: "/camps",
@@ -41,25 +51,113 @@ const LEARNING_MODULES = [
     key: "course",
     icon: BookOpen,
     label: "课程",
-    count: "4门已学",
     gradient: "from-emerald-500/15 to-emerald-600/5",
     iconColor: "text-emerald-600 dark:text-emerald-400",
-    route: "/video-courses",
+    route: "/courses",
   },
 ];
 
-const SETTINGS_ITEMS = [
-  { icon: Bell, label: "通知设置" },
-  { icon: Lock, label: "隐私安全" },
-  { icon: HelpCircle, label: "帮助反馈" },
-  { icon: LogOut, label: "退出登录" },
-];
+const maskPhone = (phone: string | null | undefined): string => {
+  if (!phone) return "";
+  if (phone.length >= 7) {
+    return phone.slice(0, 3) + "****" + phone.slice(-4);
+  }
+  return phone;
+};
+
+const statusLabel = (status: string | null): string => {
+  switch (status) {
+    case "paid": return "已支付";
+    case "shipped": return "已发货";
+    case "completed": return "已完成";
+    case "pending": return "待支付";
+    case "refunded": return "已退款";
+    default: return status || "未知";
+  }
+};
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const [showAllOrders, setShowAllOrders] = useState(false);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [isMember, setIsMember] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const visibleOrders = showAllOrders ? MOCK_ORDERS : MOCK_ORDERS.slice(0, 2);
+  // Load profile & orders
+  useEffect(() => {
+    if (!user) {
+      setLoadingProfile(false);
+      return;
+    }
+
+    const loadData = async () => {
+      // Profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, phone")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profileData) setProfile(profileData);
+
+      // Orders
+      const { data: orderData } = await supabase
+        .from("orders")
+        .select("id, order_no, package_name, amount, status, shipping_status, shipping_note, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (orderData) setOrders(orderData as OrderData[]);
+
+      // Membership check
+      const { data: memberOrder } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("user_id", user.id)
+        .in("package_key", ["member365", "365"])
+        .eq("status", "paid")
+        .limit(1)
+        .maybeSingle();
+      setIsMember(!!memberOrder);
+
+      setLoadingProfile(false);
+    };
+    loadData();
+  }, [user]);
+
+  const visibleOrders = showAllOrders ? orders : orders.slice(0, 2);
+
+  const handleSettingsClick = async (label: string) => {
+    switch (label) {
+      case "通知设置":
+        navigate("/settings");
+        break;
+      case "隐私安全":
+        navigate("/privacy");
+        break;
+      case "帮助反馈":
+        navigate("/customer-support");
+        break;
+      case "退出登录":
+        await signOut();
+        toast({ title: "已退出登录" });
+        navigate("/auth");
+        break;
+    }
+  };
+
+  const SETTINGS_ITEMS = [
+    { icon: Bell, label: "通知设置" },
+    { icon: Lock, label: "隐私安全" },
+    { icon: HelpCircle, label: "帮助反馈" },
+    { icon: LogOut, label: "退出登录" },
+  ];
+
+  const displayName = profile?.display_name || user?.user_metadata?.display_name || "未设置昵称";
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
+  const phone = profile?.phone || user?.phone;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-28">
@@ -70,20 +168,32 @@ const MyPage: React.FC = () => {
 
       <div className="px-4 space-y-5">
         {/* ======== 1. 账号信息 ======== */}
-        <Card className="border-border/40 bg-card/80 backdrop-blur-sm">
+        <Card
+          className="border-border/40 bg-card/80 backdrop-blur-sm cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+          onClick={() => navigate("/settings")}
+        >
           <CardContent className="p-4 flex items-center gap-4">
             <Avatar className="w-14 h-14">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
               <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
-                U
+                {displayName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-foreground truncate">用户昵称</p>
-              <p className="text-sm text-muted-foreground">138****8888</p>
+              <p className="text-base font-semibold text-foreground truncate">{displayName}</p>
+              {phone && (
+                <p className="text-sm text-muted-foreground">{maskPhone(phone)}</p>
+              )}
+              {!phone && (
+                <p className="text-sm text-muted-foreground">点击编辑个人信息</p>
+              )}
             </div>
-            <Badge className="bg-primary/10 text-primary border-primary/20 shrink-0">
-              365会员
-            </Badge>
+            {isMember && (
+              <Badge className="bg-primary/10 text-primary border-primary/20 shrink-0">
+                365会员
+              </Badge>
+            )}
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           </CardContent>
         </Card>
 
@@ -94,30 +204,38 @@ const MyPage: React.FC = () => {
               <Package className="w-4 h-4 text-primary" />
               <h2 className="text-base font-semibold text-foreground">订单信息</h2>
             </div>
-            <span className="text-xs text-muted-foreground">{MOCK_ORDERS.length}笔订单</span>
+            <span className="text-xs text-muted-foreground">{orders.length}笔订单</span>
           </div>
           <Card className="border-border/40 bg-card/80">
             <CardContent className="p-0 divide-y divide-border/30">
+              {visibleOrders.length === 0 && (
+                <div className="p-6 text-center text-sm text-muted-foreground">暂无订单</div>
+              )}
               {visibleOrders.map((order) => (
                 <div key={order.id} className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">{order.name}</span>
+                    <span className="text-sm font-medium text-foreground">{order.package_name || "未知商品"}</span>
                     <Badge
-                      variant={order.status === "已发货" ? "default" : "secondary"}
+                      variant={order.status === "paid" || order.status === "shipped" ? "default" : "secondary"}
                       className="text-xs"
                     >
-                      {order.status}
+                      {statusLabel(order.status)}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>订单号：{order.id}</span>
-                    <span>{order.date}</span>
+                    <span>订单号：{order.order_no || order.id.slice(0, 12)}</span>
+                    <span className="font-semibold text-foreground">
+                      ¥{(order.amount ?? 0).toFixed(2)}
+                    </span>
                   </div>
-                  {order.trackingNo && (
+                  <div className="text-xs text-muted-foreground">
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString("zh-CN") : ""}
+                  </div>
+                  {order.shipping_note && (
                     <div className="flex items-center gap-1.5 pt-1 border-t border-border/30">
                       <Truck className="w-3.5 h-3.5 text-primary/70" />
                       <span className="text-xs text-muted-foreground">
-                        物流单号：<span className="text-foreground font-medium select-all">{order.trackingNo}</span>
+                        物流单号：<span className="text-foreground font-medium select-all">{order.shipping_note}</span>
                       </span>
                     </div>
                   )}
@@ -125,7 +243,7 @@ const MyPage: React.FC = () => {
               ))}
             </CardContent>
           </Card>
-          {MOCK_ORDERS.length > 2 && (
+          {orders.length > 2 && (
             <button
               onClick={() => setShowAllOrders(!showAllOrders)}
               className="w-full flex items-center justify-center gap-1 mt-2 py-2 text-xs text-primary hover:text-primary/80 transition-colors"
@@ -154,7 +272,6 @@ const MyPage: React.FC = () => {
                     <mod.icon className={`w-5 h-5 ${mod.iconColor}`} />
                   </div>
                   <span className="text-sm font-semibold text-foreground">{mod.label}</span>
-                  <span className="text-[11px] text-muted-foreground leading-tight">{mod.count}</span>
                 </CardContent>
               </Card>
             ))}
@@ -173,9 +290,14 @@ const MyPage: React.FC = () => {
                 {SETTINGS_ITEMS.map((item) => (
                   <button
                     key={item.label}
-                    className="flex items-center gap-2.5 px-3 py-3 rounded-xl hover:bg-accent/50 active:scale-[0.97] transition-all text-sm text-foreground"
+                    onClick={() => handleSettingsClick(item.label)}
+                    className={`flex items-center gap-2.5 px-3 py-3 rounded-xl hover:bg-accent/50 active:scale-[0.97] transition-all text-sm text-foreground ${
+                      item.label === "退出登录" ? "text-destructive" : ""
+                    }`}
                   >
-                    <item.icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <item.icon className={`w-4 h-4 shrink-0 ${
+                      item.label === "退出登录" ? "text-destructive" : "text-muted-foreground"
+                    }`} />
                     <span className="truncate">{item.label}</span>
                   </button>
                 ))}
