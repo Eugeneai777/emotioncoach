@@ -429,6 +429,7 @@ const App = () => (
               <Route path="/awakening-lite" element={<AwakeningLite />} />
               <Route path="/awakening-intro" element={<AwakeningIntro />} />
               <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
+              <Route path="/my-page" element={<MyPage />} />
               <Route path="/awakening-journal" element={<AwakeningJournal />} />
               <Route path="/transformation-flow" element={<TransformationFlow />} />
               <Route path="/wealth-block-intro" element={<WealthBlockIntro />} />
