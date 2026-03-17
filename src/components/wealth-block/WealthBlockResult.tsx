@@ -692,7 +692,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         dominantBelief={result.dominantBeliefBlock}
         healthScore={healthScore}
         onPurchase={() => {
-          if (onAuthRequired && !onAuthRequired()) return;
+          if (onAuthRequired && !onAuthRequired(true)) return;
           setShowPayDialog(true);
         }}
         onViewDetails={() => navigate('/wealth-camp-intro')}
