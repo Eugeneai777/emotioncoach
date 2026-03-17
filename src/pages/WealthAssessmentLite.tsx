@@ -182,7 +182,7 @@ export default function WealthAssessmentLitePage() {
             <span className="text-xs text-muted-foreground">解锁完整分析报告</span>
           </div>
           <Button
-            onClick={() => setShowPayDialog(true)}
+            onClick={() => { if (requireAuth()) setShowPayDialog(true); }}
             className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-5 h-10 rounded-full shadow-md"
           >
             立即解锁
