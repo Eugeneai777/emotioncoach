@@ -166,7 +166,7 @@ const MyPage: React.FC = () => {
         {/* ======== 1. 账号信息 ======== */}
         <Card
           className="border-border/40 bg-card/80 backdrop-blur-sm cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
-          onClick={() => navigate("/settings")}
+          onClick={() => navigate("/settings?view=profile")}
         >
           <CardContent className="p-4 flex items-center gap-4">
             <Avatar className="w-14 h-14">
