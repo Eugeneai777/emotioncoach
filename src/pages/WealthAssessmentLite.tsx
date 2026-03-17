@@ -164,11 +164,15 @@ export default function WealthAssessmentLitePage() {
   const handleExit = useCallback(() => {
     setPageState("questions");
   }, []);
-  // 购买/解锁前检查登录状态
-  const requireAuth = useCallback((): boolean => {
+  // 购买/解锁前检查登录状态（支持区分测评购买和训练营购买）
+  const requireAuth = useCallback((forCamp?: boolean): boolean => {
     if (user) return true;
     toast.info("请先登录后再购买");
-    setPostAuthRedirect(window.location.pathname + window.location.search);
+    const redirectUrl = new URL(window.location.href);
+    if (forCamp) {
+      redirectUrl.searchParams.set('camp_pay_resume', '1');
+    }
+    setPostAuthRedirect(redirectUrl.pathname + redirectUrl.search);
     navigate("/auth");
     return false;
   }, [user, navigate]);
