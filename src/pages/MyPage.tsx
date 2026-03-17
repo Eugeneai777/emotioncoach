@@ -282,7 +282,7 @@ const MyPage: React.FC = () => {
           </div>
           <Card className="border-border/40 bg-card/80">
             <CardContent className="p-3">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {SETTINGS_ITEMS.map((item) => (
                   <button
                     key={item.label}
