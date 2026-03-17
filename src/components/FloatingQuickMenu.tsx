@@ -29,6 +29,8 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export const FloatingQuickMenu = () => {
+  // 全站隐藏小火箭
+  return null;
   const navigate = useNavigate();
   const location = useLocation();
   const { config, isLoaded, saveConfig } = useQuickMenuConfig();

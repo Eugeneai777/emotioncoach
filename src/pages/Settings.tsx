@@ -179,8 +179,84 @@ export default function Settings() {
       
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
 
-        <Tabs defaultValue={defaultTab} className="w-full">
-          {!isMinimalView && (
+        {isMinimalView ? (
+          // 精简视图：只渲染目标模块，不包裹 Tabs
+          <div className="mt-2">
+            {viewParam === "profile" && (
+              <>
+                <Card className="border-border shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg md:text-2xl text-foreground">个人资料</CardTitle>
+                    <CardDescription className="text-xs md:text-sm text-muted-foreground">设置你的个人信息 🌿</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 md:space-y-6">
+                    {(() => {
+                      const completedFields = [displayName?.trim(), avatarUrl].filter(Boolean).length;
+                      const totalFields = 2;
+                      const progress = (completedFields / totalFields) * 100;
+                      const isComplete = completedFields === totalFields;
+                      return (
+                        <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium">资料完整度</span>
+                            <div className="flex items-center gap-1.5">
+                              {isComplete ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <AlertCircle className="h-4 w-4 text-amber-500" />}
+                              <span className={cn(isComplete ? "text-green-600" : "text-amber-600")}>{completedFields}/{totalFields}</span>
+                            </div>
+                          </div>
+                          <Progress value={progress} className="h-2" />
+                          {!isComplete && <p className="text-xs text-muted-foreground">完善资料后，分享打卡时可以展示你的个人形象</p>}
+                        </div>
+                      );
+                    })()}
+                    <div className="flex flex-col items-center py-4">
+                      <AvatarUploader currentUrl={avatarUrl} onUpload={(url) => setAvatarUrl(url)} size="lg" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">用户昵称 <span className="text-destructive">*</span></Label>
+                      <Input id="display-name" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="请输入你的昵称" maxLength={20} className="border-border focus:border-primary text-sm" />
+                      <p className="text-xs md:text-sm text-muted-foreground">这个名称将在复盘报告和社区中显示</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="bio" className="text-xs md:text-sm text-foreground">个性签名（可选）</Label>
+                      <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一句话介绍自己..." maxLength={100} rows={2} className="border-border focus:border-primary text-sm resize-none" />
+                      <p className="text-xs text-muted-foreground text-right">{bio.length}/100</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs md:text-sm text-foreground">用户 ID</Label>
+                      <div className="flex items-center gap-2">
+                        <Input type="text" value={userId} readOnly className="border-border bg-muted/50 text-sm font-mono text-xs" />
+                        <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(userId); toast({ title: "已复制", description: "用户 ID 已复制到剪贴板" }); }} className="text-xs">复制</Button>
+                      </div>
+                    </div>
+                    <TimezoneSelector value={timezone} onChange={setTimezone} />
+                    <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-primary" />
+                            <Label className="text-sm font-medium">流畅模式</Label>
+                          </div>
+                          <p className="text-xs text-muted-foreground">减少动画效果，提升低配设备体验</p>
+                        </div>
+                        <Switch checked={prefersReducedMotion} onCheckedChange={setReducedMotion} />
+                      </div>
+                      {systemPreference && <p className="text-xs text-muted-foreground/70">💡 已检测到系统偏好减少动画</p>}
+                    </div>
+                    <Button onClick={saveSettings} disabled={saving} className="w-full text-xs md:text-sm" size="sm">{saving ? "保存中..." : "保存设置"}</Button>
+                  </CardContent>
+                </Card>
+                <WeChatBindStatus className="mt-6" />
+                <PhoneNumberManager />
+                <AccountCredentials />
+              </>
+            )}
+            {viewParam === "reminders" && <SmartReminderSettings />}
+            {viewParam === "notifications" && <SmartNotificationPreferences />}
+          </div>
+        ) : (
+          // 完整视图：标准 Tabs
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className={cn(
               "grid w-full mb-4 md:mb-6 h-auto",
               isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
@@ -189,211 +265,106 @@ export default function Settings() {
               <ResponsiveTabsTrigger value="account" label={searchParams.get('view') === 'orders' ? '已购订单' : '账户'} />
               <ResponsiveTabsTrigger value="reminders" label="提醒设置" shortLabel="提醒" />
               <ResponsiveTabsTrigger value="notifications" label="通知偏好" shortLabel="通知" />
-              {isAdmin && (
-                <ResponsiveTabsTrigger value="camp" label="训练营" />
-              )}
+              {isAdmin && <ResponsiveTabsTrigger value="camp" label="训练营" />}
             </TabsList>
-          )}
 
-          <TabsContent value="profile">
-            <Card className="border-border shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg md:text-2xl text-foreground">
-                  个人资料
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm text-muted-foreground">
-                  设置你的个人信息 🌿
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 md:space-y-6">
-                {/* 资料完整度进度条 */}
-                {(() => {
-                  const completedFields = [
-                    displayName?.trim(),
-                    avatarUrl,
-                  ].filter(Boolean).length;
-                  const totalFields = 2;
-                  const progress = (completedFields / totalFields) * 100;
-                  const isComplete = completedFields === totalFields;
-                  
-                  return (
-                    <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">资料完整度</span>
-                        <div className="flex items-center gap-1.5">
-                          {isComplete ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <AlertCircle className="h-4 w-4 text-amber-500" />
-                          )}
-                          <span className={cn(
-                            isComplete ? "text-green-600" : "text-amber-600"
-                          )}>
-                            {completedFields}/{totalFields}
-                          </span>
+            <TabsContent value="profile">
+              <Card className="border-border shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg md:text-2xl text-foreground">个人资料</CardTitle>
+                  <CardDescription className="text-xs md:text-sm text-muted-foreground">设置你的个人信息 🌿</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 md:space-y-6">
+                  {(() => {
+                    const completedFields = [displayName?.trim(), avatarUrl].filter(Boolean).length;
+                    const totalFields = 2;
+                    const progress = (completedFields / totalFields) * 100;
+                    const isComplete = completedFields === totalFields;
+                    return (
+                      <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">资料完整度</span>
+                          <div className="flex items-center gap-1.5">
+                            {isComplete ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <AlertCircle className="h-4 w-4 text-amber-500" />}
+                            <span className={cn(isComplete ? "text-green-600" : "text-amber-600")}>{completedFields}/{totalFields}</span>
+                          </div>
                         </div>
+                        <Progress value={progress} className="h-2" />
+                        {!isComplete && <p className="text-xs text-muted-foreground">完善资料后，分享打卡时可以展示你的个人形象</p>}
                       </div>
-                      <Progress value={progress} className="h-2" />
-                      {!isComplete && (
-                        <p className="text-xs text-muted-foreground">
-                          完善资料后，分享打卡时可以展示你的个人形象
-                        </p>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* 头像上传 */}
-                <div className="flex flex-col items-center py-4">
-                  <AvatarUploader
-                    currentUrl={avatarUrl}
-                    onUpload={(url) => setAvatarUrl(url)}
-                    size="lg"
-                  />
-                </div>
-
-                {/* 用户名称 */}
-                <div className="space-y-2">
-                  <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
-                    用户昵称 <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="display-name"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="请输入你的昵称"
-                    maxLength={20}
-                    className="border-border focus:border-primary text-sm"
-                  />
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    这个名称将在复盘报告和社区中显示
-                  </p>
-                </div>
-
-                {/* 个性签名 */}
-                <div className="space-y-2">
-                  <Label htmlFor="bio" className="text-xs md:text-sm text-foreground">
-                    个性签名（可选）
-                  </Label>
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="一句话介绍自己..."
-                    maxLength={100}
-                    rows={2}
-                    className="border-border focus:border-primary text-sm resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground text-right">
-                    {bio.length}/100
-                  </p>
-                </div>
-
-                {/* 用户 ID */}
-                <div className="space-y-2">
-                  <Label className="text-xs md:text-sm text-foreground">
-                    用户 ID
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      value={userId}
-                      readOnly
-                      className="border-border bg-muted/50 text-sm font-mono text-xs"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(userId);
-                        toast({
-                          title: "已复制",
-                          description: "用户 ID 已复制到剪贴板",
-                        });
-                      }}
-                      className="text-xs"
-                    >
-                      复制
-                    </Button>
+                    );
+                  })()}
+                  <div className="flex flex-col items-center py-4">
+                    <AvatarUploader currentUrl={avatarUrl} onUpload={(url) => setAvatarUrl(url)} size="lg" />
                   </div>
-                </div>
-
-                <TimezoneSelector value={timezone} onChange={setTimezone} />
-
-                {/* 流畅模式开关 */}
-                <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-primary" />
-                        <Label className="text-sm font-medium">流畅模式</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">用户昵称 <span className="text-destructive">*</span></Label>
+                    <Input id="display-name" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="请输入你的昵称" maxLength={20} className="border-border focus:border-primary text-sm" />
+                    <p className="text-xs md:text-sm text-muted-foreground">这个名称将在复盘报告和社区中显示</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bio" className="text-xs md:text-sm text-foreground">个性签名（可选）</Label>
+                    <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一句话介绍自己..." maxLength={100} rows={2} className="border-border focus:border-primary text-sm resize-none" />
+                    <p className="text-xs text-muted-foreground text-right">{bio.length}/100</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs md:text-sm text-foreground">用户 ID</Label>
+                    <div className="flex items-center gap-2">
+                      <Input type="text" value={userId} readOnly className="border-border bg-muted/50 text-sm font-mono text-xs" />
+                      <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(userId); toast({ title: "已复制", description: "用户 ID 已复制到剪贴板" }); }} className="text-xs">复制</Button>
+                    </div>
+                  </div>
+                  <TimezoneSelector value={timezone} onChange={setTimezone} />
+                  <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-primary" />
+                          <Label className="text-sm font-medium">流畅模式</Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground">减少动画效果，提升低配设备体验</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        减少动画效果，提升低配设备体验
-                      </p>
+                      <Switch checked={prefersReducedMotion} onCheckedChange={setReducedMotion} />
                     </div>
-                    <Switch
-                      checked={prefersReducedMotion}
-                      onCheckedChange={setReducedMotion}
-                    />
+                    {systemPreference && <p className="text-xs text-muted-foreground/70">💡 已检测到系统偏好减少动画</p>}
                   </div>
-                  {systemPreference && (
-                    <p className="text-xs text-muted-foreground/70">
-                      💡 已检测到系统偏好减少动画
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  onClick={saveSettings}
-                  disabled={saving}
-                  className="w-full text-xs md:text-sm"
-                  size="sm"
-                >
-                  {saving ? "保存中..." : "保存设置"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* 微信绑定状态 */}
-            <WeChatBindStatus className="mt-6" />
-
-            {/* 手机号管理 */}
-            <PhoneNumberManager />
-
-            {/* 账号与密码管理 */}
-            <AccountCredentials />
-          </TabsContent>
-
-          <TabsContent value="account" className="space-y-6">
-            {searchParams.get('view') === 'orders' ? (
-              <PurchaseHistory />
-            ) : (
-              <>
-                <AccountBalance />
-                <ShippingTracker />
-                <PurchaseHistory />
-                <PackageSelector />
-                <BillingExplanation />
-              </>
-            )}
-          </TabsContent>
-
-          <TabsContent value="reminders">
-            <SmartReminderSettings />
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <SmartNotificationPreferences />
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="camp">
-              <CampSettings />
+                  <Button onClick={saveSettings} disabled={saving} className="w-full text-xs md:text-sm" size="sm">{saving ? "保存中..." : "保存设置"}</Button>
+                </CardContent>
+              </Card>
+              <WeChatBindStatus className="mt-6" />
+              <PhoneNumberManager />
+              <AccountCredentials />
             </TabsContent>
-          )}
-        </Tabs>
+
+            <TabsContent value="account" className="space-y-6">
+              {searchParams.get('view') === 'orders' ? (
+                <PurchaseHistory />
+              ) : (
+                <>
+                  <AccountBalance />
+                  <ShippingTracker />
+                  <PurchaseHistory />
+                  <PackageSelector />
+                  <BillingExplanation />
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="reminders">
+              <SmartReminderSettings />
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <SmartNotificationPreferences />
+            </TabsContent>
+
+            {isAdmin && (
+              <TabsContent value="camp">
+                <CampSettings />
+              </TabsContent>
+            )}
+          </Tabs>
+        )}
       </div>
     </div>
     </>
