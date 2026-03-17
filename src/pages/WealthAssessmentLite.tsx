@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { LiteIntroCard } from "@/components/wealth-block/LiteIntroCard";
@@ -15,6 +18,7 @@ import { BloomInviteCodeEntry } from "@/components/wealth-block/BloomInviteCodeE
 type PageState = "questions" | "result";
 
 export default function WealthAssessmentLitePage() {
+  const navigate = useNavigate();
   const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
@@ -89,9 +93,12 @@ export default function WealthAssessmentLitePage() {
     
     if (hasPurchased) {
       setPageState("result");
-    } else {
-      // 显示付费弹窗
+    } else if (user) {
+      // 已登录但未购买：显示付费弹窗
       setShowPayDialog(true);
+    } else {
+      // 未登录：先展示结果页，购买时再要求登录
+      setPageState("result");
     }
   }, [hasPurchased]);
   
@@ -116,7 +123,15 @@ export default function WealthAssessmentLitePage() {
   const handleExit = useCallback(() => {
     setPageState("questions");
   }, []);
-  
+  // 购买/解锁前检查登录状态
+  const requireAuth = useCallback((): boolean => {
+    if (user) return true;
+    toast.info("请先登录后再购买");
+    setPostAuthRedirect("/wealth-assessment-lite");
+    navigate("/auth");
+    return false;
+  }, [user, navigate]);
+
   return (
     <div 
       className="h-screen overflow-y-auto overscroll-contain bg-background"
@@ -154,6 +169,7 @@ export default function WealthAssessmentLitePage() {
           followUpInsights={followUpInsights}
           deepFollowUpAnswers={deepFollowUpAnswers}
           onRetake={handleRetake}
+          onAuthRequired={requireAuth}
         />
       )}
 
@@ -169,7 +185,7 @@ export default function WealthAssessmentLitePage() {
             <span className="text-xs text-muted-foreground">解锁完整分析报告</span>
           </div>
           <Button
-            onClick={() => setShowPayDialog(true)}
+            onClick={() => { if (requireAuth()) setShowPayDialog(true); }}
             className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-5 h-10 rounded-full shadow-md"
           >
             立即解锁
