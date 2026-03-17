@@ -139,10 +139,6 @@ const ElderCarePage = () => {
           </div>
         </motion.div>
 
-        {/* 家人相册瀑布流 */}
-        <div className="pb-6">
-          <FamilyPhotoWaterfall />
-        </div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -168,6 +164,11 @@ const ElderCarePage = () => {
           </button>
           <FamilyPhotoUploader />
         </motion.div>
+
+        {/* 家人相册瀑布流 */}
+        <div className="pb-6">
+          <FamilyPhotoWaterfall />
+        </div>
 
         {/* 设为默认首页 */}
         <motion.div
