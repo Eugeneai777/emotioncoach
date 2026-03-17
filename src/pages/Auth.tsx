@@ -238,11 +238,11 @@ const Auth = () => {
               } else if (profile?.preferred_coach === 'parent') {
                 targetRedirect = "/parent-emotion";
               } else {
-                targetRedirect = "/";
+                targetRedirect = "/mini-app";
               }
             } catch (error) {
               console.log('获取用户偏好失败，跳转默认首页:', error);
-              targetRedirect = "/";
+              targetRedirect = "/mini-app";
             }
           }
 
