@@ -1244,7 +1244,9 @@ serve(async (req) => {
               console.log(`Found ${photos.length} family photos for elder companion`);
               const descriptions = await analyzePhotosForVoice(
                 photos.map((p: any) => p.photo_url),
-                LOVABLE_API_KEY
+                LOVABLE_API_KEY,
+                serviceSupabase,
+                user.id
               );
               
               if (descriptions.length) {
