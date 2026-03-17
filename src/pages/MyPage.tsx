@@ -287,14 +287,14 @@ const MyPage: React.FC = () => {
                   <button
                     key={item.label}
                     onClick={() => handleSettingsClick(item.label)}
-                    className={`flex items-center gap-2.5 px-3 py-3 rounded-xl hover:bg-accent/50 active:scale-[0.97] transition-all text-sm text-foreground ${
+                    className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl hover:bg-accent/50 active:scale-[0.97] transition-all text-foreground ${
                       item.label === "退出登录" ? "text-destructive" : ""
                     }`}
                   >
-                    <item.icon className={`w-4 h-4 shrink-0 ${
+                    <item.icon className={`w-5 h-5 ${
                       item.label === "退出登录" ? "text-destructive" : "text-muted-foreground"
                     }`} />
-                    <span className="truncate">{item.label}</span>
+                    <span className="text-xs text-center">{item.label}</span>
                   </button>
                 ))}
               </div>
