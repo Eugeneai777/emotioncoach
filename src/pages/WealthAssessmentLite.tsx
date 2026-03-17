@@ -11,6 +11,7 @@ import { LiteFooter } from "@/components/wealth-block/LiteFooter";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { BloomInviteCodeEntry } from "@/components/wealth-block/BloomInviteCodeEntry";
@@ -25,6 +26,7 @@ export default function WealthAssessmentLitePage() {
   const [followUpInsights, setFollowUpInsights] = useState<FollowUpAnswer[]>([]);
   const [deepFollowUpAnswers, setDeepFollowUpAnswers] = useState<DeepFollowUpAnswer[]>([]);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showCampPayDialog, setShowCampPayDialog] = useState(false);
   
   const { user } = useAuth();
   const { data: purchaseRecord, refetch: refetchPurchase, isLoading: isPurchaseLoading } = useAssessmentPurchase();
@@ -39,26 +41,41 @@ export default function WealthAssessmentLitePage() {
     if (isPurchaseLoading) return;
 
     const url = new URL(window.location.href);
-    const shouldResume = url.searchParams.get('assessment_pay_resume') === '1';
+    const shouldResumeAssessment = url.searchParams.get('assessment_pay_resume') === '1';
+    const shouldResumeCamp = url.searchParams.get('payment_resume') === '1';
     const paymentOpenId = url.searchParams.get('payment_openid');
+    const payFlow = url.searchParams.get('pay_flow');
 
-    if (!shouldResume) return;
+    if (!shouldResumeAssessment && !shouldResumeCamp) return;
 
     // 标记已处理
     payResumeHandledRef.current = true;
 
-    console.log('[WealthAssessmentLite] Resuming payment after WeChat OAuth, openId:', paymentOpenId ? 'present' : 'missing', 'hasPurchased:', hasPurchased);
+    // 判断是训练营支付还是测评支付
+    const isCampPurchase = payFlow === 'camp_purchase' || 
+      (() => {
+        try {
+          const cached = sessionStorage.getItem('pending_payment_package');
+          if (cached) {
+            const pkg = JSON.parse(cached);
+            return pkg.key?.startsWith('camp-');
+          }
+        } catch {}
+        return false;
+      })();
 
-    // 缓存 openId 以供 AssessmentPayDialog 使用
+    console.log('[WealthAssessmentLite] Resuming payment after WeChat OAuth, openId:', paymentOpenId ? 'present' : 'missing', 'hasPurchased:', hasPurchased, 'isCampPurchase:', isCampPurchase);
+
+    // 缓存 openId 以供支付弹窗使用
     if (paymentOpenId) {
       sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
     }
 
     // 清理 URL 参数，避免重复触发
     url.searchParams.delete('assessment_pay_resume');
+    url.searchParams.delete('payment_resume');
     url.searchParams.delete('payment_openid');
     url.searchParams.delete('payment_token_hash');
-    url.searchParams.delete('payment_resume');
     url.searchParams.delete('payment_auth_error');
     url.searchParams.delete('is_new_user');
     url.searchParams.delete('pay_flow');
@@ -67,13 +84,25 @@ export default function WealthAssessmentLitePage() {
     // 清除授权进行中标记
     sessionStorage.removeItem('pay_auth_in_progress');
 
+    if (isCampPurchase) {
+      // 训练营支付恢复：直接打开训练营支付弹窗（不需要测评结果数据）
+      if (hasPurchased) {
+        console.log('[WealthAssessmentLite] Already purchased camp, skipping');
+        return;
+      }
+      setTimeout(() => {
+        setShowCampPayDialog(true);
+      }, 500);
+      return;
+    }
+
+    // 测评支付恢复
     if (hasPurchased) {
-      // 已购买：直接跳到结果页，不打开支付弹窗
       console.log('[WealthAssessmentLite] Already purchased, skipping payment dialog');
       return;
     }
 
-    // 未购买：延迟打开支付弹窗
+    // 未购买：延迟打开测评支付弹窗
     setTimeout(() => {
       setShowPayDialog(true);
     }, 500);
@@ -109,6 +138,16 @@ export default function WealthAssessmentLitePage() {
     refetchPurchase();
     setPageState("result");
   }, [refetchPurchase]);
+
+  // 训练营支付成功回调
+  const handleCampPaySuccess = useCallback(() => {
+    console.log("[WealthAssessmentLite] Camp payment success");
+    setShowCampPayDialog(false);
+    toast.success("购买成功！");
+    refetchPurchase();
+    // 跳转到训练营介绍页
+    navigate('/camp-intro/wealth_block_7');
+  }, [refetchPurchase, navigate]);
 
   // 重新测评
   const handleRetake = useCallback(() => {
@@ -193,7 +232,7 @@ export default function WealthAssessmentLitePage() {
         </div>
       )}
       
-      {/* 付费弹窗 */}
+      {/* 测评付费弹窗 */}
       <AssessmentPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
@@ -202,6 +241,19 @@ export default function WealthAssessmentLitePage() {
         hasPurchased={hasPurchased}
         packageKey="wealth_block_assessment"
         packageName="财富卡点测评"
+      />
+
+      {/* 训练营付费弹窗 - OAuth 回调后恢复用 */}
+      <UnifiedPayDialog
+        open={showCampPayDialog}
+        onOpenChange={setShowCampPayDialog}
+        packageInfo={{
+          key: 'camp-wealth_block_7',
+          name: '财富觉醒训练营',
+          price: 299,
+        }}
+        onSuccess={handleCampPaySuccess}
+        openId={sessionStorage.getItem('wechat_payment_openid') || undefined}
       />
     </div>
   );
