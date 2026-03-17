@@ -17,12 +17,13 @@ export function FamilyAlbumShareButton() {
     queryKey: ["family-album-share", userId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("family_album_shares")
+        .from("family_album_shares" as any)
         .select("share_token")
         .eq("user_id", userId!)
         .eq("is_active", true)
-        .maybeSingle();
-      return data?.share_token ?? null;
+        .maybeSingle() as any;
+      return (data?.share_token as string) ?? null;
+    },
     },
     enabled: !!userId,
   });
