@@ -40,7 +40,7 @@ const PageHeader = ({
   return (
     <header className={`sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 ${className}`}>
       <div className="flex items-center justify-between h-12 px-4">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* 有劲AI Logo */}
           {showLogo && (
             <div
