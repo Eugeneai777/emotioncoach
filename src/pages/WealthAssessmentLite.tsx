@@ -18,6 +18,7 @@ import { BloomInviteCodeEntry } from "@/components/wealth-block/BloomInviteCodeE
 type PageState = "questions" | "result";
 
 export default function WealthAssessmentLitePage() {
+  const navigate = useNavigate();
   const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
