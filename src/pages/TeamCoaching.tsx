@@ -17,7 +17,7 @@ export default function TeamCoaching() {
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' as any }}>
-      <PageHeader title="绽放海沃塔 · 团队教练" showBack />
+      <PageHeader title="绽放海沃塔 · 团队教练" showBack showHomeButton />
 
       {/* 筛选标签 */}
       <div className="px-4 py-3 border-b">
