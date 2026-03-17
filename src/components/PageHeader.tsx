@@ -19,7 +19,8 @@ const PageHeader = ({
   backTo, 
   rightActions,
   className = '',
-  showHomeButton = false
+  showHomeButton = false,
+  showLogo = true
 }: PageHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
