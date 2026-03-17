@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package, ChevronRight, ChevronDown,
-  Info, Bell, Lock, HelpCircle, LogOut, Truck,
+  Info, Bell, MessageSquare, LogOut, Truck,
   ClipboardCheck, Flame, BookOpen, Settings, Sparkles
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
