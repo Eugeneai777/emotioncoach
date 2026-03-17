@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { consumePostAuthRedirect } from "@/lib/postAuthRedirect";
 
-const DEFAULT_COACH = "/coach/vibrant_life_sage";
+const DEFAULT_COACH = "/mini-app";
 
 const SmartHomeRedirect = () => {
   const { user, loading: authLoading } = useAuth();
