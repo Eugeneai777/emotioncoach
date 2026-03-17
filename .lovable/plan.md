@@ -1,51 +1,23 @@
 
 
-## Plan: 仅显示已购买/领取/完成的测评
+## 两个问题需要修复
 
-**目标**：`/assessment-picker` 页面只展示当前用户已拥有的测评内容。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 判断规则
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-| 测评 | 判断方式 |
-|------|---------|
-| 情绪健康、SCL-90、财富卡点 | orders 表中存在 `status='paid'` 的对应 package_key 记录 |
-| 中场觉醒力、女性竞争力、家长应对能力、亲子沟通(家长/青少年版) | awakening_entries 表中存在对应 type 的记录（完成过才显示） |
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-### 映射表
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-```text
-assessment_id → package_key (付费) 或 awakening_entries type (免费)
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-emotion-health     → orders: emotion_health_assessment
-scl90              → orders: scl90_report
-wealth-block       → orders: wealth_block_assessment
-midlife-awakening  → awakening_entries: midlife_awakening
-women-competitiveness → awakening_entries: women_competitiveness
-parent-ability     → awakening_entries: parent_ability
-communication-parent → awakening_entries: communication_parent
-communication-teen → awakening_entries: communication_teen
-```
-
-### 修改文件：`src/pages/AssessmentPicker.tsx`
-
-1. **新增 `useOwnedAssessments` hook**（在同一文件内）：
-   - 查询 orders 表：获取当前用户 `status='paid'` 且 `package_key in ('emotion_health_assessment', 'scl90_report', 'wealth_block_assessment')` 的记录
-   - 复用已有的 `useCompletedAssessments` hook 结果（awakening_entries 查询）
-   - 合并两个来源，返回 `Set<assessment_id>` 表示用户拥有的测评
-
-2. **过滤显示逻辑**：
-   - 用 `ownedSet` 过滤每个 category 的 assessments
-   - 如果某个 category 过滤后无测评，则整个 category 不显示
-   - 如果用户未登录或全部 category 为空，显示空状态提示
-
-3. **更新页面文案**：
-   - 标题从"选一个最想了解的方向"改为"我的测评"
-   - 副标题从"每个测评都免费，结果即时生成"改为"已购买和已完成的测评"
-   - 空状态提示："暂无可用测评，购买套餐或完成体验后将在此显示"
-
-### 技术实现要点
-
-- package_key 到 assessment_id 的反向映射：`{ emotion_health_assessment: 'emotion-health', scl90_report: 'scl90', wealth_block_assessment: 'wealth-block' }`
-- 免费测评直接复用已有 `completedMap`：有记录即表示拥有
-- 两个查询并行加载，合并后过滤
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
