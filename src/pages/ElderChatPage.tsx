@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { useDajinQuota } from "@/hooks/useDajinQuota";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getChildRef } from "@/utils/elderMoodUpload";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -11,6 +14,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elder-chat`;
 
 const ElderChatPage = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([
     { role: "assistant", content: "您好呀！😊 我是大劲，很高兴陪您聊天。您今天感觉怎么样？" },
   ]);
@@ -20,6 +24,39 @@ const ElderChatPage = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { remaining, deduct, refresh } = useDajinQuota();
 
+  // Photo context state
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [photoDescriptions, setPhotoDescriptions] = useState<string[]>([]);
+  const photosFetched = useRef(false);
+
+  // Determine the target user for photos
+  const childRef = getChildRef();
+  const childUserId = childRef?.startsWith("child_") ? childRef.slice(6) : null;
+  const targetUserId = childUserId || session?.user?.id || null;
+
+  // Fetch recent family photos on mount
+  useEffect(() => {
+    if (!targetUserId || photosFetched.current) return;
+    photosFetched.current = true;
+
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("family_photos")
+          .select("photo_url")
+          .eq("user_id", targetUserId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (data?.length) {
+          setPhotoUrls(data.map((p) => p.photo_url));
+        }
+      } catch (e) {
+        console.error("Failed to fetch family photos:", e);
+      }
+    })();
+  }, [targetUserId]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -28,7 +65,6 @@ const ElderChatPage = () => {
     const text = input.trim();
     if (!text || isLoading) return;
 
-    // Check quota
     if (!deduct(1)) {
       setShowUpgrade(true);
       return;
@@ -44,16 +80,39 @@ const ElderChatPage = () => {
     const allMsgs = [...messages, userMsg];
 
     try {
+      const body: Record<string, any> = { messages: allMsgs };
+
+      // On first send, pass photo URLs for analysis; after that pass cached descriptions
+      if (photoDescriptions.length) {
+        body.photoDescriptions = photoDescriptions;
+      } else if (photoUrls.length) {
+        body.photoUrls = photoUrls;
+        body.userId = targetUserId;
+      } else if (targetUserId) {
+        body.userId = targetUserId;
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: allMsgs }),
+        body: JSON.stringify(body),
       });
 
       if (!resp.ok || !resp.body) throw new Error("请求失败");
+
+      // Cache photo descriptions from response header
+      const descHeader = resp.headers.get("X-Photo-Descriptions");
+      if (descHeader && !photoDescriptions.length) {
+        try {
+          const descs = JSON.parse(decodeURIComponent(descHeader));
+          if (Array.isArray(descs) && descs.length) {
+            setPhotoDescriptions(descs);
+          }
+        } catch { /* ignore */ }
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
