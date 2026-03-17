@@ -39,8 +39,9 @@ const PageHeader = ({
   
   return (
     <header className={`sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 ${className}`}>
-      <div className="flex items-center justify-between h-12 px-4">
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center h-12 px-4 gap-1">
+        {/* 左侧操作区 - 不可压缩 */}
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* 有劲AI Logo */}
           {showLogo && (
             <div
@@ -76,7 +77,7 @@ const PageHeader = ({
                 sessionStorage.setItem('skip_preferred_redirect', '1');
                 navigate('/mini-app');
               }}
-              className="active:scale-95 transition-transform gap-1 px-2 text-xs"
+              className="active:scale-95 transition-transform gap-1 px-2 text-xs whitespace-nowrap shrink-0"
             >
               <Home className="w-3.5 h-3.5" />
               <span>主页</span>
@@ -84,15 +85,19 @@ const PageHeader = ({
           )}
         </div>
         
-        {/* 标题 */}
+        {/* 中间标题 - 可收缩截断 */}
         {title && (
-          <h1 className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-lg max-w-[40%] sm:max-w-[60%] truncate text-center whitespace-nowrap">
-            {title}
-          </h1>
+          <div className="flex-1 min-w-0 pointer-events-none">
+            <h1 className="font-semibold text-sm sm:text-lg truncate text-center">
+              {title}
+            </h1>
+          </div>
         )}
+        {/* 无标题时用 spacer 撑开 */}
+        {!title && <div className="flex-1" />}
         
-        {/* 右侧操作区 */}
-        <div className="flex items-center gap-1">
+        {/* 右侧操作区 - 不可压缩 */}
+        <div className="flex items-center gap-1 shrink-0">
           {rightActions}
         </div>
       </div>
