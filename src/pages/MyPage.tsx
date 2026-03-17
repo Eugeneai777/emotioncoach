@@ -57,7 +57,7 @@ const MyPage: React.FC = () => {
               <p className="text-base font-semibold text-foreground truncate">用户昵称</p>
               <p className="text-sm text-muted-foreground">138****8888</p>
             </div>
-            <Badge className="bg-amber-100 text-amber-700 border-amber-200 shrink-0">
+            <Badge className="bg-primary/10 text-primary border-primary/20 shrink-0">
               365会员
             </Badge>
           </CardContent>
