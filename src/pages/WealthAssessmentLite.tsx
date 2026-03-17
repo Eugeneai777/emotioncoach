@@ -53,7 +53,7 @@ export default function WealthAssessmentLitePage() {
     payResumeHandledRef.current = true;
 
     // 判断是训练营支付还是测评支付
-    const isCampPurchase = payFlow === 'camp_purchase' || 
+    const isCampPurchase = shouldResumeCampAuth || payFlow === 'camp_purchase' || 
       (() => {
         try {
           const cached = sessionStorage.getItem('pending_payment_package');
