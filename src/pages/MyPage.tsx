@@ -38,7 +38,7 @@ const MyPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-background to-background pb-28">
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-28">
       {/* 页面标题 */}
       <div className="pt-12 pb-4 px-5">
         <h1 className="text-2xl font-bold text-foreground">我的</h1>
