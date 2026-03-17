@@ -1,23 +1,33 @@
 
+结论先说：不是“历史功能没保存”，而是“同一个手机号出现了两个账号”，你现在登录的是新账号，所以看不到旧账号下的历史记录。
 
-## 两个问题需要修复
+1) 已确认的排查结果
+- `/emotion-health` 历史查询：`emotion_health_assessments` 按 `user_id = 当前登录用户` 查询（无 `is_paid` 过滤）。
+- `/scl90` 历史查询：`scl90_assessments` 按 `user_id = 当前登录用户` 查询。
+- 两张表的 RLS 都是“只能看自己的 user_id”，策略正常。
+- 数据库里手机号 `18588235488` 对应两个 profile/user：
+  - 新账号：`07f04ecd...`（你当前登录），有 paid 订单（emotion + scl90）
+  - 旧账号：`f9115340...`，有历史记录（emotion 2 条、scl90 7 条）
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+2) 为什么会出现“assessment-picker 有，详情历史空”
+- `assessment-picker` 依据 paid 订单判断“拥有”，当前账号 `07f04...` 有订单，所以卡片会显示。
+- 历史页依据测评结果表判断“历史”，当前账号 `07f04...` 在两张结果表都没有记录，所以显示为空。
+- 旧记录都在 `f91153...` 账号下，因此你当前会话读不到。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+3) 推荐修复方案（按优先级）
+- 方案A（推荐，最快恢复用户体验）：
+  - 做一次账号数据归并：把 `f91153...` 的 emotion/scl90 历史迁移到 `07f04...`。
+- 方案B（防复发）：
+  - 给 `profiles(phone_country_code, phone)` 增加“未删除用户唯一”约束。
+  - 调整手机号注册/绑定逻辑：检测到同手机号已存在时，不再创建新账号，而是走绑定/找回流程。
+- 方案C（兜底体验）：
+  - 在历史页增加“检测到同手机号多账号”的提示与联系客服入口（不自动暴露他人数据）。
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
-
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
-
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
-
-| 文件 | 修改 |
-|------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
-
+4) 实施计划（如果你确认要修）
+- 第一步：执行一次性数据归并（仅这两个测评表，保留时间顺序）。
+- 第二步：补数据库唯一约束，清理现有重复手机号账号策略。
+- 第三步：改登录/绑定流程，阻止未来再出现“同手机号双账号”。
+- 第四步：回归验证
+  - `assessment-picker` 显示正常
+  - `/emotion-health`、`/scl90` 历史与详情可见
+  - 新注册/绑定不再产生重复账号。
