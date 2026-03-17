@@ -1,71 +1,23 @@
 
 
-## Plan: Optimize "My Page" — Modular Layout, Learning Center, About Us
+## 两个问题需要修复
 
-### Problem Summary
-1. Current vertical stacking feels cramped; doesn't scale for many orders/courses
-2. "My Courses" needs to become "Learning & Growth Center" with sub-modules for assessments, training camps, and courses
-3. "About Us" section is too hidden — users won't discover the system intro link
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
----
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### Step 1: Restructure Page Layout with Clear Modular Cards
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**File: `src/pages/MyPage.tsx`** — Full rewrite of page content
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-- **Account Info**: Keep as-is (top card, no changes needed)
-- **Order Info**: Wrap in a "view all" expandable pattern — show latest 2 orders, with a "查看全部订单" button that expands or navigates. Each order card stays the same with tracking number support.
-- **Settings**: Convert to a horizontal icon grid (2x2) instead of vertical list — more compact, visually distinct as a module card
-- **About Us**: Promote from hidden accordion to a visible card at the bottom with a clear "系统介绍" button styled as a prominent entry point (icon + arrow), not buried in a collapsible
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-### Step 2: Replace "My Courses" with "学习与成长中心"
-
-New section with three sub-modules displayed as tappable category cards in a horizontal row or grid:
-
-1. **测评** (Assessments) — icon: `ClipboardCheck`, color: violet accent
-2. **训练营** (Training Camps) — icon: `Flame`, color: amber accent  
-3. **课程** (Courses) — icon: `BookOpen`, color: emerald accent
-
-Each card shows:
-- Category icon + title
-- A count placeholder (e.g., "2项已完成")
-- Tappable → navigates to the corresponding list/detail (static placeholder for now, routes like `/assessment-picker`, `/camps`, etc.)
-
-This replaces the old tabs ("已学"/"未学") with a clearer category-first structure that scales better.
-
-### Step 3: Improve "About Us" Visibility
-
-Replace the `Accordion` with a visible card:
-- Card with `Info` icon, title "关于我们", and a clear "了解系统介绍 →" button
-- Styled with a subtle gradient background to draw attention
-- Direct click navigates to `/awakening-system-intro` without needing to expand anything first
-
-### Final Page Structure (top to bottom)
-```text
-┌──────────────────────┐
-│  账号信息 (Card)      │
-├──────────────────────┤
-│  订单信息 (Card)      │
-│  - Latest 2 orders   │
-│  - "查看全部" link    │
-├──────────────────────┤
-│  学习与成长中心       │
-│  ┌──────┬──────┬────┐│
-│  │测评  │训练营│课程 ││
-│  └──────┴──────┴────┘│
-├──────────────────────┤
-│  设置 (Card/List)     │
-├──────────────────────┤
-│  关于我们 (Visible)   │
-│  → 系统介绍 button    │
-└──────────────────────┘
-```
-
-### Files Changed
-- `src/pages/MyPage.tsx` — Only file modified. No route changes, no business logic changes.
-
-### Constraints
-- Static UI only, placeholder data
-- No changes to routing, payment flows, or other pages
-- Visual style stays consistent with existing warm gradient theme
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
