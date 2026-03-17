@@ -57,8 +57,8 @@ export function FamilyPhotoUploader() {
         .select("share_token")
         .eq("user_id", userId!)
         .eq("is_active", true)
-        .maybeSingle() as any;
-      return (data?.share_token as string) ?? null;
+        .maybeSingle();
+      return ((data as any)?.share_token as string) ?? null;
     },
     enabled: !!userId,
   });

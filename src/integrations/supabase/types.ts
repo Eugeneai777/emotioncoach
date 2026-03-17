@@ -4327,6 +4327,36 @@ export type Database = {
         }
         Relationships: []
       }
+      family_album_shares: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          nickname: string | null
+          share_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          nickname?: string | null
+          share_token?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          nickname?: string | null
+          share_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       family_photos: {
         Row: {
           caption: string | null
