@@ -117,14 +117,14 @@ export const CoachHeader = ({
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-2 md:px-4 py-2 md:py-3">
         <div className="flex items-center justify-between gap-2">
           {/* Left side */}
-          <div className="flex items-center gap-1 md:gap-2">
+           <div className="flex items-center gap-1.5 md:gap-2">
             {/* 主页按钮 */}
             <button
               onClick={() => {
                 sessionStorage.setItem('skip_preferred_redirect', '1');
                 navigate('/mini-app');
               }}
-              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-1 active:scale-95"
+              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 mr-0.5 active:scale-95"
             >
               <Home className="w-3.5 h-3.5" />
               <span>主页</span>

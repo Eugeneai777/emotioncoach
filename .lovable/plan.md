@@ -1,19 +1,23 @@
 
 
-## 问题分析
+## 两个问题需要修复
 
-从截图可以看到，在手机小程序中，左侧区域的「主页」、Logo、三条横杠（汉堡菜单）排列过于紧凑，元素之间间距不足。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-**原因**：`CoachHeader.tsx` 第 120 行左侧容器的 gap 仅为 `gap-1`（4px），加上主页按钮后元素增多，空间更拥挤。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 修改方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**文件**: `src/components/coach/CoachHeader.tsx`
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-调整左侧元素间距：
-1. 将左侧容器 gap 从 `gap-1` 增加为 `gap-1.5`（6px）
-2. 给汉堡菜单按钮右侧增加少量 margin（`mr-0.5`），与后方按钮拉开距离
-3. 主页按钮的 padding 略微增大（`px-1.5`），提升可点击区域
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-**不影响现有逻辑**：仅调整 CSS 间距，不修改任何功能代码。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
