@@ -93,9 +93,12 @@ export default function WealthAssessmentLitePage() {
     
     if (hasPurchased) {
       setPageState("result");
-    } else {
-      // 显示付费弹窗
+    } else if (user) {
+      // 已登录但未购买：显示付费弹窗
       setShowPayDialog(true);
+    } else {
+      // 未登录：先展示结果页，购买时再要求登录
+      setPageState("result");
     }
   }, [hasPurchased]);
   
