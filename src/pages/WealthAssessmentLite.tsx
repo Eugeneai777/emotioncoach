@@ -80,6 +80,7 @@ export default function WealthAssessmentLitePage() {
     url.searchParams.delete('payment_auth_error');
     url.searchParams.delete('is_new_user');
     url.searchParams.delete('pay_flow');
+    url.searchParams.delete('camp_pay_resume');
     window.history.replaceState({}, '', url.toString());
 
     // 清除授权进行中标记
