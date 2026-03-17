@@ -1,23 +1,49 @@
 
 
-## 两个问题需要修复
+## 计划：大劲AI 读取家人相册照片，用开放性问题引导老人聊回忆
 
-### 问题 1：构建错误 — PayEntry.tsx 语法错误
-上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
+### 目标
+让大劲AI在文字聊天中自动获取家人相册最近的照片，用 Gemini 视觉模型分析照片内容，然后以温暖的开放性问题主动引导老人聊照片里的人和回忆（"这是谁呀？"、"您和她最开心的回忆是什么？"），让老人感到被聆听、被陪伴。
 
-**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
+### 实现方案
 
-### 问题 2：标题与 AI教练按钮 文字重叠
-从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
+#### 1. 修改 `supabase/functions/elder-chat/index.ts`
+- 接收前端传来的 `userId` 参数
+- 用 Supabase client 从 `family_photos` 表查询该用户最近 5 张照片的 `photo_url`
+- 调用 Lovable AI Gateway（`google/gemini-2.5-flash`，支持视觉）分析每张照片，生成简短中文描述（如"一位老奶奶和一个小女孩在公园里笑着合影"）
+- 将照片描述注入 system prompt 的末尾，指导 AI 用开放性问题主动提及照片：
+  ```
+  【家人相册近照】
+  1. 一位老奶奶和小女孩在公园合影
+  2. 一家人围坐在饭桌前
+  
+  引导策略：
+  - 在对话自然时，用开放性问题提及照片："我看到相册里有一张您和一个小姑娘的合照，她是谁呀？😊"
+  - 追问快乐回忆："您和她最快乐的记忆是什么呢？"
+  - 每次只提一张照片，不要一次全部说完
+  - 如果老人愿意聊，继续深入；如果不愿意，自然转换话题
+  ```
+- 照片分析结果做简单缓存：首次调用时分析，后续对话复用（通过前端传递已分析的描述）
 
-**修复**：
-- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
-- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
+#### 2. 修改 `src/pages/ElderChatPage.tsx`
+- 页面加载时，从 `family_photos` 表查询当前用户（或关联老人）最近 5 张照片 URL
+- 首次发送消息时，将 `userId` 和 `photoUrls` 一并传给 edge function
+- edge function 返回照片描述后，前端缓存，后续消息只传描述文本（避免重复分析）
 
-**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
+#### 3. 优化 system prompt
+在现有温暖晚辈人设基础上增加照片互动指导：
+- 用开放性问题而非陈述句（"这是谁？" 而非 "这是您的孙女"）
+- 引导聊回忆和感受（"最快乐的记忆"、"那时候是什么感觉"）
+- 表达被照片触动（"看起来好温馨呀"）
+- 节制地提及，不要每条消息都说照片
 
-| 文件 | 修改 |
+### 文件变更清单
+
+| 文件 | 变更 |
 |------|------|
-| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
-| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
+| `supabase/functions/elder-chat/index.ts` | 接收 userId/photoUrls，查询照片，调用 Gemini 视觉分析，注入描述到 system prompt |
+| `src/pages/ElderChatPage.tsx` | 加载时查询照片 URL，首次发送时传给 edge function，缓存分析结果 |
+
+### 不需要数据库变更
+`family_photos` 表已存在，无需新建表或迁移。
 
