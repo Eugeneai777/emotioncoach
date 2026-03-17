@@ -5,6 +5,7 @@ import { getChildRef } from "@/utils/elderMoodUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { X, ImageOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FamilyAlbumShareButton } from "./FamilyAlbumShareButton";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
