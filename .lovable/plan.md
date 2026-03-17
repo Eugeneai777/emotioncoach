@@ -1,33 +1,23 @@
 
 
-## Plan: Minimal View for Reminders & Notifications in Settings
+## 两个问题需要修复
 
-Extend the existing `isProfileOnly` pattern to also support `view=reminders` and `view=notifications`.
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### Changes in `src/pages/Settings.tsx`
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-1. Replace `isProfileOnly` with a more general `minimalView` check:
-   ```ts
-   const viewParam = searchParams.get("view");
-   const isMinimalView = viewParam === "profile" || viewParam === "reminders" || viewParam === "notifications";
-   ```
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-2. Map `viewParam` to the correct tab and title:
-   - `view=profile` → tab `"profile"`, title `"个人资料"`
-   - `view=reminders` → tab `"reminders"`, title `"提醒设置"`
-   - `view=notifications` → tab `"notifications"`, title `"通知偏好"`
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-3. Replace all `isProfileOnly` references with `isMinimalView` (hide TabsList, hide logo, set title dynamically).
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-4. Set `defaultTab` based on `viewParam` when in minimal mode.
-
-### Changes in `src/pages/MyPage.tsx`
-
-Update the settings item routes:
-- 提醒设置: `/settings?view=reminders` (was `/settings?tab=reminders`)
-- 通知偏好: `/settings?view=notifications` (was `/settings?tab=notifications`)
-
-### Files Changed
-- `src/pages/Settings.tsx`
-- `src/pages/MyPage.tsx`
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 

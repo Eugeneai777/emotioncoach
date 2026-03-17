@@ -132,10 +132,10 @@ const MyPage: React.FC = () => {
   const handleSettingsClick = async (label: string) => {
     switch (label) {
       case "提醒设置":
-        navigate("/settings?tab=reminders");
+        navigate("/settings?view=reminders");
         break;
       case "通知偏好":
-        navigate("/settings?tab=notifications");
+        navigate("/settings?view=notifications");
         break;
       case "退出登录":
         await signOut();

@@ -49,8 +49,10 @@ export default function Settings() {
   // 流畅模式 Hook
   const { prefersReducedMotion, setReducedMotion, systemPreference } = useReducedMotion();
   
-  const isProfileOnly = searchParams.get("view") === "profile";
-  const defaultTab = isProfileOnly ? "profile" : (searchParams.get("tab") || "reminders");
+  const viewParam = searchParams.get("view");
+  const isMinimalView = viewParam === "profile" || viewParam === "reminders" || viewParam === "notifications";
+  const minimalTitle = viewParam === "profile" ? "个人资料" : viewParam === "reminders" ? "提醒设置" : viewParam === "notifications" ? "通知偏好" : "设置";
+  const defaultTab = isMinimalView ? (viewParam as string) : (searchParams.get("tab") || "reminders");
 
   useEffect(() => {
     loadSettings();
@@ -173,12 +175,12 @@ export default function Settings() {
       className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
-      <PageHeader title={isProfileOnly ? "个人资料" : "设置"} showLogo={!isProfileOnly} />
+      <PageHeader title={isMinimalView ? minimalTitle : "设置"} showLogo={!isMinimalView} />
       
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          {!isProfileOnly && (
+          {!isMinimalView && (
             <TabsList className={cn(
               "grid w-full mb-4 md:mb-6 h-auto",
               isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
