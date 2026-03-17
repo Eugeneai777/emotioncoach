@@ -33,7 +33,7 @@ export default function WealthAssessmentLitePage() {
   const hasPurchased = !!purchaseRecord;
   const payResumeHandledRef = useRef(false);
 
-  // 微信 OAuth 回调后恢复支付弹窗（等待购买状态查询完成后再决定）
+  // 微信 OAuth 回调 / 登录后恢复支付弹窗（等待购买状态查询完成后再决定）
   useEffect(() => {
     // 避免重复处理
     if (payResumeHandledRef.current) return;
@@ -43,10 +43,11 @@ export default function WealthAssessmentLitePage() {
     const url = new URL(window.location.href);
     const shouldResumeAssessment = url.searchParams.get('assessment_pay_resume') === '1';
     const shouldResumeCamp = url.searchParams.get('payment_resume') === '1';
+    const shouldResumeCampAuth = url.searchParams.get('camp_pay_resume') === '1';
     const paymentOpenId = url.searchParams.get('payment_openid');
     const payFlow = url.searchParams.get('pay_flow');
 
-    if (!shouldResumeAssessment && !shouldResumeCamp) return;
+    if (!shouldResumeAssessment && !shouldResumeCamp && !shouldResumeCampAuth) return;
 
     // 标记已处理
     payResumeHandledRef.current = true;
