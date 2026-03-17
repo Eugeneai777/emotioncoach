@@ -1178,7 +1178,57 @@ serve(async (req) => {
 
     if (scenario && SCENARIO_CONFIGS[scenario]) {
       // 场景模式优先
-      instructions = buildScenarioInstructions(scenario, userName);
+      let photoContext = '';
+      
+      // 老人陪伴场景：获取家人相册照片并分析
+      if (scenario === '老人陪伴') {
+        try {
+          const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+          const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+          const supabaseUrl = Deno.env.get('SUPABASE_URL');
+          
+          if (LOVABLE_API_KEY && supabaseServiceKey && supabaseUrl) {
+            const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
+            const { data: photos } = await serviceSupabase
+              .from('family_photos')
+              .select('photo_url')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(5);
+            
+            if (photos?.length) {
+              console.log(`Found ${photos.length} family photos for elder companion`);
+              const descriptions = await analyzePhotosForVoice(
+                photos.map((p: any) => p.photo_url),
+                LOVABLE_API_KEY
+              );
+              
+              if (descriptions.length) {
+                const photoList = descriptions.map((d, i) => `${i + 1}. ${d}`).join('\n');
+                photoContext = `
+
+【家人相册近照 - 请在对话中自然地用开放性问题提及】
+${photoList}
+
+引导策略：
+- 用温暖的开放性问题提及照片："我看到相册里有一张特别温馨的照片，里面好像有个小朋友，那是谁呀？😊"
+- 追问快乐回忆："您和她/他最快乐的记忆是什么呢？那时候是什么感觉？"
+- 表达被照片触动："看起来好温馨呀！能给我讲讲吗？"
+- 每次只提一张照片，不要一次全部说完
+- 不要假设照片中人物的身份，让老人自己告诉你
+- 如果老人愿意聊，继续深入追问细节和感受
+- 如果老人不想聊某张照片，自然转换话题
+- 在对话的前几轮自然提起照片`;
+                console.log(`Photo descriptions injected: ${descriptions.length}`);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Elder photo fetch error:', e);
+        }
+      }
+      
+      instructions = buildScenarioInstructions(scenario, userName, photoContext);
       tools = commonTools;
       console.log('Scenario mode activated:', scenario);
     } else if (mode === 'emotion') {
