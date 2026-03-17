@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Sparkles, History, Menu, RotateCcw, Target, LogIn } from "lucide-react";
+import { ChevronDown, Sparkles, History, Menu, RotateCcw, Target, LogIn, Home } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
@@ -118,6 +118,18 @@ export const CoachHeader = ({
         <div className="flex items-center justify-between gap-2">
           {/* Left side */}
           <div className="flex items-center gap-1 md:gap-2">
+            {/* 主页按钮 */}
+            <button
+              onClick={() => {
+                sessionStorage.setItem('skip_preferred_redirect', '1');
+                navigate('/mini-app');
+              }}
+              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-1 active:scale-95"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>主页</span>
+            </button>
+
             {/* 有劲AI Logo */}
             <div
               onClick={() => {

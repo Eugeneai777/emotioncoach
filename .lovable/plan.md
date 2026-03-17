@@ -1,30 +1,23 @@
 
 
-## 需求分析
+## 两个问题需要修复
 
-所有教练页面（情绪教练、财富教练、亲子教练、沟通教练等）都通过 `CoachLayout` → `CoachHeader` 组件渲染头部。只需在 `CoachHeader` 中增加一个"主页"按钮即可覆盖所有教练页面。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-## 实施方案
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-**修改文件**: `src/components/coach/CoachHeader.tsx`
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-在 Logo 左侧（或 Logo 和汉堡菜单之间）增加一个"主页"按钮，样式与 `/mama` 页面一致：
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-- 点击跳转 `/mini-app`
-- 点击时设置 `sessionStorage.setItem('skip_preferred_redirect', '1')` 防止自动重定向
-- 使用 `Home` 图标 + "主页" 文字，样式为小字灰色
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-具体位置：在 Logo 之前添加，与受众页面（mama、workplace 等）保持一致的左上角位置。
-
-## 影响范围
-
-- **自动覆盖的页面**（均使用 CoachLayout/CoachHeader）：
-  - `/emotion-coach`（情绪教练 - Index.tsx）
-  - `/coach/wealth_coach_4_questions`（财富教练）
-  - `/parent-emotion`（亲子教练）
-  - `/communication-coach`（沟通教练）
-  - `/dynamic-coach`（动态教练）
-  - 所有其他通过 CoachLayout 渲染的教练页面
-
-- **不影响现有逻辑**：仅在 header 左侧新增一个导航按钮，不修改任何业务逻辑、聊天流程或数据处理
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
