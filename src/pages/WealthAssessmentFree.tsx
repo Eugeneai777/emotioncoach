@@ -1,10 +1,14 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useFooterHeight } from "@/hooks/useFooterHeight";
+import { useAuth } from "@/hooks/useAuth";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { toast } from "sonner";
 
 function FreeFooter() {
   const { footerRef } = useFooterHeight();
@@ -24,6 +28,8 @@ function FreeFooter() {
 type PageState = "questions" | "result";
 
 export default function WealthAssessmentFreePage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
@@ -58,6 +64,15 @@ export default function WealthAssessmentFreePage() {
     setPageState("questions");
   }, []);
 
+  // 购买前检查登录状态
+  const handleAuthRequired = useCallback((): boolean => {
+    if (user) return true;
+    toast.info("请先登录后再购买训练营");
+    setPostAuthRedirect("/wealth-assessment-free");
+    navigate("/auth");
+    return false;
+  }, [user, navigate]);
+
   return (
     <div
       className="h-screen overflow-y-auto overscroll-contain bg-background"
@@ -80,6 +95,7 @@ export default function WealthAssessmentFreePage() {
           followUpInsights={followUpInsights}
           deepFollowUpAnswers={deepFollowUpAnswers}
           onRetake={handleRetake}
+          onAuthRequired={handleAuthRequired}
         />
       )}
       {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}
