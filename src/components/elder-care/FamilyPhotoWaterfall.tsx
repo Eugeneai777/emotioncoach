@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getChildRef } from "@/utils/elderMoodUpload";
 import { useAuth } from "@/hooks/useAuth";
-import { X, ImageOff } from "lucide-react";
+import { X, ImageOff, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 const PHOTOS_PER_PAGE = 20;
 
@@ -21,11 +22,16 @@ function isNew(created_at: string) {
   return Date.now() - new Date(created_at).getTime() < 24 * 60 * 60 * 1000;
 }
 
-function PhotoCard({ photo, onClick }: { photo: Photo; onClick: () => void }) {
+function PhotoCard({ photo, onClick, canDelete, onDelete }: {
+  photo: Photo;
+  onClick: () => void;
+  canDelete: boolean;
+  onDelete: (id: string) => void;
+}) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
-  // Generate pseudo-random aspect ratio based on photo id for masonry effect
   const aspectClass = useMemo(() => {
     const hash = photo.id.charCodeAt(0) + photo.id.charCodeAt(photo.id.length - 1);
     const variants = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]", "aspect-[3/3.5]"];
@@ -41,42 +47,92 @@ function PhotoCard({ photo, onClick }: { photo: Photo; onClick: () => void }) {
   }
 
   return (
-    <motion.button
+    <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      onClick={onClick}
-      className="w-full rounded-2xl overflow-hidden bg-white shadow-sm border border-orange-100/60 
-                 active:scale-[0.97] transition-transform duration-200 text-left"
+      className="relative w-full rounded-2xl overflow-hidden bg-white shadow-sm border border-orange-100/60"
     >
-      <div className={`relative w-full ${aspectClass} overflow-hidden`}>
-        {!loaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-100/60 via-amber-50/40 to-orange-50/30 animate-pulse" />
-        )}
-        <img
-          src={photo.photo_url}
-          alt={photo.caption || "家人照片"}
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-          onError={() => setError(true)}
-          className={`w-full h-full object-cover transition-opacity duration-400 ${loaded ? "opacity-100" : "opacity-0"}`}
-        />
-        {isNew(photo.created_at) && (
-          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-bold shadow">
-            新
-          </span>
-        )}
-      </div>
+      <button
+        onClick={onClick}
+        onContextMenu={(e) => {
+          if (!canDelete) return;
+          e.preventDefault();
+          setShowDelete(true);
+        }}
+        className="w-full active:scale-[0.97] transition-transform duration-200 text-left"
+      >
+        <div className={`relative w-full ${aspectClass} overflow-hidden`}>
+          {!loaded && (
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/60 via-amber-50/40 to-orange-50/30 animate-pulse" />
+          )}
+          <img
+            src={photo.photo_url}
+            alt={photo.caption || "家人照片"}
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            onError={() => setError(true)}
+            className={`w-full h-full object-cover transition-opacity duration-400 ${loaded ? "opacity-100" : "opacity-0"}`}
+          />
+          {isNew(photo.created_at) && (
+            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-bold shadow">
+              新
+            </span>
+          )}
+        </div>
 
-      {/* Caption & time */}
-      <div className="px-2.5 py-2">
-        {photo.caption && (
-          <p className="text-xs font-medium text-orange-900 line-clamp-2 mb-1">{photo.caption}</p>
+        <div className="px-2.5 py-2">
+          {photo.caption && (
+            <p className="text-xs font-medium text-orange-900 line-clamp-2 mb-1">{photo.caption}</p>
+          )}
+          <p className="text-[10px] text-orange-400">
+            {formatDistanceToNow(new Date(photo.created_at), { addSuffix: true, locale: zhCN })}
+          </p>
+        </div>
+      </button>
+
+      {/* Delete button - show on long press or tap the trash icon */}
+      {canDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDelete(!showDelete);
+          }}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 text-white/80 
+                     hover:bg-red-500 hover:text-white transition-colors z-10"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+
+      {/* Confirm delete overlay */}
+      <AnimatePresence>
+        {showDelete && canDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3 z-20 rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-white text-sm font-medium">删除这张照片？</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onDelete(photo.id)}
+                className="px-4 py-1.5 rounded-full bg-red-500 text-white text-xs font-medium active:scale-95 transition-transform"
+              >
+                删除
+              </button>
+              <button
+                onClick={() => setShowDelete(false)}
+                className="px-4 py-1.5 rounded-full bg-white/20 text-white text-xs font-medium active:scale-95 transition-transform"
+              >
+                取消
+              </button>
+            </div>
+          </motion.div>
         )}
-        <p className="text-[10px] text-orange-400">
-          {formatDistanceToNow(new Date(photo.created_at), { addSuffix: true, locale: zhCN })}
-        </p>
-      </div>
-    </motion.button>
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -84,10 +140,13 @@ export function FamilyPhotoWaterfall() {
   const [viewUrl, setViewUrl] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const { session } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const childRef = getChildRef();
   const childUserId = childRef?.startsWith("child_") ? childRef.slice(6) : null;
   const targetUserId = childUserId || session?.user?.id || null;
+  const isOwner = !!session?.user?.id && targetUserId === session.user.id;
 
   const { data: photos = [] } = useQuery({
     queryKey: ["family-photos", targetUserId, page],
@@ -105,7 +164,6 @@ export function FamilyPhotoWaterfall() {
 
   const hasMore = photos.length >= page * PHOTOS_PER_PAGE;
 
-  // Split into two columns for masonry
   const { leftCol, rightCol } = useMemo(() => {
     const left: Photo[] = [];
     const right: Photo[] = [];
@@ -114,6 +172,43 @@ export function FamilyPhotoWaterfall() {
   }, [photos]);
 
   const handleView = useCallback((url: string) => setViewUrl(url), []);
+
+  const handleDelete = useCallback(async (photoId: string) => {
+    if (!session?.user?.id) return;
+
+    try {
+      const { data: deleted, error } = await supabase
+        .from("family_photos")
+        .delete()
+        .eq("id", photoId)
+        .eq("user_id", session.user.id)
+        .select();
+
+      if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        throw new Error("无权限删除此照片");
+      }
+
+      // Try to delete from storage too
+      const photo = photos.find(p => p.id === photoId);
+      if (photo?.photo_url) {
+        try {
+          const url = new URL(photo.photo_url);
+          const storagePath = url.pathname.split("/family-photos/")[1];
+          if (storagePath) {
+            await supabase.storage.from("family-photos").remove([decodeURIComponent(storagePath)]);
+          }
+        } catch { /* storage cleanup is best-effort */ }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["family-photos"] });
+      queryClient.invalidateQueries({ queryKey: ["family-photo-count"] });
+      toast({ title: "照片已删除 🗑️" });
+    } catch (err: any) {
+      console.error("删除失败:", err);
+      toast({ title: err.message || "删除失败", variant: "destructive" });
+    }
+  }, [session?.user?.id, photos, queryClient, toast]);
 
   if (!targetUserId || !photos.length) return null;
 
@@ -134,12 +229,24 @@ export function FamilyPhotoWaterfall() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-3">
             {leftCol.map((photo) => (
-              <PhotoCard key={photo.id} photo={photo} onClick={() => handleView(photo.photo_url)} />
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                onClick={() => handleView(photo.photo_url)}
+                canDelete={isOwner}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
           <div className="space-y-3">
             {rightCol.map((photo) => (
-              <PhotoCard key={photo.id} photo={photo} onClick={() => handleView(photo.photo_url)} />
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                onClick={() => handleView(photo.photo_url)}
+                canDelete={isOwner}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         </div>
