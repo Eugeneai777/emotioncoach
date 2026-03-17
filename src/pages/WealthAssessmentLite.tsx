@@ -166,6 +166,7 @@ export default function WealthAssessmentLitePage() {
           followUpInsights={followUpInsights}
           deepFollowUpAnswers={deepFollowUpAnswers}
           onRetake={handleRetake}
+          onAuthRequired={requireAuth}
         />
       )}
 
