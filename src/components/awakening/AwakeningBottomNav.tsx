@@ -164,14 +164,14 @@ const AwakeningBottomNav: React.FC = () => {
         {/* 背景条 */}
         <div className="bg-background/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-8">
-            {/* 左侧 - 介绍 */}
+            {/* 左侧 - 我的 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/awakening-system-intro')}
+              onClick={() => navigate('/my-page')}
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
-              <Info className="w-5 h-5" />
-              <span className="text-xs">介绍</span>
+              <User className="w-5 h-5" />
+              <span className="text-xs">我的</span>
             </motion.button>
 
             {/* 中间占位 */}

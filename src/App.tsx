@@ -110,6 +110,7 @@ const UserProfile = lazyRetry(() => import("./pages/UserProfile"));
 const Introduction = lazyRetry(() => import("./pages/Introduction"));
 const UserManual = lazyRetry(() => import("./pages/UserManual"));
 const Courses = lazyRetry(() => import("./pages/Courses"));
+const MyPage = lazyRetry(() => import("./pages/MyPage"));
 
 // 合伙人相关
 const Partner = lazyRetry(() => import("./pages/Partner"));
@@ -428,6 +429,7 @@ const App = () => (
               <Route path="/awakening-lite" element={<AwakeningLite />} />
               <Route path="/awakening-intro" element={<AwakeningIntro />} />
               <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
+              <Route path="/my-page" element={<MyPage />} />
               <Route path="/awakening-journal" element={<AwakeningJournal />} />
               <Route path="/transformation-flow" element={<TransformationFlow />} />
               <Route path="/wealth-block-intro" element={<WealthBlockIntro />} />
