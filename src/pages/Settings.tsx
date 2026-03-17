@@ -49,8 +49,10 @@ export default function Settings() {
   // 流畅模式 Hook
   const { prefersReducedMotion, setReducedMotion, systemPreference } = useReducedMotion();
   
-  const isProfileOnly = searchParams.get("view") === "profile";
-  const defaultTab = isProfileOnly ? "profile" : (searchParams.get("tab") || "reminders");
+  const viewParam = searchParams.get("view");
+  const isMinimalView = viewParam === "profile" || viewParam === "reminders" || viewParam === "notifications";
+  const minimalTitle = viewParam === "profile" ? "个人资料" : viewParam === "reminders" ? "提醒设置" : viewParam === "notifications" ? "通知偏好" : "设置";
+  const defaultTab = isMinimalView ? (viewParam as string) : (searchParams.get("tab") || "reminders");
 
   useEffect(() => {
     loadSettings();
