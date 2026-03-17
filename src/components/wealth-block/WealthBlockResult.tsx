@@ -71,8 +71,8 @@ interface WealthBlockResultProps {
   isSaving?: boolean;
   isSaved?: boolean;
   onAiInsightReady?: (insight: AIInsightData) => void;
-  /** 若提供，在发起购买前先调用此回调检查登录状态；返回 true 表示已登录可继续 */
-  onAuthRequired?: () => boolean;
+  /** 若提供，在发起购买前先调用此回调检查登录状态；返回 true 表示已登录可继续。参数 forCamp 表示是否为训练营购买 */
+  onAuthRequired?: (forCamp?: boolean) => boolean;
 }
 
 export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired }: WealthBlockResultProps) {
@@ -692,7 +692,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         dominantBelief={result.dominantBeliefBlock}
         healthScore={healthScore}
         onPurchase={() => {
-          if (onAuthRequired && !onAuthRequired()) return;
+          if (onAuthRequired && !onAuthRequired(true)) return;
           setShowPayDialog(true);
         }}
         onViewDetails={() => navigate('/wealth-camp-intro')}

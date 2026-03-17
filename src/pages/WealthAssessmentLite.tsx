@@ -33,7 +33,7 @@ export default function WealthAssessmentLitePage() {
   const hasPurchased = !!purchaseRecord;
   const payResumeHandledRef = useRef(false);
 
-  // 微信 OAuth 回调后恢复支付弹窗（等待购买状态查询完成后再决定）
+  // 微信 OAuth 回调 / 登录后恢复支付弹窗（等待购买状态查询完成后再决定）
   useEffect(() => {
     // 避免重复处理
     if (payResumeHandledRef.current) return;
@@ -43,16 +43,17 @@ export default function WealthAssessmentLitePage() {
     const url = new URL(window.location.href);
     const shouldResumeAssessment = url.searchParams.get('assessment_pay_resume') === '1';
     const shouldResumeCamp = url.searchParams.get('payment_resume') === '1';
+    const shouldResumeCampAuth = url.searchParams.get('camp_pay_resume') === '1';
     const paymentOpenId = url.searchParams.get('payment_openid');
     const payFlow = url.searchParams.get('pay_flow');
 
-    if (!shouldResumeAssessment && !shouldResumeCamp) return;
+    if (!shouldResumeAssessment && !shouldResumeCamp && !shouldResumeCampAuth) return;
 
     // 标记已处理
     payResumeHandledRef.current = true;
 
     // 判断是训练营支付还是测评支付
-    const isCampPurchase = payFlow === 'camp_purchase' || 
+    const isCampPurchase = shouldResumeCampAuth || payFlow === 'camp_purchase' || 
       (() => {
         try {
           const cached = sessionStorage.getItem('pending_payment_package');
@@ -79,6 +80,7 @@ export default function WealthAssessmentLitePage() {
     url.searchParams.delete('payment_auth_error');
     url.searchParams.delete('is_new_user');
     url.searchParams.delete('pay_flow');
+    url.searchParams.delete('camp_pay_resume');
     window.history.replaceState({}, '', url.toString());
 
     // 清除授权进行中标记
@@ -162,11 +164,15 @@ export default function WealthAssessmentLitePage() {
   const handleExit = useCallback(() => {
     setPageState("questions");
   }, []);
-  // 购买/解锁前检查登录状态
-  const requireAuth = useCallback((): boolean => {
+  // 购买/解锁前检查登录状态（支持区分测评购买和训练营购买）
+  const requireAuth = useCallback((forCamp?: boolean): boolean => {
     if (user) return true;
     toast.info("请先登录后再购买");
-    setPostAuthRedirect(window.location.pathname + window.location.search);
+    const redirectUrl = new URL(window.location.href);
+    if (forCamp) {
+      redirectUrl.searchParams.set('camp_pay_resume', '1');
+    }
+    setPostAuthRedirect(redirectUrl.pathname + redirectUrl.search);
     navigate("/auth");
     return false;
   }, [user, navigate]);
