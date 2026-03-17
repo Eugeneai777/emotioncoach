@@ -873,11 +873,35 @@ const SCENARIO_CONFIGS: Record<string, ScenarioConfig> = {
 
 // ============ 第二层：模式层 (Mode Layer) ============
 
-// 分析照片内容（用于老人陪伴场景）
-async function analyzePhotosForVoice(photoUrls: string[], apiKey: string): Promise<string[]> {
-  const descriptions: string[] = [];
-  for (const url of photoUrls.slice(0, 5)) {
-    try {
+// 分析照片内容（用于老人陪伴场景）- 并行分析 + 缓存
+async function analyzePhotosForVoice(
+  photoUrls: string[], 
+  apiKey: string, 
+  serviceSupabase: any,
+  userId: string
+): Promise<string[]> {
+  const cacheKey = `photo_desc_${userId}`;
+  
+  // 1. 尝试从缓存读取（24小时有效）
+  try {
+    const { data: cached } = await serviceSupabase
+      .from('cache_store')
+      .select('value, expires_at')
+      .eq('key', cacheKey)
+      .maybeSingle();
+    
+    if (cached && new Date(cached.expires_at) > new Date()) {
+      const descriptions = JSON.parse(cached.value);
+      console.log(`Photo descriptions loaded from cache: ${descriptions.length}`);
+      return descriptions;
+    }
+  } catch (e) {
+    console.warn('Cache read error:', e);
+  }
+
+  // 2. 并行分析所有照片（而非串行）
+  const results = await Promise.allSettled(
+    photoUrls.slice(0, 5).map(async (url) => {
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -898,13 +922,33 @@ async function analyzePhotosForVoice(photoUrls: string[], apiKey: string): Promi
       });
       if (resp.ok) {
         const data = await resp.json();
-        const desc = data.choices?.[0]?.message?.content?.trim();
-        if (desc) descriptions.push(desc);
+        return data.choices?.[0]?.message?.content?.trim() || null;
       }
+      return null;
+    })
+  );
+
+  const descriptions = results
+    .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled' && !!r.value)
+    .map(r => r.value);
+
+  // 3. 写入缓存（24小时过期）
+  if (descriptions.length) {
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await serviceSupabase
+        .from('cache_store')
+        .upsert({
+          key: cacheKey,
+          value: JSON.stringify(descriptions),
+          expires_at: expiresAt,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'key' });
     } catch (e) {
-      console.error("Photo analysis error:", e);
+      console.warn('Cache write error:', e);
     }
   }
+
   return descriptions;
 }
 
