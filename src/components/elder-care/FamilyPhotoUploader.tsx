@@ -138,7 +138,7 @@ export function FamilyPhotoUploader() {
       setCreating(false);
     }
 
-    const url = `${window.location.origin}/family-album/${token}`;
+    const url = `https://wechat.eugenewe.net/family-album/${token}`;
 
     if (navigator.share) {
       try {
