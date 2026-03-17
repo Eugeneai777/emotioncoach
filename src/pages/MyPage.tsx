@@ -107,6 +107,7 @@ const MyPage: React.FC = () => {
         .from("orders")
         .select("id, order_no, package_name, amount, status, shipping_status, shipping_note, created_at")
         .eq("user_id", user.id)
+        .in("status", ["paid", "shipped", "completed", "refunded"])
         .order("created_at", { ascending: false })
         .limit(20);
       if (orderData) setOrders(orderData as OrderData[]);
