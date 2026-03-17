@@ -40,7 +40,7 @@ const PageHeader = ({
   return (
     <header className={`sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 ${className}`}>
       <div className="flex items-center justify-between h-12 px-4">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* 有劲AI Logo */}
           {showLogo && (
             <div
@@ -86,7 +86,7 @@ const PageHeader = ({
         
         {/* 标题 */}
         {title && (
-          <h1 className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-lg max-w-[60%] truncate text-center whitespace-nowrap">
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-lg max-w-[40%] sm:max-w-[60%] truncate text-center whitespace-nowrap">
             {title}
           </h1>
         )}

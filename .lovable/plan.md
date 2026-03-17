@@ -1,20 +1,23 @@
 
 
-## 问题分析
+## 两个问题需要修复
 
-从截图可见，`PageHeader` 中标题使用了 `absolute left-1/2 -translate-x-1/2` 绝对居中定位，在手机端左侧元素增多后（Logo + 返回键 + 主页按钮），标题文字直接覆盖在主页按钮上方，导致按钮无法点击。
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-`CoachHeader` 没有此问题，因为它不使用绝对定位的标题。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-## 修改方案
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-**文件**: `src/components/PageHeader.tsx`
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-1. **缩小标题最大宽度**：将 `max-w-[60%]` 改为 `max-w-[40%]`，避免标题覆盖左侧按钮区域
-2. **增加左侧容器间距**：将 `gap-1` 改为 `gap-1.5`，让元素之间不那么拥挤
-3. **确保左侧区域有最小宽度保护**：给左侧容器加 `min-w-0 flex-shrink-0`，防止被挤压
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
-## 不影响现有逻辑
-
-仅调整 CSS 布局属性，不修改任何功能代码。其他使用 `PageHeader` 且没有 `showHomeButton` 的页面不受影响（标题仍有足够空间）。
+| 文件 | 修改 |
+|------|------|
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
