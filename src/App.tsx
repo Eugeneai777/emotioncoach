@@ -235,6 +235,7 @@ const WorkplacePage = lazyRetry(() => import("./pages/WorkplacePage"));
 
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
+const FamilyAlbumUpload = lazyRetry(() => import("./pages/FamilyAlbumUpload"));
 const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
 const ElderGreetingPage = lazyRetry(() => import("./pages/ElderGreetingPage"));
 const ElderRemindersPage = lazyRetry(() => import("./pages/ElderRemindersPage"));
