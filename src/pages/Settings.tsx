@@ -175,7 +175,7 @@ export default function Settings() {
       className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
-      <PageHeader title={isProfileOnly ? "个人资料" : "设置"} showLogo={!isProfileOnly} />
+      <PageHeader title={isMinimalView ? minimalTitle : "设置"} showLogo={!isMinimalView} />
       
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
 
