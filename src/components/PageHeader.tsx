@@ -86,7 +86,7 @@ const PageHeader = ({
         
         {/* 标题 */}
         {title && (
-          <h1 className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-lg max-w-[60%] truncate text-center whitespace-nowrap">
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-lg max-w-[40%] sm:max-w-[60%] truncate text-center whitespace-nowrap">
             {title}
           </h1>
         )}
