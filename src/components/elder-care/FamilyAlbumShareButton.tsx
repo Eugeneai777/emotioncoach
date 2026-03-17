@@ -24,7 +24,6 @@ export function FamilyAlbumShareButton() {
         .maybeSingle() as any;
       return (data?.share_token as string) ?? null;
     },
-    },
     enabled: !!userId,
   });
 
