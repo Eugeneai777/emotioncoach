@@ -110,6 +110,7 @@ const UserProfile = lazyRetry(() => import("./pages/UserProfile"));
 const Introduction = lazyRetry(() => import("./pages/Introduction"));
 const UserManual = lazyRetry(() => import("./pages/UserManual"));
 const Courses = lazyRetry(() => import("./pages/Courses"));
+const MyPage = lazyRetry(() => import("./pages/MyPage"));
 
 // 合伙人相关
 const Partner = lazyRetry(() => import("./pages/Partner"));
