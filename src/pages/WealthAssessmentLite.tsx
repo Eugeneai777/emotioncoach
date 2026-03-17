@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { LiteIntroCard } from "@/components/wealth-block/LiteIntroCard";
