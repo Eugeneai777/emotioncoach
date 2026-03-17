@@ -478,7 +478,8 @@ const App = () => (
               <Route path="/elder-care/chat" element={<ElderChatPage />} />
               <Route path="/elder-care/greeting" element={<ElderGreetingPage />} />
               <Route path="/elder-care/reminders" element={<ElderRemindersPage />} />
-              <Route path="/elder-care/mood" element={<ElderMoodPage />} />
+               <Route path="/elder-care/mood" element={<ElderMoodPage />} />
+               <Route path="/family-album/:token" element={<FamilyAlbumUpload />} />
               <Route path="/xiaojin" element={<XiaojinHome />} />
               <Route path="/xiaojin/mood" element={<XiaojinMood />} />
               <Route path="/xiaojin/talent" element={<XiaojinTalent />} />

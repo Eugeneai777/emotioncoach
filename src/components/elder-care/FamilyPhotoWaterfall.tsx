@@ -127,7 +127,10 @@ export function FamilyPhotoWaterfall() {
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">📷</span>
           <h3 className="text-sm font-semibold text-orange-900">家人相册</h3>
-          <span className="text-[10px] text-orange-400 ml-auto">{photos.length} 张照片</span>
+          <div className="ml-auto flex items-center gap-2">
+            <FamilyAlbumShareButton />
+            <span className="text-[10px] text-orange-400">{photos.length} 张</span>
+          </div>
         </div>
 
         {/* Masonry grid */}
