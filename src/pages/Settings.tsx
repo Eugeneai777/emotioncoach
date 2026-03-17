@@ -180,7 +180,7 @@ export default function Settings() {
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          {!isProfileOnly && (
+          {!isMinimalView && (
             <TabsList className={cn(
               "grid w-full mb-4 md:mb-6 h-auto",
               isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
