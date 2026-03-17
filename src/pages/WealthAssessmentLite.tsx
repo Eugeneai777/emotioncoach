@@ -120,7 +120,15 @@ export default function WealthAssessmentLitePage() {
   const handleExit = useCallback(() => {
     setPageState("questions");
   }, []);
-  
+  // 购买/解锁前检查登录状态
+  const requireAuth = useCallback((): boolean => {
+    if (user) return true;
+    toast.info("请先登录后再购买");
+    setPostAuthRedirect("/wealth-assessment-lite");
+    navigate("/auth");
+    return false;
+  }, [user, navigate]);
+
   return (
     <div 
       className="h-screen overflow-y-auto overscroll-contain bg-background"
