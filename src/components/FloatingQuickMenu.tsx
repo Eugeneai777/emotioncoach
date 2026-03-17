@@ -12,7 +12,7 @@ import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import { QuickMenuSettingsDialog } from '@/components/QuickMenuSettingsDialog';
 import FeedbackDialog from '@/components/FeedbackDialog';
 const POSITION_STORAGE_KEY = 'floatingQuickMenuPosition';
-const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth-block', '/wealth-assessment-lite', '/wealth-assessment-free', '/emotion-health-lite', '/scl90-lite', '/alive-check-lite', '/awakening-lite', '/emotion-button-lite', '/coach-space', '/awakening', '/bloom-partner-intro', '/mini-app'];
+const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth-block', '/wealth-assessment-lite', '/wealth-assessment-free', '/emotion-health-lite', '/scl90-lite', '/alive-check-lite', '/awakening-lite', '/emotion-button-lite', '/coach-space', '/awakening', '/bloom-partner-intro', '/mini-app', '/my-page'];
 
 interface Position {
   x: number;
