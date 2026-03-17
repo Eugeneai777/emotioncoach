@@ -71,11 +71,15 @@ const PageHeader = ({
           {showHomeButton && !isHomePage && (
             <Button
               variant="ghost"
-              size="icon"
-              onClick={() => navigate('/')}
-              className="active:scale-95 transition-transform"
+              size="sm"
+              onClick={() => {
+                sessionStorage.setItem('skip_preferred_redirect', '1');
+                navigate('/mini-app');
+              }}
+              className="active:scale-95 transition-transform gap-1 px-2 text-xs"
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-3.5 h-3.5" />
+              <span>主页</span>
             </Button>
           )}
         </div>

@@ -165,6 +165,7 @@ export default function StoryCoach() {
       <PageHeader
         title="故事教练"
         showBack
+        showHomeButton
         rightActions={
           <div className="flex items-center gap-2">
             <Button

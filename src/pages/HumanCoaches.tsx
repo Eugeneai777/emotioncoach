@@ -47,7 +47,7 @@ export default function HumanCoaches() {
     <>
       <DynamicOGMeta pageKey="humanCoaches" />
       <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <PageHeader title="真人教练" showBack rightActions={
+      <PageHeader title="真人教练" showBack showHomeButton rightActions={
         coachProfile ? (
           <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
             我的后台
