@@ -49,7 +49,8 @@ export default function Settings() {
   // 流畅模式 Hook
   const { prefersReducedMotion, setReducedMotion, systemPreference } = useReducedMotion();
   
-  const defaultTab = searchParams.get("tab") || "reminders";
+  const isProfileOnly = searchParams.get("view") === "profile";
+  const defaultTab = isProfileOnly ? "profile" : (searchParams.get("tab") || "reminders");
 
   useEffect(() => {
     loadSettings();
@@ -172,23 +173,25 @@ export default function Settings() {
       className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
-      <PageHeader title="设置" />
+      <PageHeader title={isProfileOnly ? "个人资料" : "设置"} showLogo={!isProfileOnly} />
       
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className={cn(
-            "grid w-full mb-4 md:mb-6 h-auto",
-            isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
-          )}>
-            <ResponsiveTabsTrigger value="profile" label="个人资料" shortLabel="资料" />
-            <ResponsiveTabsTrigger value="account" label={searchParams.get('view') === 'orders' ? '已购订单' : '账户'} />
-            <ResponsiveTabsTrigger value="reminders" label="提醒设置" shortLabel="提醒" />
-            <ResponsiveTabsTrigger value="notifications" label="通知偏好" shortLabel="通知" />
-            {isAdmin && (
-              <ResponsiveTabsTrigger value="camp" label="训练营" />
-            )}
-          </TabsList>
+          {!isProfileOnly && (
+            <TabsList className={cn(
+              "grid w-full mb-4 md:mb-6 h-auto",
+              isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
+            )}>
+              <ResponsiveTabsTrigger value="profile" label="个人资料" shortLabel="资料" />
+              <ResponsiveTabsTrigger value="account" label={searchParams.get('view') === 'orders' ? '已购订单' : '账户'} />
+              <ResponsiveTabsTrigger value="reminders" label="提醒设置" shortLabel="提醒" />
+              <ResponsiveTabsTrigger value="notifications" label="通知偏好" shortLabel="通知" />
+              {isAdmin && (
+                <ResponsiveTabsTrigger value="camp" label="训练营" />
+              )}
+            </TabsList>
+          )}
 
           <TabsContent value="profile">
             <Card className="border-border shadow-lg">
