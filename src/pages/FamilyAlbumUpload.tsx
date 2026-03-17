@@ -41,12 +41,12 @@ export default function FamilyAlbumUpload() {
   useEffect(() => {
     if (!token) { setInvalid(true); setLoading(false); return; }
     supabase
-      .from("family_album_shares")
+      .from("family_album_shares" as any)
       .select("user_id, nickname")
       .eq("share_token", token)
       .eq("is_active", true)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (data) {
           setTargetUserId(data.user_id);
           setNickname(data.nickname);

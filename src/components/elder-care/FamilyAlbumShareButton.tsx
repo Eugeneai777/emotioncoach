@@ -42,12 +42,12 @@ export function FamilyAlbumShareButton() {
       setCreating(true);
       try {
         const { data, error } = await supabase
-          .from("family_album_shares")
+          .from("family_album_shares" as any)
           .insert({ user_id: userId, nickname: "长辈" })
           .select("share_token")
-          .single();
+          .single() as any;
         if (error) throw error;
-        token = data.share_token;
+        token = data.share_token as string;
         await refetch();
       } catch (err) {
         console.error(err);
