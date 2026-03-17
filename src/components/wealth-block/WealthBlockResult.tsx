@@ -691,7 +691,10 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         dominantEmotion={result.dominantEmotionBlock}
         dominantBelief={result.dominantBeliefBlock}
         healthScore={healthScore}
-        onPurchase={() => setShowPayDialog(true)}
+        onPurchase={() => {
+          if (onAuthRequired && !onAuthRequired()) return;
+          setShowPayDialog(true);
+        }}
         onViewDetails={() => navigate('/wealth-camp-intro')}
         hasPurchased={hasPurchased}
       />
