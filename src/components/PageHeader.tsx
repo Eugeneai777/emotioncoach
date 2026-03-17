@@ -10,6 +10,7 @@ interface PageHeaderProps {
   rightActions?: React.ReactNode;
   className?: string;
   showHomeButton?: boolean;
+  showLogo?: boolean;
 }
 
 const PageHeader = ({ 
