@@ -166,6 +166,7 @@ const ElderCarePage = () => {
             </div>
             <ChevronRight className="w-4 h-4 text-emerald-400" />
           </button>
+          <FamilyPhotoUploader />
         </motion.div>
 
         {/* 设为默认首页 */}
