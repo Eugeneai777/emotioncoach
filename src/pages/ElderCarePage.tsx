@@ -139,16 +139,6 @@ const ElderCarePage = () => {
           </div>
         </motion.div>
 
-        {/* 上传照片给长辈 */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="pb-4"
-        >
-          <FamilyPhotoUploader />
-        </motion.div>
-
         {/* 家人相册瀑布流 */}
         <div className="pb-6">
           <FamilyPhotoWaterfall />
@@ -157,7 +147,7 @@ const ElderCarePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.4 }}
-          className="pb-8"
+          className="pb-4"
         >
           <button
             onClick={() => navigate("/alive-check")}
