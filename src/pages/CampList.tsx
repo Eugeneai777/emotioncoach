@@ -54,11 +54,86 @@ const CampList = () => {
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
 
-  // Query user's training camps when filter is active/completed
+  // Query user's training camps when filter is active/completed/my
   const { data: userCamps, isLoading: isLoadingUserCamps } = useQuery({
     queryKey: ['user-training-camps', filterParam, user?.id],
     queryFn: async () => {
       if (!user || !filterParam) return null;
+      
+      if (filterParam === 'my') {
+        // "我的训练营" mode: merge purchases + active/completed camps
+        const [purchasesRes, campsRes] = await Promise.all([
+          supabase
+            .from('user_camp_purchases')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('payment_status', 'completed')
+            .order('purchased_at', { ascending: false }),
+          supabase
+            .from('training_camps')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('status', ['active', 'completed'])
+            .order('updated_at', { ascending: false }),
+        ]);
+        if (purchasesRes.error) throw purchasesRes.error;
+        if (campsRes.error) throw campsRes.error;
+        
+        const camps = campsRes.data || [];
+        const purchases = purchasesRes.data || [];
+        
+        // Build merged list with status
+        const result: any[] = [];
+        const usedCampTypes = new Set<string>();
+        
+        // First add active camps (highest priority)
+        camps.filter(c => c.status === 'active').forEach(camp => {
+          usedCampTypes.add(camp.camp_type);
+          result.push({
+            ...camp,
+            _myStatus: 'active',
+            _statusLabel: `进行中 · Day ${camp.current_day}/${camp.duration_days}`,
+          });
+        });
+        
+        // Then completed camps
+        camps.filter(c => c.status === 'completed').forEach(camp => {
+          if (!usedCampTypes.has(camp.camp_type)) {
+            usedCampTypes.add(camp.camp_type);
+          }
+          result.push({
+            ...camp,
+            _myStatus: 'completed',
+            _statusLabel: `已完成 · 打卡${camp.completed_days}天`,
+          });
+        });
+        
+        // Then purchased but not started (no matching training_camps record)
+        purchases.forEach(purchase => {
+          const campType = purchase.camp_type;
+          // Check if there's already a camp for this type
+          const hasCamp = camps.some(c => c.camp_type === campType);
+          if (!hasCamp) {
+            result.push({
+              id: purchase.id,
+              camp_type: campType,
+              camp_name: purchase.camp_name,
+              duration_days: 0,
+              current_day: 0,
+              completed_days: 0,
+              status: 'purchased',
+              _myStatus: 'purchased',
+              _statusLabel: '已购 · 未开营',
+              _purchaseId: purchase.id,
+              created_at: purchase.purchased_at,
+            });
+          }
+        });
+        
+        return result;
+      }
+      
+      // Original active/completed filter
       const { data, error } = await supabase
         .from('training_camps')
         .select('*')
