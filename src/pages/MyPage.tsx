@@ -131,14 +131,11 @@ const MyPage: React.FC = () => {
 
   const handleSettingsClick = async (label: string) => {
     switch (label) {
-      case "通知设置":
-        navigate("/settings");
+      case "提醒设置":
+        navigate("/settings?tab=reminders");
         break;
-      case "隐私安全":
-        navigate("/privacy");
-        break;
-      case "帮助反馈":
-        navigate("/customer-support");
+      case "通知偏好":
+        navigate("/settings?tab=notifications");
         break;
       case "退出登录":
         await signOut();
@@ -149,9 +146,8 @@ const MyPage: React.FC = () => {
   };
 
   const SETTINGS_ITEMS = [
-    { icon: Bell, label: "通知设置" },
-    { icon: Lock, label: "隐私安全" },
-    { icon: HelpCircle, label: "帮助反馈" },
+    { icon: Bell, label: "提醒设置" },
+    { icon: MessageSquare, label: "通知偏好" },
     { icon: LogOut, label: "退出登录" },
   ];
 
