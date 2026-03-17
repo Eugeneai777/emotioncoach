@@ -235,6 +235,7 @@ const WorkplacePage = lazyRetry(() => import("./pages/WorkplacePage"));
 
 // 老年关怀
 const ElderCarePage = lazyRetry(() => import("./pages/ElderCarePage"));
+const FamilyAlbumUpload = lazyRetry(() => import("./pages/FamilyAlbumUpload"));
 const ElderChatPage = lazyRetry(() => import("./pages/ElderChatPage"));
 const ElderGreetingPage = lazyRetry(() => import("./pages/ElderGreetingPage"));
 const ElderRemindersPage = lazyRetry(() => import("./pages/ElderRemindersPage"));
@@ -477,7 +478,8 @@ const App = () => (
               <Route path="/elder-care/chat" element={<ElderChatPage />} />
               <Route path="/elder-care/greeting" element={<ElderGreetingPage />} />
               <Route path="/elder-care/reminders" element={<ElderRemindersPage />} />
-              <Route path="/elder-care/mood" element={<ElderMoodPage />} />
+               <Route path="/elder-care/mood" element={<ElderMoodPage />} />
+               <Route path="/family-album/:token" element={<FamilyAlbumUpload />} />
               <Route path="/xiaojin" element={<XiaojinHome />} />
               <Route path="/xiaojin/mood" element={<XiaojinMood />} />
               <Route path="/xiaojin/talent" element={<XiaojinTalent />} />
