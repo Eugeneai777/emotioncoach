@@ -45,7 +45,7 @@ const LEARNING_MODULES = [
     label: "训练营",
     gradient: "from-amber-500/15 to-amber-600/5",
     iconColor: "text-amber-600 dark:text-amber-400",
-    route: "/camps",
+    route: "/camps?filter=my",
   },
   {
     key: "course",

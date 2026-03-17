@@ -54,11 +54,86 @@ const CampList = () => {
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
 
-  // Query user's training camps when filter is active/completed
+  // Query user's training camps when filter is active/completed/my
   const { data: userCamps, isLoading: isLoadingUserCamps } = useQuery({
     queryKey: ['user-training-camps', filterParam, user?.id],
     queryFn: async () => {
       if (!user || !filterParam) return null;
+      
+      if (filterParam === 'my') {
+        // "我的训练营" mode: merge purchases + active/completed camps
+        const [purchasesRes, campsRes] = await Promise.all([
+          supabase
+            .from('user_camp_purchases')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('payment_status', 'completed')
+            .order('purchased_at', { ascending: false }),
+          supabase
+            .from('training_camps')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('status', ['active', 'completed'])
+            .order('updated_at', { ascending: false }),
+        ]);
+        if (purchasesRes.error) throw purchasesRes.error;
+        if (campsRes.error) throw campsRes.error;
+        
+        const camps = campsRes.data || [];
+        const purchases = purchasesRes.data || [];
+        
+        // Build merged list with status
+        const result: any[] = [];
+        const usedCampTypes = new Set<string>();
+        
+        // First add active camps (highest priority)
+        camps.filter(c => c.status === 'active').forEach(camp => {
+          usedCampTypes.add(camp.camp_type);
+          result.push({
+            ...camp,
+            _myStatus: 'active',
+            _statusLabel: `进行中 · Day ${camp.current_day}/${camp.duration_days}`,
+          });
+        });
+        
+        // Then completed camps
+        camps.filter(c => c.status === 'completed').forEach(camp => {
+          if (!usedCampTypes.has(camp.camp_type)) {
+            usedCampTypes.add(camp.camp_type);
+          }
+          result.push({
+            ...camp,
+            _myStatus: 'completed',
+            _statusLabel: `已完成 · 打卡${camp.completed_days}天`,
+          });
+        });
+        
+        // Then purchased but not started (no matching training_camps record)
+        purchases.forEach(purchase => {
+          const campType = purchase.camp_type;
+          // Check if there's already a camp for this type
+          const hasCamp = camps.some(c => c.camp_type === campType);
+          if (!hasCamp) {
+            result.push({
+              id: purchase.id,
+              camp_type: campType,
+              camp_name: purchase.camp_name,
+              duration_days: 0,
+              current_day: 0,
+              completed_days: 0,
+              status: 'purchased',
+              _myStatus: 'purchased',
+              _statusLabel: '已购 · 未开营',
+              _purchaseId: purchase.id,
+              created_at: purchase.purchased_at,
+            });
+          }
+        });
+        
+        return result;
+      }
+      
+      // Original active/completed filter
       const { data, error } = await supabase
         .from('training_camps')
         .select('*')
@@ -118,8 +193,38 @@ const CampList = () => {
 
   // If filter mode, show user's camps
   if (filterParam) {
-    const filterTitle = filterParam === 'active' ? '待学课程' : '已学课程';
+    const filterTitle = filterParam === 'my' ? '我的训练营' : filterParam === 'active' ? '待学课程' : '已学课程';
+    const emptyEmoji = filterParam === 'my' ? '🏕️' : filterParam === 'active' ? '📚' : '🎓';
+    const emptyText = filterParam === 'my' ? '还没有训练营，去看看吧' : filterParam === 'active' ? '暂无进行中的课程' : '暂无已完成的课程';
     const isFilterLoading = isLoadingUserCamps;
+
+    const handleMyCampClick = (camp: any) => {
+      if (camp._myStatus === 'purchased') {
+        // Purchased but not started → go to camp intro to start
+        navigate(`/camp-intro/${camp.camp_type}`);
+      } else if (camp._myStatus === 'active') {
+        navigate(`/camp-checkin/${camp.id}`);
+      } else if (camp._myStatus === 'completed') {
+        navigate(`/camp-checkin/${camp.id}`);
+      } else {
+        navigate(`/camp-checkin/${camp.id}`);
+      }
+    };
+
+    const getStatusBadge = (camp: any) => {
+      if (camp._myStatus === 'active') {
+        return <Badge className="bg-primary/15 text-primary border-primary/20">进行中</Badge>;
+      }
+      if (camp._myStatus === 'completed') {
+        return <Badge variant="secondary">已完成</Badge>;
+      }
+      if (camp._myStatus === 'purchased') {
+        return <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20">待开营</Badge>;
+      }
+      return <Badge variant={camp.status === 'active' ? 'default' : 'secondary'}>
+        {camp.status === 'active' ? '进行中' : '已完成'}
+      </Badge>;
+    };
     
     return (
       <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -131,10 +236,8 @@ const CampList = () => {
             </div>
           ) : !userCamps || userCamps.length === 0 ? (
             <div className="text-center py-16 space-y-3">
-              <p className="text-4xl">{filterParam === 'active' ? '📚' : '🎓'}</p>
-              <p className="text-muted-foreground">
-                {filterParam === 'active' ? '暂无进行中的课程' : '暂无已完成的课程'}
-              </p>
+              <p className="text-4xl">{emptyEmoji}</p>
+              <p className="text-muted-foreground">{emptyText}</p>
               <Button variant="outline" onClick={() => navigate('/camps')}>
                 浏览训练营
               </Button>
@@ -145,21 +248,33 @@ const CampList = () => {
                 <Card 
                   key={camp.id} 
                   className="p-4 cursor-pointer hover:shadow-md transition-shadow border-border/40"
-                  onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+                  onClick={() => filterParam === 'my' ? handleMyCampClick(camp) : navigate(`/camp-checkin/${camp.id}`)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-foreground">{camp.camp_name}</h3>
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{camp.camp_name}</h3>
                       <p className="text-xs text-muted-foreground">
-                        第 {camp.current_day}/{camp.duration_days} 天 · 已打卡 {camp.completed_days} 天
+                        {camp._statusLabel || `第 ${camp.current_day}/${camp.duration_days} 天 · 已打卡 ${camp.completed_days} 天`}
                       </p>
                     </div>
-                    <Badge variant={camp.status === 'active' ? 'default' : 'secondary'}>
-                      {camp.status === 'active' ? '进行中' : '已完成'}
-                    </Badge>
+                    {getStatusBadge(camp)}
                   </div>
                 </Card>
               ))}
+
+              {/* "浏览更多训练营" button for my filter */}
+              {filterParam === 'my' && (
+                <div className="pt-4 text-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate('/camps')}
+                    className="gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    浏览更多训练营
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </main>
