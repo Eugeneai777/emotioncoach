@@ -42,16 +42,18 @@ const PageHeader = ({
       <div className="flex items-center justify-between h-12 px-4">
         <div className="flex items-center gap-1">
           {/* 有劲AI Logo */}
-          <div
-            onClick={() => !isHomePage && navigate('/')}
-            className={`flex-shrink-0 ${isHomePage ? '' : 'cursor-pointer active:scale-95 transition-transform'}`}
-          >
-            <img
-              src={logoImage}
-              alt="有劲AI"
-              className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"
-            />
-          </div>
+          {showLogo && (
+            <div
+              onClick={() => !isHomePage && navigate('/')}
+              className={`flex-shrink-0 ${isHomePage ? '' : 'cursor-pointer active:scale-95 transition-transform'}`}
+            >
+              <img
+                src={logoImage}
+                alt="有劲AI"
+                className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"
+              />
+            </div>
+          )}
 
           {/* 返回按钮 */}
           {showBack && !isHomePage && (
