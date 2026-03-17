@@ -49,7 +49,8 @@ export default function Settings() {
   // 流畅模式 Hook
   const { prefersReducedMotion, setReducedMotion, systemPreference } = useReducedMotion();
   
-  const defaultTab = searchParams.get("tab") || "reminders";
+  const isProfileOnly = searchParams.get("view") === "profile";
+  const defaultTab = isProfileOnly ? "profile" : (searchParams.get("tab") || "reminders");
 
   useEffect(() => {
     loadSettings();
