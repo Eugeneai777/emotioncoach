@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Sparkles, History, Menu, RotateCcw, Target, LogIn } from "lucide-react";
+import { ChevronDown, Sparkles, History, Menu, RotateCcw, Target, LogIn, Home } from "lucide-react";
 import logoImage from "@/assets/logo-youjin-ai.png";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
