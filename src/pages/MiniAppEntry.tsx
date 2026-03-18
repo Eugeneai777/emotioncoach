@@ -133,12 +133,13 @@ const testimonials = [
   { quote: "21天训练营结束那天，AI生成的成长报告让我看到了自己的蜕变轨迹，感动到截图发了朋友圈。", name: "思思", identity: "29岁，HR", tag: "蜕变见证" },
 ];
 
-// 精选4条见证（覆盖宝妈、中年男性、职场、情感场景）
+// 精选5条见证（覆盖宝妈、中年男性、职场、情感、代际场景）
 const featuredTestimonials = [
   testimonials[3],  // 芳芳 - 全职妈妈 - 被理解
   testimonials[4],  // 大伟 - 40岁工程师 - 财富觉醒
   testimonials[7],  // 阿明 - 30岁销售 - 情绪急救
   testimonials[9],  // 老王 - 36岁程序员 - 关系修复
+  testimonials[5],  // 丽姐 - 38岁教师 - 代际疗愈
 ];
 
 const paidShortcuts = [
