@@ -16,6 +16,10 @@ interface DynamicAssessmentIntroProps {
   onStart: () => void;
   onShowHistory?: () => void;
   hasHistory?: boolean;
+  requirePayment?: boolean;
+  hasPurchased?: boolean;
+  price?: number;
+  onPayClick?: () => void;
 }
 
 const fadeUp = (delay: number) => ({
@@ -30,7 +34,8 @@ const benefitItems = [
   { icon: MessageSquare, text: "改善建议与行动方案" },
 ];
 
-export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory }: DynamicAssessmentIntroProps) {
+export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
+  const needPay = requirePayment && !hasPurchased;
   const dimensions = template.dimensions || [];
 
   return (
@@ -146,11 +151,11 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
         {/* CTA */}
         <motion.div {...fadeUp(0.75)} className="pt-2">
           <Button
-            onClick={onStart}
+            onClick={needPay ? (onPayClick ?? onStart) : onStart}
             className="w-full h-13 text-base gap-2 shadow-lg active:scale-[0.98] transition-transform"
             size="lg"
           >
-            开始测评 <ArrowRight className="w-5 h-5" />
+            {needPay ? `¥${price ?? '?'} 开始测评` : '开始测评'} <ArrowRight className="w-5 h-5" />
           </Button>
         </motion.div>
 

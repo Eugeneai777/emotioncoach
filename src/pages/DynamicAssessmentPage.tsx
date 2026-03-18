@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAssessmentTemplate, useSaveAssessmentResult } from "@/hooks/usePartnerAssessments";
 import { useAuth } from "@/hooks/useAuth";
 import { useDynamicAssessmentPurchase } from "@/hooks/useDynamicAssessmentPurchase";
+import { usePackageByKey } from "@/hooks/usePackages";
 import { useDynamicAssessmentHistory, useDeleteDynamicAssessmentRecord } from "@/hooks/useDynamicAssessmentHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateScore, type ScoringResult } from "@/lib/scoring-engine";
@@ -40,6 +41,8 @@ export default function DynamicAssessmentPage() {
     requirePayment ? packageKey : undefined
   );
   const hasPurchased = !requirePayment || !!purchaseRecord;
+  const { data: packageData } = usePackageByKey(requirePayment ? packageKey : '');
+  const price = packageData?.price;
 
   const { data: historyRecords = [], isLoading: historyLoading } = useDynamicAssessmentHistory(
     template?.id
@@ -153,12 +156,29 @@ export default function DynamicAssessmentPage() {
   // === INTRO ===
   if (phase === "intro") {
     return (
-      <DynamicAssessmentIntro
-        template={template}
-        onStart={() => setPhase("questions")}
-        onShowHistory={() => setPhase("history")}
-        hasHistory={historyRecords.length > 0}
-      />
+      <>
+        <DynamicAssessmentIntro
+          template={template}
+          onStart={() => setPhase("questions")}
+          onShowHistory={() => setPhase("history")}
+          hasHistory={historyRecords.length > 0}
+          requirePayment={requirePayment}
+          hasPurchased={hasPurchased}
+          price={price}
+          onPayClick={() => setShowPayDialog(true)}
+        />
+        {requirePayment && packageKey && (
+          <AssessmentPayDialog
+            open={showPayDialog}
+            onOpenChange={setShowPayDialog}
+            onSuccess={handlePaymentSuccess}
+            userId={user?.id}
+            hasPurchased={hasPurchased}
+            packageKey={packageKey}
+            packageName={template.title}
+          />
+        )}
+      </>
     );
   }
 
