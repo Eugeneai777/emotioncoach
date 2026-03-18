@@ -181,7 +181,7 @@ const AwakeningBottomNav: React.FC = () => {
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
             >
               <Zap className="w-5 h-5" />
-              <span className="text-xs">快捷</span>
+              <span className="text-xs">快捷服务</span>
             </motion.button>
           </div>
         </div>
