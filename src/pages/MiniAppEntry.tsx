@@ -292,48 +292,6 @@ const MiniAppEntry = () => {
               className="overflow-hidden"
             >
               <div className="pt-3 space-y-5">
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2 px-0.5">
-                    <div className="w-1 h-4 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500" />
-                    <h3 className="text-sm font-bold text-foreground">四大板块，助你持续成长</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {exploreBlocks.map((block, i) => {
-                      const Icon = block.icon;
-                      return (
-                        <motion.button
-                          key={block.title}
-                          onClick={() => navigate(block.route)}
-                          className={`relative text-left p-3.5 rounded-2xl ${block.bg} ring-1 ${block.ring} shadow-lg ${block.glow} active:scale-[0.97] transition-all duration-150 hover:shadow-xl overflow-hidden`}
-                          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.06, duration: 0.3 }}
-                        >
-                          {/* 右下角装饰插画 */}
-                          {illustrations[block.illustrationKey] && (
-                            <img
-                              src={illustrations[block.illustrationKey]}
-                              alt=""
-                              className="absolute -right-3 -bottom-3 w-24 h-24 object-contain opacity-25 pointer-events-none select-none"
-                              loading="lazy"
-                            />
-                          )}
-                          <div className={`relative z-10 w-11 h-11 rounded-xl ${block.iconBg} flex items-center justify-center mb-2.5 overflow-hidden bg-white/60 shadow-sm`}>
-                            {illustrations[block.illustrationKey] ? (
-                              <img src={illustrations[block.illustrationKey]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
-                            ) : (
-                              <Icon className={`w-4 h-4 ${block.iconColor}`} />
-                            )}
-                          </div>
-                          <p className="relative z-10 text-[13px] font-bold text-foreground">{block.title}</p>
-                          <p className="relative z-10 text-[10px] text-foreground/70 font-medium mb-1.5">{block.sub}</p>
-                          <p className="relative z-10 text-[10px] text-foreground/60 leading-relaxed line-clamp-2">{block.desc}</p>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 {/* 使用场景引导 */}
                 <div className="space-y-3">
                   <div className="px-0.5">
