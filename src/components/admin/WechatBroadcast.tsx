@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Loader2, CheckCircle2, XCircle, Users } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Users, Globe } from "lucide-react";
 
 const SCENARIOS = [
   { value: "default", label: "默认通知" },
@@ -40,16 +41,27 @@ interface WechatUser {
 }
 
 interface SendResult {
-  user_id: string;
+  id: string;
   success: boolean;
   reason?: string;
 }
 
 export default function WechatBroadcast() {
+  // Mode: false = bound users, true = all followers
+  const [allFollowersMode, setAllFollowersMode] = useState(false);
+
+  // Bound users state
   const [users, setUsers] = useState<WechatUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // All followers state
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
+  const [followerOpenIds, setFollowerOpenIds] = useState<string[]>([]);
+  const [fetchingFollowers, setFetchingFollowers] = useState(false);
+
+  // Common state
   const [scenario, setScenario] = useState("default");
   const [customTitle, setCustomTitle] = useState("");
   const [customMessage, setCustomMessage] = useState("");
@@ -63,7 +75,6 @@ export default function WechatBroadcast() {
 
   async function fetchUsers() {
     setLoading(true);
-    // 获取已绑定+已关注的用户
     const { data: mappings, error } = await supabase
       .from("wechat_user_mappings")
       .select("system_user_id, openid, subscribe_status")
@@ -82,7 +93,6 @@ export default function WechatBroadcast() {
       return;
     }
 
-    // 获取 profiles 的 display_name
     const userIds = mappings.map((m) => m.system_user_id).filter(Boolean);
     const { data: profiles } = await supabase
       .from("profiles")
@@ -102,6 +112,21 @@ export default function WechatBroadcast() {
 
     setUsers(merged);
     setLoading(false);
+  }
+
+  async function fetchAllFollowers() {
+    setFetchingFollowers(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-wechat-followers");
+      if (error) throw error;
+      setFollowerCount(data.total);
+      setFollowerOpenIds(data.openids || []);
+      toast.success(`拉取到 ${data.total} 位关注者`);
+    } catch (err: any) {
+      toast.error("拉取关注者失败: " + (err.message || "未知错误"));
+    } finally {
+      setFetchingFollowers(false);
+    }
   }
 
   const filtered = users.filter((u) => {
@@ -132,20 +157,29 @@ export default function WechatBroadcast() {
     });
   }
 
+  const sendCount = allFollowersMode ? followerOpenIds.length : selectedIds.size;
+
   async function handleSend() {
     setConfirmOpen(false);
     setSending(true);
     setResults(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("batch-send-wechat-template", {
-        body: {
-          user_ids: Array.from(selectedIds),
-          scenario,
-          custom_title: customTitle || undefined,
-          custom_message: customMessage || undefined,
-        },
-      });
+      const body = allFollowersMode
+        ? {
+            openids: followerOpenIds,
+            scenario,
+            custom_title: customTitle || undefined,
+            custom_message: customMessage || undefined,
+          }
+        : {
+            user_ids: Array.from(selectedIds),
+            scenario,
+            custom_title: customTitle || undefined,
+            custom_message: customMessage || undefined,
+          };
+
+      const { data, error } = await supabase.functions.invoke("batch-send-wechat-template", { body });
 
       if (error) throw error;
 
@@ -165,50 +199,108 @@ export default function WechatBroadcast() {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              选择用户
-              <span className="text-xs text-muted-foreground font-normal ml-auto">
-                已选 {selectedIds.size} / {filtered.length} 人
-              </span>
+              {allFollowersMode ? (
+                <Globe className="h-4 w-4" />
+              ) : (
+                <Users className="h-4 w-4" />
+              )}
+              <span>{allFollowersMode ? "全部关注者" : "网站绑定用户"}</span>
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs text-muted-foreground font-normal">绑定用户</span>
+                <Switch
+                  checked={allFollowersMode}
+                  onCheckedChange={(checked) => {
+                    setAllFollowersMode(checked);
+                    setResults(null);
+                  }}
+                />
+                <span className="text-xs text-muted-foreground font-normal">全部关注者</span>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <AdminFilterBar
-              searchValue={search}
-              onSearchChange={setSearch}
-              searchPlaceholder="搜索昵称或用户ID…"
-              totalCount={filtered.length}
-            >
-              <Button variant="outline" size="sm" onClick={toggleAll}>
-                {allSelected ? "取消全选" : "全选"}
-              </Button>
-            </AdminFilterBar>
-
-            <div className="border rounded-lg max-h-[400px] overflow-y-auto divide-y">
-              {loading ? (
-                <div className="p-8 text-center text-muted-foreground">加载中…</div>
-              ) : filtered.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">暂无已关注的用户</div>
-              ) : (
-                filtered.map((u) => (
-                  <label
-                    key={u.system_user_id}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 cursor-pointer"
+            {allFollowersMode ? (
+              /* 全部关注者模式 */
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={fetchAllFollowers}
+                    disabled={fetchingFollowers}
                   >
-                    <Checkbox
-                      checked={selectedIds.has(u.system_user_id)}
-                      onCheckedChange={() => toggleUser(u.system_user_id)}
-                    />
-                    <span className="text-sm font-medium truncate">
-                      {u.display_name || "未设置昵称"}
+                    {fetchingFollowers ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        拉取中…
+                      </>
+                    ) : (
+                      "拉取全部关注者"
+                    )}
+                  </Button>
+                  {followerCount !== null && (
+                    <span className="text-sm text-muted-foreground">
+                      共 <strong className="text-foreground">{followerCount}</strong> 位关注者
                     </span>
-                    <span className="text-xs text-muted-foreground ml-auto font-mono">
-                      {u.system_user_id.slice(0, 8)}…
-                    </span>
-                  </label>
-                ))
-              )}
-            </div>
+                  )}
+                </div>
+
+                {followerOpenIds.length > 0 && (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <p className="text-sm text-muted-foreground">
+                      已加载 <strong className="text-foreground">{followerOpenIds.length}</strong> 个 OpenID，
+                      点击下方发送按钮将向所有关注者推送模版消息。
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      注：包含未在网站注册的关注者，这些用户的昵称将显示为"用户"。
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* 绑定用户模式 */
+              <>
+                <AdminFilterBar
+                  searchValue={search}
+                  onSearchChange={setSearch}
+                  searchPlaceholder="搜索昵称或用户ID…"
+                  totalCount={filtered.length}
+                >
+                  <Button variant="outline" size="sm" onClick={toggleAll}>
+                    {allSelected ? "取消全选" : "全选"}
+                  </Button>
+                </AdminFilterBar>
+
+                <div className="border rounded-lg max-h-[400px] overflow-y-auto divide-y">
+                  {loading ? (
+                    <div className="p-8 text-center text-muted-foreground">加载中…</div>
+                  ) : filtered.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">暂无已关注的用户</div>
+                  ) : (
+                    filtered.map((u) => (
+                      <label
+                        key={u.system_user_id}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selectedIds.has(u.system_user_id)}
+                          onCheckedChange={() => toggleUser(u.system_user_id)}
+                        />
+                        <span className="text-sm font-medium truncate">
+                          {u.display_name || "未设置昵称"}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-auto font-mono">
+                          {u.system_user_id.slice(0, 8)}…
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+
+                <span className="text-xs text-muted-foreground">
+                  已选 {selectedIds.size} / {filtered.length} 人
+                </span>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -258,7 +350,7 @@ export default function WechatBroadcast() {
 
               <Button
                 className="w-full"
-                disabled={selectedIds.size === 0 || sending}
+                disabled={sendCount === 0 || sending}
                 onClick={() => setConfirmOpen(true)}
               >
                 {sending ? (
@@ -269,7 +361,7 @@ export default function WechatBroadcast() {
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    发送给 {selectedIds.size} 人
+                    发送给 {sendCount} 人
                   </>
                 )}
               </Button>
@@ -280,13 +372,15 @@ export default function WechatBroadcast() {
           {results && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">发送结果</CardTitle>
+                <CardTitle className="text-base">
+                  发送结果（成功 {results.filter(r => r.success).length} / 失败 {results.filter(r => !r.success).length}）
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-1 max-h-[200px] overflow-y-auto">
-                  {results.map((r) => (
+                <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                  {results.map((r, idx) => (
                     <div
-                      key={r.user_id}
+                      key={idx}
                       className="flex items-center gap-2 text-xs py-1"
                     >
                       {r.success ? (
@@ -294,9 +388,9 @@ export default function WechatBroadcast() {
                       ) : (
                         <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
                       )}
-                      <span className="font-mono truncate">{r.user_id.slice(0, 8)}…</span>
+                      <span className="font-mono truncate">{r.id.slice(0, 12)}…</span>
                       {!r.success && (
-                        <span className="text-muted-foreground ml-auto">{r.reason}</span>
+                        <span className="text-muted-foreground ml-auto truncate max-w-[120px]">{r.reason}</span>
                       )}
                     </div>
                   ))}
@@ -313,8 +407,15 @@ export default function WechatBroadcast() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认发送</AlertDialogTitle>
             <AlertDialogDescription>
-              将向 <strong>{selectedIds.size}</strong> 位用户发送
+              将向 <strong>{sendCount}</strong> 位
+              {allFollowersMode ? "公众号关注者" : "用户"}发送
               「{SCENARIOS.find((s) => s.value === scenario)?.label}」模版消息。
+              {allFollowersMode && (
+                <>
+                  <br />
+                  <span className="text-amber-600">⚠️ 此操作将向所有公众号关注者发送，请确认！</span>
+                </>
+              )}
               {customTitle && (
                 <>
                   <br />自定义标题：{customTitle}
