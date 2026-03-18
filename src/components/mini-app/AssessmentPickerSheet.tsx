@@ -46,7 +46,11 @@ const AssessmentPickerSheet: React.FC<AssessmentPickerSheetProps> = ({
                 <h4 className="text-sm font-semibold text-foreground">{a.title}</h4>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{a.sub}</p>
               </div>
-              <span className="shrink-0 px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[11px] font-bold dark:bg-orange-500/20 dark:text-orange-400">
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                a.price === '专业版'
+                  ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400'
+                  : 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
+              }`}>
                 {a.price}
               </span>
             </button>

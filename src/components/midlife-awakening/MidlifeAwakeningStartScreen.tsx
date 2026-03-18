@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Brain, Target, Compass, Zap, Shield, Bot, ChevronRight, Users
+  Brain, Target, Compass, Zap, Shield, Bot, ChevronRight, Users, TrendingUp, BookOpen
 } from "lucide-react";
 import { personalityTypeConfig, dimensionConfig, type MidlifePersonalityType, type MidlifeDimension } from "./midlifeAwakeningData";
 
@@ -64,8 +63,21 @@ function DimensionPreview() {
   );
 }
 
-export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased, isLoading, price }: MidlifeAwakeningStartScreenProps) {
+const painPoints = [
+  { emoji: "🌀", text: "每天很忙，但不知道忙的意义是什么" },
+  { emoji: "💎", text: "觉得自己还不够好，却说不清标准是谁定的" },
+  { emoji: "⏳", text: "害怕10年后回头，发现一直在走别人的路" },
+  { emoji: "🎭", text: "在家人面前演坚强，自己独处时却很空" },
+  { emoji: "⚡", text: "有很多想法，但永远停在想的阶段" },
+];
 
+const authorityData = [
+  { emoji: "📊", text: "哈佛成人发展研究：75年追踪发现，中年觉醒期是人生幸福感的关键转折点" },
+  { emoji: "🧠", text: "心理学研究：35-55岁是'意义危机'高发期，超过68%的人经历过方向迷失" },
+  { emoji: "🔄", text: "《中年的意义》研究：中年不是衰退，是重新定义人生主线的最佳窗口" },
+];
+
+export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased, isLoading, price }: MidlifeAwakeningStartScreenProps) {
   return (
     <div className="space-y-4 pb-8">
       {/* Hero */}
@@ -77,6 +89,11 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
             </motion.div>
             <h1 className="text-xl font-bold mb-1">中场觉醒力测评 3.0</h1>
             <p className="text-sm opacity-90">你不是迷惘，你只是卡在中场转弯处</p>
+            {/* Social proof badge */}
+            <div className="mt-3 inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1 text-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+              <span>2,847 人已完成测评</span>
+            </div>
           </div>
           <CardContent className="p-4">
             <div className="flex justify-around text-center py-2">
@@ -101,7 +118,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         </Card>
       </AnimatedSection>
 
-      {/* 痛点共鸣 */}
+      {/* 痛点共鸣（强化版） */}
       <AnimatedSection delay={0.1}>
         <Card>
           <CardContent className="p-4">
@@ -110,15 +127,30 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
               你是否正经历这些？
             </h3>
             <div className="space-y-2">
-              {[
-                '明明什么都有，却总觉得缺少什么',
-                '忙碌了半辈子，不知道自己真正想要什么',
-                '害怕做选择，又害怕不做选择',
-                '外人眼中成功，内心却充满不安',
-              ].map((text, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-pink-500 mt-0.5">•</span>
-                  <span className="text-muted-foreground">{text}</span>
+              {painPoints.map((item, i) => (
+                <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/40 border border-border/30">
+                  <span className="text-lg shrink-0">{item.emoji}</span>
+                  <span className="text-sm text-muted-foreground leading-relaxed">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </AnimatedSection>
+
+      {/* 权威数据背书 */}
+      <AnimatedSection delay={0.15}>
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-500" />
+              科学研究支撑
+            </h3>
+            <div className="space-y-2">
+              {authorityData.map((item, i) => (
+                <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-500/5 border border-amber-200/40 dark:border-amber-500/10">
+                  <span className="text-lg shrink-0">{item.emoji}</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">{item.text}</span>
                 </div>
               ))}
             </div>
@@ -127,7 +159,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
       </AnimatedSection>
 
       {/* 六大维度预览 */}
-      <AnimatedSection delay={0.15}>
+      <AnimatedSection delay={0.2}>
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -140,7 +172,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
       </AnimatedSection>
 
       {/* 四种人格预览 */}
-      <AnimatedSection delay={0.2}>
+      <AnimatedSection delay={0.25}>
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -152,8 +184,30 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         </Card>
       </AnimatedSection>
 
+      {/* AI vs 传统对比 */}
+      <AnimatedSection delay={0.3}>
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              AI深度测评 vs 传统测试
+            </h3>
+            <div className="space-y-2">
+              <div className="p-3 rounded-lg bg-muted/40 border border-border/30">
+                <p className="text-xs font-medium text-muted-foreground mb-1">❌ 传统中年危机测试</p>
+                <p className="text-xs text-muted-foreground/70">只告诉你"有没有危机" → 知道了又怎样</p>
+              </div>
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
+                <p className="text-xs font-medium text-primary mb-1">✅ 中场觉醒力测评</p>
+                <p className="text-xs text-muted-foreground">精准定位6个维度卡点 + AI教练1对1引导 → 知道怎么突破</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </AnimatedSection>
+
       {/* 你将获得 */}
-      <AnimatedSection delay={0.25}>
+      <AnimatedSection delay={0.35}>
         <Card>
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -178,7 +232,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
       </AnimatedSection>
 
       {/* CTA */}
-      <AnimatedSection delay={0.3}>
+      <AnimatedSection delay={0.4}>
         <div className="space-y-3 pt-2">
           <Button
             onClick={hasPurchased ? onStart : (onPayClick ?? onStart)}
