@@ -77,7 +77,7 @@ interface WealthBlockResultProps {
   autoOpenPay?: boolean;
 }
 
-export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired }: WealthBlockResultProps) {
+export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired, autoOpenPay }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { trackEvent } = useWealthCampAnalytics();
