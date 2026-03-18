@@ -152,6 +152,9 @@ const MyPage: React.FC = () => {
       case "通知偏好":
         navigate("/settings?view=notifications");
         break;
+      case "联系客服":
+        setShowCustomerSupport(true);
+        break;
       case "退出登录":
         await signOut();
         toast({ title: "已退出登录" });
