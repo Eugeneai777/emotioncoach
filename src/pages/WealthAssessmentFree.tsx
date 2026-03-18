@@ -187,6 +187,7 @@ export default function WealthAssessmentFreePage() {
           deepFollowUpAnswers={deepFollowUpAnswers}
           onRetake={handleRetake}
           onAuthRequired={handleAuthRequired}
+          autoOpenPay={autoOpenPay}
         />
       )}
       {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}

@@ -93,6 +93,14 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   
   // 直接购买训练营状态
   const [showPayDialog, setShowPayDialog] = useState(false);
+
+  // 登录/OAuth 返回后自动打开支付弹窗
+  useEffect(() => {
+    if (autoOpenPay && !purchaseRecord) {
+      console.log('[WealthBlockResult] autoOpenPay triggered, opening pay dialog');
+      setShowPayDialog(true);
+    }
+  }, [autoOpenPay, purchaseRecord]);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
   const hasPurchased = !!purchaseRecord;
