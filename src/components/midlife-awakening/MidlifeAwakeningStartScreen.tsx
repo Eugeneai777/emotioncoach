@@ -65,9 +65,6 @@ function DimensionPreview() {
 }
 
 export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased, isLoading, price }: MidlifeAwakeningStartScreenProps) {
-  const handleAction = () => {
-    onStart();
-  };
 
   return (
     <div className="space-y-4 pb-8">
