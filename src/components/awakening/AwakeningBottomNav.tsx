@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
   User, Info,
-  MessageCircle, Heart, Zap, GraduationCap, Package, Users 
+  MessageCircle, Heart, Zap, Users 
 } from "lucide-react";
 import logoImage from "@/assets/youjin-ai-logo.png";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
