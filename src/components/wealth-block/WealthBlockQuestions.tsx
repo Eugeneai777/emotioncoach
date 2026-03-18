@@ -240,8 +240,8 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     const newProgress = (Object.keys(newAnswers).length / questions.length) * 100;
     checkMilestone(newProgress);
     
-    // 检查是否需要AI追问
-    if (shouldAskFollowUp(value, currentIndex, followUpAnswers.length)) {
+    // 检查是否需要AI追问（最后一题不触发，避免卡住）
+    if (!isLastQuestion && shouldAskFollowUp(value, currentIndex, followUpAnswers.length)) {
       setPendingNextQuestion(true);
       await generateFollowUp(currentQuestion.id, value);
     } else {
