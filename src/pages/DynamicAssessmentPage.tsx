@@ -156,12 +156,29 @@ export default function DynamicAssessmentPage() {
   // === INTRO ===
   if (phase === "intro") {
     return (
-      <DynamicAssessmentIntro
-        template={template}
-        onStart={() => setPhase("questions")}
-        onShowHistory={() => setPhase("history")}
-        hasHistory={historyRecords.length > 0}
-      />
+      <>
+        <DynamicAssessmentIntro
+          template={template}
+          onStart={() => setPhase("questions")}
+          onShowHistory={() => setPhase("history")}
+          hasHistory={historyRecords.length > 0}
+          requirePayment={requirePayment}
+          hasPurchased={hasPurchased}
+          price={price}
+          onPayClick={() => setShowPayDialog(true)}
+        />
+        {requirePayment && packageKey && (
+          <AssessmentPayDialog
+            open={showPayDialog}
+            onOpenChange={setShowPayDialog}
+            onSuccess={handlePaymentSuccess}
+            userId={user?.id}
+            hasPurchased={hasPurchased}
+            packageKey={packageKey}
+            packageName={template.title}
+          />
+        )}
+      </>
     );
   }
 
