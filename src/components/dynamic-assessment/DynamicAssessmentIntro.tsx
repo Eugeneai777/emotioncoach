@@ -16,6 +16,10 @@ interface DynamicAssessmentIntroProps {
   onStart: () => void;
   onShowHistory?: () => void;
   hasHistory?: boolean;
+  requirePayment?: boolean;
+  hasPurchased?: boolean;
+  price?: number;
+  onPayClick?: () => void;
 }
 
 const fadeUp = (delay: number) => ({
