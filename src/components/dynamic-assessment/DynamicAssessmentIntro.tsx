@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
-import { motion } from "framer-motion";
 
 interface DynamicAssessmentIntroProps {
   template: {
