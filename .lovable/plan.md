@@ -1,21 +1,8 @@
 
 
-## 客服入口恢复方案
+## /mini-app 页面优化方案（已完成）
 
-移除「快捷服务」后，用户失去了联系客服的唯一入口。最合理的位置是在「我的」页面的设置区域新增「联系客服」按钮，点击后弹出已有的 `TextCustomerSupport` 文字客服组件。
+### 已完成改动
 
-### 改动文件
-
-**`src/pages/MyPage.tsx`**
-
-1. 在 `SETTINGS_ITEMS` 数组中，在「退出登录」之前新增一项：`{ icon: Headphones, label: "联系客服" }`（使用 `Headphones` 图标，与 admin 侧栏保持一致）
-2. 新增 state `showCustomerSupport`
-3. `handleSettingsClick` 添加 `case "联系客服"` → `setShowCustomerSupport(true)`
-4. JSX 底部添加条件渲染：当 `showCustomerSupport` 为 `true` 时，以固定定位弹层形式展示 `TextCustomerSupport`，传入 `onClose` 关闭
-5. import 新增 `Headphones` 和 `TextCustomerSupport`
-
-### 不影响项
-- 现有设置项（提醒设置、通知偏好、退出登录）不变
-- 底部导航不变
-- 其他页面不变
-
+1. **AwakeningBottomNav.tsx** — 移除「快捷服务」按钮、遮罩层、弹出菜单，底栏精简为「我的」+「开始对话」
+2. **MiniAppEntry.tsx** — 新增已购用户快捷面板（我的订单/测评/训练营）+ 精选5条见证横向滚动卡片 + 末尾"查看更多"按钮 + 使用场景引导从折叠区移出直接展示

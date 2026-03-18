@@ -4,8 +4,9 @@ import {
   Package, ChevronRight, ChevronDown,
   Info, Bell, MessageSquare, LogOut, Truck,
   ClipboardCheck, Flame, BookOpen, Settings, Sparkles,
-  Wrench, BarChart3, Target, ShoppingBag, Users
+  Wrench, BarChart3, Target, ShoppingBag, Users, Headphones
 } from "lucide-react";
+import TextCustomerSupport from "@/components/TextCustomerSupport";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -87,6 +88,7 @@ const MyPage: React.FC = () => {
   const [isMember, setIsMember] = useState(false);
   const [hasPaidOrder, setHasPaidOrder] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [showCustomerSupport, setShowCustomerSupport] = useState(false);
 
   // Load profile & orders
   useEffect(() => {
@@ -150,6 +152,9 @@ const MyPage: React.FC = () => {
       case "通知偏好":
         navigate("/settings?view=notifications");
         break;
+      case "联系客服":
+        setShowCustomerSupport(true);
+        break;
       case "退出登录":
         await signOut();
         toast({ title: "已退出登录" });
@@ -161,6 +166,7 @@ const MyPage: React.FC = () => {
   const SETTINGS_ITEMS = [
     { icon: Bell, label: "提醒设置" },
     { icon: MessageSquare, label: "通知偏好" },
+    { icon: Headphones, label: "联系客服" },
     { icon: LogOut, label: "退出登录" },
   ];
 
@@ -368,6 +374,15 @@ const MyPage: React.FC = () => {
       </div>
 
       <AwakeningBottomNav />
+
+      {/* 客服弹层 */}
+      {showCustomerSupport && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-in slide-in-from-bottom duration-300">
+            <TextCustomerSupport onClose={() => setShowCustomerSupport(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
