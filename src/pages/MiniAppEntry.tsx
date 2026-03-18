@@ -1,4 +1,4 @@
-// force rebuild v2 - 2026-03-18
+// force rebuild v3 - 2026-03-18
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,14 +11,34 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectPlatform } from "@/lib/platformDetector";
 import { supabase } from "@/integrations/supabase/client";
+import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-app/AssessmentPickerSheet";
 
-const audiences = [
-  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
-  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400" },
-  { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "爱需要被听见", route: "/us-ai", gradient: "from-purple-500 to-violet-400" },
-  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400" },
-  { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400" },
-  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400" },
+interface AudienceBadge {
+  text: string;
+  assessments: AssessmentOption[];
+}
+
+const audiences: Array<{
+  id: string; emoji: string; label: string; subtitle: string; route: string; gradient: string; badge?: AudienceBadge | null;
+}> = [
+  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400", badge: null },
+  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400", badge: {
+    text: "¥9.9测评",
+    assessments: [
+      { emoji: "👑", title: "35+女性竞争力", sub: "25题·7分钟", route: "/assessment/women_competitiveness", price: "¥9.9" },
+      { emoji: "💚", title: "情绪健康测评", sub: "PHQ-9+GAD-7·5分钟", route: "/emotion-health", price: "¥9.9" },
+    ],
+  }},
+  { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "爱需要被听见", route: "/us-ai", gradient: "from-purple-500 to-violet-400", badge: null },
+  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400", badge: null },
+  { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400", badge: {
+    text: "¥9.9测评",
+    assessments: [
+      { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "¥9.9" },
+      { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "¥9.9" },
+    ],
+  }},
+  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400", badge: null },
 ];
 
 const exploreBlocks = [
@@ -154,6 +174,8 @@ const MiniAppEntry = () => {
   const { user } = useAuth();
   const { greeting, isLoading } = usePersonalizedGreeting();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [pickerAssessments, setPickerAssessments] = useState<AssessmentOption[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
   const [illustrations, setIllustrations] = useState<Record<string, string>>({});
@@ -277,6 +299,19 @@ const MiniAppEntry = () => {
               </div>
               {/* 按压反馈层 */}
               <div className="absolute inset-0 bg-white/0 active:bg-white/10 transition-colors duration-150 pointer-events-none" />
+              {/* ¥9.9 测评角标 */}
+              {a.badge && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPickerAssessments(a.badge!.assessments);
+                    setPickerOpen(true);
+                  }}
+                  className="absolute top-1.5 right-1.5 z-20 bg-white/85 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm active:scale-95 transition-transform"
+                >
+                  <span className="text-[10px] font-bold text-orange-600">{a.badge.text}</span>
+                </button>
+              )}
             </motion.button>
           ))}
         </div>
@@ -528,6 +563,13 @@ const MiniAppEntry = () => {
 
       {/* ── 底部导航 ── */}
       <AwakeningBottomNav />
+
+      {/* ── 测评选择弹窗 ── */}
+      <AssessmentPickerSheet
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        assessments={pickerAssessments}
+      />
     </div>
   );
 };
