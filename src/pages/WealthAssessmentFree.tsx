@@ -107,6 +107,7 @@ export default function WealthAssessmentFreePage() {
 
     if (isPayResume) {
       console.log('[WealthFree] Payment resume detected, will auto-trigger pay dialog');
+      setAutoOpenPay(true);
       // 清理 payment_resume URL 参数（保留 payment_openid 给 UnifiedPayDialog）
       if (searchParams.get('payment_resume')) {
         const newParams = new URLSearchParams(searchParams);
