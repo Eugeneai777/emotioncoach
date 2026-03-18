@@ -43,8 +43,8 @@ serve(async (req) => {
           headers: proxyHeaders,
           body: JSON.stringify({ target_url: url, method: 'GET' }),
         });
-        const data = await res.json();
-        return data.data || data;
+        // Proxy returns WeChat API response directly - do NOT unwrap data.data
+        return res.json();
       }
       const res = await fetch(url);
       return res.json();
