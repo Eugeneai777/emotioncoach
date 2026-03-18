@@ -75,13 +75,6 @@ export const FloatingQuickMenu = () => {
       path: '/camps?filter=active', 
       color: 'bg-violet-500',
     },
-    { 
-      id: 'feedback', 
-      icon: iconMap['MessageCircle'], 
-      label: '建议', 
-      path: '/customer-support', 
-      color: 'bg-slate-500',
-    },
   ];
 
   // Load saved position with boundary check
