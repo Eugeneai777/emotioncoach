@@ -81,6 +81,7 @@ export default function WealthAssessmentFreePage() {
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
   const [followUpInsights, setFollowUpInsights] = useState<FollowUpAnswer[]>([]);
   const [deepFollowUpAnswers, setDeepFollowUpAnswers] = useState<DeepFollowUpAnswer[]>([]);
+  const [autoOpenPay, setAutoOpenPay] = useState(false);
 
   // 防止重复处理恢复逻辑
   const resumeHandledRef = useRef(false);
@@ -106,6 +107,7 @@ export default function WealthAssessmentFreePage() {
 
     if (isPayResume) {
       console.log('[WealthFree] Payment resume detected, will auto-trigger pay dialog');
+      setAutoOpenPay(true);
       // 清理 payment_resume URL 参数（保留 payment_openid 给 UnifiedPayDialog）
       if (searchParams.get('payment_resume')) {
         const newParams = new URLSearchParams(searchParams);
@@ -185,6 +187,7 @@ export default function WealthAssessmentFreePage() {
           deepFollowUpAnswers={deepFollowUpAnswers}
           onRetake={handleRetake}
           onAuthRequired={handleAuthRequired}
+          autoOpenPay={autoOpenPay}
         />
       )}
       {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}

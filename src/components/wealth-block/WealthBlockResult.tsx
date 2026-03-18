@@ -73,9 +73,11 @@ interface WealthBlockResultProps {
   onAiInsightReady?: (insight: AIInsightData) => void;
   /** 若提供，在发起购买前先调用此回调检查登录状态；返回 true 表示已登录可继续。参数 forCamp 表示是否为训练营购买 */
   onAuthRequired?: (forCamp?: boolean) => boolean;
+  /** 登录/OAuth 返回后自动打开支付弹窗 */
+  autoOpenPay?: boolean;
 }
 
-export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired }: WealthBlockResultProps) {
+export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired, autoOpenPay }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { trackEvent } = useWealthCampAnalytics();
@@ -94,6 +96,14 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   const [showStartDialog, setShowStartDialog] = useState(false);
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
   const hasPurchased = !!purchaseRecord;
+
+  // 登录/OAuth 返回后自动打开支付弹窗
+  useEffect(() => {
+    if (autoOpenPay && !purchaseRecord) {
+      console.log('[WealthBlockResult] autoOpenPay triggered, opening pay dialog');
+      setShowPayDialog(true);
+    }
+  }, [autoOpenPay, purchaseRecord]);
 
   // 控制三层展开状态 - 默认全部折叠
   const [openLayers, setOpenLayers] = useState<string[]>([]);
