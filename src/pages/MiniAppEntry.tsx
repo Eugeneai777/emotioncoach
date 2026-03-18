@@ -355,6 +355,23 @@ const MiniAppEntry = () => {
               </div>
             </motion.div>
           ))}
+          {/* 查看更多卡片 */}
+          <motion.button
+            initial={reduceMotion ? false : { opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + featuredTestimonials.length * 0.06, duration: 0.3 }}
+            onClick={() => {
+              setIsExpanded(true);
+              setTimeout(() => {
+                document.getElementById('full-testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 350);
+            }}
+            className="min-w-[100px] shrink-0 snap-start rounded-xl bg-primary/5 border border-primary/20 p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-primary/10 active:scale-95 transition-all"
+          >
+            <span className="text-lg">💬</span>
+            <span className="text-[11px] text-primary font-medium whitespace-nowrap">查看更多</span>
+            <span className="text-[9px] text-muted-foreground">{testimonials.length}条</span>
+          </motion.button>
         </div>
       </div>
 
