@@ -1,13 +1,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders, validateServiceRole } from '../_shared/auth.ts';
+import { corsHeaders } from '../_shared/auth.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const authError = validateServiceRole(req);
-  if (authError) return authError;
+  // Auth: accept cron secret, anon key, or service role key
+  const apiKey = req.headers.get('apikey') || '';
+  const authHeader = req.headers.get('authorization') || '';
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  const cronSecret = Deno.env.get('CRON_SECRET') || '';
+  const token = authHeader.replace('Bearer ', '');
+  
+  const isAuthorized = 
+    apiKey === anonKey || apiKey === serviceRoleKey ||
+    token === anonKey || token === serviceRoleKey || token === cronSecret;
+  
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), 
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
 
   try {
     const appId = Deno.env.get('WECHAT_APP_ID');
@@ -29,8 +43,8 @@ serve(async (req) => {
           headers: proxyHeaders,
           body: JSON.stringify({ target_url: url, method: 'GET' }),
         });
-        const data = await res.json();
-        return data.data || data;
+        // Proxy returns WeChat API response directly - do NOT unwrap data.data
+        return res.json();
       }
       const res = await fetch(url);
       return res.json();
