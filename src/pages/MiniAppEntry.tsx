@@ -1,4 +1,4 @@
-// force rebuild v2 - 2026-03-18
+// force rebuild v3 - 2026-03-18
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectPlatform } from "@/lib/platformDetector";
 import { supabase } from "@/integrations/supabase/client";
+import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-app/AssessmentPickerSheet";
 
 const audiences = [
   { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400" },
