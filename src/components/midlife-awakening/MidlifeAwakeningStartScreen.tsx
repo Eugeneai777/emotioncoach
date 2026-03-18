@@ -5,6 +5,7 @@ import {
   Brain, Target, Compass, Zap, Shield, Bot, ChevronRight, Users, TrendingUp, BookOpen
 } from "lucide-react";
 import { personalityTypeConfig, dimensionConfig, type MidlifePersonalityType, type MidlifeDimension } from "./midlifeAwakeningData";
+import { DimensionRadarChart } from "@/components/dynamic-assessment/DimensionRadarChart";
 
 function AnimatedSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return (
