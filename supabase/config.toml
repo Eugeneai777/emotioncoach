@@ -517,3 +517,6 @@ verify_jwt = false
 
 [functions.batch-send-wechat-template]
 verify_jwt = false
+
+[functions.fetch-wechat-followers]
+verify_jwt = false
