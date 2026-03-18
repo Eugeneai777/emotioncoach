@@ -45,6 +45,7 @@ import FlywheelFunnel from "./flywheel/FlywheelFunnel";
 import FlywheelRevenue from "./flywheel/FlywheelRevenue";
 import FlywheelReferral from "./flywheel/FlywheelReferral";
 import FlywheelAIStrategy from "./flywheel/FlywheelAIStrategy";
+import WechatBroadcast from "./WechatBroadcast";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
