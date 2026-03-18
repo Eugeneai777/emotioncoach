@@ -693,7 +693,7 @@ serve(async (req) => {
     const wechatBaseUrl = 'https://wechat.eugenewe.net';
 
     const messageBody = {
-      touser: mapping.openid,
+      touser: openid,
       template_id: templateId,
       url: `${wechatBaseUrl}/?notification=${notification.id}`,
       data: messageData,
