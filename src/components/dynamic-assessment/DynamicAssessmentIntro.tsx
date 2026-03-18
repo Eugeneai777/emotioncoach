@@ -34,7 +34,8 @@ const benefitItems = [
   { icon: MessageSquare, text: "改善建议与行动方案" },
 ];
 
-export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory }: DynamicAssessmentIntroProps) {
+export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
+  const needPay = requirePayment && !hasPurchased;
   const dimensions = template.dimensions || [];
 
   return (
