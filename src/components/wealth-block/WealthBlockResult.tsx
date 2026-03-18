@@ -93,6 +93,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   
   // 直接购买训练营状态
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
+  const hasPurchased = !!purchaseRecord;
 
   // 登录/OAuth 返回后自动打开支付弹窗
   useEffect(() => {
@@ -101,9 +104,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       setShowPayDialog(true);
     }
   }, [autoOpenPay, purchaseRecord]);
-  const [showStartDialog, setShowStartDialog] = useState(false);
-  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
-  const hasPurchased = !!purchaseRecord;
 
   // 控制三层展开状态 - 默认全部折叠
   const [openLayers, setOpenLayers] = useState<string[]>([]);
