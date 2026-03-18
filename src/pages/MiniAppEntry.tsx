@@ -170,6 +170,127 @@ const paidShortcuts = [
   { icon: Tent, label: "我的训练营", route: "/camps" },
 ];
 
+/* ── 活动轮播图组件 ── */
+const promoSlides = [
+  {
+    id: "assessment",
+    emoji: "🎯",
+    title: "找到你的卡点",
+    subtitle: "科学定位突破方向",
+    gradient: "from-violet-600 to-indigo-500",
+  },
+  {
+    id: "women-camp",
+    emoji: "🌸",
+    title: "7天情绪解压",
+    subtitle: "找回内心平静",
+    gradient: "from-rose-500 to-pink-400",
+    route: "/promo/synergy",
+  },
+  {
+    id: "men-relief",
+    emoji: "💪",
+    title: "知乐双效解压",
+    subtitle: "身心协同修复",
+    gradient: "from-blue-500 to-cyan-400",
+    route: "/promo/zhile-havruta",
+  },
+];
+
+const PromoBanner: React.FC<{
+  onAssessmentClick: () => void;
+  navigate: (path: string) => void;
+  reduceMotion: boolean;
+}> = ({ onAssessmentClick, navigate, reduceMotion }) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  // Auto-play 3s
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+
+    const timer = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 3000);
+
+    // Pause on pointer interaction
+    const stopTimer = () => clearInterval(timer);
+    emblaApi.on("pointerDown", stopTimer);
+
+    return () => {
+      clearInterval(timer);
+      emblaApi.off("select", onSelect);
+      emblaApi.off("pointerDown", stopTimer);
+    };
+  }, [emblaApi, onSelect]);
+
+  const handleSlideClick = (slide: typeof promoSlides[0]) => {
+    if (slide.id === "assessment") {
+      onAssessmentClick();
+    } else if (slide.route) {
+      navigate(slide.route);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.35 }}
+      className="px-4 pb-3"
+    >
+      <div ref={emblaRef} className="overflow-hidden rounded-2xl">
+        <div className="flex">
+          {promoSlides.map((slide) => (
+            <button
+              key={slide.id}
+              onClick={() => handleSlideClick(slide)}
+              className={`relative flex-[0_0_100%] min-w-0 h-[130px] sm:h-[140px] rounded-2xl bg-gradient-to-br ${slide.gradient} flex items-center justify-between px-5 text-left overflow-hidden active:scale-[0.98] transition-transform`}
+            >
+              {/* 装饰圆 */}
+              <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+              <div className="absolute -right-2 -bottom-4 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
+              {/* 文字区 */}
+              <div className="relative z-10 flex flex-col gap-1">
+                <span className="text-lg font-extrabold text-white tracking-wide leading-tight">
+                  {slide.emoji} {slide.title}
+                </span>
+                <span className="text-xs text-white/80 tracking-wider">
+                  {slide.subtitle}
+                </span>
+                <span className="mt-1.5 inline-block w-fit px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-semibold text-white">
+                  {slide.id === "assessment" ? "立即测评 →" : "了解详情 →"}
+                </span>
+              </div>
+              {/* 大 emoji 装饰 */}
+              <span className="absolute right-4 bottom-2 text-5xl opacity-20 pointer-events-none select-none">{slide.emoji}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* 圆点指示器 */}
+      <div className="flex justify-center gap-1.5 mt-2">
+        {promoSlides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => emblaApi?.scrollTo(i)}
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+              i === selectedIndex ? "w-4 bg-primary" : "bg-muted-foreground/30"
+            }`}
+          />
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
 const MiniAppEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
