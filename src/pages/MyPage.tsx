@@ -125,6 +125,16 @@ const MyPage: React.FC = () => {
         .maybeSingle();
       setIsMember(!!memberOrder);
 
+      // Check if user has any paid order
+      const { data: paidOrder } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "paid")
+        .limit(1)
+        .maybeSingle();
+      setHasPaidOrder(!!paidOrder);
+
       setLoadingProfile(false);
     };
     loadData();
