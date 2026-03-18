@@ -42,6 +42,7 @@ const enrichmentData: Record<string, {
   painPoints: { emoji: string; text: string }[];
   authority: { emoji: string; text: string }[];
   comparison: { traditional: string; ours: string };
+  radarPreview?: { score: number; maxScore: number; label: string; emoji: string }[];
 }> = {
   women_competitiveness: {
     painPoints: [
@@ -58,6 +59,13 @@ const enrichmentData: Record<string, {
       traditional: "通用模板，千人一面，看完也不知道优势在哪",
       ours: "针对35+女性设计维度 + AI深度洞察你的独特优势",
     },
+    radarPreview: [
+      { score: 68, maxScore: 100, label: "职场生命力", emoji: "🔥" },
+      { score: 52, maxScore: 100, label: "个人品牌力", emoji: "👑" },
+      { score: 75, maxScore: 100, label: "情绪韧性", emoji: "💪" },
+      { score: 40, maxScore: 100, label: "财务掌控力", emoji: "💰" },
+      { score: 82, maxScore: 100, label: "关系经营力", emoji: "🤝" },
+    ],
   },
 };
 
