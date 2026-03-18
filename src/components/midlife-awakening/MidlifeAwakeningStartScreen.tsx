@@ -78,6 +78,36 @@ const authorityData = [
   { emoji: "🔄", text: "《中年的意义》研究：中年不是衰退，是重新定义人生主线的最佳窗口" },
 ];
 
+const midlifeRadarPreviewData = [
+  { score: 72, maxScore: 100, label: "内耗循环", emoji: "🌀" },
+  { score: 45, maxScore: 100, label: "价值松动", emoji: "💎" },
+  { score: 58, maxScore: 100, label: "行动停滞", emoji: "⚡" },
+  { score: 80, maxScore: 100, label: "支持系统", emoji: "🤝" },
+  { score: 35, maxScore: 100, label: "后悔风险", emoji: "⏳" },
+  { score: 65, maxScore: 100, label: "使命清晰", emoji: "🧭" },
+];
+
+const diagnosticSteps = [
+  {
+    emoji: "🎯", title: "维度扫描", desc: "6维雷达定位你的卡点所在",
+    bgColor: "bg-blue-50/60 dark:bg-blue-500/5",
+    borderColor: "border-blue-200/40 dark:border-blue-500/10",
+    iconBg: "bg-blue-100 dark:bg-blue-500/15",
+  },
+  {
+    emoji: "🧩", title: "人格诊断", desc: "4种中场人格匹配你的行为模式",
+    bgColor: "bg-purple-50/60 dark:bg-purple-500/5",
+    borderColor: "border-purple-200/40 dark:border-purple-500/10",
+    iconBg: "bg-purple-100 dark:bg-purple-500/15",
+  },
+  {
+    emoji: "🤖", title: "AI教练引导", desc: "1对1对话制定突破方案",
+    bgColor: "bg-pink-50/60 dark:bg-pink-500/5",
+    borderColor: "border-pink-200/40 dark:border-pink-500/10",
+    iconBg: "bg-pink-100 dark:bg-pink-500/15",
+  },
+];
+
 export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased, isLoading, price }: MidlifeAwakeningStartScreenProps) {
   return (
     <div className="space-y-4 pb-8">
