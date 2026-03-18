@@ -184,14 +184,16 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
       <AnimatedSection delay={0.3}>
         <div className="space-y-3 pt-2">
           <Button
-            onClick={handleAction}
+            onClick={hasPurchased ? onStart : (onPayClick ?? onStart)}
             disabled={isLoading}
             className="w-full h-14 text-base font-bold bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-2xl shadow-lg"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : hasPurchased ? (
+              <>开始测评 <ChevronRight className="w-5 h-5 ml-1" /></>
             ) : (
-              <>免费开始测评 <ChevronRight className="w-5 h-5 ml-1" /></>
+              <>¥{price ?? '?'} 开始测评 <ChevronRight className="w-5 h-5 ml-1" /></>
             )}
           </Button>
           <p className="text-center text-[10px] text-muted-foreground">
