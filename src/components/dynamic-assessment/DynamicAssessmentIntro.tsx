@@ -43,7 +43,7 @@ const enrichmentData: Record<string, {
 }> = {
   women_competitiveness: {
     painPoints: [
-      { emoji: "👩‍💼", text: "35岁以后，简历上的经验反而成了"年龄大"的证据" },
+      { emoji: "👩‍💼", text: "35岁以后，简历上的经验反而成了'年龄大'的证据" },
       { emoji: "🔍", text: "明明能力不差，却总在面试中输给更年轻的人" },
       { emoji: "💭", text: "不知道自己的核心竞争力到底是什么" },
       { emoji: "🏃‍♀️", text: "想转型，但不知道从哪里开始" },
