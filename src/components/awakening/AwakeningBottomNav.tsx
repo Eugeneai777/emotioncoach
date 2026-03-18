@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
   User, Info,
-  MessageCircle, Heart, Zap, Users 
+  MessageCircle, Heart, Zap
 } from "lucide-react";
 import logoImage from "@/assets/youjin-ai-logo.png";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
@@ -36,7 +36,6 @@ const AwakeningBottomNav: React.FC = () => {
   const quickActions = [
     { id: 'feedback', icon: MessageCircle, label: '联系客服', route: '/customer-support', color: 'from-blue-400 to-blue-500' },
     { id: 'emotion', icon: Heart, label: '解压一下', route: '/emotion-button', color: 'from-pink-400 to-pink-500' },
-    { id: 'coach', icon: Users, label: '教练空间', route: '/coach-space', color: 'from-rose-400 to-rose-500' },
   ];
 
   const handleCenterClick = () => {

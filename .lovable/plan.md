@@ -1,41 +1,23 @@
 
 
-## 修改方案
+## 两个问题需要修复
 
-在已批准方案的基础上，新增两处调整：
+### 问题 1：构建错误 — PayEntry.tsx 语法错误
+上次编辑时，`fetchPartnerInfo` 的函数声明行（`const fetchPartnerInfo = async () => {`）被意外删除，导致第 135 行的 `try` 块变成了孤立代码。
 
-### 1. MiniAppEntry.tsx — 移除四大板块（不变）
-移除「还想探索更多？」折叠区中的四大板块 2x2 网格（约第 295-335 行），保留「使用场景引导」等其他内容。
+**修复**：在第 134 行（`useEffect` 结束后）重新插入 `const fetchPartnerInfo = async () => {`。
 
-### 2. MyPage.tsx — 四大板块扩展为五大板块
-在「学习与成长中心」与「设置」之间插入新区域，仅已购用户可见（orders 表中存在任意 `status='paid'` 记录）。
+### 问题 2：标题与 AI教练按钮 文字重叠
+从截图可以看到，PageHeader 中标题 "情绪健康测评" 使用 `absolute left-1/2 -translate-x-1/2` 居中定位，而右侧的 AI教练按钮较宽，导致两者在移动端视觉上重叠。
 
-板块内容从原来 4 个扩展为 **5 个**：
+**修复**：
+- 在 `PageHeader.tsx` 中，给标题添加 `max-w-[40%] truncate` 限制宽度并截断溢出文字
+- 或者在 `EmotionHealthPage.tsx` 中缩短标题文字，改为 "情绪测评"
 
-| 板块 | 路由 | 说明 |
-|------|------|------|
-| 日常工具 | /energy-studio | 原有 |
-| 专业测评 | /energy-studio?tab=assessments | 原有 |
-| 系统训练营 | /camps | 原有 |
-| 健康商城 | /health-store | 原有 |
-| **教练空间** | **/coach-space** | **新增** |
-
-布局：手机端上排 2+2、下排 1 居中（或 3+2），电脑端 5 列一行。标题改为「五大板块，助你持续成长」或保持「助你持续成长」不含数字。
-
-### 3. AwakeningBottomNav.tsx — 快捷服务移除「教练空间」
-将 `quickActions` 数组（第 36-40 行）中 `id: 'coach'` 的教练空间条目删除，快捷服务菜单从 3 项缩减为 2 项（联系客服、解压一下）。
-
-### 影响评估
-- 纯 UI 调整，不改动路由定义、购买流程、导航结构
-- 快捷服务从 3 项变 2 项，弹出菜单布局自动适配
-- MyPage 新增板块用条件渲染，未购用户无感知
-- 手机端和电脑端均兼容
-
-### 涉及文件
+**推荐方案**：修改 PageHeader 的标题样式，添加 `max-w-[40%] truncate text-center`，这样所有页面都能受益，不会出现标题与右侧按钮重叠的问题。
 
 | 文件 | 修改 |
 |------|------|
-| `src/pages/MiniAppEntry.tsx` | 移除四大板块网格（~第 295-335 行） |
-| `src/pages/MyPage.tsx` | 查询 orders 表 + 新增五板块区域（含教练空间） |
-| `src/components/awakening/AwakeningBottomNav.tsx` | 删除 quickActions 中的教练空间条目（第 39 行） |
+| `src/pages/PayEntry.tsx` | 第 134 行插入 `const fetchPartnerInfo = async () => {` |
+| `src/components/PageHeader.tsx` | 标题添加 `max-w-[40%] truncate` 防止与右侧按钮重叠 |
 
