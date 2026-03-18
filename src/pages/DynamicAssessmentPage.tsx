@@ -41,6 +41,8 @@ export default function DynamicAssessmentPage() {
     requirePayment ? packageKey : undefined
   );
   const hasPurchased = !requirePayment || !!purchaseRecord;
+  const { data: packageData } = usePackageByKey(requirePayment ? packageKey : '');
+  const price = packageData?.price;
 
   const { data: historyRecords = [], isLoading: historyLoading } = useDynamicAssessmentHistory(
     template?.id
