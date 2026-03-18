@@ -4,8 +4,9 @@ import {
   Package, ChevronRight, ChevronDown,
   Info, Bell, MessageSquare, LogOut, Truck,
   ClipboardCheck, Flame, BookOpen, Settings, Sparkles,
-  Wrench, BarChart3, Target, ShoppingBag, Users
+  Wrench, BarChart3, Target, ShoppingBag, Users, Headphones
 } from "lucide-react";
+import TextCustomerSupport from "@/components/TextCustomerSupport";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
