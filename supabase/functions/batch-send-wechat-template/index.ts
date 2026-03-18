@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
 import { corsHeaders, validateServiceRole } from '../_shared/auth.ts';
 
 serve(async (req) => {
@@ -12,11 +11,14 @@ serve(async (req) => {
   if (authError) return authError;
 
   try {
-    const { user_ids, scenario, custom_title, custom_message } = await req.json();
+    const { user_ids, openids, scenario, custom_title, custom_message } = await req.json();
 
-    if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+    const hasUserIds = user_ids && Array.isArray(user_ids) && user_ids.length > 0;
+    const hasOpenIds = openids && Array.isArray(openids) && openids.length > 0;
+
+    if (!hasUserIds && !hasOpenIds) {
       return new Response(
-        JSON.stringify({ error: '请提供至少一个用户ID' }),
+        JSON.stringify({ error: '请提供至少一个用户ID或openid' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -31,18 +33,25 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    console.log(`[batch-send] 开始批量发送: ${user_ids.length} 个用户, 场景: ${scenario}`);
+    const mode = hasOpenIds ? 'openid' : 'userId';
+    const targets = hasOpenIds ? openids : user_ids;
 
-    const results: Array<{ user_id: string; success: boolean; reason?: string }> = [];
+    console.log(`[batch-send] 开始批量发送: ${targets.length} 个目标, 模式: ${mode}, 场景: ${scenario}`);
 
-    // 逐个调用 send-wechat-template-message
-    for (const userId of user_ids) {
+    const results: Array<{ id: string; success: boolean; reason?: string }> = [];
+
+    for (const target of targets) {
       try {
         const notification = {
           title: custom_title || '来自劲老师的消息',
           message: custom_message || '',
-          id: `batch-${Date.now()}-${userId.slice(0, 8)}`,
+          id: `batch-${Date.now()}-${target.slice(0, 8)}`,
         };
+
+        // 根据模式构造请求体
+        const body = hasOpenIds
+          ? { openid: target, scenario, notification }
+          : { userId: target, scenario, notification };
 
         const response = await fetch(`${supabaseUrl}/functions/v1/send-wechat-template-message`, {
           method: 'POST',
@@ -50,18 +59,18 @@ serve(async (req) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${serviceRoleKey}`,
           },
-          body: JSON.stringify({ userId, scenario, notification }),
+          body: JSON.stringify(body),
         });
 
         const data = await response.json();
         results.push({
-          user_id: userId,
+          id: target,
           success: data.success === true,
-          reason: data.reason || (data.success ? undefined : 'unknown'),
+          reason: data.reason || (data.success ? undefined : data.error || 'unknown'),
         });
       } catch (err) {
-        console.error(`[batch-send] 发送失败 userId=${userId}:`, err.message);
-        results.push({ user_id: userId, success: false, reason: err.message });
+        console.error(`[batch-send] 发送失败 target=${target}:`, err.message);
+        results.push({ id: target, success: false, reason: err.message });
       }
 
       // 每次发送间隔 100ms，避免触发微信频率限制

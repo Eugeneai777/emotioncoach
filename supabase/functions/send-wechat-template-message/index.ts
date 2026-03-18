@@ -369,11 +369,11 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, scenario, notification } = await req.json();
+    const { userId, scenario, notification, openid: directOpenId } = await req.json();
 
-    console.log(`[${scenario}] 收到通知请求 - userId: ${userId}`);
+    console.log(`[${scenario}] 收到通知请求 - userId: ${userId}, directOpenId: ${directOpenId ? 'yes' : 'no'}`);
 
-    if (!userId || !scenario || !notification) {
+    if ((!userId && !directOpenId) || !scenario || !notification) {
       throw new Error('Missing required parameters');
     }
 
@@ -382,46 +382,71 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 获取用户的 OpenID 和配置
-    const { data: mapping, error: mappingError } = await supabaseClient
-      .from('wechat_user_mappings')
-      .select('openid, subscribe_status')
-      .eq('system_user_id', userId)
-      .maybeSingle();
+    let openid: string;
+    let displayName = '用户';
 
-    if (mappingError || !mapping) {
-      console.log(`[${scenario}] 用户尚未绑定微信公众号 - userId: ${userId}`);
-      return new Response(
-        JSON.stringify({ success: false, reason: 'not_bound' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    if (directOpenId) {
+      // 直接使用传入的 openid，跳过绑定和启用检查（群发模式）
+      openid = directOpenId;
+      // 尝试从 wechat_user_mappings 获取关联的用户昵称
+      const { data: existingMapping } = await supabaseClient
+        .from('wechat_user_mappings')
+        .select('system_user_id')
+        .eq('openid', directOpenId)
+        .maybeSingle();
+      if (existingMapping?.system_user_id) {
+        const { data: existingProfile } = await supabaseClient
+          .from('profiles')
+          .select('display_name')
+          .eq('id', existingMapping.system_user_id)
+          .single();
+        if (existingProfile?.display_name) displayName = existingProfile.display_name;
+      }
+    } else {
+      // 原有逻辑：通过 userId 查找 openid
+      const { data: mapping, error: mappingError } = await supabaseClient
+        .from('wechat_user_mappings')
+        .select('openid, subscribe_status')
+        .eq('system_user_id', userId)
+        .maybeSingle();
 
-    if (!mapping.subscribe_status) {
-      console.log(`[${scenario}] 用户已取消关注公众号 - userId: ${userId}`);
-      return new Response(
-        JSON.stringify({ success: false, reason: 'unsubscribed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      if (mappingError || !mapping) {
+        console.log(`[${scenario}] 用户尚未绑定微信公众号 - userId: ${userId}`);
+        return new Response(
+          JSON.stringify({ success: false, reason: 'not_bound' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    // 获取用户是否启用微信通知
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('wechat_enabled, display_name')
-      .eq('id', userId)
-      .single();
+      if (!mapping.subscribe_status) {
+        console.log(`[${scenario}] 用户已取消关注公众号 - userId: ${userId}`);
+        return new Response(
+          JSON.stringify({ success: false, reason: 'unsubscribed' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (profileError) {
-      console.log(`[${scenario}] 获取用户配置失败 - userId: ${userId}, error: ${profileError.message}`);
-    }
-    console.log(`[${scenario}] 用户配置 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
-    if (!profile?.wechat_enabled) {
-      console.log(`[${scenario}] 用户未启用微信公众号推送 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
-      return new Response(
-        JSON.stringify({ success: false, reason: 'disabled' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      openid = mapping.openid;
+
+      // 获取用户是否启用微信通知
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('wechat_enabled, display_name')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.log(`[${scenario}] 获取用户配置失败 - userId: ${userId}, error: ${profileError.message}`);
+      }
+      console.log(`[${scenario}] 用户配置 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
+      if (!profile?.wechat_enabled) {
+        console.log(`[${scenario}] 用户未启用微信公众号推送 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
+        return new Response(
+          JSON.stringify({ success: false, reason: 'disabled' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (profile?.display_name) displayName = profile.display_name;
     }
 
     // 使用系统级模板ID配置
@@ -488,7 +513,7 @@ serve(async (req) => {
     }
 
     const accessToken = tokenData.access_token;
-    const displayName = profile?.display_name || '用户';
+    // displayName already set above
 
     // 构建消息上下文 - 使用当前发送时的北京时间
     const now = new Date();
@@ -693,7 +718,7 @@ serve(async (req) => {
     const wechatBaseUrl = 'https://wechat.eugenewe.net';
 
     const messageBody = {
-      touser: mapping.openid,
+      touser: openid,
       template_id: templateId,
       url: `${wechatBaseUrl}/?notification=${notification.id}`,
       data: messageData,
@@ -715,8 +740,8 @@ serve(async (req) => {
     await supabaseClient
       .from('wechat_template_messages')
       .insert({
-        user_id: userId,
-        openid: mapping.openid,
+        user_id: userId || null,
+        openid: openid,
         template_id: templateId,
         scenario: scenario,
         data: messageData,
