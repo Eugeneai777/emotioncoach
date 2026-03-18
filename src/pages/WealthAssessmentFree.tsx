@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
@@ -9,6 +9,51 @@ import { useFooterHeight } from "@/hooks/useFooterHeight";
 import { useAuth } from "@/hooks/useAuth";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { toast } from "sonner";
+
+// ─── sessionStorage keys for state recovery ───
+const SS_KEY_RESULT = 'wealth_free_assessment_result';
+const SS_KEY_FOLLOWUP = 'wealth_free_followup_insights';
+const SS_KEY_DEEP = 'wealth_free_deep_followup';
+const SS_KEY_PAY_RESUME = 'wealth_free_camp_pay_resume';
+
+function saveResultToSession(
+  result: AssessmentResult,
+  followUp: FollowUpAnswer[],
+  deep: DeepFollowUpAnswer[]
+) {
+  try {
+    sessionStorage.setItem(SS_KEY_RESULT, JSON.stringify(result));
+    sessionStorage.setItem(SS_KEY_FOLLOWUP, JSON.stringify(followUp));
+    sessionStorage.setItem(SS_KEY_DEEP, JSON.stringify(deep));
+  } catch (e) {
+    console.warn('[WealthFree] Failed to save state to sessionStorage:', e);
+  }
+}
+
+function loadResultFromSession(): {
+  result: AssessmentResult;
+  followUp: FollowUpAnswer[];
+  deep: DeepFollowUpAnswer[];
+} | null {
+  try {
+    const raw = sessionStorage.getItem(SS_KEY_RESULT);
+    if (!raw) return null;
+    const result = JSON.parse(raw) as AssessmentResult;
+    const followUp = JSON.parse(sessionStorage.getItem(SS_KEY_FOLLOWUP) || '[]') as FollowUpAnswer[];
+    const deep = JSON.parse(sessionStorage.getItem(SS_KEY_DEEP) || '[]') as DeepFollowUpAnswer[];
+    return { result, followUp, deep };
+  } catch (e) {
+    console.warn('[WealthFree] Failed to load state from sessionStorage:', e);
+    return null;
+  }
+}
+
+function clearResultSession() {
+  sessionStorage.removeItem(SS_KEY_RESULT);
+  sessionStorage.removeItem(SS_KEY_FOLLOWUP);
+  sessionStorage.removeItem(SS_KEY_DEEP);
+  sessionStorage.removeItem(SS_KEY_PAY_RESUME);
+}
 
 function FreeFooter() {
   const { footerRef } = useFooterHeight();
@@ -29,12 +74,48 @@ type PageState = "questions" | "result";
 
 export default function WealthAssessmentFreePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
   const [followUpInsights, setFollowUpInsights] = useState<FollowUpAnswer[]>([]);
   const [deepFollowUpAnswers, setDeepFollowUpAnswers] = useState<DeepFollowUpAnswer[]>([]);
+
+  // 防止重复处理恢复逻辑
+  const resumeHandledRef = useRef(false);
+
+  // ─── 页面加载时：从 sessionStorage 恢复结果状态 ───
+  useEffect(() => {
+    if (resumeHandledRef.current) return;
+    resumeHandledRef.current = true;
+
+    const cached = loadResultFromSession();
+    if (!cached) return;
+
+    console.log('[WealthFree] Restoring assessment result from sessionStorage');
+    setCurrentResult(cached.result);
+    setFollowUpInsights(cached.followUp);
+    setDeepFollowUpAnswers(cached.deep);
+    setPageState("result");
+
+    // 检查是否是支付恢复场景（登录回跳 or 微信 OAuth 回跳）
+    const isPayResume =
+      sessionStorage.getItem(SS_KEY_PAY_RESUME) === '1' ||
+      searchParams.get('payment_resume') === '1';
+
+    if (isPayResume) {
+      console.log('[WealthFree] Payment resume detected, will auto-trigger pay dialog');
+      // 清理 payment_resume URL 参数（保留 payment_openid 给 UnifiedPayDialog）
+      if (searchParams.get('payment_resume')) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('payment_resume');
+        setSearchParams(newParams, { replace: true });
+      }
+      // 清除 sessionStorage 中的支付恢复标记
+      sessionStorage.removeItem(SS_KEY_PAY_RESUME);
+    }
+  }, [searchParams, setSearchParams]);
 
   // 完成测评回调 — 直接展示结果，无需付费
   const handleComplete = useCallback((
@@ -43,11 +124,15 @@ export default function WealthAssessmentFreePage() {
     insights?: FollowUpAnswer[],
     deepAnswers?: DeepFollowUpAnswer[]
   ) => {
+    const fi = insights || [];
+    const da = deepAnswers || [];
     setCurrentResult(result);
     setCurrentAnswers(answers);
-    if (insights) setFollowUpInsights(insights);
-    if (deepAnswers) setDeepFollowUpAnswers(deepAnswers);
+    setFollowUpInsights(fi);
+    setDeepFollowUpAnswers(da);
     setPageState("result");
+    // 缓存结果到 sessionStorage，供登录/授权回跳后恢复
+    saveResultToSession(result, fi, da);
   }, []);
 
   // 重新测评
@@ -57,6 +142,8 @@ export default function WealthAssessmentFreePage() {
     setFollowUpInsights([]);
     setDeepFollowUpAnswers([]);
     setPageState("questions");
+    // 清除缓存
+    clearResultSession();
   }, []);
 
   // 退出测评
@@ -68,6 +155,8 @@ export default function WealthAssessmentFreePage() {
   const handleAuthRequired = useCallback((): boolean => {
     if (user) return true;
     toast.info("请先登录后再购买训练营");
+    // 标记支付恢复，登录后自动回到结果页
+    sessionStorage.setItem(SS_KEY_PAY_RESUME, '1');
     setPostAuthRedirect(window.location.pathname + window.location.search);
     navigate("/auth");
     return false;
