@@ -177,6 +177,7 @@ const promoSlides = [
     emoji: "🎯",
     title: "找到你的卡点",
     subtitle: "科学定位突破方向",
+    tag: "中年男性 · 35+女性",
     gradient: "from-violet-600 to-indigo-500",
   },
   {
@@ -184,6 +185,7 @@ const promoSlides = [
     emoji: "🌸",
     title: "7天情绪解压",
     subtitle: "找回内心平静",
+    tag: "女性专属",
     gradient: "from-rose-500 to-pink-400",
     route: "/promo/synergy",
   },
@@ -192,6 +194,7 @@ const promoSlides = [
     emoji: "💪",
     title: "知乐双效解压",
     subtitle: "身心协同修复",
+    tag: "男性专属",
     gradient: "from-blue-500 to-cyan-400",
     route: "/promo/zhile-havruta",
   },
