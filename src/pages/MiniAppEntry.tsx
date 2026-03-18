@@ -563,6 +563,13 @@ const MiniAppEntry = () => {
 
       {/* ── 底部导航 ── */}
       <AwakeningBottomNav />
+
+      {/* ── 测评选择弹窗 ── */}
+      <AssessmentPickerSheet
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        assessments={pickerAssessments}
+      />
     </div>
   );
 };
