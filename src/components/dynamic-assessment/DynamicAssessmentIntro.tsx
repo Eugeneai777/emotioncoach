@@ -50,7 +50,7 @@ const enrichmentData: Record<string, {
     ],
     authority: [
       { emoji: "📈", text: "麦肯锡研究：35+女性在领导力、判断力、共情力三项核心维度上显著领先" },
-      { emoji: "🧠", text: "脑科学研究：女性35岁后进入"整合智慧期"，综合决策能力达到峰值" },
+      { emoji: "🧠", text: "脑科学研究：女性35岁后进入'整合智慧期'，综合决策能力达到峰值" },
     ],
     comparison: {
       traditional: "通用模板，千人一面，看完也不知道优势在哪",

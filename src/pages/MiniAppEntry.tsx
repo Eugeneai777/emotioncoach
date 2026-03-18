@@ -34,8 +34,8 @@ const audiences: Array<{
   { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400", badge: {
     text: "🔍 测一测",
     assessments: [
-      { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "¥9.9" },
-      { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "¥9.9" },
+      { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "限时¥9.9" },
+      { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "专业版" },
     ],
   }},
   { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400", badge: null },
