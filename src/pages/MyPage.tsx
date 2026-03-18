@@ -166,6 +166,7 @@ const MyPage: React.FC = () => {
   const SETTINGS_ITEMS = [
     { icon: Bell, label: "提醒设置" },
     { icon: MessageSquare, label: "通知偏好" },
+    { icon: Headphones, label: "联系客服" },
     { icon: LogOut, label: "退出登录" },
   ];
 
