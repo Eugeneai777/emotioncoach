@@ -174,6 +174,21 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           </motion.div>
         )}
 
+        {/* Radar Preview (enrichment) */}
+        {enrichment?.radarPreview && (
+          <motion.div {...fadeUp(0.52)}>
+            <Card className="border-border/40 bg-card/95 backdrop-blur-md shadow-lg">
+              <CardContent className="p-5">
+                <p className="text-[10px] text-center text-muted-foreground mb-2">📊 报告预览 · 示例数据</p>
+                <div className="h-[220px]">
+                  <DimensionRadarChart dimensionScores={enrichment.radarPreview} />
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground/60 mt-1">你的真实数据将在测评后生成</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Dimensions */}
         {dimensions.length > 0 && (
           <motion.div {...fadeUp(enrichment ? 0.55 : 0.5)}>
