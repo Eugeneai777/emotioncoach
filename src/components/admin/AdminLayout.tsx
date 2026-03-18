@@ -94,6 +94,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="bloom-cashflow" element={<AdminBloomMonthlyCashflow />} />
                   <Route path="usage" element={<UsageRecordsTable />} />
                   <Route path="activation-codes" element={<ActivationCodeManagement />} />
+                  <Route path="wechat-broadcast" element={<WechatBroadcast />} />
                   <Route path="funnel" element={<ConversionFunnelDashboard />} />
                   <Route path="cost-monitor" element={<CostMonitorDashboard />} />
                   <Route path="api-monitor" element={<OperationsMonitorDashboard />} />
