@@ -5,6 +5,7 @@ import {
   Brain, Target, Compass, Zap, Shield, Bot, ChevronRight, Users, TrendingUp, BookOpen
 } from "lucide-react";
 import { personalityTypeConfig, dimensionConfig, type MidlifePersonalityType, type MidlifeDimension } from "./midlifeAwakeningData";
+import { DimensionRadarChart } from "@/components/dynamic-assessment/DimensionRadarChart";
 
 function AnimatedSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return (
@@ -75,6 +76,36 @@ const authorityData = [
   { emoji: "📊", text: "哈佛成人发展研究：75年追踪发现，中年觉醒期是人生幸福感的关键转折点" },
   { emoji: "🧠", text: "心理学研究：35-55岁是'意义危机'高发期，超过68%的人经历过方向迷失" },
   { emoji: "🔄", text: "《中年的意义》研究：中年不是衰退，是重新定义人生主线的最佳窗口" },
+];
+
+const midlifeRadarPreviewData = [
+  { score: 72, maxScore: 100, label: "内耗循环", emoji: "🌀" },
+  { score: 45, maxScore: 100, label: "价值松动", emoji: "💎" },
+  { score: 58, maxScore: 100, label: "行动停滞", emoji: "⚡" },
+  { score: 80, maxScore: 100, label: "支持系统", emoji: "🤝" },
+  { score: 35, maxScore: 100, label: "后悔风险", emoji: "⏳" },
+  { score: 65, maxScore: 100, label: "使命清晰", emoji: "🧭" },
+];
+
+const diagnosticSteps = [
+  {
+    emoji: "🎯", title: "维度扫描", desc: "6维雷达定位你的卡点所在",
+    bgColor: "bg-blue-50/60 dark:bg-blue-500/5",
+    borderColor: "border-blue-200/40 dark:border-blue-500/10",
+    iconBg: "bg-blue-100 dark:bg-blue-500/15",
+  },
+  {
+    emoji: "🧩", title: "人格诊断", desc: "4种中场人格匹配你的行为模式",
+    bgColor: "bg-purple-50/60 dark:bg-purple-500/5",
+    borderColor: "border-purple-200/40 dark:border-purple-500/10",
+    iconBg: "bg-purple-100 dark:bg-purple-500/15",
+  },
+  {
+    emoji: "🤖", title: "AI教练引导", desc: "1对1对话制定突破方案",
+    bgColor: "bg-pink-50/60 dark:bg-pink-500/5",
+    borderColor: "border-pink-200/40 dark:border-pink-500/10",
+    iconBg: "bg-pink-100 dark:bg-pink-500/15",
+  },
 ];
 
 export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased, isLoading, price }: MidlifeAwakeningStartScreenProps) {
@@ -158,7 +189,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         </Card>
       </AnimatedSection>
 
-      {/* 六大维度预览 */}
+      {/* 六大维度预览 + 雷达图 */}
       <AnimatedSection delay={0.2}>
         <Card>
           <CardContent className="p-4">
@@ -166,6 +197,14 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
               <Target className="w-4 h-4 text-blue-500" />
               6维深度扫描
             </h3>
+            {/* 雷达图预览 */}
+            <div className="mb-4">
+              <p className="text-[10px] text-center text-muted-foreground mb-2">📊 报告示例预览</p>
+              <div className="h-[220px]">
+                <DimensionRadarChart dimensionScores={midlifeRadarPreviewData} />
+              </div>
+              <p className="text-[10px] text-center text-muted-foreground/60 mt-1">你的真实数据将在测评后生成</p>
+            </div>
             <DimensionPreview />
           </CardContent>
         </Card>
@@ -201,6 +240,36 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
                 <p className="text-xs font-medium text-primary mb-1">✅ 中场觉醒力测评</p>
                 <p className="text-xs text-muted-foreground">精准定位6个维度卡点 + AI教练1对1引导 → 知道怎么突破</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </AnimatedSection>
+
+      {/* 三阶诊断流程 */}
+      <AnimatedSection delay={0.35}>
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Compass className="w-4 h-4 text-fuchsia-500" />
+              三阶诊断模型
+            </h3>
+            <div className="flex flex-col items-center gap-0">
+              {diagnosticSteps.map((step, i) => (
+                <div key={i} className="flex flex-col items-center w-full">
+                  <div className={`w-full p-3 rounded-xl border ${step.borderColor} ${step.bgColor} flex items-center gap-3`}>
+                    <div className={`w-10 h-10 rounded-full ${step.iconBg} flex items-center justify-center text-lg shrink-0`}>
+                      {step.emoji}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold">{step.title}</p>
+                      <p className="text-[11px] text-muted-foreground">{step.desc}</p>
+                    </div>
+                  </div>
+                  {i < diagnosticSteps.length - 1 && (
+                    <div className="w-0.5 h-6 bg-gradient-to-b from-pink-300 to-purple-400 dark:from-pink-500/40 dark:to-purple-500/40 rounded-full" />
+                  )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

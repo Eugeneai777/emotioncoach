@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
+import { DimensionRadarChart } from "./DimensionRadarChart";
 
 interface DynamicAssessmentIntroProps {
   template: {
@@ -40,6 +41,7 @@ const enrichmentData: Record<string, {
   painPoints: { emoji: string; text: string }[];
   authority: { emoji: string; text: string }[];
   comparison: { traditional: string; ours: string };
+  radarPreview?: { score: number; maxScore: number; label: string; emoji: string }[];
 }> = {
   women_competitiveness: {
     painPoints: [
@@ -56,6 +58,13 @@ const enrichmentData: Record<string, {
       traditional: "通用模板，千人一面，看完也不知道优势在哪",
       ours: "针对35+女性设计维度 + AI深度洞察你的独特优势",
     },
+    radarPreview: [
+      { score: 68, maxScore: 100, label: "职场生命力", emoji: "🔥" },
+      { score: 52, maxScore: 100, label: "个人品牌力", emoji: "👑" },
+      { score: 75, maxScore: 100, label: "情绪韧性", emoji: "💪" },
+      { score: 40, maxScore: 100, label: "财务掌控力", emoji: "💰" },
+      { score: 82, maxScore: 100, label: "关系经营力", emoji: "🤝" },
+    ],
   },
 };
 
@@ -160,6 +169,21 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Radar Preview (enrichment) */}
+        {enrichment?.radarPreview && (
+          <motion.div {...fadeUp(0.52)}>
+            <Card className="border-border/40 bg-card/95 backdrop-blur-md shadow-lg">
+              <CardContent className="p-5">
+                <p className="text-[10px] text-center text-muted-foreground mb-2">📊 报告预览 · 示例数据</p>
+                <div className="h-[220px]">
+                  <DimensionRadarChart dimensionScores={enrichment.radarPreview} />
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground/60 mt-1">你的真实数据将在测评后生成</p>
               </CardContent>
             </Card>
           </motion.div>
