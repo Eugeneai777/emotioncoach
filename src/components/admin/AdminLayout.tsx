@@ -45,6 +45,7 @@ import FlywheelFunnel from "./flywheel/FlywheelFunnel";
 import FlywheelRevenue from "./flywheel/FlywheelRevenue";
 import FlywheelReferral from "./flywheel/FlywheelReferral";
 import FlywheelAIStrategy from "./flywheel/FlywheelAIStrategy";
+import WechatBroadcast from "./WechatBroadcast";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
@@ -93,6 +94,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="bloom-cashflow" element={<AdminBloomMonthlyCashflow />} />
                   <Route path="usage" element={<UsageRecordsTable />} />
                   <Route path="activation-codes" element={<ActivationCodeManagement />} />
+                  <Route path="wechat-broadcast" element={<WechatBroadcast />} />
                   <Route path="funnel" element={<ConversionFunnelDashboard />} />
                   <Route path="cost-monitor" element={<CostMonitorDashboard />} />
                   <Route path="api-monitor" element={<OperationsMonitorDashboard />} />
