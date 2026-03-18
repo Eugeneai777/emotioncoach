@@ -159,7 +159,7 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         </Card>
       </AnimatedSection>
 
-      {/* 六大维度预览 */}
+      {/* 六大维度预览 + 雷达图 */}
       <AnimatedSection delay={0.2}>
         <Card>
           <CardContent className="p-4">
@@ -167,6 +167,14 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
               <Target className="w-4 h-4 text-blue-500" />
               6维深度扫描
             </h3>
+            {/* 雷达图预览 */}
+            <div className="mb-4">
+              <p className="text-[10px] text-center text-muted-foreground mb-2">📊 报告示例预览</p>
+              <div className="h-[220px]">
+                <DimensionRadarChart dimensionScores={midlifeRadarPreviewData} />
+              </div>
+              <p className="text-[10px] text-center text-muted-foreground/60 mt-1">你的真实数据将在测评后生成</p>
+            </div>
             <DimensionPreview />
           </CardContent>
         </Card>
