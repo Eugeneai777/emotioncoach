@@ -6,7 +6,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const authError = validateServiceRole(req);
+  // Accept both service role and cron secret (for internal/scheduled calls)
+  const authError = validateCronSecret(req);
   if (authError) return authError;
 
   try {
