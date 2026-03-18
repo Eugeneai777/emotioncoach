@@ -299,6 +299,19 @@ const MiniAppEntry = () => {
               </div>
               {/* 按压反馈层 */}
               <div className="absolute inset-0 bg-white/0 active:bg-white/10 transition-colors duration-150 pointer-events-none" />
+              {/* ¥9.9 测评角标 */}
+              {a.badge && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPickerAssessments(a.badge!.assessments);
+                    setPickerOpen(true);
+                  }}
+                  className="absolute top-1.5 right-1.5 z-20 bg-white/85 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm active:scale-95 transition-transform"
+                >
+                  <span className="text-[10px] font-bold text-orange-600">{a.badge.text}</span>
+                </button>
+              )}
             </motion.button>
           ))}
         </div>
