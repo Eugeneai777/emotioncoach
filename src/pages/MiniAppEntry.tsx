@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp, ShoppingCart, ClipboardList, Tent } from "lucide-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectPlatform } from "@/lib/platformDetector";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,13 +133,29 @@ const testimonials = [
   { quote: "21天训练营结束那天，AI生成的成长报告让我看到了自己的蜕变轨迹，感动到截图发了朋友圈。", name: "思思", identity: "29岁，HR", tag: "蜕变见证" },
 ];
 
+// 精选4条见证（覆盖宝妈、中年男性、职场、情感场景）
+const featuredTestimonials = [
+  testimonials[3],  // 芳芳 - 全职妈妈 - 被理解
+  testimonials[4],  // 大伟 - 40岁工程师 - 财富觉醒
+  testimonials[7],  // 阿明 - 30岁销售 - 情绪急救
+  testimonials[9],  // 老王 - 36岁程序员 - 关系修复
+];
+
+const paidShortcuts = [
+  { icon: ShoppingCart, label: "我的订单", route: "/my-page" },
+  { icon: ClipboardList, label: "我的测评", route: "/energy-studio?tab=assessments" },
+  { icon: Tent, label: "我的训练营", route: "/camps" },
+];
+
 const MiniAppEntry = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { greeting, isLoading } = usePersonalizedGreeting();
   const [isExpanded, setIsExpanded] = useState(false);
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
   const [illustrations, setIllustrations] = useState<Record<string, string>>({});
+  const [hasPaidOrder, setHasPaidOrder] = useState(false);
 
   useEffect(() => {
     supabase
@@ -152,6 +169,24 @@ const MiniAppEntry = () => {
         }
       });
   }, []);
+
+  // 检查是否为已购用户
+  useEffect(() => {
+    if (!user) {
+      setHasPaidOrder(false);
+      return;
+    }
+    supabase
+      .from('orders')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'paid')
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setHasPaidOrder(!!data);
+      });
+  }, [user]);
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
@@ -245,6 +280,32 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
+      {/* ── 已购用户快捷面板 ── */}
+      {hasPaidOrder && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+          className="px-4 pb-3"
+        >
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            {paidShortcuts.map((s) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.label}
+                  onClick={() => navigate(s.route)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium whitespace-nowrap shrink-0 hover:bg-primary/15 active:scale-95 transition-all"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       {/* ── 个性化欢迎语 ── */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
@@ -262,6 +323,39 @@ const MiniAppEntry = () => {
           )}
         </div>
       </motion.div>
+
+      {/* ── 精选用户见证（横向滚动） ── */}
+      <div className="px-4 pb-4">
+        <div className="flex items-center gap-2 mb-2 px-0.5">
+          <div className="w-1 h-3.5 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
+          <h4 className="text-xs font-bold text-foreground">真实用户体验</h4>
+        </div>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
+          {featuredTestimonials.map((t, i) => (
+            <motion.div
+              key={i}
+              initial={reduceMotion ? false : { opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 + i * 0.06, duration: 0.3 }}
+              className="min-w-[260px] max-w-[280px] shrink-0 snap-start rounded-xl bg-card border border-border/40 p-3 shadow-sm"
+            >
+              <span className="inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium mb-1.5">
+                {t.tag}
+              </span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed mb-2 line-clamp-3">
+                <Quote className="inline w-3 h-3 mr-0.5 opacity-30 -translate-y-px" />
+                {t.quote}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <span className="text-[8px] text-primary-foreground font-bold">{t.name[0]}</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{t.name} · {t.identity}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
 
       {/* ── 了解更多折叠区 ── */}
       <div className="px-4 pb-4">
@@ -340,7 +434,7 @@ const MiniAppEntry = () => {
                   </div>
                 </div>
 
-                {/* 用户见证 - 瀑布流 */}
+                {/* 用户见证 - 完整列表 */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
