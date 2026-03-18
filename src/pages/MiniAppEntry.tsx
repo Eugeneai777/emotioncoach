@@ -247,7 +247,7 @@ const PromoBanner: React.FC<{
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.35 }}
-      className="px-4 pb-3"
+      className="px-4 pb-3 max-w-lg mx-auto"
     >
       <div ref={emblaRef} className="overflow-hidden rounded-2xl">
         <div className="flex">
@@ -255,25 +255,28 @@ const PromoBanner: React.FC<{
             <button
               key={slide.id}
               onClick={() => handleSlideClick(slide)}
-              className={`relative flex-[0_0_100%] min-w-0 h-[130px] sm:h-[140px] rounded-2xl bg-gradient-to-br ${slide.gradient} flex items-center justify-between px-5 text-left overflow-hidden active:scale-[0.98] transition-transform`}
+              className={`relative flex-[0_0_100%] min-w-0 h-[140px] sm:h-[150px] rounded-2xl bg-gradient-to-br ${slide.gradient} flex flex-col items-center justify-center text-center overflow-hidden active:scale-[0.98] transition-transform`}
             >
               {/* 装饰圆 */}
-              <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
-              <div className="absolute -right-2 -bottom-4 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
-              {/* 文字区 */}
-              <div className="relative z-10 flex flex-col gap-1">
+              <div className="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
+              <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
+              {/* 装饰 emoji */}
+              <span className="absolute left-3 bottom-2 text-4xl opacity-15 pointer-events-none select-none">{slide.emoji}</span>
+              {/* 内容区 */}
+              <div className="relative z-10 flex flex-col items-center gap-1.5">
+                <span className="px-2.5 py-0.5 rounded-full bg-white/25 text-[10px] font-medium text-white/90 tracking-wide">
+                  {slide.tag}
+                </span>
                 <span className="text-lg font-extrabold text-white tracking-wide leading-tight">
                   {slide.emoji} {slide.title}
                 </span>
-                <span className="text-xs text-white/80 tracking-wider">
+                <span className="text-sm text-white/80 tracking-wider">
                   {slide.subtitle}
                 </span>
-                <span className="mt-1.5 inline-block w-fit px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-semibold text-white">
+                <span className="mt-1 inline-block px-4 py-1 rounded-full bg-white/30 backdrop-blur-sm text-xs font-semibold text-white">
                   {slide.id === "assessment" ? "立即测评 →" : "了解详情 →"}
                 </span>
               </div>
-              {/* 大 emoji 装饰 */}
-              <span className="absolute right-4 bottom-2 text-5xl opacity-20 pointer-events-none select-none">{slide.emoji}</span>
             </button>
           ))}
         </div>
