@@ -174,6 +174,8 @@ const MiniAppEntry = () => {
   const { user } = useAuth();
   const { greeting, isLoading } = usePersonalizedGreeting();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [pickerAssessments, setPickerAssessments] = useState<AssessmentOption[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
   const [illustrations, setIllustrations] = useState<Record<string, string>>({});
