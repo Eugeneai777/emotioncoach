@@ -215,6 +215,36 @@ export function MidlifeAwakeningStartScreen({ onStart, onPayClick, hasPurchased,
         </Card>
       </AnimatedSection>
 
+      {/* 三阶诊断流程 */}
+      <AnimatedSection delay={0.35}>
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Compass className="w-4 h-4 text-fuchsia-500" />
+              三阶诊断模型
+            </h3>
+            <div className="flex flex-col items-center gap-0">
+              {diagnosticSteps.map((step, i) => (
+                <div key={i} className="flex flex-col items-center w-full">
+                  <div className={`w-full p-3 rounded-xl border ${step.borderColor} ${step.bgColor} flex items-center gap-3`}>
+                    <div className={`w-10 h-10 rounded-full ${step.iconBg} flex items-center justify-center text-lg shrink-0`}>
+                      {step.emoji}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold">{step.title}</p>
+                      <p className="text-[11px] text-muted-foreground">{step.desc}</p>
+                    </div>
+                  </div>
+                  {i < diagnosticSteps.length - 1 && (
+                    <div className="w-0.5 h-6 bg-gradient-to-b from-pink-300 to-purple-400 dark:from-pink-500/40 dark:to-purple-500/40 rounded-full" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </AnimatedSection>
+
       {/* 你将获得 */}
       <AnimatedSection delay={0.35}>
         <Card>
