@@ -111,6 +111,19 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     setIsLoadingFollowUp(true);
     setShowFollowUp(true);
 
+    // 10秒超时保护，防止请求卡住导致UI锁死
+    const timeoutId = setTimeout(() => {
+      console.warn('[WealthBlockQuestions] Follow-up generation timeout');
+      setIsLoadingFollowUp(false);
+      setShowFollowUp(false);
+      setCurrentFollowUp(null);
+      setPendingNextQuestion(false);
+      // 超时后自动跳到下一题
+      if (currentIndex < questions.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      }
+    }, 10000);
+
     try {
       const { data, error } = await supabase.functions.invoke('smart-question-followup', {
         body: {
@@ -122,12 +135,15 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
         }
       });
 
+      clearTimeout(timeoutId);
+
       if (error) throw error;
 
       // 检查是否使用了fallback
       const followUpData = data.fallback || data;
       setCurrentFollowUp(followUpData);
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Failed to generate follow-up:', err);
       // 使用默认追问
       setCurrentFollowUp({
@@ -138,7 +154,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     } finally {
       setIsLoadingFollowUp(false);
     }
-  }, [answers]);
+  }, [answers, currentIndex]);
 
   // 生成深度追问 - 修复闭包陷阱：传递参数而非依赖 state
   const generateDeepFollowUp = useCallback(async (
