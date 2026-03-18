@@ -488,7 +488,7 @@ serve(async (req) => {
     }
 
     const accessToken = tokenData.access_token;
-    const displayName = profile?.display_name || '用户';
+    // displayName already set above
 
     // 构建消息上下文 - 使用当前发送时的北京时间
     const now = new Date();
