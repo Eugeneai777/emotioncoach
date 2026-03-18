@@ -1,13 +1,42 @@
 
 
-## /mini-app 页面优化方案（已完成）
+## 批量发送微信模版消息 — 管理后台页面
 
-### 已完成改动
+### 概述
+在管理后台新增「微信群发」页面，允许管理员筛选用户并批量发送微信公众号模版消息。
 
-1. **AwakeningBottomNav.tsx** — 移除「快捷服务」按钮、遮罩层、弹出菜单，底栏精简为「我的」+「开始对话」
-2. **MiniAppEntry.tsx** — 新增已购用户快捷面板（我的订单/测评/训练营）+ 精选5条见证横向滚动卡片 + 末尾"查看更多"按钮 + 使用场景引导从折叠区移出直接展示
-3. **MiniAppEntry.tsx** — 新增活动轮播图（3张），位于已购快捷面板之后、个性化欢迎语之前：
-   - 🎯 找到你的卡点 → 弹出 AssessmentPickerSheet（4个测评，专业版在前）
-   - 🌸 7天情绪解压 → `/promo/synergy`
-   - 💪 知乐双效解压 → `/promo/zhile-havruta`
-   - 使用 embla-carousel-react 实现 3 秒自动轮播 + 圆点指示器
+### 实现方案
+
+#### 1. 新建 Edge Function：`batch-send-wechat-template`
+- 接收参数：`user_ids[]`、`scenario`、`custom_title`、`custom_message`
+- 使用 `validateServiceRole` 鉴权（仅后台可调用）
+- 遍历 user_ids，逐个调用现有 `send-wechat-template-message` 函数
+- 返回每个用户的发送结果（成功/失败/原因）
+- 支持自定义 notification 内容覆盖默认变体
+
+#### 2. 新建前端页面：`src/components/admin/WechatBroadcast.tsx`
+功能区域：
+- **用户筛选**：从 `wechat_user_mappings`（已绑定+已关注）拉取用户列表，关联 profiles 显示昵称
+- **场景选择**：下拉选择 scenario（default / encouragement / inactivity 等）
+- **自定义内容**：可选填自定义标题和消息内容（覆盖默认模版变体）
+- **预览**：发送前显示将发送的模版字段预览
+- **批量发送按钮**：确认后调用 Edge Function，显示进度和结果汇总
+
+#### 3. 路由 & 导航注册
+- `AdminLayout.tsx`：添加 `<Route path="wechat-broadcast" element={<WechatBroadcast />} />`
+- `AdminSidebar.tsx`：在「运营数据」分组下添加「微信群发」菜单项，使用 `Mail` 图标
+
+### 改动文件清单
+| 文件 | 操作 |
+|------|------|
+| `supabase/functions/batch-send-wechat-template/index.ts` | 新建 |
+| `src/components/admin/WechatBroadcast.tsx` | 新建 |
+| `src/components/admin/AdminLayout.tsx` | 添加路由 |
+| `src/components/admin/AdminSidebar.tsx` | 添加菜单项 |
+| `supabase/config.toml` | 添加 function 配置（verify_jwt=false） |
+
+### 安全性
+- Edge Function 使用 service role key 鉴权
+- 前端页面仅 admin 角色可见（已有路由保护）
+- 发送前需二次确认弹窗，显示将发送人数
+
