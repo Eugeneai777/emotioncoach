@@ -133,12 +133,13 @@ const testimonials = [
   { quote: "21天训练营结束那天，AI生成的成长报告让我看到了自己的蜕变轨迹，感动到截图发了朋友圈。", name: "思思", identity: "29岁，HR", tag: "蜕变见证" },
 ];
 
-// 精选4条见证（覆盖宝妈、中年男性、职场、情感场景）
+// 精选5条见证（覆盖宝妈、中年男性、职场、情感、代际场景）
 const featuredTestimonials = [
   testimonials[3],  // 芳芳 - 全职妈妈 - 被理解
   testimonials[4],  // 大伟 - 40岁工程师 - 财富觉醒
   testimonials[7],  // 阿明 - 30岁销售 - 情绪急救
   testimonials[9],  // 老王 - 36岁程序员 - 关系修复
+  testimonials[5],  // 丽姐 - 38岁教师 - 代际疗愈
 ];
 
 const paidShortcuts = [
@@ -354,10 +355,76 @@ const MiniAppEntry = () => {
               </div>
             </motion.div>
           ))}
+          {/* 查看更多卡片 */}
+          <motion.button
+            initial={reduceMotion ? false : { opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + featuredTestimonials.length * 0.06, duration: 0.3 }}
+            onClick={() => {
+              setIsExpanded(true);
+              setTimeout(() => {
+                document.getElementById('full-testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 350);
+            }}
+            className="min-w-[100px] shrink-0 snap-start rounded-xl bg-primary/5 border border-primary/20 p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-primary/10 active:scale-95 transition-all"
+          >
+            <span className="text-lg">💬</span>
+            <span className="text-[11px] text-primary font-medium whitespace-nowrap">查看更多</span>
+            <span className="text-[9px] text-muted-foreground">{testimonials.length}条</span>
+          </motion.button>
         </div>
       </div>
 
-      {/* ── 了解更多折叠区 ── */}
+      {/* ── 使用场景引导（直接展示） ── */}
+      <div className="px-4 pb-4">
+        <div className="space-y-3">
+          <div className="px-0.5">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
+              <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
+            </div>
+            <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪，它都在</p>
+          </div>
+          <div className="space-y-2">
+            {useCases.map((c, i) => {
+              const Icon = c.icon;
+              return (
+                <motion.div
+                  key={i}
+                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent} overflow-hidden`}
+                  initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + i * 0.06, duration: 0.3 }}
+                >
+                  {illustrations[c.illustrationKey] && (
+                    <img
+                      src={illustrations[c.illustrationKey]}
+                      alt=""
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-18 h-18 object-contain opacity-20 pointer-events-none select-none"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="flex items-start gap-3 relative z-10">
+                    <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
+                      {illustrations[c.illustrationKey] ? (
+                        <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
+                      <p className="text-[10px] text-foreground/70 leading-relaxed">{c.desc}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 了解更多折叠区（仅完整见证列表） ── */}
       <div className="px-4 pb-4">
         <motion.div
           initial={{ opacity: 0 }}
@@ -385,56 +452,7 @@ const MiniAppEntry = () => {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="pt-3 space-y-5">
-                {/* 使用场景引导 */}
-                <div className="space-y-3">
-                  <div className="px-0.5">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
-                      <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪，它都在</p>
-                  </div>
-                  <div className="space-y-2">
-                    {useCases.map((c, i) => {
-                      const Icon = c.icon;
-                      return (
-                        <motion.div
-                          key={i}
-                          className={`relative p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent} overflow-hidden`}
-                          initial={reduceMotion ? false : { opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.06, duration: 0.3 }}
-                        >
-                          {/* 右侧装饰插画 */}
-                          {illustrations[c.illustrationKey] && (
-                            <img
-                              src={illustrations[c.illustrationKey]}
-                              alt=""
-                              className="absolute right-2 top-1/2 -translate-y-1/2 w-18 h-18 object-contain opacity-20 pointer-events-none select-none"
-                              loading="lazy"
-                            />
-                          )}
-                          <div className="flex items-start gap-3 relative z-10">
-                            <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
-                              {illustrations[c.illustrationKey] ? (
-                                <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
-                              ) : (
-                                <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
-                              <p className="text-[10px] text-foreground/70 leading-relaxed">{c.desc}</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 用户见证 - 完整列表 */}
+              <div className="pt-3 space-y-5" id="full-testimonials">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
@@ -486,7 +504,6 @@ const MiniAppEntry = () => {
                   </div>
                 </div>
 
-                {/* 收起按钮 */}
                 <button
                   onClick={() => setIsExpanded(false)}
                   className="w-full text-center text-xs text-muted-foreground py-2 active:opacity-70"
