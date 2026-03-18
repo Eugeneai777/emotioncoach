@@ -715,8 +715,8 @@ serve(async (req) => {
     await supabaseClient
       .from('wechat_template_messages')
       .insert({
-        user_id: userId,
-        openid: mapping.openid,
+        user_id: userId || null,
+        openid: openid,
         template_id: templateId,
         scenario: scenario,
         data: messageData,
