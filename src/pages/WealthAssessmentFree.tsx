@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
@@ -74,7 +74,7 @@ type PageState = "questions" | "result";
 
 export default function WealthAssessmentFreePage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  
   const { user } = useAuth();
   const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
@@ -86,7 +86,7 @@ export default function WealthAssessmentFreePage() {
   // 防止重复处理恢复逻辑
   const resumeHandledRef = useRef(false);
 
-  // ─── 页面加载时：从 sessionStorage 恢复结果状态 ───
+  // ─── 页面加载时：从 sessionStorage 恢复结果状态（仅执行一次） ───
   useEffect(() => {
     if (resumeHandledRef.current) return;
     resumeHandledRef.current = true;
@@ -99,25 +99,43 @@ export default function WealthAssessmentFreePage() {
     setFollowUpInsights(cached.followUp);
     setDeepFollowUpAnswers(cached.deep);
     setPageState("result");
+  }, []);
 
-    // 检查是否是支付恢复场景（登录回跳 or 微信 OAuth 回跳）
+  // ─── 支付恢复：登录回跳 / 微信 OAuth 回跳后自动弹出支付 ───
+  const payResumeHandledRef = useRef(false);
+  useEffect(() => {
+    if (payResumeHandledRef.current) return;
+
+    const url = new URL(window.location.href);
     const isPayResume =
       sessionStorage.getItem(SS_KEY_PAY_RESUME) === '1' ||
-      searchParams.get('payment_resume') === '1';
+      url.searchParams.get('payment_resume') === '1';
 
-    if (isPayResume) {
-      console.log('[WealthFree] Payment resume detected, will auto-trigger pay dialog');
-      setAutoOpenPay(true);
-      // 清理 payment_resume URL 参数（保留 payment_openid 给 UnifiedPayDialog）
-      if (searchParams.get('payment_resume')) {
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('payment_resume');
-        setSearchParams(newParams, { replace: true });
-      }
-      // 清除 sessionStorage 中的支付恢复标记
-      sessionStorage.removeItem(SS_KEY_PAY_RESUME);
+    if (!isPayResume) return;
+
+    payResumeHandledRef.current = true;
+    console.log('[WealthFree] Payment resume detected, will auto-trigger pay dialog');
+
+    // 缓存 openId 以供支付弹窗使用
+    const paymentOpenId = url.searchParams.get('payment_openid');
+    if (paymentOpenId) {
+      sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
     }
-  }, [searchParams, setSearchParams]);
+
+    // 清理 URL 参数，使用 replaceState 避免触发 React 重渲染
+    url.searchParams.delete('payment_resume');
+    url.searchParams.delete('payment_openid');
+    url.searchParams.delete('payment_token_hash');
+    url.searchParams.delete('payment_auth_error');
+    url.searchParams.delete('is_new_user');
+    window.history.replaceState({}, '', url.toString());
+
+    // 清除 sessionStorage 标记
+    sessionStorage.removeItem(SS_KEY_PAY_RESUME);
+    sessionStorage.removeItem('pay_auth_in_progress');
+
+    setAutoOpenPay(true);
+  }, []);
 
   // 完成测评回调 — 直接展示结果，无需付费
   const handleComplete = useCallback((
