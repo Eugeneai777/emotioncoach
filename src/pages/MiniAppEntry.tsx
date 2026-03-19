@@ -387,7 +387,7 @@ const MiniAppEntry = () => {
 
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-4 pb-4">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 overflow-visible">
           {audiences.map((a, i) => {
             const card = (
               <motion.button
@@ -432,13 +432,13 @@ const MiniAppEntry = () => {
             );
 
             return a.badge ? (
-              <div key={a.id} className="relative pt-4">
+              <div key={a.id} className="relative">
                 <button
                   onClick={() => {
                     setPickerAssessments(a.badge!.assessments);
                     setPickerOpen(true);
                   }}
-                  className="absolute top-0 right-0 z-20 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm active:scale-95 transition-transform"
+                  className="absolute -top-2 right-1 z-20 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm active:scale-95 transition-transform"
                 >
                   {a.badge.text}
                 </button>
