@@ -176,10 +176,14 @@ export default function WealthAssessmentLitePage() {
     insights?: FollowUpAnswer[], 
     deepAnswers?: DeepFollowUpAnswer[]
   ) => {
+    const fi = insights || [];
+    const da = deepAnswers || [];
     setCurrentResult(result);
     setCurrentAnswers(answers);
-    if (insights) setFollowUpInsights(insights);
-    if (deepAnswers) setDeepFollowUpAnswers(deepAnswers);
+    setFollowUpInsights(fi);
+    setDeepFollowUpAnswers(da);
+    // 缓存结果到 sessionStorage，供登录/授权回跳后恢复
+    saveResultToSession(result, fi, da);
     
     if (hasPurchased) {
       setPageState("result");
