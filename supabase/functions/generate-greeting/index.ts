@@ -31,9 +31,18 @@ serve(async (req) => {
 
     const timePeriod = localHour < 6 ? '深夜' : localHour < 11 ? '早上' : localHour < 14 ? '中午' : localHour < 18 ? '下午' : '晚上';
 
+    // 未登录用户的时段问候（固定文案，不调用 AI）
+    const anonymousGreetings: Record<string, string> = {
+      '深夜': '夜深了，记得早点休息哦',
+      '早上': '早上好，新的一天开始了',
+      '中午': '中午好，记得好好吃饭哦',
+      '下午': '下午好，今天辛苦了',
+      '晚上': '晚上好，放松一下吧',
+    };
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ greeting: null }), {
+      return new Response(JSON.stringify({ greeting: anonymousGreetings[timePeriod] || '你好呀' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
