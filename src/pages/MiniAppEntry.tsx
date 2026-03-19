@@ -387,7 +387,7 @@ const MiniAppEntry = () => {
 
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-4 pb-4">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 overflow-visible">
           {audiences.map((a, i) => {
             const card = (
               <motion.button
