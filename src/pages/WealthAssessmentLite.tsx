@@ -236,8 +236,9 @@ export default function WealthAssessmentLitePage() {
     if (forCamp) {
       redirectUrl.searchParams.set('camp_pay_resume', '1');
     }
-    setPostAuthRedirect(redirectUrl.pathname + redirectUrl.search);
-    navigate("/auth");
+    const currentPath = redirectUrl.pathname + redirectUrl.search;
+    setPostAuthRedirect(currentPath);
+    navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
     return false;
   }, [user, navigate]);
 
