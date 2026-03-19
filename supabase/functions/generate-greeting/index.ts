@@ -55,7 +55,7 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ greeting: null }), {
+      return new Response(JSON.stringify({ greeting: anonymousGreetings[timePeriod] || '你好呀' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
