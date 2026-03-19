@@ -82,6 +82,8 @@ export default function WealthAssessmentFreePage() {
   const [followUpInsights, setFollowUpInsights] = useState<FollowUpAnswer[]>([]);
   const [deepFollowUpAnswers, setDeepFollowUpAnswers] = useState<DeepFollowUpAnswer[]>([]);
   const [autoOpenPay, setAutoOpenPay] = useState(false);
+  // 微信 OAuth 回跳后缓存的 openId，传递给支付弹窗避免重复授权
+  const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
 
   // 防止重复处理恢复逻辑
   const resumeHandledRef = useRef(false);
