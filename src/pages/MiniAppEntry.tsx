@@ -397,7 +397,7 @@ const MiniAppEntry = () => {
               whileTap={{ scale: 0.93 }}
               onClick={() => navigate(a.route)}
               style={{ transform: "translateZ(0)" }}
-              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200`}
+              className={`relative ${a.badge ? 'overflow-visible' : 'overflow-hidden'} rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200`}
             >
               {/* 顶部高光层 */}
               <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
