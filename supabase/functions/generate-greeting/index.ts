@@ -12,6 +12,25 @@ serve(async (req) => {
   }
 
   try {
+    // 解析请求体获取用户本地时间
+    let localHour: number | null = null;
+    let timezone: string | null = null;
+    try {
+      const body = await req.json();
+      localHour = typeof body.localHour === 'number' ? body.localHour : null;
+      timezone = typeof body.timezone === 'string' ? body.timezone : null;
+    } catch {
+      // body 解析失败，使用 fallback
+    }
+
+    // Fallback: 如果前端未传时间，使用 UTC+8
+    if (localHour === null) {
+      const now = new Date();
+      localHour = (now.getUTCHours() + 8) % 24;
+    }
+
+    const timePeriod = localHour < 6 ? '深夜' : localHour < 12 ? '早上' : localHour < 18 ? '下午' : '晚上';
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ greeting: null }), {
@@ -116,7 +135,10 @@ serve(async (req) => {
 
     // 构建上下文
     const contextParts: string[] = [];
-    
+
+    // 时段信息（始终加入）
+    contextParts.push(`用户当前本地时间: ${localHour}点 (${timePeriod})${timezone ? ` [${timezone}]` : ''}`);
+
     if (userName) {
       contextParts.push(`用户名: ${userName}`);
     }
@@ -154,8 +176,9 @@ serve(async (req) => {
       }
     }
 
-    // 如果没有任何数据，返回 null 让前端使用默认欢迎语
-    if (contextParts.length === 0 || (contextParts.length === 1 && userName)) {
+    // 如果没有任何有意义的数据（只有时段+用户名），返回 null 让前端使用默认欢迎语
+    const meaningfulParts = contextParts.filter(p => !p.startsWith('用户当前本地时间') && !p.startsWith('用户名'));
+    if (meaningfulParts.length === 0) {
       return new Response(JSON.stringify({ greeting: null }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -182,11 +205,12 @@ serve(async (req) => {
 5. 如果有用户名，可以亲切地称呼
 6. 语气自然，像老朋友问候
 7. 只输出欢迎语本身，不要任何解释
+8. **必须匹配用户当前时段**：深夜(0-5点)要关心休息/熬夜，早上(6-11点)可用早安/新的一天，下午(12-17点)用下午好/辛苦了，晚上(18-23点)用晚上好/放松。严禁在非早上时段使用"早起""早安""新的早晨"等早上专属词汇。
 
 示例风格：
 - "嗨小红，最近的阳光好像照进了你心里呢"
 - "看到你记录的那些美好，今天也要好好的哦"
-- "最近在思考很多呢，累了就歇歇吧"`;
+- "这么晚了还没睡，记得早点休息哦"`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
