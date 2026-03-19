@@ -16,6 +16,49 @@ import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/weal
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { BloomInviteCodeEntry } from "@/components/wealth-block/BloomInviteCodeEntry";
 
+// ─── sessionStorage keys for state recovery ───
+const SS_KEY_RESULT = 'wealth_lite_assessment_result';
+const SS_KEY_FOLLOWUP = 'wealth_lite_followup_insights';
+const SS_KEY_DEEP = 'wealth_lite_deep_followup';
+
+function saveResultToSession(
+  result: AssessmentResult,
+  followUp: FollowUpAnswer[],
+  deep: DeepFollowUpAnswer[]
+) {
+  try {
+    sessionStorage.setItem(SS_KEY_RESULT, JSON.stringify(result));
+    sessionStorage.setItem(SS_KEY_FOLLOWUP, JSON.stringify(followUp));
+    sessionStorage.setItem(SS_KEY_DEEP, JSON.stringify(deep));
+  } catch (e) {
+    console.warn('[WealthLite] Failed to save state to sessionStorage:', e);
+  }
+}
+
+function loadResultFromSession(): {
+  result: AssessmentResult;
+  followUp: FollowUpAnswer[];
+  deep: DeepFollowUpAnswer[];
+} | null {
+  try {
+    const raw = sessionStorage.getItem(SS_KEY_RESULT);
+    if (!raw) return null;
+    const result = JSON.parse(raw) as AssessmentResult;
+    const followUp = JSON.parse(sessionStorage.getItem(SS_KEY_FOLLOWUP) || '[]') as FollowUpAnswer[];
+    const deep = JSON.parse(sessionStorage.getItem(SS_KEY_DEEP) || '[]') as DeepFollowUpAnswer[];
+    return { result, followUp, deep };
+  } catch (e) {
+    console.warn('[WealthLite] Failed to load state from sessionStorage:', e);
+    return null;
+  }
+}
+
+function clearResultSession() {
+  sessionStorage.removeItem(SS_KEY_RESULT);
+  sessionStorage.removeItem(SS_KEY_FOLLOWUP);
+  sessionStorage.removeItem(SS_KEY_DEEP);
+}
+
 type PageState = "questions" | "result";
 
 export default function WealthAssessmentLitePage() {
@@ -32,6 +75,22 @@ export default function WealthAssessmentLitePage() {
   const { data: purchaseRecord, refetch: refetchPurchase, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
   const payResumeHandledRef = useRef(false);
+  const resumeHandledRef = useRef(false);
+
+  // ─── 页面加载时：从 sessionStorage 恢复结果状态 ───
+  useEffect(() => {
+    if (resumeHandledRef.current) return;
+    resumeHandledRef.current = true;
+
+    const cached = loadResultFromSession();
+    if (!cached) return;
+
+    console.log('[WealthLite] Restoring assessment result from sessionStorage');
+    setCurrentResult(cached.result);
+    setFollowUpInsights(cached.followUp);
+    setDeepFollowUpAnswers(cached.deep);
+    setPageState("result");
+  }, []);
 
   // 微信 OAuth 回调 / 登录后恢复支付弹窗（等待购买状态查询完成后再决定）
   useEffect(() => {
