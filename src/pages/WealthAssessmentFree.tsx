@@ -74,7 +74,7 @@ type PageState = "questions" | "result";
 
 export default function WealthAssessmentFreePage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  
   const { user } = useAuth();
   const [pageState, setPageState] = useState<PageState>("questions");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
