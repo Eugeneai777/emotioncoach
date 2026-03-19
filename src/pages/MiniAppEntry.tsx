@@ -388,60 +388,66 @@ const MiniAppEntry = () => {
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-4 pb-4">
         <div className="grid grid-cols-3 gap-2">
-          {audiences.map((a, i) => (
-            <motion.button
-              key={a.id}
-              initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-              whileTap={{ scale: 0.93 }}
-              onClick={() => navigate(a.route)}
-              style={{ transform: "translateZ(0)" }}
-              className={`relative ${a.badge ? 'overflow-visible' : 'overflow-hidden'} rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200`}
-            >
-              {/* 顶部高光层 */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
-              {/* 右侧插画或 emoji 水印 fallback */}
-              {illustrations[a.id] ? (
-                <img
-                  src={illustrations[a.id]}
-                  alt=""
-                  className="absolute -right-2 -top-2 w-20 h-20 object-cover opacity-30 pointer-events-none select-none rounded-full"
-                  loading="lazy"
-                />
-              ) : (
-                <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
-              )}
-              {/* 图标容器 */}
-              <div className={`relative z-10 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${illustrations[a.id] ? 'border-2 border-white/40 shadow-md' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
+          {audiences.map((a, i) => {
+            const card = (
+              <motion.button
+                key={a.id}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+                whileTap={{ scale: 0.93 }}
+                onClick={() => navigate(a.route)}
+                style={{ transform: "translateZ(0)" }}
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200 w-full`}
+              >
+                {/* 顶部高光层 */}
+                <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
+                {/* 右侧插画或 emoji 水印 fallback */}
                 {illustrations[a.id] ? (
-                  <img src={illustrations[a.id]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
+                  <img
+                    src={illustrations[a.id]}
+                    alt=""
+                    className="absolute -right-2 -top-2 w-20 h-20 object-cover opacity-30 pointer-events-none select-none rounded-full"
+                    loading="lazy"
+                  />
                 ) : (
-                  <span className="text-lg">{a.emoji}</span>
+                  <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
                 )}
-              </div>
-              {/* 文字区 */}
-              <div className="relative z-10 mt-auto">
-                <h3 className="text-[15px] font-extrabold text-white leading-tight tracking-wide">{a.label}</h3>
-                <p className="text-[10px] text-white/80 mt-0.5 leading-tight tracking-wider line-clamp-1">{a.subtitle}</p>
-              </div>
-              {/* 按压反馈层 */}
-              <div className="absolute inset-0 bg-white/0 active:bg-white/10 transition-colors duration-150 pointer-events-none" />
-              {/* ¥9.9 测评角标 */}
-              {a.badge && (
+                {/* 图标容器 */}
+                <div className={`relative z-10 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${illustrations[a.id] ? 'border-2 border-white/40 shadow-md' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
+                  {illustrations[a.id] ? (
+                    <img src={illustrations[a.id]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
+                  ) : (
+                    <span className="text-lg">{a.emoji}</span>
+                  )}
+                </div>
+                {/* 文字区 */}
+                <div className="relative z-10 mt-auto">
+                  <h3 className="text-[15px] font-extrabold text-white leading-tight tracking-wide">{a.label}</h3>
+                  <p className="text-[10px] text-white/80 mt-0.5 leading-tight tracking-wider line-clamp-1">{a.subtitle}</p>
+                </div>
+                {/* 按压反馈层 */}
+                <div className="absolute inset-0 bg-white/0 active:bg-white/10 transition-colors duration-150 pointer-events-none" />
+              </motion.button>
+            );
+
+            return a.badge ? (
+              <div key={a.id} className="relative pt-4">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     setPickerAssessments(a.badge!.assessments);
                     setPickerOpen(true);
                   }}
-                  className="absolute -top-2 -right-2 z-20 bg-orange-500 rounded-full px-2 py-0.5 shadow-lg active:scale-95 transition-transform"
+                  className="absolute top-0 right-0 z-20 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm active:scale-95 transition-transform"
                 >
-                  <span className="text-[10px] font-bold text-white">{a.badge.text}</span>
+                  {a.badge.text}
                 </button>
-              )}
-            </motion.button>
-          ))}
+                {card}
+              </div>
+            ) : (
+              <div key={a.id}>{card}</div>
+            );
+          })}
         </div>
       </div>
 
