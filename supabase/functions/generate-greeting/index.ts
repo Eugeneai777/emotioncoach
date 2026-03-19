@@ -31,9 +31,18 @@ serve(async (req) => {
 
     const timePeriod = localHour < 6 ? '深夜' : localHour < 11 ? '早上' : localHour < 14 ? '中午' : localHour < 18 ? '下午' : '晚上';
 
+    // 未登录用户的时段问候（固定文案，不调用 AI）
+    const anonymousGreetings: Record<string, string> = {
+      '深夜': '夜深了，记得早点休息哦',
+      '早上': '早上好，新的一天开始了',
+      '中午': '中午好，记得好好吃饭哦',
+      '下午': '下午好，今天辛苦了',
+      '晚上': '晚上好，放松一下吧',
+    };
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ greeting: null }), {
+      return new Response(JSON.stringify({ greeting: anonymousGreetings[timePeriod] || '你好呀' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -46,7 +55,7 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ greeting: null }), {
+      return new Response(JSON.stringify({ greeting: anonymousGreetings[timePeriod] || '你好呀' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -176,13 +185,7 @@ serve(async (req) => {
       }
     }
 
-    // 如果没有任何有意义的数据（只有时段+用户名），返回 null 让前端使用默认欢迎语
-    const meaningfulParts = contextParts.filter(p => !p.startsWith('用户当前本地时间') && !p.startsWith('用户名'));
-    if (meaningfulParts.length === 0) {
-      return new Response(JSON.stringify({ greeting: null }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // 即使只有时段+用户名，也让 AI 生成个性化问候（比通用语好得多）
 
     const userContext = contextParts.join('\n');
 
