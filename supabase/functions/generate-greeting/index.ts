@@ -29,7 +29,7 @@ serve(async (req) => {
       localHour = (now.getUTCHours() + 8) % 24;
     }
 
-    const timePeriod = localHour < 6 ? '深夜' : localHour < 12 ? '早上' : localHour < 18 ? '下午' : '晚上';
+    const timePeriod = localHour < 6 ? '深夜' : localHour < 11 ? '早上' : localHour < 14 ? '中午' : localHour < 18 ? '下午' : '晚上';
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
