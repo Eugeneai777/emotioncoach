@@ -130,8 +130,8 @@ const useCases = [
   },
   {
     icon: TrendingUp,
-    title: "想要成长时",
-    desc: "AI教练陪你一步步觉察、记录、突破，见证你的每一个进步。",
+    title: "财富渴望时",
+    desc: "总觉得赚得不少却存不下来？AI帮你找到财富卡点，打通金钱信念。",
     illustrationKey: "scene_growth",
     iconColor: "text-emerald-300",
     iconBg: "bg-emerald-500/20",
