@@ -130,8 +130,8 @@ const useCases = [
   },
   {
     icon: TrendingUp,
-    title: "想要成长时",
-    desc: "AI教练陪你一步步觉察、记录、突破，见证你的每一个进步。",
+    title: "财富渴望时",
+    desc: "总觉得赚得不少却存不下来？AI帮你找到财富卡点，打通金钱信念。",
     illustrationKey: "scene_growth",
     iconColor: "text-emerald-300",
     iconBg: "bg-emerald-500/20",
@@ -397,7 +397,7 @@ const MiniAppEntry = () => {
               whileTap={{ scale: 0.93 }}
               onClick={() => navigate(a.route)}
               style={{ transform: "translateZ(0)" }}
-              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200`}
+              className={`relative ${a.badge ? 'overflow-visible' : 'overflow-hidden'} rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200`}
             >
               {/* 顶部高光层 */}
               <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
@@ -435,9 +435,9 @@ const MiniAppEntry = () => {
                     setPickerAssessments(a.badge!.assessments);
                     setPickerOpen(true);
                   }}
-                  className="absolute bottom-1.5 right-1.5 z-20 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-md active:scale-95 transition-transform animate-pulse"
+                  className="absolute -top-2 -right-2 z-20 bg-orange-500 rounded-full px-2 py-0.5 shadow-lg active:scale-95 transition-transform"
                 >
-                  <span className="text-[10px] font-bold text-orange-600">{a.badge.text}</span>
+                  <span className="text-[10px] font-bold text-white">{a.badge.text}</span>
                 </button>
               )}
             </motion.button>
