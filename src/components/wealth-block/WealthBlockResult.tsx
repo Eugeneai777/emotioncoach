@@ -75,9 +75,11 @@ interface WealthBlockResultProps {
   onAuthRequired?: (forCamp?: boolean) => boolean;
   /** 登录/OAuth 返回后自动打开支付弹窗 */
   autoOpenPay?: boolean;
+  /** 微信 OAuth 回跳后缓存的 openId，传递给支付弹窗避免重复授权 */
+  resumedOpenId?: string;
 }
 
-export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired, autoOpenPay }: WealthBlockResultProps) {
+export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved, onAiInsightReady, onAuthRequired, autoOpenPay, resumedOpenId }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { trackEvent } = useWealthCampAnalytics();
