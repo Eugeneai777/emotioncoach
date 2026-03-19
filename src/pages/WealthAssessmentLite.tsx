@@ -129,6 +129,9 @@ export default function WealthAssessmentLitePage() {
     // 缓存 openId 以供支付弹窗使用
     if (paymentOpenId) {
       sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+      // 🔧 同时写入 WechatPayDialog 使用的缓存 key，避免 key 不匹配导致循环授权
+      localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
     }
 
     // 清理 URL 参数，避免重复触发
