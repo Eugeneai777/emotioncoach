@@ -185,13 +185,7 @@ serve(async (req) => {
       }
     }
 
-    // 如果没有任何有意义的数据（只有时段+用户名），返回 null 让前端使用默认欢迎语
-    const meaningfulParts = contextParts.filter(p => !p.startsWith('用户当前本地时间') && !p.startsWith('用户名'));
-    if (meaningfulParts.length === 0) {
-      return new Response(JSON.stringify({ greeting: null }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // 即使只有时段+用户名，也让 AI 生成个性化问候（比通用语好得多）
 
     const userContext = contextParts.join('\n');
 
