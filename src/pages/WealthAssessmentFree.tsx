@@ -214,6 +214,7 @@ export default function WealthAssessmentFreePage() {
           onRetake={handleRetake}
           onAuthRequired={handleAuthRequired}
           autoOpenPay={autoOpenPay}
+          resumedOpenId={resumedOpenId}
         />
       )}
       {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}
