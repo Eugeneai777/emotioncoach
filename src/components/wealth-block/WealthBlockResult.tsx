@@ -745,6 +745,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
 
         {/* 微信支付对话框 */}
         <UnifiedPayDialog
+          openId={resumedOpenId}
           open={showPayDialog}
           onOpenChange={(open) => {
             setShowPayDialog(open);
