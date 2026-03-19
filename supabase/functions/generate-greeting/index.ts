@@ -135,8 +135,10 @@ serve(async (req) => {
 
     // 构建上下文
     const contextParts: string[] = [];
+
+    // 时段信息（始终加入）
+    contextParts.push(`用户当前本地时间: ${localHour}点 (${timePeriod})${timezone ? ` [${timezone}]` : ''}`);
     
-    if (userName) {
       contextParts.push(`用户名: ${userName}`);
     }
 
