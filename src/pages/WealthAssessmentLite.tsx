@@ -221,6 +221,7 @@ export default function WealthAssessmentLitePage() {
     setFollowUpInsights([]);
     setDeepFollowUpAnswers([]);
     setPageState("questions");
+    clearResultSession();
   }, []);
 
   // 退出测评 - 重新开始答题
