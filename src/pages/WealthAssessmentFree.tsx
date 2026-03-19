@@ -159,8 +159,10 @@ export default function WealthAssessmentFreePage() {
     toast.info("请先登录后再购买训练营");
     // 标记支付恢复，登录后自动回到结果页
     sessionStorage.setItem(SS_KEY_PAY_RESUME, '1');
-    setPostAuthRedirect(window.location.pathname + window.location.search);
-    navigate("/auth");
+    const currentPath = window.location.pathname + window.location.search;
+    setPostAuthRedirect(currentPath);
+    // 同时通过 ?redirect= 传递，确保 Auth 页面在所有场景下都能正确回跳
+    navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
     return false;
   }, [user, navigate]);
 
