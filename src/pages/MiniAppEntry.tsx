@@ -33,7 +33,7 @@ const audiences: Array<{
   { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "爱需要被听见", route: "/us-ai", gradient: "from-purple-500 to-violet-400", badge: null },
   { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400", badge: null },
   { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400", badge: {
-    text: "🔍 测一测",
+    text: "测一测",
     assessments: [
       { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "限时¥9.9" },
       { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "专业版" },
