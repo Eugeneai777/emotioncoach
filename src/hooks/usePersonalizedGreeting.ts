@@ -5,7 +5,12 @@ const DEFAULT_GREETING = "嗨，今天感觉怎么样？";
 
 const fetchPersonalizedGreeting = async (): Promise<string> => {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-greeting');
+    const localHour = new Date().getHours();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const { data, error } = await supabase.functions.invoke('generate-greeting', {
+      body: { localHour, timezone },
+    });
     
     if (error) {
       console.error("Error fetching greeting:", error);

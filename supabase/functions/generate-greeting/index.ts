@@ -12,6 +12,25 @@ serve(async (req) => {
   }
 
   try {
+    // 解析请求体获取用户本地时间
+    let localHour: number | null = null;
+    let timezone: string | null = null;
+    try {
+      const body = await req.json();
+      localHour = typeof body.localHour === 'number' ? body.localHour : null;
+      timezone = typeof body.timezone === 'string' ? body.timezone : null;
+    } catch {
+      // body 解析失败，使用 fallback
+    }
+
+    // Fallback: 如果前端未传时间，使用 UTC+8
+    if (localHour === null) {
+      const now = new Date();
+      localHour = (now.getUTCHours() + 8) % 24;
+    }
+
+    const timePeriod = localHour < 6 ? '深夜' : localHour < 12 ? '早上' : localHour < 18 ? '下午' : '晚上';
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ greeting: null }), {
