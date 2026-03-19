@@ -435,9 +435,9 @@ const MiniAppEntry = () => {
                     setPickerAssessments(a.badge!.assessments);
                     setPickerOpen(true);
                   }}
-                  className="absolute bottom-1.5 right-1.5 z-20 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-md active:scale-95 transition-transform animate-pulse"
+                  className="absolute -top-2 -right-2 z-20 bg-orange-500 rounded-full px-2 py-0.5 shadow-lg active:scale-95 transition-transform"
                 >
-                  <span className="text-[10px] font-bold text-orange-600">{a.badge.text}</span>
+                  <span className="text-[10px] font-bold text-white">{a.badge.text}</span>
                 </button>
               )}
             </motion.button>
