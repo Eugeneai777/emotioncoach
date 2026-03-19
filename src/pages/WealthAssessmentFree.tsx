@@ -82,6 +82,8 @@ export default function WealthAssessmentFreePage() {
   const [followUpInsights, setFollowUpInsights] = useState<FollowUpAnswer[]>([]);
   const [deepFollowUpAnswers, setDeepFollowUpAnswers] = useState<DeepFollowUpAnswer[]>([]);
   const [autoOpenPay, setAutoOpenPay] = useState(false);
+  // 微信 OAuth 回跳后缓存的 openId，传递给支付弹窗避免重复授权
+  const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
 
   // 防止重复处理恢复逻辑
   const resumeHandledRef = useRef(false);
@@ -120,6 +122,10 @@ export default function WealthAssessmentFreePage() {
     const paymentOpenId = url.searchParams.get('payment_openid');
     if (paymentOpenId) {
       sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+      // 🔧 同时写入 WechatPayDialog 使用的缓存 key，避免 key 不匹配导致循环授权
+      localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      setResumedOpenId(paymentOpenId);
     }
 
     // 清理 URL 参数，使用 replaceState 避免触发 React 重渲染
@@ -208,6 +214,7 @@ export default function WealthAssessmentFreePage() {
           onRetake={handleRetake}
           onAuthRequired={handleAuthRequired}
           autoOpenPay={autoOpenPay}
+          resumedOpenId={resumedOpenId}
         />
       )}
       {/* 公司信息和ICP备案 — 参考 LiteFooter 样式 */}
