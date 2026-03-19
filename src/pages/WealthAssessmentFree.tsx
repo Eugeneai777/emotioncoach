@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
