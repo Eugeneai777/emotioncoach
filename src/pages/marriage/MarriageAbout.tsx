@@ -6,6 +6,14 @@ import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
 import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 import { Badge } from "@/components/ui/badge";
+import teamGao from "@/assets/team-gao.png";
+import teamHehua from "@/assets/team-hehua.png";
+import teamMi from "@/assets/team-mi.png";
+import teamZhoujin from "@/assets/team-zhoujin.png";
+import teamXiangli from "@/assets/team-xiangli.png";
+import teamAnyi from "@/assets/team-anyi.png";
+import teamZhoulang from "@/assets/team-zhoulang.png";
+import teamAnran from "@/assets/team-anran.png";
 
 const timeline = [
   { year: "2004", event: "创立婚因有道，开始深耕婚姻家庭服务领域", icon: Heart },
@@ -55,14 +63,14 @@ const mediaReports: Record<MediaCategory, { title: string; date: string; summary
 };
 
 const faculty = [
-  { name: "高牵牛", title: "首席专家", tags: ["中科院心理所博士研究生", "婚姻家庭咨询师"] },
-  { name: "米老师", title: "核心专家", tags: ["心理学大会现场专家"] },
-  { name: "何华", title: "执行院长", tags: ["中科院心理所博士研究生"] },
-  { name: "周瑾", title: "讲师 / 法律顾问", tags: ["法律咨询", "婚姻法务"] },
-  { name: "祥丽", title: "高级咨询师", tags: ["北大心理学学士"] },
-  { name: "安逸", title: "高级导师", tags: ["河南卫视特约嘉宾"] },
-  { name: "周浪", title: "咨询师", tags: ["婚姻咨询1000+小时"] },
-  { name: "安然", title: "高级咨询师", tags: ["资深从业者"] },
+  { name: "高牵牛", title: "首席专家", tags: ["中科院心理所博士研究生", "婚姻家庭咨询师"], avatar: teamGao },
+  { name: "米老师", title: "核心专家", tags: ["心理学大会现场专家"], avatar: teamMi },
+  { name: "何华", title: "执行院长", tags: ["中科院心理所博士研究生"], avatar: teamHehua },
+  { name: "周瑾", title: "讲师 / 法律顾问", tags: ["法律咨询", "婚姻法务"], avatar: teamZhoujin },
+  { name: "祥丽", title: "高级咨询师", tags: ["北大心理学学士"], avatar: teamXiangli },
+  { name: "安逸", title: "高级导师", tags: ["河南卫视特约嘉宾"], avatar: teamAnyi },
+  { name: "周浪", title: "咨询师", tags: ["婚姻咨询1000+小时"], avatar: teamZhoulang },
+  { name: "安然", title: "高级咨询师", tags: ["资深从业者"], avatar: teamAnran },
 ];
 
 const trainingStages = [
@@ -234,9 +242,7 @@ const MarriageAbout: React.FC = () => {
                   transition={{ delay: i * 0.06 }}
                   className="bg-white rounded-xl p-3.5 border border-marriage-border shadow-sm"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-marriage-primary/20 to-marriage-primary/5 flex items-center justify-center mb-2">
-                    <span className="text-sm font-bold text-marriage-primary">{f.name[0]}</span>
-                  </div>
+                  <img src={f.avatar} alt={f.name} className="w-10 h-10 rounded-full object-cover mb-2" />
                   <h3 className="text-sm font-bold text-foreground">{f.name}</h3>
                   <p className="text-[11px] text-marriage-primary mb-2">{f.title}</p>
                   <div className="flex flex-wrap gap-1">
