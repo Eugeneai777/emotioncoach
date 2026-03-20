@@ -23,17 +23,17 @@ export const MarriageHero: React.FC = () => {
         >
           <div className="inline-flex items-center gap-1.5 bg-marriage-primary/10 text-marriage-primary px-3 py-1 rounded-full text-xs font-medium">
             <Heart className="h-3.5 w-3.5" />
-            婚因有道 · 专业婚姻家庭服务
+            婚姻全生命周期服务生态平台
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
-            你的婚姻，<br />现在处于什么状态？
+            让每一对夫妻<br />享受婚姻之旅
           </h1>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
-            3分钟AI测评，<br />
-            帮助你更早看见关系问题，<br />
-            找到更适合的修复方向。
+            深耕婚姻家庭服务20年，<br />
+            结合AI测评与专业咨询，<br />
+            助力幸福中国。
           </p>
 
           <div className="flex flex-col gap-3 pt-2">
