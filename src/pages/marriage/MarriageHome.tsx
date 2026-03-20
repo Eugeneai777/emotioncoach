@@ -6,6 +6,8 @@ import { MarriagePainPoints } from "@/components/marriage/MarriagePainPoints";
 import { MarriageAssessmentCards } from "@/components/marriage/MarriageAssessmentCards";
 import { MarriageAIToolCards } from "@/components/marriage/MarriageAIToolCards";
 import { MarriageWhyUs } from "@/components/marriage/MarriageWhyUs";
+import { MarriageMission } from "@/components/marriage/MarriageMission";
+import { MarriageTeam } from "@/components/marriage/MarriageTeam";
 import { MarriageSteps } from "@/components/marriage/MarriageSteps";
 import { MarriageCTA } from "@/components/marriage/MarriageCTA";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
@@ -14,8 +16,8 @@ const MarriageHome: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>婚因有道 - AI婚姻关系测评与修复</title>
-        <meta name="description" content="婚因有道深耕婚姻家庭服务20年，结合AI测评与专业咨询，帮助夫妻更早发现问题、更有效修复关系。" />
+        <title>婚因有道 - 婚姻全生命周期服务生态平台</title>
+        <meta name="description" content="婚因有道深耕婚姻家庭服务20年，结合AI+大数据技术，让每一对夫妻享受婚姻之旅，助力幸福中国。" />
       </Helmet>
       <div className="min-h-screen bg-white">
         <MarriageHero />
@@ -23,6 +25,8 @@ const MarriageHome: React.FC = () => {
         <MarriageAssessmentCards />
         <MarriageAIToolCards />
         <MarriageWhyUs />
+        <MarriageMission />
+        <MarriageTeam />
         <MarriageSteps />
         <MarriageCTA />
         <MarriageFooter />
