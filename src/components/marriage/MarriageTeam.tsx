@@ -1,11 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import teamGao from "@/assets/team-gao.png";
+import teamHehua from "@/assets/team-hehua.png";
+import teamMi from "@/assets/team-mi.png";
 
 const team = [
-  { name: "高牵牛", title: "婚因有道学苑首席专家", fallback: "高" },
-  { name: "何华", title: "婚因有道学苑执行院长", fallback: "何" },
-  { name: "米老师", title: "婚因有道核心专家", fallback: "米" },
+  { name: "高牵牛", title: "婚因有道学苑首席专家", fallback: "高", avatar: teamGao },
+  { name: "何华", title: "婚因有道学苑执行院长", fallback: "何", avatar: teamHehua },
+  { name: "米老师", title: "婚因有道核心专家", fallback: "米", avatar: teamMi },
 ];
 
 export const MarriageTeam: React.FC = () => {
@@ -26,6 +29,7 @@ export const MarriageTeam: React.FC = () => {
               className="bg-white rounded-xl p-5 border border-marriage-border shadow-sm text-center"
             >
               <Avatar className="w-14 h-14 mx-auto mb-3">
+                <AvatarImage src={member.avatar} alt={member.name} />
                 <AvatarFallback className="bg-marriage-primary/10 text-marriage-primary text-lg font-bold">
                   {member.fallback}
                 </AvatarFallback>
