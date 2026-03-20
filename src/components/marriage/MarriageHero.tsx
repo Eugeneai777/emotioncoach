@@ -61,9 +61,9 @@ export const MarriageHero: React.FC = () => {
           className="mt-8 grid grid-cols-3 gap-3"
         >
           {[
-            { icon: Shield, text: "20年婚姻家庭服务经验" },
-            { icon: Users, text: "专业机构背景" },
-            { icon: Heart, text: "全国咨询服务网络" },
+            { icon: Shield, text: "专业深耕20年" },
+            { icon: Users, text: "AI+大数据驱动" },
+            { icon: Heart, text: "政府认证供应商" },
           ].map((item, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5 text-center">
               <div className="w-9 h-9 rounded-full bg-marriage-primary/10 flex items-center justify-center">

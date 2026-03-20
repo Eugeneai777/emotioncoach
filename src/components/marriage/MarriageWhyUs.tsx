@@ -1,12 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Award, BookOpen, FileCheck, MapPin } from "lucide-react";
+import { Award, Cpu, Building2, MapPin } from "lucide-react";
 
 const advantages = [
-  { icon: Award, title: "婚姻情感领域深耕20年", color: "bg-purple-100 text-marriage-primary" },
-  { icon: FileCheck, title: "参与婚姻家庭服务行业标准相关工作", color: "bg-blue-100 text-blue-600" },
-  { icon: BookOpen, title: "参与婚姻家庭咨询师国家标准修订工作", color: "bg-emerald-100 text-emerald-600" },
-  { icon: MapPin, title: "咨询服务网络覆盖全国34个省市", color: "bg-amber-100 text-amber-600" },
+  { icon: Award, title: "婚姻情感领域专业深耕20年", color: "bg-purple-100 text-marriage-primary" },
+  { icon: Cpu, title: "大数据及人工智能技术支撑", color: "bg-blue-100 text-blue-600" },
+  { icon: Building2, title: "政府认证供应商，知名企业战略合作伙伴", color: "bg-emerald-100 text-emerald-600" },
+  { icon: MapPin, title: "遍及全国的咨询师队伍", color: "bg-amber-100 text-amber-600" },
 ];
 
 export const MarriageWhyUs: React.FC = () => {
