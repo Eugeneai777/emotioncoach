@@ -6,6 +6,14 @@ import { MarriageNav } from "@/components/marriage/MarriageNav";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
 import { MarriageBackButton } from "@/components/marriage/MarriageBackButton";
 import { Badge } from "@/components/ui/badge";
+import teamGao from "@/assets/team-gao.png";
+import teamHehua from "@/assets/team-hehua.png";
+import teamMi from "@/assets/team-mi.png";
+import teamZhoujin from "@/assets/team-zhoujin.png";
+import teamXiangli from "@/assets/team-xiangli.png";
+import teamAnyi from "@/assets/team-anyi.png";
+import teamZhoulang from "@/assets/team-zhoulang.png";
+import teamAnran from "@/assets/team-anran.png";
 
 const timeline = [
   { year: "2004", event: "创立婚因有道，开始深耕婚姻家庭服务领域", icon: Heart },
