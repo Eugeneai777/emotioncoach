@@ -63,14 +63,14 @@ const mediaReports: Record<MediaCategory, { title: string; date: string; summary
 };
 
 const faculty = [
-  { name: "高牵牛", title: "首席专家", tags: ["中科院心理所博士研究生", "婚姻家庭咨询师"] },
-  { name: "米老师", title: "核心专家", tags: ["心理学大会现场专家"] },
-  { name: "何华", title: "执行院长", tags: ["中科院心理所博士研究生"] },
-  { name: "周瑾", title: "讲师 / 法律顾问", tags: ["法律咨询", "婚姻法务"] },
-  { name: "祥丽", title: "高级咨询师", tags: ["北大心理学学士"] },
-  { name: "安逸", title: "高级导师", tags: ["河南卫视特约嘉宾"] },
-  { name: "周浪", title: "咨询师", tags: ["婚姻咨询1000+小时"] },
-  { name: "安然", title: "高级咨询师", tags: ["资深从业者"] },
+  { name: "高牵牛", title: "首席专家", tags: ["中科院心理所博士研究生", "婚姻家庭咨询师"], avatar: teamGao },
+  { name: "米老师", title: "核心专家", tags: ["心理学大会现场专家"], avatar: teamMi },
+  { name: "何华", title: "执行院长", tags: ["中科院心理所博士研究生"], avatar: teamHehua },
+  { name: "周瑾", title: "讲师 / 法律顾问", tags: ["法律咨询", "婚姻法务"], avatar: teamZhoujin },
+  { name: "祥丽", title: "高级咨询师", tags: ["北大心理学学士"], avatar: teamXiangli },
+  { name: "安逸", title: "高级导师", tags: ["河南卫视特约嘉宾"], avatar: teamAnyi },
+  { name: "周浪", title: "咨询师", tags: ["婚姻咨询1000+小时"], avatar: teamZhoulang },
+  { name: "安然", title: "高级咨询师", tags: ["资深从业者"], avatar: teamAnran },
 ];
 
 const trainingStages = [
