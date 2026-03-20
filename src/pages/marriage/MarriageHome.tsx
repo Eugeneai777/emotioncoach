@@ -8,6 +8,7 @@ import { MarriageAIToolCards } from "@/components/marriage/MarriageAIToolCards";
 import { MarriageWhyUs } from "@/components/marriage/MarriageWhyUs";
 import { MarriageMission } from "@/components/marriage/MarriageMission";
 import { MarriageTeam } from "@/components/marriage/MarriageTeam";
+import { MarriageNews } from "@/components/marriage/MarriageNews";
 import { MarriageSteps } from "@/components/marriage/MarriageSteps";
 import { MarriageCTA } from "@/components/marriage/MarriageCTA";
 import { MarriageFooter } from "@/components/marriage/MarriageFooter";
