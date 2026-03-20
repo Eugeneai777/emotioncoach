@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const team = [
   { name: "高牵牛", title: "婚因有道学苑首席专家", fallback: "高" },
   { name: "何华", title: "婚因有道学苑执行院长", fallback: "何" },
+  { name: "米老师", title: "婚因有道核心专家", fallback: "米" },
 ];
 
 export const MarriageTeam: React.FC = () => {
@@ -14,7 +15,7 @@ export const MarriageTeam: React.FC = () => {
         <h2 className="text-lg font-bold text-foreground text-center mb-5">
           核心团队
         </h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {team.map((member, i) => (
             <motion.div
               key={i}
