@@ -15,7 +15,7 @@ export const MarriageTeam: React.FC = () => {
         <h2 className="text-lg font-bold text-foreground text-center mb-5">
           核心团队
         </h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {team.map((member, i) => (
             <motion.div
               key={i}

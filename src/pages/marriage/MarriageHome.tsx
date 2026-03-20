@@ -28,6 +28,7 @@ const MarriageHome: React.FC = () => {
         <MarriageWhyUs />
         <MarriageMission />
         <MarriageTeam />
+        <MarriageNews />
         <MarriageSteps />
         <MarriageCTA />
         <MarriageFooter />
