@@ -242,9 +242,7 @@ const MarriageAbout: React.FC = () => {
                   transition={{ delay: i * 0.06 }}
                   className="bg-white rounded-xl p-3.5 border border-marriage-border shadow-sm"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-marriage-primary/20 to-marriage-primary/5 flex items-center justify-center mb-2">
-                    <span className="text-sm font-bold text-marriage-primary">{f.name[0]}</span>
-                  </div>
+                  <img src={f.avatar} alt={f.name} className="w-10 h-10 rounded-full object-cover mb-2" />
                   <h3 className="text-sm font-bold text-foreground">{f.name}</h3>
                   <p className="text-[11px] text-marriage-primary mb-2">{f.title}</p>
                   <div className="flex flex-wrap gap-1">
