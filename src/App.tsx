@@ -145,6 +145,7 @@ const AliveCheckLite = lazyRetry(() => import("./pages/AliveCheckLite"));
 const AliveCheckIntro = lazyRetry(() => import("./pages/AliveCheckIntro"));
 const SCL90Page = lazyRetry(() => import("./pages/SCL90Page"));
 const SCL90Lite = lazyRetry(() => import("./pages/SCL90Lite"));
+const SCL90Free = lazyRetry(() => import("./pages/SCL90Free"));
 const EmotionHealthPage = lazyRetry(() => import("./pages/EmotionHealthPage"));
 const EmotionHealthLite = lazyRetry(() => import("./pages/EmotionHealthLite"));
 const AssessmentCoachPage = lazyRetry(() => import("./pages/AssessmentCoachPage"));
@@ -403,6 +404,7 @@ const App = () => (
               <Route path="/alive-check-intro" element={<AliveCheckIntro />} />
 <Route path="/scl90" element={<SCL90Page />} />
               <Route path="/scl90-lite" element={<SCL90Lite />} />
+              <Route path="/scl90-free" element={<SCL90Free />} />
               <Route path="/emotion-health" element={<EmotionHealthPage />} />
               <Route path="/emotion-health-lite" element={<EmotionHealthLite />} />
               <Route path="/assessment-coach" element={<AssessmentCoachPage />} />
