@@ -37,6 +37,7 @@ interface StartCampDialogProps {
 
 export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, isPurchased }: StartCampDialogProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
