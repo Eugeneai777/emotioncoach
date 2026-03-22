@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,7 @@ interface StartCampDialogProps {
 
 export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, isPurchased }: StartCampDialogProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
@@ -93,6 +95,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
                 onClick={() => {
                   if (!user) {
                     onOpenChange(false);
+                    setPostAuthRedirect(location.pathname + location.search);
                     navigate('/auth');
                     return;
                   }
