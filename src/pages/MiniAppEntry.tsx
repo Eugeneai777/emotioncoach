@@ -106,7 +106,7 @@ const useCases = [
     iconColor: "text-indigo-300",
     iconBg: "bg-indigo-500/20",
     accent: "border-l-indigo-400",
-    bg: "bg-gradient-to-r from-indigo-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-indigo-500/6 to-transparent",
   },
   {
     icon: Briefcase,
@@ -116,7 +116,7 @@ const useCases = [
     iconColor: "text-amber-300",
     iconBg: "bg-amber-500/20",
     accent: "border-l-amber-400",
-    bg: "bg-gradient-to-r from-amber-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-amber-500/6 to-transparent",
   },
   {
     icon: Heart,
@@ -126,7 +126,7 @@ const useCases = [
     iconColor: "text-rose-300",
     iconBg: "bg-rose-500/20",
     accent: "border-l-rose-400",
-    bg: "bg-gradient-to-r from-rose-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-rose-500/6 to-transparent",
   },
   {
     icon: TrendingUp,
@@ -136,7 +136,7 @@ const useCases = [
     iconColor: "text-emerald-300",
     iconBg: "bg-emerald-500/20",
     accent: "border-l-emerald-400",
-    bg: "bg-gradient-to-r from-emerald-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-emerald-500/6 to-transparent",
   },
 ];
 
@@ -256,12 +256,7 @@ const PromoBanner: React.FC<{
               key={slide.id}
               onClick={() => handleSlideClick(slide)}
               className={`relative flex-[0_0_100%] min-w-0 h-[140px] sm:h-[150px] rounded-2xl bg-gradient-to-br ${slide.gradient} flex flex-col items-center justify-center text-center overflow-hidden active:scale-[0.98] transition-transform`}
-            >
-              {/* 装饰圆 */}
-              <div className="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
-              <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
-              {/* 装饰 emoji */}
-              <span className="absolute left-3 bottom-2 text-4xl opacity-15 pointer-events-none select-none">{slide.emoji}</span>
+>
               {/* 内容区 */}
               <div className="relative z-10 flex flex-col items-center gap-1.5">
                 <span className="px-2.5 py-0.5 rounded-full bg-white/25 text-[10px] font-medium text-white/90 tracking-wide">
@@ -394,14 +389,12 @@ const MiniAppEntry = () => {
                 key={a.id}
                 initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+                transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.02, type: "spring", stiffness: 300, damping: 25 }}
                 whileTap={{ scale: 0.93 }}
                 onClick={() => navigate(a.route)}
                 style={{ transform: "translateZ(0)" }}
-                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-lg active:shadow-inner hover:-translate-y-0.5 transition-all duration-200 w-full`}
+                className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-md active:shadow-inner hover:-translate-y-0.5 transition-all duration-200 w-full`}
               >
-                {/* 顶部高光层 */}
-                <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-black/5 pointer-events-none" />
                 {/* 右侧插画或 emoji 水印 fallback */}
                 {illustrations[a.id] ? (
                   <img
@@ -410,9 +403,7 @@ const MiniAppEntry = () => {
                     className="absolute -right-2 -top-2 w-20 h-20 object-cover opacity-30 pointer-events-none select-none rounded-full"
                     loading="lazy"
                   />
-                ) : (
-                  <span className="absolute -top-1 -right-1 text-3xl opacity-[0.15] pointer-events-none select-none">{a.emoji}</span>
-                )}
+                ) : null}
                 {/* 图标容器 */}
                 <div className={`relative z-10 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${illustrations[a.id] ? 'border-2 border-white/40 shadow-md' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
                   {illustrations[a.id] ? (
@@ -426,8 +417,6 @@ const MiniAppEntry = () => {
                   <h3 className="text-[15px] font-extrabold text-white leading-tight tracking-wide">{a.label}</h3>
                   <p className="text-[10px] text-white/80 mt-0.5 leading-tight tracking-wider line-clamp-1">{a.subtitle}</p>
                 </div>
-                {/* 按压反馈层 */}
-                <div className="absolute inset-0 bg-white/0 active:bg-white/10 transition-colors duration-150 pointer-events-none" />
               </motion.button>
             );
 
@@ -521,9 +510,9 @@ const MiniAppEntry = () => {
               initial={reduceMotion ? false : { opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + i * 0.06, duration: 0.3 }}
-              className="min-w-[260px] max-w-[280px] shrink-0 snap-start rounded-xl bg-card border border-border/40 p-3 shadow-sm"
+              className="min-w-[260px] max-w-[280px] shrink-0 snap-start rounded-xl bg-card border border-border/40 p-3"
             >
-              <span className="inline-block px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] text-primary font-medium mb-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded-full bg-muted text-[9px] text-muted-foreground font-medium mb-1.5">
                 {t.tag}
               </span>
               <p className="text-[11px] text-muted-foreground leading-relaxed mb-2 line-clamp-3">
@@ -574,10 +563,10 @@ const MiniAppEntry = () => {
               return (
                 <motion.div
                   key={i}
-                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-[3px] ${c.accent} overflow-hidden`}
+                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-2 ${c.accent} overflow-hidden`}
                   initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + i * 0.06, duration: 0.3 }}
+                  transition={{ delay: 0.3, duration: 0.3 }}
                 >
                   {illustrations[c.illustrationKey] && (
                     <img
