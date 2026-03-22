@@ -95,6 +95,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
                 onClick={() => {
                   if (!user) {
                     onOpenChange(false);
+                    setPostAuthRedirect(location.pathname + location.search);
                     navigate('/auth');
                     return;
                   }
