@@ -95,8 +95,9 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
                 onClick={() => {
                   if (!user) {
                     onOpenChange(false);
-                    setPostAuthRedirect(location.pathname + location.search);
-                    navigate('/auth');
+                    const currentPath = location.pathname + location.search;
+                    setPostAuthRedirect(currentPath);
+                    navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
                     return;
                   }
                   setShowPayDialog(true);
