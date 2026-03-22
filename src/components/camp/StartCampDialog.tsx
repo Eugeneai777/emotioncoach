@@ -6,13 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Lock } from "lucide-react";
+import { CalendarIcon, Lock, ShoppingCart } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
+import { useAuth } from "@/hooks/useAuth";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface StartCampDialogProps {
   open: boolean;
@@ -36,7 +39,10 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
+  const [showPayDialog, setShowPayDialog] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   // 检查用户购买状态（外部传入的 isPurchased 优先级最高）
   const { data: purchaseRecord } = useCampPurchase(campTemplate.camp_type);
@@ -44,56 +50,99 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
   const hasPurchased = isPurchased || !!purchaseRecord;
   const needsPurchase = !isFree && !hasPurchased;
 
-  // 如果需要购买但未购买，不允许开启
+  // 如果需要购买但未购买，显示购买提示
   if (needsPurchase && open) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md bg-gradient-to-br from-teal-50/95 via-cyan-50/80 to-blue-50/60
-          dark:from-teal-950/95 dark:via-cyan-950/80 dark:to-blue-950/60 border-teal-200/50 dark:border-teal-800/50">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2 text-teal-800 dark:text-teal-200">
-              <Lock className="w-5 h-5 text-amber-600" />
-              需要购买此训练营
-            </DialogTitle>
-            <DialogDescription className="text-left space-y-3 pt-2">
-              <p>该训练营需要购买后才能开启。</p>
-              <div className="bg-teal-100/50 dark:bg-teal-900/30 p-4 rounded-lg space-y-2 border border-teal-200/50 dark:border-teal-800/50">
-                <div className="flex items-end gap-2">
-                  {campTemplate.original_price && campTemplate.original_price > (campTemplate.price || 0) && (
-                    <span className="text-muted-foreground line-through">
-                      ¥{campTemplate.original_price.toLocaleString()}
+      <>
+        <Dialog open={open && !showPayDialog} onOpenChange={onOpenChange}>
+          <DialogContent className="sm:max-w-md bg-gradient-to-br from-teal-50/95 via-cyan-50/80 to-blue-50/60
+            dark:from-teal-950/95 dark:via-cyan-950/80 dark:to-blue-950/60 border-teal-200/50 dark:border-teal-800/50">
+            <DialogHeader>
+              <DialogTitle className="text-xl flex items-center gap-2 text-teal-800 dark:text-teal-200">
+                <Lock className="w-5 h-5 text-amber-600" />
+                需要购买此训练营
+              </DialogTitle>
+              <DialogDescription className="text-left space-y-3 pt-2">
+                <p>该训练营需要购买后才能开启。</p>
+                <div className="bg-teal-100/50 dark:bg-teal-900/30 p-4 rounded-lg space-y-2 border border-teal-200/50 dark:border-teal-800/50">
+                  <div className="flex items-end gap-2">
+                    {campTemplate.original_price && campTemplate.original_price > (campTemplate.price || 0) && (
+                      <span className="text-muted-foreground line-through">
+                        ¥{campTemplate.original_price.toLocaleString()}
+                      </span>
+                    )}
+                    <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                      ¥{campTemplate.price?.toLocaleString() || '0'}
                     </span>
+                  </div>
+                  {campTemplate.price_note && (
+                    <p className="text-sm text-teal-700 dark:text-teal-300">{campTemplate.price_note}</p>
                   )}
-                  <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
-                    ¥{campTemplate.price?.toLocaleString() || '0'}
-                  </span>
                 </div>
-                {campTemplate.price_note && (
-                  <p className="text-sm text-teal-700 dark:text-teal-300">{campTemplate.price_note}</p>
-                )}
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              className="flex-1 border-teal-300/50 text-teal-700 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400"
-            >
-              取消
-            </Button>
-            <Button 
-              onClick={() => {
-                onOpenChange(false);
-                window.open('https://work.weixin.qq.com/kfid/kfcf2ea5c20b7e50e1d', '_blank');
-              }} 
-              className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
-            >
-              联系购买
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => onOpenChange(false)} 
+                className="flex-1 border-teal-300/50 text-teal-700 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400"
+              >
+                取消
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (!user) {
+                    onOpenChange(false);
+                    navigate('/auth');
+                    return;
+                  }
+                  setShowPayDialog(true);
+                }} 
+                className="flex-1 gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                立即购买
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <UnifiedPayDialog
+          open={showPayDialog}
+          onOpenChange={(v) => {
+            setShowPayDialog(v);
+            if (!v) onOpenChange(false);
+          }}
+          packageInfo={{
+            key: `camp-${campTemplate.camp_type}`,
+            name: campTemplate.camp_name,
+            price: campTemplate.price || 0,
+          }}
+          onSuccess={async () => {
+            // 记录购买到 user_camp_purchases
+            if (user) {
+              try {
+                await supabase.from('user_camp_purchases').insert({
+                  user_id: user.id,
+                  camp_type: campTemplate.camp_type,
+                  camp_name: campTemplate.camp_name,
+                  purchase_price: campTemplate.price || 0,
+                  payment_status: 'completed',
+                });
+              } catch (e) {
+                console.error('Insert camp purchase error:', e);
+              }
+            }
+            setShowPayDialog(false);
+            // 刷新购买状态
+            queryClient.invalidateQueries({ queryKey: ['camp-purchase'] });
+            toast({
+              title: "购买成功！",
+              description: "请选择开始日期开启训练营",
+            });
+          }}
+        />
+      </>
     );
   }
 
