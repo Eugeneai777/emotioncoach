@@ -106,7 +106,7 @@ const useCases = [
     iconColor: "text-indigo-300",
     iconBg: "bg-indigo-500/20",
     accent: "border-l-indigo-400",
-    bg: "bg-gradient-to-r from-indigo-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-indigo-500/6 to-transparent",
   },
   {
     icon: Briefcase,
@@ -116,7 +116,7 @@ const useCases = [
     iconColor: "text-amber-300",
     iconBg: "bg-amber-500/20",
     accent: "border-l-amber-400",
-    bg: "bg-gradient-to-r from-amber-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-amber-500/6 to-transparent",
   },
   {
     icon: Heart,
@@ -126,7 +126,7 @@ const useCases = [
     iconColor: "text-rose-300",
     iconBg: "bg-rose-500/20",
     accent: "border-l-rose-400",
-    bg: "bg-gradient-to-r from-rose-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-rose-500/6 to-transparent",
   },
   {
     icon: TrendingUp,
@@ -136,7 +136,7 @@ const useCases = [
     iconColor: "text-emerald-300",
     iconBg: "bg-emerald-500/20",
     accent: "border-l-emerald-400",
-    bg: "bg-gradient-to-r from-emerald-500/12 to-transparent",
+    bg: "bg-gradient-to-r from-emerald-500/6 to-transparent",
   },
 ];
 
