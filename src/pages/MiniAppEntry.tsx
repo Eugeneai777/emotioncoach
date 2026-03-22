@@ -563,7 +563,7 @@ const MiniAppEntry = () => {
               return (
                 <motion.div
                   key={i}
-                  className={`relative p-3.5 rounded-xl ${c.bg.replace('/12', '/6').replace('/15', '/8').replace('/8', '/5')} border-l-2 ${c.accent} overflow-hidden`}
+                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-2 ${c.accent} overflow-hidden`}
                   initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3, duration: 0.3 }}
