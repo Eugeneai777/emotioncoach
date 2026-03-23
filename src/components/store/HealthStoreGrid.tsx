@@ -10,10 +10,8 @@ import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { ProductDetailDialog } from "./ProductDetailDialog";
 import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { AlipayPayDialog } from "@/components/AlipayPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
-import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
 
 const STORE_CHECKOUT_CACHE_KEY = 'store_pending_checkout';
 const STORE_PACKAGE_CACHE_KEY = 'store_pending_package';
@@ -106,7 +104,7 @@ export function HealthStoreGrid() {
         if (product) setSelectedProduct(product);
         setPayOpen(true);
 
-        // 清理 URL 中的 payment_resume（保留 payment_openid 给 WechatPayDialog）
+        // 清理 URL 中的 payment_resume（保留 payment_openid 给支付组件）
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('payment_resume');
         setSearchParams(newParams, { replace: true });
@@ -314,6 +312,14 @@ export function HealthStoreGrid() {
     return acc;
   }, {});
 
+  const shippingInfo = pendingCheckoutInfo ? {
+    buyerName: pendingCheckoutInfo.buyerName,
+    buyerPhone: pendingCheckoutInfo.buyerPhone,
+    buyerAddress: pendingCheckoutInfo.buyerAddress,
+    idCardName: pendingCheckoutInfo.idCardName,
+    idCardNumber: pendingCheckoutInfo.idCardNumber,
+  } : undefined;
+
   return (
     <>
       <div className="space-y-4">
@@ -389,44 +395,15 @@ export function HealthStoreGrid() {
         />
       )}
 
-      {/* 环境自适应支付：桌面→微信扫码，移动非微信→支付宝，微信内→微信支付 */}
-      {(() => {
-        const isWechat = isWeChatBrowser();
-        const isMiniProg = isWeChatMiniProgram();
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const useAlipay = isMobile && !isWechat && !isMiniProg;
-
-        const shippingInfo = pendingCheckoutInfo ? {
-          buyerName: pendingCheckoutInfo.buyerName,
-          buyerPhone: pendingCheckoutInfo.buyerPhone,
-          buyerAddress: pendingCheckoutInfo.buyerAddress,
-          idCardName: pendingCheckoutInfo.idCardName,
-          idCardNumber: pendingCheckoutInfo.idCardNumber,
-        } : undefined;
-
-        if (useAlipay) {
-          return (
-            <AlipayPayDialog
-              open={payOpen}
-              onOpenChange={setPayOpen}
-              packageInfo={payPackage}
-              onSuccess={handlePaySuccess}
-              shippingInfo={shippingInfo}
-            />
-          );
-        }
-
-        return (
-          <WechatPayDialog
-            open={payOpen}
-            onOpenChange={setPayOpen}
-            packageInfo={payPackage}
-            onSuccess={handlePaySuccess}
-            openId={wechatOpenId}
-            shippingInfo={shippingInfo}
-          />
-        );
-      })()}
+      {/* 统一支付对话框：自动根据环境选择微信/支付宝 */}
+      <UnifiedPayDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        packageInfo={payPackage}
+        onSuccess={handlePaySuccess}
+        openId={wechatOpenId}
+        shippingInfo={shippingInfo}
+      />
     </>
   );
 }

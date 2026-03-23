@@ -4,14 +4,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories, brandGroups, type BrandId } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { AlipayPayDialog } from "@/components/AlipayPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
-import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
-import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 
 // 静默授权恢复支付的 sessionStorage key
 const PENDING_PAYMENT_PACKAGE_KEY = 'pending_payment_package';
@@ -37,17 +34,8 @@ export default function Packages() {
   
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
   
-  // 支付弹窗状态
+  // 统一支付弹窗状态
   const [payDialogOpen, setPayDialogOpen] = useState(false);
-  const [alipayDialogOpen, setAlipayDialogOpen] = useState(false);
-  
-  // 检测是否在移动端普通浏览器（非微信环境）—— 这种情况使用支付宝H5支付
-  const shouldUseAlipay = useMemo(() => {
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isWechat = isWeChatBrowser();
-    const isMiniProgram = isWeChatMiniProgram();
-    return isMobile && !isWechat && !isMiniProgram;
-  }, []);
   
   // 🆕 静默授权回跳后恢复支付流程的状态
   const paymentResumeHandledRef = useRef(false);
@@ -137,18 +125,12 @@ export default function Packages() {
     }
     
     setSelectedPackage(packageInfo);
-    if (shouldUseAlipay) {
-      console.log('[Packages] Mobile browser detected, using Alipay');
-      setAlipayDialogOpen(true);
-    } else {
-      setPayDialogOpen(true);
-    }
+    setPayDialogOpen(true);
   };
   
   const handlePaymentSuccess = () => {
     console.log('[Packages] Dialog payment success callback');
     setPayDialogOpen(false);
-    setAlipayDialogOpen(false);
     setSelectedPackage(null);
   };
 
@@ -213,8 +195,8 @@ export default function Packages() {
           </p>
         </div>
         
-        {/* 微信支付对话框 */}
-        <WechatPayDialog
+        {/* 统一支付对话框 */}
+        <UnifiedPayDialog
           open={payDialogOpen || isPaymentCallback}
           onOpenChange={(open) => {
             if (!isPaymentCallback) {
@@ -224,14 +206,6 @@ export default function Packages() {
           packageInfo={selectedPackage}
           onSuccess={handlePaymentSuccess}
           openId={paymentOpenId || undefined}
-        />
-        
-        {/* 支付宝支付对话框 */}
-        <AlipayPayDialog
-          open={alipayDialogOpen}
-          onOpenChange={setAlipayDialogOpen}
-          packageInfo={selectedPackage}
-          onSuccess={handlePaymentSuccess}
         />
       </div>
     </>
