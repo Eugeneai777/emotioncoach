@@ -85,7 +85,7 @@ const SmartHomeRedirect = () => {
 
           setTargetPath(emotionCamp ? "/emotion-coach" : DEFAULT_COACH);
         } else if (preferredCoach === "parent") {
-          setTargetPath("/parent-emotion");
+          setTargetPath("/parent-coach");
         } else {
           setTargetPath(DEFAULT_COACH);
         }
