@@ -16,6 +16,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -24,12 +26,10 @@ serve(async (req) => {
       );
     }
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
     if (userError || !user) {
+      console.error('Auto-claim auth failed:', userError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -37,7 +37,6 @@ serve(async (req) => {
     }
 
     const userId = user.id;
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // 从规则表动态获取有劲L1的预购名额
     const { data: l1Rule } = await adminClient
