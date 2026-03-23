@@ -239,7 +239,7 @@ const Auth = () => {
               } else if (profile?.preferred_coach === 'communication') {
                 targetRedirect = "/communication";
               } else if (profile?.preferred_coach === 'parent') {
-                targetRedirect = "/parent-emotion";
+                targetRedirect = "/parent-coach";
               } else {
                 targetRedirect = "/mini-app";
               }
