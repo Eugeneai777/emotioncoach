@@ -210,14 +210,17 @@ const Auth = () => {
             }
           }
           
-          // 计算目标跳转路径：优先 auth_redirect（显式传入的当前页面路径），其次 post_auth_redirect（支付后跳转，带时效）
+          // 计算目标跳转路径：优先 auth_redirect / URL redirect 参数，其次 post_auth_redirect（支付后跳转，带时效）
           const savedRedirect = localStorage.getItem('auth_redirect');
+          const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
           const postAuthRedirect = consumePostAuthRedirect();
           let targetRedirect = '/';
           
           if (savedRedirect) {
             localStorage.removeItem('auth_redirect');
             targetRedirect = savedRedirect;
+          } else if (urlRedirect && isValidRedirect(urlRedirect)) {
+            targetRedirect = urlRedirect;
           } else if (postAuthRedirect) {
             targetRedirect = postAuthRedirect;
           } else {
