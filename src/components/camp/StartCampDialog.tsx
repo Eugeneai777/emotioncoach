@@ -136,14 +136,73 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess, i
               } catch (e) {
                 console.error('Insert camp purchase error:', e);
               }
+
+              // 支付成功后直接开营（以今天为起始日期）
+              try {
+                const today = new Date();
+                const endDate = addDays(today, campTemplate.duration_days - 1);
+
+                // 检查是否已有活跃训练营
+                const { data: existingCamp } = await supabase
+                  .from('training_camps')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('camp_type', campTemplate.camp_type)
+                  .eq('status', 'active')
+                  .maybeSingle();
+
+                if (existingCamp) {
+                  setShowPayDialog(false);
+                  onOpenChange(false);
+                  toast({ title: "购买成功！", description: "您已有进行中的训练营" });
+                  onSuccess?.(existingCamp.id);
+                  return;
+                }
+
+                const { data: insertedCamps, error } = await supabase
+                  .from('training_camps')
+                  .insert({
+                    user_id: user.id,
+                    camp_name: campTemplate.camp_name,
+                    camp_type: campTemplate.camp_type,
+                    duration_days: campTemplate.duration_days,
+                    start_date: format(today, 'yyyy-MM-dd'),
+                    end_date: format(endDate, 'yyyy-MM-dd'),
+                    current_day: 0,
+                    completed_days: 0,
+                    check_in_dates: [],
+                    status: 'active',
+                  })
+                  .select('id');
+
+                if (!error && insertedCamps?.[0]) {
+                  // 更新用户偏好教练
+                  const coachTypeMap: Record<string, string> = {
+                    'wealth_block_7': 'wealth', 'wealth_block_21': 'wealth',
+                    'emotion_bloom': 'emotion', 'identity_bloom': 'emotion',
+                    'emotion_stress_7': 'emotion', 'emotion_journal_21': 'emotion',
+                    'parent_emotion_21': 'parent',
+                  };
+                  const preferredCoach = coachTypeMap[campTemplate.camp_type];
+                  if (preferredCoach) {
+                    await supabase.from('profiles').update({ preferred_coach: preferredCoach }).eq('id', user.id);
+                  }
+
+                  setShowPayDialog(false);
+                  onOpenChange(false);
+                  queryClient.invalidateQueries({ queryKey: ['camp-purchase'] });
+                  toast({ title: "购买成功，训练营已开启！", description: "开始你的成长之旅吧！" });
+                  onSuccess?.(insertedCamps[0].id);
+                  return;
+                }
+              } catch (e) {
+                console.error('Auto-start camp after payment error:', e);
+              }
             }
             setShowPayDialog(false);
-            // 刷新购买状态
+            onOpenChange(false);
             queryClient.invalidateQueries({ queryKey: ['camp-purchase'] });
-            toast({
-              title: "购买成功！",
-              description: "请选择开始日期开启训练营",
-            });
+            toast({ title: "购买成功！", description: "请前往训练营页面开启训练" });
           }}
         />
       </>
