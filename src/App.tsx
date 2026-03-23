@@ -57,6 +57,7 @@ const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 // 能量空间
 const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
 const MiniAppEntry = lazyRetry(() => import("./pages/MiniAppEntry"));
+const YoujinLife = lazyRetry(() => import("./pages/YoujinLife"));
 
 // 小劲AI
 const XiaojinHome = lazyRetry(() => import("./pages/xiaojin/XiaojinHome"));
@@ -338,6 +339,7 @@ const App = () => (
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
               <Route path="/mini-app" element={<MiniAppEntry />} />
+              <Route path="/youjin-life" element={<YoujinLife />} />
               <Route path="/health-store" element={<HealthStore />} />
               <Route path="/living-lab" element={<LivingLab />} />
               <Route path="/coach-space" element={<CoachSpace />} />
