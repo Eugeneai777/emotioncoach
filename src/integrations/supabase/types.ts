@@ -10983,6 +10983,87 @@ export type Database = {
         }
         Relationships: []
       }
+      youjin_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          intent_type: string | null
+          messages: Json
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_type?: string | null
+          messages?: Json
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_type?: string | null
+          messages?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      youjin_todos: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_at: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_at?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_at?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      youjin_user_preferences: {
+        Row: {
+          created_at: string
+          history: Json
+          id: string
+          location: string | null
+          preferences: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          history?: Json
+          id?: string
+          location?: string | null
+          preferences?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          history?: Json
+          id?: string
+          location?: string | null
+          preferences?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       assessment_changes: {
