@@ -186,6 +186,28 @@ export default function YoujinLife() {
         </div>
       </div>
 
+      {/* ===== 本月消费摘要 ===== */}
+      {monthlyTotal !== null && (
+        <div className="px-4 mb-5">
+          <button
+            onClick={() => navigate("/youjin-life/expenses")}
+            className="w-full bg-card rounded-2xl border border-border/50 shadow-sm p-3.5 flex items-center gap-3 active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5 text-green-600" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs text-muted-foreground">本月消费</p>
+              <p className="text-base font-bold text-foreground">¥{monthlyTotal.toFixed(0)}</p>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] text-muted-foreground">{monthlyCount}笔</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+            </div>
+          </button>
+        </div>
+      )}
+
       {/* ===== 社区生活圈 ===== */}
       <div className="mb-5">
         <div className="flex items-center justify-between px-4 mb-3">
