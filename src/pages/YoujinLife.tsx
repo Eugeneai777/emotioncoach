@@ -17,9 +17,7 @@ const placeholders = [
 ];
 
 const quickServices = [
-  { emoji: "🧹", label: "保洁", prompt: "帮我找个附近的保洁服务", bg: "bg-white/10", ring: "ring-white/10" },
   { emoji: "🔧", label: "维修", prompt: "水龙头漏水了，怎么修", bg: "bg-white/10", ring: "ring-white/10" },
-  { emoji: "🍜", label: "美食", prompt: "今晚吃什么？推荐一下", bg: "bg-white/10", ring: "ring-white/10" },
   { emoji: "💰", label: "记账", prompt: "帮我记一笔账", bg: "bg-white/10", ring: "ring-white/10" },
   { emoji: "🎯", label: "打卡", prompt: "__NAV__/youjin-life/habits", bg: "bg-white/10", ring: "ring-white/10" },
   { emoji: "🤝", label: "互助", prompt: "__NAV__/youjin-life/help", bg: "bg-white/10", ring: "ring-white/10" },
