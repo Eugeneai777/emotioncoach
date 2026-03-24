@@ -164,11 +164,6 @@ const featuredTestimonials = [
   testimonials[5],  // 丽姐 - 38岁教师 - 代际疗愈
 ];
 
-const paidShortcuts = [
-  { icon: ShoppingCart, label: "我的订单", route: "/my-page" },
-  { icon: ClipboardList, label: "我的测评", route: "/energy-studio?tab=assessments" },
-  { icon: Tent, label: "我的训练营", route: "/camps" },
-];
 
 /* ── 活动轮播图组件 ── */
 const promoSlides = [
@@ -302,7 +297,7 @@ const MiniAppEntry = () => {
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
   const [illustrations, setIllustrations] = useState<Record<string, string>>({});
-  const [hasPaidOrder, setHasPaidOrder] = useState(false);
+  
 
   useEffect(() => {
     supabase
@@ -317,23 +312,6 @@ const MiniAppEntry = () => {
       });
   }, []);
 
-  // 检查是否为已购用户
-  useEffect(() => {
-    if (!user) {
-      setHasPaidOrder(false);
-      return;
-    }
-    supabase
-      .from('orders')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('status', 'paid')
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        setHasPaidOrder(!!data);
-      });
-  }, [user]);
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
   React.useEffect(() => {
@@ -440,31 +418,6 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── 已购用户快捷面板 ── */}
-      {hasPaidOrder && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
-          className="px-4 pb-3"
-        >
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            {paidShortcuts.map((s) => {
-              const Icon = s.icon;
-              return (
-                <button
-                  key={s.label}
-                  onClick={() => navigate(s.route)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium whitespace-nowrap shrink-0 hover:bg-primary/15 active:scale-95 transition-all"
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
 
       {/* ── 活动轮播图 ── */}
       <PromoBanner
