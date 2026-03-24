@@ -31,33 +31,6 @@ interface OrderData {
   created_at: string | null;
 }
 
-const LEARNING_MODULES = [
-  {
-    key: "assessment",
-    icon: ClipboardCheck,
-    label: "测评",
-    gradient: "from-violet-500/15 to-violet-600/5",
-    iconColor: "text-violet-600 dark:text-violet-400",
-    route: "/assessment-picker",
-  },
-  {
-    key: "camp",
-    icon: Flame,
-    label: "训练营",
-    gradient: "from-amber-500/15 to-amber-600/5",
-    iconColor: "text-amber-600 dark:text-amber-400",
-    route: "/camps?filter=my",
-  },
-  {
-    key: "course",
-    icon: BookOpen,
-    label: "课程",
-    gradient: "from-emerald-500/15 to-emerald-600/5",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
-    route: "/courses",
-  },
-];
-
 const maskPhone = (phone: string | null | undefined): string => {
   if (!phone) return "";
   if (phone.length >= 7) {
