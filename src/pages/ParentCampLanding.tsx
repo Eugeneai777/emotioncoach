@@ -937,12 +937,7 @@ export default function ParentCampLanding() {
         <StartCampDialog
           open={showStartDialog}
           onOpenChange={setShowStartDialog}
-          campTemplate={{
-            camp_type: campTemplate.camp_type,
-            camp_name: campTemplate.camp_name,
-            duration_days: campTemplate.duration_days,
-            icon: campTemplate.icon
-          }}
+          campTemplate={campTemplate}
           onSuccess={(campId) => navigate(`/camp-checkin/${campId}`)}
         />
       )}
