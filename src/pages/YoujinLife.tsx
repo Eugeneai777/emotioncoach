@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ArrowRight } from "lucide-react";
-import { YoujinBottomNav } from "@/components/youjin-life/YoujinBottomNav";
+import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock } from "lucide-react";
 import AudienceHub from "@/components/energy-studio/AudienceHub";
-import logoImage from "@/assets/logo-youjin-ai.png";
 
 const placeholders = [
   "帮我找个保洁",
@@ -27,42 +25,12 @@ const quickServices = [
 ];
 
 const cases = [
-  {
-    emoji: "🧹",
-    question: "帮我找个周末的保洁阿姨",
-    result: "推荐3位 · 可跳转58到家预约",
-    tag: "保洁",
-  },
-  {
-    emoji: "😰",
-    question: "最近工作压力特别大",
-    result: "情绪疏导 + 3条实用建议",
-    tag: "减压",
-  },
-  {
-    emoji: "🍜",
-    question: "今晚吃什么？不想吃辣",
-    result: "3个推荐 · 可跳转美团下单",
-    tag: "美食",
-  },
-  {
-    emoji: "🔧",
-    question: "水龙头漏水了",
-    result: "推荐啄木鸟维修 · ¥80起",
-    tag: "维修",
-  },
-  {
-    emoji: "⚖️",
-    question: "要不要跳槽？",
-    result: "3维度对比分析 + 建议",
-    tag: "决策",
-  },
-  {
-    emoji: "🚚",
-    question: "下周要搬家",
-    result: "货拉拉¥180起 · 一键下单",
-    tag: "搬家",
-  },
+  { emoji: "🧹", question: "帮我找个周末的保洁阿姨", result: "推荐3位 · 可跳转58到家预约", tag: "保洁" },
+  { emoji: "😰", question: "最近工作压力特别大", result: "情绪疏导 + 3条实用建议", tag: "减压" },
+  { emoji: "🍜", question: "今晚吃什么？不想吃辣", result: "3个推荐 · 可跳转美团下单", tag: "美食" },
+  { emoji: "🔧", question: "水龙头漏水了", result: "推荐啄木鸟维修 · ¥80起", tag: "维修" },
+  { emoji: "⚖️", question: "要不要跳槽？", result: "3维度对比分析 + 建议", tag: "决策" },
+  { emoji: "🚚", question: "下周要搬家", result: "货拉拉¥180起 · 一键下单", tag: "搬家" },
 ];
 
 const todayCards = [
@@ -100,48 +68,19 @@ export default function YoujinLife() {
 
   return (
     <div
-      className="min-h-screen pb-20"
+      className="min-h-screen pb-16"
       style={{
         background: "linear-gradient(180deg, #f8f6f3 0%, #ffffff 40%)",
         WebkitOverflowScrolling: "touch",
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      {/* ===== 顶部状态栏区域 ===== */}
+      {/* ===== 顶部标题 ===== */}
       <div className="px-4 pt-[calc(env(safe-area-inset-top,12px)+8px)]">
-        {/* Brand Header */}
-        <div className="flex flex-col items-center mb-3">
+        <div className="flex flex-col items-center mb-4">
           <h1 className="text-base font-bold text-gray-900 leading-tight">有劲AI · 一句话帮你搞定生活</h1>
           <p className="text-[11px] text-gray-400 leading-tight mt-1">不需要思考，AI帮你安排好生活</p>
         </div>
-
-        {/* ===== 搜索栏 ===== */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 bg-white rounded-xl px-3.5 py-2.5 border border-gray-100 shadow-sm mb-4"
-        >
-          <Search className="w-4 h-4 text-gray-300 shrink-0" />
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-300"
-            placeholder={placeholders[placeholderIdx]}
-          />
-          <button
-            onClick={() => navigate("/youjin-life/chat?voice=1")}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 active:bg-gray-100"
-          >
-            <Mic className="w-3.5 h-3.5 text-gray-400" />
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-3 py-1 rounded-lg bg-gray-900 text-white text-xs font-medium active:bg-gray-700"
-          >
-            搜索
-          </button>
-        </motion.div>
       </div>
 
       {/* ===== 人群入口 ===== */}
@@ -151,7 +90,7 @@ export default function YoujinLife() {
         </div>
       </div>
 
-      {/* ===== 快捷服务网格（小程序常见九宫格） ===== */}
+      {/* ===== 快捷服务网格 ===== */}
       <div className="px-4 mb-4">
         <div className="bg-white rounded-xl p-3 border border-gray-100/80 shadow-sm">
           <div className="grid grid-cols-4 gap-y-4">
@@ -241,19 +180,36 @@ export default function YoujinLife() {
         </div>
       </div>
 
-      {/* ===== 底部悬浮对话入口 ===== */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 px-4 pb-[env(safe-area-inset-bottom,0px)]">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/youjin-life/chat")}
-          className="w-full py-3 rounded-xl bg-gray-900 text-white text-sm font-medium flex items-center justify-center gap-2 shadow-lg active:bg-gray-800"
-        >
-          👉 一句话，立即搞定
-          <ArrowRight className="w-4 h-4" />
-        </motion.button>
+      {/* ===== 底部固定对话输入框 ===== */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100"
+        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+      >
+        <div className="flex items-center gap-2 max-w-lg mx-auto px-3 py-2">
+          <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-full px-3.5 py-2 border border-gray-100">
+            <Search className="w-4 h-4 text-gray-300 shrink-0" />
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-300"
+              placeholder={placeholders[placeholderIdx]}
+            />
+            <button
+              onClick={() => navigate("/youjin-life/chat?voice=1")}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-gray-100 active:bg-gray-100 shrink-0"
+            >
+              <Mic className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+          </div>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-medium active:bg-gray-700 shrink-0"
+          >
+            搞定
+          </button>
+        </div>
       </div>
-
-      <YoujinBottomNav active="home" />
     </div>
   );
 }
