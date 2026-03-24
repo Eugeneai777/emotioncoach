@@ -241,62 +241,6 @@ const MyPage: React.FC = () => {
           )}
         </section>
 
-        {/* ======== 3. 学习与成长中心 ======== */}
-        <section>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-semibold text-foreground">学习与成长中心</h2>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {LEARNING_MODULES.map((mod) => (
-              <Card
-                key={mod.key}
-                className="border-border/40 cursor-pointer hover:shadow-md active:scale-[0.97] transition-all"
-                onClick={() => navigate(mod.route)}
-              >
-                <CardContent className={`p-4 flex flex-col items-center text-center gap-2.5 bg-gradient-to-br ${mod.gradient} rounded-2xl`}>
-                  <div className="w-11 h-11 rounded-xl bg-background/80 flex items-center justify-center shadow-sm">
-                    <mod.icon className={`w-5 h-5 ${mod.iconColor}`} />
-                  </div>
-                  <span className="text-sm font-semibold text-foreground">{mod.label}</span>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* ======== 3.5 五大板块（仅付费用户可见） ======== */}
-        {hasPaidOrder && (
-          <section>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <Target className="w-4 h-4 text-primary" />
-              <h2 className="text-base font-semibold text-foreground">助你持续成长</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {[
-                { icon: Wrench, label: "日常工具", gradient: "from-cyan-500/15 to-cyan-600/5", iconColor: "text-cyan-600 dark:text-cyan-400", route: "/energy-studio" },
-                { icon: BarChart3, label: "专业测评", gradient: "from-violet-500/15 to-violet-600/5", iconColor: "text-violet-600 dark:text-violet-400", route: "/energy-studio?tab=assessments" },
-                { icon: Flame, label: "系统训练营", gradient: "from-amber-500/15 to-amber-600/5", iconColor: "text-amber-600 dark:text-amber-400", route: "/camps" },
-                { icon: ShoppingBag, label: "健康商城", gradient: "from-emerald-500/15 to-emerald-600/5", iconColor: "text-emerald-600 dark:text-emerald-400", route: "/health-store" },
-                { icon: Users, label: "教练空间", gradient: "from-rose-500/15 to-rose-600/5", iconColor: "text-rose-600 dark:text-rose-400", route: "/coach-space" },
-              ].map((block) => (
-                <Card
-                  key={block.label}
-                  className="border-border/40 cursor-pointer hover:shadow-md active:scale-[0.97] transition-all"
-                  onClick={() => navigate(block.route)}
-                >
-                  <CardContent className={`p-4 flex flex-col items-center text-center gap-2.5 bg-gradient-to-br ${block.gradient} rounded-2xl`}>
-                    <div className="w-11 h-11 rounded-xl bg-background/80 flex items-center justify-center shadow-sm">
-                      <block.icon className={`w-5 h-5 ${block.iconColor}`} />
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">{block.label}</span>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* ======== 4. 设置 ======== */}
         <section>
           <div className="flex items-center gap-2 mb-3 px-1">
