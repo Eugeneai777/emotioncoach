@@ -2983,6 +2983,89 @@ export type Database = {
         }
         Relationships: []
       }
+      community_help_requests: {
+        Row: {
+          ai_match_result: Json | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          location_hint: string | null
+          matched_user_id: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          urgency: string
+          user_id: string
+        }
+        Insert: {
+          ai_match_result?: Json | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location_hint?: string | null
+          matched_user_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          urgency?: string
+          user_id: string
+        }
+        Update: {
+          ai_match_result?: Json | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location_hint?: string | null
+          matched_user_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_help_responses: {
+        Row: {
+          created_at: string
+          id: string
+          is_accepted: boolean | null
+          message: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_accepted?: boolean | null
+          message: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_accepted?: boolean | null
+          message?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_help_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "community_help_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           achievement_id: string | null
@@ -3085,6 +3168,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      community_user_skills: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          skill_tag: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          skill_tag: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          skill_tag?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       competitiveness_assessments: {
         Row: {
