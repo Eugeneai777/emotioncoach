@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Package, ChevronRight, ChevronDown,
   Info, Bell, MessageSquare, LogOut, Truck,
-  ClipboardCheck, Flame, BookOpen, Settings, Sparkles,
-  Wrench, BarChart3, Target, ShoppingBag, Users, Headphones
+  Settings, Headphones
 } from "lucide-react";
 import TextCustomerSupport from "@/components/TextCustomerSupport";
 import { Card, CardContent } from "@/components/ui/card";
