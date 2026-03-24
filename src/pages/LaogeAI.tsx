@@ -1,28 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
-import { LaogeChat } from "@/components/laoge/LaogeChat";
-import { Send, Home, Share2, Mic } from "lucide-react";
+import { Home, Share2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
-import { useAuth } from "@/hooks/useAuth";
-import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const TOOLS = [
-  {
-    tool: "decision",
-    title: "老哥，帮我做个决策",
-    description: "有时候不是没有答案，只是需要一个人帮你看清。",
-    icon: "⚖️",
-    fields: [
-      { key: "situation", label: "你现在在考虑什么决定？", placeholder: "简单描述你的情况..." },
-      { key: "optionA", label: "A方案", placeholder: "第一个选择是..." },
-      { key: "optionB", label: "B方案", placeholder: "第二个选择是..." },
-    ],
-  },
   {
     tool: "opportunity",
     title: "老哥，今年怎么赚钱",
@@ -74,13 +59,25 @@ const TOOLS = [
 
 export default function LaogeAI() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [dailyInput, setDailyInput] = useState("");
-  const [dailySubmitted, setDailySubmitted] = useState(false);
-  const [showVoice, setShowVoice] = useState(false);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--laoge-bg))] pb-20">
+      {/* Sticky Conversion Bar */}
+      <div className="sticky top-0 z-50 bg-[#EF6A20] px-4 py-2.5">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <span className="text-white font-bold text-sm">
+            🔥 中年男人职场突围方案
+          </span>
+          <button
+            onClick={() => navigate("/promo/zhile-havruta")}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/60 text-white text-xs font-medium hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+          >
+            了解详情
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
       {/* Top bar */}
       <div className="max-w-lg mx-auto px-5 pt-4">
         <div className="flex items-center justify-between mb-2">
@@ -124,7 +121,7 @@ export default function LaogeAI() {
             男人的AI参谋
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-3">
-            {["事业", "赚钱", "决策", "压力", "健康"].map(tag => (
+            {["赚钱", "事业", "压力", "健康"].map(tag => (
               <span key={tag} className="px-3 py-1 rounded-full bg-[hsl(var(--laoge-accent)/0.15)] text-[hsl(var(--laoge-accent))] text-xs font-medium">
                 {tag}
               </span>
@@ -133,120 +130,12 @@ export default function LaogeAI() {
         </div>
       </div>
 
-      {/* Voice CTA */}
-      <div className="flex flex-col items-center py-6">
-        <button
-          onClick={() => {
-            if (!user) { navigate("/auth"); return; }
-            setShowVoice(true);
-          }}
-          className="relative group focus:outline-none touch-manipulation"
-          aria-label="智能语音"
-        >
-          <div className="absolute inset-[-12px] bg-[hsl(var(--laoge-accent)/0.2)] rounded-full animate-pulse" />
-          <div
-            className="absolute inset-[-6px] bg-[hsl(var(--laoge-accent)/0.15)] rounded-full animate-ping"
-            style={{ animationDuration: "2s" }}
-          />
-          <div className="relative w-[100px] h-[100px] bg-[hsl(var(--laoge-accent))] 
-                          rounded-full flex flex-col items-center justify-center 
-                          shadow-lg
-                          hover:scale-105 active:scale-95 
-                          transition-all duration-200 ease-out">
-            <div className="mb-1 p-2 bg-white/20 rounded-full backdrop-blur-sm">
-              <Mic className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-white font-bold text-sm">智能语音</span>
-          </div>
-        </button>
-        <p className="mt-3 text-xs text-[hsl(var(--laoge-text-muted))]">语音聊，更痛快 🎤</p>
-      </div>
-
       {/* Tools */}
-      <div className="px-4 pb-6 space-y-3 max-w-lg mx-auto">
+      <div className="px-4 py-6 space-y-3 max-w-lg mx-auto">
         {TOOLS.map(t => (
           <LaogeToolCard key={t.tool} {...t} />
         ))}
       </div>
-
-      {/* Daily Section */}
-      <div className="px-4 pb-6 max-w-lg mx-auto">
-        <div className="rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] p-5">
-          <h2 className="text-base font-bold text-[hsl(var(--laoge-text))] mb-1">
-            💬 今日老哥一句话
-          </h2>
-          <p className="text-xs text-[hsl(var(--laoge-text-muted))] mb-4">
-            今天最重要的一件事是什么？
-          </p>
-
-          {!dailySubmitted ? (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={dailyInput}
-                onChange={(e) => setDailyInput(e.target.value)}
-                placeholder="说说你今天最重要的事..."
-                className="flex-1 rounded-lg bg-[hsl(var(--laoge-bg))] border border-[hsl(var(--laoge-border))] text-[hsl(var(--laoge-text))] p-3 text-sm placeholder:text-[hsl(var(--laoge-text-muted))] focus:outline-none focus:border-[hsl(var(--laoge-accent))]"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && dailyInput.trim()) {
-                    setDailySubmitted(true);
-                  }
-                }}
-              />
-              <button
-                onClick={() => dailyInput.trim() && setDailySubmitted(true)}
-                disabled={!dailyInput.trim()}
-                className="p-3 rounded-lg bg-[hsl(var(--laoge-accent))] text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <LaogeChat
-              tool="daily"
-              inputs={{ answer: dailyInput }}
-              onReset={() => {
-                setDailySubmitted(false);
-                setDailyInput("");
-              }}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* 设为默认首页 */}
-      <div className="px-4 pb-12 max-w-lg mx-auto">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <button
-            onClick={() => {
-              localStorage.setItem('preferred_audience', 'midlife');
-              const el = document.getElementById('set-home-toast-midlife');
-              if (el) { el.textContent = '✅ 已设为默认首页'; setTimeout(() => { el.textContent = '⭐ 设为我的首页'; }, 2000); }
-            }}
-            className="w-full text-center py-2.5 rounded-xl border border-[hsl(var(--laoge-border))] bg-[hsl(var(--laoge-card))] text-sm text-[hsl(var(--laoge-accent))] active:scale-[0.98] transition-transform"
-          >
-            <span id="set-home-toast-midlife">⭐ 设为我的首页</span>
-          </button>
-        </motion.div>
-      </div>
-
-      {showVoice && user && (
-        <CoachVoiceChat
-          onClose={() => setShowVoice(false)}
-          coachEmoji="🤝"
-          coachTitle="老哥AI语音参谋"
-          primaryColor="stone"
-          tokenEndpoint="vibrant-life-realtime-token"
-          userId={user.id}
-          mode="general"
-          featureKey="realtime_voice"
-          voiceType={getSavedVoiceType()}
-        />
-      )}
 
       <AwakeningBottomNav />
     </div>
