@@ -133,6 +133,10 @@ export default function YoujinLife() {
   };
 
   const handleQuickEntry = (prompt: string) => {
+    if (prompt.startsWith("__NAV__")) {
+      navigate(prompt.replace("__NAV__", ""));
+      return;
+    }
     navigate(`/youjin-life/chat?q=${encodeURIComponent(prompt)}`);
   };
 
