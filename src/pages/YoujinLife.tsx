@@ -147,22 +147,19 @@ export default function YoujinLife() {
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-violet-100/60 blur-3xl" />
         <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-sky-100/50 blur-3xl" />
 
-        <div className="relative flex items-center gap-3">
+        <div className="relative flex flex-col items-center text-center">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center shadow-lg shadow-violet-200"
           >
-            <span className="text-lg font-bold text-white">劲</span>
+            <BrandLogo size="md" />
           </motion.div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground tracking-tight">
-              有劲AI生活助手
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              一句话，帮你搞定今天
-            </p>
-          </div>
+          <h1 className="text-lg font-bold text-foreground tracking-tight mt-2.5">
+            有劲AI生活助手
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            一句话，帮你搞定今天
+          </p>
         </div>
       </div>
 
