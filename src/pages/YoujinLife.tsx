@@ -95,12 +95,35 @@ export default function YoujinLife() {
     { text: "附近有什么团购", time: "昨天", done: true },
     { text: "最近很焦虑", time: "3天前", done: true },
   ]);
+  const [monthlyTotal, setMonthlyTotal] = useState<number | null>(null);
+  const [monthlyCount, setMonthlyCount] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setPlaceholderIdx((i) => (i + 1) % placeholders.length);
     }, 3000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Fetch monthly expense summary
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const start = startOfMonth(new Date()).toISOString();
+      const end = endOfMonth(new Date()).toISOString();
+      const { data } = await supabase
+        .from("finance_records")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("type", "expense")
+        .gte("created_at", start)
+        .lte("created_at", end);
+      if (data) {
+        setMonthlyTotal(data.reduce((s, r) => s + Number(r.amount), 0));
+        setMonthlyCount(data.length);
+      }
+    })();
   }, []);
 
   const handleSubmit = () => {
