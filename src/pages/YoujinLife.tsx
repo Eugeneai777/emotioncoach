@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink } from "lucide-react";
+import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink, TrendingUp, Wallet } from "lucide-react";
 import AudienceHub from "@/components/energy-studio/AudienceHub";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 const placeholders = [
   "帮我找个保洁",
@@ -93,12 +95,35 @@ export default function YoujinLife() {
     { text: "附近有什么团购", time: "昨天", done: true },
     { text: "最近很焦虑", time: "3天前", done: true },
   ]);
+  const [monthlyTotal, setMonthlyTotal] = useState<number | null>(null);
+  const [monthlyCount, setMonthlyCount] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setPlaceholderIdx((i) => (i + 1) % placeholders.length);
     }, 3000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Fetch monthly expense summary
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const start = startOfMonth(new Date()).toISOString();
+      const end = endOfMonth(new Date()).toISOString();
+      const { data } = await supabase
+        .from("finance_records")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("type", "expense")
+        .gte("created_at", start)
+        .lte("created_at", end);
+      if (data) {
+        setMonthlyTotal(data.reduce((s, r) => s + Number(r.amount), 0));
+        setMonthlyCount(data.length);
+      }
+    })();
   }, []);
 
   const handleSubmit = () => {
@@ -160,6 +185,28 @@ export default function YoujinLife() {
           ))}
         </div>
       </div>
+
+      {/* ===== 本月消费摘要 ===== */}
+      {monthlyTotal !== null && (
+        <div className="px-4 mb-5">
+          <button
+            onClick={() => navigate("/youjin-life/expenses")}
+            className="w-full bg-card rounded-2xl border border-border/50 shadow-sm p-3.5 flex items-center gap-3 active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5 text-green-600" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs text-muted-foreground">本月消费</p>
+              <p className="text-base font-bold text-foreground">¥{monthlyTotal.toFixed(0)}</p>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] text-muted-foreground">{monthlyCount}笔</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* ===== 社区生活圈 ===== */}
       <div className="mb-5">
