@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink } from "lucide-react";
+import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink, TrendingUp, Wallet } from "lucide-react";
 import AudienceHub from "@/components/energy-studio/AudienceHub";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 const placeholders = [
   "帮我找个保洁",
