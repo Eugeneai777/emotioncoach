@@ -4,6 +4,7 @@ import { toast } from "sonner";
 interface Action {
   label: string;
   type: "book" | "execute" | "contact";
+  url?: string;
 }
 
 const iconMap = {
@@ -14,7 +15,11 @@ const iconMap = {
 
 export function ActionCard({ actions }: { actions: Action[] }) {
   const handleAction = (action: Action) => {
-    toast.success(`${action.label} - 功能即将上线`);
+    if (action.url) {
+      window.open(action.url, "_blank", "noopener,noreferrer");
+    } else {
+      toast.success(`${action.label} - 功能即将上线`);
+    }
   };
 
   return (

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { SuggestionCard } from "./SuggestionCard";
 import { ActionCard } from "./ActionCard";
 import { FollowUpCard } from "./FollowUpCard";
+import { ServiceLinkCard } from "./ServiceLinkCard";
 
 interface ChatBubbleProps {
   role: "user" | "assistant";
@@ -13,17 +14,18 @@ interface ChatBubbleProps {
 
 // Parse special card markers from AI response
 function parseCards(content: string) {
-  const parts: { type: "text" | "suggestion" | "action" | "followup"; data?: any; text?: string }[] = [];
+  const parts: { type: "text" | "suggestion" | "action" | "followup" | "servicelink"; data?: any; text?: string }[] = [];
   
-  // Simple marker detection for structured cards
   const suggestionMatch = content.match(/\[SUGGESTION\]([\s\S]*?)\[\/SUGGESTION\]/);
   const actionMatch = content.match(/\[ACTION\]([\s\S]*?)\[\/ACTION\]/);
   const followupMatch = content.match(/\[FOLLOWUP\]/);
+  const serviceLinkMatch = content.match(/\[SERVICE_LINK\]([\s\S]*?)\[\/SERVICE_LINK\]/);
   
   let textContent = content
     .replace(/\[SUGGESTION\][\s\S]*?\[\/SUGGESTION\]/g, "")
     .replace(/\[ACTION\][\s\S]*?\[\/ACTION\]/g, "")
     .replace(/\[FOLLOWUP\]/g, "")
+    .replace(/\[SERVICE_LINK\][\s\S]*?\[\/SERVICE_LINK\]/g, "")
     .trim();
 
   if (textContent) {
@@ -41,6 +43,13 @@ function parseCards(content: string) {
     try {
       const data = JSON.parse(actionMatch[1]);
       parts.push({ type: "action", data });
+    } catch {}
+  }
+
+  if (serviceLinkMatch) {
+    try {
+      const data = JSON.parse(serviceLinkMatch[1]);
+      parts.push({ type: "servicelink", data });
     } catch {}
   }
 
@@ -93,6 +102,9 @@ export function ChatBubble({ role, content, isStreaming, onRefine }: ChatBubbleP
           }
           if (part.type === "action" && part.data) {
             return <ActionCard key={i} actions={part.data} />;
+          }
+          if (part.type === "servicelink" && part.data) {
+            return <ServiceLinkCard key={i} services={part.data} />;
           }
           if (part.type === "followup") {
             return <FollowUpCard key={i} onRefine={onRefine} />;
