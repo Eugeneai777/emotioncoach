@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock } from "lucide-react";
+import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink } from "lucide-react";
 import AudienceHub from "@/components/energy-studio/AudienceHub";
 
 const placeholders = [
   "帮我找个保洁",
   "我今天很烦",
   "今晚吃什么",
+  "附近有什么团购",
   "帮我做个决定",
-  "找个维修师傅",
   "最近压力好大",
 ];
 
@@ -18,19 +18,62 @@ const quickServices = [
   { emoji: "🔧", label: "维修", prompt: "水龙头漏水了，怎么修" },
   { emoji: "🚚", label: "搬家", prompt: "下周要搬家，东西不多" },
   { emoji: "🍜", label: "美食", prompt: "今晚吃什么？推荐一下" },
-  { emoji: "😌", label: "减压", prompt: "最近工作压力特别大" },
-  { emoji: "⚖️", label: "帮我选", prompt: "帮我做个选择" },
-  { emoji: "📋", label: "待办", prompt: "帮我整理一下今天要做的事" },
+  { emoji: "🛒", label: "团购", prompt: "附近有什么社区团购" },
+  { emoji: "🏪", label: "跳蚤市场", prompt: "我想看看邻居在卖什么" },
+  { emoji: "🎉", label: "社区活动", prompt: "最近有什么社区活动" },
   { emoji: "💡", label: "更多", prompt: "你能帮我做什么" },
+];
+
+const communityServices = [
+  {
+    emoji: "🛒",
+    title: "社区团购",
+    desc: "新鲜水果蔬菜，邻居拼团更便宜",
+    items: [
+      { name: "有机草莓 3斤装", detail: "¥29.9 原价¥49.9", extra: "128人已买" },
+      { name: "土鸡蛋 30枚", detail: "¥19.8 原价¥35", extra: "86人已买" },
+      { name: "五常大米 10斤", detail: "¥39.9 原价¥59", extra: "203人已买" },
+    ],
+    link: "https://youhui.pinduoduo.com",
+    linkLabel: "去多多买菜",
+    color: "bg-orange-50",
+    iconColor: "text-orange-600",
+  },
+  {
+    emoji: "🏪",
+    title: "跳蚤市场",
+    desc: "邻居闲置好物，低价淘到宝",
+    items: [
+      { name: "戴森吸尘器 V8（九成新）", detail: "¥800", extra: "3栋王姐" },
+      { name: "儿童自行车（适合4-6岁）", detail: "¥120", extra: "5栋李妈" },
+      { name: "宜家书架（白色）", detail: "¥150", extra: "2栋张哥" },
+    ],
+    link: "https://www.xianyu.com",
+    linkLabel: "去闲鱼看更多",
+    color: "bg-blue-50",
+    iconColor: "text-blue-600",
+  },
+  {
+    emoji: "🎉",
+    title: "社区活动",
+    desc: "周末遛娃、兴趣班、邻里聚会",
+    items: [
+      { name: "周六亲子手工课", detail: "本周六 14:00", extra: "社区活动中心" },
+      { name: "瑜伽晨练班", detail: "每周一三五 7:00", extra: "小区花园" },
+      { name: "跳蚤市集（线下）", detail: "下周日 9:00", extra: "南门广场" },
+    ],
+    color: "bg-purple-50",
+    iconColor: "text-purple-600",
+  },
 ];
 
 const cases = [
   { emoji: "🧹", question: "帮我找个周末的保洁阿姨", result: "推荐3位 · 可跳转58到家预约", tag: "保洁" },
   { emoji: "😰", question: "最近工作压力特别大", result: "情绪疏导 + 3条实用建议", tag: "减压" },
   { emoji: "🍜", question: "今晚吃什么？不想吃辣", result: "3个推荐 · 可跳转美团下单", tag: "美食" },
-  { emoji: "🔧", question: "水龙头漏水了", result: "推荐啄木鸟维修 · ¥80起", tag: "维修" },
+  { emoji: "🛒", question: "附近有什么团购？", result: "3个社区团 · 今日截单", tag: "团购" },
   { emoji: "⚖️", question: "要不要跳槽？", result: "3维度对比分析 + 建议", tag: "决策" },
-  { emoji: "🚚", question: "下周要搬家", result: "货拉拉¥180起 · 一键下单", tag: "搬家" },
+  { emoji: "🏪", question: "想买个二手书架", result: "邻居在卖 · ¥150", tag: "闲置" },
 ];
 
 const todayCards = [
@@ -45,7 +88,7 @@ export default function YoujinLife() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [recentItems] = useState([
     { text: "帮我找个保洁阿姨", time: "2小时前", done: false },
-    { text: "今晚吃什么", time: "昨天", done: true },
+    { text: "附近有什么团购", time: "昨天", done: true },
     { text: "最近很焦虑", time: "3天前", done: true },
   ]);
 
@@ -107,6 +150,66 @@ export default function YoujinLife() {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* ===== 社区服务 ===== */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between px-4 mb-2.5">
+          <h2 className="text-sm font-bold text-gray-900">🏘️ 小区生活圈</h2>
+        </div>
+        <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 scrollbar-none">
+          {communityServices.map((svc, idx) => (
+            <motion.div
+              key={svc.title}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.06 }}
+              className="shrink-0 w-64 bg-white rounded-xl border border-gray-100/80 shadow-sm overflow-hidden"
+            >
+              {/* Header */}
+              <div className={`${svc.color} px-3.5 py-2.5 flex items-center gap-2`}>
+                <span className="text-xl">{svc.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-900">{svc.title}</p>
+                  <p className="text-[10px] text-gray-500 truncate">{svc.desc}</p>
+                </div>
+              </div>
+              {/* Items */}
+              <div className="divide-y divide-gray-50">
+                {svc.items.map((item, i) => (
+                  <div key={i} className="px-3.5 py-2 flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium text-gray-800 truncate">{item.name}</p>
+                      <p className="text-[10px] text-gray-400">{item.detail}</p>
+                    </div>
+                    <span className="text-[10px] text-gray-300 shrink-0">{item.extra}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Footer link */}
+              {svc.link && (
+                <a
+                  href={svc.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center justify-center gap-1 px-3.5 py-2 border-t border-gray-50 ${svc.iconColor} text-[11px] font-medium active:bg-gray-50`}
+                >
+                  {svc.linkLabel}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {!svc.link && (
+                <button
+                  onClick={() => handleQuickEntry(svc.title)}
+                  className={`w-full flex items-center justify-center gap-1 px-3.5 py-2 border-t border-gray-50 ${svc.iconColor} text-[11px] font-medium active:bg-gray-50`}
+                >
+                  AI 帮你找
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
+            </motion.div>
+          ))}
         </div>
       </div>
 
