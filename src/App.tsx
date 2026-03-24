@@ -61,6 +61,7 @@ const YoujinLife = lazyRetry(() => import("./pages/YoujinLife"));
 const YoujinLifeChat = lazyRetry(() => import("./pages/YoujinLifeChat"));
 const YoujinLifeExpenses = lazyRetry(() => import("./pages/YoujinLifeExpenses"));
 const YoujinLifeHelp = lazyRetry(() => import("./pages/YoujinLifeHelp"));
+const YoujinLifeHabits = lazyRetry(() => import("./pages/YoujinLifeHabits"));
 
 // 小劲AI
 const XiaojinHome = lazyRetry(() => import("./pages/xiaojin/XiaojinHome"));
