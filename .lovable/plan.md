@@ -1,37 +1,51 @@
 
 
-# 修复 /parent-camp 购买弹框
+# /mini-app 底部导航改造：三项式布局
 
-## 问题
+## 概述
 
-`/parent-camp`（ParentCampLanding.tsx）在传递 `campTemplate` 给 `StartCampDialog` 时，手动构造了对象但**遗漏了 `price`、`original_price`、`price_note` 字段**。这导致 `StartCampDialog` 内部判断 `isFree = true`，跳过了购买流程，用户未购买也能直接开营。
+将底部导航从「我的 + 语音教练」两项布局改为「我的 + 文字AI + 学习」三项布局，同时瘦身「我的」页面。
 
-而 `/parent-coach` 页面直接传入了完整的 `parentCampTemplate` 对象（包含价格信息），所以购买弹框正常弹出。
+## 改动范围（3个文件）
 
-## 修改方案
+### 1. `src/components/awakening/AwakeningBottomNav.tsx` — 重写
 
-**仅修改 1 个文件**：`src/pages/ParentCampLanding.tsx`
+**移除内容：**
+- 所有语音通话相关代码（CoachVoiceChat、UnifiedPayDialog、PurchaseOnboardingDialog、预热逻辑、余额检查、useAuth、supabase 引用）
 
-将 `StartCampDialog` 的 `campTemplate` prop 从手动构造改为传入完整的 `campTemplate` 对象（与 `/parent-coach` 一致）：
+**保留内容：**
+- 中间 Logo 凸起按钮的视觉样式（呼吸动画、光晕效果）
 
-```tsx
-// 之前（缺少价格字段）
-<StartCampDialog
-  campTemplate={{
-    camp_type: campTemplate.camp_type,
-    camp_name: campTemplate.camp_name,
-    duration_days: campTemplate.duration_days,
-    icon: campTemplate.icon
-  }}
-  ...
-/>
+**新增/修改内容：**
+- 中间按钮 onClick → `navigate('/youjin-life/chat')`，无登录门槛
+- 右侧新增「学习」按钮（BookOpen 图标），点击跳转 `/camps`
+- 右侧空占位 `div` 替换为实际按钮
+- 布局变为左中右三项对称
 
-// 之后（传入完整对象）
-<StartCampDialog
-  campTemplate={campTemplate}
-  ...
-/>
-```
+**关于右侧跳转 `/camps` 的说明：**
+- `/camps` 页面（CampList.tsx）已支持 `?filter=active`、`?filter=completed` 参数筛选用户训练营
+- 默认展示所有训练营商品浏览，用户可通过页面内 Tab 切换查看自己的训练营
+- 直接复用现有页面，不额外新建聚合页，避免增加维护成本
 
-这样 `StartCampDialog` 就能读取到 `price`、`original_price`、`price_note`，在用户未购买时正确弹出购买弹框。
+### 2. `src/pages/MyPage.tsx` — 瘦身
+
+**移除内容：**
+- 「学习与成长中心」区块（第272-294行，LEARNING_MODULES 及其渲染）
+- 「助你持续成长」五大板块区块（第296-326行）
+- 相关的 import（ClipboardCheck、Flame、BookOpen、Sparkles、Wrench、BarChart3、Target、ShoppingBag、Users）
+
+**保留内容：**
+- 账号信息卡片
+- 订单信息区块（完整保留，不做简化）
+- 设置区块
+- 关于我们
+
+### 3. `.lovable/plan.md` — 更新计划文档
+
+## 不受影响的功能
+
+- 语音教练在各人群页面（/workplace、/laoge 等）的独立入口不受影响
+- `/youjin-life` 页面底部的语音入口不受影响
+- `/camps` 页面功能不变
+- 「我的」页面的订单查看功能完整保留
 
