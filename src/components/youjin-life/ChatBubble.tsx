@@ -25,7 +25,7 @@ interface ChatBubbleProps {
 
 // Parse special card markers from AI response
 function parseCards(content: string) {
-  const parts: { type: "text" | "suggestion" | "action" | "followup" | "servicelink"; data?: any; text?: string }[] = [];
+  const parts: { type: "text" | "suggestion" | "action" | "followup" | "servicelink" | "expense" | "expense_query"; data?: any; text?: string }[] = [];
   
   const suggestionMatch = content.match(/\[SUGGESTION\]([\s\S]*?)\[\/SUGGESTION\]/);
   const actionMatch = content.match(/\[ACTION\]([\s\S]*?)\[\/ACTION\]/);
