@@ -58,7 +58,7 @@ const MyPage: React.FC = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isMember, setIsMember] = useState(false);
-  const [hasPaidOrder, setHasPaidOrder] = useState(false);
+  
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [showCustomerSupport, setShowCustomerSupport] = useState(false);
 
