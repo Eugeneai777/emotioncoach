@@ -134,10 +134,8 @@ export default function YoujinLife() {
         </div>
       </div>
 
-      {/* Audience Hub */}
-      <div className="px-6 mb-8">
-        <AudienceHub />
-      </div>
+
+
 
       {/* Today AI Cards */}
       <div className="px-6 mb-8">
