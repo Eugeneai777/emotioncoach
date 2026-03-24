@@ -1,61 +1,37 @@
 
 
-# 智能记账功能：对话式记账 + 月度消费报告
+# 修复 /parent-camp 购买弹框
 
-## 概述
+## 问题
 
-在 /youjin-life 生态中加入"对话式记账"能力，用户通过自然语言（如"午饭花了35"、"打车18块"）即可完成记账，并可生成月度消费报告。
+`/parent-camp`（ParentCampLanding.tsx）在传递 `campTemplate` 给 `StartCampDialog` 时，手动构造了对象但**遗漏了 `price`、`original_price`、`price_note` 字段**。这导致 `StartCampDialog` 内部判断 `isFree = true`，跳过了购买流程，用户未购买也能直接开营。
 
-## 现状
+而 `/parent-coach` 页面直接传入了完整的 `parentCampTemplate` 对象（包含价格信息），所以购买弹框正常弹出。
 
-项目已有 `finance_records` 表和 `FinanceTracker` 组件（表单式记账），但与 youjin-life 对话系统完全独立。
+## 修改方案
 
-## 方案
+**仅修改 1 个文件**：`src/pages/ParentCampLanding.tsx`
 
-### 1. 更新 AI System Prompt（对话式记账）
+将 `StartCampDialog` 的 `campTemplate` prop 从手动构造改为传入完整的 `campTemplate` 对象（与 `/parent-coach` 一致）：
 
-修改 `supabase/functions/youjin-life-chat/index.ts`，在执行模式中增加记账场景：
-- AI 识别记账意图（"午饭35"、"今天花了多少"、"本月消费报告"）
-- 输出结构化标记 `[EXPENSE]{"amount":35,"category":"餐饮","note":"午饭"}[/EXPENSE]`
-- 查询类输出 `[EXPENSE_QUERY]{"type":"monthly_report","month":"2026-03"}[/EXPENSE_QUERY]`
+```tsx
+// 之前（缺少价格字段）
+<StartCampDialog
+  campTemplate={{
+    camp_type: campTemplate.camp_type,
+    camp_name: campTemplate.camp_name,
+    duration_days: campTemplate.duration_days,
+    icon: campTemplate.icon
+  }}
+  ...
+/>
 
-### 2. 前端解析与写入
+// 之后（传入完整对象）
+<StartCampDialog
+  campTemplate={campTemplate}
+  ...
+/>
+```
 
-修改 `src/pages/YoujinLifeChat.tsx`：
-- 解析 `[EXPENSE]` 标记，自动调用 `finance_records` 表插入记录
-- 解析 `[EXPENSE_QUERY]` 标记，查询数据库生成报告
-
-修改 `src/components/youjin-life/ChatBubble.tsx`：
-- 新增 `ExpenseCard` 卡片类型，展示记账确认（金额、分类、备注 + ✅ 已记录）
-- 新增 `ExpenseReportCard` 卡片，展示月度消费饼图/分类汇总
-
-### 3. 新增组件
-
-| 文件 | 说明 |
-|------|------|
-| `src/components/youjin-life/ExpenseCard.tsx` | 记账确认卡片（金额、分类、备注） |
-| `src/components/youjin-life/ExpenseReportCard.tsx` | 月度报告卡片（分类汇总 + 简单柱状/饼图） |
-
-### 4. 首页快捷入口
-
-在 `src/pages/YoujinLife.tsx` 的 `quickServices` 网格中添加"记账"入口：
-- emoji: 💰，label: "记账"，prompt: "帮我记一笔账"
-- bg: "bg-green-50"
-
-### 5. 数据层
-
-复用已有的 `finance_records` 表，无需新建表。月度报告通过前端查询 `finance_records` 按月分组聚合。
-
-## 改动文件
-
-| 文件 | 操作 |
-|------|------|
-| `supabase/functions/youjin-life-chat/index.ts` | prompt 增加记账意图识别与标记输出 |
-| `src/pages/YoujinLifeChat.tsx` | 解析 EXPENSE/EXPENSE_QUERY 标记，执行数据库操作 |
-| `src/components/youjin-life/ChatBubble.tsx` | 新增 expense/expense_report 卡片类型解析 |
-| `src/components/youjin-life/ExpenseCard.tsx` | 新建，记账确认卡片 |
-| `src/components/youjin-life/ExpenseReportCard.tsx` | 新建，月度报告卡片 |
-| `src/pages/YoujinLife.tsx` | quickServices 增加"记账"入口 |
-
-不改动数据库结构，复用已有 `finance_records` 表。
+这样 `StartCampDialog` 就能读取到 `price`、`original_price`、`price_note`，在用户未购买时正确弹出购买弹框。
 
