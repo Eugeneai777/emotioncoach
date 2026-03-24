@@ -18,29 +18,34 @@
 
 **新增/修改内容：**
 - 中间按钮 onClick → `navigate('/youjin-life/chat')`，无登录门槛
-- 右侧新增「学习」按钮（BookOpen 图标），点击跳转 `/camps`
+- 右侧新增「学习」按钮（BookOpen 图标），点击跳转 `/camps?filter=my`
 - 右侧空占位 `div` 替换为实际按钮
 - 布局变为左中右三项对称
 
-**关于右侧跳转 `/camps` 的说明：**
-- `/camps` 页面（CampList.tsx）已支持 `?filter=active`、`?filter=completed` 参数筛选用户训练营
-- 默认展示所有训练营商品浏览，用户可通过页面内 Tab 切换查看自己的训练营
+**关于右侧跳转 `/camps?filter=my` 的说明：**
+- `/camps` 页面（CampList.tsx）已支持 `?filter=my` 参数筛选用户训练营
+- 已购用户直接看到"我的训练营"，未购用户可手动切换查看全部
 - 直接复用现有页面，不额外新建聚合页，避免增加维护成本
 
-### 2. `src/pages/MyPage.tsx` — 瘦身
+### 2. `src/pages/MiniAppEntry.tsx` — 移除冗余快捷面板
 
 **移除内容：**
-- 「学习与成长中心」区块（第272-294行，LEARNING_MODULES 及其渲染）
-- 「助你持续成长」五大板块区块（第296-326行）
-- 相关的 import（ClipboardCheck、Flame、BookOpen、Sparkles、Wrench、BarChart3、Target、ShoppingBag、Users）
+- `paidShortcuts` 数组及其渲染（「我的订单」「我的测评」「我的训练营」快捷面板）
+- 相关 import（ShoppingCart、ClipboardList、Tent）
+- `hasPaidOrder` 状态及其 orders 表查询逻辑
+
+### 3. `src/pages/MyPage.tsx` — 瘦身（已完成）
+
+**移除内容：**
+- 「学习与成长中心」区块（LEARNING_MODULES 及其渲染）
+- 「助你持续成长」五大板块区块
+- 相关的 import
 
 **保留内容：**
 - 账号信息卡片
-- 订单信息区块（完整保留，不做简化）
+- 订单信息区块（完整保留，默认展示最近2笔）
 - 设置区块
 - 关于我们
-
-### 3. `.lovable/plan.md` — 更新计划文档
 
 ## 不受影响的功能
 
@@ -48,4 +53,3 @@
 - `/youjin-life` 页面底部的语音入口不受影响
 - `/camps` 页面功能不变
 - 「我的」页面的订单查看功能完整保留
-
