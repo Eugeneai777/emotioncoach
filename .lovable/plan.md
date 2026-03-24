@@ -1,48 +1,24 @@
 
 
-# 优化方案：链接中国生活服务平台
+# 将底部导航替换为内嵌对话输入框
 
-## 现状
+## 改动
 
-当前 ActionCard 按钮点击只弹 toast "功能即将上线"，没有实际跳转。服务数据是 AI prompt 中的模拟数据，无外部链接。
+### 1. 修改 `src/pages/YoujinLife.tsx`
+- 移除 `YoujinBottomNav` 组件引用
+- 移除底部悬浮按钮（"一句话，立即搞定"）
+- 在页面最底部固定一个对话输入框，样式类似截图中的搜索栏：
+  - 左侧搜索图标 + 输入框（placeholder 轮播，如"帮我找个保洁"）
+  - 右侧语音按钮 + "搞定"按钮
+  - 输入后回车或点击按钮跳转到 `/youjin-life/chat?q=...`
+- 移除顶部搜索栏（避免重复），顶部只保留标题+副标题
 
-## 方案
+### 2. 删除或保留 `YoujinBottomNav.tsx`
+- 保留文件（对话页仍可能用到），但首页不再引用
 
-### 1. ActionCard 支持外链跳转
+### 3. 调整间距
+- `pb-20` 改为 `pb-16` 适配底部输入框高度
 
-给 Action 接口新增可选 `url` 字段，点击按钮时用 `window.open(url)` 跳转外部平台。
-
-### 2. 服务类型 → 平台映射
-
-根据 AI 识别的服务类型，自动关联对应的中国主流平台：
-
-| 服务类型 | 推荐平台 | 链接 |
-|---------|---------|------|
-| 保洁/家政 | 58到家 | `https://daojia.58.com` |
-| 维修 | 啄木鸟家庭维修 | `https://www.zmn.cn` |
-| 搬家 | 货拉拉 | `https://www.huolala.cn` |
-| 外卖/吃什么 | 美团 | `https://www.meituan.com` |
-| 跑腿/代办 | 闪送 | `https://www.ishansong.com` |
-
-### 3. 更新 AI System Prompt
-
-在 Edge Function 的 system prompt 执行模式中，让 AI 在推荐服务时输出平台名称和类别标识，前端根据类别自动匹配外链。
-
-### 4. 新增 ServiceLinkCard 组件
-
-在 ChatBubble 中新增一种卡片类型，展示：
-- 平台 logo/图标 + 名称
-- 一句话描述（如 "去58到家找附近保洁"）
-- 跳转按钮
-
-## 改动文件
-
-| 文件 | 操作 |
-|------|------|
-| `src/components/youjin-life/ActionCard.tsx` | Action 接口加 `url`，按钮支持外链 |
-| `src/components/youjin-life/ServiceLinkCard.tsx` | 新建，平台链接卡片 |
-| `src/components/youjin-life/ChatBubble.tsx` | 解析新卡片标记 `[SERVICE_LINK]` |
-| `supabase/functions/youjin-life-chat/index.ts` | prompt 中加入平台推荐指引 |
-
-不改动任何现有业务逻辑。
+## 效果
+首页底部固定显示对话输入框，用户直接输入即可开始对话，无需额外点击。
 
