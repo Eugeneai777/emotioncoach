@@ -56,28 +56,32 @@ export default function YoujinLife() {
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      {/* Audience Hub */}
-      <div className="px-6 pt-10 pb-4">
-        <AudienceHub />
-      </div>
-
-      {/* Hero */}
-      <div className="pb-6 px-6">
+      {/* 顶部标题 */}
+      <div className="px-6 pt-10 pb-2">
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold text-gray-900 tracking-tight"
+          className="text-2xl font-bold text-gray-900 tracking-tight"
         >
-          一句话，帮你搞定今天
+          有劲AI · 一句话帮你搞定生活
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mt-2 text-base text-gray-400"
+          className="mt-1.5 text-sm text-gray-400"
         >
           不需要思考，AI帮你安排好生活
         </motion.p>
+      </div>
+
+      {/* Audience Hub */}
+      <div className="px-6 pb-4">
+        <AudienceHub />
+      </div>
+
+      {/* Hero */}
+      <div className="pb-6 px-6">
       </div>
 
       {/* Core Input */}
