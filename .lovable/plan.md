@@ -1,51 +1,44 @@
 
 
-# /mini-app 底部导航改造：三项式布局
+# 修复：/mini-app 导航内容重复与「学习」按钮跳转问题
 
-## 概述
+## 现存问题
 
-将底部导航从「我的 + 语音教练」两项布局改为「我的 + 文字AI + 学习」三项布局，同时瘦身「我的」页面。
+1. **「学习」按钮** 跳转 `/camps` 展示全部训练营商品列表，已购用户看不到"我的训练营"
+2. **「我的」页面** 仍显示完整的订单列表（最多20笔），内容过多
+3. **/mini-app 首页** 已购用户快捷面板仍有「我的订单」「我的测评」「我的训练营」三个按钮，与底部导航「学习」和「我的」形成重复
 
-## 改动范围（3个文件）
+## 修改方案
 
-### 1. `src/components/awakening/AwakeningBottomNav.tsx` — 重写
+### 文件1：`src/components/awakening/AwakeningBottomNav.tsx`
 
-**移除内容：**
-- 所有语音通话相关代码（CoachVoiceChat、UnifiedPayDialog、PurchaseOnboardingDialog、预热逻辑、余额检查、useAuth、supabase 引用）
+- 「学习」按钮跳转改为 `/camps?filter=my`，让已购用户直接看到"我的训练营"列表
+- `/camps` 页面已支持 `?filter=my` 参数，会展示用户已购/进行中/已完成的训练营
 
-**保留内容：**
-- 中间 Logo 凸起按钮的视觉样式（呼吸动画、光晕效果）
+### 文件2：`src/pages/MiniAppEntry.tsx`
 
-**新增/修改内容：**
-- 中间按钮 onClick → `navigate('/youjin-life/chat')`，无登录门槛
-- 右侧新增「学习」按钮（BookOpen 图标），点击跳转 `/camps`
-- 右侧空占位 `div` 替换为实际按钮
-- 布局变为左中右三项对称
+- 移除 `paidShortcuts` 数组及其渲染的「我的订单」「我的测评」「我的训练营」快捷面板
+- 移除相关 import（ShoppingCart、ClipboardList、Tent）和 `hasPaidOrder` 状态逻辑
+- 这些功能已通过底部导航「我的」和「学习」覆盖
 
-**关于右侧跳转 `/camps` 的说明：**
-- `/camps` 页面（CampList.tsx）已支持 `?filter=active`、`?filter=completed` 参数筛选用户训练营
-- 默认展示所有训练营商品浏览，用户可通过页面内 Tab 切换查看自己的训练营
-- 直接复用现有页面，不额外新建聚合页，避免增加维护成本
+### 文件3：`src/pages/MyPage.tsx`
 
-### 2. `src/pages/MyPage.tsx` — 瘦身
+- 订单区块简化：从完整列表改为仅显示一行「查看全部订单 →」入口
+- 点击跳转 `/my-page-orders`（新建）或保留在页面内折叠显示
+- **建议**：保留订单列表但默认只显示最近2笔（当前逻辑已如此），不做大改，保持稳定
 
-**移除内容：**
-- 「学习与成长中心」区块（第272-294行，LEARNING_MODULES 及其渲染）
-- 「助你持续成长」五大板块区块（第296-326行）
-- 相关的 import（ClipboardCheck、Flame、BookOpen、Sparkles、Wrench、BarChart3、Target、ShoppingBag、Users）
+## 不影响的功能
 
-**保留内容：**
-- 账号信息卡片
-- 订单信息区块（完整保留，不做简化）
-- 设置区块
-- 关于我们
+- `/camps` 页面本身功能不变，用户仍可手动切换查看全部训练营
+- 订单数据查询逻辑不变
+- 各人群页面的独立入口不受影响
 
-### 3. `.lovable/plan.md` — 更新计划文档
+## 技术细节
 
-## 不受影响的功能
-
-- 语音教练在各人群页面（/workplace、/laoge 等）的独立入口不受影响
-- `/youjin-life` 页面底部的语音入口不受影响
-- `/camps` 页面功能不变
-- 「我的」页面的订单查看功能完整保留
+```text
+改动量：
+- AwakeningBottomNav.tsx: 1行改动（路由参数）
+- MiniAppEntry.tsx: 移除 ~25行代码（快捷面板 + hasPaidOrder 逻辑）
+- MyPage.tsx: 不改动（保持当前默认展示2笔订单的行为）
+```
 
