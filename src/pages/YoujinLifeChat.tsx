@@ -5,10 +5,13 @@ import { ArrowLeft, Send, Mic, MicOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ChatBubble } from "@/components/youjin-life/ChatBubble";
 import { YoujinBottomNav } from "@/components/youjin-life/YoujinBottomNav";
+import { supabase } from "@/integrations/supabase/client";
+import { getTodayRangeUTC } from "@/utils/dateUtils";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youjin-life-chat`;
 
 type Msg = { role: "user" | "assistant"; content: string };
+type ExpenseReport = { month: string; totalAmount: number; categories: { category: string; total: number; count: number }[] };
 
 export default function YoujinLifeChat() {
   const [searchParams] = useSearchParams();
@@ -17,6 +20,8 @@ export default function YoujinLifeChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [expenseReport, setExpenseReport] = useState<ExpenseReport | null>(null);
+  const expenseSavedRef = useRef<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -153,6 +158,67 @@ export default function YoujinLifeChat() {
     setIsListening(false);
   };
 
+  const handleExpense = useCallback(async (data: { amount: number; category: string; note: string }) => {
+    const key = `${data.amount}-${data.category}-${data.note}`;
+    if (expenseSavedRef.current.has(key)) return;
+    expenseSavedRef.current.add(key);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { error } = await supabase.from("finance_records").insert({
+      user_id: user.id,
+      amount: data.amount,
+      category: data.category,
+      type: "expense",
+      note: data.note || null,
+    });
+    if (error) {
+      console.error("Save expense error:", error);
+      toast.error("记账保存失败");
+    }
+  }, []);
+
+  const handleExpenseQuery = useCallback(async (data: { type: string; month?: string }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const month = data.month || new Date().toISOString().slice(0, 7);
+    const startDate = `${month}-01T00:00:00+08:00`;
+    const endMonth = parseInt(month.split("-")[1]);
+    const endYear = parseInt(month.split("-")[0]);
+    const nextMonth = endMonth === 12 ? `${endYear + 1}-01` : `${endYear}-${String(endMonth + 1).padStart(2, "0")}`;
+    const endDate = `${nextMonth}-01T00:00:00+08:00`;
+
+    const { data: records, error } = await supabase
+      .from("finance_records")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("type", "expense")
+      .gte("created_at", new Date(startDate).toISOString())
+      .lt("created_at", new Date(endDate).toISOString());
+
+    if (error) {
+      console.error("Query expense error:", error);
+      return;
+    }
+
+    const catMap: Record<string, { total: number; count: number }> = {};
+    let totalAmount = 0;
+    (records || []).forEach((r) => {
+      totalAmount += r.amount;
+      if (!catMap[r.category]) catMap[r.category] = { total: 0, count: 0 };
+      catMap[r.category].total += r.amount;
+      catMap[r.category].count += 1;
+    });
+
+    setExpenseReport({
+      month: `${month}月`,
+      totalAmount,
+      categories: Object.entries(catMap).map(([category, v]) => ({ category, ...v })),
+    });
+  }, []);
+
   const handleSubmit = () => {
     sendMessage(input);
   };
@@ -185,6 +251,9 @@ export default function YoujinLifeChat() {
             role={msg.role}
             content={msg.content}
             isStreaming={isLoading && i === messages.length - 1 && msg.role === "assistant"}
+            onExpense={handleExpense}
+            onExpenseQuery={handleExpenseQuery}
+            expenseReport={expenseReport}
           />
         ))}
         {isLoading && messages[messages.length - 1]?.role === "user" && (
