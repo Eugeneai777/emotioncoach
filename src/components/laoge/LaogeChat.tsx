@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -8,15 +8,21 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/laoge-ai`;
 interface LaogeChatProps {
   tool: string;
   inputs: Record<string, string>;
+  round?: number;
+  history?: { round: number; inputs: Record<string, string>; response: string }[];
   onReset?: () => void;
+  onComplete?: (responseText: string) => void;
 }
 
-export function LaogeChat({ tool, inputs, onReset }: LaogeChatProps) {
+export function LaogeChat({ tool, inputs, round, history, onReset, onComplete }: LaogeChatProps) {
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const startedRef = useRef(false);
 
   const startChat = useCallback(async () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     setLoading(true);
     setResponse("");
     setDone(false);
@@ -28,7 +34,7 @@ export function LaogeChat({ tool, inputs, onReset }: LaogeChatProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ tool, inputs }),
+        body: JSON.stringify({ tool, inputs, round, history }),
       });
 
       if (!resp.ok) {
@@ -78,18 +84,18 @@ export function LaogeChat({ tool, inputs, onReset }: LaogeChatProps) {
       }
 
       setDone(true);
+      onComplete?.(accumulated);
     } catch (e) {
       console.error(e);
       toast.error("网络错误，请检查连接后重试");
     } finally {
       setLoading(false);
     }
-  }, [tool, inputs]);
+  }, [tool, inputs, round, history, onComplete]);
 
-  if (!done && !loading && !response) {
-    // Auto-start on mount
+  useEffect(() => {
     startChat();
-  }
+  }, [startChat]);
 
   return (
     <div className="space-y-4">
@@ -101,7 +107,7 @@ export function LaogeChat({ tool, inputs, onReset }: LaogeChatProps) {
       )}
 
       {response && (
-        <div className="bg-[hsl(var(--laoge-card))] rounded-xl p-5 border border-[hsl(var(--laoge-border))]">
+        <div className="bg-[hsl(var(--laoge-bg))] rounded-xl rounded-tl-sm p-4 border border-[hsl(var(--laoge-border))]">
           <div className="prose prose-sm prose-invert max-w-none 
             prose-headings:text-[hsl(var(--laoge-text))] prose-headings:font-bold
             prose-p:text-[hsl(var(--laoge-text-muted))] prose-p:leading-relaxed
@@ -112,7 +118,7 @@ export function LaogeChat({ tool, inputs, onReset }: LaogeChatProps) {
         </div>
       )}
 
-      {done && onReset && (
+      {done && onReset && !onComplete && (
         <button
           onClick={onReset}
           className="w-full py-3 rounded-lg border border-[hsl(var(--laoge-border))] text-[hsl(var(--laoge-text-muted))] hover:bg-[hsl(var(--laoge-card))] transition-colors text-sm"
