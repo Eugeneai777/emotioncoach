@@ -110,12 +110,9 @@ export default function YoujinLife() {
       {/* ===== 顶部状态栏区域 ===== */}
       <div className="px-4 pt-[calc(env(safe-area-inset-top,12px)+8px)]">
         {/* Brand Header */}
-        <div className="flex items-center gap-2.5 mb-3">
-          <img src={logoImage} alt="有劲AI" className="w-9 h-9 rounded-full object-cover" />
-          <div>
-            <h1 className="text-base font-bold text-gray-900 leading-tight">有劲AI</h1>
-            <p className="text-[11px] text-gray-400 leading-tight">一句话帮你搞定生活</p>
-          </div>
+        <div className="flex flex-col items-center mb-3">
+          <h1 className="text-base font-bold text-gray-900 leading-tight">有劲AI · 一句话帮你搞定生活</h1>
+          <p className="text-[11px] text-gray-400 leading-tight mt-1">不需要思考，AI帮你安排好生活</p>
         </div>
 
         {/* ===== 搜索栏 ===== */}
