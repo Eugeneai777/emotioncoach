@@ -130,6 +130,33 @@ export default function LaogeAI() {
         </div>
       </div>
 
+      {/* Assessment Entry */}
+      <div className="px-4 pt-5 pb-2 max-w-lg mx-auto">
+        <p className="text-sm font-bold text-[hsl(var(--laoge-text))] mb-3">
+          🩺 老哥建议：先做个体检
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate("/wealth-block")}
+            className="flex flex-col items-start gap-1.5 p-4 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+          >
+            <span className="text-2xl">💰</span>
+            <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">财富卡点测评</span>
+            <span className="text-[10px] text-[hsl(var(--laoge-text-muted))]">20题 · 6分钟</span>
+            <span className="text-[10px] font-bold text-[hsl(var(--laoge-accent))]">限时 ¥9.9</span>
+          </button>
+          <button
+            onClick={() => navigate("/midlife-awakening")}
+            className="flex flex-col items-start gap-1.5 p-4 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+          >
+            <span className="text-2xl">🧭</span>
+            <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">中场觉醒力测评</span>
+            <span className="text-[10px] text-[hsl(var(--laoge-text-muted))]">30题 · 8分钟</span>
+            <span className="text-[10px] font-bold text-[hsl(var(--laoge-accent))]">专业版</span>
+          </button>
+        </div>
+      </div>
+
       {/* Tools */}
       <div className="px-4 py-6 space-y-3 max-w-lg mx-auto">
         {TOOLS.map(t => (
