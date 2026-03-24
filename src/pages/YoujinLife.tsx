@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, ArrowRight, Brain, Home, Scale, Lightbulb, ListTodo, Bell, Clock, ChevronRight } from "lucide-react";
 import { YoujinBottomNav } from "@/components/youjin-life/YoujinBottomNav";
+import AudienceHub from "@/components/energy-studio/AudienceHub";
 
 const placeholders = [
   "帮我找个保洁",
