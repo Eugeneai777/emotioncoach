@@ -20,9 +20,9 @@ const placeholders = [
 const quickServices = [
   { emoji: "🧹", label: "保洁", prompt: "帮我找个附近的保洁服务", bg: "bg-blue-50", ring: "ring-blue-100" },
   { emoji: "🔧", label: "维修", prompt: "水龙头漏水了，怎么修", bg: "bg-orange-50", ring: "ring-orange-100" },
-  { emoji: "🚚", label: "搬家", prompt: "下周要搬家，东西不多", bg: "bg-emerald-50", ring: "ring-emerald-100" },
   { emoji: "🍜", label: "美食", prompt: "今晚吃什么？推荐一下", bg: "bg-red-50", ring: "ring-red-100" },
   { emoji: "💰", label: "记账", prompt: "帮我记一笔账", bg: "bg-green-50", ring: "ring-green-100" },
+  { emoji: "🎯", label: "打卡", prompt: "__NAV__/youjin-life/habits", bg: "bg-violet-50", ring: "ring-violet-100" },
   { emoji: "🤝", label: "互助", prompt: "__NAV__/youjin-life/help", bg: "bg-pink-50", ring: "ring-pink-100" },
   { emoji: "🛒", label: "团购", prompt: "附近有什么社区团购", bg: "bg-amber-50", ring: "ring-amber-100" },
   { emoji: "💡", label: "更多", prompt: "你能帮我做什么", bg: "bg-gray-50", ring: "ring-gray-100" },

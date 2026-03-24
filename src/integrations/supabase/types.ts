@@ -3701,6 +3701,77 @@ export type Database = {
           },
         ]
       }
+      daily_habit_checkins: {
+        Row: {
+          ai_encouragement: string | null
+          checkin_date: string
+          created_at: string
+          habit_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          ai_encouragement?: string | null
+          checkin_date?: string
+          created_at?: string
+          habit_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          ai_encouragement?: string | null
+          checkin_date?: string
+          created_at?: string
+          habit_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_habit_checkins_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "daily_habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_habits: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          emoji: string | null
+          id: string
+          is_active: boolean | null
+          target_days_per_week: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          target_days_per_week?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          target_days_per_week?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_todo_summaries: {
         Row: {
           ai_summary: string | null
