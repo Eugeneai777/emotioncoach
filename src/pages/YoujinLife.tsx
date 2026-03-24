@@ -134,7 +134,82 @@ export default function YoujinLife() {
         </div>
       </div>
 
-
+      {/* Real Use Cases */}
+      <div className="px-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">真实案例</h2>
+        <div className="space-y-3">
+          {[
+            {
+              emoji: "🧹",
+              question: "帮我找个周末的保洁阿姨",
+              answer: "已为你推荐3位附近保洁：李阿姨 ¥45/时 ⭐4.9，可直接跳转58到家预约。",
+              tags: ["生活服务", "保洁"],
+              prompt: "帮我找个周末的保洁阿姨",
+            },
+            {
+              emoji: "😰",
+              question: "最近工作压力特别大，不知道怎么办",
+              answer: "听起来你最近挺累的。建议：① 今晚散步20分钟 ② 写3件今天的小确幸 ③ 周末给自己放半天假。",
+              tags: ["情绪支持", "减压"],
+              prompt: "最近工作压力特别大，不知道怎么办",
+            },
+            {
+              emoji: "🍜",
+              question: "今晚吃什么？不想吃辣的",
+              answer: "推荐：① 清淡粤菜小炒 ② 日式定食套餐 ③ 意面沙拉轻食。可跳转美团查看附近餐厅。",
+              tags: ["决策", "美食"],
+              prompt: "今晚吃什么？不想吃辣的",
+            },
+            {
+              emoji: "🔧",
+              question: "水龙头漏水了，怎么修",
+              answer: "建议找专业师傅上门维修。已推荐啄木鸟家庭维修，张师傅 ¥80起 ⭐4.9，0.8km内。",
+              tags: ["生活服务", "维修"],
+              prompt: "水龙头漏水了，怎么修",
+            },
+            {
+              emoji: "⚖️",
+              question: "要不要跳槽？现在的工作稳定但没成长",
+              answer: "这个问题挺现实的。从收入、成长、风险3个维度分析后，建议先内部争取轮岗机会，同时更新简历。",
+              tags: ["决策", "职业"],
+              prompt: "要不要跳槽？现在的工作稳定但没成长",
+            },
+            {
+              emoji: "🚚",
+              question: "下周要搬家，东西不多",
+              answer: "东西不多推荐货拉拉小面包车 ¥180起，好运搬家也不错 ¥150起。已生成一键下单链接。",
+              tags: ["生活服务", "搬家"],
+              prompt: "下周要搬家，东西不多",
+            },
+          ].map((item, i) => (
+            <motion.button
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + i * 0.05 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleQuickEntry(item.prompt)}
+              className="w-full text-left p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100/60 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xl mt-0.5">{item.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 mb-1">"{item.question}"</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{item.answer}</p>
+                  <div className="flex gap-1.5 mt-2">
+                    {item.tags.map((tag) => (
+                      <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-200/60 text-gray-500">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 mt-1 shrink-0" />
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      </div>
 
 
       {/* Today AI Cards */}
