@@ -347,6 +347,7 @@ const App = () => (
               <Route path="/youjin-life/chat" element={<YoujinLifeChat />} />
               <Route path="/youjin-life/expenses" element={<YoujinLifeExpenses />} />
               <Route path="/youjin-life/help" element={<YoujinLifeHelp />} />
+              <Route path="/youjin-life/habits" element={<YoujinLifeHabits />} />
               <Route path="/health-store" element={<HealthStore />} />
               <Route path="/living-lab" element={<LivingLab />} />
               <Route path="/coach-space" element={<CoachSpace />} />
