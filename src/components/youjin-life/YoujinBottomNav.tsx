@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Home, MessageCircle, ClipboardList, User } from "lucide-react";
+import { Home, MessageCircle } from "lucide-react";
 
 const tabs = [
   { key: "home", label: "首页", icon: Home, path: "/youjin-life" },
   { key: "chat", label: "对话", icon: MessageCircle, path: "/youjin-life/chat" },
-  { key: "assess", label: "测评", icon: ClipboardList, path: "/youjin-life/assess" },
-  { key: "profile", label: "我的", icon: User, path: "/youjin-life/profile" },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];

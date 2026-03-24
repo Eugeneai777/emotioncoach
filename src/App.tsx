@@ -59,8 +59,6 @@ const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
 const MiniAppEntry = lazyRetry(() => import("./pages/MiniAppEntry"));
 const YoujinLife = lazyRetry(() => import("./pages/YoujinLife"));
 const YoujinLifeChat = lazyRetry(() => import("./pages/YoujinLifeChat"));
-const YoujinLifeAssess = lazyRetry(() => import("./pages/YoujinLifeAssess"));
-const YoujinLifeProfile = lazyRetry(() => import("./pages/YoujinLifeProfile"));
 
 // 小劲AI
 const XiaojinHome = lazyRetry(() => import("./pages/xiaojin/XiaojinHome"));
@@ -344,8 +342,6 @@ const App = () => (
               <Route path="/mini-app" element={<MiniAppEntry />} />
               <Route path="/youjin-life" element={<YoujinLife />} />
               <Route path="/youjin-life/chat" element={<YoujinLifeChat />} />
-              <Route path="/youjin-life/assess" element={<YoujinLifeAssess />} />
-              <Route path="/youjin-life/profile" element={<YoujinLifeProfile />} />
               <Route path="/health-store" element={<HealthStore />} />
               <Route path="/living-lab" element={<LivingLab />} />
               <Route path="/coach-space" element={<CoachSpace />} />
