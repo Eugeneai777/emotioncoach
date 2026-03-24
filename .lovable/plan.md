@@ -1,52 +1,61 @@
 
 
-# 优化 YoujinLife 页面设计排版
+# 智能记账功能：对话式记账 + 月度消费报告
 
-## 现状问题
+## 概述
 
-页面当前存在以下排版问题：
-- 各板块之间层次不够分明，视觉节奏单调
-- 社区服务卡片和案例卡片横向滚动区域视觉权重相近，缺乏主次
-- 标题区域过于简单，缺少品牌感
-- 快捷服务网格图标背景单一（全是 `bg-gray-50`），不够活泼
-- 底部输入框与页面内容之间过渡生硬
+在 /youjin-life 生态中加入"对话式记账"能力，用户通过自然语言（如"午饭花了35"、"打车18块"）即可完成记账，并可生成月度消费报告。
 
-## 优化方案
+## 现状
 
-### 1. 标题区域增强
-- 增加品牌 Logo（BrandLogo 组件）
-- 标题加大字号，副标题加入渐变色点缀
-- 增加一个柔和的圆形装饰背景
+项目已有 `finance_records` 表和 `FinanceTracker` 组件（表单式记账），但与 youjin-life 对话系统完全独立。
 
-### 2. 快捷服务网格优化
-- 每个服务图标使用对应主题色背景（保洁用蓝色、维修用橙色等）
-- 图标尺寸微调，间距优化
-- 移除外层白色卡片包裹，直接融入页面背景
+## 方案
 
-### 3. 社区生活圈卡片优化
-- 卡片宽度统一为 `w-56`，更紧凑
-- 增加物品数量上限为 2 条（减少高度差异）
-- 底部链接按钮加强视觉
+### 1. 更新 AI System Prompt（对话式记账）
 
-### 4. 案例卡片优化
-- 卡片增加顶部色条装饰
-- tag 标签使用对应主题色
-- 去掉引号，简化文案
+修改 `supabase/functions/youjin-life-chat/index.ts`，在执行模式中增加记账场景：
+- AI 识别记账意图（"午饭35"、"今天花了多少"、"本月消费报告"）
+- 输出结构化标记 `[EXPENSE]{"amount":35,"category":"餐饮","note":"午饭"}[/EXPENSE]`
+- 查询类输出 `[EXPENSE_QUERY]{"type":"monthly_report","month":"2026-03"}[/EXPENSE_QUERY]`
 
-### 5. 今日AI + 最近记录合并
-- 两个列表合并为一个卡片，用 tab 切换
-- 减少页面纵向长度
+### 2. 前端解析与写入
 
-### 6. 整体间距与色彩
-- 板块间距从 `mb-4` 调整为 `mb-5`，增加呼吸感
-- 背景渐变微调，从暖灰过渡到白色更自然
-- 底部输入框加入顶部柔和阴影
+修改 `src/pages/YoujinLifeChat.tsx`：
+- 解析 `[EXPENSE]` 标记，自动调用 `finance_records` 表插入记录
+- 解析 `[EXPENSE_QUERY]` 标记，查询数据库生成报告
+
+修改 `src/components/youjin-life/ChatBubble.tsx`：
+- 新增 `ExpenseCard` 卡片类型，展示记账确认（金额、分类、备注 + ✅ 已记录）
+- 新增 `ExpenseReportCard` 卡片，展示月度消费饼图/分类汇总
+
+### 3. 新增组件
+
+| 文件 | 说明 |
+|------|------|
+| `src/components/youjin-life/ExpenseCard.tsx` | 记账确认卡片（金额、分类、备注） |
+| `src/components/youjin-life/ExpenseReportCard.tsx` | 月度报告卡片（分类汇总 + 简单柱状/饼图） |
+
+### 4. 首页快捷入口
+
+在 `src/pages/YoujinLife.tsx` 的 `quickServices` 网格中添加"记账"入口：
+- emoji: 💰，label: "记账"，prompt: "帮我记一笔账"
+- bg: "bg-green-50"
+
+### 5. 数据层
+
+复用已有的 `finance_records` 表，无需新建表。月度报告通过前端查询 `finance_records` 按月分组聚合。
 
 ## 改动文件
 
 | 文件 | 操作 |
 |------|------|
-| `src/pages/YoujinLife.tsx` | 重构排版布局和样式 |
+| `supabase/functions/youjin-life-chat/index.ts` | prompt 增加记账意图识别与标记输出 |
+| `src/pages/YoujinLifeChat.tsx` | 解析 EXPENSE/EXPENSE_QUERY 标记，执行数据库操作 |
+| `src/components/youjin-life/ChatBubble.tsx` | 新增 expense/expense_report 卡片类型解析 |
+| `src/components/youjin-life/ExpenseCard.tsx` | 新建，记账确认卡片 |
+| `src/components/youjin-life/ExpenseReportCard.tsx` | 新建，月度报告卡片 |
+| `src/pages/YoujinLife.tsx` | quickServices 增加"记账"入口 |
 
-不新增文件，不改动业务逻辑和路由。
+不改动数据库结构，复用已有 `finance_records` 表。
 
