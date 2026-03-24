@@ -56,8 +56,13 @@ export default function YoujinLife() {
 
   return (
     <div className="min-h-screen bg-white pb-24">
+      {/* Audience Hub */}
+      <div className="px-6 pt-10 pb-4">
+        <AudienceHub />
+      </div>
+
       {/* Hero */}
-      <div className="pt-12 pb-8 px-6">
+      <div className="pb-6 px-6">
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
