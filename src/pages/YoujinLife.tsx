@@ -131,7 +131,7 @@ export default function YoujinLife() {
             有劲AI · 一句话帮你搞定生活
           </h1>
           <p className="text-xs text-muted-foreground leading-tight mt-1">
-            不需要思考，AI帮你安排好生活
+            您专属的社区入口
           </p>
         </div>
       </div>
