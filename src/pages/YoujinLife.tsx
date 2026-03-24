@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink, TrendingUp, Wallet } from "lucide-react";
+import { Mic, Search, ChevronRight, Lightbulb, ListTodo, Bell, Clock, ExternalLink, Wallet } from "lucide-react";
 import AudienceHub from "@/components/energy-studio/AudienceHub";
-import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -18,14 +17,14 @@ const placeholders = [
 ];
 
 const quickServices = [
-  { emoji: "🧹", label: "保洁", prompt: "帮我找个附近的保洁服务", bg: "bg-blue-50", ring: "ring-blue-100" },
-  { emoji: "🔧", label: "维修", prompt: "水龙头漏水了，怎么修", bg: "bg-orange-50", ring: "ring-orange-100" },
-  { emoji: "🍜", label: "美食", prompt: "今晚吃什么？推荐一下", bg: "bg-red-50", ring: "ring-red-100" },
-  { emoji: "💰", label: "记账", prompt: "帮我记一笔账", bg: "bg-green-50", ring: "ring-green-100" },
-  { emoji: "🎯", label: "打卡", prompt: "__NAV__/youjin-life/habits", bg: "bg-violet-50", ring: "ring-violet-100" },
-  { emoji: "🤝", label: "互助", prompt: "__NAV__/youjin-life/help", bg: "bg-pink-50", ring: "ring-pink-100" },
-  { emoji: "🛒", label: "团购", prompt: "附近有什么社区团购", bg: "bg-amber-50", ring: "ring-amber-100" },
-  { emoji: "💡", label: "更多", prompt: "你能帮我做什么", bg: "bg-gray-50", ring: "ring-gray-100" },
+  { emoji: "🧹", label: "保洁", prompt: "帮我找个附近的保洁服务", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "🔧", label: "维修", prompt: "水龙头漏水了，怎么修", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "🍜", label: "美食", prompt: "今晚吃什么？推荐一下", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "💰", label: "记账", prompt: "帮我记一笔账", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "🎯", label: "打卡", prompt: "__NAV__/youjin-life/habits", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "🤝", label: "互助", prompt: "__NAV__/youjin-life/help", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "🛒", label: "团购", prompt: "附近有什么社区团购", bg: "bg-white/10", ring: "ring-white/10" },
+  { emoji: "💡", label: "更多", prompt: "你能帮我做什么", bg: "bg-white/10", ring: "ring-white/10" },
 ];
 
 const communityServices = [
@@ -39,9 +38,10 @@ const communityServices = [
     ],
     link: "https://youhui.pinduoduo.com",
     linkLabel: "去多多买菜",
-    accent: "bg-orange-500",
-    color: "bg-orange-50",
-    iconColor: "text-orange-600",
+    accent: "bg-orange-400",
+    cardBg: "bg-white/[0.06]",
+    borderColor: "border-white/[0.08]",
+    iconColor: "text-orange-400",
   },
   {
     emoji: "🏪",
@@ -53,9 +53,10 @@ const communityServices = [
     ],
     link: "https://www.xianyu.com",
     linkLabel: "去闲鱼看更多",
-    accent: "bg-blue-500",
-    color: "bg-blue-50",
-    iconColor: "text-blue-600",
+    accent: "bg-sky-400",
+    cardBg: "bg-white/[0.06]",
+    borderColor: "border-white/[0.08]",
+    iconColor: "text-sky-400",
   },
   {
     emoji: "🎉",
@@ -65,25 +66,26 @@ const communityServices = [
       { name: "周六亲子手工课", detail: "本周六 14:00", extra: "活动中心" },
       { name: "瑜伽晨练班", detail: "每周一三五 7:00", extra: "小区花园" },
     ],
-    accent: "bg-purple-500",
-    color: "bg-purple-50",
-    iconColor: "text-purple-600",
+    accent: "bg-violet-400",
+    cardBg: "bg-white/[0.06]",
+    borderColor: "border-white/[0.08]",
+    iconColor: "text-violet-400",
   },
 ];
 
 const cases = [
-  { emoji: "🧹", question: "帮我找个周末的保洁阿姨", result: "推荐3位 · 可跳转58到家预约", tag: "保洁", tagColor: "bg-blue-50 text-blue-600" },
-  { emoji: "😰", question: "最近工作压力特别大", result: "情绪疏导 + 3条实用建议", tag: "减压", tagColor: "bg-emerald-50 text-emerald-600" },
-  { emoji: "🍜", question: "今晚吃什么？不想吃辣", result: "3个推荐 · 可跳转美团下单", tag: "美食", tagColor: "bg-red-50 text-red-600" },
-  { emoji: "🛒", question: "附近有什么团购？", result: "3个社区团 · 今日截单", tag: "团购", tagColor: "bg-amber-50 text-amber-600" },
-  { emoji: "⚖️", question: "要不要跳槽？", result: "3维度对比分析 + 建议", tag: "决策", tagColor: "bg-violet-50 text-violet-600" },
-  { emoji: "🏪", question: "想买个二手书架", result: "邻居在卖 · ¥150", tag: "闲置", tagColor: "bg-cyan-50 text-cyan-600" },
+  { emoji: "🧹", question: "帮我找个周末的保洁阿姨", result: "推荐3位 · 可跳转58到家预约", tag: "保洁", tagColor: "bg-sky-500/20 text-sky-300" },
+  { emoji: "😰", question: "最近工作压力特别大", result: "情绪疏导 + 3条实用建议", tag: "减压", tagColor: "bg-emerald-500/20 text-emerald-300" },
+  { emoji: "🍜", question: "今晚吃什么？不想吃辣", result: "3个推荐 · 可跳转美团下单", tag: "美食", tagColor: "bg-red-500/20 text-red-300" },
+  { emoji: "🛒", question: "附近有什么团购？", result: "3个社区团 · 今日截单", tag: "团购", tagColor: "bg-amber-500/20 text-amber-300" },
+  { emoji: "⚖️", question: "要不要跳槽？", result: "3维度对比分析 + 建议", tag: "决策", tagColor: "bg-violet-500/20 text-violet-300" },
+  { emoji: "🏪", question: "想买个二手书架", result: "邻居在卖 · ¥150", tag: "闲置", tagColor: "bg-cyan-500/20 text-cyan-300" },
 ];
 
 const todayCards = [
-  { icon: Lightbulb, title: "今日建议", desc: "保持专注，适当休息", color: "text-emerald-600", bg: "bg-emerald-50" },
-  { icon: ListTodo, title: "今日待办", desc: "还有 3 件事等你处理", color: "text-blue-600", bg: "bg-blue-50" },
-  { icon: Bell, title: "AI 提醒", desc: "下午记得喝水哦", color: "text-amber-600", bg: "bg-amber-50" },
+  { icon: Lightbulb, title: "今日建议", desc: "保持专注，适当休息", color: "text-emerald-400", bg: "bg-emerald-500/15" },
+  { icon: ListTodo, title: "今日待办", desc: "还有 3 件事等你处理", color: "text-sky-400", bg: "bg-sky-500/15" },
+  { icon: Bell, title: "AI 提醒", desc: "下午记得喝水哦", color: "text-amber-400", bg: "bg-amber-500/15" },
 ];
 
 export default function YoujinLife() {
@@ -105,7 +107,6 @@ export default function YoujinLife() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch monthly expense summary
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -144,22 +145,24 @@ export default function YoujinLife() {
     <div
       className="min-h-screen pb-20"
       style={{
-        background: "linear-gradient(180deg, #faf8f5 0%, #f5f3ef 15%, #ffffff 50%)",
+        background: "linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 70%, #0f0f1a 100%)",
         WebkitOverflowScrolling: "touch",
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      {/* ===== 顶部标题 + 品牌 ===== */}
-      <div className="relative px-4 pt-[calc(env(safe-area-inset-top,12px)+12px)] pb-3 overflow-hidden">
-        {/* 装饰圆 */}
-        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-amber-100/30 blur-2xl" />
-        <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-blue-100/20 blur-2xl" />
+      {/* ===== 顶部标题 ===== */}
+      <div className="relative px-4 pt-[calc(env(safe-area-inset-top,12px)+16px)] pb-4 overflow-hidden">
+        {/* 装饰光晕 */}
+        <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="absolute -top-16 -left-16 w-40 h-40 rounded-full bg-sky-500/8 blur-3xl" />
         <div className="relative flex flex-col items-center">
-          <BrandLogo size="sm" />
-          <h1 className="text-lg font-bold text-foreground leading-tight mt-2">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <span className="text-lg font-bold text-white">劲</span>
+          </div>
+          <h1 className="text-lg font-bold text-white leading-tight mt-3 tracking-wide">
             有劲AI · 一句话帮你搞定生活
           </h1>
-          <p className="text-xs text-muted-foreground leading-tight mt-1">
+          <p className="text-xs text-white/40 leading-tight mt-1.5">
             您专属的社区入口
           </p>
         </div>
@@ -167,13 +170,13 @@ export default function YoujinLife() {
 
       {/* ===== 人群入口 ===== */}
       <div className="px-4 mb-5">
-        <div className="bg-card rounded-2xl p-3.5 border border-border/50 shadow-sm">
+        <div className="bg-white/[0.06] rounded-2xl p-3.5 border border-white/[0.08] backdrop-blur-sm">
           <AudienceHub />
         </div>
       </div>
 
       {/* ===== 快捷服务网格 ===== */}
-      <div className="px-4 mb-5">
+      <div className="px-4 mb-6">
         <div className="grid grid-cols-4 gap-y-5 gap-x-2">
           {quickServices.map((s) => (
             <button
@@ -181,10 +184,10 @@ export default function YoujinLife() {
               onClick={() => handleQuickEntry(s.prompt)}
               className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
             >
-              <span className={`text-2xl w-12 h-12 flex items-center justify-center ${s.bg} rounded-2xl ring-1 ${s.ring}`}>
+              <span className={`text-2xl w-12 h-12 flex items-center justify-center ${s.bg} rounded-2xl ring-1 ${s.ring} backdrop-blur-sm`}>
                 {s.emoji}
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium">{s.label}</span>
+              <span className="text-[11px] text-white/50 font-medium">{s.label}</span>
             </button>
           ))}
         </div>
@@ -195,27 +198,27 @@ export default function YoujinLife() {
         <div className="px-4 mb-5">
           <button
             onClick={() => navigate("/youjin-life/expenses")}
-            className="w-full bg-card rounded-2xl border border-border/50 shadow-sm p-3.5 flex items-center gap-3 active:scale-[0.98] transition-transform"
+            className="w-full bg-white/[0.06] rounded-2xl border border-white/[0.08] backdrop-blur-sm p-3.5 flex items-center gap-3 active:scale-[0.98] transition-transform"
           >
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
-              <Wallet className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5 text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs text-muted-foreground">本月消费</p>
-              <p className="text-base font-bold text-foreground">¥{monthlyTotal.toFixed(0)}</p>
+              <p className="text-xs text-white/40">本月消费</p>
+              <p className="text-base font-bold text-white">¥{monthlyTotal.toFixed(0)}</p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[10px] text-muted-foreground">{monthlyCount}笔</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+              <span className="text-[10px] text-white/30">{monthlyCount}笔</span>
+              <ChevronRight className="w-4 h-4 text-white/20" />
             </div>
           </button>
         </div>
       )}
 
       {/* ===== 社区生活圈 ===== */}
-      <div className="mb-5">
+      <div className="mb-6">
         <div className="flex items-center justify-between px-4 mb-3">
-          <h2 className="text-sm font-bold text-foreground">🏘️ 小区生活圈</h2>
+          <h2 className="text-sm font-bold text-white/90">🏘️ 小区生活圈</h2>
         </div>
         <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none">
           {communityServices.map((svc, idx) => (
@@ -224,37 +227,33 @@ export default function YoujinLife() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.06 }}
-              className="shrink-0 w-56 bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
+              className={`shrink-0 w-56 ${svc.cardBg} rounded-2xl border ${svc.borderColor} backdrop-blur-sm overflow-hidden`}
             >
-              {/* 顶部色条 */}
-              <div className={`h-1 ${svc.accent}`} />
-              {/* Header */}
-              <div className={`${svc.color} px-3.5 py-2.5 flex items-center gap-2`}>
+              <div className={`h-0.5 ${svc.accent}`} />
+              <div className="px-3.5 py-2.5 flex items-center gap-2">
                 <span className="text-lg">{svc.emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-foreground">{svc.title}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{svc.desc}</p>
+                  <p className="text-xs font-bold text-white/90">{svc.title}</p>
+                  <p className="text-[10px] text-white/40 truncate">{svc.desc}</p>
                 </div>
               </div>
-              {/* Items */}
-              <div className="divide-y divide-border/30">
+              <div className="divide-y divide-white/[0.06]">
                 {svc.items.map((item, i) => (
                   <div key={i} className="px-3.5 py-2 flex items-center gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium text-foreground truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.detail}</p>
+                      <p className="text-[11px] font-medium text-white/80 truncate">{item.name}</p>
+                      <p className="text-[10px] text-white/35">{item.detail}</p>
                     </div>
-                    <span className="text-[10px] text-muted-foreground/50 shrink-0">{item.extra}</span>
+                    <span className="text-[10px] text-white/25 shrink-0">{item.extra}</span>
                   </div>
                 ))}
               </div>
-              {/* Footer */}
               {svc.link ? (
                 <a
                   href={svc.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-1 px-3.5 py-2.5 border-t border-border/30 ${svc.iconColor} text-[11px] font-semibold active:bg-accent/50 transition-colors`}
+                  className={`flex items-center justify-center gap-1 px-3.5 py-2.5 border-t border-white/[0.06] ${svc.iconColor} text-[11px] font-semibold active:bg-white/5 transition-colors`}
                 >
                   {svc.linkLabel}
                   <ExternalLink className="w-3 h-3" />
@@ -262,7 +261,7 @@ export default function YoujinLife() {
               ) : (
                 <button
                   onClick={() => handleQuickEntry(svc.title)}
-                  className={`w-full flex items-center justify-center gap-1 px-3.5 py-2.5 border-t border-border/30 ${svc.iconColor} text-[11px] font-semibold active:bg-accent/50 transition-colors`}
+                  className={`w-full flex items-center justify-center gap-1 px-3.5 py-2.5 border-t border-white/[0.06] ${svc.iconColor} text-[11px] font-semibold active:bg-white/5 transition-colors`}
                 >
                   AI 帮你找
                   <ChevronRight className="w-3 h-3" />
@@ -274,12 +273,12 @@ export default function YoujinLife() {
       </div>
 
       {/* ===== 真实案例 ===== */}
-      <div className="mb-5">
+      <div className="mb-6">
         <div className="flex items-center justify-between px-4 mb-3">
-          <h2 className="text-sm font-bold text-foreground">💬 真实案例</h2>
+          <h2 className="text-sm font-bold text-white/90">💬 真实案例</h2>
           <button
             onClick={() => navigate("/youjin-life/chat")}
-            className="text-[11px] text-muted-foreground flex items-center gap-0.5"
+            className="text-[11px] text-white/40 flex items-center gap-0.5"
           >
             查看更多
             <ChevronRight className="w-3 h-3" />
@@ -293,16 +292,14 @@ export default function YoujinLife() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.04 }}
               onClick={() => handleQuickEntry(item.question)}
-              className="shrink-0 w-36 bg-card rounded-2xl border border-border/50 shadow-sm text-left active:scale-[0.97] transition-transform overflow-hidden"
+              className="shrink-0 w-36 bg-white/[0.06] rounded-2xl border border-white/[0.08] backdrop-blur-sm text-left active:scale-[0.97] transition-transform overflow-hidden"
             >
-              {/* 顶部色条 */}
-              <div className={`h-0.5 ${item.tagColor.split(' ')[0].replace('50', '400')}`} />
               <div className="p-3">
                 <span className="text-xl">{item.emoji}</span>
-                <p className="text-xs font-medium text-foreground mt-2 line-clamp-2 leading-snug">
+                <p className="text-xs font-medium text-white/85 mt-2 line-clamp-2 leading-snug">
                   {item.question}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-1">{item.result}</p>
+                <p className="text-[10px] text-white/35 mt-1.5 line-clamp-1">{item.result}</p>
                 <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full ${item.tagColor} font-medium mt-2`}>
                   {item.tag}
                 </span>
@@ -312,44 +309,44 @@ export default function YoujinLife() {
         </div>
       </div>
 
-      {/* ===== 今日AI + 最近记录（Tab 合并）===== */}
+      {/* ===== 今日AI + 最近记录 ===== */}
       <div className="px-4 mb-6">
         <Tabs defaultValue="today" className="w-full">
-          <TabsList className="w-full grid grid-cols-2 h-9 bg-muted/50 rounded-xl mb-3">
-            <TabsTrigger value="today" className="text-xs rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
+          <TabsList className="w-full grid grid-cols-2 h-9 bg-white/[0.06] rounded-xl mb-3 border border-white/[0.06]">
+            <TabsTrigger value="today" className="text-xs text-white/50 rounded-lg data-[state=active]:bg-white/[0.1] data-[state=active]:text-white data-[state=active]:shadow-none">
               今日 AI
             </TabsTrigger>
-            <TabsTrigger value="recent" className="text-xs rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
+            <TabsTrigger value="recent" className="text-xs text-white/50 rounded-lg data-[state=active]:bg-white/[0.1] data-[state=active]:text-white data-[state=active]:shadow-none">
               最近记录
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="today" className="mt-0">
-            <div className="bg-card rounded-2xl border border-border/50 shadow-sm divide-y divide-border/30">
+            <div className="bg-white/[0.06] rounded-2xl border border-white/[0.08] backdrop-blur-sm divide-y divide-white/[0.06]">
               {todayCards.map((card) => (
                 <div key={card.title} className="flex items-center gap-3 px-3.5 py-3">
                   <div className={`w-9 h-9 rounded-xl ${card.bg} flex items-center justify-center shrink-0`}>
                     <card.icon className={`w-4 h-4 ${card.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground">{card.title}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{card.desc}</p>
+                    <p className="text-xs font-medium text-white/85">{card.title}</p>
+                    <p className="text-[11px] text-white/40 mt-0.5 truncate">{card.desc}</p>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-white/15 shrink-0" />
                 </div>
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="recent" className="mt-0">
-            <div className="bg-card rounded-2xl border border-border/50 shadow-sm divide-y divide-border/30">
+            <div className="bg-white/[0.06] rounded-2xl border border-white/[0.08] backdrop-blur-sm divide-y divide-white/[0.06]">
               {recentItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-2.5 px-3.5 py-3">
-                  <Clock className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
-                  <span className={`flex-1 text-xs ${item.done ? "text-muted-foreground/50 line-through" : "text-foreground"}`}>
+                  <Clock className="w-3.5 h-3.5 text-white/20 shrink-0" />
+                  <span className={`flex-1 text-xs ${item.done ? "text-white/25 line-through" : "text-white/70"}`}>
                     {item.text}
                   </span>
-                  <span className="text-[10px] text-muted-foreground/50">{item.time}</span>
+                  <span className="text-[10px] text-white/25">{item.time}</span>
                 </div>
               ))}
             </div>
@@ -359,29 +356,32 @@ export default function YoujinLife() {
 
       {/* ===== 底部固定对话输入框 ===== */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.04)]"
-        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl"
+        style={{
+          paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
+          background: "linear-gradient(180deg, rgba(15,15,26,0) 0%, rgba(15,15,26,0.95) 30%)",
+        }}
       >
         <div className="flex items-center gap-2 max-w-lg mx-auto px-3 py-2">
-          <div className="flex-1 flex items-center gap-2 bg-muted/50 rounded-full px-3.5 py-2.5 border border-border/50">
-            <Search className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+          <div className="flex-1 flex items-center gap-2 bg-white/[0.08] rounded-full px-3.5 py-2.5 border border-white/[0.1]">
+            <Search className="w-4 h-4 text-white/25 shrink-0" />
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground/40"
+              className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/25"
               placeholder={placeholders[placeholderIdx]}
             />
             <button
               onClick={() => navigate("/youjin-life/chat?voice=1")}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-background border border-border/50 active:bg-accent shrink-0"
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-white/[0.08] border border-white/[0.1] active:bg-white/15 shrink-0"
             >
-              <Mic className="w-3.5 h-3.5 text-muted-foreground" />
+              <Mic className="w-3.5 h-3.5 text-white/50" />
             </button>
           </div>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2.5 rounded-full bg-foreground text-background text-xs font-semibold active:opacity-80 shrink-0 transition-opacity"
+            className="px-4 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-sky-500 text-white text-xs font-semibold active:opacity-80 shrink-0 transition-opacity shadow-lg shadow-violet-500/20"
           >
             搞定
           </button>
