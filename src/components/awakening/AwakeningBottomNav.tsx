@@ -27,7 +27,7 @@ const AwakeningBottomNav: React.FC = () => {
           {/* 右侧 - 学习 */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => navigate('/camps')}
+            onClick={() => navigate('/camps?filter=my')}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
           >
             <BookOpen className="w-5 h-5" />
