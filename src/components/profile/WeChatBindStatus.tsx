@@ -188,9 +188,13 @@ export function WeChatBindStatus({ className }: WeChatBindStatusProps) {
             </div>
 
             {/* 绑定按钮 */}
-            <Button onClick={handleBind} className="w-full">
-              <Link2 className="h-4 w-4 mr-2" />
-              立即绑定微信账号
+            <Button onClick={handleBind} disabled={bindLoading} className="w-full">
+              {bindLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Link2 className="h-4 w-4 mr-2" />
+              )}
+              {bindLoading ? '正在跳转授权...' : '立即绑定微信账号'}
             </Button>
           </>
         )}
