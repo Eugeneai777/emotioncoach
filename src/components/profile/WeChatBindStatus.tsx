@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useWeChatBindStatus } from '@/hooks/useWeChatBindStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { isWeChatBrowser } from '@/utils/platform';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Smartphone, 
   CheckCircle, 
@@ -24,11 +27,44 @@ interface WeChatBindStatusProps {
 
 export function WeChatBindStatus({ className }: WeChatBindStatusProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { isBound, isSubscribed, wechatInfo, isLoading, refetch } = useWeChatBindStatus();
   const [refreshing, setRefreshing] = useState(false);
+  const [bindLoading, setBindLoading] = useState(false);
 
-  const handleBind = () => {
-    navigate('/settings?tab=notifications');
+  const handleBind = async () => {
+    if (isWeChatBrowser()) {
+      // 微信内：直接拉起 OAuth 授权
+      setBindLoading(true);
+      try {
+        const redirectUri = `${window.location.origin}/wechat-bindcallback`;
+        const { data, error } = await supabase.functions.invoke('get-wechat-bind-url', {
+          body: { redirectUri },
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.location.href = data.url;
+          return;
+        }
+        throw new Error('未获取到授权链接');
+      } catch (err) {
+        console.error('WeChat bind error:', err);
+        toast({
+          title: '绑定失败',
+          description: '请稍后再试，或前往通知设置页绑定',
+          variant: 'destructive',
+        });
+      } finally {
+        setBindLoading(false);
+      }
+    } else {
+      // 非微信浏览器：跳到通知页使用二维码绑定
+      toast({
+        title: '请在微信中操作',
+        description: '微信绑定需要在微信浏览器中完成，已为您跳转到通知设置页',
+      });
+      navigate('/settings?tab=notifications');
+    }
   };
 
   const handleRefresh = async () => {
