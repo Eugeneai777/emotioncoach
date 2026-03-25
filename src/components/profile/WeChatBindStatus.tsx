@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useWeChatBindStatus } from '@/hooks/useWeChatBindStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { generateQRCode } from '@/utils/qrCodeUtils';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { detectPlatform } from '@/lib/platformDetector';
 import { 
   Smartphone, 
   CheckCircle, 
@@ -24,10 +29,39 @@ interface WeChatBindStatusProps {
 
 export function WeChatBindStatus({ className }: WeChatBindStatusProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { isBound, isSubscribed, wechatInfo, isLoading, refetch } = useWeChatBindStatus();
   const [refreshing, setRefreshing] = useState(false);
+  const [bindLoading, setBindLoading] = useState(false);
 
-  const handleBind = () => {
+  const handleBind = async () => {
+    const platform = detectPlatform();
+    
+    if (platform === 'wechat') {
+      // 微信内：直接拉起授权
+      setBindLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('get-wechat-bind-url', {
+          body: { redirectUri: 'https://wechat.eugenewe.net/wechat-oauth-callback' }
+        });
+        if (error || !data?.url) {
+          toast({ title: '获取绑定链接失败', description: '请联系管理员检查配置', variant: 'destructive' });
+          return;
+        }
+        window.location.href = data.url;
+      } catch (err) {
+        console.error('WeChat bind error:', err);
+        toast({ title: '操作失败', description: '请稍后再试', variant: 'destructive' });
+      } finally {
+        setBindLoading(false);
+      }
+    } else {
+      // 非微信浏览器：跳转通知页并自动触发绑定弹窗
+      navigate('/settings?tab=notifications&autoBindWechat=true');
+    }
+  };
+
+  const handleManageSettings = () => {
     navigate('/settings?tab=notifications');
   };
 
@@ -119,7 +153,7 @@ export function WeChatBindStatus({ className }: WeChatBindStatusProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleBind}
+              onClick={handleManageSettings}
               className="w-full text-xs"
             >
               管理微信设置
@@ -152,9 +186,18 @@ export function WeChatBindStatus({ className }: WeChatBindStatusProps) {
             </div>
 
             {/* 绑定按钮 */}
-            <Button onClick={handleBind} className="w-full">
-              <Link2 className="h-4 w-4 mr-2" />
-              立即绑定微信账号
+            <Button onClick={handleBind} disabled={bindLoading} className="w-full">
+              {bindLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  拉起授权中...
+                </>
+              ) : (
+                <>
+                  <Link2 className="h-4 w-4 mr-2" />
+                  立即绑定微信账号
+                </>
+              )}
             </Button>
           </>
         )}

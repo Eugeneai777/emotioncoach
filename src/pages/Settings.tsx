@@ -32,7 +32,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -256,7 +256,12 @@ export default function Settings() {
           </div>
         ) : (
           // 完整视图：标准 Tabs
-          <Tabs defaultValue={defaultTab} className="w-full">
+          <Tabs value={defaultTab} onValueChange={(val) => {
+              const newParams = new URLSearchParams(searchParams);
+              newParams.set('tab', val);
+              newParams.delete('view');
+              setSearchParams(newParams, { replace: true });
+            }} className="w-full">
             <TabsList className={cn(
               "grid w-full mb-4 md:mb-6 h-auto",
               isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"

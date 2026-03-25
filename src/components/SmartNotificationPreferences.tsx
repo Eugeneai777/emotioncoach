@@ -59,6 +59,16 @@ export function SmartNotificationPreferences() {
     loadPreferences();
   }, []);
 
+  // 自动触发绑定（从资料页跳转过来时）
+  useEffect(() => {
+    if (searchParams.get('autoBindWechat') === 'true' && !wechatBound && !loading) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('autoBindWechat');
+      setSearchParams(newParams, { replace: true });
+      handleWechatBind();
+    }
+  }, [searchParams, wechatBound, loading]);
+
   // 实时监听微信绑定状态变化（用于PC端扫码后自动刷新）
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
