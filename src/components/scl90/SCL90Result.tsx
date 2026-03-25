@@ -277,8 +277,8 @@ export function SCL90Result({
         severityLevel={result.severityLevel}
       />
 
-      {/* Enhanced Emotion Journal Camp Conversion Card */}
-      {aiInsight?.campInvite && (
+      {/* Enhanced Emotion Journal Camp Conversion Card - 无条件展示 */}
+      {!isLoadingAI && (
         <motion.div
           initial={{ opacity: 0.01, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -290,17 +290,23 @@ export function SCL90Result({
               {/* Personalized headline */}
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-2xl">🎯</span>
-                <h3 className="font-bold text-lg">{aiInsight.campInvite.headline}</h3>
+                <h3 className="font-bold text-lg">
+                  {aiInsight?.campInvite?.headline || "情绪需要一个出口"}
+                </h3>
               </div>
               
               {/* AI-generated recommendation reason */}
               <p className="text-white/90 text-sm mb-4 leading-relaxed">
-                {aiInsight.campInvite.reason}
+                {aiInsight?.campInvite?.reason || "通过21天情绪日记训练，系统地觉察和管理你的内在状态，找到属于自己的情绪平衡点。"}
               </p>
               
               {/* Expected benefits list */}
               <div className="space-y-1.5 mb-4">
-                {aiInsight.campInvite.expectedBenefits.map((benefit, idx) => (
+                {(aiInsight?.campInvite?.expectedBenefits || [
+                  "每天10分钟，建立稳定的情绪觉察习惯",
+                  "AI教练实时陪伴，帮你识别情绪模式",
+                  "21天后获得个人情绪成长报告"
+                ]).map((benefit, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-sm">
                     <span className="text-white/80">✓</span>
                     <span className="text-white/95">{benefit}</span>
@@ -321,7 +327,7 @@ export function SCL90Result({
                 <p className="text-white/70 text-xs mt-1">21天系统训练 · 每天10分钟</p>
               </div>
               
-              {/* Dual buttons: Learn more / Join now - 小屏幕垂直堆叠 */}
+              {/* Dual buttons */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   variant="outline" 
