@@ -1,56 +1,39 @@
 
+目标：修复 `/settings`「资料」页“立即绑定微信账号”无响应，改为一键拉起微信授权，并确保绑定到当前登录账号（手机号登录同样生效）。
 
-# 修复 SCL-90 结果页：未登录用户也展示训练营转化卡片
+1) 问题定位（已确认）
+- `src/components/profile/WeChatBindStatus.tsx` 当前 `handleBind` 只执行 `navigate('/settings?tab=notifications')`，没有触发授权。
+- `src/pages/Settings.tsx` 的 Tabs 使用 `defaultValue`（非受控）；在同页内改 URL 参数时，tab 可能不切换，用户体感“没反应”。
 
-## 问题
+2) 代码改造方案（最小改动、复用现有能力）
 
-`SCL90Result.tsx` 第73行 `if (!user) return;` 导致未登录用户跳过整个 AI 分析流程，`aiInsight` 为 null，campInvite 卡片永远不渲染。
+A. `src/components/profile/WeChatBindStatus.tsx`
+- 新增 `bindLoading` 状态（防重复点击 + 给出反馈）。
+- 将“未绑定时”的按钮逻辑改为直接发起绑定：
+  - 调用 `supabase.functions.invoke('get-wechat-bind-url', { body: { redirectUri: 'https://wechat.eugenewe.net/wechat-oauth-callback' } })`
+  - 在微信浏览器内：`window.location.href = data.url`，直接进入微信授权。
+  - 非微信浏览器：跳转 `/settings?tab=notifications&autoBindWechat=true`（复用通知页已有二维码弹窗流程）。
+- “已绑定时”的“管理微信设置”仍保留跳转通知页。
+- 按钮文案在 loading 时显示“拉起授权中...”。
 
-## 方案
+B. `src/components/SmartNotificationPreferences.tsx`
+- 增加对 URL 参数 `autoBindWechat=true` 的自动触发逻辑：
+  - 组件加载后检测到该参数且当前未绑定时，自动调用现有 `handleWechatBind()`。
+  - 触发后清理参数（`setSearchParams` 删除 `autoBindWechat`），避免刷新重复弹窗。
+- 复用当前绑定弹窗/二维码/Realtime 监听，不新增 UI。
 
-### 修改文件：`src/components/scl90/SCL90Result.tsx`
+C. `src/pages/Settings.tsx`
+- 将 Tabs 改为“受控”模式（`value + onValueChange`）并与 `tab` 参数同步：
+  - `value` 来源于 `searchParams.get('tab') ?? 'reminders'`
+  - 切换 tab 时写回 URL（保留其他 query）。
+- 目的：从资料页跳到 `?tab=notifications` 时界面一定切过去，彻底消除“点击没反应”。
 
-**改动1：拆分 saveAndAnalyze，让 AI 分析对所有用户执行**
+3) “绑定到手机号账号”保证
+- 无需后端改动：`get-wechat-bind-url` 已用 `state=bind_${user.id}`，`wechat-oauth-process` 按该 `bindUserId` 绑定。
+- 因此无论用户是邮箱登录还是手机号登录，都会绑定到“当前登录账号”对应的用户 ID。
 
-```typescript
-useEffect(() => {
-  const saveAndAnalyze = async () => {
-    // 1. 保存：仅登录用户
-    if (user) {
-      try { /* 现有保存逻辑不变 */ } catch (err) { ... }
-    }
-
-    // 2. AI分析：所有用户都执行（移到 if(user) 外面）
-    setIsLoadingAI(true);
-    setAiError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-scl90', { body: { ... } });
-      if (error) throw error;
-      setAiInsight(data);
-      // 回写数据库仅登录用户
-      if (user && hasSaved) { /* update逻辑不变 */ }
-    } catch (err) {
-      setAiError("AI分析暂时不可用...");
-    } finally {
-      setIsLoadingAI(false);
-    }
-  };
-  saveAndAnalyze();
-}, [result, answers]); // 移除 user 依赖，避免登录状态变化重复触发
-```
-
-**改动2：campInvite 卡片增加兜底，确保无条件展示**
-
-将渲染条件从 `{aiInsight?.campInvite && (...)}` 改为始终渲染：
-- AI 返回了 campInvite → 用 AI 个性化内容
-- AI 失败或未返回 → 用默认内容（headline: "情绪需要一个出口", reason: "通过21天情绪日记训练...", benefits 固定3条）
-
-**改动3：handleJoinCamp 已有未登录处理（第44-48行）**
-
-现有逻辑已正确：未登录时 toast 提示并跳转 `/camp-intro/emotion_journal_21`，该页面内有登录引导。无需修改。
-
-### 不影响的内容
-- Edge Function `analyze-scl90` 无需改动（已有 campInvite 兜底）
-- 付费版 SCL-90 体验不变
-- 登录用户的数据保存逻辑不变
-
+4) 验收标准
+- 微信内访问 `/settings` 的资料页，点“立即绑定微信账号”后可直接进入微信授权页。
+- 授权完成后回到设置页，显示已绑定（并可自动出现关注引导）。
+- 非微信浏览器点击后会进入通知页并自动弹出绑定二维码窗口。
+- 手机号登录用户完成授权后，`wechat_user_mappings.system_user_id` 对应当前登录用户。
