@@ -32,7 +32,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,11 +52,7 @@ export default function Settings() {
   const viewParam = searchParams.get("view");
   const isMinimalView = viewParam === "profile" || viewParam === "reminders" || viewParam === "notifications";
   const minimalTitle = viewParam === "profile" ? "个人资料" : viewParam === "reminders" ? "提醒设置" : viewParam === "notifications" ? "通知偏好" : "设置";
-  const activeTab = isMinimalView ? (viewParam as string) : (searchParams.get("tab") || "reminders");
-
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value }, { replace: true });
-  };
+  const defaultTab = isMinimalView ? (viewParam as string) : (searchParams.get("tab") || "reminders");
 
   useEffect(() => {
     loadSettings();
@@ -260,7 +256,7 @@ export default function Settings() {
           </div>
         ) : (
           // 完整视图：标准 Tabs
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className={cn(
               "grid w-full mb-4 md:mb-6 h-auto",
               isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
