@@ -70,44 +70,44 @@ export function SCL90Result({
   // Auto-save and fetch AI analysis
   useEffect(() => {
     const saveAndAnalyze = async () => {
-      if (!user) return;
+      // 1. 保存：仅登录用户
+      if (user) {
+        try {
+          const { error: saveError } = await supabase
+            .from('scl90_assessments')
+            .insert({
+              user_id: user.id,
+              answers,
+              somatization_score: result.factorScores.somatization,
+              obsessive_score: result.factorScores.obsessive,
+              interpersonal_score: result.factorScores.interpersonal,
+              depression_score: result.factorScores.depression,
+              anxiety_score: result.factorScores.anxiety,
+              hostility_score: result.factorScores.hostility,
+              phobic_score: result.factorScores.phobic,
+              paranoid_score: result.factorScores.paranoid,
+              psychoticism_score: result.factorScores.psychoticism,
+              other_score: result.factorScores.other,
+              total_score: result.totalScore,
+              positive_count: result.positiveCount,
+              positive_score_avg: result.positiveScoreAvg,
+              gsi: result.gsi,
+              severity_level: result.severityLevel,
+              primary_symptom: result.primarySymptom,
+              secondary_symptom: result.secondarySymptom,
+            });
 
-      // Save to database
-      try {
-        const { error: saveError } = await supabase
-          .from('scl90_assessments')
-          .insert({
-            user_id: user.id,
-            answers,
-            somatization_score: result.factorScores.somatization,
-            obsessive_score: result.factorScores.obsessive,
-            interpersonal_score: result.factorScores.interpersonal,
-            depression_score: result.factorScores.depression,
-            anxiety_score: result.factorScores.anxiety,
-            hostility_score: result.factorScores.hostility,
-            phobic_score: result.factorScores.phobic,
-            paranoid_score: result.factorScores.paranoid,
-            psychoticism_score: result.factorScores.psychoticism,
-            other_score: result.factorScores.other,
-            total_score: result.totalScore,
-            positive_count: result.positiveCount,
-            positive_score_avg: result.positiveScoreAvg,
-            gsi: result.gsi,
-            severity_level: result.severityLevel,
-            primary_symptom: result.primarySymptom,
-            secondary_symptom: result.secondarySymptom,
-          });
-
-        if (saveError) {
-          console.error('Save error:', saveError);
-        } else {
-          setHasSaved(true);
+          if (saveError) {
+            console.error('Save error:', saveError);
+          } else {
+            setHasSaved(true);
+          }
+        } catch (err) {
+          console.error('Save error:', err);
         }
-      } catch (err) {
-        console.error('Save error:', err);
       }
 
-      // Fetch AI analysis
+      // 2. AI分析：所有用户都执行
       setIsLoadingAI(true);
       setAiError(null);
 
@@ -130,8 +130,8 @@ export function SCL90Result({
 
         setAiInsight(data);
 
-        // Update AI analysis in database
-        if (hasSaved) {
+        // 回写数据库：仅登录用户且已保存
+        if (user && hasSaved) {
           await supabase
             .from('scl90_assessments')
             .update({ ai_analysis: data })
@@ -148,7 +148,7 @@ export function SCL90Result({
     };
 
     saveAndAnalyze();
-  }, [user, result, answers]);
+  }, [result, answers]);
 
   // Get high-score factors for highlight
   const highFactors = Object.entries(result.factorScores)
