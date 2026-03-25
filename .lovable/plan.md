@@ -1,107 +1,56 @@
 
 
-# /laoge 3轮对话式痛点挖掘 — 实施方案
+# 修复 SCL-90 结果页：未登录用户也展示训练营转化卡片
 
-## 当前状态
+## 问题
 
-工具卡片展开后一次性显示所有字段（3-5个），用户填完点"问老哥"，AI一次性返回完整分析。缺少逐步深入的过程。
+`SCL90Result.tsx` 第73行 `if (!user) return;` 导致未登录用户跳过整个 AI 分析流程，`aiInsight` 为 null，campInvite 卡片永远不渲染。
 
-## 改造目标
+## 方案
 
-每个工具拆为3轮：每轮问1-2个问题 → AI短回复（共情+铺垫） → 自动展开下一轮 → 第3轮给完整诊断报告 + 训练营转化卡片。
+### 修改文件：`src/components/scl90/SCL90Result.tsx`
 
-## 改动文件
+**改动1：拆分 saveAndAnalyze，让 AI 分析对所有用户执行**
 
-### 1. `src/pages/LaogeAI.tsx` — 数据结构改造
-
-将 `TOOLS` 的 `fields` 数组拆为 `rounds` 数组，每个 round 包含独立的 fields：
-
-```text
-rounds: [
-  { fields: [{ key: "industry", ... }], buttonText: "问老哥" },
-  { fields: [{ key: "income", ... }, { key: "painPoint", ... }], buttonText: "继续" },
-  { fields: [{ key: "duration", ... }, { key: "tried", ... }], buttonText: "让老哥给方案" },
-]
-```
-
-四个工具的轮次拆分：
-
-| 工具 | 第1轮 | 第2轮 | 第3轮 |
-|------|-------|-------|-------|
-| 赚钱 | 行业 | 城市 + 资源 | 能投入的时间和资金 |
-| 事业 | 行业 | 收入 + 卡点 | 持续多久 + 试过什么 |
-| 压力 | 压力来源（工作/家庭） | 睡眠 + 经济压力 | 情绪释放 + 最想改变的 |
-| 健康 | 年龄 + 体重 | 睡眠 + 运动 | 最担心的健康问题 |
-
-### 2. `src/components/laoge/LaogeToolCard.tsx` — 交互逻辑重写
-
-核心状态机：
-- `currentRound`（0/1/2）— 当前轮次
-- `roundHistory[]` — 已完成轮次的 `{ inputs, aiResponse }` 记录
-- `isWaitingAI` — 当前轮次是否在等待AI回复
-
-渲染逻辑：
-1. 遍历 `roundHistory`，依次显示：用户已填内容摘要 → AI回复气泡
-2. 如果 `currentRound < 3` 且不在等待AI，显示当前轮的表单
-3. 第3轮AI回复完成后，底部追加训练营转化卡片
-4. 每次新内容出现时自动滚动到底部
-
-### 3. `src/components/laoge/LaogeChat.tsx` — 适配多轮调用
-
-修改请求体，新增 `round` 和 `history` 字段：
 ```typescript
-body: JSON.stringify({ tool, inputs, round, history })
+useEffect(() => {
+  const saveAndAnalyze = async () => {
+    // 1. 保存：仅登录用户
+    if (user) {
+      try { /* 现有保存逻辑不变 */ } catch (err) { ... }
+    }
+
+    // 2. AI分析：所有用户都执行（移到 if(user) 外面）
+    setIsLoadingAI(true);
+    setAiError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-scl90', { body: { ... } });
+      if (error) throw error;
+      setAiInsight(data);
+      // 回写数据库仅登录用户
+      if (user && hasSaved) { /* update逻辑不变 */ }
+    } catch (err) {
+      setAiError("AI分析暂时不可用...");
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+  saveAndAnalyze();
+}, [result, answers]); // 移除 user 依赖，避免登录状态变化重复触发
 ```
 
-回调机制：新增 `onComplete(responseText)` 回调，让 `LaogeToolCard` 知道本轮AI回复完成，可以展开下一轮表单。
+**改动2：campInvite 卡片增加兜底，确保无条件展示**
 
-### 4. `supabase/functions/laoge-ai/index.ts` — 后端提示词分轮
+将渲染条件从 `{aiInsight?.campInvite && (...)}` 改为始终渲染：
+- AI 返回了 campInvite → 用 AI 个性化内容
+- AI 失败或未返回 → 用默认内容（headline: "情绪需要一个出口", reason: "通过21天情绪日记训练...", benefits 固定3条）
 
-`buildToolPrompt` 改为接收 `round` 和 `history` 参数：
-- **第1-2轮**：生成短回复提示词（3-5句，共情 + 铺垫下一轮）
-- **第3轮**：生成完整诊断报告提示词（包含所有历史输入的汇总分析）
+**改动3：handleJoinCamp 已有未登录处理（第44-48行）**
 
-示例（事业工具第1轮）：
-```text
-用户说他做的是"互联网"行业。
-请用3-5句话回复，像老大哥一样聊天：
-1. 先对他的行业做一句简短点评
-2. 说一个这个行业常见的坑
-3. 末尾自然引出"收入和卡点"的话题，为下一轮提问做铺垫
-```
+现有逻辑已正确：未登录时 toast 提示并跳转 `/camp-intro/emotion_journal_21`，该页面内有登录引导。无需修改。
 
-示例（事业工具第3轮）：
-```text
-// 汇总所有轮次输入，生成完整诊断
-用户的完整情况：
-- 行业：互联网
-- 收入：月薪2-3万
-- 卡点：团队管理
-- 持续时间：2年
-- 试过的方法：看书、找朋友聊
-
-请给出完整的诊断报告...
-```
-
-## 转化卡片
-
-第3轮AI回复完成后，在底部渲染一个静态转化卡片：
-
-```text
-┌─────────────────────────────────┐
-│ 🔥 想要系统的突围方案？          │
-│ 老哥为你设计了一套完整的         │
-│ 职场突围训练营                   │
-│           [了解详情 →]           │
-└─────────────────────────────────┘
-```
-
-点击跳转 `/promo/zhile-havruta`。
-
-## 不影响的功能
-
-- 顶部悬浮转化条不变
-- 测评入口区块不变
-- Edge Function 的流式响应机制不变，仅修改提示词构建逻辑
-- 其他页面不受影响
+### 不影响的内容
+- Edge Function `analyze-scl90` 无需改动（已有 campInvite 兜底）
+- 付费版 SCL-90 体验不变
+- 登录用户的数据保存逻辑不变
 
