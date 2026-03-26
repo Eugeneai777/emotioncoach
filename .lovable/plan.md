@@ -1,59 +1,65 @@
 
 
-# 修复方案 + 移除权益
+# 修复跨终端订单复用 pay_type 不匹配问题
 
-## 一、代码修复：SuccessPanel 不显示问题
+## 问题
 
-**文件**：`src/pages/SynergyPromoPage.tsx`
+用户先在桌面端创建了 native（QR 码）订单，再从微信小程序进入时，后端复用了旧 native 订单并直接返回 QR 码，小程序无法使用 QR 码支付（需要 prepay_id）。
 
-### 改动 1：`handlePaySuccess`（第 419-424 行）
-已登录用户改为 `setStep('success')`，先展示 SuccessPanel（含企微二维码），而非直接跳转：
+## 修复方案
 
-```typescript
-if (user) {
-  setStep('success');  // 先展示成功页（含企微二维码）
-} else {
-  setPostAuthRedirect('/camp-intro/emotion_stress_7');
-  setStep('register');
-}
-```
+**文件**：`supabase/functions/create-wechat-order/index.ts`
 
-### 改动 2：`handleRegisterSuccess`（第 427-431 行）
-注册成功后也先展示成功页：
+### 改动：在复用逻辑中增加 pay_type 匹配检查
 
-```typescript
-const handleRegisterSuccess = (userId: string) => {
-  clearPostAuthRedirect();
-  setStep('success');  // 先展示成功页
-};
-```
+在第 171-211 行的订单复用块中，增加判断：**如果请求的 payType 与已有订单的 pay_type 不同，跳过复用，创建新订单**。
 
-### 改动 3：`handleEnterCamp`（第 508-510 行）
-保持不变——用户在 SuccessPanel 点击「进入训练营」时才执行自动创建营 + 跳转打卡页。
-
-### 流程对比
+具体改动位置在第 195 行附近：
 
 ```text
-修复前：支付成功 → 直接 navigate → 用户看不到企微二维码
-修复后：支付成功 → SuccessPanel（企微二维码 + 按钮）→ 用户点按钮 → 自动开营 → 打卡页
+当前逻辑（第 195 行）：
+  if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
+    → 直接返回旧 QR 码（不管请求方是 miniprogram 还是 jsapi）
+
+修改后逻辑：
+  // 仅当请求方也是 native 时才复用 QR 码
+  // 如果请求方是 miniprogram/jsapi/h5，跳过复用，走新建订单流程
+  if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
+    if (payType === 'native') {
+      → 返回旧 QR 码
+    }
+    // 否则：小程序/JSAPI/H5 请求 → 跳过复用，继续创建新订单
+  }
 ```
 
-## 二、移除账号 18588235488 的权益（用于重新测试）
+同时在小程序分支（第 175 行）也需兼容：当旧订单是 native（有 QR 码）而新请求是 miniprogram 时，允许用旧订单号重新调微信 API 获取 prepay_id：
 
-当前数据：
-- `user_camp_purchases`：3 条重复记录（并发写入导致），ID: `8ec4e0ea`, `decc548c`, `16c6d24b`
-- `training_camps`：1 条活跃营，ID: `ae96fc38`
-- `orders`：最新一笔 `c9319354`，status=paid
-
-执行 SQL：
-```sql
-DELETE FROM training_camps WHERE id = 'ae96fc38-bfac-4e33-8847-092e6f0a7320';
-DELETE FROM user_camp_purchases WHERE id IN ('8ec4e0ea-fee5-4241-8884-014ffa56fa7d','decc548c-c6a3-40ed-acc9-b83f09774c6d','16c6d24b-df59-4fc5-b1f2-6c0d0e4f7f2a');
-UPDATE orders SET status = 'refunded' WHERE id = 'c9319354-be21-489f-8362-e116a0553bd5';
+```text
+  if (payType === 'miniprogram') {
+    if (openId) {
+      // 不管旧订单是什么类型，用旧订单号重新获取 prepay_id
+      reusedMiniProgramOrderNo = recentPending.order_no;
+    } else {
+      // 无 openId，返回等待原生端提供
+      return { needsNativePayment: true }
+    }
+  }
 ```
 
-## 三、不受影响
-- 支付逻辑、价格、权益发放零改动
-- 手机端/电脑端排版不变
-- 其他页面不受影响
+## 流程对比
+
+```text
+修复前：
+  桌面 native 订单(有QR) → 小程序请求 → 返回 QR 码 → 小程序无法使用 → 失败
+
+修复后：
+  桌面 native 订单(有QR) → 小程序请求 → 检测 payType 不匹配
+  → 用旧订单号重新调微信 API 获取 miniprogram prepay_id → 成功
+```
+
+## 不受影响
+
+- 同类型复用（native→native, jsapi→jsapi）行为不变
+- 支付金额、权益发放逻辑不变
+- 其他页面和支付入口不受影响
 
