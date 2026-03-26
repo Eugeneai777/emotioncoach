@@ -1,34 +1,59 @@
 
 
-# 移除账号 18588235488 的「7天情绪解压训练营」权益
+# 修复方案 + 移除权益
 
-## 数据现状
+## 一、代码修复：SuccessPanel 不显示问题
 
-| 表 | ID | 内容 |
-|---|---|------|
-| `training_camps` | `73e9e07d-...` | camp_type=`emotion_stress_7`, status=`active` |
-| `user_camp_purchases` | `2ebeaf8d-...` | camp_type=`emotion_stress_7`, payment_status=`completed` |
-| `orders` | `e1abbf71-...` | package_key=`synergy_bundle`, status=`paid`, amount=0.01 |
+**文件**：`src/pages/SynergyPromoPage.tsx`
 
-## 执行步骤
+### 改动 1：`handlePaySuccess`（第 419-424 行）
+已登录用户改为 `setStep('success')`，先展示 SuccessPanel（含企微二维码），而非直接跳转：
 
-### 步骤 1：删除训练营记录
-```sql
-DELETE FROM training_camps WHERE id = '73e9e07d-aeb2-48a0-bd1b-eb82be268526';
+```typescript
+if (user) {
+  setStep('success');  // 先展示成功页（含企微二维码）
+} else {
+  setPostAuthRedirect('/camp-intro/emotion_stress_7');
+  setStep('register');
+}
 ```
 
-### 步骤 2：删除购买权益记录
-```sql
-DELETE FROM user_camp_purchases WHERE id = '2ebeaf8d-5b7b-47ac-a13a-28b0b37bc008';
+### 改动 2：`handleRegisterSuccess`（第 427-431 行）
+注册成功后也先展示成功页：
+
+```typescript
+const handleRegisterSuccess = (userId: string) => {
+  clearPostAuthRedirect();
+  setStep('success');  // 先展示成功页
+};
 ```
 
-### 步骤 3：将订单标记为已退款
-```sql
-UPDATE orders SET status = 'refunded' WHERE id = 'e1abbf71-db65-4c78-8b76-100c7e325327';
+### 改动 3：`handleEnterCamp`（第 508-510 行）
+保持不变——用户在 SuccessPanel 点击「进入训练营」时才执行自动创建营 + 跳转打卡页。
+
+### 流程对比
+
+```text
+修复前：支付成功 → 直接 navigate → 用户看不到企微二维码
+修复后：支付成功 → SuccessPanel（企微二维码 + 按钮）→ 用户点按钮 → 自动开营 → 打卡页
 ```
 
-## 说明
-- 实际微信退款 0.01 元无法通过系统操作，需在微信商户平台手动处理（金额极小，可忽略）
-- 该用户的 `emotion_journal_21`（21天情绪日记训练营）**不受影响**
-- 操作后用户再访问 `/promo/synergy` 将显示未购买状态，可重新走购买流程
+## 二、移除账号 18588235488 的权益（用于重新测试）
+
+当前数据：
+- `user_camp_purchases`：3 条重复记录（并发写入导致），ID: `8ec4e0ea`, `decc548c`, `16c6d24b`
+- `training_camps`：1 条活跃营，ID: `ae96fc38`
+- `orders`：最新一笔 `c9319354`，status=paid
+
+执行 SQL：
+```sql
+DELETE FROM training_camps WHERE id = 'ae96fc38-bfac-4e33-8847-092e6f0a7320';
+DELETE FROM user_camp_purchases WHERE id IN ('8ec4e0ea-fee5-4241-8884-014ffa56fa7d','decc548c-c6a3-40ed-acc9-b83f09774c6d','16c6d24b-df59-4fc5-b1f2-6c0d0e4f7f2a');
+UPDATE orders SET status = 'refunded' WHERE id = 'c9319354-be21-489f-8362-e116a0553bd5';
+```
+
+## 三、不受影响
+- 支付逻辑、价格、权益发放零改动
+- 手机端/电脑端排版不变
+- 其他页面不受影响
 
