@@ -430,15 +430,17 @@ export default function SynergyPromoPage() {
 
   const handleEnterCamp = async () => {
     if (user) {
-      const { data: activeCamp } = await supabase
+      // 优先查找 emotion_stress_7 训练营
+      const { data: stressCamp } = await supabase
         .from('training_camps')
         .select('id')
         .eq('user_id', user.id)
-        .in('camp_type', ['emotion_stress_7', 'emotion_journal_21', 'synergy_bundle'])
+        .eq('camp_type', 'emotion_stress_7')
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+      
+      const activeCamp = stressCamp;
       
       if (activeCamp) {
         navigate(`/camp-checkin/${activeCamp.id}`);
