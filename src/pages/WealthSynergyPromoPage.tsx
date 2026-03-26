@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 
 /* ========== Animated Progress Bar ========== */
 function AnimatedBar({ label, value, color, delay }: { label: string; value: number; color: string; delay: number }) {
@@ -161,6 +162,18 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
               <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
             </div>
           </div>
+        </div>
+
+        {/* 企微教练引导卡片 */}
+        <div className="p-4 rounded-xl bg-gradient-to-br from-amber-900/40 to-yellow-900/30 border border-amber-500/30 text-center space-y-3">
+          <p className="text-sm font-semibold text-amber-300">👨‍🏫 添加主教练微信，加入学员互助群</p>
+          <p className="text-xs text-slate-400">获得真人教练 1v1 指导 · 参加线上冥想直播 · 学员社群互助交流</p>
+          <div className="flex justify-center">
+            <div className="p-2 bg-white rounded-lg shadow-md">
+              <img src={wecomCoachQr} alt="主教练企微二维码" className="w-36 h-36 object-contain" />
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-500">长按识别二维码添加</p>
         </div>
 
         <div className="space-y-3 pt-2">
