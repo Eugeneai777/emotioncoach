@@ -289,6 +289,7 @@ export default function MidlifeAwakeningPage() {
         }}
         onSuccess={handlePaymentSuccess}
         returnUrl="/midlife-awakening"
+        openId={openId}
       />
     </div>
   );
