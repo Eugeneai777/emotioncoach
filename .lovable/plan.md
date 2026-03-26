@@ -1,35 +1,43 @@
 
 
-# 阶段一：/laoge 转化路径统一到 /promo/synergy
+# 阶段二：购买成功后展示企微二维码引导卡片
 
-## 改动范围（3个文件，纯路由+文案微调，零业务逻辑变更）
+## 用户场景
 
-### 改动 1：LaogeToolCard 转化卡片跳转
-**文件**: `src/components/laoge/LaogeToolCard.tsx` 第 230 行
-- `navigate("/promo/zhile-havruta")` → `navigate("/promo/synergy?source=laoge")`
-- 其余（文案、按钮样式、"再问老哥一次"）完全不变
+用户在 `/promo/synergy` 完成支付 → 看到 SuccessPanel（购买成功页）→ 页面中新增一个「添加教练微信」卡片，展示企微二维码 → 用户长按/扫码添加 → 点击「进入训练营」继续。
 
-### 改动 2：LaogeAI 顶部悬浮条跳转
-**文件**: `src/pages/LaogeAI.tsx` 第 82 行
-- `navigate("/promo/zhile-havruta")` → `navigate("/promo/synergy?source=laoge")`
-- 悬浮条文案、样式不变
+## 改动范围（2个文件）
 
-### 改动 3：SynergyPromoPage Hero 副标题按 source 微调
-**文件**: `src/pages/SynergyPromoPage.tsx` 约第 479-481 行
+### 1. 复制企微二维码图片到项目
+- 将用户上传的企微二维码图片复制到 `src/assets/wecom-coach-qr.jpg`
 
-读取 `searchParams.get("source")`，Hero 区副标题根据来源显示不同文案：
+### 2. 修改 SuccessPanel — `src/pages/SynergyPromoPage.tsx`
 
-| source 参数 | 副标题 |
-|------------|--------|
-| `laoge` | "从职场内耗到能量重启，7天专业陪伴" |
-| 无/其他 | 保持现有："7天 AI + 专业教练 + 知乐胶囊..." |
+在 SuccessPanel 的「7天情绪成长训练营已开通」卡片下方、按钮区域上方，新增企微引导卡片：
 
-页面其余内容（痛点卡片、价格、支付流程、购买后跳转）完全不变。
+```text
+现有卡片结构:
+  ✅ 知乐胶囊已安排发货
+  💡 建议收到胶囊后再开启训练营
+  🧠 7天情绪成长训练营已开通
+  ── 新增：企微教练卡片 ──     ← 插入位置
+  [进入情绪成长训练营] 按钮
+  [查看订单与物流] 按钮
+```
+
+**企微卡片设计**：
+- 深色主题卡片（与 SuccessPanel 风格一致），渐变边框（emerald/teal）
+- 标题：「👨‍🏫 添加主教练微信，加入学员互助群」
+- 副文案：「获得真人教练 1v1 指导、参加线上冥想直播、学员社群互助交流」
+- 居中展示企微二维码图片（圆角、白色背景内衬，确保扫码可识别）
+- 底部小字提示：「长按识别二维码添加」
+
+### 3. 同步修改 WealthSynergyPromoPage 的 SuccessPanel
+- 同样在 `src/pages/WealthSynergyPromoPage.tsx` 的 SuccessPanel 中添加相同的企微引导卡片（配色改为金色系以匹配主题）
 
 ## 不受影响的内容
-
-- `/promo/zhile-havruta` 页面保留，已有的外部链接、分享链接仍可访问
-- 支付流程（微信/支付宝）、订单逻辑、训练营开通逻辑零改动
-- 购买后跳转路径仍为 `/camp-intro/emotion_stress_7`，不变
-- 手机端/电脑端排版无影响（仅改 URL 字符串 + 一行文案条件判断）
+- 支付流程、训练营开通逻辑零改动
+- 未购买用户看不到此卡片（SuccessPanel 仅在 `alreadyPurchased` 为 true 时渲染）
+- 手机端自动适配（二维码居中、卡片全宽）
+- `/promo/zhile-havruta` 不受影响
 
