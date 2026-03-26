@@ -174,8 +174,30 @@ serve(async (req) => {
         } else {
           // 微信已被其他用户绑定，拒绝绑定
           console.log('WeChat already bound to another user:', existingMapping.system_user_id);
+          
+          // 查询已绑定账号的脱敏名称
+          let boundAccountName = '未知账号';
+          try {
+            const { data: boundProfile } = await supabaseClient
+              .from('profiles')
+              .select('display_name, phone')
+              .eq('id', existingMapping.system_user_id)
+              .maybeSingle();
+            
+            if (boundProfile?.phone) {
+              const p = boundProfile.phone;
+              boundAccountName = p.length >= 7 
+                ? p.substring(0, 3) + '****' + p.substring(p.length - 4)
+                : p;
+            } else if (boundProfile?.display_name) {
+              boundAccountName = boundProfile.display_name;
+            }
+          } catch (e) {
+            console.error('Failed to fetch bound account info:', e);
+          }
+          
           return new Response(
-            JSON.stringify({ error: 'already_bound', message: '该微信已绑定其他账号' }),
+            JSON.stringify({ error: 'already_bound', message: '该微信已绑定其他账号', bound_account_name: boundAccountName }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }

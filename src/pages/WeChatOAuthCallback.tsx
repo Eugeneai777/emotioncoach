@@ -45,8 +45,9 @@ export default function WeChatOAuthCallback() {
 
         if (data?.error) {
           if (data.error === 'already_bound') {
-            toast.error("该微信已绑定其他账号，如需绑定当前账号请先解绑");
-            navigate("/settings?tab=notifications&wechat_error=already_bound");
+            const accountName = data.bound_account_name || '未知账号';
+            toast.error(`该微信已绑定其他账号（${accountName}），如需绑定当前账号请先解绑`);
+            navigate(`/settings?tab=notifications&wechat_error=already_bound&bound_account=${encodeURIComponent(accountName)}`);
           } else if (data.error === 'not_registered') {
             toast.error("该微信未注册，请先注册");
             navigate("/wechat-auth?mode=register");
