@@ -417,7 +417,7 @@ export default function SynergyPromoPage() {
     }
 
     if (user) {
-      handleEnterCamp();
+      setStep('success');  // 先展示成功页（含企微二维码）
     } else {
       setPostAuthRedirect('/camp-intro/emotion_stress_7');
       setStep('register');
@@ -426,8 +426,7 @@ export default function SynergyPromoPage() {
 
   const handleRegisterSuccess = (userId: string) => {
     clearPostAuthRedirect();
-    // 注册成功后也自动开营直达打卡页
-    autoCreateAndEnterCamp(userId);
+    setStep('success');  // 先展示成功页（含企微二维码）
   };
 
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
