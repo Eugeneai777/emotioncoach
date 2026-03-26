@@ -18,7 +18,7 @@ export default function WeChatOAuthCallback() {
       if (!code || !state) {
         setError("缺少必要参数");
         toast.error("微信授权失败：缺少必要参数");
-        setTimeout(() => navigate("/auth"), 2000);
+        setTimeout(() => navigate("/auth", { replace: true }), 2000);
         return;
       }
 
@@ -47,10 +47,10 @@ export default function WeChatOAuthCallback() {
           if (data.error === 'already_bound') {
             const accountName = data.bound_account_name || '未知账号';
             toast.error(`该微信已绑定其他账号（${accountName}），如需绑定当前账号请先解绑`);
-            navigate(`/settings?tab=notifications&wechat_error=already_bound&bound_account=${encodeURIComponent(accountName)}`);
+            navigate(`/settings?tab=notifications&wechat_error=already_bound&bound_account=${encodeURIComponent(accountName)}`, { replace: true });
           } else if (data.error === 'not_registered') {
             toast.error("该微信未注册，请先注册");
-            navigate("/wechat-auth?mode=register");
+            navigate("/wechat-auth?mode=register", { replace: true });
           } else {
             throw new Error(data.error);
           }
@@ -84,7 +84,7 @@ export default function WeChatOAuthCallback() {
               });
               if (claimData?.success) {
                 toast.success(claimData.message || "恭喜您成为绽放合伙人！");
-                navigate("/partner");
+                navigate("/partner", { replace: true });
                 return;
               }
             } catch (err) {
@@ -95,15 +95,15 @@ export default function WeChatOAuthCallback() {
         // 检查是否有待跳转的目标路径（如 promo 页支付后注册，带时效）
           const postAuthRedirect = consumePostAuthRedirect();
           if (postAuthRedirect) {
-            navigate(postAuthRedirect);
+            navigate(postAuthRedirect, { replace: true });
             return;
           }
 
           // 新用户跳转到关注页，老用户直接进入首页
           if (data.isNewUser) {
-            navigate("/wechat-auth?mode=follow");
+            navigate("/wechat-auth?mode=follow", { replace: true });
           } else {
-            navigate("/");
+            navigate("/", { replace: true });
           }
           return;
         }
@@ -111,19 +111,19 @@ export default function WeChatOAuthCallback() {
         // 兜底处理：如果没有匹配任何已知情况，也导航到设置页
         if (isBind) {
           console.warn('Unexpected bind response:', data);
-          navigate("/settings?tab=notifications");
+          navigate("/settings?tab=notifications", { replace: true });
           return;
         }
 
         // 对于其他未知情况，导航到首页
         console.warn('Unknown OAuth response:', data);
-        navigate("/");
+        navigate("/", { replace: true });
       } catch (err) {
         console.error("OAuth callback error:", err);
         const message = err instanceof Error ? err.message : "未知错误";
         setError(message);
         toast.error(`微信授权失败: ${message}`);
-        setTimeout(() => navigate("/auth"), 3000);
+        setTimeout(() => navigate("/auth", { replace: true }), 3000);
       }
     };
 
