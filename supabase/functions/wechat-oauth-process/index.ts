@@ -200,7 +200,120 @@ serve(async (req) => {
               );
             }
             
-            // 2. 软删除临时账号的 profile
+            // 2. 迁移临时账号的业务数据到当前账号
+            const migrationTables = [
+              'orders',
+              'store_orders:buyer_id',
+              'user_camp_purchases',
+              'training_camps',
+              'conversations',
+              'emotion_health_assessments',
+              'scl90_assessments',
+              'smart_notifications',
+              'community_posts',
+              'camp_daily_progress',
+              'awakening_entries',
+              'breathing_sessions',
+              'alive_check_logs',
+              'alive_check_settings',
+              'coaching_appointments:client_id',
+            ];
+            
+            for (const tableSpec of migrationTables) {
+              const [table, column] = tableSpec.includes(':') 
+                ? tableSpec.split(':') 
+                : [tableSpec, 'user_id'];
+              try {
+                const { data: rows, error: checkErr } = await supabaseClient
+                  .from(table)
+                  .select('id')
+                  .eq(column, tempUserId)
+                  .limit(1);
+                
+                if (!checkErr && rows && rows.length > 0) {
+                  const { error: updateErr } = await supabaseClient
+                    .from(table)
+                    .update({ [column]: bindUserId })
+                    .eq(column, tempUserId);
+                  
+                  if (updateErr) {
+                    console.error(`Failed to migrate ${table}:`, updateErr);
+                  } else {
+                    console.log(`Migrated ${table} records from temp to target`);
+                  }
+                }
+              } catch (e) {
+                console.error(`Error migrating ${table}:`, e);
+              }
+            }
+            
+            // 3. 合并 AI 额度（user_accounts）
+            try {
+              const { data: tempAccount } = await supabaseClient
+                .from('user_accounts')
+                .select('total_quota, used_quota')
+                .eq('user_id', tempUserId)
+                .maybeSingle();
+              
+              if (tempAccount && tempAccount.total_quota > 0) {
+                const remainingQuota = Math.max(0, tempAccount.total_quota - tempAccount.used_quota);
+                if (remainingQuota > 0) {
+                  const { data: targetAccount } = await supabaseClient
+                    .from('user_accounts')
+                    .select('total_quota')
+                    .eq('user_id', bindUserId)
+                    .maybeSingle();
+                  
+                  if (targetAccount) {
+                    await supabaseClient
+                      .from('user_accounts')
+                      .update({ total_quota: targetAccount.total_quota + remainingQuota })
+                      .eq('user_id', bindUserId);
+                    console.log(`Merged ${remainingQuota} quota to target account`);
+                  }
+                }
+              }
+            } catch (e) {
+              console.error('Error merging quota:', e);
+            }
+            
+            // 4. 合并预充值余额（coaching_prepaid_balance）
+            try {
+              const { data: tempBalance } = await supabaseClient
+                .from('coaching_prepaid_balance')
+                .select('balance, paid_balance, bonus_balance')
+                .eq('user_id', tempUserId)
+                .maybeSingle();
+              
+              if (tempBalance && tempBalance.balance > 0) {
+                const { data: targetBalance } = await supabaseClient
+                  .from('coaching_prepaid_balance')
+                  .select('balance, paid_balance, bonus_balance')
+                  .eq('user_id', bindUserId)
+                  .maybeSingle();
+                
+                if (targetBalance) {
+                  await supabaseClient
+                    .from('coaching_prepaid_balance')
+                    .update({
+                      balance: targetBalance.balance + tempBalance.balance,
+                      paid_balance: targetBalance.paid_balance + tempBalance.paid_balance,
+                      bonus_balance: targetBalance.bonus_balance + tempBalance.bonus_balance,
+                    })
+                    .eq('user_id', bindUserId);
+                } else {
+                  await supabaseClient
+                    .from('coaching_prepaid_balance')
+                    .update({ user_id: bindUserId })
+                    .eq('user_id', tempUserId);
+                }
+                console.log('Merged prepaid balance to target account');
+              }
+            } catch (e) {
+              console.error('Error merging prepaid balance:', e);
+            }
+            
+            // 5. 软删除临时账号的 profile
             await supabaseClient
               .from('profiles')
               .update({ 
