@@ -426,29 +426,87 @@ export default function SynergyPromoPage() {
 
   const handleRegisterSuccess = (userId: string) => {
     clearPostAuthRedirect();
-    navigate('/camp-intro/emotion_stress_7');
+    // 注册成功后也自动开营直达打卡页
+    autoCreateAndEnterCamp(userId);
   };
 
-  const handleEnterCamp = async () => {
-    if (user) {
-      // 优先查找 emotion_stress_7 训练营
-      const { data: stressCamp } = await supabase
+  const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
+    const targetUserId = overrideUserId || user?.id;
+    if (!targetUserId) {
+      navigate('/camp-intro/emotion_stress_7');
+      return;
+    }
+
+    try {
+      // 1. 先查是否已有活跃的 emotion_stress_7 营
+      const { data: existingCamp } = await supabase
         .from('training_camps')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .eq('camp_type', 'emotion_stress_7')
         .eq('status', 'active')
         .limit(1)
         .maybeSingle();
-      
-      const activeCamp = stressCamp;
-      
-      if (activeCamp) {
-        navigate(`/camp-checkin/${activeCamp.id}`);
+
+      if (existingCamp) {
+        navigate(`/camp-checkin/${existingCamp.id}`);
         return;
       }
+
+      // 2. 查询模板获取 duration_days
+      const { data: template } = await supabase
+        .from('camp_templates')
+        .select('duration_days')
+        .eq('camp_type', 'emotion_stress_7')
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      const durationDays = template?.duration_days || 7;
+      const today = new Date();
+      const startDate = today.toISOString().split('T')[0];
+      const endDate = new Date(today.getTime() + (durationDays - 1) * 86400000).toISOString().split('T')[0];
+
+      // 3. 自动创建训练营
+      const { data: newCamp, error: createError } = await supabase
+        .from('training_camps')
+        .insert({
+          user_id: targetUserId,
+          camp_type: 'emotion_stress_7',
+          camp_name: '7天情绪解压训练营',
+          duration_days: durationDays,
+          start_date: startDate,
+          end_date: endDate,
+          current_day: 1,
+          completed_days: 0,
+          check_in_dates: [],
+          status: 'active',
+        })
+        .select('id')
+        .single();
+
+      if (createError || !newCamp) {
+        console.error('[SynergyPromo] Auto-create camp failed:', createError);
+        navigate('/camp-intro/emotion_stress_7');
+        return;
+      }
+
+      // 4. 更新 preferred_coach
+      await supabase
+        .from('profiles')
+        .update({ preferred_coach: 'emotion' })
+        .eq('id', targetUserId);
+
+      // 5. 直达打卡页
+      navigate(`/camp-checkin/${newCamp.id}`);
+    } catch (err) {
+      console.error('[SynergyPromo] Auto-enter camp error:', err);
+      navigate('/camp-intro/emotion_stress_7');
     }
-    navigate('/camp-intro/emotion_stress_7');
+  };
+
+  const handleEnterCamp = async () => {
+    await autoCreateAndEnterCamp();
   };
 
   const handleViewLogistics = () => {
