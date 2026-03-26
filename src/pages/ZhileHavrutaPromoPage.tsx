@@ -271,7 +271,8 @@ export default function ZhileHavrutaPromoPage() {
   useEffect(() => {
     if (step !== 'checkout' && step !== 'payment') return;
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-    if (!isWechat || paymentOpenId) return;
+    const isMiniProg = isWeChatMiniProgram();
+    if (!isWechat || isMiniProg || paymentOpenId) return;
     const cached = sessionStorage.getItem('cached_wechat_openid');
     if (cached) { setPaymentOpenId(cached); return; }
     if (user) {
@@ -705,7 +706,7 @@ export default function ZhileHavrutaPromoPage() {
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
-        openId={paymentOpenId}
+        openId={isWeChatMiniProgram() ? undefined : paymentOpenId}
         shippingInfo={shippingData}
       />
 

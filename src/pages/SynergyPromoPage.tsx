@@ -345,7 +345,8 @@ export default function SynergyPromoPage() {
   useEffect(() => {
     if (step !== 'checkout' && step !== 'payment') return;
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-    if (!isWechat || paymentOpenId) return;
+    const isMiniProg = isWeChatMiniProgram();
+    if (!isWechat || isMiniProg || paymentOpenId) return;
 
     const cached = sessionStorage.getItem('cached_wechat_openid');
     if (cached) { setPaymentOpenId(cached); return; }
@@ -965,7 +966,7 @@ export default function SynergyPromoPage() {
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
-        openId={paymentOpenId}
+        openId={isWeChatMiniProgram() ? undefined : paymentOpenId}
         shippingInfo={checkoutInfo ? {
           buyerName: checkoutInfo.buyerName,
           buyerPhone: checkoutInfo.buyerPhone,

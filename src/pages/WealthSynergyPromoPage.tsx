@@ -334,7 +334,8 @@ export default function WealthSynergyPromoPage() {
   useEffect(() => {
     if (step !== 'checkout' && step !== 'payment') return;
     const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-    if (!isWechat || paymentOpenId) return;
+    const isMiniProg = isWeChatMiniProgram();
+    if (!isWechat || isMiniProg || paymentOpenId) return;
 
     // 1. 检查 sessionStorage 缓存（统一使用 cached_wechat_openid）
     const cached = sessionStorage.getItem('cached_wechat_openid');
@@ -850,7 +851,7 @@ export default function WealthSynergyPromoPage() {
         onOpenChange={(open) => { if (!open) setStep('browse'); }}
         packageInfo={packageInfo}
         onSuccess={handlePaySuccess}
-        openId={paymentOpenId}
+        openId={isWeChatMiniProgram() ? undefined : paymentOpenId}
         shippingInfo={checkoutInfo ? {
           buyerName: checkoutInfo.buyerName,
           buyerPhone: checkoutInfo.buyerPhone,
