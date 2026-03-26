@@ -9,7 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, History, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
 import { isWeChatBrowser } from "@/utils/platform";
@@ -279,14 +279,16 @@ export default function MidlifeAwakeningPage() {
         )}
       </main>
 
-      <AssessmentPayDialog
+      <UnifiedPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
+        packageInfo={{
+          key: 'midlife_awakening_assessment',
+          name: '中场觉醒力测评',
+          price: price,
+        }}
         onSuccess={handlePaymentSuccess}
-        userId={user?.id}
-        hasPurchased={hasPurchased}
-        packageKey="midlife_awakening_assessment"
-        packageName="中场觉醒力测评"
+        returnUrl="/midlife-awakening"
       />
     </div>
   );
