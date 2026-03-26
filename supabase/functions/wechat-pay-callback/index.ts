@@ -150,7 +150,7 @@ serve(async (req) => {
       // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases
       const bundleCampMap: Record<string, Array<{ campType: string; campName: string }>> = {
         'synergy_bundle': [
-          { campType: 'emotion_stress_7', campName: '7天情绪解压训练营' },
+          { campType: 'emotion_stress_7', campName: '7天有劲训练营' },
           { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
         ],
         'wealth_synergy_bundle': [{ campType: 'wealth_block_7', campName: '财富觉醒训练营' }],
@@ -309,7 +309,7 @@ serve(async (req) => {
     // === synergy_bundle / wealth_synergy_bundle 特殊处理：补写训练营购买记录 ===
     const bundleCampMapNew: Record<string, Array<{ campType: string; campName: string }>> = {
       'synergy_bundle': [
-        { campType: 'emotion_stress_7', campName: '7天情绪解压训练营' },
+        { campType: 'emotion_stress_7', campName: '7天有劲训练营' },
         { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
       ],
       'wealth_synergy_bundle': [{ campType: 'wealth_block_7', campName: '财富觉醒训练营' }],
