@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 
 /* ========== Animated Progress Bar ========== */
 function AnimatedBar({ label, value, color, delay }: { label: string; value: number; color: string; delay: number }) {
