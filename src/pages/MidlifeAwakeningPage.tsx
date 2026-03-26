@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
-import { isWeChatBrowser } from "@/utils/platform";
+import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { useQuery } from "@tanstack/react-query";
 import {
   MidlifeAwakeningStartScreen,
