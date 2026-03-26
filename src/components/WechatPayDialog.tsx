@@ -420,6 +420,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       // 非微信环境：无需等待 openId
       if (!shouldWaitForOpenId) {
         setOpenIdResolved(true);
+        setIsRedirectingForOpenId(false);
+        setIsExchangingCode(false);
+        sessionStorage.removeItem('pay_auth_in_progress');
         return;
       }
 
@@ -440,6 +443,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setUserOpenId(resolvedId);
         cachePaymentOpenId(resolvedId);
         setOpenIdResolved(true);
+        setIsRedirectingForOpenId(false);
+        setIsExchangingCode(false);
+        sessionStorage.removeItem('pay_auth_in_progress');
 
         // 清理 URL 中的微信浏览器静默授权参数（不要清理 mp_openid）
         if (!isMiniProgram && urlOpenId) {
@@ -463,6 +469,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (isMiniProgram) {
         console.log('[Payment] MiniProgram environment, will use native bridge for payment');
         setOpenIdResolved(true);
+        setIsRedirectingForOpenId(false);
+        setIsExchangingCode(false);
+        sessionStorage.removeItem('pay_auth_in_progress');
         return;
       }
 
@@ -521,6 +530,37 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     triggerSilentAuth,
     exchangeCodeForOpenId,
   ]);
+
+  // iOS 微信浏览器可能使用 bfcache 恢复页面，导致“授权中”状态残留；
+  // 回到页面时如果已拿到 openId，立即恢复到可支付状态。
+  useEffect(() => {
+    if (!open) return;
+
+    const recoverFromAuthRedirectState = () => {
+      const resolvedOpenId = propOpenId || getPaymentOpenIdFromUrl() || getCachedPaymentOpenId();
+      if (!resolvedOpenId) return;
+
+      if (isRedirectingForOpenId || isExchangingCode || !openIdResolved) {
+        console.log('[Payment] Recovering from auth redirect state with existing openId');
+      }
+
+      setUserOpenId(resolvedOpenId);
+      cachePaymentOpenId(resolvedOpenId);
+      setOpenIdResolved(true);
+      setIsRedirectingForOpenId(false);
+      setIsExchangingCode(false);
+      sessionStorage.removeItem('pay_auth_in_progress');
+    };
+
+    recoverFromAuthRedirectState();
+    window.addEventListener('pageshow', recoverFromAuthRedirectState);
+    window.addEventListener('focus', recoverFromAuthRedirectState);
+
+    return () => {
+      window.removeEventListener('pageshow', recoverFromAuthRedirectState);
+      window.removeEventListener('focus', recoverFromAuthRedirectState);
+    };
+  }, [open, propOpenId, isRedirectingForOpenId, isExchangingCode, openIdResolved]);
 
   // 清理定时器
   const clearTimers = () => {
