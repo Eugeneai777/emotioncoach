@@ -158,7 +158,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
             <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-slate-200">7天情绪成长训练营已开通</p>
+              <p className="text-sm font-medium text-slate-200">7天有劲训练营已开通</p>
               <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
             className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
           >
             <Rocket className="w-5 h-5 mr-2" />
-            进入情绪成长训练营
+            进入有劲训练营
           </Button>
           <Button
             onClick={onViewLogistics}
@@ -473,7 +473,7 @@ export default function SynergyPromoPage() {
         .insert({
           user_id: targetUserId,
           camp_type: 'emotion_stress_7',
-          camp_name: '7天情绪解压训练营',
+          camp_name: '7天有劲训练营',
           duration_days: durationDays,
           start_date: startDate,
           end_date: endDate,
@@ -542,20 +542,13 @@ export default function SynergyPromoPage() {
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
             <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              情绪解压 × 关系修复
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-              × 身心调理
+              7天有劲训练营
             </span>
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-            {searchParams.get("source") === "laoge" ? (
-              <>从职场内耗到能量重启，7天专业陪伴<br />AI教练 + 真人教练 + 知乐胶囊，三重守护</>
-            ) : (
-              <>7天 AI + 专业教练 + 知乐胶囊<br />三重陪伴，一站式解决职场压力·夫妻矛盾·亲子代沟·情绪内耗·睡眠变差</>
-            )}
+            情绪解压 · 关系修复 · 身心调理<br />
+            AI教练 + 专业教练 + 知乐胶囊，三重陪伴一站式解决
           </p>
 
           {/* Triple Engine Formula */}
