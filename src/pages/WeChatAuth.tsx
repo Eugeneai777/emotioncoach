@@ -51,7 +51,8 @@ export default function WeChatAuth() {
   useEffect(() => {
     const error = searchParams.get("wechat_error");
     if (error === "already_bound") {
-      toast.error("该微信已绑定其他账号");
+      const boundAccount = searchParams.get("bound_account");
+      toast.error(boundAccount ? `该微信已绑定其他账号（${boundAccount}）` : "该微信已绑定其他账号");
     } else if (error === "not_registered") {
       toast.error("该微信未注册，请先注册");
       navigate("/wechat-auth?mode=register");
