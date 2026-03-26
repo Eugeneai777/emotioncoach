@@ -1,23 +1,34 @@
 
 
-# 修复后端 Edge Functions 中的训练营名称
+# 移除账号 18588235488 的「7天情绪解压训练营」权益
 
-## 问题
+## 数据现状
 
-4 个支付回调 Edge Function 的 `bundleCampMap` 中，`synergy_bundle` 对应的 `emotion_stress_7` 营名仍是 `'7天情绪解压训练营'`，需同步改为 `'7天有劲训练营'`。
+| 表 | ID | 内容 |
+|---|---|------|
+| `training_camps` | `73e9e07d-...` | camp_type=`emotion_stress_7`, status=`active` |
+| `user_camp_purchases` | `2ebeaf8d-...` | camp_type=`emotion_stress_7`, payment_status=`completed` |
+| `orders` | `e1abbf71-...` | package_key=`synergy_bundle`, status=`paid`, amount=0.01 |
 
-## 改动清单（4 个文件，每个改 1-2 处）
+## 执行步骤
 
-| 文件 | 改动 |
-|------|------|
-| `supabase/functions/wechat-pay-callback/index.ts` | 第 153、312 行：`campName: '7天情绪解压训练营'` → `'7天有劲训练营'` |
-| `supabase/functions/check-order-status/index.ts` | 第 212、324 行：同上 |
-| `supabase/functions/alipay-callback/index.ts` | 第 166、322 行：同上 |
-| `supabase/functions/claim-guest-order/index.ts` | 第 194 行：同上 |
+### 步骤 1：删除训练营记录
+```sql
+DELETE FROM training_camps WHERE id = '73e9e07d-aeb2-48a0-bd1b-eb82be268526';
+```
 
-## 注意
+### 步骤 2：删除购买权益记录
+```sql
+DELETE FROM user_camp_purchases WHERE id = '2ebeaf8d-5b7b-47ac-a13a-28b0b37bc008';
+```
 
-- 仅修改 `synergy_bundle` 映射中 `emotion_stress_7` 的 `campName`
-- 其他 camp_type（如 `emotion_journal_21`、`wealth_block_7`）名称不变
-- 支付逻辑、权益发放逻辑零改动
+### 步骤 3：将订单标记为已退款
+```sql
+UPDATE orders SET status = 'refunded' WHERE id = 'e1abbf71-db65-4c78-8b76-100c7e325327';
+```
+
+## 说明
+- 实际微信退款 0.01 元无法通过系统操作，需在微信商户平台手动处理（金额极小，可忽略）
+- 该用户的 `emotion_journal_21`（21天情绪日记训练营）**不受影响**
+- 操作后用户再访问 `/promo/synergy` 将显示未购买状态，可重新走购买流程
 
