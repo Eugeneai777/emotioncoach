@@ -477,8 +477,11 @@ export default function SynergyPromoPage() {
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-            7天 AI + 专业教练 + 知乐胶囊<br />
-            三重陪伴，一站式解决职场压力·夫妻矛盾·亲子代沟·情绪内耗·睡眠变差
+            {searchParams.get("source") === "laoge" ? (
+              <>从职场内耗到能量重启，7天专业陪伴<br />AI教练 + 真人教练 + 知乐胶囊，三重守护</>
+            ) : (
+              <>7天 AI + 专业教练 + 知乐胶囊<br />三重陪伴，一站式解决职场压力·夫妻矛盾·亲子代沟·情绪内耗·睡眠变差</>
+            )}
           </p>
 
           {/* Triple Engine Formula */}
