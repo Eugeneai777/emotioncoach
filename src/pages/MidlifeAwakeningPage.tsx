@@ -64,6 +64,7 @@ export default function MidlifeAwakeningPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
   const [aiAnalysis, setAiAnalysis] = useState<MidlifeAIAnalysisData | null>(null);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
@@ -86,18 +87,31 @@ export default function MidlifeAwakeningPage() {
   // 微信授权回跳后自动恢复支付弹窗
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('payment_resume') === '1' || params.get('assessment_pay_resume') === '1') {
-      setShowPayDialog(true);
-      // 清理 URL 参数
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_resume');
-      url.searchParams.delete('assessment_pay_resume');
-      url.searchParams.delete('payment_openid');
-      url.searchParams.delete('payment_token_hash');
-      url.searchParams.delete('pay_flow');
-      url.searchParams.delete('is_new_user');
-      window.history.replaceState({}, '', url.toString());
+    const isPayResume = params.get('payment_resume') === '1' || params.get('assessment_pay_resume') === '1';
+    if (!isPayResume) return;
+
+    // 先缓存 openId，再清理 URL，避免支付弹窗读取不到导致循环授权
+    const paymentOpenId = params.get('payment_openid');
+    if (paymentOpenId) {
+      setResumedOpenId(paymentOpenId);
+      localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      localStorage.setItem('cached_wechat_openid', paymentOpenId);
+      sessionStorage.setItem('cached_wechat_openid', paymentOpenId);
     }
+
+    sessionStorage.removeItem('pay_auth_in_progress');
+    setShowPayDialog(true);
+
+    // 清理 URL 参数
+    const url = new URL(window.location.href);
+    url.searchParams.delete('payment_resume');
+    url.searchParams.delete('assessment_pay_resume');
+    url.searchParams.delete('payment_openid');
+    url.searchParams.delete('payment_token_hash');
+    url.searchParams.delete('pay_flow');
+    url.searchParams.delete('is_new_user');
+    window.history.replaceState({}, '', url.toString());
   }, []);
 
   // 恢复进度
@@ -289,7 +303,7 @@ export default function MidlifeAwakeningPage() {
         }}
         onSuccess={handlePaymentSuccess}
         returnUrl="/midlife-awakening"
-        openId={openId}
+        openId={resumedOpenId || openId}
       />
     </div>
   );

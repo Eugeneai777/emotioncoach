@@ -37,6 +37,16 @@ export default function PayEntry() {
   useEffect(() => {
     if (!isPaymentAuthCallback) return;
 
+    // 防重入：同一个微信 code 只处理一次，避免重复换码触发 code been used
+    const authCodeLockKey = `wechat_payauth_lock_${paymentAuthCode}`;
+    const now = Date.now();
+    const lockedAt = Number(sessionStorage.getItem(authCodeLockKey) || 0);
+    if (lockedAt && now - lockedAt < 30_000) {
+      console.log('[PayEntry] Duplicate callback detected, skip re-processing code');
+      return;
+    }
+    sessionStorage.setItem(authCodeLockKey, String(now));
+
     const run = async () => {
       console.log('[PayEntry] Processing payment auth callback...');
       console.log('[PayEntry] code:', paymentAuthCode);
