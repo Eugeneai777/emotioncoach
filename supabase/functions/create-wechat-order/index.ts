@@ -169,10 +169,10 @@ serve(async (req) => {
         .maybeSingle();
 
       if (recentPending) {
-        console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'created at:', recentPending.created_at);
+        console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'pay_type:', recentPending.pay_type, 'requested payType:', payType, 'created at:', recentPending.created_at);
         
-        // 小程序支付且无 QR：
-        if (payType === 'miniprogram' && !recentPending.qr_code_url) {
+        // 小程序请求：不管旧订单是什么类型，只要有 openId 就用旧订单号重新获取 prepay_id
+        if (payType === 'miniprogram') {
           if (!openId) {
             return new Response(
               JSON.stringify({
@@ -187,12 +187,12 @@ serve(async (req) => {
             );
           }
           // 有 openId：标记复用该 orderNo，继续往下调微信 API 获取 prepay_id
-          console.log('[CreateOrder] MiniProgram has openId now, will call WeChat API with existing order:', recentPending.order_no);
+          console.log('[CreateOrder] MiniProgram has openId, will call WeChat API with existing order:', recentPending.order_no);
           reusedMiniProgramOrderNo = recentPending.order_no;
         }
         
-        // Native 支付且有 QR：直接返回（但不拦截小程序复用路径）
-        if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
+        // Native 支付且有 QR：仅当请求方也是 native 时才复用 QR 码
+        if (!reusedMiniProgramOrderNo && recentPending.qr_code_url && payType === 'native') {
           return new Response(
             JSON.stringify({
               success: true,
@@ -207,7 +207,16 @@ serve(async (req) => {
           );
         }
         
-        // 其他情况（如 JSAPI/H5 pending 订单）：不复用，因为 prepay_id 可能已失效
+        // JSAPI 请求复用旧订单：用旧订单号重新获取 prepay_id
+        if (!reusedMiniProgramOrderNo && payType === 'jsapi' && openId) {
+          console.log('[CreateOrder] JSAPI has openId, will call WeChat API with existing order:', recentPending.order_no);
+          reusedMiniProgramOrderNo = recentPending.order_no;
+        }
+        
+        // 其他情况（如 H5 pending 订单、payType 不匹配）：不复用，继续创建新订单
+        if (!reusedMiniProgramOrderNo && payType !== 'native') {
+          console.log('[CreateOrder] payType mismatch or unsupported reuse, skipping reuse. old pay_type:', recentPending.pay_type, 'requested:', payType);
+        }
       }
     }
 
