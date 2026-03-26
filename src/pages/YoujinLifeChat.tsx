@@ -227,9 +227,6 @@ export default function YoujinLifeChat() {
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white/95 backdrop-blur sticky top-0 z-10">
-        <button onClick={() => navigate("/youjin-life")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
         <div>
           <p className="text-sm font-semibold text-gray-900">有劲AI</p>
           <p className="text-[10px] text-gray-400">一句话帮你搞定</p>
