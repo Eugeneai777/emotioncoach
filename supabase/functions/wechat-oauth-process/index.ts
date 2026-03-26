@@ -172,34 +172,86 @@ serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } else {
-          // 微信已被其他用户绑定，拒绝绑定
-          console.log('WeChat already bound to another user:', existingMapping.system_user_id);
+          // 检查已绑定的是否为临时微信账号（wechat_*@temp.youjin365.com）
+          const { data: boundAuthUser } = await supabaseClient.auth.admin.getUserById(existingMapping.system_user_id);
+          const boundEmail = boundAuthUser?.user?.email || '';
+          const isTempAccount = boundEmail.startsWith('wechat_') && boundEmail.endsWith('@temp.youjin365.com');
           
-          // 查询已绑定账号的脱敏名称
-          let boundAccountName = '未知账号';
-          try {
-            const { data: boundProfile } = await supabaseClient
-              .from('profiles')
-              .select('display_name, phone')
-              .eq('id', existingMapping.system_user_id)
-              .maybeSingle();
+          if (isTempAccount) {
+            // 临时账号：自动迁移映射到当前正式账号
+            console.log('Existing mapping is a temp account, migrating from', existingMapping.system_user_id, 'to', bindUserId);
             
-            if (boundProfile?.phone) {
-              const p = boundProfile.phone;
-              boundAccountName = p.length >= 7 
-                ? p.substring(0, 3) + '****' + p.substring(p.length - 4)
-                : p;
-            } else if (boundProfile?.display_name) {
-              boundAccountName = boundProfile.display_name;
+            const tempUserId = existingMapping.system_user_id;
+            
+            // 1. 将 wechat_user_mappings 的 system_user_id 更新为当前用户
+            const { error: migrateError } = await supabaseClient
+              .from('wechat_user_mappings')
+              .update({ 
+                system_user_id: bindUserId,
+                updated_at: new Date().toISOString()
+              })
+              .eq('openid', tokenData.openid);
+            
+            if (migrateError) {
+              console.error('Failed to migrate mapping:', migrateError);
+              return new Response(
+                JSON.stringify({ error: 'Failed to migrate WeChat binding' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
             }
-          } catch (e) {
-            console.error('Failed to fetch bound account info:', e);
+            
+            // 2. 软删除临时账号的 profile
+            await supabaseClient
+              .from('profiles')
+              .update({ 
+                deleted_at: new Date().toISOString(),
+                phone: null
+              })
+              .eq('id', tempUserId);
+            
+            // 3. 禁用临时 Auth 用户
+            try {
+              await supabaseClient.auth.admin.updateUserById(tempUserId, { 
+                ban_duration: '876600h' // ~100 years
+              });
+              console.log('Temp account disabled:', tempUserId);
+            } catch (disableErr) {
+              console.error('Failed to disable temp account:', disableErr);
+            }
+            
+            console.log('Migration complete, binding to:', bindUserId);
+            finalUserId = bindUserId;
+            // 继续走正常绑定流程（下方会发送通知等）
+          } else {
+            // 正式账号：拒绝绑定，返回已绑定信息
+            console.log('WeChat already bound to another user:', existingMapping.system_user_id);
+            
+            // 查询已绑定账号的脱敏名称
+            let boundAccountName = '未知账号';
+            try {
+              const { data: boundProfile } = await supabaseClient
+                .from('profiles')
+                .select('display_name, phone')
+                .eq('id', existingMapping.system_user_id)
+                .maybeSingle();
+              
+              if (boundProfile?.phone) {
+                const p = boundProfile.phone;
+                boundAccountName = p.length >= 7 
+                  ? p.substring(0, 3) + '****' + p.substring(p.length - 4)
+                  : p;
+              } else if (boundProfile?.display_name) {
+                boundAccountName = boundProfile.display_name;
+              }
+            } catch (e) {
+              console.error('Failed to fetch bound account info:', e);
+            }
+            
+            return new Response(
+              JSON.stringify({ error: 'already_bound', message: '该微信已绑定其他账号', bound_account_name: boundAccountName }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
           }
-          
-          return new Response(
-            JSON.stringify({ error: 'already_bound', message: '该微信已绑定其他账号', bound_account_name: boundAccountName }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
         }
       }
 
