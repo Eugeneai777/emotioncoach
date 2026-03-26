@@ -548,7 +548,7 @@ const Index = () => {
   const getCampDisplayInfo = (campType: string) => {
     switch (campType) {
       case 'emotion_stress_7':
-        return { name: '7天情绪解压训练营', desc: '用7天释放压力，找回内心平静与清晰' };
+        return { name: '7天有劲训练营', desc: '用7天释放压力，找回内心平静与清晰' };
       case 'wealth_block_7':
       case 'wealth_block_21':
         return { name: '7天财富觉醒训练营', desc: '用7天突破财富卡点，重塑金钱关系' };
