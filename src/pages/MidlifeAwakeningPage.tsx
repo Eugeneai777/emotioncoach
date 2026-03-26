@@ -65,10 +65,10 @@ export default function MidlifeAwakeningPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<MidlifeAIAnalysisData | null>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<MidlifeAIAnalysisData | null>(null);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
 
+  const openId = useWechatOpenId();
   const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useMidlifeAwakeningPurchase();
   const hasPurchased = !!purchaseRecord;
   const { data: packageData } = usePackageByKey(PACKAGE_KEY);
@@ -82,6 +82,23 @@ export default function MidlifeAwakeningPage() {
     },
     autoRedirect: false,
   });
+
+  // 微信授权回跳后自动恢复支付弹窗
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment_resume') === '1' || params.get('assessment_pay_resume') === '1') {
+      setShowPayDialog(true);
+      // 清理 URL 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_resume');
+      url.searchParams.delete('assessment_pay_resume');
+      url.searchParams.delete('payment_openid');
+      url.searchParams.delete('payment_token_hash');
+      url.searchParams.delete('pay_flow');
+      url.searchParams.delete('is_new_user');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
 
   // 恢复进度
   useEffect(() => {
@@ -103,27 +120,10 @@ export default function MidlifeAwakeningPage() {
     }
   }, [answers, step]);
 
-  const triggerWeChatSilentAuth = useCallback(async () => {
-    setIsRedirectingForAuth(true);
-    try {
-      const resumeUrl = new URL(window.location.href);
-      resumeUrl.searchParams.set('assessment_pay_resume', '1');
-      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-        body: { redirectUri: resumeUrl.toString(), flow: 'midlife_awakening_assessment' },
-      });
-      if (error || !data?.authUrl) { setIsRedirectingForAuth(false); setShowPayDialog(true); return; }
-      window.location.href = data.authUrl;
-    } catch { setIsRedirectingForAuth(false); setShowPayDialog(true); }
-  }, []);
-
   const handlePayClick = useCallback(() => {
     if (!user) { toast.error("请先登录"); navigate('/auth', { state: { from: '/midlife-awakening' } }); return; }
-    if (isWeChatBrowser()) {
-      const existingOpenId = sessionStorage.getItem('wechat_openid');
-      if (!existingOpenId) { triggerWeChatSilentAuth(); return; }
-    }
     setShowPayDialog(true);
-  }, [user, navigate, triggerWeChatSilentAuth]);
+  }, [user, navigate]);
 
   const handleStart = useCallback(() => {
     if (!user) { toast.error("请先登录"); navigate('/auth', { state: { from: '/midlife-awakening' } }); return; }
