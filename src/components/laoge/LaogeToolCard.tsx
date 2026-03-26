@@ -227,7 +227,7 @@ export function LaogeToolCard({ tool, title, description, icon, rounds }: LaogeT
               老哥为你设计了一套完整的职场突围训练营
             </p>
             <button
-              onClick={() => navigate("/promo/zhile-havruta")}
+              onClick={() => navigate("/promo/synergy?source=laoge")}
               className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[hsl(var(--laoge-accent))] text-white text-sm font-bold hover:opacity-90 transition-opacity"
             >
               了解详情

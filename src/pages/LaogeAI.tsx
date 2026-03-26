@@ -79,7 +79,7 @@ export default function LaogeAI() {
             🔥 中年男人职场突围方案
           </span>
           <button
-            onClick={() => navigate("/promo/zhile-havruta")}
+            onClick={() => navigate("/promo/synergy?source=laoge")}
             className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/60 text-white text-xs font-medium hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
           >
             了解详情
