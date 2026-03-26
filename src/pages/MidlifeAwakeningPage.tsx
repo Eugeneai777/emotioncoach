@@ -64,7 +64,7 @@ export default function MidlifeAwakeningPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
-  const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<MidlifeAIAnalysisData | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<MidlifeAIAnalysisData | null>(null);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
