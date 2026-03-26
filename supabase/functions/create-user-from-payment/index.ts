@@ -104,9 +104,9 @@ serve(async (req) => {
         // 已有账号，直接绑定
         userId = existingMapping.system_user_id;
       } else {
-        // 创建新账号
-        const email = `wx_${openId.slice(0, 16)}@youjin.app`;
-        const password = `wx_${crypto.randomUUID()}`;
+        // 创建新账号 - 使用与其他入口一致的邮箱格式
+        const email = `wechat_${openId.toLowerCase()}@temp.youjin365.com`;
+        const password = `wechat_${openId}_${Date.now()}`;
 
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -118,32 +118,51 @@ serve(async (req) => {
           }
         });
 
-        if (authError) throw authError;
-        userId = authData.user.id;
+        if (authError) {
+          // 邮箱已存在，查找现有用户并复用
+          if ((authError as any).code === 'email_exists') {
+            console.log('Email already exists, finding existing user...');
+            const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+            const existingUser = existingUsers?.users?.find(u => u.email === email);
+            
+            if (existingUser) {
+              userId = existingUser.id;
+              console.log('Found existing user by email:', userId);
+              
+              // 确保映射存在
+              await supabaseAdmin.from('wechat_user_mappings').upsert({
+                openid: openId,
+                system_user_id: userId,
+                unionid: null,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'openid' });
+            } else {
+              throw authError;
+            }
+          } else {
+            throw authError;
+          }
+        } else {
+          userId = authData.user.id;
 
-        // 创建微信映射
-        await supabaseAdmin.from('wechat_user_mappings').insert({
-          openid: openId,
-          system_user_id: userId,
-          unionid: null
-        });
+          // 创建微信映射
+          await supabaseAdmin.from('wechat_user_mappings').upsert({
+            openid: openId,
+            system_user_id: userId,
+            unionid: null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'openid' });
 
-        // 更新 profile（包含手机号）
-        await supabaseAdmin.from('profiles').upsert({
-          id: userId,
-          display_name: nickname || '有劲用户',
-          phone: phone || null,
-          phone_country_code: phoneCountryCode || '+86'
-        });
+          // 更新 profile（包含手机号）
+          await supabaseAdmin.from('profiles').upsert({
+            id: userId,
+            display_name: nickname || '有劲用户',
+            phone: phone || null,
+            phone_country_code: phoneCountryCode || '+86'
+          });
 
-        // 生成登录session
-        const { data: sessionData } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email,
-        });
-        
-        // 实际场景中需要更好的session处理
-        console.log('User created:', userId);
+          console.log('User created:', userId);
+        }
       }
     } else {
       throw new Error('请提供微信信息完成注册');
