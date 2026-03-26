@@ -223,7 +223,7 @@ export default function MidlifeAwakeningPage() {
     setStep('questions');
   }, [refetchPurchase]);
 
-  const isLoading = authLoading || purchaseLoading || isRedirectingForAuth;
+  const isLoading = authLoading || purchaseLoading;
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
