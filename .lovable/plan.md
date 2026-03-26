@@ -1,43 +1,23 @@
 
 
-# 统一 /promo/synergy 主标题为「7天有劲训练营」
+# 修复后端 Edge Functions 中的训练营名称
 
-## 改动内容
+## 问题
 
-**文件**: `src/pages/SynergyPromoPage.tsx`
+4 个支付回调 Edge Function 的 `bundleCampMap` 中，`synergy_bundle` 对应的 `emotion_stress_7` 营名仍是 `'7天情绪解压训练营'`，需同步改为 `'7天有劲训练营'`。
 
-### 第 543-551 行：替换 Hero 主标题
+## 改动清单（4 个文件，每个改 1-2 处）
 
-当前标题是「情绪解压 × 关系修复 × 身心调理」，改为：
+| 文件 | 改动 |
+|------|------|
+| `supabase/functions/wechat-pay-callback/index.ts` | 第 153、312 行：`campName: '7天情绪解压训练营'` → `'7天有劲训练营'` |
+| `supabase/functions/check-order-status/index.ts` | 第 212、324 行：同上 |
+| `supabase/functions/alipay-callback/index.ts` | 第 166、322 行：同上 |
+| `supabase/functions/claim-guest-order/index.ts` | 第 194 行：同上 |
 
-```tsx
-<h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
-  <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-    7天有劲训练营
-  </span>
-</h1>
-```
+## 注意
 
-### 第 553-558 行：统一副标题（移除 source 判断）
-
-不再区分 `source=laoge`，统一副标题：
-
-```tsx
-<p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-  情绪解压 · 关系修复 · 身心调理<br />
-  AI教练 + 专业教练 + 知乐胶囊，三重陪伴一站式解决
-</p>
-```
-
-### 自动创建训练营 camp_name 同步
-
-搜索 `autoCreateAndEnterCamp` 中的 `camp_name` 赋值，改为 `'7天有劲训练营'`。
-
-### SuccessPanel 文案同步
-
-将成功页中涉及训练营名称的文案统一为「7天有劲训练营」。
-
-## 不受影响
-- 支付流程、跳转逻辑、课程内容零改动
-- 其他页面不受影响
+- 仅修改 `synergy_bundle` 映射中 `emotion_stress_7` 的 `campName`
+- 其他 camp_type（如 `emotion_journal_21`、`wealth_block_7`）名称不变
+- 支付逻辑、权益发放逻辑零改动
 
