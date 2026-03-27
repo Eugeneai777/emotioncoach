@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
