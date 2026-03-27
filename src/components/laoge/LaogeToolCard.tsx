@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronRight, X, ArrowRight } from "lucide-react";
+import { ChevronRight, X, ArrowRight, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LaogeChat } from "./LaogeChat";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
 import type { RoundConfig } from "@/pages/LaogeAI";
 
 interface FieldConfig {
