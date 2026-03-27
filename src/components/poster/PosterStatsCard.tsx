@@ -24,7 +24,7 @@ const templateNames: Record<string, string> = {
   '365_member': '365会员',
   member_365: '365会员',
   partner_recruit: '招募合伙人',
-  emotion_stress_7: '7天情绪解压营',
+  emotion_stress_7: '7天有劲训练营',
 };
 
 interface PosterStatsCardProps {
