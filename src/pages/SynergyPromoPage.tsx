@@ -1080,6 +1080,14 @@ export default function SynergyPromoPage() {
       {/* ===== STICKY BOTTOM BAR ===== */}
       <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-white via-white/95 to-transparent pt-4">
         <div className="max-w-lg mx-auto flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShareDialogOpen(true)}
+            className="shrink-0 h-11 w-11 rounded-full border-orange-200 text-orange-600 hover:bg-orange-50"
+          >
+            <Share2 className="w-5 h-5" />
+          </Button>
           {alreadyPurchased ? (
             <>
               <div className="flex-1 min-w-0">

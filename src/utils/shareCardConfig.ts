@@ -47,8 +47,8 @@ const getOptimalScale = (): number => {
     // 微信环境：低端设备用 2x，否则 2.5x
     return isLowEndDevice() ? 2 : 2.5;
   }
-  // 标准浏览器：低端设备用 3x，否则 3.5x（提升字体清晰度）
-  return isLowEndDevice() ? 3 : 3.5;
+  // 标准浏览器（桌面端）：降低倍数提升渲染速度
+  return isLowEndDevice() ? 2.5 : 3;
 };
 
 // ============= 常量配置 =============
