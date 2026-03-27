@@ -147,7 +147,7 @@ serve(async (req) => {
         }
       }
 
-      // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases
+      // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases (upsert防重复)
       const bundleCampMap: Record<string, Array<{ campType: string; campName: string }>> = {
         'synergy_bundle': [
           { campType: 'emotion_stress_7', campName: '7天有劲训练营' },
@@ -159,27 +159,17 @@ serve(async (req) => {
       if (bundleCamps) {
         for (const bundleCamp of bundleCamps) {
           try {
-            const { data: existingCamp } = await supabase
-              .from('user_camp_purchases')
-              .select('id')
-              .eq('user_id', order.user_id)
-              .eq('camp_type', bundleCamp.campType)
-              .eq('payment_status', 'completed')
-              .maybeSingle();
-
-            if (!existingCamp) {
-              await supabase.from('user_camp_purchases').insert({
-                user_id: order.user_id,
-                camp_type: bundleCamp.campType,
-                camp_name: bundleCamp.campName,
-                purchase_price: order.amount,
-                payment_method: 'wechat',
-                payment_status: 'completed',
-                purchased_at: order.paid_at || new Date().toISOString(),
-                expires_at: null,
-              });
-              console.log(`[WechatCallback] Repaired missing ${bundleCamp.campType} for ${order.package_key}:`, order.user_id);
-            }
+            await supabase.from('user_camp_purchases').upsert({
+              user_id: order.user_id,
+              camp_type: bundleCamp.campType,
+              camp_name: bundleCamp.campName,
+              purchase_price: order.amount,
+              payment_method: 'wechat',
+              payment_status: 'completed',
+              purchased_at: order.paid_at || new Date().toISOString(),
+              expires_at: null,
+            }, { onConflict: 'user_id,camp_type,payment_status' });
+            console.log(`[WechatCallback] Upserted ${bundleCamp.campType} for ${order.package_key}:`, order.user_id);
           } catch (repairErr) {
             console.error(`[WechatCallback] ${bundleCamp.campType} camp repair error:`, repairErr);
           }
@@ -251,10 +241,10 @@ serve(async (req) => {
         .eq('camp_type', campType)
         .single();
 
-      // 创建训练营购买记录
+      // 创建训练营购买记录 (upsert防重复)
       const { error: purchaseError } = await supabase
         .from('user_camp_purchases')
-        .insert({
+        .upsert({
           user_id: order.user_id,
           camp_type: campType,
           camp_name: campTemplate?.camp_name || order.product_name || '训练营',
@@ -263,8 +253,8 @@ serve(async (req) => {
           payment_status: 'completed',
           transaction_id: tradeNo,
           purchased_at: new Date().toISOString(),
-          expires_at: null // 不设置过期时间，永久有效
-        });
+          expires_at: null
+        }, { onConflict: 'user_id,camp_type,payment_status' });
 
       if (purchaseError) {
         console.error('Create camp purchase error:', purchaseError);
@@ -306,35 +296,7 @@ serve(async (req) => {
       }
     }
 
-    // === synergy_bundle / wealth_synergy_bundle 特殊处理：补写训练营购买记录 ===
-    const bundleCampMapNew: Record<string, Array<{ campType: string; campName: string }>> = {
-      'synergy_bundle': [
-        { campType: 'emotion_stress_7', campName: '7天有劲训练营' },
-        { campType: 'emotion_journal_21', campName: '21天情绪日记训练营' },
-      ],
-      'wealth_synergy_bundle': [{ campType: 'wealth_block_7', campName: '财富觉醒训练营' }],
-    };
-    const bundleCampsNew = bundleCampMapNew[order.package_key];
-    if (bundleCampsNew) {
-      for (const camp of bundleCampsNew) {
-        try {
-          await supabase.from('user_camp_purchases').insert({
-            user_id: order.user_id,
-            camp_type: camp.campType,
-            camp_name: camp.campName,
-            purchase_price: order.amount,
-            payment_method: 'wechat',
-            payment_status: 'completed',
-            transaction_id: tradeNo,
-            purchased_at: new Date().toISOString(),
-            expires_at: null,
-          });
-          console.log(`[WechatCallback] ${order.package_key} camp purchase recorded for ${camp.campType}`);
-        } catch (e) {
-          console.error(`[WechatCallback] ${camp.campType} camp purchase exception:`, e);
-        }
-      }
-    }
+    // === synergy_bundle / wealth_synergy_bundle：已在自愈逻辑中通过 upsert 处理，此处不再重复插入 ===
 
     // === 新增：写入 subscriptions 表（非训练营订单） ===
     if (!order.package_key.startsWith('camp-')) {
