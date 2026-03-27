@@ -43,6 +43,7 @@ export default function StressMeditation() {
   const [emotionImpact, setEmotionImpact] = useState('');
   const [isBuffering, setIsBuffering] = useState(false);
   const [isLoadingPlay, setIsLoadingPlay] = useState(false);
+  const [bufferProgress, setBufferProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { isCached, cacheAudio, getCachedAudio, isSupported: isCacheSupported, isLoading: isCaching } = useAudioCache();
@@ -120,14 +121,21 @@ export default function StressMeditation() {
       markMeditationCompleted();
     };
     const onWaiting = () => setIsBuffering(true);
-    const onCanPlay = () => setIsBuffering(false);
-    const onPlaying = () => setIsBuffering(false);
+    const onCanPlay = () => { setIsBuffering(false); setBufferProgress(0); };
+    const onPlaying = () => { setIsBuffering(false); setBufferProgress(0); };
+    const onProgress = () => {
+      if (audio.buffered.length > 0 && audio.duration > 0) {
+        const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
+        setBufferProgress(Math.round((bufferedEnd / audio.duration) * 100));
+      }
+    };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
     audio.addEventListener('waiting', onWaiting);
     audio.addEventListener('canplay', onCanPlay);
     audio.addEventListener('playing', onPlaying);
+    audio.addEventListener('progress', onProgress);
     return () => {
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('loadedmetadata', onMeta);
@@ -135,6 +143,7 @@ export default function StressMeditation() {
       audio.removeEventListener('waiting', onWaiting);
       audio.removeEventListener('canplay', onCanPlay);
       audio.removeEventListener('playing', onPlaying);
+      audio.removeEventListener('progress', onProgress);
     };
   }, [meditation, markMeditationCompleted]);
 
@@ -250,6 +259,22 @@ export default function StressMeditation() {
       }
       if (sentCurrent.length > 0) sentParagraphs.push([sentCurrent.join('')]);
       if (sentParagraphs.length > 1) return sentParagraphs;
+
+      // Layer 3: space-delimited text (Whisper transcripts for Day 3/5/6)
+      const spaceSegments = allText.split(/\s+/).filter(s => s.trim());
+      if (spaceSegments.length > 4) {
+        const spaceParagraphs: string[][] = [];
+        let spaceCurrent: string[] = [];
+        for (const seg of spaceSegments) {
+          spaceCurrent.push(seg);
+          if (spaceCurrent.length >= 4) {
+            spaceParagraphs.push([spaceCurrent.join('，')]);
+            spaceCurrent = [];
+          }
+        }
+        if (spaceCurrent.length > 0) spaceParagraphs.push([spaceCurrent.join('，')]);
+        return spaceParagraphs;
+      }
     }
     return paragraphs;
   };
@@ -278,7 +303,7 @@ export default function StressMeditation() {
           <audio
             ref={audioRef}
             src={cachedAudioUrl || meditation.audio_url}
-            preload="auto"
+            preload="metadata"
             playsInline
           />
         )}
@@ -352,7 +377,14 @@ export default function StressMeditation() {
 
               <Button onClick={togglePlay} disabled={!meditation.audio_url || isLoadingPlay}
                 className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg">
-                {isLoadingPlay || isBuffering ? <Loader2 className="w-7 h-7 animate-spin" /> :
+                {isLoadingPlay || isBuffering ? (
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="w-7 h-7 animate-spin" />
+                    {bufferProgress > 0 && bufferProgress < 100 && (
+                      <span className="text-[10px] mt-0.5">{bufferProgress}%</span>
+                    )}
+                  </div>
+                ) :
                   isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
               </Button>
 
