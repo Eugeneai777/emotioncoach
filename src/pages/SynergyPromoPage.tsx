@@ -1083,7 +1083,7 @@ export default function SynergyPromoPage() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setShareDialogOpen(true)}
+            onClick={shareDialog.openDialog}
             className="shrink-0 h-11 w-11 rounded-full border-orange-200 text-orange-600 hover:bg-orange-50"
           >
             <Share2 className="w-5 h-5" />
