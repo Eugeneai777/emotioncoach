@@ -74,9 +74,9 @@ const painPoints = [
 /* ========== 6 Core Highlights ========== */
 const coreHighlights = [
   { icon: MessageCircle, title: "AI情绪教练", subtitle: "24小时个性化陪伴", desc: "专业冥想音频 + 自动捕捉情绪 + 引导式对话 + 个人成长简报", color: "#7c3aed" },
-  { icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，{ icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长情绪疏导与关系修复", color: "#d97706" },", color: "#d97706" },
+  { icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长情绪疏导与关系修复", color: "#d97706" },, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长情绪疏导与关系修复", color: "#d97706" },", color: "#d97706" },
   { icon: Clock, title: "轻量打卡", subtitle: "每日15-25分钟", desc: "碎片时间即可完成，清晰打卡日历，系统自动推荐匹配个人状态的专属课程", color: "#059669" },
-  { icon: Users, title: "{ icon: Users, title: "同频成长社区", subtitle: "安全不尴尬", desc: "专属成长社区，无评判放心倾诉，智能推荐同频伙伴，告别孤独", color: "#2563eb" },", color: "#2563eb" },
+  { icon: Users, title: "同频成长社区", subtitle: "安全不尴尬", desc: "专属成长社区，无评判放心倾诉，智能推荐同频伙伴，告别孤独", color: "#2563eb" },, subtitle: "安全不尴尬", desc: "专属成长社区，无评判放心倾诉，智能推荐同频伙伴，告别孤独", color: "#2563eb" },", color: "#2563eb" },
   { icon: Leaf, title: "知乐胶囊", subtitle: "草本调理根源", desc: "香港HKC-18181认证，16味草本，不含褪黑素/激素，无依赖，补心补肝益气安神", color: "#0d9488" },
   { icon: Sparkles, title: "体系化闭环", subtitle: "从知道到做到", desc: "冥想→情绪觉察→AI对话→课程学习→社区分享→草本调理→成长报告", color: "#e11d48" },
 ];
@@ -97,7 +97,7 @@ const outcomes = [
   { icon: "🎯", title: "压力明显减少", desc: "每天放松训练+草本调理，缓解职场与生活双重压力" },
   { icon: "😴", title: "睡眠质量提升", desc: "冥想+情绪疏导+知乐胶囊，入睡更快、睡得更沉" },
   { icon: "🔧", title: "长期成长工具", desc: "学会一套可终身使用的情绪调节+自我关怀方法" },
-  { icon: "👥", title: "找到同频圈子", desc: "{ icon: "👥", title: "找到同频圈子", desc: "在安全、理解、支持的社区里，不再孤独硬扛" }," },
+  { icon: "👥", title: "找到同频圈子", desc: "在安全、理解、支持的社区里，不再孤独硬扛" },, title: "找到同频圈子", desc: "在安全、理解、支持的社区里，不再孤独硬扛" }," },
   { icon: "🛡", title: "专业教练护航", desc: "多元背景资深教练团队，提供专业指导与陪伴" },
   { icon: "🌿", title: "根源身体调理", desc: "知乐胶囊草本配方，补心补肝，调理情绪与睡眠根源" },
 ];
@@ -1193,7 +1193,7 @@ export default function SynergyPromoPage() {
         shareUrl={`${window.location.origin}/promo/synergy`}
         fileName="7天有劲训练营"
         shareTitle="7天有劲训练营"
-        shareText="shareText="7天身心解压·关系修复训练方案""
+        shareText="7天身心解压·关系修复训练方案"
         previewCard={
           <div className="transform scale-[0.6] origin-top-left">
             <SynergyShareCard onReady={shareDialog.handleCardReady} />
