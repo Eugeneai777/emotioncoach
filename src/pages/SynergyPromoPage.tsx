@@ -123,75 +123,77 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0e1a]/95 px-4"
+      className="fixed inset-0 z-[100] overflow-y-auto bg-[#0a0e1a]/95"
     >
-      <div className="max-w-sm w-full text-center space-y-6">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring" }}
-          className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30"
-        >
-          <CheckCircle className="w-10 h-10 text-white" />
-        </motion.div>
-
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">🎉 购买成功！</h2>
-          <p className="text-slate-400 text-sm">你的三重陪伴成长之旅即将开始</p>
-        </div>
-
-        <div className="space-y-3 text-left">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-            <Package className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-slate-200">知乐胶囊已安排发货</p>
-              <p className="text-xs text-slate-500">香港直邮，预计 4-7 个工作日送达</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-900/30 border border-amber-500/30">
-            <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-amber-200">💡 建议收到胶囊后再开启训练营</p>
-              <p className="text-xs text-slate-400">AI教练 + 专业教练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
-            <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-slate-200">7天有劲训练营已开通</p>
-              <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 企微教练引导卡片 */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-900/40 to-teal-900/30 border border-emerald-500/30 text-center space-y-3">
-          <p className="text-sm font-semibold text-emerald-300">👨‍🏫 添加主教练微信，加入学员互助群</p>
-          <p className="text-xs text-slate-400">获得真人教练 1v1 指导 · 参加线上冥想直播 · 学员社群互助交流</p>
-          <div className="flex justify-center">
-            <div className="p-2 bg-white rounded-lg shadow-md">
-              <img src={wecomCoachQr} alt="主教练企微二维码" className="w-36 h-36 object-contain" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500">长按识别二维码添加</p>
-        </div>
-
-        <div className="space-y-3 pt-2">
-          <Button
-            onClick={onEnterCamp}
-            className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
+      <div className="min-h-screen flex flex-col items-center justify-start py-8 px-4">
+        <div className="max-w-sm w-full text-center space-y-6">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30"
           >
-            <Rocket className="w-5 h-5 mr-2" />
-            进入有劲训练营
-          </Button>
-          <Button
-            onClick={onViewLogistics}
-            variant="outline"
-            className="w-full h-10 text-sm rounded-full border-slate-600 text-slate-300 hover:bg-slate-800"
-          >
-            <Truck className="w-4 h-4 mr-2" />
-            查看订单与物流
-          </Button>
+            <CheckCircle className="w-10 h-10 text-white" />
+          </motion.div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2">🎉 购买成功！</h2>
+            <p className="text-slate-400 text-sm">你的三重陪伴成长之旅即将开始</p>
+          </div>
+
+          <div className="space-y-3 text-left">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+              <Package className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-slate-200">知乐胶囊已安排发货</p>
+                <p className="text-xs text-slate-500">香港直邮，预计 4-7 个工作日送达</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-900/30 border border-amber-500/30">
+              <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-200">💡 建议收到胶囊后再开启训练营</p>
+                <p className="text-xs text-slate-400">AI教练 + 专业教练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/40">
+              <Brain className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-slate-200">7天有劲训练营已开通</p>
+                <p className="text-xs text-slate-500">可随时进入训练营开始学习</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 企微教练引导卡片 */}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-900/40 to-teal-900/30 border border-emerald-500/30 text-center space-y-3">
+            <p className="text-sm font-semibold text-emerald-300">👨‍🏫 添加助教微信，加入学员互助群</p>
+            <p className="text-xs text-slate-400">获得真人教练 1v1 指导 · 参加线上冥想直播 · 学员社群互助交流</p>
+            <div className="flex justify-center">
+              <div className="p-3 bg-white rounded-xl shadow-lg">
+                <img src={wecomCoachQr} alt="助教企微二维码" className="w-48 h-48 object-contain" />
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-500">长按识别二维码添加</p>
+          </div>
+
+          <div className="space-y-3 pt-2 pb-[env(safe-area-inset-bottom)]">
+            <Button
+              onClick={onEnterCamp}
+              className="w-full h-12 text-base font-bold rounded-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white shadow-lg shadow-violet-500/25 border-0"
+            >
+              <Rocket className="w-5 h-5 mr-2" />
+              进入有劲训练营
+            </Button>
+            <Button
+              onClick={onViewLogistics}
+              variant="outline"
+              className="w-full h-10 text-sm rounded-full border-slate-600 text-slate-300 hover:bg-slate-800"
+            >
+              <Truck className="w-4 h-4 mr-2" />
+              查看订单与物流
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>
