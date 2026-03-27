@@ -454,14 +454,26 @@ export default function StressMeditation() {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <Card className="border-emerald-200 dark:border-emerald-800">
-                <CardContent className="p-5 space-y-3">
-                  {scriptLines.map((line, i) => (
-                    <p key={i} className={cn(
-                      "text-sm leading-relaxed",
-                      line.startsWith('（') ? "text-emerald-500/60 italic text-xs" : "text-emerald-800 dark:text-emerald-200"
-                    )}>
-                      {line}
-                    </p>
+                <CardContent className="px-6 py-5 space-y-4">
+                  {scriptParagraphs.map((paragraph, pi) => (
+                    <div key={pi} className="space-y-1">
+                      {paragraph.map((line, li) => {
+                        const isFirst = pi === 0 && li === 0;
+                        const isStageDir = line.startsWith('（') || line.startsWith('(');
+                        return (
+                          <p key={li} className={cn(
+                            "leading-7",
+                            isStageDir 
+                              ? "text-emerald-500/60 italic text-sm" 
+                              : isFirst 
+                                ? "text-base font-semibold text-emerald-900 dark:text-emerald-100"
+                                : "text-base text-emerald-800 dark:text-emerald-200"
+                          )}>
+                            {isStageDir ? line : highlightBreathing(line)}
+                          </p>
+                        );
+                      })}
+                    </div>
                   ))}
                 </CardContent>
               </Card>
