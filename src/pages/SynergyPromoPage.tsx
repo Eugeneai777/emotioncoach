@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
@@ -16,6 +16,9 @@ import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+import SynergyShareCard from "@/components/promo/SynergyShareCard";
+import ShareDialogBase from "@/components/sharing/ShareDialogBase";
+import { useShareDialog } from "@/hooks/useShareDialog";
 
 /* ========== Floating particles ========== */
 function Particles() {
