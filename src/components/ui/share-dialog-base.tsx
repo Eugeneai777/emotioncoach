@@ -207,11 +207,16 @@ export function ShareDialogBase({
         }
 
         if (showImagePreview) {
-          const imageUrl = URL.createObjectURL(blob);
           if (loadingToastId) toast.dismiss(loadingToastId);
-          if (!isiOS) onOpenChange(false);
-          setPreviewUrl(imageUrl);
-          setShowPreview(true);
+          await handleShareWithFallback(blob, fileName, {
+            title: shareTitle,
+            text: shareText,
+            onShowPreview: (url) => {
+              if (!isiOS) onOpenChange(false);
+              setPreviewUrl(url);
+              setShowPreview(true);
+            },
+          });
         } else {
           if (loadingToastId) toast.dismiss(loadingToastId);
           const result = await handleShareWithFallback(blob, fileName, {

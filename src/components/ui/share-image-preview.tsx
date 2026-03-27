@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, RotateCw, Download, CheckCircle2 } from 'lucide-react';
+import { X, RotateCw, Download, CheckCircle2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -40,7 +40,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     document.body.style.position = '';
   };
 
-  // Fade-in on open
   useEffect(() => {
     if (open) {
       setImageSaved(false);
@@ -54,7 +53,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     }
   }, [open]);
 
-  // Wrap onClose to ensure scroll lock cleanup
   const handleClose = useCallback(() => {
     cleanupScrollLock();
     onClose();
@@ -64,7 +62,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     if (!imageUrl) return;
     try {
       let downloadUrl = imageUrl;
-      // If it's not a blob URL, fetch and create one for reliable download
       if (!imageUrl.startsWith('blob:')) {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
@@ -84,6 +81,25 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     } catch (error) {
       console.error('Download failed:', error);
       toast.error('下载失败，请长按图片保存');
+    }
+  }, [imageUrl]);
+
+  const handleForward = useCallback(async () => {
+    if (!imageUrl) return;
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `share-${Date.now()}.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        toast.success('转发成功');
+      } else {
+        toast('请长按图片转发给朋友');
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') {
+        toast('请长按图片转发给朋友');
+      }
     }
   }, [imageUrl]);
 
@@ -115,16 +131,14 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         </div>
 
         <div className="flex items-center gap-1">
-          {!isWeChat && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDownload}
-              className="min-h-[44px] min-w-[44px]"
-            >
-              <Download className="h-5 w-5" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDownload}
+            className="min-h-[44px] min-w-[44px]"
+          >
+            <Download className="h-5 w-5" />
+          </Button>
           {onRegenerate && (
             <Button
               variant="ghost"
@@ -141,7 +155,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
 
       {/* Image area */}
       <div className="flex-1 flex items-center justify-center p-2 overflow-hidden min-h-0">
-        {/* Loading */}
         {!imageLoaded && !imageError && (
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
@@ -149,7 +162,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           </div>
         )}
 
-        {/* Error */}
         {imageError && (
           <div className="flex flex-col items-center gap-3 text-center">
             <span className="text-4xl">😕</span>
@@ -182,18 +194,36 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         />
       </div>
 
-      {/* Bottom guidance */}
+      {/* Bottom actions */}
       <div
         className="shrink-0 flex flex-col items-center gap-3 px-4 pb-6"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
-      {isMobile ? (
-          <div className="flex items-center gap-3 w-full max-w-sm">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs flex-1">
-              <span>👆</span>
-              <span>长按图片保存 · 分享给好友</span>
+        {isMobile ? (
+          <div className="flex flex-col items-center gap-2 w-full max-w-sm">
+            <div className="flex items-center gap-2 w-full">
+              <Button
+                onClick={handleDownload}
+                className="flex-1 rounded-full h-11 gap-2 text-sm font-medium"
+              >
+                <Download className="h-4 w-4" />
+                保存图片
+              </Button>
+              {isWeChat && (
+                <Button
+                  onClick={handleForward}
+                  variant="outline"
+                  className="flex-1 rounded-full h-11 gap-2 text-sm font-medium"
+                >
+                  <Send className="h-4 w-4" />
+                  转发给朋友
+                </Button>
+              )}
             </div>
-            <Button variant="outline" size="sm" onClick={handleClose}>返回</Button>
+            <div className="flex items-center justify-between w-full">
+              <span className="text-muted-foreground text-xs">👆 长按图片也可保存</span>
+              <Button variant="ghost" size="sm" onClick={handleClose} className="text-muted-foreground">返回</Button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 max-w-sm w-full">
