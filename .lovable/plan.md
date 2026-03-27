@@ -1,65 +1,34 @@
 
 
-# 修复跨终端订单复用 pay_type 不匹配问题
+# SuccessPanel 购买成功页优化
 
-## 问题
+## 问题分析
 
-用户先在桌面端创建了 native（QR 码）订单，再从微信小程序进入时，后端复用了旧 native 订单并直接返回 QR 码，小程序无法使用 QR 码支付（需要 prepay_id）。
+1. **底部按钮被截断**：当前容器使用 `fixed inset-0 flex items-center justify-center`，内容垂直居中但无滚动，小屏手机上底部"进入训练营"按钮被截断不可见
+2. **文案需更新**：第 169 行 "添加主教练微信，加入学员互助群" → "添加助教微信，加入学员互助群"
+3. **二维码偏小**：当前 `w-36 h-36`（144px），视觉上不够醒目
 
 ## 修复方案
 
-**文件**：`supabase/functions/create-wechat-order/index.ts`
+**文件**：`src/pages/SynergyPromoPage.tsx`，SuccessPanel 函数（第 121-198 行）
 
-### 改动：在复用逻辑中增加 pay_type 匹配检查
+### 改动 1：容器改为可滚动布局
+- 外层 `fixed inset-0` 改为 `overflow-y-auto`，内容区从 `flex items-center justify-center` 改为 `min-h-screen py-8 px-4` 垂直 padding 布局
+- 确保所有终端（小程序 webview、微信 H5、手机浏览器、PC）均可完整滚动查看
 
-在第 171-211 行的订单复用块中，增加判断：**如果请求的 payType 与已有订单的 pay_type 不同，跳过复用，创建新订单**。
+### 改动 2：文案更新
+- "添加主教练微信，加入学员互助群" → "添加助教微信，加入学员互助群"
 
-具体改动位置在第 195 行附近：
+### 改动 3：二维码放大 + 视觉优化
+- 二维码尺寸从 `w-36 h-36` 放大至 `w-48 h-48`（192px）
+- 外框增加适当 padding（`p-3`）使其更接近主流电商下单后的二维码展示效果
 
-```text
-当前逻辑（第 195 行）：
-  if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
-    → 直接返回旧 QR 码（不管请求方是 miniprogram 还是 jsapi）
-
-修改后逻辑：
-  // 仅当请求方也是 native 时才复用 QR 码
-  // 如果请求方是 miniprogram/jsapi/h5，跳过复用，走新建订单流程
-  if (!reusedMiniProgramOrderNo && recentPending.qr_code_url) {
-    if (payType === 'native') {
-      → 返回旧 QR 码
-    }
-    // 否则：小程序/JSAPI/H5 请求 → 跳过复用，继续创建新订单
-  }
-```
-
-同时在小程序分支（第 175 行）也需兼容：当旧订单是 native（有 QR 码）而新请求是 miniprogram 时，允许用旧订单号重新调微信 API 获取 prepay_id：
-
-```text
-  if (payType === 'miniprogram') {
-    if (openId) {
-      // 不管旧订单是什么类型，用旧订单号重新获取 prepay_id
-      reusedMiniProgramOrderNo = recentPending.order_no;
-    } else {
-      // 无 openId，返回等待原生端提供
-      return { needsNativePayment: true }
-    }
-  }
-```
-
-## 流程对比
-
-```text
-修复前：
-  桌面 native 订单(有QR) → 小程序请求 → 返回 QR 码 → 小程序无法使用 → 失败
-
-修复后：
-  桌面 native 订单(有QR) → 小程序请求 → 检测 payType 不匹配
-  → 用旧订单号重新调微信 API 获取 miniprogram prepay_id → 成功
-```
+### 改动 4：底部安全区适配
+- 底部按钮区域增加 `pb-[env(safe-area-inset-bottom)]`，兼容 iPhone 底部安全区
 
 ## 不受影响
 
-- 同类型复用（native→native, jsapi→jsapi）行为不变
-- 支付金额、权益发放逻辑不变
-- 其他页面和支付入口不受影响
+- 支付逻辑、权益发放、跳转流程零改动
+- 仅调整 SuccessPanel 内的排版和文案
+- WealthSynergyPromoPage 的 SuccessPanel 不在本次范围（如需同步请确认）
 
