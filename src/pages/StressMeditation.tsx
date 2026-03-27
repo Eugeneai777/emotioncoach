@@ -43,6 +43,7 @@ export default function StressMeditation() {
   const [emotionImpact, setEmotionImpact] = useState('');
   const [isBuffering, setIsBuffering] = useState(false);
   const [isLoadingPlay, setIsLoadingPlay] = useState(false);
+  const [bufferProgress, setBufferProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { isCached, cacheAudio, getCachedAudio, isSupported: isCacheSupported, isLoading: isCaching } = useAudioCache();
@@ -250,6 +251,22 @@ export default function StressMeditation() {
       }
       if (sentCurrent.length > 0) sentParagraphs.push([sentCurrent.join('')]);
       if (sentParagraphs.length > 1) return sentParagraphs;
+
+      // Layer 3: space-delimited text (Whisper transcripts for Day 3/5/6)
+      const spaceSegments = allText.split(/\s+/).filter(s => s.trim());
+      if (spaceSegments.length > 4) {
+        const spaceParagraphs: string[][] = [];
+        let spaceCurrent: string[] = [];
+        for (const seg of spaceSegments) {
+          spaceCurrent.push(seg);
+          if (spaceCurrent.length >= 4) {
+            spaceParagraphs.push([spaceCurrent.join('，')]);
+            spaceCurrent = [];
+          }
+        }
+        if (spaceCurrent.length > 0) spaceParagraphs.push([spaceCurrent.join('，')]);
+        return spaceParagraphs;
+      }
     }
     return paragraphs;
   };
