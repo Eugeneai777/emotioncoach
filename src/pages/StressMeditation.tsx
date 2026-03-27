@@ -118,13 +118,22 @@ export default function StressMeditation() {
       setHasListened(true);
       markMeditationCompleted();
     };
+    const onWaiting = () => setIsBuffering(true);
+    const onCanPlay = () => setIsBuffering(false);
+    const onPlaying = () => setIsBuffering(false);
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
+    audio.addEventListener('waiting', onWaiting);
+    audio.addEventListener('canplay', onCanPlay);
+    audio.addEventListener('playing', onPlaying);
     return () => {
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('loadedmetadata', onMeta);
       audio.removeEventListener('ended', onEnd);
+      audio.removeEventListener('waiting', onWaiting);
+      audio.removeEventListener('canplay', onCanPlay);
+      audio.removeEventListener('playing', onPlaying);
     };
   }, [meditation, markMeditationCompleted]);
 
@@ -134,13 +143,28 @@ export default function StressMeditation() {
 
   const togglePlay = async () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || isLoadingPlay) return;
     if (isPlaying) { audio.pause(); setIsPlaying(false); return; }
+    setIsLoadingPlay(true);
     try {
       await audio.play();
       setIsPlaying(true);
-    } catch (err) {
-      toast.error('无法播放音频，请检查网络');
+    } catch {
+      // Retry: reload then play
+      try {
+        audio.load();
+        await new Promise(resolve => {
+          const handler = () => { audio.removeEventListener('canplay', handler); resolve(undefined); };
+          audio.addEventListener('canplay', handler);
+          setTimeout(() => { audio.removeEventListener('canplay', handler); resolve(undefined); }, 5000);
+        });
+        await audio.play();
+        setIsPlaying(true);
+      } catch {
+        toast.error('音频加载失败，请稍后重试');
+      }
+    } finally {
+      setIsLoadingPlay(false);
     }
   };
 
