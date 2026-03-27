@@ -51,7 +51,7 @@ type PayMethod = 'wechat' | 'alipay';
 type Stage = 'select' | 'pay';
 
 function getDefaultPayMethod(): PayMethod {
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isMobile = /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent);
   const isWechat = isWeChatBrowser();
   const isMiniProgram = isWeChatMiniProgram();
 

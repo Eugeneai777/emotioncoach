@@ -206,7 +206,7 @@ export default function WealthSynergyPromoPage() {
 
   // 环境检测：移动端非微信浏览器使用支付宝，微信环境使用微信支付
   const shouldUseAlipay = useMemo(() => {
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobile = /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent);
     const isWechat = isWeChatBrowser();
     const isMiniProgram = isWeChatMiniProgram();
     return isMobile && !isWechat && !isMiniProgram;
