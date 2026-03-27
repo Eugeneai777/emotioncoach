@@ -1079,7 +1079,6 @@ export default function SynergyPromoPage() {
         exportCardRef={shareDialog.exportCardRef}
         cardReady={shareDialog.cardReady}
         title="分享给朋友"
-        cardType="promo"
         cardName="7天有劲训练营"
       >
         <SynergyShareCard
