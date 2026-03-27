@@ -100,6 +100,8 @@ export function ShareDialogBase({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Session cache: keep generated image URL to avoid re-rendering
+  const cachedBlobUrlRef = useRef<string | null>(null);
 
   const { isWeChat, isIOS } = getShareEnvironment();
   const showImagePreview = shouldUseImagePreview();
@@ -107,7 +109,7 @@ export function ShareDialogBase({
   // Reset state when dialog opens & clean up scroll lock when it closes
   useEffect(() => {
     if (open) {
-      setPreviewUrl(null);
+      // Don't reset previewUrl — keep cached result for instant re-open
       setShowPreview(false);
       setCopied(false);
     } else {
@@ -154,17 +156,26 @@ export function ShareDialogBase({
   }, []);
 
   const handleGenerateImage = useCallback(async () => {
-    // MUST be set first — before any early return or onGenerate call
+    // Prevent concurrent generation
+    if (isGenerating) return;
+
+    // Session cache: if we already have a generated image, show it instantly
+    if (cachedBlobUrlRef.current) {
+      console.log('[ShareDialogBase] Using cached poster, instant preview');
+      onOpenChange(false);
+      setPreviewUrl(cachedBlobUrlRef.current);
+      setShowPreview(true);
+      return;
+    }
+
     setIsGenerating(true);
 
     const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     let loadingToastId: string | number | undefined;
 
-    // iOS + html2canvas path: close Dialog early to avoid overlay freeze
-    // Server-side path (onGenerate): fast enough, keep Dialog open for feedback
     if (isiOS && !onGenerate) {
       onOpenChange(false);
-      loadingToastId = toast.loading('正在生成图片...');
+      loadingToastId = toast.loading('正在生成海报（约1-2秒）');
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     }
 
@@ -184,6 +195,18 @@ export function ShareDialogBase({
         }
       }
 
+      // Helper: attempt generation with optional retry at lower scale
+      const attemptGenerate = async (): Promise<Blob | null> => {
+        const blob = await generateCardBlob(exportCardRef, { isWeChat });
+        if (blob) return blob;
+        // Auto-retry with lower scale
+        console.warn('[ShareDialogBase] First attempt failed, retrying with lower scale...');
+        if (loadingToastId) toast.dismiss(loadingToastId);
+        loadingToastId = toast.loading('正在优化清晰度后重试...');
+        const { generateCardBlob: retryGen } = await import('@/utils/shareCardConfig');
+        return retryGen(exportCardRef, { isWeChat, forceScale: 1.5 });
+      };
+
       if (useDataUrl) {
         const dataUrl = await generateCardDataUrl(exportCardRef, {
           isWeChat,
@@ -193,6 +216,7 @@ export function ShareDialogBase({
         if (dataUrl) {
           if (loadingToastId) toast.dismiss(loadingToastId);
           if (!isiOS) onOpenChange(false);
+          cachedBlobUrlRef.current = dataUrl;
           setPreviewUrl(dataUrl);
           setShowPreview(true);
         } else {
@@ -200,22 +224,25 @@ export function ShareDialogBase({
           toast.error("生成图片失败，请重试");
         }
       } else {
-        const blob = await generateCardBlob(exportCardRef, { isWeChat });
+        const blob = await attemptGenerate();
         if (!blob) {
           if (loadingToastId) toast.dismiss(loadingToastId);
           throw new Error("Failed to generate image");
         }
+
+        const showPreviewFn = (url: string) => {
+          if (!isiOS) onOpenChange(false);
+          cachedBlobUrlRef.current = url;
+          setPreviewUrl(url);
+          setShowPreview(true);
+        };
 
         if (showImagePreview) {
           if (loadingToastId) toast.dismiss(loadingToastId);
           await handleShareWithFallback(blob, fileName, {
             title: shareTitle,
             text: shareText,
-            onShowPreview: (url) => {
-              if (!isiOS) onOpenChange(false);
-              setPreviewUrl(url);
-              setShowPreview(true);
-            },
+            onShowPreview: showPreviewFn,
           });
         } else {
           if (loadingToastId) toast.dismiss(loadingToastId);
@@ -224,6 +251,7 @@ export function ShareDialogBase({
             text: shareText,
             onShowPreview: (url) => {
               onOpenChange(false);
+              cachedBlobUrlRef.current = url;
               setPreviewUrl(url);
               setShowPreview(true);
             },
@@ -246,12 +274,12 @@ export function ShareDialogBase({
       toast.error("生成图片失败，请重试");
     } finally {
       setIsGenerating(false);
-      // 强制清理 scroll-lock，防止 iOS 白屏遗留（无论成功/失败都执行）
       document.body.removeAttribute('data-scroll-locked');
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
     }
   }, [
+    isGenerating,
     onGenerate,
     exportCardRef,
     useDataUrl,
