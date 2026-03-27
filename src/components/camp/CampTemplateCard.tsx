@@ -213,17 +213,30 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
             暂未解锁
           </Button>
         ) : isPaidCamp && !hasPurchased ? (
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPurchase?.(camp);
-            }}
-            className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
-            size="sm"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            购买 ¥{formatMoney(camp.price)}
-          </Button>
+          camp.camp_type === 'emotion_stress_7' ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+              className="w-full gap-2 bg-gradient-to-r from-slate-700 to-amber-600 hover:opacity-90 text-white"
+              size="sm"
+            >
+              查看详情
+            </Button>
+          ) : (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPurchase?.(camp);
+              }}
+              className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
+              size="sm"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              购买 ¥{formatMoney(camp.price)}
+            </Button>
+          )
         ) : (
           <Button
             onClick={(e) => {
