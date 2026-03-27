@@ -50,6 +50,7 @@ const CampList = () => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
+  const { data: stressCampPurchase } = useCampPurchase('emotion_stress_7');
   const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -393,6 +394,12 @@ const CampList = () => {
                   onClick={() => {
                     if (camp.camp_type === 'parent_emotion_21') {
                       navigate('/parent-camp');
+                    } else if (camp.camp_type === 'emotion_stress_7') {
+                      if (stressCampPurchase) {
+                        navigate('/camp-checkin');
+                      } else {
+                        navigate('/promo/synergy');
+                      }
                     } else {
                       navigate(`/camp-template/${camp.id}`);
                     }
