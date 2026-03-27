@@ -15,8 +15,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
+import coachDaixi from "@/assets/coach-daixi.jpg";
+import coachXiaoyi from "@/assets/coach-xiaoyi.png";
+import coachAmy from "@/assets/coach-amy.jpg";
+import coachMumian from "@/assets/coach-mumian.jpg";
+import coachXiaojianxiong from "@/assets/coach-xiaojianxiong.jpg";
+import coachBetty from "@/assets/coach-betty.jpg";
 import { ShareDialogBase } from "@/components/ui/share-dialog-base";
 import { useShareDialog } from "@/hooks/useShareDialog";
 
@@ -68,7 +75,7 @@ const painPoints = [
 const coreHighlights = [
   { icon: MessageCircle, title: "AI情绪教练", subtitle: "24小时个性化陪伴", desc: "专业冥想音频 + 自动捕捉情绪 + 引导式对话 + 个人成长简报", gradient: "from-violet-500/20 to-violet-900/20", border: "border-violet-500/30", textColor: "text-violet-300" },
   { icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长中年男性情绪与关系问题", gradient: "from-amber-500/20 to-amber-900/20", border: "border-amber-500/30", textColor: "text-amber-300" },
-  { icon: Clock, title: "轻量打卡", subtitle: "每日10-15分钟", desc: "碎片时间即可完成，清晰打卡日历，系统自动推荐匹配个人状态的专属课程", gradient: "from-emerald-500/20 to-emerald-900/20", border: "border-emerald-500/30", textColor: "text-emerald-300" },
+  { icon: Clock, title: "轻量打卡", subtitle: "每日15-25分钟", desc: "碎片时间即可完成，清晰打卡日历，系统自动推荐匹配个人状态的专属课程", gradient: "from-emerald-500/20 to-emerald-900/20", border: "border-emerald-500/30", textColor: "text-emerald-300" },
   { icon: Users, title: "同频男性社区", subtitle: "安全不尴尬", desc: "专属男性成长社区，无评判放心倾诉，智能推荐同频用户，告别孤独", gradient: "from-blue-500/20 to-blue-900/20", border: "border-blue-500/30", textColor: "text-blue-300" },
   { icon: Leaf, title: "知乐胶囊", subtitle: "草本调理根源", desc: "香港HKC-18181认证，16味草本，不含褪黑素/激素，无依赖，补心补肝益气安神", gradient: "from-cyan-500/20 to-cyan-900/20", border: "border-cyan-500/30", textColor: "text-cyan-300" },
   { icon: Sparkles, title: "体系化闭环", subtitle: "从知道到做到", desc: "冥想→情绪觉察→AI对话→课程学习→社区分享→草本调理→成长报告", gradient: "from-rose-500/20 to-rose-900/20", border: "border-rose-500/30", textColor: "text-rose-300" },
@@ -76,7 +83,7 @@ const coreHighlights = [
 
 /* ========== Daily Loop (PDF §5) ========== */
 const dailyLoop = [
-  { step: 1, icon: Sun, title: "冥想放松", desc: "专业导师录制，3-8分钟轻冥想，快速缓解身体紧绷、平复焦虑情绪", color: "#a78bfa" },
+  { step: 1, icon: Sun, title: "冥想放松", desc: "专业导师录制，10-17分钟专业冥想引导，深度缓解身体紧绷、平复焦虑情绪", color: "#a78bfa" },
   { step: 2, icon: MessageCircle, title: "AI情绪教练对话", desc: "引导记录想法、识别情绪、拆解压力，给出个性化调节建议", color: "#60a5fa" },
   { step: 3, icon: BookOpen, title: "每日反思", desc: "简单书写沉淀当天收获，强化改变，形成长期成长习惯", color: "#34d399" },
   { step: 4, icon: Sparkles, title: "智能课程推荐", desc: "根据当天状态自动推送情绪管理、夫妻沟通、亲子教育等实用课程", color: "#fbbf24" },
@@ -95,13 +102,29 @@ const outcomes = [
   { icon: "🌿", title: "根源身体调理", desc: "知乐胶囊草本配方，补心补肝，调理情绪与睡眠根源" },
 ];
 
-/* ========== Faculty (PDF §7) ========== */
-const faculty = [
-  { role: "总教练团队", desc: "资深生命教练、心理咨询师、督导师，10年+行业经验，统筹训练营方向与质量", icon: "🎓" },
-  { role: "导师/教练团队", desc: "涵盖领导力教练、心理咨询师、身心疗愈师、家庭教育指导师等多元背景", icon: "🧑‍🏫" },
+/* ========== Faculty — Lead Coach ========== */
+const leadCoach = {
+  name: "黛汐",
+  role: "总教练",
+  image: coachDaixi,
+  certifications: ["国际脑点执行师(BSP)", "生命教练", "10年+行业经验"],
+  motto: "用生命影响生命",
+  desc: "统筹训练营方向与质量，擅长深层情绪疏导与生命蜕变引导",
+};
+
+/* ========== Faculty — Coach Team ========== */
+const coachTeam = [
+  { name: "晓一", role: "主教练", tag: "领导力教练", image: coachXiaoyi, desc: "擅长职场压力管理与领导力提升" },
+  { name: "肖剑雄", role: "教练", tag: "心理教练", image: coachXiaojianxiong, desc: "擅长婚姻关系、职业焦虑、生命成长" },
+  { name: "Amy", role: "教练", tag: "心理咨询师", image: coachAmy, desc: "擅长情绪调节与心理健康支持" },
+  { name: "木棉", role: "教练", tag: "身心疗愈师", image: coachMumian, desc: "擅长身心整合与深度放松引导" },
+  { name: "贝蒂", role: "教练", tag: "心理咨询师 · 天赋测评师", image: coachBetty, desc: "擅长个人生命重建、亲密关系" },
+];
+
+/* ========== Faculty — Support Roles ========== */
+const supportRoles = [
   { role: "AI情绪教练系统", desc: "24小时在线，个性化引导，自动生成成长报告", icon: "🤖" },
-  { role: "知乐胶囊专业支持", desc: "产品资质、服用指导、品质保障，确保用户安全使用", icon: "💊" },
-  { role: "运营陪伴团队", desc: "打卡提醒、社区维护、全程支持，确保学习体验", icon: "📋" },
+  { role: "知乐胶囊专业支持", desc: "产品资质、服用指导、品质保障", icon: "💊" },
 ];
 
 /* ========== Testimonials ========== */
@@ -705,7 +728,7 @@ export default function SynergyPromoPage() {
       {/* ===== DAILY LOOP (replaces 24h timeline) ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">每日闭环流程</h2>
-        <p className="text-slate-400 text-sm text-center mb-8">每天10-15分钟，碎片时间即可完成</p>
+        <p className="text-slate-400 text-sm text-center mb-8">每天15-25分钟，碎片时间即可完成</p>
         <div className="max-w-lg mx-auto relative">
           {/* Vertical connector */}
           <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-violet-500/40 via-blue-500/40 via-emerald-500/40 via-amber-500/40 to-cyan-500/40" />
@@ -763,27 +786,87 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== FACULTY (PDF §7) ===== */}
+      {/* ===== FACULTY — Real Coach Photos ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">师资与支持力量</h2>
         <p className="text-slate-400 text-sm text-center mb-8">多元背景专家团队，全程陪伴</p>
-        <div className="max-w-lg mx-auto space-y-3">
-          {faculty.map((f, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -15 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/50 border border-slate-700/40"
-            >
-              <span className="text-2xl shrink-0">{f.icon}</span>
-              <div>
-                <h4 className="text-sm font-bold text-slate-200">{f.role}</h4>
-                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{f.desc}</p>
+        <div className="max-w-lg mx-auto space-y-5">
+          {/* Lead Coach — featured card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="p-5 rounded-2xl bg-gradient-to-br from-amber-900/30 to-slate-800/60 border border-amber-500/30"
+          >
+            <div className="flex items-center gap-4">
+              <img
+                src={leadCoach.image}
+                alt={leadCoach.name}
+                className="w-20 h-20 rounded-full object-cover border-2 border-amber-400/50 shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-lg font-bold text-amber-200">{leadCoach.name}</h4>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">{leadCoach.role}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {leadCoach.certifications.map((c, i) => (
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-300">{c}</span>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">{leadCoach.desc}</p>
+                <p className="text-[10px] text-amber-400/70 mt-1 italic">「{leadCoach.motto}」</p>
               </div>
-            </motion.div>
-          ))}
+            </div>
+          </motion.div>
+
+          {/* Coach Team — grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {coachTeam.map((c, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/40"
+              >
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  className="w-14 h-14 rounded-full object-cover border border-slate-600/50 shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <h4 className="text-sm font-bold text-slate-200">{c.name}</h4>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-400">{c.role}</span>
+                  </div>
+                  <p className="text-[10px] text-amber-300/80 mb-0.5">{c.tag}</p>
+                  <p className="text-[10px] text-slate-400 leading-relaxed truncate">{c.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Support roles — compact */}
+          <div className="grid grid-cols-2 gap-3">
+            {supportRoles.map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-start gap-2 p-3 rounded-xl bg-slate-800/40 border border-slate-700/30"
+              >
+                <span className="text-xl shrink-0">{s.icon}</span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-300">{s.role}</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{s.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </Section>
 
@@ -794,7 +877,7 @@ export default function SynergyPromoPage() {
         <div className="max-w-lg mx-auto space-y-4">
           {/* Product Image */}
           <div className="rounded-2xl overflow-hidden border border-cyan-500/20">
-            <img src={zhileCapsules} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
+            <img src={zhileProductNew} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
           </div>
 
           {/* Specs grid */}
