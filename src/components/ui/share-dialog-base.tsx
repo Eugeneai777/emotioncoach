@@ -320,46 +320,35 @@ export function ShareDialogBase({
 
           {/* Action Buttons */}
           <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <Button
-                onClick={handleGenerateImage}
-                disabled={isGenerating || !cardReady}
-                className={`flex-1 h-11 ${buttonGradient}`}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    生成中...
-                  </>
-                ) : showImagePreview ? (
-                  <>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    生成分享图片
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 mr-2" />
-                    保存分享卡片
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
+            <Button
+              onClick={handleGenerateImage}
+              disabled={isGenerating || !cardReady}
+              className={`w-full h-12 text-base font-medium ${buttonGradient}`}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  正在生成海报...
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  生成海报
+                </>
+              )}
+            </Button>
+            <div className="flex items-center justify-center gap-1 mt-2">
+              {footerHint && (
+                <span className="text-[10px] text-muted-foreground">{footerHint}</span>
+              )}
+              {footerHint && <span className="text-[10px] text-muted-foreground">·</span>}
+              <button
                 onClick={handleCopyLink}
-                className="h-11 px-4"
+                className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
               >
-                {copied ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </Button>
+                {copied ? "已复制 ✓" : "复制链接"}
+              </button>
             </div>
-            {footerHint && (
-              <p className="text-[10px] text-muted-foreground text-center mt-2">
-                {footerHint}
-              </p>
-            )}
           </div>
         </DialogContent>
       </Dialog>
