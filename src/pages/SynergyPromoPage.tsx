@@ -114,11 +114,46 @@ const leadCoach = {
 
 /* ========== Faculty — Coach Team ========== */
 const coachTeam = [
-  { name: "晓一", role: "主教练", tag: "领导力教练", image: coachXiaoyi, specialty: "职场压力管理与领导力提升" },
-  { name: "肖剑雄", role: "教练", tag: "心理教练", image: coachXiaojianxiong, specialty: "婚姻关系、职业焦虑、生命成长", motto: "倾听、陪伴、觉察，升维" },
-  { name: "Amy", role: "教练", tag: "心理咨询师", image: coachAmy, specialty: "情绪调节与心理健康支持" },
-  { name: "木棉", role: "教练", tag: "身心疗愈师", image: coachMumian, specialty: "身心整合与深度放松引导" },
-  { name: "贝蒂", role: "教练", tag: "心理咨询师 · 天赋测评师", image: coachBetty, specialty: "个人生命重建、亲密关系", motto: "陪伴你，看见自己的美好" },
+  {
+    name: "晓一", role: "教练",
+    title: "绽放者联盟生命教练",
+    certifications: ["特教音乐疗愈师", "青少年足球教练", "德国TJ发型设计深圳总监"],
+    specialties: ["婚姻家庭", "个人成长", "情绪管理", "人际沟通"],
+    motto: "人不是被教导的，而是被启示的",
+    image: coachXiaoyi,
+  },
+  {
+    name: "肖剑雄", role: "教练",
+    title: "绽放者联盟发展运营合伙人",
+    certifications: ["心理教练"],
+    specialties: ["婚姻关系", "亲子关系", "职业焦虑", "生命成长"],
+    motto: "倾听、陪伴、觉察，升维",
+    image: coachXiaojianxiong,
+  },
+  {
+    name: "Amy", role: "教练",
+    title: "绽放联盟教练 · 中国社科院经济学研究生",
+    certifications: ["生命绽放教练", "心理咨询师", "家庭教育指导师"],
+    specialties: ["情感困惑", "亲子关系", "身心疗愈"],
+    motto: "全情陪伴，滋养生命",
+    image: coachAmy,
+  },
+  {
+    name: "木棉", role: "教练",
+    title: "企业人力资源管理顾问",
+    certifications: ["心理咨询师", "格森自然疗法教练", "补水自然疗法教练", "芳香治疗师"],
+    specialties: ["身心互动整体疗愈", "身心灵排毒", "细胞激活"],
+    motto: "流水不争先，争的是滔滔不绝",
+    image: coachMumian,
+  },
+  {
+    name: "贝蒂", role: "教练",
+    title: "绽放者联盟教练",
+    certifications: ["国家二级教师", "心理咨询师", "天赋测评&分析师"],
+    specialties: ["个人生命重建", "亲密关系", "亲子关系"],
+    motto: "陪伴你，看见自己的美好",
+    image: coachBetty,
+  },
 ];
 
 /* ========== Faculty — Support Roles ========== */
@@ -770,29 +805,33 @@ export default function SynergyPromoPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="p-6 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 shadow-sm text-center"
+            className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 shadow-sm"
           >
-            <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-3 border-amber-400/50 shadow-lg mb-4">
-              <img
-                src={leadCoach.image}
-                alt={leadCoach.name}
-                className="w-full h-full object-cover"
-                style={{ objectPosition: 'center 20%' }}
-              />
+            <div className="flex items-start gap-4">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-full overflow-hidden border-3 border-amber-400/50 shadow-lg">
+                <img src={leadCoach.image} alt={leadCoach.name} className="w-full h-full object-cover" style={{ objectPosition: 'center 20%' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-lg sm:text-xl font-bold text-slate-800">{leadCoach.name}</h4>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 border border-amber-300/50 font-medium">{leadCoach.role}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mb-2">绽放者联盟创始人&总教练</p>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {leadCoach.certifications.map((c, i) => (
+                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200/60">{c}</span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed mb-1.5">
+                  <span className="text-amber-700 font-medium">擅长：</span>{leadCoach.desc.replace('擅长', '')}
+                </p>
+                <p className="text-[11px] text-amber-600/80 italic">「{leadCoach.motto}」</p>
+              </div>
             </div>
-            <h4 className="text-xl font-bold text-slate-800 mb-1">{leadCoach.name}</h4>
-            <span className="inline-block text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 border border-amber-300/50 font-medium mb-3">{leadCoach.role}</span>
-            <div className="flex flex-wrap justify-center gap-1.5 mb-3">
-              {leadCoach.certifications.map((c, i) => (
-                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200/60">{c}</span>
-              ))}
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed mb-2">{leadCoach.desc}</p>
-            <p className="text-xs text-amber-600/80 italic">「{leadCoach.motto}」</p>
           </motion.div>
 
-          {/* Coach Team — poster grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {/* Coach Team — single column full cards */}
+          <div className="space-y-3">
             {coachTeam.map((c, i) => (
               <motion.div
                 key={i}
@@ -800,22 +839,31 @@ export default function SynergyPromoPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="p-4 rounded-xl bg-white shadow-sm border border-amber-100/50 text-center"
+                className="p-4 rounded-xl bg-white shadow-sm border border-amber-100/50"
               >
-                <div className="w-16 h-16 mx-auto rounded-full overflow-hidden border-2 border-amber-200/50 shadow-sm mb-3">
-                  <img
-                    src={c.image}
-                    alt={c.name}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full overflow-hidden border-2 border-amber-200/50 shadow-sm">
+                    <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h4 className="text-sm font-bold text-slate-800">{c.name}</h4>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/50 font-medium">{c.role}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mb-1.5">{c.title}</p>
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      {c.certifications.map((cert, ci) => (
+                        <span key={ci} className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200/60">{cert}</span>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      {c.specialties.map((s, si) => (
+                        <span key={si} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/40">{s}</span>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-amber-600/80 italic">「{c.motto}」</p>
+                  </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-800 mb-0.5">{c.name}</h4>
-                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/50 mb-2">{c.role}</span>
-                <p className="text-[10px] text-orange-600/80 font-medium mb-1">{c.tag}</p>
-                <p className="text-[10px] text-slate-500 leading-relaxed">{c.specialty}</p>
-                {c.motto && (
-                  <p className="text-[9px] text-amber-600/60 italic mt-1">「{c.motto}」</p>
-                )}
               </motion.div>
             ))}
           </div>
