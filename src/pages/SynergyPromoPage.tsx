@@ -224,6 +224,7 @@ export default function SynergyPromoPage() {
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [purchaseChecked, setPurchaseChecked] = useState(false);
+  const shareDialog = useShareDialog();
 
   // 🆕 payment_resume: 微信 OAuth 重定向回跳后恢复支付弹窗（参考产品中心逻辑）
   const paymentResumeHandledRef = useRef(false);
@@ -962,6 +963,14 @@ export default function SynergyPromoPage() {
               <p className="text-xs text-slate-600 mt-3">支持微信支付 · 支付宝</p>
             </>
           )}
+          {/* 分享按钮 */}
+          <button
+            onClick={shareDialog.openDialog}
+            className="mt-4 inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <Share2 className="w-4 h-4" />
+            分享给朋友
+          </button>
         </div>
       </section>
 
