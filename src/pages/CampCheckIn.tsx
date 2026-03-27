@@ -24,6 +24,34 @@ import { zhCN } from "date-fns/locale";
 import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceStart } from "@/utils/dateUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
+import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+
+// 企微助教引导卡片
+const WeComGuideCard = () => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <div className="flex items-center gap-3 p-3.5 rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 cursor-pointer hover:shadow-sm transition-shadow">
+          <span className="text-2xl">👨‍🏫</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">添加助教，获得 1v1 指导</p>
+            <p className="text-xs text-muted-foreground mt-0.5">加入学员群，参加线上冥想直播</p>
+          </div>
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-2 p-4 rounded-xl bg-white dark:bg-card border border-border flex flex-col items-center gap-3">
+          <img src={wecomCoachQr} alt="助教企微二维码" className="w-48 h-48 rounded-lg object-contain" />
+          <p className="text-xs text-muted-foreground text-center">长按识别二维码添加助教</p>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
 
 
 
@@ -737,6 +765,11 @@ const CampCheckIn = () => {
                           </>
                         );
                       })()}
+
+                      {/* 企微助教引导卡片 - Day 1/3/5/7 显示 */}
+                      {hasMeditation && [1, 3, 5, 7].includes(displayCurrentDay || 0) && (
+                        <WeComGuideCard />
+                      )}
                     </div>
                   </>
                 );

@@ -218,29 +218,38 @@ export function LaogeToolCard({ tool, title, description, icon, rounds }: LaogeT
         )}
 
         {/* Conversion card after final round */}
-        {allDone && (
-          <div className="mt-4 p-4 rounded-xl border border-[hsl(var(--laoge-accent)/0.3)] bg-gradient-to-br from-[hsl(var(--laoge-accent)/0.08)] to-[hsl(var(--laoge-accent)/0.02)]">
-            <p className="text-sm font-bold text-[hsl(var(--laoge-text))]">
-              🔥 想要系统的突围方案？
-            </p>
-            <p className="text-xs text-[hsl(var(--laoge-text-muted))] mt-1">
-              老哥为你设计了一套完整的职场突围训练营
-            </p>
-            <button
-              onClick={() => navigate("/promo/synergy?source=laoge")}
-              className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[hsl(var(--laoge-accent))] text-white text-sm font-bold hover:opacity-90 transition-opacity"
-            >
-              了解详情
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleClose}
-              className="mt-2 w-full py-2 text-xs text-[hsl(var(--laoge-text-muted))] hover:text-[hsl(var(--laoge-text))] transition-colors"
-            >
-              再问老哥一次
-            </button>
-          </div>
-        )}
+        {allDone && (() => {
+          const conversionCopy: Record<string, { title: string; desc: string }> = {
+            money:   { title: '🔥 想要突破收入瓶颈？', desc: '7天有劲训练营帮你重建赚钱的内在动力' },
+            career:  { title: '🔥 想要找回事业方向？', desc: '7天有劲训练营帮你破解职场内耗' },
+            stress:  { title: '🔥 想要系统减压？', desc: '7天有劲训练营帮你从根源化解压力' },
+            health:  { title: '🔥 想要恢复身心活力？', desc: '7天有劲训练营帮你重启身体能量' },
+          };
+          const copy = conversionCopy[tool] || conversionCopy.stress;
+          return (
+            <div className="mt-4 p-4 rounded-xl border border-[hsl(var(--laoge-accent)/0.3)] bg-gradient-to-br from-[hsl(var(--laoge-accent)/0.08)] to-[hsl(var(--laoge-accent)/0.02)]">
+              <p className="text-sm font-bold text-[hsl(var(--laoge-text))]">
+                {copy.title}
+              </p>
+              <p className="text-xs text-[hsl(var(--laoge-text-muted))] mt-1">
+                {copy.desc}
+              </p>
+              <button
+                onClick={() => navigate("/promo/synergy?source=laoge")}
+                className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[hsl(var(--laoge-accent))] text-white text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                了解详情
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleClose}
+                className="mt-2 w-full py-2 text-xs text-[hsl(var(--laoge-text-muted))] hover:text-[hsl(var(--laoge-text))] transition-colors"
+              >
+                再问老哥一次
+              </button>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

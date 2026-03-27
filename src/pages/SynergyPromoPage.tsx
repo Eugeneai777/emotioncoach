@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
@@ -16,6 +16,9 @@ import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+import SynergyShareCard from "@/components/promo/SynergyShareCard";
+import { ShareDialogBase } from "@/components/ui/share-dialog-base";
+import { useShareDialog } from "@/hooks/useShareDialog";
 
 /* ========== Floating particles ========== */
 function Particles() {
@@ -221,6 +224,7 @@ export default function SynergyPromoPage() {
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [purchaseChecked, setPurchaseChecked] = useState(false);
+  const shareDialog = useShareDialog();
 
   // 🆕 payment_resume: 微信 OAuth 重定向回跳后恢复支付弹窗（参考产品中心逻辑）
   const paymentResumeHandledRef = useRef(false);
@@ -959,6 +963,14 @@ export default function SynergyPromoPage() {
               <p className="text-xs text-slate-600 mt-3">支持微信支付 · 支付宝</p>
             </>
           )}
+          {/* 分享按钮 */}
+          <button
+            onClick={shareDialog.openDialog}
+            className="mt-4 inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <Share2 className="w-4 h-4" />
+            分享给朋友
+          </button>
         </div>
       </section>
 
@@ -1058,6 +1070,30 @@ export default function SynergyPromoPage() {
           idCardName: checkoutInfo.idCardName,
           idCardNumber: checkoutInfo.idCardNumber,
         } : undefined}
+      />
+
+      {/* 分享海报弹窗 */}
+      <ShareDialogBase
+        open={shareDialog.isOpen}
+        onOpenChange={shareDialog.setIsOpen}
+        exportCardRef={shareDialog.exportCardRef}
+        cardReady={shareDialog.cardReady}
+        title="分享给朋友"
+        shareUrl={`${window.location.origin}/promo/synergy`}
+        fileName="7天有劲训练营"
+        shareTitle="7天有劲训练营"
+        shareText="专为35-55岁中年男性设计的身心解压方案"
+        previewCard={
+          <div className="transform scale-[0.6] origin-top-left">
+            <SynergyShareCard onReady={shareDialog.handleCardReady} />
+          </div>
+        }
+        exportCard={
+          <SynergyShareCard
+            ref={shareDialog.exportCardRef}
+            onReady={shareDialog.handleCardReady}
+          />
+        }
       />
     </div>
   );
