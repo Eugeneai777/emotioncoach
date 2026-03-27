@@ -56,7 +56,7 @@ const Auth = () => {
   const defaultLogin = searchParams.get('default_login') === 'true';
   const isRegisterMode = searchParams.get('register') === 'true';
   const [isLogin, setIsLogin] = useState(isPhoneOnly || isRegisterMode ? false : true);
-  const [authMode, setAuthMode] = useState<'phone' | 'email'>('phone');
+  const [authMode, setAuthMode] = useState<'phone' | 'email' | 'sms'>('sms');
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+86");
   const [email, setEmail] = useState("");
@@ -67,8 +67,78 @@ const Auth = () => {
   const { isAgreed: agreedTerms, setAgreed: setAgreedTerms } = useTermsAgreement();
   const [showFollowGuide, setShowFollowGuide] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
+  // SMS验证码相关状态
+  const [smsCode, setSmsCode] = useState("");
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsCountdown, setSmsCountdown] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // 短信倒计时
+  useEffect(() => {
+    if (smsCountdown <= 0) return;
+    const timer = setTimeout(() => setSmsCountdown(smsCountdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [smsCountdown]);
+
+  // 发送短信验证码
+  const handleSendSmsCode = async () => {
+    if (!phone || !/^\d{11}$/.test(phone)) {
+      toast({ title: "请输入有效的11位手机号", variant: "destructive" });
+      return;
+    }
+    if (countryCode !== '+86') {
+      toast({ title: "短信验证码仅支持中国大陆手机号", variant: "destructive" });
+      return;
+    }
+    setSmsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-sms-code', {
+        body: { phone, countryCode },
+      });
+      if (error) throw new Error(error.message || '发送失败');
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "验证码已发送", description: "请查看手机短信" });
+      setSmsCountdown(60);
+    } catch (err: any) {
+      toast({ title: "发送失败", description: err.message, variant: "destructive" });
+    } finally {
+      setSmsSending(false);
+    }
+  };
+
+  // 短信验证码登录
+  const handleSmsLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone || !smsCode) {
+      toast({ title: "请输入手机号和验证码", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-sms-login', {
+        body: { phone, code: smsCode, countryCode },
+      });
+      if (error) throw new Error(error.message || '验证失败');
+      if (data?.error) throw new Error(data.error);
+      if (!data?.session) throw new Error('登录失败，未获取到会话');
+
+      // 设置 session
+      await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+
+      toast({
+        title: data.isNewUser ? "注册成功" : "登录成功",
+        description: data.isNewUser ? "欢迎来到有劲AI 🌿" : "欢迎回来 🌿",
+      });
+    } catch (err: any) {
+      toast({ title: "验证失败", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 🔒 SECURITY: Validate redirect URLs to prevent open redirect attacks
   const isValidRedirect = (url: string): boolean => {
