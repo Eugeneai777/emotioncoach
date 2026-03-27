@@ -1071,6 +1071,22 @@ export default function SynergyPromoPage() {
           idCardNumber: checkoutInfo.idCardNumber,
         } : undefined}
       />
+
+      {/* 分享海报弹窗 */}
+      <ShareDialogBase
+        open={shareDialog.isOpen}
+        onOpenChange={shareDialog.setIsOpen}
+        exportCardRef={shareDialog.exportCardRef}
+        cardReady={shareDialog.cardReady}
+        title="分享给朋友"
+        cardType="promo"
+        cardName="7天有劲训练营"
+      >
+        <SynergyShareCard
+          ref={shareDialog.exportCardRef}
+          onReady={shareDialog.handleCardReady}
+        />
+      </ShareDialogBase>
     </div>
   );
 }
