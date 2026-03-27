@@ -1079,13 +1079,22 @@ export default function SynergyPromoPage() {
         exportCardRef={shareDialog.exportCardRef}
         cardReady={shareDialog.cardReady}
         title="分享给朋友"
-        cardName="7天有劲训练营"
-      >
-        <SynergyShareCard
-          ref={shareDialog.exportCardRef}
-          onReady={shareDialog.handleCardReady}
-        />
-      </ShareDialogBase>
+        shareUrl={`${window.location.origin}/promo/synergy`}
+        fileName="7天有劲训练营"
+        shareTitle="7天有劲训练营"
+        shareText="专为35-55岁中年男性设计的身心解压方案"
+        previewCard={
+          <div className="transform scale-[0.6] origin-top-left">
+            <SynergyShareCard onReady={shareDialog.handleCardReady} />
+          </div>
+        }
+        exportCard={
+          <SynergyShareCard
+            ref={shareDialog.exportCardRef}
+            onReady={shareDialog.handleCardReady}
+          />
+        }
+      />
     </div>
   );
 }
