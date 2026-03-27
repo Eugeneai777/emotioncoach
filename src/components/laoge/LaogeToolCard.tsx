@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronRight, X, ArrowRight } from "lucide-react";
+import { ChevronRight, X, ArrowRight, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LaogeChat } from "./LaogeChat";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
 import type { RoundConfig } from "@/pages/LaogeAI";
 
 interface FieldConfig {
@@ -27,6 +28,7 @@ interface LaogeToolCardProps {
 
 export function LaogeToolCard({ tool, title, description, icon, rounds }: LaogeToolCardProps) {
   const navigate = useNavigate();
+  const { data: purchaseData } = useCampPurchase('emotion_stress_7');
   const [expanded, setExpanded] = useState(false);
   const [currentRound, setCurrentRound] = useState(0);
   const [roundHistory, setRoundHistory] = useState<RoundHistoryEntry[]>([]);
@@ -219,6 +221,33 @@ export function LaogeToolCard({ tool, title, description, icon, rounds }: LaogeT
 
         {/* Conversion card after final round */}
         {allDone && (() => {
+          // 已购买用户：显示"继续训练"
+          if (purchaseData) {
+            return (
+              <div className="mt-4 p-4 rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-green-500/5">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <p className="text-sm font-bold text-[hsl(var(--laoge-text))]">✅ 已加入7天有劲训练营</p>
+                </div>
+                <p className="text-xs text-[hsl(var(--laoge-text-muted))] mb-3">继续完成今日训练，保持你的成长节奏</p>
+                <button
+                  onClick={() => navigate("/camp-checkin")}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold hover:opacity-90 transition-opacity"
+                >
+                  继续训练
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="mt-2 w-full py-2 text-xs text-[hsl(var(--laoge-text-muted))] hover:text-[hsl(var(--laoge-text))] transition-colors"
+                >
+                  再问老哥一次
+                </button>
+              </div>
+            );
+          }
+
+          // 未购买 / 游客：展示转化卡片
           const conversionCopy: Record<string, { title: string; desc: string }> = {
             money:   { title: '🔥 想要突破收入瓶颈？', desc: '7天有劲训练营帮你重建赚钱的内在动力' },
             career:  { title: '🔥 想要找回事业方向？', desc: '7天有劲训练营帮你破解职场内耗' },
