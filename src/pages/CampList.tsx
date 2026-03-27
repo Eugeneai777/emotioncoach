@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { BookOpen, HeartHandshake, Target, Sparkles } from "lucide-react";
 
 const campCategories = [

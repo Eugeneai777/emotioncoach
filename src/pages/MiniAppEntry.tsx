@@ -178,10 +178,10 @@ const promoSlides = [
   {
     id: "women-camp",
     emoji: "🌸",
-    title: "7天情绪解压",
-    subtitle: "找回内心平静",
-    tag: "女性专属",
-    gradient: "from-rose-500 to-pink-400",
+    title: "7天有劲训练营",
+    subtitle: "找回你的劲头",
+    tag: "热门推荐",
+    gradient: "from-slate-700 to-amber-600",
     route: "/promo/synergy",
   },
   {
