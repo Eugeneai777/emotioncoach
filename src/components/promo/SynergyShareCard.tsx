@@ -39,7 +39,7 @@ const SynergyShareCard = forwardRef<HTMLDivElement, SynergyShareCardProps>(
               fontSize: 11,
               marginBottom: 16,
             }}>
-              🛡️ 专为35-55岁中年男性设计
+              🛡️ 专为高压人群设计的身心方案
             </div>
 
             {/* Title */}
