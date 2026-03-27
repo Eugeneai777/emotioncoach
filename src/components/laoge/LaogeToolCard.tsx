@@ -28,6 +28,7 @@ interface LaogeToolCardProps {
 
 export function LaogeToolCard({ tool, title, description, icon, rounds }: LaogeToolCardProps) {
   const navigate = useNavigate();
+  const { data: purchaseData } = useCampPurchase('emotion_stress_7');
   const [expanded, setExpanded] = useState(false);
   const [currentRound, setCurrentRound] = useState(0);
   const [roundHistory, setRoundHistory] = useState<RoundHistoryEntry[]>([]);
