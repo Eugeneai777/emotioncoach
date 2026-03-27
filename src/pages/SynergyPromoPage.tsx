@@ -107,9 +107,9 @@ const leadCoach = {
   name: "黛汐",
   role: "总教练",
   image: coachDaixi,
-  certifications: ["国际脑点执行师(BSP)", "生命教练", "10年+行业经验"],
-  motto: "用生命影响生命",
-  desc: "统筹训练营方向与质量，擅长深层情绪疏导与生命蜕变引导",
+  certifications: ["生命教练", "认证国际脑点执行师", "PNCC心流教练", "高级心理咨询师"],
+  motto: "你不仅仅是你以为的样子",
+  desc: "擅长创伤修复、人格整合、潜能激发",
 };
 
 /* ========== Faculty — Coach Team ========== */
