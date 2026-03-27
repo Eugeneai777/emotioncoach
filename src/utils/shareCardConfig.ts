@@ -37,18 +37,12 @@ const isIOSDevice = (): boolean => {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 };
 
-/** 获取最优分辨率倍数 */
+/** 获取最优分辨率倍数 - 优先速度 */
 const getOptimalScale = (): number => {
-  // iOS Safari 对 canvas 尺寸有严格限制（某些 WebView 低至 4-8MP），统一用 2x
-  if (isIOSDevice()) {
-    return 2;
-  }
-  if (isWeChatBrowser()) {
-    // 微信环境：低端设备用 2x，否则 2.5x
-    return isLowEndDevice() ? 2 : 2.5;
-  }
-  // 标准浏览器（桌面端）：降低倍数提升渲染速度
-  return isLowEndDevice() ? 2.5 : 3;
+  if (isIOSDevice()) return 2;
+  if (isWeChatBrowser()) return isLowEndDevice() ? 1.5 : 2;
+  // 桌面端
+  return isLowEndDevice() ? 2 : 2.5;
 };
 
 // ============= 常量配置 =============

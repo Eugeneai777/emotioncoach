@@ -11,7 +11,7 @@ export function useShareDialog() {
 
   const openDialog = useCallback(() => {
     setIsOpen(true);
-    setCardReady(false);
+    // Don't reset cardReady here — preserve state for second-time opens
   }, []);
 
   const closeDialog = useCallback(() => {
