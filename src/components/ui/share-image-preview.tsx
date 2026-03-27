@@ -63,16 +63,22 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const handleDownload = useCallback(async () => {
     if (!imageUrl) return;
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      let downloadUrl = imageUrl;
+      // If it's not a blob URL, fetch and create one for reliable download
+      if (!imageUrl.startsWith('blob:')) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        downloadUrl = URL.createObjectURL(blob);
+      }
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       link.download = `share-card-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      if (downloadUrl !== imageUrl) {
+        URL.revokeObjectURL(downloadUrl);
+      }
       setImageSaved(true);
       toast.success('图片已保存');
     } catch (error) {
