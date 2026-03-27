@@ -1,56 +1,29 @@
 
 
-# 彻底清除 18898593978 的【7天有劲训练营】权益并可重测
+# 修订：Day 2-7 冥想标题统一评估
 
-## 当前数据状况
+## 问题
 
-| 表 | 数据 | 说明 |
+1. Day 3「深度放松的睡眠冥想」缺少"练习"后缀，与其他 Day 不一致
+2. Day 4-7 标题均含"冥想练习"四字，而课程本身就叫"冥想课程"，语义重复
+
+## 设计原则
+
+Day 1「身心放松的呼吸练习」的核心结构是：**「效果/感受」+「练习方式」**。"练习方式"不一定都是"冥想练习"，可以根据内容特点用不同的词（呼吸练习、放松练习、冥想练习、引导练习），避免千篇一律。
+
+## 修订方案
+
+| Day | 标题 | 说明 |
 |---|---|---|
-| `training_camps` | 1 条 `emotion_stress_7` (ID: `75796d74`), status=active | 小程序"学习"能进入的原因 |
-| `user_camp_purchases` | 仅 `emotion_journal_21` 1 条 | 无 `emotion_stress_7` 购买记录（上次已删） |
-| `orders` | 2 笔 `synergy_bundle` status=paid | 系统自愈逻辑会根据 paid 订单自动补写 purchase 记录 |
+| 1 | 身心放松的呼吸练习 | 不变 |
+| 2 | 身体放松与能量流动练习 | 不变，内容侧重体感练习 |
+| 3 | 深度放松的睡眠引导练习 | 补"练习"，用"引导"区分于纯冥想 |
+| 4 | 开启潜意识的引导练习 | 去掉"冥想"，用"引导练习"避免重复 |
+| 5 | 心灵苏醒的觉察练习 | "觉察"比"冥想"更贴合苏醒主题 |
+| 6 | 潜意识赋能的静心练习 | "静心"替代"冥想"，同义但不重复 |
+| 7 | 创造美好未来的冥想练习 | 最后一天用"冥想练习"做课程收束 |
 
-## 问题根因
+## 执行
 
-上次清理只删除了 `user_camp_purchases` 中的 `emotion_stress_7` 记录和 `training_camps` 记录，但 **没有处理 orders 表**。由于 `check-order-status` 和 `wechat-pay-callback` 的自愈逻辑会检查 orders 表中 `synergy_bundle` 状态为 `paid` 的订单，自动为用户补写 `user_camp_purchases` 记录。同时 `/promo/synergy` 页面的 `autoCreateAndEnterCamp` 会自动创建 `training_camps` 记录。所以权益被"复活"了。
-
-## 执行方案
-
-### SQL 清理（数据库迁移）
-
-```sql
--- 1. 删除活跃训练营
-DELETE FROM training_camps 
-WHERE id = '75796d74-009a-4fa0-92d8-f6fff88289d7';
-
--- 2. 删除 emotion_stress_7 购买记录（如果自愈逻辑已补写）
-DELETE FROM user_camp_purchases 
-WHERE user_id = '5e5cdc49-f922-499a-916e-b5d2cda0d051' 
-  AND camp_type = 'emotion_stress_7';
-
--- 3. 将两笔 synergy_bundle paid 订单改为 refunded，阻止自愈逻辑再次触发
-UPDATE orders SET status = 'refunded', updated_at = NOW()
-WHERE user_id = '5e5cdc49-f922-499a-916e-b5d2cda0d051' 
-  AND package_key = 'synergy_bundle' 
-  AND status = 'paid';
-```
-
-### 关联清理
-
-同时清理该训练营关联的进度数据（如有）：
-- `camp_daily_progress`
-- `camp_daily_tasks`
-- `camp_video_tasks`
-- `community_posts` 中 `camp_id` 置 NULL
-
-（查询显示这些表当前无关联数据，但为安全仍执行 DELETE/UPDATE）
-
-## 保留不动
-
-- `emotion_journal_21` 购买记录保留
-- 其他用户数据不受影响
-
-## 结果
-
-清理后用户访问 `/promo/synergy` 和小程序"学习"页面均显示未购买状态，orders 表中无 paid 的 synergy_bundle 订单，自愈逻辑不会再自动补权。可完整重新测试购买流程。
+SQL 迁移更新 `stress_meditations` 表 day 2-7 的 `title` 字段，同时上传音频文件并更新 `duration_seconds`。前端无需改动。
 
