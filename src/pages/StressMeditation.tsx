@@ -40,6 +40,8 @@ export default function StressMeditation() {
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
   const [thought, setThought] = useState('');
   const [emotionImpact, setEmotionImpact] = useState('');
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [isLoadingPlay, setIsLoadingPlay] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { isCached, cacheAudio, getCachedAudio, isSupported: isCacheSupported, isLoading: isCaching } = useAudioCache();
@@ -116,13 +118,22 @@ export default function StressMeditation() {
       setHasListened(true);
       markMeditationCompleted();
     };
+    const onWaiting = () => setIsBuffering(true);
+    const onCanPlay = () => setIsBuffering(false);
+    const onPlaying = () => setIsBuffering(false);
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
+    audio.addEventListener('waiting', onWaiting);
+    audio.addEventListener('canplay', onCanPlay);
+    audio.addEventListener('playing', onPlaying);
     return () => {
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('loadedmetadata', onMeta);
       audio.removeEventListener('ended', onEnd);
+      audio.removeEventListener('waiting', onWaiting);
+      audio.removeEventListener('canplay', onCanPlay);
+      audio.removeEventListener('playing', onPlaying);
     };
   }, [meditation, markMeditationCompleted]);
 
@@ -132,13 +143,28 @@ export default function StressMeditation() {
 
   const togglePlay = async () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || isLoadingPlay) return;
     if (isPlaying) { audio.pause(); setIsPlaying(false); return; }
+    setIsLoadingPlay(true);
     try {
       await audio.play();
       setIsPlaying(true);
-    } catch (err) {
-      toast.error('无法播放音频，请检查网络');
+    } catch {
+      // Retry: reload then play
+      try {
+        audio.load();
+        await new Promise(resolve => {
+          const handler = () => { audio.removeEventListener('canplay', handler); resolve(undefined); };
+          audio.addEventListener('canplay', handler);
+          setTimeout(() => { audio.removeEventListener('canplay', handler); resolve(undefined); }, 5000);
+        });
+        await audio.play();
+        setIsPlaying(true);
+      } catch {
+        toast.error('音频加载失败，请稍后重试');
+      }
+    } finally {
+      setIsLoadingPlay(false);
     }
   };
 
@@ -191,7 +217,55 @@ export default function StressMeditation() {
     );
   }
 
-  const scriptLines = meditation.script.split('\n').filter(l => l.trim());
+  // Smart formatting for meditation script
+  const formatScript = (script: string) => {
+    const lines = script.split('\n').filter(l => l.trim());
+    const paragraphs: string[][] = [];
+    let current: string[] = [];
+    
+    for (const line of lines) {
+      current.push(line);
+      // Split into paragraphs every 3-5 sentences or on explicit breaks
+      const sentenceCount = line.split(/[。！？…]+/).filter(Boolean).length;
+      if (current.length >= 3 || sentenceCount >= 3) {
+        paragraphs.push([...current]);
+        current = [];
+      }
+    }
+    if (current.length > 0) paragraphs.push(current);
+
+    // If only 1 paragraph from line-based split, try sentence-based splitting
+    if (paragraphs.length <= 1 && lines.length <= 2) {
+      const allText = lines.join('');
+      const sentences = allText.split(/(?<=[。！？…])/g).filter(s => s.trim());
+      const sentParagraphs: string[][] = [];
+      let sentCurrent: string[] = [];
+      for (const s of sentences) {
+        sentCurrent.push(s.trim());
+        if (sentCurrent.length >= 4) {
+          sentParagraphs.push([sentCurrent.join('')]);
+          sentCurrent = [];
+        }
+      }
+      if (sentCurrent.length > 0) sentParagraphs.push([sentCurrent.join('')]);
+      if (sentParagraphs.length > 1) return sentParagraphs;
+    }
+    return paragraphs;
+  };
+
+  const breathingKeywords = ['吸气', '吐气', '呼气', '屏住呼吸', '深呼吸', '慢慢地呼吸', '自然呼吸'];
+  
+  const highlightBreathing = (text: string) => {
+    const regex = new RegExp(`(${breathingKeywords.join('|')})`, 'g');
+    const parts = text.split(regex);
+    return parts.map((part, i) => 
+      breathingKeywords.includes(part) 
+        ? <span key={i} className="text-emerald-600 dark:text-emerald-400 font-medium">{part}</span>
+        : part
+    );
+  };
+
+  const scriptParagraphs = formatScript(meditation.script);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
@@ -202,7 +276,7 @@ export default function StressMeditation() {
         {meditation.audio_url && (
           <audio
             ref={audioRef}
-            src={cachedAudioUrl || encodeURI(meditation.audio_url)}
+            src={cachedAudioUrl || meditation.audio_url}
             preload="auto"
             playsInline
           />
@@ -275,9 +349,10 @@ export default function StressMeditation() {
                 <RotateCcw className="w-5 h-5" />
               </Button>
 
-              <Button onClick={togglePlay} disabled={!meditation.audio_url}
+              <Button onClick={togglePlay} disabled={!meditation.audio_url || isLoadingPlay}
                 className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg">
-                {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+                {isLoadingPlay || isBuffering ? <Loader2 className="w-7 h-7 animate-spin" /> :
+                  isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
               </Button>
 
               {/* Cache button */}
@@ -379,14 +454,26 @@ export default function StressMeditation() {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <Card className="border-emerald-200 dark:border-emerald-800">
-                <CardContent className="p-5 space-y-3">
-                  {scriptLines.map((line, i) => (
-                    <p key={i} className={cn(
-                      "text-sm leading-relaxed",
-                      line.startsWith('（') ? "text-emerald-500/60 italic text-xs" : "text-emerald-800 dark:text-emerald-200"
-                    )}>
-                      {line}
-                    </p>
+                <CardContent className="px-6 py-5 space-y-4">
+                  {scriptParagraphs.map((paragraph, pi) => (
+                    <div key={pi} className="space-y-1">
+                      {paragraph.map((line, li) => {
+                        const isFirst = pi === 0 && li === 0;
+                        const isStageDir = line.startsWith('（') || line.startsWith('(');
+                        return (
+                          <p key={li} className={cn(
+                            "leading-7",
+                            isStageDir 
+                              ? "text-emerald-500/60 italic text-sm" 
+                              : isFirst 
+                                ? "text-base font-semibold text-emerald-900 dark:text-emerald-100"
+                                : "text-base text-emerald-800 dark:text-emerald-200"
+                          )}>
+                            {isStageDir ? line : highlightBreathing(line)}
+                          </p>
+                        );
+                      })}
+                    </div>
                   ))}
                 </CardContent>
               </Card>
