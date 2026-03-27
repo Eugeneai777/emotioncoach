@@ -194,55 +194,30 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         />
       </div>
 
-      {/* Bottom actions */}
+      {/* Bottom actions - 极简双按钮（参考小鹅通） */}
       <div
-        className="shrink-0 flex flex-col items-center gap-3 px-4 pb-6"
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+        className="shrink-0 flex flex-col items-center gap-2 px-4 pb-4"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
-        {isMobile ? (
-          <div className="flex flex-col items-center gap-2 w-full max-w-sm">
-            <div className="flex items-center gap-2 w-full">
-              <Button
-                onClick={handleDownload}
-                className="flex-1 rounded-full h-11 gap-2 text-sm font-medium"
-              >
-                <Download className="h-4 w-4" />
-                保存图片
-              </Button>
-              {isWeChat && (
-                <Button
-                  onClick={handleForward}
-                  variant="outline"
-                  className="flex-1 rounded-full h-11 gap-2 text-sm font-medium"
-                >
-                  <Send className="h-4 w-4" />
-                  转发给朋友
-                </Button>
-              )}
-            </div>
-            <div className="flex items-center justify-between w-full">
-              <span className="text-muted-foreground text-xs">👆 长按图片也可保存</span>
-              <Button variant="ghost" size="sm" onClick={handleClose} className="text-muted-foreground">返回</Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 max-w-sm w-full">
-            <Button
-              onClick={handleDownload}
-              className="rounded-full px-8 h-12 gap-2 text-base font-medium w-full"
-            >
-              <Download className="h-5 w-5" />
-              保存图片
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleClose}
-              className="rounded-full px-8 h-11 gap-2 text-base w-full"
-            >
-              <X className="h-4 w-4" />
-              返回
-            </Button>
-          </div>
+        <div className="flex items-center gap-3 w-full max-w-sm">
+          <Button
+            onClick={handleDownload}
+            className="flex-1 rounded-full h-12 gap-2 text-base font-medium"
+          >
+            <Download className="h-5 w-5" />
+            保存图片
+          </Button>
+          <Button
+            onClick={handleForward}
+            variant="outline"
+            className="flex-1 rounded-full h-12 gap-2 text-base font-medium"
+          >
+            <Send className="h-5 w-5" />
+            转发朋友
+          </Button>
+        </div>
+        {isMobile && (
+          <p className="text-muted-foreground text-xs">长按图片也可保存</p>
         )}
       </div>
     </div>,
