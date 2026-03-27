@@ -1,68 +1,62 @@
 
 
-# 微信全端分享链路统一修复
+# 分享流程极简重构：参考小鹅通，一键转发/保存
 
-## 问题
+## 核心问题
 
-从截图看，小程序端已能弹出原生操作面板（转发/保存/收藏），但实际操作失败。根因：
+1. **复制链接按钮干扰**：占据主按钮区空间，用户不需要
+2. **生成慢**：html2canvas 渲染复杂卡片耗时长
+3. **转发失败**：微信环境 `navigator.share` 不可靠，按钮形同虚设
+4. **步骤太多**：弹窗预览 → 生成 → 二次预览 → 再操作，链路太长
 
-1. **`share-dialog-base.tsx` 第209-214行**：`showImagePreview=true` 时直接用 `URL.createObjectURL(blob)` 生成 `blob:` URL，**绕过了** `handleShareWithFallback` 的上传逻辑。微信 Android 无法长按保存 `blob:` URL。
-2. **`share-image-preview.tsx` 第118行**：`!isWeChat` 条件隐藏了微信环境的下载按钮。
-3. **移动端底部（第190-197行）**：只有"长按图片保存"文字提示，没有可靠的保存/转发按钮。
+## 方案：一键生成 + 极简操作面板
 
-## 方案
+参考小鹅通：点击分享 → 直接生成海报 → 全屏展示 + 底部两个大按钮（保存/转发）。去掉中间的弹窗预览步骤。
 
-### A. `src/components/ui/share-dialog-base.tsx`（第209-214行）
+### A. `src/components/ui/share-dialog-base.tsx` 改造
 
-`showImagePreview` 分支改为调用 `handleShareWithFallback`，让它根据环境自动上传获取 HTTPS URL（微信/Android）或用 blob URL（其他）：
+1. **复制链接按钮**改为次要入口：移到 footer hint 区域，变成小字链接"复制链接"，不再占主按钮空间
+2. **主按钮**文案统一为"生成海报"，移除"保存分享卡片"分支
+3. 加 loading 进度提示（"正在生成海报..."）替代空白等待
 
-```typescript
-if (showImagePreview) {
-  if (loadingToastId) toast.dismiss(loadingToastId);
-  await handleShareWithFallback(blob, fileName, {
-    title: shareTitle,
-    text: shareText,
-    onShowPreview: (url) => {
-      if (!isiOS) onOpenChange(false);
-      setPreviewUrl(url);
-      setShowPreview(true);
-    },
-  });
-}
+### B. `src/components/ui/share-image-preview.tsx` 极简重构
+
+底部操作区重构为**两个并排大按钮**（参考小鹅通）：
+
+```
+┌─────────────────────────────────┐
+│         [海报图片预览]            │
+│                                 │
+├─────────────────────────────────┤
+│  [💾 保存图片]  [📤 转发朋友]     │  ← 并排大按钮
+│       长按图片也可保存            │  ← 小字提示
+└─────────────────────────────────┘
 ```
 
-### B. `src/components/ui/share-image-preview.tsx`
+- **保存图片**：所有环境都显示，调用 `handleDownload`
+- **转发朋友**：所有环境都显示
+  - 微信 H5/小程序：`navigator.share` 尝试 → 失败则 toast "请长按图片转发"
+  - 手机浏览器：`navigator.share({ files: [...] })`
+  - 桌面端：`navigator.share` 或 fallback 到 toast 提示
+- 移除单独的"返回"按钮，改为顶部 X 关闭
+- 移除底部桌面端的大号"保存图片"+"返回"双栈布局，统一用并排按钮
 
-**1. 移除 `!isWeChat` 限制**（第118行）— 所有环境都显示下载按钮。
+### C. 微信全端兼容保障
 
-**2. 移动端底部增加操作按钮**（第190-197行）：
+| 环境 | 保存 | 转发 |
+|------|------|------|
+| 微信小程序 | HTTPS URL → download按钮 + 长按 | navigator.share → fallback长按提示 |
+| 微信 H5 | HTTPS URL → download按钮 + 长按 | navigator.share → fallback长按提示 |
+| 电脑微信 | HTTPS URL → download按钮 | navigator.share → fallback提示 |
+| 手机浏览器 | blob URL → download | navigator.share |
+| 桌面浏览器 | blob URL → download | navigator.share |
 
-- **微信环境**：「保存图片」按钮 + 「转发给朋友」按钮 + 返回
-- **其他移动端**：「保存图片」按钮 + 返回
-- **桌面端**：保持不变
-
-**3. 新增 `handleForward` 函数**：
-- fetch imageUrl → 转 File → `navigator.share({ files: [...] })`
-- 失败时 toast 提示"请长按图片转发"
-
-**4. 保留"长按图片保存"小字提示**作为辅助说明。
-
-### C. 兼容性保证
-
-| 环境 | 保存图片 | 转发给朋友 | 长按保存 |
-|------|---------|-----------|---------|
-| 微信小程序 | HTTPS URL → 下载按钮 | navigator.share | ✅ |
-| 微信 H5 | HTTPS URL → 下载按钮 | navigator.share | ✅ |
-| 电脑微信 | HTTPS URL → 下载按钮 | navigator.share | N/A |
-| 手机浏览器 | blob URL → 下载按钮 | navigator.share | ✅ |
-| 桌面浏览器 | blob URL → 下载按钮 | N/A | N/A |
-
-所有移动端通过 `handleShareWithFallback` 统一走上传流程获取 HTTPS URL，确保跨端一致。
+`handleShareWithFallback` 已处理上传逻辑（微信Android自动上传获取HTTPS URL），保持不变。
 
 ## 改动文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/ui/share-dialog-base.tsx` | 第209-214行：用 `handleShareWithFallback` 替代直接 blob URL |
-| `src/components/ui/share-image-preview.tsx` | 移除微信限制 + 移动端增加保存/转发按钮 |
+| `src/components/ui/share-dialog-base.tsx` | 复制链接按钮降级为小字链接；主按钮文案统一 |
+| `src/components/ui/share-image-preview.tsx` | 底部重构为并排双按钮极简布局，桌面/移动统一风格 |
 
