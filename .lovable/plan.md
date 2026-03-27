@@ -1,82 +1,52 @@
 
 
-# 教练团队数据更新 + 排版重构（手机/电脑端兼容）
+# 分享按钮前置 + 海报下载性能优化
 
-## 改动内容
+## 问题分析
 
-### 1. 数据更新（第116-122行）
+### 问题 1：分享按钮太靠后
+当前分享按钮在页面底部 CTA 区域下方（第1069行），是一个不起眼的灰色文字链接。用户需要滚动到页面最底部才能看到。
 
-将 `coachTeam` 数组重写为完整结构：
+**方案**：在底部固定栏（sticky bottom bar，第1080行）中添加分享图标按钮，让用户随时可以点击分享，无需滚动到底部。
 
-```typescript
-const coachTeam = [
-  {
-    name: "晓一", role: "教练",
-    title: "绽放者联盟生命教练",
-    certifications: ["特教音乐疗愈师", "青少年足球教练", "德国TJ发型设计深圳总监"],
-    specialties: ["婚姻家庭", "个人成长", "情绪管理", "人际沟通"],
-    motto: "人不是被教导的，而是被启示的",
-    image: coachXiaoyi,
-  },
-  {
-    name: "肖剑雄", role: "教练",
-    title: "绽放者联盟发展运营合伙人",
-    certifications: ["心理教练"],
-    specialties: ["婚姻关系", "亲子关系", "职业焦虑", "生命成长"],
-    motto: "倾听、陪伴、觉察，升维",
-    image: coachXiaojianxiong,
-  },
-  {
-    name: "Amy", role: "教练",
-    title: "绽放联盟教练 · 中国社科院经济学研究生",
-    certifications: ["生命绽放教练", "心理咨询师", "家庭教育指导师"],
-    specialties: ["情感困惑", "亲子关系", "身心疗愈"],
-    motto: "全情陪伴，滋养生命",
-    image: coachAmy,
-  },
-  {
-    name: "木棉", role: "教练",
-    title: "企业人力资源管理顾问",
-    certifications: ["心理咨询师", "格森自然疗法教练", "补水自然疗法教练", "芳香治疗师"],
-    specialties: ["身心互动整体疗愈", "身心灵排毒", "细胞激活"],
-    motto: "流水不争先，争的是滔滔不绝",
-    image: coachMumian,
-  },
-  {
-    name: "贝蒂", role: "教练",
-    title: "绽放者联盟教练",
-    certifications: ["国家二级教师", "心理咨询师", "天赋测评&分析师"],
-    specialties: ["个人生命重建", "亲密关系", "亲子关系"],
-    motto: "陪伴你，看见自己的美好",
-    image: coachBetty,
-  },
-];
-```
+### 问题 2：电脑端下载慢
+当前流程：点击"生成分享图片" → `html2canvas` 渲染卡片为 Canvas → 转 Blob → 下载。桌面端 `html2canvas` 使用 3.5x 分辨率（`getOptimalScale()` 返回值），对于包含多张教练照片的复杂卡片，渲染耗时较长。
 
-### 2. 排版重构（第794-821行）— 单列完整卡片
+**方案**：
+- 桌面端降低渲染倍数为 2.5x（视觉差异极小但速度提升 ~40%）
+- 生成过程中显示进度提示，改善等待体验
 
-从 `grid-cols-2` 改为**单列布局**，每张卡片采用左头像 + 右信息区的横排设计：
+### 问题 3：多端保存兼容性
+当前已有的兼容逻辑：
+- **手机端（iOS/Android/微信）**：`shouldUseImagePreview()` 返回 true → 生成 blob URL → 全屏预览 → 引导长按保存 ✅
+- **微信 Android**：上传到 Storage 获取 HTTPS URL（WeChat 无法长按保存 blob: URL）✅
+- **桌面端**：尝试 Web Share API → 失败则 `<a download>` 自动下载 ✅
 
-- **移动端**：单列全宽，头像 56px，信息区紧凑排列
-- **桌面端**：单列全宽（max-w-lg 居中），头像 64px，信息区宽松
+现有兼容逻辑基本完善，但 `share-image-preview.tsx` 的桌面端"保存图片"按钮（第63-82行）会重新 `fetch(imageUrl)` 再转 blob 下载——如果 imageUrl 是上传后的 HTTPS URL，这个 fetch 会多一次网络请求。可优化为直接使用已有的 blob。
 
-每张卡片内容层级：
-1. 姓名 + "教练"标签（同行）
-2. 身份 title（灰色小字）
-3. 认证标签（flex-wrap，浅灰底圆角 tag）
-4. 擅长问题（flex-wrap，橙色调标签）
-5. 座右铭（斜体）
+## 具体改动
 
-响应式要点：
-- 卡片使用 `flex` 横排（非 grid），移动端 `gap-3`，桌面端 `gap-4`
-- 标签使用 `flex-wrap` 自然换行，不会溢出
-- 整体外层 `max-w-lg mx-auto` 居中，桌面端不会过宽
+### A. `src/pages/SynergyPromoPage.tsx`
+**底部固定栏添加分享按钮**（第1080-1114行区域）：
+- 未购买状态：在"立即购买"按钮左侧添加分享图标按钮（Share2 icon）
+- 已购买状态：在"进入训练营"按钮左侧添加分享图标按钮
+- 按钮样式：`variant="outline"` 圆形图标按钮，不占用过多空间
 
-### 3. 黛汐总教练卡片（第773-792行）
+### B. `src/utils/shareCardConfig.ts`
+**降低桌面端渲染倍数**（第41-52行 `getOptimalScale`）：
+- 标准浏览器（桌面端）：从 3/3.5x 降为 2.5/3x
+- 移动端和微信保持不变
 
-同步增加 `title: "绽放者联盟创始人&总教练"` 和 `specialties` 展示行，与团队卡片风格一致但更大更突出。
+### C. `src/components/ui/share-image-preview.tsx`
+**优化桌面端下载**（第63-82行 `handleDownload`）：
+- 判断 imageUrl 是否为 blob: URL，如果是则直接使用，跳过 fetch 步骤
+- 对 HTTPS URL 保持现有 fetch 逻辑（无法避免）
 
 ## 改动文件
 
-仅 `src/pages/SynergyPromoPage.tsx`
+| 文件 | 改动 |
+|------|------|
+| `src/pages/SynergyPromoPage.tsx` | 底部固定栏增加分享图标按钮 |
+| `src/utils/shareCardConfig.ts` | 降低桌面端渲染倍数 |
+| `src/components/ui/share-image-preview.tsx` | 优化 blob URL 下载路径 |
 
