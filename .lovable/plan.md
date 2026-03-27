@@ -1,65 +1,70 @@
 
 
-# 当前计划缺失项评估
+# MVP 商业链路优化方案
 
-`.lovable/plan.md` 中的计划**仅**涉及"强制触发新版本发布"，**没有**包含以下两项：
+## 核心目标
 
-## 缺失一：Day 3/5/6 冥想文案分段（空格分隔文本）
+跑通两条转化路径：
+1. 流量用户 → 测评 → ¥399（/promo/synergy）
+2. 流量用户 → ¥399（/promo/synergy）
 
-`formatScript` 函数（第 222-254 行）只支持两种分段方式：
-1. 按 `\n` 换行分段
-2. 按 `。！？…` 标点分段
+## 本轮需做的 4 件事
 
-Day 3/5/6 的 Whisper 转录文本没有句号，用空格分隔句子，导致无法分段（显示为一整坨）。
+### 1. 老哥工具 → 落地页的过渡优化
 
-**修复**：在 `formatScript` 中增加第三层逻辑——当标点分割仍只产生 1 个段落时，按空格 ` ` 分割句子，每 4-5 句合并为一段。
+**问题**：4个工具（赚钱/事业/压力/健康）的 AI 总结内容各不相同，统一硬接"职场突围训练营"文案会突兀。
 
-## 缺失二：播放缓冲慢
+**方案**：根据工具类型，动态调整转化卡片的文案和跳转参数，使推荐语与用户刚聊完的痛点对齐：
 
-当前 `<audio>` 使用 `preload="auto"`，但 5MB 的 MP3 文件在移动端仍需较长缓冲。改进措施：
-
-1. **预加载优化**：将 `preload` 改为 `"metadata"`，点击播放时再开始加载音频数据
-2. **加载进度显示**：监听 `progress` 事件，显示缓冲百分比（如"加载中 45%..."），让用户知道正在加载而非卡死
-3. **已有重试逻辑保留**：第 153-166 行的 `audio.load()` 重试机制保持不变
-
-## 缺失三：简体中文统一
-
-数据库层面的简体中文修正已在之前的 SQL UPDATE 中完成。但需要**验证**线上数据是否已生效（数据库操作是实时的，不依赖前端发布）。
-
-## 更新后的完整计划
-
-| 步骤 | 内容 | 类型 |
+| 工具 | 转化卡片标题 | 转化卡片描述 |
 |---|---|---|
-| 1 | `formatScript` 增加空格分割逻辑，修复 Day 3/5/6 排版 | 前端代码 |
-| 2 | 音频 `preload` 改为 `metadata`，增加缓冲进度显示 | 前端代码 |
-| 3 | 查询线上数据库确认简体中文已生效 | 数据验证 |
-| 4 | 发布新版本（以上代码改动会自动触发 Publish 按钮可用） | 发布 |
+| 赚钱 | 🔥 想要突破收入瓶颈？ | 7天有劲训练营帮你重建赚钱的内在动力 |
+| 事业 | 🔥 想要找回事业方向？ | 7天有劲训练营帮你破解职场内耗 |
+| 压力 | 🔥 想要系统减压？ | 7天有劲训练营帮你从根源化解压力 |
+| 健康 | 🔥 想要恢复身心活力？ | 7天有劲训练营帮你重启身体能量 |
 
-### 技术细节
+跳转仍为 `/promo/synergy?source=laoge`，但用户到达落地页时不会感到断裂——因为落地页本身覆盖了情绪、压力、身心等多个痛点维度。
 
-**formatScript 修改**（StressMeditation.tsx 第 239-253 行）：
-```typescript
-// 在 sentParagraphs.length <= 1 时追加空格分割逻辑
-if (sentParagraphs.length <= 1) {
-  const spaceSegments = allText.split(/\s+/).filter(s => s.trim());
-  if (spaceSegments.length > 4) {
-    const spaceParagraphs: string[][] = [];
-    let spaceCurrent: string[] = [];
-    for (const seg of spaceSegments) {
-      spaceCurrent.push(seg);
-      if (spaceCurrent.length >= 4) {
-        spaceParagraphs.push([spaceCurrent.join('，')]);
-        spaceCurrent = [];
-      }
-    }
-    if (spaceCurrent.length > 0) spaceParagraphs.push([spaceCurrent.join('，')]);
-    return spaceParagraphs;
-  }
-}
-```
+**改动文件**：`LaogeToolCard.tsx` 第 220-242 行
 
-**音频缓冲改进**（StressMeditation.tsx）：
-- 第 281 行 `preload="auto"` → `preload="metadata"`
-- 播放按钮区域增加缓冲进度百分比显示
-- 新增 `bufferProgress` state + `progress` 事件监听
+### 2. 打卡页增加企微引导入口
+
+**问题**：SuccessPanel 的企微二维码只展示一次，进入训练营后再无入口。
+
+**方案**：在 `CampCheckIn.tsx` 的打卡页中，增加一个轻量级的企微引导卡片。放在每日任务列表底部（"今日成长课程"下方），样式为小卡片：
+
+- 标题：「👨‍🏫 添加助教，获得 1v1 指导」
+- 描述：「加入学员群，参加线上冥想直播」
+- 点击展开显示企微二维码图片
+- Day 1/3/5/7 显示（非每天显示，避免打扰）
+
+**改动文件**：`CampCheckIn.tsx`
+
+### 3. /promo/synergy 增加分享海报功能
+
+**方案**：在落地页底部 CTA 区域旁增加"分享给朋友"按钮，点击后生成一张简洁的分享海报卡片，包含：
+
+- 产品名称「7天有劲训练营」
+- 核心卖点（1-2行）
+- 小程序/H5 链接二维码
+- 使用现有 `ShareCardBase` 组件 + `html2canvas` 生成图片
+
+**新增文件**：`SynergyShareCard.tsx`
+**改动文件**：`SynergyPromoPage.tsx`（增加分享按钮和弹窗）
+
+### 4. 价格说明（无需代码改动）
+
+¥0.01 是测试价，后续改为 ¥399 只需在数据库 `products` 表更新 `price` 字段即可，无需前端改动（价格从数据库动态读取）。
+
+## 本轮不做
+
+- ¥399 → ¥3980 转化路径（通过企微群和教练 1v1 引导）
+- 线上会议/直播入口嵌入（通过企微群发布）
+- 测评产品与 /promo/synergy 的串联（可作为下一轮优化）
+
+## 技术细节
+
+- 转化卡片文案映射：在 `LaogeToolCard` 中根据 `tool` prop（"money"/"career"/"stress"/"health"）选取对应文案
+- 企微卡片：复用已有的 `wecom-coach-qr.jpg` 资源
+- 分享海报：基于 `ShareCardBase` + `html2canvas`，生成 380px 宽的卡片图片
 
