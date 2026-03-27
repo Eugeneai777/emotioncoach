@@ -217,7 +217,55 @@ export default function StressMeditation() {
     );
   }
 
-  const scriptLines = meditation.script.split('\n').filter(l => l.trim());
+  // Smart formatting for meditation script
+  const formatScript = (script: string) => {
+    const lines = script.split('\n').filter(l => l.trim());
+    const paragraphs: string[][] = [];
+    let current: string[] = [];
+    
+    for (const line of lines) {
+      current.push(line);
+      // Split into paragraphs every 3-5 sentences or on explicit breaks
+      const sentenceCount = line.split(/[。！？…]+/).filter(Boolean).length;
+      if (current.length >= 3 || sentenceCount >= 3) {
+        paragraphs.push([...current]);
+        current = [];
+      }
+    }
+    if (current.length > 0) paragraphs.push(current);
+
+    // If only 1 paragraph from line-based split, try sentence-based splitting
+    if (paragraphs.length <= 1 && lines.length <= 2) {
+      const allText = lines.join('');
+      const sentences = allText.split(/(?<=[。！？…])/g).filter(s => s.trim());
+      const sentParagraphs: string[][] = [];
+      let sentCurrent: string[] = [];
+      for (const s of sentences) {
+        sentCurrent.push(s.trim());
+        if (sentCurrent.length >= 4) {
+          sentParagraphs.push([sentCurrent.join('')]);
+          sentCurrent = [];
+        }
+      }
+      if (sentCurrent.length > 0) sentParagraphs.push([sentCurrent.join('')]);
+      if (sentParagraphs.length > 1) return sentParagraphs;
+    }
+    return paragraphs;
+  };
+
+  const breathingKeywords = ['吸气', '吐气', '呼气', '屏住呼吸', '深呼吸', '慢慢地呼吸', '自然呼吸'];
+  
+  const highlightBreathing = (text: string) => {
+    const regex = new RegExp(`(${breathingKeywords.join('|')})`, 'g');
+    const parts = text.split(regex);
+    return parts.map((part, i) => 
+      breathingKeywords.includes(part) 
+        ? <span key={i} className="text-emerald-600 dark:text-emerald-400 font-medium">{part}</span>
+        : part
+    );
+  };
+
+  const scriptParagraphs = formatScript(meditation.script);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
