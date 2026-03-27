@@ -17,7 +17,7 @@ import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedire
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
-import ShareDialogBase from "@/components/sharing/ShareDialogBase";
+import { ShareDialogBase } from "@/components/ui/share-dialog-base";
 import { useShareDialog } from "@/hooks/useShareDialog";
 
 /* ========== Floating particles ========== */
