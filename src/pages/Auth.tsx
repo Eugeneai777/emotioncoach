@@ -801,6 +801,7 @@ const Auth = () => {
               </label>
             </div>
           </form>
+          )}
 
           {!isPhoneOnly && (
             <>
