@@ -228,7 +228,7 @@ export default function StressMeditation() {
         {meditation.audio_url && (
           <audio
             ref={audioRef}
-            src={cachedAudioUrl || encodeURI(meditation.audio_url)}
+            src={cachedAudioUrl || meditation.audio_url}
             preload="auto"
             playsInline
           />
@@ -301,9 +301,10 @@ export default function StressMeditation() {
                 <RotateCcw className="w-5 h-5" />
               </Button>
 
-              <Button onClick={togglePlay} disabled={!meditation.audio_url}
+              <Button onClick={togglePlay} disabled={!meditation.audio_url || isLoadingPlay}
                 className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg">
-                {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+                {isLoadingPlay || isBuffering ? <Loader2 className="w-7 h-7 animate-spin" /> :
+                  isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
               </Button>
 
               {/* Cache button */}
