@@ -206,7 +206,7 @@ serve(async (req) => {
         }
       }
 
-      // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases
+      // 自愈逻辑：synergy_bundle / wealth_synergy_bundle 补写 user_camp_purchases (upsert防重复)
       const bundleCampMap: Record<string, Array<{ campType: string; campName: string }>> = {
         'synergy_bundle': [
           { campType: 'emotion_stress_7', campName: '7天有劲训练营' },
@@ -218,27 +218,17 @@ serve(async (req) => {
       if (bundleCamps) {
         for (const bundleCamp of bundleCamps) {
           try {
-            const { data: existingCamp } = await supabase
-              .from('user_camp_purchases')
-              .select('id')
-              .eq('user_id', order.user_id)
-              .eq('camp_type', bundleCamp.campType)
-              .eq('payment_status', 'completed')
-              .maybeSingle();
-
-            if (!existingCamp) {
-              await supabase.from('user_camp_purchases').insert({
-                user_id: order.user_id,
-                camp_type: bundleCamp.campType,
-                camp_name: bundleCamp.campName,
-                purchase_price: order.amount,
-                payment_method: 'wechat',
-                payment_status: 'completed',
-                purchased_at: order.paid_at || new Date().toISOString(),
-                expires_at: null,
-              });
-              console.log(`[CheckOrder] Repaired missing ${bundleCamp.campType} for ${order.package_key}:`, order.user_id);
-            }
+            await supabase.from('user_camp_purchases').upsert({
+              user_id: order.user_id,
+              camp_type: bundleCamp.campType,
+              camp_name: bundleCamp.campName,
+              purchase_price: order.amount,
+              payment_method: 'wechat',
+              payment_status: 'completed',
+              purchased_at: order.paid_at || new Date().toISOString(),
+              expires_at: null,
+            }, { onConflict: 'user_id,camp_type,payment_status' });
+            console.log(`[CheckOrder] Upserted ${bundleCamp.campType} for ${order.package_key}:`, order.user_id);
           } catch (repairErr) {
             console.error(`[CheckOrder] ${bundleCamp.campType} camp repair error:`, repairErr);
           }
@@ -305,7 +295,7 @@ serve(async (req) => {
                   .eq('camp_type', campType)
                   .maybeSingle();
 
-                await supabase.from('user_camp_purchases').insert({
+                await supabase.from('user_camp_purchases').upsert({
                   user_id: fullOrder.user_id,
                   camp_type: campType,
                   camp_name: campTemplate?.camp_name || fullOrder.product_name || '训练营',
@@ -315,7 +305,7 @@ serve(async (req) => {
                   transaction_id: wechatResult.transaction_id,
                   purchased_at: new Date().toISOString(),
                   expires_at: null,
-                });
+                }, { onConflict: 'user_id,camp_type,payment_status' });
                 console.log('[CheckOrder] Camp purchase recorded:', campType);
               } else {
                 // synergy_bundle / wealth_synergy_bundle 特殊处理
@@ -329,7 +319,7 @@ serve(async (req) => {
                 const bundleCampsNew = bundleCampMapNew[pkgKey];
                 if (bundleCampsNew) {
                   for (const camp of bundleCampsNew) {
-                    await supabase.from('user_camp_purchases').insert({
+                    await supabase.from('user_camp_purchases').upsert({
                       user_id: fullOrder.user_id,
                       camp_type: camp.campType,
                       camp_name: camp.campName,
@@ -339,8 +329,8 @@ serve(async (req) => {
                       transaction_id: wechatResult.transaction_id,
                       purchased_at: new Date().toISOString(),
                       expires_at: null,
-                    });
-                    console.log(`[CheckOrder] ${pkgKey} camp purchase recorded for ${camp.campType}`);
+                    }, { onConflict: 'user_id,camp_type,payment_status' });
+                    console.log(`[CheckOrder] ${pkgKey} camp purchase upserted for ${camp.campType}`);
                   }
                 }
               }

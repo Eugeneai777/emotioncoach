@@ -109,7 +109,14 @@ const CampList = () => {
         });
         
         // Then purchased but not started (no matching training_camps record)
-        purchases.forEach(purchase => {
+        // Deduplicate purchases by camp_type (keep earliest)
+        const seenCampTypes = new Set<string>();
+        const dedupedPurchases = purchases.filter(p => {
+          if (seenCampTypes.has(p.camp_type)) return false;
+          seenCampTypes.add(p.camp_type);
+          return true;
+        });
+        dedupedPurchases.forEach(purchase => {
           const campType = purchase.camp_type;
           // Check if there's already a camp for this type
           const hasCamp = camps.some(c => c.camp_type === campType);
