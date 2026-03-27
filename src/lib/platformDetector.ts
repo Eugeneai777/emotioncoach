@@ -25,7 +25,7 @@ export function detectPlatform(): MonitorPlatform {
   }
 
   // 移动端浏览器
-  const isMobile = /android|iphone|ipad|ipod|mobile|phone|tablet/i.test(ua);
+  const isMobile = /android|iphone|ipad|ipod|mobile|phone|tablet|harmonyos/i.test(ua);
   if (isMobile) {
     cachedPlatform = 'mobile_browser';
     return cachedPlatform;

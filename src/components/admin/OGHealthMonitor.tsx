@@ -52,7 +52,7 @@ function detectPlatformFromUA(ua: string): string {
   const lower = ua.toLowerCase();
   if (lower.includes('micromessenger') && lower.includes('miniprogram')) return 'miniprogram';
   if (lower.includes('micromessenger')) return 'wechat';
-  if (/android|iphone|ipad|ipod/i.test(lower)) return 'mobile_browser';
+  if (/android|iphone|ipad|ipod|harmonyos/i.test(lower)) return 'mobile_browser';
   return 'web';
 }
 

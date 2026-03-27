@@ -31,7 +31,7 @@ export const getShareEnvironment = (): ShareEnvironment => {
   return {
     isWeChat,
     isIOS: /iphone|ipad|ipod/.test(ua),
-    isMobile: /android|iphone|ipad|ipod/i.test(ua),
+    isMobile: /android|iphone|ipad|ipod|harmonyos/i.test(ua),
     isAndroid: /android/i.test(ua),
     isMiniProgram,
     supportsWebShare: !!(navigator.share && navigator.canShare),

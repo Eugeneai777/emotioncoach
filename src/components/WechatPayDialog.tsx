@@ -207,7 +207,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   // 检测是否在微信内
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
   // 检测是否在移动端
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isMobile = /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent);
   // 检测是否在小程序环境
   const isMiniProgram = isWeChatMiniProgram();
   
