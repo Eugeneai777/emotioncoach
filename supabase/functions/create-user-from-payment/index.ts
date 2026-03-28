@@ -121,12 +121,11 @@ serve(async (req) => {
         if (authError) {
           // 邮箱已存在，查找现有用户并复用
           if ((authError as any).code === 'email_exists') {
-            console.log('Email already exists, finding existing user...');
-            const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-            const existingUser = existingUsers?.users?.find(u => u.email === email);
+            console.log('Email already exists, finding existing user by email...');
+            const { data: existingUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
             
-            if (existingUser) {
-              userId = existingUser.id;
+            if (!getUserError && existingUserData?.user) {
+              userId = existingUserData.user.id;
               console.log('Found existing user by email:', userId);
               
               // 确保映射存在
