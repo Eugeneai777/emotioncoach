@@ -819,7 +819,7 @@ export default function WealthBlockAssessmentPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     登录后可以保存测评结果并查看历史趋势
                   </p>
-                  <Button onClick={() => navigate("/auth")}>
+                  <Button onClick={() => navigate("/auth?redirect=/wealth-block")}>
                     去登录
                   </Button>
                 </div>

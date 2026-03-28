@@ -118,7 +118,7 @@ const AwakeningJournal: React.FC = () => {
           <Sparkles className="w-12 h-12 mx-auto text-muted-foreground" />
           <h2 className="text-lg font-semibold">登录后查看觉察日记</h2>
           <p className="text-sm text-muted-foreground">记录你的觉察时刻，追踪成长轨迹</p>
-          <Button onClick={() => navigate('/auth')}>去登录</Button>
+          <Button onClick={() => navigate('/auth?redirect=/awakening-journal')}>去登录</Button>
         </div>
       </div>
     );

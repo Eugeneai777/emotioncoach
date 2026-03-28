@@ -10,7 +10,7 @@ const LifeCoachVoice = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate("/auth", { replace: true });
+      navigate("/auth?redirect=/life-coach-voice", { replace: true });
     }
   }, [user, navigate]);
 

@@ -24,7 +24,7 @@ export const ScenarioVoiceEntry = ({ scenarios }: ScenarioVoiceEntryProps) => {
 
   const handleScenarioClick = (scenarioTitle: string) => {
     if (!user) {
-      navigate('/auth');
+      navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
       return;
     }
     setActiveScenario(scenarioTitle);

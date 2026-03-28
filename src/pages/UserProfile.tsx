@@ -173,7 +173,7 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (!displayUserId) {
-      navigate("/auth");
+      navigate("/auth?redirect=/user-profile");
       return;
     }
     loadUserData();
