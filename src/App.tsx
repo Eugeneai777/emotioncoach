@@ -260,6 +260,7 @@ const FloatingQuickMenu = lazyRetry(() => import("./components/FloatingQuickMenu
 const FollowWechatReminder = lazyRetry(() => import("./components/FollowWechatReminder").then(m => ({ default: m.FollowWechatReminder })));
 
 const BloomInvitePrompt = lazyRetry(() => import("./components/BloomInvitePrompt").then(m => ({ default: m.BloomInvitePrompt })));
+const PhoneBindOnboarding = lazyRetry(() => import("./components/onboarding/PhoneBindOnboarding").then(m => ({ default: m.PhoneBindOnboarding })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
