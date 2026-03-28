@@ -81,6 +81,23 @@ const Auth = () => {
     return () => clearTimeout(timer);
   }, [smsCountdown]);
 
+  // SMS模式下非+86自动提示并禁用
+  const isSmsDisabled = authMode === 'sms' && countryCode !== '+86';
+
+  // 切换到SMS tab时，如果区号不是+86，自动重置
+  useEffect(() => {
+    if (authMode === 'sms' && countryCode !== '+86') {
+      setCountryCode('+86');
+    }
+  }, [authMode]);
+
+  // 验证码满6位自动提交
+  useEffect(() => {
+    if (authMode === 'sms' && smsCode.length === 6 && agreedTerms && !loading && phone) {
+      handleSmsLogin({ preventDefault: () => {} } as React.FormEvent);
+    }
+  }, [smsCode]);
+
   // 发送短信验证码
   const handleSendSmsCode = async () => {
     if (!phone || !/^\d{11}$/.test(phone)) {
