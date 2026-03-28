@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       }
 
       const url = new URL(actionLink);
-      const token_hash = url.searchParams.get('token') || url.hash?.match(/token=([^&]*)/)?.[1];
+      const token_hash = url.searchParams.get('token_hash') || url.searchParams.get('token') || url.hash?.match(/token_hash=([^&]*)/)?.[1] || url.hash?.match(/token=([^&]*)/)?.[1];
 
       if (!token_hash) {
         console.error('Failed to extract token_hash from:', actionLink);
