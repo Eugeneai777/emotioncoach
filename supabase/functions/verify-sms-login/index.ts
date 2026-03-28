@@ -28,12 +28,13 @@ Deno.serve(async (req) => {
       .eq('phone_number', phone)
       .eq('code', code)
       .eq('purpose', 'sms_login')
-      .eq('is_used', false)
+      .is('verified_at', null)
       .gte('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1);
 
     if (codeError || !codes || codes.length === 0) {
+      console.error('Code verification failed:', { codeError, codesFound: codes?.length });
       return new Response(
         JSON.stringify({ error: '验证码无效或已过期' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -43,7 +44,7 @@ Deno.serve(async (req) => {
     // 标记验证码已使用
     await adminClient
       .from('sms_verification_codes')
-      .update({ is_used: true })
+      .update({ verified_at: new Date().toISOString() })
       .eq('id', codes[0].id);
 
     // 生成占位邮箱
