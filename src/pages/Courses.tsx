@@ -212,7 +212,7 @@ const Courses = () => {
   const handleToggleFavorite = async (courseId: string) => {
     if (!user) {
       toast.error("请先登录");
-      navigate("/auth");
+      navigate("/auth?redirect=/courses");
       return;
     }
 
