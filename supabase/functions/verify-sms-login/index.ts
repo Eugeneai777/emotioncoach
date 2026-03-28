@@ -141,6 +141,9 @@ Deno.serve(async (req) => {
       // 新用户：自动注册
       console.log('New user, creating account for:', placeholderEmail);
       const defaultPassword = crypto.randomUUID();
+      let finalUserId: string;
+      let isNewUser = true;
+
       const { data: newUser, error: signUpError } = await adminClient.auth.admin.createUser({
         email: placeholderEmail,
         password: defaultPassword,
@@ -151,6 +154,73 @@ Deno.serve(async (req) => {
       });
 
       if (signUpError) {
+        // 兜底：profile 缺失但 auth.users 中已存在同邮箱用户
+        if (signUpError.message?.includes('email') || signUpError.message?.includes('already')) {
+          console.log('Email already exists in auth, falling back to getUserByEmail');
+          const { data: existingUser, error: getErr } = await adminClient.auth.admin.getUserByEmail(placeholderEmail);
+          if (getErr || !existingUser?.user) {
+            console.error('Fallback getUserByEmail failed:', getErr);
+            return new Response(
+              JSON.stringify({ error: '注册失败，请稍后重试' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          finalUserId = existingUser.user.id;
+          isNewUser = false;
+
+          // 补齐可能缺失的 profile
+          await adminClient.from('profiles').upsert({
+            id: finalUserId,
+            display_name: `用户${phone.slice(-4)}`,
+            phone,
+            phone_country_code: countryCode,
+            auth_provider: 'sms',
+          });
+
+          // 使用 generateLink 登录已有用户（不覆盖密码）
+          const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+            type: 'magiclink',
+            email: placeholderEmail,
+          });
+
+          if (!linkError && linkData?.properties?.action_link) {
+            const url = new URL(linkData.properties.action_link);
+            const token_hash = url.searchParams.get('token') || url.hash?.match(/token=([^&]*)/)?.[1];
+            if (token_hash) {
+              const anonClient = createClient(supabaseUrl, anonKey);
+              const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
+                token_hash,
+                type: 'magiclink',
+              });
+              if (!verifyError && verifyData?.session) {
+                return new Response(
+                  JSON.stringify({ success: true, isNewUser: false, session: verifyData.session }),
+                  { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+              }
+            }
+          }
+
+          // 最终 fallback：临时密码登录
+          const tempPassword = crypto.randomUUID();
+          await adminClient.auth.admin.updateUser(finalUserId, { password: tempPassword });
+          const anonClient = createClient(supabaseUrl, anonKey);
+          const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+            email: placeholderEmail,
+            password: tempPassword,
+          });
+          if (signInError) {
+            return new Response(
+              JSON.stringify({ error: '登录失败，请稍后重试' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          return new Response(
+            JSON.stringify({ success: true, isNewUser: false, session: signInData.session }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         console.error('Create user error:', signUpError);
         return new Response(
           JSON.stringify({ error: '注册失败，请稍后重试' }),
@@ -158,9 +228,11 @@ Deno.serve(async (req) => {
         );
       }
 
+      finalUserId = newUser.user.id;
+
       // 创建 profile
       await adminClient.from('profiles').upsert({
-        id: newUser.user.id,
+        id: finalUserId,
         display_name: `用户${phone.slice(-4)}`,
         phone,
         phone_country_code: countryCode,
@@ -183,7 +255,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, isNewUser: true, session: signInData.session }),
+        JSON.stringify({ success: true, isNewUser, session: signInData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
