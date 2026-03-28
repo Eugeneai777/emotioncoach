@@ -219,14 +219,14 @@ async function ensureUserFromOpenId(openId: string, unionId?: string): Promise<R
     if (authError) {
       console.error('[WechatPayAuth] Error creating miniprogram user:', authError);
       
-      // 尝试通过邮箱查找用户
-      const { data: existingUsers } = await supabase.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === tempEmail);
+      // 通过邮箱精准查找用户（替代 listUsers 全量拉取）
+      const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(tempEmail);
       
-      if (existingUser) {
-        userId = existingUser.id;
+      if (!getUserError && existingUserData?.user) {
+        userId = existingUserData.user.id;
         console.log('[WechatPayAuth] Found existing user by email:', userId);
       } else {
+        console.error('[WechatPayAuth] getUserByEmail failed:', getUserError);
         return new Response(
           JSON.stringify({ error: 'Failed to create user', details: authError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -602,14 +602,14 @@ async function exchangeCodeAndEnsureUser(code: string, state?: string): Promise<
       // 如果用户已存在（可能之前通过其他方式创建），尝试获取用户
       console.error('[WechatPayAuth] Error creating user:', authError);
       
-      // 尝试通过邮箱查找用户
-      const { data: existingUsers } = await supabase.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === tempEmail);
+      // 通过邮箱精准查找用户（替代 listUsers 全量拉取）
+      const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(tempEmail);
       
-      if (existingUser) {
-        userId = existingUser.id;
+      if (!getUserError && existingUserData?.user) {
+        userId = existingUserData.user.id;
         console.log('[WechatPayAuth] Found existing user by email:', userId);
       } else {
+        console.error('[WechatPayAuth] getUserByEmail failed:', getUserError);
         return new Response(
           JSON.stringify({ error: 'Failed to create user', details: authError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

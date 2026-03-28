@@ -526,20 +526,14 @@ Deno.serve(async (req) => {
                     userId = authData.user.id;
                     console.log('Created new user:', userId);
                   } else if ((authError as any)?.code === 'email_exists') {
-                    // 邮箱已存在，查找已有用户
-                    const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
-                      page: 1,
-                      perPage: 1000,
-                    });
+                    // 邮箱已存在，通过邮箱精准查找已有用户
+                    const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(email);
 
-                    if (listErr) {
-                      console.error('Failed to list users after email_exists:', listErr);
-                    } else {
-                      const existing = listData?.users?.find((u) => u.email === email);
-                      if (existing) {
-                        userId = existing.id;
-                        console.log('Found existing user by email:', userId);
-                      }
+                    if (getUserError) {
+                      console.error('Failed to getUserByEmail after email_exists:', getUserError);
+                    } else if (existingUserData?.user) {
+                      userId = existingUserData.user.id;
+                      console.log('Found existing user by email:', userId);
                     }
 
                     if (!userId) {
