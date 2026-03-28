@@ -225,7 +225,7 @@ const Goals = (): JSX.Element => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      navigate("/auth");
+      navigate("/auth?redirect=/goals");
       return;
     }
 

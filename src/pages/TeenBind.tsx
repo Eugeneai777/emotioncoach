@@ -28,7 +28,7 @@ export default function TeenBind() {
 
     if (!user?.id) {
       toast({ title: "请先登录", variant: "destructive" });
-      navigate("/auth");
+      navigate("/auth?redirect=/teen-bind");
       return;
     }
 

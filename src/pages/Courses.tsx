@@ -143,7 +143,7 @@ const Courses = () => {
   const handleWatch = async (videoUrlOrCourse: string | Course, courseId?: string) => {
     if (!user) {
       toast.error("请先登录");
-      navigate("/auth");
+      navigate("/auth?redirect=/courses");
       return;
     }
 

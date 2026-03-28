@@ -50,7 +50,7 @@ export default function MyStories() {
   const checkAuthAndLoadStories = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/auth");
+      navigate("/auth?redirect=/my-stories");
       return;
     }
     await loadStories(user.id);
