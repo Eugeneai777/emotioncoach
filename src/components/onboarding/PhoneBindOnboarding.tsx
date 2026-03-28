@@ -36,7 +36,7 @@ export function PhoneBindOnboarding() {
       .from('profiles')
       .select('phone, phone_bind_prompted')
       .eq('id', user.id)
-      .single();
+      .single() as any;
 
     if (!profile) return;
     // 已绑定手机号或已永久关闭提示
@@ -108,7 +108,7 @@ export function PhoneBindOnboarding() {
     if (user) {
       await supabase
         .from('profiles')
-        .update({ phone_bind_prompted: true })
+        .update({ phone_bind_prompted: true } as any)
         .eq('id', user.id);
     }
     setOpen(false);
