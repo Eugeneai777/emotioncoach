@@ -1,54 +1,98 @@
 
-# /promo/synergy 分享链路二次优化（运营视角）
 
-## 运营诊断（你反馈的问题本质）
-1. **“第一次成功、第二次失败”**会直接击穿用户信任，分享意愿会明显下降。  
-2. **生成慢**会导致高流失（尤其微信内链路，用户耐心极短）。  
-3. **“转发朋友”按钮不可兑现**属于“假功能”，会造成挫败感，影响成交与裂变。  
+# /auth 短信验证码功能问题诊断
 
-## 优化目标
-- 稳定性优先：连续多次生成可用（至少解决第二次失败）。
-- 体验极简：只保留“保存图片”主动作，转发改为长按引导。
-- 微信兼容：小程序 / H5 / 手机浏览器 / 电脑端行为一致、可理解。
+经过对前端 `Auth.tsx`、后端 `send-sms-code/index.ts` 和 `verify-sms-login/index.ts` 的完整审查，发现以下问题：
 
-## 实施方案
+---
 
-### A. 修复“第二次无法生成”（P0）
-1. **不再每次打开弹窗都重置 `cardReady=false`**，避免二次打开时卡片状态丢失。  
-2. 给生成流程加**自动降级重试**：  
-   - 首次按当前参数生成；  
-   - 失败后自动以更低 scale 再试一次（更稳更快）；  
-   - 重试失败再提示错误。  
-3. 增加**生成互斥锁**与状态机（idle/generating/preview），避免快速连点导致并发冲突。
+## 问题一：`verify-sms-login` 用 `listUsers()` 查全量用户（P0 严重）
 
-### B. 提升生成速度（P0-P1）
-1. `shareCardConfig` 下调微信/Android渲染倍率（优先稳定+速度）。  
-2. 同一次会话内引入**海报结果缓存**（首张成功后再次分享直接复用，秒开）。  
-3. 生成文案改为分阶段反馈：  
-   - “正在生成海报（约1-2秒）”  
-   - 失败重试时“正在优化清晰度后重试”。
+**第53行**：`adminClient.auth.admin.listUsers()` 默认只返回前 50 个用户。当用户数超过 50 后，新注册的用户可能查不到，导致：
+- 已注册用户被误判为新用户，重复创建账号失败
+- 或创建出重复占位邮箱账号
 
-### C. 交互改造（P0）
-1. **移除“转发朋友”按钮**（底部双按钮改为单按钮）。  
-2. 保留一个主按钮：**保存图片**。  
-3. 底部小字提示改为：  
-   - 微信内：`保存后，长按图片可转发给朋友/朋友圈`  
-   - 其他端：`保存到相册后可在社交软件中转发`  
-4. 去掉重复操作入口（顶部下载图标与底部主按钮重复时，保留底部主按钮）。
+**修复**：改用 `adminClient.auth.admin.listUsers({ filter: placeholderEmail })` 或直接用 `adminClient.auth.admin.getUserByEmail(placeholderEmail)` 精准查询。
 
-## 兼容策略（链路统一）
-- **微信小程序/H5**：主动作只做“保存”，转发走长按系统能力。  
-- **手机浏览器**：保存下载为主，保留长按提示。  
-- **电脑端**：下载到本地后分享（不再提供失败率高的伪转发入口）。
+---
 
-## 涉及文件
-- `src/hooks/useShareDialog.ts`（cardReady 重置逻辑）
-- `src/components/ui/share-dialog-base.tsx`（生成状态机、重试、缓存、文案）
-- `src/components/ui/share-image-preview.tsx`（移除“转发朋友”，单主按钮+小字提示）
-- `src/utils/shareCardConfig.ts`（渲染倍率与失败降级参数）
+## 问题二：临时密码 fallback 会覆盖用户原密码（P0 严重）
 
-## 验收标准（必须通过）
-1. 同一会话连续点击分享 3 次，均可生成。  
-2. 微信内无“点了没反应”的转发按钮。  
-3. 二次分享耗时明显低于首次（命中缓存）。  
-4. 手机端与电脑端提示文案一致且可执行。  
+**第78-79行和第119-120行**：当 magic link 验证失败时，代码用 `crypto.randomUUID()` 覆盖用户密码，之后用户无法用原密码登录。
+
+**修复**：改用 `adminClient.auth.admin.generateLink({ type: 'magiclink' })` 后直接提取 `hashed_token` 来验证，或统一使用临时密码方案但在登录成功后**立即恢复原密码**（当前代码第97行有注释但没实现）。
+
+---
+
+## 问题三：非 +86 手机号前端可发验证码请求（P1）
+
+**前端**第86行只校验11位数字格式，但第90行限制了 `countryCode !== '+86'`。如果用户选了 +86 以外的区号但手机号恰好11位，前端校验通过但后端返回错误。体验不一致。
+
+**修复**：前端在 `authMode === 'sms'` 时，根据 `countryCode` 动态调整校验规则，非 +86 时禁用发送按钮并提示"短信验证码仅支持中国大陆手机号"。
+
+---
+
+## 问题四：验证码输入无自动提交（P2 体验）
+
+用户输入满6位后仍需手动点击"登录/注册"按钮，增加一步操作。
+
+**修复**：`smsCode` 长度达到6位时自动触发 `handleSmsLogin`。
+
+---
+
+## 问题五：SMS模式与密码模式共享 `phone` 状态但验证规则不同（P2）
+
+SMS模式要求11位中国手机号，密码模式允许5-15位国际号码。两个 tab 共享同一个 `phone` 状态，切换 tab 时可能导致校验混乱。
+
+**修复**：SMS模式独立校验，或切换到 SMS tab 时如果 `countryCode !== '+86'` 自动重置为 `+86`。
+
+---
+
+## 问题六：验证码过期清理依赖触发器但无定时执行（P3）
+
+`cleanup_expired_verification_codes` 是 INSERT 触发器，只在新插入时清理。如果长时间无人发送验证码，过期数据不会被清理。
+
+**修复**：可忽略（数据量小），或加一个 pg_cron 定时清理。
+
+---
+
+## 修复方案
+
+| 文件 | 改动 |
+|------|------|
+| `supabase/functions/verify-sms-login/index.ts` | 用 `getUserByEmail` 替换 `listUsers()`；移除临时密码方案，统一用 generateLink + verifyOtp |
+| `src/pages/Auth.tsx` | SMS模式下非+86禁用发送；6位验证码自动提交；切换tab时重置countryCode |
+
+### 核心改动详情
+
+**verify-sms-login 重构（第52-106行）**：
+```typescript
+// Before: listUsers() 全量拉取（有分页限制）
+const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+const existingUser = existingUsers?.users?.find(...)
+
+// After: 精准查询单个用户
+const { data: { users } } = await adminClient.auth.admin.listUsers({
+  page: 1, perPage: 1,
+});
+// 或更好的方案：直接通过邮箱查
+const { data: userData } = await adminClient
+  .from('profiles')
+  .select('id')
+  .eq('phone', phone)
+  .eq('phone_country_code', countryCode)
+  .limit(1)
+  .maybeSingle();
+```
+
+**移除临时密码，统一登录方式**：对已有用户只用 `generateLink` → `verifyOtp`，失败直接报错而非用临时密码覆盖。
+
+**前端自动提交**：
+```typescript
+useEffect(() => {
+  if (smsCode.length === 6 && agreedTerms && !loading) {
+    handleSmsLogin({ preventDefault: () => {} } as React.FormEvent);
+  }
+}, [smsCode]);
+```
+
