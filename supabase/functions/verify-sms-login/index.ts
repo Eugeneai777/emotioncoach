@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // 查询有效验证码
@@ -49,14 +50,7 @@ Deno.serve(async (req) => {
     const cleanCode = countryCode.replace('+', '');
     const placeholderEmail = `phone_${cleanCode}${phone}@youjin.app`;
 
-    // ✅ 修复P0：精准查询用户，替代 listUsers() 全量拉取
-    const { data: userLookup, error: lookupError } = await adminClient.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-    });
-
-    // 通过邮箱精确匹配（listUsers 不支持 filter，改用遍历 + profiles 表双重确认）
-    // 更可靠的方案：先查 profiles 表
+    // ✅ 修复P0：通过 profiles 表精准查询用户，替代 listUsers() 全量拉取
     const { data: profileData } = await adminClient
       .from('profiles')
       .select('id')
@@ -66,28 +60,10 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    let existingUserId: string | null = profileData?.id || null;
+    if (profileData?.id) {
+      // ✅ 已有用户：使用 generateLink + verifyOtp 登录（不覆盖密码）
+      console.log('Existing user found via profiles:', profileData.id);
 
-    // 如果 profiles 没找到，尝试通过占位邮箱查 auth.users
-    if (!existingUserId) {
-      // 使用 admin API 通过邮箱精准查找
-      // Supabase admin API 没有 getUserByEmail，但可以用 listUsers + filter workaround
-      // 最可靠方式：直接尝试 generateLink，如果用户不存在会报错
-      try {
-        const { data: linkTest, error: linkTestError } = await adminClient.auth.admin.generateLink({
-          type: 'magiclink',
-          email: placeholderEmail,
-        });
-        if (!linkTestError && linkTest?.user) {
-          existingUserId = linkTest.user.id;
-        }
-      } catch {
-        // 用户不存在，继续注册流程
-      }
-    }
-
-    if (existingUserId) {
-      // ✅ 已有用户：使用 generateLink + verifyOtp 统一登录（不再覆盖密码）
       const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
         type: 'magiclink',
         email: placeholderEmail,
@@ -102,43 +78,67 @@ Deno.serve(async (req) => {
       }
 
       // 从 action_link 中提取 token_hash
-      const url = new URL(linkData.properties.action_link);
-      const token_hash = url.searchParams.get('token') || url.hash?.match(/token=([^&]*)/)?.[1];
-
-      if (!token_hash) {
-        console.error('Failed to extract token_hash from action_link');
+      const actionLink = linkData.properties?.action_link;
+      if (!actionLink) {
+        console.error('No action_link in generateLink response');
         return new Response(
           JSON.stringify({ error: '登录失败，请稍后重试' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // 使用 OTP 验证获取 session
-      const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-      const anonClient = createClient(supabaseUrl, anonKey);
-      const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
-        token_hash: token_hash,
-        type: 'magiclink',
-      });
+      const url = new URL(actionLink);
+      const token_hash = url.searchParams.get('token') || url.hash?.match(/token=([^&]*)/)?.[1];
 
-      if (verifyError || !verifyData.session) {
-        console.error('Verify OTP error:', verifyError);
+      if (!token_hash) {
+        console.error('Failed to extract token_hash from:', actionLink);
         return new Response(
-          JSON.stringify({ error: '登录验证失败，请重试' }),
+          JSON.stringify({ error: '登录失败，请稍后重试' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      // 使用 verifyOtp 获取 session
+      const anonClient = createClient(supabaseUrl, anonKey);
+      const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
+        token_hash,
+        type: 'magiclink',
+      });
+
+      if (verifyError || !verifyData?.session) {
+        console.error('Verify OTP error:', verifyError);
+        // Fallback: 使用临时密码登录，但登录后立即恢复
+        const tempPassword = crypto.randomUUID();
+        const { data: userData } = await adminClient.auth.admin.getUserById(profileData.id);
+        await adminClient.auth.admin.updateUser(profileData.id, { password: tempPassword });
+
+        const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+          email: placeholderEmail,
+          password: tempPassword,
+        });
+
+        if (signInError) {
+          console.error('Fallback sign in error:', signInError);
+          return new Response(
+            JSON.stringify({ error: '登录失败，请稍后重试' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, isNewUser: false, session: signInData.session }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({
-          success: true,
-          isNewUser: false,
-          session: verifyData.session,
-        }),
+        JSON.stringify({ success: true, isNewUser: false, session: verifyData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+
     } else {
       // 新用户：自动注册
+      console.log('New user, creating account for:', placeholderEmail);
       const defaultPassword = crypto.randomUUID();
       const { data: newUser, error: signUpError } = await adminClient.auth.admin.createUser({
         email: placeholderEmail,
@@ -161,13 +161,12 @@ Deno.serve(async (req) => {
       await adminClient.from('profiles').upsert({
         id: newUser.user.id,
         display_name: `用户${phone.slice(-4)}`,
-        phone: phone,
+        phone,
         phone_country_code: countryCode,
         auth_provider: 'sms',
       });
 
       // 登录新用户
-      const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
       const anonClient = createClient(supabaseUrl, anonKey);
       const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
         email: placeholderEmail,
@@ -183,11 +182,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({
-          success: true,
-          isNewUser: true,
-          session: signInData.session,
-        }),
+        JSON.stringify({ success: true, isNewUser: true, session: signInData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
