@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_bind_prompted boolean DEFAULT false;

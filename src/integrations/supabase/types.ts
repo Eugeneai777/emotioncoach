@@ -8124,6 +8124,7 @@ export type Database = {
           must_change_password: boolean | null
           notification_frequency: string | null
           phone: string | null
+          phone_bind_prompted: boolean | null
           phone_country_code: string | null
           preferred_coach: string | null
           preferred_encouragement_style: string | null
@@ -8188,6 +8189,7 @@ export type Database = {
           must_change_password?: boolean | null
           notification_frequency?: string | null
           phone?: string | null
+          phone_bind_prompted?: boolean | null
           phone_country_code?: string | null
           preferred_coach?: string | null
           preferred_encouragement_style?: string | null
@@ -8252,6 +8254,7 @@ export type Database = {
           must_change_password?: boolean | null
           notification_frequency?: string | null
           phone?: string | null
+          phone_bind_prompted?: boolean | null
           phone_country_code?: string | null
           preferred_coach?: string | null
           preferred_encouragement_style?: string | null
