@@ -81,14 +81,31 @@ const Auth = () => {
     return () => clearTimeout(timer);
   }, [smsCountdown]);
 
+  // SMS模式下非+86自动提示并禁用
+  const isSmsDisabled = authMode === 'sms' && countryCode !== '+86';
+
+  // 切换到SMS tab时，如果区号不是+86，自动重置
+  useEffect(() => {
+    if (authMode === 'sms' && countryCode !== '+86') {
+      setCountryCode('+86');
+    }
+  }, [authMode]);
+
+  // 验证码满6位自动提交
+  useEffect(() => {
+    if (authMode === 'sms' && smsCode.length === 6 && agreedTerms && !loading && phone) {
+      handleSmsLogin({ preventDefault: () => {} } as React.FormEvent);
+    }
+  }, [smsCode]);
+
   // 发送短信验证码
   const handleSendSmsCode = async () => {
-    if (!phone || !/^\d{11}$/.test(phone)) {
-      toast({ title: "请输入有效的11位手机号", variant: "destructive" });
+    if (countryCode !== '+86') {
+      toast({ title: "短信验证码仅支持中国大陆手机号（+86）", variant: "destructive" });
       return;
     }
-    if (countryCode !== '+86') {
-      toast({ title: "短信验证码仅支持中国大陆手机号", variant: "destructive" });
+    if (!phone || !/^\d{11}$/.test(phone)) {
+      toast({ title: "请输入有效的11位手机号", variant: "destructive" });
       return;
     }
     setSmsSending(true);
