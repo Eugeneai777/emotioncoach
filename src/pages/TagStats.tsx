@@ -55,7 +55,7 @@ const TagStats = () => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      navigate("/auth");
+      navigate("/auth?redirect=" + encodeURIComponent(window.location.pathname + window.location.search));
       return;
     }
 

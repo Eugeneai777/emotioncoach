@@ -98,7 +98,7 @@ export default function StoryCoach() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("请先登录");
-        navigate("/auth");
+        navigate("/auth?redirect=" + encodeURIComponent(window.location.pathname + window.location.search));
         return;
       }
 
@@ -146,7 +146,7 @@ export default function StoryCoach() {
     localStorage.removeItem('cached_payment_openid_mp');
     sessionStorage.removeItem('cached_payment_openid_mp');
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   const handleQuickStart = () => {

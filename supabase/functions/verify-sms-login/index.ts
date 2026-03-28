@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
 
           if (!linkError && linkData?.properties?.action_link) {
             const url = new URL(linkData.properties.action_link);
-            const token_hash = url.searchParams.get('token') || url.hash?.match(/token=([^&]*)/)?.[1];
+            const token_hash = url.searchParams.get('token_hash') || url.searchParams.get('token') || url.hash?.match(/token_hash=([^&]*)/)?.[1] || url.hash?.match(/token=([^&]*)/)?.[1];
             if (token_hash) {
               const anonClient = createClient(supabaseUrl, anonKey);
               const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
 
           // 最终 fallback：临时密码登录
           const tempPassword = crypto.randomUUID();
-          await adminClient.auth.admin.updateUser(finalUserId, { password: tempPassword });
+          await adminClient.auth.admin.updateUserById(finalUserId, { password: tempPassword });
           const anonClient = createClient(supabaseUrl, anonKey);
           const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
             email: placeholderEmail,
