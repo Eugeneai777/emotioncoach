@@ -219,7 +219,7 @@ ${briefingData.growth_story || '暂无记录'}
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   const handleOptionClick = async (option: string) => {
