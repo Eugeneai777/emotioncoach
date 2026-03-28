@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       }
 
       const url = new URL(actionLink);
-      const token_hash = url.searchParams.get('token') || url.hash?.match(/token=([^&]*)/)?.[1];
+      const token_hash = url.searchParams.get('token_hash') || url.searchParams.get('token') || url.hash?.match(/token_hash=([^&]*)/)?.[1] || url.hash?.match(/token=([^&]*)/)?.[1];
 
       if (!token_hash) {
         console.error('Failed to extract token_hash from:', actionLink);
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
         // Fallback: 使用临时密码登录，但登录后立即恢复
         const tempPassword = crypto.randomUUID();
         const { data: userData } = await adminClient.auth.admin.getUserById(profileData.id);
-        await adminClient.auth.admin.updateUser(profileData.id, { password: tempPassword });
+        await adminClient.auth.admin.updateUserById(profileData.id, { password: tempPassword });
 
         const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
           email: placeholderEmail,
