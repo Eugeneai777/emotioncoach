@@ -90,16 +90,20 @@ const dailyLoop = [
   { step: 5, icon: Leaf, title: "知乐胶囊调理", desc: "结合当日情绪与睡眠状态，个性化服用建议，加速身心改善", color: "#0d9488" },
 ];
 
-/* ========== Training Outcomes ========== */
-const outcomes = [
-  { icon: "🧘", title: "情绪更稳定", desc: "学会识别、表达、释放情绪，不再易怒、压抑、崩溃" },
-  { icon: "❤️", title: "关系更和顺", desc: "掌握夫妻沟通、亲子交流方法，家庭更和睦" },
-  { icon: "🎯", title: "压力明显减少", desc: "每天放松训练+草本调理，缓解职场与生活双重压力" },
-  { icon: "😴", title: "睡眠质量提升", desc: "冥想+情绪疏导+知乐胶囊，入睡更快、睡得更沉" },
-  { icon: "🔧", title: "长期成长工具", desc: "学会一套可终身使用的情绪调节+自我关怀方法" },
-  { icon: "👥", title: "找到同频圈子", desc: "在安全、理解、支持的社区里，不再孤独硬扛" },
-  { icon: "🛡", title: "专业教练护航", desc: "多元背景资深教练团队，提供专业指导与陪伴" },
-  { icon: "🌿", title: "根源身体调理", desc: "知乐胶囊草本配方，补心补肝，调理情绪与睡眠根源" },
+/* ========== Delivery Tiers (三层交付金字塔) ========== */
+const deliveryCore = [
+  { icon: "🧠", title: "AI情绪教练系统", detail: "24小时全天候陪伴，随时倾诉、精准疏导", accent: "amber" },
+  { icon: "🧘", title: "7天专业冥想音频", detail: "真人录制，每天10-17分钟，深度放松身心", accent: "amber" },
+  { icon: "💊", title: "知乐胶囊·草本调理", detail: "天然植物配方，从根源调理情绪与睡眠", accent: "amber" },
+];
+const deliveryHighlights = [
+  { icon: "👤", title: "1V1教练专属辅导", detail: "资深教练一对一，量身定制成长方案", tag: "稀缺" },
+  { icon: "👥", title: "海沃塔团队研讨", detail: "犹太精英学习法，同频伙伴深度共创", tag: "特色" },
+];
+const deliveryBonuses = [
+  { icon: "📚", title: "每日精选课程" },
+  { icon: "🏘️", title: "成长社群" },
+  { icon: "📊", title: "7天成长报告" },
 ];
 
 /* ========== Faculty — Lead Coach ========== */
@@ -772,25 +776,78 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== TRAINING OUTCOMES ===== */}
+      {/* ===== 你将获得 — 三层交付金字塔 ===== */}
       <Section className="bg-amber-50/40">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">训练营能给你带来什么</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">8项结果承诺，看得见的改变</p>
-        <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
-          {outcomes.map((o, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              className="p-3 rounded-xl bg-white shadow-sm border border-amber-100/50 text-center"
-            >
-              <span className="text-2xl mb-1 block">{o.icon}</span>
-              <h4 className="text-sm font-bold text-slate-700 mb-1">{o.title}</h4>
-              <p className="text-[10px] text-slate-500 leading-relaxed">{o.desc}</p>
-            </motion.div>
-          ))}
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你将获得</h2>
+        <p className="text-slate-500 text-sm text-center mb-6">核心交付 · 专属权益 · 附加福利</p>
+
+        <div className="max-w-lg mx-auto space-y-5">
+          {/* — 核心交付 — */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-base">🔥</span>
+              <span className="text-xs font-bold text-amber-700 tracking-wide">核心交付 · 每天都用</span>
+            </div>
+            <div className="space-y-2.5">
+              {deliveryCore.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex items-start gap-3 p-3.5 rounded-xl bg-white border-l-[3px] border-amber-400 shadow-sm"
+                >
+                  <span className="text-2xl mt-0.5 shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-slate-800">{item.title}</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed mt-0.5">{item.detail}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* — 专属亮点 — */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-base">⭐</span>
+              <span className="text-xs font-bold text-violet-700 tracking-wide">专属亮点 · 高价值稀缺</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {deliveryHighlights.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative p-3.5 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200/60 shadow-sm"
+                >
+                  <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[9px] font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-sm">{item.tag}</span>
+                  <span className="text-2xl block mb-1.5">{item.icon}</span>
+                  <h4 className="text-sm font-bold text-slate-800 mb-0.5">{item.title}</h4>
+                  <p className="text-[10px] text-slate-500 leading-relaxed">{item.detail}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* — 附加权益 — */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-base">🎁</span>
+              <span className="text-xs font-bold text-slate-500 tracking-wide">附加权益</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {deliveryBonuses.map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-slate-600 bg-white/80 border border-slate-200/60 rounded-full shadow-sm">
+                  <span>{item.icon}</span>
+                  <span>{item.title}</span>
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </Section>
 
