@@ -97,8 +97,8 @@ const deliveryCore = [
   { icon: "💊", title: "知乐胶囊·草本调理", detail: "天然植物配方，从根源调理情绪与睡眠", accent: "amber" },
 ];
 const deliveryHighlights = [
-  { icon: "👤", title: "1V1教练专属辅导", detail: "资深教练一对一，量身定制成长方案", tag: "稀缺" },
-  { icon: "👥", title: "海沃塔团队研讨", detail: "犹太精英学习法，同频伙伴深度共创", tag: "特色" },
+  { icon: "🎯", title: "1V1教练专属辅导", detail: "资深教练一对一，量身定制成长方案", tag: "稀缺" },
+  { icon: "💡", title: "海沃塔团队研讨", detail: "犹太精英学习法，同频伙伴深度共创", tag: "特色" },
 ];
 const deliveryBonuses = [
   { icon: "📚", title: "每日精选课程" },
