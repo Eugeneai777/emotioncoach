@@ -324,6 +324,7 @@ const App = () => (
             <FloatingQuickMenu />
             <FollowWechatReminder />
             <BloomInvitePrompt />
+            <PhoneBindOnboarding />
           </Suspense>
           <ChunkErrorBoundary>
           <Suspense fallback={<PageLoader />}>
