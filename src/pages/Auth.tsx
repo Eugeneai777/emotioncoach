@@ -100,12 +100,12 @@ const Auth = () => {
 
   // 发送短信验证码
   const handleSendSmsCode = async () => {
-    if (!phone || !/^\d{11}$/.test(phone)) {
-      toast({ title: "请输入有效的11位手机号", variant: "destructive" });
+    if (countryCode !== '+86') {
+      toast({ title: "短信验证码仅支持中国大陆手机号（+86）", variant: "destructive" });
       return;
     }
-    if (countryCode !== '+86') {
-      toast({ title: "短信验证码仅支持中国大陆手机号", variant: "destructive" });
+    if (!phone || !/^\d{11}$/.test(phone)) {
+      toast({ title: "请输入有效的11位手机号", variant: "destructive" });
       return;
     }
     setSmsSending(true);
