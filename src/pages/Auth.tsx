@@ -136,8 +136,9 @@ const Auth = () => {
       const { data, error } = await supabase.functions.invoke('verify-sms-login', {
         body: { phone, code: smsCode, countryCode },
       });
-      if (error) throw new Error(error.message || '验证失败');
+      // 优先使用后端返回的中文错误信息
       if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(data?.error || '验证失败，请稍后重试');
       if (!data?.session) throw new Error('登录失败，未获取到会话');
 
       // 设置 session
