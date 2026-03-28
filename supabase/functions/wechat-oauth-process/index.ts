@@ -101,12 +101,11 @@ serve(async (req) => {
         if (signUpError) {
           // 如果是邮箱已存在错误，尝试获取现有用户并登录
           if (signUpError.code === 'email_exists') {
-            console.log('Email exists, fetching existing user...');
-            const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
-            const existingUser = existingUsers?.users?.find(u => u.email === email);
+            console.log('Email exists, fetching existing user by email...');
+            const { data: existingUserData, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(email);
             
-            if (existingUser) {
-              finalUserId = existingUser.id;
+            if (!getUserError && existingUserData?.user) {
+              finalUserId = existingUserData.user.id;
               isNewUser = false;
               console.log('Found existing user by email:', finalUserId);
               
