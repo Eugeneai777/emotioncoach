@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAssessmentTemplate, useSaveAssessmentResult } from "@/hooks/usePartnerAssessments";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,6 +49,90 @@ export default function DynamicAssessmentPage() {
   );
   const deleteRecord = useDeleteDynamicAssessmentRecord();
 
+  const questions = template?.questions || [];
+  const dimensions = template?.dimensions || [];
+  const patterns = template?.result_patterns || [];
+
+  const generateInsight = async (scoringResult: ScoringResult) => {
+    if (!template) return;
+    setLoadingInsight(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-partner-assessment-insight", {
+        body: {
+          dimensionScores: scoringResult.dimensionScores,
+          primaryPattern: scoringResult.primaryPattern?.label,
+          totalScore: scoringResult.totalScore,
+          maxScore: scoringResult.maxScore,
+          aiInsightPrompt: template.ai_insight_prompt,
+          title: template.title,
+          meta: scoringResult.meta,
+        },
+      });
+      if (error) throw error;
+      setAiInsight(data.insight);
+    } catch (e) {
+      console.error("Insight error:", e);
+    } finally {
+      setLoadingInsight(false);
+    }
+  };
+
+  const calculateAndShowResult = (answers: Record<number, number>) => {
+    if (!template) return;
+    const scoringResult = calculateScore(scoringType, answers, questions, dimensions, patterns);
+    setResult(scoringResult);
+    setPhase("result");
+
+    if (user) {
+      saveResult.mutate({
+        user_id: user.id,
+        template_id: template.id,
+        answers,
+        dimension_scores: scoringResult.dimensionScores,
+        total_score: scoringResult.totalScore,
+        primary_pattern: scoringResult.primaryPattern?.label || "",
+      });
+    }
+
+    generateInsight(scoringResult);
+  };
+
+  const handleQuestionsComplete = (answers: Record<number, number>) => {
+    if (requireAuth && !user) {
+      toast.info("请先登录后查看结果");
+      const returnUrl = window.location.pathname;
+      window.location.href = `/auth?returnUrl=${encodeURIComponent(returnUrl)}`;
+      return;
+    }
+
+    if (requirePayment && !hasPurchased) {
+      calculateAndShowResult(answers);
+      setShowPayDialog(true);
+      return;
+    }
+
+    calculateAndShowResult(answers);
+  };
+
+  const handleRetake = () => {
+    setResult(null);
+    setAiInsight(null);
+    setPhase("questions");
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPayDialog(false);
+    refetchPurchase();
+    toast.success("支付成功，已解锁完整报告");
+  };
+
+  const handleDeleteRecord = (id: string) => {
+    deleteRecord.mutate(id, {
+      onSuccess: () => toast.success("记录已删除"),
+      onError: () => toast.error("删除失败"),
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -64,94 +148,6 @@ export default function DynamicAssessmentPage() {
       </div>
     );
   }
-
-  const questions = template.questions || [];
-  const dimensions = template.dimensions || [];
-  const patterns = template.result_patterns || [];
-
-  const calculateAndShowResult = (answers: Record<number, number>) => {
-    // Use pluggable scoring engine
-    const scoringResult = calculateScore(scoringType, answers, questions, dimensions, patterns);
-
-    setResult(scoringResult);
-    setPhase("result");
-
-    // Save result
-    if (user) {
-      saveResult.mutate({
-        user_id: user.id,
-        template_id: template.id,
-        answers,
-        dimension_scores: scoringResult.dimensionScores,
-        total_score: scoringResult.totalScore,
-        primary_pattern: scoringResult.primaryPattern?.label || "",
-      });
-    }
-
-    // Generate AI insight
-    generateInsight(scoringResult);
-  };
-
-  const handleQuestionsComplete = useCallback((answers: Record<number, number>) => {
-    // Check auth requirement
-    if (requireAuth && !user) {
-      toast.info("请先登录后查看结果");
-      const returnUrl = window.location.pathname;
-      window.location.href = `/auth?returnUrl=${encodeURIComponent(returnUrl)}`;
-      return;
-    }
-
-    // Check payment requirement
-    if (requirePayment && !hasPurchased) {
-      calculateAndShowResult(answers);
-      setShowPayDialog(true);
-      return;
-    }
-
-    calculateAndShowResult(answers);
-  }, [requireAuth, user, requirePayment, hasPurchased, template, questions, dimensions, patterns, scoringType]);
-
-  const generateInsight = async (scoringResult: ScoringResult) => {
-    setLoadingInsight(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-partner-assessment-insight", {
-        body: {
-          dimensionScores: scoringResult.dimensionScores,
-          primaryPattern: scoringResult.primaryPattern?.label,
-          totalScore: scoringResult.totalScore,
-          maxScore: scoringResult.maxScore,
-          aiInsightPrompt: template.ai_insight_prompt,
-          title: template.title,
-          meta: scoringResult.meta, // Pass extra scoring data for clinical insights
-        },
-      });
-      if (error) throw error;
-      setAiInsight(data.insight);
-    } catch (e) {
-      console.error("Insight error:", e);
-    } finally {
-      setLoadingInsight(false);
-    }
-  };
-
-  const handleRetake = useCallback(() => {
-    setResult(null);
-    setAiInsight(null);
-    setPhase("questions");
-  }, []);
-
-  const handlePaymentSuccess = useCallback(() => {
-    setShowPayDialog(false);
-    refetchPurchase();
-    toast.success("支付成功，已解锁完整报告");
-  }, [refetchPurchase]);
-
-  const handleDeleteRecord = useCallback((id: string) => {
-    deleteRecord.mutate(id, {
-      onSuccess: () => toast.success("记录已删除"),
-      onError: () => toast.error("删除失败"),
-    });
-  }, [deleteRecord]);
 
   // === INTRO ===
   if (phase === "intro") {
