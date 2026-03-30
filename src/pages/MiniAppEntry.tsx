@@ -184,15 +184,6 @@ const promoSlides = [
     gradient: "from-slate-700 to-amber-600",
     route: "/promo/synergy",
   },
-  {
-    id: "men-relief",
-    emoji: "💪",
-    title: "知乐双效解压",
-    subtitle: "身心协同修复",
-    tag: "男性专属",
-    gradient: "from-blue-500 to-cyan-400",
-    route: "/promo/zhile-havruta",
-  },
 ];
 
 const PromoBanner: React.FC<{
