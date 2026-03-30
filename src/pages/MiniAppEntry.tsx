@@ -306,7 +306,7 @@ const MiniAppEntry = () => {
       .then(({ data }) => {
         if (data) {
           const map: Record<string, string> = {};
-          data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
+          data.forEach((row: any) => { map[row.audience_id] = `${row.image_url}?t=${Date.now()}`; });
           setIllustrations(map);
         }
       });
