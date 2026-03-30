@@ -164,14 +164,14 @@ const MamaAssistant = () => {
         >
           <p className="text-xs font-semibold text-rose-800 px-1">📊 测一测</p>
           <button
-            onClick={() => navigate("/assessment/women_competitiveness")}
+            onClick={() => navigate("/women-competitiveness")}
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
           >
             <div className="flex items-center gap-2.5">
               <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">✨</span>
               <div className="text-left">
                 <p className="text-[13px] font-medium text-rose-900">35+女性竞争力测评</p>
-                <p className="text-[10px] text-rose-600/60">5分钟 · 免费</p>
+                <p className="text-[10px] text-rose-600/60">7分钟 · 限时¥9.9</p>
               </div>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
@@ -184,7 +184,7 @@ const MamaAssistant = () => {
               <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50">💛</span>
               <div className="text-left">
                 <p className="text-[13px] font-medium text-rose-900">情绪健康自评</p>
-                <p className="text-[10px] text-rose-600/60">3分钟 · 免费</p>
+                <p className="text-[10px] text-rose-600/60">5分钟 · 限时¥9.9</p>
               </div>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
