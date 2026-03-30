@@ -29,9 +29,8 @@ const audiences: Array<{
       { emoji: "💚", title: "情绪健康测评", sub: "PHQ-9+GAD-7·5分钟", route: "/emotion-health", price: "限时¥9.9" },
     ],
   }},
-  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400", badge: null },
+  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400", badge: null },
   { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "爱需要被听见", route: "/us-ai", gradient: "from-purple-500 to-violet-400", badge: null },
-  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400", badge: null },
   { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400", badge: {
     text: "测一测",
     assessments: [
@@ -39,7 +38,8 @@ const audiences: Array<{
       { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "专业版" },
     ],
   }},
-  { id: "senior", emoji: "🌿", label: "银发陪伴", subtitle: "陪您说说话", route: "/elder-care", gradient: "from-emerald-500 to-teal-400", badge: null },
+  { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400", badge: null },
+  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400", badge: null },
 ];
 
 const exploreBlocks = [
