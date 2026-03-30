@@ -1,60 +1,32 @@
 
 
-# 女性专区插画更新 + 人群卡片排序调整
+# 修复女性专区插画缓存问题
 
-## 评估
+## 问题原因
 
-### 1. 插画问题 — 确实不合适
+Edge Function 确实已重新生成了 `mama` 插画并更新了数据库记录（时间戳 `2026-03-30 09:43:59`），但存储桶中的文件路径没变（仍是 `mama.png`），浏览器和 CDN 缓存了旧的"妈妈抱孩子"图片，导致页面显示未更新。
 
-当前 `mama` 插画的生成 prompt 是 **"a gentle mother holding a baby"**（妈妈抱婴儿），这与已升级的"女性专区"定位严重不符。35+ 单身女性、已婚未育女性看到"抱孩子"的画面会产生心理排斥，直接影响点击率。
+## 解决方案
 
-**需要做**：更新生成 prompt 为更泛化的女性形象（如自信独立的职场女性、或多元女性群像），然后重新生成插画并替换数据库记录。
-
-### 2. 排序调整 — 商业合理
-
-你提出的排序：
-
-```text
-第一排：女性专区  银发陪伴  情侣夫妻
-第二排：中年觉醒  青少年    职场解压
-```
-
-**商业评估**：
-- **女性专区 + 中年觉醒对角线分布**，两个核心付费转化入口（挂测评 badge）分别占据左上、左下视觉焦点位，符合 Z 字阅读动线
-- **银发陪伴提前**到第一排中间 — 这是一个家庭决策型入口（子女替父母选），放在显眼位置有利于口碑传播
-- **职场解压移到右下** — 当前已无 badge，降低了其战略优先级，放在末位合理
-
----
-
-## 具体改动
-
-### 1. 调整卡片排序（两个文件）
-
-**`MiniAppEntry.tsx`** 和 **`AudienceHub.tsx`** 中 audiences 数组重排为：
-
-1. 女性专区 (mama)
-2. 银发陪伴 (senior)
-3. 情侣夫妻 (couple)
-4. 中年觉醒 (midlife)
-5. 青少年 (youth)
-6. 职场解压 (workplace)
-
-### 2. 更新女性专区插画 prompt + 重新生成
-
-**`generate-audience-illustrations/index.ts`** 中将 mama prompt 从：
-> "a gentle mother holding a baby..."
-
-改为：
-> "a confident modern Chinese woman standing tall, professional attire with warm smile, representing empowerment and independence, soft rose-pink tones, minimalist flat style..."
-
-然后调用 edge function 重新生成 mama 插画。
+在两个加载插画的组件中，给图片 URL 追加 `?t=` 时间戳参数作为 cache-busting，强制浏览器加载最新版本。
 
 ### 改动文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/pages/MiniAppEntry.tsx` | audiences 数组重排顺序 |
-| `src/components/energy-studio/AudienceHub.tsx` | audiences 数组重排顺序 |
-| `supabase/functions/generate-audience-illustrations/index.ts` | 更新 mama prompt |
-| 数据库 `audience_illustrations` | 调用 edge function 重新生成 mama 插画 |
+| `src/pages/MiniAppEntry.tsx` | 加载插画数据后，给每个 `image_url` 追加 `?t={created_at时间戳}` |
+| `src/components/energy-studio/AudienceHub.tsx` | 同上 |
+
+### 具体改动
+
+在两个文件的 `useEffect` 中，将：
+```js
+map[row.audience_id] = row.image_url;
+```
+改为：
+```js
+map[row.audience_id] = `${row.image_url}?t=${Date.now()}`;
+```
+
+这样每次页面加载都会绕过缓存拉取最新图片。零业务逻辑影响，仅影响图片加载。
 
