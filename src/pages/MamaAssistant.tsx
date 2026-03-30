@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, ChevronRight, Home, Share2, MessageCircle } from "lucide-react";
+import { Mic, ChevronRight, Home, Share2, MessageCircle, ArrowRight } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 
@@ -16,7 +16,7 @@ import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 const quickEntries = [
   { emoji: "😊", title: "情绪日记", desc: "记录此刻心情", context: "我现在心情不太好，想聊聊...", chatType: "emotion" as "emotion" | "gratitude" },
   { emoji: "🆘", title: "情绪SOS", desc: "崩溃时按一下", route: "/emotion-button" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
-  { emoji: "📝", title: "感恩日记", desc: "记录美好", context: "我想记录一件今天让我感恩的小事...", chatType: "gratitude" as "emotion" | "gratitude" },
+  { emoji: "✨", title: "能量测评", desc: "了解你的状态", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
 ];
 
 const MamaAssistant = () => {
@@ -38,6 +38,24 @@ const MamaAssistant = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white pb-20">
+      {/* Sticky conversion bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="sticky top-0 z-50 bg-gradient-to-r from-pink-400 via-rose-400 to-pink-500 shadow-md"
+      >
+        <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2.5">
+          <span className="text-white text-sm font-medium">🌸 7天有劲训练营 · 找回你的能量</span>
+          <button
+            onClick={() => navigate("/promo/synergy?source=mama")}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 text-rose-600 text-xs font-semibold active:scale-95 transition-transform"
+          >
+            了解详情 <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      </motion.div>
+
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
 
         {/* Top bar */}
@@ -61,7 +79,7 @@ const MamaAssistant = () => {
                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
               >
                 <Share2 className="w-3.5 h-3.5" />
-                <span>分享给闺蜜</span>
+                <span>分享给好友</span>
               </motion.button>
             }
           />
@@ -74,9 +92,9 @@ const MamaAssistant = () => {
           className="text-center mb-1"
         >
           <span className="text-[22px] font-extrabold tracking-wider text-rose-900">
-             宝妈AI
+             女性专区
           </span>
-          <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">懂 你 的 温 暖 陪 伴</p>
+          <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">懂 你 的 辛 苦 与 力 量</p>
         </motion.div>
 
         {/* Hero CTA */}
@@ -116,7 +134,7 @@ const MamaAssistant = () => {
           </button>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            不需要坚强，这里可以放下所有 💖
+            不需要坚强，这里可以做自己 💖
           </p>
         </motion.div>
 
@@ -160,29 +178,45 @@ const MamaAssistant = () => {
           <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
         </motion.div>
 
-        {/* 趣味测评 CTA */}
+        {/* 测评入口 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.4 }}
-          className="pb-8"
+          className="pb-8 space-y-2"
         >
+          <p className="text-xs font-semibold text-rose-800 px-1">📊 测一测</p>
           <button
-            onClick={() => navigate("/assessment-tools")}
+            onClick={() => navigate("/assessment/women_competitiveness")}
             className="w-full flex items-center justify-between 
-                       px-5 py-4 rounded-2xl 
-                       bg-gradient-to-r from-pink-50 to-rose-50 
-                       border border-pink-200/60 
+                       px-4 py-3 rounded-xl 
+                       bg-white border border-pink-100/60 shadow-sm
                        active:scale-[0.98] transition-transform duration-200"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🔋</span>
+            <div className="flex items-center gap-2.5">
+              <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">✨</span>
               <div className="text-left">
-                <p className="text-sm font-semibold text-rose-800">能量测评 & 工具</p>
-                <p className="text-[11px] text-rose-600/70">1分钟了解自己的状态</p>
+                <p className="text-[13px] font-medium text-rose-900">35+女性竞争力测评</p>
+                <p className="text-[10px] text-rose-600/60">5分钟 · 免费</p>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-rose-400" />
+            <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
+          </button>
+          <button
+            onClick={() => navigate("/assessment/emotion_health")}
+            className="w-full flex items-center justify-between 
+                       px-4 py-3 rounded-xl 
+                       bg-white border border-pink-100/60 shadow-sm
+                       active:scale-[0.98] transition-transform duration-200"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50">💛</span>
+              <div className="text-left">
+                <p className="text-[13px] font-medium text-rose-900">情绪健康自评</p>
+                <p className="text-[10px] text-rose-600/60">3分钟 · 免费</p>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
           </button>
         </motion.div>
 
@@ -207,7 +241,7 @@ const MamaAssistant = () => {
 
         {/* Footer */}
         <div className="text-center pb-6">
-          <p className="text-xs text-muted-foreground/50">宝妈AI · 温暖陪伴每一天</p>
+          <p className="text-xs text-muted-foreground/50">女性专区 · 懂你的辛苦与力量</p>
         </div>
       </div>
 
@@ -228,8 +262,8 @@ const MamaAssistant = () => {
       {showVoice && user && (
         <CoachVoiceChat
           onClose={() => setShowVoice(false)}
-          coachEmoji="👩‍👧"
-          coachTitle="宝妈AI语音教练"
+          coachEmoji="👩"
+          coachTitle="女性AI语音教练"
           primaryColor="rose"
           tokenEndpoint="vibrant-life-realtime-token"
           userId={user.id}
