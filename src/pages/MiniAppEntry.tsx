@@ -22,14 +22,14 @@ interface AudienceBadge {
 const audiences: Array<{
   id: string; emoji: string; label: string; subtitle: string; route: string; gradient: string; badge?: AudienceBadge | null;
 }> = [
-  { id: "mama", emoji: "👩‍👧", label: "宝妈专区", subtitle: "你的辛苦，我都懂", route: "/mama", gradient: "from-rose-500 to-pink-400", badge: null },
-  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400", badge: {
+  { id: "mama", emoji: "👩", label: "女性专区", subtitle: "懂你的辛苦与力量", route: "/mama", gradient: "from-rose-500 to-pink-400", badge: {
     text: "测一测",
     assessments: [
       { emoji: "👑", title: "35+女性竞争力", sub: "25题·7分钟", route: "/assessment/women_competitiveness", price: "专业版" },
       { emoji: "💚", title: "情绪健康测评", sub: "PHQ-9+GAD-7·5分钟", route: "/emotion-health", price: "限时¥9.9" },
     ],
   }},
+  { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400", badge: null },
   { id: "couple", emoji: "💑", label: "情侣夫妻", subtitle: "爱需要被听见", route: "/us-ai", gradient: "from-purple-500 to-violet-400", badge: null },
   { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400", badge: null },
   { id: "midlife", emoji: "🧭", label: "中年觉醒", subtitle: "人生下半场", route: "/laoge", gradient: "from-orange-500 to-red-400", badge: {

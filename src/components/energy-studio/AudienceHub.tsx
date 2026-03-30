@@ -6,9 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 const audiences = [
   {
     id: "mama",
-    emoji: "👩‍👧",
-    label: "宝妈专区",
-    subtitle: "陪你一起带娃",
+    emoji: "👩",
+    label: "女性专区",
+    subtitle: "懂你的辛苦与力量",
     route: "/mama",
     gradient: "from-rose-400 to-pink-500",
     bgColor: "hsl(350 80% 96%)",
