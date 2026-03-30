@@ -1,22 +1,68 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, ChevronRight, Home, Share2, MessageCircle, ArrowRight } from "lucide-react";
+import { ChevronRight, Home, Share2, ArrowRight, Mic } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 
-import MamaQuickScenarios from "@/components/mama/MamaQuickScenarios";
+import { MamaToolCard, type MamaRoundConfig } from "@/components/mama/MamaToolCard";
 import MamaAIChat from "@/components/mama/MamaAIChat";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
-import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
+// 4 pain-point tools with 3-round configs
+const mamaTools: { tool: string; title: string; description: string; icon: string; rounds: MamaRoundConfig[] }[] = [
+  {
+    tool: "career",
+    title: "职场跃迁",
+    description: "突破瓶颈，找回自信",
+    icon: "💼",
+    rounds: [
+      { fields: [{ key: "status", label: "你目前的职业状态", placeholder: "例如：在职但感觉没有发展空间", type: "text" }], buttonText: "聊一聊 →" },
+      { fields: [{ key: "painPoint", label: "最大的卡点是什么", placeholder: "例如：晋升受阻、薪资停滞" }, { key: "goal", label: "你期望的改变", placeholder: "例如：转行、升职、创业" }], buttonText: "继续分析 →" },
+      { fields: [{ key: "impact", label: "这对你生活影响有多大", placeholder: "例如：影响了自信心和家庭关系" }], buttonText: "获取诊断报告 →" },
+    ],
+  },
+  {
+    tool: "balance",
+    title: "生活平衡",
+    description: "找回属于自己的能量",
+    icon: "🌿",
+    rounds: [
+      { fields: [{ key: "pressure", label: "你最大的压力来源", placeholder: "例如：家务、育儿、老人照顾", type: "text" }], buttonText: "聊一聊 →" },
+      { fields: [{ key: "energy", label: "你的能量都花在哪了", placeholder: "例如：80%给家人，20%给自己" }, { key: "wantChange", label: "最想改变什么", placeholder: "例如：想要自己的时间和空间" }], buttonText: "继续分析 →" },
+      { fields: [{ key: "meTime", label: "你有属于自己的时间吗", placeholder: "例如：几乎没有/每天半小时" }], buttonText: "获取诊断报告 →" },
+    ],
+  },
+  {
+    tool: "emotion",
+    title: "情绪疏导",
+    description: "被看见，被理解",
+    icon: "💛",
+    rounds: [
+      { fields: [{ key: "feeling", label: "你现在的情绪状态", placeholder: "例如：焦虑、委屈、疲惫", type: "text" }], buttonText: "聊一聊 →" },
+      { fields: [{ key: "duration", label: "这种感觉持续多久了", placeholder: "例如：几天/几个月/很久了" }, { key: "support", label: "有人可以倾诉吗", placeholder: "例如：没有/偶尔和朋友说" }], buttonText: "继续分析 →" },
+      { fields: [{ key: "release", label: "你平时怎么释放情绪", placeholder: "例如：忍着/哭/运动/吃东西" }], buttonText: "获取诊断报告 →" },
+    ],
+  },
+  {
+    tool: "growth",
+    title: "副业增收",
+    description: "发现你的隐藏优势",
+    icon: "💰",
+    rounds: [
+      { fields: [{ key: "skills", label: "你擅长什么/有什么资源", placeholder: "例如：写作、烘焙、人脉广", type: "text" }], buttonText: "聊一聊 →" },
+      { fields: [{ key: "time", label: "每周能投入多少时间", placeholder: "例如：5小时/10小时" }, { key: "interest", label: "最感兴趣的方向", placeholder: "例如：自媒体、教育、手工" }], buttonText: "继续分析 →" },
+      { fields: [{ key: "concern", label: "你最大的顾虑是什么", placeholder: "例如：怕失败/不知道从哪开始" }], buttonText: "获取成长规划 →" },
+    ],
+  },
+];
 
-const quickEntries = [
-  { emoji: "😊", title: "情绪日记", desc: "记录此刻心情", context: "我现在心情不太好，想聊聊...", chatType: "emotion" as "emotion" | "gratitude" },
-  { emoji: "🆘", title: "情绪SOS", desc: "崩溃时按一下", route: "/emotion-button" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
-  { emoji: "✨", title: "能量测评", desc: "了解你的状态", route: "/assessment-tools" as string | undefined, context: undefined as string | undefined, chatType: "emotion" as "emotion" | "gratitude" },
+const toolEntries = [
+  { emoji: "🎙", title: "语音教练", desc: "AI陪你聊", action: "voice" as const },
+  { emoji: "😊", title: "情绪日记", desc: "记录心情", action: "emotion" as const },
+  { emoji: "🆘", title: "情绪SOS", desc: "崩溃时按", action: "sos" as const },
 ];
 
 const MamaAssistant = () => {
@@ -34,7 +80,6 @@ const MamaAssistant = () => {
     setChatType(type);
     setChatOpen(true);
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white pb-20">
@@ -57,7 +102,6 @@ const MamaAssistant = () => {
       </motion.div>
 
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
-
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
           <motion.button
@@ -89,76 +133,50 @@ const MamaAssistant = () => {
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-1"
+          className="text-center mb-6"
         >
           <span className="text-[22px] font-extrabold tracking-wider text-rose-900">
-             女性专区
+            女性专区
           </span>
           <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">懂 你 的 辛 苦 与 力 量</p>
         </motion.div>
 
-        {/* Hero CTA */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="flex flex-col items-center py-8"
-        >
-          <button
-            onClick={() => {
-              if (!user) {
-                navigate("/auth");
-                return;
-              }
-              setShowVoice(true);
-            }}
-            className="relative group focus:outline-none touch-manipulation"
-            aria-label="智能语音"
-          >
-            <div className="absolute inset-[-16px] bg-gradient-to-r from-pink-300 to-rose-300 rounded-full animate-pulse opacity-30" />
-            <div
-              className="absolute inset-[-8px] bg-gradient-to-r from-pink-400 to-rose-400 rounded-full animate-ping opacity-20"
-              style={{ animationDuration: "2s" }}
-            />
-
-            <div className="relative w-[140px] h-[140px] bg-gradient-to-br from-pink-400 via-rose-500 to-pink-500 
-                            rounded-full flex flex-col items-center justify-center 
-                            shadow-2xl shadow-pink-400/40 
-                            hover:scale-105 active:scale-95 
-                            transition-all duration-200 ease-out">
-              <div className="mb-2 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                <Mic className="w-8 h-8 text-white" />
-              </div>
-              <span className="text-white font-bold text-lg">智能语音</span>
-            </div>
-          </button>
-
-          <p className="mt-6 text-sm text-muted-foreground">
-            不需要坚强，这里可以做自己 💖
-          </p>
-        </motion.div>
-
-        {/* 3列功能入口 */}
+        {/* 4 pain-point tool cards — 2x2 grid */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="pb-4"
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="pb-5"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            {mamaTools.map((t) => (
+              <MamaToolCard key={t.tool} {...t} />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* 3-col tool entries: voice, diary, SOS */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="pb-5"
         >
           <div className="grid grid-cols-3 gap-3">
-            {quickEntries.map((entry) => (
+            {toolEntries.map((entry) => (
               <button
                 key={entry.title}
                 onClick={() => {
-                  if (entry.route) {
-                    navigate(entry.route);
-                  } else if (entry.context) {
-                    openChat(entry.context, entry.chatType);
+                  if (entry.action === "voice") {
+                    if (!user) { navigate("/auth"); return; }
+                    setShowVoice(true);
+                  } else if (entry.action === "sos") {
+                    navigate("/emotion-button");
+                  } else {
+                    openChat("我现在心情不太好，想聊聊...", "emotion");
                   }
                 }}
-                className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm 
-                           border border-pink-100/60 
-                           active:scale-95 transition-all duration-200"
+                className="flex flex-col items-center gap-1.5 p-4 rounded-2xl bg-white shadow-sm border border-pink-100/60 active:scale-95 transition-all duration-200"
               >
                 <span className="text-2xl">{entry.emoji}</span>
                 <span className="text-sm font-semibold text-rose-900">{entry.title}</span>
@@ -168,30 +186,17 @@ const MamaAssistant = () => {
           </div>
         </motion.div>
 
-        {/* Quick scenarios */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-          className="pb-4"
-        >
-          <MamaQuickScenarios onSelect={(ctx) => openChat(ctx)} />
-        </motion.div>
-
         {/* 测评入口 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
           className="pb-8 space-y-2"
         >
           <p className="text-xs font-semibold text-rose-800 px-1">📊 测一测</p>
           <button
             onClick={() => navigate("/assessment/women_competitiveness")}
-            className="w-full flex items-center justify-between 
-                       px-4 py-3 rounded-xl 
-                       bg-white border border-pink-100/60 shadow-sm
-                       active:scale-[0.98] transition-transform duration-200"
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
           >
             <div className="flex items-center gap-2.5">
               <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">✨</span>
@@ -204,10 +209,7 @@ const MamaAssistant = () => {
           </button>
           <button
             onClick={() => navigate("/assessment/emotion_health")}
-            className="w-full flex items-center justify-between 
-                       px-4 py-3 rounded-xl 
-                       bg-white border border-pink-100/60 shadow-sm
-                       active:scale-[0.98] transition-transform duration-200"
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
           >
             <div className="flex items-center gap-2.5">
               <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50">💛</span>
@@ -224,7 +226,7 @@ const MamaAssistant = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.45 }}
           className="pb-4"
         >
           <button
