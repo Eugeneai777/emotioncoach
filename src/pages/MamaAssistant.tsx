@@ -155,12 +155,48 @@ const MamaAssistant = () => {
           </div>
         </motion.div>
 
-        {/* 3-col tool entries: voice, diary, SOS */}
+        {/* 测评入口 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25 }}
-          className="pb-5"
+          className="pb-5 space-y-2"
+        >
+          <p className="text-xs font-semibold text-rose-800 px-1">📊 测一测</p>
+          <button
+            onClick={() => navigate("/assessment/women_competitiveness")}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">✨</span>
+              <div className="text-left">
+                <p className="text-[13px] font-medium text-rose-900">35+女性竞争力测评</p>
+                <p className="text-[10px] text-rose-600/60">5分钟 · 免费</p>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
+          </button>
+          <button
+            onClick={() => navigate("/emotion-health")}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50">💛</span>
+              <div className="text-left">
+                <p className="text-[13px] font-medium text-rose-900">情绪健康自评</p>
+                <p className="text-[10px] text-rose-600/60">3分钟 · 免费</p>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
+          </button>
+        </motion.div>
+
+        {/* 3-col tool entries: voice, diary, SOS */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
+          className="pb-8"
         >
           <div className="grid grid-cols-3 gap-3">
             {toolEntries.map((entry) => (
@@ -184,42 +220,6 @@ const MamaAssistant = () => {
               </button>
             ))}
           </div>
-        </motion.div>
-
-        {/* 测评入口 */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-          className="pb-8 space-y-2"
-        >
-          <p className="text-xs font-semibold text-rose-800 px-1">📊 测一测</p>
-          <button
-            onClick={() => navigate("/assessment/women_competitiveness")}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">✨</span>
-              <div className="text-left">
-                <p className="text-[13px] font-medium text-rose-900">35+女性竞争力测评</p>
-                <p className="text-[10px] text-rose-600/60">5分钟 · 免费</p>
-              </div>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
-          </button>
-          <button
-            onClick={() => navigate("/assessment/emotion_health")}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50">💛</span>
-              <div className="text-left">
-                <p className="text-[13px] font-medium text-rose-900">情绪健康自评</p>
-                <p className="text-[10px] text-rose-600/60">3分钟 · 免费</p>
-              </div>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
-          </button>
         </motion.div>
 
         {/* 设为默认首页 */}
