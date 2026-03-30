@@ -90,8 +90,8 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           : ''
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
-      onClick={!isLocked && (!isPaidCamp || hasPurchased) ? onClick : undefined}
-      role={!isLocked && (!isPaidCamp || hasPurchased) ? "button" : undefined}
+      onClick={!isLocked && (!isPaidCamp || hasPurchased || camp.camp_type === 'emotion_bloom') ? onClick : undefined}
+      role={!isLocked && (!isPaidCamp || hasPurchased || camp.camp_type === 'emotion_bloom') ? "button" : undefined}
     >
       {/* 渐变头图 */}
       <div className={`relative h-24 sm:h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
@@ -220,6 +220,17 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
                 onClick();
               }}
               className="w-full gap-2 bg-gradient-to-r from-slate-700 to-amber-600 hover:opacity-90 text-white"
+              size="sm"
+            >
+              查看详情
+            </Button>
+          ) : camp.camp_type === 'emotion_bloom' ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+              className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 text-white"
               size="sm"
             >
               查看详情

@@ -51,6 +51,7 @@ const CampList = () => {
   const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
   const { data: stressCampPurchase } = useCampPurchase('emotion_stress_7');
+  const { data: bloomCampPurchase } = useCampPurchase('emotion_bloom');
   const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -399,6 +400,12 @@ const CampList = () => {
                         navigate('/camp-checkin');
                       } else {
                         navigate('/promo/synergy');
+                      }
+                    } else if (camp.camp_type === 'emotion_bloom') {
+                      if (bloomCampPurchase) {
+                        navigate('/camp-checkin');
+                      } else {
+                        navigate('/camp-intro/emotion_bloom');
                       }
                     } else {
                       navigate(`/camp-template/${camp.id}`);
