@@ -164,7 +164,7 @@ const MamaAssistant = () => {
         >
           <p className="text-xs font-semibold text-rose-800 px-1">📊 测一测</p>
           <button
-            onClick={() => navigate("/women-competitiveness")}
+            onClick={() => navigate("/assessment/women_competitiveness")}
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-pink-100/60 shadow-sm active:scale-[0.98] transition-transform duration-200"
           >
             <div className="flex items-center gap-2.5">
