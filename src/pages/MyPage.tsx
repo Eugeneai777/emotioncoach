@@ -5,7 +5,7 @@ import {
   Info, Bell, MessageSquare, LogOut, Truck,
   Settings, Headphones
 } from "lucide-react";
-import TextCustomerSupport from "@/components/TextCustomerSupport";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
