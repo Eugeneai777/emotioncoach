@@ -60,7 +60,7 @@ const MyPage: React.FC = () => {
   const [isMember, setIsMember] = useState(false);
   
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [showCustomerSupport, setShowCustomerSupport] = useState(false);
+  
 
   // Load profile & orders
   useEffect(() => {
