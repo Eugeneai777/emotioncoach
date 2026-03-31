@@ -281,14 +281,6 @@ const MyPage: React.FC = () => {
 
       <AwakeningBottomNav />
 
-      {/* 客服弹层 */}
-      {showCustomerSupport && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-in slide-in-from-bottom duration-300">
-            <TextCustomerSupport onClose={() => setShowCustomerSupport(false)} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
