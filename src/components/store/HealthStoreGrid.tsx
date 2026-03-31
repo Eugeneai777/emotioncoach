@@ -132,6 +132,11 @@ export function HealthStoreGrid() {
 
   const handleBuy = (product: Product) => {
     if (requireLogin()) return;
+    // 有外部链接的商品直接跳转（如有赞商城）
+    if (product.external_url) {
+      window.open(product.external_url, '_blank');
+      return;
+    }
     setDetailOpen(false);
     setSelectedProduct(product);
     setCheckoutOpen(true);

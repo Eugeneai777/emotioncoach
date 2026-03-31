@@ -203,8 +203,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
               className="w-full"
               size="lg"
             >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              {outOfStock ? "已售罄" : `立即购买 ¥${product.price}`}
+              {product.external_url ? <ExternalLink className="w-4 h-4 mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
+              {outOfStock ? "已售罄" : product.external_url ? `前往购买 ¥${product.price}` : `立即购买 ¥${product.price}`}
             </Button>
           </div>
         </DialogContent>
