@@ -19,7 +19,7 @@ import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
 import { PurchaseAgreementSheet } from "@/components/promo/PurchaseAgreementSheet";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { useTermsAgreement } from "@/hooks/useTermsAgreement";
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
