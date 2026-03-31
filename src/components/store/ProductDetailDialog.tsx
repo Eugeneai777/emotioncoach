@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin } from "lucide-react";
+import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin, ExternalLink } from "lucide-react";
 
 interface Product {
   id: string;
