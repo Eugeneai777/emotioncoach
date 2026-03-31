@@ -422,14 +422,19 @@ export default function SynergyPromoPage() {
     }
   }, [step, user, paymentOpenId]);
 
-  const [showRefundPolicy, setShowRefundPolicy] = useState(false);
+  const { isAgreed: agreedPolicy, setAgreed: setAgreedPolicy } = useTermsAgreement();
+  const [showAgreementSheet, setShowAgreementSheet] = useState(false);
 
   const handleBuyClick = () => {
-    setShowRefundPolicy(true);
+    if (!agreedPolicy) {
+      setShowAgreementSheet(true);
+      return;
+    }
+    setStep('checkout');
   };
 
-  const handleRefundPolicyConfirm = () => {
-    setShowRefundPolicy(false);
+  const handleAgreementConfirm = () => {
+    setAgreedPolicy(true);
     setStep('checkout');
   };
 
