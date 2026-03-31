@@ -194,17 +194,22 @@ export default function WealthAssessmentFreePage() {
   }, []);
 
   // 购买前检查登录状态
+  // 🔧 同时设置 SS_KEY_PAY_RESUME，确保任何重定向（登录/OAuth）后都能恢复支付弹窗
   const handleAuthRequired = useCallback((): boolean => {
+    // 无论是否登录，都标记支付恢复，确保 OAuth 重定向后也能恢复
+    sessionStorage.setItem(SS_KEY_PAY_RESUME, '1');
+    // 同步保存当前结果，以防 OAuth 中途丢失
+    if (currentResult) {
+      saveResultToSession(currentResult, followUpInsights, deepFollowUpAnswers);
+    }
+
     if (user) return true;
     toast.info("请先登录后再购买训练营");
-    // 标记支付恢复，登录后自动回到结果页
-    sessionStorage.setItem(SS_KEY_PAY_RESUME, '1');
     const currentPath = window.location.pathname + window.location.search;
     setPostAuthRedirect(currentPath);
-    // 同时通过 ?redirect= 传递，确保 Auth 页面在所有场景下都能正确回跳
     navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
     return false;
-  }, [user, navigate]);
+  }, [user, navigate, currentResult, followUpInsights, deepFollowUpAnswers]);
 
   return (
     <div
