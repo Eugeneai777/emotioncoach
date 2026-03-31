@@ -483,6 +483,7 @@ const CampIntro = () => {
 
       {/* 付费弹窗 */}
       <UnifiedPayDialog
+        openId={resumedOpenId}
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageInfo={{
