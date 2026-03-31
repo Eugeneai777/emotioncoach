@@ -1130,10 +1130,11 @@ export default function SynergyPromoPage() {
               </div>
               <p className="text-xs text-slate-500 mb-3">7天训练营 + 知乐胶囊套餐</p>
               <label className="flex items-center justify-center gap-2 mb-4 cursor-pointer">
-                <Checkbox
+                <input
+                  type="checkbox"
                   checked={agreedPolicy}
-                  onCheckedChange={(checked) => setAgreedPolicy(!!checked)}
-                  className="h-4 w-4 !min-h-0 !min-w-0"
+                  onChange={(e) => setAgreedPolicy(e.target.checked)}
+                  className="h-4 w-4 rounded border-primary accent-orange-600 cursor-pointer"
                 />
                 <span className="text-xs text-muted-foreground">
                   我已阅读并同意
