@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import PageHeader from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,61 @@ const CampIntro = () => {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const { user } = useAuth();
+  const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
+
+  // ─── 微信 OAuth 支付回跳后自动打开支付弹窗 ───
+  const payResumeHandledRef = useRef(false);
+  useEffect(() => {
+    if (payResumeHandledRef.current) return;
+
+    const url = new URL(window.location.href);
+    const isPayResume =
+      sessionStorage.getItem(`camp_intro_pay_resume_${campType}`) === '1' ||
+      url.searchParams.get('payment_resume') === '1';
+
+    if (!isPayResume) return;
+
+    payResumeHandledRef.current = true;
+    console.log('[CampIntro] Payment resume detected, will auto-open pay dialog');
+
+    // 缓存 openId
+    const paymentOpenId = url.searchParams.get('payment_openid');
+    if (paymentOpenId) {
+      sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+      localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      setResumedOpenId(paymentOpenId);
+    }
+
+    // 处理 token_hash 自动登录
+    const tokenHash = url.searchParams.get('payment_token_hash');
+
+    // 清理 URL 参数
+    url.searchParams.delete('payment_resume');
+    url.searchParams.delete('payment_openid');
+    url.searchParams.delete('payment_token_hash');
+    url.searchParams.delete('payment_auth_error');
+    url.searchParams.delete('is_new_user');
+    window.history.replaceState({}, '', url.toString());
+
+    // 清除 sessionStorage 标记
+    sessionStorage.removeItem(`camp_intro_pay_resume_${campType}`);
+    sessionStorage.removeItem('pay_auth_in_progress');
+
+    if (tokenHash) {
+      console.log('[CampIntro] Auto-login with tokenHash before opening pay dialog');
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' })
+        .then(({ error }) => {
+          if (error) console.warn('[CampIntro] Auto-login failed:', error.message);
+          else console.log('[CampIntro] Auto-login successful');
+        })
+        .catch((e) => console.warn('[CampIntro] Auto-login exception:', e))
+        .finally(() => setShowPayDialog(true));
+    } else {
+      // 延迟一下等 auth 状态同步
+      setTimeout(() => setShowPayDialog(true), 300);
+    }
+  }, [campType]);
 
   // 检查用户是否已购买该付费训练营
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase(campType || '');
@@ -382,9 +438,24 @@ const CampIntro = () => {
               if (hasJoinedCamp && existingCamp) {
                 navigate(`/camp-checkin/${existingCamp.id}`);
               } else if (campTemplate.price && campTemplate.price > 0 && !hasPurchased) {
-                // 付费训练营且未购买，打开支付弹窗
+                // 付费训练营且未购买：先检查登录
+                if (!user) {
+                  // 保存支付恢复标记，登录后自动弹出支付
+                  sessionStorage.setItem(`camp_intro_pay_resume_${campType}`, '1');
+                  const currentPath = window.location.pathname + window.location.search;
+                  setPostAuthRedirect(currentPath);
+                  navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                  return;
+                }
                 setShowPayDialog(true);
               } else {
+                // 免费训练营或已购买：检查登录
+                if (!user) {
+                  const currentPath = window.location.pathname + window.location.search;
+                  setPostAuthRedirect(currentPath);
+                  navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                  return;
+                }
                 setShowStartDialog(true);
               }
             }}
@@ -412,6 +483,7 @@ const CampIntro = () => {
 
       {/* 付费弹窗 */}
       <UnifiedPayDialog
+        openId={resumedOpenId}
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
         packageInfo={{
