@@ -627,6 +627,7 @@ const Index = () => {
           price: 399,
           original_price: 399,
         }}
+        isPurchased={!!journalOrderPurchase}
         onSuccess={loadActiveCamp}
       />
       
