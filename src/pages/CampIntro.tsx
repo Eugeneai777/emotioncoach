@@ -438,9 +438,24 @@ const CampIntro = () => {
               if (hasJoinedCamp && existingCamp) {
                 navigate(`/camp-checkin/${existingCamp.id}`);
               } else if (campTemplate.price && campTemplate.price > 0 && !hasPurchased) {
-                // 付费训练营且未购买，打开支付弹窗
+                // 付费训练营且未购买：先检查登录
+                if (!user) {
+                  // 保存支付恢复标记，登录后自动弹出支付
+                  sessionStorage.setItem(`camp_intro_pay_resume_${campType}`, '1');
+                  const currentPath = window.location.pathname + window.location.search;
+                  setPostAuthRedirect(currentPath);
+                  navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                  return;
+                }
                 setShowPayDialog(true);
               } else {
+                // 免费训练营或已购买：检查登录
+                if (!user) {
+                  const currentPath = window.location.pathname + window.location.search;
+                  setPostAuthRedirect(currentPath);
+                  navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                  return;
+                }
                 setShowStartDialog(true);
               }
             }}
