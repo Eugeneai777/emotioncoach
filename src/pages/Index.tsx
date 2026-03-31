@@ -102,6 +102,25 @@ const Index = () => {
     loading: authLoading,
     signOut
   } = useAuth();
+
+  // 查询21天情绪日记是否已通过 orders 表购买
+  const { data: journalOrderPurchase } = useQuery({
+    queryKey: ['journal-order-purchase', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('package_key', ['synergy_bundle', 'camp-emotion_journal_21'])
+        .eq('status', 'paid')
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user
+  });
+
   const {
     messages,
     isLoading,
