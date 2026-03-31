@@ -5129,6 +5129,7 @@ export type Database = {
           description: string | null
           detail_images: string[] | null
           display_order: number | null
+          external_url: string | null
           id: string
           image_url: string | null
           is_available: boolean | null
@@ -5153,6 +5154,7 @@ export type Database = {
           description?: string | null
           detail_images?: string[] | null
           display_order?: number | null
+          external_url?: string | null
           id?: string
           image_url?: string | null
           is_available?: boolean | null
@@ -5177,6 +5179,7 @@ export type Database = {
           description?: string | null
           detail_images?: string[] | null
           display_order?: number | null
+          external_url?: string | null
           id?: string
           image_url?: string | null
           is_available?: boolean | null
