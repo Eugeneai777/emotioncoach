@@ -123,11 +123,13 @@ export default function WealthAssessmentFreePage() {
     const paymentOpenId = url.searchParams.get('payment_openid');
     if (paymentOpenId) {
       sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
-      // 🔧 同时写入 WechatPayDialog 使用的缓存 key，避免 key 不匹配导致循环授权
       localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
       sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
       setResumedOpenId(paymentOpenId);
     }
+
+    // 🔧 处理 payment_token_hash：OAuth 回跳后自动登录，确保 useAuth 能获取到用户
+    const tokenHash = url.searchParams.get('payment_token_hash');
 
     // 清理 URL 参数，使用 replaceState 避免触发 React 重渲染
     url.searchParams.delete('payment_resume');
@@ -135,13 +137,26 @@ export default function WealthAssessmentFreePage() {
     url.searchParams.delete('payment_token_hash');
     url.searchParams.delete('payment_auth_error');
     url.searchParams.delete('is_new_user');
+    url.searchParams.delete('assessment_pay_resume');
     window.history.replaceState({}, '', url.toString());
 
     // 清除 sessionStorage 标记
     sessionStorage.removeItem(SS_KEY_PAY_RESUME);
     sessionStorage.removeItem('pay_auth_in_progress');
 
-    setAutoOpenPay(true);
+    // 如果有 tokenHash，先自动登录再弹出支付
+    if (tokenHash) {
+      console.log('[WealthFree] Auto-login with tokenHash before opening pay dialog');
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' })
+        .then(({ error }) => {
+          if (error) console.warn('[WealthFree] Auto-login failed:', error.message);
+          else console.log('[WealthFree] Auto-login successful');
+        })
+        .catch((e) => console.warn('[WealthFree] Auto-login exception:', e))
+        .finally(() => setAutoOpenPay(true));
+    } else {
+      setAutoOpenPay(true);
+    }
   }, []);
 
   // 完成测评回调 — 直接展示结果，无需付费
