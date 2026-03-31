@@ -1,0 +1,1 @@
+ALTER TABLE public.health_store_products ADD COLUMN external_url text NULL;

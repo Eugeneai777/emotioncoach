@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin } from "lucide-react";
+import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin, ExternalLink } from "lucide-react";
 
 interface Product {
   id: string;
@@ -203,8 +203,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
               className="w-full"
               size="lg"
             >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              {outOfStock ? "已售罄" : `立即购买 ¥${product.price}`}
+              {product.external_url ? <ExternalLink className="w-4 h-4 mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
+              {outOfStock ? "已售罄" : product.external_url ? `前往购买 ¥${product.price}` : `立即购买 ¥${product.price}`}
             </Button>
           </div>
         </DialogContent>
