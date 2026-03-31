@@ -1,22 +1,47 @@
 
 
-# 修复 /my-page 联系客服问题
+# 退款政策合规提醒 — `/promo/synergy`
 
-## 问题分析
+## 合规与转化的平衡评估
 
-1. **为什么不一样**：`/my-page` 弹出的是简化版 `TextCustomerSupport` 组件（小弹窗），而教练空间等入口跳转到的是完整版 `/customer-support` 页面（有快速选项、结构化推荐卡片等）。
+**合规必要性**：虚拟服务+实物商品不支持退款，必须在支付前明确告知用户，否则面临消费者投诉和平台处罚风险。
 
-2. **为什么无法使用**：`TextCustomerSupport` 发送的请求格式是 `{ message, conversationHistory }`，但边缘函数期望的是 `{ messages, sessionId }`。字段名不匹配导致后端报 500 错误。
+**转化影响最小化策略**：
+- 弹窗出现在用户已点击"立即购买"之后（此时购买意愿已建立），不在浏览阶段干扰
+- 倒计时设为 **3秒**（行业常见为5-10秒），足够合规但不过度阻断
+- 确认按钮文案用"我已了解，继续购买"而非"我已知晓并确认购买"，减少法律感、保持购买动力
+- 不在商品详情页增加额外灰色小字链接（避免在浏览阶段引发犹豫），退款政策仅在点击购买后展示一次即可满足合规
+- 弹窗设计融入页面暖色调，不用警告红色，降低心理压力
 
-## 修复方案：统一跳转到 /customer-support
+## 改动计划
 
-最简单且体验一致的方案：`/my-page` 点击"联系客服"时直接跳转到 `/customer-support` 页面，而不是弹出简化版弹窗。
+### 1. 新建 `src/components/promo/RefundPolicyDialog.tsx`
 
-### `src/pages/MyPage.tsx`
+基于现有 `AlertDialog` 组件：
+- 标题：温馨提示
+- 正文：本产品为虚拟服务与实物结合的特殊商品，购买后不支持退款。请确认需求后再购买。
+- 按钮：「再想想」+ 「我已了解，继续购买（3s倒计时）」
+- 3秒倒计时期间确认按钮 disabled，显示剩余秒数
+- 使用 CSS transition 实现淡入淡出（0.3s），不额外引入 framer-motion
+- 响应式：移动端按钮纵向排列，桌面端横向
 
-- 将 `case "联系客服"` 的处理从 `setShowCustomerSupport(true)` 改为 `navigate("/customer-support")`
-- 移除 `showCustomerSupport` state 和底部客服弹层代码
-- 移除 `TextCustomerSupport` 的 import
+### 2. 修改 `src/pages/SynergyPromoPage.tsx`
 
-这样所有入口（/my-page、教练空间等）统一使用功能完整的客服页面，避免两套实现不一致的问题。
+- 新增 `showRefundPolicy` state
+- `handleBuyClick` 改为打开退款弹窗
+- 弹窗确认回调执行 `setStep('checkout')`
+- 已购买用户（按钮为"进入训练营"）不受影响
+
+### 3. 数据埋点（轻量方案）
+
+不新建数据库表，直接使用 `console.log` + 现有 analytics 逻辑记录：
+- 弹窗展示次数
+- 确认/取消比例
+
+如需持久化埋点，后续再建表，当前先保证功能上线。
+
+## 不变项
+- 不修改支付流程、路由、checkout 表单
+- 不在浏览页面增加退款提示文字
+- 已购买用户不触发弹窗
 
