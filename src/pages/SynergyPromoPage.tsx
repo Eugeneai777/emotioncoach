@@ -18,7 +18,9 @@ import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
-import { RefundPolicyDialog } from "@/components/promo/RefundPolicyDialog";
+import { PurchaseAgreementSheet } from "@/components/promo/PurchaseAgreementSheet";
+
+import { useTermsAgreement } from "@/hooks/useTermsAgreement";
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
@@ -420,14 +422,19 @@ export default function SynergyPromoPage() {
     }
   }, [step, user, paymentOpenId]);
 
-  const [showRefundPolicy, setShowRefundPolicy] = useState(false);
+  const { isAgreed: agreedPolicy, setAgreed: setAgreedPolicy } = useTermsAgreement();
+  const [showAgreementSheet, setShowAgreementSheet] = useState(false);
 
   const handleBuyClick = () => {
-    setShowRefundPolicy(true);
+    if (!agreedPolicy) {
+      setShowAgreementSheet(true);
+      return;
+    }
+    setStep('checkout');
   };
 
-  const handleRefundPolicyConfirm = () => {
-    setShowRefundPolicy(false);
+  const handleAgreementConfirm = () => {
+    setAgreedPolicy(true);
     setStep('checkout');
   };
 
@@ -1121,10 +1128,29 @@ export default function SynergyPromoPage() {
                 <span className="text-4xl font-black text-orange-600">¥0.01</span>
                 <span className="text-slate-400 line-through text-sm">¥899</span>
               </div>
-              <p className="text-xs text-slate-500 mb-6">7天训练营 + 知乐胶囊套餐</p>
+              <p className="text-xs text-slate-500 mb-3">7天训练营 + 知乐胶囊套餐</p>
+              <label className="flex items-center justify-center gap-2 mb-4 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedPolicy}
+                  onChange={(e) => setAgreedPolicy(e.target.checked)}
+                  className="h-4 w-4 rounded border-primary accent-orange-600 cursor-pointer"
+                />
+                <span className="text-xs text-muted-foreground">
+                  我已阅读并同意
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
+                    className="text-orange-600 underline underline-offset-2 ml-0.5"
+                  >
+                    《购买须知》
+                  </button>
+                </span>
+              </label>
               <Button
                 onClick={handleBuyClick}
-                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0"
+                disabled={!agreedPolicy}
+                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 disabled:opacity-50"
               >
                 立即开启三重陪伴之旅
               </Button>
@@ -1174,10 +1200,29 @@ export default function SynergyPromoPage() {
                   <span className="text-xs text-slate-400 line-through">¥899</span>
                 </div>
                 <p className="text-[10px] text-slate-400 truncate">AI教练 + 专业教练 + 知乐胶囊</p>
+                <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreedPolicy}
+                    onChange={(e) => setAgreedPolicy(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-primary accent-orange-600 cursor-pointer"
+                  />
+                  <span className="text-[10px] text-muted-foreground">
+                    我已阅读并同意
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
+                      className="text-orange-600 underline underline-offset-2 ml-0.5"
+                    >
+                      《购买须知》
+                    </button>
+                  </span>
+                </label>
               </div>
               <Button
                 onClick={handleBuyClick}
-                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0"
+                disabled={!agreedPolicy}
+                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0 disabled:opacity-50"
               >
                 立即购买
               </Button>
@@ -1271,10 +1316,10 @@ export default function SynergyPromoPage() {
           />
         }
       />
-      <RefundPolicyDialog
-        open={showRefundPolicy}
-        onOpenChange={setShowRefundPolicy}
-        onConfirm={handleRefundPolicyConfirm}
+      <PurchaseAgreementSheet
+        open={showAgreementSheet}
+        onOpenChange={setShowAgreementSheet}
+        onAgree={handleAgreementConfirm}
       />
     </div>
   );
