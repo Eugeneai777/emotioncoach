@@ -1278,10 +1278,10 @@ export default function SynergyPromoPage() {
           />
         }
       />
-      <RefundPolicyDialog
-        open={showRefundPolicy}
-        onOpenChange={setShowRefundPolicy}
-        onConfirm={handleRefundPolicyConfirm}
+      <PurchaseAgreementSheet
+        open={showAgreementSheet}
+        onOpenChange={setShowAgreementSheet}
+        onAgree={handleAgreementConfirm}
       />
     </div>
   );
