@@ -32,6 +32,7 @@ interface Product {
   sales_count: number;
   partner_id: string | null;
   detail_images: string[] | null;
+  external_url: string | null;
 }
 
 function needsIdCard(product: Product): boolean {
