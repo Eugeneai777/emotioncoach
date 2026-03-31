@@ -5,7 +5,7 @@ import {
   Info, Bell, MessageSquare, LogOut, Truck,
   Settings, Headphones
 } from "lucide-react";
-import TextCustomerSupport from "@/components/TextCustomerSupport";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,7 +60,7 @@ const MyPage: React.FC = () => {
   const [isMember, setIsMember] = useState(false);
   
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [showCustomerSupport, setShowCustomerSupport] = useState(false);
+  
 
   // Load profile & orders
   useEffect(() => {
@@ -115,7 +115,7 @@ const MyPage: React.FC = () => {
         navigate("/settings?view=notifications");
         break;
       case "联系客服":
-        setShowCustomerSupport(true);
+        navigate("/customer-support");
         break;
       case "退出登录":
         await signOut();
@@ -281,14 +281,6 @@ const MyPage: React.FC = () => {
 
       <AwakeningBottomNav />
 
-      {/* 客服弹层 */}
-      {showCustomerSupport && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-in slide-in-from-bottom duration-300">
-            <TextCustomerSupport onClose={() => setShowCustomerSupport(false)} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
