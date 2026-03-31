@@ -7,6 +7,7 @@ import { AssessmentResult, FollowUpAnswer } from "@/components/wealth-block/weal
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useFooterHeight } from "@/hooks/useFooterHeight";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { toast } from "sonner";
 
