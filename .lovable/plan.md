@@ -1,34 +1,51 @@
 
 
-# 彻底撤销 18588235488 的【7天有劲训练营】权限
+# 退款政策改为电商式「购买须知」勾选模式
 
-## 当前数据库状态
+## 现状问题
+当前点击"立即购买"后弹出全屏模态弹窗（RefundPolicyDialog），虽合规但体验较重，与主流电商的轻量化勾选模式不一致。从截图看，弹窗遮挡了大量内容，增加了用户的心理压力。
 
-| 表 | 记录 | 说明 |
-|---|---|---|
-| `orders` | synergy_bundle, status=paid | 这是权益来源，自愈机制依赖它 |
-| `training_camps` | emotion_stress_7, active | 上次删除可能未生效 |
-| `training_camps` | emotion_journal_21, active | 同一笔订单授予 |
-| `user_camp_purchases` | emotion_journal_21, completed | 自愈补写的 |
+## 方案：底部栏内嵌「购买须知」勾选
 
-## 问题
+参考淘宝/拼多多/知识星球等平台的做法：在底部固定购买栏（Sticky Bottom Bar）的购买按钮上方，增加一行勾选协议文字。
 
-synergy_bundle 是一笔订单同时授予 `emotion_stress_7` + `emotion_journal_21`。要彻底阻止自愈恢复，必须将该订单状态改为 `refunded`，**这会同时撤销21天情绪日记的权限**。
+### 交互流程
+1. 底部栏价格下方新增一行：`☐ 我已阅读并同意` + 可点击的「购买须知」链接
+2. 点击「购买须知」→ 弹出轻量底部抽屉（Sheet），展示退款政策详情
+3. **未勾选时**：「立即购买」按钮置灰（disabled），点击时自动弹出须知抽屉引导用户阅读
+4. **已勾选后**：按钮恢复正常，点击直接进入 checkout 流程
+5. 页面中部 Final CTA 区的购买按钮同样受勾选状态控制
 
-## 执行计划（3步数据操作）
+### 合规保障
+- 勾选行为本身即为用户主动确认，法律效力等同甚至优于倒计时弹窗
+- 「购买须知」内容包含完整退款政策文本，可随时查看
+- 用户必须主动勾选才能购买，不存在"没看到"的抗辩空间
 
-1. **`orders`**：将 synergy_bundle 订单状态改为 `refunded`（阻断自愈机制）
-2. **`training_camps`**：删除 `emotion_stress_7` 的 active 记录
-3. **`user_camp_purchases`**：删除 `emotion_journal_21` 的 completed 记录（如有）
+### 转化优势
+- 去掉全屏弹窗的打断感，购买流程更顺滑
+- 勾选框是用户熟悉的电商模式，心理阻力更低
+- 无需等待倒计时，减少流失
 
-执行后该账号将：
-- 无法进入7天有劲训练营
-- 同时失去21天情绪日记权限
-- 自愈机制不会恢复（订单已非 paid 状态）
-- 可以重新走完整购买流程测试
+## 改动计划
 
-如果你希望**保留21天情绪日记权限**，需要单独为 emotion_journal_21 创建一笔独立的 paid 订单记录。请确认是否需要。
+### 1. 新建 `src/components/promo/PurchaseAgreementSheet.tsx`
+- 底部抽屉（基于现有 Sheet 组件）展示购买须知
+- 内容：产品为虚拟服务+实物，不支持退款；购买即表示同意
+- 底部按钮：「我已了解」→ 关闭抽屉并自动勾选
+
+### 2. 修改 `src/pages/SynergyPromoPage.tsx`
+- 新增 `agreedPolicy` state（默认 false）
+- **Sticky Bottom Bar**：价格区下方增加勾选行 `Checkbox + "我已阅读并同意《购买须知》"`
+- **购买按钮**：未勾选时 disabled + 降低透明度；点击时弹出须知抽屉而非直接购买
+- **Final CTA 区**：同样增加勾选行，共享 `agreedPolicy` 状态
+- 移除 `RefundPolicyDialog` 的引用和相关 state（`showRefundPolicy`）
+- `handleBuyClick` 逻辑改为：已勾选 → 直接 `setStep('checkout')`；未勾选 → 打开须知抽屉
+
+### 3. 保留 `RefundPolicyDialog.tsx` 文件
+- 不删除组件文件（其他页面未来可能复用），仅从 SynergyPromoPage 中移除使用
 
 ## 不变项
-- 不修改代码，纯数据操作
+- 支付流程、路由、checkout 表单不变
+- 已购买用户不受影响
+- 埋点逻辑迁移到新组件中
 
