@@ -18,6 +18,7 @@ import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
+import { RefundPolicyDialog } from "@/components/promo/RefundPolicyDialog";
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
@@ -419,7 +420,14 @@ export default function SynergyPromoPage() {
     }
   }, [step, user, paymentOpenId]);
 
+  const [showRefundPolicy, setShowRefundPolicy] = useState(false);
+
   const handleBuyClick = () => {
+    setShowRefundPolicy(true);
+  };
+
+  const handleRefundPolicyConfirm = () => {
+    setShowRefundPolicy(false);
     setStep('checkout');
   };
 
@@ -1262,6 +1270,11 @@ export default function SynergyPromoPage() {
             onReady={shareDialog.handleCardReady}
           />
         }
+      />
+      <RefundPolicyDialog
+        open={showRefundPolicy}
+        onOpenChange={setShowRefundPolicy}
+        onConfirm={handleRefundPolicyConfirm}
       />
     </div>
   );
