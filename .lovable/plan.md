@@ -1,53 +1,27 @@
 
 
-# 21天情绪日记训练营：已购用户免支付修复
+# 健康商城 359 商品跳转有赞外链
 
-## 问题分析
+## 方案
 
-`Index.tsx` 页面中的 `StartCampDialog` 配置了 `price: 399`，但**没有传入 `isPurchased` 属性**。对话框内部通过 `useCampPurchase` 仅检查 `user_camp_purchases` 表，而非作为财务事实来源的 `orders` 表。
-
-这导致通过 `synergy_bundle` 购买的用户（订单在 `orders` 表中），可能仍然被要求再次付费。
-
-相比之下，`CampIntro.tsx` 页面已正确实现了基于 `orders` 表的购买检查。
+给 `health_store_products` 表新增 `external_url` 字段，为 359 商品填入有赞链接。点击购买时，有外链的商品直接跳转，跳过内部结算/支付流程。
 
 ## 改动计划
 
-### 修改 `src/pages/Index.tsx`
+### 1. 数据库迁移
+- `health_store_products` 表新增 `external_url text null` 字段
+- 为 id=`920ee870-35e1-4246-80ff-9421743060e5` 的商品写入有赞链接
 
-1. **新增 orders 表购买状态查询**：使用 `useQuery` 查询 `orders` 表中 `emotion_journal_21` 或 `synergy_bundle` 的 paid 记录（与 CampIntro.tsx 逻辑一致）
-2. **传入 `isPurchased` 到 StartCampDialog**：将查询结果作为 `isPurchased` 属性传入
-3. 已有活跃训练营（`activeCamp`）的用户不受影响，他们直接进入打卡页
+### 2. `src/components/store/HealthStoreGrid.tsx`
+- `Product` 接口新增 `external_url` 字段
+- `handleBuy` 函数：如果 `product.external_url` 存在，直接 `window.open(product.external_url, '_blank')` 跳转，不进入 checkout 流程
 
-### 技术细节
+### 3. `src/components/store/ProductDetailDialog.tsx`
+- `Product` 接口新增 `external_url` 字段
+- 购买按钮文案：有外链时显示「前往购买 ¥359」，无外链保持「立即购买 ¥xxx」
+- 按钮图标：有外链时用 ExternalLink 图标
 
-```typescript
-// 新增查询
-const { data: journalOrderPurchase } = useQuery({
-  queryKey: ['journal-order-purchase', user?.id],
-  queryFn: async () => {
-    if (!user) return null;
-    const { data } = await supabase
-      .from('orders')
-      .select('id')
-      .eq('user_id', user.id)
-      .in('package_key', ['synergy_bundle', 'camp-emotion_journal_21'])
-      .eq('status', 'paid')
-      .limit(1)
-      .maybeSingle();
-    return data;
-  },
-  enabled: !!user
-});
-
-// 传入 StartCampDialog
-<StartCampDialog
-  ...
-  isPurchased={!!journalOrderPurchase}
-/>
-```
-
-## 不变项
-- CampIntro.tsx 已有正确逻辑，不改动
-- 支付流程、训练营创建流程不变
-- 未登录用户行为不变
+### 不变项
+- 无外链商品继续走内部支付流程
+- 商品列表展示、分类、分享不变
 
