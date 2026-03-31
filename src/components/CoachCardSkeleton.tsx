@@ -7,44 +7,28 @@ interface CoachCardSkeletonProps {
 
 export const CoachCardSkeleton = ({ count = 4 }: CoachCardSkeletonProps) => {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {Array.from({ length: count }).map((_, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: i * 0.1 }}
-          className="bg-white rounded-xl p-4 shadow-sm border border-border/30"
+          transition={{ delay: i * 0.08 }}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-border/30 flex items-center gap-3.5"
         >
-          <div className="flex items-start gap-3">
-            {/* 头像骨架 */}
-            <Skeleton className="w-12 h-12 rounded-xl flex-shrink-0" />
-            
-            <div className="flex-1 space-y-2">
-              {/* 标题骨架 */}
-              <Skeleton className="h-5 w-24" />
-              
-              {/* 描述骨架 */}
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-            
-            {/* 箭头骨架 */}
-            <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
+          <Skeleton className="w-14 h-14 rounded-2xl flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
           </div>
-          
-          {/* 标签骨架 */}
-          <div className="flex gap-2 mt-3">
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-          </div>
+          <Skeleton className="w-5 h-5 rounded-full flex-shrink-0" />
         </motion.div>
       ))}
     </div>
   );
 };
 
-// 友好加载提示组件
 export const LoadingMessage = ({ message = "正在为您加载专属内容..." }: { message?: string }) => {
   return (
     <motion.div
