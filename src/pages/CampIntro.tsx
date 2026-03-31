@@ -45,6 +45,61 @@ const CampIntro = () => {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const { user } = useAuth();
+  const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
+
+  // ─── 微信 OAuth 支付回跳后自动打开支付弹窗 ───
+  const payResumeHandledRef = useRef(false);
+  useEffect(() => {
+    if (payResumeHandledRef.current) return;
+
+    const url = new URL(window.location.href);
+    const isPayResume =
+      sessionStorage.getItem(`camp_intro_pay_resume_${campType}`) === '1' ||
+      url.searchParams.get('payment_resume') === '1';
+
+    if (!isPayResume) return;
+
+    payResumeHandledRef.current = true;
+    console.log('[CampIntro] Payment resume detected, will auto-open pay dialog');
+
+    // 缓存 openId
+    const paymentOpenId = url.searchParams.get('payment_openid');
+    if (paymentOpenId) {
+      sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+      localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
+      setResumedOpenId(paymentOpenId);
+    }
+
+    // 处理 token_hash 自动登录
+    const tokenHash = url.searchParams.get('payment_token_hash');
+
+    // 清理 URL 参数
+    url.searchParams.delete('payment_resume');
+    url.searchParams.delete('payment_openid');
+    url.searchParams.delete('payment_token_hash');
+    url.searchParams.delete('payment_auth_error');
+    url.searchParams.delete('is_new_user');
+    window.history.replaceState({}, '', url.toString());
+
+    // 清除 sessionStorage 标记
+    sessionStorage.removeItem(`camp_intro_pay_resume_${campType}`);
+    sessionStorage.removeItem('pay_auth_in_progress');
+
+    if (tokenHash) {
+      console.log('[CampIntro] Auto-login with tokenHash before opening pay dialog');
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' })
+        .then(({ error }) => {
+          if (error) console.warn('[CampIntro] Auto-login failed:', error.message);
+          else console.log('[CampIntro] Auto-login successful');
+        })
+        .catch((e) => console.warn('[CampIntro] Auto-login exception:', e))
+        .finally(() => setShowPayDialog(true));
+    } else {
+      // 延迟一下等 auth 状态同步
+      setTimeout(() => setShowPayDialog(true), 300);
+    }
+  }, [campType]);
 
   // 检查用户是否已购买该付费训练营
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase(campType || '');
