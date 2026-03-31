@@ -420,7 +420,14 @@ export default function SynergyPromoPage() {
     }
   }, [step, user, paymentOpenId]);
 
+  const [showRefundPolicy, setShowRefundPolicy] = useState(false);
+
   const handleBuyClick = () => {
+    setShowRefundPolicy(true);
+  };
+
+  const handleRefundPolicyConfirm = () => {
+    setShowRefundPolicy(false);
     setStep('checkout');
   };
 
