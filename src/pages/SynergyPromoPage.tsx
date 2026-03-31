@@ -1271,6 +1271,11 @@ export default function SynergyPromoPage() {
           />
         }
       />
+      <RefundPolicyDialog
+        open={showRefundPolicy}
+        onOpenChange={setShowRefundPolicy}
+        onConfirm={handleRefundPolicyConfirm}
+      />
     </div>
   );
 }
