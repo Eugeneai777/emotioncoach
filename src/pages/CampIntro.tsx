@@ -462,7 +462,9 @@ const CampIntro = () => {
             }}
             className={`w-full gap-2 bg-gradient-to-r ${campTemplate.gradient} hover:opacity-90 text-white shadow-lg text-lg py-6`}
           >
-            {hasJoinedCamp 
+            {orderLoading
+              ? '加载中...'
+              : hasJoinedCamp 
               ? '继续训练' 
               : hasPurchased 
               ? '已购买，立即开始' 
