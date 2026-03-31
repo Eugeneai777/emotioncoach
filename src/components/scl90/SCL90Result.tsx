@@ -43,7 +43,7 @@ export function SCL90Result({
   // Handle join camp action
   const handleJoinCamp = async () => {
     if (!user) {
-      toast.info("请先登录后再加入训练营");
+      // 未登录：跳转到训练营介绍页，由该页面处理登录引导
       navigate('/camp-intro/emotion_journal_21');
       return;
     }
