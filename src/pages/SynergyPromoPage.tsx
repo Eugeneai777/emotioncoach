@@ -1181,10 +1181,28 @@ export default function SynergyPromoPage() {
                   <span className="text-xs text-slate-400 line-through">¥899</span>
                 </div>
                 <p className="text-[10px] text-slate-400 truncate">AI教练 + 专业教练 + 知乐胶囊</p>
+                <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                  <Checkbox
+                    checked={agreedPolicy}
+                    onCheckedChange={(checked) => setAgreedPolicy(!!checked)}
+                    className="h-3.5 w-3.5 !min-h-0 !min-w-0"
+                  />
+                  <span className="text-[10px] text-muted-foreground">
+                    我已阅读并同意
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
+                      className="text-orange-600 underline underline-offset-2 ml-0.5"
+                    >
+                      《购买须知》
+                    </button>
+                  </span>
+                </label>
               </div>
               <Button
                 onClick={handleBuyClick}
-                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0"
+                disabled={!agreedPolicy}
+                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0 disabled:opacity-50"
               >
                 立即购买
               </Button>
