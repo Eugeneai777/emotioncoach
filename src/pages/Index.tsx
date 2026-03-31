@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { usePurchaseOnboarding } from "@/hooks/usePurchaseOnboarding";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
+import { useQuery } from "@tanstack/react-query";
 import { Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
@@ -101,6 +102,25 @@ const Index = () => {
     loading: authLoading,
     signOut
   } = useAuth();
+
+  // 查询21天情绪日记是否已通过 orders 表购买
+  const { data: journalOrderPurchase } = useQuery({
+    queryKey: ['journal-order-purchase', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('package_key', ['synergy_bundle', 'camp-emotion_journal_21'])
+        .eq('status', 'paid')
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user
+  });
+
   const {
     messages,
     isLoading,
@@ -626,6 +646,7 @@ const Index = () => {
           price: 399,
           original_price: 399,
         }}
+        isPurchased={!!journalOrderPurchase}
         onSuccess={loadActiveCamp}
       />
       
