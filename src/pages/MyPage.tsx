@@ -115,7 +115,7 @@ const MyPage: React.FC = () => {
         navigate("/settings?view=notifications");
         break;
       case "联系客服":
-        setShowCustomerSupport(true);
+        navigate("/customer-support");
         break;
       case "退出登录":
         await signOut();
