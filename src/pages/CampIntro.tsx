@@ -135,7 +135,7 @@ const CampIntro = () => {
   });
   
   // 额外检查 orders 表（synergy_bundle 购买记录在 orders 表中）
-  const { data: orderPurchase } = useQuery({
+  const { data: orderPurchase, isLoading: orderLoading } = useQuery({
     queryKey: ['camp-order-purchase', campType, user?.id],
     queryFn: async () => {
       if (!user || !campType) return null;
@@ -157,7 +157,8 @@ const CampIntro = () => {
     enabled: !!user && !!campType
   });
   
-  const hasPurchased = !!purchaseRecord || !!orderPurchase;
+  // 以 orders 表（财务事实来源）为准，避免 user_camp_purchases 中残留记录导致误判
+  const hasPurchased = !!orderPurchase;
 
   const { data: campTemplate, isLoading } = useQuery({
     queryKey: ['camp-template', campType],
