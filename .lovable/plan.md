@@ -1,37 +1,43 @@
 
 
-# 异常/退款卡片增加详细说明
+# 语音监控增加 usage_records 数据源（含豆包语音）
 
 ## 问题
 
-"异常/退款"卡片只显示数字（如 27）和异常率，无法得知具体是哪些记录构成了这个数字。用户需要知道异常的计算逻辑和具体明细。
+当前"今日语音"和"24小时语音趋势"仅查询 `ai_coach_calls` 表，该表只记录 AI 主动发起的通话。用户通过各专区发起的 OpenAI Realtime 和豆包语音会话记录在 `usage_records` 表中（source 为 `realtime_voice`、`realtime_voice_emotion` 等），导致图表数据为空。
 
 ## 方案
 
-### 1. 获取异常记录详情
+在 `OperationsMonitorDashboard.tsx` 的 3 处语音查询中，额外查询 `usage_records` 中 source 包含 `realtime_voice` 的记录，将两个数据源合并。
 
-在 `fetchRealtimeMetrics` 中，除了已有的 count 查询，额外查询 `usage_records` 中 `record_type IN ('refund', 'compensation')` 的具体记录（limit 50），存入新状态 `errorDetails`。
+### 具体变更
 
-### 2. 点击卡片展开详情面板
+**1. 今日语音统计（~行 301-304）**
 
-将"异常/退款" StatCard 改为可点击，点击后在卡片下方展开一个详情面板，包含：
+追加查询 `usage_records` 中 `source LIKE 'realtime_voice%'` 的记录，用 `amount` 字段（积分消耗）换算为大致秒数（8点/分钟 = 7.5秒/点），或直接显示通话次数+积分消耗。合并两个数据源的结果。
 
-- **计算说明**：「异常数 = 今日 usage_records 中 record_type 为 refund 或 compensation 的记录数；异常率 = 异常数 / 今日总调用数 × 100%」
-- **按来源聚合的统计表**：按 `source`（如 ai_coaching、emotion_journal 等）分组，显示每个来源的异常数量
-- **按类型分组**：refund vs compensation 各多少条
-- **最近异常记录列表**（最多显示 20 条）：时间、来源(source)、类型(record_type)、用户ID（前8位）、金额(amount)、描述
+**2. 24小时趋势（~行 372-375）**
 
-### 3. 文件变更
+每小时循环中追加查询 `usage_records` 中语音相关 source 的记录，将 amount 累加到 voiceSeconds。
 
-| 文件 | 操作 |
-|---|---|
-| `src/components/admin/OperationsMonitorDashboard.tsx` | 新增 errorDetails 状态、查询逻辑、可点击卡片、展开面板 |
+**3. 活跃用户语音统计（~行 450-454）**
+
+同样追加 `usage_records` 语音记录到用户维度统计。
+
+**4. 数据源标识**
+
+在"今日语音"卡片的 sub 文案中区分显示：如 `OpenAI: X通 / 豆包: Y通`，让运营能区分两个通道的流量。
 
 ### 技术细节
 
-- 新增状态 `errorDetails: Array<{...}>` 和 `showErrorDetails: boolean`
-- 在 `fetchRealtimeMetrics` 中追加一个 select 查询（`source, record_type, user_id, amount, created_at, description`）
-- StatCard 的"异常/退款"卡片外包一层 `onClick` 切换 `showErrorDetails`
-- 展开面板用 `Collapsible` 或简单的条件渲染，放在 StatCard 行下方
-- 不影响其他卡片和现有逻辑
+- `usage_records` 中语音 source 值：`realtime_voice`（通用）、`realtime_voice_emotion`（豆包情绪）、`realtime_voice_identity`、`realtime_voice_life`
+- 其中 `realtime_voice_emotion` 走豆包通道，其余走 OpenAI
+- 使用 `.like('source', 'realtime_voice%')` 筛选
+- `amount` 字段为扣减积分数，按 8点/分钟换算秒数：`seconds = (amount / 8) * 60`
+
+### 文件变更
+
+| 文件 | 操作 |
+|---|---|
+| `src/components/admin/OperationsMonitorDashboard.tsx` | 修改 3 处语音查询，合并 usage_records 数据 |
 
