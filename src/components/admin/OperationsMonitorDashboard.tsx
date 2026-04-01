@@ -283,6 +283,7 @@ export default function OperationsMonitorDashboard() {
       todayCallsRes,
       todayCostLogsRes,
       todayVoiceRes,
+      todayVoiceUsageRes,
       todayActiveRes,
       todayErrorRes,
       errorDetailsRes,
