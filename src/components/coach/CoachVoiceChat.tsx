@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft } from 'lucide-react';
 import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
+import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
@@ -1271,7 +1272,17 @@ export const CoachVoiceChat = ({
         
         // 🔧 麦克风权限已在 startCall 开头统一获取（preAcquiredStream），无需重复请求
         updateConnectionPhase('establishing');
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
+
+        // 🔧 情绪教练模式使用豆包端到端实时语音
+        let chat: AudioClient;
+        if (mode === 'emotion') {
+          console.log('[VoiceChat] 🎯 Emotion mode: Using Doubao Realtime');
+          const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
+          chat = doubaoChat;
+        } else {
+          const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
+          chat = realtimeChat;
+        }
         chatRef.current = chat;
         
         try {
