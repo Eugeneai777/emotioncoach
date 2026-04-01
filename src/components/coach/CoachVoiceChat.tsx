@@ -1272,7 +1272,17 @@ export const CoachVoiceChat = ({
         
         // 🔧 麦克风权限已在 startCall 开头统一获取（preAcquiredStream），无需重复请求
         updateConnectionPhase('establishing');
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
+
+        // 🔧 情绪教练模式使用豆包端到端实时语音
+        let chat: AudioClient;
+        if (mode === 'emotion') {
+          console.log('[VoiceChat] 🎯 Emotion mode: Using Doubao Realtime');
+          const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
+          chat = doubaoChat;
+        } else {
+          const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
+          chat = realtimeChat;
+        }
         chatRef.current = chat;
         
         try {
