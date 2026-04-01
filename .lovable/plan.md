@@ -1,19 +1,48 @@
 
 
-# 替换黛汐老师头像并统一为圆形
+# 外部导入兑换码方案评估与实施
 
-## 方案
+## 运营评估
 
-1. **复制新头像到项目资源目录**：将用户上传的图片复制为 `src/assets/coach-daixi.jpg`（覆盖原文件）
+外部导入方案确实更优，理由：
 
-2. **修改 `src/pages/SynergyPromoPage.tsx`**：
-   - 移除 leadCoach 头像 `<img>` 上的 `style={{ objectPosition: 'center 20%' }}`，因为新照片构图合适，不需要偏移
-   - leadCoach 头像容器已经是 `rounded-full`（圆形），与其他教练一致，无需改动容器样式
+1. **编码规则可控**：`YJ267001-YJ267100` 编号规则清晰，便于有赞客服按序发放和追踪
+2. **库存管理透明**：有赞客服手中的码与系统库存完全一致，避免系统生成码与外部发放脱节
+3. **补码灵活**：未来需要更多码时，按相同规则续编（YJ267101...）即可
+4. **审计友好**：兑换码与有赞订单一一对应，方便对账
 
-### 文件变更
+## 实施方案
 
-| 文件 | 操作 |
+将上传的 100 个兑换码（YJ267001 ~ YJ267100）批量写入 `synergy_activation_codes` 表。
+
+### 具体操作
+
+通过数据库插入工具，执行一条批量 INSERT：
+
+```sql
+INSERT INTO synergy_activation_codes (code, batch_name, source_channel, is_used)
+VALUES 
+  ('YJ267001', '7天有劲训练营-首批100', '有赞商城', false),
+  ('YJ267002', '7天有劲训练营-首批100', '有赞商城', false),
+  ...
+  ('YJ267100', '7天有劲训练营-首批100', '有赞商城', false);
+```
+
+- **batch_name**：`7天有劲训练营-首批100`，方便后台按批次筛选
+- **source_channel**：`有赞商城`，标记来源渠道
+- **is_used**：默认 `false`，用户兑换后自动标记为 `true`（已有逻辑）
+- **expires_at**：不设过期，长期有效
+
+### 不需要新建边缘函数
+
+现有 `redeem-synergy-code` 已完整支持：查码 → 校验未使用 → 核销 → 开通权益。导入数据后即可正常工作。
+
+### 后续补码
+
+未来需要追加时，按相同格式准备 Excel，再次导入即可。也可以后续在管理后台增加"批量导入"功能。
+
+| 操作 | 说明 |
 |---|---|
-| `src/assets/coach-daixi.jpg` | 替换为新上传的头像 |
-| `src/pages/SynergyPromoPage.tsx` | 第720行移除 `objectPosition` 样式 |
+| 数据库插入 | 100 条兑换码写入 `synergy_activation_codes` |
+| 代码变更 | 无 |
 
