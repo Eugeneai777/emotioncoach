@@ -262,12 +262,9 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
 /* ========== Main Page ========== */
 export default function SynergyPromoPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
-  const [step, setStep] = useState<'browse' | 'redeem' | 'register' | 'success'>('browse');
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
-  const [purchaseChecked, setPurchaseChecked] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
   const shareDialog = useShareDialog();
