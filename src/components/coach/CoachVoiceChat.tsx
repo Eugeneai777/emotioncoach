@@ -1747,20 +1747,7 @@ export const CoachVoiceChat = ({
     await performEndCall();
   };
 
-  // 初始化时获取时长限制
-  useEffect(() => {
-    const loadDurationLimit = async () => {
-      setIsLoadingDuration(true);
-      if (maxDurationOverride !== undefined) {
-        setMaxDurationMinutes(maxDurationOverride);
-      } else {
-        const maxDuration = await getMaxDurationForUser();
-        setMaxDurationMinutes(maxDuration);
-      }
-      setIsLoadingDuration(false);
-    };
-    loadDurationLimit();
-  }, []);
+  // 🔧 时长限制现在在 startCall 中并行加载，不再需要单独的 useEffect
 
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
