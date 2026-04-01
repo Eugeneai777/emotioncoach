@@ -353,6 +353,7 @@ serve(async (req) => {
     }
 
     console.log('[DoubaoRelay] 🔗 Connecting to Doubao WebSocket...');
+    console.log('[DoubaoRelay] 🔑 APP_ID prefix:', DOUBAO_APP_ID.substring(0, 6) + '...', 'TOKEN prefix:', DOUBAO_ACCESS_TOKEN.substring(0, 6) + '...', 'APP_ID length:', DOUBAO_APP_ID.length, 'TOKEN length:', DOUBAO_ACCESS_TOKEN.length);
 
     try {
       const doubaoWsUrl = 'wss://openspeech.bytedance.com/api/v3/realtime/dialogue';
