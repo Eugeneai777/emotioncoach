@@ -333,7 +333,7 @@ export class DoubaoRealtimeChat {
       }
     }
 
-    this.stopRecording();
+    this.endRecording();
     this.clearAudioQueue();
     this.onStatusChange('disconnected');
   }
