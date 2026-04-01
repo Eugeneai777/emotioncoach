@@ -235,6 +235,22 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
   return { msgType, flags, serialMethod, eventId, sessionId, errorCode, payload, jsonPayload };
 }
 
+function toUint8Array(rawData: string | Uint8Array | ArrayBuffer | ArrayBufferView): Uint8Array {
+  if (typeof rawData === 'string') {
+    return new TextEncoder().encode(rawData);
+  }
+
+  if (rawData instanceof Uint8Array) {
+    return rawData;
+  }
+
+  if (rawData instanceof ArrayBuffer) {
+    return new Uint8Array(rawData);
+  }
+
+  return new Uint8Array(rawData.buffer, rawData.byteOffset, rawData.byteLength);
+}
+
 // ============ WebSocket Relay Handler ============
 
 serve(async (req) => {
@@ -272,7 +288,7 @@ serve(async (req) => {
   const url = new URL(req.url);
   const authToken = url.searchParams.get('token') || req.headers.get('authorization')?.replace('Bearer ', '');
 
-  let doubaoWs: WebSocket | null = null;
+  let doubaoWs: NodeWebSocket | null = null;
   let sessionId = '';
   let userName: string | undefined;
 
@@ -348,7 +364,7 @@ serve(async (req) => {
         headers: Object.fromEntries(connectHeaders.entries()),
       });
       upstreamWs.binaryType = 'arraybuffer';
-      doubaoWs = upstreamWs as unknown as WebSocket;
+      doubaoWs = upstreamWs;
 
       upstreamWs.on('open', () => {
         console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket');
@@ -361,11 +377,7 @@ serve(async (req) => {
         if (clientWs.readyState !== WebSocket.OPEN) return;
 
         try {
-          const data = rawData instanceof Uint8Array
-            ? rawData
-            : rawData instanceof ArrayBuffer
-              ? new Uint8Array(rawData)
-              : new Uint8Array(rawData.buffer, rawData.byteOffset, rawData.byteLength);
+          const data = toUint8Array(rawData);
           const parsed = parseServerFrame(data);
           if (!parsed) {
             console.warn('[DoubaoRelay] ⚠️ Failed to parse server frame, length:', data.length);
@@ -552,7 +564,7 @@ serve(async (req) => {
         } catch (e) {
           console.error('[DoubaoRelay] ❌ Error processing Doubao message:', e);
         }
-      };
+      });
 
       upstreamWs.on('error', (e) => {
         console.error('[DoubaoRelay] ❌ Doubao WebSocket error:', e);
@@ -578,7 +590,7 @@ serve(async (req) => {
   };
 
   clientWs.onmessage = (event) => {
-    if (!doubaoWs || doubaoWs.readyState !== WebSocket.OPEN) {
+    if (!doubaoWs || doubaoWs.readyState !== NodeWebSocket.OPEN) {
       console.warn('[DoubaoRelay] ⚠️ Received client message but Doubao WS not ready, state:', doubaoWs?.readyState);
       return;
     }
@@ -633,13 +645,13 @@ serve(async (req) => {
 
   clientWs.onclose = (e) => {
     console.log('[DoubaoRelay] 🔌 Client WebSocket closed:', e.code, e.reason);
-    if (doubaoWs && doubaoWs.readyState === WebSocket.OPEN) {
+    if (doubaoWs && doubaoWs.readyState === NodeWebSocket.OPEN) {
       try {
         // 发送 FinishSession 和 FinishConnection
         const finishSession = buildClientTextFrame(EVENT_FINISH_SESSION, {}, sessionId);
-        (doubaoWs as unknown as NodeWebSocket).send(finishSession);
+        doubaoWs.send(finishSession);
         const finishConn = buildClientTextFrame(EVENT_FINISH_CONNECTION, {});
-        (doubaoWs as unknown as NodeWebSocket).send(finishConn);
+        doubaoWs.send(finishConn);
       } catch {
         // ignore
       }
@@ -649,7 +661,7 @@ serve(async (req) => {
 
   clientWs.onerror = (e) => {
     console.error('[DoubaoRelay] ❌ Client WebSocket error:', e);
-    if (doubaoWs && doubaoWs.readyState === WebSocket.OPEN) {
+    if (doubaoWs && doubaoWs.readyState === NodeWebSocket.OPEN) {
       doubaoWs.close();
     }
   };
