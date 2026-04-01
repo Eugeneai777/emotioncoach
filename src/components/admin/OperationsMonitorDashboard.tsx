@@ -806,7 +806,101 @@ export default function OperationsMonitorDashboard() {
         />
       </div>
 
-      {/* Row 2: Charts */}
+      {/* Error Details Panel */}
+      {showErrorDetails && (
+        <Card className="border-muted">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              异常/退款详细说明
+              <Badge variant="outline" className="text-[10px] ml-1">{errorDetails.length} 条记录</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="!p-6 space-y-4">
+            {/* Calculation logic */}
+            <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground text-sm">📐 计算逻辑</p>
+              <p>• <strong>异常数</strong> = 今日 usage_records 中 record_type 为 <code className="bg-muted px-1 rounded">refund</code> 或 <code className="bg-muted px-1 rounded">compensation</code> 的记录总数</p>
+              <p>• <strong>异常率</strong> = 异常数 ÷ 今日总调用数 × 100% = {metrics?.todayErrorCount ?? 0} ÷ {metrics?.todayTotalCalls ?? 0} × 100% = {metrics?.errorRate ?? 0}%</p>
+            </div>
+
+            {/* Aggregation by type */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium mb-2">按类型分布</p>
+                <div className="space-y-1.5">
+                  {(() => {
+                    const typeMap: Record<string, number> = {};
+                    errorDetails.forEach(r => {
+                      typeMap[r.record_type] = (typeMap[r.record_type] || 0) + 1;
+                    });
+                    return Object.entries(typeMap).map(([type, count]) => (
+                      <div key={type} className="flex items-center justify-between text-xs bg-muted/30 rounded px-3 py-1.5">
+                        <Badge variant="outline" className="text-[10px]">{type === 'refund' ? '退款 refund' : '补偿 compensation'}</Badge>
+                        <span className="font-mono font-medium">{count} 条</span>
+                      </div>
+                    ));
+                  })()}
+                  {errorDetails.length === 0 && <p className="text-xs text-muted-foreground">暂无异常记录</p>}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-2">按来源分布</p>
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                  {(() => {
+                    const sourceMap: Record<string, number> = {};
+                    errorDetails.forEach(r => {
+                      sourceMap[r.source] = (sourceMap[r.source] || 0) + 1;
+                    });
+                    return Object.entries(sourceMap)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([source, count]) => (
+                        <div key={source} className="flex items-center justify-between text-xs bg-muted/30 rounded px-3 py-1.5">
+                          <span className="text-muted-foreground">{source}</span>
+                          <span className="font-mono font-medium">{count} 条</span>
+                        </div>
+                      ));
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Recent records list */}
+            <div>
+              <p className="text-sm font-medium mb-2">最近异常记录（最多20条）</p>
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left px-3 py-2 font-medium">时间</th>
+                      <th className="text-left px-3 py-2 font-medium">来源</th>
+                      <th className="text-left px-3 py-2 font-medium">类型</th>
+                      <th className="text-left px-3 py-2 font-medium">用户ID</th>
+                      <th className="text-right px-3 py-2 font-medium">金额</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {errorDetails.slice(0, 20).map((r) => (
+                      <tr key={r.id} className="border-t border-border/50 hover:bg-muted/30">
+                        <td className="px-3 py-1.5 text-muted-foreground">{format(new Date(r.created_at), "HH:mm:ss")}</td>
+                        <td className="px-3 py-1.5"><Badge variant="secondary" className="text-[10px]">{r.source}</Badge></td>
+                        <td className="px-3 py-1.5"><Badge variant={r.record_type === 'refund' ? 'destructive' : 'outline'} className="text-[10px]">{r.record_type}</Badge></td>
+                        <td className="px-3 py-1.5 font-mono text-muted-foreground">{r.user_id.slice(0, 8)}...</td>
+                        <td className="px-3 py-1.5 text-right font-mono">{r.amount}</td>
+                      </tr>
+                    ))}
+                    {errorDetails.length === 0 && (
+                      <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">今日暂无异常/退款记录</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* QPS 实时趋势 (15分钟) */}
         <Card>
