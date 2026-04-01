@@ -824,6 +824,23 @@ export default function OperationsMonitorDashboard() {
               <p>• <strong>异常率</strong> = 异常数 ÷ 今日总调用数 × 100% = {metrics?.todayErrorCount ?? 0} ÷ {metrics?.todayTotalCalls ?? 0} × 100% = {metrics?.errorRate ?? 0}%</p>
             </div>
 
+            {/* Business rules explanation */}
+            <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground text-sm">📋 异常项来源说明</p>
+              <p className="font-medium mt-1">🎙 语音通话退款规则：</p>
+              <p>• 通话时长 &lt; 10秒：全额退还积分（8点/分钟）</p>
+              <p>• 通话时长 10~30秒：退还一半积分</p>
+              <p>• 通话时长 &gt; 30秒：不退费</p>
+              <p className="font-medium mt-1">💬 文字对话补偿：</p>
+              <p>• AI 响应失败或超时时，系统自动补偿已扣除的 1 点消费积分</p>
+              <p className="font-medium mt-1">🏕 训练营相关：</p>
+              <p>• 训练营专属 feature_key 下的免费通话不产生退款记录</p>
+              <p>• 通用专区（如 /mama, /workplace）即使已购营用户仍按标准扣费，适用上述退款规则</p>
+              <p className="font-medium mt-1">📊 判断标准：</p>
+              <p>• <code className="bg-muted px-1 rounded">refund</code> = 系统按规则自动退还的积分</p>
+              <p>• <code className="bg-muted px-1 rounded">compensation</code> = 因服务异常手动或自动补偿的积分</p>
+            </div>
+
             {/* Aggregation by type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
