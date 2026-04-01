@@ -242,7 +242,7 @@ export class DoubaoRealtimeChat {
     }
   }
 
-  private stopRecording() {
+  private endRecording() {
     if (this.sourceNode) {
       this.sourceNode.disconnect();
       this.sourceNode = null;
