@@ -321,12 +321,19 @@ export class DoubaoRealtimeChat {
   private appendAudioChunk(audioData: Uint8Array) {
     if (audioData.length === 0) return;
     this.audioChunks.push(audioData);
-    this.flushAudioChunks();
+
+    const totalBufferedBytes = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    if (totalBufferedBytes >= MIN_PLAYABLE_PCM_BYTES) {
+      this.flushAudioChunks();
+    }
   }
 
-  private flushAudioChunks() {
+  private flushAudioChunks(force = false) {
     if (this.audioChunks.length === 0) return;
+
     const totalLen = this.audioChunks.reduce((s, c) => s + c.length, 0);
+    if (!force && totalLen < MIN_PLAYABLE_PCM_BYTES) return;
+
     const merged = new Uint8Array(totalLen);
     let offset = 0;
     for (const chunk of this.audioChunks) {
