@@ -258,6 +258,29 @@ export default function CostMonitorDashboard() {
     }
   };
 
+  const acknowledgeAllAlerts = async () => {
+    const pendingAlerts = alerts.filter(a => !a.is_acknowledged);
+    if (pendingAlerts.length === 0) {
+      toast.info('没有待处理的预警');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('cost_alerts')
+        .update({ 
+          is_acknowledged: true, 
+          acknowledged_at: new Date().toISOString() 
+        })
+        .in('id', pendingAlerts.map(a => a.id));
+      if (error) throw error;
+      toast.success(`已确认 ${pendingAlerts.length} 条预警`);
+      fetchData();
+    } catch (error) {
+      console.error('Error acknowledging all alerts:', error);
+      toast.error('操作失败');
+    }
+  };
+
   // 计算统计数据
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
@@ -1133,10 +1156,18 @@ export default function CostMonitorDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">预警记录</CardTitle>
-              <Button size="sm" variant="outline" onClick={runAlertCheck} disabled={checking}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
-                检查预警
-              </Button>
+              <div className="flex gap-2">
+                {alerts.some(a => !a.is_acknowledged) && (
+                  <Button size="sm" variant="outline" onClick={acknowledgeAllAlerts}>
+                    <Check className="h-4 w-4 mr-2" />
+                    全部确认
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={runAlertCheck} disabled={checking}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+                  检查预警
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {alerts.length === 0 ? (
