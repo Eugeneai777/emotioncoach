@@ -789,13 +789,15 @@ export default function OperationsMonitorDashboard() {
           value={formatDuration(metrics?.todayVoiceSeconds ?? 0)}
           sub={`${metrics?.todayVoiceCalls ?? 0} 通通话`}
         />
-        <StatCard
-          icon={AlertTriangle}
-          label="异常/退款"
-          value={metrics?.todayErrorCount ?? 0}
-          sub={`异常率 ${metrics?.errorRate ?? 0}%`}
-          alert={(metrics?.errorRate ?? 0) > 5}
-        />
+        <div className="cursor-pointer" onClick={() => setShowErrorDetails(!showErrorDetails)}>
+          <StatCard
+            icon={AlertTriangle}
+            label="异常/退款 ⓘ"
+            value={metrics?.todayErrorCount ?? 0}
+            sub={`异常率 ${metrics?.errorRate ?? 0}% · 点击查看详情`}
+            alert={(metrics?.errorRate ?? 0) > 5}
+          />
+        </div>
         <StatCard
           icon={TrendingUp}
           label="今日成本"
