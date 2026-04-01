@@ -1048,13 +1048,19 @@ export default function OperationsMonitorDashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={hourlyData}>
+              <AreaChart data={hourlyData}>
+                <defs>
+                  <linearGradient id="tokenGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" fontSize={11} interval={3} />
                 <YAxis fontSize={11} />
                 <Tooltip formatter={(v: number) => [formatNumber(v), "Token"]} />
-                <Line type="monotone" dataKey="tokens" name="Token数" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-              </LineChart>
+                <Area type="monotone" dataKey="tokens" name="Token数" stroke="hsl(var(--chart-2))" strokeWidth={2} fill="url(#tokenGradient)" dot={false} />
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
