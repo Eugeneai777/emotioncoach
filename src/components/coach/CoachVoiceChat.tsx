@@ -87,6 +87,7 @@ export const CoachVoiceChat = ({
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const globalVoice = (() => { try { return useGlobalVoice(); } catch { return null; } })();
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
   const [transcript, setTranscript] = useState('');
