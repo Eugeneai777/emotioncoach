@@ -258,6 +258,29 @@ export default function CostMonitorDashboard() {
     }
   };
 
+  const acknowledgeAllAlerts = async () => {
+    const pendingAlerts = alerts.filter(a => !a.is_acknowledged);
+    if (pendingAlerts.length === 0) {
+      toast.info('没有待处理的预警');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('cost_alerts')
+        .update({ 
+          is_acknowledged: true, 
+          acknowledged_at: new Date().toISOString() 
+        })
+        .in('id', pendingAlerts.map(a => a.id));
+      if (error) throw error;
+      toast.success(`已确认 ${pendingAlerts.length} 条预警`);
+      fetchData();
+    } catch (error) {
+      console.error('Error acknowledging all alerts:', error);
+      toast.error('操作失败');
+    }
+  };
+
   // 计算统计数据
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
