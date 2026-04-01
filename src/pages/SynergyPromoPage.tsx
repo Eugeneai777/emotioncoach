@@ -267,91 +267,12 @@ export default function SynergyPromoPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
-  const shouldUseAlipay = useMemo(() => {
-    const isMobile = /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent);
-    const isWechat = isWeChatBrowser();
-    const isMiniProgram = isWeChatMiniProgram();
-    return isMobile && !isWechat && !isMiniProgram;
-  }, []);
-
-  const [step, setStep] = useState<'browse' | 'checkout' | 'payment' | 'register' | 'success'>('browse');
-  const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
-  const [orderNo, setOrderNo] = useState('');
-  const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
+  const [step, setStep] = useState<'browse' | 'redeem' | 'register' | 'success'>('browse');
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [purchaseChecked, setPurchaseChecked] = useState(false);
+  const [showRedeemDialog, setShowRedeemDialog] = useState(false);
+  const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
   const shareDialog = useShareDialog();
-
-  const paymentResumeHandledRef = useRef(false);
-  const paymentResume = searchParams.get('payment_resume') === '1';
-  const urlPaymentOpenId = searchParams.get('payment_openid');
-  const paymentAuthError = searchParams.get('payment_auth_error') === '1';
-
-  const packageInfo = {
-    key: "synergy_bundle",
-    name: "心智×身体 全天候抗压套餐",
-    price: 0.01,
-    quota: 1,
-  };
-
-  usePaymentCallback({
-    onSuccess: (callbackOrderNo, packageKey) => {
-      if (packageKey === 'synergy_bundle' || !packageKey) {
-        setOrderNo(callbackOrderNo);
-        setAlreadyPurchased(true);
-        if (user) {
-          handleEnterCamp();
-        } else {
-          localStorage.setItem('pending_claim_order', callbackOrderNo);
-          setPostAuthRedirect('/camp-intro/emotion_stress_7');
-          setStep('register');
-        }
-      }
-    },
-    showToast: true,
-    showConfetti: true,
-    priority: 'page',
-  });
-
-  useEffect(() => {
-    if (paymentResumeHandledRef.current) return;
-
-    if (paymentAuthError) {
-      paymentResumeHandledRef.current = true;
-      toast.error("微信授权失败", { description: "请重新尝试支付" });
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_resume');
-      url.searchParams.delete('payment_auth_error');
-      window.history.replaceState({}, '', url.toString());
-      return;
-    }
-
-    if (paymentResume) {
-      paymentResumeHandledRef.current = true;
-      console.log('[SynergyPromo] Payment resume detected, restoring payment dialog');
-
-      if (urlPaymentOpenId) {
-        setPaymentOpenId(urlPaymentOpenId);
-      }
-
-      try {
-        const cachedShipping = localStorage.getItem('synergy_shipping_info');
-        if (cachedShipping) {
-          setCheckoutInfo(JSON.parse(cachedShipping));
-        }
-      } catch (e) {
-        console.error('[SynergyPromo] Failed to restore shipping info:', e);
-      }
-
-      setStep('payment');
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_resume');
-      url.searchParams.delete('payment_openid');
-      url.searchParams.delete('payment_auth_error');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [paymentResume, paymentAuthError, urlPaymentOpenId]);
 
   useEffect(() => {
     const checkPurchase = async () => {
