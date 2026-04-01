@@ -3,7 +3,6 @@ import { Phone, MessageSquare } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { preheatTokenEndpoint, prewarmMicrophoneStream } from '@/utils/RealtimeAudio';
 
 interface EmotionVoiceCallCTAProps {
