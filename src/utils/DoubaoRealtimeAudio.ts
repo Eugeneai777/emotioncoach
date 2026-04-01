@@ -26,6 +26,8 @@ export class DoubaoRealtimeChat {
   private playQueue: ArrayBuffer[] = [];
   private isPlaying = false;
   private playbackAudioContext: AudioContext | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
+  private interruptFlag = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   // 累积的 assistant 文本
