@@ -297,11 +297,17 @@ export default function OperationsMonitorDashboard() {
       supabase.from("api_cost_logs")
         .select("input_tokens, output_tokens, estimated_cost_cny")
         .gte("created_at", todayStart),
-      // Today voice calls
+      // Today voice calls (ai_coach_calls)
       supabase.from("ai_coach_calls")
         .select("duration_seconds, id")
         .gte("created_at", todayStart)
         .eq("call_status", "ended"),
+      // Today voice from usage_records (OpenAI Realtime + Doubao)
+      supabase.from("usage_records")
+        .select("source, amount")
+        .gte("created_at", todayStart)
+        .like("source", "realtime_voice%")
+        .eq("record_type", "consumption"),
       // Today active users (distinct)
       supabase.from("usage_records")
         .select("user_id")
