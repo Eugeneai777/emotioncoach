@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.81.0";
+import NodeWebSocket from "npm:ws@8.18.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -343,24 +344,28 @@ serve(async (req) => {
 
       console.log('[DoubaoRelay] 🔗 Opening outbound Doubao WebSocket, connectId:', connectId);
 
-      // Deno 运行时支持在出站 WebSocket 握手里附带自定义 headers
-      // deno-lint-ignore no-explicit-any
-      const doubaoSocketOptions: any = { headers: connectHeaders };
-      doubaoWs = new WebSocket(doubaoWsUrl, doubaoSocketOptions);
-      doubaoWs.binaryType = 'arraybuffer';
+      const upstreamWs = new NodeWebSocket(doubaoWsUrl, {
+        headers: Object.fromEntries(connectHeaders.entries()),
+      });
+      upstreamWs.binaryType = 'arraybuffer';
+      doubaoWs = upstreamWs as unknown as WebSocket;
 
-      doubaoWs.onopen = () => {
+      upstreamWs.on('open', () => {
         console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket');
         const frame = buildClientTextFrame(EVENT_START_CONNECTION, {});
-        doubaoWs!.send(frame);
+        upstreamWs.send(frame);
         console.log('[DoubaoRelay] 📤 Sent StartConnection event');
-      };
+      });
 
-      doubaoWs.onmessage = (event) => {
+      upstreamWs.on('message', (rawData) => {
         if (clientWs.readyState !== WebSocket.OPEN) return;
 
         try {
-          const data = new Uint8Array(event.data as ArrayBuffer);
+          const data = rawData instanceof Uint8Array
+            ? rawData
+            : rawData instanceof ArrayBuffer
+              ? new Uint8Array(rawData)
+              : new Uint8Array(rawData.buffer, rawData.byteOffset, rawData.byteLength);
           const parsed = parseServerFrame(data);
           if (!parsed) {
             console.warn('[DoubaoRelay] ⚠️ Failed to parse server frame, length:', data.length);
@@ -549,20 +554,21 @@ serve(async (req) => {
         }
       };
 
-      doubaoWs.onerror = (e) => {
+      upstreamWs.on('error', (e) => {
         console.error('[DoubaoRelay] ❌ Doubao WebSocket error:', e);
         if (clientWs.readyState === WebSocket.OPEN) {
           clientWs.send(JSON.stringify({ type: 'error', message: '语音服务连接错误' }));
         }
-      };
+      });
 
-      doubaoWs.onclose = (e) => {
-        console.log('[DoubaoRelay] 🔌 Doubao WebSocket closed:', e.code, e.reason);
+      upstreamWs.on('close', (code, reason) => {
+        const closeReason = typeof reason === 'string' ? reason : new TextDecoder().decode(reason);
+        console.log('[DoubaoRelay] 🔌 Doubao WebSocket closed:', code, closeReason);
         if (clientWs.readyState === WebSocket.OPEN) {
-          clientWs.send(JSON.stringify({ type: 'disconnected', code: e.code }));
+          clientWs.send(JSON.stringify({ type: 'disconnected', code }));
           clientWs.close(1000, '豆包连接关闭');
         }
-      };
+      });
 
     } catch (e) {
       console.error('[DoubaoRelay] ❌ Failed to connect to Doubao:', e);
@@ -631,9 +637,9 @@ serve(async (req) => {
       try {
         // 发送 FinishSession 和 FinishConnection
         const finishSession = buildClientTextFrame(EVENT_FINISH_SESSION, {}, sessionId);
-        doubaoWs.send(finishSession);
+        (doubaoWs as unknown as NodeWebSocket).send(finishSession);
         const finishConn = buildClientTextFrame(EVENT_FINISH_CONNECTION, {});
-        doubaoWs.send(finishConn);
+        (doubaoWs as unknown as NodeWebSocket).send(finishConn);
       } catch {
         // ignore
       }
