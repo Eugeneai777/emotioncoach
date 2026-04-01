@@ -24,7 +24,7 @@ interface GlobalVoiceContextValue {
   setVoiceConnected: () => void;
 }
 
-const GlobalVoiceContext = createContext<GlobalVoiceContextValue | null>(null);
+export const GlobalVoiceContext = createContext<GlobalVoiceContextValue | null>(null);
 
 export function useGlobalVoice() {
   const ctx = useContext(GlobalVoiceContext);

@@ -974,7 +974,7 @@ export const CoachVoiceChat = ({
 
   const updateConnectionPhase = useCallback((phase: ConnectionPhase) => {
     setConnectionPhase(phase);
-    if (phase === 'connected') globalVoice?.setVoiceConnected();
+    if (phase === 'connected') globalVoice?.setVoiceConnected?.();
     console.log(`[VoiceChat] Connection phase: ${phase}`);
   }, []);
 
