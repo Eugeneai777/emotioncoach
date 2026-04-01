@@ -941,7 +941,6 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== FINAL CTA ===== */}
       <section className="px-4 py-12 text-center">
         <div className="max-w-lg mx-auto">
           {alreadyPurchased ? (
@@ -970,38 +969,13 @@ export default function SynergyPromoPage() {
             </>
           ) : (
             <>
-              <p className="text-slate-500 text-sm mb-2">限时特惠</p>
-              <div className="flex items-baseline justify-center gap-2 mb-1">
-                <span className="text-4xl font-black text-orange-600">¥0.01</span>
-                <span className="text-slate-400 line-through text-sm">¥899</span>
-              </div>
-              <p className="text-xs text-slate-500 mb-3">7天训练营 + 知乐胶囊套餐</p>
-              <label className="flex items-center justify-center gap-2 mb-4 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreedPolicy}
-                  onChange={(e) => setAgreedPolicy(e.target.checked)}
-                  className="h-4 w-4 rounded border-primary accent-orange-600 cursor-pointer"
-                />
-                <span className="text-xs text-muted-foreground">
-                  我已阅读并同意
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
-                    className="text-orange-600 underline underline-offset-2 ml-0.5"
-                  >
-                    《购买须知》
-                  </button>
-                </span>
-              </label>
+              <p className="text-slate-500 text-sm mb-4">在有赞商城下单后，使用兑换码激活训练营</p>
               <Button
-                onClick={handleBuyClick}
-                disabled={!agreedPolicy}
-                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 disabled:opacity-50"
+                onClick={() => setShowRedeemDialog(true)}
+                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0"
               >
-                立即开启三重陪伴之旅
+                输入兑换码开启训练营
               </Button>
-              <p className="text-xs text-slate-400 mt-3">支持微信支付 · 支付宝</p>
             </>
           )}
           {/* 分享按钮 */}
