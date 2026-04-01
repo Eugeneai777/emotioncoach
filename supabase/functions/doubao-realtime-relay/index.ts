@@ -235,7 +235,11 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
   return { msgType, flags, serialMethod, eventId, sessionId, errorCode, payload, jsonPayload };
 }
 
-function toUint8Array(rawData: string | Uint8Array | ArrayBuffer | ArrayBufferView): Uint8Array {
+function toUint8Array(rawData: unknown): Uint8Array {
+  if (Array.isArray(rawData)) {
+    return concatBuffers(...rawData.map((part) => toUint8Array(part)));
+  }
+
   if (typeof rawData === 'string') {
     return new TextEncoder().encode(rawData);
   }
@@ -248,7 +252,11 @@ function toUint8Array(rawData: string | Uint8Array | ArrayBuffer | ArrayBufferVi
     return new Uint8Array(rawData);
   }
 
-  return new Uint8Array(rawData.buffer, rawData.byteOffset, rawData.byteLength);
+  if (ArrayBuffer.isView(rawData)) {
+    return new Uint8Array(rawData.buffer, rawData.byteOffset, rawData.byteLength);
+  }
+
+  throw new TypeError(`Unsupported WebSocket message type: ${typeof rawData}`);
 }
 
 // ============ WebSocket Relay Handler ============
