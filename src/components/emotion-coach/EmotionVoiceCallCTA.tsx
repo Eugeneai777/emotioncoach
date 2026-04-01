@@ -21,12 +21,9 @@ export const EmotionVoiceCallCTA = ({
     isLoading
   } = usePersonalizedGreeting();
 
-  // 🚀 P0: 预热豆包语音引擎（优先）和 OpenAI Realtime（降级备用）
+  // 🚀 预热 OpenAI Realtime 语音引擎
   const handlePreheat = useCallback(() => {
     Promise.all([
-      // 豆包预热：AudioContext + 麦克风
-      (() => { DoubaoRealtimeChat.prewarmAudioContexts({ includeMicrophone: false }); })(),
-      // OpenAI 降级备用预热
       preheatTokenEndpoint('emotion-realtime-token'),
       prewarmMicrophoneStream()
     ]).catch(console.warn);
