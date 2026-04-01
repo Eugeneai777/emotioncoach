@@ -1,45 +1,37 @@
 
 
-# 兑换码页面增加退订政策与发票说明文案
+# 异常/退款卡片增加详细说明
+
+## 问题
+
+"异常/退款"卡片只显示数字（如 27）和异常率，无法得知具体是哪些记录构成了这个数字。用户需要知道异常的计算逻辑和具体明细。
 
 ## 方案
 
-在即将新建的 `SynergyRedeemDialog.tsx` 兑换码弹窗中，温馨提示区域增加两条说明文案。同时在吸顶栏底部也增加精简版提示。
+### 1. 获取异常记录详情
 
-### 文案内容
+在 `fetchRealtimeMetrics` 中，除了已有的 count 查询，额外查询 `usage_records` 中 `record_type IN ('refund', 'compensation')` 的具体记录（limit 50），存入新状态 `errorDetails`。
 
-1. **退订政策**：由于本产品为实物+服务商品，在有赞商城下单获取的兑换码，不支持退订、转赠、退换。
-2. **发票说明**：若需开发票，本产品发票将分为两张开具，开票金额合计为您实际支付的套餐总价。
+### 2. 点击卡片展开详情面板
 
-### 放置位置与呈现方式
+将"异常/退款" StatCard 改为可点击，点击后在卡片下方展开一个详情面板，包含：
 
-**位置：兑换码弹窗（SynergyRedeemDialog）底部**
+- **计算说明**：「异常数 = 今日 usage_records 中 record_type 为 refund 或 compensation 的记录数；异常率 = 异常数 / 今日总调用数 × 100%」
+- **按来源聚合的统计表**：按 `source`（如 ai_coaching、emotion_journal 等）分组，显示每个来源的异常数量
+- **按类型分组**：refund vs compensation 各多少条
+- **最近异常记录列表**（最多显示 20 条）：时间、来源(source)、类型(record_type)、用户ID（前8位）、金额(amount)、描述
 
-在"前往有赞商城下单"按钮下方，以浅灰底色的提示卡片呈现：
-
-```
-📋 购买须知
-• 本产品为实物+服务商品，兑换码不支持退订、转赠、退换
-• 如需开票，发票将分两张开具，金额合计为实付套餐总价
-```
-
-- 使用 `text-xs text-muted-foreground` 小字样式，`bg-slate-50 rounded-lg p-3`
-- 放在弹窗最底部，不干扰核心兑换流程，但在用户决策前可见
-- 不使用红色/警告色，保持温和的信息告知语气
-
-**不在吸顶栏重复展示**——吸顶栏空间紧凑，这两条信息属于决策辅助而非核心行动，放在兑换弹窗内即可覆盖所有进入兑换流程的用户。
-
-### 设计理由
-
-- 用户打开兑换码弹窗 = 已有购买意向，此时展示须知最合理
-- 文案紧跟"前往有赞下单"按钮，用户在跳转前自然看到
-- 小字+柔和背景色，不造成心理压力，但满足合规告知义务
-
-### 文件变更
+### 3. 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/components/promo/SynergyRedeemDialog.tsx` | 新建时直接包含这两条须知 |
+| `src/components/admin/OperationsMonitorDashboard.tsx` | 新增 errorDetails 状态、查询逻辑、可点击卡片、展开面板 |
 
-此变更将与前面已批准的「去掉支付、仅保留兑换码」方案一起实施，不需要额外修改其他文件。
+### 技术细节
+
+- 新增状态 `errorDetails: Array<{...}>` 和 `showErrorDetails: boolean`
+- 在 `fetchRealtimeMetrics` 中追加一个 select 查询（`source, record_type, user_id, amount, created_at, description`）
+- StatCard 的"异常/退款"卡片外包一层 `onClick` 切换 `showErrorDetails`
+- 展开面板用 `Collapsible` 或简单的条件渲染，放在 StatCard 行下方
+- 不影响其他卡片和现有逻辑
 
