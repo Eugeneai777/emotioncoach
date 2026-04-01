@@ -309,6 +309,7 @@ const App = () => (
       <BrowserRouter>
         <CoachCallProvider>
           <AICoachCallProvider>
+          <GlobalVoiceProvider>
             <Toaster />
             <Sonner />
             <GlobalRefTracker />
