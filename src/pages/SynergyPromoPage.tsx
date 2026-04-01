@@ -1052,6 +1052,7 @@ export default function SynergyPromoPage() {
             </DialogDescription>
           </DialogHeader>
           <QuickRegisterStep
+            orderNo=""
             onSuccess={handleRegisterSuccess}
           />
         </DialogContent>
