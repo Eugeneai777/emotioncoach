@@ -319,9 +319,10 @@ serve(async (req) => {
     // 连接豆包
     const DOUBAO_ACCESS_TOKEN = Deno.env.get('DOUBAO_ACCESS_TOKEN');
     const DOUBAO_APP_ID = Deno.env.get('DOUBAO_APP_ID');
+    const DOUBAO_APP_KEY = Deno.env.get('DOUBAO_APP_KEY');
 
-    if (!DOUBAO_ACCESS_TOKEN || !DOUBAO_APP_ID) {
-      console.error('[DoubaoRelay] ❌ DOUBAO_ACCESS_TOKEN or DOUBAO_APP_ID not set');
+    if (!DOUBAO_ACCESS_TOKEN || !DOUBAO_APP_ID || !DOUBAO_APP_KEY) {
+      console.error('[DoubaoRelay] ❌ DOUBAO_ACCESS_TOKEN, DOUBAO_APP_ID or DOUBAO_APP_KEY not set');
       clientWs.send(JSON.stringify({ type: 'error', message: '豆包语音服务未配置' }));
       clientWs.close(4002, '配置缺失');
       return;
