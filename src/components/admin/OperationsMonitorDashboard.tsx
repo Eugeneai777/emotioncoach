@@ -473,16 +473,20 @@ export default function OperationsMonitorDashboard() {
   };
 
   const fetchTopUsers = async () => {
-    const { data: usageData } = await supabase
-      .from("usage_records")
-      .select("user_id, amount")
-      .gte("created_at", todayStart);
-
-    const { data: voiceData } = await supabase
-      .from("ai_coach_calls")
-      .select("user_id, duration_seconds")
-      .gte("created_at", todayStart)
-      .eq("call_status", "ended");
+    const [{ data: usageData }, { data: voiceData }, { data: voiceUsageData }] = await Promise.all([
+      supabase.from("usage_records")
+        .select("user_id, amount")
+        .gte("created_at", todayStart),
+      supabase.from("ai_coach_calls")
+        .select("user_id, duration_seconds")
+        .gte("created_at", todayStart)
+        .eq("call_status", "ended"),
+      supabase.from("usage_records")
+        .select("user_id, amount")
+        .gte("created_at", todayStart)
+        .like("source", "realtime_voice%")
+        .eq("record_type", "consumption"),
+    ]);
 
     const userMap: Record<string, { calls: number; tokens: number; voiceSeconds: number }> = {};
 
@@ -495,6 +499,12 @@ export default function OperationsMonitorDashboard() {
     (voiceData || []).forEach((r: any) => {
       if (!userMap[r.user_id]) userMap[r.user_id] = { calls: 0, tokens: 0, voiceSeconds: 0 };
       userMap[r.user_id].voiceSeconds += r.duration_seconds || 0;
+    });
+
+    // Add voice usage from usage_records
+    (voiceUsageData || []).forEach((r: any) => {
+      if (!userMap[r.user_id]) userMap[r.user_id] = { calls: 0, tokens: 0, voiceSeconds: 0 };
+      userMap[r.user_id].voiceSeconds += ((r.amount || 0) / 8) * 60;
     });
 
     const sorted = Object.entries(userMap)
