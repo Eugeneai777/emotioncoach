@@ -887,29 +887,52 @@ export default function OperationsMonitorDashboard() {
             {/* Recent records list */}
             <div>
               <p className="text-sm font-medium mb-2">最近异常记录（最多20条）</p>
-              <div className="rounded-lg border overflow-hidden">
+              <div className="rounded-lg border overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50">
                       <th className="text-left px-3 py-2 font-medium">时间</th>
                       <th className="text-left px-3 py-2 font-medium">来源</th>
                       <th className="text-left px-3 py-2 font-medium">类型</th>
+                      <th className="text-left px-3 py-2 font-medium">功能模块</th>
+                      <th className="text-left px-3 py-2 font-medium">退款原因</th>
                       <th className="text-left px-3 py-2 font-medium">用户ID</th>
                       <th className="text-right px-3 py-2 font-medium">金额</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {errorDetails.slice(0, 20).map((r) => (
-                      <tr key={r.id} className="border-t border-border/50 hover:bg-muted/30">
-                        <td className="px-3 py-1.5 text-muted-foreground">{format(new Date(r.created_at), "HH:mm:ss")}</td>
-                        <td className="px-3 py-1.5"><Badge variant="secondary" className="text-[10px]">{r.source}</Badge></td>
-                        <td className="px-3 py-1.5"><Badge variant={r.record_type === 'refund' ? 'destructive' : 'outline'} className="text-[10px]">{r.record_type}</Badge></td>
-                        <td className="px-3 py-1.5 font-mono text-muted-foreground">{r.user_id.slice(0, 8)}...</td>
-                        <td className="px-3 py-1.5 text-right font-mono">{r.amount}</td>
-                      </tr>
-                    ))}
+                    {errorDetails.slice(0, 20).map((r) => {
+                      const meta = r.metadata as Record<string, any> | null;
+                      const featureKey = meta?.feature_key || '-';
+                      const reason = meta?.reason || '-';
+                      const reasonLabels: Record<string, string> = {
+                        'call_too_short_under_10s': '通话<10s 全额退',
+                        'call_short_10_to_30s': '通话10-30s 半额退',
+                        'ai_response_failed': 'AI响应失败',
+                        'ai_response_timeout': 'AI响应超时',
+                      };
+                      const featureLabels: Record<string, string> = {
+                        'realtime_voice': '通用语音',
+                        'realtime_voice_emotion': '情绪语音(训练营)',
+                        'realtime_voice_identity': '身份语音(训练营)',
+                        'realtime_voice_life': '生命语音(训练营)',
+                        'ai_coaching': 'AI教练对话',
+                        'emotion_journal': '情绪日记',
+                      };
+                      return (
+                        <tr key={r.id} className="border-t border-border/50 hover:bg-muted/30">
+                          <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{format(new Date(r.created_at), "HH:mm:ss")}</td>
+                          <td className="px-3 py-1.5"><Badge variant="secondary" className="text-[10px]">{r.source}</Badge></td>
+                          <td className="px-3 py-1.5"><Badge variant={r.record_type === 'refund' ? 'destructive' : 'outline'} className="text-[10px]">{r.record_type}</Badge></td>
+                          <td className="px-3 py-1.5 whitespace-nowrap">{featureLabels[featureKey] || featureKey}</td>
+                          <td className="px-3 py-1.5 whitespace-nowrap">{reasonLabels[reason] || reason}</td>
+                          <td className="px-3 py-1.5 font-mono text-muted-foreground">{r.user_id.slice(0, 8)}...</td>
+                          <td className="px-3 py-1.5 text-right font-mono">{r.amount}</td>
+                        </tr>
+                      );
+                    })}
                     {errorDetails.length === 0 && (
-                      <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">今日暂无异常/退款记录</td></tr>
+                      <tr><td colSpan={7} className="px-3 py-4 text-center text-muted-foreground">今日暂无异常/退款记录</td></tr>
                     )}
                   </tbody>
                 </table>
