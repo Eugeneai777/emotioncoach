@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, Mic, MicOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Mic, MicOff, Loader2, Phone } from "lucide-react";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { toast } from "sonner";
 import { ChatBubble } from "@/components/youjin-life/ChatBubble";
 import { YoujinBottomNav } from "@/components/youjin-life/YoujinBottomNav";
