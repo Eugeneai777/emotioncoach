@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { EmotionBloomIntroSections } from "@/components/camp/EmotionBloomIntroSections";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import PageHeader from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
@@ -268,6 +269,9 @@ const CampIntro = () => {
             </div>
           )}
         </section>
+
+        {/* Emotion Bloom 专属丰富内容 */}
+        {campType === 'emotion_bloom' && <EmotionBloomIntroSections />}
 
         {/* Stages */}
         {campTemplate.stages && campTemplate.stages.length > 0 && (
