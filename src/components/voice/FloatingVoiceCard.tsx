@@ -10,7 +10,7 @@ interface FloatingVoiceCardProps {
   onEnd: () => void;
 }
 
-export function FloatingVoiceCard({ coachEmoji, coachTitle, startTime, onRestore, onEnd }: FloatingVoiceCardProps) {
+export function FloatingVoiceCard({ coachEmoji, coachTitle, startTime, isConnected, onRestore, onEnd }: FloatingVoiceCardProps) {
   const [position, setPosition] = useState({ x: 16, y: 120 });
   const [isDragging, setIsDragging] = useState(false);
   const [elapsed, setElapsed] = useState(0);
