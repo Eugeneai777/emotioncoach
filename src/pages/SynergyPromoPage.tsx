@@ -1016,36 +1016,14 @@ export default function SynergyPromoPage() {
           ) : (
             <>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-orange-600">¥0.01</span>
-                  <span className="text-xs text-slate-400 line-through">¥899</span>
-                </div>
+                <p className="text-sm font-medium text-slate-700">7天有劲训练营</p>
                 <p className="text-[10px] text-slate-400 truncate">AI教练 + 专业教练 + 知乐胶囊</p>
-                <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedPolicy}
-                    onChange={(e) => setAgreedPolicy(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-primary accent-orange-600 cursor-pointer"
-                  />
-                  <span className="text-[10px] text-muted-foreground">
-                    我已阅读并同意
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
-                      className="text-orange-600 underline underline-offset-2 ml-0.5"
-                    >
-                      《购买须知》
-                    </button>
-                  </span>
-                </label>
               </div>
               <Button
-                onClick={handleBuyClick}
-                disabled={!agreedPolicy}
-                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0 disabled:opacity-50"
+                onClick={() => setShowRedeemDialog(true)}
+                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0"
               >
-                立即购买
+                兑换码激活
               </Button>
             </>
           )}
@@ -1055,31 +1033,13 @@ export default function SynergyPromoPage() {
       {/* Bottom spacer for sticky bar */}
       <div className="h-20" />
 
-      {/* Checkout form dialog */}
-      <CheckoutForm
-        open={step === 'checkout'}
-        onOpenChange={(open) => { if (!open) setStep('browse'); }}
-        productName={packageInfo.name}
-        price={packageInfo.price}
-        onConfirm={handleCheckoutConfirm}
-        shippingNote="香港直邮，预计 4-7 个工作日送达"
-        needIdCard={true}
-      />
-
-      {/* 微信支付对话框 */}
-      <WechatPayDialog
-        open={step === 'payment' && !shouldUseAlipay}
-        onOpenChange={(open) => { if (!open) setStep('browse'); }}
-        packageInfo={packageInfo}
-        onSuccess={handlePaySuccess}
-        openId={isWeChatMiniProgram() ? undefined : paymentOpenId}
-        shippingInfo={checkoutInfo ? {
-          buyerName: checkoutInfo.buyerName,
-          buyerPhone: checkoutInfo.buyerPhone,
-          buyerAddress: checkoutInfo.buyerAddress,
-          idCardName: checkoutInfo.idCardName,
-          idCardNumber: checkoutInfo.idCardNumber,
-        } : undefined}
+      {/* 兑换码弹窗 */}
+      <SynergyRedeemDialog
+        open={showRedeemDialog}
+        onOpenChange={setShowRedeemDialog}
+        onSuccess={handleRedeemSuccess}
+        isLoggedIn={!!user}
+        onNeedLogin={handleRedeemNeedLogin}
       />
 
       {/* 登录注册弹窗 */}
@@ -1088,31 +1048,14 @@ export default function SynergyPromoPage() {
           <DialogHeader>
             <DialogTitle className="text-center text-slate-800">请登录或注册以激活您的权益</DialogTitle>
             <DialogDescription className="text-center text-slate-500">
-              注册后可管理训练营进度和订单
+              注册后即可使用兑换码激活训练营
             </DialogDescription>
           </DialogHeader>
           <QuickRegisterStep
-            orderNo={orderNo}
-            paymentOpenId={paymentOpenId}
             onSuccess={handleRegisterSuccess}
           />
         </DialogContent>
       </Dialog>
-
-      {/* 支付宝对话框 */}
-      <AlipayPayDialog
-        open={step === 'payment' && shouldUseAlipay}
-        onOpenChange={(open) => { if (!open) setStep('browse'); }}
-        packageInfo={packageInfo}
-        onSuccess={handlePaySuccess}
-        shippingInfo={checkoutInfo ? {
-          buyerName: checkoutInfo.buyerName,
-          buyerPhone: checkoutInfo.buyerPhone,
-          buyerAddress: checkoutInfo.buyerAddress,
-          idCardName: checkoutInfo.idCardName,
-          idCardNumber: checkoutInfo.idCardNumber,
-        } : undefined}
-      />
 
       {/* 分享海报弹窗 */}
       <ShareDialogBase
@@ -1136,11 +1079,6 @@ export default function SynergyPromoPage() {
             onReady={shareDialog.handleCardReady}
           />
         }
-      />
-      <PurchaseAgreementSheet
-        open={showAgreementSheet}
-        onOpenChange={setShowAgreementSheet}
-        onAgree={handleAgreementConfirm}
       />
     </div>
   );
