@@ -751,10 +751,10 @@ export const CoachVoiceChat = ({
     } else if (event.type === 'input_audio_buffer.speech_stopped' || event.type === 'speech_stopped') {
       setSpeakingStatus('idle');
       userLastActivityRef.current = Date.now(); // 🔧 用户说完
-    } else if (event.type === 'response.audio.delta' || event.type === 'audio_output') {
+    } else if (event.type === 'response.audio.delta' || event.type === 'audio_output' || event.type === 'response.audio.started') {
       setSpeakingStatus('assistant-speaking');
       aiLastActivityRef.current = Date.now(); // 🔧 AI 正在回复
-    } else if (event.type === 'response.done') {
+    } else if (event.type === 'response.done' || event.type === 'response.audio.done') {
       setSpeakingStatus('idle');
       aiLastActivityRef.current = Date.now(); // 🔧 AI 回复完成
     } else if (event.type === 'tool_executed') {

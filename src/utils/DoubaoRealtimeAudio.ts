@@ -29,6 +29,7 @@ export class DoubaoRealtimeChat {
   private currentSource: AudioBufferSourceNode | null = null;
   private interruptFlag = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private pcmRemainder: Uint8Array | null = null; // 残留的奇数字节
 
   // 累积的 assistant 文本
   private assistantText = '';
@@ -336,6 +337,28 @@ export class DoubaoRealtimeChat {
     }
   }
 
+  private alignPcmBytes(data: ArrayBuffer): ArrayBuffer {
+    let bytes = new Uint8Array(data);
+
+    // Prepend any leftover byte from the previous chunk
+    if (this.pcmRemainder) {
+      const merged = new Uint8Array(this.pcmRemainder.length + bytes.length);
+      merged.set(this.pcmRemainder, 0);
+      merged.set(bytes, this.pcmRemainder.length);
+      bytes = merged;
+      this.pcmRemainder = null;
+    }
+
+    // If odd length, stash the last byte for the next chunk
+    if (bytes.length % 2 !== 0) {
+      this.pcmRemainder = bytes.slice(bytes.length - 1);
+      bytes = bytes.slice(0, bytes.length - 1);
+    }
+
+    if (bytes.length === 0) return new ArrayBuffer(0);
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  }
+
   private async processPlayQueue() {
     if (this.playQueue.length === 0) {
       this.isPlaying = false;
@@ -350,7 +373,9 @@ export class DoubaoRealtimeChat {
     const playCtx = this.playbackAudioContext;
 
     while (this.playQueue.length > 0 && !this.interruptFlag) {
-      const data = this.playQueue.shift()!;
+      const rawData = this.playQueue.shift()!;
+      const data = this.alignPcmBytes(rawData);
+      if (data.byteLength === 0) continue;
       try {
         // PCM Int16 -> Float32 AudioBuffer
         const int16 = new Int16Array(data);
@@ -385,6 +410,7 @@ export class DoubaoRealtimeChat {
   private clearAllAudio() {
     this.audioChunks = [];
     this.playQueue = [];
+    this.pcmRemainder = null;
     this.interruptFlag = true;
     if (this.currentSource) {
       try {
@@ -421,6 +447,7 @@ export class DoubaoRealtimeChat {
 
     this.endRecording();
     this.clearAllAudio();
+    this.pcmRemainder = null;
     this.onStatusChange('disconnected');
   }
 
