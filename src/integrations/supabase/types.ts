@@ -8994,6 +8994,42 @@ export type Database = {
         }
         Relationships: []
       }
+      synergy_activation_codes: {
+        Row: {
+          batch_name: string | null
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_used: boolean
+          redeemed_at: string | null
+          redeemed_by: string | null
+          source_channel: string | null
+        }
+        Insert: {
+          batch_name?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          source_channel?: string | null
+        }
+        Update: {
+          batch_name?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          source_channel?: string | null
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string | null

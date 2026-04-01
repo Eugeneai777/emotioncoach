@@ -1,26 +1,18 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Battery, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Settings, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { AlipayPayDialog } from "@/components/AlipayPayDialog";
-import { isWeChatBrowser, isWeChatMiniProgram } from "@/utils/platform";
-import { CheckoutForm, type CheckoutInfo } from "@/components/store/CheckoutForm";
 import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import { useAuth } from "@/hooks/useAuth";
-import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
-import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
-import { PurchaseAgreementSheet } from "@/components/promo/PurchaseAgreementSheet";
+import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
 
-import { useTermsAgreement } from "@/hooks/useTermsAgreement";
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
@@ -270,94 +262,14 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
 /* ========== Main Page ========== */
 export default function SynergyPromoPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
-  const shouldUseAlipay = useMemo(() => {
-    const isMobile = /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent);
-    const isWechat = isWeChatBrowser();
-    const isMiniProgram = isWeChatMiniProgram();
-    return isMobile && !isWechat && !isMiniProgram;
-  }, []);
-
-  const [step, setStep] = useState<'browse' | 'checkout' | 'payment' | 'register' | 'success'>('browse');
-  const [checkoutInfo, setCheckoutInfo] = useState<CheckoutInfo | null>(null);
-  const [orderNo, setOrderNo] = useState('');
-  const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
+  const [step, setStep] = useState<'browse' | 'register'>('browse');
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
-  const [purchaseChecked, setPurchaseChecked] = useState(false);
+  const [_purchaseChecked, setPurchaseChecked] = useState(false);
+  const [showRedeemDialog, setShowRedeemDialog] = useState(false);
+  const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
   const shareDialog = useShareDialog();
-
-  const paymentResumeHandledRef = useRef(false);
-  const paymentResume = searchParams.get('payment_resume') === '1';
-  const urlPaymentOpenId = searchParams.get('payment_openid');
-  const paymentAuthError = searchParams.get('payment_auth_error') === '1';
-
-  const packageInfo = {
-    key: "synergy_bundle",
-    name: "心智×身体 全天候抗压套餐",
-    price: 0.01,
-    quota: 1,
-  };
-
-  usePaymentCallback({
-    onSuccess: (callbackOrderNo, packageKey) => {
-      if (packageKey === 'synergy_bundle' || !packageKey) {
-        setOrderNo(callbackOrderNo);
-        setAlreadyPurchased(true);
-        if (user) {
-          handleEnterCamp();
-        } else {
-          localStorage.setItem('pending_claim_order', callbackOrderNo);
-          setPostAuthRedirect('/camp-intro/emotion_stress_7');
-          setStep('register');
-        }
-      }
-    },
-    showToast: true,
-    showConfetti: true,
-    priority: 'page',
-  });
-
-  useEffect(() => {
-    if (paymentResumeHandledRef.current) return;
-
-    if (paymentAuthError) {
-      paymentResumeHandledRef.current = true;
-      toast.error("微信授权失败", { description: "请重新尝试支付" });
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_resume');
-      url.searchParams.delete('payment_auth_error');
-      window.history.replaceState({}, '', url.toString());
-      return;
-    }
-
-    if (paymentResume) {
-      paymentResumeHandledRef.current = true;
-      console.log('[SynergyPromo] Payment resume detected, restoring payment dialog');
-
-      if (urlPaymentOpenId) {
-        setPaymentOpenId(urlPaymentOpenId);
-      }
-
-      try {
-        const cachedShipping = localStorage.getItem('synergy_shipping_info');
-        if (cachedShipping) {
-          setCheckoutInfo(JSON.parse(cachedShipping));
-        }
-      } catch (e) {
-        console.error('[SynergyPromo] Failed to restore shipping info:', e);
-      }
-
-      setStep('payment');
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_resume');
-      url.searchParams.delete('payment_openid');
-      url.searchParams.delete('payment_auth_error');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [paymentResume, paymentAuthError, urlPaymentOpenId]);
 
   useEffect(() => {
     const checkPurchase = async () => {
@@ -399,103 +311,34 @@ export default function SynergyPromoPage() {
     checkPurchase();
   }, [user]);
 
+  // Auto-redeem after login if code was cached
   useEffect(() => {
-    if (step !== 'checkout' && step !== 'payment') return;
-    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-    const isMiniProg = isWeChatMiniProgram();
-    if (!isWechat || isMiniProg || paymentOpenId) return;
-
-    const cached = sessionStorage.getItem('cached_wechat_openid');
-    if (cached) { setPaymentOpenId(cached); return; }
-
-    if (user) {
-      supabase.from('wechat_user_mappings')
-        .select('openid')
-        .eq('system_user_id', user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.openid) {
-            setPaymentOpenId(data.openid);
-            sessionStorage.setItem('cached_wechat_openid', data.openid);
-          }
-        });
+    if (user && pendingRedeemCode) {
+      setPendingRedeemCode(null);
+      setShowRedeemDialog(true);
     }
-  }, [step, user, paymentOpenId]);
+  }, [user, pendingRedeemCode]);
 
-  const { isAgreed: agreedPolicy, setAgreed: setAgreedPolicy } = useTermsAgreement();
-  const [showAgreementSheet, setShowAgreementSheet] = useState(false);
-
-  const handleBuyClick = () => {
-    if (!agreedPolicy) {
-      setShowAgreementSheet(true);
-      return;
-    }
-    setStep('checkout');
+  const handleRedeemNeedLogin = (code: string) => {
+    setPendingRedeemCode(code);
+    localStorage.setItem('pending_redeem_code', code);
+    setPostAuthRedirect(window.location.pathname + window.location.search);
+    setStep('register');
   };
 
-  const handleAgreementConfirm = () => {
-    setAgreedPolicy(true);
-    setStep('checkout');
-  };
-
-  const handleCheckoutConfirm = (info: CheckoutInfo) => {
-    setCheckoutInfo(info);
-    localStorage.setItem('synergy_shipping_info', JSON.stringify(info));
-    setStep('payment');
-  };
-
-  const handlePaySuccess = async () => {
-    if (checkoutInfo) {
-      try {
-        let foundOrderNo = localStorage.getItem('pending_claim_order') || '';
-        
-        if (!foundOrderNo) {
-          const { data: { user: currentUser } } = await supabase.auth.getUser();
-          if (currentUser) {
-            const { data: latestOrder } = await supabase
-              .from('orders')
-              .select('order_no')
-              .eq('user_id', currentUser.id)
-              .eq('package_key', 'synergy_bundle')
-              .eq('status', 'paid')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (latestOrder?.order_no) foundOrderNo = latestOrder.order_no;
-          }
-        }
-
-        if (foundOrderNo) {
-          setOrderNo(foundOrderNo);
-          await supabase.functions.invoke('update-order-shipping', {
-            body: {
-              orderNo: foundOrderNo,
-              shippingInfo: {
-                buyerName: checkoutInfo.buyerName,
-                buyerPhone: checkoutInfo.buyerPhone,
-                buyerAddress: checkoutInfo.buyerAddress,
-                idCardName: checkoutInfo.idCardName,
-                idCardNumber: checkoutInfo.idCardNumber,
-              },
-            },
-          });
-        }
-      } catch (e) {
-        console.error('Save shipping info error:', e);
-      }
-    }
-
-    if (user) {
-      setStep('success');
-    } else {
-      setPostAuthRedirect('/camp-intro/emotion_stress_7');
-      setStep('register');
-    }
+  const handleRedeemSuccess = () => {
+    setAlreadyPurchased(true);
+    handleEnterCamp();
   };
 
   const handleRegisterSuccess = (userId: string) => {
     clearPostAuthRedirect();
-    setStep('success');
+    const cachedCode = localStorage.getItem('pending_redeem_code');
+    if (cachedCode) {
+      localStorage.removeItem('pending_redeem_code');
+      setPendingRedeemCode(cachedCode);
+    }
+    setStep('browse');
   };
 
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
@@ -576,13 +419,6 @@ export default function SynergyPromoPage() {
     navigate('/settings?tab=account&view=orders');
   };
 
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
-        <SuccessPanel onEnterCamp={handleEnterCamp} onViewLogistics={handleViewLogistics} />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50/30 to-white text-slate-800 overflow-x-hidden">
@@ -643,13 +479,13 @@ export default function SynergyPromoPage() {
           ) : (
             <>
               <Button
-                onClick={handleBuyClick}
+                onClick={() => setShowRedeemDialog(true)}
                 className="h-12 px-8 text-base font-bold rounded-full bg-white text-orange-600 hover:bg-white/90 shadow-lg shadow-black/10 border-0"
               >
-                立即解锁套餐 ¥0.01
+                输入兑换码开启训练营
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
-              <p className="text-white/60 text-xs mt-3">原价 ¥899 · 限时优惠</p>
+              <p className="text-white/60 text-xs mt-3">请先在有赞商城下单获取兑换码</p>
             </>
           )}
         </motion.div>
@@ -1094,7 +930,6 @@ export default function SynergyPromoPage() {
         </div>
       </Section>
 
-      {/* ===== FINAL CTA ===== */}
       <section className="px-4 py-12 text-center">
         <div className="max-w-lg mx-auto">
           {alreadyPurchased ? (
@@ -1123,38 +958,13 @@ export default function SynergyPromoPage() {
             </>
           ) : (
             <>
-              <p className="text-slate-500 text-sm mb-2">限时特惠</p>
-              <div className="flex items-baseline justify-center gap-2 mb-1">
-                <span className="text-4xl font-black text-orange-600">¥0.01</span>
-                <span className="text-slate-400 line-through text-sm">¥899</span>
-              </div>
-              <p className="text-xs text-slate-500 mb-3">7天训练营 + 知乐胶囊套餐</p>
-              <label className="flex items-center justify-center gap-2 mb-4 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreedPolicy}
-                  onChange={(e) => setAgreedPolicy(e.target.checked)}
-                  className="h-4 w-4 rounded border-primary accent-orange-600 cursor-pointer"
-                />
-                <span className="text-xs text-muted-foreground">
-                  我已阅读并同意
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
-                    className="text-orange-600 underline underline-offset-2 ml-0.5"
-                  >
-                    《购买须知》
-                  </button>
-                </span>
-              </label>
+              <p className="text-slate-500 text-sm mb-4">在有赞商城下单后，使用兑换码激活训练营</p>
               <Button
-                onClick={handleBuyClick}
-                disabled={!agreedPolicy}
-                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 disabled:opacity-50"
+                onClick={() => setShowRedeemDialog(true)}
+                className="w-full max-w-xs h-14 text-lg font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0"
               >
-                立即开启三重陪伴之旅
+                输入兑换码开启训练营
               </Button>
-              <p className="text-xs text-slate-400 mt-3">支持微信支付 · 支付宝</p>
             </>
           )}
           {/* 分享按钮 */}
@@ -1195,36 +1005,14 @@ export default function SynergyPromoPage() {
           ) : (
             <>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-orange-600">¥0.01</span>
-                  <span className="text-xs text-slate-400 line-through">¥899</span>
-                </div>
+                <p className="text-sm font-medium text-slate-700">7天有劲训练营</p>
                 <p className="text-[10px] text-slate-400 truncate">AI教练 + 专业教练 + 知乐胶囊</p>
-                <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedPolicy}
-                    onChange={(e) => setAgreedPolicy(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-primary accent-orange-600 cursor-pointer"
-                  />
-                  <span className="text-[10px] text-muted-foreground">
-                    我已阅读并同意
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreementSheet(true); }}
-                      className="text-orange-600 underline underline-offset-2 ml-0.5"
-                    >
-                      《购买须知》
-                    </button>
-                  </span>
-                </label>
               </div>
               <Button
-                onClick={handleBuyClick}
-                disabled={!agreedPolicy}
-                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0 disabled:opacity-50"
+                onClick={() => setShowRedeemDialog(true)}
+                className="h-11 px-6 font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white shadow-lg shadow-orange-500/20 border-0 text-sm shrink-0"
               >
-                立即购买
+                兑换码激活
               </Button>
             </>
           )}
@@ -1234,31 +1022,13 @@ export default function SynergyPromoPage() {
       {/* Bottom spacer for sticky bar */}
       <div className="h-20" />
 
-      {/* Checkout form dialog */}
-      <CheckoutForm
-        open={step === 'checkout'}
-        onOpenChange={(open) => { if (!open) setStep('browse'); }}
-        productName={packageInfo.name}
-        price={packageInfo.price}
-        onConfirm={handleCheckoutConfirm}
-        shippingNote="香港直邮，预计 4-7 个工作日送达"
-        needIdCard={true}
-      />
-
-      {/* 微信支付对话框 */}
-      <WechatPayDialog
-        open={step === 'payment' && !shouldUseAlipay}
-        onOpenChange={(open) => { if (!open) setStep('browse'); }}
-        packageInfo={packageInfo}
-        onSuccess={handlePaySuccess}
-        openId={isWeChatMiniProgram() ? undefined : paymentOpenId}
-        shippingInfo={checkoutInfo ? {
-          buyerName: checkoutInfo.buyerName,
-          buyerPhone: checkoutInfo.buyerPhone,
-          buyerAddress: checkoutInfo.buyerAddress,
-          idCardName: checkoutInfo.idCardName,
-          idCardNumber: checkoutInfo.idCardNumber,
-        } : undefined}
+      {/* 兑换码弹窗 */}
+      <SynergyRedeemDialog
+        open={showRedeemDialog}
+        onOpenChange={setShowRedeemDialog}
+        onSuccess={handleRedeemSuccess}
+        isLoggedIn={!!user}
+        onNeedLogin={handleRedeemNeedLogin}
       />
 
       {/* 登录注册弹窗 */}
@@ -1267,31 +1037,15 @@ export default function SynergyPromoPage() {
           <DialogHeader>
             <DialogTitle className="text-center text-slate-800">请登录或注册以激活您的权益</DialogTitle>
             <DialogDescription className="text-center text-slate-500">
-              注册后可管理训练营进度和订单
+              注册后即可使用兑换码激活训练营
             </DialogDescription>
           </DialogHeader>
           <QuickRegisterStep
-            orderNo={orderNo}
-            paymentOpenId={paymentOpenId}
+            orderNo=""
             onSuccess={handleRegisterSuccess}
           />
         </DialogContent>
       </Dialog>
-
-      {/* 支付宝对话框 */}
-      <AlipayPayDialog
-        open={step === 'payment' && shouldUseAlipay}
-        onOpenChange={(open) => { if (!open) setStep('browse'); }}
-        packageInfo={packageInfo}
-        onSuccess={handlePaySuccess}
-        shippingInfo={checkoutInfo ? {
-          buyerName: checkoutInfo.buyerName,
-          buyerPhone: checkoutInfo.buyerPhone,
-          buyerAddress: checkoutInfo.buyerAddress,
-          idCardName: checkoutInfo.idCardName,
-          idCardNumber: checkoutInfo.idCardNumber,
-        } : undefined}
-      />
 
       {/* 分享海报弹窗 */}
       <ShareDialogBase
@@ -1315,11 +1069,6 @@ export default function SynergyPromoPage() {
             onReady={shareDialog.handleCardReady}
           />
         }
-      />
-      <PurchaseAgreementSheet
-        open={showAgreementSheet}
-        onOpenChange={setShowAgreementSheet}
-        onAgree={handleAgreementConfirm}
       />
     </div>
   );
