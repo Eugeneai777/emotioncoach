@@ -717,7 +717,7 @@ export default function SynergyPromoPage() {
           >
             <div className="flex items-start gap-4">
               <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-full overflow-hidden border-3 border-amber-400/50 shadow-lg">
-                <img src={leadCoach.image} alt={leadCoach.name} className="w-full h-full object-cover" style={{ objectPosition: 'center 20%' }} />
+                <img src={leadCoach.image} alt={leadCoach.name} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
