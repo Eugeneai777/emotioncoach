@@ -1,48 +1,26 @@
 
 
-# 外部导入兑换码方案评估与实施
+# 清除账号 18898593978 的7天有劲训练营权益（用于重新测试兑换码）
 
-## 运营评估
+## 用户信息
 
-外部导入方案确实更优，理由：
+- 用户：炯谦，user_id = `5e5cdc49-f922-499a-916e-b5d2cda0d051`
 
-1. **编码规则可控**：`YJ267001-YJ267100` 编号规则清晰，便于有赞客服按序发放和追踪
-2. **库存管理透明**：有赞客服手中的码与系统库存完全一致，避免系统生成码与外部发放脱节
-3. **补码灵活**：未来需要更多码时，按相同规则续编（YJ267101...）即可
-4. **审计友好**：兑换码与有赞订单一一对应，方便对账
+## 执行操作（3步，防自愈机制恢复）
 
-## 实施方案
+| 步骤 | 表 | SQL 操作 |
+|---|---|---|
+| 1 | `orders` | UPDATE status → `refunded`，条件：user_id + package_key = `synergy_bundle` + status = `paid` |
+| 2 | `user_camp_purchases` | DELETE，条件：user_id + camp_type IN (`emotion_stress_7`, `emotion_journal_21`) |
+| 3 | `training_camps` | UPDATE status → `cancelled`，条件：user_id + camp_type IN (`emotion_stress_7`, `emotion_journal_21`) + status IN (`active`, `completed`) |
 
-将上传的 100 个兑换码（YJ267001 ~ YJ267100）批量写入 `synergy_activation_codes` 表。
+### 为什么必须三表同步
 
-### 具体操作
+系统自愈机制会检查 `orders` 表中 `paid` 状态的订单并自动补齐 `user_camp_purchases`。若仅删除购买记录而不改订单状态，用户再次访问时权益会被自动恢复。
 
-通过数据库插入工具，执行一条批量 INSERT：
+### 兑换码状态
 
-```sql
-INSERT INTO synergy_activation_codes (code, batch_name, source_channel, is_used)
-VALUES 
-  ('YJ267001', '7天有劲训练营-首批100', '有赞商城', false),
-  ('YJ267002', '7天有劲训练营-首批100', '有赞商城', false),
-  ...
-  ('YJ267100', '7天有劲训练营-首批100', '有赞商城', false);
-```
+如果该用户之前通过兑换码开通，还需将 `synergy_activation_codes` 中对应记录的 `is_used` 重置为 `false`，以便该码可再次用于测试。
 
-- **batch_name**：`7天有劲训练营-首批100`，方便后台按批次筛选
-- **source_channel**：`有赞商城`，标记来源渠道
-- **is_used**：默认 `false`，用户兑换后自动标记为 `true`（已有逻辑）
-- **expires_at**：不设过期，长期有效
-
-### 不需要新建边缘函数
-
-现有 `redeem-synergy-code` 已完整支持：查码 → 校验未使用 → 核销 → 开通权益。导入数据后即可正常工作。
-
-### 后续补码
-
-未来需要追加时，按相同格式准备 Excel，再次导入即可。也可以后续在管理后台增加"批量导入"功能。
-
-| 操作 | 说明 |
-|---|---|
-| 数据库插入 | 100 条兑换码写入 `synergy_activation_codes` |
-| 代码变更 | 无 |
+执行完成后，用户在 `/promo/synergy` 页面将回到未购买状态，可重新输入兑换码测试完整流程。
 
