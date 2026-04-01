@@ -130,6 +130,7 @@ export default function OperationsMonitorDashboard() {
   // Error details state
   const [errorDetails, setErrorDetails] = useState<ErrorDetailRecord[]>([]);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [voiceChannelInfo, setVoiceChannelInfo] = useState<{ aiCoach: number; openai: number; doubao: number }>({ aiCoach: 0, openai: 0, doubao: 0 });
 
   const todayStart = startOfDay(new Date()).toISOString();
 
