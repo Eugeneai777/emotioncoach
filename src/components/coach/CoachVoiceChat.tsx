@@ -1189,9 +1189,21 @@ export const CoachVoiceChat = ({
         return;
       }
       
-      // 🔧 预扣第一分钟点数
+      // 🔧 并行化：同时执行预扣费 + 获取时长限制（节省 300-800ms）
       updateConnectionPhase('requesting_mic');
-      const deducted = await deductQuota(1);
+      const [deducted, durationResult] = await Promise.all([
+        deductQuota(1),
+        // 如果有 maxDurationOverride，跳过 RPC 查询
+        maxDurationOverride !== undefined 
+          ? Promise.resolve(maxDurationOverride) 
+          : getMaxDurationForUser()
+      ]);
+
+      // 🔧 设置时长限制（并行获取的结果）
+      setMaxDurationMinutes(durationResult);
+      setIsLoadingDuration(false);
+      console.log(`[VoiceChat] Parallel results - deducted: ${deducted}, maxDuration: ${durationResult}`);
+
       if (!deducted) {
         setStatus('error');
         isInitializingRef.current = false;
