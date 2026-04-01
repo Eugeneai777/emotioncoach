@@ -37,7 +37,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
 
   const startVoice = useCallback((config: VoiceConfig) => {
     setVoiceConfig(config);
-    setIsMinimized(false);
+    setIsMinimized(true);
     setStartTime(Date.now());
   }, []);
 
