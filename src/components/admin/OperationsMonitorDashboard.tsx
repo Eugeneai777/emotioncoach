@@ -130,6 +130,7 @@ export default function OperationsMonitorDashboard() {
   // Error details state
   const [errorDetails, setErrorDetails] = useState<ErrorDetailRecord[]>([]);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [voiceChannelInfo, setVoiceChannelInfo] = useState<{ aiCoach: number; openai: number; doubao: number }>({ aiCoach: 0, openai: 0, doubao: 0 });
 
   const todayStart = startOfDay(new Date()).toISOString();
 
@@ -283,6 +284,7 @@ export default function OperationsMonitorDashboard() {
       todayCallsRes,
       todayCostLogsRes,
       todayVoiceRes,
+      todayVoiceUsageRes,
       todayActiveRes,
       todayErrorRes,
       errorDetailsRes,
@@ -297,11 +299,17 @@ export default function OperationsMonitorDashboard() {
       supabase.from("api_cost_logs")
         .select("input_tokens, output_tokens, estimated_cost_cny")
         .gte("created_at", todayStart),
-      // Today voice calls
+      // Today voice calls (ai_coach_calls)
       supabase.from("ai_coach_calls")
         .select("duration_seconds, id")
         .gte("created_at", todayStart)
         .eq("call_status", "ended"),
+      // Today voice from usage_records (OpenAI Realtime + Doubao)
+      supabase.from("usage_records")
+        .select("source, amount")
+        .gte("created_at", todayStart)
+        .like("source", "realtime_voice%")
+        .eq("record_type", "consumption"),
       // Today active users (distinct)
       supabase.from("usage_records")
         .select("user_id")
@@ -329,7 +337,14 @@ export default function OperationsMonitorDashboard() {
     const todayTotalCostCNY = costLogs.reduce((s, r) => s + (r.estimated_cost_cny || 0), 0);
 
     const voiceData = todayVoiceRes.data || [];
-    const todayVoiceSeconds = voiceData.reduce((s, r) => s + (r.duration_seconds || 0), 0);
+    const aiCoachVoiceSeconds = voiceData.reduce((s, r) => s + (r.duration_seconds || 0), 0);
+
+    // Voice from usage_records (OpenAI Realtime + Doubao)
+    const voiceUsageData = todayVoiceUsageRes.data || [];
+    const openaiVoiceRecords = voiceUsageData.filter((r: any) => r.source !== 'realtime_voice_emotion');
+    const doubaoVoiceRecords = voiceUsageData.filter((r: any) => r.source === 'realtime_voice_emotion');
+    const usageVoiceSeconds = voiceUsageData.reduce((s, r: any) => s + ((r.amount || 0) / 8) * 60, 0);
+    const todayVoiceSeconds = aiCoachVoiceSeconds + usageVoiceSeconds;
 
     const activeUserIds = new Set((todayActiveRes.data || []).map((r: any) => r.user_id));
     const todayTotalCalls = todayCallsRes.count || 0;
@@ -337,17 +352,24 @@ export default function OperationsMonitorDashboard() {
 
     setMetrics({
       currentQPS,
-      peakQPS: currentQPS, // Will be tracked properly with historical data
+      peakQPS: currentQPS,
       todayTotalCalls,
       todayTotalTokens: todayInputTokens + todayOutputTokens,
       todayInputTokens,
       todayOutputTokens,
-      todayVoiceSeconds,
-      todayVoiceCalls: voiceData.length,
+      todayVoiceSeconds: Math.round(todayVoiceSeconds),
+      todayVoiceCalls: voiceData.length + voiceUsageData.length,
       todayActiveUsers: activeUserIds.size,
       todayErrorCount,
       errorRate: todayTotalCalls > 0 ? Math.round((todayErrorCount / todayTotalCalls) * 10000) / 100 : 0,
       todayTotalCostCNY: Math.round(todayTotalCostCNY * 100) / 100,
+    });
+
+    // Store voice channel breakdown for display
+    setVoiceChannelInfo({
+      aiCoach: voiceData.length,
+      openai: openaiVoiceRecords.length,
+      doubao: doubaoVoiceRecords.length,
     });
 
     // Store error details
@@ -373,12 +395,21 @@ export default function OperationsMonitorDashboard() {
             .select("duration_seconds")
             .gte("created_at", hourStart).lt("created_at", hourEnd)
             .eq("call_status", "ended"),
-        ]).then(([callsRes, tokensRes, voiceRes]) => ({
-          hour: format(subHours(new Date(), i), "HH:00"),
-          calls: callsRes.count || 0,
-          tokens: (tokensRes.data || []).reduce((s, r) => s + (r.input_tokens || 0) + (r.output_tokens || 0), 0),
-          voiceSeconds: (voiceRes.data || []).reduce((s, r) => s + (r.duration_seconds || 0), 0),
-        }))
+          supabase.from("usage_records")
+            .select("amount")
+            .gte("created_at", hourStart).lt("created_at", hourEnd)
+            .like("source", "realtime_voice%")
+            .eq("record_type", "consumption"),
+        ]).then(([callsRes, tokensRes, voiceRes, voiceUsageRes]) => {
+          const aiCoachSeconds = (voiceRes.data || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
+          const usageSeconds = (voiceUsageRes.data || []).reduce((s, r: any) => s + ((r.amount || 0) / 8) * 60, 0);
+          return {
+            hour: format(subHours(new Date(), i), "HH:00"),
+            calls: callsRes.count || 0,
+            tokens: (tokensRes.data || []).reduce((s, r) => s + (r.input_tokens || 0) + (r.output_tokens || 0), 0),
+            voiceSeconds: Math.round(aiCoachSeconds + usageSeconds),
+          };
+        })
       );
     }
 
@@ -442,16 +473,20 @@ export default function OperationsMonitorDashboard() {
   };
 
   const fetchTopUsers = async () => {
-    const { data: usageData } = await supabase
-      .from("usage_records")
-      .select("user_id, amount")
-      .gte("created_at", todayStart);
-
-    const { data: voiceData } = await supabase
-      .from("ai_coach_calls")
-      .select("user_id, duration_seconds")
-      .gte("created_at", todayStart)
-      .eq("call_status", "ended");
+    const [{ data: usageData }, { data: voiceData }, { data: voiceUsageData }] = await Promise.all([
+      supabase.from("usage_records")
+        .select("user_id, amount")
+        .gte("created_at", todayStart),
+      supabase.from("ai_coach_calls")
+        .select("user_id, duration_seconds")
+        .gte("created_at", todayStart)
+        .eq("call_status", "ended"),
+      supabase.from("usage_records")
+        .select("user_id, amount")
+        .gte("created_at", todayStart)
+        .like("source", "realtime_voice%")
+        .eq("record_type", "consumption"),
+    ]);
 
     const userMap: Record<string, { calls: number; tokens: number; voiceSeconds: number }> = {};
 
@@ -464,6 +499,12 @@ export default function OperationsMonitorDashboard() {
     (voiceData || []).forEach((r: any) => {
       if (!userMap[r.user_id]) userMap[r.user_id] = { calls: 0, tokens: 0, voiceSeconds: 0 };
       userMap[r.user_id].voiceSeconds += r.duration_seconds || 0;
+    });
+
+    // Add voice usage from usage_records
+    (voiceUsageData || []).forEach((r: any) => {
+      if (!userMap[r.user_id]) userMap[r.user_id] = { calls: 0, tokens: 0, voiceSeconds: 0 };
+      userMap[r.user_id].voiceSeconds += ((r.amount || 0) / 8) * 60;
     });
 
     const sorted = Object.entries(userMap)
@@ -788,7 +829,7 @@ export default function OperationsMonitorDashboard() {
           icon={Phone}
           label="今日语音"
           value={formatDuration(metrics?.todayVoiceSeconds ?? 0)}
-          sub={`${metrics?.todayVoiceCalls ?? 0} 通通话`}
+          sub={`共 ${metrics?.todayVoiceCalls ?? 0} 通 | OpenAI: ${voiceChannelInfo.openai} / 豆包: ${voiceChannelInfo.doubao}`}
         />
         <div className="cursor-pointer" onClick={() => setShowErrorDetails(!showErrorDetails)}>
           <StatCard
