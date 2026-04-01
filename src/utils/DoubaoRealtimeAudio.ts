@@ -381,6 +381,9 @@ export class DoubaoRealtimeChat {
       this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
     }
     const playCtx = this.playbackAudioContext;
+    if (playCtx.state === 'suspended') {
+      await playCtx.resume().catch(() => {});
+    }
 
     while (this.playQueue.length > 0 && !this.interruptFlag) {
       const rawData = this.playQueue.shift()!;
