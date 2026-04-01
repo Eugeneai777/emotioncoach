@@ -313,7 +313,7 @@ export default function OperationsMonitorDashboard() {
         .in("record_type", ["refund", "compensation"]),
       // Error detail records
       supabase.from("usage_records")
-        .select("id, source, record_type, user_id, amount, created_at")
+        .select("id, source, record_type, user_id, amount, created_at, metadata")
         .gte("created_at", todayStart)
         .in("record_type", ["refund", "compensation"])
         .order("created_at", { ascending: false })
