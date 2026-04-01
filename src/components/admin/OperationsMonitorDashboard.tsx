@@ -26,7 +26,6 @@ interface ErrorDetailRecord {
   user_id: string;
   amount: number;
   created_at: string;
-  description: string | null;
 }
 interface RealtimeMetrics {
   currentQPS: number;
