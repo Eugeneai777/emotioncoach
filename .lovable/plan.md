@@ -1,32 +1,32 @@
 
 
-# 浮窗计时器：连接成功后才显示时间
+# 重新配置豆包 AppId 等信息
 
-## 问题
-点击语音按钮后，`GlobalVoiceProvider` 立即设置 `startTime = Date.now()`，浮窗卡片马上开始显示通话时长。但此时连接尚未建立，误导用户以为已在通话中。
+## 概述
+更新豆包实时语音的三个关键配置：`DOUBAO_APP_ID`、`DOUBAO_ACCESS_TOKEN`（通过密钥管理工具更新），以及将硬编码的 `X-Api-App-Key` 改为从环境变量读取。
 
-## 方案
-在 `GlobalVoiceProvider` 中增加连接状态，浮窗卡片根据状态显示"连接中…"或通话时长。
+## 步骤
 
-### 改动
+### 1. 更新 DOUBAO_APP_ID 密钥
+使用密钥管理工具更新 `DOUBAO_APP_ID` 的值，提示你输入新的 App ID。
 
-**`src/components/voice/GlobalVoiceProvider.tsx`**
-- 新增 `isConnected` 状态，初始 `false`
-- `startVoice` 时不设 `startTime`，设 `isConnected = false`
-- 新增 `setVoiceConnected()` 方法，当连接成功时调用：设 `isConnected = true`、`startTime = Date.now()`
-- `endVoice` 时重置 `isConnected = false`
-- 通过 context 暴露 `setVoiceConnected`
+### 2. 更新 DOUBAO_ACCESS_TOKEN 密钥
+使用密钥管理工具更新 `DOUBAO_ACCESS_TOKEN` 的值，提示你输入新的 Access Token。
 
-**`src/components/coach/CoachVoiceChat.tsx`**
-- 引入 `useGlobalVoice`
-- 在 `updateConnectionPhase('connected')` 处调用 `setVoiceConnected()`
+### 3. 新增 DOUBAO_APP_KEY 密钥
+将当前硬编码在 `doubao-realtime-relay` 中的 `X-Api-App-Key: 'PlgvMymc7f3tQnJ6'` 改为从环境变量 `DOUBAO_APP_KEY` 读取，并通过密钥管理工具让你设置该值。
 
-**`src/components/voice/FloatingVoiceCard.tsx`**
-- 新增 `isConnected` prop
-- 未连接时：绿色呼吸动画改为橙色/灰色，时间区域显示"连接中…"
-- 已连接后：显示正常计时
+### 4. 修改 Edge Function 代码
+在 `supabase/functions/doubao-realtime-relay/index.ts` 中：
+- 新增读取 `DOUBAO_APP_KEY` 环境变量
+- 将 `'X-Api-App-Key': 'PlgvMymc7f3tQnJ6'` 替换为 `'X-Api-App-Key': DOUBAO_APP_KEY`
+- 在配置校验中加入 `DOUBAO_APP_KEY` 的检查
 
-### 不变项
-- 拖动、挂断、恢复全屏等交互不变
-- 连接流程本身不变
+### 5. 重新部署 Edge Function
+部署更新后的 `doubao-realtime-relay` 函数使配置生效。
+
+## 不影响的内容
+- OpenAI Realtime 通道及其他教练模式不受影响
+- 前端代码无需修改
+- 音色、模型版本等参数保持不变
 
