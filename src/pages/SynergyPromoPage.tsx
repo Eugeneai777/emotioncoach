@@ -419,13 +419,6 @@ export default function SynergyPromoPage() {
     navigate('/settings?tab=account&view=orders');
   };
 
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
-        <SuccessPanel onEnterCamp={handleEnterCamp} onViewLogistics={handleViewLogistics} />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50/30 to-white text-slate-800 overflow-x-hidden">
