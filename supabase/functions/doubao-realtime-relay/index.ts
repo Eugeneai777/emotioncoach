@@ -524,11 +524,11 @@ serve(async (req) => {
               break;
 
             case EVENT_TTS_RESPONSE:
-              // 音频数据 - 直接以二进制发送给客户端
-              if (parsed.payload) {
+              // 音频数据 - 使用正确解析的 audioData 字段
+              if (parsed.audioData && parsed.audioData.length > 0) {
                 // 发送类型标记 + 音频数据
                 const typeByte = new Uint8Array([0x01]); // 0x01 = audio data
-                const audioMsg = concatBuffers(typeByte, parsed.payload);
+                const audioMsg = concatBuffers(typeByte, parsed.audioData);
                 clientWs.send(audioMsg.buffer);
               }
               break;
