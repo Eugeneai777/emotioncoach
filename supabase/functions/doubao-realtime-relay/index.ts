@@ -330,22 +330,35 @@ serve(async (req) => {
     console.log('[DoubaoRelay] 🔗 Connecting to Doubao WebSocket...');
 
     try {
-      const doubaoUrl = 'wss://openspeech.bytedance.com/api/v3/realtime/dialogue';
+      const doubaoHttpUrl = 'https://openspeech.bytedance.com/api/v3/realtime/dialogue';
       const connectId = crypto.randomUUID();
 
-      // Deno WebSocket 支持通过第二个参数传递 headers
-      // 参考: https://docs.deno.com/api/web/~/WebSocket
-      doubaoWs = new WebSocket(doubaoUrl, {
+      // Deno 原生 WebSocket 不支持自定义 headers，使用 fetch upgrade 方式
+      console.log('[DoubaoRelay] 🔗 Using fetch upgrade with headers, connectId:', connectId);
+      const upgradeResp = await fetch(doubaoHttpUrl, {
         headers: {
+          'Connection': 'Upgrade',
+          'Upgrade': 'websocket',
           'X-Api-App-ID': DOUBAO_APP_ID,
           'X-Api-Access-Key': DOUBAO_ACCESS_TOKEN,
           'X-Api-Resource-Id': 'volc.speech.dialog',
           'X-Api-App-Key': 'PlgvMymc7f3tQnJ6',
           'X-Api-Connect-Id': connectId,
         },
-      } as any);
+      });
 
+      // deno-lint-ignore no-explicit-any
+      doubaoWs = (upgradeResp as any).webSocket;
+      if (!doubaoWs) {
+        throw new Error(`WebSocket upgrade failed, status: ${upgradeResp.status}, body: ${await upgradeResp.text()}`);
+      }
       doubaoWs.binaryType = 'arraybuffer';
+      // Accept the WebSocket (Deno specific)
+      // deno-lint-ignore no-explicit-any
+      if (typeof (doubaoWs as any).accept === 'function') {
+        // deno-lint-ignore no-explicit-any
+        (doubaoWs as any).accept();
+      }
 
       doubaoWs.onopen = () => {
         console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket');
