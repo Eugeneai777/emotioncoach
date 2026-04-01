@@ -139,7 +139,7 @@ export class DoubaoRealtimeChat {
       case 'session_started':
         console.log('[DoubaoClient] Session started:', msg.session_id);
         this.onStatusChange('connected');
-        this.startRecording();
+        this.beginRecording();
         onSessionStarted?.();
         break;
 
