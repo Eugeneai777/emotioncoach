@@ -19,6 +19,8 @@ type ExpenseReport = { month: string; totalAmount: number; categories: { categor
 export default function YoujinLifeChat() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showVoice, setShowVoice] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
