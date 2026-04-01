@@ -1,26 +1,46 @@
 
 
-# 修复 /youjin-life/chat 无法返回 /mini-app
+# /youjin-life/chat 整合语音模式
 
-## 问题
+## 现状
+- `/youjin-life/chat` 是纯文字聊天，调用 `youjin-life-chat` 边缘函数
+- `/life-coach-voice` 是独立语音页面，使用 `CoachVoiceChat` 组件 + `vibrant-life-realtime-token` 端点
+- 两者互相独立，用户无法在聊天页切换语音
 
-聊天页面 Header 区域没有返回按钮，也没有使用 `YoujinBottomNav`（虽然已 import）。用户进入后无法返回 `/mini-app`。
+## 方案：Header 增加语音通话按钮
 
-## 改动计划
+在聊天页 Header 右侧添加一个「电话」图标按钮，点击后全屏展示 `CoachVoiceChat` 语音界面（覆盖在聊天页之上），关闭后回到文字聊天。
 
-### 修改 `src/pages/YoujinLifeChat.tsx`
+### 交互流程
+1. 用户在 `/youjin-life/chat` 正常文字聊天
+2. 点击 Header 右侧的电话图标 → 展示全屏语音模式（CoachVoiceChat 组件）
+3. 语音结束/关闭 → 回到文字聊天界面
+4. 需登录才能使用语音（未登录跳转 `/auth`）
 
-在 Header 左侧添加返回按钮，点击导航到 `/mini-app`：
+### 修改文件
 
-```
-<button onClick={() => navigate('/mini-app')} className="p-1 -ml-1">
-  <ArrowLeft className="w-5 h-5 text-gray-900" />
-</button>
-```
-
-将其插入到现有 Header `<div>` 内、标题文字之前（第 230 行前）。
+#### `src/pages/YoujinLifeChat.tsx`
+- 新增 `showVoice` state（默认 false）
+- 导入 `CoachVoiceChat`、`useAuth`、`getSavedVoiceType`、`Phone` 图标
+- Header 右侧添加电话按钮：点击时检查登录状态，已登录 → `setShowVoice(true)`，未登录 → 跳转 auth
+- 当 `showVoice === true` 时，渲染全屏 `CoachVoiceChat`：
+  ```tsx
+  <CoachVoiceChat
+    onClose={() => setShowVoice(false)}
+    coachEmoji="❤️"
+    coachTitle="有劲AI生活教练"
+    primaryColor="rose"
+    tokenEndpoint="vibrant-life-realtime-token"
+    userId={user.id}
+    mode="general"
+    featureKey="realtime_voice"
+    voiceType={getSavedVoiceType()}
+  />
+  ```
+- `showVoice` 为 true 时隐藏原有聊天 UI（CoachVoiceChat 已是全屏组件）
 
 ### 不变项
-- 聊天功能、输入框、语音等不变
-- 不引入 `YoujinBottomNav`（聊天页面底部已有输入栏，底部导航会遮挡）
+- 文字聊天功能、记账、服务链接等不变
+- `/life-coach-voice` 独立页面保留不动
+- 语音使用同样的 token 端点和计费逻辑
 
