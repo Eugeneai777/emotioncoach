@@ -29,6 +29,7 @@ export class DoubaoRealtimeChat {
   private playbackAudioContext: AudioContext | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
   private interruptFlag = false;
+  private dropInterruptedAudioUntilNextTurn = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private pcmRemainder: Uint8Array | null = null; // 残留的奇数字节
 
@@ -173,6 +174,10 @@ export class DoubaoRealtimeChat {
         break;
 
       case 'tts_start':
+        // 用户打断后，直到新的 assistant 轮次开始前都丢弃旧音频；这里恢复正常播放
+        if (this.dropInterruptedAudioUntilNextTurn || this.interruptFlag) {
+          this.resetAssistantAudioTurn();
+        }
         // AI 开始说话
         if (msg.text) {
           this.assistantText = msg.text;
@@ -190,6 +195,9 @@ export class DoubaoRealtimeChat {
         break;
 
       case 'tts_sentence_end':
+        if (this.dropInterruptedAudioUntilNextTurn) {
+          break;
+        }
         // 一句话结束
         if (this.assistantText) {
           this.onTranscript(this.assistantText, true, 'assistant');
@@ -198,6 +206,10 @@ export class DoubaoRealtimeChat {
         break;
 
       case 'tts_ended':
+        if (this.dropInterruptedAudioUntilNextTurn) {
+          this.assistantText = '';
+          break;
+        }
         // 一轮回复结束
         this.flushAudioChunks(true);
         this.assistantText = '';
@@ -211,7 +223,8 @@ export class DoubaoRealtimeChat {
 
       case 'asr_info':
         // 用户开始说话 - 打断播放
-        this.clearAllAudio();
+        this.assistantText = '';
+        this.clearAllAudio({ dropIncomingAudioUntilNextTurn: true });
         this.onMessage({ type: 'input_audio_buffer.speech_started' });
         break;
 
@@ -318,8 +331,16 @@ export class DoubaoRealtimeChat {
 
   // ============ 音频播放 (PCM 16-bit, 24kHz, mono) ============
 
+  private resetAssistantAudioTurn() {
+    this.audioChunks = [];
+    this.playQueue = [];
+    this.pcmRemainder = null;
+    this.interruptFlag = false;
+    this.dropInterruptedAudioUntilNextTurn = false;
+  }
+
   private appendAudioChunk(audioData: Uint8Array) {
-    if (audioData.length === 0) return;
+    if (audioData.length === 0 || this.dropInterruptedAudioUntilNextTurn) return;
     this.audioChunks.push(audioData);
 
     const totalBufferedBytes = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
@@ -329,7 +350,7 @@ export class DoubaoRealtimeChat {
   }
 
   private flushAudioChunks(force = false) {
-    if (this.audioChunks.length === 0) return;
+    if (this.audioChunks.length === 0 || this.dropInterruptedAudioUntilNextTurn) return;
 
     const totalLen = this.audioChunks.reduce((s, c) => s + c.length, 0);
     if (!force && totalLen < MIN_PLAYABLE_PCM_BYTES) return;
@@ -420,11 +441,14 @@ export class DoubaoRealtimeChat {
     this.interruptFlag = false;
   }
 
-  private clearAllAudio() {
+  private clearAllAudio(options?: { dropIncomingAudioUntilNextTurn?: boolean }) {
+    const { dropIncomingAudioUntilNextTurn = false } = options ?? {};
+
     this.audioChunks = [];
     this.playQueue = [];
     this.pcmRemainder = null;
     this.interruptFlag = true;
+    this.dropInterruptedAudioUntilNextTurn = dropIncomingAudioUntilNextTurn;
     if (this.currentSource) {
       try {
         this.currentSource.stop();
