@@ -11,6 +11,7 @@ type TranscriptCallback = (text: string, isFinal: boolean, role: 'user' | 'assis
 type MessageCallback = (message: any) => void;
 
 const HEARTBEAT_INTERVAL_MS = 15000;
+const MIN_PLAYABLE_PCM_BYTES = 9600; // 约 200ms 的 24kHz/16-bit/mono PCM，避免碎片过小导致断续
 
 export class DoubaoRealtimeChat {
   private ws: WebSocket | null = null;
@@ -193,12 +194,12 @@ export class DoubaoRealtimeChat {
         if (this.assistantText) {
           this.onTranscript(this.assistantText, true, 'assistant');
         }
-        this.flushAudioChunks();
+        this.flushAudioChunks(true);
         break;
 
       case 'tts_ended':
         // 一轮回复结束
-        this.flushAudioChunks();
+        this.flushAudioChunks(true);
         this.assistantText = '';
         this.onMessage({ type: 'response.audio.done' });
         break;
@@ -320,12 +321,19 @@ export class DoubaoRealtimeChat {
   private appendAudioChunk(audioData: Uint8Array) {
     if (audioData.length === 0) return;
     this.audioChunks.push(audioData);
-    this.flushAudioChunks();
+
+    const totalBufferedBytes = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    if (totalBufferedBytes >= MIN_PLAYABLE_PCM_BYTES) {
+      this.flushAudioChunks();
+    }
   }
 
-  private flushAudioChunks() {
+  private flushAudioChunks(force = false) {
     if (this.audioChunks.length === 0) return;
+
     const totalLen = this.audioChunks.reduce((s, c) => s + c.length, 0);
+    if (!force && totalLen < MIN_PLAYABLE_PCM_BYTES) return;
+
     const merged = new Uint8Array(totalLen);
     let offset = 0;
     for (const chunk of this.audioChunks) {
@@ -373,6 +381,9 @@ export class DoubaoRealtimeChat {
       this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
     }
     const playCtx = this.playbackAudioContext;
+    if (playCtx.state === 'suspended') {
+      await playCtx.resume().catch(() => {});
+    }
 
     while (this.playQueue.length > 0 && !this.interruptFlag) {
       const rawData = this.playQueue.shift()!;
