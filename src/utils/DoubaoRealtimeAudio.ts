@@ -26,6 +26,8 @@ export class DoubaoRealtimeChat {
   private playQueue: ArrayBuffer[] = [];
   private isPlaying = false;
   private playbackAudioContext: AudioContext | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
+  private interruptFlag = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   // 累积的 assistant 文本
@@ -347,15 +349,20 @@ export class DoubaoRealtimeChat {
     }
     const playCtx = this.playbackAudioContext;
 
-    while (this.playQueue.length > 0) {
+    while (this.playQueue.length > 0 && !this.interruptFlag) {
       const data = this.playQueue.shift()!;
       try {
         const audioBuffer = await playCtx.decodeAudioData(data.slice(0));
+        if (this.interruptFlag) break;
         await new Promise<void>((resolve) => {
           const source = playCtx.createBufferSource();
           source.buffer = audioBuffer;
           source.connect(playCtx.destination);
-          source.onended = () => resolve();
+          source.onended = () => {
+            this.currentSource = null;
+            resolve();
+          };
+          this.currentSource = source;
           source.start(0);
         });
       } catch (e) {
@@ -364,11 +371,20 @@ export class DoubaoRealtimeChat {
     }
 
     this.isPlaying = false;
+    this.interruptFlag = false;
   }
 
   private clearAllAudio() {
     this.audioChunks = [];
     this.playQueue = [];
+    this.interruptFlag = true;
+    // 立即停止正在播放的音频源
+    if (this.currentSource) {
+      try {
+        this.currentSource.stop();
+      } catch {}
+      this.currentSource = null;
+    }
     this.isPlaying = false;
   }
 
