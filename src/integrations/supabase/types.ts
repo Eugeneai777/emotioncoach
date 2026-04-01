@@ -11473,6 +11473,10 @@ export type Database = {
           package_name: string
         }[]
       }
+      get_voice_max_duration: {
+        Args: { p_feature_key: string; p_user_id: string }
+        Returns: number
+      }
       get_zhile_orders: {
         Args: never
         Returns: {
