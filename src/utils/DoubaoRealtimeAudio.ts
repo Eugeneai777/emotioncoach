@@ -194,12 +194,12 @@ export class DoubaoRealtimeChat {
         if (this.assistantText) {
           this.onTranscript(this.assistantText, true, 'assistant');
         }
-        this.flushAudioChunks();
+        this.flushAudioChunks(true);
         break;
 
       case 'tts_ended':
         // 一轮回复结束
-        this.flushAudioChunks();
+        this.flushAudioChunks(true);
         this.assistantText = '';
         this.onMessage({ type: 'response.audio.done' });
         break;
