@@ -1156,10 +1156,18 @@ export default function CostMonitorDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">预警记录</CardTitle>
-              <Button size="sm" variant="outline" onClick={runAlertCheck} disabled={checking}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
-                检查预警
-              </Button>
+              <div className="flex gap-2">
+                {alerts.some(a => !a.is_acknowledged) && (
+                  <Button size="sm" variant="outline" onClick={acknowledgeAllAlerts}>
+                    <Check className="h-4 w-4 mr-2" />
+                    全部确认
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={runAlertCheck} disabled={checking}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+                  检查预警
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {alerts.length === 0 ? (
