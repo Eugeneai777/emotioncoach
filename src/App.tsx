@@ -509,8 +509,8 @@ const App = () => (
             </Routes>
           </Suspense>
           </ChunkErrorBoundary>
-          </AICoachCallProvider>
           </GlobalVoiceProvider>
+          </AICoachCallProvider>
         </CoachCallProvider>
       </BrowserRouter>
     </TooltipProvider>
