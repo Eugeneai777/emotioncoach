@@ -233,24 +233,17 @@ export default function YoujinLifeChat() {
       navigate('/auth?redirect=/youjin-life/chat');
       return;
     }
-    setShowVoice(true);
+    startVoice({
+      coachEmoji: '❤️',
+      coachTitle: '有劲AI生活教练',
+      primaryColor: 'rose',
+      tokenEndpoint: 'vibrant-life-realtime-token',
+      userId: user.id,
+      mode: 'general',
+      featureKey: 'realtime_voice',
+      voiceType: getSavedVoiceType(),
+    });
   };
-
-  if (showVoice && user) {
-    return (
-      <CoachVoiceChat
-        onClose={() => setShowVoice(false)}
-        coachEmoji="❤️"
-        coachTitle="有劲AI生活教练"
-        primaryColor="rose"
-        tokenEndpoint="vibrant-life-realtime-token"
-        userId={user.id}
-        mode="general"
-        featureKey="realtime_voice"
-        voiceType={getSavedVoiceType()}
-      />
-    );
-  }
 
   return (
     <div className="flex flex-col h-screen bg-white">
