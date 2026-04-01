@@ -377,6 +377,14 @@ export class DoubaoRealtimeChat {
   private clearAllAudio() {
     this.audioChunks = [];
     this.playQueue = [];
+    this.interruptFlag = true;
+    // 立即停止正在播放的音频源
+    if (this.currentSource) {
+      try {
+        this.currentSource.stop();
+      } catch {}
+      this.currentSource = null;
+    }
     this.isPlaying = false;
   }
 
