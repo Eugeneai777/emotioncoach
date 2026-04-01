@@ -35,7 +35,7 @@ const commonTools = [
       properties: {
         destination: {
           type: "string",
-          enum: ["emotion_button", "emotion_coach", "parent_coach", "communication_coach", "story_coach", "gratitude_coach", "training_camp", "community", "packages", "meditation", "history", "profile"],
+          enum: ["emotion_button", "emotion_coach", "parent_coach", "communication_coach", "story_coach", "gratitude_coach", "training_camp", "community", "packages", "meditation", "history", "profile", "mini_app", "health_store", "youjin_chat", "assessments", "daily_tools"],
           description: "目标页面"
         }
       },
