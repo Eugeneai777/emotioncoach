@@ -336,7 +336,14 @@ export default function OperationsMonitorDashboard() {
     const todayTotalCostCNY = costLogs.reduce((s, r) => s + (r.estimated_cost_cny || 0), 0);
 
     const voiceData = todayVoiceRes.data || [];
-    const todayVoiceSeconds = voiceData.reduce((s, r) => s + (r.duration_seconds || 0), 0);
+    const aiCoachVoiceSeconds = voiceData.reduce((s, r) => s + (r.duration_seconds || 0), 0);
+
+    // Voice from usage_records (OpenAI Realtime + Doubao)
+    const voiceUsageData = todayVoiceUsageRes.data || [];
+    const openaiVoiceRecords = voiceUsageData.filter((r: any) => r.source !== 'realtime_voice_emotion');
+    const doubaoVoiceRecords = voiceUsageData.filter((r: any) => r.source === 'realtime_voice_emotion');
+    const usageVoiceSeconds = voiceUsageData.reduce((s, r: any) => s + ((r.amount || 0) / 8) * 60, 0);
+    const todayVoiceSeconds = aiCoachVoiceSeconds + usageVoiceSeconds;
 
     const activeUserIds = new Set((todayActiveRes.data || []).map((r: any) => r.user_id));
     const todayTotalCalls = todayCallsRes.count || 0;
@@ -344,17 +351,24 @@ export default function OperationsMonitorDashboard() {
 
     setMetrics({
       currentQPS,
-      peakQPS: currentQPS, // Will be tracked properly with historical data
+      peakQPS: currentQPS,
       todayTotalCalls,
       todayTotalTokens: todayInputTokens + todayOutputTokens,
       todayInputTokens,
       todayOutputTokens,
-      todayVoiceSeconds,
-      todayVoiceCalls: voiceData.length,
+      todayVoiceSeconds: Math.round(todayVoiceSeconds),
+      todayVoiceCalls: voiceData.length + voiceUsageData.length,
       todayActiveUsers: activeUserIds.size,
       todayErrorCount,
       errorRate: todayTotalCalls > 0 ? Math.round((todayErrorCount / todayTotalCalls) * 10000) / 100 : 0,
       todayTotalCostCNY: Math.round(todayTotalCostCNY * 100) / 100,
+    });
+
+    // Store voice channel breakdown for display
+    setVoiceChannelInfo({
+      aiCoach: voiceData.length,
+      openai: openaiVoiceRecords.length,
+      doubao: doubaoVoiceRecords.length,
     });
 
     // Store error details
