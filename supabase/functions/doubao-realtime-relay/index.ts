@@ -218,22 +218,29 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
 
   if (isAudioFrame) {
     // 序列号 (4 bytes)
-    if (offset + 4 <= data.length) {
-      // const sequence = readUint32BE(data, offset);  // 不需要使用
-      offset += 4;
+    if (offset + 4 > data.length) {
+      console.warn('[parseServerFrame] Audio frame too short for sequence number');
+      return { msgType, flags, serialMethod, eventId, sessionId, errorCode };
     }
+    offset += 4;
 
     // JSON payload
-    if (offset + 4 <= data.length) {
-      const payloadSize = readUint32BE(data, offset);
-      offset += 4;
-      if (payloadSize > 0 && offset + payloadSize <= data.length) {
-        payload = data.slice(offset, offset + payloadSize);
-        try {
-          jsonPayload = JSON.parse(new TextDecoder().decode(payload));
-        } catch {}
-        offset += payloadSize;
+    if (offset + 4 > data.length) {
+      console.warn('[parseServerFrame] Audio frame too short for payload size');
+      return { msgType, flags, serialMethod, eventId, sessionId, errorCode };
+    }
+    const payloadSize = readUint32BE(data, offset);
+    offset += 4;
+    if (payloadSize > 0) {
+      if (offset + payloadSize > data.length) {
+        console.warn('[parseServerFrame] Audio frame payload overflow:', payloadSize, 'available:', data.length - offset);
+        return { msgType, flags, serialMethod, eventId, sessionId, errorCode };
       }
+      payload = data.slice(offset, offset + payloadSize);
+      try {
+        jsonPayload = JSON.parse(new TextDecoder().decode(payload));
+      } catch {}
+      offset += payloadSize;
     }
 
     // 音频数据
@@ -241,7 +248,11 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
       const audioSize = readUint32BE(data, offset);
       offset += 4;
       if (audioSize > 0 && offset + audioSize <= data.length) {
-        audioData = data.slice(offset, offset + audioSize);
+        // Ensure even byte length for PCM Int16
+        const validSize = audioSize % 2 === 0 ? audioSize : audioSize - 1;
+        if (validSize > 0) {
+          audioData = data.slice(offset, offset + validSize);
+        }
       }
     }
   } else {

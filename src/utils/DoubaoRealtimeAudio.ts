@@ -410,6 +410,7 @@ export class DoubaoRealtimeChat {
   private clearAllAudio() {
     this.audioChunks = [];
     this.playQueue = [];
+    this.pcmRemainder = null;
     this.interruptFlag = true;
     if (this.currentSource) {
       try {
