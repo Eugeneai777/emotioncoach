@@ -509,6 +509,7 @@ const App = () => (
           </Suspense>
           </ChunkErrorBoundary>
           </AICoachCallProvider>
+          </GlobalVoiceProvider>
         </CoachCallProvider>
       </BrowserRouter>
     </TooltipProvider>
