@@ -810,7 +810,7 @@ export default function OperationsMonitorDashboard() {
           icon={Phone}
           label="今日语音"
           value={formatDuration(metrics?.todayVoiceSeconds ?? 0)}
-          sub={`${metrics?.todayVoiceCalls ?? 0} 通通话`}
+          sub={`共 ${metrics?.todayVoiceCalls ?? 0} 通 | OpenAI: ${voiceChannelInfo.openai} / 豆包: ${voiceChannelInfo.doubao}`}
         />
         <div className="cursor-pointer" onClick={() => setShowErrorDetails(!showErrorDetails)}>
           <StatCard
