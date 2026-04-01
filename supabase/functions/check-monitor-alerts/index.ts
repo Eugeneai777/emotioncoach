@@ -46,11 +46,35 @@ serve(async (req) => {
       .gte('created_at', fifteenMinAgo);
 
     if ((apiErrorCount || 0) > 10) {
+      // 查询详情用于聚合
+      const { data: apiErrors } = await supabase
+        .from('monitor_api_errors')
+        .select('method, url, error_type, status_code, message')
+        .gte('created_at', fifteenMinAgo)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      const apiAgg = new Map<string, { count: number; msg: string }>();
+      for (const e of (apiErrors || [])) {
+        const key = `${e.method} ${e.url} [${e.error_type}]${e.status_code ? ` ${e.status_code}` : ''}`;
+        const existing = apiAgg.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          apiAgg.set(key, { count: 1, msg: (e.message || '').slice(0, 80) });
+        }
+      }
+      const apiTop = Array.from(apiAgg.entries())
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 5)
+        .map(([k, v]) => `- ${k} x${v.count}: ${v.msg}`)
+        .join('\n');
+
       alerts.push({
         type: 'api_monitor',
         level: 'high',
         message: `API 错误突增预警：最近15分钟内出现 ${apiErrorCount} 条接口错误`,
-        details: `错误数量: ${apiErrorCount}，超过阈值 10 条`,
+        details: `错误数量: ${apiErrorCount}，超过阈值 10 条\n\n错误分布（Top 5）:\n${apiTop}`,
       });
     }
 
