@@ -314,103 +314,35 @@ export default function SynergyPromoPage() {
     checkPurchase();
   }, [user]);
 
+  // Auto-redeem after login if code was cached
   useEffect(() => {
-    if (step !== 'checkout' && step !== 'payment') return;
-    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-    const isMiniProg = isWeChatMiniProgram();
-    if (!isWechat || isMiniProg || paymentOpenId) return;
-
-    const cached = sessionStorage.getItem('cached_wechat_openid');
-    if (cached) { setPaymentOpenId(cached); return; }
-
-    if (user) {
-      supabase.from('wechat_user_mappings')
-        .select('openid')
-        .eq('system_user_id', user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.openid) {
-            setPaymentOpenId(data.openid);
-            sessionStorage.setItem('cached_wechat_openid', data.openid);
-          }
-        });
+    if (user && pendingRedeemCode) {
+      const cachedCode = pendingRedeemCode;
+      setPendingRedeemCode(null);
+      setShowRedeemDialog(true);
     }
-  }, [step, user, paymentOpenId]);
+  }, [user, pendingRedeemCode]);
 
-  const { isAgreed: agreedPolicy, setAgreed: setAgreedPolicy } = useTermsAgreement();
-  const [showAgreementSheet, setShowAgreementSheet] = useState(false);
-
-  const handleBuyClick = () => {
-    if (!agreedPolicy) {
-      setShowAgreementSheet(true);
-      return;
-    }
-    setStep('checkout');
+  const handleRedeemNeedLogin = (code: string) => {
+    setPendingRedeemCode(code);
+    localStorage.setItem('pending_redeem_code', code);
+    setPostAuthRedirect(window.location.pathname + window.location.search);
+    setStep('register');
   };
 
-  const handleAgreementConfirm = () => {
-    setAgreedPolicy(true);
-    setStep('checkout');
-  };
-
-  const handleCheckoutConfirm = (info: CheckoutInfo) => {
-    setCheckoutInfo(info);
-    localStorage.setItem('synergy_shipping_info', JSON.stringify(info));
-    setStep('payment');
-  };
-
-  const handlePaySuccess = async () => {
-    if (checkoutInfo) {
-      try {
-        let foundOrderNo = localStorage.getItem('pending_claim_order') || '';
-        
-        if (!foundOrderNo) {
-          const { data: { user: currentUser } } = await supabase.auth.getUser();
-          if (currentUser) {
-            const { data: latestOrder } = await supabase
-              .from('orders')
-              .select('order_no')
-              .eq('user_id', currentUser.id)
-              .eq('package_key', 'synergy_bundle')
-              .eq('status', 'paid')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (latestOrder?.order_no) foundOrderNo = latestOrder.order_no;
-          }
-        }
-
-        if (foundOrderNo) {
-          setOrderNo(foundOrderNo);
-          await supabase.functions.invoke('update-order-shipping', {
-            body: {
-              orderNo: foundOrderNo,
-              shippingInfo: {
-                buyerName: checkoutInfo.buyerName,
-                buyerPhone: checkoutInfo.buyerPhone,
-                buyerAddress: checkoutInfo.buyerAddress,
-                idCardName: checkoutInfo.idCardName,
-                idCardNumber: checkoutInfo.idCardNumber,
-              },
-            },
-          });
-        }
-      } catch (e) {
-        console.error('Save shipping info error:', e);
-      }
-    }
-
-    if (user) {
-      setStep('success');
-    } else {
-      setPostAuthRedirect('/camp-intro/emotion_stress_7');
-      setStep('register');
-    }
+  const handleRedeemSuccess = () => {
+    setAlreadyPurchased(true);
+    handleEnterCamp();
   };
 
   const handleRegisterSuccess = (userId: string) => {
     clearPostAuthRedirect();
-    setStep('success');
+    const cachedCode = localStorage.getItem('pending_redeem_code');
+    if (cachedCode) {
+      localStorage.removeItem('pending_redeem_code');
+      setPendingRedeemCode(cachedCode);
+    }
+    setStep('browse');
   };
 
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
