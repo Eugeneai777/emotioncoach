@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, Mic, MicOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Mic, MicOff, Loader2, Phone } from "lucide-react";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { useAuth } from "@/hooks/useAuth";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { toast } from "sonner";
 import { ChatBubble } from "@/components/youjin-life/ChatBubble";
 import { YoujinBottomNav } from "@/components/youjin-life/YoujinBottomNav";
@@ -16,6 +19,8 @@ type ExpenseReport = { month: string; totalAmount: number; categories: { categor
 export default function YoujinLifeChat() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showVoice, setShowVoice] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -223,6 +228,30 @@ export default function YoujinLifeChat() {
     sendMessage(input);
   };
 
+  const handleVoiceClick = () => {
+    if (!user) {
+      navigate('/auth?redirect=/youjin-life/chat');
+      return;
+    }
+    setShowVoice(true);
+  };
+
+  if (showVoice && user) {
+    return (
+      <CoachVoiceChat
+        onClose={() => setShowVoice(false)}
+        coachEmoji="❤️"
+        coachTitle="有劲AI生活教练"
+        primaryColor="rose"
+        tokenEndpoint="vibrant-life-realtime-token"
+        userId={user.id}
+        mode="general"
+        featureKey="realtime_voice"
+        voiceType={getSavedVoiceType()}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
@@ -230,10 +259,17 @@ export default function YoujinLifeChat() {
         <button onClick={() => navigate('/mini-app')} className="p-1 -ml-1 active:scale-95 transition-transform">
           <ArrowLeft className="w-5 h-5 text-gray-900" />
         </button>
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-semibold text-gray-900">有劲AI</p>
           <p className="text-[10px] text-gray-400">一句话帮你搞定</p>
         </div>
+        <button
+          onClick={handleVoiceClick}
+          className="p-2 rounded-full bg-rose-50 text-rose-500 active:scale-95 transition-transform"
+          title="语音通话"
+        >
+          <Phone className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Messages */}
