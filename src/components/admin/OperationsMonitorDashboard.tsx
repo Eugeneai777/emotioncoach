@@ -349,6 +349,9 @@ export default function OperationsMonitorDashboard() {
       errorRate: todayTotalCalls > 0 ? Math.round((todayErrorCount / todayTotalCalls) * 10000) / 100 : 0,
       todayTotalCostCNY: Math.round(todayTotalCostCNY * 100) / 100,
     });
+
+    // Store error details
+    setErrorDetails((errorDetailsRes.data || []) as ErrorDetailRecord[]);
   };
 
   const fetchHourlyData = async () => {
