@@ -1,53 +1,59 @@
 
-结论
 
-- 从日志看，不是“模型没有回复”，而是“回复已经出来了，但前端播放失败了”。
-- 直接证据：
-  - 客户端日志里先后出现了 `response.audio.started`、`response.audio.done`，说明后端已经返回了回复音频。
-  - 同时客户端在 `src/utils/DoubaoRealtimeAudio.ts` 的 `processPlayQueue()` 报错：`RangeError: byte length of Int16Array should be a multiple of 2`。
-  - 后端中继日志显示会话建立、开场白发送、usage 事件都有，且没有上游报错，说明语音服务本身是有产出的。
+# 情感绽放训练营详情页升级方案
 
-我会按下面方案修：
+## 问题
 
-1. 修复前端 PCM 播放容错
-- 修改 `src/utils/DoubaoRealtimeAudio.ts`
-- 给播放器增加“残留半个采样字节”缓存。
-- 如果收到的 PCM 长度是奇数，不直接 `new Int16Array(...)`，而是把最后 1 byte 暂存，等下一块拼上再解码。
-- 在 `clearAllAudio()` 和 `disconnect()` 时同步清空这个残留缓存，避免串音或脏数据。
+当前 `/camp-intro/emotion_bloom` 页面使用通用模板渲染，视觉简单、缺乏说服力，与 ¥3980 高客单价不匹配。需要借鉴 `/promo/synergy` 的高转化设计模式进行专项升级。
 
-2. 加固中继的音频帧解析
-- 检查 `supabase/functions/doubao-realtime-relay/index.ts` 里 `parseServerFrame()` 对 `EVENT_TTS_RESPONSE` 的偏移解析。
-- 为音频帧补边界校验：
-  - `payloadSize`
-  - `audioSize`
-  - 实际剩余字节数
-- 只把真正的 PCM 数据转发给前端；如果上游帧末尾有多余字节或长度异常，要在中继层先规整掉，而不是把脏数据送到播放器。
+## 方案
 
-3. 统一豆包通道的“AI正在回复”事件
-- 当前 `CoachVoiceChat` 更偏向监听 `response.audio.delta` / `response.done`。
-- 但豆包这条链路发的是 `response.audio.started` / `response.audio.done`。
-- 我会把这两套事件统一映射，避免出现“其实有回复，但 UI 像没回复”的错觉。
+在 `CampIntro.tsx` 中，针对 `emotion_bloom` 类型做条件渲染，插入专属的丰富内容模块。抽取独立组件 `EmotionBloomIntroSections.tsx`，避免主文件膨胀。
 
-4. 保留现有打断能力
-- 不回退你前面已经修好的心跳和打断逻辑。
-- 修复后继续保证：
-  - AI 开口时能正常播出
-  - 用户插话时能立刻停掉旧音频
-  - 不再出现双重回复叠加
+### 新增模块（按页面顺序）
 
-验证标准
+1. **痛点共鸣区**（借鉴 synergy 的 Pain Points 模式）
+   - 标题："你是否也有这些困扰？"
+   - 5-6 个痛点卡片（带图标+描述）：情绪压抑无法表达、亲密关系反复受伤、童年创伤影响当下、害怕冲突回避愤怒、总觉得自己不够好、想改变但不知从何开始
+   - 底部一句话钩子："这些不是你的错，而是情感模式在运作"
 
-- 再进一次 `/emotion-coach` 通话：
-  - 控制台不再出现 `byte length of Int16Array should be a multiple of 2`
-  - 开场白能正常听到
-  - 你说一句后，AI 能继续语音回复
-  - 主动打断时，只保留最新一轮回复，不重叠播放
+2. **课程亮点区**（借鉴 synergy 的 6 Core Highlights）
+   - 标题："为什么选择情感绽放训练营？"
+   - 6 个亮点卡片：28天系统课程（非碎片学习）、黛汐老师1V1直播答疑、教练课+情绪日记双轨并行、4阶递进式成长路径、从认知到体验的深度转化、安全的团体场域支持
 
-技术说明
+3. **每日学习闭环**（借鉴 synergy 的 Daily Loop）
+   - 标题："每阶学习流程"
+   - 时间线展示：音频课学习 → 教练课实践 → 情绪日记记录 → 周六直播答疑
+   - 强调"每阶 4 周，循序渐进"
 
-- 重点文件：
-  - `src/utils/DoubaoRealtimeAudio.ts`
-  - `supabase/functions/doubao-realtime-relay/index.ts`
-  - `src/components/coach/CoachVoiceChat.tsx`
-- 这次问题不涉及数据库、权限或登录流程。
-- `useVoiceSessionLock` 那条“尝试释放非当前会话的锁”警告我也看到了，但它发生在挂断收尾阶段，不是这次“没有回复”的主因，可以后续单独清理。
+4. **你将获得 - 三层权益金字塔**（借鉴 synergy 的 Delivery Tiers）
+   - 核心交付：16节音频课、16节教练课、4次直播答疑
+   - 专属权益：黛汐老师亲自带班、情绪日记系统跟踪
+   - 附加福利：学员社群、成长报告、课程回放
+
+5. **适合人群区升级**（从勾选列表改为"共鸣卡片"风格）
+   - 使用引号+心声风格："总是在关系中受伤，不敢再信任"
+   - 让用户产生"说的就是我"的感觉
+
+6. **社交证明/信任区**
+   - 黛汐老师简介卡片（复用 synergy 的教练展示模式）
+   - 课程数据：28天 · 4大阶段 · 16节音频课 · 16节教练课
+
+### 视觉风格
+
+- 背景从 `purple-50/pink-50` 渐变保持，与品牌一致
+- 卡片风格借鉴 synergy：圆角 2xl、轻阴影、左侧彩色边框
+- 每个阶段配专属颜色：恐惧→蓝、苏醒→紫、整合→橙、绽放→玫红
+- 动画使用 framer-motion `whileInView`
+
+### 技术细节
+
+- 新建 `src/components/camp/EmotionBloomIntroSections.tsx`
+- 在 `CampIntro.tsx` 的 Hero 和 Stages 之间插入条件渲染：
+  ```tsx
+  {campType === 'emotion_bloom' && <EmotionBloomIntroSections />}
+  ```
+- 数据硬编码在组件中（非数据库字段），保持灵活性
+- 不影响其他训练营的详情页
+- 阶段卡片区保留但视觉增强（加彩色左边框+阶段颜色）
+
