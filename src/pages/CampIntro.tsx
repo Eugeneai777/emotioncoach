@@ -270,6 +270,9 @@ const CampIntro = () => {
           )}
         </section>
 
+        {/* Emotion Bloom 专属丰富内容 */}
+        {campType === 'emotion_bloom' && <EmotionBloomIntroSections />}
+
         {/* Stages */}
         {campTemplate.stages && campTemplate.stages.length > 0 && (
           <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">

@@ -1,23 +1,18 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Heart,
   Shield,
-  Users,
   BookOpen,
   Mic,
   PenLine,
   Video,
   Sparkles,
   Brain,
-  Flame,
-  Flower2,
   MessageCircle,
   Award,
   BarChart3,
-  Clock,
   ChevronRight,
 } from "lucide-react";
 
