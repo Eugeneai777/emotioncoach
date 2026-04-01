@@ -447,6 +447,7 @@ export class DoubaoRealtimeChat {
 
     this.endRecording();
     this.clearAllAudio();
+    this.pcmRemainder = null;
     this.onStatusChange('disconnected');
   }
 
