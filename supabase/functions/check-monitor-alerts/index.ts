@@ -85,11 +85,38 @@ serve(async (req) => {
       .gte('created_at', fifteenMinAgo);
 
     if ((feErrorCount || 0) > 15) {
+      // 查询详情用于聚合
+      const { data: feErrors } = await supabase
+        .from('monitor_frontend_errors')
+        .select('error_type, message, page')
+        .gte('created_at', fifteenMinAgo)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      const feAgg = new Map<string, { count: number; pages: Set<string> }>();
+      for (const e of (feErrors || [])) {
+        const key = `[${e.error_type}] ${(e.message || '').slice(0, 80)}`;
+        const existing = feAgg.get(key);
+        if (existing) {
+          existing.count++;
+          if (e.page) existing.pages.add(e.page);
+        } else {
+          const pages = new Set<string>();
+          if (e.page) pages.add(e.page);
+          feAgg.set(key, { count: 1, pages });
+        }
+      }
+      const feTop = Array.from(feAgg.entries())
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 5)
+        .map(([k, v]) => `- ${k} x${v.count} (页面: ${[...v.pages].join(', ') || '未知'})`)
+        .join('\n');
+
       alerts.push({
         type: 'stability',
         level: 'high',
         message: `前端错误突增预警：最近15分钟内出现 ${feErrorCount} 条前端错误`,
-        details: `错误数量: ${feErrorCount}，超过阈值 15 条`,
+        details: `错误数量: ${feErrorCount}，超过阈值 15 条\n\n错误分布（Top 5）:\n${feTop}`,
       });
     }
 
