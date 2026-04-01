@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { CoachCallProvider } from "@/components/coach-call";
 import { AICoachCallProvider } from "@/components/coach-call/AICoachCallProvider";
+import { GlobalVoiceProvider } from "@/components/voice/GlobalVoiceProvider";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 import { UserPresenceTracker } from "./hooks/useUserPresence";
@@ -308,6 +309,7 @@ const App = () => (
       <BrowserRouter>
         <CoachCallProvider>
           <AICoachCallProvider>
+          <GlobalVoiceProvider>
             <Toaster />
             <Sonner />
             <GlobalRefTracker />
@@ -507,6 +509,7 @@ const App = () => (
             </Routes>
           </Suspense>
           </ChunkErrorBoundary>
+          </GlobalVoiceProvider>
           </AICoachCallProvider>
         </CoachCallProvider>
       </BrowserRouter>

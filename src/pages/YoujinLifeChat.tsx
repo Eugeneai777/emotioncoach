@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Mic, MicOff, Loader2, Phone } from "lucide-react";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+import { useGlobalVoice } from "@/components/voice/GlobalVoiceProvider";
 import { toast } from "sonner";
 import { ChatBubble } from "@/components/youjin-life/ChatBubble";
 import { YoujinBottomNav } from "@/components/youjin-life/YoujinBottomNav";
@@ -20,7 +20,7 @@ export default function YoujinLifeChat() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [showVoice, setShowVoice] = useState(false);
+  const { startVoice } = useGlobalVoice();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -233,24 +233,17 @@ export default function YoujinLifeChat() {
       navigate('/auth?redirect=/youjin-life/chat');
       return;
     }
-    setShowVoice(true);
+    startVoice({
+      coachEmoji: '❤️',
+      coachTitle: '有劲AI生活教练',
+      primaryColor: 'rose',
+      tokenEndpoint: 'vibrant-life-realtime-token',
+      userId: user.id,
+      mode: 'general',
+      featureKey: 'realtime_voice',
+      voiceType: getSavedVoiceType(),
+    });
   };
-
-  if (showVoice && user) {
-    return (
-      <CoachVoiceChat
-        onClose={() => setShowVoice(false)}
-        coachEmoji="❤️"
-        coachTitle="有劲AI生活教练"
-        primaryColor="rose"
-        tokenEndpoint="vibrant-life-realtime-token"
-        userId={user.id}
-        mode="general"
-        featureKey="realtime_voice"
-        voiceType={getSavedVoiceType()}
-      />
-    );
-  }
 
   return (
     <div className="flex flex-col h-screen bg-white">
