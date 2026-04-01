@@ -19,6 +19,15 @@ import {
 import { toast } from "sonner";
 
 // ========== Types ==========
+interface ErrorDetailRecord {
+  id: string;
+  source: string;
+  record_type: string;
+  user_id: string;
+  amount: number;
+  created_at: string;
+  description: string | null;
+}
 interface RealtimeMetrics {
   currentQPS: number;
   peakQPS: number;
