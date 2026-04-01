@@ -1133,46 +1133,53 @@ export const CoachVoiceChat = ({
         return;
       }
 
-      // 尝试刷新 session，但失败时不立即强制登出
-      // 因为在某些环境下 refresh_token 可能无效，但 access_token 仍可用
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.warn('[VoiceChat] ⚠️ Session refresh failed:', refreshError.message);
-        
-        // 验证当前 access token 是否仍然有效
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError || !userData?.user) {
-          console.error('[VoiceChat] ❌ Token validation failed after refresh error:', userError?.message);
-          try {
-            // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
-            localStorage.removeItem('cached_wechat_openid');
-            sessionStorage.removeItem('cached_wechat_openid');
-            localStorage.removeItem('cached_payment_openid');
-            sessionStorage.removeItem('cached_payment_openid');
-            localStorage.removeItem('cached_payment_openid_gzh');
-            sessionStorage.removeItem('cached_payment_openid_gzh');
-            localStorage.removeItem('cached_payment_openid_mp');
-            sessionStorage.removeItem('cached_payment_openid_mp');
-            await supabase.auth.signOut();
-          } catch (e) {
-            console.warn('[VoiceChat] signOut after token validation failure:', e);
-          }
+      // 🔧 惰性刷新：仅在 token 即将过期（<5分钟）时才 refreshSession，节省 200-500ms
+      const session = sessionData.session;
+      const expiresAt = session.expires_at ? session.expires_at * 1000 : 0; // expires_at is seconds
+      const timeUntilExpiry = expiresAt - Date.now();
+      const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
-          toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
-          setStatus('error');
-          isInitializingRef.current = false;
-          stopConnectionTimer();
-          releaseLock();
-          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-          navigate(`/auth?redirect=${redirect}`);
-          setTimeout(onClose, 300);
-          return;
+      if (timeUntilExpiry < REFRESH_THRESHOLD) {
+        console.log(`[VoiceChat] Token expiring in ${Math.round(timeUntilExpiry / 1000)}s, refreshing...`);
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.warn('[VoiceChat] ⚠️ Session refresh failed:', refreshError.message);
+          
+          // 验证当前 access token 是否仍然有效
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (userError || !userData?.user) {
+            console.error('[VoiceChat] ❌ Token validation failed after refresh error:', userError?.message);
+            try {
+              localStorage.removeItem('cached_wechat_openid');
+              sessionStorage.removeItem('cached_wechat_openid');
+              localStorage.removeItem('cached_payment_openid');
+              sessionStorage.removeItem('cached_payment_openid');
+              localStorage.removeItem('cached_payment_openid_gzh');
+              sessionStorage.removeItem('cached_payment_openid_gzh');
+              localStorage.removeItem('cached_payment_openid_mp');
+              sessionStorage.removeItem('cached_payment_openid_mp');
+              await supabase.auth.signOut();
+            } catch (e) {
+              console.warn('[VoiceChat] signOut after token validation failure:', e);
+            }
+
+            toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
+            setStatus('error');
+            isInitializingRef.current = false;
+            stopConnectionTimer();
+            releaseLock();
+            const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+            navigate(`/auth?redirect=${redirect}`);
+            setTimeout(onClose, 300);
+            return;
+          }
+          
+          console.log('[VoiceChat] ✅ Token still valid despite refresh failure, continuing...');
+        } else {
+          console.log('[VoiceChat] ✅ Session refreshed successfully');
         }
-        
-        // Token 仍然有效，继续执行
-        console.log('[VoiceChat] ✅ Token still valid despite refresh failure, continuing...');
       } else {
-        console.log('[VoiceChat] ✅ Session refreshed successfully');
+        console.log(`[VoiceChat] ✅ Token still valid for ${Math.round(timeUntilExpiry / 1000)}s, skipping refresh`);
       }
 
       if (isStale()) {
