@@ -29,6 +29,7 @@ export class DoubaoRealtimeChat {
   private currentSource: AudioBufferSourceNode | null = null;
   private interruptFlag = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private pcmRemainder: Uint8Array | null = null; // 残留的奇数字节
 
   // 累积的 assistant 文本
   private assistantText = '';
