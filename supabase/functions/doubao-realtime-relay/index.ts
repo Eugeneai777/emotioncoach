@@ -166,6 +166,7 @@ interface ParsedFrame {
   errorCode?: number;
   payload?: Uint8Array;
   jsonPayload?: any;
+  audioData?: Uint8Array;  // 音频帧的实际音频数据
 }
 
 function parseServerFrame(data: Uint8Array): ParsedFrame | null {
@@ -207,32 +208,60 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
       }
     }
   }
-  // Connect级别的服务端事件 (50-99) 可能有 connect id
-  // 按文档：connect id 在 event 字段之后、session id 之前
-  // 对于 ConnectionStarted(50) 等，服务端可能不返回 connect id
-  // 这里跳过 connect id 的解析
 
-  // Payload
+  // 对于音频服务端帧，结构是: ... | sequence(4) | payload_size(4) | payload(JSON) | audio_size(4) | audio_data
+  const isAudioFrame = msgType === MSG_TYPE_AUDIO_SERVER;
+
   let payload: Uint8Array | undefined;
   let jsonPayload: any;
+  let audioData: Uint8Array | undefined;
 
-  if (offset + 4 <= data.length) {
-    const payloadSize = readUint32BE(data, offset);
-    offset += 4;
-    if (payloadSize > 0 && offset + payloadSize <= data.length) {
-      payload = data.slice(offset, offset + payloadSize);
+  if (isAudioFrame) {
+    // 序列号 (4 bytes)
+    if (offset + 4 <= data.length) {
+      // const sequence = readUint32BE(data, offset);  // 不需要使用
+      offset += 4;
+    }
 
-      if (serialMethod === SERIAL_JSON && payload) {
+    // JSON payload
+    if (offset + 4 <= data.length) {
+      const payloadSize = readUint32BE(data, offset);
+      offset += 4;
+      if (payloadSize > 0 && offset + payloadSize <= data.length) {
+        payload = data.slice(offset, offset + payloadSize);
         try {
           jsonPayload = JSON.parse(new TextDecoder().decode(payload));
-        } catch {
-          // not valid JSON
+        } catch {}
+        offset += payloadSize;
+      }
+    }
+
+    // 音频数据
+    if (offset + 4 <= data.length) {
+      const audioSize = readUint32BE(data, offset);
+      offset += 4;
+      if (audioSize > 0 && offset + audioSize <= data.length) {
+        audioData = data.slice(offset, offset + audioSize);
+      }
+    }
+  } else {
+    // 普通文本帧
+    if (offset + 4 <= data.length) {
+      const payloadSize = readUint32BE(data, offset);
+      offset += 4;
+      if (payloadSize > 0 && offset + payloadSize <= data.length) {
+        payload = data.slice(offset, offset + payloadSize);
+
+        if (serialMethod === SERIAL_JSON && payload) {
+          try {
+            jsonPayload = JSON.parse(new TextDecoder().decode(payload));
+          } catch {}
         }
       }
     }
   }
 
-  return { msgType, flags, serialMethod, eventId, sessionId, errorCode, payload, jsonPayload };
+  return { msgType, flags, serialMethod, eventId, sessionId, errorCode, payload, jsonPayload, audioData };
 }
 
 function toUint8Array(rawData: unknown): Uint8Array {
