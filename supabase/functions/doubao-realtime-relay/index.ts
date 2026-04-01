@@ -331,43 +331,30 @@ serve(async (req) => {
     console.log('[DoubaoRelay] 🔗 Connecting to Doubao WebSocket...');
 
     try {
-      const doubaoHttpUrl = 'https://openspeech.bytedance.com/api/v3/realtime/dialogue';
+      const doubaoWsUrl = 'wss://openspeech.bytedance.com/api/v3/realtime/dialogue';
       const connectId = crypto.randomUUID();
-
-      // Deno 原生 WebSocket 不支持自定义 headers，使用 fetch upgrade 方式
-      console.log('[DoubaoRelay] 🔗 Using fetch upgrade with headers, connectId:', connectId);
-      const upgradeResp = await fetch(doubaoHttpUrl, {
-        headers: {
-          'Connection': 'Upgrade',
-          'Upgrade': 'websocket',
-          'X-Api-App-ID': DOUBAO_APP_ID,
-          'X-Api-Access-Key': DOUBAO_ACCESS_TOKEN,
-          'X-Api-Resource-Id': 'volc.speech.dialog',
-          'X-Api-App-Key': DOUBAO_APP_KEY,
-          'X-Api-Connect-Id': connectId,
-        },
+      const connectHeaders = new Headers({
+        'X-Api-App-ID': DOUBAO_APP_ID,
+        'X-Api-Access-Key': DOUBAO_ACCESS_TOKEN,
+        'X-Api-Resource-Id': 'volc.speech.dialog',
+        'X-Api-App-Key': DOUBAO_APP_KEY,
+        'X-Api-Connect-Id': connectId,
       });
 
-      // deno-lint-ignore no-explicit-any
-      doubaoWs = (upgradeResp as any).webSocket;
-      if (!doubaoWs) {
-        throw new Error(`WebSocket upgrade failed, status: ${upgradeResp.status}, body: ${await upgradeResp.text()}`);
-      }
-      doubaoWs.binaryType = 'arraybuffer';
-      // Accept the WebSocket (Deno specific)
-      // deno-lint-ignore no-explicit-any
-      if (typeof (doubaoWs as any).accept === 'function') {
-        // deno-lint-ignore no-explicit-any
-        (doubaoWs as any).accept();
-      }
+      console.log('[DoubaoRelay] 🔗 Opening outbound Doubao WebSocket, connectId:', connectId);
 
-      // fetch upgrade 后 WS 已处于 open 状态，直接发送 StartConnection
-      console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket via fetch upgrade');
-      {
+      // Deno 运行时支持在出站 WebSocket 握手里附带自定义 headers
+      // deno-lint-ignore no-explicit-any
+      const doubaoSocketOptions: any = { headers: connectHeaders };
+      doubaoWs = new WebSocket(doubaoWsUrl, doubaoSocketOptions);
+      doubaoWs.binaryType = 'arraybuffer';
+
+      doubaoWs.onopen = () => {
+        console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket');
         const frame = buildClientTextFrame(EVENT_START_CONNECTION, {});
         doubaoWs!.send(frame);
         console.log('[DoubaoRelay] 📤 Sent StartConnection event');
-      }
+      };
 
       doubaoWs.onmessage = (event) => {
         if (clientWs.readyState !== WebSocket.OPEN) return;
