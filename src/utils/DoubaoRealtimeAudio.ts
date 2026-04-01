@@ -129,7 +129,7 @@ export class DoubaoRealtimeChat {
         if (!this.isDisconnected) {
           this.onStatusChange('disconnected');
         }
-        this.stopRecording();
+        this.endRecording();
       };
     });
   }
