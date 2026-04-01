@@ -1,59 +1,33 @@
 
 
-# 情感绽放训练营详情页升级方案
+# 告警推送增加错误详情
 
 ## 问题
-
-当前 `/camp-intro/emotion_bloom` 页面使用通用模板渲染，视觉简单、缺乏说服力，与 ¥3980 高客单价不匹配。需要借鉴 `/promo/synergy` 的高转化设计模式进行专项升级。
+当前 `check-monitor-alerts` 边缘函数在 API 错误和前端错误告警中只推送错误数量，不包含具体哪些接口/页面出了什么错误，无法快速定位问题。
 
 ## 方案
 
-在 `CampIntro.tsx` 中，针对 `emotion_bloom` 类型做条件渲染，插入专属的丰富内容模块。抽取独立组件 `EmotionBloomIntroSections.tsx`，避免主文件膨胀。
+修改 `supabase/functions/check-monitor-alerts/index.ts`，在触发告警前查询最近的错误记录详情，拼接到 `details` 字段中。
 
-### 新增模块（按页面顺序）
+### 1. API 错误告警增加详情
 
-1. **痛点共鸣区**（借鉴 synergy 的 Pain Points 模式）
-   - 标题："你是否也有这些困扰？"
-   - 5-6 个痛点卡片（带图标+描述）：情绪压抑无法表达、亲密关系反复受伤、童年创伤影响当下、害怕冲突回避愤怒、总觉得自己不够好、想改变但不知从何开始
-   - 底部一句话钩子："这些不是你的错，而是情感模式在运作"
+当 `apiErrorCount > 10` 时，额外查询 `monitor_api_errors` 表最近 10 条记录，提取 `error_type`、`url`、`message`、`status_code`，按 `url + error_type` 聚合统计，生成类似：
 
-2. **课程亮点区**（借鉴 synergy 的 6 Core Highlights）
-   - 标题："为什么选择情感绽放训练营？"
-   - 6 个亮点卡片：28天系统课程（非碎片学习）、黛汐老师1V1直播答疑、教练课+情绪日记双轨并行、4阶递进式成长路径、从认知到体验的深度转化、安全的团体场域支持
+```
+错误分布（Top 5）:
+- POST /functions/v1/doubao-realtime-relay [server_error] x3: WebSocket连接失败
+- GET /rest/v1/profiles [timeout] x2: 请求超时
+- POST /functions/v1/log-api-cost [client_error] x1: Missing authorization header
+```
 
-3. **每日学习闭环**（借鉴 synergy 的 Daily Loop）
-   - 标题："每阶学习流程"
-   - 时间线展示：音频课学习 → 教练课实践 → 情绪日记记录 → 周六直播答疑
-   - 强调"每阶 4 周，循序渐进"
+### 2. 前端错误告警增加详情
 
-4. **你将获得 - 三层权益金字塔**（借鉴 synergy 的 Delivery Tiers）
-   - 核心交付：16节音频课、16节教练课、4次直播答疑
-   - 专属权益：黛汐老师亲自带班、情绪日记系统跟踪
-   - 附加福利：学员社群、成长报告、课程回放
-
-5. **适合人群区升级**（从勾选列表改为"共鸣卡片"风格）
-   - 使用引号+心声风格："总是在关系中受伤，不敢再信任"
-   - 让用户产生"说的就是我"的感觉
-
-6. **社交证明/信任区**
-   - 黛汐老师简介卡片（复用 synergy 的教练展示模式）
-   - 课程数据：28天 · 4大阶段 · 16节音频课 · 16节教练课
-
-### 视觉风格
-
-- 背景从 `purple-50/pink-50` 渐变保持，与品牌一致
-- 卡片风格借鉴 synergy：圆角 2xl、轻阴影、左侧彩色边框
-- 每个阶段配专属颜色：恐惧→蓝、苏醒→紫、整合→橙、绽放→玫红
-- 动画使用 framer-motion `whileInView`
+当 `feErrorCount > 15` 时，同样查询 `monitor_frontend_errors` 最近记录，按 `error_message + page` 聚合，展示 Top 5 错误类型和出现页面。
 
 ### 技术细节
 
-- 新建 `src/components/camp/EmotionBloomIntroSections.tsx`
-- 在 `CampIntro.tsx` 的 Hero 和 Stages 之间插入条件渲染：
-  ```tsx
-  {campType === 'emotion_bloom' && <EmotionBloomIntroSections />}
-  ```
-- 数据硬编码在组件中（非数据库字段），保持灵活性
-- 不影响其他训练营的详情页
-- 阶段卡片区保留但视觉增强（加彩色左边框+阶段颜色）
+- 仅修改 `supabase/functions/check-monitor-alerts/index.ts`
+- 在已有的 count 查询之后，增加一个 `select` 查询获取详情（limit 50），在内存中聚合
+- 不影响告警触发逻辑，只丰富 `details` 内容
+- 部署后自动生效
 
