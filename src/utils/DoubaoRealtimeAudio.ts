@@ -314,7 +314,7 @@ export class DoubaoRealtimeChat {
     }
   }
 
-  // ============ 音频播放 ============
+  // ============ 音频播放 (PCM 16-bit, 24kHz, mono) ============
 
   private appendAudioChunk(audioData: Uint8Array) {
     this.audioChunks.push(audioData);
@@ -345,14 +345,22 @@ export class DoubaoRealtimeChat {
     this.isPlaying = true;
 
     if (!this.playbackAudioContext || this.playbackAudioContext.state === 'closed') {
-      this.playbackAudioContext = new AudioContext({ sampleRate: 48000 });
+      this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
     }
     const playCtx = this.playbackAudioContext;
 
     while (this.playQueue.length > 0 && !this.interruptFlag) {
       const data = this.playQueue.shift()!;
       try {
-        const audioBuffer = await playCtx.decodeAudioData(data.slice(0));
+        // PCM Int16 -> Float32 AudioBuffer
+        const int16 = new Int16Array(data);
+        const float32 = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i++) {
+          float32[i] = int16[i] / 32768;
+        }
+        const audioBuffer = playCtx.createBuffer(1, float32.length, 24000);
+        audioBuffer.getChannelData(0).set(float32);
+
         if (this.interruptFlag) break;
         await new Promise<void>((resolve) => {
           const source = playCtx.createBufferSource();
@@ -366,7 +374,7 @@ export class DoubaoRealtimeChat {
           source.start(0);
         });
       } catch (e) {
-        console.warn('[DoubaoClient] Audio decode/play error:', e);
+        console.warn('[DoubaoClient] Audio play error:', e);
       }
     }
 
@@ -378,7 +386,6 @@ export class DoubaoRealtimeChat {
     this.audioChunks = [];
     this.playQueue = [];
     this.interruptFlag = true;
-    // 立即停止正在播放的音频源
     if (this.currentSource) {
       try {
         this.currentSource.stop();
