@@ -490,13 +490,13 @@ export default function SynergyPromoPage() {
           ) : (
             <>
               <Button
-                onClick={handleBuyClick}
+                onClick={() => setShowRedeemDialog(true)}
                 className="h-12 px-8 text-base font-bold rounded-full bg-white text-orange-600 hover:bg-white/90 shadow-lg shadow-black/10 border-0"
               >
-                立即解锁套餐 ¥0.01
+                输入兑换码开启训练营
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
-              <p className="text-white/60 text-xs mt-3">原价 ¥899 · 限时优惠</p>
+              <p className="text-white/60 text-xs mt-3">请先在有赞商城下单获取兑换码</p>
             </>
           )}
         </motion.div>
