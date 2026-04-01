@@ -839,6 +839,9 @@ export default function OperationsMonitorDashboard() {
               <p className="font-medium mt-1">📊 判断标准：</p>
               <p>• <code className="bg-muted px-1 rounded">refund</code> = 系统按规则自动退还的积分</p>
               <p>• <code className="bg-muted px-1 rounded">compensation</code> = 因服务异常手动或自动补偿的积分</p>
+            </div>
+
+            {/* Aggregation by type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-2">按类型分布</p>
