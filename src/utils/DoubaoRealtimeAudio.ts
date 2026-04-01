@@ -20,8 +20,10 @@ export class DoubaoRealtimeChat {
   private preAcquiredStream: MediaStream | null = null;
 
   // 音频播放队列
-  private audioQueue: ArrayBuffer[] = [];
+  private audioChunks: Uint8Array[] = [];
+  private playQueue: ArrayBuffer[] = [];
   private isPlaying = false;
+  private playbackAudioContext: AudioContext | null = null;
 
   // 累积的 assistant 文本
   private assistantText = '';
@@ -102,7 +104,7 @@ export class DoubaoRealtimeChat {
           if (data.length > 1 && data[0] === 0x01) {
             // 音频数据，去掉类型标记
             const audioData = data.slice(1);
-            this.playAudio(audioData.buffer);
+            this.appendAudioChunk(audioData);
           }
           return;
         }
@@ -169,10 +171,12 @@ export class DoubaoRealtimeChat {
         if (this.assistantText) {
           this.onTranscript(this.assistantText, true, 'assistant');
         }
+        this.flushAudioChunks();
         break;
 
       case 'tts_ended':
         // 一轮回复结束
+        this.flushAudioChunks();
         this.assistantText = '';
         this.onMessage({ type: 'response.audio.done' });
         break;
@@ -184,7 +188,7 @@ export class DoubaoRealtimeChat {
 
       case 'asr_info':
         // 用户开始说话 - 打断播放
-        this.clearAudioQueue();
+        this.clearAllAudio();
         this.onMessage({ type: 'input_audio_buffer.speech_started' });
         break;
 
@@ -263,31 +267,42 @@ export class DoubaoRealtimeChat {
 
   // ============ 音频播放 ============
 
-  private async playAudio(audioData: ArrayBuffer) {
-    this.audioQueue.push(audioData);
+  private appendAudioChunk(audioData: Uint8Array) {
+    this.audioChunks.push(audioData);
+  }
+
+  private flushAudioChunks() {
+    if (this.audioChunks.length === 0) return;
+    const totalLen = this.audioChunks.reduce((s, c) => s + c.length, 0);
+    const merged = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const chunk of this.audioChunks) {
+      merged.set(chunk, offset);
+      offset += chunk.length;
+    }
+    this.audioChunks = [];
+    this.playQueue.push(merged.buffer);
     if (!this.isPlaying) {
-      await this.processAudioQueue();
+      this.processPlayQueue();
     }
   }
 
-  private async processAudioQueue() {
-    if (this.audioQueue.length === 0) {
+  private async processPlayQueue() {
+    if (this.playQueue.length === 0) {
       this.isPlaying = false;
       return;
     }
 
     this.isPlaying = true;
 
-    // 创建播放用 AudioContext（24kHz 或 48kHz 都可以，浏览器会自动重采样）
-    if (!this.audioContext || this.audioContext.state === 'closed') {
-      this.audioContext = new AudioContext({ sampleRate: 48000 });
+    if (!this.playbackAudioContext || this.playbackAudioContext.state === 'closed') {
+      this.playbackAudioContext = new AudioContext({ sampleRate: 48000 });
     }
-    const playCtx = this.audioContext;
+    const playCtx = this.playbackAudioContext;
 
-    while (this.audioQueue.length > 0) {
-      const data = this.audioQueue.shift()!;
+    while (this.playQueue.length > 0) {
+      const data = this.playQueue.shift()!;
       try {
-        // 豆包返回的是 OGG/Opus，浏览器原生支持解码
         const audioBuffer = await playCtx.decodeAudioData(data.slice(0));
         await new Promise<void>((resolve) => {
           const source = playCtx.createBufferSource();
@@ -298,15 +313,15 @@ export class DoubaoRealtimeChat {
         });
       } catch (e) {
         console.warn('[DoubaoClient] Audio decode/play error:', e);
-        // 跳过无法解码的音频包继续播放下一个
       }
     }
 
     this.isPlaying = false;
   }
 
-  private clearAudioQueue() {
-    this.audioQueue = [];
+  private clearAllAudio() {
+    this.audioChunks = [];
+    this.playQueue = [];
     this.isPlaying = false;
   }
 
@@ -334,7 +349,7 @@ export class DoubaoRealtimeChat {
     }
 
     this.endRecording();
-    this.clearAudioQueue();
+    this.clearAllAudio();
     this.onStatusChange('disconnected');
   }
 
