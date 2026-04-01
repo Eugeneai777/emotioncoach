@@ -395,12 +395,21 @@ export default function OperationsMonitorDashboard() {
             .select("duration_seconds")
             .gte("created_at", hourStart).lt("created_at", hourEnd)
             .eq("call_status", "ended"),
-        ]).then(([callsRes, tokensRes, voiceRes]) => ({
-          hour: format(subHours(new Date(), i), "HH:00"),
-          calls: callsRes.count || 0,
-          tokens: (tokensRes.data || []).reduce((s, r) => s + (r.input_tokens || 0) + (r.output_tokens || 0), 0),
-          voiceSeconds: (voiceRes.data || []).reduce((s, r) => s + (r.duration_seconds || 0), 0),
-        }))
+          supabase.from("usage_records")
+            .select("amount")
+            .gte("created_at", hourStart).lt("created_at", hourEnd)
+            .like("source", "realtime_voice%")
+            .eq("record_type", "consumption"),
+        ]).then(([callsRes, tokensRes, voiceRes, voiceUsageRes]) => {
+          const aiCoachSeconds = (voiceRes.data || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
+          const usageSeconds = (voiceUsageRes.data || []).reduce((s, r: any) => s + ((r.amount || 0) / 8) * 60, 0);
+          return {
+            hour: format(subHours(new Date(), i), "HH:00"),
+            calls: callsRes.count || 0,
+            tokens: (tokensRes.data || []).reduce((s, r) => s + (r.input_tokens || 0) + (r.output_tokens || 0), 0),
+            voiceSeconds: Math.round(aiCoachSeconds + usageSeconds),
+          };
+        })
       );
     }
 
