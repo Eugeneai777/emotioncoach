@@ -299,6 +299,30 @@ serve(async (req) => {
   let doubaoWs: NodeWebSocket | null = null;
   let sessionId = '';
   let userName: string | undefined;
+  let heartbeatTimer: number | null = null;
+
+  const stopHeartbeat = () => {
+    if (heartbeatTimer !== null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+  };
+
+  const startHeartbeat = () => {
+    stopHeartbeat();
+    heartbeatTimer = setInterval(() => {
+      if (clientWs.readyState !== WebSocket.OPEN) {
+        stopHeartbeat();
+        return;
+      }
+
+      try {
+        clientWs.send(JSON.stringify({ type: 'ping', ts: Date.now() }));
+      } catch (error) {
+        console.warn('[DoubaoRelay] ⚠️ Failed to send heartbeat to client:', error);
+      }
+    }, 15000);
+  };
 
   clientWs.onopen = async () => {
     console.log('[DoubaoRelay] ✅ Client WebSocket connected');
@@ -443,6 +467,7 @@ serve(async (req) => {
                 session_id: sessionId,
                 dialog_id: parsed.jsonPayload?.dialog_id
               }));
+              startHeartbeat();
               // 发送开场白
               const greetingText = `嗨${userName ? userName + '，' : ''}今天心情怎么样？`;
               const sayHelloFrame = buildClientTextFrame(EVENT_SAY_HELLO, { content: greetingText }, sessionId);
@@ -617,6 +642,14 @@ serve(async (req) => {
       console.log('[DoubaoRelay] 📥 Client message:', msg.type);
 
       switch (msg.type) {
+        case 'ping': {
+          clientWs.send(JSON.stringify({ type: 'pong', ts: msg.ts ?? Date.now() }));
+          break;
+        }
+
+        case 'pong':
+          break;
+
         case 'audio': {
           // Base64 音频数据
           const binaryStr = atob(msg.data);
@@ -653,6 +686,7 @@ serve(async (req) => {
 
   clientWs.onclose = (e) => {
     console.log('[DoubaoRelay] 🔌 Client WebSocket closed:', e.code, e.reason);
+    stopHeartbeat();
     if (doubaoWs && doubaoWs.readyState === NodeWebSocket.OPEN) {
       try {
         // 发送 FinishSession 和 FinishConnection
@@ -669,6 +703,7 @@ serve(async (req) => {
 
   clientWs.onerror = (e) => {
     console.error('[DoubaoRelay] ❌ Client WebSocket error:', e);
+    stopHeartbeat();
     if (doubaoWs && doubaoWs.readyState === NodeWebSocket.OPEN) {
       doubaoWs.close();
     }
