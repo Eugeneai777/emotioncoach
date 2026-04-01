@@ -866,7 +866,7 @@ export const CoachVoiceChat = ({
   // 通用的转录处理函数 - 🔧 修复：实时显示 assistant 回复，不等待 isFinal
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
     if (role === 'assistant') {
-      // ✅ 应用身份替换，确保显示"劲老师"而非"豆包"
+      // ✅ 应用身份替换，确保显示一致的身份
       const sanitizedText = sanitizeIdentity(text);
       
       if (isFinal) {
