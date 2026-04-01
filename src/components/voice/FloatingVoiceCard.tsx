@@ -5,11 +5,12 @@ interface FloatingVoiceCardProps {
   coachEmoji: string;
   coachTitle: string;
   startTime: number | null;
+  isConnected: boolean;
   onRestore: () => void;
   onEnd: () => void;
 }
 
-export function FloatingVoiceCard({ coachEmoji, coachTitle, startTime, onRestore, onEnd }: FloatingVoiceCardProps) {
+export function FloatingVoiceCard({ coachEmoji, coachTitle, startTime, isConnected, onRestore, onEnd }: FloatingVoiceCardProps) {
   const [position, setPosition] = useState({ x: 16, y: 120 });
   const [isDragging, setIsDragging] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -108,8 +109,8 @@ export function FloatingVoiceCard({ coachEmoji, coachTitle, startTime, onRestore
     >
       {/* 呼吸动画指示器 */}
       <div className="relative flex items-center justify-center w-9 h-9">
-        <div className="absolute inset-0 rounded-full bg-green-500/30 animate-ping" style={{ animationDuration: '2s' }} />
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-base shadow-inner">
+        <div className={`absolute inset-0 rounded-full ${isConnected ? 'bg-green-500/30' : 'bg-orange-500/30'} animate-ping`} style={{ animationDuration: '2s' }} />
+        <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${isConnected ? 'from-green-400 to-green-600' : 'from-orange-400 to-orange-600'} flex items-center justify-center text-base shadow-inner`}>
           {coachEmoji}
         </div>
       </div>
@@ -117,7 +118,11 @@ export function FloatingVoiceCard({ coachEmoji, coachTitle, startTime, onRestore
       {/* 信息 */}
       <div className="flex flex-col min-w-0">
         <span className="text-white text-xs font-medium truncate max-w-[80px]">{coachTitle}</span>
-        <span className="text-green-400 text-[10px] font-mono tabular-nums">{fmt(elapsed)}</span>
+        {isConnected ? (
+          <span className="text-green-400 text-[10px] font-mono tabular-nums">{fmt(elapsed)}</span>
+        ) : (
+          <span className="text-orange-400 text-[10px]">连接中…</span>
+        )}
       </div>
 
       {/* 挂断按钮 */}

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useContext } from 'react';
+import { GlobalVoiceContext } from '@/components/voice/GlobalVoiceProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft } from 'lucide-react';
@@ -86,6 +88,7 @@ export const CoachVoiceChat = ({
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const globalVoice = useContext(GlobalVoiceContext);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
   const [transcript, setTranscript] = useState('');
@@ -971,6 +974,7 @@ export const CoachVoiceChat = ({
 
   const updateConnectionPhase = useCallback((phase: ConnectionPhase) => {
     setConnectionPhase(phase);
+    if (phase === 'connected') globalVoice?.setVoiceConnected?.();
     console.log(`[VoiceChat] Connection phase: ${phase}`);
   }, []);
 
