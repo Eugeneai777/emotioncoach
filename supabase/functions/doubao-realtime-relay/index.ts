@@ -343,7 +343,7 @@ serve(async (req) => {
           'X-Api-App-ID': DOUBAO_APP_ID,
           'X-Api-Access-Key': DOUBAO_ACCESS_TOKEN,
           'X-Api-Resource-Id': 'volc.speech.dialog',
-          'X-Api-App-Key': 'PlgvMymc7f3tQnJ6',
+          'X-Api-App-Key': DOUBAO_APP_KEY,
           'X-Api-Connect-Id': connectId,
         },
       });
