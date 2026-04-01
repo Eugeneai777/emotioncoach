@@ -205,7 +205,7 @@ export class DoubaoRealtimeChat {
 
   // ============ 录音相关 ============
 
-  private startRecording() {
+  private beginRecording() {
     if (!this.mediaStream) return;
 
     try {
