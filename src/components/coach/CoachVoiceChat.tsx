@@ -7,8 +7,6 @@ import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart
 import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
-import { DoubaoRealtimeChat, type DoubaoConnectionStatus } from '@/utils/DoubaoRealtimeAudio';
-import { getSavedVoiceType } from '@/config/voiceTypeConfig';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,7 +48,7 @@ interface CoachVoiceChatProps {
   mode?: VoiceChatMode;
   featureKey?: string; // 教练专属计费 feature_key，默认 'realtime_voice'
   scenario?: string; // 场景名称，如 "睡不着觉"，用于场景专属语音对话
-  voiceType?: string; // 豆包语音音色类型
+  voiceType?: string; // 语音音色类型
   onBriefingSaved?: (briefingId: string, briefingData: BriefingData) => void;
   // AI主动来电相关
   isIncomingCall?: boolean;        // 是否是AI来电（被动接入）
@@ -852,11 +850,9 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 🔧 身份替换：将"豆包"替换为"静老师"，确保用户看到一致的身份
+  // 🔧 身份替换：确保用户看到一致的身份
   const sanitizeIdentity = (text: string): string => {
     return text
-      .replace(/豆包/g, '劲老师')
-      .replace(/字节跳动/g, '')
       .replace(/我是一个AI/g, '我是劲老师')
       .replace(/我是AI/g, '我是劲老师')
       .replace(/作为AI/g, '作为情绪教练');
@@ -870,7 +866,7 @@ export const CoachVoiceChat = ({
   // 通用的转录处理函数 - 🔧 修复：实时显示 assistant 回复，不等待 isFinal
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
     if (role === 'assistant') {
-      // ✅ 应用身份替换，确保显示"劲老师"而非"豆包"
+      // ✅ 应用身份替换，确保显示一致的身份
       const sanitizedText = sanitizeIdentity(text);
       
       if (isFinal) {
@@ -1234,130 +1230,14 @@ export const CoachVoiceChat = ({
       updateConnectionPhase('getting_token');
       console.log('[VoiceChat] Platform info:', platformInfo);
 
-      // 🎯 情绪教练优先使用豆包语音（DoubaoRealtimeChat），失败后降级到 OpenAI Realtime
-      const isEmotionMode = mode === 'emotion';
-
       console.log('[VoiceChat] Voice routing decision:', {
         mode,
-        isEmotionMode,
         recommendedVoiceMethod: platformInfo.recommendedVoiceMethod,
         supportsWebRTC: platformInfo.supportsWebRTC,
         platform: platformInfo.platform,
       });
       
-      if (isEmotionMode) {
-        // 🎯 情绪教练：优先豆包 WebSocket Relay，失败降级 OpenAI
-        const resolvedVoiceType = voiceType || getSavedVoiceType();
-        console.log('[VoiceChat] 🎙️ Emotion coach: trying Doubao first, voiceType:', resolvedVoiceType);
-        
-        try {
-          updateConnectionPhase('establishing');
-          setUseMiniProgramMode(false);
-          
-          const doubaoChat = new DoubaoRealtimeChat({
-            onStatusChange: (doubaoStatus: DoubaoConnectionStatus) => {
-              handleStatusChange(doubaoStatus);
-            },
-            onSpeakingChange: (speakStatus) => {
-              setSpeakingStatus(speakStatus);
-              if (speakStatus === 'user-speaking') {
-                userLastActivityRef.current = Date.now();
-                if (hasWarnedInactivity) {
-                  setHasWarnedInactivity(false);
-                  warningTimestampRef.current = 0;
-                }
-              } else if (speakStatus === 'assistant-speaking') {
-                aiLastActivityRef.current = Date.now();
-              }
-            },
-            onTranscript: handleTranscript,
-            onToolCall: (toolName, args) => {
-              handleVoiceMessage({ type: 'tool_executed', tool: toolName, result: args, args });
-            },
-            onMessage: handleVoiceMessage,
-            tokenEndpoint: 'doubao-realtime-token',
-            mode: 'emotion',
-            voiceType: resolvedVoiceType,
-          });
-          
-          chatRef.current = doubaoChat;
-          await doubaoChat.init();
-          
-          updateConnectionPhase('connected');
-          stopConnectionTimer();
-          startMonitoring();
-          console.log('[VoiceChat] ✅ Doubao connection established for emotion coach');
-          
-          // 🔧 AI来电模式：让AI先说开场白
-          if (isIncomingCall && openingMessage && doubaoChat.sendTextMessage) {
-            console.log('[VoiceChat] AI incoming call (Doubao) - sending opening message');
-            setTimeout(() => {
-              doubaoChat.sendTextMessage?.(openingMessage);
-            }, 500);
-          }
-        } catch (doubaoError: any) {
-          console.error('[VoiceChat] ❌ Doubao connection failed, falling back to OpenAI:', doubaoError);
-          
-          // 清理豆包连接
-          try { chatRef.current?.disconnect(); } catch (e) { /* ignore */ }
-          chatRef.current = null;
-          
-          toast({
-            title: "正在切换语音通道",
-            description: "正在使用备用语音引擎...",
-          });
-          
-          // 降级到 OpenAI Realtime
-          const canUseWebRTC = platformInfo.recommendedVoiceMethod === 'webrtc';
-          
-          if (canUseWebRTC) {
-            console.log('[VoiceChat] Falling back to OpenAI Realtime (WebRTC) for emotion coach');
-            setUseMiniProgramMode(false);
-            updateConnectionPhase('establishing');
-            
-            const emotionTokenEndpoint = 'emotion-realtime-token';
-            const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, emotionTokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
-            chatRef.current = chat;
-            
-            try {
-              await chat.init();
-              updateConnectionPhase('connected');
-              stopConnectionTimer();
-              startMonitoring();
-              
-              if (isIncomingCall && openingMessage && chat.sendTextMessage) {
-                setTimeout(() => { chat.sendTextMessage?.(openingMessage); }, 500);
-              }
-            } catch (webrtcError: any) {
-              console.error('[VoiceChat] ❌ OpenAI WebRTC fallback also failed:', webrtcError);
-              chat.disconnect();
-              chatRef.current = null;
-              throw webrtcError;
-            }
-          } else {
-            // WebSocket relay 降级
-            console.log('[VoiceChat] Falling back to OpenAI WebSocket relay for emotion coach');
-            updateConnectionPhase('establishing');
-            setUseMiniProgramMode(true);
-            const miniProgramClient = new MiniProgramAudioClient({
-              onMessage: handleVoiceMessage,
-              onStatusChange: handleStatusChange,
-              onTranscript: handleTranscript,
-              onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
-              tokenEndpoint: 'emotion-realtime-token',
-              mode,
-              scenario,
-              extraBody
-            });
-            chatRef.current = miniProgramClient;
-            await miniProgramClient.connect();
-            updateConnectionPhase('connected');
-            stopConnectionTimer();
-            startMonitoring();
-            miniProgramClient.startRecording();
-          }
-        }
-      } else if (platformInfo.recommendedVoiceMethod === 'websocket') {
+      if (platformInfo.recommendedVoiceMethod === 'websocket') {
         console.log('[VoiceChat] Using MiniProgram WebSocket relay mode');
         updateConnectionPhase('establishing');
         setUseMiniProgramMode(true);
