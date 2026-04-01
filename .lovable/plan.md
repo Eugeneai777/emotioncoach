@@ -1,33 +1,45 @@
 
 
-# 告警推送增加错误详情
-
-## 问题
-当前 `check-monitor-alerts` 边缘函数在 API 错误和前端错误告警中只推送错误数量，不包含具体哪些接口/页面出了什么错误，无法快速定位问题。
+# 兑换码页面增加退订政策与发票说明文案
 
 ## 方案
 
-修改 `supabase/functions/check-monitor-alerts/index.ts`，在触发告警前查询最近的错误记录详情，拼接到 `details` 字段中。
+在即将新建的 `SynergyRedeemDialog.tsx` 兑换码弹窗中，温馨提示区域增加两条说明文案。同时在吸顶栏底部也增加精简版提示。
 
-### 1. API 错误告警增加详情
+### 文案内容
 
-当 `apiErrorCount > 10` 时，额外查询 `monitor_api_errors` 表最近 10 条记录，提取 `error_type`、`url`、`message`、`status_code`，按 `url + error_type` 聚合统计，生成类似：
+1. **退订政策**：由于本产品为实物+服务商品，在有赞商城下单获取的兑换码，不支持退订、转赠、退换。
+2. **发票说明**：若需开发票，本产品发票将分为两张开具，开票金额合计为您实际支付的套餐总价。
+
+### 放置位置与呈现方式
+
+**位置：兑换码弹窗（SynergyRedeemDialog）底部**
+
+在"前往有赞商城下单"按钮下方，以浅灰底色的提示卡片呈现：
 
 ```
-错误分布（Top 5）:
-- POST /functions/v1/doubao-realtime-relay [server_error] x3: WebSocket连接失败
-- GET /rest/v1/profiles [timeout] x2: 请求超时
-- POST /functions/v1/log-api-cost [client_error] x1: Missing authorization header
+📋 购买须知
+• 本产品为实物+服务商品，兑换码不支持退订、转赠、退换
+• 如需开票，发票将分两张开具，金额合计为实付套餐总价
 ```
 
-### 2. 前端错误告警增加详情
+- 使用 `text-xs text-muted-foreground` 小字样式，`bg-slate-50 rounded-lg p-3`
+- 放在弹窗最底部，不干扰核心兑换流程，但在用户决策前可见
+- 不使用红色/警告色，保持温和的信息告知语气
 
-当 `feErrorCount > 15` 时，同样查询 `monitor_frontend_errors` 最近记录，按 `error_message + page` 聚合，展示 Top 5 错误类型和出现页面。
+**不在吸顶栏重复展示**——吸顶栏空间紧凑，这两条信息属于决策辅助而非核心行动，放在兑换弹窗内即可覆盖所有进入兑换流程的用户。
 
-### 技术细节
+### 设计理由
 
-- 仅修改 `supabase/functions/check-monitor-alerts/index.ts`
-- 在已有的 count 查询之后，增加一个 `select` 查询获取详情（limit 50），在内存中聚合
-- 不影响告警触发逻辑，只丰富 `details` 内容
-- 部署后自动生效
+- 用户打开兑换码弹窗 = 已有购买意向，此时展示须知最合理
+- 文案紧跟"前往有赞下单"按钮，用户在跳转前自然看到
+- 小字+柔和背景色，不造成心理压力，但满足合规告知义务
+
+### 文件变更
+
+| 文件 | 操作 |
+|---|---|
+| `src/components/promo/SynergyRedeemDialog.tsx` | 新建时直接包含这两条须知 |
+
+此变更将与前面已批准的「去掉支付、仅保留兑换码」方案一起实施，不需要额外修改其他文件。
 
