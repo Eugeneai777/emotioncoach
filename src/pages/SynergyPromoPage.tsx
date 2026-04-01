@@ -312,7 +312,6 @@ export default function SynergyPromoPage() {
   // Auto-redeem after login if code was cached
   useEffect(() => {
     if (user && pendingRedeemCode) {
-      const cachedCode = pendingRedeemCode;
       setPendingRedeemCode(null);
       setShowRedeemDialog(true);
     }
