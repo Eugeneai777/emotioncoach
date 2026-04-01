@@ -1,15 +1,32 @@
 
 
-# 点击语音按钮直接显示最小化浮窗
+# 浮窗计时器：连接成功后才显示时间
 
-## 改动
+## 问题
+点击语音按钮后，`GlobalVoiceProvider` 立即设置 `startTime = Date.now()`，浮窗卡片马上开始显示通话时长。但此时连接尚未建立，误导用户以为已在通话中。
 
-### `src/components/voice/GlobalVoiceProvider.tsx`
-- `startVoice` 方法改为启动时直接设置 `isMinimized = true`（第 40 行 `setIsMinimized(false)` 改为 `setIsMinimized(true)`）
+## 方案
+在 `GlobalVoiceProvider` 中增加连接状态，浮窗卡片根据状态显示"连接中…"或通话时长。
 
-这样点击语音按钮后，`CoachVoiceChat` 仍在后台渲染并建立连接，但用户看到的是可拖动的浮动小卡片，不会被全屏遮挡。用户点击小卡片可随时展开全屏。
+### 改动
+
+**`src/components/voice/GlobalVoiceProvider.tsx`**
+- 新增 `isConnected` 状态，初始 `false`
+- `startVoice` 时不设 `startTime`，设 `isConnected = false`
+- 新增 `setVoiceConnected()` 方法，当连接成功时调用：设 `isConnected = true`、`startTime = Date.now()`
+- `endVoice` 时重置 `isConnected = false`
+- 通过 context 暴露 `setVoiceConnected`
+
+**`src/components/coach/CoachVoiceChat.tsx`**
+- 引入 `useGlobalVoice`
+- 在 `updateConnectionPhase('connected')` 处调用 `setVoiceConnected()`
+
+**`src/components/voice/FloatingVoiceCard.tsx`**
+- 新增 `isConnected` prop
+- 未连接时：绿色呼吸动画改为橙色/灰色，时间区域显示"连接中…"
+- 已连接后：显示正常计时
 
 ### 不变项
-- 浮窗拖动、恢复全屏、挂断等交互不变
-- 连接流程不变（CoachVoiceChat 仍正常初始化）
+- 拖动、挂断、恢复全屏等交互不变
+- 连接流程本身不变
 
