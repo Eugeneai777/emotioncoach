@@ -428,7 +428,7 @@ serve(async (req) => {
                 tts: {
                   speaker: 'zh_male_yunzhou_jupiter_bigtts',
                   audio_config: {
-                    format: 'pcm',
+                    format: 'pcm_s16le',
                     sample_rate: 24000,
                     channel: 1,
                   }
