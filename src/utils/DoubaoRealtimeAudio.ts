@@ -10,6 +10,8 @@ type StatusCallback = (status: 'connecting' | 'connected' | 'disconnected' | 'er
 type TranscriptCallback = (text: string, isFinal: boolean, role: 'user' | 'assistant') => void;
 type MessageCallback = (message: any) => void;
 
+const HEARTBEAT_INTERVAL_MS = 15000;
+
 export class DoubaoRealtimeChat {
   private ws: WebSocket | null = null;
   private audioContext: AudioContext | null = null;
@@ -24,6 +26,7 @@ export class DoubaoRealtimeChat {
   private playQueue: ArrayBuffer[] = [];
   private isPlaying = false;
   private playbackAudioContext: AudioContext | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   // 累积的 assistant 文本
   private assistantText = '';
@@ -121,6 +124,7 @@ export class DoubaoRealtimeChat {
       this.ws.onerror = (e) => {
         console.error('[DoubaoClient] WebSocket error:', e);
         if (!this.isDisconnected) {
+          this.stopHeartbeat();
           this.onStatusChange('error');
           reject(new Error('WebSocket 连接错误'));
         }
@@ -128,6 +132,7 @@ export class DoubaoRealtimeChat {
 
       this.ws.onclose = (e) => {
         console.log('[DoubaoClient] WebSocket closed:', e.code, e.reason);
+        this.stopHeartbeat();
         if (!this.isDisconnected) {
           this.onStatusChange('disconnected');
         }
@@ -141,8 +146,22 @@ export class DoubaoRealtimeChat {
       case 'session_started':
         console.log('[DoubaoClient] Session started:', msg.session_id);
         this.onStatusChange('connected');
+        this.startHeartbeat();
         this.beginRecording();
         onSessionStarted?.();
+        break;
+
+      case 'ping':
+        if (this.ws?.readyState === WebSocket.OPEN && !this.isDisconnected) {
+          try {
+            this.ws.send(JSON.stringify({ type: 'pong', ts: msg.ts ?? Date.now() }));
+          } catch {
+            // ignore heartbeat response failures
+          }
+        }
+        break;
+
+      case 'pong':
         break;
 
       case 'transcript':
@@ -202,8 +221,36 @@ export class DoubaoRealtimeChat {
         break;
 
       case 'disconnected':
+        this.stopHeartbeat();
         this.onStatusChange('disconnected');
         break;
+    }
+  }
+
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.isDisconnected) {
+        this.stopHeartbeat();
+        return;
+      }
+
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      try {
+        this.ws.send(JSON.stringify({ type: 'ping', ts: Date.now() }));
+      } catch (error) {
+        console.warn('[DoubaoClient] Heartbeat failed:', error);
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 
@@ -330,6 +377,7 @@ export class DoubaoRealtimeChat {
   disconnect() {
     if (this.isDisconnected) return;
     this.isDisconnected = true;
+    this.stopHeartbeat();
 
     console.log('[DoubaoClient] Disconnecting');
 
