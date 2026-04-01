@@ -116,7 +116,7 @@ export default function OperationsMonitorDashboard() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  // Threshold & anomaly state
+   // Threshold & anomaly state
   const [thresholds, setThresholds] = useState<ThresholdConfig>(() => {
     try {
       const saved = localStorage.getItem(THRESHOLD_STORAGE_KEY);
@@ -126,6 +126,10 @@ export default function OperationsMonitorDashboard() {
   const [showThresholdConfig, setShowThresholdConfig] = useState(false);
   const [anomalyAlerts, setAnomalyAlerts] = useState<AnomalyAlert[]>([]);
   const [previousHourCalls, setPreviousHourCalls] = useState<number | null>(null);
+
+  // Error details state
+  const [errorDetails, setErrorDetails] = useState<ErrorDetailRecord[]>([]);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   const todayStart = startOfDay(new Date()).toISOString();
 
