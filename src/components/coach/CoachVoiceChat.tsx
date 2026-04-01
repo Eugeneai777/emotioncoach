@@ -7,8 +7,6 @@ import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart
 import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
-import { DoubaoRealtimeChat, type DoubaoConnectionStatus } from '@/utils/DoubaoRealtimeAudio';
-import { getSavedVoiceType } from '@/config/voiceTypeConfig';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
