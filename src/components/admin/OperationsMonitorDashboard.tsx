@@ -285,6 +285,7 @@ export default function OperationsMonitorDashboard() {
       todayVoiceRes,
       todayActiveRes,
       todayErrorRes,
+      errorDetailsRes,
     ] = await Promise.all([
       // QPS: calls in last 1 min
       supabase.from("usage_records").select("id", { count: "exact", head: true })
@@ -310,6 +311,13 @@ export default function OperationsMonitorDashboard() {
         .select("id", { count: "exact", head: true })
         .gte("created_at", todayStart)
         .in("record_type", ["refund", "compensation"]),
+      // Error detail records
+      supabase.from("usage_records")
+        .select("id, source, record_type, user_id, amount, created_at, description")
+        .gte("created_at", todayStart)
+        .in("record_type", ["refund", "compensation"])
+        .order("created_at", { ascending: false })
+        .limit(50),
     ]);
 
     const recentCount = recentCallsRes.count || 0;
