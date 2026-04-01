@@ -195,7 +195,7 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
     }
   }
 
-  // Session ID (session级别事件)
+  // Session ID (session级别事件, eventId >= 100)
   if (eventId !== undefined && eventId >= 100) {
     if (offset + 4 <= data.length) {
       const sessionIdSize = readUint32BE(data, offset);
@@ -205,10 +205,11 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
         offset += sessionIdSize;
       }
     }
-  } else if (eventId !== undefined && eventId < 100 && eventId >= 50) {
-    // Connect级别的服务端事件也可能有connect id
-    // 简单跳过
   }
+  // Connect级别的服务端事件 (50-99) 可能有 connect id
+  // 按文档：connect id 在 event 字段之后、session id 之前
+  // 对于 ConnectionStarted(50) 等，服务端可能不返回 connect id
+  // 这里跳过 connect id 的解析
 
   // Payload
   let payload: Uint8Array | undefined;
@@ -272,14 +273,14 @@ serve(async (req) => {
 
   let doubaoWs: WebSocket | null = null;
   let sessionId = '';
-  let isAuthenticated = false;
   let userName: string | undefined;
 
   clientWs.onopen = async () => {
-    console.log('[DoubaoRelay] Client connected');
+    console.log('[DoubaoRelay] ✅ Client WebSocket connected');
 
     // 验证用户身份
     if (!authToken) {
+      console.error('[DoubaoRelay] ❌ No auth token provided');
       clientWs.send(JSON.stringify({ type: 'error', message: '未授权访问' }));
       clientWs.close(4001, '未授权');
       return;
@@ -292,13 +293,13 @@ serve(async (req) => {
       
       const { data: { user }, error: authError } = await adminClient.auth.getUser(authToken);
       if (authError || !user) {
+        console.error('[DoubaoRelay] ❌ Auth failed:', authError?.message);
         clientWs.send(JSON.stringify({ type: 'error', message: '身份验证失败' }));
         clientWs.close(4001, '认证失败');
         return;
       }
 
-      isAuthenticated = true;
-      console.log('[DoubaoRelay] User authenticated:', user.id);
+      console.log('[DoubaoRelay] ✅ User authenticated:', user.id);
 
       // 获取用户名
       const { data: profile } = await adminClient
@@ -309,7 +310,7 @@ serve(async (req) => {
       userName = profile?.display_name;
 
     } catch (e) {
-      console.error('[DoubaoRelay] Auth error:', e);
+      console.error('[DoubaoRelay] ❌ Auth error:', e);
       clientWs.send(JSON.stringify({ type: 'error', message: '认证失败' }));
       clientWs.close(4001, '认证失败');
       return;
@@ -320,15 +321,20 @@ serve(async (req) => {
     const DOUBAO_APP_ID = Deno.env.get('DOUBAO_APP_ID');
 
     if (!DOUBAO_ACCESS_TOKEN || !DOUBAO_APP_ID) {
+      console.error('[DoubaoRelay] ❌ DOUBAO_ACCESS_TOKEN or DOUBAO_APP_ID not set');
       clientWs.send(JSON.stringify({ type: 'error', message: '豆包语音服务未配置' }));
       clientWs.close(4002, '配置缺失');
       return;
     }
 
+    console.log('[DoubaoRelay] 🔗 Connecting to Doubao WebSocket...');
+
     try {
       const doubaoUrl = 'wss://openspeech.bytedance.com/api/v3/realtime/dialogue';
       const connectId = crypto.randomUUID();
 
+      // Deno WebSocket 支持通过第二个参数传递 headers
+      // 参考: https://docs.deno.com/api/web/~/WebSocket
       doubaoWs = new WebSocket(doubaoUrl, {
         headers: {
           'X-Api-App-ID': DOUBAO_APP_ID,
@@ -342,10 +348,11 @@ serve(async (req) => {
       doubaoWs.binaryType = 'arraybuffer';
 
       doubaoWs.onopen = () => {
-        console.log('[DoubaoRelay] Connected to Doubao');
+        console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket');
         // 发送 StartConnection
         const frame = buildClientTextFrame(EVENT_START_CONNECTION, {});
         doubaoWs!.send(frame);
+        console.log('[DoubaoRelay] 📤 Sent StartConnection event');
       };
 
       doubaoWs.onmessage = (event) => {
@@ -354,12 +361,15 @@ serve(async (req) => {
         try {
           const data = new Uint8Array(event.data as ArrayBuffer);
           const parsed = parseServerFrame(data);
-          if (!parsed) return;
+          if (!parsed) {
+            console.warn('[DoubaoRelay] ⚠️ Failed to parse server frame, length:', data.length);
+            return;
+          }
 
           // 转发服务端事件为 JSON 给客户端
           switch (parsed.eventId) {
             case EVENT_CONNECTION_STARTED:
-              console.log('[DoubaoRelay] Connection started, sending StartSession');
+              console.log('[DoubaoRelay] ✅ ConnectionStarted, sending StartSession');
               // 自动发送 StartSession
               sessionId = crypto.randomUUID();
               const systemRole = buildEmotionPrompt(userName);
@@ -382,16 +392,18 @@ serve(async (req) => {
                   system_role: systemRole,
                   speaking_style: '温暖、亲切、像老朋友聊天，语气自然不端着，适当使用"嗯嗯""我懂"等口头禅',
                   extra: {
-                    model: '1.2.1.1',  // O2.0版本
+                    model: '1.2.1.1',  // O2.0版本（必传）
                     strict_audit: false,
                   }
                 }
               };
               const sessionFrame = buildClientTextFrame(EVENT_START_SESSION, startSessionPayload, sessionId);
               doubaoWs!.send(sessionFrame);
+              console.log('[DoubaoRelay] 📤 Sent StartSession, sessionId:', sessionId);
               break;
 
             case EVENT_CONNECTION_FAILED:
+              console.error('[DoubaoRelay] ❌ ConnectionFailed:', parsed.jsonPayload);
               clientWs.send(JSON.stringify({
                 type: 'error',
                 message: parsed.jsonPayload?.error || '连接失败'
@@ -399,7 +411,7 @@ serve(async (req) => {
               break;
 
             case EVENT_SESSION_STARTED:
-              console.log('[DoubaoRelay] Session started:', parsed.jsonPayload?.dialog_id);
+              console.log('[DoubaoRelay] ✅ SessionStarted, dialog_id:', parsed.jsonPayload?.dialog_id);
               clientWs.send(JSON.stringify({
                 type: 'session_started',
                 session_id: sessionId,
@@ -409,9 +421,11 @@ serve(async (req) => {
               const greetingText = `嗨${userName ? userName + '，' : ''}今天心情怎么样？`;
               const sayHelloFrame = buildClientTextFrame(EVENT_SAY_HELLO, { content: greetingText }, sessionId);
               doubaoWs!.send(sayHelloFrame);
+              console.log('[DoubaoRelay] 📤 Sent SayHello greeting');
               break;
 
             case EVENT_SESSION_FAILED:
+              console.error('[DoubaoRelay] ❌ SessionFailed:', parsed.jsonPayload);
               clientWs.send(JSON.stringify({
                 type: 'error',
                 message: parsed.jsonPayload?.error || '会话失败'
@@ -500,7 +514,7 @@ serve(async (req) => {
               break;
 
             case EVENT_DIALOG_ERROR:
-              console.error('[DoubaoRelay] Dialog error:', parsed.jsonPayload);
+              console.error('[DoubaoRelay] ❌ DialogError:', parsed.jsonPayload);
               clientWs.send(JSON.stringify({
                 type: 'error',
                 message: parsed.jsonPayload?.message || '对话错误',
@@ -509,7 +523,7 @@ serve(async (req) => {
               break;
 
             default:
-              // 未知事件，转发 JSON payload
+              console.log('[DoubaoRelay] 📥 Unknown server event:', parsed.eventId, parsed.jsonPayload);
               if (parsed.jsonPayload) {
                 clientWs.send(JSON.stringify({
                   type: 'unknown_event',
@@ -522,7 +536,7 @@ serve(async (req) => {
 
           // 错误帧
           if (parsed.msgType === MSG_TYPE_ERROR) {
-            console.error('[DoubaoRelay] Error frame:', parsed.errorCode, parsed.jsonPayload);
+            console.error('[DoubaoRelay] ❌ Error frame:', parsed.errorCode, parsed.jsonPayload);
             clientWs.send(JSON.stringify({
               type: 'error',
               code: parsed.errorCode,
@@ -530,19 +544,19 @@ serve(async (req) => {
             }));
           }
         } catch (e) {
-          console.error('[DoubaoRelay] Error processing Doubao message:', e);
+          console.error('[DoubaoRelay] ❌ Error processing Doubao message:', e);
         }
       };
 
       doubaoWs.onerror = (e) => {
-        console.error('[DoubaoRelay] Doubao WebSocket error:', e);
+        console.error('[DoubaoRelay] ❌ Doubao WebSocket error:', e);
         if (clientWs.readyState === WebSocket.OPEN) {
           clientWs.send(JSON.stringify({ type: 'error', message: '语音服务连接错误' }));
         }
       };
 
       doubaoWs.onclose = (e) => {
-        console.log('[DoubaoRelay] Doubao WebSocket closed:', e.code, e.reason);
+        console.log('[DoubaoRelay] 🔌 Doubao WebSocket closed:', e.code, e.reason);
         if (clientWs.readyState === WebSocket.OPEN) {
           clientWs.send(JSON.stringify({ type: 'disconnected', code: e.code }));
           clientWs.close(1000, '豆包连接关闭');
@@ -550,14 +564,17 @@ serve(async (req) => {
       };
 
     } catch (e) {
-      console.error('[DoubaoRelay] Failed to connect to Doubao:', e);
-      clientWs.send(JSON.stringify({ type: 'error', message: '无法连接语音服务' }));
+      console.error('[DoubaoRelay] ❌ Failed to connect to Doubao:', e);
+      clientWs.send(JSON.stringify({ type: 'error', message: `无法连接语音服务: ${e instanceof Error ? e.message : String(e)}` }));
       clientWs.close(4003, '连接失败');
     }
   };
 
   clientWs.onmessage = (event) => {
-    if (!doubaoWs || doubaoWs.readyState !== WebSocket.OPEN) return;
+    if (!doubaoWs || doubaoWs.readyState !== WebSocket.OPEN) {
+      console.warn('[DoubaoRelay] ⚠️ Received client message but Doubao WS not ready, state:', doubaoWs?.readyState);
+      return;
+    }
 
     try {
       // 二进制数据 = 音频
@@ -570,9 +587,10 @@ serve(async (req) => {
 
       // 文本数据 = JSON 控制消息
       const msg = JSON.parse(event.data as string);
+      console.log('[DoubaoRelay] 📥 Client message:', msg.type);
 
       switch (msg.type) {
-        case 'audio':
+        case 'audio': {
           // Base64 音频数据
           const binaryStr = atob(msg.data);
           const audioBytes = new Uint8Array(binaryStr.length);
@@ -582,27 +600,32 @@ serve(async (req) => {
           const audioFrame = buildAudioFrame(audioBytes, sessionId);
           doubaoWs.send(audioFrame);
           break;
+        }
 
-        case 'finish_session':
+        case 'finish_session': {
+          console.log('[DoubaoRelay] 📤 Sending FinishSession');
           const finishFrame = buildClientTextFrame(EVENT_FINISH_SESSION, {}, sessionId);
           doubaoWs.send(finishFrame);
           break;
+        }
 
-        case 'finish_connection':
+        case 'finish_connection': {
+          console.log('[DoubaoRelay] 📤 Sending FinishConnection');
           const finishConnFrame = buildClientTextFrame(EVENT_FINISH_CONNECTION, {});
           doubaoWs.send(finishConnFrame);
           break;
+        }
 
         default:
-          console.warn('[DoubaoRelay] Unknown client message type:', msg.type);
+          console.warn('[DoubaoRelay] ⚠️ Unknown client message type:', msg.type);
       }
     } catch (e) {
-      console.error('[DoubaoRelay] Error processing client message:', e);
+      console.error('[DoubaoRelay] ❌ Error processing client message:', e);
     }
   };
 
-  clientWs.onclose = () => {
-    console.log('[DoubaoRelay] Client disconnected');
+  clientWs.onclose = (e) => {
+    console.log('[DoubaoRelay] 🔌 Client WebSocket closed:', e.code, e.reason);
     if (doubaoWs && doubaoWs.readyState === WebSocket.OPEN) {
       try {
         // 发送 FinishSession 和 FinishConnection
@@ -618,7 +641,7 @@ serve(async (req) => {
   };
 
   clientWs.onerror = (e) => {
-    console.error('[DoubaoRelay] Client WebSocket error:', e);
+    console.error('[DoubaoRelay] ❌ Client WebSocket error:', e);
     if (doubaoWs && doubaoWs.readyState === WebSocket.OPEN) {
       doubaoWs.close();
     }
