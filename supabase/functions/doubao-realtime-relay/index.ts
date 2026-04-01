@@ -197,12 +197,10 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
     }
   }
 
-  // 对于音频服务端帧，结构是: header | eventId | sequence(4) | payload_size(4) | payload(JSON) | audio_size(4) | audio_data
-  // 注意：音频帧没有 session ID 字段，不能在这里解析 session ID
   const isAudioFrame = msgType === MSG_TYPE_AUDIO_SERVER;
 
-  // Session ID (仅非音频帧的 session 级别事件, eventId >= 100)
-  if (!isAudioFrame && eventId !== undefined && eventId >= 100) {
+  // Session ID (session级别事件, eventId >= 100) — 包括音频帧
+  if (eventId !== undefined && eventId >= 100) {
     if (offset + 4 <= data.length) {
       const sessionIdSize = readUint32BE(data, offset);
       offset += 4;
@@ -218,12 +216,7 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
   let audioData: Uint8Array | undefined;
 
   if (isAudioFrame) {
-    // 序列号 (4 bytes) - 音频帧的第一个字段（在 eventId 之后）
-    if (offset + 4 > data.length) {
-      console.warn('[parseServerFrame] Audio frame too short for sequence number');
-      return { msgType, flags, serialMethod, eventId, sessionId, errorCode };
-    }
-    offset += 4;
+    // 音频服务端帧结构（无 sequence）: header | eventId | sessionId | payloadSize | payload | audioSize | audio
 
     // JSON payload
     if (offset + 4 > data.length) {
