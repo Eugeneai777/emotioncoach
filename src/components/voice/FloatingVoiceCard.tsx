@@ -5,6 +5,7 @@ interface FloatingVoiceCardProps {
   coachEmoji: string;
   coachTitle: string;
   startTime: number | null;
+  isConnected: boolean;
   onRestore: () => void;
   onEnd: () => void;
 }
