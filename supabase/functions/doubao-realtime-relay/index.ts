@@ -182,45 +182,6 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
   let sessionId: string | undefined;
   let errorCode: number | undefined;
 
-  const isAudioFrame = msgType === MSG_TYPE_AUDIO_SERVER;
-
-  // Audio-only server response:
-  // header | [sequence? 4B] | payloadSize 4B | raw audio payload
-  // 注意：这里没有 eventId / sessionId / audioSize 这些字段
-  if (isAudioFrame) {
-    if (flags !== 0) {
-      if (offset + 4 > data.length) {
-        console.warn('[parseServerFrame] Audio frame too short for sequence');
-        return { msgType, flags, serialMethod };
-      }
-      offset += 4;
-    }
-
-    if (offset + 4 > data.length) {
-      console.warn('[parseServerFrame] Audio frame too short for payload size');
-      return { msgType, flags, serialMethod };
-    }
-
-    const payloadSize = readUint32BE(data, offset);
-    offset += 4;
-
-    if (payloadSize <= 0 || offset + payloadSize > data.length) {
-      console.warn('[parseServerFrame] Audio frame payload overflow:', payloadSize, 'available:', data.length - offset);
-      return { msgType, flags, serialMethod };
-    }
-
-    const validSize = payloadSize % 2 === 0 ? payloadSize : payloadSize - 1;
-    const audioData = validSize > 0 ? data.slice(offset, offset + validSize) : undefined;
-
-    return {
-      msgType,
-      flags,
-      serialMethod,
-      eventId: EVENT_TTS_RESPONSE,
-      audioData,
-    };
-  }
-
   // 错误帧有 error code
   if (msgType === MSG_TYPE_ERROR) {
     if (offset + 4 <= data.length) {
@@ -258,6 +219,11 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
     offset += 4;
     if (payloadSize > 0 && offset + payloadSize <= data.length) {
       payload = data.slice(offset, offset + payloadSize);
+
+      if (msgType === MSG_TYPE_AUDIO_SERVER) {
+        const validSize = payload.length % 2 === 0 ? payload.length : payload.length - 1;
+        audioData = validSize > 0 ? payload.slice(0, validSize) : undefined;
+      }
 
       if (serialMethod === SERIAL_JSON && payload) {
         try {
