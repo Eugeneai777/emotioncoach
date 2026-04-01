@@ -264,7 +264,9 @@ export default function SynergyPromoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const [step, setStep] = useState<'browse' | 'register'>('browse');
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
+  const [_purchaseChecked, setPurchaseChecked] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
   const shareDialog = useShareDialog();
