@@ -16,10 +16,12 @@ interface VoiceConfig {
 interface GlobalVoiceContextValue {
   isVoiceActive: boolean;
   isMinimized: boolean;
+  isConnected: boolean;
   startVoice: (config: VoiceConfig) => void;
   minimizeVoice: () => void;
   restoreVoice: () => void;
   endVoice: () => void;
+  setVoiceConnected: () => void;
 }
 
 const GlobalVoiceContext = createContext<GlobalVoiceContextValue | null>(null);
@@ -33,11 +35,18 @@ export function useGlobalVoice() {
 export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
   const [voiceConfig, setVoiceConfig] = useState<VoiceConfig | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
 
   const startVoice = useCallback((config: VoiceConfig) => {
     setVoiceConfig(config);
     setIsMinimized(true);
+    setIsConnected(false);
+    setStartTime(null);
+  }, []);
+
+  const setVoiceConnected = useCallback(() => {
+    setIsConnected(true);
     setStartTime(Date.now());
   }, []);
 
@@ -52,6 +61,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
   const endVoice = useCallback(() => {
     setVoiceConfig(null);
     setIsMinimized(false);
+    setIsConnected(false);
     setStartTime(null);
   }, []);
 
@@ -59,7 +69,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
 
   return (
     <GlobalVoiceContext.Provider
-      value={{ isVoiceActive, isMinimized, startVoice, minimizeVoice, restoreVoice, endVoice }}
+      value={{ isVoiceActive, isMinimized, isConnected, startVoice, minimizeVoice, restoreVoice, endVoice, setVoiceConnected }}
     >
       {children}
 
@@ -103,6 +113,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
           coachEmoji={voiceConfig.coachEmoji}
           coachTitle={voiceConfig.coachTitle}
           startTime={startTime}
+          isConnected={isConnected}
           onRestore={restoreVoice}
           onEnd={endVoice}
         />
