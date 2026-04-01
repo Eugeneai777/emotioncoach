@@ -427,7 +427,9 @@ serve(async (req) => {
                 tts: {
                   speaker: 'zh_male_yunzhou_jupiter_bigtts',
                   audio_config: {
-                    format: 'ogg_opus',
+                    format: 'pcm',
+                    sample_rate: 24000,
+                    channel: 1,
                   }
                 },
                 asr: {
