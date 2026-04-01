@@ -172,14 +172,54 @@ interface ParsedFrame {
 function parseServerFrame(data: Uint8Array): ParsedFrame | null {
   if (data.length < 4) return null;
 
+  const headerSize = (data[0] & 0x0F) * 4;
   const msgType = (data[1] >> 4) & 0x0F;
   const flags = data[1] & 0x0F;
   const serialMethod = (data[2] >> 4) & 0x0F;
 
-  let offset = 4;
+  let offset = headerSize || 4;
   let eventId: number | undefined;
   let sessionId: string | undefined;
   let errorCode: number | undefined;
+
+  const isAudioFrame = msgType === MSG_TYPE_AUDIO_SERVER;
+
+  // Audio-only server response:
+  // header | [sequence? 4B] | payloadSize 4B | raw audio payload
+  // 注意：这里没有 eventId / sessionId / audioSize 这些字段
+  if (isAudioFrame) {
+    if (flags !== 0) {
+      if (offset + 4 > data.length) {
+        console.warn('[parseServerFrame] Audio frame too short for sequence');
+        return { msgType, flags, serialMethod };
+      }
+      offset += 4;
+    }
+
+    if (offset + 4 > data.length) {
+      console.warn('[parseServerFrame] Audio frame too short for payload size');
+      return { msgType, flags, serialMethod };
+    }
+
+    const payloadSize = readUint32BE(data, offset);
+    offset += 4;
+
+    if (payloadSize <= 0 || offset + payloadSize > data.length) {
+      console.warn('[parseServerFrame] Audio frame payload overflow:', payloadSize, 'available:', data.length - offset);
+      return { msgType, flags, serialMethod };
+    }
+
+    const validSize = payloadSize % 2 === 0 ? payloadSize : payloadSize - 1;
+    const audioData = validSize > 0 ? data.slice(offset, offset + validSize) : undefined;
+
+    return {
+      msgType,
+      flags,
+      serialMethod,
+      eventId: EVENT_TTS_RESPONSE,
+      audioData,
+    };
+  }
 
   // 错误帧有 error code
   if (msgType === MSG_TYPE_ERROR) {
@@ -197,9 +237,7 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
     }
   }
 
-  const isAudioFrame = msgType === MSG_TYPE_AUDIO_SERVER;
-
-  // Session ID (session级别事件, eventId >= 100) — 包括音频帧
+  // Session ID (session级别事件, eventId >= 100)
   if (eventId !== undefined && eventId >= 100) {
     if (offset + 4 <= data.length) {
       const sessionIdSize = readUint32BE(data, offset);
@@ -215,53 +253,16 @@ function parseServerFrame(data: Uint8Array): ParsedFrame | null {
   let jsonPayload: any;
   let audioData: Uint8Array | undefined;
 
-  if (isAudioFrame) {
-    // 音频服务端帧结构（无 sequence）: header | eventId | sessionId | payloadSize | payload | audioSize | audio
-
-    // JSON payload
-    if (offset + 4 > data.length) {
-      console.warn('[parseServerFrame] Audio frame too short for payload size');
-      return { msgType, flags, serialMethod, eventId, sessionId, errorCode };
-    }
+  if (offset + 4 <= data.length) {
     const payloadSize = readUint32BE(data, offset);
     offset += 4;
-    if (payloadSize > 0) {
-      if (offset + payloadSize > data.length) {
-        console.warn('[parseServerFrame] Audio frame payload overflow:', payloadSize, 'available:', data.length - offset);
-        return { msgType, flags, serialMethod, eventId, sessionId, errorCode };
-      }
+    if (payloadSize > 0 && offset + payloadSize <= data.length) {
       payload = data.slice(offset, offset + payloadSize);
-      try {
-        jsonPayload = JSON.parse(new TextDecoder().decode(payload));
-      } catch {}
-      offset += payloadSize;
-    }
 
-    // 音频数据
-    if (offset + 4 <= data.length) {
-      const audioSize = readUint32BE(data, offset);
-      offset += 4;
-      if (audioSize > 0 && offset + audioSize <= data.length) {
-        // Ensure even byte length for PCM Int16
-        const validSize = audioSize % 2 === 0 ? audioSize : audioSize - 1;
-        if (validSize > 0) {
-          audioData = data.slice(offset, offset + validSize);
-        }
-      }
-    }
-  } else {
-    // 普通文本帧
-    if (offset + 4 <= data.length) {
-      const payloadSize = readUint32BE(data, offset);
-      offset += 4;
-      if (payloadSize > 0 && offset + payloadSize <= data.length) {
-        payload = data.slice(offset, offset + payloadSize);
-
-        if (serialMethod === SERIAL_JSON && payload) {
-          try {
-            jsonPayload = JSON.parse(new TextDecoder().decode(payload));
-          } catch {}
-        }
+      if (serialMethod === SERIAL_JSON && payload) {
+        try {
+          jsonPayload = JSON.parse(new TextDecoder().decode(payload));
+        } catch {}
       }
     }
   }

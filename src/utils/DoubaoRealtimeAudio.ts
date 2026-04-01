@@ -318,7 +318,9 @@ export class DoubaoRealtimeChat {
   // ============ 音频播放 (PCM 16-bit, 24kHz, mono) ============
 
   private appendAudioChunk(audioData: Uint8Array) {
+    if (audioData.length === 0) return;
     this.audioChunks.push(audioData);
+    this.flushAudioChunks();
   }
 
   private flushAudioChunks() {
