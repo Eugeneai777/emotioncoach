@@ -360,13 +360,13 @@ serve(async (req) => {
         (doubaoWs as any).accept();
       }
 
-      doubaoWs.onopen = () => {
-        console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket');
-        // 发送 StartConnection
+      // fetch upgrade 后 WS 已处于 open 状态，直接发送 StartConnection
+      console.log('[DoubaoRelay] ✅ Connected to Doubao WebSocket via fetch upgrade');
+      {
         const frame = buildClientTextFrame(EVENT_START_CONNECTION, {});
         doubaoWs!.send(frame);
         console.log('[DoubaoRelay] 📤 Sent StartConnection event');
-      };
+      }
 
       doubaoWs.onmessage = (event) => {
         if (clientWs.readyState !== WebSocket.OPEN) return;
