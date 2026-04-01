@@ -365,89 +365,24 @@ export const CoachVoiceChat = ({
     setPendingNavigation(null);
   };
 
-  // 获取用户套餐的时长限制
+  // 获取用户套餐的时长限制 - 🔧 优化：使用单个 RPC 替代 5 次串行查询
   const getMaxDurationForUser = async (): Promise<number | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return DEFAULT_MAX_DURATION_MINUTES;
 
-      let packageId: string | null = null;
+      const { data, error } = await supabase.rpc('get_voice_max_duration', {
+        p_user_id: user.id,
+        p_feature_key: featureKey
+      });
 
-      // 1. 首先检查 subscriptions 表获取有效订阅（管理员充值会创建此记录）
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('package_id')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (subscription?.package_id) {
-        packageId = subscription.package_id;
-        console.log('[VoiceChat] Found active subscription with package_id:', packageId);
+      if (error) {
+        console.error('[VoiceChat] RPC get_voice_max_duration error:', error);
+        return DEFAULT_MAX_DURATION_MINUTES;
       }
 
-      // 2. 如果没有有效订阅，再检查 orders 表
-      if (!packageId) {
-        const { data: order } = await supabase
-          .from('orders')
-          .select('package_key')
-          .eq('user_id', user.id)
-          .eq('status', 'paid')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (order?.package_key) {
-          const { data: pkg } = await supabase
-            .from('packages')
-            .select('id')
-            .eq('package_key', order.package_key)
-            .single();
-          packageId = pkg?.id || null;
-          console.log('[VoiceChat] Found order with package_key:', order.package_key);
-        }
-      }
-
-      // 3. 如果都没有，使用 basic 套餐
-      if (!packageId) {
-        const { data: basicPkg } = await supabase
-          .from('packages')
-          .select('id')
-          .eq('package_key', 'basic')
-          .single();
-        packageId = basicPkg?.id || null;
-        console.log('[VoiceChat] Using default basic package');
-      }
-
-      if (!packageId) return DEFAULT_MAX_DURATION_MINUTES;
-
-      // 4. 获取对应教练的语音功能ID
-      const { data: feature } = await supabase
-        .from('feature_items')
-        .select('id')
-        .eq('item_key', featureKey)
-        .single();
-
-      if (!feature) return DEFAULT_MAX_DURATION_MINUTES;
-
-      // 5. 获取该套餐对应的时长限制
-      const { data: setting } = await supabase
-        .from('package_feature_settings')
-        .select('max_duration_minutes')
-        .eq('feature_id', feature.id)
-        .eq('package_id', packageId)
-        .single();
-
-      console.log('[VoiceChat] Duration setting:', setting, '(max_duration_minutes null = unlimited)');
-
-      // 如果没有找到设置记录，使用默认值
-      if (!setting) return DEFAULT_MAX_DURATION_MINUTES;
-      
-      // max_duration_minutes 为 null 表示不限时，返回 null
-      // max_duration_minutes 有值则返回该值
-      return setting.max_duration_minutes;
+      console.log('[VoiceChat] Duration from RPC:', data, '(null = unlimited)');
+      return data;
     } catch (error) {
       console.error('Get max duration error:', error);
       return DEFAULT_MAX_DURATION_MINUTES;
@@ -1198,46 +1133,53 @@ export const CoachVoiceChat = ({
         return;
       }
 
-      // 尝试刷新 session，但失败时不立即强制登出
-      // 因为在某些环境下 refresh_token 可能无效，但 access_token 仍可用
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.warn('[VoiceChat] ⚠️ Session refresh failed:', refreshError.message);
-        
-        // 验证当前 access token 是否仍然有效
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError || !userData?.user) {
-          console.error('[VoiceChat] ❌ Token validation failed after refresh error:', userError?.message);
-          try {
-            // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
-            localStorage.removeItem('cached_wechat_openid');
-            sessionStorage.removeItem('cached_wechat_openid');
-            localStorage.removeItem('cached_payment_openid');
-            sessionStorage.removeItem('cached_payment_openid');
-            localStorage.removeItem('cached_payment_openid_gzh');
-            sessionStorage.removeItem('cached_payment_openid_gzh');
-            localStorage.removeItem('cached_payment_openid_mp');
-            sessionStorage.removeItem('cached_payment_openid_mp');
-            await supabase.auth.signOut();
-          } catch (e) {
-            console.warn('[VoiceChat] signOut after token validation failure:', e);
-          }
+      // 🔧 惰性刷新：仅在 token 即将过期（<5分钟）时才 refreshSession，节省 200-500ms
+      const session = sessionData.session;
+      const expiresAt = session.expires_at ? session.expires_at * 1000 : 0; // expires_at is seconds
+      const timeUntilExpiry = expiresAt - Date.now();
+      const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
-          toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
-          setStatus('error');
-          isInitializingRef.current = false;
-          stopConnectionTimer();
-          releaseLock();
-          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-          navigate(`/auth?redirect=${redirect}`);
-          setTimeout(onClose, 300);
-          return;
+      if (timeUntilExpiry < REFRESH_THRESHOLD) {
+        console.log(`[VoiceChat] Token expiring in ${Math.round(timeUntilExpiry / 1000)}s, refreshing...`);
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.warn('[VoiceChat] ⚠️ Session refresh failed:', refreshError.message);
+          
+          // 验证当前 access token 是否仍然有效
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (userError || !userData?.user) {
+            console.error('[VoiceChat] ❌ Token validation failed after refresh error:', userError?.message);
+            try {
+              localStorage.removeItem('cached_wechat_openid');
+              sessionStorage.removeItem('cached_wechat_openid');
+              localStorage.removeItem('cached_payment_openid');
+              sessionStorage.removeItem('cached_payment_openid');
+              localStorage.removeItem('cached_payment_openid_gzh');
+              sessionStorage.removeItem('cached_payment_openid_gzh');
+              localStorage.removeItem('cached_payment_openid_mp');
+              sessionStorage.removeItem('cached_payment_openid_mp');
+              await supabase.auth.signOut();
+            } catch (e) {
+              console.warn('[VoiceChat] signOut after token validation failure:', e);
+            }
+
+            toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
+            setStatus('error');
+            isInitializingRef.current = false;
+            stopConnectionTimer();
+            releaseLock();
+            const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+            navigate(`/auth?redirect=${redirect}`);
+            setTimeout(onClose, 300);
+            return;
+          }
+          
+          console.log('[VoiceChat] ✅ Token still valid despite refresh failure, continuing...');
+        } else {
+          console.log('[VoiceChat] ✅ Session refreshed successfully');
         }
-        
-        // Token 仍然有效，继续执行
-        console.log('[VoiceChat] ✅ Token still valid despite refresh failure, continuing...');
       } else {
-        console.log('[VoiceChat] ✅ Session refreshed successfully');
+        console.log(`[VoiceChat] ✅ Token still valid for ${Math.round(timeUntilExpiry / 1000)}s, skipping refresh`);
       }
 
       if (isStale()) {
@@ -1247,9 +1189,21 @@ export const CoachVoiceChat = ({
         return;
       }
       
-      // 🔧 预扣第一分钟点数
+      // 🔧 并行化：同时执行预扣费 + 获取时长限制（节省 300-800ms）
       updateConnectionPhase('requesting_mic');
-      const deducted = await deductQuota(1);
+      const [deducted, durationResult] = await Promise.all([
+        deductQuota(1),
+        // 如果有 maxDurationOverride，跳过 RPC 查询
+        maxDurationOverride !== undefined 
+          ? Promise.resolve(maxDurationOverride) 
+          : getMaxDurationForUser()
+      ]);
+
+      // 🔧 设置时长限制（并行获取的结果）
+      setMaxDurationMinutes(durationResult);
+      setIsLoadingDuration(false);
+      console.log(`[VoiceChat] Parallel results - deducted: ${deducted}, maxDuration: ${durationResult}`);
+
       if (!deducted) {
         setStatus('error');
         isInitializingRef.current = false;
@@ -1793,20 +1747,7 @@ export const CoachVoiceChat = ({
     await performEndCall();
   };
 
-  // 初始化时获取时长限制
-  useEffect(() => {
-    const loadDurationLimit = async () => {
-      setIsLoadingDuration(true);
-      if (maxDurationOverride !== undefined) {
-        setMaxDurationMinutes(maxDurationOverride);
-      } else {
-        const maxDuration = await getMaxDurationForUser();
-        setMaxDurationMinutes(maxDuration);
-      }
-      setIsLoadingDuration(false);
-    };
-    loadDurationLimit();
-  }, []);
+  // 🔧 时长限制现在在 startCall 中并行加载，不再需要单独的 useEffect
 
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
