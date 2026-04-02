@@ -1,38 +1,46 @@
 
 
-# 在"联系人工"流程中添加可折叠企微二维码
+# 调整 CoachHeader 导航栏布局：移动有劲AI圆形按钮
+
+## 问题
+
+在 `CoachHeader` 组件中，"主页"、"有劲AI圆形logo"、"菜单(教练)" 三个元素挤在同一行左侧，导致移动端"教练"下拉按钮与菜单图标重叠（第二张图片所示）。
+
+## 影响范围
+
+`CoachHeader` 被 `CoachLayout` 使用，出现在以下页面：
+- `/`（Index.tsx — 情绪教练）
+- `/coach/:coachKey`（DynamicCoach.tsx — 各类教练，含财富教练）
+- `/parent-coach`（ParentCoach.tsx）
+- `/communication-coach`（CommunicationCoach.tsx）
+- `/wealth-coach-chat`（WealthCoachChat.tsx）
 
 ## 方案
 
-用户点击"联系人工" → AI 追问问题 → 用户描述 → AI 提交工单并回复确认 → 回复末尾附带 `[QIWEI_QR]` 标记 → 前端识别标记，渲染可折叠企微二维码链接。
+只需修改 **1 个文件**：`src/components/coach/CoachHeader.tsx`
 
-## 实施步骤
+### 布局调整
 
-### 1. 保存企微二维码图片
-将上传图片复制到 `src/assets/qiwei-service-qr.jpg`
+将 header 从单行改为两行结构：
 
-### 2. 新建 `src/components/customer-support/QiWeiQRCard.tsx`
-- 默认收起状态，显示一行小字："紧急问题？点此联系企微客服 →"
-- 点击展开显示企微二维码图片 + "扫码添加企微客服，获取即时帮助"
-- 再次点击收起
+```text
+第一行（原导航行）：
+  左侧：主页 | ☰菜单 | 教练▼    右侧：生活馆 | 日记 | 🔔通知
+  （移除有劲AI logo，三个按钮均匀排列）
 
-### 3. 修改 `src/pages/CustomerSupport.tsx`
-- Message 类型增加 `showQiWeiQR?: boolean`
-- 渲染消息时，检测 `content` 中是否包含 `[QIWEI_QR]`，若包含则：
-  - 从显示文本中移除 `[QIWEI_QR]` 标记
-  - 在该消息气泡下方渲染 `QiWeiQRCard`
+第二行（新增）：
+  左上角：有劲AI圆形logo（小尺寸，如 w-7 h-7）
+```
 
-### 4. 修改边缘函数 `supabase/functions/customer-support/index.ts`
-- `submit_ticket` 成功后的 system prompt 指令追加：提交工单后，回复确认文字，并在末尾追加 `[QIWEI_QR]`
-- 具体：在 system prompt 第5条规则改为：
-  > 投诉/问题 → 使用 submit_ticket 工具，工单创建成功后在回复末尾追加标记 [QIWEI_QR]
+### 具体改动
 
-## 文件变更
+1. 从第一行的左侧区域移除有劲AI logo（第134-150行）
+2. 在 header 底部新增一行，将 logo 放在左上角，尺寸缩小
+3. 调整第一行左侧元素（主页、菜单、教练）的间距，使其排列整齐不重叠
+
+### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/assets/qiwei-service-qr.jpg` | 新增 |
-| `src/components/customer-support/QiWeiQRCard.tsx` | 新建 |
-| `src/pages/CustomerSupport.tsx` | 修改 |
-| `supabase/functions/customer-support/index.ts` | 修改 |
+| `src/components/coach/CoachHeader.tsx` | 修改布局为双行，logo 移至第二行左上角 |
 
