@@ -1,48 +1,31 @@
 
 
-# 轮播图已购隐藏优化（修订）
+# /mama 和 /laoge 顶部横幅已购隐藏优化
 
 ## 现状
 
-轮播图只有 **2 张卡片**：
-1. `assessment` — "找到你的卡点"（点击弹出4个测评选择器）
-2. `women-camp` — "7天有劲训练营"
-
-测评选择器内含4个测评：
-- 中场觉醒力测评（免费）
-- 35+女性竞争力（免费）
-- 财富卡点测评（¥9.9，package_key: `wealth_block_assessment`）
-- 情绪健康测评（¥9.9，package_key: `emotion_health_assessment`）
+- `/mama`（MamaAssistant.tsx）第86-102行：sticky 顶部横幅推广"7天有劲训练营"，链接到 `/promo/synergy`
+- `/laoge`（LaogeAI.tsx）第76-89行：sticky 顶部横幅推广"中年男人职场突围方案"，也链接到 `/promo/synergy`
+- 两者都是推广 `synergy_bundle`，用户已购后仍然展示
 
 ## 方案
 
-### 轮播卡片层级（2张卡片）
-
-| 卡片 | 隐藏条件 |
-|---|---|
-| `women-camp` | `synergy_bundle` 已购 |
-| `assessment` | 4个测评**全部**已完成/已购 → 隐藏；否则保留 |
-
-### 测评选择器层级（弹窗内4项）
-
-已购/已完成的测评从弹窗列表中过滤掉，只展示用户尚未体验的测评。
-
-检查逻辑：
-- 财富卡点：orders 表 `wealth_block_assessment` 已购
-- 情绪健康：orders 表 `emotion_health_assessment` 已购
-- 中场觉醒力：`awakening_entries` 表有完成记录
-- 女性竞争力：`awakening_entries` 表有完成记录
-
-### 边界处理
-
-- 全部轮播已购 → 隐藏整个轮播区域
-- 只剩1张 → 禁用自动轮播和圆点指示器
-- 弹窗内测评全部已完成 → `assessment` 卡片也隐藏
-- 未登录 → 全部展示
+与 mini-app 轮播图机制一致：使用 `usePackagesPurchased` 检查 `synergy_bundle` 购买状态，已购则隐藏顶部横幅。
 
 ### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/pages/MiniAppEntry.tsx` | PromoBanner 增加购买/完成状态查询；过滤轮播卡片；过滤测评选择器列表 |
+| `src/pages/MamaAssistant.tsx` | 引入 `usePackagesPurchased`，检查 `synergy_bundle`；已购时隐藏第86-102行的 sticky 横幅 |
+| `src/pages/LaogeAI.tsx` | 同上，已购时隐藏第76-89行的 sticky 横幅 |
+
+### 逻辑
+
+```typescript
+const { user } = useAuth();
+const { data: purchasedMap } = usePackagesPurchased(['synergy_bundle']);
+const campPurchased = !!user && !!purchasedMap?.['synergy_bundle'];
+// campPurchased 为 true → 不渲染横幅
+// 未登录 → 展示横幅
+```
 
