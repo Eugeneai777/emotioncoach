@@ -663,8 +663,35 @@ export const CoachVoiceChat = ({
             console.error('[VoiceChat] ❌ 财富日记生成异常:', journalError);
           }
         }
+      } else if (mode === 'emotion') {
+        // 情绪教练（含豆包通道）：生成结构化情绪简报
+        if (transcriptContent && transcriptContent.length > 100) {
+          try {
+            console.log('[VoiceChat] 🎭 Generating structured emotion briefing from transcript...');
+            const { data: emotionResult, error: emotionError } = await supabase.functions.invoke(
+              'generate-emotion-briefing-from-transcript',
+              { body: { transcript: transcriptContent, duration_minutes: callMinutes } }
+            );
+
+            if (emotionError) {
+              console.error('[VoiceChat] ❌ Emotion briefing generation failed:', emotionError);
+              toast({ title: "情绪简报生成失败", description: "已保存基础对话记录", variant: "destructive" });
+            } else if (emotionResult?.error) {
+              console.error('[VoiceChat] ❌ Emotion briefing API error:', emotionResult.error);
+            } else if (emotionResult?.briefing_id) {
+              console.log('[VoiceChat] ✅ Emotion briefing generated:', emotionResult.briefing_id, emotionResult.skipped ? '(dedup skipped)' : '');
+              if (onBriefingSaved && emotionResult.briefing_data) {
+                onBriefingSaved(emotionResult.briefing_id, emotionResult.briefing_data);
+              }
+            }
+          } catch (emotionGenError) {
+            console.error('[VoiceChat] ❌ Emotion briefing exception:', emotionGenError);
+          }
+        } else if (transcriptContent) {
+          console.log('[VoiceChat] ⚠️ Emotion conversation too short for briefing');
+        }
       } else {
-        // 非财富教练：生成有劲AI简报
+        // 非财富/非情绪教练：生成有劲AI通用简报
         if (transcriptContent && transcriptContent.length > 100) {
           try {
             const { data: briefingResult, error: briefingError } = await supabase.functions.invoke('generate-life-briefing', {
