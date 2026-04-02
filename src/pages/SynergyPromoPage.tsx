@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
