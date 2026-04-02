@@ -323,7 +323,8 @@ export default function SynergyPromoPage() {
     setPendingRedeemCode(code);
     localStorage.setItem('pending_redeem_code', code);
     setPostAuthRedirect(window.location.pathname + window.location.search);
-    setStep('register');
+    setShowRedeemDialog(false);
+    navigate('/auth');
   };
 
   const handleRedeemSuccess = () => {
