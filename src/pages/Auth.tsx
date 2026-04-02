@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
@@ -113,8 +114,10 @@ const Auth = () => {
       const { data, error } = await supabase.functions.invoke('send-sms-code', {
         body: { phone, countryCode },
       });
-      if (error) throw new Error(error.message || '发送失败');
-      if (data?.error) throw new Error(data.error);
+      if (data?.error || error) {
+        const msg = await extractEdgeFunctionError(data, error, '发送失败，请稍后重试');
+        throw new Error(msg);
+      }
       toast({ title: "验证码已发送", description: "请查看手机短信" });
       setSmsCountdown(60);
     } catch (err: any) {
@@ -136,9 +139,10 @@ const Auth = () => {
       const { data, error } = await supabase.functions.invoke('verify-sms-login', {
         body: { phone, code: smsCode, countryCode },
       });
-      // 优先使用后端返回的中文错误信息
-      if (data?.error) throw new Error(data.error);
-      if (error) throw new Error(data?.error || '验证失败，请稍后重试');
+      if (data?.error || error) {
+        const msg = await extractEdgeFunctionError(data, error, '验证失败，请稍后重试');
+        throw new Error(msg);
+      }
       if (!data?.session) throw new Error('登录失败，未获取到会话');
 
       // 设置 session
