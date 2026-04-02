@@ -1,26 +1,63 @@
 
 
-# 清除账号 18898593978 的7天有劲训练营权益（用于重新测试兑换码）
+# 为豆包语音通道增加简报生成能力
 
-## 用户信息
+## 问题
 
-- 用户：炯谦，user_id = `5e5cdc49-f922-499a-916e-b5d2cda0d051`
+豆包（Doubao）语音通道（`mode === 'emotion'`）结束对话后，`recordSession()` 走的是通用的 `generate-life-briefing` 路径，保存到 `vibrant_life_sage_briefings` 表。而 OpenAI 通道通过 function calling 调用 `save-emotion-voice-briefing`，保存到情绪专属的 `briefings` 表（含四阶段、情绪标签等结构化数据）。
 
-## 执行操作（3步，防自愈机制恢复）
+**结果**：豆包语音的情绪对话没有生成结构化的情绪简报，在情绪教练的简报列表中看不到记录。
 
-| 步骤 | 表 | SQL 操作 |
-|---|---|---|
-| 1 | `orders` | UPDATE status → `refunded`，条件：user_id + package_key = `synergy_bundle` + status = `paid` |
-| 2 | `user_camp_purchases` | DELETE，条件：user_id + camp_type IN (`emotion_stress_7`, `emotion_journal_21`) |
-| 3 | `training_camps` | UPDATE status → `cancelled`，条件：user_id + camp_type IN (`emotion_stress_7`, `emotion_journal_21`) + status IN (`active`, `completed`) |
+## 方案
 
-### 为什么必须三表同步
+### 1. 新建边缘函数 `generate-emotion-briefing-from-transcript`
 
-系统自愈机制会检查 `orders` 表中 `paid` 状态的订单并自动补齐 `user_camp_purchases`。若仅删除购买记录而不改订单状态，用户再次访问时权益会被自动恢复。
+接收原始对话文本，通过 Lovable AI 提取结构化情绪数据，然后复用 `save-emotion-voice-briefing` 的保存逻辑。
 
-### 兑换码状态
+**输入**：`{ transcript, duration_minutes }`（需鉴权）
 
-如果该用户之前通过兑换码开通，还需将 `synergy_activation_codes` 中对应记录的 `is_used` 重置为 `false`，以便该码可再次用于测试。
+**AI 提取内容**（通过 tool calling 结构化输出）：
+- `emotion_theme`：情绪主题
+- `emotion_tags`：情绪标签数组
+- `emotion_intensity`：1-10
+- `stage_1_content` ~ `stage_4_content`：觉察/理解/反应/转化
+- `insight`：洞察
+- `action`：微行动建议
+- `growth_story`：成长寄语
 
-执行完成后，用户在 `/promo/synergy` 页面将回到未购买状态，可重新输入兑换码测试完整流程。
+**保存逻辑**：复用 `save-emotion-voice-briefing` 中的三表写入（`conversations` → `emotion_coaching_sessions` → `briefings`）+ 标签关联 + 训练营自动打卡。
+
+### 2. 修改 `CoachVoiceChat.tsx` 的 `recordSession()`
+
+在 `isWealthCoach` 判断之后、通用简报逻辑之前，增加 `mode === 'emotion'` 分支：
+
+```typescript
+if (isWealthCoach) {
+  // 财富教练...（已有）
+} else if (mode === 'emotion') {
+  // 情绪教练（含豆包通道）：生成结构化情绪简报
+  if (transcriptContent && transcriptContent.length > 100) {
+    const { data, error } = await supabase.functions.invoke(
+      'generate-emotion-briefing-from-transcript',
+      { body: { transcript: transcriptContent, duration_minutes: callMinutes } }
+    );
+    // 成功/失败处理 + onBriefingSaved 回调
+  }
+} else {
+  // 通用简报（已有）
+}
+```
+
+### 文件变更
+
+| 文件 | 操作 |
+|---|---|
+| `supabase/functions/generate-emotion-briefing-from-transcript/index.ts` | **新建**，AI提取 + 三表写入 |
+| `src/components/coach/CoachVoiceChat.tsx` | `recordSession()` 增加 emotion 分支 |
+
+### 注意事项
+
+- OpenAI 通道的 function calling 简报机制不受影响（它在对话中实时生成）
+- 如果 OpenAI 通道已通过 function calling 生成了简报，`recordSession` 的 emotion 分支会额外生成一份。需要加去重检查：先查该用户最近5分钟内是否已有 briefing，有则跳过
+- 使用 `LOVABLE_API_KEY` 调用 AI Gateway 提取结构化数据，无需额外 API Key
 
