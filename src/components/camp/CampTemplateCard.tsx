@@ -224,7 +224,7 @@ onClick={!isLocked && (!isPaidCamp || hasPurchased || ['emotion_bloom', 'identit
             >
               查看详情
             </Button>
-          ) : camp.camp_type === 'emotion_bloom' ? (
+          ) : ['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) ? (
             <Button
               onClick={(e) => {
                 e.stopPropagation();
