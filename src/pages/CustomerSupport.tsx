@@ -11,6 +11,7 @@ import { SupportCoachCard } from "@/components/customer-support/SupportCoachCard
 import { SupportPackageCard } from "@/components/customer-support/SupportPackageCard";
 import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
+import { QiWeiQRCard } from "@/components/customer-support/QiWeiQRCard";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
