@@ -1,46 +1,29 @@
 
 
-# 调整 CoachHeader 导航栏布局：移动有劲AI圆形按钮
+# 身份绽放训练营：先查看详情再购买
 
-## 问题
+## 现状
 
-在 `CoachHeader` 组件中，"主页"、"有劲AI圆形logo"、"菜单(教练)" 三个元素挤在同一行左侧，导致移动端"教练"下拉按钮与菜单图标重叠（第二张图片所示）。
-
-## 影响范围
-
-`CoachHeader` 被 `CoachLayout` 使用，出现在以下页面：
-- `/`（Index.tsx — 情绪教练）
-- `/coach/:coachKey`（DynamicCoach.tsx — 各类教练，含财富教练）
-- `/parent-coach`（ParentCoach.tsx）
-- `/communication-coach`（CommunicationCoach.tsx）
-- `/wealth-coach-chat`（WealthCoachChat.tsx）
+- `CampTemplateCard.tsx` 第93行和第227行只对 `emotion_bloom` 做了"查看详情"按钮的特殊处理，`identity_bloom` 作为付费营会直接显示"购买 ¥xxx"按钮
+- `CampList.tsx` 第411行，`identity_bloom` 走的是通用 `camp-template/${camp.id}` 路由，而非专属介绍页
 
 ## 方案
 
-只需修改 **1 个文件**：`src/components/coach/CoachHeader.tsx`
+修改 2 处，让 `identity_bloom` 与 `emotion_bloom` 行为一致：
 
-### 布局调整
+### 1. `src/components/camp/CampTemplateCard.tsx`
 
-将 header 从单行改为两行结构：
+- **第93行**：卡片点击条件已包含 bloom 系列（`isBloomCamp` 包含 `identity_bloom`），无需改
+- **第227行按钮区域**：将 `emotion_bloom` 的判断扩展为 `['emotion_bloom', 'identity_bloom'].includes(camp.camp_type)`，让 `identity_bloom` 也显示"查看详情"按钮
 
-```text
-第一行（原导航行）：
-  左侧：主页 | ☰菜单 | 教练▼    右侧：生活馆 | 日记 | 🔔通知
-  （移除有劲AI logo，三个按钮均匀排列）
+### 2. `src/pages/CampList.tsx`
 
-第二行（新增）：
-  左上角：有劲AI圆形logo（小尺寸，如 w-7 h-7）
-```
-
-### 具体改动
-
-1. 从第一行的左侧区域移除有劲AI logo（第134-150行）
-2. 在 header 底部新增一行，将 logo 放在左上角，尺寸缩小
-3. 调整第一行左侧元素（主页、菜单、教练）的间距，使其排列整齐不重叠
+- **第404-409行**：在 `emotion_bloom` 分支旁增加 `identity_bloom` 分支，未购用户跳转 `/camp-intro/identity_bloom`，已购用户跳转 `/camp-checkin`
 
 ### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/components/coach/CoachHeader.tsx` | 修改布局为双行，logo 移至第二行左上角 |
+| `src/components/camp/CampTemplateCard.tsx` | 扩展"查看详情"按钮条件，覆盖 `identity_bloom` |
+| `src/pages/CampList.tsx` | 增加 `identity_bloom` 路由分支 |
 
