@@ -11,6 +11,7 @@ import { CoachThemeConfig } from "@/hooks/useCoachTemplates";
 import { getThemeBackgroundGradient, getThemeLoaderColor } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import logoImage from "@/assets/logo-youjin-ai.png";
 
 interface Step {
   id: number;
@@ -411,6 +412,28 @@ export const CoachLayout = ({
           }}
         >
           <div className="container max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-8">
+            {/* 有劲AI Logo */}
+            <div className="mb-2">
+              <div
+                onClick={() => {
+                  if (backRoute) {
+                    navigate(backRoute);
+                  } else {
+                    const isHome = location.pathname === '/';
+                    if (!isHome) navigate('/');
+                  }
+                }}
+                className="inline-block cursor-pointer active:scale-95 transition-transform"
+              >
+                <img
+                  src={logoImage}
+                  alt="有劲AI"
+                  className="w-8 h-8 rounded-full object-cover shadow-sm"
+                />
+              </div>
+            </div>
+
+
             {/* 显示自定义加载占位符（如冥想分析引导） */}
             {messages.length === 0 && isLoading && loadingPlaceholder ? (
               loadingPlaceholder
