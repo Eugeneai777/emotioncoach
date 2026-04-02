@@ -5,7 +5,7 @@ import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Sprout,
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
