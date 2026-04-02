@@ -407,6 +407,12 @@ const CampList = () => {
                       } else {
                         navigate('/camp-intro/emotion_bloom');
                       }
+                    } else if (camp.camp_type === 'identity_bloom') {
+                      if (bloomCampPurchase) {
+                        navigate('/camp-checkin');
+                      } else {
+                        navigate('/camp-intro/identity_bloom');
+                      }
                     } else {
                       navigate(`/camp-template/${camp.id}`);
                     }
