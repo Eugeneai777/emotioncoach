@@ -170,7 +170,7 @@ const CustomerSupport = () => {
                           : 'bg-muted/50'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.content.replace(/\[QIWEI_QR\]/g, '')}</p>
                     </div>
                   </div>
                   
