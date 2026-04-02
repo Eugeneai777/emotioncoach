@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
