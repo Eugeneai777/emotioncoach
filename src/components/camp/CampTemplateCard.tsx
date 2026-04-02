@@ -90,8 +90,8 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           : ''
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
-      onClick={!isLocked && (!isPaidCamp || hasPurchased || camp.camp_type === 'emotion_bloom') ? onClick : undefined}
-      role={!isLocked && (!isPaidCamp || hasPurchased || camp.camp_type === 'emotion_bloom') ? "button" : undefined}
+onClick={!isLocked && (!isPaidCamp || hasPurchased || ['emotion_bloom', 'identity_bloom'].includes(camp.camp_type)) ? onClick : undefined}
+      role={!isLocked && (!isPaidCamp || hasPurchased || ['emotion_bloom', 'identity_bloom'].includes(camp.camp_type)) ? "button" : undefined}
     >
       {/* 渐变头图 */}
       <div className={`relative h-24 sm:h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
