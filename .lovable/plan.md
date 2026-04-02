@@ -1,29 +1,48 @@
 
 
-# 移除 identity_bloom 重复的"课程阶段"模块
+# 轮播图已购隐藏优化（修订）
 
-## 问题
+## 现状
 
-`CampIntro.tsx` 第278-316行从数据库渲染了通用的"课程阶段"模块，而 `IdentityBloomIntroSections` 内的 `CurriculumSection` 已包含相同的4阶课程内容（且视觉更精致）。两者同时展示导致内容重复。
+轮播图只有 **2 张卡片**：
+1. `assessment` — "找到你的卡点"（点击弹出4个测评选择器）
+2. `women-camp` — "7天有劲训练营"
+
+测评选择器内含4个测评：
+- 中场觉醒力测评（免费）
+- 35+女性竞争力（免费）
+- 财富卡点测评（¥9.9，package_key: `wealth_block_assessment`）
+- 情绪健康测评（¥9.9，package_key: `emotion_health_assessment`）
 
 ## 方案
 
-修改 `src/pages/CampIntro.tsx` 第279行，在 stages 渲染条件中排除 `identity_bloom`（与 `emotion_bloom` 同理）：
+### 轮播卡片层级（2张卡片）
 
-```typescript
-// 第279行，将：
-{campTemplate.stages && campTemplate.stages.length > 0 && (
+| 卡片 | 隐藏条件 |
+|---|---|
+| `women-camp` | `synergy_bundle` 已购 |
+| `assessment` | 4个测评**全部**已完成/已购 → 隐藏；否则保留 |
 
-// 改为：
-{campTemplate.stages && campTemplate.stages.length > 0 && 
- !['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
-```
+### 测评选择器层级（弹窗内4项）
 
-同样检查"你将获得"等其他通用模块是否也需要排除（避免与 `DeliverySection` 重复）。
+已购/已完成的测评从弹窗列表中过滤掉，只展示用户尚未体验的测评。
 
-## 文件变更
+检查逻辑：
+- 财富卡点：orders 表 `wealth_block_assessment` 已购
+- 情绪健康：orders 表 `emotion_health_assessment` 已购
+- 中场觉醒力：`awakening_entries` 表有完成记录
+- 女性竞争力：`awakening_entries` 表有完成记录
+
+### 边界处理
+
+- 全部轮播已购 → 隐藏整个轮播区域
+- 只剩1张 → 禁用自动轮播和圆点指示器
+- 弹窗内测评全部已完成 → `assessment` 卡片也隐藏
+- 未登录 → 全部展示
+
+### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/pages/CampIntro.tsx` | 第279行加条件排除 identity_bloom 的通用 stages 渲染；检查并排除其他重复模块 |
+| `src/pages/MiniAppEntry.tsx` | PromoBanner 增加购买/完成状态查询；过滤轮播卡片；过滤测评选择器列表 |
 
