@@ -114,8 +114,10 @@ const Auth = () => {
       const { data, error } = await supabase.functions.invoke('send-sms-code', {
         body: { phone, countryCode },
       });
-      if (error) throw new Error(error.message || '发送失败');
-      if (data?.error) throw new Error(data.error);
+      if (data?.error || error) {
+        const msg = await extractEdgeFunctionError(data, error, '发送失败，请稍后重试');
+        throw new Error(msg);
+      }
       toast({ title: "验证码已发送", description: "请查看手机短信" });
       setSmsCountdown(60);
     } catch (err: any) {
