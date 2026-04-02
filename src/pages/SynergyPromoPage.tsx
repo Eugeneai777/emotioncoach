@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
@@ -264,7 +262,7 @@ export default function SynergyPromoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [step, setStep] = useState<'browse' | 'register'>('browse');
+  
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [_purchaseChecked, setPurchaseChecked] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
@@ -323,7 +321,8 @@ export default function SynergyPromoPage() {
     setPendingRedeemCode(code);
     localStorage.setItem('pending_redeem_code', code);
     setPostAuthRedirect(window.location.pathname + window.location.search);
-    setStep('register');
+    setShowRedeemDialog(false);
+    navigate('/auth');
   };
 
   const handleRedeemSuccess = () => {
@@ -331,15 +330,6 @@ export default function SynergyPromoPage() {
     handleEnterCamp();
   };
 
-  const handleRegisterSuccess = (userId: string) => {
-    clearPostAuthRedirect();
-    const cachedCode = localStorage.getItem('pending_redeem_code');
-    if (cachedCode) {
-      localStorage.removeItem('pending_redeem_code');
-      setPendingRedeemCode(cachedCode);
-    }
-    setStep('browse');
-  };
 
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
     const targetUserId = overrideUserId || user?.id;
@@ -1031,21 +1021,6 @@ export default function SynergyPromoPage() {
         onNeedLogin={handleRedeemNeedLogin}
       />
 
-      {/* 登录注册弹窗 */}
-      <Dialog open={step === 'register'} onOpenChange={(open) => { if (!open) setStep('browse'); }}>
-        <DialogContent size="sm" className="bg-white border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-center text-slate-800">请登录或注册以激活您的权益</DialogTitle>
-            <DialogDescription className="text-center text-slate-500">
-              注册后即可使用兑换码激活训练营
-            </DialogDescription>
-          </DialogHeader>
-          <QuickRegisterStep
-            orderNo=""
-            onSuccess={handleRegisterSuccess}
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* 分享海报弹窗 */}
       <ShareDialogBase
