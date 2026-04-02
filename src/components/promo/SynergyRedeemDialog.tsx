@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ExternalLink, Gift, ShoppingBag, Info } from "lucide-react";
+import { detectPlatform } from "@/lib/platformDetector";
+import youzanMiniQr from "@/assets/youzan-miniprogram-qr.png";
 
 const YOUZAN_URL = "https://tuicashier.youzan.com/pay/wscgoods_order?scan=1&activity=none&from=kdt&qr=directgoods_5625577765&shopAutoEnter=1&alias=36c1wn65vbtllos";
 
@@ -19,6 +21,7 @@ interface SynergyRedeemDialogProps {
 export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn, onNeedLogin }: SynergyRedeemDialogProps) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const isMiniProgram = detectPlatform() === 'mini_program';
 
   const handleRedeem = async () => {
     const trimmed = code.trim();
@@ -102,14 +105,29 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
               <p>2. 支付成功后，您将获得专属兑换码</p>
               <p>3. 返回此页面输入兑换码完成激活</p>
             </div>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-100/60 font-medium text-sm"
-              onClick={() => window.open(YOUZAN_URL, "_blank")}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              前往有赞商城下单
-            </Button>
+
+            {isMiniProgram ? (
+              /* 小程序环境：展示有赞小程序码 */
+              <div className="flex flex-col items-center gap-2 py-2">
+                <img
+                  src={youzanMiniQr}
+                  alt="有赞商品小程序码"
+                  className="w-40 h-40 rounded-lg"
+                />
+                <p className="text-xs text-amber-700 font-medium">长按识别小程序码前往下单</p>
+              </div>
+            ) : (
+              /* H5 / 微信浏览器 / PC：直接跳转 */
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-100/60 font-medium text-sm"
+                onClick={() => window.open(YOUZAN_URL, "_blank")}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                前往有赞商城下单
+              </Button>
+            )}
+
             <p className="text-[11px] text-slate-400 text-center">下单后请返回此页面输入兑换码完成激活</p>
           </div>
 
