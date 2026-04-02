@@ -89,9 +89,165 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
+      // 检查该手机号用户是否是微信用户
+      const { data: existingAuthData } = await adminClient.auth.admin.getUserById(existingProfile.id);
+      const existingEmail = existingAuthData?.user?.email || '';
+      const isExistingWechatUser = existingEmail.includes('@temp.youjin365.com');
+
+      if (isExistingWechatUser) {
+        // 手机号已被另一个微信账号绑定，拒绝
+        return new Response(
+          JSON.stringify({ error: '该手机号已绑定其它微信账号，请使用该手机号登录后查看' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 手机号属于普通账号（手机号/邮箱注册），执行账号合并：
+      // 将微信用户的资产迁移到已有手机号用户，然后清理微信临时账号
+      console.log(`[bind-phone] Merging WeChat user ${user.id} into phone user ${existingProfile.id}`);
+
+      const wechatUserId = user.id;
+      const phoneUserId = existingProfile.id;
+
+      // 迁移订单
+      await adminClient
+        .from('orders')
+        .update({ user_id: phoneUserId })
+        .eq('user_id', wechatUserId);
+
+      // 迁移会话记录
+      await adminClient
+        .from('conversations')
+        .update({ user_id: phoneUserId })
+        .eq('user_id', wechatUserId);
+
+      // 迁移觉醒记录
+      await adminClient
+        .from('awakening_entries')
+        .update({ user_id: phoneUserId })
+        .eq('user_id', wechatUserId);
+
+      // 迁移呼吸会话
+      await adminClient
+        .from('breathing_sessions')
+        .update({ user_id: phoneUserId })
+        .eq('user_id', wechatUserId);
+
+      // 迁移 AI 教练通话
+      await adminClient
+        .from('ai_coach_calls')
+        .update({ user_id: phoneUserId })
+        .eq('user_id', wechatUserId);
+
+      // 迁移训练营购买
+      await adminClient
+        .from('user_camp_purchases')
+        .update({ user_id: phoneUserId })
+        .eq('user_id', wechatUserId);
+
+      // 迁移用户额度（合并）
+      const { data: wechatAccount } = await adminClient
+        .from('user_accounts')
+        .select('total_quota, used_quota')
+        .eq('user_id', wechatUserId)
+        .maybeSingle();
+
+      if (wechatAccount) {
+        const { data: phoneAccount } = await adminClient
+          .from('user_accounts')
+          .select('total_quota, used_quota')
+          .eq('user_id', phoneUserId)
+          .maybeSingle();
+
+        if (phoneAccount) {
+          await adminClient
+            .from('user_accounts')
+            .update({
+              total_quota: (phoneAccount.total_quota || 0) + (wechatAccount.total_quota || 0),
+            })
+            .eq('user_id', phoneUserId);
+        }
+
+        // 删除微信临时账号的 user_accounts
+        await adminClient
+          .from('user_accounts')
+          .delete()
+          .eq('user_id', wechatUserId);
+      }
+
+      // 将微信映射关联到手机号用户
+      await adminClient
+        .from('wechat_user_mappings')
+        .update({ system_user_id: phoneUserId })
+        .eq('system_user_id', wechatUserId);
+
+      // 标记微信临时 profile 为已删除
+      await adminClient
+        .from('profiles')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', wechatUserId);
+
+      // 标记手机号用户已完成绑定
+      await adminClient
+        .from('profiles')
+        .update({ phone_bind_prompted: true })
+        .eq('id', phoneUserId);
+
+      console.log(`[bind-phone] Merge complete: WeChat ${wechatUserId} → Phone ${phoneUserId}`);
+
+      // 生成手机号用户的新 session 给微信用户使用
+      // 使用 generateLink 获取 magic link 来登录目标账号
+      const phoneEmail = existingAuthData?.user?.email || `phone_${countryCode.replace('+', '')}${phone}@youjin.app`;
+      const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+        type: 'magiclink',
+        email: phoneEmail,
+      });
+
+      if (linkError || !linkData) {
+        console.error('[bind-phone] Failed to generate session for merged user:', linkError);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            merged: true,
+            message: '手机号绑定成功，账号已合并。请使用手机号重新登录。',
+            needRelogin: true
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 从 link 中提取 token_hash 用于 verifyOtp
+      const actionLink = linkData?.properties?.action_link || '';
+      const urlObj = new URL(actionLink);
+      const tokenHash = urlObj.searchParams.get('token_hash') || urlObj.hash?.match(/token_hash=([^&]+)/)?.[1];
+
+      if (tokenHash) {
+        const { data: sessionData, error: verifyError } = await adminClient.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'magiclink',
+        });
+
+        if (!verifyError && sessionData?.session) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              merged: true,
+              message: '手机号绑定成功，账号已合并',
+              session: sessionData.session,
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       return new Response(
-        JSON.stringify({ error: '该手机号已绑定其它微信账号，请使用该手机号登录后查看' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          success: true,
+          merged: true,
+          message: '手机号绑定成功，账号已合并。请使用手机号重新登录。',
+          needRelogin: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
