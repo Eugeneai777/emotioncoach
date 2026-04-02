@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmotionBloomIntroSections } from "@/components/camp/EmotionBloomIntroSections";
+import { IdentityBloomIntroSections } from "@/components/camp/IdentityBloomIntroSections";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import PageHeader from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
