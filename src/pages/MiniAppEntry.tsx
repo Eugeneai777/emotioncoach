@@ -296,7 +296,58 @@ const MiniAppEntry = () => {
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
   const [illustrations, setIllustrations] = useState<Record<string, string>>({});
-  
+
+  // ── 购买/完成状态查询 ──
+  const { data: purchasedMap = {} } = usePackagesPurchased([
+    'synergy_bundle', 'wealth_block_assessment', 'emotion_health_assessment',
+  ]);
+
+  const { data: completedFreeAssessments = {} } = useQuery({
+    queryKey: ['free-assessment-completion', user?.id],
+    queryFn: async () => {
+      if (!user) return {};
+      const { data, error } = await supabase
+        .from('awakening_entries')
+        .select('type')
+        .eq('user_id', user.id);
+      if (error) return {};
+      const types = new Set((data || []).map((r: any) => r.type));
+      return {
+        midlife_awakening: types.has('midlife_assessment') || types.has('midlife_awakening'),
+        women_competitiveness: types.has('women_competitiveness') || types.has('female_competitiveness'),
+      } as Record<string, boolean>;
+    },
+    enabled: !!user,
+    staleTime: 30 * 1000,
+  });
+
+  // ── 过滤轮播卡片 ──
+  const filteredSlides = useMemo(() => {
+    if (!user) return promoSlides;
+    const allAssessmentsDone =
+      !!purchasedMap['wealth_block_assessment'] &&
+      !!purchasedMap['emotion_health_assessment'] &&
+      !!completedFreeAssessments['midlife_awakening'] &&
+      !!completedFreeAssessments['women_competitiveness'];
+    return promoSlides.filter(slide => {
+      if (slide.id === 'women-camp' && purchasedMap['synergy_bundle']) return false;
+      if (slide.id === 'assessment' && allAssessmentsDone) return false;
+      return true;
+    });
+  }, [user, purchasedMap, completedFreeAssessments]);
+
+  // ── 过滤测评选择器列表 ──
+  const filterAssessments = useCallback((assessments: AssessmentOption[]): AssessmentOption[] => {
+    if (!user) return assessments;
+    return assessments.filter(a => {
+      if (a.route === '/wealth-block' && purchasedMap['wealth_block_assessment']) return false;
+      if (a.route === '/emotion-health' && purchasedMap['emotion_health_assessment']) return false;
+      if (a.route === '/midlife-awakening' && completedFreeAssessments['midlife_awakening']) return false;
+      if (a.route === '/assessment/women_competitiveness' && completedFreeAssessments['women_competitiveness']) return false;
+      return true;
+    });
+  }, [user, purchasedMap, completedFreeAssessments]);
+
 
   useEffect(() => {
     supabase
