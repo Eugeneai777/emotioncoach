@@ -273,6 +273,7 @@ const CampIntro = () => {
 
         {/* Emotion Bloom 专属丰富内容 */}
         {campType === 'emotion_bloom' && <EmotionBloomIntroSections />}
+        {campType === 'identity_bloom' && <IdentityBloomIntroSections />}
 
         {/* Stages */}
         {campTemplate.stages && campTemplate.stages.length > 0 && (
