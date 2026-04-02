@@ -475,16 +475,21 @@ const MiniAppEntry = () => {
       {/* ── 活动轮播图 ── */}
       <PromoBanner
         onAssessmentClick={() => {
-          setPickerAssessments([
+          const allAssessments = [
             { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "专业版" },
             { emoji: "👑", title: "35+女性竞争力", sub: "25题·7分钟", route: "/assessment/women_competitiveness", price: "专业版" },
             { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "限时¥9.9" },
             { emoji: "💚", title: "情绪健康测评", sub: "PHQ-9+GAD-7·5分钟", route: "/emotion-health", price: "限时¥9.9" },
-          ]);
-          setPickerOpen(true);
+          ];
+          const filtered = filterAssessments(allAssessments);
+          if (filtered.length > 0) {
+            setPickerAssessments(filtered);
+            setPickerOpen(true);
+          }
         }}
         navigate={navigate}
         reduceMotion={reduceMotion}
+        slides={filteredSlides}
       />
       <motion.div
         initial={{ opacity: 0, y: 6 }}
