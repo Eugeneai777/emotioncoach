@@ -330,15 +330,6 @@ export default function SynergyPromoPage() {
     handleEnterCamp();
   };
 
-  const handleRegisterSuccess = (userId: string) => {
-    clearPostAuthRedirect();
-    const cachedCode = localStorage.getItem('pending_redeem_code');
-    if (cachedCode) {
-      localStorage.removeItem('pending_redeem_code');
-      setPendingRedeemCode(cachedCode);
-    }
-    setStep('browse');
-  };
 
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
     const targetUserId = overrideUserId || user?.id;
