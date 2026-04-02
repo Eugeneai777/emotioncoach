@@ -1,4 +1,4 @@
-// force rebuild v4 - 2026-03-18
+// force rebuild v5 - 2026-04-02
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { detectPlatform } from "@/lib/platformDetector";
 import { supabase } from "@/integrations/supabase/client";
 import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-app/AssessmentPickerSheet";
+import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
+import { useQuery } from "@tanstack/react-query";
 
 interface AudienceBadge {
   text: string;
