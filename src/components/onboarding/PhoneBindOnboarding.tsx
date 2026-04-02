@@ -98,7 +98,21 @@ export function PhoneBindOnboarding() {
         const msg = await extractEdgeFunctionError(data, error, '绑定失败，请稍后重试');
         throw new Error(msg);
       }
-      toast({ title: '🎉 手机号绑定成功' });
+
+      // 账号合并场景：切换到合并后的手机号用户 session
+      if (data?.merged && data?.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        toast({ title: '🎉 手机号绑定成功，账号已合并' });
+      } else if (data?.merged && data?.needRelogin) {
+        toast({ title: '手机号绑定成功，请使用手机号重新登录', description: '账号已合并' });
+        // 退出当前微信临时账号
+        await supabase.auth.signOut();
+      } else {
+        toast({ title: '🎉 手机号绑定成功' });
+      }
       setOpen(false);
       setNeedsBind(false);
     } catch (e: any) {
