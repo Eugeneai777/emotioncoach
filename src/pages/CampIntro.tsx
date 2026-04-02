@@ -276,7 +276,7 @@ const CampIntro = () => {
         {campType === 'identity_bloom' && <IdentityBloomIntroSections />}
 
         {/* Stages */}
-        {campTemplate.stages && campTemplate.stages.length > 0 && (
+        {campTemplate.stages && campTemplate.stages.length > 0 && !['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
           <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
             <div className="text-center space-y-2">
               <h2 className="text-2xl md:text-3xl font-bold">课程阶段</h2>
@@ -321,7 +321,7 @@ const CampIntro = () => {
         )}
 
         {/* Learning Formats */}
-        {campTemplate.learning_formats && campTemplate.learning_formats.length > 0 && (
+        {campTemplate.learning_formats && campTemplate.learning_formats.length > 0 && !['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
           <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
             <div className="text-center space-y-2">
               <h2 className="text-2xl md:text-3xl font-bold">上课形式</h2>
@@ -348,7 +348,7 @@ const CampIntro = () => {
         )}
 
         {/* Benefits */}
-        {campTemplate.benefits && campTemplate.benefits.length > 0 && (
+        {campTemplate.benefits && campTemplate.benefits.length > 0 && !['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
           <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
             <div className="text-center space-y-2">
               <h2 className="text-2xl md:text-3xl font-bold">你将获得</h2>
@@ -379,7 +379,7 @@ const CampIntro = () => {
         )}
 
         {/* Target Audience */}
-        {campTemplate.target_audience && campTemplate.target_audience.length > 0 && (
+        {campTemplate.target_audience && campTemplate.target_audience.length > 0 && !['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
           <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
             <div className="text-center space-y-2">
               <h2 className="text-2xl md:text-3xl font-bold">适合加入的人</h2>
