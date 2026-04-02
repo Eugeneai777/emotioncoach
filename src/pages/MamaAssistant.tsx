@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, Home, Share2, ArrowRight, Mic } from "lucide-react";

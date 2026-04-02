@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
+import { useAuth } from "@/hooks/useAuth";
+import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 
 export interface RoundConfig {
   fields: { key: string; label: string; placeholder: string; type?: "text" | "select"; options?: string[] }[];
