@@ -192,8 +192,9 @@ const PromoBanner: React.FC<{
   onAssessmentClick: () => void;
   navigate: (path: string) => void;
   reduceMotion: boolean;
-}> = ({ onAssessmentClick, navigate, reduceMotion }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+  slides: typeof promoSlides;
+}> = ({ onAssessmentClick, navigate, reduceMotion, slides }) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: slides.length > 1, align: "center" });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const onSelect = useCallback(() => {
@@ -201,17 +202,18 @@ const PromoBanner: React.FC<{
     setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
-  // Auto-play 3s
+  // Auto-play 3s (only if multiple slides)
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("select", onSelect);
     onSelect();
 
+    if (slides.length <= 1) return;
+
     const timer = setInterval(() => {
       emblaApi.scrollNext();
     }, 3000);
 
-    // Pause on pointer interaction
     const stopTimer = () => clearInterval(timer);
     emblaApi.on("pointerDown", stopTimer);
 
@@ -220,7 +222,7 @@ const PromoBanner: React.FC<{
       emblaApi.off("select", onSelect);
       emblaApi.off("pointerDown", stopTimer);
     };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi, onSelect, slides.length]);
 
   const handleSlideClick = (slide: typeof promoSlides[0]) => {
     if (slide.id === "assessment") {
@@ -229,6 +231,8 @@ const PromoBanner: React.FC<{
       navigate(slide.route);
     }
   };
+
+  if (slides.length === 0) return null;
 
   return (
     <motion.div
@@ -239,7 +243,7 @@ const PromoBanner: React.FC<{
     >
       <div ref={emblaRef} className="overflow-hidden rounded-2xl">
         <div className="flex">
-          {promoSlides.map((slide) => (
+          {slides.map((slide) => (
             <button
               key={slide.id}
               onClick={() => handleSlideClick(slide)}
@@ -264,18 +268,20 @@ const PromoBanner: React.FC<{
           ))}
         </div>
       </div>
-      {/* 圆点指示器 */}
-      <div className="flex justify-center gap-1.5 mt-2">
-        {promoSlides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => emblaApi?.scrollTo(i)}
-            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-              i === selectedIndex ? "w-4 bg-primary" : "bg-muted-foreground/30"
-            }`}
-          />
-        ))}
-      </div>
+      {/* 圆点指示器（仅多张时展示） */}
+      {slides.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => emblaApi?.scrollTo(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                i === selectedIndex ? "w-4 bg-primary" : "bg-muted-foreground/30"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };
