@@ -115,39 +115,21 @@ export const CoachHeader = ({
     <div className="sticky top-0 z-10">
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-md">
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-2 md:px-4 py-2 md:py-3">
+        {/* Row 1: Navigation */}
         <div className="flex items-center justify-between gap-2">
           {/* Left side */}
-           <div className="flex items-center gap-1.5 md:gap-2">
+           <div className="flex items-center gap-1 md:gap-2">
             {/* 主页按钮 */}
             <button
               onClick={() => {
                 sessionStorage.setItem('skip_preferred_redirect', '1');
                 navigate('/mini-app');
               }}
-              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 mr-0.5 active:scale-95 whitespace-nowrap shrink-0"
+              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 active:scale-95 whitespace-nowrap shrink-0"
             >
               <Home className="w-3.5 h-3.5 shrink-0" />
               <span>主页</span>
             </button>
-
-            {/* 有劲AI Logo */}
-            <div
-              onClick={() => {
-                if (backRoute) {
-                  navigate(backRoute);
-                } else {
-                  const isHome = location.pathname === '/';
-                  if (!isHome) navigate('/');
-                }
-              }}
-              className={`flex-shrink-0 cursor-pointer active:scale-95 transition-transform`}
-            >
-              <img
-                src={logoImage}
-                alt="有劲AI"
-                className="w-9 h-9 md:w-12 md:h-12 rounded-full object-cover"
-              />
-            </div>
 
             {/* Hamburger menu dropdown */}
             <DropdownMenu>
@@ -178,7 +160,6 @@ export const CoachHeader = ({
                     </DropdownMenuItem>
                   );
                 })}
-                {/* Show login item when user is not logged in */}
                 {!user && (
                   <DropdownMenuItem
                     onClick={() => navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`)}
@@ -191,22 +172,6 @@ export const CoachHeader = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Restart/Back Button - Only show when has messages */}
-            {hasMessages && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRestart}
-                className={`gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 active:scale-95 transition-all font-medium ${getRestartButtonClass(primaryColor)}`}
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span className="hidden sm:inline">返回主页</span>
-              </Button>
-            )}
-          </div>
-
-          {/* Right side */}
-          <div className="flex items-center gap-1.5 md:gap-3">
             {/* Coach Space Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -216,12 +181,12 @@ export const CoachHeader = ({
                   className="gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
                 >
                   <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">教练空间</span>
-              <span className="sm:hidden">教练</span>
+                  <span className="hidden sm:inline">教练空间</span>
+                  <span className="sm:hidden">教练</span>
                   <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 bg-card border shadow-lg z-50">
+              <DropdownMenuContent align="start" className="w-52 bg-card border shadow-lg z-50">
               {coaches?.map((coach) => (
                   <DropdownMenuItem
                     key={coach.id}
@@ -248,6 +213,22 @@ export const CoachHeader = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Restart/Back Button - Only show when has messages */}
+            {hasMessages && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRestart}
+                className={`gap-1 text-xs md:text-sm h-8 px-1.5 md:px-3 active:scale-95 transition-all font-medium ${getRestartButtonClass(primaryColor)}`}
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span className="hidden sm:inline">返回主页</span>
+              </Button>
+            )}
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-1.5 md:gap-3">
             {/* 有劲生活馆 */}
             <Button
               size="sm"
@@ -273,9 +254,29 @@ export const CoachHeader = ({
               </Button>
             )}
 
-
             {/* Notification Center */}
             {showNotificationCenter && <SmartNotificationCenter />}
+          </div>
+        </div>
+
+        {/* Row 2: 有劲AI Logo */}
+        <div className="mt-1">
+          <div
+            onClick={() => {
+              if (backRoute) {
+                navigate(backRoute);
+              } else {
+                const isHome = location.pathname === '/';
+                if (!isHome) navigate('/');
+              }
+            }}
+            className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform inline-block"
+          >
+            <img
+              src={logoImage}
+              alt="有劲AI"
+              className="w-7 h-7 rounded-full object-cover"
+            />
           </div>
         </div>
       </div>
