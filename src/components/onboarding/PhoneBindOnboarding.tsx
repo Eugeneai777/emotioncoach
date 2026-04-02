@@ -6,6 +6,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { extractEdgeFunctionError } from '@/lib/edgeFunctionError';
 import { Phone, Shield, Loader2 } from 'lucide-react';
 
 /**
