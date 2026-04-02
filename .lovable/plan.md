@@ -1,53 +1,38 @@
 
 
-# 产品评估：兑换码体验优化两个需求
+# 优化未登录兑换码跳转：直接导航到登录页
 
-## 需求1：错误提示"网络异常"不准确
+## 问题
 
-**问题根因**：当用户输入错误兑换码时，后端返回 HTTP 400 + `{ error: "兑换码无效" }`。但前端代码（第44行）判断的是 SDK 层的 `error` 对象——Supabase SDK 会把所有非200响应都包装成 `error`，导致前端走进了"网络错误"分支，而不是读取后端返回的具体业务错误（如"兑换码无效"、"已被使用"）。
+用户未登录时点击"去登录"，当前行为是在兑换弹窗之上再弹出一个注册弹窗（两层 Dialog 叠加），体验割裂。应该直接跳转到 `/auth` 登录页，登录成功后自动返回。
 
-**评估**：完全正确的发现。修复方式是调整前端错误处理优先级——先读 `data?.error`（业务错误），再回退到 SDK `error`（真正的网络错误）。
+## 方案
 
-## 需求2：未登录提示时机不合理
+修改 `src/pages/SynergyPromoPage.tsx` 中的 `handleRedeemNeedLogin` 函数：
 
-**现状**：用户输入兑换码 → 点击兑换 → 弹出一个**全新的登录弹窗**覆盖在兑换弹窗之上（截图2），体验割裂。
+1. **保留**：缓存兑换码到 `localStorage` + 设置 `postAuthRedirect` 回跳地址
+2. **改为**：关闭兑换弹窗，使用 `navigate('/auth')` 跳转登录页，而非 `setStep('register')` 弹出内嵌注册弹窗
+3. 登录成功后，`postAuthRedirect` 机制会将用户带回 `/promo/synergy` 页面
+4. 回到页面后，现有的 `useEffect`（第315-320行）检测到 `user + pendingRedeemCode`，自动重新打开兑换弹窗
 
-**你的想法**：在兑换弹窗内直接提示"请先登录"+ 登录跳转按钮。
+### 具体改动
 
-**评估**：方向正确，但建议更进一步——**在兑换弹窗顶部直接展示登录状态提示**，而非等用户输入码后才提醒：
+```typescript
+// handleRedeemNeedLogin 改为：
+const handleRedeemNeedLogin = (code: string) => {
+  setPendingRedeemCode(code);
+  localStorage.setItem('pending_redeem_code', code);
+  setPostAuthRedirect(window.location.pathname + window.location.search);
+  setShowRedeemDialog(false);  // 关闭兑换弹窗
+  navigate('/auth');            // 直接跳转登录页
+};
+```
 
-- 未登录时：兑换码输入框上方显示一条提示横幅"请先登录后兑换"+ 登录按钮
-- 兑换按钮置灰不可点击
-- 用户先完成登录，再回来输入兑换码
-
-这样用户一打开弹窗就知道需要先登录，避免输入码后才被打断。
-
-## 实施方案
+可选清理：如果 `step === 'register'` 的注册弹窗不再有其他入口使用，可以一并移除该弹窗代码（第1034-1048行）。
 
 ### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/components/promo/SynergyRedeemDialog.tsx` | 1. 修复错误处理：优先读 `data?.error`；2. 未登录时在弹窗内显示登录提示横幅+按钮，兑换按钮置灰 |
-
-### 具体改动
-
-**错误处理修复**（第40-56行）：
-```typescript
-const { data, error } = await supabase.functions.invoke(...)
-// 优先读业务错误
-if (data?.error) {
-  toast.error(data.error);
-  return;
-}
-if (error) {
-  toast.error("网络错误，请稍后重试");
-  return;
-}
-```
-
-**未登录提示**（兑换码输入框上方）：
-- 未登录时显示橙色提示条："🔒 请先登录后再兑换"  
-- 右侧"去登录"按钮，点击调用 `onNeedLogin`
-- 输入框和兑换按钮置为 `disabled`
+| `src/pages/SynergyPromoPage.tsx` | 修改 `handleRedeemNeedLogin`：跳转 `/auth` 而非弹窗；可选移除内嵌注册弹窗 |
 
