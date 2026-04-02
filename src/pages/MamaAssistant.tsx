@@ -138,7 +138,7 @@ const MamaAssistant = () => {
           <span className="text-[22px] font-extrabold tracking-wider text-rose-900">
             女性专区
           </span>
-          <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">懂 你 的 辛 苦 与 力 量</p>
+          <p className="text-[11px] text-gray-400 tracking-widest font-medium mt-1">懂 你 也 懂 生 活</p>
         </motion.div>
 
         {/* 4 pain-point tool cards — 2x2 grid */}
@@ -243,7 +243,7 @@ const MamaAssistant = () => {
 
         {/* Footer */}
         <div className="text-center pb-6">
-          <p className="text-xs text-muted-foreground/50">女性专区 · 懂你的辛苦与力量</p>
+          <p className="text-xs text-muted-foreground/50">女性专区 · 懂你也懂生活</p>
         </div>
       </div>
 

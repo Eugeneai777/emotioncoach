@@ -8,7 +8,7 @@ const audiences = [
     id: "mama",
     emoji: "👩",
     label: "女性专区",
-    subtitle: "懂你的辛苦与力量",
+    subtitle: "懂你也懂生活",
     route: "/mama",
     gradient: "from-rose-400 to-pink-500",
     bgColor: "hsl(350 80% 96%)",
