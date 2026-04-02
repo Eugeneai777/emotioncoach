@@ -1032,21 +1032,6 @@ export default function SynergyPromoPage() {
         onNeedLogin={handleRedeemNeedLogin}
       />
 
-      {/* 登录注册弹窗 */}
-      <Dialog open={step === 'register'} onOpenChange={(open) => { if (!open) setStep('browse'); }}>
-        <DialogContent size="sm" className="bg-white border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-center text-slate-800">请登录或注册以激活您的权益</DialogTitle>
-            <DialogDescription className="text-center text-slate-500">
-              注册后即可使用兑换码激活训练营
-            </DialogDescription>
-          </DialogHeader>
-          <QuickRegisterStep
-            orderNo=""
-            onSuccess={handleRegisterSuccess}
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* 分享海报弹窗 */}
       <ShareDialogBase
