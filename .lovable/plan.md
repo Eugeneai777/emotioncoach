@@ -1,41 +1,38 @@
 
 
-# 产品评估：环境自适应下单引导方案
+# 在"联系人工"流程中添加可折叠企微二维码
 
-## 昨天的问题回顾
+## 方案
 
-小程序 WebView 内无法通过 `window.open` 或 `<a>` 标签跳转到有赞 H5 链接（微信安全策略限制外部域名），导致用户点击"前往有赞商城下单"无反应或报错。
+用户点击"联系人工" → AI 追问问题 → 用户描述 → AI 提交工单并回复确认 → 回复末尾附带 `[QIWEI_QR]` 标记 → 前端识别标记，渲染可折叠企微二维码链接。
 
-## 你的思路评估：✅ 正确方向，可以解决
+## 实施步骤
 
-将"前往下单"拆分为两条路径，按环境自适应展示：
+### 1. 保存企微二维码图片
+将上传图片复制到 `src/assets/qiwei-service-qr.jpg`
 
-| 环境 | 方案 | 可行性 |
-|---|---|---|
-| H5 / 移动浏览器 / 微信内置浏览器 | 直接跳转有赞 H5 链接 | ✅ 没问题 |
-| 小程序 WebView | 展示有赞商品小程序码，用户长按识别或截图扫码 | ✅ 绕过跳转限制 |
-| PC 桌面 | 直接跳转有赞 H5 链接 | ✅ 没问题 |
+### 2. 新建 `src/components/customer-support/QiWeiQRCard.tsx`
+- 默认收起状态，显示一行小字："紧急问题？点此联系企微客服 →"
+- 点击展开显示企微二维码图片 + "扫码添加企微客服，获取即时帮助"
+- 再次点击收起
 
-**补充建议**：小程序环境下，除了展示二维码，还应加一行提示文案"长按识别小程序码前往下单"，因为微信 WebView 内长按图片可直接识别小程序码，无需截图。
+### 3. 修改 `src/pages/CustomerSupport.tsx`
+- Message 类型增加 `showQiWeiQR?: boolean`
+- 渲染消息时，检测 `content` 中是否包含 `[QIWEI_QR]`，若包含则：
+  - 从显示文本中移除 `[QIWEI_QR]` 标记
+  - 在该消息气泡下方渲染 `QiWeiQRCard`
 
-## 实施方案
+### 4. 修改边缘函数 `supabase/functions/customer-support/index.ts`
+- `submit_ticket` 成功后的 system prompt 指令追加：提交工单后，回复确认文字，并在末尾追加 `[QIWEI_QR]`
+- 具体：在 system prompt 第5条规则改为：
+  > 投诉/问题 → 使用 submit_ticket 工具，工单创建成功后在回复末尾追加标记 [QIWEI_QR]
 
-### 修改 `SynergyRedeemDialog.tsx`
-
-将现有的"前往有赞商城下单"按钮区域改为环境自适应：
-
-1. 引入 `detectPlatform()`（已有工具）
-2. **非小程序环境**：保留现有按钮，`window.open(YOUZAN_URL)`
-3. **小程序环境**：替换按钮为有赞小程序码图片 + "长按识别小程序码前往下单"提示
-
-### 资源准备
-
-将用户上传的有赞小程序码图片复制到 `src/assets/youzan-miniprogram-qr.png`，在组件中 import 使用。
-
-### 文件变更
+## 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/assets/youzan-miniprogram-qr.png` | 新增，有赞商品小程序码 |
-| `src/components/promo/SynergyRedeemDialog.tsx` | 修改，环境检测 + 自适应展示 |
+| `src/assets/qiwei-service-qr.jpg` | 新增 |
+| `src/components/customer-support/QiWeiQRCard.tsx` | 新建 |
+| `src/pages/CustomerSupport.tsx` | 修改 |
+| `supabase/functions/customer-support/index.ts` | 修改 |
 
