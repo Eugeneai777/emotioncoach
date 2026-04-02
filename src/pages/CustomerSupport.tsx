@@ -11,6 +11,7 @@ import { SupportCoachCard } from "@/components/customer-support/SupportCoachCard
 import { SupportPackageCard } from "@/components/customer-support/SupportPackageCard";
 import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
+import { QiWeiQRCard } from "@/components/customer-support/QiWeiQRCard";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -169,10 +170,14 @@ const CustomerSupport = () => {
                           : 'bg-muted/50'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.content.replace(/\[QIWEI_QR\]/g, '')}</p>
                     </div>
                   </div>
                   
+                  {/* 企微二维码卡片 */}
+                  {message.role === 'assistant' && message.content.includes('[QIWEI_QR]') && (
+                    <QiWeiQRCard />
+                  )}
                   {/* 推荐卡片 */}
                   {message.recommendations && (
                     <div className="mt-3 space-y-2">
