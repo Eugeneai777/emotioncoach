@@ -1,63 +1,54 @@
 
 
-# 为豆包语音通道增加简报生成能力
+# 豆包与OpenAI情绪教练通道对齐
 
-## 问题
+## 现状分析
 
-豆包（Doubao）语音通道（`mode === 'emotion'`）结束对话后，`recordSession()` 走的是通用的 `generate-life-briefing` 路径，保存到 `vibrant_life_sage_briefings` 表。而 OpenAI 通道通过 function calling 调用 `save-emotion-voice-briefing`，保存到情绪专属的 `briefings` 表（含四阶段、情绪标签等结构化数据）。
+| 能力 | 豆包通道 (doubao-realtime-relay) | OpenAI专用通道 (emotion-realtime-token) | OpenAI通用通道 (vibrant-life-realtime-token) |
+|---|---|---|---|
+| Prompt 深度 | 简版（~30行） | 详细版（~120行，含对话示例） | 有 emotionTools 的工具驱动 |
+| Function Calling | ❌ 不支持 | ❌ 未配置工具 | ✅ track_emotion_stage, capture_emotion_event, generate_emotion_briefing |
+| 实时阶段追踪 | ❌ | ❌ | ✅ |
+| 对话后简报 | ✅ generate-emotion-briefing-from-transcript（刚实现） | N/A（未被使用） | ✅ 通过 function calling 实时生成 |
+| 前端路由 | ✅ mode='emotion' 总是走这里 | ❌ 未被使用 | 仅通用模式使用 |
 
-**结果**：豆包语音的情绪对话没有生成结构化的情绪简报，在情绪教练的简报列表中看不到记录。
+**关键发现**：前端 `mode === 'emotion'` 总是路由到豆包，`emotion-realtime-token` 端点目前未被任何前端代码实际调用。
 
-## 方案
+## 对齐方案
 
-### 1. 新建边缘函数 `generate-emotion-briefing-from-transcript`
+### 1. 统一 Prompt：升级豆包通道的情绪教练 Prompt
 
-接收原始对话文本，通过 Lovable AI 提取结构化情绪数据，然后复用 `save-emotion-voice-briefing` 的保存逻辑。
+将 `doubao-realtime-relay` 中的 `buildEmotionPrompt` 升级为与 `emotion-realtime-token` 一致的详细版，包含：
+- 核心身份锁定
+- 语言要求（简体中文）
+- 详细四阶段指引（含图示）
+- 核心技术（镜像、命名、下沉、留白、回应优先）
+- 情绪强度分级响应策略
+- 难以开口用户的引导策略
+- 对话节奏规则
+- 对话示例
+- 完成信号与收尾话术
 
-**输入**：`{ transcript, duration_minutes }`（需鉴权）
+### 2. 清理未使用的 emotion-realtime-token
 
-**AI 提取内容**（通过 tool calling 结构化输出）：
-- `emotion_theme`：情绪主题
-- `emotion_tags`：情绪标签数组
-- `emotion_intensity`：1-10
-- `stage_1_content` ~ `stage_4_content`：觉察/理解/反应/转化
-- `insight`：洞察
-- `action`：微行动建议
-- `growth_story`：成长寄语
+`emotion-realtime-token` 目前未被前端调用。两个选择：
 
-**保存逻辑**：复用 `save-emotion-voice-briefing` 中的三表写入（`conversations` → `emotion_coaching_sessions` → `briefings`）+ 标签关联 + 训练营自动打卡。
+- **保留但标记为备用**：万一需要切换回 OpenAI 通道时可用
+- **删除**：减少维护负担
 
-### 2. 修改 `CoachVoiceChat.tsx` 的 `recordSession()`
+建议：保留，暂不改动。
 
-在 `isWealthCoach` 判断之后、通用简报逻辑之前，增加 `mode === 'emotion'` 分支：
+### 3. 不需要改动的部分
 
-```typescript
-if (isWealthCoach) {
-  // 财富教练...（已有）
-} else if (mode === 'emotion') {
-  // 情绪教练（含豆包通道）：生成结构化情绪简报
-  if (transcriptContent && transcriptContent.length > 100) {
-    const { data, error } = await supabase.functions.invoke(
-      'generate-emotion-briefing-from-transcript',
-      { body: { transcript: transcriptContent, duration_minutes: callMinutes } }
-    );
-    // 成功/失败处理 + onBriefingSaved 回调
-  }
-} else {
-  // 通用简报（已有）
-}
-```
+- **对话后简报生成**：`generate-emotion-briefing-from-transcript` 已就绪，`recordSession()` 的 emotion 分支已实现
+- **实时阶段追踪**：豆包不支持 function calling，无法实现实时追踪。但对话后的 AI 分析已能提取四阶段内容，效果等价
+- **训练营自动打卡**：已在 briefing 保存逻辑中实现
 
-### 文件变更
+## 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `supabase/functions/generate-emotion-briefing-from-transcript/index.ts` | **新建**，AI提取 + 三表写入 |
-| `src/components/coach/CoachVoiceChat.tsx` | `recordSession()` 增加 emotion 分支 |
+| `supabase/functions/doubao-realtime-relay/index.ts` | 升级 `buildEmotionPrompt`，对齐 `emotion-realtime-token` 的详细版 Prompt |
 
-### 注意事项
-
-- OpenAI 通道的 function calling 简报机制不受影响（它在对话中实时生成）
-- 如果 OpenAI 通道已通过 function calling 生成了简报，`recordSession` 的 emotion 分支会额外生成一份。需要加去重检查：先查该用户最近5分钟内是否已有 briefing，有则跳过
-- 使用 `LOVABLE_API_KEY` 调用 AI Gateway 提取结构化数据，无需额外 API Key
+只需改动 1 个文件，约 30 行简版 Prompt 替换为 ~100 行详细版。
 
