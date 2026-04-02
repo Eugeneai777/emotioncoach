@@ -22,7 +22,7 @@ interface AudienceBadge {
 const audiences: Array<{
   id: string; emoji: string; label: string; subtitle: string; route: string; gradient: string; badge?: AudienceBadge | null;
 }> = [
-  { id: "mama", emoji: "👩", label: "女性专区", subtitle: "懂你的辛苦与力量", route: "/mama", gradient: "from-rose-500 to-pink-400", badge: {
+  { id: "mama", emoji: "👩", label: "女性专区", subtitle: "懂你也懂生活", route: "/mama", gradient: "from-rose-500 to-pink-400", badge: {
     text: "测一测",
     assessments: [
       { emoji: "👑", title: "35+女性竞争力", sub: "25题·7分钟", route: "/assessment/women_competitiveness", price: "专业版" },

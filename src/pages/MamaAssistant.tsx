@@ -243,7 +243,7 @@ const MamaAssistant = () => {
 
         {/* Footer */}
         <div className="text-center pb-6">
-          <p className="text-xs text-muted-foreground/50">女性专区 · 懂你的辛苦与力量</p>
+          <p className="text-xs text-muted-foreground/50">女性专区 · 懂你也懂生活</p>
         </div>
       </div>
 
