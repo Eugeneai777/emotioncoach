@@ -452,8 +452,11 @@ const MiniAppEntry = () => {
               <div key={a.id} className="relative">
                 <button
                   onClick={() => {
-                    setPickerAssessments(a.badge!.assessments);
-                    setPickerOpen(true);
+                    const filtered = filterAssessments(a.badge!.assessments);
+                    if (filtered.length > 0) {
+                      setPickerAssessments(filtered);
+                      setPickerOpen(true);
+                    }
                   }}
                   className="absolute -top-2 right-1 z-20 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm active:scale-95 transition-transform"
                 >
