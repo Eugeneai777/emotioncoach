@@ -174,6 +174,10 @@ const CustomerSupport = () => {
                     </div>
                   </div>
                   
+                  {/* 企微二维码卡片 */}
+                  {message.role === 'assistant' && message.content.includes('[QIWEI_QR]') && (
+                    <QiWeiQRCard />
+                  )}
                   {/* 推荐卡片 */}
                   {message.recommendations && (
                     <div className="mt-3 space-y-2">
