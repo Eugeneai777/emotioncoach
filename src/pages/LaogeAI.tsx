@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
 import { Home, Share2, ArrowRight } from "lucide-react";
