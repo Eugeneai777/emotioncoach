@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, Home, Share2, ArrowRight, Mic } from "lucide-react";
@@ -74,6 +75,9 @@ const MamaAssistant = () => {
   const [initialInput, setInitialInput] = useState<string | undefined>();
   const [chatType, setChatType] = useState<"emotion" | "gratitude">("emotion");
 
+  const { data: purchasedMap } = usePackagesPurchased(['synergy_bundle']);
+  const campPurchased = !!user && !!purchasedMap?.['synergy_bundle'];
+
   const openChat = (context?: string, type: "emotion" | "gratitude" = "emotion") => {
     setChatContext(context);
     setInitialInput(undefined);
@@ -83,23 +87,25 @@ const MamaAssistant = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50/40 to-white pb-20">
-      {/* Sticky conversion bar */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="sticky top-0 z-50 bg-gradient-to-r from-pink-400 via-rose-400 to-pink-500 shadow-md"
-      >
-        <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2.5">
-          <span className="text-white text-sm font-medium">🌸 7天有劲训练营 · 找回你的能量</span>
-          <button
-            onClick={() => navigate("/promo/synergy?source=mama")}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 text-rose-600 text-xs font-semibold active:scale-95 transition-transform"
-          >
-            了解详情 <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-      </motion.div>
+      {/* Sticky conversion bar - hidden if purchased */}
+      {!campPurchased && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="sticky top-0 z-50 bg-gradient-to-r from-pink-400 via-rose-400 to-pink-500 shadow-md"
+        >
+          <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2.5">
+            <span className="text-white text-sm font-medium">🌸 7天有劲训练营 · 找回你的能量</span>
+            <button
+              onClick={() => navigate("/promo/synergy?source=mama")}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 text-rose-600 text-xs font-semibold active:scale-95 transition-transform"
+            >
+              了解详情 <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       <div className="max-w-md mx-auto px-5 pt-4 pb-8">
         {/* Top bar */}
