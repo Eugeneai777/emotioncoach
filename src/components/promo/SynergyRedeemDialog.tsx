@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Gift, ShoppingBag, Info } from "lucide-react";
+import { Loader2, ExternalLink, Gift, ShoppingBag, Info, LogIn } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetector";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import youzanMiniQr from "@/assets/youzan-miniprogram-qr.png";
 
 const YOUZAN_URL = "https://tuicashier.youzan.com/pay/wscgoods_order?scan=1&activity=none&from=kdt&qr=directgoods_5625577765&shopAutoEnter=1&alias=36c1wn65vbtllos";
@@ -41,8 +42,15 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
         body: { code: trimmed },
       });
 
+      // 优先读业务错误（后端返回的中文提示）
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
       if (error) {
-        toast.error("兑换失败", { description: "网络错误，请稍后重试" });
+        const msg = await extractEdgeFunctionError(data, error, "网络错误，请稍后重试");
+        toast.error(msg);
         return;
       }
 
@@ -51,8 +59,6 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
         setCode("");
         onOpenChange(false);
         onSuccess();
-      } else {
-        toast.error(data?.error || "兑换失败");
       }
     } catch (e) {
       toast.error("系统错误，请稍后重试");
@@ -75,19 +81,35 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
+          {/* 未登录提示横幅 */}
+          {!isLoggedIn && (
+            <div className="flex items-center justify-between rounded-lg bg-orange-50 border border-orange-200/60 px-3 py-2.5">
+              <span className="text-sm text-orange-700">🔒 请先登录后再兑换</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 border-orange-300 text-orange-700 hover:bg-orange-100/60 text-xs"
+                onClick={() => onNeedLogin(code.trim())}
+              >
+                <LogIn className="w-3.5 h-3.5 mr-1" />
+                去登录
+              </Button>
+            </div>
+          )}
+
           {/* 兑换码输入 */}
           <div className="flex gap-2">
             <Input
               placeholder="请输入兑换码"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleRedeem()}
+              onKeyDown={(e) => e.key === "Enter" && isLoggedIn && handleRedeem()}
               className="flex-1"
-              disabled={loading}
+              disabled={loading || !isLoggedIn}
             />
             <Button
               onClick={handleRedeem}
-              disabled={loading || !code.trim()}
+              disabled={loading || !code.trim() || !isLoggedIn}
               className="shrink-0 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white border-0"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "兑换"}
@@ -107,7 +129,6 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
             </div>
 
             {isMiniProgram ? (
-              /* 小程序环境：展示有赞小程序码 */
               <div className="flex flex-col items-center gap-2 py-2">
                 <img
                   src={youzanMiniQr}
@@ -117,7 +138,6 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
                 <p className="text-xs text-amber-700 font-medium">长按识别小程序码前往下单</p>
               </div>
             ) : (
-              /* H5 / 微信浏览器 / PC：直接跳转 */
               <Button
                 variant="outline"
                 className="w-full h-10 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-100/60 font-medium text-sm"
