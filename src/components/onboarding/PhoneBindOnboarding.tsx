@@ -94,8 +94,10 @@ export function PhoneBindOnboarding() {
       const { data, error } = await supabase.functions.invoke('bind-phone-to-wechat', {
         body: { phone, code: codeValue, countryCode: '+86' },
       });
-      if (data?.error) throw new Error(data.error);
-      if (error) throw error;
+      if (data?.error || error) {
+        const msg = await extractEdgeFunctionError(data, error, '绑定失败，请稍后重试');
+        throw new Error(msg);
+      }
       toast({ title: '🎉 手机号绑定成功' });
       setOpen(false);
       setNeedsBind(false);
