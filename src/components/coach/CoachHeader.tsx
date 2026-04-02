@@ -259,26 +259,6 @@ export const CoachHeader = ({
           </div>
         </div>
 
-        {/* Row 2: 有劲AI Logo */}
-        <div className="mt-1">
-          <div
-            onClick={() => {
-              if (backRoute) {
-                navigate(backRoute);
-              } else {
-                const isHome = location.pathname === '/';
-                if (!isHome) navigate('/');
-              }
-            }}
-            className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform inline-block"
-          >
-            <img
-              src={logoImage}
-              alt="有劲AI"
-              className="w-7 h-7 rounded-full object-cover"
-            />
-          </div>
-        </div>
       </div>
     </header>
     </div>

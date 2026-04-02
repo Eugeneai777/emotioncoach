@@ -11,6 +11,7 @@ import { CoachThemeConfig } from "@/hooks/useCoachTemplates";
 import { getThemeBackgroundGradient, getThemeLoaderColor } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import logoImage from "@/assets/logo-youjin-ai.png";
 
 interface Step {
   id: number;
