@@ -1,4 +1,4 @@
-// force rebuild v4 - 2026-03-18
+// force rebuild v5 - 2026-04-02
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { detectPlatform } from "@/lib/platformDetector";
 import { supabase } from "@/integrations/supabase/client";
 import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-app/AssessmentPickerSheet";
+import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
+import { useQuery } from "@tanstack/react-query";
 
 interface AudienceBadge {
   text: string;
@@ -190,8 +192,9 @@ const PromoBanner: React.FC<{
   onAssessmentClick: () => void;
   navigate: (path: string) => void;
   reduceMotion: boolean;
-}> = ({ onAssessmentClick, navigate, reduceMotion }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+  slides: typeof promoSlides;
+}> = ({ onAssessmentClick, navigate, reduceMotion, slides }) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: slides.length > 1, align: "center" });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const onSelect = useCallback(() => {
@@ -199,17 +202,18 @@ const PromoBanner: React.FC<{
     setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
-  // Auto-play 3s
+  // Auto-play 3s (only if multiple slides)
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("select", onSelect);
     onSelect();
 
+    if (slides.length <= 1) return;
+
     const timer = setInterval(() => {
       emblaApi.scrollNext();
     }, 3000);
 
-    // Pause on pointer interaction
     const stopTimer = () => clearInterval(timer);
     emblaApi.on("pointerDown", stopTimer);
 
@@ -218,7 +222,7 @@ const PromoBanner: React.FC<{
       emblaApi.off("select", onSelect);
       emblaApi.off("pointerDown", stopTimer);
     };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi, onSelect, slides.length]);
 
   const handleSlideClick = (slide: typeof promoSlides[0]) => {
     if (slide.id === "assessment") {
@@ -227,6 +231,8 @@ const PromoBanner: React.FC<{
       navigate(slide.route);
     }
   };
+
+  if (slides.length === 0) return null;
 
   return (
     <motion.div
@@ -237,7 +243,7 @@ const PromoBanner: React.FC<{
     >
       <div ref={emblaRef} className="overflow-hidden rounded-2xl">
         <div className="flex">
-          {promoSlides.map((slide) => (
+          {slides.map((slide) => (
             <button
               key={slide.id}
               onClick={() => handleSlideClick(slide)}
@@ -262,18 +268,20 @@ const PromoBanner: React.FC<{
           ))}
         </div>
       </div>
-      {/* 圆点指示器 */}
-      <div className="flex justify-center gap-1.5 mt-2">
-        {promoSlides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => emblaApi?.scrollTo(i)}
-            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-              i === selectedIndex ? "w-4 bg-primary" : "bg-muted-foreground/30"
-            }`}
-          />
-        ))}
-      </div>
+      {/* 圆点指示器（仅多张时展示） */}
+      {slides.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => emblaApi?.scrollTo(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                i === selectedIndex ? "w-4 bg-primary" : "bg-muted-foreground/30"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -288,7 +296,58 @@ const MiniAppEntry = () => {
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
   const [illustrations, setIllustrations] = useState<Record<string, string>>({});
-  
+
+  // ── 购买/完成状态查询 ──
+  const { data: purchasedMap = {} } = usePackagesPurchased([
+    'synergy_bundle', 'wealth_block_assessment', 'emotion_health_assessment',
+  ]);
+
+  const { data: completedFreeAssessments = {} } = useQuery({
+    queryKey: ['free-assessment-completion', user?.id],
+    queryFn: async () => {
+      if (!user) return {};
+      const { data, error } = await supabase
+        .from('awakening_entries')
+        .select('type')
+        .eq('user_id', user.id);
+      if (error) return {};
+      const types = new Set((data || []).map((r: any) => r.type));
+      return {
+        midlife_awakening: types.has('midlife_assessment') || types.has('midlife_awakening'),
+        women_competitiveness: types.has('women_competitiveness') || types.has('female_competitiveness'),
+      } as Record<string, boolean>;
+    },
+    enabled: !!user,
+    staleTime: 30 * 1000,
+  });
+
+  // ── 过滤轮播卡片 ──
+  const filteredSlides = useMemo(() => {
+    if (!user) return promoSlides;
+    const allAssessmentsDone =
+      !!purchasedMap['wealth_block_assessment'] &&
+      !!purchasedMap['emotion_health_assessment'] &&
+      !!completedFreeAssessments['midlife_awakening'] &&
+      !!completedFreeAssessments['women_competitiveness'];
+    return promoSlides.filter(slide => {
+      if (slide.id === 'women-camp' && purchasedMap['synergy_bundle']) return false;
+      if (slide.id === 'assessment' && allAssessmentsDone) return false;
+      return true;
+    });
+  }, [user, purchasedMap, completedFreeAssessments]);
+
+  // ── 过滤测评选择器列表 ──
+  const filterAssessments = useCallback((assessments: AssessmentOption[]): AssessmentOption[] => {
+    if (!user) return assessments;
+    return assessments.filter(a => {
+      if (a.route === '/wealth-block' && purchasedMap['wealth_block_assessment']) return false;
+      if (a.route === '/emotion-health' && purchasedMap['emotion_health_assessment']) return false;
+      if (a.route === '/midlife-awakening' && completedFreeAssessments['midlife_awakening']) return false;
+      if (a.route === '/assessment/women_competitiveness' && completedFreeAssessments['women_competitiveness']) return false;
+      return true;
+    });
+  }, [user, purchasedMap, completedFreeAssessments]);
+
 
   useEffect(() => {
     supabase
@@ -393,8 +452,11 @@ const MiniAppEntry = () => {
               <div key={a.id} className="relative">
                 <button
                   onClick={() => {
-                    setPickerAssessments(a.badge!.assessments);
-                    setPickerOpen(true);
+                    const filtered = filterAssessments(a.badge!.assessments);
+                    if (filtered.length > 0) {
+                      setPickerAssessments(filtered);
+                      setPickerOpen(true);
+                    }
                   }}
                   className="absolute -top-2 right-1 z-20 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm active:scale-95 transition-transform"
                 >
@@ -413,16 +475,21 @@ const MiniAppEntry = () => {
       {/* ── 活动轮播图 ── */}
       <PromoBanner
         onAssessmentClick={() => {
-          setPickerAssessments([
+          const allAssessments = [
             { emoji: "🧭", title: "中场觉醒力测评", sub: "6维度·30题·8分钟", route: "/midlife-awakening", price: "专业版" },
             { emoji: "👑", title: "35+女性竞争力", sub: "25题·7分钟", route: "/assessment/women_competitiveness", price: "专业版" },
             { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "限时¥9.9" },
             { emoji: "💚", title: "情绪健康测评", sub: "PHQ-9+GAD-7·5分钟", route: "/emotion-health", price: "限时¥9.9" },
-          ]);
-          setPickerOpen(true);
+          ];
+          const filtered = filterAssessments(allAssessments);
+          if (filtered.length > 0) {
+            setPickerAssessments(filtered);
+            setPickerOpen(true);
+          }
         }}
         navigate={navigate}
         reduceMotion={reduceMotion}
+        slides={filteredSlides}
       />
       <motion.div
         initial={{ opacity: 0, y: 6 }}
