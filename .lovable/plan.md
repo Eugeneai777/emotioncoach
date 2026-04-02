@@ -1,54 +1,41 @@
 
 
-# 豆包与OpenAI情绪教练通道对齐
+# 产品评估：环境自适应下单引导方案
 
-## 现状分析
+## 昨天的问题回顾
 
-| 能力 | 豆包通道 (doubao-realtime-relay) | OpenAI专用通道 (emotion-realtime-token) | OpenAI通用通道 (vibrant-life-realtime-token) |
-|---|---|---|---|
-| Prompt 深度 | 简版（~30行） | 详细版（~120行，含对话示例） | 有 emotionTools 的工具驱动 |
-| Function Calling | ❌ 不支持 | ❌ 未配置工具 | ✅ track_emotion_stage, capture_emotion_event, generate_emotion_briefing |
-| 实时阶段追踪 | ❌ | ❌ | ✅ |
-| 对话后简报 | ✅ generate-emotion-briefing-from-transcript（刚实现） | N/A（未被使用） | ✅ 通过 function calling 实时生成 |
-| 前端路由 | ✅ mode='emotion' 总是走这里 | ❌ 未被使用 | 仅通用模式使用 |
+小程序 WebView 内无法通过 `window.open` 或 `<a>` 标签跳转到有赞 H5 链接（微信安全策略限制外部域名），导致用户点击"前往有赞商城下单"无反应或报错。
 
-**关键发现**：前端 `mode === 'emotion'` 总是路由到豆包，`emotion-realtime-token` 端点目前未被任何前端代码实际调用。
+## 你的思路评估：✅ 正确方向，可以解决
 
-## 对齐方案
+将"前往下单"拆分为两条路径，按环境自适应展示：
 
-### 1. 统一 Prompt：升级豆包通道的情绪教练 Prompt
+| 环境 | 方案 | 可行性 |
+|---|---|---|
+| H5 / 移动浏览器 / 微信内置浏览器 | 直接跳转有赞 H5 链接 | ✅ 没问题 |
+| 小程序 WebView | 展示有赞商品小程序码，用户长按识别或截图扫码 | ✅ 绕过跳转限制 |
+| PC 桌面 | 直接跳转有赞 H5 链接 | ✅ 没问题 |
 
-将 `doubao-realtime-relay` 中的 `buildEmotionPrompt` 升级为与 `emotion-realtime-token` 一致的详细版，包含：
-- 核心身份锁定
-- 语言要求（简体中文）
-- 详细四阶段指引（含图示）
-- 核心技术（镜像、命名、下沉、留白、回应优先）
-- 情绪强度分级响应策略
-- 难以开口用户的引导策略
-- 对话节奏规则
-- 对话示例
-- 完成信号与收尾话术
+**补充建议**：小程序环境下，除了展示二维码，还应加一行提示文案"长按识别小程序码前往下单"，因为微信 WebView 内长按图片可直接识别小程序码，无需截图。
 
-### 2. 清理未使用的 emotion-realtime-token
+## 实施方案
 
-`emotion-realtime-token` 目前未被前端调用。两个选择：
+### 修改 `SynergyRedeemDialog.tsx`
 
-- **保留但标记为备用**：万一需要切换回 OpenAI 通道时可用
-- **删除**：减少维护负担
+将现有的"前往有赞商城下单"按钮区域改为环境自适应：
 
-建议：保留，暂不改动。
+1. 引入 `detectPlatform()`（已有工具）
+2. **非小程序环境**：保留现有按钮，`window.open(YOUZAN_URL)`
+3. **小程序环境**：替换按钮为有赞小程序码图片 + "长按识别小程序码前往下单"提示
 
-### 3. 不需要改动的部分
+### 资源准备
 
-- **对话后简报生成**：`generate-emotion-briefing-from-transcript` 已就绪，`recordSession()` 的 emotion 分支已实现
-- **实时阶段追踪**：豆包不支持 function calling，无法实现实时追踪。但对话后的 AI 分析已能提取四阶段内容，效果等价
-- **训练营自动打卡**：已在 briefing 保存逻辑中实现
+将用户上传的有赞小程序码图片复制到 `src/assets/youzan-miniprogram-qr.png`，在组件中 import 使用。
 
-## 文件变更
+### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `supabase/functions/doubao-realtime-relay/index.ts` | 升级 `buildEmotionPrompt`，对齐 `emotion-realtime-token` 的详细版 Prompt |
-
-只需改动 1 个文件，约 30 行简版 Prompt 替换为 ~100 行详细版。
+| `src/assets/youzan-miniprogram-qr.png` | 新增，有赞商品小程序码 |
+| `src/components/promo/SynergyRedeemDialog.tsx` | 修改，环境检测 + 自适应展示 |
 
