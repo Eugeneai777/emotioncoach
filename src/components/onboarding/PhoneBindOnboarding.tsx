@@ -74,8 +74,10 @@ export function PhoneBindOnboarding() {
       const { data, error } = await supabase.functions.invoke('send-sms-code', {
         body: { phone, countryCode: '+86' },
       });
-      if (data?.error) throw new Error(data.error);
-      if (error) throw error;
+      if (data?.error || error) {
+        const msg = await extractEdgeFunctionError(data, error, '发送失败，请稍后重试');
+        throw new Error(msg);
+      }
       toast({ title: '验证码已发送' });
       setCountdown(60);
     } catch (e: any) {
