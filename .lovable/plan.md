@@ -1,31 +1,24 @@
 
 
-# /mama 和 /laoge 顶部横幅已购隐藏优化
-
-## 现状
-
-- `/mama`（MamaAssistant.tsx）第86-102行：sticky 顶部横幅推广"7天有劲训练营"，链接到 `/promo/synergy`
-- `/laoge`（LaogeAI.tsx）第76-89行：sticky 顶部横幅推广"中年男人职场突围方案"，也链接到 `/promo/synergy`
-- 两者都是推广 `synergy_bundle`，用户已购后仍然展示
+# 为1159元四瓶装商品设置有赞外部链接
 
 ## 方案
 
-与 mini-app 轮播图机制一致：使用 `usePackagesPurchased` 检查 `synergy_bundle` 购买状态，已购则隐藏顶部横幅。
+通过数据库迁移更新 `health_store_products` 表中四瓶装商品（ID: `59472a53-195c-4963-9fe9-b13fbdc3db77`）的 `external_url` 字段。
+
+### SQL 迁移
+
+```sql
+UPDATE health_store_products 
+SET external_url = 'https://shop138837377.m.youzan.com/wscgoods/detail/26x5yk7m5xg6hyx?scan=1&activity=none&from=kdt&qr=directgoods_3808287996&shopAutoEnter=1'
+WHERE id = '59472a53-195c-4963-9fe9-b13fbdc3db77';
+```
+
+无需改动代码——现有的 `HealthStoreGrid` 和 `ProductDetailDialog` 已支持 `external_url` 跳转逻辑（按钮自动变为"前往购买"并跳转有赞商城）。
 
 ### 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/pages/MamaAssistant.tsx` | 引入 `usePackagesPurchased`，检查 `synergy_bundle`；已购时隐藏第86-102行的 sticky 横幅 |
-| `src/pages/LaogeAI.tsx` | 同上，已购时隐藏第76-89行的 sticky 横幅 |
-
-### 逻辑
-
-```typescript
-const { user } = useAuth();
-const { data: purchasedMap } = usePackagesPurchased(['synergy_bundle']);
-const campPurchased = !!user && !!purchasedMap?.['synergy_bundle'];
-// campPurchased 为 true → 不渲染横幅
-// 未登录 → 展示横幅
-```
+| 数据库迁移 | UPDATE 1行，设置 external_url |
 
