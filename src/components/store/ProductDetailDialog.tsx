@@ -222,7 +222,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
           {/* Sticky buy button at bottom */}
           <div className="p-4 border-t bg-background shrink-0">
             <Button
-              onClick={() => onBuy(product)}
+              onClick={handleBuyClick}
               disabled={outOfStock}
               className="w-full"
               size="lg"
