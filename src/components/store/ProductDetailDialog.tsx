@@ -13,6 +13,12 @@ const YOUZAN_QR_MAP: Record<string, string> = {
   '3ept17m02a8x5x3': youzan1packQr, // 359单瓶装
 };
 
+// 有劲专属优惠券信息
+const COUPON_INFO: Record<string, { discount: number; threshold: string }> = {
+  '3ept17m02a8x5x3': { discount: 40, threshold: '389元单瓶可用' },
+  '26x5yk7m5xg6hyx': { discount: 397, threshold: '1556元4瓶装可用' },
+};
+
 interface Product {
   id: string;
   product_name: string;
