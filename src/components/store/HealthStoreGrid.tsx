@@ -143,8 +143,16 @@ export function HealthStoreGrid() {
 
   const handleBuy = (product: Product) => {
     if (requireLogin()) return;
-    // 有外部链接的商品直接跳转（如有赞商城）
+    // 有外部链接的商品：小程序环境弹出小程序码，其他环境直接跳转
     if (product.external_url) {
+      if (isMiniProgram) {
+        const match = Object.keys(YOUZAN_QR_MAP).find(k => product.external_url!.includes(k));
+        if (match) {
+          setQrImage(YOUZAN_QR_MAP[match]);
+          setQrDialogOpen(true);
+          return;
+        }
+      }
       window.open(product.external_url, '_blank');
       return;
     }
