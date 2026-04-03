@@ -229,6 +229,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
 
           {/* Sticky buy button at bottom */}
           <div className="p-4 border-t bg-background shrink-0">
+            {product.external_url && (() => {
+              const matchKey = Object.keys(COUPON_INFO).find(k => product.external_url!.includes(k));
+              const info = matchKey ? COUPON_INFO[matchKey] : null;
+              if (!info) return null;
+              return (
+                <div className="mb-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
+                  <p className="text-sm font-semibold text-amber-800">🎁 有劲专属福利</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    跳转有赞商城后，点击<span className="font-bold">「客服」</span>，说暗号<span className="font-bold text-orange-600">「有劲专属」</span>领优惠券
+                  </p>
+                  <p className="text-xs text-amber-600 mt-0.5">立减{info.discount}元（{info.threshold}）</p>
+                </div>
+              );
+            })()}
             <Button
               onClick={handleBuyClick}
               disabled={outOfStock}
