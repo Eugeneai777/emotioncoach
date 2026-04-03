@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin, ExternalLink } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetector";
 import youzan4packQr from "@/assets/youzan-store-4pack-qr.png";
+import youzan1packQr from "@/assets/youzan-store-1pack-qr.png";
 
 // 有赞商品标识 → 小程序码映射（与 HealthStoreGrid 保持一致）
 const YOUZAN_QR_MAP: Record<string, string> = {
-  '26x5yk7m5xg6hyx': youzan4packQr,
+  '26x5yk7m5xg6hyx': youzan4packQr, // 1159四瓶装
+  '3ept17m02a8x5x3': youzan1packQr, // 359单瓶装
 };
 
 interface Product {
