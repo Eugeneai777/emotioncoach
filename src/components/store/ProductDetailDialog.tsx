@@ -93,6 +93,23 @@ function parseDescription(text: string) {
 
 export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: ProductDetailDialogProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const isMiniProgram = detectPlatform() === 'mini_program';
+
+  // 小程序环境下外部链接商品：弹出小程序码
+  const handleBuyClick = () => {
+    if (!product) return;
+    if (product.external_url && isMiniProgram) {
+      const match = Object.keys(YOUZAN_QR_MAP).find(k => product.external_url!.includes(k));
+      if (match) {
+        setQrImage(YOUZAN_QR_MAP[match]);
+        setQrDialogOpen(true);
+        return;
+      }
+    }
+    onBuy(product);
+  };
 
   if (!product) return null;
 
