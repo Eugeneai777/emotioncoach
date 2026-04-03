@@ -1,43 +1,30 @@
 
 
-# 修复财富觉醒训练营打卡页显示情绪解压内容的问题
+# 情绪健康测评结果页：推荐训练营改为"7天有劲训练营"
 
-## 问题根因
+## 需要修改的内容
 
-财富觉醒训练营（`wealth_block_7`）有专属打卡页 `/wealth-camp-checkin`（`WealthCampCheckIn.tsx`），但多个入口错误地将用户导航到通用打卡页 `/camp-checkin/:campId`（`CampCheckIn.tsx`），后者只包含情绪解压/亲子营内容，没有财富营的冥想、教练对话等模块。
+### 1. `src/components/emotion-health/emotionHealthData.ts`
 
-受影响的入口包括：
-- `CampIntro.tsx` — "进入训练营"按钮
-- `WealthSynergyPromoPage.tsx` — 已购用户进入按钮
-- `CampList.tsx` — 训练营列表点击
-- `CampDetailSheet.tsx` — 训练营详情弹窗
-- `CampJoinSelector.tsx` — 加入训练营后跳转
+**CTA 文案**（第630行）：
+- `secondaryText`: "了解21天训练营" → "了解7天有劲训练营"
 
-## 方案
+**教练对话脚本 campId**（第658、698、738、778行）：
+- 4种情绪模式的 `campId` 全部从 `'emotion_journal_21'` 改为 `'emotion_stress_7'`
 
-在 `CampCheckIn.tsx` 加载完训练营数据后，检测 `camp_type` 是否为 wealth 类型，如果是则自动重定向到 `/wealth-camp-checkin`。这是最安全的兜底方案，无论从哪个入口进入都能正确路由。
+**底部转化配置**（第841行）：
+- `primaryCampId` 从 `'emotion_journal_21'` 改为 `'emotion_stress_7'`
+- `primary` 文案从 "进入21天情绪修复训练营" 改为 "进入7天有劲训练营"
 
-### 文件变更
+### 2. `src/components/emotion-health/EmotionHealthResult.tsx`
+
+**第275行**：
+- `navigate('/camp-intro/emotion_journal_21')` → `navigate('/camp-intro/emotion_stress_7')`
+
+## 文件变更
 
 | 文件 | 操作 |
 |---|---|
-| `src/pages/CampCheckIn.tsx` | 在 `loadCampData` 成功后增加 wealth 类型检测，自动 `navigate('/wealth-camp-checkin')` 重定向 |
-
-### 实现细节
-
-在 `CampCheckIn.tsx` 的 `loadCampData` 函数（约第286行）中，检测到 camp 的 `camp_type` 包含 `wealth` 时，执行重定向：
-
-```typescript
-if (data) {
-  // 财富营有专属打卡页，重定向过去
-  if (data.camp_type === 'wealth_block_7' || data.camp_type === 'wealth_block_21') {
-    navigate('/wealth-camp-checkin', { replace: true });
-    return;
-  }
-  setCamp(data as TrainingCamp);
-  // ...
-}
-```
-
-这样无论用户从哪个页面进入 `/camp-checkin/:campId`，只要是财富营都会被正确重定向到专属页面。
+| `src/components/emotion-health/emotionHealthData.ts` | 修改6处 `emotion_journal_21` → `emotion_stress_7`，更新相关文案 |
+| `src/components/emotion-health/EmotionHealthResult.tsx` | 修改1处导航路径 |
 
