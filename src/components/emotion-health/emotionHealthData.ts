@@ -627,7 +627,7 @@ export const resultPageSectionTitles = {
   },
   cta: {
     primarySubtext: '根据你的状态，我会陪你一步步调整节奏',
-    secondaryText: '了解21天训练营'
+    secondaryText: '了解7天有劲训练营'
   },
   compliance: '本测评为情绪状态与成长觉察工具，不构成任何医疗诊断。如你感到持续严重不适，请及时寻求专业心理支持。'
 };
@@ -655,7 +655,7 @@ export const coachDialogueScripts: Record<PatternType, PatternDialogueScript> = 
     patternName: '能量耗竭型',
     ctaButton: '开始情绪修复陪伴',
     ctaLabel: '情绪修复AI + 能量恢复营',
-    campId: 'emotion_journal_21',
+    campId: 'emotion_stress_7',
     coachType: 'emotion_recovery',
     rounds: [
       {
@@ -695,7 +695,7 @@ export const coachDialogueScripts: Record<PatternType, PatternDialogueScript> = 
     patternName: '高度紧绷型',
     ctaButton: '开始焦虑释放陪伴',
     ctaLabel: '焦虑释放AI + 行动启动营',
-    campId: 'emotion_journal_21',
+    campId: 'emotion_stress_7',
     coachType: 'anxiety_release',
     rounds: [
       {
@@ -735,7 +735,7 @@ export const coachDialogueScripts: Record<PatternType, PatternDialogueScript> = 
     patternName: '情绪压抑型',
     ctaButton: '开始情绪表达陪伴',
     ctaLabel: '情绪表达AI + 关系修复营',
-    campId: 'emotion_journal_21',
+    campId: 'emotion_stress_7',
     coachType: 'emotion_expression',
     rounds: [
       {
@@ -775,7 +775,7 @@ export const coachDialogueScripts: Record<PatternType, PatternDialogueScript> = 
     patternName: '逃避延迟型',
     ctaButton: '开始行动启动陪伴',
     ctaLabel: '行动教练AI + 执行力训练营',
-    campId: 'emotion_journal_21',
+    campId: 'emotion_stress_7',
     coachType: 'action_coach',
     rounds: [
       {
@@ -836,9 +836,9 @@ export const universalConversionRounds: ConversionRound[] = [
     content: '接下来我可以把你接入一个更系统的陪伴路径，\n包括每天的引导练习和阶段性回顾。\n\n你想继续跟我一起走下去吗？',
     waitForUser: true,
     cta: {
-      primary: '进入21天情绪修复训练营',
+      primary: '进入7天有劲训练营',
       secondary: '升级365陪伴',
-      primaryCampId: 'emotion_journal_21',
+      primaryCampId: 'emotion_stress_7',
       secondaryCampId: 'yearly_membership'
     }
   }
