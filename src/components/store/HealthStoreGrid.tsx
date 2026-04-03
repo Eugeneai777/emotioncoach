@@ -429,6 +429,23 @@ export function HealthStoreGrid() {
         openId={wechatOpenId}
         shippingInfo={shippingInfo}
       />
+
+      {/* 小程序环境：有赞商品小程序码弹窗 */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent size="sm" className="bg-white border-slate-200">
+          <div className="flex flex-col items-center gap-3 py-2">
+            {qrImage && (
+              <img
+                src={qrImage}
+                alt="有赞商品小程序码"
+                className="w-44 h-44 rounded-lg"
+              />
+            )}
+            <p className="text-sm text-amber-700 font-medium">长按识别小程序码前往下单</p>
+            <p className="text-[11px] text-slate-400">下单后商品将由卖家直接发货</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
