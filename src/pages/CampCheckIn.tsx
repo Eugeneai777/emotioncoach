@@ -284,6 +284,11 @@ const CampCheckIn = () => {
 
       if (error) throw error;
       if (data) {
+        // 财富营有专属打卡页，自动重定向
+        if (data.camp_type === 'wealth_block_7' || data.camp_type === 'wealth_block_21') {
+          navigate('/wealth-camp-checkin', { replace: true });
+          return;
+        }
         setCamp(data as TrainingCamp);
         await loadTodayProgress();
         await loadLatestBriefing();
