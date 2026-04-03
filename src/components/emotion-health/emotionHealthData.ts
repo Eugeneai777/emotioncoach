@@ -836,9 +836,9 @@ export const universalConversionRounds: ConversionRound[] = [
     content: '接下来我可以把你接入一个更系统的陪伴路径，\n包括每天的引导练习和阶段性回顾。\n\n你想继续跟我一起走下去吗？',
     waitForUser: true,
     cta: {
-      primary: '进入21天情绪修复训练营',
+      primary: '进入7天有劲训练营',
       secondary: '升级365陪伴',
-      primaryCampId: 'emotion_journal_21',
+      primaryCampId: 'emotion_stress_7',
       secondaryCampId: 'yearly_membership'
     }
   }
