@@ -6,12 +6,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { ProductDetailDialog } from "./ProductDetailDialog";
 import { CheckoutForm, type CheckoutInfo } from "./CheckoutForm";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
+import { detectPlatform } from "@/lib/platformDetector";
+import youzan4packQr from "@/assets/youzan-store-4pack-qr.png";
+
+// 有赞商品标识 → 小程序码映射
+const YOUZAN_QR_MAP: Record<string, string> = {
+  '26x5yk7m5xg6hyx': youzan4packQr, // 1159四瓶装
+};
 
 const STORE_CHECKOUT_CACHE_KEY = 'store_pending_checkout';
 const STORE_PACKAGE_CACHE_KEY = 'store_pending_package';
@@ -52,6 +60,9 @@ export function HealthStoreGrid() {
   const [payOpen, setPayOpen] = useState(false);
   const [payPackage, setPayPackage] = useState<{ key: string; name: string; price: number } | null>(null);
   const [pendingCheckoutInfo, setPendingCheckoutInfo] = useState<CheckoutInfo | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const isMiniProgram = detectPlatform() === 'mini_program';
 
   // 缓存结账信息（OAuth 跳转前保存，回来后恢复）
   const cacheCheckoutState = useCallback((info: CheckoutInfo, pkg: { key: string; name: string; price: number }, productId: string) => {
@@ -132,8 +143,16 @@ export function HealthStoreGrid() {
 
   const handleBuy = (product: Product) => {
     if (requireLogin()) return;
-    // 有外部链接的商品直接跳转（如有赞商城）
+    // 有外部链接的商品：小程序环境弹出小程序码，其他环境直接跳转
     if (product.external_url) {
+      if (isMiniProgram) {
+        const match = Object.keys(YOUZAN_QR_MAP).find(k => product.external_url!.includes(k));
+        if (match) {
+          setQrImage(YOUZAN_QR_MAP[match]);
+          setQrDialogOpen(true);
+          return;
+        }
+      }
       window.open(product.external_url, '_blank');
       return;
     }
@@ -410,6 +429,23 @@ export function HealthStoreGrid() {
         openId={wechatOpenId}
         shippingInfo={shippingInfo}
       />
+
+      {/* 小程序环境：有赞商品小程序码弹窗 */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent size="sm" className="bg-white border-slate-200">
+          <div className="flex flex-col items-center gap-3 py-2">
+            {qrImage && (
+              <img
+                src={qrImage}
+                alt="有赞商品小程序码"
+                className="w-44 h-44 rounded-lg"
+              />
+            )}
+            <p className="text-sm text-amber-700 font-medium">长按识别小程序码前往下单</p>
+            <p className="text-[11px] text-slate-400">下单后商品将由卖家直接发货</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

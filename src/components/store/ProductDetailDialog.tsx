@@ -3,6 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Truck, X, Target, AlertCircle, Lightbulb, Star, Pin, ExternalLink } from "lucide-react";
+import { detectPlatform } from "@/lib/platformDetector";
+import youzan4packQr from "@/assets/youzan-store-4pack-qr.png";
+
+// 有赞商品标识 → 小程序码映射（与 HealthStoreGrid 保持一致）
+const YOUZAN_QR_MAP: Record<string, string> = {
+  '26x5yk7m5xg6hyx': youzan4packQr,
+};
 
 interface Product {
   id: string;
@@ -86,6 +93,23 @@ function parseDescription(text: string) {
 
 export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: ProductDetailDialogProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const isMiniProgram = detectPlatform() === 'mini_program';
+
+  // 小程序环境下外部链接商品：弹出小程序码
+  const handleBuyClick = () => {
+    if (!product) return;
+    if (product.external_url && isMiniProgram) {
+      const match = Object.keys(YOUZAN_QR_MAP).find(k => product.external_url!.includes(k));
+      if (match) {
+        setQrImage(YOUZAN_QR_MAP[match]);
+        setQrDialogOpen(true);
+        return;
+      }
+    }
+    onBuy(product);
+  };
 
   if (!product) return null;
 
@@ -198,7 +222,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
           {/* Sticky buy button at bottom */}
           <div className="p-4 border-t bg-background shrink-0">
             <Button
-              onClick={() => onBuy(product)}
+              onClick={handleBuyClick}
               disabled={outOfStock}
               className="w-full"
               size="lg"
@@ -225,6 +249,23 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
           <img src={previewImage} alt="大图预览" className="max-w-full max-h-full object-contain" />
         </div>
       )}
+
+      {/* 小程序环境：有赞商品小程序码弹窗 */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent size="sm" className="bg-white border-slate-200">
+          <div className="flex flex-col items-center gap-3 py-2">
+            {qrImage && (
+              <img
+                src={qrImage}
+                alt="有赞商品小程序码"
+                className="w-44 h-44 rounded-lg"
+              />
+            )}
+            <p className="text-sm text-amber-700 font-medium">长按识别小程序码前往下单</p>
+            <p className="text-[11px] text-slate-400">下单后商品将由卖家直接发货</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
