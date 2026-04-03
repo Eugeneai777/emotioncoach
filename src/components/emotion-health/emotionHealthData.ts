@@ -775,7 +775,7 @@ export const coachDialogueScripts: Record<PatternType, PatternDialogueScript> = 
     patternName: '逃避延迟型',
     ctaButton: '开始行动启动陪伴',
     ctaLabel: '行动教练AI + 执行力训练营',
-    campId: 'emotion_journal_21',
+    campId: 'emotion_stress_7',
     coachType: 'action_coach',
     rounds: [
       {
