@@ -60,6 +60,9 @@ export function HealthStoreGrid() {
   const [payOpen, setPayOpen] = useState(false);
   const [payPackage, setPayPackage] = useState<{ key: string; name: string; price: number } | null>(null);
   const [pendingCheckoutInfo, setPendingCheckoutInfo] = useState<CheckoutInfo | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const isMiniProgram = detectPlatform() === 'mini_program';
 
   // 缓存结账信息（OAuth 跳转前保存，回来后恢复）
   const cacheCheckoutState = useCallback((info: CheckoutInfo, pkg: { key: string; name: string; price: number }, productId: string) => {
