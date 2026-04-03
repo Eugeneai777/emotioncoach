@@ -13,6 +13,12 @@ const YOUZAN_QR_MAP: Record<string, string> = {
   '3ept17m02a8x5x3': youzan1packQr, // 359单瓶装
 };
 
+// 有劲专属优惠券信息
+const COUPON_INFO: Record<string, { discount: number; threshold: string }> = {
+  '3ept17m02a8x5x3': { discount: 40, threshold: '389元单瓶可用' },
+  '26x5yk7m5xg6hyx': { discount: 397, threshold: '1556元4瓶装可用' },
+};
+
 interface Product {
   id: string;
   product_name: string;
@@ -223,6 +229,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
 
           {/* Sticky buy button at bottom */}
           <div className="p-4 border-t bg-background shrink-0">
+            {product.external_url && (() => {
+              const matchKey = Object.keys(COUPON_INFO).find(k => product.external_url!.includes(k));
+              const info = matchKey ? COUPON_INFO[matchKey] : null;
+              if (!info) return null;
+              return (
+                <div className="mb-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
+                  <p className="text-sm font-semibold text-amber-800">🎁 有劲专属福利</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    跳转有赞商城后，点击<span className="font-bold">「客服」</span>，说暗号<span className="font-bold text-orange-600">「有劲专属」</span>领优惠券
+                  </p>
+                  <p className="text-xs text-amber-600 mt-0.5">立减{info.discount}元（{info.threshold}）</p>
+                </div>
+              );
+            })()}
             <Button
               onClick={handleBuyClick}
               disabled={outOfStock}
@@ -264,6 +284,19 @@ export function ProductDetailDialog({ product, open, onOpenChange, onBuy }: Prod
               />
             )}
             <p className="text-sm text-amber-700 font-medium">长按识别小程序码前往下单</p>
+            {product?.external_url && (() => {
+              const matchKey = Object.keys(COUPON_INFO).find(k => product.external_url!.includes(k));
+              const info = matchKey ? COUPON_INFO[matchKey] : null;
+              if (!info) return null;
+              return (
+                <div className="w-full rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-3 py-2 text-center">
+                  <p className="text-xs text-amber-700">
+                    下单后点击<span className="font-bold">「客服」</span>，说暗号<span className="font-bold text-orange-600">「有劲专属」</span>领券
+                  </p>
+                  <p className="text-xs text-amber-600 mt-0.5">立减{info.discount}元（{info.threshold}）</p>
+                </div>
+              );
+            })()}
             <p className="text-[11px] text-slate-400">下单后商品将由卖家直接发货</p>
           </div>
         </DialogContent>
