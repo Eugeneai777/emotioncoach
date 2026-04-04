@@ -61,8 +61,7 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // supabaseUrl and serviceRoleKey already declared above
 
     const mode = hasOpenIds ? 'openid' : 'userId';
     const targets = hasOpenIds ? openids : user_ids;
