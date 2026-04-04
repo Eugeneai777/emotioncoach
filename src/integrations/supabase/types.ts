@@ -10928,6 +10928,72 @@ export type Database = {
         }
         Relationships: []
       }
+      wechat_broadcast_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          custom_message: string | null
+          custom_title: string | null
+          custom_url: string | null
+          fail_count: number
+          id: string
+          last_error: string | null
+          processed_count: number
+          scenario: string
+          started_at: string | null
+          status: string
+          success_count: number
+          target_mode: string
+          target_openids: string[] | null
+          target_user_ids: string[] | null
+          total_count: number
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          custom_message?: string | null
+          custom_title?: string | null
+          custom_url?: string | null
+          fail_count?: number
+          id?: string
+          last_error?: string | null
+          processed_count?: number
+          scenario?: string
+          started_at?: string | null
+          status?: string
+          success_count?: number
+          target_mode?: string
+          target_openids?: string[] | null
+          target_user_ids?: string[] | null
+          total_count?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          custom_message?: string | null
+          custom_title?: string | null
+          custom_url?: string | null
+          fail_count?: number
+          id?: string
+          last_error?: string | null
+          processed_count?: number
+          scenario?: string
+          started_at?: string | null
+          status?: string
+          success_count?: number
+          target_mode?: string
+          target_openids?: string[] | null
+          target_user_ids?: string[] | null
+          total_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wechat_login_scenes: {
         Row: {
           confirmed_at: string | null
