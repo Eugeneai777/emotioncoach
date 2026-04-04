@@ -188,7 +188,7 @@ export function installApiErrorTracker() {
         args[0],
         { ...init, signal: existingSignal || controller!.signal },
       ]);
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       const responseTime = Math.round(performance.now() - start);
 
       if (!response.ok) {
