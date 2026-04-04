@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageLayout } from "./shared/AdminPageLayout";
 import { AdminFilterBar } from "./shared/AdminFilterBar";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Loader2, CheckCircle2, XCircle, Users, Globe } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle } from "lucide-react";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 const SCENARIOS = [
   { value: "default", label: "默认通知" },
@@ -40,39 +42,97 @@ interface WechatUser {
   display_name: string | null;
 }
 
-interface SendResult {
+interface BroadcastJob {
   id: string;
-  success: boolean;
-  reason?: string;
+  status: string;
+  total_count: number;
+  processed_count: number;
+  success_count: number;
+  fail_count: number;
+  last_error: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
 }
 
 export default function WechatBroadcast() {
-  // Mode: false = bound users, true = all followers
   const [allFollowersMode, setAllFollowersMode] = useState(false);
-
-  // Bound users state
   const [users, setUsers] = useState<WechatUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // All followers state
   const [followerCount, setFollowerCount] = useState<number | null>(null);
   const [followerOpenIds, setFollowerOpenIds] = useState<string[]>([]);
   const [fetchingFollowers, setFetchingFollowers] = useState(false);
-
-  // Common state
   const [scenario, setScenario] = useState("default");
   const [customTitle, setCustomTitle] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [results, setResults] = useState<SendResult[] | null>(null);
+
+  // Job tracking
+  const [activeJob, setActiveJob] = useState<BroadcastJob | null>(null);
 
   useEffect(() => {
     fetchUsers();
+    checkActiveJob();
   }, []);
+
+  // Subscribe to realtime updates for active job
+  useEffect(() => {
+    if (!activeJob || activeJob.status === 'completed' || activeJob.status === 'failed') return;
+
+    const channel = supabase
+      .channel(`broadcast-job-${activeJob.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'wechat_broadcast_jobs',
+          filter: `id=eq.${activeJob.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setActiveJob({
+            id: updated.id,
+            status: updated.status,
+            total_count: updated.total_count,
+            processed_count: updated.processed_count,
+            success_count: updated.success_count,
+            fail_count: updated.fail_count,
+            last_error: updated.last_error,
+            created_at: updated.created_at,
+            started_at: updated.started_at,
+            completed_at: updated.completed_at,
+          });
+          if (updated.status === 'completed') {
+            toast.success(`群发完成：成功 ${updated.success_count}，失败 ${updated.fail_count}`);
+          } else if (updated.status === 'failed') {
+            toast.error(`群发失败：${updated.last_error || '未知错误'}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeJob?.id, activeJob?.status]);
+
+  async function checkActiveJob() {
+    const { data } = await supabase
+      .from('wechat_broadcast_jobs' as any)
+      .select('*')
+      .in('status', ['pending', 'running'])
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0) {
+      setActiveJob(data[0] as any);
+    }
+  }
 
   async function fetchUsers() {
     setLoading(true);
@@ -159,11 +219,11 @@ export default function WechatBroadcast() {
   }
 
   const sendCount = allFollowersMode ? followerOpenIds.length : selectedIds.size;
+  const hasActiveJob = activeJob && (activeJob.status === 'pending' || activeJob.status === 'running');
 
   async function handleSend() {
     setConfirmOpen(false);
     setSending(true);
-    setResults(null);
 
     try {
       const body = allFollowersMode
@@ -184,19 +244,95 @@ export default function WechatBroadcast() {
 
       const { data, error } = await supabase.functions.invoke("batch-send-wechat-template", { body });
 
-      if (error) throw error;
+      if (data?.error || error) {
+        throw new Error(await extractEdgeFunctionError(data, error, '发送失败'));
+      }
 
-      setResults(data.results || []);
-      toast.success(`发送完成：成功 ${data.success_count}，失败 ${data.fail_count}`);
+      // Job created successfully - start tracking
+      if (data?.job_id) {
+        setActiveJob({
+          id: data.job_id,
+          status: 'pending',
+          total_count: data.total,
+          processed_count: 0,
+          success_count: 0,
+          fail_count: 0,
+          last_error: null,
+          created_at: new Date().toISOString(),
+          started_at: null,
+          completed_at: null,
+        });
+        toast.success(`群发任务已创建，共 ${data.total} 人，后台处理中…`);
+      }
     } catch (err: any) {
-      toast.error("发送失败: " + (err.message || "未知错误"));
+      toast.error(err.message || "发送失败");
     } finally {
       setSending(false);
     }
   }
 
+  function dismissJob() {
+    setActiveJob(null);
+  }
+
+  const jobProgress = activeJob && activeJob.total_count > 0
+    ? Math.round((activeJob.processed_count / activeJob.total_count) * 100)
+    : 0;
+
   return (
     <AdminPageLayout title="微信群发" description="向已关注公众号的用户批量发送模版消息">
+      {/* Active Job Progress Card */}
+      {activeJob && (
+        <Card className={`mb-4 border-2 ${
+          activeJob.status === 'completed' ? 'border-green-200 bg-green-50/50' :
+          activeJob.status === 'failed' ? 'border-red-200 bg-red-50/50' :
+          'border-blue-200 bg-blue-50/50'
+        }`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              {activeJob.status === 'completed' ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              ) : activeJob.status === 'failed' ? (
+                <XCircle className="h-5 w-5 text-red-600" />
+              ) : (
+                <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+              )}
+              群发任务 {
+                activeJob.status === 'pending' ? '等待中' :
+                activeJob.status === 'running' ? '发送中' :
+                activeJob.status === 'completed' ? '已完成' :
+                activeJob.status === 'failed' ? '发送失败' : activeJob.status
+              }
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Progress value={jobProgress} className="h-2" />
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                进度：{activeJob.processed_count} / {activeJob.total_count}
+              </span>
+              <div className="flex gap-3">
+                <span className="text-green-600">成功 {activeJob.success_count}</span>
+                {activeJob.fail_count > 0 && (
+                  <span className="text-red-600">失败 {activeJob.fail_count}</span>
+                )}
+              </div>
+            </div>
+            {activeJob.last_error && (
+              <div className="flex items-start gap-2 text-xs text-red-600 bg-red-100/50 rounded p-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>最近错误：{activeJob.last_error}</span>
+              </div>
+            )}
+            {(activeJob.status === 'completed' || activeJob.status === 'failed') && (
+              <Button variant="outline" size="sm" onClick={dismissJob}>
+                关闭
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
         {/* 左侧：用户选择 */}
         <Card className="lg:col-span-2">
@@ -214,7 +350,6 @@ export default function WechatBroadcast() {
                   checked={allFollowersMode}
                   onCheckedChange={(checked) => {
                     setAllFollowersMode(checked);
-                    setResults(null);
                   }}
                 />
                 <span className="text-xs text-muted-foreground font-normal">全部关注者</span>
@@ -223,7 +358,6 @@ export default function WechatBroadcast() {
           </CardHeader>
           <CardContent className="space-y-3">
             {allFollowersMode ? (
-              /* 全部关注者模式 */
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Button
@@ -260,7 +394,6 @@ export default function WechatBroadcast() {
                 )}
               </div>
             ) : (
-              /* 绑定用户模式 */
               <>
                 <AdminFilterBar
                   searchValue={search}
@@ -363,13 +496,18 @@ export default function WechatBroadcast() {
 
               <Button
                 className="w-full"
-                disabled={sendCount === 0 || sending}
+                disabled={sendCount === 0 || sending || !!hasActiveJob}
                 onClick={() => setConfirmOpen(true)}
               >
                 {sending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    发送中…
+                    提交中…
+                  </>
+                ) : hasActiveJob ? (
+                  <>
+                    <Clock className="h-4 w-4" />
+                    任务进行中…
                   </>
                 ) : (
                   <>
@@ -380,37 +518,6 @@ export default function WechatBroadcast() {
               </Button>
             </CardContent>
           </Card>
-
-          {/* 发送结果 */}
-          {results && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  发送结果（成功 {results.filter(r => r.success).length} / 失败 {results.filter(r => !r.success).length}）
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                  {results.map((r, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-2 text-xs py-1"
-                    >
-                      {r.success ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                      )}
-                      <span className="font-mono truncate">{r.id.slice(0, 12)}…</span>
-                      {!r.success && (
-                        <span className="text-muted-foreground ml-auto truncate max-w-[120px]">{r.reason}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
@@ -434,6 +541,10 @@ export default function WechatBroadcast() {
                   <br />自定义标题：{customTitle}
                 </>
               )}
+              <br />
+              <span className="text-muted-foreground text-xs mt-2 block">
+                任务将在后台处理，你可以在页面上查看实时进度。
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

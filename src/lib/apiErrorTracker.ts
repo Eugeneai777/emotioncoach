@@ -178,18 +178,17 @@ export function installApiErrorTracker() {
     const start = performance.now();
     totalCalls++;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
-
-    // Merge signals if caller already provided one
+    // If caller already provided a signal, respect it and skip our timeout
     const existingSignal = init?.signal || (args[0] as Request)?.signal;
+    const controller = existingSignal ? null : new AbortController();
+    const timeoutId = controller ? setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS) : null;
 
     try {
       const response = await originalFetch.apply(this, [
         args[0],
-        { ...init, signal: existingSignal || controller.signal },
+        { ...init, signal: existingSignal || controller!.signal },
       ]);
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       const responseTime = Math.round(performance.now() - start);
 
       if (!response.ok) {
@@ -229,7 +228,7 @@ export function installApiErrorTracker() {
 
       return response;
     } catch (err: any) {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       const responseTime = Math.round(performance.now() - start);
       failedCalls++;
 
