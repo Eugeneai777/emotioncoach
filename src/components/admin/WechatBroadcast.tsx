@@ -122,15 +122,31 @@ export default function WechatBroadcast() {
   }, [activeJob?.id, activeJob?.status]);
 
   async function checkActiveJob() {
-    const { data } = await supabase
+    // First check for active (pending/running) jobs
+    const { data: activeData } = await supabase
       .from('wechat_broadcast_jobs' as any)
       .select('*')
       .in('status', ['pending', 'running'])
       .order('created_at', { ascending: false })
       .limit(1);
 
-    if (data && data.length > 0) {
-      setActiveJob(data[0] as any);
+    if (activeData && activeData.length > 0) {
+      setActiveJob(activeData[0] as any);
+      return;
+    }
+
+    // If no active job, show the most recent completed/failed job (within last 30 min)
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: recentData } = await supabase
+      .from('wechat_broadcast_jobs' as any)
+      .select('*')
+      .in('status', ['completed', 'failed'])
+      .gte('updated_at', thirtyMinAgo)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (recentData && recentData.length > 0) {
+      setActiveJob(recentData[0] as any);
     }
   }
 
