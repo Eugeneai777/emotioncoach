@@ -351,6 +351,16 @@ export default function WechatBroadcast() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label>跳转链接（可选）</Label>
+                <Input
+                  placeholder="留空则跳转首页，如 https://wechat.eugenewe.net/event/ai-breakthrough"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">用户点击模板消息后跳转的页面</p>
+              </div>
+
               <Button
                 className="w-full"
                 disabled={sendCount === 0 || sending}
