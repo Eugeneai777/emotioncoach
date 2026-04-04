@@ -228,7 +228,7 @@ export function installApiErrorTracker() {
 
       return response;
     } catch (err: any) {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       const responseTime = Math.round(performance.now() - start);
       failedCalls++;
 
