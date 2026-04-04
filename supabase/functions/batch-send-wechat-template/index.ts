@@ -11,7 +11,7 @@ serve(async (req) => {
   if (authError) return authError;
 
   try {
-    const { user_ids, openids, scenario, custom_title, custom_message } = await req.json();
+    const { user_ids, openids, scenario, custom_title, custom_message, custom_url } = await req.json();
 
     const hasUserIds = user_ids && Array.isArray(user_ids) && user_ids.length > 0;
     const hasOpenIds = openids && Array.isArray(openids) && openids.length > 0;

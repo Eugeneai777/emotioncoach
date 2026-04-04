@@ -720,7 +720,7 @@ serve(async (req) => {
     const messageBody = {
       touser: openid,
       template_id: templateId,
-      url: `${wechatBaseUrl}/?notification=${notification.id}`,
+      url: notification.custom_url || `${wechatBaseUrl}/?notification=${notification.id}`,
       data: messageData,
     };
 
