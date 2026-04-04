@@ -46,6 +46,7 @@ serve(async (req) => {
           title: custom_title || '来自劲老师的消息',
           message: custom_message || '',
           id: `batch-${Date.now()}-${target.slice(0, 8)}`,
+          custom_url: custom_url || undefined,
         };
 
         // 根据模式构造请求体
