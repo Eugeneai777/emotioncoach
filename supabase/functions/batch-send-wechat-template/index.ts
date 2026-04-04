@@ -11,7 +11,7 @@ serve(async (req) => {
   if (authError) return authError;
 
   try {
-    const { user_ids, openids, scenario, custom_title, custom_message } = await req.json();
+    const { user_ids, openids, scenario, custom_title, custom_message, custom_url } = await req.json();
 
     const hasUserIds = user_ids && Array.isArray(user_ids) && user_ids.length > 0;
     const hasOpenIds = openids && Array.isArray(openids) && openids.length > 0;
@@ -46,6 +46,7 @@ serve(async (req) => {
           title: custom_title || '来自劲老师的消息',
           message: custom_message || '',
           id: `batch-${Date.now()}-${target.slice(0, 8)}`,
+          custom_url: custom_url || undefined,
         };
 
         // 根据模式构造请求体

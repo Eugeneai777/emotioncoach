@@ -217,6 +217,9 @@ const GrowthSupportPath = lazyRetry(() => import("./pages/GrowthSupportPath"));
 
 // 推广页
 const PromoPage = lazyRetry(() => import("./pages/PromoPage"));
+
+// 活动页
+const EventAIBreakthrough = lazyRetry(() => import("./pages/EventAIBreakthrough"));
 const SynergyPromoPage = lazyRetry(() => import("./pages/SynergyPromoPage"));
 const WealthSynergyPromoPage = lazyRetry(() => import("./pages/WealthSynergyPromoPage"));
 const ZhileHavrutaPromoPage = lazyRetry(() => import("./pages/ZhileHavrutaPromoPage"));
@@ -404,6 +407,7 @@ const App = () => (
               <Route path="/promo/zhile-havruta" element={<ZhileHavrutaPromoPage />} />
               <Route path="/zhile-promo" element={<ZhilePromoHub />} />
               <Route path="/zhile-products" element={<ZhileProductsPage />} />
+              <Route path="/event/ai-breakthrough" element={<EventAIBreakthrough />} />
               <Route path="/promo/:slug" element={<PromoPage />} />
               <Route path="/story-coach" element={<StoryCoach />} />
               <Route path="/story-coach-intro" element={<StoryCoachIntro />} />

@@ -65,6 +65,7 @@ export default function WechatBroadcast() {
   const [scenario, setScenario] = useState("default");
   const [customTitle, setCustomTitle] = useState("");
   const [customMessage, setCustomMessage] = useState("");
+  const [customUrl, setCustomUrl] = useState("");
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
@@ -171,12 +172,14 @@ export default function WechatBroadcast() {
             scenario,
             custom_title: customTitle || undefined,
             custom_message: customMessage || undefined,
+            custom_url: customUrl || undefined,
           }
         : {
             user_ids: Array.from(selectedIds),
             scenario,
             custom_title: customTitle || undefined,
             custom_message: customMessage || undefined,
+            custom_url: customUrl || undefined,
           };
 
       const { data, error } = await supabase.functions.invoke("batch-send-wechat-template", { body });
@@ -346,6 +349,16 @@ export default function WechatBroadcast() {
                   maxLength={200}
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>跳转链接（可选）</Label>
+                <Input
+                  placeholder="留空则跳转首页，如 https://wechat.eugenewe.net/event/ai-breakthrough"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">用户点击模板消息后跳转的页面</p>
               </div>
 
               <Button
