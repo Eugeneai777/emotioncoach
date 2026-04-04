@@ -1,58 +1,87 @@
 
 
-# 商品详情页增加"有劲专属优惠券"提示
+# 线上说明会活动落地页 + 模板消息群发
 
-## 分析
+## 概述
 
-两个外部商品（359单瓶装、1159四瓶装）跳转有赞商城购买，用户到有赞后可联系客服说暗号领专属优惠券。当前详情页没有任何提示，用户不知道有这个福利，会损失转化动力。
+创建一个专属活动落地页 `/event/ai-breakthrough`，展示完整活动信息，然后通过现有微信群发工具发送模板消息，用户点击后跳转到该页面。
 
-## 方案
+## 需要做的事
 
-在详情页底部购买按钮上方，针对有 `external_url` 的商品，增加一个醒目但不突兀的"专属福利"提示卡片。
+### 1. 创建活动落地页组件
 
-### 提示卡片设计
+**新建文件**: `src/pages/EventAIBreakthrough.tsx`
 
-```text
-┌─────────────────────────────────┐
-│ 🎁 有劲专属福利                   │
-│ 跳转有赞商城后，点击【客服】       │
-│ 说暗号「有劲专属」领专属优惠券      │
-│ 单瓶装立减40元 · 4瓶装立减397元   │
-└─────────────────────────────────┘
-│         [前往购买 ¥xxx]           │
+一个精美的移动端优先活动页面，包含：
+- 顶部 Banner：活动主题「普通人如何靠"AI+真实关系"破圈？」
+- 活动信息卡片：时间、地点、会议号、密码
+- 活动亮点/痛点共鸣区（学了AI用不起来、想进垂直领域找不到入口...）
+- 一键复制会议号按钮
+- 底部 CTA：分享给好友
+
+设计风格：暖色渐变，与有劲AI整体品牌一致。
+
+### 2. 注册路由
+
+**修改文件**: `src/App.tsx`
+
+添加路由 `/event/ai-breakthrough`，懒加载 `EventAIBreakthrough`。
+
+### 3. 更新 OG 配置映射
+
+**修改文件**: `src/config/ogConfig.ts`
+
+在 `pathToKeyMap` 中添加 `/event/ai-breakthrough` 映射，用于微信分享卡片展示。
+
+### 4. 修改模板消息支持自定义跳转 URL
+
+**修改文件**: `supabase/functions/send-wechat-template-message/index.ts`
+
+在请求参数中支持 `custom_url` 字段，当传入时替代默认的 `/?notification=...` 链接：
+
+```typescript
+// 第720行附近
+const messageBody = {
+  touser: openid,
+  template_id: templateId,
+  url: notification.custom_url || `${wechatBaseUrl}/?notification=${notification.id}`,
+  data: messageData,
+};
 ```
 
-- 渐变背景卡片（amber/orange 暖色调），视觉上像"福利彩蛋"
-- 暗号文字加粗高亮，便于用户记忆和复制
-- 仅对 `external_url` 存在的商品显示
-- 根据商品价格动态展示对应优惠金额（359→立减40，1159→立减397）
+### 5. batch-send 透传 custom_url
 
-### 文件变更
+**修改文件**: `supabase/functions/batch-send-wechat-template/index.ts`
+
+接收 `custom_url` 参数并透传到 notification 对象中。
+
+### 6. 管理后台群发工具支持自定义链接
+
+**修改文件**: `src/components/admin/WechatBroadcast.tsx`
+
+在发送表单中增加"跳转链接"输入框（可选），填写后会作为 `custom_url` 传入。
+
+---
+
+## 发送流程
+
+1. 活动页上线后，管理员进入 `/admin/wechat-broadcast`
+2. 选择"全部粉丝"模式
+3. 填写标题：`免费线上说明会｜AI+真实关系破圈`
+4. 填写内容：`4月4日周六 20:00 腾讯会议`
+5. 填写跳转链接：`https://wechat.eugenewe.net/event/ai-breakthrough`
+6. 点击发送
+
+用户收到模板消息 → 点击 → 打开活动落地页 → 看到完整信息 → 复制会议号参加
+
+## 文件变更总结
 
 | 文件 | 操作 |
 |---|---|
-| `src/components/store/ProductDetailDialog.tsx` | 在购买按钮上方（约第224行 sticky 区域内），新增专属福利提示卡片，仅对 external_url 商品渲染 |
-
-### 实现细节
-
-```typescript
-// 优惠券映射
-const COUPON_INFO: Record<string, { discount: number; threshold: string }> = {
-  '3ept17m02a8x5x3': { discount: 40, threshold: '389元单瓶可用' },
-  '26x5yk7m5xg6hyx': { discount: 397, threshold: '1556元4瓶装可用' },
-};
-
-// 在 sticky 购买按钮区域内，Button 之前渲染
-{product.external_url && couponInfo && (
-  <div className="mb-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
-    <p className="text-sm font-semibold text-amber-800">🎁 有劲专属福利</p>
-    <p className="text-xs text-amber-700 mt-1">
-      跳转有赞商城后，点击<span className="font-bold">「客服」</span>，说暗号<span className="font-bold text-orange-600">「有劲专属」</span>领优惠券
-    </p>
-    <p className="text-xs text-amber-600 mt-0.5">立减{couponInfo.discount}元（{couponInfo.threshold}）</p>
-  </div>
-)}
-```
-
-小程序码弹窗（第256-270行）也同步增加该提示，确保小程序环境用户同样能看到。
+| `src/pages/EventAIBreakthrough.tsx` | 新建，活动落地页 |
+| `src/App.tsx` | 添加路由 |
+| `src/config/ogConfig.ts` | 添加路径映射 |
+| `supabase/functions/send-wechat-template-message/index.ts` | 支持 custom_url |
+| `supabase/functions/batch-send-wechat-template/index.ts` | 透传 custom_url |
+| `src/components/admin/WechatBroadcast.tsx` | 增加跳转链接输入框 |
 
