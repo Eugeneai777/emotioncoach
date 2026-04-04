@@ -66,6 +66,7 @@ export default function WechatBroadcast() {
   const [customTitle, setCustomTitle] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [customUrl, setCustomUrl] = useState("");
+  const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
 
