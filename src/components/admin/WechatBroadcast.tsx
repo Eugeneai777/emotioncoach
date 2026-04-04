@@ -172,12 +172,14 @@ export default function WechatBroadcast() {
             scenario,
             custom_title: customTitle || undefined,
             custom_message: customMessage || undefined,
+            custom_url: customUrl || undefined,
           }
         : {
             user_ids: Array.from(selectedIds),
             scenario,
             custom_title: customTitle || undefined,
             custom_message: customMessage || undefined,
+            custom_url: customUrl || undefined,
           };
 
       const { data, error } = await supabase.functions.invoke("batch-send-wechat-template", { body });
