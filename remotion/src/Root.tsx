@@ -12,6 +12,7 @@ const VIDEOS = [
     quoteIdentity: "24岁 · 研究生",
     quoteText: "凌晨三点崩溃大哭时\nAI教练陪了我整整两个小时",
     brandLine: "24小时在线 · 随时接住你",
+    audioPrefix: "video-1-midnight",
   },
   {
     id: "video-2-feelings",
