@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const audiences = [
   {
@@ -62,20 +62,20 @@ const audiences = [
 
 const AudienceHub = () => {
   const navigate = useNavigate();
-  const [illustrations, setIllustrations] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    supabase
-      .from('audience_illustrations')
-      .select('audience_id, image_url')
-      .then(({ data }) => {
-        if (data) {
-          const map: Record<string, string> = {};
-          data.forEach((row: any) => { map[row.audience_id] = `${row.image_url}?t=${Date.now()}`; });
-          setIllustrations(map);
-        }
-      });
-  }, []);
+  const { data: illustrations = {} } = useQuery({
+    queryKey: ['audience-illustrations'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('audience_illustrations')
+        .select('audience_id, image_url');
+      if (!data) return {};
+      const map: Record<string, string> = {};
+      data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
+      return map;
+    },
+    staleTime: Infinity,
+  });
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-3">
