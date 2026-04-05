@@ -31,10 +31,10 @@ serve(async (req) => {
     console.log(`TTS request: voice=${selectedVoice}, text="${text.substring(0, 30)}..."`);
     console.log(`AppID prefix: ${appId.substring(0, 6)}..., Token prefix: ${accessToken.substring(0, 6)}...`);
 
-    // 判断是否为大模型音色 (bigtts/mega)
+    // 支持手动指定 cluster，否则自动判断
     const isMegaVoice = selectedVoice.includes('bigtts') || selectedVoice.includes('mega');
-    const cluster = isMegaVoice ? "volcano_mega_tts" : "volcano_tts";
-    console.log(`Using cluster: ${cluster} (mega=${isMegaVoice})`);
+    const cluster = reqCluster || (isMegaVoice ? "volcano_mega_tts" : "volcano_tts");
+    console.log(`Using cluster: ${cluster}, voice: ${selectedVoice}`);
 
     // 火山引擎 TTS V1 HTTP 非流式接口
     const body = {
