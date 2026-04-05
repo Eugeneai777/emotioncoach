@@ -295,7 +295,20 @@ const MiniAppEntry = () => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
-  const [illustrations, setIllustrations] = useState<Record<string, string>>({});
+
+  const { data: illustrations = {} } = useQuery({
+    queryKey: ['audience-illustrations'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('audience_illustrations')
+        .select('audience_id, image_url');
+      if (!data) return {};
+      const map: Record<string, string> = {};
+      data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
+      return map;
+    },
+    staleTime: Infinity,
+  });
 
   // ── 购买/完成状态查询 ──
   const { data: purchasedMap = {} } = usePackagesPurchased([
@@ -349,18 +362,6 @@ const MiniAppEntry = () => {
   }, [user, purchasedMap, completedFreeAssessments]);
 
 
-  useEffect(() => {
-    supabase
-      .from('audience_illustrations')
-      .select('audience_id, image_url')
-      .then(({ data }) => {
-        if (data) {
-          const map: Record<string, string> = {};
-          data.forEach((row: any) => { map[row.audience_id] = `${row.image_url}?t=${Date.now()}`; });
-          setIllustrations(map);
-        }
-      });
-  }, []);
 
 
   // 小程序入口页：缓存 mp_openid / mp_unionid，供后续页面（如情绪按钮、产品中心）支付复用
