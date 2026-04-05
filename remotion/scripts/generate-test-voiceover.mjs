@@ -17,7 +17,7 @@ const segments = [
 
 for (const seg of segments) {
   console.log(`Generating: ${seg.name}...`);
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/text-to-speech`, {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/volcengine-tts`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -28,15 +28,21 @@ for (const seg of segments) {
   });
 
   if (!res.ok) {
-    console.error(`Failed ${seg.name}: ${res.status} ${await res.text()}`);
+    const errText = await res.text();
+    console.error(`Failed ${seg.name}: ${res.status} ${errText}`);
     process.exit(1);
   }
 
   const data = await res.json();
+  if (data.error) {
+    console.error(`API error for ${seg.name}:`, data.error);
+    process.exit(1);
+  }
+
   const buf = Buffer.from(data.audioContent, "base64");
   const outPath = path.join(audioDir, `${seg.name}.mp3`);
   fs.writeFileSync(outPath, buf);
   console.log(`Saved: ${outPath} (${buf.length} bytes)`);
 }
 
-console.log("All voiceover segments generated!");
+console.log("All voiceover segments generated with Volcengine TTS!");
