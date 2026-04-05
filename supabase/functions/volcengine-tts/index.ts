@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice_type } = await req.json();
+    const { text, voice_type, cluster: reqCluster } = await req.json();
 
     if (!text) {
       throw new Error('Text is required');
