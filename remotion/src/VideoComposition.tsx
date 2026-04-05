@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence } from "remotion";
+import { AbsoluteFill, Sequence, Audio, staticFile } from "remotion";
 import { Background } from "./components/Background";
 import { PainPoint } from "./scenes/PainPoint";
 import { StoryScene } from "./scenes/StoryScene";
@@ -12,13 +12,12 @@ interface Props {
   quoteIdentity: string;
   quoteText: string;
   brandLine: string;
+  audioPrefix?: string;
 }
 
 export const VideoComposition: React.FC<Props> = (props) => {
-  // 16s = 480 frames at 30fps
-  // Scene 1: Pain point (0-210, 7s)
-  // Scene 2: Story/quote (180-370, ~6.3s)
-  // Scene 3: Brand outro (340-480, ~4.7s)
+  const prefix = props.audioPrefix;
+
   return (
     <AbsoluteFill>
       <Background />
@@ -31,6 +30,20 @@ export const VideoComposition: React.FC<Props> = (props) => {
       <Sequence from={340} durationInFrames={140}>
         <BrandOutro line={props.brandLine} />
       </Sequence>
+
+      {prefix && (
+        <>
+          <Sequence from={0} durationInFrames={180}>
+            <Audio src={staticFile(`audio/${prefix}_pain.mp3`)} />
+          </Sequence>
+          <Sequence from={180} durationInFrames={160}>
+            <Audio src={staticFile(`audio/${prefix}_quote.mp3`)} />
+          </Sequence>
+          <Sequence from={340} durationInFrames={140}>
+            <Audio src={staticFile(`audio/${prefix}_outro.mp3`)} />
+          </Sequence>
+        </>
+      )}
     </AbsoluteFill>
   );
 };
