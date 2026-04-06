@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { RefreshCw, Plus, Eye, Send, Clock, CheckCircle, XCircle, FileText } from "lucide-react";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 interface WechatArticle {
   id: string;
@@ -70,7 +71,9 @@ export default function WechatArticlesManagement() {
       });
 
       clearTimeout(timeout);
-      if (error) throw error;
+      if (data?.error || error) {
+        throw new Error(await extractEdgeFunctionError(data, error, '生成失败，请稍后重试'));
+      }
 
       if (data?.success) {
         toast.success(`文章「${data.title}」${autoPublish ? '已发布' : '已生成'}！`);
@@ -92,7 +95,9 @@ export default function WechatArticlesManagement() {
         body: { action: 'publish', article_id: articleId },
       });
 
-      if (error) throw error;
+      if (data?.error || error) {
+        throw new Error(await extractEdgeFunctionError(data, error, '发布失败，请稍后重试'));
+      }
       if (data?.success) {
         toast.success('文章已发布到公众号！');
       } else {
