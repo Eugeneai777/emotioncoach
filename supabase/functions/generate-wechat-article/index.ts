@@ -287,13 +287,21 @@ JSON格式输出（不要markdown代码块）：
 
       // Step 2: Generate images
       console.log('Step 2: Generating illustrations...');
+      const articleId = crypto.randomUUID();
       const images: string[] = [];
-      for (const key of ["scene1_desc", "scene2_desc", "scene3_desc"]) {
+      const rawImages: string[] = []; // keep base64 for WeChat upload
+      for (let i = 0; i < 3; i++) {
+        const key = ["scene1_desc", "scene2_desc", "scene3_desc"][i];
         const desc = article[key];
         const prompt = `Realistic soft illustration, muted warm tones, delicate watercolor and digital art blend. ${desc}. No text, no words, no letters. Cinematic lighting, intimate atmosphere, editorial magazine quality.`;
         console.log(`  Generating: ${desc.substring(0, 60)}...`);
         const imgDataUrl = await generateImage(prompt);
-        images.push(imgDataUrl);
+        rawImages.push(imgDataUrl);
+        // Upload to Storage
+        const filename = `${articleId}/image_${i + 1}.png`;
+        const publicUrl = await uploadToStorage(supabase, imgDataUrl, filename);
+        images.push(publicUrl);
+        console.log(`  Uploaded to storage: ${filename}`);
       }
 
       // Step 3: Assemble HTML
