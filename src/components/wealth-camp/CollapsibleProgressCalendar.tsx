@@ -394,6 +394,12 @@ export function CollapsibleProgressCalendar({
                               onClick={() => {
                                 if (dot.canMakeup && !dot.isCompleted && !dot.isActiveMakeup) {
                                   onMakeupClick(dot.dayNumber);
+                                } else if (dot.isCompleted) {
+                                  onDayClick?.(dot.dayNumber, 'completed');
+                                } else if (dot.isCurrent && !dot.isCompleted) {
+                                  onDayClick?.(dot.dayNumber, 'current');
+                                } else if (dot.isFuture) {
+                                  onDayClick?.(dot.dayNumber, 'future');
                                 }
                               }}
                             >
