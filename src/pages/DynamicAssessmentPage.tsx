@@ -7,8 +7,11 @@ import { usePackageByKey } from "@/hooks/usePackages";
 import { useDynamicAssessmentHistory, useDeleteDynamicAssessmentRecord } from "@/hooks/useDynamicAssessmentHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateScore, type ScoringResult } from "@/lib/scoring-engine";
-import { Loader2 } from "lucide-react";
+import { Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
+import { AssessmentPromoShareDialog } from "@/components/dynamic-assessment/AssessmentPromoShareDialog";
 
 import { DynamicAssessmentIntro } from "@/components/dynamic-assessment/DynamicAssessmentIntro";
 import { DynamicAssessmentQuestions } from "@/components/dynamic-assessment/DynamicAssessmentQuestions";
@@ -29,6 +32,7 @@ export default function DynamicAssessmentPage() {
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Cast template to access extended fields
   const tpl = template as any;
@@ -152,17 +156,28 @@ export default function DynamicAssessmentPage() {
   // === INTRO ===
   if (phase === "intro") {
     return (
-      <>
-        <DynamicAssessmentIntro
-          template={template}
-          onStart={() => setPhase("questions")}
-          onShowHistory={() => setPhase("history")}
-          hasHistory={historyRecords.length > 0}
-          requirePayment={requirePayment}
-          hasPurchased={hasPurchased}
-          price={price}
-          onPayClick={() => setShowPayDialog(true)}
+      <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <PageHeader
+          title={template.title}
+          showBack={true}
+          rightActions={
+            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9" onClick={() => setShowShareDialog(true)}>
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+          }
         />
+        <main className="container max-w-2xl mx-auto px-4 py-4">
+          <DynamicAssessmentIntro
+            template={template}
+            onStart={() => setPhase("questions")}
+            onShowHistory={() => setPhase("history")}
+            hasHistory={historyRecords.length > 0}
+            requirePayment={requirePayment}
+            hasPurchased={hasPurchased}
+            price={price}
+            onPayClick={() => setShowPayDialog(true)}
+          />
+        </main>
         {requirePayment && packageKey && (
           <AssessmentPayDialog
             open={showPayDialog}
@@ -174,7 +189,18 @@ export default function DynamicAssessmentPage() {
             packageName={template.title}
           />
         )}
-      </>
+        <AssessmentPromoShareDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          assessmentKey={assessmentKey || ''}
+          config={{
+            emoji: template.emoji,
+            title: template.title,
+            subtitle: template.subtitle || '',
+            sharePath: `/assessment/${assessmentKey}`,
+          }}
+        />
+      </div>
     );
   }
 

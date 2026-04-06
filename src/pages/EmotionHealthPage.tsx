@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Helmet } from "react-helmet";
 import PageHeader from "@/components/PageHeader";
+import { AssessmentPromoShareDialog } from "@/components/dynamic-assessment/AssessmentPromoShareDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, History, Share2, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -361,6 +362,11 @@ export default function EmotionHealthPage() {
               result={result}
             />
           </>
+        )}
+
+        {/* 非结果页的推广分享弹窗 */}
+        {step !== 'result' && (
+          <AssessmentPromoShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} assessmentKey="emotion_health" />
         )}
 
         {isSaving && (
