@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Helmet } from "react-helmet";
 import PageHeader from "@/components/PageHeader";
+import { AssessmentPromoShareDialog } from "@/components/dynamic-assessment/AssessmentPromoShareDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, History, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -281,6 +282,11 @@ export default function MidlifeAwakeningPage() {
             <MidlifeAwakeningResult result={result} onShare={() => setShareDialogOpen(true)} onRetake={handleRetake} onViewHistory={() => { setStep('start'); setActiveTab('history'); }} aiAnalysis={aiAnalysis} aiAnalysisLoading={aiAnalysisLoading} aiAnalysisError={aiAnalysisError} />
             <MidlifeAwakeningShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} result={result} />
           </>
+        )}
+
+        {/* 非结果页的推广分享弹窗 */}
+        {step !== 'result' && (
+          <AssessmentPromoShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} assessmentKey="midlife_awakening" />
         )}
 
         {isSaving && (
