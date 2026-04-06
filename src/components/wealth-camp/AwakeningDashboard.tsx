@@ -9,6 +9,7 @@ interface AwakeningDashboardProps {
   makeupDays: number[];
   streak: number;
   onMakeupClick: (dayNumber: number) => void;
+  onDayClick?: (dayNumber: number, status: 'completed' | 'current' | 'future') => void;
   activeMakeupDay?: number | null;
   justCompletedDay?: number | null;
   className?: string;
@@ -32,6 +33,7 @@ export function AwakeningDashboard({
   makeupDays,
   streak,
   onMakeupClick,
+  onDayClick,
   activeMakeupDay,
   justCompletedDay,
   className,
@@ -56,6 +58,7 @@ export function AwakeningDashboard({
         makeupDays={makeupDays}
         streak={streak}
         onMakeupClick={onMakeupClick}
+        onDayClick={onDayClick}
         activeMakeupDay={activeMakeupDay}
         justCompletedDay={justCompletedDay}
         postGraduationCheckIns={postGraduationCheckIns}
