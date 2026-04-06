@@ -20,6 +20,7 @@ import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemorie
 import { BackfillVoiceBriefingsButton } from '@/components/wealth-camp/BackfillVoiceBriefingsButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
+import { WealthMeditationCourseOutline } from '@/components/wealth-camp/WealthMeditationCourseOutline';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
 import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
