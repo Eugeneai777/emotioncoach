@@ -66,6 +66,27 @@ async function generateImage(prompt: string): Promise<string> {
   return imageUrl; // data:image/png;base64,...
 }
 
+// Upload base64 image to Supabase Storage, return public URL
+async function uploadToStorage(supabase: any, base64DataUrl: string, filename: string): Promise<string> {
+  const base64Data = base64DataUrl.replace(/^data:image\/\w+;base64,/, '');
+  const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+  const { error } = await supabase.storage
+    .from('wechat-article-images')
+    .upload(filename, binaryData, {
+      contentType: 'image/png',
+      upsert: true,
+    });
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`);
+
+  const { data: urlData } = supabase.storage
+    .from('wechat-article-images')
+    .getPublicUrl(filename);
+
+  return urlData.publicUrl;
+}
+
 async function getWechatAccessToken(): Promise<string> {
   const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
   const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
@@ -266,13 +287,21 @@ JSON格式输出（不要markdown代码块）：
 
       // Step 2: Generate images
       console.log('Step 2: Generating illustrations...');
+      const articleId = crypto.randomUUID();
       const images: string[] = [];
-      for (const key of ["scene1_desc", "scene2_desc", "scene3_desc"]) {
+      const rawImages: string[] = []; // keep base64 for WeChat upload
+      for (let i = 0; i < 3; i++) {
+        const key = ["scene1_desc", "scene2_desc", "scene3_desc"][i];
         const desc = article[key];
         const prompt = `Realistic soft illustration, muted warm tones, delicate watercolor and digital art blend. ${desc}. No text, no words, no letters. Cinematic lighting, intimate atmosphere, editorial magazine quality.`;
         console.log(`  Generating: ${desc.substring(0, 60)}...`);
         const imgDataUrl = await generateImage(prompt);
-        images.push(imgDataUrl);
+        rawImages.push(imgDataUrl);
+        // Upload to Storage
+        const filename = `${articleId}/image_${i + 1}.png`;
+        const publicUrl = await uploadToStorage(supabase, imgDataUrl, filename);
+        images.push(publicUrl);
+        console.log(`  Uploaded to storage: ${filename}`);
       }
 
       // Step 3: Assemble HTML
@@ -352,7 +381,7 @@ JSON格式输出（不要markdown代码块）：
 
           // Upload cover image
           console.log('  Uploading cover image...');
-          const coverMediaId = await uploadImageToWechat(accessToken, images[0]);
+          const coverMediaId = await uploadImageToWechat(accessToken, rawImages[0]);
           
           if (!coverMediaId) {
             throw new Error('Failed to upload cover image to WeChat');
