@@ -10,6 +10,69 @@ const corsHeaders = {
 const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const CAMP_URL = "https://wechat.eugenewe.net/promo/synergy";
 
+type ImagePayload = {
+  bytes: Uint8Array;
+  contentType: string;
+  extension: string;
+};
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+  return 'Unknown error';
+}
+
+function encodeBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  return btoa(binary);
+}
+
+async function getImagePayload(imageSource: string): Promise<ImagePayload> {
+  if (imageSource.startsWith('data:image/')) {
+    const match = imageSource.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (!match) throw new Error('Invalid image data URL');
+
+    const [, contentType, base64Data] = match;
+
+    try {
+      return {
+        bytes: Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0)),
+        contentType,
+        extension: contentType.includes('jpeg') ? 'jpg' : contentType.split('/')[1]?.split(';')[0] || 'png',
+      };
+    } catch {
+      throw new Error('Failed to decode base64 image');
+    }
+  }
+
+  const response = await fetch(imageSource);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+  }
+
+  const contentType = (response.headers.get('content-type') || 'image/png').split(';')[0];
+  return {
+    bytes: new Uint8Array(await response.arrayBuffer()),
+    contentType,
+    extension: contentType.includes('jpeg') ? 'jpg' : contentType.split('/')[1] || 'png',
+  };
+}
+
 async function callAI(prompt: string, system: string, model = "google/gemini-2.5-flash"): Promise<string> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -68,13 +131,12 @@ async function generateImage(prompt: string): Promise<string> {
 
 // Upload base64 image to Supabase Storage, return public URL
 async function uploadToStorage(supabase: any, base64DataUrl: string, filename: string): Promise<string> {
-  const base64Data = base64DataUrl.replace(/^data:image\/\w+;base64,/, '');
-  const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+  const { bytes, contentType } = await getImagePayload(base64DataUrl);
 
   const { error } = await supabase.storage
     .from('wechat-article-images')
-    .upload(filename, binaryData, {
-      contentType: 'image/png',
+    .upload(filename, bytes, {
+      contentType,
       upsert: true,
     });
 
@@ -143,19 +205,16 @@ async function wechatApiCall(accessToken: string, path: string, body: any): Prom
   return await resp.json();
 }
 
-async function uploadImageToWechat(accessToken: string, imageDataUrl: string): Promise<string> {
+async function uploadImageToWechat(accessToken: string, imageSource: string): Promise<string> {
   const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
   const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
-
-  // Extract base64 data
-  const base64Data = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
-  const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+  const { bytes: binaryData, contentType, extension } = await getImagePayload(imageSource);
 
   const targetUrl = `https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=${accessToken}&type=image`;
 
   // Build multipart form data
   const boundary = '----WechatBoundary' + Date.now();
-  const header = `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="article_image.png"\r\nContent-Type: image/png\r\n\r\n`;
+  const header = `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="article_image.${extension}"\r\nContent-Type: ${contentType}\r\n\r\n`;
   const footer = `\r\n--${boundary}--\r\n`;
 
   const headerBytes = new TextEncoder().encode(header);
@@ -166,22 +225,29 @@ async function uploadImageToWechat(accessToken: string, imageDataUrl: string): P
   bodyBytes.set(footerBytes, headerBytes.length + binaryData.length);
 
   if (proxyUrl) {
-    // For proxy, send as base64 with metadata
-    const resp = await fetch(`${proxyUrl}/wechat-proxy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(proxyToken ? { 'Authorization': `Bearer ${proxyToken}` } : {}),
-      },
-      body: JSON.stringify({
-        target_url: targetUrl,
+    try {
+      const resp = await fetch(`${proxyUrl}/wechat-proxy`, {
         method: 'POST',
-        content_type: `multipart/form-data; boundary=${boundary}`,
-        binary_body_base64: btoa(String.fromCharCode(...bodyBytes)),
-      }),
-    });
-    const data = await resp.json();
-    return data.data?.media_id || data.media_id || '';
+        headers: {
+          'Content-Type': 'application/json',
+          ...(proxyToken ? { 'Authorization': `Bearer ${proxyToken}` } : {}),
+        },
+        body: JSON.stringify({
+          target_url: targetUrl,
+          method: 'POST',
+          content_type: `multipart/form-data; boundary=${boundary}`,
+          binary_body_base64: encodeBase64(bodyBytes),
+        }),
+      });
+
+      const data = await resp.json().catch(() => null);
+      const mediaId = data?.data?.media_id || data?.media_id;
+      if (resp.ok && mediaId) return mediaId;
+
+      console.warn('WeChat proxy upload failed, falling back to direct upload', data ?? resp.statusText);
+    } catch (proxyError) {
+      console.warn('WeChat proxy upload threw error, falling back to direct upload', getErrorMessage(proxyError));
+    }
   }
 
   const resp = await fetch(targetUrl, {
@@ -440,7 +506,7 @@ JSON格式输出（不要markdown代码块）：
             .from('wechat_articles')
             .update({
               status: 'failed',
-              publish_error: publishError instanceof Error ? publishError.message : String(publishError),
+              publish_error: getErrorMessage(publishError),
             })
             .eq('id', articleRecord.id);
 
@@ -449,7 +515,7 @@ JSON格式输出（不要markdown代码块）：
             article_id: articleRecord.id,
             title: article.title,
             status: 'failed',
-            error: publishError instanceof Error ? publishError.message : String(publishError),
+            error: getErrorMessage(publishError),
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -519,11 +585,11 @@ JSON格式输出（不要markdown代码块）：
           .from('wechat_articles')
           .update({
             status: 'failed',
-            publish_error: err instanceof Error ? err.message : String(err),
+            publish_error: getErrorMessage(err),
           })
           .eq('id', article_id);
 
-        return new Response(JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) }), {
+        return new Response(JSON.stringify({ success: false, error: getErrorMessage(err) }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -535,7 +601,7 @@ JSON格式输出（不要markdown代码块）：
   } catch (error) {
     console.error('Error:', error);
     return new Response(JSON.stringify({
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: getErrorMessage(error)
     }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
