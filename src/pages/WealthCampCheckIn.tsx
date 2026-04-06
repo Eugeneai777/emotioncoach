@@ -807,6 +807,46 @@ ${reflection}`;
 
           {/* 今日任务 Tab */}
           <TabsContent value="today" className="space-y-4 mt-6">
+            {/* 断档用户欢迎回来提示 */}
+            {userCampMode === 'active' && currentDay - displayDay >= 3 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl p-4 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/20 border border-sky-200 dark:border-sky-800"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">👋</span>
+                  <div className="flex-1">
+                    <p className="font-medium text-sky-900 dark:text-sky-100">欢迎回来！</p>
+                    <p className="text-xs text-sky-700/80 dark:text-sky-300/70 mt-0.5">
+                      你已经有 {currentDay - displayDay} 天没打卡了，{makeupDays.length > 0 ? `有 ${makeupDays.length} 天待补卡` : '继续你的觉醒旅程吧'}
+                    </p>
+                  </div>
+                  {makeupDays.length > 0 && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="border-sky-300 text-sky-700 hover:bg-sky-100"
+                      onClick={() => {
+                        setMakeupMeditationDone(false);
+                        setMakeupReflection('');
+                        setMakeupDayNumber(makeupDays[0]);
+                        toast({ title: `开始补打 Day ${makeupDays[0]}`, description: "完成冥想和教练梳理后即可补卡" });
+                      }}
+                    >
+                      开始补卡
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* 7天课程大纲 */}
+            <WealthMeditationCourseOutline
+              completedDays={camp?.completed_days || 0}
+              campId={campId || ''}
+            />
+
             {/* 补卡模式提示条 */}
             <AnimatePresence>
               {makeupDayNumber && (
