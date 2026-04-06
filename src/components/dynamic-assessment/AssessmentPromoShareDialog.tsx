@@ -42,10 +42,10 @@ export function AssessmentPromoShareDialog({ open, onOpenChange, assessmentKey, 
       previewScale={0.75}
       useDataUrl
       previewCard={
-        <AssessmentPromoShareCard config={config} userName={userName} avatarUrl={avatarUrl} />
+        <AssessmentPromoShareCard config={config} displayName={userName} avatarUrl={avatarUrl} />
       }
       exportCard={
-        <AssessmentPromoShareCard ref={exportCardRef} config={config} userName={userName} avatarUrl={avatarUrl} />
+        <AssessmentPromoShareCard ref={exportCardRef} config={config} displayName={userName} avatarUrl={avatarUrl} />
       }
     />
   );
