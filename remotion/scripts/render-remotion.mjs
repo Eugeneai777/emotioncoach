@@ -37,6 +37,19 @@ const coverFilenames = [
   "cover_5_career.png",
 ];
 
+// Extra standalone compositions
+const extraVideoIds = [
+  "video-laoge-heygen",
+  "video-midlife-stock",
+  "video-dh-broll",
+];
+
+const extraVideoFilenames = [
+  "video_laoge_heygen.mp4",
+  "video_midlife_stock.mp4",
+  "video_dh_broll.mp4",
+];
+
 console.log("Bundling...");
 const bundled = await bundle({
   entryPoint: path.resolve(__dirname, "../src/index.ts"),
@@ -93,16 +106,20 @@ try {
     for (let i = 0; i < videoIds.length; i++) {
       await renderVideo(videoIds[i], videoFilenames[i]);
     }
+    for (let i = 0; i < extraVideoIds.length; i++) {
+      await renderVideo(extraVideoIds[i], extraVideoFilenames[i]);
+    }
   }
 
   // Single target
   if (target && !["all", "videos", "covers"].includes(target)) {
     const vi = videoIds.indexOf(target);
     const ci = coverIds.indexOf(target);
+    const ei = extraVideoIds.indexOf(target);
     if (vi >= 0) await renderVideo(videoIds[vi], videoFilenames[vi]);
     else if (ci >= 0) await renderCover(coverIds[ci], coverFilenames[ci]);
+    else if (ei >= 0) await renderVideo(extraVideoIds[ei], extraVideoFilenames[ei]);
     else {
-      // Try as arbitrary composition ID
       const filename = target.replace(/-/g, "_") + ".mp4";
       await renderVideo(target, filename);
     }

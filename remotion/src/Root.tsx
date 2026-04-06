@@ -3,6 +3,7 @@ import { VideoComposition } from "./VideoComposition";
 import { CoverComposition } from "./covers/CoverComposition";
 import { MidlifeCrisisHeyGen } from "./MidlifeCrisisHeyGen";
 import { MidlifeStockVideo } from "./MidlifeStockVideo";
+import { DigitalHumanBRoll } from "./DigitalHumanBRoll";
 
 const VIDEOS = [
   {
@@ -66,6 +67,39 @@ const COVERS = [
   { id: "cover-5-career", title: "35岁", subtitle: "你还敢辞职吗？", tag: "职场觉醒" },
 ];
 
+// Default props for the Digital Human + B-Roll template demo
+const DH_BROLL_DEFAULT_PROPS = {
+  avatarVideo: "heygen/midlife.mp4",
+  brollClips: [
+    { src: "stock/overtime.mp4", type: "video" as const, startFrame: 90, durationInFrames: 60, effect: "zoom-in" as const },
+    { src: "stock/overtime.mp4", type: "video" as const, startFrame: 210, durationInFrames: 60, effect: "slide-left" as const },
+    { src: "stock/overtime.mp4", type: "video" as const, startFrame: 540, durationInFrames: 90, effect: "zoom-out" as const },
+  ],
+  subtitles: [
+    { text: "你是不是也这样？", startFrame: 10, endFrame: 80, style: "hook" as const },
+    { text: "凌晨三点 还在加班", startFrame: 100, endFrame: 180, style: "pain" as const, highlight: "加班" },
+    { text: "越忙越焦虑 越焦虑越忙", startFrame: 200, endFrame: 280, style: "pain" as const, highlight: "焦虑" },
+    { text: "试试AI情绪教练", startFrame: 310, endFrame: 420, style: "product" as const },
+    { text: "随时随地 接住你的情绪", startFrame: 440, endFrame: 540, style: "product" as const },
+    { text: "用了一周 整个人稳住了", startFrame: 560, endFrame: 660, style: "pain" as const },
+    { text: "你有没有这种感觉？", startFrame: 760, endFrame: 880, style: "question" as const },
+  ],
+  productScreenshots: [
+    {
+      src: "stock/overtime.mp4",
+      startFrame: 300,
+      durationInFrames: 180,
+      annotations: [
+        { x: 50, y: 30, label: "AI情绪教练" },
+        { x: 50, y: 70, label: "24小时在线" },
+      ],
+    },
+  ],
+  closingQuestion: "你有没有\n这种感觉？",
+  closingCta: "评论区告诉我 👇",
+  questionStartFrame: 750,
+};
+
 export const RemotionRoot = () => (
   <>
     {VIDEOS.map((v) => (
@@ -107,6 +141,15 @@ export const RemotionRoot = () => (
       fps={30}
       width={1080}
       height={1920}
+    />
+    <Composition
+      id="video-dh-broll"
+      component={DigitalHumanBRoll}
+      durationInFrames={900}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={DH_BROLL_DEFAULT_PROPS}
     />
   </>
 );
