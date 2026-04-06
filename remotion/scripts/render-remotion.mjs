@@ -115,10 +115,11 @@ try {
   if (target && !["all", "videos", "covers"].includes(target)) {
     const vi = videoIds.indexOf(target);
     const ci = coverIds.indexOf(target);
+    const ei = extraVideoIds.indexOf(target);
     if (vi >= 0) await renderVideo(videoIds[vi], videoFilenames[vi]);
     else if (ci >= 0) await renderCover(coverIds[ci], coverFilenames[ci]);
+    else if (ei >= 0) await renderVideo(extraVideoIds[ei], extraVideoFilenames[ei]);
     else {
-      // Try as arbitrary composition ID
       const filename = target.replace(/-/g, "_") + ".mp4";
       await renderVideo(target, filename);
     }
