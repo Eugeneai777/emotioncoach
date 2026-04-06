@@ -10,21 +10,38 @@ export type VideoGenStatus =
   | 'done'
   | 'error';
 
+export interface ScriptSegment {
+  type: 'hook' | 'pain' | 'product' | 'result' | 'question';
+  text: string;
+  startSec: number;
+  endSec: number;
+  highlight?: string;
+}
+
+export interface StructuredScript {
+  script: string;
+  segments: ScriptSegment[];
+  closingQuestion: string;
+  closingCta: string;
+}
+
 interface VideoGenResult {
   audioUrl?: string;
   taskId?: string;
   videoUrl?: string;
+  compositionProps?: Record<string, any>;
 }
 
 interface UseVideoGenerationReturn {
   status: VideoGenStatus;
   error: string | null;
   result: VideoGenResult;
-  progress: number; // 0-100
+  progress: number;
   generate: (params: {
     script: string;
     imageUrl: string;
     voiceType: string;
+    structuredScript?: StructuredScript;
     resolution?: '720p' | '1080p';
   }) => Promise<void>;
   reset: () => void;
@@ -49,6 +66,7 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
     script: string;
     imageUrl: string;
     voiceType: string;
+    structuredScript?: StructuredScript;
     resolution?: '720p' | '1080p';
   }) => {
     abortRef.current = false;
@@ -117,7 +135,7 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
       // Step 4: Poll for result
       setStatus('generating_video');
 
-      const maxPolls = 120; // 10 minutes max
+      const maxPolls = 120;
       let polls = 0;
 
       while (polls < maxPolls) {
@@ -138,7 +156,35 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
         const taskStatus = queryData?.status;
 
         if (taskStatus === 'done' && queryData?.video_url) {
-          setResult(prev => ({ ...prev, videoUrl: queryData.video_url }));
+          // Build Remotion composition props if structured script is available
+          let compositionProps: Record<string, any> | undefined;
+          if (params.structuredScript) {
+            const fps = 30;
+            const ss = params.structuredScript;
+            compositionProps = {
+              avatarVideo: queryData.video_url,
+              subtitles: ss.segments.map(seg => ({
+                text: seg.text,
+                startFrame: Math.round(seg.startSec * fps),
+                endFrame: Math.round(seg.endSec * fps),
+                style: seg.type === 'result' ? 'pain' : seg.type,
+                highlight: seg.highlight,
+              })),
+              closingQuestion: ss.closingQuestion,
+              closingCta: ss.closingCta,
+              questionStartFrame: Math.round(
+                (ss.segments.find(s => s.type === 'question')?.startSec ?? 25) * fps
+              ),
+              brollClips: [],
+              productScreenshots: [],
+            };
+          }
+
+          setResult(prev => ({
+            ...prev,
+            videoUrl: queryData.video_url,
+            compositionProps,
+          }));
           setStatus('done');
           setProgress(100);
           return;
@@ -148,7 +194,6 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           throw new Error(queryData?.error || '视频生成失败');
         }
 
-        // Update progress (55-95 range during polling)
         const pollProgress = 55 + Math.min(40, (polls / maxPolls) * 40);
         setProgress(Math.round(pollProgress));
       }
