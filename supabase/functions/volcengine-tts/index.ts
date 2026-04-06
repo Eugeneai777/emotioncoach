@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice_type, cluster: reqCluster } = await req.json();
+    const { text, voice_type } = await req.json();
 
     if (!text) {
       throw new Error('Text is required');
@@ -24,87 +24,89 @@ serve(async (req) => {
       throw new Error('DOUBAO_APP_ID or DOUBAO_ACCESS_TOKEN not configured');
     }
 
-    // 温柔女声
     const selectedVoice = voice_type || 'zh_female_cancan_mars_bigtts';
-    const reqId = crypto.randomUUID();
+    console.log(`TTS V3 request: voice=${selectedVoice}, text="${text.substring(0, 50)}..."`);
 
-    console.log(`TTS request: voice=${selectedVoice}, text="${text.substring(0, 30)}..."`);
-    console.log(`AppID prefix: ${appId.substring(0, 6)}..., Token prefix: ${accessToken.substring(0, 6)}...`);
+    // Determine resource ID based on voice type
+    const isBigtts = selectedVoice.includes('bigtts');
+    const resourceId = isBigtts ? 'seed-tts-2.0' : 'seed-tts-1.0';
 
-    // 支持手动指定 cluster，否则自动判断
-    const isMegaVoice = selectedVoice.includes('bigtts') || selectedVoice.includes('mega');
-    const cluster = reqCluster || (isMegaVoice ? "volcano_mega_tts" : "volcano_tts");
-    console.log(`Using cluster: ${cluster}, voice: ${selectedVoice}`);
-
-    // 火山引擎 TTS V1 HTTP 非流式接口
+    // V3 HTTP Chunked API (supports bigtts/2.0 voices)
     const body = {
-      app: {
-        appid: appId,
-        token: accessToken,
-        cluster: cluster,
-      },
-      user: {
-        uid: "lovable_tts",
-      },
-      audio: {
-        voice_type: selectedVoice,
-        encoding: "mp3",
-        speed_ratio: 1.0,
-        volume_ratio: 1.0,
-        pitch_ratio: 1.0,
-      },
-      request: {
-        reqid: reqId,
+      user: { uid: "lovable_tts" },
+      req_params: {
         text: text,
-        text_type: "plain",
-        operation: "query",
-        with_frontend: 1,
-        frontend_type: "unitTson",
+        speaker: selectedVoice,
+        audio_params: {
+          format: "mp3",
+          sample_rate: 24000,
+        },
       },
     };
 
-    // 尝试方式1: V1 API with Bearer;token
-    let response = await fetch("https://openspeech.bytedance.com/api/v1/tts", {
+    const response = await fetch("https://openspeech.bytedance.com/api/v3/tts/unidirectional", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer;${accessToken}`,
+        "X-Api-App-Id": appId,
+        "X-Api-Access-Key": accessToken,
+        "X-Api-Resource-Id": resourceId,
+        "X-Api-Request-Id": crypto.randomUUID(),
       },
       body: JSON.stringify(body),
     });
 
-    console.log(`V1 API response status: ${response.status}`);
-
-    // 如果V1失败，尝试方式2: 用 X-Api-App-Key / X-Api-Access-Key header
-    if (!response.ok) {
-      console.log('V1 failed, trying with X-Api headers...');
-      response = await fetch("https://openspeech.bytedance.com/api/v1/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Api-App-Key": appId,
-          "X-Api-Access-Key": accessToken,
-        },
-        body: JSON.stringify(body),
-      });
-      console.log(`V1 with X-Api headers response status: ${response.status}`);
-    }
+    console.log(`V3 response status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('All TTS attempts failed:', errorText);
-      throw new Error(`Volcengine TTS error: ${response.status} - ${errorText}`);
+      console.error('V3 TTS failed:', errorText);
+      throw new Error(`TTS V3 error: ${response.status} - ${errorText}`);
     }
 
-    const result = await response.json();
-    console.log(`TTS response code: ${result.code}, message: ${result.message}`);
+    // V3 returns chunked JSON lines — collect all audio base64 data
+    const responseText = await response.text();
+    const audioChunks: string[] = [];
+    let lastError: string | null = null;
 
-    if (result.code !== 3000) {
-      throw new Error(`TTS error: ${result.code} - ${result.message}`);
+    for (const line of responseText.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      try {
+        const chunk = JSON.parse(trimmed);
+
+        // code 20000000 = final success signal
+        if (chunk.code === 20000000) {
+          console.log('TTS V3 synthesis complete');
+          break;
+        }
+
+        // code 0 = normal data chunk
+        if (chunk.code === 0 && chunk.data) {
+          audioChunks.push(chunk.data);
+        }
+
+        // Non-zero code (other than success) = error
+        if (chunk.code !== 0 && chunk.code !== 20000000) {
+          lastError = `TTS error: ${chunk.code} - ${chunk.message}`;
+          console.error(lastError);
+        }
+      } catch {
+        // Skip non-JSON lines
+      }
     }
+
+    if (audioChunks.length === 0) {
+      throw new Error(lastError || 'No audio data received from TTS V3');
+    }
+
+    // Concatenate all base64 audio chunks
+    const fullAudioBase64 = audioChunks.join('');
+    console.log(`TTS V3 success: ${audioChunks.length} chunks, total base64 length: ${fullAudioBase64.length}`);
 
     return new Response(
-      JSON.stringify({ audioContent: result.data }),
+      JSON.stringify({ audioContent: fullAudioBase64 }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
