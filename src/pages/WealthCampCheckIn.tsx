@@ -962,7 +962,52 @@ ${reflection}`;
               }
             />
 
-            {/* 补卡模式：冥想完成后显示教练对话 */}
+            {/* 上一天 / 下一天 导航 */}
+            {!makeupDayNumber && (
+              <div className="flex items-center justify-between px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={displayDay <= 1}
+                  onClick={() => {
+                    const prevDay = displayDay - 1;
+                    if (prevDay >= 1 && completedDays.includes(prevDay)) {
+                      // 回放已完成的前一天 — 通过课程大纲的回放弹窗
+                      document.getElementById('meditation-player')?.scrollIntoView({ behavior: 'smooth' });
+                      toast({ title: `查看 Day ${prevDay}`, description: '已完成天可在课程大纲中回放' });
+                    } else if (prevDay >= 1 && makeupDays.includes(prevDay)) {
+                      setMakeupMeditationDone(false);
+                      setMakeupReflection('');
+                      setMakeupDayNumber(prevDay);
+                      toast({ title: `开始补打 Day ${prevDay}` });
+                    }
+                  }}
+                  className="text-amber-700 dark:text-amber-300"
+                >
+                  ← 上一天
+                </Button>
+                <span className="text-xs text-muted-foreground">Day {displayDay} / 7</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={displayDay >= 7 || displayDay > (camp?.completed_days || 0) + 1}
+                  onClick={() => {
+                    const nextDay = displayDay + 1;
+                    if (nextDay <= (camp?.completed_days || 0)) {
+                      toast({ title: `查看 Day ${nextDay}`, description: '已完成天可在课程大纲中回放' });
+                    } else if (nextDay === (camp?.completed_days || 0) + 1) {
+                      toast({ title: '这就是今天要完成的任务' });
+                    } else {
+                      toast({ title: '🔒 尚未解锁', description: '请先完成当前天的打卡' });
+                    }
+                  }}
+                  className="text-amber-700 dark:text-amber-300"
+                >
+                  下一天 →
+                </Button>
+              </div>
+            )}
+
             <AnimatePresence>
               {makeupDayNumber && makeupMeditationDone && (
                 <motion.div
