@@ -1,57 +1,64 @@
 
 
-# 视频生成页面 — 一站式数字人短视频创作
+# 视频生成页面升级 — 照片上传 + AI剧本生成
 
-## 现状
+## 概述
 
-- ✅ Remotion 混剪架构已完成（DigitalHumanBRoll + 4个组件）
-- ✅ 即梦AI数字人边缘函数已部署（jimeng-digital-human）
-- ✅ 火山引擎TTS边缘函数已部署（volcengine-tts）
-- ❌ 没有前端生成页面
-- ❌ 没有 Storage bucket 存储音频中转文件
+升级 `/video-generator` 页面，新增两大能力：
+1. **照片上传**：用户可直接上传人像照片到 `video-assets` bucket，获取公开URL（替代手动粘贴URL）
+2. **AI剧本生成**：用户选择「人群 + 工具场景 + 转化产品」，AI 自动生成短视频口播剧本
 
-## 需要解决的核心问题
-
-TTS 返回 base64 音频，但即梦AI需要**音频公开URL**。需要一个 Storage bucket 做中转。
-
-## 实现方案
-
-### 1. 数据库迁移 — 创建 Storage bucket
-
-创建 `video-assets` 公开存储桶，用于存放 TTS 生成的音频文件，供即梦AI读取。
-
-### 2. 新建 `src/hooks/useVideoGeneration.ts`
-
-封装完整生成流程：
+## 页面流程
 
 ```text
-Step 1: 调用 volcengine-tts → 获取 base64 音频
-Step 2: base64 → Blob → 上传到 video-assets bucket → 获取公开URL
-Step 3: 调用 jimeng-digital-human submit（图片URL + 音频URL）→ 获取 task_id
-Step 4: 每5秒轮询 jimeng-digital-human query → 直到 status=done → 获取 video_url
+Step 1: 上传人像照片（拍照/相册）
+Step 2: 选择人群（女性/中年/情侣/职场/银发/青少年）
+Step 3: 选择该人群下的工具场景（如"职场跃迁"、"情绪翻译"等）
+Step 4: 选择转化产品（如训练营、测评、教练服务等）
+Step 5: AI生成剧本（调用现有 chat 边缘函数，prompt 按5段叙事结构生成）
+Step 6: 用户可编辑剧本 → 一键生成视频
 ```
 
-暴露状态：`idle | generating_audio | uploading_audio | submitting_task | generating_video | done | error`
+## 新增/修改文件
 
-### 3. 新建 `src/pages/VideoGenerator.tsx`
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/pages/VideoGenerator.tsx` | 重构 | 添加照片上传、人群/工具/产品选择、AI生成剧本区域 |
+| `src/config/videoScriptConfig.ts` | 新建 | 人群→工具→产品的映射配置数据 |
 
-页面布局：
-- **配置区**：人像图片URL输入、音色下拉选择（温柔女声/沉稳男声等）、分辨率选择
-- **文案区**：多行文本输入视频脚本
-- **生成按钮**：一键启动全流程
-- **进度条**：实时显示当前阶段（✅/🔄/⏳）
-- **结果区**：视频预览播放器 + 下载链接
+## 关键实现
 
-### 4. 修改 `src/App.tsx`
+### 1. 照片上传
+- 使用 `<input type="file" accept="image/*">` + 相机捕获
+- 上传到 `video-assets` bucket（已存在且公开），路径 `avatars/{userId}/{timestamp}.jpg`
+- 上传后获取公开URL，替代手动输入
 
-添加 `/video-generator` 路由。
+### 2. 人群-工具-产品配置（`videoScriptConfig.ts`）
+从现有页面提取数据，构建三级联动：
+- **人群**：复用 `audiences` 数组（女性/银发/情侣/中年/青少年/职场）
+- **工具**：每个人群对应的 AI 工具列表（如女性→职场跃迁/生活平衡/情绪疏导/副业增收）
+- **产品**：每个人群可转化的产品（如训练营、测评、教练1v1等）
 
-## 文件清单
+### 3. AI剧本生成
+调用现有 `chat` 边缘函数，system prompt 指导按「Hook→痛点→产品介绍→效果展示→提问」5段结构输出30秒口播剧本。prompt 中注入所选人群、工具场景、转化产品信息。
 
-| 文件 | 操作 |
-|------|------|
-| 数据库迁移 SQL | 新建 — 创建 `video-assets` Storage bucket + 公开读取策略 |
-| `src/hooks/useVideoGeneration.ts` | 新建 |
-| `src/pages/VideoGenerator.tsx` | 新建 |
-| `src/App.tsx` | 修改 — 添加路由 |
+### 4. 页面布局变化
+```text
+┌──────────────────────────────────┐
+│  🎬 AI数字人视频生成              │
+├──────────────────────────────────┤
+│  📷 上传人像 [点击上传/拍照]       │
+│  🎯 选择人群: [下拉]              │
+│  🔧 选择场景: [下拉-联动]         │
+│  📦 转化产品: [下拉-联动]         │
+│  🎙️ 音色选择: [下拉]             │
+│                                  │
+│  [✨ AI生成剧本]                  │
+├──────────────────────────────────┤
+│  视频文案: [可编辑文本框]          │
+│  [🚀 开始生成视频]               │
+└──────────────────────────────────┘
+```
+
+不需要创建新的边缘函数或数据库迁移，复用现有 `chat` 函数和 `video-assets` bucket。
 
