@@ -107,8 +107,8 @@ serve(async (req) => {
 
     const selectedVoice = voice_type || 'zh_female_cancan_mars_bigtts';
     const isBigtts = selectedVoice.includes('bigtts') || selectedVoice.includes('mega');
-    console.log(`TTS request: voice=${selectedVoice}, bigtts=${isBigtts}, text="${text.substring(0, 50)}..."`);
-
+    const appKey = Deno.env.get('DOUBAO_APP_KEY');
+    console.log(`Credentials: appId=${appId?.slice(0,6)}..., token=${accessToken?.slice(0,6)}..., appKey=${appKey?.slice(0,6) || 'N/A'}...`);
     // Strategy: Try V3 with multiple resource IDs, then fallback to V1
     const attempts: Array<{ label: string; fn: () => Promise<{ ok: boolean; audioBase64?: string; error?: string }> }> = [];
 
