@@ -1083,6 +1083,18 @@ ${reflection}`;
                   description: "完成冥想和教练梳理后即可补卡",
                 });
               }}
+              onDayClick={(dayNumber, status) => {
+                if (status === 'completed') {
+                  // Scroll to today tab and show course outline for replay
+                  setActiveTab('today');
+                  toast({ title: `Day ${dayNumber} 已完成`, description: "在课程大纲中点击可回放冥想" });
+                } else if (status === 'current') {
+                  setActiveTab('today');
+                  scrollToMeditation();
+                } else if (status === 'future') {
+                  toast({ title: `Day ${dayNumber} 尚未解锁`, description: "请先完成前面的课程" });
+                }
+              }}
               activeMakeupDay={makeupDayNumber}
               justCompletedDay={lastCompletedMakeupDay}
               userMode={userCampMode}
