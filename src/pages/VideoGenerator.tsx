@@ -1,21 +1,26 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useVideoGeneration, VideoGenStatus, StructuredScript, ScriptSegment } from '@/hooks/useVideoGeneration';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { useVideoGeneration, VideoGenStatus, StructuredScript } from '@/hooks/useVideoGeneration';
 import { VOICE_TYPE_OPTIONS } from '@/config/voiceTypeConfig';
-import { VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
+import {
+  STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES, CONVERSION_PRODUCTS,
+  getRecommendedProducts, VideoTopic, VideoTopicGroup,
+} from '@/config/videoScriptConfig';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, Video, CheckCircle2, Loader2, AlertCircle,
-  Download, RotateCcw, Camera, Sparkles, ImageIcon, Copy, FileJson,
+  Download, RotateCcw, Camera, Sparkles, ImageIcon, FileJson,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+
+// ─── Constants ───
 
 const STATUS_LABELS: Record<VideoGenStatus, string> = {
   idle: '等待开始',
@@ -54,25 +59,103 @@ const SEGMENT_META: Record<string, { label: string; emoji: string; color: string
   question: { label: '互动提问 · 5秒', emoji: '❓', color: 'border-l-purple-500' },
 };
 
+// ─── Dynamic data hooks ───
+
+function useDynamicTopicGroups(): VideoTopicGroup[] {
+  const { data: coaches } = useQuery({
+    queryKey: ['coach-templates-for-video'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('coach_templates')
+        .select('id, name, description')
+        .eq('is_active', true)
+        .order('display_order');
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: camps } = useQuery({
+    queryKey: ['camp-templates-for-video'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('camp_templates')
+        .select('id, camp_name, camp_type, description')
+        .eq('is_active', true)
+        .order('display_order');
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return useMemo(() => {
+    const dynamicGroups: VideoTopicGroup[] = [];
+
+    if (coaches && coaches.length > 0) {
+      dynamicGroups.push({
+        groupId: 'ai-coach',
+        groupLabel: 'AI教练',
+        groupEmoji: '🤖',
+        items: coaches.map(c => ({
+          id: `ai-coach-${c.id}`,
+          label: c.name,
+          description: c.description || 'AI教练对话',
+          groupId: 'ai-coach',
+        })),
+      });
+    }
+
+    if (camps && camps.length > 0) {
+      dynamicGroups.push({
+        groupId: 'camp-db',
+        groupLabel: '训练营',
+        groupEmoji: '🏕',
+        items: camps.map(c => ({
+          id: `camp-${c.camp_type}`,
+          label: c.camp_name,
+          description: c.description || '训练营课程',
+          groupId: 'camp-db',
+        })),
+      });
+    }
+
+    return [...dynamicGroups, ...STATIC_TOPIC_GROUPS];
+  }, [coaches, camps]);
+}
+
+// ─── Component ───
+
 const VideoGenerator: React.FC = () => {
   const navigate = useNavigate();
   const { status, error, result, progress, generate, reset } = useVideoGeneration();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const topicGroups = useDynamicTopicGroups();
 
   // Form state
   const [imageUrl, setImageUrl] = useState('');
   const [imagePreview, setImagePreview] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [audienceId, setAudienceId] = useState('');
-  const [toolId, setToolId] = useState('');
-  const [productId, setProductId] = useState('');
+  const [topicId, setTopicId] = useState('');
+  const [audienceId, setAudienceId] = useState('general');
+  const [conversionId, setConversionId] = useState('');
   const [voiceType, setVoiceType] = useState(VOICE_TYPE_OPTIONS[0].voice_type);
   const [structuredScript, setStructuredScript] = useState<StructuredScript | null>(null);
   const [generatingScript, setGeneratingScript] = useState(false);
 
+  // Derived
+  const allTopics = useMemo(() => topicGroups.flatMap(g => g.items), [topicGroups]);
+  const selectedTopic = useMemo(() => allTopics.find(t => t.id === topicId), [allTopics, topicId]);
   const selectedAudience = useMemo(() => VIDEO_AUDIENCES.find(a => a.id === audienceId), [audienceId]);
-  const selectedTool = useMemo(() => selectedAudience?.tools.find(t => t.id === toolId), [selectedAudience, toolId]);
-  const selectedProduct = useMemo(() => selectedAudience?.products.find(p => p.id === productId), [selectedAudience, productId]);
+  const selectedConversion = useMemo(() => CONVERSION_PRODUCTS.find(p => p.id === conversionId), [conversionId]);
+
+  const recommendedIds = useMemo(() => topicId ? getRecommendedProducts(topicId) : [], [topicId]);
+
+  // Auto-set first recommended conversion product when topic changes
+  useEffect(() => {
+    if (recommendedIds.length > 0 && !recommendedIds.includes(conversionId)) {
+      setConversionId(recommendedIds[0]);
+    }
+  }, [recommendedIds]);
 
   const isGenerating = !['idle', 'done', 'error'].includes(status);
 
@@ -81,11 +164,11 @@ const VideoGenerator: React.FC = () => {
     return structuredScript.script || structuredScript.segments.map(s => s.text).join('\n');
   }, [structuredScript]);
 
-  // Photo upload
+  // ─── Handlers ───
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = ev => setImagePreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -94,14 +177,10 @@ const VideoGenerator: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('请先登录'); return; }
-
       const ext = file.name.split('.').pop() || 'jpg';
       const path = `avatars/${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from('video-assets').upload(path, file, {
-        contentType: file.type,
-      });
+      const { error: uploadErr } = await supabase.storage.from('video-assets').upload(path, file, { contentType: file.type });
       if (uploadErr) throw uploadErr;
-
       const { data } = supabase.storage.from('video-assets').getPublicUrl(path);
       setImageUrl(data.publicUrl);
       toast.success('照片上传成功');
@@ -113,10 +192,9 @@ const VideoGenerator: React.FC = () => {
     }
   };
 
-  // AI script generation via dedicated edge function
   const handleGenerateScript = async () => {
-    if (!selectedAudience || !selectedTool || !selectedProduct) {
-      toast.error('请先选择人群、场景和产品');
+    if (!selectedTopic || !selectedAudience || !selectedConversion) {
+      toast.error('请先选择主题、人群和转化产品');
       return;
     }
     setGeneratingScript(true);
@@ -124,18 +202,13 @@ const VideoGenerator: React.FC = () => {
       const { data, error: fnErr } = await supabase.functions.invoke('video-script-ai', {
         body: {
           audience: { id: selectedAudience.id, label: selectedAudience.label, emoji: selectedAudience.emoji },
-          tool: { id: selectedTool.id, label: selectedTool.label, description: selectedTool.description },
-          product: { id: selectedProduct.id, label: selectedProduct.label, description: selectedProduct.description },
+          tool: { id: selectedTopic.id, label: selectedTopic.label, description: selectedTopic.description },
+          product: { id: selectedConversion.id, label: selectedConversion.label, description: selectedConversion.description },
         },
       });
-
       if (fnErr) throw new Error(fnErr.message);
       if (data?.error) throw new Error(data.error);
-
-      if (!data?.segments || !Array.isArray(data.segments)) {
-        throw new Error('AI返回数据格式异常');
-      }
-
+      if (!data?.segments || !Array.isArray(data.segments)) throw new Error('AI返回数据格式异常');
       setStructuredScript(data as StructuredScript);
       toast.success('剧本生成成功！可编辑各段文案');
     } catch (err: any) {
@@ -145,26 +218,16 @@ const VideoGenerator: React.FC = () => {
     }
   };
 
-  // Update a single segment text
   const updateSegmentText = (index: number, text: string) => {
     if (!structuredScript) return;
     const newSegments = [...structuredScript.segments];
     newSegments[index] = { ...newSegments[index], text };
-    setStructuredScript({
-      ...structuredScript,
-      segments: newSegments,
-      script: newSegments.map(s => s.text).join(''),
-    });
+    setStructuredScript({ ...structuredScript, segments: newSegments, script: newSegments.map(s => s.text).join('') });
   };
 
   const handleGenerate = () => {
     if (!fullScript.trim() || !imageUrl.trim()) return;
-    generate({
-      script: fullScript.trim(),
-      imageUrl: imageUrl.trim(),
-      voiceType,
-      structuredScript: structuredScript || undefined,
-    });
+    generate({ script: fullScript.trim(), imageUrl: imageUrl.trim(), voiceType, structuredScript: structuredScript || undefined });
   };
 
   const handleExportConfig = () => {
@@ -173,16 +236,27 @@ const VideoGenerator: React.FC = () => {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `remotion-config-${Date.now()}.json`;
-    a.click();
+    a.href = url; a.download = `remotion-config-${Date.now()}.json`; a.click();
     URL.revokeObjectURL(url);
     toast.success('Remotion 配置已导出');
   };
 
+  // Group conversion products by category, recommended first
+  const conversionGroups = useMemo(() => {
+    const cats = new Map<string, typeof CONVERSION_PRODUCTS>();
+    // Recommended first
+    const recommended = CONVERSION_PRODUCTS.filter(p => recommendedIds.includes(p.id));
+    if (recommended.length) cats.set('⭐ 推荐', recommended);
+    // Then by category
+    for (const p of CONVERSION_PRODUCTS) {
+      if (!cats.has(p.category)) cats.set(p.category, []);
+      cats.get(p.category)!.push(p);
+    }
+    return cats;
+  }, [recommendedIds]);
+
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
@@ -201,41 +275,17 @@ const VideoGenerator: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="user"
-              className="hidden"
-              onChange={handleFileSelect}
-              disabled={isGenerating}
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleFileSelect} disabled={isGenerating} />
             {imagePreview ? (
               <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="人像预览"
-                  className="w-full max-h-64 object-contain rounded-lg border"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute bottom-2 right-2"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isGenerating || uploading}
-                >
+                <img src={imagePreview} alt="人像预览" className="w-full max-h-64 object-contain rounded-lg border" />
+                <Button variant="secondary" size="sm" className="absolute bottom-2 right-2" onClick={() => fileInputRef.current?.click()} disabled={isGenerating || uploading}>
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '重新选择'}
                 </Button>
               </div>
             ) : (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isGenerating || uploading}
-                className="w-full h-40 border-2 border-dashed border-muted-foreground/30 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors disabled:opacity-50"
-              >
-                {uploading ? (
-                  <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                ) : (
+              <button onClick={() => fileInputRef.current?.click()} disabled={isGenerating || uploading} className="w-full h-40 border-2 border-dashed border-muted-foreground/30 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors disabled:opacity-50">
+                {uploading ? <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" /> : (
                   <>
                     <ImageIcon className="w-8 h-8 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">点击上传或拍照</span>
@@ -247,22 +297,42 @@ const VideoGenerator: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* 2. Audience / Tool / Product selectors */}
+        {/* 2. Topic + Audience + Conversion */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              🎯 剧本配置
-            </CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">🎯 剧本配置</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
+            {/* Topic — grouped */}
             <div className="space-y-2">
-              <Label>目标人群</Label>
-              <Select
-                value={audienceId}
-                onValueChange={v => { setAudienceId(v); setToolId(''); setProductId(''); setStructuredScript(null); }}
-                disabled={isGenerating}
-              >
-                <SelectTrigger><SelectValue placeholder="选择目标人群" /></SelectTrigger>
+              <Label>推广主题（视频介绍什么）</Label>
+              <Select value={topicId} onValueChange={v => { setTopicId(v); setStructuredScript(null); }} disabled={isGenerating}>
+                <SelectTrigger><SelectValue placeholder="选择推广主题" /></SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {topicGroups.map(group => (
+                    <SelectGroup key={group.groupId}>
+                      <SelectLabel>{group.groupEmoji} {group.groupLabel}</SelectLabel>
+                      {group.items.map(item => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.label}
+                          <span className="text-muted-foreground text-xs ml-2 hidden sm:inline">— {item.description}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTopic && (
+                <p className="text-xs text-muted-foreground">{selectedTopic.description}</p>
+              )}
+            </div>
+
+            {/* Audience */}
+            <div className="space-y-2">
+              <Label>目标人群（给谁看）</Label>
+              <Select value={audienceId} onValueChange={setAudienceId} disabled={isGenerating}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {VIDEO_AUDIENCES.map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.emoji} {a.label}</SelectItem>
@@ -271,34 +341,30 @@ const VideoGenerator: React.FC = () => {
               </Select>
             </div>
 
-            {selectedAudience && (
-              <div className="space-y-2">
-                <Label>工具场景</Label>
-                <Select value={toolId} onValueChange={setToolId} disabled={isGenerating}>
-                  <SelectTrigger><SelectValue placeholder="选择工具场景" /></SelectTrigger>
-                  <SelectContent>
-                    {selectedAudience.tools.map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.label} — {t.description}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Conversion Product — grouped with recommended */}
+            <div className="space-y-2">
+              <Label>转化产品（视频结尾推什么）</Label>
+              <Select value={conversionId} onValueChange={setConversionId} disabled={isGenerating}>
+                <SelectTrigger><SelectValue placeholder="选择转化产品" /></SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Array.from(conversionGroups.entries()).map(([cat, items]) => (
+                    <SelectGroup key={cat}>
+                      <SelectLabel>{cat}</SelectLabel>
+                      {items.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.label}{p.price ? ` ¥${p.price}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedConversion && (
+                <p className="text-xs text-muted-foreground">{selectedConversion.description}</p>
+              )}
+            </div>
 
-            {selectedAudience && (
-              <div className="space-y-2">
-                <Label>转化产品</Label>
-                <Select value={productId} onValueChange={setProductId} disabled={isGenerating}>
-                  <SelectTrigger><SelectValue placeholder="选择转化产品" /></SelectTrigger>
-                  <SelectContent>
-                    {selectedAudience.products.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.label} — {p.description}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
+            {/* Voice */}
             <div className="space-y-2">
               <Label>音色选择</Label>
               <Select value={voiceType} onValueChange={setVoiceType} disabled={isGenerating}>
@@ -311,22 +377,13 @@ const VideoGenerator: React.FC = () => {
               </Select>
             </div>
 
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={handleGenerateScript}
-              disabled={!selectedAudience || !selectedTool || !selectedProduct || generatingScript || isGenerating}
-            >
-              {generatingScript ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> AI生成中...</>
-              ) : (
-                <><Sparkles className="w-4 h-4" /> ✨ AI生成剧本</>
-              )}
+            <Button variant="secondary" className="w-full" onClick={handleGenerateScript} disabled={!topicId || !conversionId || generatingScript || isGenerating}>
+              {generatingScript ? <><Loader2 className="w-4 h-4 animate-spin" /> AI生成中...</> : <><Sparkles className="w-4 h-4" /> ✨ AI生成剧本</>}
             </Button>
           </CardContent>
         </Card>
 
-        {/* 3. Structured Script Editor — 5 segments */}
+        {/* 3. Structured Script Editor */}
         {structuredScript && (
           <Card>
             <CardHeader className="pb-3">
@@ -336,33 +393,19 @@ const VideoGenerator: React.FC = () => {
               {structuredScript.segments.map((seg, i) => {
                 const meta = SEGMENT_META[seg.type] || { label: seg.type, emoji: '📌', color: 'border-l-gray-400' };
                 return (
-                  <div
-                    key={i}
-                    className={`border-l-4 ${meta.color} pl-3 py-2 space-y-1`}
-                  >
+                  <div key={i} className={`border-l-4 ${meta.color} pl-3 py-2 space-y-1`}>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{meta.emoji} {meta.label}</span>
                       <span className="text-xs text-muted-foreground">{seg.startSec}s - {seg.endSec}s</span>
                     </div>
-                    <Textarea
-                      value={seg.text}
-                      onChange={e => updateSegmentText(i, e.target.value)}
-                      disabled={isGenerating}
-                      className="min-h-[60px] text-sm"
-                    />
-                    {seg.highlight && (
-                      <span className="text-xs text-orange-500">关键词高亮: {seg.highlight}</span>
-                    )}
+                    <Textarea value={seg.text} onChange={e => updateSegmentText(i, e.target.value)} disabled={isGenerating} className="min-h-[60px] text-sm" />
+                    {seg.highlight && <span className="text-xs text-orange-500">关键词高亮: {seg.highlight}</span>}
                   </div>
                 );
               })}
               <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">
-                  总字数：{fullScript.length} · 建议150-250字（约30秒视频）
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  结尾提问: {structuredScript.closingQuestion} · CTA: {structuredScript.closingCta}
-                </p>
+                <p className="text-xs text-muted-foreground">总字数：{fullScript.length} · 建议150-250字（约30秒视频）</p>
+                <p className="text-xs text-muted-foreground mt-1">结尾提问: {structuredScript.closingQuestion} · CTA: {structuredScript.closingCta}</p>
               </div>
             </CardContent>
           </Card>
@@ -370,31 +413,18 @@ const VideoGenerator: React.FC = () => {
 
         {/* 4. Generate button */}
         <div className="flex gap-3">
-          <Button
-            className="flex-1"
-            size="lg"
-            onClick={handleGenerate}
-            disabled={isGenerating || !fullScript.trim() || !imageUrl.trim()}
-          >
-            {isGenerating ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> 生成中...</>
-            ) : (
-              '🚀 开始生成视频'
-            )}
+          <Button className="flex-1" size="lg" onClick={handleGenerate} disabled={isGenerating || !fullScript.trim() || !imageUrl.trim()}>
+            {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> 生成中...</> : '🚀 开始生成视频'}
           </Button>
           {(status === 'done' || status === 'error') && (
-            <Button variant="outline" size="lg" onClick={reset}>
-              <RotateCcw className="w-4 h-4" />
-            </Button>
+            <Button variant="outline" size="lg" onClick={reset}><RotateCcw className="w-4 h-4" /></Button>
           )}
         </div>
 
         {/* 5. Progress */}
         {status !== 'idle' && (
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">生成进度</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-base">生成进度</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <Progress value={progress} className="h-2" />
               <p className="text-sm font-medium text-center">{STATUS_LABELS[status]}</p>
@@ -403,13 +433,7 @@ const VideoGenerator: React.FC = () => {
                   const state = getStepState(step.key, status);
                   return (
                     <div key={step.key} className="flex items-center gap-3 text-sm">
-                      {state === 'done' ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      ) : state === 'active' ? (
-                        <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full border-2 border-muted shrink-0" />
-                      )}
+                      {state === 'done' ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : state === 'active' ? <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-muted shrink-0" />}
                       <span className={state === 'pending' ? 'text-muted-foreground' : ''}>{step.label}</span>
                     </div>
                   );
@@ -417,8 +441,7 @@ const VideoGenerator: React.FC = () => {
               </div>
               {error && (
                 <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
                 </div>
               )}
             </CardContent>
@@ -428,9 +451,7 @@ const VideoGenerator: React.FC = () => {
         {/* 6. Result */}
         {status === 'done' && result.videoUrl && (
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">🎬 生成结果</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-base">🎬 生成结果</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <video src={result.videoUrl} controls className="w-full rounded-lg" playsInline />
               <div className="flex gap-2">
@@ -446,9 +467,7 @@ const VideoGenerator: React.FC = () => {
                 )}
               </div>
               {result.compositionProps && (
-                <p className="text-xs text-muted-foreground text-center">
-                  导出 Remotion 配置 JSON 后，可用本地渲染脚本生成数字人+B-Roll混剪视频
-                </p>
+                <p className="text-xs text-muted-foreground text-center">导出 Remotion 配置 JSON 后，可用本地渲染脚本生成数字人+B-Roll混剪视频</p>
               )}
             </CardContent>
           </Card>
