@@ -106,6 +106,9 @@ try {
     for (let i = 0; i < videoIds.length; i++) {
       await renderVideo(videoIds[i], videoFilenames[i]);
     }
+    for (let i = 0; i < extraVideoIds.length; i++) {
+      await renderVideo(extraVideoIds[i], extraVideoFilenames[i]);
+    }
   }
 
   // Single target
