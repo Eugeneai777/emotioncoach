@@ -25,6 +25,7 @@ interface CollapsibleProgressCalendarProps {
   makeupDays: number[];
   streak: number;
   onMakeupClick: (dayNumber: number) => void;
+  onDayClick?: (dayNumber: number, status: 'completed' | 'current' | 'future') => void;
   activeMakeupDay?: number | null;
   justCompletedDay?: number | null;
   // Post-camp cycle data - 基于实际打卡次数

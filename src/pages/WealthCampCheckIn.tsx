@@ -725,9 +725,9 @@ ${reflection}`;
   );
 
   const makeupDays = useMemo(() => {
-    const makeupLimit = 3;
     const days: number[] = [];
-    for (let i = displayDay - 1; i >= Math.max(1, displayDay - makeupLimit); i--) {
+    // 允许补所有已解锁但未完成的天（不再限制3天窗口）
+    for (let i = 1; i < displayDay; i++) {
       const entry = journalEntries.find(e => e.day_number === i);
       if (!(entry?.behavior_block || entry?.emotion_block || entry?.belief_block || (entry as any)?.briefing_content)) {
         days.push(i);
