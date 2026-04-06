@@ -841,10 +841,20 @@ ${reflection}`;
               </motion.div>
             )}
 
-            {/* 7天课程大纲 */}
+            {/* 7天课程大纲 — 支持补卡跳转 */}
             <WealthMeditationCourseOutline
               completedDays={camp?.completed_days || 0}
               campId={campId || ''}
+              makeupDays={makeupDays}
+              onMakeupClick={(dayNum) => {
+                setMakeupMeditationDone(false);
+                setMakeupReflection('');
+                setMakeupDayNumber(dayNum);
+                toast({ title: `开始补打 Day ${dayNum}`, description: "完成冥想和教练梳理后即可补卡" });
+              }}
+              onCurrentDayClick={() => {
+                document.getElementById('meditation-player')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             />
 
             {/* 补卡模式提示条 */}

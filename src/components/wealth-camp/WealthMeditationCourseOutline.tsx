@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Lock, CheckCircle2, Play, ChevronDown, ChevronUp, Headphones } from 'lucide-react';
+import { Lock, CheckCircle2, Play, ChevronDown, ChevronUp, Headphones, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { WealthMeditationPlayer } from './WealthMeditationPlayer';
@@ -16,22 +16,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from '@/hooks/use-toast';
 
 interface WealthMeditationCourseOutlineProps {
   completedDays: number;
   campId: string;
   className?: string;
+  makeupDays?: number[];
+  onMakeupClick?: (dayNumber: number) => void;
+  onCurrentDayClick?: () => void;
 }
 
 export function WealthMeditationCourseOutline({
   completedDays,
   campId,
   className,
+  makeupDays = [],
+  onMakeupClick,
+  onCurrentDayClick,
 }: WealthMeditationCourseOutlineProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [replayDay, setReplayDay] = useState<number | null>(null);
 
-  // Fetch all 7 meditations
   const { data: meditations = [] } = useQuery({
     queryKey: ['wealth-meditations-all'],
     queryFn: async () => {
@@ -46,6 +52,7 @@ export function WealthMeditationCourseOutline({
   });
 
   const replayMeditation = replayDay ? meditations.find(m => m.day_number === replayDay) : null;
+  const displayDay = completedDays + 1;
 
   return (
     <>
@@ -75,22 +82,34 @@ export function WealthMeditationCourseOutline({
               {meditations.map((m) => {
                 const dayNum = m.day_number;
                 const isCompleted = dayNum <= completedDays;
-                const isCurrent = dayNum === completedDays + 1;
-                const isLocked = dayNum > completedDays + 1;
+                const isCurrent = dayNum === displayDay;
+                const isMakeup = makeupDays.includes(dayNum);
+                const isLocked = dayNum > displayDay && !isMakeup;
                 const minutes = m.duration_seconds ? Math.round(m.duration_seconds / 60) : null;
+
+                const handleClick = () => {
+                  if (isCompleted) {
+                    setReplayDay(dayNum);
+                  } else if (isMakeup && onMakeupClick) {
+                    onMakeupClick(dayNum);
+                  } else if (isCurrent && onCurrentDayClick) {
+                    onCurrentDayClick();
+                  } else if (isLocked) {
+                    toast({ title: '🔒 尚未解锁', description: '请先完成前面的天数' });
+                  }
+                };
 
                 return (
                   <div
                     key={dayNum}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
-                      isCompleted && "bg-amber-100/60 dark:bg-amber-900/20 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/30",
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors cursor-pointer",
+                      isCompleted && "bg-amber-100/60 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30",
                       isCurrent && "bg-amber-200/50 dark:bg-amber-800/30 ring-1 ring-amber-300 dark:ring-amber-700",
+                      isMakeup && "bg-orange-50 dark:bg-orange-950/20 border border-dashed border-orange-300 dark:border-orange-700",
                       isLocked && "opacity-50"
                     )}
-                    onClick={() => {
-                      if (isCompleted) setReplayDay(dayNum);
-                    }}
+                    onClick={handleClick}
                   >
                     {/* Status icon */}
                     <div className="flex-shrink-0">
@@ -98,6 +117,8 @@ export function WealthMeditationCourseOutline({
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                       ) : isCurrent ? (
                         <Play className="w-5 h-5 text-amber-600 fill-amber-600" />
+                      ) : isMakeup ? (
+                        <RotateCcw className="w-5 h-5 text-orange-500" />
                       ) : (
                         <Lock className="w-5 h-5 text-muted-foreground/40" />
                       )}
@@ -108,13 +129,19 @@ export function WealthMeditationCourseOutline({
                       <div className="flex items-center gap-2">
                         <span className={cn(
                           "text-xs font-semibold",
-                          isCurrent ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"
+                          isCurrent ? "text-amber-700 dark:text-amber-300" : 
+                          isMakeup ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"
                         )}>
                           Day {dayNum}
                         </span>
                         {isCurrent && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-300/60 text-amber-800 font-medium">
                             今日
+                          </span>
+                        )}
+                        {isMakeup && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-200/80 text-orange-700 font-medium">
+                            待补卡
                           </span>
                         )}
                       </div>
@@ -126,13 +153,19 @@ export function WealthMeditationCourseOutline({
                       </p>
                     </div>
 
-                    {/* Duration + replay hint */}
+                    {/* Duration + action hint */}
                     <div className="flex-shrink-0 text-right">
                       {minutes && (
                         <span className="text-xs text-muted-foreground">{minutes}分钟</span>
                       )}
                       {isCompleted && (
                         <div className="text-[10px] text-amber-600 dark:text-amber-400">回放</div>
+                      )}
+                      {isMakeup && (
+                        <div className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">补卡 →</div>
+                      )}
+                      {isCurrent && (
+                        <div className="text-[10px] text-amber-600 dark:text-amber-400">开始 →</div>
                       )}
                     </div>
                   </div>
