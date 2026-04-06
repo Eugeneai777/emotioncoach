@@ -37,6 +37,19 @@ const coverFilenames = [
   "cover_5_career.png",
 ];
 
+// Extra standalone compositions
+const extraVideoIds = [
+  "video-laoge-heygen",
+  "video-midlife-stock",
+  "video-dh-broll",
+];
+
+const extraVideoFilenames = [
+  "video_laoge_heygen.mp4",
+  "video_midlife_stock.mp4",
+  "video_dh_broll.mp4",
+];
+
 console.log("Bundling...");
 const bundled = await bundle({
   entryPoint: path.resolve(__dirname, "../src/index.ts"),
