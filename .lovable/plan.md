@@ -1,58 +1,50 @@
 
 
-# 中年觉醒 — 真人素材混剪版视频
+# 中年觉醒视频升级 — 加入中年男人素材 + 语音旁白
 
-## 目标
-用免费真人视频素材（Pexels）混剪 + 文字动画 + AI 语音旁白，制作一个面向中年男性的剧情营销视频，推广「7天有劲训练营」。
+## 问题
+当前视频使用的 Pexels 素材（overtime.mp4、sunrise.mp4、relax.mp4）没有中年男性出镜的画面，且全片无声。
 
-## 创意方向
+## 升级方案
 
-**风格**: 电影感纪录片混剪 — 暗色调真实生活画面配大字幕，类似抖音/小红书爆款情感视频。
+### 1. 替换/新增含中年男人的 Pexels 素材
+从 Pexels 下载包含中年亚洲男性的免费视频素材，替换现有通用素材：
 
-**剧本（沿用已有3段式）**:
-1. **深夜痛点** — 加班、失眠、胸闷画面 + 旁白独白
-2. **转折觉醒** — 晨光、运动、放松画面 + AI教练帮助的叙述
-3. **产品推广** — 品牌CTA + 训练营介绍
+| 场景 | 当前素材 | 替换为 |
+|------|---------|--------|
+| 痛点 | overtime.mp4（通用办公） | 中年男人深夜疲惫/揉眼/独坐办公室 |
+| 转折 | sunrise.mp4（风景） | 中年男人晨跑/冥想/微笑 |
+| CTA | relax.mp4（通用放松） | 中年男人与家人/放松/自信表情 |
 
-**视觉**: 暗色电影画面 + 白/暖色大字 + 轻微Ken Burns（缓慢推拉）效果
+搜索关键词：`middle aged asian man tired`、`asian man meditation`、`asian man family smile` 等。
 
-## 执行步骤
+### 2. 生成语音旁白（火山引擎 TTS）
+使用已有的 `volcengine-tts` Edge Function 生成3段中文男声旁白：
 
-### 第 1 步：下载 Pexels 免费素材
-从 Pexels 下载 6-8 段免费视频素材：
-- 深夜办公室/加班
-- 男人疲惫/失眠
-- 城市夜景/车窗雨
-- 日出/晨跑/自然
-- 家庭温馨/微笑
-- 冥想/放松
+| 段落 | 旁白文案 | 文件名 |
+|------|---------|--------|
+| 痛点 | "兄弟，我跟你说个真事。上个月我加班到凌晨三点，回家路上突然胸口一阵发紧..." | `midlife_pain.mp3` |
+| 转折 | "后来一个朋友推荐我试了个东西。每天就花十五分钟，跟着一个AI教练做情绪训练..." | `midlife_turning.mp3` |
+| CTA | "现在回头看，那七天真的改变了我。兄弟，如果你也到了这个坎儿，试试有劲AI的七天训练营..." | `midlife_cta.mp3` |
 
-使用 Pexels API（免费）或直接下载 URL。
+### 3. 在 Remotion 组件中加入 `<Audio>` 轨道
+每个场景组件中添加 `<Audio src={staticFile("audio/midlife_xxx.mp3")} />` 播放旁白。
 
-### 第 2 步：创建新场景组件
-复用现有 Remotion 项目结构，新建：
+### 4. 渲染带声音的最终视频
+渲染脚本中去掉 `muted: true`，输出带旁白的完整视频。
 
-| 文件 | 说明 |
+## 修改文件清单
+
+| 文件 | 操作 |
 |------|------|
-| `remotion/src/scenes/MidlifeOpening.tsx` | 痛点场景 — 暗色素材 + 大字独白 |
-| `remotion/src/scenes/MidlifeTurning.tsx` | 转折场景 — 暖色素材 + 改变叙述 |
-| `remotion/src/scenes/MidlifeCTA.tsx` | CTA场景 — 品牌推广（复用BrandOutro样式） |
-| `remotion/src/MidlifeStockVideo.tsx` | 主组合 — 串联3段 + 转场 |
-
-### 第 3 步：生成 AI 语音旁白
-用 Lovable AI 支持的模型生成语音脚本，通过 Edge Function 调用 TTS（或直接使用素材+字幕无声版）。
-
-### 第 4 步：组合与渲染
-- 每段素材叠加半透明暗层 + 文字动画
-- Ken Burns 缓慢推拉效果增加电影感
-- 场景间用 `wipe` 或 `fade` 转场
-- 竖屏 1080x1920，约 30 秒（避免渲染超时）
-- 渲染输出到 `/mnt/documents/`
-
-## 技术要点
-- 使用 `<Video>` 组件播放素材片段，`startFrom` + `endAt` 裁剪
-- Ken Burns 效果通过 `interpolate()` 控制 `scale` 和 `translate`
-- 字幕用现有 `TextReveal` 组件
-- 控制在 25-30 秒内，确保渲染不超时
-- 复用现有 fonts、Background、BrandOutro 等组件
+| `remotion/public/stock/overtime.mp4` | 替换 — 含中年男人的素材 |
+| `remotion/public/stock/sunrise.mp4` | 替换 — 含中年男人的素材 |
+| `remotion/public/stock/relax.mp4` | 替换 — 含中年男人的素材 |
+| `remotion/public/audio/midlife_pain.mp3` | 新建 — TTS 旁白 |
+| `remotion/public/audio/midlife_turning.mp3` | 新建 — TTS 旁白 |
+| `remotion/public/audio/midlife_cta.mp3` | 新建 — TTS 旁白 |
+| `remotion/src/scenes/MidlifeOpening.tsx` | 修改 — 加 Audio 组件 |
+| `remotion/src/scenes/MidlifeTurning.tsx` | 修改 — 加 Audio 组件 |
+| `remotion/src/scenes/MidlifeCTA.tsx` | 修改 — 加 Audio 组件 |
+| `remotion/scripts/render-remotion.mjs` | 修改 — 去掉 muted |
 
