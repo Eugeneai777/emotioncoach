@@ -28,8 +28,11 @@ serve(async (req) => {
     console.log(`TTS V3 request: voice=${selectedVoice}, text="${text.substring(0, 50)}..."`);
 
     // Determine resource ID based on voice type
-    const isBigtts = selectedVoice.includes('bigtts');
-    const resourceId = isBigtts ? 'seed-tts-2.0' : 'seed-tts-1.0';
+    // Try multiple resource IDs if one fails
+    const isBigtts = selectedVoice.includes('bigtts') || selectedVoice.includes('mega');
+    const resourceIds = isBigtts
+      ? ['seed-tts-2.0', 'volc.service_type.10029', 'seed-tts-1.0']
+      : ['seed-tts-1.0', 'volc.service_type.10029'];
 
     // V3 HTTP Chunked API (supports bigtts/2.0 voices)
     const body = {
