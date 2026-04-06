@@ -381,7 +381,7 @@ JSON格式输出（不要markdown代码块）：
 
           // Upload cover image
           console.log('  Uploading cover image...');
-          const coverMediaId = await uploadImageToWechat(accessToken, images[0]);
+          const coverMediaId = await uploadImageToWechat(accessToken, rawImages[0]);
           
           if (!coverMediaId) {
             throw new Error('Failed to upload cover image to WeChat');
