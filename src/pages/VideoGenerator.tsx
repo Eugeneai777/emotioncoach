@@ -180,7 +180,7 @@ const VideoGenerator: React.FC = () => {
                   return (
                     <div key={step.key} className="flex items-center gap-3 text-sm">
                       {state === 'done' ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                       ) : state === 'active' ? (
                         <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
                       ) : (
