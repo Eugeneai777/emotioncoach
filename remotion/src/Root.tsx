@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 import { VideoComposition } from "./VideoComposition";
 import { CoverComposition } from "./covers/CoverComposition";
+import { MidlifeCrisisHeyGen } from "./MidlifeCrisisHeyGen";
 
 const VIDEOS = [
   {
