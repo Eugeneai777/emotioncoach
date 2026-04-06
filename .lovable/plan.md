@@ -1,74 +1,59 @@
 
 
-# 财富觉醒训练营 — 打卡路径优化方案
+# 财富觉醒训练营 — 课程大纲可跳转打卡
 
-## 当前问题（课程设计视角）
+## 问题
 
-1. **内容不可浏览**：用户只能看到当前进度天的冥想，无法预览或回顾其他天的内容
-2. **补卡窗口过窄**：仅允许补前 3 天（基于 `displayDay - 1` 到 `displayDay - 3`），半个月后回来只能补到当前进度的前几天，体验断裂
-3. **已完成内容不可回放**：完成 Day 1 后无入口重新听 Day 1 冥想
-4. **日历不可交互**：7 天日历只有"可补卡"的天能点击，已完成/未来天都不可点
-5. **断档用户无引导**：离开半个月后回来，页面仍停在 `completed_days + 1`，没有"欢迎回来"或进度恢复提示
+从截图和代码看，`WealthMeditationCourseOutline` 组件中：
+- **已完成天**：只能弹窗"回放"冥想，无法跳到该天的完整打卡内容
+- **未完成但已解锁天**（补卡天）：完全不可点击，用户找不到补卡入口
+- **当前天**：无交互
+- 对比有劲训练营的 `StressMeditation.tsx` 有"上一天 / 下一天"导航按钮，财富营缺少这种直觉式导航
 
-## 优化方案
+## 修复方案
 
-### 1. 新增「7天课程大纲」卡片
-在"今日任务"Tab 顶部（日历下方）增加一个可展开的课程总览卡片，展示全部 7 天冥想标题和时长。用户可以：
-- **已完成天**：点击回放冥想（只读模式，不影响进度）
-- **当前天**：高亮标记，点击滚动到冥想播放器
-- **未解锁天**：显示锁定图标和标题，不可播放
+### 1. 课程大纲增加「补卡」交互
+**文件**: `src/components/wealth-camp/WealthMeditationCourseOutline.tsx`
 
-**文件**: 新建 `src/components/wealth-camp/WealthMeditationCourseOutline.tsx`
-- 从 `wealth_meditations` 加载全部 7 天数据
-- 根据 `completed_days` 判断解锁状态
-- 已完成天点击后弹出独立播放器（回放模式）
+新增 `onMakeupClick` 和 `makeupDays` props：
+- **已完成天**：保留回放功能不变
+- **可补卡天**（未完成但 < displayDay）：显示橙色「补卡」标签，点击触发 `onMakeupClick(dayNum)` — 直接进入补卡模式
+- **当前天**：点击滚动到冥想播放器（触发 `onCurrentDayClick`）
+- **未来天**：点击显示 toast 提示
 
-### 2. 放宽补卡范围 — 允许补所有未完成天
-将补卡限制从"前 3 天"改为"所有已解锁但未完成的天"。
+视觉变化：
+- 可补卡天用橙色虚线边框 + "待补卡" 标签替代锁定图标
+- 当前天保持高亮 + 可点击
 
-**文件**: `src/pages/WealthCampCheckIn.tsx`（`makeupDays` 计算逻辑，约第 727 行）
-- 当前逻辑：`for (let i = displayDay - 1; i >= Math.max(1, displayDay - 3); i--)`
-- 改为：`for (let i = 1; i < displayDay; i++)`，遍历所有已过但未完成的天
-
-### 3. 日历天数可点击交互
-让 7 天日历格子全部可点击，行为根据状态区分：
-- **已完成**：点击后展示该天的冥想回放 + 教练记录摘要
-- **可补卡**（未完成且已过）：点击进入补卡模式（现有逻辑）
-- **当前天**：点击滚动到冥想播放器
-- **未来天**：点击显示"完成前面的天才能解锁"提示
-
-**文件**: `src/components/wealth-camp/CollapsibleProgressCalendar.tsx`（约第 392 行）
-- 扩展 `onClick` 处理，增加已完成天和当前天的交互
-
-### 4. 断档用户欢迎回来提示
-当用户超过 3 天未打卡时，在顶部显示一个温暖的回归提示卡片。
-
+### 2. 冥想播放器底部增加「上一天 / 下一天」导航
 **文件**: `src/pages/WealthCampCheckIn.tsx`
-- 计算 `daysSinceLastCheckIn`（`currentDay - displayDay`）
-- 超过 3 天时显示鼓励文案 + 快速补卡入口
 
-### 5. 补卡流程增加"快速补卡"选项
-对于长时间断档用户，提供批量补卡入口，让用户可以一次性查看所有待补天数并逐个完成。
+在冥想播放器下方（WaterfallSteps 之后）添加类似有劲训练营的 prev/next 导航：
+```
+< 上一天          下一天 >
+```
+- 「上一天」：跳到已完成的前一天（回放模式）
+- 「下一天」：如果下一天已解锁，切换到该天；否则禁用
+- 点击切换时更新 `displayDay` / 进入补卡模式
 
-**文件**: `src/components/wealth-camp/CollapsibleProgressCalendar.tsx`
-- 补卡入口从下拉菜单改为更显眼的卡片式列表
+### 3. 课程大纲默认展开
+改 `isExpanded` 初始值为 `true`，让用户一眼看到所有天数和状态，降低发现成本。
 
 ## 修改文件清单
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| `src/components/wealth-camp/WealthMeditationCourseOutline.tsx` | 新建 | 7天课程大纲 + 回放功能 |
-| `src/pages/WealthCampCheckIn.tsx` | 修改 | 放宽补卡范围、加断档提示、集成课程大纲 |
-| `src/components/wealth-camp/CollapsibleProgressCalendar.tsx` | 修改 | 日历天数可点击交互 |
+| 文件 | 说明 |
+|------|------|
+| `WealthMeditationCourseOutline.tsx` | 增加补卡/当前天点击交互、默认展开 |
+| `WealthCampCheckIn.tsx` | 传递回调 props、底部增加上一天/下一天导航 |
 
 ## 用户体验改善
 
 ```text
 Before:
-  Day 2 用户 → 只能看 Day 2 冥想 → 半月后回来仍卡在 Day 2 → 无法找到补卡入口
+  课程大纲 → 已完成天只能回放 → 补卡天无入口 → 不知道去哪补卡
 
 After:
-  Day 2 用户 → 展开课程大纲可浏览 7 天内容 → 半月后回来看到"欢迎回来"提示
-  → 日历显示 Day 1 ✓ + Day 2 待补卡 → 点击 Day 2 进入补卡 → 完成后自动进入 Day 3
+  课程大纲 → 已完成天可回放 → 补卡天显示"待补卡"可直接点击进入
+  → 底部有上一天/下一天切换 → 与有劲训练营体验一致
 ```
 
