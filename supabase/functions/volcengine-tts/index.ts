@@ -7,7 +7,7 @@ const corsHeaders = {
 
 async function tryV3TTS(
   appId: string,
-  accessToken: string,
+  accessKey: string,
   text: string,
   speaker: string,
   resourceId: string,
@@ -26,18 +26,18 @@ async function tryV3TTS(
     headers: {
       "Content-Type": "application/json",
       "X-Api-App-Id": appId,
-      "X-Api-Access-Key": accessToken,
+      "X-Api-Access-Key": accessKey,
       "X-Api-Resource-Id": resourceId,
       "X-Api-Request-Id": crypto.randomUUID(),
     },
     body: JSON.stringify(body),
   });
 
-  console.log(`V3 [${resourceId}] status: ${response.status}`);
+  console.log(`V3 [${resourceId}] key=${accessKey.slice(0,6)}... status: ${response.status}`);
 
   if (!response.ok) {
     const errText = await response.text();
-    console.warn(`V3 [${resourceId}] failed:`, errText.slice(0, 200));
+    console.warn(`V3 [${resourceId}] failed:`, errText.slice(0, 300));
     return { ok: false, error: errText };
   }
 
@@ -54,10 +54,10 @@ async function tryV3TTS(
       if (chunk.code !== 0 && chunk.code !== 20000000) {
         return { ok: false, error: `${chunk.code}: ${chunk.message}` };
       }
-    } catch { /* skip */ }
+    } catch { /* skip non-JSON */ }
   }
 
-  if (audioChunks.length === 0) return { ok: false, error: 'No audio chunks' };
+  if (audioChunks.length === 0) return { ok: false, error: 'No audio chunks received' };
   return { ok: true, audioBase64: audioChunks.join('') };
 }
 
@@ -103,33 +103,40 @@ serve(async (req) => {
 
     const appId = Deno.env.get('DOUBAO_APP_ID');
     const accessToken = Deno.env.get('DOUBAO_ACCESS_TOKEN');
+    const appKey = Deno.env.get('DOUBAO_APP_KEY');
     if (!appId || !accessToken) throw new Error('DOUBAO_APP_ID or DOUBAO_ACCESS_TOKEN not configured');
 
     const selectedVoice = voice_type || 'zh_female_cancan_mars_bigtts';
     const isBigtts = selectedVoice.includes('bigtts') || selectedVoice.includes('mega');
-    const appKey = Deno.env.get('DOUBAO_APP_KEY');
-    console.log(`Credentials: appId=${appId?.slice(0,6)}..., token=${accessToken?.slice(0,6)}..., appKey=${appKey?.slice(0,6) || 'N/A'}...`);
-    // Strategy: Try V3 with multiple resource IDs, then fallback to V1
+    console.log(`TTS: voice=${selectedVoice}, bigtts=${isBigtts}, hasAppKey=${!!appKey}`);
+
     const attempts: Array<{ label: string; fn: () => Promise<{ ok: boolean; audioBase64?: string; error?: string }> }> = [];
 
-    // V3 attempts
-    const v3Resources = isBigtts
-      ? ['seed-tts-2.0', 'seed-tts-1.0', 'seed-tts-1.0-concurr']
-      : ['seed-tts-1.0', 'seed-tts-1.0-concurr'];
+    // Keys to try for V3: accessToken first, then appKey if different
+    const keysToTry = [accessToken];
+    if (appKey && appKey !== accessToken) keysToTry.push(appKey);
 
-    for (const rid of v3Resources) {
-      attempts.push({
-        label: `V3/${rid}`,
-        fn: () => tryV3TTS(appId, accessToken, text, selectedVoice, rid),
-      });
+    const v3Resources = isBigtts
+      ? ['seed-tts-2.0', 'seed-tts-1.0']
+      : ['seed-tts-1.0'];
+
+    for (const key of keysToTry) {
+      for (const rid of v3Resources) {
+        attempts.push({
+          label: `V3/${rid}/${key.slice(0,4)}`,
+          fn: () => tryV3TTS(appId, key, text, selectedVoice, rid),
+        });
+      }
     }
 
-    // V1 fallback
-    const v1Cluster = isBigtts ? 'volcano_mega_tts' : 'volcano_tts';
-    attempts.push({
-      label: `V1/${v1Cluster}`,
-      fn: () => tryV1TTS(appId, accessToken, text, selectedVoice, v1Cluster),
-    });
+    // V1 fallback with both clusters
+    const v1Clusters = isBigtts ? ['volcano_mega_tts', 'volcano_tts'] : ['volcano_tts', 'volcano_mega_tts'];
+    for (const cluster of v1Clusters) {
+      attempts.push({
+        label: `V1/${cluster}`,
+        fn: () => tryV1TTS(appId, accessToken, text, selectedVoice, cluster),
+      });
+    }
 
     let lastError = '';
     for (const attempt of attempts) {
@@ -142,11 +149,11 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      lastError = `${attempt.label}: ${result.error}`;
+      lastError = `${attempt.label}: ${result.error?.slice(0, 150)}`;
       console.warn(`❌ ${attempt.label} failed`);
     }
 
-    throw new Error(`所有TTS方式均失败。最后错误: ${lastError.slice(0, 200)}`);
+    throw new Error(`所有TTS方式均失败。最后: ${lastError}`);
   } catch (error) {
     console.error('Error in volcengine-tts:', error);
     return new Response(
