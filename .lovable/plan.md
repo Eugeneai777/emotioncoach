@@ -1,64 +1,64 @@
 
 
-# 视频生成页面升级 — 照片上传 + AI剧本生成
+# 视频生成页面完善 — 端到端5段叙事视频生产
 
-## 概述
+## 当前问题
 
-升级 `/video-generator` 页面，新增两大能力：
-1. **照片上传**：用户可直接上传人像照片到 `video-assets` bucket，获取公开URL（替代手动粘贴URL）
-2. **AI剧本生成**：用户选择「人群 + 工具场景 + 转化产品」，AI 自动生成短视频口播剧本
+### 问题1：AI剧本生成不生效
+`VideoGenerator.tsx` 调用 `chat` 边缘函数生成剧本，但 `chat` 函数会**覆盖传入的 system prompt**，替换为情绪教练的 companion prompt。用户传入的 `VIDEO_SCRIPT_SYSTEM_PROMPT` 被完全忽略。
 
-## 页面流程
+### 问题2：只生成原始数字人视频
+当前流程：TTS → 上传音频 → 即梦AI生成数字人视频 → 结束。输出的是一个没有 B-Roll、没有字幕、没有产品展示的纯数字人口播视频。没有与 Remotion 的 `DigitalHumanBRoll` 模板对接。
 
-```text
-Step 1: 上传人像照片（拍照/相册）
-Step 2: 选择人群（女性/中年/情侣/职场/银发/青少年）
-Step 3: 选择该人群下的工具场景（如"职场跃迁"、"情绪翻译"等）
-Step 4: 选择转化产品（如训练营、测评、教练服务等）
-Step 5: AI生成剧本（调用现有 chat 边缘函数，prompt 按5段叙事结构生成）
-Step 6: 用户可编辑剧本 → 一键生成视频
+### 问题3：缺少视频混剪渲染能力
+Remotion 渲染需要 headless Chrome + ffmpeg，无法在浏览器或 Edge Function 中运行。需要一个服务端渲染方案。
+
+## 解决方案
+
+### 1. 新建 `video-script-ai` 边缘函数
+专用于视频剧本生成，直接调用 Lovable AI Gateway，使用 `VIDEO_SCRIPT_SYSTEM_PROMPT` 作为 system prompt。**输出结构化 JSON**（非纯文本），包含5段内容 + 字幕时间轴 + B-Roll 建议。
+
+输出格式：
+```json
+{
+  "script": "完整口播文案",
+  "segments": [
+    { "type": "hook", "text": "你是不是也这样？", "startSec": 0, "endSec": 3 },
+    { "type": "pain", "text": "凌晨三点...", "startSec": 3, "endSec": 10, "highlight": "焦虑" },
+    { "type": "product", "text": "试试AI教练...", "startSec": 10, "endSec": 18 },
+    { "type": "result", "text": "用了一周...", "startSec": 18, "endSec": 25 },
+    { "type": "question", "text": "你有没有这种感觉？", "startSec": 25, "endSec": 30 }
+  ],
+  "closingQuestion": "你有没有这种感觉？",
+  "closingCta": "评论区告诉我 👇"
+}
 ```
 
-## 新增/修改文件
+### 2. 新建 `render-video` 边缘函数
+使用 Remotion Lambda 或 Remotion Serverless 渲染最终混剪视频。考虑到 Edge Function 的时间限制，采用异步方案：
+- 将 Remotion composition props（数字人视频URL + 字幕JSON + B-Roll配置）保存到数据库
+- 触发远程渲染（或降级方案：直接返回数字人视频 + 字幕配置JSON供本地渲染）
+
+**降级方案**（如无 Remotion Lambda）：前端将生成的数字人视频 + 结构化字幕配置导出为 JSON，用户可通过已有的 `render-remotion.mjs` 脚本本地渲染混剪视频。
+
+### 3. 重构前端页面
+- AI生成剧本 → 调用新的 `video-script-ai` 函数 → 返回结构化数据
+- 展示5段预览（可编辑每段文案）
+- 生成视频后，展示最终结果
+
+## 文件清单
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/pages/VideoGenerator.tsx` | 重构 | 添加照片上传、人群/工具/产品选择、AI生成剧本区域 |
-| `src/config/videoScriptConfig.ts` | 新建 | 人群→工具→产品的映射配置数据 |
+| `supabase/functions/video-script-ai/index.ts` | 新建 | 专用剧本AI生成，输出结构化JSON |
+| `src/pages/VideoGenerator.tsx` | 重构 | 5段可视化编辑、结构化剧本展示 |
+| `src/hooks/useVideoGeneration.ts` | 更新 | 支持结构化剧本参数 |
+| `src/config/videoScriptConfig.ts` | 更新 | 增强 prompt 要求输出 JSON 格式 |
 
-## 关键实现
+## 实施步骤
 
-### 1. 照片上传
-- 使用 `<input type="file" accept="image/*">` + 相机捕获
-- 上传到 `video-assets` bucket（已存在且公开），路径 `avatars/{userId}/{timestamp}.jpg`
-- 上传后获取公开URL，替代手动输入
-
-### 2. 人群-工具-产品配置（`videoScriptConfig.ts`）
-从现有页面提取数据，构建三级联动：
-- **人群**：复用 `audiences` 数组（女性/银发/情侣/中年/青少年/职场）
-- **工具**：每个人群对应的 AI 工具列表（如女性→职场跃迁/生活平衡/情绪疏导/副业增收）
-- **产品**：每个人群可转化的产品（如训练营、测评、教练1v1等）
-
-### 3. AI剧本生成
-调用现有 `chat` 边缘函数，system prompt 指导按「Hook→痛点→产品介绍→效果展示→提问」5段结构输出30秒口播剧本。prompt 中注入所选人群、工具场景、转化产品信息。
-
-### 4. 页面布局变化
-```text
-┌──────────────────────────────────┐
-│  🎬 AI数字人视频生成              │
-├──────────────────────────────────┤
-│  📷 上传人像 [点击上传/拍照]       │
-│  🎯 选择人群: [下拉]              │
-│  🔧 选择场景: [下拉-联动]         │
-│  📦 转化产品: [下拉-联动]         │
-│  🎙️ 音色选择: [下拉]             │
-│                                  │
-│  [✨ AI生成剧本]                  │
-├──────────────────────────────────┤
-│  视频文案: [可编辑文本框]          │
-│  [🚀 开始生成视频]               │
-└──────────────────────────────────┘
-```
-
-不需要创建新的边缘函数或数据库迁移，复用现有 `chat` 函数和 `video-assets` bucket。
+1. 创建 `video-script-ai` 边缘函数 — 调用 Lovable AI Gateway，输出结构化5段剧本JSON
+2. 重构 `VideoGenerator.tsx` — 剧本生成后展示5段可编辑卡片（Hook/痛点/产品/效果/提问），每段显示时长和字幕样式
+3. 更新 `useVideoGeneration` hook — 将结构化字幕数据与数字人视频URL一起保存，生成完成后提供完整的 Remotion composition props
+4. 视频生成完成后，展示数字人原始视频预览 + 导出 Remotion 配置 JSON（用于后续混剪渲染）
 
