@@ -33,6 +33,7 @@ export function AwakeningDashboard({
   makeupDays,
   streak,
   onMakeupClick,
+  onDayClick,
   activeMakeupDay,
   justCompletedDay,
   className,
@@ -57,6 +58,7 @@ export function AwakeningDashboard({
         makeupDays={makeupDays}
         streak={streak}
         onMakeupClick={onMakeupClick}
+        onDayClick={onDayClick}
         activeMakeupDay={activeMakeupDay}
         justCompletedDay={justCompletedDay}
         postGraduationCheckIns={postGraduationCheckIns}
