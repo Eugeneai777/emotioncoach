@@ -1,4 +1,4 @@
-import { AbsoluteFill, Video, staticFile, useCurrentFrame, interpolate, Sequence } from "remotion";
+import { AbsoluteFill, Video, Audio, staticFile, useCurrentFrame, interpolate, Sequence } from "remotion";
 import { TextReveal } from "../components/TextReveal";
 import { SANS_FONT } from "../fonts";
 
@@ -18,6 +18,8 @@ export const MidlifeTurning: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#1a1008", opacity: fadeOut > 0 ? fadeOut : 0 }}>
+      {/* Voiceover */}
+      <Audio src={staticFile("audio/midlife_turning.mp3")} volume={0.9} />
       {/* Sunrise video */}
       <div style={{
         position: "absolute", inset: 0,

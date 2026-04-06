@@ -1,4 +1,4 @@
-import { AbsoluteFill, Video, staticFile, useCurrentFrame, interpolate, useVideoConfig } from "remotion";
+import { AbsoluteFill, Video, Audio, staticFile, useCurrentFrame, interpolate, useVideoConfig } from "remotion";
 import { TextReveal } from "../components/TextReveal";
 
 /**
@@ -18,6 +18,8 @@ export const MidlifeOpening: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a1e", opacity: fadeOut > 0 ? fadeOut : 0 }}>
+      {/* Voiceover */}
+      <Audio src={staticFile("audio/midlife_pain.mp3")} volume={0.9} />
       {/* Background video with Ken Burns */}
       <div style={{
         position: "absolute", inset: 0,

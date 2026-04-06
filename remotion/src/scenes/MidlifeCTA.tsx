@@ -1,4 +1,4 @@
-import { AbsoluteFill, Video, staticFile, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { AbsoluteFill, Video, Audio, staticFile, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
 import { SERIF_FONT, SANS_FONT } from "../fonts";
 
 /**
@@ -21,6 +21,8 @@ export const MidlifeCTA: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a1e", opacity: fadeIn }}>
+      {/* Voiceover */}
+      <Audio src={staticFile("audio/midlife_cta.mp3")} volume={0.9} />
       {/* Background video */}
       <div style={{
         position: "absolute", inset: 0,

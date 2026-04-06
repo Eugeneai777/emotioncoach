@@ -64,7 +64,7 @@ async function renderVideo(id, filename) {
     codec: "h264",
     outputLocation: `/mnt/documents/${filename}`,
     puppeteerInstance: browser,
-    muted: true,
+    muted: false,
     concurrency: 1,
   });
   console.log(`Done: /mnt/documents/${filename}`);
