@@ -66,6 +66,27 @@ async function generateImage(prompt: string): Promise<string> {
   return imageUrl; // data:image/png;base64,...
 }
 
+// Upload base64 image to Supabase Storage, return public URL
+async function uploadToStorage(supabase: any, base64DataUrl: string, filename: string): Promise<string> {
+  const base64Data = base64DataUrl.replace(/^data:image\/\w+;base64,/, '');
+  const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+  const { error } = await supabase.storage
+    .from('wechat-article-images')
+    .upload(filename, binaryData, {
+      contentType: 'image/png',
+      upsert: true,
+    });
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`);
+
+  const { data: urlData } = supabase.storage
+    .from('wechat-article-images')
+    .getPublicUrl(filename);
+
+  return urlData.publicUrl;
+}
+
 async function getWechatAccessToken(): Promise<string> {
   const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
   const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
