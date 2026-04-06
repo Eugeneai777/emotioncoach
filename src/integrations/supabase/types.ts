@@ -10928,6 +10928,66 @@ export type Database = {
         }
         Relationships: []
       }
+      wechat_articles: {
+        Row: {
+          article_images: Json | null
+          content_html: string | null
+          cover_image_url: string | null
+          created_at: string
+          digest: string | null
+          id: string
+          publish_error: string | null
+          published_at: string | null
+          scheduled_for: string | null
+          status: string
+          story_theme: string | null
+          target_product: string | null
+          target_url: string | null
+          title: string
+          updated_at: string
+          wechat_media_id: string | null
+          wechat_publish_id: string | null
+        }
+        Insert: {
+          article_images?: Json | null
+          content_html?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          digest?: string | null
+          id?: string
+          publish_error?: string | null
+          published_at?: string | null
+          scheduled_for?: string | null
+          status?: string
+          story_theme?: string | null
+          target_product?: string | null
+          target_url?: string | null
+          title: string
+          updated_at?: string
+          wechat_media_id?: string | null
+          wechat_publish_id?: string | null
+        }
+        Update: {
+          article_images?: Json | null
+          content_html?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          digest?: string | null
+          id?: string
+          publish_error?: string | null
+          published_at?: string | null
+          scheduled_for?: string | null
+          status?: string
+          story_theme?: string | null
+          target_product?: string | null
+          target_url?: string | null
+          title?: string
+          updated_at?: string
+          wechat_media_id?: string | null
+          wechat_publish_id?: string | null
+        }
+        Relationships: []
+      }
       wechat_broadcast_jobs: {
         Row: {
           completed_at: string | null
