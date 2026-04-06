@@ -67,7 +67,7 @@ function useDynamicTopicGroups(): VideoTopicGroup[] {
     queryFn: async () => {
       const { data } = await supabase
         .from('coach_templates')
-        .select('id, name, description')
+        .select('id, title, description')
         .eq('is_active', true)
         .order('display_order');
       return data || [];
@@ -98,7 +98,7 @@ function useDynamicTopicGroups(): VideoTopicGroup[] {
         groupEmoji: '🤖',
         items: coaches.map(c => ({
           id: `ai-coach-${c.id}`,
-          label: c.name,
+          label: c.title,
           description: c.description || 'AI教练对话',
           groupId: 'ai-coach',
         })),
