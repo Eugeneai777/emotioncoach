@@ -383,12 +383,12 @@ export function CollapsibleProgressCalendar({
                           <div key={dot.dayNumber} className="flex flex-col items-center gap-1">
                             <div
                               className={cn(
-                                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                                dot.isCompleted && "bg-amber-500 text-white",
-                                dot.isCurrent && !dot.isCompleted && !activeMakeupDay && "bg-amber-300 ring-2 ring-amber-500 text-amber-800",
+                                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all cursor-pointer",
+                                dot.isCompleted && "bg-amber-500 text-white hover:ring-2 hover:ring-amber-400",
+                                dot.isCurrent && !dot.isCompleted && !activeMakeupDay && "bg-amber-300 ring-2 ring-amber-500 text-amber-800 hover:bg-amber-400",
                                 dot.isActiveMakeup && "bg-gradient-to-br from-amber-400 to-orange-500 text-white ring-2 ring-amber-400 animate-pulse",
-                                dot.canMakeup && !dot.isCompleted && !dot.isActiveMakeup && "border-2 border-dashed border-amber-400 text-amber-600 cursor-pointer hover:bg-amber-100",
-                                dot.isFuture && "bg-muted/30 text-muted-foreground",
+                                dot.canMakeup && !dot.isCompleted && !dot.isActiveMakeup && "border-2 border-dashed border-amber-400 text-amber-600 hover:bg-amber-100",
+                                dot.isFuture && "bg-muted/30 text-muted-foreground hover:bg-muted/50",
                                 !dot.isCompleted && !dot.canMakeup && !dot.isCurrent && !dot.isFuture && !dot.isActiveMakeup && "bg-red-100 text-red-400"
                               )}
                               onClick={() => {
