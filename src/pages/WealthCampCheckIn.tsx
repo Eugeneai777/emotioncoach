@@ -465,7 +465,7 @@ export default function WealthCampCheckIn() {
     return map;
   }, [mergedBriefings]);
 
-  const { todayAction, todayEntryId, todayActionCompleted: journalActionCompleted } = useTodayWealthJournal(journalEntries, currentDay);
+  const { todayAction, todayEntryId, todayActionCompleted: journalActionCompleted } = useTodayWealthJournal(journalEntries, displayDay);
 
   // Fetch user ID
   const { data: userId } = useQuery({
@@ -478,12 +478,12 @@ export default function WealthCampCheckIn() {
 
   // localStorage 读取邀请状态
   useEffect(() => {
-    if (campId && currentDay) {
-      const key = `wealth-camp-invite-${campId}-${currentDay}`;
+    if (campId && displayDay) {
+      const key = `wealth-camp-invite-${campId}-${displayDay}`;
       const saved = localStorage.getItem(key);
       setInviteCompleted(saved === 'true');
     }
-  }, [campId, currentDay]);
+  }, [campId, displayDay]);
 
   // 补卡成功提示
   useEffect(() => {
@@ -499,17 +499,17 @@ export default function WealthCampCheckIn() {
 
   // Called after user views the invite dialog for 3+ seconds
   const handleInviteViewComplete = () => {
-    if (campId && currentDay) {
-      const key = `wealth-camp-invite-${campId}-${currentDay}`;
+    if (campId && displayDay) {
+      const key = `wealth-camp-invite-${campId}-${displayDay}`;
       localStorage.setItem(key, 'true');
       setInviteCompleted(true);
-      trackShare('invite', 'completed', false, { day_number: currentDay });
+      trackShare('invite', 'completed', false, { day_number: displayDay });
     }
   };
 
   // 查询社区帖子确定分享状态
   const { data: hasSharedPost = false } = useQuery({
-    queryKey: ['wealth-camp-share-status', campId, currentDay, userId],
+    queryKey: ['wealth-camp-share-status', campId, displayDay, userId],
     queryFn: async () => {
       if (!userId || !campId) return false;
       const { count } = await supabase
@@ -517,16 +517,16 @@ export default function WealthCampCheckIn() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('camp_id', campId)
-        .eq('camp_day', currentDay);
+        .eq('camp_day', displayDay);
       return (count || 0) > 0;
     },
-    enabled: !!userId && !!campId && currentDay > 0,
+    enabled: !!userId && !!campId && displayDay > 0,
   });
 
   // Check today's progress
   useEffect(() => {
     if (journalEntries.length > 0 && camp) {
-      const todayEntry = journalEntries.find(e => e.day_number === currentDay);
+      const todayEntry = journalEntries.find(e => e.day_number === displayDay);
       if (todayEntry) {
         // 如果用户正在重新冥想，不要从DB覆盖回true
         if (!isRedoingMeditationRef.current) {
@@ -549,7 +549,7 @@ export default function WealthCampCheckIn() {
       }
       
       const allPendingActions = journalEntries
-        .filter(e => e.giving_action && !(e as any).action_completed_at && e.day_number < currentDay)
+        .filter(e => e.giving_action && !(e as any).action_completed_at && e.day_number < displayDay)
         .sort((a, b) => b.day_number - a.day_number)
         .map(e => ({
           action: e.giving_action!,
@@ -560,7 +560,7 @@ export default function WealthCampCheckIn() {
     } else {
       setShareCompleted(hasSharedPost);
     }
-  }, [journalEntries, camp, currentDay, hasSharedPost]);
+  }, [journalEntries, camp, displayDay, hasSharedPost]);
 
   // 使用 ref 标记重新冥想状态，防止 useEffect 从 DB 覆盖回 true
   const isRedoingMeditationRef = useRef(false);
@@ -667,10 +667,31 @@ ${reflection}`;
     queryClient.invalidateQueries({ queryKey: ['user-camp-mode'] });
     
     if (campId) {
-      trackDayCheckin(currentDay, campId);
+      trackDayCheckin(displayDay, campId);
     }
     
-    const dayJustCompleted = makeupDayNumber || currentDay;
+    // 更新数据库中的 completed_days 和 check_in_dates
+    if (campId && camp && userId) {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const checkInDates = Array.isArray(camp.check_in_dates) ? [...camp.check_in_dates] : [];
+        if (!checkInDates.includes(today)) {
+          checkInDates.push(today);
+          await supabase
+            .from('training_camps')
+            .update({
+              completed_days: camp.completed_days + 1,
+              check_in_dates: checkInDates,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', campId);
+        }
+      } catch (err) {
+        console.error('更新打卡天数失败:', err);
+      }
+    }
+    
+    const dayJustCompleted = makeupDayNumber || displayDay;
     const completedDays = (camp?.completed_days || 0) + 1;
     
     if (dayJustCompleted === 7 || completedDays >= 7) {
@@ -706,14 +727,14 @@ ${reflection}`;
   const makeupDays = useMemo(() => {
     const makeupLimit = 3;
     const days: number[] = [];
-    for (let i = currentDay - 1; i >= Math.max(1, currentDay - makeupLimit); i--) {
+    for (let i = displayDay - 1; i >= Math.max(1, displayDay - makeupLimit); i--) {
       const entry = journalEntries.find(e => e.day_number === i);
       if (!(entry?.behavior_block || entry?.emotion_block || entry?.belief_block || (entry as any)?.briefing_content)) {
         days.push(i);
       }
     }
     return days;
-  }, [currentDay, journalEntries]);
+  }, [displayDay, journalEntries]);
 
   const streak = useMemo(() => {
     let s = 0;
@@ -848,7 +869,7 @@ ${reflection}`;
                         🎉 Day {lastCompletedMakeupDay} 补卡成功！
                       </span>
                       <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
-                        继续完成今日 Day {currentDay} 的打卡任务吧
+                        继续完成今日 Day {displayDay} 的打卡任务吧
                       </p>
                     </div>
                   </div>
@@ -864,7 +885,7 @@ ${reflection}`;
               inviteCompleted={inviteCompleted}
               onCoachingClick={handleStartCoaching}
               onShareClick={() => {
-                trackShare('journal', 'clicked', false, { day_number: currentDay });
+                trackShare('journal', 'clicked', false, { day_number: displayDay });
                 setShowShareDialog(true);
               }}
               onInviteClick={() => setShowInviteDialog(true)}
