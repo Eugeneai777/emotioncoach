@@ -60,10 +60,16 @@ export default function WechatArticlesManagement() {
     toast.info(autoPublish ? '正在生成并发布文章...' : '正在生成文章草稿...', { duration: 10000 });
 
     try {
+      // AI 生成文章+图片耗时较长，需要 5 分钟超时
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 300000);
+
       const { data, error } = await supabase.functions.invoke('generate-wechat-article', {
         body: { action: autoPublish ? 'generate_and_publish' : 'generate_only' },
+        signal: controller.signal as AbortSignal,
       });
 
+      clearTimeout(timeout);
       if (error) throw error;
 
       if (data?.success) {
