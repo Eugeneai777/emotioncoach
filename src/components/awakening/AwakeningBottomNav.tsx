@@ -39,10 +39,8 @@ const AwakeningBottomNav: React.FC = () => {
       {/* 凸起中心按钮 - 文字AI对话入口 */}
       <div className="absolute left-1/2 -translate-x-1/2 -top-7 flex flex-col items-center">
         {/* 光晕效果 */}
-        <motion.div
-          className="absolute inset-0 w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/40 to-orange-500/40 blur-xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        <div
+          className="absolute inset-0 w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/30 to-orange-500/30 blur-xl"
         />
         
         {/* 主按钮 */}
@@ -52,8 +50,6 @@ const AwakeningBottomNav: React.FC = () => {
                      border-0 shadow-lg shadow-orange-500/30"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          animate={{ y: [0, -3, 0] }}
-          transition={{ y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }}
         >
           <img src={logoImage} alt="有劲AI" className="w-[115%] h-[115%] object-cover" />
         </motion.button>
