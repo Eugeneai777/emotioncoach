@@ -738,7 +738,7 @@ ${reflection}`;
 
   const streak = useMemo(() => {
     let s = 0;
-    for (let i = currentDay - 1; i >= 1; i--) {
+    for (let i = displayDay - 1; i >= 1; i--) {
       if (journalEntries.find(e => e.day_number === i && e.behavior_block)) {
         s++;
       } else {
@@ -746,7 +746,7 @@ ${reflection}`;
       }
     }
     return s;
-  }, [currentDay, journalEntries]);
+  }, [displayDay, journalEntries]);
 
   // Calculate post-camp checkin dates for graduates/partners
   const postCampCheckinDates = useMemo(() => {
