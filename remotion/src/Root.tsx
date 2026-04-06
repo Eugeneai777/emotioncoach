@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 import { VideoComposition } from "./VideoComposition";
 import { CoverComposition } from "./covers/CoverComposition";
+import { MidlifeCrisisHeyGen } from "./MidlifeCrisisHeyGen";
 
 const VIDEOS = [
   {
@@ -90,5 +91,13 @@ export const RemotionRoot = () => (
         defaultProps={c}
       />
     ))}
+    <Composition
+      id="video-laoge-heygen"
+      component={MidlifeCrisisHeyGen}
+      durationInFrames={1650}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
   </>
 );
