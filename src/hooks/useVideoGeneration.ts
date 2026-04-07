@@ -153,6 +153,11 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           continue;
         }
 
+        // Check for API-level errors (e.g. code 50215 "Input invalid")
+        if (queryData?.code && queryData.code !== 0 && !queryData?.status) {
+          throw new Error(queryData.message || `即梦 API 错误 (code: ${queryData.code})`);
+        }
+
         const taskStatus = queryData?.status;
 
         if (taskStatus === 'done' && queryData?.video_url) {
@@ -190,8 +195,13 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           return;
         }
 
-        if (taskStatus === 'failed') {
+        if (taskStatus === 'failed' || taskStatus === 'error') {
           throw new Error(queryData?.error || '视频生成失败');
+        }
+
+        // If status is unknown for too long, likely an unrecoverable error
+        if (taskStatus === 'unknown' && polls > 10) {
+          throw new Error('即梦任务状态异常，请检查输入图片和音频是否符合要求');
         }
 
         const pollProgress = 55 + Math.min(40, (polls / maxPolls) * 40);
