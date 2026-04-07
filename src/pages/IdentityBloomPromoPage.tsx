@@ -613,7 +613,7 @@ export default function IdentityBloomPromoPage() {
 
       {/* ===== 6 CORE HIGHLIGHTS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">六大核心亮点</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">五大核心亮点</h2>
         <p className="text-slate-500 text-sm text-center mb-8">一站式解决，从"迷失"到"绽放"</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {coreHighlights.map((h, i) => (
@@ -715,7 +715,7 @@ export default function IdentityBloomPromoPage() {
               <span className="text-base">⭐</span>
               <span className="text-xs font-bold text-violet-700 tracking-wide">专属亮点 · 高价值稀缺</span>
             </div>
-            <div className="flex justify-center">
+            <div className="space-y-2">
               {deliveryHighlights.map((item, i) => (
                 <motion.div
                   key={i}
@@ -723,12 +723,14 @@ export default function IdentityBloomPromoPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="relative p-3.5 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200/60 shadow-sm"
+                  className="relative flex items-start gap-3 p-3.5 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-l-[3px] border-violet-400 shadow-sm"
                 >
-                  <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[9px] font-bold text-white bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full shadow-sm">{item.tag}</span>
-                  <span className="text-2xl block mb-1.5">{item.icon}</span>
-                  <h4 className="text-sm font-bold text-slate-800 mb-0.5">{item.title}</h4>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">{item.detail}</p>
+                  <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-bold text-white bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full shadow-sm">{item.tag}</span>
+                  <span className="text-2xl mt-0.5">{item.icon}</span>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 mb-0.5">{item.title}</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">{item.detail}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -953,9 +955,7 @@ export default function IdentityBloomPromoPage() {
               {[
                 { icon: "🎧", text: "16节音频课" },
                 { icon: "👨‍🏫", text: "16次教练课" },
-                { icon: "🤖", text: "AI身份教练" },
                 { icon: "💊", text: "知乐胶囊×4瓶" },
-                { icon: "💡", text: "海沃塔研讨" },
                 { icon: "🏘️", text: "成长社群" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-white/80">
@@ -973,7 +973,7 @@ export default function IdentityBloomPromoPage() {
 
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium italic">
             "从迷失到绽放，从不敢到勇敢，<br />
-            AI教练+专业教练+知乐胶囊三重陪伴，<br />
+            专业教练+知乐胶囊双重陪伴，<br />
             帮你找回真实的自己，活出生命的力量。"
           </p>
         </div>
