@@ -917,8 +917,8 @@ export default function IdentityBloomPromoPage() {
 
       {/* ===== TESTIMONIALS ===== */}
       <Section className="bg-indigo-50/40">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">真实改变，数据说话</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">来自真实用户的反馈</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">学员真实反馈</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">活成自己，才是幸福感与成就感的终极答案</p>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div
@@ -926,35 +926,14 @@ export default function IdentityBloomPromoPage() {
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
+              transition={{ delay: i * 0.1 }}
               className="p-5 rounded-2xl bg-white shadow-sm border border-indigo-100/50"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{t.avatar}</span>
-                <div>
-                  <p className="text-sm font-semibold text-slate-700">{t.name}</p>
-                  <p className="text-xs text-slate-400">{t.role} · 使用{t.duration}</p>
-                </div>
+              <div className="flex items-start gap-3">
+                <span className="text-indigo-400 text-2xl font-serif leading-none mt-1">❝</span>
+                <p className="text-sm text-slate-600 leading-relaxed">{t.quote}</p>
               </div>
-
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50/60 mb-3">
-                <div className="text-center">
-                  <p className="text-xs text-slate-500">{t.metric}</p>
-                  <p className="text-lg font-bold text-red-500">{t.before}</p>
-                  <p className="text-[10px] text-slate-400">使用前</p>
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <TrendingUp className="w-5 h-5 text-emerald-500" />
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-slate-500">{t.metric}</p>
-                  <p className="text-lg font-bold text-emerald-500">{t.after}</p>
-                  <p className="text-[10px] text-slate-400">使用后</p>
-                </div>
-              </div>
-
-              <p className="text-sm text-slate-600 italic">"{t.quote}"</p>
-              <div className="flex gap-0.5 mt-2">
+              <div className="flex gap-0.5 mt-3 justify-end">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star key={j} className="w-3.5 h-3.5 fill-indigo-400 text-indigo-400" />
                 ))}
