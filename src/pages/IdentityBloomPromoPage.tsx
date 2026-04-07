@@ -182,6 +182,19 @@ const testimonials = [
   { quote: "在课程中找到真实的自己，锚定了自己的人生方向，现在在专属的赛道上慢慢努力，每一次小小的进步，都让我充满成就感，这种为自己而活的感觉，真的太美好了。" },
 ];
 
+const classQuotes = [
+  { text: "不知道原创的自己是谁，如何能活出绽放的自己？", author: "敏杰" },
+  { text: "成长不是否定过去，而是理解当时的局限性。", author: "撒拉" },
+  { text: "既然能作茧自缚，就一定能化茧成蝶。", author: "Lydia" },
+  { text: "粗糙的开始，勇敢地上路。", author: "陶子" },
+  { text: "瓶颈会带来力量。", author: "艳琴" },
+  { text: "在防御面前不退缩，在攻击面前能存活。", author: "贝蒂" },
+  { text: "不做"好人"，先做个"人"吧！", author: "Lydia" },
+  { text: "别人看不见自己，自己要看见自己。", author: "Lisa" },
+  { text: "我们发光不是为了去照亮谁，而是让他们知道自己也能发光。", author: "Lisa" },
+  { text: "爱不是如我所愿，而是如其所是。", author: "黛汐" },
+];
+
 /* ========== Product specs ========== */
 const specs = [
   { label: "每瓶", value: "84粒" },
@@ -1056,27 +1069,55 @@ export default function IdentityBloomPromoPage() {
             课程体系经反复实践优化愈发成熟，无数人在这里实现心理内核与生命状态的双重蜕变，真实成长反馈看得见、摸得着
           </p>
         </div>
-        <div className="max-w-lg mx-auto space-y-4">
-          {testimonials.map((t, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="p-5 rounded-2xl bg-white shadow-sm border border-indigo-100/50"
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-indigo-400 text-2xl font-serif leading-none mt-1">❝</span>
-                <p className="text-sm text-slate-600 leading-relaxed">{t.quote}</p>
-              </div>
-              <div className="flex gap-0.5 mt-3 justify-end">
-                {Array.from({ length: 5 }).map((_, j) => (
-                  <Star key={j} className="w-3.5 h-3.5 fill-indigo-400 text-indigo-400" />
-                ))}
-              </div>
-            </motion.div>
-          ))}
+        {/* 课堂金句 */}
+        <div className="max-w-lg mx-auto mb-8">
+          <h3 className="text-base font-bold text-slate-700 mb-3 flex items-center gap-2">
+            <span className="text-lg">💬</span> 课堂金句
+          </h3>
+          <div className="grid grid-cols-2 gap-2.5">
+            {classQuotes.map((q, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="p-3 rounded-xl bg-white border-l-[3px] border-indigo-400 shadow-sm"
+              >
+                <p className="text-xs text-slate-700 leading-relaxed font-medium">"{q.text}"</p>
+                <p className="text-[10px] text-indigo-500 mt-1.5 text-right">—— {q.author}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* 蜕变感悟 */}
+        <div className="max-w-lg mx-auto">
+          <h3 className="text-base font-bold text-slate-700 mb-3 flex items-center gap-2">
+            <span className="text-lg">✨</span> 蜕变感悟
+          </h3>
+          <div className="space-y-3">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-5 rounded-2xl bg-white shadow-sm border border-indigo-100/50"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-indigo-400 text-2xl font-serif leading-none mt-1">❝</span>
+                  <p className="text-sm text-slate-600 leading-relaxed">{t.quote}</p>
+                </div>
+                <div className="flex gap-0.5 mt-3 justify-end">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star key={j} className="w-3.5 h-3.5 fill-indigo-400 text-indigo-400" />
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </Section>
 
@@ -1107,10 +1148,11 @@ export default function IdentityBloomPromoPage() {
           </div>
 
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium italic">
-            "从迷失到绽放，从不敢到勇敢，<br />
-            专业教练+知乐胶囊双重陪伴，<br />
-            帮你找回真实的自己，活出生命的力量。"
+            "爱不是如我所愿，而是如其所是。<br />
+            我们发光不是为了去照亮谁，<br />
+            而是让他们知道自己也能发光。"
           </p>
+          <p className="text-xs text-slate-400 mt-1">—— 黛汐 & Lisa</p>
         </div>
       </Section>
 
