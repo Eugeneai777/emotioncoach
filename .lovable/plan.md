@@ -1,56 +1,140 @@
 
+# 微信环境长按保存失败：检查结论与修复计划
 
-# 修复身份绽放分享海报三大问题
+## 检查结论
 
-## 问题分析
+问题基本已经定位，不是单纯“提示文案不对”，而是**分享链路本身还不可靠**：
 
-从截图可以看到三个问题：
+1. **当前预览先显示的是 `blob:` URL**
+   - `src/utils/shareUtils.ts` 里 `showUploadedPreview()` 先 `URL.createObjectURL(blob)` 立即展示。
+   - 微信里长按保存 `blob:` 图片本来就不稳定，很多机型会直接失败。
 
-1. **生成慢 + 重试**：截图1显示"正在优化清晰度后重试..."，说明首次生成失败触发了降级重试，总耗时翻倍
-2. **长按保存失败**：WeChat Android 环境无法长按 blob: URL 保存图片。虽然代码有 `showUploadedPreview` 上传逻辑，但上传可能失败（需要登录/权限），导致回退到 blob URL
-3. **点击保存提示跳转浏览器**：`handleDownload` 使用 `<a download>` 方式保存，WeChat 会拦截并提示"在浏览器打开"
+2. **升级成 HTTPS 的后台上传，大概率会失败**
+   - `src/utils/shareImageUploader.ts` 把图片上传到 `partner-assets/temp-share/...`
+   - 但现有存储策略只允许：
+     - partner 自己目录上传，或
+     - `authenticated` 用户上传
+   - `/promo/identity-bloom` 是公开售前页，微信访客通常**未登录**，所以这里很可能上传失败，最终一直停留在 `blob:` URL。
 
-## 改动方案
+3. **界面会误导用户过早长按**
+   - `ShareImagePreview` 现在一打开就提示“长按上方图片保存到相册”
+   - 但此时图片可能还只是本地 blob，还没升级到可保存的 HTTPS 图。
 
-### 1. `src/components/ui/share-image-preview.tsx` — 微信环境优化保存逻辑
+4. **缓存还会把失败结果记住**
+   - `src/components/ui/share-dialog-base.tsx` 用 `cachedBlobUrlRef` 缓存已生成海报
+   - 如果第一次缓存的是 `blob:` URL，后续再次打开可能继续复用这个不可长按保存的地址。
 
-**核心改动**：微信环境下隐藏"保存图片"按钮（因 `<a download>` 不可用），改为显示醒目的"长按上方图片保存到相册"引导文案。非微信环境保持原逻辑不变。
+## 需要怎么改
 
-```tsx
-// WeChat: 隐藏下载按钮，显示长按引导
-{isWeChat ? (
-  <p className="text-base font-medium text-foreground">长按上方图片保存到相册</p>
-) : (
-  <Button onClick={handleDownload}>保存图片</Button>
-)}
+### 1. 先修正上传通道，让未登录微信用户也能拿到 HTTPS 图片
+
+核心目标：**公开售前页生成的海报，必须能在未登录状态下上传成功。**
+
+推荐方案二选一，优先方案 A：
+
+#### 方案 A：新增专用公开分享桶
+新增一个专门给公开分享海报用的存储桶，例如 `public-share-images`：
+
+- bucket 设为 `public = true`
+- 允许 `anon, authenticated` 插入
+- 可选限制路径前缀为 `promo-share/`
+- 前端把分享海报上传改到这个桶，不再复用 `partner-assets`
+
+这样最干净，避免把 partner 资产桶和公开分享海报混在一起。
+
+#### 方案 B：继续用 `partner-assets`，但补 anon 上传策略
+不太推荐，但也能修：
+- 给 `partner-assets` 增加 `TO anon` 的 INSERT 策略
+- 同时最好限制只能写入 `temp-share/` 前缀
+
+问题是这个桶原本是 partner 业务资产桶，职责会混乱。
+
+## 2. 预览页增加“上传中/可保存”状态，而不是一上来就让用户长按
+
+### `src/components/ui/share-image-preview.tsx`
+新增一个状态，例如：
+- `isRemoteReady?: boolean`
+- `isUpgrading?: boolean`
+
+逻辑改为：
+
+- **微信里如果还是 blob/data URL**
+  - 显示：`正在准备可保存图片，请稍候...`
+  - 底部小字说明：`图片准备完成后再长按保存`
+- **当切换成 https:// URL 后**
+  - 再显示：`长按上方图片保存到相册`
+
+这样用户不会在错误时机操作。
+
+## 3. 分享逻辑要把“URL 是否已升级成功”显式传出来
+
+### `src/utils/shareUtils.ts`
+现在 `onShowPreview` 只传一个 url，不够区分状态。
+
+建议改为传结构化数据，例如：
+```ts
+onShowPreview?: (payload: {
+  url: string;
+  isRemoteReady: boolean;
+}) => void;
 ```
 
-### 2. `src/components/ui/share-dialog-base.tsx` — 先显示再上传（PosterCenter 模式）
+流程变成：
 
-当前流程：生成 blob → 上传到 Storage 获取 HTTPS URL → 再显示预览。上传过程增加了等待时间。
+- 先回调 `{ url: blobUrl, isRemoteReady: false }`
+- 上传成功后回调 `{ url: httpsUrl, isRemoteReady: true }`
+- 上传失败时不要继续假装可长按保存，而是明确保持 false
 
-**改为 PosterCenter 的"先显后传"模式**：
-- 生成 blob 后立即用 blob URL 显示预览（毫秒级）
-- 后台异步上传到 Storage，上传完成后静默替换为 HTTPS URL
-- 这样用户能立即看到海报，长按保存在 HTTPS URL 替换后生效
+## 4. `ShareDialogBase` 不要缓存不可保存的 blob 结果
 
-修改 `handleGenerateImage` 中的 `showImagePreview` 分支（L240-246），不再等待上传完成才显示。
+### `src/components/ui/share-dialog-base.tsx`
+当前 `cachedBlobUrlRef` 会缓存任何 url。
 
-### 3. `src/utils/shareCardConfig.ts` — 降低首次生成失败率
+应改为：
 
-IdentityBloomShareCard 是纯文本+渐变卡片（无复杂图片），但首次生成仍然失败。优化：
-- 对于没有 `<img>` 标签的简单卡片，跳过图片等待阶段（节省 4-6 秒超时）
-- 这个改动在 `waitForImages` 已有（images.length === 0 时直接 return），所以不需要改 shareCardConfig
+- **只缓存 HTTPS 结果**
+- 或至少分开缓存：
+  - `cachedPreviewUrl`
+  - `cachedRemoteReady`
+- 如果是微信环境且 `remoteReady = false`，再次打开时应触发重新上传，而不是直接复用 blob
 
-实际上首次失败可能是空白检测误判。查看代码 L504-518，空白检测只采样左上角 10x10 像素——如果卡片顶部有 padding（IdentityBloomShareCard 顶部 28px padding），在 2x scale 下采样区域可能仍在 padding 区域内，被误判为空白。
+这是避免“第一次失败后永久失败感”的关键。
 
-**修复空白检测**：改为采样中心区域而非左上角 (0,0)。
+## 5. `shareImageUploader` 改成专用公开路径
+
+### `src/utils/shareImageUploader.ts`
+如果采用方案 A，则改为：
+- bucket：`public-share-images`
+- path：`promo-share/${Date.now()}-${random}.png`
+
+并保留 `getPublicUrl()`。
 
 ## 涉及文件
 
 | 文件 | 操作 |
 |------|------|
-| `src/components/ui/share-image-preview.tsx` | 微信环境隐藏下载按钮，改为长按引导 |
-| `src/components/ui/share-dialog-base.tsx` | 先显示 blob 预览，后台异步上传替换 |
-| `src/utils/shareCardConfig.ts` | 空白检测改为采样中心区域 |
+| `src/utils/shareUtils.ts` | 预览回调改为携带 remote-ready 状态 |
+| `src/components/ui/share-image-preview.tsx` | 微信场景增加“准备中 / 可长按”状态提示 |
+| `src/components/ui/share-dialog-base.tsx` | 只缓存可保存的 HTTPS 结果，避免复用 blob |
+| `src/utils/shareImageUploader.ts` | 改用公开分享海报专用 bucket/路径 |
+| `supabase/migrations/...sql` | 新增公开分享海报 bucket 与 anon/authenticated 上传策略 |
 
+## 预期效果
+
+修完后，微信里的体验会变成：
+
+1. 点击“生成海报”
+2. 先快速看到预览
+3. 底部显示“正在准备可保存图片，请稍候”
+4. 后台上传成功后，自动切换为 HTTPS 图
+5. 文案切换为“长按上方图片保存到相册”
+6. 此时长按保存才真正可用
+
+## 补充判断
+
+从现有代码看，这次问题**大概率不是海报生成本身失败**，而是：
+- 生成成功了
+- 但**未登录微信用户无法把图片上传成公网 HTTPS 地址**
+- 所以长按保存一直失败
+
+这是目前最需要优先修的点。
