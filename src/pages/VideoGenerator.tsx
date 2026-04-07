@@ -41,6 +41,57 @@ const STEPS: { key: VideoGenStatus; label: string }[] = [
 ];
 
 const stepOrder = STEPS.map(s => s.key);
+const SUPPORTED_PORTRAIT_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_PORTRAIT_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_PORTRAIT_DIMENSION = 1280;
+
+async function normalizePortraitImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      reject(new Error('浏览器暂不支持图片处理，请更换设备重试'));
+      return;
+    }
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      let { width, height } = img;
+
+      if (width > MAX_PORTRAIT_DIMENSION || height > MAX_PORTRAIT_DIMENSION) {
+        const scale = Math.min(MAX_PORTRAIT_DIMENSION / width, MAX_PORTRAIT_DIMENSION / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(objectUrl);
+
+        if (!blob) {
+          reject(new Error('图片处理失败，请换一张清晰正面照'));
+          return;
+        }
+
+        const baseName = file.name.replace(/\.[^.]+$/, '') || 'portrait';
+        resolve(new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' }));
+      }, 'image/jpeg', 0.92);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('图片格式暂不支持，请上传 JPG、PNG 或 WebP 格式的人像照片'));
+    };
+
+    img.src = objectUrl;
+  });
+}
 
 function getStepState(step: VideoGenStatus, current: VideoGenStatus): 'done' | 'active' | 'pending' {
   const stepIdx = stepOrder.indexOf(step);
@@ -169,26 +220,45 @@ const VideoGenerator: React.FC = () => {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
 
     setUploading(true);
+    let localPreviewUrl: string | null = null;
+
     try {
+      if (!SUPPORTED_PORTRAIT_MIME_TYPES.has(file.type)) {
+        throw new Error('请上传 JPG、PNG 或 WebP 格式的人像照片');
+      }
+
+      if (file.size > MAX_PORTRAIT_FILE_SIZE) {
+        throw new Error('图片大小不能超过 10MB');
+      }
+
+      const normalizedFile = await normalizePortraitImage(file);
+      localPreviewUrl = URL.createObjectURL(normalizedFile);
+      setImagePreview(localPreviewUrl);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('请先登录'); return; }
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `avatars/${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from('video-assets').upload(path, file, { contentType: file.type });
+      const path = `avatars/${user.id}/${Date.now()}.jpg`;
+      const { error: uploadErr } = await supabase.storage.from('video-assets').upload(path, normalizedFile, { contentType: 'image/jpeg' });
       if (uploadErr) throw uploadErr;
       const { data } = supabase.storage.from('video-assets').getPublicUrl(path);
       setImageUrl(data.publicUrl);
+      setImagePreview(data.publicUrl);
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+        localPreviewUrl = null;
+      }
       toast.success('照片上传成功');
     } catch (err: any) {
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+      }
       toast.error(`上传失败: ${err.message}`);
       setImagePreview('');
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
