@@ -109,6 +109,7 @@ const useCases = [
     iconBg: "bg-indigo-500/20",
     accent: "border-l-indigo-400",
     bg: "bg-gradient-to-r from-indigo-500/6 to-transparent",
+    chatRoute: "/youjin-life/chat?topic=anxiety",
   },
   {
     icon: Briefcase,
@@ -119,6 +120,7 @@ const useCases = [
     iconBg: "bg-amber-500/20",
     accent: "border-l-amber-400",
     bg: "bg-gradient-to-r from-amber-500/6 to-transparent",
+    chatRoute: "/youjin-life/chat?topic=career",
   },
   {
     icon: Heart,
@@ -129,6 +131,7 @@ const useCases = [
     iconBg: "bg-rose-500/20",
     accent: "border-l-rose-400",
     bg: "bg-gradient-to-r from-rose-500/6 to-transparent",
+    chatRoute: "/youjin-life/chat?topic=relationship",
   },
   {
     icon: TrendingUp,
@@ -139,6 +142,7 @@ const useCases = [
     iconBg: "bg-emerald-500/20",
     accent: "border-l-emerald-400",
     bg: "bg-gradient-to-r from-emerald-500/6 to-transparent",
+    chatRoute: "/youjin-life/chat?topic=wealth",
   },
 ];
 
@@ -575,10 +579,12 @@ const MiniAppEntry = () => {
               return (
                 <motion.div
                   key={i}
-                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-2 ${c.accent} overflow-hidden`}
+                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-2 ${c.accent} overflow-hidden cursor-pointer`}
                   initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3, duration: 0.3 }}
+                  onClick={() => navigate(c.chatRoute)}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {illustrations[c.illustrationKey] && (
                     <img

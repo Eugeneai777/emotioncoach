@@ -16,6 +16,20 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youjin-life-
 type Msg = { role: "user" | "assistant"; content: string };
 type ExpenseReport = { month: string; totalAmount: number; categories: { category: string; total: number; count: number }[] };
 
+const TOPIC_OPENERS: Record<string, string> = {
+  anxiety: "最近总是睡不着，心里很焦虑",
+  career: "工作上有些迷茫，不知道该怎么选",
+  relationship: "最近和身边的人关系出了问题",
+  wealth: "总觉得赚得不少但存不下来",
+};
+
+const ASSESSMENT_PACKAGE_KEYS = [
+  "emotion_health_assessment",
+  "wealth_block_assessment",
+  "scl90_report",
+  "women_competitiveness_assessment",
+];
+
 export default function YoujinLifeChat() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -30,6 +44,24 @@ export default function YoujinLifeChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const topicHandledRef = useRef(false);
+  const [completedAssessments, setCompletedAssessments] = useState<string[]>([]);
+
+  const topic = searchParams.get("topic");
+
+  // Query completed assessments when topic is present
+  useEffect(() => {
+    if (!topic || !user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("package_key")
+        .eq("user_id", user.id)
+        .in("package_key", ASSESSMENT_PACKAGE_KEYS)
+        .eq("status", "paid");
+      setCompletedAssessments((data || []).map((r: any) => r.package_key));
+    })();
+  }, [topic, user]);
 
   // Auto-scroll
   useEffect(() => {
@@ -48,6 +80,16 @@ export default function YoujinLifeChat() {
     }
   }, []); // eslint-disable-line
 
+  // Handle topic-based auto-message
+  useEffect(() => {
+    if (!topic || topicHandledRef.current) return;
+    const opener = TOPIC_OPENERS[topic];
+    if (opener && messages.length === 0) {
+      topicHandledRef.current = true;
+      sendMessage(opener);
+    }
+  }, [topic]); // eslint-disable-line
+
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || isLoading) return;
@@ -61,13 +103,19 @@ export default function YoujinLifeChat() {
     let assistantSoFar = "";
 
     try {
+      const body: any = { messages: updatedMessages };
+      if (topic) {
+        body.topic = topic;
+        body.completedAssessments = completedAssessments;
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: updatedMessages }),
+        body: JSON.stringify(body),
       });
 
       if (resp.status === 429) {
@@ -129,7 +177,7 @@ export default function YoujinLifeChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, topic, completedAssessments]);
 
   const startListening = () => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
