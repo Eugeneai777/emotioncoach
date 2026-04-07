@@ -579,7 +579,8 @@ export default function IdentityBloomPromoPage() {
       {/* ===== 4-STAGE TIMELINE ===== */}
       <Section className="bg-indigo-50/40">
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">四阶段系统蜕变</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">16节音频课 + 16次教练课，循序渐进</p>
+        <p className="text-slate-500 text-sm text-center mb-1">遵循"觉察自我→打破模式→确立身份→绽放生命"的科学成长逻辑</p>
+        <p className="text-indigo-600 text-sm font-semibold text-center mb-8">4阶16节课程层层递进，每一步都紧扣"活自己、获幸福、得成就"</p>
         <div className="max-w-lg mx-auto space-y-4">
           {stages.map((s, i) => (
             <motion.div
@@ -709,7 +710,7 @@ export default function IdentityBloomPromoPage() {
       {/* ===== DAILY LOOP ===== */}
       <Section className="bg-indigo-50/40">
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">每日学习流程</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">系统化闭环，每天都在进步</p>
+        <p className="text-slate-500 text-sm text-center mb-8">课前-课中-课后闭环落地日常，让活成自己成为习惯</p>
         <div className="max-w-lg mx-auto relative">
           <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-indigo-300/60 via-violet-300/40 to-indigo-200/30" />
           <div className="space-y-0">
@@ -1039,7 +1040,7 @@ export default function IdentityBloomPromoPage() {
               <p className="text-[10px] text-slate-500 font-medium">训练营</p>
             </div>
           </div>
-          <p className="text-xs text-slate-500 text-center mt-2 leading-relaxed">
+          <p className="text-xs text-slate-500 text-left mt-2 leading-relaxed">
             课程体系经反复实践优化愈发成熟，无数人在这里实现心理内核与生命状态的双重蜕变，真实成长反馈看得见、摸得着
           </p>
         </div>
