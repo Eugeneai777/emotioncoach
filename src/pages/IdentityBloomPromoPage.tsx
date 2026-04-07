@@ -741,6 +741,18 @@ export default function IdentityBloomPromoPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* 闭环总结卡片 */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-lg mx-auto mt-6 rounded-2xl bg-gradient-to-br from-indigo-600/90 to-violet-600/90 p-5 text-white shadow-lg"
+          >
+            <p className="text-sm leading-relaxed">
+              搭配"课前音频预习 + 课中实战突破 + 课后鹅圈子打卡"完整成长闭环——把"接纳自我"融入晨起对话，把"勇敢表达"融入日常沟通，把"忠于本心"融入每一次选择。让幸福感浸润三餐四季，让成就感在点滴行动中不断积累。
+            </p>
+          </motion.div>
         </div>
       </Section>
 
