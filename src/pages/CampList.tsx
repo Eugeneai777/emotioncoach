@@ -316,7 +316,7 @@ const CampList = () => {
               <p className="text-muted-foreground">还没有学习记录，去探索吧</p>
               <div className="flex gap-3 justify-center">
                 <Button variant="outline" onClick={() => navigate('/camps')}>浏览训练营</Button>
-                <Button variant="outline" onClick={() => navigate('/mini-app')}>探索测评</Button>
+                <Button variant="outline" onClick={() => navigate('/assessment-picker')}>探索测评</Button>
               </div>
             </div>
           ) : (
@@ -416,7 +416,7 @@ const CampList = () => {
                     <p className="text-sm text-muted-foreground py-3">暂无测评记录</p>
                   )}
                   <div className="pt-3 text-center">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/mini-app')} className="gap-1.5 text-xs">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/assessment-picker')} className="gap-1.5 text-xs">
                       <Sparkles className="w-3.5 h-3.5" />
                       浏览更多测评
                     </Button>
