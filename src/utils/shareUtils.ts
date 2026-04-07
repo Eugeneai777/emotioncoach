@@ -101,11 +101,16 @@ export interface ShareResult {
   error?: string;
 }
 
+export interface SharePreviewPayload {
+  url: string;
+  isRemoteReady: boolean;
+}
+
 export interface ShareOptions {
   title?: string;
   text?: string;
   filename?: string;
-  onShowPreview?: (blobUrl: string) => void;
+  onShowPreview?: (payload: SharePreviewPayload) => void;
   onDownload?: () => void;
 }
 
