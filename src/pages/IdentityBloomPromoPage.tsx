@@ -715,7 +715,7 @@ export default function IdentityBloomPromoPage() {
               <span className="text-base">⭐</span>
               <span className="text-xs font-bold text-violet-700 tracking-wide">专属亮点 · 高价值稀缺</span>
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex justify-center">
               {deliveryHighlights.map((item, i) => (
                 <motion.div
                   key={i}
