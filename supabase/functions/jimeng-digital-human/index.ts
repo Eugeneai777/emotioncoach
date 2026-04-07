@@ -239,7 +239,15 @@ Deno.serve(async (req) => {
       // Handle error in ResponseMetadata
       if (data.ResponseMetadata?.Error) {
         return new Response(
-          JSON.stringify({ error: data.ResponseMetadata.Error.Message, task_id, status: "error", raw: data }),
+          JSON.stringify({ error: data.ResponseMetadata.Error.Message, task_id, status: "failed", raw: data }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Handle top-level API error codes (e.g. 50215 "Input invalid for this service")
+      if (data.code && data.code !== 0 && !data.data) {
+        return new Response(
+          JSON.stringify({ error: data.message || `即梦 API 错误 (code: ${data.code})`, task_id, status: "failed", raw: data }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
