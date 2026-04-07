@@ -224,6 +224,7 @@ const EventAIBreakthrough = lazyRetry(() => import("./pages/EventAIBreakthrough"
 const SynergyPromoPage = lazyRetry(() => import("./pages/SynergyPromoPage"));
 const WealthSynergyPromoPage = lazyRetry(() => import("./pages/WealthSynergyPromoPage"));
 const ZhileHavrutaPromoPage = lazyRetry(() => import("./pages/ZhileHavrutaPromoPage"));
+const IdentityBloomPromoPage = lazyRetry(() => import("./pages/IdentityBloomPromoPage"));
 const ZhilePromoHub = lazyRetry(() => import("./pages/ZhilePromoHub"));
 const ZhileProductsPage = lazyRetry(() => import("./pages/ZhileProductsPage"));
 
