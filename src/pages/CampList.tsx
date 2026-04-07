@@ -16,7 +16,23 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
-import { BookOpen, HeartHandshake, Target, Sparkles } from "lucide-react";
+import { BookOpen, HeartHandshake, Target, Sparkles, ClipboardList, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+
+// Assessment mapping config
+const PAID_ASSESSMENT_MAP: Record<string, { title: string; emoji: string; route: string }> = {
+  emotion_health_assessment: { title: '情绪健康测评', emoji: '💚', route: '/emotion-health' },
+  scl90_report: { title: 'SCL-90心理测评', emoji: '🧠', route: '/scl90' },
+  wealth_block_assessment: { title: '财富卡点测评', emoji: '💰', route: '/wealth-block' },
+  midlife_awakening_assessment: { title: '中场觉醒力测评', emoji: '🧭', route: '/midlife-awakening' },
+};
+
+const FREE_ASSESSMENT_MAP: Record<string, { title: string; emoji: string; route: string }> = {
+  women_competitiveness: { title: '35+女性竞争力测评', emoji: '👩‍💼', route: '/assessment/women_competitiveness' },
+  parent_ability: { title: '父母胜任力测评', emoji: '👨‍👩‍👧', route: '/assessment/parent_ability' },
+  communication_parent: { title: '亲子沟通力测评(家长)', emoji: '💬', route: '/assessment/communication_parent' },
+  communication_teen: { title: '亲子沟通力测评(青少年)', emoji: '🗣️', route: '/assessment/communication_teen' },
+};
 
 const campCategories = [
   {
