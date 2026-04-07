@@ -1,66 +1,46 @@
 
 
-# 视频生成器升级 — 全产品/功能/工具选择
+# 可用 TTS 方案对比
 
-## 目标
+## 现状
 
-将视频生成页面的「工具场景」和「转化产品」从硬编码的6个人群扩展为覆盖网站所有产品线，包括：
+你的项目已有两个 TTS 边缘函数：
+- `text-to-speech` — 使用 **ElevenLabs**（`ELEVENLABS_API_KEY` 已配置，可直接使用）
+- `volcengine-tts` — 使用豆包/火山引擎（当前凭证有问题）
 
-- **AI教练**（从 `coach_templates` 数据库动态加载）
-- **成长工具 + 专业测评**（从 `energyStudioTools.ts` 的 30+ 工具/测评）
-- **训练营**（从 `camp_templates` 数据库加载）
-- **会员产品**（尝鲜会员、365会员）
-- **合伙人套餐**（初级/高级/钻石）
-- **绽放系列**（训练营、合伙人、教练）
-- **真人教练 1v1**
+视频生成流程 (`useVideoGeneration.ts`) 当前调用的是 `volcengine-tts`。
 
-## 设计思路
+## 方案一：直接切换到 ElevenLabs（推荐，最快）
 
-重构 `videoScriptConfig.ts`，将三级联动改为两级独立选择：
+ElevenLabs 已经配置好，API Key 已就位，`text-to-speech` 函数可用。
 
-```text
-┌─────────────────────────┐    ┌─────────────────────────┐
-│ 视频主题/场景（推广什么） │    │ 目标人群（给谁看）       │
-│                         │    │                         │
-│ ▸ AI教练（数据库动态）   │    │ ▸ 女性专区              │
-│ ▸ 日常工具（16个）       │    │ ▸ 中年觉醒              │
-│ ▸ 专业测评（8个）        │    │ ▸ 情侣夫妻              │
-│ ▸ 训练营（数据库动态）   │    │ ▸ 职场解压              │
-│ ▸ 会员产品              │    │ ▸ 银发陪伴              │
-│ ▸ 合伙人套餐            │    │ ▸ 青少年                │
-│ ▸ 绽放系列              │    │ ▸ 通用                  │
-│ ▸ 真人教练              │    └─────────────────────────┘
-└─────────────────────────┘
-         ↓
-┌─────────────────────────┐
-│ 转化产品（视频结尾推什么）│
-│                         │
-│ （自动推荐 + 可手动改）  │
-│ 基于主题自动匹配最佳     │
-│ 转化产品                │
-└─────────────────────────┘
-```
+**改动**：
+- 修改 `useVideoGeneration.ts`，将 TTS 调用从 `volcengine-tts` 改为 `text-to-speech`
+- ElevenLabs 支持中文（`eleven_multilingual_v2` 模型）
+- 声音选择：使用 ElevenLabs Voice Library 的声音 ID 替代豆包音色
 
-## 文件变更
+**优点**：零配置，立即可用
+**缺点**：ElevenLabs 按字符计费，中文声音效果可能不如豆包自然
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| `src/config/videoScriptConfig.ts` | 重构 | 新增 `VIDEO_TOPICS`（静态工具/测评/会员/合伙人数据），保留 `VIDEO_AUDIENCES`，新增 `CONVERSION_PRODUCTS` 全量转化产品列表，新增自动推荐逻辑 |
-| `src/pages/VideoGenerator.tsx` | 重构 | 三区域选择：主题（分组下拉）+ 人群 + 转化产品；动态加载教练和训练营数据 |
+## 方案二：继续修复豆包 TTS
 
-## 具体实现
+重新在火山引擎控制台创建应用，获取匹配的 APP_ID + Access Token。
 
-### `videoScriptConfig.ts` 重构
+**优点**：中文语音质量最佳
+**缺点**：需要在控制台排查凭证问题
 
-1. **VIDEO_TOPICS** — 静态工具/测评数据从 `energyStudioTools.ts` 映射，会员/合伙人从 `productCategories.ts` 映射
-2. **动态数据** — 页面中通过 `useQuery` 加载 `coach_templates` 和 `camp_templates`，合并到主题列表
-3. **CONVERSION_PRODUCTS** — 所有可作为转化目标的产品（会员、训练营、合伙人、测评、教练），每个带 `id/label/description/price`
-4. **推荐映射** — `getRecommendedProducts(topicId)` 根据选择的主题自动推荐最匹配的转化产品
+## 方案三：使用 Lovable AI 支持的模型生成语音
 
-### `VideoGenerator.tsx` UI 变更
+Lovable 内置的 AI 模型不包含 TTS 能力，不适用。
 
-- **主题选择**：分组下拉（AI教练 / 日常工具 / 专业测评 / 训练营 / 会员产品 / 合伙人 / 绽放系列 / 真人教练），教练和训练营从数据库动态加载
-- **人群选择**：保留现有6个人群 + 新增「通用」选项
-- **转化产品**：根据主题自动推荐，用户可手动切换
-- AI prompt 构建时注入主题描述 + 人群 + 转化产品信息
+## 建议
+
+**先用方案一（ElevenLabs）跑通端到端流程**，后续再切回豆包。只需改一个文件 `useVideoGeneration.ts`，将 `volcengine-tts` 替换为 `text-to-speech` 并适配参数即可。
+
+## 涉及文件
+
+| 文件 | 操作 |
+|------|------|
+| `src/hooks/useVideoGeneration.ts` | 修改 TTS 调用为 ElevenLabs |
+| `src/config/voiceTypeConfig.ts` | 适配 ElevenLabs voice ID（可选） |
 
