@@ -282,6 +282,7 @@ export default function IdentityBloomPromoPage() {
   const [_purchaseChecked, setPurchaseChecked] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
+  const [expandedHighlight, setExpandedHighlight] = useState<number | null>(null);
   const shareDialog = useShareDialog();
 
   useEffect(() => {
