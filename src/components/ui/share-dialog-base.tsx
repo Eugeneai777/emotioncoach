@@ -310,6 +310,7 @@ export function ShareDialogBase({
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl(null);
+    setIsRemoteReady(false);
   }, [previewUrl, useDataUrl]);
 
   const handleRegenerate = useCallback(async () => {
