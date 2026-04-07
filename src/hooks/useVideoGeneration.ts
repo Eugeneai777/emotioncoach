@@ -153,6 +153,11 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           continue;
         }
 
+        // Check for API-level errors (e.g. code 50215 "Input invalid")
+        if (queryData?.code && queryData.code !== 0 && !queryData?.status) {
+          throw new Error(queryData.message || `即梦 API 错误 (code: ${queryData.code})`);
+        }
+
         const taskStatus = queryData?.status;
 
         if (taskStatus === 'done' && queryData?.video_url) {
