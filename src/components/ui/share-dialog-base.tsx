@@ -314,6 +314,9 @@ export function ShareDialogBase({
   }, [previewUrl, useDataUrl]);
 
   const handleRegenerate = useCallback(async () => {
+    // Clear cache so we re-generate fresh
+    cachedBlobUrlRef.current = null;
+    cachedRemoteReadyRef.current = false;
     handleClosePreview();
     onOpenChange(true);
     await new Promise((r) => setTimeout(r, 100));
