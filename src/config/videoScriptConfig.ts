@@ -135,6 +135,7 @@ export const CONVERSION_PRODUCTS: ConversionProduct[] = [
   { id: 'cv-trial', label: '尝鲜会员', description: '50点AI教练体验', price: 9.9, category: '会员' },
   { id: 'cv-365', label: '365年度会员', description: '全年无限AI教练', price: 365, category: '会员' },
   // 训练营
+  { id: 'cv-synergy-camp', label: '7天有劲训练营', description: '7天解压训练+AI教练+冥想音频', price: 399, category: '训练营' },
   { id: 'cv-emotion-camp', label: '21天情绪日记训练营', description: '21天情绪管理训练', price: 299, category: '训练营' },
   { id: 'cv-wealth-camp', label: '财富觉醒训练营', description: '7天财富卡点突破', price: 299, category: '训练营' },
   { id: 'cv-youth-camp', label: '青少年困境突破营', description: '21天青少年成长', price: 299, category: '训练营' },
