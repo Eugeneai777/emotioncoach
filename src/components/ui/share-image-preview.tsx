@@ -10,6 +10,8 @@ interface ShareImagePreviewProps {
   imageUrl: string | null;
   onRegenerate?: () => void;
   isRegenerating?: boolean;
+  /** Whether the image URL is a remote HTTPS URL ready for long-press saving */
+  isRemoteReady?: boolean;
 }
 
 const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
@@ -18,6 +20,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   imageUrl,
   onRegenerate,
   isRegenerating = false,
+  isRemoteReady = false,
 }) => {
   const [imageSaved, setImageSaved] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -83,19 +86,54 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
 
   if (!open || !imageUrl) return null;
 
-  // Contextual hint text
-  const hintText = isWeChat
-    ? '保存后，长按图片可转发给朋友/朋友圈'
-    : isMobile
+  // Determine bottom hint based on environment and remote readiness
+  const renderBottomAction = () => {
+    if (isWeChat) {
+      // WeChat environment: show preparing vs ready state
+      if (!isRemoteReady) {
+        return (
+          <div className="flex flex-col items-center gap-1 py-2">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-muted-foreground/40 border-t-muted-foreground rounded-full animate-spin" />
+              <p className="text-base font-medium text-foreground">正在准备可保存图片…</p>
+            </div>
+            <p className="text-muted-foreground text-xs">图片准备完成后再长按保存</p>
+          </div>
+        );
+      }
+      return (
+        <div className="flex flex-col items-center gap-1 py-2">
+          <p className="text-base font-medium text-foreground">👆 长按上方图片保存到相册</p>
+          <p className="text-muted-foreground text-xs">保存后可转发给朋友或朋友圈</p>
+        </div>
+      );
+    }
+
+    // Non-WeChat: show download button
+    const hintText = isMobile
       ? '保存到相册后可在社交软件中转发'
       : '保存后可通过社交软件分享';
+
+    return (
+      <>
+        <Button
+          onClick={handleDownload}
+          className="w-full max-w-sm rounded-full h-12 gap-2 text-base font-medium"
+        >
+          <Download className="h-5 w-5" />
+          {imageSaved ? '已保存 ✓' : '保存图片'}
+        </Button>
+        <p className="text-muted-foreground text-xs">{hintText}</p>
+      </>
+    );
+  };
 
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex flex-col bg-background transition-opacity duration-200"
       style={{ opacity: visible ? 1 : 0 }}
     >
-      {/* Header bar - minimal */}
+      {/* Header bar */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
         <Button
           variant="ghost"
@@ -161,28 +199,12 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         />
       </div>
 
-      {/* Bottom: single save button + contextual hint */}
+      {/* Bottom action */}
       <div
         className="shrink-0 flex flex-col items-center gap-2 px-4 pb-4"
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
-        {isWeChat ? (
-          <div className="flex flex-col items-center gap-1 py-2">
-            <p className="text-base font-medium text-foreground">👆 长按上方图片保存到相册</p>
-            <p className="text-muted-foreground text-xs">保存后可转发给朋友或朋友圈</p>
-          </div>
-        ) : (
-          <>
-            <Button
-              onClick={handleDownload}
-              className="w-full max-w-sm rounded-full h-12 gap-2 text-base font-medium"
-            >
-              <Download className="h-5 w-5" />
-              {imageSaved ? '已保存 ✓' : '保存图片'}
-            </Button>
-            <p className="text-muted-foreground text-xs">{hintText}</p>
-          </>
-        )}
+        {renderBottomAction()}
       </div>
     </div>,
     document.body
