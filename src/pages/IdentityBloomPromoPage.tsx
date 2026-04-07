@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhile4BoxCover from "@/assets/zhile-4box-cover.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
-import SynergyShareCard from "@/components/promo/SynergyShareCard";
+import IdentityBloomShareCard from "@/components/promo/IdentityBloomShareCard";
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
 
 import coachDaixi from "@/assets/coach-daixi.jpg";
@@ -1207,7 +1207,7 @@ export default function IdentityBloomPromoPage() {
             <>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-700">身份绽放训练营</p>
-                <p className="text-[10px] text-slate-400 truncate">¥3980 · AI教练+专业教练+知乐胶囊×4</p>
+                <p className="text-[10px] text-slate-400 truncate">¥3980 · 专业教练+知乐胶囊×4</p>
               </div>
               <Button
                 onClick={() => setShowRedeemDialog(true)}
