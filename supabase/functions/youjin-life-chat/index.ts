@@ -169,14 +169,17 @@ function buildTopicPrompt(topic: string, completedAssessments: string[]): string
   prompt += `【严格约束】你**必须且只能**推荐下面列出的测评，**严格禁止**推荐其他任何测评。\n`;
 
   if (isCompleted) {
-    prompt += `用户已完成「${target.title}」。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」（¥399），这是一个系统化的AI+真人陪伴训练。不要推荐测评。\n`;
+    prompt += `用户已完成「${target.title}」。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」。\n`;
+    prompt += `推荐时附加标记：\n`;
+    prompt += `[CAMP]{"title":"7天有劲训练营","route":"/camps","desc":"AI+真人陪伴·系统蜕变·7天见效","price":"¥399"}[/CAMP]\n`;
+    prompt += `不要推荐测评。\n`;
   } else {
     prompt += `请在第2-3轮对话中，根据用户的倾诉自然过渡到推荐「${target.title}」。\n`;
     prompt += `推荐时要自然（如"你描述的这些感受，我建议做个专业筛查来看看目前的状态"），然后附加标记：\n`;
     prompt += `[ASSESSMENT]{"title":"${target.title}","route":"${target.route}","desc":"${target.desc}","price":"${target.price}"}[/ASSESSMENT]\n`;
   }
 
-  prompt += `\n注意：\n- 不要在第一轮就推荐，先共情、倾听\n- 推荐要自然融入对话，不要生硬\n- [ASSESSMENT] 标记前端会自动渲染为可点击的测评卡片\n`;
+  prompt += `\n注意：\n- 不要在第一轮就推荐，先共情、倾听\n- 推荐要自然融入对话，不要生硬\n- [ASSESSMENT] 和 [CAMP] 标记前端会自动渲染为可点击的卡片\n`;
 
   return prompt;
 }
@@ -191,7 +194,10 @@ function buildCareerTopicPrompt(completedAssessments: string[]): string {
   prompt += `【严格约束】你**必须且只能**推荐下面列出的测评，**严格禁止**推荐其他任何测评。\n`;
 
   if (availableAssessments.length === 0) {
-    prompt += `用户已完成所有职场相关测评。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」（¥399），这是一个系统化的AI+真人陪伴训练。不要推荐测评。\n`;
+    prompt += `用户已完成所有职场相关测评。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」。\n`;
+    prompt += `推荐时附加标记：\n`;
+    prompt += `[CAMP]{"title":"7天有劲训练营","route":"/camps","desc":"AI+真人陪伴·系统蜕变·7天见效","price":"¥399"}[/CAMP]\n`;
+    prompt += `不要推荐测评。\n`;
   } else {
     prompt += `请在第2-3轮对话中，根据用户的倾诉自然过渡到推荐以下测评（全部推荐，每个测评输出一个 [ASSESSMENT] 标记）：\n`;
     for (const a of availableAssessments) {
@@ -201,7 +207,7 @@ function buildCareerTopicPrompt(completedAssessments: string[]): string {
     prompt += `推荐时要自然（如"针对你目前的职场困惑，我建议做这两个专业测评来全面了解自己的状态"）。\n`;
   }
 
-  prompt += `\n注意：\n- 不要在第一轮就推荐，先共情、倾听\n- 推荐要自然融入对话，不要生硬\n- [ASSESSMENT] 标记前端会自动渲染为可点击的测评卡片\n`;
+  prompt += `\n注意：\n- 不要在第一轮就推荐，先共情、倾听\n- 推荐要自然融入对话，不要生硬\n- [ASSESSMENT] 和 [CAMP] 标记前端会自动渲染为可点击的卡片\n`;
 
   return prompt;
 }

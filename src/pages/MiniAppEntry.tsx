@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -594,17 +594,21 @@ const MiniAppEntry = () => {
                       loading="lazy"
                     />
                   )}
-                  <div className="flex items-start gap-3 relative z-10">
-                    <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 mt-0.5 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
                       {illustrations[c.illustrationKey] ? (
                         <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
                       )}
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
-                      <p className="text-[10px] text-foreground/70 leading-relaxed">{c.desc}</p>
+                      <p className="text-[10px] text-foreground/70 leading-relaxed line-clamp-2">{c.desc}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] font-medium text-primary/80">聊一聊</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-primary/60" />
                     </div>
                   </div>
                 </motion.div>
