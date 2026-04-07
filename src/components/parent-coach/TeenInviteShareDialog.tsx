@@ -154,8 +154,8 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
       const result = await handleShareWithFallback(blob, '青少年私密空间-邀请卡.png', {
         title: '有劲AI · 懂你版',
         text: '这是一份给你的私密空间，有心事可以来这里聊聊',
-        onShowPreview: (blobUrl) => {
-          setPreviewImageUrl(blobUrl);
+        onShowPreview: (payload) => {
+          setPreviewImageUrl(payload.url);
           setShowImagePreview(true);
         },
         onDownload: () => {

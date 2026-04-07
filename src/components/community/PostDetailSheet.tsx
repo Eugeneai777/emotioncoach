@@ -294,8 +294,8 @@ const PostDetailSheet = ({
         {
           title: post.title || "我的分享",
           text: post.content?.slice(0, 100) || "",
-          onShowPreview: (blobUrl) => {
-            setPreviewImageUrl(blobUrl);
+          onShowPreview: (payload) => {
+            setPreviewImageUrl(payload.url);
             setShowImagePreview(true);
             setShowShareDialog(false);
           },

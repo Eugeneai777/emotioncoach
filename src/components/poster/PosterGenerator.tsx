@@ -183,8 +183,8 @@ export function PosterGenerator({
 
       const result = await handleShareWithFallback(blob, `${template.name}-推广海报.png`, {
         title: `${template.name}-推广海报`,
-        onShowPreview: (blobUrl) => {
-          setPreviewImageUrl(blobUrl);
+        onShowPreview: (payload) => {
+          setPreviewImageUrl(payload.url);
           setShowImagePreview(true);
         },
         onDownload: () => {

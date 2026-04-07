@@ -113,9 +113,9 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         {
           title: post.title || "我的分享",
           text: post.content?.slice(0, 100) || "",
-          onShowPreview: (blobUrl) => {
+          onShowPreview: (payload) => {
             console.log('[ShareButton] Showing preview');
-            setPreviewImageUrl(blobUrl);
+            setPreviewImageUrl(payload.url);
             setShowImagePreview(true);
             setShowShareDialog(false);
           },

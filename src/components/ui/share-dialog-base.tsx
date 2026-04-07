@@ -100,8 +100,10 @@ export function ShareDialogBase({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Session cache: keep generated image URL to avoid re-rendering
+  const [isRemoteReady, setIsRemoteReady] = useState(false);
+  // Session cache: keep generated HTTPS URL to avoid re-rendering
   const cachedBlobUrlRef = useRef<string | null>(null);
+  const cachedRemoteReadyRef = useRef<boolean>(false);
 
   const { isWeChat, isIOS } = getShareEnvironment();
   const showImagePreview = shouldUseImagePreview();
@@ -164,6 +166,7 @@ export function ShareDialogBase({
       console.log('[ShareDialogBase] Using cached poster, instant preview');
       onOpenChange(false);
       setPreviewUrl(cachedBlobUrlRef.current);
+      setIsRemoteReady(cachedRemoteReadyRef.current);
       setShowPreview(true);
       return;
     }
@@ -230,10 +233,15 @@ export function ShareDialogBase({
           throw new Error("Failed to generate image");
         }
 
-        const showPreviewFn = (url: string) => {
+        const showPreviewFn = (payload: { url: string; isRemoteReady: boolean }) => {
           if (!isiOS) onOpenChange(false);
-          cachedBlobUrlRef.current = url;
-          setPreviewUrl(url);
+          // Only cache HTTPS URLs; don't cache blob URLs
+          if (payload.isRemoteReady) {
+            cachedBlobUrlRef.current = payload.url;
+            cachedRemoteReadyRef.current = true;
+          }
+          setPreviewUrl(payload.url);
+          setIsRemoteReady(payload.isRemoteReady);
           setShowPreview(true);
         };
 
@@ -249,10 +257,14 @@ export function ShareDialogBase({
           const result = await handleShareWithFallback(blob, fileName, {
             title: shareTitle,
             text: shareText,
-            onShowPreview: (url) => {
+            onShowPreview: (payload) => {
               onOpenChange(false);
-              cachedBlobUrlRef.current = url;
-              setPreviewUrl(url);
+              if (payload.isRemoteReady) {
+                cachedBlobUrlRef.current = payload.url;
+                cachedRemoteReadyRef.current = true;
+              }
+              setPreviewUrl(payload.url);
+              setIsRemoteReady(payload.isRemoteReady);
               setShowPreview(true);
             },
           });
@@ -298,9 +310,13 @@ export function ShareDialogBase({
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl(null);
+    setIsRemoteReady(false);
   }, [previewUrl, useDataUrl]);
 
   const handleRegenerate = useCallback(async () => {
+    // Clear cache so we re-generate fresh
+    cachedBlobUrlRef.current = null;
+    cachedRemoteReadyRef.current = false;
     handleClosePreview();
     onOpenChange(true);
     await new Promise((r) => setTimeout(r, 100));
@@ -410,6 +426,7 @@ export function ShareDialogBase({
         imageUrl={previewUrl}
         onRegenerate={handleRegenerate}
         isRegenerating={isGenerating}
+        isRemoteReady={isRemoteReady}
       />
     </>
   );

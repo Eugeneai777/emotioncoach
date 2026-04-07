@@ -1,19 +1,19 @@
 /**
  * Upload a generated image blob to Storage and return a public HTTPS URL.
  * 
- * WeChat on Android cannot long-press-save `blob:` URLs — only `https://` works.
- * This utility bridges the gap by persisting the blob to the `partner-assets` bucket.
+ * Uses the `public-share-images` bucket which allows anonymous uploads,
+ * so unauthenticated WeChat visitors on promo pages can also get HTTPS URLs.
  */
 
 import { supabase } from "@/integrations/supabase/client";
 
 export async function uploadShareImage(blob: Blob): Promise<string> {
   const ext = blob.type === 'image/jpeg' ? 'jpg' : 'png';
-  const path = `temp-share/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const path = `promo-share/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
   const { error } = await supabase.storage
-    .from('partner-assets')
-    .upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false });
+    .from('public-share-images')
+    .upload(path, blob, { contentType: blob.type || 'image/png', upsert: false });
 
   if (error) {
     console.error('[shareImageUploader] Upload failed:', error);
@@ -21,7 +21,7 @@ export async function uploadShareImage(blob: Blob): Promise<string> {
   }
 
   const { data } = supabase.storage
-    .from('partner-assets')
+    .from('public-share-images')
     .getPublicUrl(path);
 
   console.log('[shareImageUploader] Uploaded to:', data.publicUrl);
