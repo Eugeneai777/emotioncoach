@@ -232,10 +232,15 @@ export function ShareDialogBase({
           throw new Error("Failed to generate image");
         }
 
-        const showPreviewFn = (url: string) => {
+        const showPreviewFn = (payload: { url: string; isRemoteReady: boolean }) => {
           if (!isiOS) onOpenChange(false);
-          cachedBlobUrlRef.current = url;
-          setPreviewUrl(url);
+          // Only cache HTTPS URLs; don't cache blob URLs
+          if (payload.isRemoteReady) {
+            cachedBlobUrlRef.current = payload.url;
+            cachedRemoteReadyRef.current = true;
+          }
+          setPreviewUrl(payload.url);
+          setIsRemoteReady(payload.isRemoteReady);
           setShowPreview(true);
         };
 
@@ -251,10 +256,14 @@ export function ShareDialogBase({
           const result = await handleShareWithFallback(blob, fileName, {
             title: shareTitle,
             text: shareText,
-            onShowPreview: (url) => {
+            onShowPreview: (payload) => {
               onOpenChange(false);
-              cachedBlobUrlRef.current = url;
-              setPreviewUrl(url);
+              if (payload.isRemoteReady) {
+                cachedBlobUrlRef.current = payload.url;
+                cachedRemoteReadyRef.current = true;
+              }
+              setPreviewUrl(payload.url);
+              setIsRemoteReady(payload.isRemoteReady);
               setShowPreview(true);
             },
           });
