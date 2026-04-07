@@ -16,7 +16,22 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
-import { BookOpen, HeartHandshake, Target, Sparkles } from "lucide-react";
+import { BookOpen, HeartHandshake, Target, Sparkles, ChevronRight } from "lucide-react";
+
+// Assessment mapping config
+const PAID_ASSESSMENT_MAP: Record<string, { title: string; emoji: string; route: string }> = {
+  emotion_health_assessment: { title: '情绪健康测评', emoji: '💚', route: '/emotion-health' },
+  scl90_report: { title: 'SCL-90心理测评', emoji: '🧠', route: '/scl90' },
+  wealth_block_assessment: { title: '财富卡点测评', emoji: '💰', route: '/wealth-block' },
+  midlife_awakening_assessment: { title: '中场觉醒力测评', emoji: '🧭', route: '/midlife-awakening' },
+};
+
+const FREE_ASSESSMENT_MAP: Record<string, { title: string; emoji: string; route: string }> = {
+  women_competitiveness: { title: '35+女性竞争力测评', emoji: '👩‍💼', route: '/assessment/women_competitiveness' },
+  parent_ability: { title: '父母胜任力测评', emoji: '👨‍👩‍👧', route: '/assessment/parent_ability' },
+  communication_parent: { title: '亲子沟通力测评(家长)', emoji: '💬', route: '/assessment/communication_parent' },
+  communication_teen: { title: '亲子沟通力测评(青少年)', emoji: '🗣️', route: '/assessment/communication_teen' },
+};
 
 const campCategories = [
   {
@@ -56,6 +71,56 @@ const CampList = () => {
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
+
+  // Query user's assessments (paid + free) for "my" filter
+  const { data: myAssessments, isLoading: isLoadingAssessments } = useQuery({
+    queryKey: ['my-assessments', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const PAID_KEYS = Object.keys(PAID_ASSESSMENT_MAP);
+      const FREE_TYPES = Object.keys(FREE_ASSESSMENT_MAP);
+      
+      const [paidRes, freeRes] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('package_key, paid_at')
+          .eq('user_id', user.id)
+          .eq('status', 'paid')
+          .in('package_key', PAID_KEYS)
+          .order('paid_at', { ascending: false }),
+        supabase
+          .from('awakening_entries')
+          .select('type, created_at')
+          .eq('user_id', user.id)
+          .in('type', FREE_TYPES)
+          .order('created_at', { ascending: false }),
+      ]);
+      
+      const items: { key: string; title: string; emoji: string; route: string; date: string; tag: string }[] = [];
+      
+      // Deduplicate paid
+      const seenPaid = new Set<string>();
+      (paidRes.data || []).forEach(o => {
+        if (seenPaid.has(o.package_key)) return;
+        seenPaid.add(o.package_key);
+        const m = PAID_ASSESSMENT_MAP[o.package_key];
+        if (m) items.push({ key: o.package_key, ...m, date: o.paid_at || '', tag: '已购' });
+      });
+      
+      // Deduplicate free
+      const seenFree = new Set<string>();
+      (freeRes.data || []).forEach(e => {
+        if (seenFree.has(e.type)) return;
+        seenFree.add(e.type);
+        const m = FREE_ASSESSMENT_MAP[e.type];
+        if (m) items.push({ key: e.type, ...m, date: e.created_at || '', tag: '已测' });
+      });
+      
+      return items;
+    },
+    enabled: !!user && filterParam === 'my',
+  });
 
   // Query user's training camps when filter is active/completed/my
   const { data: userCamps, isLoading: isLoadingUserCamps } = useQuery({
@@ -203,14 +268,11 @@ const CampList = () => {
 
   // If filter mode, show user's camps
   if (filterParam) {
-    const filterTitle = filterParam === 'my' ? '我的训练营' : filterParam === 'active' ? '待学课程' : '已学课程';
-    const emptyEmoji = filterParam === 'my' ? '🏕️' : filterParam === 'active' ? '📚' : '🎓';
-    const emptyText = filterParam === 'my' ? '还没有训练营，去看看吧' : filterParam === 'active' ? '暂无进行中的课程' : '暂无已完成的课程';
-    const isFilterLoading = isLoadingUserCamps;
+    const filterTitle = filterParam === 'my' ? '我的学习' : filterParam === 'active' ? '待学课程' : '已学课程';
+    const isFilterLoading = isLoadingUserCamps || (filterParam === 'my' && isLoadingAssessments);
 
     const handleMyCampClick = (camp: any) => {
       if (camp._myStatus === 'purchased') {
-        // Purchased but not started → go to camp intro to start
         navigate(`/camp-intro/${camp.camp_type}`);
       } else if (camp._myStatus === 'active') {
         navigate(`/camp-checkin/${camp.id}`);
@@ -235,57 +297,133 @@ const CampList = () => {
         {camp.status === 'active' ? '进行中' : '已完成'}
       </Badge>;
     };
+
+    const hasCamps = userCamps && userCamps.length > 0;
+    const hasAssessments = myAssessments && myAssessments.length > 0;
+    const hasNothing = !hasCamps && !hasAssessments;
     
     return (
       <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
         <PageHeader title={filterTitle} showBack />
-        <main className="container max-w-2xl mx-auto px-4 py-6">
+        <main className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
           {isFilterLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => <CampCardSkeleton key={i} />)}
             </div>
-          ) : !userCamps || userCamps.length === 0 ? (
+          ) : hasNothing ? (
             <div className="text-center py-16 space-y-3">
-              <p className="text-4xl">{emptyEmoji}</p>
-              <p className="text-muted-foreground">{emptyText}</p>
-              <Button variant="outline" onClick={() => navigate('/camps')}>
-                浏览训练营
-              </Button>
+              <p className="text-4xl">📚</p>
+              <p className="text-muted-foreground">还没有学习记录，去探索吧</p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={() => navigate('/camps')}>浏览训练营</Button>
+                <Button variant="outline" onClick={() => navigate('/mini-app')}>探索测评</Button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {userCamps.map((camp: any) => (
-                <Card 
-                  key={camp.id} 
-                  className="p-4 cursor-pointer hover:shadow-md transition-shadow border-border/40"
-                  onClick={() => filterParam === 'my' ? handleMyCampClick(camp) : navigate(`/camp-checkin/${camp.id}`)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{camp.camp_name}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {camp._statusLabel || `第 ${camp.current_day}/${camp.duration_days} 天 · 已打卡 ${camp.completed_days} 天`}
-                      </p>
-                    </div>
-                    {getStatusBadge(camp)}
-                  </div>
-                </Card>
-              ))}
-
-              {/* "浏览更多训练营" button for my filter */}
+            <>
+              {/* 我的训练营 */}
               {filterParam === 'my' && (
-                <div className="pt-4 text-center">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/camps')}
-                    className="gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    浏览更多训练营
-                  </Button>
+                <section>
+                  <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <span>📚</span> 我的训练营
+                  </h2>
+                  {hasCamps ? (
+                    <div className="space-y-3">
+                      {userCamps!.map((camp: any) => (
+                        <Card 
+                          key={camp.id} 
+                          className="p-4 cursor-pointer hover:shadow-md transition-shadow border-border/40"
+                          onClick={() => handleMyCampClick(camp)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-1 flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground truncate">{camp.camp_name}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                {camp._statusLabel || `第 ${camp.current_day}/${camp.duration_days} 天 · 已打卡 ${camp.completed_days} 天`}
+                              </p>
+                            </div>
+                            {getStatusBadge(camp)}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-3">暂无训练营记录</p>
+                  )}
+                  <div className="pt-3 text-center">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/camps')} className="gap-1.5 text-xs">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      浏览更多训练营
+                    </Button>
+                  </div>
+                </section>
+              )}
+
+              {/* Non-my filter: original list */}
+              {filterParam !== 'my' && hasCamps && (
+                <div className="space-y-3">
+                  {userCamps!.map((camp: any) => (
+                    <Card 
+                      key={camp.id} 
+                      className="p-4 cursor-pointer hover:shadow-md transition-shadow border-border/40"
+                      onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground truncate">{camp.camp_name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {camp._statusLabel || `第 ${camp.current_day}/${camp.duration_days} 天 · 已打卡 ${camp.completed_days} 天`}
+                          </p>
+                        </div>
+                        {getStatusBadge(camp)}
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               )}
-            </div>
+
+              {/* 我的测评 — only in 'my' filter */}
+              {filterParam === 'my' && (
+                <section>
+                  <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <span>📝</span> 我的测评
+                  </h2>
+                  {hasAssessments ? (
+                    <div className="space-y-2">
+                      {myAssessments!.map((a) => (
+                        <Card
+                          key={a.key}
+                          className="p-3.5 cursor-pointer hover:shadow-md transition-shadow border-border/40 group"
+                          onClick={() => navigate(a.route)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl shrink-0">{a.emoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-foreground truncate">{a.title}</h3>
+                              {a.date && (
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {new Date(a.date).toLocaleDateString('zh-CN')}
+                                </p>
+                              )}
+                            </div>
+                            <Badge variant="secondary" className="text-[10px] shrink-0">{a.tag}</Badge>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-3">暂无测评记录</p>
+                  )}
+                  <div className="pt-3 text-center">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/mini-app')} className="gap-1.5 text-xs">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      浏览更多测评
+                    </Button>
+                  </div>
+                </section>
+              )}
+            </>
           )}
         </main>
       </div>
