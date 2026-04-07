@@ -78,8 +78,8 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
       setStatus('generating_audio');
       setProgress(10);
 
-      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('volcengine-tts', {
-        body: { text: params.script, voice_type: params.voiceType },
+      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+        body: { text: params.script, voice_id: params.voiceType },
       });
 
       if (ttsError || !ttsData?.audioContent) {
