@@ -28,6 +28,7 @@ const ASSESSMENT_PACKAGE_KEYS = [
   "wealth_block_assessment",
   "scl90_report",
   "women_competitiveness_assessment",
+  "midlife_awakening_assessment",
 ];
 
 export default function YoujinLifeChat() {

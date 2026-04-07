@@ -147,36 +147,58 @@ const TOPIC_ASSESSMENT_MAP: Record<string, { title: string; route: string; desc:
   career: { title: "35+女性竞争力测评", route: "/assessment/women_competitiveness", desc: "25题 · 7分钟深度分析", price: "专业版", packageKey: "women_competitiveness_assessment" },
   relationship: { title: "SCL-90心理健康测评", route: "/assessment/scl90", desc: "90题 · 专业心理筛查", price: "¥9.9", packageKey: "scl90_report" },
   wealth: { title: "财富卡点测评", route: "/wealth-block", desc: "20题 · 6分钟发现财富信念", price: "¥9.9", packageKey: "wealth_block_assessment" },
+  midlife: { title: "中场觉醒力测评", route: "/assessment/midlife_awakening", desc: "6维度·30题·8分钟", price: "专业版", packageKey: "midlife_awakening_assessment" },
 };
 
+// Career topic maps to both career + midlife assessments
+const CAREER_ASSESSMENT_KEYS = ["career", "midlife"];
+
 function buildTopicPrompt(topic: string, completedAssessments: string[]): string {
+  // Special handling for career: recommend both career + midlife assessments
+  if (topic === "career") {
+    return buildCareerTopicPrompt(completedAssessments);
+  }
+
   const target = TOPIC_ASSESSMENT_MAP[topic];
   if (!target) return "";
 
   const isCompleted = completedAssessments.includes(target.packageKey);
 
-  // Find alternative assessments not yet completed
-  const alternatives = Object.entries(TOPIC_ASSESSMENT_MAP)
-    .filter(([key, val]) => key !== topic && !completedAssessments.includes(val.packageKey))
-    .map(([, val]) => val);
-
-  const allCompleted = isCompleted && alternatives.length === 0;
-
   let prompt = `\n\n## 场景引导指令（本次对话特别规则）\n`;
-  prompt += `用户是通过「${topic === 'anxiety' ? '深夜焦虑' : topic === 'career' ? '职场迷茫' : topic === 'relationship' ? '关系困扰' : '财富渴望'}」场景入口进来的。\n`;
+  prompt += `用户是通过「${topic === 'anxiety' ? '深夜焦虑' : topic === 'relationship' ? '关系困扰' : '财富渴望'}」场景入口进来的。\n`;
+  prompt += `【严格约束】你**必须且只能**推荐下面列出的测评，**严格禁止**推荐其他任何测评。\n`;
 
-  if (allCompleted) {
-    prompt += `用户已完成所有测评。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」（¥399），这是一个系统化的AI+真人陪伴训练。不要推荐测评。\n`;
-  } else if (isCompleted) {
-    const alt = alternatives[0];
-    prompt += `用户已完成「${target.title}」。请在第2-3轮对话中，根据对话内容自然推荐其他未完成的测评。\n`;
-    prompt += `可推荐的测评：${alternatives.map(a => `「${a.title}」`).join('、')}\n`;
-    prompt += `推荐时在回复末尾附加标记：\n`;
-    prompt += `[ASSESSMENT]{"title":"${alt.title}","route":"${alt.route}","desc":"${alt.desc}","price":"${alt.price}"}[/ASSESSMENT]\n`;
+  if (isCompleted) {
+    prompt += `用户已完成「${target.title}」。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」（¥399），这是一个系统化的AI+真人陪伴训练。不要推荐测评。\n`;
   } else {
     prompt += `请在第2-3轮对话中，根据用户的倾诉自然过渡到推荐「${target.title}」。\n`;
     prompt += `推荐时要自然（如"你描述的这些感受，我建议做个专业筛查来看看目前的状态"），然后附加标记：\n`;
     prompt += `[ASSESSMENT]{"title":"${target.title}","route":"${target.route}","desc":"${target.desc}","price":"${target.price}"}[/ASSESSMENT]\n`;
+  }
+
+  prompt += `\n注意：\n- 不要在第一轮就推荐，先共情、倾听\n- 推荐要自然融入对话，不要生硬\n- [ASSESSMENT] 标记前端会自动渲染为可点击的测评卡片\n`;
+
+  return prompt;
+}
+
+function buildCareerTopicPrompt(completedAssessments: string[]): string {
+  const availableAssessments = CAREER_ASSESSMENT_KEYS
+    .map(key => TOPIC_ASSESSMENT_MAP[key])
+    .filter(a => !completedAssessments.includes(a.packageKey));
+
+  let prompt = `\n\n## 场景引导指令（本次对话特别规则）\n`;
+  prompt += `用户是通过「职场迷茫」场景入口进来的。\n`;
+  prompt += `【严格约束】你**必须且只能**推荐下面列出的测评，**严格禁止**推荐其他任何测评。\n`;
+
+  if (availableAssessments.length === 0) {
+    prompt += `用户已完成所有职场相关测评。在第2-3轮对话中，自然引导用户了解「7天有劲训练营」（¥399），这是一个系统化的AI+真人陪伴训练。不要推荐测评。\n`;
+  } else {
+    prompt += `请在第2-3轮对话中，根据用户的倾诉自然过渡到推荐以下测评（全部推荐，每个测评输出一个 [ASSESSMENT] 标记）：\n`;
+    for (const a of availableAssessments) {
+      prompt += `- 「${a.title}」：${a.desc}\n`;
+      prompt += `  标记：[ASSESSMENT]{"title":"${a.title}","route":"${a.route}","desc":"${a.desc}","price":"${a.price}"}[/ASSESSMENT]\n`;
+    }
+    prompt += `推荐时要自然（如"针对你目前的职场困惑，我建议做这两个专业测评来全面了解自己的状态"）。\n`;
   }
 
   prompt += `\n注意：\n- 不要在第一轮就推荐，先共情、倾听\n- 推荐要自然融入对话，不要生硬\n- [ASSESSMENT] 标记前端会自动渲染为可点击的测评卡片\n`;
