@@ -27,7 +27,7 @@ interface ChatBubbleProps {
 
 // Parse special card markers from AI response
 function parseCards(content: string) {
-  const parts: { type: "text" | "suggestion" | "action" | "followup" | "servicelink" | "expense" | "expense_query" | "assessment"; data?: any; text?: string }[] = [];
+  const parts: { type: "text" | "suggestion" | "action" | "followup" | "servicelink" | "expense" | "expense_query" | "assessment" | "camp"; data?: any; text?: string }[] = [];
   
   const suggestionMatch = content.match(/\[SUGGESTION\]([\s\S]*?)\[\/SUGGESTION\]/);
   const actionMatch = content.match(/\[ACTION\]([\s\S]*?)\[\/ACTION\]/);
@@ -35,7 +35,6 @@ function parseCards(content: string) {
   const serviceLinkMatch = content.match(/\[SERVICE_LINK\]([\s\S]*?)\[\/SERVICE_LINK\]/);
   const expenseMatch = content.match(/\[EXPENSE\]([\s\S]*?)\[\/EXPENSE\]/);
   const expenseQueryMatch = content.match(/\[EXPENSE_QUERY\]([\s\S]*?)\[\/EXPENSE_QUERY\]/);
-  const assessmentMatch = content.match(/\[ASSESSMENT\]([\s\S]*?)\[\/ASSESSMENT\]/);
   
   let textContent = content
     .replace(/\[SUGGESTION\][\s\S]*?\[\/SUGGESTION\]/g, "")
@@ -45,6 +44,7 @@ function parseCards(content: string) {
     .replace(/\[EXPENSE\][\s\S]*?\[\/EXPENSE\]/g, "")
     .replace(/\[EXPENSE_QUERY\][\s\S]*?\[\/EXPENSE_QUERY\]/g, "")
     .replace(/\[ASSESSMENT\][\s\S]*?\[\/ASSESSMENT\]/g, "")
+    .replace(/\[CAMP\][\s\S]*?\[\/CAMP\]/g, "")
     .trim();
 
   if (textContent) {
@@ -86,10 +86,21 @@ function parseCards(content: string) {
     } catch {}
   }
 
-  if (assessmentMatch) {
+  // Support multiple [ASSESSMENT] tags via matchAll
+  const assessmentMatches = [...content.matchAll(/\[ASSESSMENT\]([\s\S]*?)\[\/ASSESSMENT\]/g)];
+  for (const m of assessmentMatches) {
     try {
-      const data = JSON.parse(assessmentMatch[1]);
+      const data = JSON.parse(m[1]);
       parts.push({ type: "assessment", data });
+    } catch {}
+  }
+
+  // Support [CAMP] tag for training camp recommendation
+  const campMatches = [...content.matchAll(/\[CAMP\]([\s\S]*?)\[\/CAMP\]/g)];
+  for (const m of campMatches) {
+    try {
+      const data = JSON.parse(m[1]);
+      parts.push({ type: "camp", data });
     } catch {}
   }
 
