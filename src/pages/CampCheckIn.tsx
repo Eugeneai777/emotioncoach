@@ -623,7 +623,7 @@ const CampCheckIn = () => {
                                 🎉 今日打卡完成！
                               </h3>
                               <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
-                                已坚持 {camp.completed_days || 0} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                已坚持 {camp.completed_days || checkInDates.length || 0} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
                                 {bonusDone > 0 && ` · 额外完成 ${bonusDone} 项`}
                               </p>
                               <div className="flex items-center gap-1 mt-1.5">

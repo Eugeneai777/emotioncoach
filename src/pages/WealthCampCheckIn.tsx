@@ -285,8 +285,9 @@ export default function WealthCampCheckIn() {
   // 动态计算当前天数
   const currentDay = useMemo(() => {
     if (!camp?.start_date) return 1;
-    return Math.max(1, getDaysSinceStart(camp.start_date) + 1);
-  }, [camp?.start_date]);
+    const days = Math.max(1, getDaysSinceStart(camp.start_date) + 1);
+    return Math.min(days, camp.duration_days || 7);
+  }, [camp?.start_date, camp?.duration_days]);
   
   // 自动检查并计算本周权重
   useEffect(() => {
