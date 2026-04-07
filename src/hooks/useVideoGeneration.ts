@@ -195,8 +195,13 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           return;
         }
 
-        if (taskStatus === 'failed') {
+        if (taskStatus === 'failed' || taskStatus === 'error') {
           throw new Error(queryData?.error || '视频生成失败');
+        }
+
+        // If status is unknown for too long, likely an unrecoverable error
+        if (taskStatus === 'unknown' && polls > 10) {
+          throw new Error('即梦任务状态异常，请检查输入图片和音频是否符合要求');
         }
 
         const pollProgress = 55 + Math.min(40, (polls / maxPolls) * 40);
