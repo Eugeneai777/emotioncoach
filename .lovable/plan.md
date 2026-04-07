@@ -1,59 +1,40 @@
 
 
-# 方案A补充：已购/已做测评不推荐
+# 修复训练营天数显示两个 Bug
 
-## 问题
+## Bug 1：财富训练营显示 "Day 26/7"
 
-用户从场景卡进入对话后，AI 会推荐对应测评。但如果用户已经购买或完成了该测评，推荐就显得多余甚至影响体验。
+**根因**：`WealthCampCheckIn.tsx` 第 286-289 行，`currentDay` 用 `getDaysSinceStart(camp.start_date) + 1` 计算，这是自然日历天数（开营至今的天数），不封顶。虽然 `CampCheckIn.tsx` 用了 `Math.min(calculatedCurrentDay, camp.duration_days)` 封顶，但 `WealthCampCheckIn.tsx` **没有封顶**，所以传给 `AwakeningDashboard` 和 `CollapsibleProgressCalendar` 的 `currentDay` 可以是 26、30 等超过 7 的值。
 
-## 解决思路
+**修复**：在 `WealthCampCheckIn.tsx` 第 288 行加封顶：
+```typescript
+const currentDay = useMemo(() => {
+  if (!camp?.start_date) return 1;
+  const days = Math.max(1, getDaysSinceStart(camp.start_date) + 1);
+  return Math.min(days, camp.duration_days || 7); // 封顶为 7
+}, [camp?.start_date, camp?.duration_days]);
+```
 
-在前端发送聊天请求时，查询用户已购买/已完成的测评列表，一并传给边缘函数。边缘函数在 system prompt 中告知 AI 哪些测评已完成，AI 就不会推荐这些测评。
+同时检查 `CollapsibleProgressCalendar.tsx` 第 231 行的 `Day ${currentDay}/${totalDays}` 显示逻辑，确保 `currentDay` 已经是封顶值。
 
-## 数据来源
+## Bug 2：第 1 天打卡完成后显示"已坚持 0 天"
 
-已购测评：`orders` 表，`status = 'paid'`，`package_key` 匹配以下值：
-- `emotion_health_assessment` → 情绪健康
-- `wealth_block_assessment` → 财富卡点
-- `scl90_report` → SCL-90
-- `women_competitiveness_assessment` → 35+女性竞争力
+**根因**：`CampCheckIn.tsx` 第 626 行显示 `camp.completed_days || 0`。打卡通过 `performCheckIn` 更新数据库中的 `completed_days`，然后调用 `loadCampData()` 重新获取数据。但显示用的是 `camp` 状态对象——如果 `loadCampData` 返回的数据没有及时刷新 `camp.completed_days`（例如缓存或 React Query 延迟），就会显示旧值 0。
 
-已完成测评：`partner_assessment_results` 表，按 `user_id` 查询是否有记录。
+更本质的问题：`performCheckIn` 在第 159-166 行只有当 `today` 不在 `checkInDates` 中时才更新 `completed_days`。如果用户今天已经触发过一次打卡（重复打卡），`streakDays = camp.completed_days`（不加 1），这时如果初始值是 0 就会一直是 0。
 
-## 改动
+**修复**：
+1. 在 `CampCheckIn.tsx` 第 626 行，改用 `check_in_dates` 的长度作为已坚持天数的 fallback：
+```typescript
+已坚持 {camp.completed_days || checkInDates.length || 0} 天
+```
 
-### 1. `src/pages/YoujinLifeChat.tsx`
-- 页面加载时，如果 URL 含 `topic` 参数，查询用户已购/已完成的测评 package_key 列表
-- 将 `topic` 和 `completedAssessments` 数组一起传给边缘函数：
-  ```json
-  { "messages": [...], "topic": "anxiety", "completedAssessments": ["emotion_health_assessment"] }
-  ```
-
-### 2. `supabase/functions/youjin-life-chat/index.ts`
-- 接收 `topic` 和 `completedAssessments` 参数
-- 当 `topic` 存在时，追加场景引导指令到 system prompt
-- 场景 → 测评映射：
-  - `anxiety` → 情绪健康 `/emotion-health`
-  - `career` → 35+女性竞争力 `/assessment/women_competitiveness`
-  - `relationship` → SCL-90 `/assessment/scl90`
-  - `wealth` → 财富卡点 `/wealth-block`
-- 如果目标测评在 `completedAssessments` 中，prompt 指令改为「用户已完成该测评，不要推荐，可以推荐其他未完成的测评或直接引导到训练营」
-- 如果所有测评都已完成，直接推荐 ¥399 训练营
-
-### 3. `src/pages/MiniAppEntry.tsx`
-- `useCases` 数组每项新增 `chatRoute` 字段
-- 场景卡片加 `onClick` 和 `cursor-pointer`，点击导航到对应路由
-
-### 4. `src/components/youjin-life/ChatBubble.tsx`
-- `parseCards` 新增解析 `[ASSESSMENT]...[/ASSESSMENT]` 标记
-- 渲染为可点击的测评推荐卡片（标题、描述、价格、跳转按钮）
+2. 或更彻底：在 `handleCoachingComplete` 成功后，用 `performCheckIn` 返回的 `streakDays` 直接更新显示状态，而不是等待 `loadCampData` 异步刷新。
 
 ## 涉及文件
 
 | 文件 | 操作 |
 |------|------|
-| `src/pages/MiniAppEntry.tsx` | 场景卡加 chatRoute + onClick |
-| `src/pages/YoujinLifeChat.tsx` | 读取 topic，查询已完成测评，传给边缘函数 |
-| `supabase/functions/youjin-life-chat/index.ts` | 接收 topic + completedAssessments，动态调整推荐策略 |
-| `src/components/youjin-life/ChatBubble.tsx` | 解析 [ASSESSMENT] 标记，渲染推荐卡片 |
+| `src/pages/WealthCampCheckIn.tsx` | `currentDay` 加 `Math.min` 封顶 |
+| `src/pages/CampCheckIn.tsx` | "已坚持 N 天"改用可靠数据源，打卡后立即更新显示 |
 
