@@ -14,8 +14,6 @@ import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
-import coachMumian from "@/assets/coach-mumian.jpg";
-import coachXiaojianxiong from "@/assets/coach-xiaojianxiong.jpg";
 import coachBetty from "@/assets/coach-betty.jpg";
 import { ShareDialogBase } from "@/components/ui/share-dialog-base";
 import { useShareDialog } from "@/hooks/useShareDialog";
