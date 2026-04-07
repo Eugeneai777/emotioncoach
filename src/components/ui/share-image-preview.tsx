@@ -166,14 +166,23 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         className="shrink-0 flex flex-col items-center gap-2 px-4 pb-4"
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
-        <Button
-          onClick={handleDownload}
-          className="w-full max-w-sm rounded-full h-12 gap-2 text-base font-medium"
-        >
-          <Download className="h-5 w-5" />
-          {imageSaved ? '已保存 ✓' : '保存图片'}
-        </Button>
-        <p className="text-muted-foreground text-xs">{hintText}</p>
+        {isWeChat ? (
+          <div className="flex flex-col items-center gap-1 py-2">
+            <p className="text-base font-medium text-foreground">👆 长按上方图片保存到相册</p>
+            <p className="text-muted-foreground text-xs">保存后可转发给朋友或朋友圈</p>
+          </div>
+        ) : (
+          <>
+            <Button
+              onClick={handleDownload}
+              className="w-full max-w-sm rounded-full h-12 gap-2 text-base font-medium"
+            >
+              <Download className="h-5 w-5" />
+              {imageSaved ? '已保存 ✓' : '保存图片'}
+            </Button>
+            <p className="text-muted-foreground text-xs">{hintText}</p>
+          </>
+        )}
       </div>
     </div>,
     document.body
