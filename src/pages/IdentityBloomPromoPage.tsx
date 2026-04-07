@@ -854,7 +854,7 @@ export default function IdentityBloomPromoPage() {
         <p className="text-slate-400 text-xs text-center mb-6">身份蜕变 + 身体调理，内外兼修</p>
         <div className="max-w-lg mx-auto space-y-4">
           <div className="rounded-2xl overflow-hidden border border-indigo-200/50 shadow-sm bg-white">
-            <img src={zhileProductNew} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
+            <img src={zhile4BoxCover} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -907,7 +907,7 @@ export default function IdentityBloomPromoPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-indigo-700">📦 香港直邮 · 预计4-7个工作日送达</p>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  建议收到知乐胶囊后再开启训练营，AI教练+专业教练+草本调理同步进行，效果更佳。
+                  建议收到知乐胶囊后再开启训练营，专业教练+草本调理同步进行，效果更佳。
                 </p>
               </div>
             </div>
