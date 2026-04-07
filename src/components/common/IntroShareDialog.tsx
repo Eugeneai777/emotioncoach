@@ -132,8 +132,8 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
       const result = await handleShareWithFallback(blob, filename, {
         title: config.title,
         text: config.subtitle,
-        onShowPreview: (blobUrl) => {
-          setPreviewImage(blobUrl);
+        onShowPreview: (payload) => {
+          setPreviewImage(payload.url);
         },
       });
 

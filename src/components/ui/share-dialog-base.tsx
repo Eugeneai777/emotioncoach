@@ -100,8 +100,10 @@ export function ShareDialogBase({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Session cache: keep generated image URL to avoid re-rendering
+  const [isRemoteReady, setIsRemoteReady] = useState(false);
+  // Session cache: keep generated HTTPS URL to avoid re-rendering
   const cachedBlobUrlRef = useRef<string | null>(null);
+  const cachedRemoteReadyRef = useRef<boolean>(false);
 
   const { isWeChat, isIOS } = getShareEnvironment();
   const showImagePreview = shouldUseImagePreview();
