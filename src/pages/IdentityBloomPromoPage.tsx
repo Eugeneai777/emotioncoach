@@ -282,6 +282,7 @@ export default function IdentityBloomPromoPage() {
   const [_purchaseChecked, setPurchaseChecked] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
+  const [expandedHighlight, setExpandedHighlight] = useState<number | null>(null);
   const shareDialog = useShareDialog();
 
   useEffect(() => {
@@ -640,6 +641,71 @@ export default function IdentityBloomPromoPage() {
         </div>
       </Section>
 
+      {/* ===== COURSE HIGHLIGHTS DEEP DIVE ===== */}
+      <Section className="bg-indigo-50/40">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">科学深度设计 + 独特核心优势</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">让改变真实可落地、成长有根可循</p>
+        <div className="max-w-lg mx-auto space-y-3">
+          {[
+            {
+              icon: "🧠",
+              title: "心理学与成长视角双重赋能",
+              summary: "兼具先进性与深度，从人格根源切入探索改变的底层逻辑",
+              detail: "课程扎根人格心理学、创伤心理学、人际神经生物学等前沿理论，通过专业方法完成原生家庭创伤疗愈、内隐记忆梳理、情绪模式重构，实现认知、行为、关系、能量的全维度深度成长，让改变不是表面的行为模仿，而是从心理内核到生命状态的本质蜕变。"
+            },
+            {
+              icon: "📐",
+              title: "阶梯式科学课程体系",
+              summary: "步步为营破局成长，4阶16节层层递进",
+              detail: "遵循「觉察→破局→立身份→绽生命」的人格成长逻辑，从「我知道我是谁」到「转化困境破茧成蝶」，层层递进解构虚假身份、重塑真实自我。2个月系统学习，随报随学适配你的节奏，每一步都有心理学理论支撑。"
+            },
+            {
+              icon: "🔥",
+              title: "独创海沃塔实战训练模式",
+              summary: "告别学用脱节，拒绝单向灌输",
+              detail: "以犹太经典海沃塔深度交流模式为核心训练方法，融合心理学团体疗愈理念。1教练带练10人小班，3人一组展开「倾听-探索-挑战」深度互动，搭配课前预习+课中实战+课后打卡落地的完整闭环，彻底解决「听时激动，课后不动」的行业痛点。"
+            },
+            {
+              icon: "💛",
+              title: "高陪伴+长滋养，成长路上不孤单",
+              summary: "个性化教练指导，温暖包容的社群氛围",
+              detail: "结合学员心理特质与成长卡点精准破解，兼顾科学性与个性化；无评判、多赋能，让你敢直面自我、敢真实表达；免费终身复训权益，持续链接同频伙伴，一次加入，终身收获专业成长滋养与温暖人际支撑。"
+            },
+          ].map((item, i) => {
+            const isExpanded = expandedHighlight === i;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="p-4 rounded-2xl bg-white shadow-sm border border-indigo-100/50 cursor-pointer"
+                onClick={() => setExpandedHighlight(isExpanded ? null : i)}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-slate-800">{item.title}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{item.summary}</p>
+                    {isExpanded && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="text-xs text-slate-600 leading-relaxed mt-2 border-t border-slate-100 pt-2"
+                      >
+                        {item.detail}
+                      </motion.p>
+                    )}
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-slate-400 shrink-0 mt-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </Section>
+
       {/* ===== DAILY LOOP ===== */}
       <Section className="bg-indigo-50/40">
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">每日学习流程</h2>
@@ -681,6 +747,39 @@ export default function IdentityBloomPromoPage() {
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你将获得</h2>
         <p className="text-slate-500 text-sm text-center mb-6">核心交付 · 专属权益 · 附加福利</p>
+
+        {/* — 六大核心收益 — */}
+        <div className="max-w-lg mx-auto mb-8">
+          <h3 className="text-base sm:text-lg font-bold text-center text-indigo-700 mb-5">六大核心收益，解锁从内到外的人生蜕变</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { emoji: "🧠", title: "认知觉醒", desc: "穿透情绪表象看清本质，疗愈原生家庭深层创伤，与自我和解彻底告别内耗" },
+              { emoji: "🦋", title: "行为蜕变", desc: "从压抑抗拒到主动表达，从自我否定到接纳自信，勇敢拒绝掌控人生主动权" },
+              { emoji: "🤝", title: "关系重塑", desc: "打通家庭、人际情感联结，学会深度共情沟通，收获和谐亲密的关系滋养" },
+              { emoji: "⚡", title: "能量提升", desc: "告别低能量自我攻击，激活生命原动力，找到人生方向与内在核心使命" },
+              { emoji: "🔗", title: "同频链接", desc: "遇见三观契合的成长伙伴，彼此支撑陪伴，收获长久的温暖与前行力量" },
+              { emoji: "🌱", title: "终身成长", desc: "掌握心理学底层的自我觉察与情绪调节能力，免费复训持续滋养，让成长成为常态" },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+                className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-indigo-100/50 shadow-sm"
+              >
+                <span className="text-lg shrink-0 mt-0.5">{item.emoji}</span>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    {item.title}
+                  </h4>
+                  <p className="text-xs text-slate-500 leading-relaxed mt-0.5">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
 
         <div className="max-w-lg mx-auto space-y-5">
           {/* — 核心交付 — */}
@@ -920,7 +1019,30 @@ export default function IdentityBloomPromoPage() {
       {/* ===== TESTIMONIALS ===== */}
       <Section className="bg-indigo-50/40">
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">学员真实反馈</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">活成自己，才是幸福感与成就感的终极答案</p>
+        <p className="text-slate-500 text-sm text-center mb-4">活成自己，才是幸福感与成就感的终极答案</p>
+
+        {/* 口碑背书 */}
+        <div className="max-w-lg mx-auto mb-6">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-100/80 to-violet-100/80 border border-indigo-200/50">
+            <div className="text-center">
+              <p className="text-2xl sm:text-3xl font-black text-indigo-600">3年+</p>
+              <p className="text-[10px] text-slate-500 font-medium">沉淀打磨</p>
+            </div>
+            <div className="w-px h-10 bg-indigo-200/60" />
+            <div className="text-center">
+              <p className="text-2xl sm:text-3xl font-black text-indigo-600">95%+</p>
+              <p className="text-[10px] text-slate-500 font-medium">学员好评</p>
+            </div>
+            <div className="w-px h-10 bg-indigo-200/60" />
+            <div className="text-center">
+              <p className="text-2xl sm:text-3xl font-black text-indigo-600">实战型</p>
+              <p className="text-[10px] text-slate-500 font-medium">训练营</p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 text-center mt-2 leading-relaxed">
+            课程体系经反复实践优化愈发成熟，无数人在这里实现心理内核与生命状态的双重蜕变，真实成长反馈看得见、摸得着
+          </p>
+        </div>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div
