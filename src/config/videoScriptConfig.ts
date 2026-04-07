@@ -163,11 +163,11 @@ const RECOMMENDATION_MAP: Record<string, string[]> = {
   // 日常工具 → 推荐会员
   'tool-': ['cv-trial', 'cv-365', 'cv-free-tool'],
   // 测评 → 推荐该测评 + 会员
-  'assess-emotion-health': ['cv-emotion-assess', 'cv-trial', 'cv-emotion-camp'],
-  'assess-scl90': ['cv-scl90', 'cv-trial'],
+  'assess-emotion-health': ['cv-emotion-assess', 'cv-synergy-camp', 'cv-emotion-camp'],
+  'assess-scl90': ['cv-scl90', 'cv-synergy-camp'],
   'assess-wealth': ['cv-wealth-assess', 'cv-wealth-camp'],
-  'assess-midlife': ['cv-emotion-assess', 'cv-emotion-camp'],
-  'assess-women': ['cv-emotion-assess', 'cv-trial'],
+  'assess-midlife': ['cv-emotion-assess', 'cv-synergy-camp'],
+  'assess-women': ['cv-emotion-assess', 'cv-synergy-camp'],
   'assess-parent': ['cv-emotion-assess', 'cv-youth-camp'],
   'assess-comm': ['cv-emotion-assess', 'cv-youth-camp'],
   // 会员
@@ -183,7 +183,7 @@ const RECOMMENDATION_MAP: Record<string, string[]> = {
   // AI教练(动态)
   'ai-coach-': ['cv-trial', 'cv-365'],
   // 训练营(动态)
-  'camp-': ['cv-emotion-camp', 'cv-wealth-camp'],
+  'camp-': ['cv-synergy-camp', 'cv-emotion-camp', 'cv-wealth-camp'],
 };
 
 export function getRecommendedProducts(topicId: string): string[] {
