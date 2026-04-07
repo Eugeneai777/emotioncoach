@@ -506,7 +506,9 @@ const generateCanvasInternal = async (
         try {
           const sampleW = Math.min(canvas.width, 10);
           const sampleH = Math.min(canvas.height, 10);
-          const sample = ctx.getImageData(0, 0, sampleW, sampleH);
+          const cx = Math.max(0, Math.floor((canvas.width - sampleW) / 2));
+          const cy = Math.max(0, Math.floor((canvas.height - sampleH) / 2));
+          const sample = ctx.getImageData(cx, cy, sampleW, sampleH);
           const isBlank = sample.data.every(v => v === 0);
           if (isBlank) {
             console.warn('[shareCardConfig] Blank canvas detected, retrying with scale 1.5...');

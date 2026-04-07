@@ -131,19 +131,27 @@ export const handleShareWithFallback = async (
     return result;
   };
 
-  // Helper: upload blob and show preview with HTTPS URL (WeChat Android can't save blob: URLs)
+  // Helper: show preview immediately with blob URL, then async upload for HTTPS URL
   const showUploadedPreview = async () => {
-    try {
-      const { uploadShareImage } = await import('./shareImageUploader');
-      const httpsUrl = await uploadShareImage(blob);
-      options.onShowPreview?.(httpsUrl);
-      return reportShare({ success: true, method: 'preview', blobUrl: httpsUrl });
-    } catch (uploadErr) {
-      console.warn('[shareUtils] Upload failed, falling back to blob URL', uploadErr);
-      const blobUrl = URL.createObjectURL(blob);
-      options.onShowPreview?.(blobUrl);
-      return reportShare({ success: true, method: 'preview', blobUrl });
-    }
+    const blobUrl = URL.createObjectURL(blob);
+    // Show immediately with blob URL
+    options.onShowPreview?.(blobUrl);
+    
+    // Async upload in background, silently replace with HTTPS URL when ready
+    (async () => {
+      try {
+        const { uploadShareImage } = await import('./shareImageUploader');
+        const httpsUrl = await uploadShareImage(blob);
+        // Replace blob URL with HTTPS URL for long-press saving
+        options.onShowPreview?.(httpsUrl);
+        URL.revokeObjectURL(blobUrl);
+        console.log('[shareUtils] Upgraded to HTTPS URL');
+      } catch (uploadErr) {
+        console.warn('[shareUtils] Upload failed, keeping blob URL', uploadErr);
+      }
+    })();
+    
+    return reportShare({ success: true, method: 'preview', blobUrl });
   };
 
   // Mini Program environment: Always use image preview (no Web Share API support)
