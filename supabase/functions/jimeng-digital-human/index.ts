@@ -164,16 +164,16 @@ Deno.serve(async (req) => {
 
       if (data.code && data.code !== 10000) {
         return new Response(
-          JSON.stringify({ error: `提交失败: ${data.message || data.code}`, detail: data }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: `提交失败: ${data.message || data.code}`, status: "failed", raw: data }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       // Handle Volcengine ResponseMetadata errors
       if (data.ResponseMetadata?.Error) {
         return new Response(
-          JSON.stringify({ error: `提交失败: ${data.ResponseMetadata.Error.Message}`, detail: data }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: `提交失败: ${data.ResponseMetadata.Error.Message}`, status: "failed", raw: data }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
       if (data.ResponseMetadata?.Error) {
         return new Response(
           JSON.stringify({ error: data.ResponseMetadata.Error.Message, task_id, status: "failed", raw: data }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -248,7 +248,7 @@ Deno.serve(async (req) => {
       if (data.code && data.code !== 0 && !data.data) {
         return new Response(
           JSON.stringify({ error: data.message || `即梦 API 错误 (code: ${data.code})`, task_id, status: "failed", raw: data }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 

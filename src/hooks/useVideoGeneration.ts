@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { extractEdgeFunctionError } from '@/lib/edgeFunctionError';
 
 export type VideoGenStatus =
   | 'idle'
@@ -82,8 +83,10 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
         body: { text: params.script, voice_id: params.voiceType },
       });
 
-      if (ttsError || !ttsData?.audioContent) {
-        throw new Error(ttsError?.message || ttsData?.error || 'TTS 语音合成失败');
+      if (ttsData?.error || ttsError || !ttsData?.audioContent) {
+        throw new Error(
+          await extractEdgeFunctionError(ttsData, ttsError, 'TTS 语音合成失败')
+        );
       }
 
       if (abortRef.current) return;
@@ -93,7 +96,7 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
       setStatus('uploading_audio');
 
       const audioBytes = Uint8Array.from(atob(ttsData.audioContent), c => c.charCodeAt(0));
-      const audioBlob = new Blob([audioBytes], { type: 'audio/mp3' });
+      const audioBlob = new Blob([audioBytes], { type: 'audio/mpeg' });
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('请先登录');
@@ -101,7 +104,7 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
       const fileName = `${user.id}/${Date.now()}.mp3`;
       const { error: uploadError } = await supabase.storage
         .from('video-assets')
-        .upload(fileName, audioBlob, { contentType: 'audio/mp3' });
+        .upload(fileName, audioBlob, { contentType: 'audio/mpeg' });
 
       if (uploadError) throw new Error(`音频上传失败: ${uploadError.message}`);
 
@@ -123,8 +126,10 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
         },
       });
 
-      if (submitError || !submitData?.task_id) {
-        throw new Error(submitError?.message || submitData?.error || '数字人任务提交失败');
+      if (submitData?.status === 'failed' || submitData?.error || submitError || !submitData?.task_id) {
+        throw new Error(
+          await extractEdgeFunctionError(submitData, submitError, '数字人任务提交失败')
+        );
       }
 
       const taskId = submitData.task_id;
@@ -148,7 +153,15 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           body: { action: 'query', task_id: taskId },
         });
 
+        if (queryData?.status === 'failed' || queryData?.error) {
+          throw new Error(queryData.error || '视频生成失败');
+        }
+
         if (queryError) {
+          const queryMessage = await extractEdgeFunctionError(queryData, queryError, '');
+          if (queryMessage) {
+            throw new Error(queryMessage);
+          }
           console.warn('查询失败，重试中...', queryError.message);
           continue;
         }
