@@ -135,6 +135,7 @@ export const CONVERSION_PRODUCTS: ConversionProduct[] = [
   { id: 'cv-trial', label: '尝鲜会员', description: '50点AI教练体验', price: 9.9, category: '会员' },
   { id: 'cv-365', label: '365年度会员', description: '全年无限AI教练', price: 365, category: '会员' },
   // 训练营
+  { id: 'cv-synergy-camp', label: '7天有劲训练营', description: '7天解压训练+AI教练+冥想音频', price: 399, category: '训练营' },
   { id: 'cv-emotion-camp', label: '21天情绪日记训练营', description: '21天情绪管理训练', price: 299, category: '训练营' },
   { id: 'cv-wealth-camp', label: '财富觉醒训练营', description: '7天财富卡点突破', price: 299, category: '训练营' },
   { id: 'cv-youth-camp', label: '青少年困境突破营', description: '21天青少年成长', price: 299, category: '训练营' },
@@ -162,11 +163,11 @@ const RECOMMENDATION_MAP: Record<string, string[]> = {
   // 日常工具 → 推荐会员
   'tool-': ['cv-trial', 'cv-365', 'cv-free-tool'],
   // 测评 → 推荐该测评 + 会员
-  'assess-emotion-health': ['cv-emotion-assess', 'cv-trial', 'cv-emotion-camp'],
-  'assess-scl90': ['cv-scl90', 'cv-trial'],
+  'assess-emotion-health': ['cv-emotion-assess', 'cv-synergy-camp', 'cv-emotion-camp'],
+  'assess-scl90': ['cv-scl90', 'cv-synergy-camp'],
   'assess-wealth': ['cv-wealth-assess', 'cv-wealth-camp'],
-  'assess-midlife': ['cv-emotion-assess', 'cv-emotion-camp'],
-  'assess-women': ['cv-emotion-assess', 'cv-trial'],
+  'assess-midlife': ['cv-emotion-assess', 'cv-synergy-camp'],
+  'assess-women': ['cv-emotion-assess', 'cv-synergy-camp'],
   'assess-parent': ['cv-emotion-assess', 'cv-youth-camp'],
   'assess-comm': ['cv-emotion-assess', 'cv-youth-camp'],
   // 会员
@@ -182,7 +183,7 @@ const RECOMMENDATION_MAP: Record<string, string[]> = {
   // AI教练(动态)
   'ai-coach-': ['cv-trial', 'cv-365'],
   // 训练营(动态)
-  'camp-': ['cv-emotion-camp', 'cv-wealth-camp'],
+  'camp-': ['cv-synergy-camp', 'cv-emotion-camp', 'cv-wealth-camp'],
 };
 
 export function getRecommendedProducts(topicId: string): string[] {
