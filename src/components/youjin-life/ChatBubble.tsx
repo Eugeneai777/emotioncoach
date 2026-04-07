@@ -138,6 +138,33 @@ function AssessmentInlineCard({ title, desc, route, price }: { title: string; de
   );
 }
 
+function CampInlineCard({ title, desc, route, price }: { title: string; desc: string; route: string; price?: string }) {
+  const navigate = useNavigate();
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => navigate(route)}
+      className="w-full rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/25 p-3.5 flex items-center gap-3 text-left active:bg-amber-500/15 transition-colors"
+    >
+      <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0 text-lg">
+        🔥
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{desc}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {price && (
+          <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full">{price}</span>
+        )}
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+      </div>
+    </motion.button>
+  );
+}
+
 export function ChatBubble({ role, content, isStreaming, onRefine, onExpense, onExpenseQuery, expenseReport }: ChatBubbleProps) {
   if (role === "user") {
     return (
@@ -197,6 +224,9 @@ export function ChatBubble({ role, content, isStreaming, onRefine, onExpense, on
           }
           if (part.type === "assessment" && part.data) {
             return <AssessmentInlineCard key={i} title={part.data.title} desc={part.data.desc} route={part.data.route} price={part.data.price} />;
+          }
+          if (part.type === "camp" && part.data) {
+            return <CampInlineCard key={i} title={part.data.title} desc={part.data.desc} route={part.data.route} price={part.data.price} />;
           }
           if (part.type === "followup") {
             return <FollowUpCard key={i} onRefine={onRefine} />;
