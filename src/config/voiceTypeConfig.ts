@@ -1,5 +1,5 @@
 /**
- * 豆包语音音色配置
+ * ElevenLabs 语音音色配置
  * 
  * 定义情绪教练可用的 AI 声音选项
  */
@@ -14,75 +14,62 @@ export interface VoiceTypeOption {
 }
 
 /**
- * 豆包语音大模型 2.0 音色配置
- * 
- * 注意：doubao-speech-vision-pro-250515 模型需要使用长格式音色 ID
- * 旧版短 ID (BV158_streaming 等) 在新模型中不生效
+ * ElevenLabs 音色配置
+ * 使用 eleven_multilingual_v2 模型，支持中文
  */
 export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   {
-    id: 'wise_elder',
-    name: '智慧长者',
-    // ✅ 新版模型需要使用长格式 ID（旧版 BV158_streaming 已不支持）
-    voice_type: 'zh_male_M392_conversation_wvae_bigtts',
-    description: '年长男声，沉稳睿智',
-    gender: 'male',
-    emoji: '👴'
-  },
-  {
-    id: 'wise_uncle',
-    name: '渊博小叔',
-    voice_type: 'zh_male_yuanboxiaoshu_moon_bigtts',
-    description: '成熟男声，儒雅博学',
+    id: 'brian',
+    name: '温暖男声',
+    voice_type: 'nPczCjzI2devNBz1zQrb', // Brian
+    description: '温暖稳重的男声',
     gender: 'male',
     emoji: '👨'
   },
   {
-    id: 'warm_female',
-    name: '心灵鸡汤',
-    voice_type: 'zh_female_xinlingjitang_moon_bigtts',
-    description: '温暖女声，治愈心灵',
+    id: 'george',
+    name: '沉稳长者',
+    voice_type: 'JBFqnCBsd6RMkjVDRZzb', // George
+    description: '沉稳睿智的男声',
+    gender: 'male',
+    emoji: '👴'
+  },
+  {
+    id: 'sarah',
+    name: '温柔女声',
+    voice_type: 'EXAVITQu4vr4xnSDxMaL', // Sarah
+    description: '温柔亲切的女声',
     gender: 'female',
     emoji: '👩'
   },
   {
-    id: 'gentle_lady',
-    name: '温柔淑女',
-    voice_type: 'zh_female_wenroushunv_mars_bigtts',
-    description: '柔和女声，亲切温婉',
+    id: 'lily',
+    name: '清新女声',
+    voice_type: 'pFZP5JQG7iQjIQuC4Bku', // Lily
+    description: '清新自然的女声',
     gender: 'female',
     emoji: '👧'
   }
 ];
 
-// ✅ 使用新版长格式 ID 作为默认音色
-export const DEFAULT_VOICE_TYPE = 'zh_male_M392_conversation_wvae_bigtts'; // 智慧长者
+export const DEFAULT_VOICE_TYPE = 'nPczCjzI2devNBz1zQrb'; // Brian 温暖男声
 
 export const VOICE_TYPE_STORAGE_KEY = 'emotion_coach_voice_type';
 
 /**
  * 获取用户保存的音色偏好
- * 🔧 兼容旧版短格式 ID，自动迁移到新版长格式
+ * 自动迁移旧版豆包音色ID到ElevenLabs
  */
 export const getSavedVoiceType = (): string => {
   try {
     const saved = localStorage.getItem(VOICE_TYPE_STORAGE_KEY);
     if (!saved) return DEFAULT_VOICE_TYPE;
     
-    // 🔧 检查是否是已废弃的旧版短格式 ID
-    const legacyIdMapping: Record<string, string> = {
-      'BV158_streaming': 'zh_male_M392_conversation_wvae_bigtts',  // 智慧长者
-      'BV123_streaming': 'zh_male_yuanboxiaoshu_moon_bigtts',       // 渊博小叔 (假设)
-      'BV503_streaming': 'zh_female_xinlingjitang_moon_bigtts',     // 心灵鸡汤 (假设)
-      'BV504_streaming': 'zh_female_wenroushunv_mars_bigtts',       // 温柔淑女 (假设)
-    };
-    
-    if (legacyIdMapping[saved]) {
-      console.log('[VoiceTypeConfig] 🔄 Migrating legacy voice ID:', saved, '→', legacyIdMapping[saved]);
-      const newId = legacyIdMapping[saved];
-      // 自动迁移存储
-      localStorage.setItem(VOICE_TYPE_STORAGE_KEY, newId);
-      return newId;
+    // 迁移旧版豆包音色ID
+    if (saved.includes('bigtts') || saved.includes('streaming') || saved.includes('zh_')) {
+      console.log('[VoiceTypeConfig] 🔄 Migrating legacy Doubao voice ID to ElevenLabs default');
+      localStorage.setItem(VOICE_TYPE_STORAGE_KEY, DEFAULT_VOICE_TYPE);
+      return DEFAULT_VOICE_TYPE;
     }
     
     // 验证是否是当前有效的 voice_type
