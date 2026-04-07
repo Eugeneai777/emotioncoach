@@ -166,6 +166,7 @@ export function ShareDialogBase({
       console.log('[ShareDialogBase] Using cached poster, instant preview');
       onOpenChange(false);
       setPreviewUrl(cachedBlobUrlRef.current);
+      setIsRemoteReady(cachedRemoteReadyRef.current);
       setShowPreview(true);
       return;
     }
@@ -421,6 +422,7 @@ export function ShareDialogBase({
         imageUrl={previewUrl}
         onRegenerate={handleRegenerate}
         isRegenerating={isGenerating}
+        isRemoteReady={isRemoteReady}
       />
     </>
   );
