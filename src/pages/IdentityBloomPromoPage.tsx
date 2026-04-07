@@ -189,7 +189,7 @@ const classQuotes = [
   { text: "粗糙的开始，勇敢地上路。", author: "陶子" },
   { text: "瓶颈会带来力量。", author: "艳琴" },
   { text: "在防御面前不退缩，在攻击面前能存活。", author: "贝蒂" },
-  { text: "不做"好人"，先做个"人"吧！", author: "Lydia" },
+  { text: "不做'好人'，先做个'人'吧！", author: "Lydia" },
   { text: "别人看不见自己，自己要看见自己。", author: "Lisa" },
   { text: "我们发光不是为了去照亮谁，而是让他们知道自己也能发光。", author: "Lisa" },
   { text: "爱不是如我所愿，而是如其所是。", author: "黛汐" },
