@@ -1244,11 +1244,11 @@ export default function IdentityBloomPromoPage() {
         shareText="找回真实的自己·活出生命的力量"
         previewCard={
           <div className="transform scale-[0.6] origin-top-left">
-            <SynergyShareCard onReady={shareDialog.handleCardReady} />
+            <IdentityBloomShareCard onReady={shareDialog.handleCardReady} />
           </div>
         }
         exportCard={
-          <SynergyShareCard
+          <IdentityBloomShareCard
             ref={shareDialog.exportCardRef}
             onReady={shareDialog.handleCardReady}
           />
