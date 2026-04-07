@@ -16,8 +16,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
-import { BookOpen, HeartHandshake, Target, Sparkles, ClipboardList, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+import { BookOpen, HeartHandshake, Target, Sparkles, ChevronRight } from "lucide-react";
 
 // Assessment mapping config
 const PAID_ASSESSMENT_MAP: Record<string, { title: string; emoji: string; route: string }> = {
