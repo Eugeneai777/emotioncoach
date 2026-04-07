@@ -73,6 +73,56 @@ const CampList = () => {
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
 
+  // Query user's assessments (paid + free) for "my" filter
+  const { data: myAssessments, isLoading: isLoadingAssessments } = useQuery({
+    queryKey: ['my-assessments', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const PAID_KEYS = Object.keys(PAID_ASSESSMENT_MAP);
+      const FREE_TYPES = Object.keys(FREE_ASSESSMENT_MAP);
+      
+      const [paidRes, freeRes] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('package_key, paid_at')
+          .eq('user_id', user.id)
+          .eq('status', 'paid')
+          .in('package_key', PAID_KEYS)
+          .order('paid_at', { ascending: false }),
+        supabase
+          .from('awakening_entries')
+          .select('type, created_at')
+          .eq('user_id', user.id)
+          .in('type', FREE_TYPES)
+          .order('created_at', { ascending: false }),
+      ]);
+      
+      const items: { key: string; title: string; emoji: string; route: string; date: string; tag: string }[] = [];
+      
+      // Deduplicate paid
+      const seenPaid = new Set<string>();
+      (paidRes.data || []).forEach(o => {
+        if (seenPaid.has(o.package_key)) return;
+        seenPaid.add(o.package_key);
+        const m = PAID_ASSESSMENT_MAP[o.package_key];
+        if (m) items.push({ key: o.package_key, ...m, date: o.paid_at || '', tag: '已购' });
+      });
+      
+      // Deduplicate free
+      const seenFree = new Set<string>();
+      (freeRes.data || []).forEach(e => {
+        if (seenFree.has(e.type)) return;
+        seenFree.add(e.type);
+        const m = FREE_ASSESSMENT_MAP[e.type];
+        if (m) items.push({ key: e.type, ...m, date: e.created_at || '', tag: '已测' });
+      });
+      
+      return items;
+    },
+    enabled: !!user && filterParam === 'my',
+  });
+
   // Query user's training camps when filter is active/completed/my
   const { data: userCamps, isLoading: isLoadingUserCamps } = useQuery({
     queryKey: ['user-training-camps', filterParam, user?.id],
