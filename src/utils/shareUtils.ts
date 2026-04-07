@@ -139,8 +139,8 @@ export const handleShareWithFallback = async (
   // Helper: show preview immediately with blob URL, then async upload for HTTPS URL
   const showUploadedPreview = async () => {
     const blobUrl = URL.createObjectURL(blob);
-    // Show immediately with blob URL
-    options.onShowPreview?.(blobUrl);
+    // Show immediately with blob URL (not remote-ready yet)
+    options.onShowPreview?.({ url: blobUrl, isRemoteReady: false });
     
     // Async upload in background, silently replace with HTTPS URL when ready
     (async () => {
@@ -148,11 +148,12 @@ export const handleShareWithFallback = async (
         const { uploadShareImage } = await import('./shareImageUploader');
         const httpsUrl = await uploadShareImage(blob);
         // Replace blob URL with HTTPS URL for long-press saving
-        options.onShowPreview?.(httpsUrl);
+        options.onShowPreview?.({ url: httpsUrl, isRemoteReady: true });
         URL.revokeObjectURL(blobUrl);
         console.log('[shareUtils] Upgraded to HTTPS URL');
       } catch (uploadErr) {
         console.warn('[shareUtils] Upload failed, keeping blob URL', uploadErr);
+        // Keep isRemoteReady as false — don't lie about readiness
       }
     })();
     
