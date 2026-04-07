@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Heart, Briefcase, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2, Target, Compass, Flame } from "lucide-react";
+import { Brain, Pill, Shield, Clock, Heart, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Award, Leaf, CircleCheck, Share2, Target, Compass, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
-import zhileProductNew from "@/assets/zhile-product-new.jpg";
+import zhile4BoxCover from "@/assets/zhile-4box-cover.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
@@ -87,37 +87,32 @@ const stages = [
 
 /* ========== 6 Core Highlights ========== */
 const coreHighlights = [
-  { icon: MessageCircle, title: "AI身份教练", subtitle: "24小时深度陪伴", desc: "智能觉察身份困惑、引导自我探索，随时随地获得专业支持", color: "#4f46e5" },
   { icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长身份重建与潜能激发", color: "#d97706" },
   { icon: BookOpen, title: "16节音频课", subtitle: "4阶段系统学习", desc: "从认识自己到绽放生命，每阶段4节课+4次教练课，循序渐进", color: "#7c3aed" },
   { icon: Users, title: "同频成长社区", subtitle: "安全不评判", desc: "专属成长社区，无评判放心倾诉，与同频伙伴深度共创", color: "#2563eb" },
   { icon: Leaf, title: "知乐胶囊（4瓶）", subtitle: "草本调理根源", desc: "香港HKC-18181认证，16味草本，补心补肝益气安神，从身体根源支持蜕变", color: "#0d9488" },
-  { icon: Sparkles, title: "体系化闭环", subtitle: "从知道到做到", desc: "音频课→教练辅导→AI陪伴→社区共创→草本调理→成长报告", color: "#e11d48" },
+  { icon: Sparkles, title: "体系化闭环", subtitle: "从知道到做到", desc: "音频课→教练辅导→社区共创→草本调理→成长报告", color: "#e11d48" },
 ];
 
 /* ========== Daily Loop ========== */
 const dailyLoop = [
   { step: 1, icon: Sun, title: "音频课学习", desc: "每天一节身份觉醒音频课，10-15分钟深度学习，系统重建自我认知", color: "#4f46e5" },
-  { step: 2, icon: MessageCircle, title: "AI教练对话", desc: "围绕当日课程主题深度对话，引导觉察、拆解困惑、个性化指导", color: "#7c3aed" },
-  { step: 3, icon: Award, title: "专业教练辅导", desc: "资深教练1V1/小组辅导，针对性解决身份认同与关系问题", color: "#d97706" },
-  { step: 4, icon: BookOpen, title: "反思与沉淀", desc: "书写当天收获，强化新认知，形成持续成长的正向循环", color: "#059669" },
-  { step: 5, icon: Leaf, title: "知乐胶囊调理", desc: "草本配方从身体层面支持情绪稳定与精力恢复，内外兼修", color: "#0d9488" },
+  { step: 2, icon: Award, title: "专业教练辅导", desc: "资深教练小组辅导，针对性解决身份认同与关系问题", color: "#d97706" },
+  { step: 3, icon: BookOpen, title: "反思与沉淀", desc: "书写当天收获，强化新认知，形成持续成长的正向循环", color: "#059669" },
+  { step: 4, icon: Leaf, title: "知乐胶囊调理", desc: "草本配方从身体层面支持情绪稳定与精力恢复，内外兼修", color: "#0d9488" },
 ];
 
 /* ========== Delivery Tiers ========== */
 const deliveryCore = [
-  { icon: "🧠", title: "AI身份教练系统", detail: "24小时全天候陪伴，智能引导身份探索与自我觉察", accent: "indigo" },
   { icon: "🎧", title: "16节专业音频课", detail: "4阶段系统课程，从「我是谁」到「绽放生命」", accent: "indigo" },
   { icon: "💊", title: "知乐胶囊·4瓶", detail: "天然植物配方，从身体根源调理情绪与精力", accent: "indigo" },
 ];
 const deliveryHighlights = [
-  { icon: "🎯", title: "1V1教练专属辅导", detail: "资深教练一对一，量身定制身份重建方案", tag: "稀缺" },
-  { icon: "💡", title: "海沃塔团队研讨", detail: "犹太精英学习法，同频伙伴深度共创", tag: "特色" },
+  { icon: "🎯", title: "资深教练小组辅导", detail: "量身定制身份重建方案", tag: "稀缺" },
 ];
 const deliveryBonuses = [
-  { icon: "📚", title: "16次教练课" },
+  { icon: "🔄", title: "免费复训" },
   { icon: "🏘️", title: "成长社群" },
-  { icon: "📊", title: "阶段成长报告" },
 ];
 
 /* ========== Faculty ========== */
@@ -174,15 +169,17 @@ const coachTeam = [
 ];
 
 const supportRoles = [
-  { role: "AI身份教练系统", desc: "24小时在线，智能引导身份探索，自动生成成长报告", icon: "🤖" },
   { role: "知乐胶囊专业支持", desc: "产品资质、服用指导、品质保障", icon: "💊" },
 ];
 
 /* ========== Testimonials ========== */
 const testimonials = [
-  { name: "王先生", role: "企业高管·44岁", avatar: "👨‍💼", metric: "自我认同感", before: "3.0", after: "8.5", duration: "28天", quote: "终于不再为了别人的期待活着，找到了自己真正想要的方向" },
-  { name: "张先生", role: "创业者·39岁", avatar: "👨‍💻", metric: "决策力指数", before: "4.0", after: "8.0", duration: "21天", quote: "学会了说不，不再被无效社交消耗，事业也有了新突破" },
-  { name: "李先生", role: "技术总监·41岁", avatar: "👨", metric: "生活满意度", before: "3.5", after: "8.0", duration: "28天", quote: "和家人的关系好了很多，终于敢做真实的自己了" },
+  { quote: "告别了一味迎合家人和朋友的日子，终于敢做真实的自己，现在每天都过得很舒展，内心的安宁和幸福，是以前从未体会过的。" },
+  { quote: "疗愈了原生家庭的创伤，不再自我否定，慢慢接纳了不完美的自己，每一次突破自己的舒适区，都收获满满的成就感，这种感觉太踏实了。" },
+  { quote: "以前总在模仿别人的生活，拼尽全力却一点都不快乐，学完课程后放下迎合，专注做自己喜欢的事，虽然慢，但每一步都有收获，幸福感和成就感都藏在点滴里。" },
+  { quote: "不再压抑自己的想法，学会了勇敢表达，现在不管是工作还是生活，都能跟着本心走，不仅收获了同事和朋友的认可，更收获了自我认同的成就感，每天都很开心。" },
+  { quote: "打破了自我内耗的怪圈，活成了自己喜欢的样子，不用再为别人的眼光而焦虑，内心的幸福感油然而生，这种从心而发的满足，比任何外在的认可都重要。" },
+  { quote: "在课程中找到真实的自己，锚定了自己的人生方向，现在在专属的赛道上慢慢努力，每一次小小的进步，都让我充满成就感，这种为自己而活的感觉，真的太美好了。" },
 ];
 
 /* ========== Product specs ========== */
@@ -229,7 +226,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
               <Clock className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-indigo-800">💡 建议收到胶囊后再开启训练营</p>
-                <p className="text-xs text-slate-500">AI教练 + 专业教练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
+                <p className="text-xs text-slate-500">专业教练 + 知乐胶囊同步进行，效果更佳。您也可以先进入训练营熟悉内容。</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 rounded-xl bg-white border border-indigo-200/60 shadow-sm">
@@ -448,7 +445,7 @@ export default function IdentityBloomPromoPage() {
 
           <p className="text-white/80 text-sm sm:text-base leading-relaxed mb-6 max-w-md mx-auto">
             身份重建 · 潜能激发 · 身心蜕变<br />
-            AI教练 + 专业教练 + 知乐胶囊，三重陪伴系统蜕变
+            专业教练 + 知乐胶囊，双重陪伴系统蜕变
           </p>
 
           {/* Price Display */}
@@ -461,7 +458,6 @@ export default function IdentityBloomPromoPage() {
           {/* Triple Engine Formula */}
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8">
             {[
-              { Icon: Brain, label: "AI教练" },
               { Icon: Award, label: "专业教练" },
               { Icon: Pill, label: "知乐胶囊×4" },
             ].map((item, i) => (
@@ -719,7 +715,7 @@ export default function IdentityBloomPromoPage() {
               <span className="text-base">⭐</span>
               <span className="text-xs font-bold text-violet-700 tracking-wide">专属亮点 · 高价值稀缺</span>
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex justify-center">
               {deliveryHighlights.map((item, i) => (
                 <motion.div
                   key={i}
@@ -858,7 +854,7 @@ export default function IdentityBloomPromoPage() {
         <p className="text-slate-400 text-xs text-center mb-6">身份蜕变 + 身体调理，内外兼修</p>
         <div className="max-w-lg mx-auto space-y-4">
           <div className="rounded-2xl overflow-hidden border border-indigo-200/50 shadow-sm bg-white">
-            <img src={zhileProductNew} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
+            <img src={zhile4BoxCover} alt="知乐胶囊产品实拍" className="w-full object-cover" loading="lazy" />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -911,7 +907,7 @@ export default function IdentityBloomPromoPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-indigo-700">📦 香港直邮 · 预计4-7个工作日送达</p>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  建议收到知乐胶囊后再开启训练营，AI教练+专业教练+草本调理同步进行，效果更佳。
+                  建议收到知乐胶囊后再开启训练营，专业教练+草本调理同步进行，效果更佳。
                 </p>
               </div>
             </div>
@@ -921,8 +917,8 @@ export default function IdentityBloomPromoPage() {
 
       {/* ===== TESTIMONIALS ===== */}
       <Section className="bg-indigo-50/40">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">真实改变，数据说话</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">来自真实用户的反馈</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">学员真实反馈</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">活成自己，才是幸福感与成就感的终极答案</p>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div
@@ -930,35 +926,14 @@ export default function IdentityBloomPromoPage() {
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
+              transition={{ delay: i * 0.1 }}
               className="p-5 rounded-2xl bg-white shadow-sm border border-indigo-100/50"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{t.avatar}</span>
-                <div>
-                  <p className="text-sm font-semibold text-slate-700">{t.name}</p>
-                  <p className="text-xs text-slate-400">{t.role} · 使用{t.duration}</p>
-                </div>
+              <div className="flex items-start gap-3">
+                <span className="text-indigo-400 text-2xl font-serif leading-none mt-1">❝</span>
+                <p className="text-sm text-slate-600 leading-relaxed">{t.quote}</p>
               </div>
-
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50/60 mb-3">
-                <div className="text-center">
-                  <p className="text-xs text-slate-500">{t.metric}</p>
-                  <p className="text-lg font-bold text-red-500">{t.before}</p>
-                  <p className="text-[10px] text-slate-400">使用前</p>
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <TrendingUp className="w-5 h-5 text-emerald-500" />
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-slate-500">{t.metric}</p>
-                  <p className="text-lg font-bold text-emerald-500">{t.after}</p>
-                  <p className="text-[10px] text-slate-400">使用后</p>
-                </div>
-              </div>
-
-              <p className="text-sm text-slate-600 italic">"{t.quote}"</p>
-              <div className="flex gap-0.5 mt-2">
+              <div className="flex gap-0.5 mt-3 justify-end">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star key={j} className="w-3.5 h-3.5 fill-indigo-400 text-indigo-400" />
                 ))}
