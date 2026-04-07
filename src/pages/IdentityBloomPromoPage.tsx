@@ -672,7 +672,7 @@ export default function IdentityBloomPromoPage() {
               detail: "结合学员心理特质与成长卡点精准破解，兼顾科学性与个性化；无评判、多赋能，让你敢直面自我、敢真实表达；免费终身复训权益，持续链接同频伙伴，一次加入，终身收获专业成长滋养与温暖人际支撑。"
             },
           ].map((item, i) => {
-            const [expanded, setExpanded] = useState(false);
+            const isExpanded = expandedHighlight === i;
             return (
               <motion.div
                 key={i}
@@ -681,14 +681,14 @@ export default function IdentityBloomPromoPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
                 className="p-4 rounded-2xl bg-white shadow-sm border border-indigo-100/50 cursor-pointer"
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => setExpandedHighlight(isExpanded ? null : i)}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-2xl shrink-0">{item.icon}</span>
                   <div className="min-w-0">
                     <h3 className="font-bold text-sm text-slate-800">{item.title}</h3>
                     <p className="text-xs text-slate-500 mt-0.5">{item.summary}</p>
-                    {expanded && (
+                    {isExpanded && (
                       <motion.p
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
@@ -698,7 +698,7 @@ export default function IdentityBloomPromoPage() {
                       </motion.p>
                     )}
                   </div>
-                  <ChevronRight className={`w-4 h-4 text-slate-400 shrink-0 mt-1 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+                  <ChevronRight className={`w-4 h-4 text-slate-400 shrink-0 mt-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                 </div>
               </motion.div>
             );
