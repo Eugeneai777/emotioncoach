@@ -110,6 +110,10 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
       return;
     }
     const fullAddress = `${province}${city}${district} ${detailAddress.trim()}`;
+    // 埋点：收货信息提交
+    trackPaymentEvent('checkout_submitted', {
+      metadata: { productName, price },
+    });
     onConfirm({
       buyerName: name.trim(),
       buyerPhone: phone.trim(),
