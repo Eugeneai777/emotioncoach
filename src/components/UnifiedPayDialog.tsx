@@ -100,7 +100,9 @@ export function UnifiedPayDialog({
 
   const handlePayDialogChange = useCallback((v: boolean) => {
     if (!v) {
-      // 关闭支付弹窗时，回到选择阶段或直接关闭
+      // 埋点：用户关闭支付弹窗
+      trackPaymentEvent('payment_cancelled');
+      endPaymentFlow();
       onOpenChange(false);
     }
   }, [onOpenChange]);
