@@ -423,20 +423,25 @@ export default function OperationsMonitorDashboard() {
   };
 
   const fetchMinuteQPS = async () => {
-    const points: { time: string; qps: number }[] = [];
+    const points: { time: string; qps: number; apiQps: number }[] = [];
     const promises = [];
 
     for (let i = 14; i >= 0; i--) {
       const minStart = subMinutes(new Date(), i + 1).toISOString();
       const minEnd = subMinutes(new Date(), i).toISOString();
       promises.push(
-        supabase.from("usage_records")
-          .select("id", { count: "exact", head: true })
-          .gte("created_at", minStart).lt("created_at", minEnd)
-          .then(res => ({
-            time: format(subMinutes(new Date(), i), "HH:mm"),
-            qps: Math.round(((res.count || 0) / 60) * 100) / 100,
-          }))
+        Promise.all([
+          supabase.from("usage_records")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", minStart).lt("created_at", minEnd),
+          supabase.from("api_cost_logs")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", minStart).lt("created_at", minEnd),
+        ]).then(([usageRes, apiRes]) => ({
+          time: format(subMinutes(new Date(), i), "HH:mm"),
+          qps: Math.round(((usageRes.count || 0) / 60) * 100) / 100,
+          apiQps: Math.round(((apiRes.count || 0) / 60) * 100) / 100,
+        }))
       );
     }
 
