@@ -114,7 +114,7 @@ const stages = [
 /* ========== 6 Core Highlights ========== */
 const coreHighlights = [
   { icon: Award, title: "资深教练团队", subtitle: "专业护航", desc: "生命教练、心理咨询师等多元专家，平均10年+经验，擅长身份重建与潜能激发", color: "#d97706" },
-  { icon: BookOpen, title: "16节音频课", subtitle: "4阶段系统学习", desc: "从认识自己到绽放生命，每阶段4节课+4次教练课，循序渐进", color: "#7c3aed" },
+  { icon: BookOpen, title: "16节教练课 + 16节音频课", subtitle: "双轨并行·知行合一", desc: "每阶段4节音频课打开认知 + 4次教练课实战落地，不只听懂，更要做到", color: "#7c3aed" },
   { icon: Users, title: "同频成长社区", subtitle: "安全不评判", desc: "专属成长社区，无评判放心倾诉，与同频伙伴深度共创", color: "#2563eb" },
   { icon: Leaf, title: "知乐胶囊（4瓶）", subtitle: "草本调理根源", desc: "香港HKC-18181认证，16味草本，补心补肝益气安神，从身体根源支持蜕变", color: "#0d9488" },
   { icon: Sparkles, title: "体系化闭环", subtitle: "从知道到做到", desc: "音频课→教练辅导→社区共创→草本调理→成长报告", color: "#e11d48" },
