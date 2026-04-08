@@ -1302,7 +1302,7 @@ export const CoachVoiceChat = ({
 
         // 🔧 所有模式（含情绪教练）优先使用 OpenAI Realtime，失败后降级豆包
         let chat: AudioClient;
-        const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
+        const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, { ...extraBody, voice_type: voiceType }, preAcquiredStream);
         chat = realtimeChat;
         chatRef.current = chat;
         

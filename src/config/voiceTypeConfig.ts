@@ -8,6 +8,8 @@ export interface VoiceTypeOption {
   id: string;
   name: string;
   voice_type: string;
+  /** 对应 OpenAI Realtime 的 voice 名称 */
+  openai_voice: string;
   description: string;
   gender: 'male' | 'female';
   emoji: string;
@@ -21,7 +23,8 @@ export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   {
     id: 'brian',
     name: '温暖男声',
-    voice_type: 'nPczCjzI2devNBz1zQrb', // Brian
+    voice_type: 'nPczCjzI2devNBz1zQrb', // Brian (ElevenLabs)
+    openai_voice: 'echo',                // OpenAI Realtime 对应音色
     description: '温暖稳重的男声',
     gender: 'male',
     emoji: '👨'
@@ -29,7 +32,8 @@ export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   {
     id: 'george',
     name: '沉稳长者',
-    voice_type: 'JBFqnCBsd6RMkjVDRZzb', // George
+    voice_type: 'JBFqnCBsd6RMkjVDRZzb', // George (ElevenLabs)
+    openai_voice: 'ash',                 // OpenAI Realtime 对应音色
     description: '沉稳睿智的男声',
     gender: 'male',
     emoji: '👴'
@@ -37,7 +41,8 @@ export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   {
     id: 'sarah',
     name: '温柔女声',
-    voice_type: 'EXAVITQu4vr4xnSDxMaL', // Sarah
+    voice_type: 'EXAVITQu4vr4xnSDxMaL', // Sarah (ElevenLabs)
+    openai_voice: 'shimmer',             // OpenAI Realtime 对应音色
     description: '温柔亲切的女声',
     gender: 'female',
     emoji: '👩'
@@ -45,7 +50,8 @@ export const VOICE_TYPE_OPTIONS: VoiceTypeOption[] = [
   {
     id: 'lily',
     name: '清新女声',
-    voice_type: 'pFZP5JQG7iQjIQuC4Bku', // Lily
+    voice_type: 'pFZP5JQG7iQjIQuC4Bku', // Lily (ElevenLabs)
+    openai_voice: 'coral',              // OpenAI Realtime 对应音色
     description: '清新自然的女声',
     gender: 'female',
     emoji: '👧'
@@ -102,4 +108,13 @@ export const saveVoiceType = (voiceType: string): void => {
  */
 export const getVoiceTypeOption = (voiceType: string): VoiceTypeOption | undefined => {
   return VOICE_TYPE_OPTIONS.find(opt => opt.voice_type === voiceType);
+};
+
+/**
+ * 将 ElevenLabs voice_type 转为 OpenAI Realtime voice 名称
+ * 用于 OpenAI Realtime API 的 voice 参数
+ */
+export const getOpenAIVoiceName = (voiceType: string): string => {
+  const option = VOICE_TYPE_OPTIONS.find(opt => opt.voice_type === voiceType);
+  return option?.openai_voice || 'echo'; // 默认 echo
 };
