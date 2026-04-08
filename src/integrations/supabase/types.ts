@@ -11299,6 +11299,81 @@ export type Database = {
         }
         Relationships: []
       }
+      xhs_saved_notes: {
+        Row: {
+          ai_analysis: string | null
+          author: string | null
+          collects: number | null
+          comments: number | null
+          content: string | null
+          cover_url: string | null
+          created_at: string
+          id: string
+          likes: number | null
+          note_id: string
+          note_url: string | null
+          tags: string[] | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: string | null
+          author?: string | null
+          collects?: number | null
+          comments?: number | null
+          content?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          likes?: number | null
+          note_id: string
+          note_url?: string | null
+          tags?: string[] | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: string | null
+          author?: string | null
+          collects?: number | null
+          comments?: number | null
+          content?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          likes?: number | null
+          note_id?: string
+          note_url?: string | null
+          tags?: string[] | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xhs_search_cache: {
+        Row: {
+          cached_at: string
+          expires_at: string
+          id: string
+          keyword: string
+          results: Json
+        }
+        Insert: {
+          cached_at?: string
+          expires_at?: string
+          id?: string
+          keyword: string
+          results?: Json
+        }
+        Update: {
+          cached_at?: string
+          expires_at?: string
+          id?: string
+          keyword?: string
+          results?: Json
+        }
+        Relationships: []
+      }
       xiaojin_mood_logs: {
         Row: {
           created_at: string
