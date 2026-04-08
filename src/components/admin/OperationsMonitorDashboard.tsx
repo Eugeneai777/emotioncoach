@@ -356,6 +356,7 @@ export default function OperationsMonitorDashboard() {
       currentQPS,
       peakQPS: currentQPS,
       todayTotalCalls,
+      todayApiCalls: costLogs.length,
       todayTotalTokens: todayInputTokens + todayOutputTokens,
       todayInputTokens,
       todayOutputTokens,
