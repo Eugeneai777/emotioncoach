@@ -132,7 +132,7 @@ serve(async (req) => {
   try {
     // 解析请求体
     const body = await req.json().catch(() => ({}));
-    const { preheat = false, mode = 'emotion', scenario } = body;
+    const { preheat = false, mode = 'emotion', scenario, voice_type } = body;
 
     // 预热请求：只验证配置存在
     if (preheat) {
@@ -195,6 +195,29 @@ serve(async (req) => {
     // 获取情绪教练专用 instructions
     const instructions = getEmotionCoachInstructions(userName);
 
+    // 解析 OpenAI Realtime voice 名称（从前端传入的 ElevenLabs ID 映射）
+    // 有效值: alloy, ash, ballad, coral, echo, sage, shimmer, verse
+    const VALID_OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
+    // voice_type 映射表：ElevenLabs voice_type → OpenAI voice name
+    const ELEVENLABS_TO_OPENAI: Record<string, string> = {
+      'nPczCjzI2devNBz1zQrb': 'echo',    // Brian → echo（温暖男声）
+      'JBFqnCBsd6RMkjVDRZzb': 'ash',     // George → ash（沉稳长者）
+      'EXAVITQu4vr4xnSDxMaL': 'shimmer', // Sarah → shimmer（温柔女声）
+      'pFZP5JQG7iQjIQuC4Bku': 'coral',   // Lily → coral（清新女声）
+    };
+
+    let resolvedVoice = 'echo'; // 默认值
+    if (voice_type) {
+      if (VALID_OPENAI_VOICES.includes(voice_type)) {
+        // 前端已传入 OpenAI voice name
+        resolvedVoice = voice_type;
+      } else if (ELEVENLABS_TO_OPENAI[voice_type]) {
+        // 前端传入 ElevenLabs ID，转换
+        resolvedVoice = ELEVENLABS_TO_OPENAI[voice_type];
+      }
+      console.log(`[EmotionRealtimeToken] Voice resolved: ${voice_type} → ${resolvedVoice}`);
+    }
+
     // Request an ephemeral token from OpenAI
     const response = await fetch(realtimeUrl, {
       method: "POST",
@@ -204,7 +227,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview",
-        voice: "echo",
+        voice: resolvedVoice,
         instructions: instructions,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
