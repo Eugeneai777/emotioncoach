@@ -32,6 +32,7 @@ interface RealtimeMetrics {
   currentQPS: number;
   peakQPS: number;
   todayTotalCalls: number;
+  todayApiCalls: number;
   todayTotalTokens: number;
   todayInputTokens: number;
   todayOutputTokens: number;
