@@ -88,6 +88,7 @@ const THRESHOLD_STORAGE_KEY = "admin_anomaly_thresholds";
 interface HourlyData {
   hour: string;
   calls: number;
+  apiCalls: number;
   tokens: number;
   voiceSeconds: number;
 }
