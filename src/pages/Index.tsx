@@ -571,7 +571,7 @@ const Index = () => {
       case 'wealth_block_21':
         return { name: '7天财富觉醒训练营', desc: '用7天突破财富卡点，重塑金钱关系' };
       default:
-        return { name: '21天情绪日记训练营', desc: '用21天养成情绪记录习惯，获得专属徽章和成长洞察' };
+        return { name: '7天有劲训练营', desc: '用7天释放压力，找回内心平静与清晰' };
     }
   };
 
@@ -606,19 +606,8 @@ const Index = () => {
     </div>
   ) : null;
 
-  // Build camp recommendation content
-  const campRecommendationContent = !activeCamp ? (
-    <div className="w-full mt-6">
-      <CoachTrainingCamp
-        activeCamp={null}
-        onStartCamp={() => setShowStartCamp(true)}
-        onViewDetails={() => navigate("/camps")}
-        colorTheme="green"
-        campName={campInfo.name}
-        campDescription={campInfo.desc}
-      />
-    </div>
-  ) : null;
+  // Build camp recommendation content - 21天情绪日记训练营已退隐，不再显示推荐
+  const campRecommendationContent = null;
 
   // 强度选择器已移除，不再显示
   const intensitySelectorContent = null;
@@ -637,10 +626,10 @@ const Index = () => {
         open={showStartCamp}
         onOpenChange={setShowStartCamp}
         campTemplate={{
-          camp_type: 'emotion_journal_21',
-          camp_name: '21天情绪日记训练营',
-          duration_days: 21,
-          icon: '📝',
+          camp_type: 'emotion_stress_7',
+          camp_name: '7天有劲训练营',
+          duration_days: 7,
+          icon: '💪',
           price: 399,
           original_price: 399,
         }}
