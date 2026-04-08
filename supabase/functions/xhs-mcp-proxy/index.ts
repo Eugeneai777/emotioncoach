@@ -226,6 +226,128 @@ Deno.serve(async (req) => {
         }
       }
 
+      case 'publish': {
+        const { task_id, title, content, tags } = await req.json().catch(() => ({}));
+        if (!title || !content) {
+          return jsonResponse({ error: '标题和内容不能为空' }, 400);
+        }
+
+        // Update task status
+        if (task_id) {
+          await adminClient.from('xhs_content_tasks').update({ status: 'publishing' }).eq('id', task_id);
+        }
+
+        try {
+          const mcpResult = await callMcpTool('create_note', {
+            title,
+            content,
+            tags: tags || [],
+          });
+
+          const result = extractContent(mcpResult);
+          const noteId = result?.note_id || result?.id || null;
+
+          if (task_id) {
+            await adminClient.from('xhs_content_tasks').update({
+              status: 'published',
+              published_note_id: noteId,
+              published_at: new Date().toISOString(),
+            }).eq('id', task_id);
+          }
+
+          return jsonResponse({ success: true, data: result, note_id: noteId });
+        } catch (e) {
+          if (task_id) {
+            await adminClient.from('xhs_content_tasks').update({
+              status: 'failed',
+              error_message: e.message,
+            }).eq('id', task_id);
+          }
+          throw e;
+        }
+      }
+
+      case 'comment': {
+        const body = await req.json().catch(() => ({}));
+        const { note_id: commentNoteId, comment_text, note_title } = body;
+        if (!commentNoteId || !comment_text) {
+          return jsonResponse({ error: '笔记ID和评论内容不能为空' }, 400);
+        }
+
+        const userId = auth.user.id;
+
+        // Rate limit: check last comment time
+        const { data: lastComment } = await adminClient
+          .from('xhs_auto_comments')
+          .select('sent_at')
+          .eq('status', 'sent')
+          .order('sent_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (lastComment?.sent_at) {
+          const elapsed = Date.now() - new Date(lastComment.sent_at).getTime();
+          if (elapsed < 5000) {
+            return jsonResponse({ error: '评论间隔不足5秒，请稍后重试' }, 429);
+          }
+        }
+
+        // Insert pending record
+        const { data: commentRecord } = await adminClient
+          .from('xhs_auto_comments')
+          .insert({
+            user_id: userId,
+            target_note_id: commentNoteId,
+            target_title: note_title || null,
+            comment_text,
+            status: 'pending',
+          })
+          .select('id')
+          .single();
+
+        try {
+          const mcpResult = await callMcpTool('comment_note', {
+            note_id: commentNoteId,
+            content: comment_text,
+          });
+
+          await adminClient.from('xhs_auto_comments').update({
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+          }).eq('id', commentRecord?.id);
+
+          return jsonResponse({ success: true, data: extractContent(mcpResult) });
+        } catch (e) {
+          await adminClient.from('xhs_auto_comments').update({
+            status: 'failed',
+            error_message: e.message,
+          }).eq('id', commentRecord?.id);
+          throw e;
+        }
+      }
+
+      case 'track': {
+        const body = await req.json().catch(() => ({}));
+        const { note_id: trackNoteId, task_id: trackTaskId } = body;
+        if (!trackNoteId) {
+          return jsonResponse({ error: '请提供笔记 ID' }, 400);
+        }
+
+        const mcpResult = await callMcpTool('get_note', { note_id: trackNoteId });
+        const detail = extractContent(mcpResult);
+
+        // Save tracking data
+        await adminClient.from('xhs_performance_tracking').insert({
+          content_task_id: trackTaskId || null,
+          note_id: trackNoteId,
+          likes: detail?.likes || detail?.liked_count || 0,
+          collects: detail?.collects || detail?.collected_count || 0,
+          comments: detail?.comments || detail?.comment_count || 0,
+        });
+
+        return jsonResponse({ success: true, data: detail });
+      }
+
       default:
         return jsonResponse({ error: `未知操作: ${action}` }, 400);
     }
