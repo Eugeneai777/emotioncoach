@@ -1055,7 +1055,8 @@ export default function OperationsMonitorDashboard() {
                 <XAxis dataKey="hour" fontSize={11} interval={3} />
                 <YAxis fontSize={11} />
                 <Tooltip />
-                <Bar dataKey="calls" name="调用次数" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="calls" name="点数调用" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="apiCalls" name="API调用" fill="#f59e0b" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
