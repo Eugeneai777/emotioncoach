@@ -828,8 +828,8 @@ export default function OperationsMonitorDashboard() {
         <StatCard
           icon={Zap}
           label="今日总调用"
-          value={formatNumber(metrics?.todayTotalCalls ?? 0)}
-          sub={`活跃用户 ${metrics?.todayActiveUsers ?? 0}`}
+          value={formatNumber((metrics?.todayTotalCalls ?? 0) + (metrics?.todayApiCalls ?? 0))}
+          sub={`点数 ${formatNumber(metrics?.todayTotalCalls ?? 0)} · API ${formatNumber(metrics?.todayApiCalls ?? 0)} · 活跃 ${metrics?.todayActiveUsers ?? 0}`}
         />
         <StatCard
           icon={MessageSquare}
