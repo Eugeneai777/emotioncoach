@@ -1300,16 +1300,10 @@ export const CoachVoiceChat = ({
         // 🔧 麦克风权限已在 startCall 开头统一获取（preAcquiredStream），无需重复请求
         updateConnectionPhase('establishing');
 
-        // 🔧 情绪教练模式使用豆包端到端实时语音
+        // 🔧 所有模式（含情绪教练）优先使用 OpenAI Realtime，失败后降级豆包
         let chat: AudioClient;
-        if (mode === 'emotion') {
-          console.log('[VoiceChat] 🎯 Emotion mode: Using Doubao Realtime');
-          const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
-          chat = doubaoChat;
-        } else {
-          const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
-          chat = realtimeChat;
-        }
+        const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, extraBody, preAcquiredStream);
+        chat = realtimeChat;
         chatRef.current = chat;
         
         try {
@@ -1337,20 +1331,42 @@ export const CoachVoiceChat = ({
             }, 500);
           }
         } catch (webrtcError: any) {
-          console.error('[VoiceChat] WebRTC connection failed, falling back to WebSocket relay:', webrtcError);
+          console.error('[VoiceChat] WebRTC connection failed:', webrtcError);
           
-          // 🔧 所有 WebRTC 失败都自动降级到 WebSocket relay
-          // 包括：地区限制、DNS 失败、Safari 兼容问题、网络超时、CORS 错误等
+          // 清理 WebRTC 连接
+          try { chat.disconnect(); } catch (e) { /* ignore cleanup errors */ }
+          chatRef.current = null;
+
+          // 🔧 情绪教练模式：OpenAI Realtime 失败 → 降级豆包实时语音
+          if (mode === 'emotion') {
+            console.log('[VoiceChat] 🎯 Emotion mode fallback: Trying Doubao Realtime');
+            toast({
+              title: "正在切换通道",
+              description: "正在使用豆包语音通道...",
+            });
+            try {
+              const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
+              chatRef.current = doubaoChat;
+              await doubaoChat.init();
+              updateConnectionPhase('connected');
+              stopConnectionTimer();
+              startMonitoring();
+              console.log('[VoiceChat] ✅ Doubao fallback connected successfully');
+              return;
+            } catch (doubaoError: any) {
+              console.error('[VoiceChat] Doubao fallback also failed:', doubaoError);
+              try { chatRef.current?.disconnect(); } catch (e) { /* ignore */ }
+              chatRef.current = null;
+              // 继续降级到 WebSocket relay
+            }
+          }
+          
+          // 🔧 最终降级：WebSocket relay 模式
           toast({
             title: "正在切换通道",
             description: "正在使用备用语音通道...",
           });
           
-          // 清理 WebRTC 连接
-          try { chat.disconnect(); } catch (e) { /* ignore cleanup errors */ }
-          chatRef.current = null;
-          
-          // 切换到 WebSocket relay 模式
           setUseMiniProgramMode(true);
           const miniProgramClient = new MiniProgramAudioClient({
             onMessage: handleVoiceMessage,
