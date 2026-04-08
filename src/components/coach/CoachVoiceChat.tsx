@@ -1337,28 +1337,26 @@ export const CoachVoiceChat = ({
           try { chat.disconnect(); } catch (e) { /* ignore cleanup errors */ }
           chatRef.current = null;
 
-          // 🔧 情绪教练模式：OpenAI Realtime 失败 → 降级豆包实时语音
-          if (mode === 'emotion') {
-            console.log('[VoiceChat] 🎯 Emotion mode fallback: Trying Doubao Realtime');
-            toast({
-              title: "正在切换通道",
-              description: "正在使用豆包语音通道...",
-            });
-            try {
-              const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
-              chatRef.current = doubaoChat;
-              await doubaoChat.init();
-              updateConnectionPhase('connected');
-              stopConnectionTimer();
-              startMonitoring();
-              console.log('[VoiceChat] ✅ Doubao fallback connected successfully');
-              return;
-            } catch (doubaoError: any) {
-              console.error('[VoiceChat] Doubao fallback also failed:', doubaoError);
-              try { chatRef.current?.disconnect(); } catch (e) { /* ignore */ }
-              chatRef.current = null;
-              // 继续降级到 WebSocket relay
-            }
+          // 🔧 OpenAI Realtime 失败 → 降级豆包实时语音（全站所有语音模式）
+          console.log('[VoiceChat] 🎯 Fallback: Trying Doubao Realtime');
+          toast({
+            title: "正在切换通道",
+            description: "正在使用豆包语音通道...",
+          });
+          try {
+            const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
+            chatRef.current = doubaoChat;
+            await doubaoChat.init();
+            updateConnectionPhase('connected');
+            stopConnectionTimer();
+            startMonitoring();
+            console.log('[VoiceChat] ✅ Doubao fallback connected successfully');
+            return;
+          } catch (doubaoError: any) {
+            console.error('[VoiceChat] Doubao fallback also failed:', doubaoError);
+            try { chatRef.current?.disconnect(); } catch (e) { /* ignore */ }
+            chatRef.current = null;
+            // 继续降级到 WebSocket relay
           }
           
           // 🔧 最终降级：WebSocket relay 模式
