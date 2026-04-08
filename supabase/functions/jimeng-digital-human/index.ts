@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
         ...sigHeaders,
       };
 
-      console.log(`[jimeng] submit: image=${image_url.slice(0, 60)}, audio=${audio_url.slice(0, 60)}`);
+      console.log(`[jimeng] submit: image=${image_url}, audio=${audio_url}, resolution=${resolution || 720}`);
 
       const res = await fetch(`https://${host}${path}?${queryString}`, {
         method: "POST",
