@@ -11299,6 +11299,137 @@ export type Database = {
         }
         Relationships: []
       }
+      xhs_auto_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          error_message: string | null
+          id: string
+          sent_at: string | null
+          status: string
+          target_note_id: string
+          target_title: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+          target_note_id: string
+          target_title?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+          target_note_id?: string
+          target_title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xhs_content_tasks: {
+        Row: {
+          ai_content: string | null
+          ai_image_prompts: Json | null
+          ai_tags: string[] | null
+          ai_title: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          image_urls: string[] | null
+          published_at: string | null
+          published_note_id: string | null
+          schedule_at: string | null
+          status: string
+          target_audience: string | null
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_content?: string | null
+          ai_image_prompts?: Json | null
+          ai_tags?: string[] | null
+          ai_title?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_urls?: string[] | null
+          published_at?: string | null
+          published_note_id?: string | null
+          schedule_at?: string | null
+          status?: string
+          target_audience?: string | null
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_content?: string | null
+          ai_image_prompts?: Json | null
+          ai_tags?: string[] | null
+          ai_title?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_urls?: string[] | null
+          published_at?: string | null
+          published_note_id?: string | null
+          schedule_at?: string | null
+          status?: string
+          target_audience?: string | null
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xhs_performance_tracking: {
+        Row: {
+          collects: number | null
+          comments: number | null
+          content_task_id: string | null
+          id: string
+          likes: number | null
+          note_id: string
+          tracked_at: string
+        }
+        Insert: {
+          collects?: number | null
+          comments?: number | null
+          content_task_id?: string | null
+          id?: string
+          likes?: number | null
+          note_id: string
+          tracked_at?: string
+        }
+        Update: {
+          collects?: number | null
+          comments?: number | null
+          content_task_id?: string | null
+          id?: string
+          likes?: number | null
+          note_id?: string
+          tracked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xhs_performance_tracking_content_task_id_fkey"
+            columns: ["content_task_id"]
+            isOneToOne: false
+            referencedRelation: "xhs_content_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xhs_saved_notes: {
         Row: {
           ai_analysis: string | null
