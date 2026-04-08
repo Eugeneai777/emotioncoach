@@ -28,6 +28,7 @@ const STATUS_LABELS: Record<VideoGenStatus, string> = {
   uploading_audio: '正在上传音频...',
   submitting_task: '正在提交数字人任务...',
   generating_video: '数字人视频生成中（预计2-5分钟）...',
+  merging_video: '正在合并视频片段...',
   done: '视频生成完成！',
   error: '生成失败',
 };
