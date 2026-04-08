@@ -10,6 +10,7 @@ export type VideoGenStatus =
   | 'submitting_task'
   | 'generating_video'
   | 'merging_video'
+  | 'merge_failed'
   | 'done'
   | 'error';
 
@@ -34,6 +35,7 @@ interface VideoGenResult {
   videoUrl?: string;
   videoSegments?: string[];
   compositionProps?: Record<string, any>;
+  mergeError?: string;
 }
 
 interface UseVideoGenerationReturn {
@@ -49,12 +51,11 @@ interface UseVideoGenerationReturn {
     structuredScript?: StructuredScript;
     resolution?: '720p' | '1080p';
   }) => Promise<void>;
+  retryMerge: () => Promise<void>;
   reset: () => void;
 }
 
 // ─── Segment Grouping ───
-// 即梦 API 要求音频时长 ≤ 15s
-// 预估时长不可靠，改用字符数限制：中文约 4 字/秒，50 字 ≈ 12.5s（留余量）
 const MAX_GROUP_DURATION_SEC = 12;
 const MAX_GROUP_CHARS = 50;
 
@@ -74,7 +75,6 @@ function groupSegments(segments: ScriptSegment[]): SegmentGroup[] {
     const segDuration = seg.endSec - seg.startSec;
     const segChars = seg.text.length;
 
-    // 如果添加当前段后超出时长或字数限制，先把已有的段落打包
     if (current.length > 0 && (
       currentDuration + segDuration > MAX_GROUP_DURATION_SEC ||
       currentChars + segChars > MAX_GROUP_CHARS
@@ -89,7 +89,6 @@ function groupSegments(segments: ScriptSegment[]): SegmentGroup[] {
       currentChars = 0;
     }
 
-    // 如果单个段落本身就超过字数限制，按句号/逗号拆分
     if (segChars > MAX_GROUP_CHARS && current.length === 0) {
       const subTexts = splitTextBySentence(seg.text, MAX_GROUP_CHARS);
       const avgDurPerChar = segDuration / segChars;
@@ -120,10 +119,8 @@ function groupSegments(segments: ScriptSegment[]): SegmentGroup[] {
   return groups;
 }
 
-/** 按中文标点拆分长文本，每段不超过 maxChars */
 function splitTextBySentence(text: string, maxChars: number): string[] {
   const results: string[] = [];
-  // 按句号、问号、感叹号、分号拆分，保留分隔符
   const sentences = text.split(/(?<=[。！？；，,])/);
   let buf = '';
   for (const s of sentences) {
@@ -137,7 +134,7 @@ function splitTextBySentence(text: string, maxChars: number): string[] {
   return results;
 }
 
-// ─── Single segment pipeline: TTS → Upload → Submit → Poll ───
+// ─── Single segment pipeline ───
 async function generateSegmentVideo(
   group: SegmentGroup,
   groupIndex: number,
@@ -148,7 +145,6 @@ async function generateSegmentVideo(
 ): Promise<string> {
   const label = `片段${groupIndex + 1}`;
 
-  // 1. TTS
   onProgress(`${label}: 生成语音...`);
   const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
     body: { text: group.text, voice_id: voiceType },
@@ -159,7 +155,6 @@ async function generateSegmentVideo(
   }
   if (abortRef.current) throw new Error('已取消');
 
-  // 2. Upload audio
   onProgress(`${label}: 上传音频...`);
   const audioBytes = Uint8Array.from(atob(ttsData.audioContent), c => c.charCodeAt(0));
   const audioBlob = new Blob([audioBytes], { type: 'audio/mpeg' });
@@ -177,7 +172,6 @@ async function generateSegmentVideo(
   const audioUrl = urlData.publicUrl;
   if (abortRef.current) throw new Error('已取消');
 
-  // 3. Submit Jimeng task
   onProgress(`${label}: 提交数字人任务...`);
   const { data: submitData, error: submitError } = await supabase.functions.invoke('jimeng-digital-human', {
     body: { action: 'submit', image_url: imageUrl, audio_url: audioUrl },
@@ -190,7 +184,6 @@ async function generateSegmentVideo(
   const taskId = submitData.task_id;
   if (abortRef.current) throw new Error('已取消');
 
-  // 4. Poll for result
   onProgress(`${label}: 视频生成中...`);
   const maxPolls = 120;
 
@@ -236,6 +229,28 @@ async function generateSegmentVideo(
   throw new Error(`${label} 视频生成超时`);
 }
 
+// ─── Merge helper ───
+async function mergeAndUpload(
+  videoUrls: string[],
+  onProgress: (msg: string) => void,
+): Promise<string> {
+  const mergedBlob = await mergeVideosClientSide(videoUrls, onProgress);
+
+  onProgress('正在上传合并后的视频...');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('请先登录');
+
+  const fileName = `merged/${user.id}/${Date.now()}.mp4`;
+  const { error: uploadError } = await supabase.storage
+    .from('video-assets')
+    .upload(fileName, mergedBlob, { contentType: 'video/mp4' });
+
+  if (uploadError) throw new Error(`合并视频上传失败: ${uploadError.message}`);
+
+  const { data: urlData } = supabase.storage.from('video-assets').getPublicUrl(fileName);
+  return urlData.publicUrl;
+}
+
 // ─── Hook ───
 export const useVideoGeneration = (): UseVideoGenerationReturn => {
   const [status, setStatus] = useState<VideoGenStatus>('idle');
@@ -254,6 +269,32 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
     abortRef.current = false;
   }, []);
 
+  // Retry merge only — reuses existing videoSegments
+  const retryMerge = useCallback(async () => {
+    const segments = result.videoSegments;
+    if (!segments || segments.length < 2) return;
+
+    setStatus('merging_video');
+    setProgress(90);
+    setSegmentProgress('正在重试合并视频片段...');
+    setResult(prev => ({ ...prev, mergeError: undefined, videoUrl: undefined }));
+
+    try {
+      const mergedUrl = await mergeAndUpload(segments, (msg) => setSegmentProgress(msg));
+      setResult(prev => ({ ...prev, videoUrl: mergedUrl, mergeError: undefined }));
+      setStatus('done');
+      setProgress(100);
+      setSegmentProgress(`${segments.length} 个片段合并完成！`);
+    } catch (err) {
+      console.error('重试合并失败:', err);
+      const errMsg = err instanceof Error ? err.message : '合并失败';
+      setResult(prev => ({ ...prev, mergeError: errMsg }));
+      setStatus('merge_failed');
+      setProgress(95);
+      setSegmentProgress('合并失败，可下载各片段或重试');
+    }
+  }, [result.videoSegments]);
+
   const generate = useCallback(async (params: {
     script: string;
     imageUrl: string;
@@ -268,16 +309,13 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
 
     try {
       const segments = params.structuredScript?.segments;
-      
-      // 判断是否需要分段：如果有结构化脚本且总时长 > 15s
       const totalDuration = segments
         ? segments[segments.length - 1].endSec - segments[0].startSec
         : 0;
-      
       const needsSplit = segments && totalDuration > 15;
 
       if (needsSplit && segments) {
-        // ═══ 分段生成流程 ═══
+        // ═══ Multi-segment flow ═══
         const groups = groupSegments(segments);
         console.log(`[VideoGen] 分为 ${groups.length} 组:`, groups.map(g => `${g.totalDuration}s`));
         
@@ -285,14 +323,11 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
         setProgress(5);
         setSegmentProgress(`准备生成 ${groups.length} 个视频片段...`);
 
-        // 串行生成每个片段（避免 API 频率限制）
         const videoUrls: string[] = [];
         
         for (let i = 0; i < groups.length; i++) {
           const groupProgress = (i / groups.length) * 85;
           setProgress(5 + Math.round(groupProgress));
-          
-          // Update status based on current phase
           setStatus(i === 0 ? 'generating_audio' : 'generating_video');
           
           const videoUrl = await generateSegmentVideo(
@@ -310,48 +345,7 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
 
         setResult(prev => ({ ...prev, videoSegments: videoUrls }));
 
-        // 合并视频（客户端 ffmpeg.wasm）
-        if (videoUrls.length > 1) {
-          setStatus('merging_video');
-          setProgress(90);
-          setSegmentProgress('正在合并视频片段...');
-
-          try {
-            const mergedBlob = await mergeVideosClientSide(videoUrls, (msg) => {
-              setSegmentProgress(msg);
-            });
-
-            // 上传合并后的视频到 Storage
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('请先登录');
-
-            const fileName = `merged/${user.id}/${Date.now()}.mp4`;
-            const { error: uploadError } = await supabase.storage
-              .from('video-assets')
-              .upload(fileName, mergedBlob, { contentType: 'video/mp4' });
-
-            if (uploadError) throw uploadError;
-
-            const { data: urlData } = supabase.storage.from('video-assets').getPublicUrl(fileName);
-
-            setResult(prev => ({
-              ...prev,
-              videoUrl: urlData.publicUrl,
-              videoSegments: videoUrls,
-            }));
-          } catch (mergeErr) {
-            console.warn('视频合并失败，返回片段列表:', mergeErr);
-            setResult(prev => ({
-              ...prev,
-              videoUrl: videoUrls[0],
-              videoSegments: videoUrls,
-            }));
-          }
-        } else {
-          setResult(prev => ({ ...prev, videoUrl: videoUrls[0] }));
-        }
-
-        // Build Remotion composition props
+        // Build Remotion composition props early (before merge attempt)
         if (params.structuredScript) {
           const fps = 30;
           const ss = params.structuredScript;
@@ -375,12 +369,35 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
           setResult(prev => ({ ...prev, compositionProps }));
         }
 
-        setStatus('done');
-        setProgress(100);
-        setSegmentProgress(`${groups.length} 个片段全部生成完成！`);
+        // Merge videos
+        if (videoUrls.length > 1) {
+          setStatus('merging_video');
+          setProgress(90);
+          setSegmentProgress('正在合并视频片段...');
+
+          try {
+            const mergedUrl = await mergeAndUpload(videoUrls, (msg) => setSegmentProgress(msg));
+            setResult(prev => ({ ...prev, videoUrl: mergedUrl }));
+            setStatus('done');
+            setProgress(100);
+            setSegmentProgress(`${groups.length} 个片段全部合并完成！`);
+          } catch (mergeErr) {
+            console.error('视频合并失败:', mergeErr);
+            const errMsg = mergeErr instanceof Error ? mergeErr.message : '合并失败';
+            setResult(prev => ({ ...prev, mergeError: errMsg }));
+            setStatus('merge_failed');
+            setProgress(95);
+            setSegmentProgress('自动合并失败，可下载各分段视频或重试合并');
+          }
+        } else {
+          setResult(prev => ({ ...prev, videoUrl: videoUrls[0] }));
+          setStatus('done');
+          setProgress(100);
+          setSegmentProgress('视频生成完成！');
+        }
         
       } else {
-        // ═══ 单段生成流程（≤15s 的脚本） ═══
+        // ═══ Single segment flow ═══
         setStatus('generating_audio');
         setProgress(10);
 
@@ -510,5 +527,5 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
     }
   }, []);
 
-  return { status, error, result, progress, segmentProgress, generate, reset };
+  return { status, error, result, progress, segmentProgress, generate, retryMerge, reset };
 };
