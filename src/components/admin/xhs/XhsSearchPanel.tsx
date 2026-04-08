@@ -3,19 +3,28 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Heart, Bookmark, MessageCircle, Star, ArrowUpDown } from "lucide-react";
+import { Search, Loader2, Heart, Bookmark, MessageCircle, Star, ArrowUpDown, MessageSquarePlus } from "lucide-react";
 import { useXhsSearch, type XhsNote } from "@/hooks/useXhsSearch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SortField = "likes" | "collects" | "comments" | "total";
 
-export function XhsSearchPanel() {
+interface XhsSearchPanelProps {
+  onAddToCommentQueue?: (notes: XhsNote[]) => void;
+}
+
+export function XhsSearchPanel({ onAddToCommentQueue }: XhsSearchPanelProps) {
   const { loading, results, search, saveNote } = useXhsSearch();
   const [keyword, setKeyword] = useState("");
   const [sortBy, setSortBy] = useState<SortField>("total");
+  const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
 
   const handleSearch = () => {
-    if (keyword.trim()) search(keyword);
+    if (keyword.trim()) {
+      search(keyword);
+      setSelectedNotes(new Set());
+    }
   };
 
   const getTotal = (n: XhsNote) => (n.likes ?? 0) + (n.collects ?? 0) + (n.comments ?? 0);
@@ -29,6 +38,30 @@ export function XhsSearchPanel() {
       default: return 0;
     }
   });
+
+  const toggleSelect = (noteId: string) => {
+    setSelectedNotes((prev) => {
+      const next = new Set(prev);
+      if (next.has(noteId)) next.delete(noteId);
+      else next.add(noteId);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedNotes.size === sortedResults.length) {
+      setSelectedNotes(new Set());
+    } else {
+      setSelectedNotes(new Set(sortedResults.map((n) => n.note_id)));
+    }
+  };
+
+  const handleBatchComment = () => {
+    if (!onAddToCommentQueue) return;
+    const selected = sortedResults.filter((n) => selectedNotes.has(n.note_id));
+    onAddToCommentQueue(selected);
+    setSelectedNotes(new Set());
+  };
 
   const suggestedKeywords = ["情绪管理", "心理成长", "自我提升", "冥想", "焦虑", "内耗", "自信", "能量"];
 
@@ -64,12 +97,27 @@ export function XhsSearchPanel() {
         ))}
       </div>
 
-      {/* Sort & count */}
+      {/* Sort & batch actions */}
       {results.length > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            共 {results.length} 条结果
-          </p>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              共 {results.length} 条结果
+            </p>
+            {onAddToCommentQueue && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  {selectedNotes.size === sortedResults.length ? "取消全选" : "全选"}
+                </Button>
+                {selectedNotes.size > 0 && (
+                  <Button size="sm" onClick={handleBatchComment}>
+                    <MessageSquarePlus className="h-4 w-4 mr-1" />
+                    批量评论 ({selectedNotes.size})
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortField)}>
@@ -92,7 +140,14 @@ export function XhsSearchPanel() {
         {sortedResults.map((note, idx) => (
           <Card key={note.note_id || idx} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                {onAddToCommentQueue && (
+                  <Checkbox
+                    checked={selectedNotes.has(note.note_id)}
+                    onCheckedChange={() => toggleSelect(note.note_id)}
+                    className="mt-1"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-sm line-clamp-2 mb-2">
                     {note.title || "无标题"}
@@ -127,14 +182,16 @@ export function XhsSearchPanel() {
                     </div>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => saveNote(note)}
-                  title="收藏"
-                >
-                  <Star className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => saveNote(note)}
+                    title="收藏"
+                  >
+                    <Star className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
