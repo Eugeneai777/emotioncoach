@@ -4,28 +4,42 @@
  */
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile } from '@ffmpeg/util';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 let ffmpegInstance: FFmpeg | null = null;
+let loadPromise: Promise<FFmpeg> | null = null;
 
 async function getFFmpeg(): Promise<FFmpeg> {
   if (ffmpegInstance && ffmpegInstance.loaded) {
     return ffmpegInstance;
   }
 
-  const ffmpeg = new FFmpeg();
-  
-  // Use single-threaded core from CDN (no SharedArrayBuffer needed)
-  const coreURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js';
-  const wasmURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm';
+  // Prevent multiple parallel loads
+  if (loadPromise) return loadPromise;
 
-  await ffmpeg.load({
-    coreURL,
-    wasmURL,
-  });
-  
-  ffmpegInstance = ffmpeg;
-  return ffmpeg;
+  loadPromise = (async () => {
+    const ffmpeg = new FFmpeg();
+
+    // Use jsdelivr (faster in China) with toBlobURL for proper CORS handling
+    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+
+    const [coreURL, wasmURL] = await Promise.all([
+      toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    ]);
+
+    await ffmpeg.load({ coreURL, wasmURL });
+
+    ffmpegInstance = ffmpeg;
+    return ffmpeg;
+  })();
+
+  try {
+    return await loadPromise;
+  } catch (e) {
+    loadPromise = null;
+    throw e;
+  }
 }
 
 export async function mergeVideosClientSide(
@@ -38,8 +52,15 @@ export async function mergeVideosClientSide(
     return resp.blob();
   }
 
-  onProgress?.('正在加载视频处理引擎...');
-  const ffmpeg = await getFFmpeg();
+  onProgress?.('正在加载视频处理引擎（首次约需30秒）...');
+  
+  let ffmpeg: FFmpeg;
+  try {
+    ffmpeg = await getFFmpeg();
+  } catch (err) {
+    console.error('ffmpeg.wasm 加载失败:', err);
+    throw new Error('视频处理引擎加载失败，请检查网络后重试');
+  }
 
   // Download all segments and write to ffmpeg virtual FS
   const fileNames: string[] = [];
