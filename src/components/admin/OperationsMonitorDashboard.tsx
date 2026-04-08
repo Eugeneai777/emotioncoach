@@ -110,7 +110,7 @@ interface TopUser {
 export default function OperationsMonitorDashboard() {
   const [metrics, setMetrics] = useState<RealtimeMetrics | null>(null);
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
-  const [minuteQPS, setMinuteQPS] = useState<{ time: string; qps: number }[]>([]);
+  const [minuteQPS, setMinuteQPS] = useState<{ time: string; qps: number; apiQps: number }[]>([]);
   const [sourceBreakdown, setSourceBreakdown] = useState<SourceBreakdown[]>([]);
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [loading, setLoading] = useState(true);
