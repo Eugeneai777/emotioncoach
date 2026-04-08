@@ -134,7 +134,7 @@ const coachTeam = [
   },
   {
     name: "Amy", role: "教练",
-    title: "绽放联盟教练 · 中国社科院经济学研究生",
+    title: "绽放联盟教练",
     certifications: ["生命绽放教练", "心理咨询师", "家庭教育指导师"],
     specialties: ["情感困惑", "亲子关系", "身心疗愈"],
     motto: "全情陪伴，滋养生命",
