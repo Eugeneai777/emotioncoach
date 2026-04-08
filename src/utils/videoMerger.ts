@@ -75,7 +75,7 @@ export async function mergeVideosClientSide(
   await ffmpeg.deleteFile('list.txt');
   await ffmpeg.deleteFile('output.mp4');
 
-  const blob = new Blob([outputData.buffer], { type: 'video/mp4' });
+  const blob = new Blob([new Uint8Array(outputData.buffer as ArrayBuffer)], { type: 'video/mp4' });
   onProgress?.(`合并完成，文件大小: ${(blob.size / 1024 / 1024).toFixed(1)} MB`);
   return blob;
 }
