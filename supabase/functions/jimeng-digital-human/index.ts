@@ -117,6 +117,34 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Pre-check: verify image and audio URLs are accessible and within limits
+      try {
+        const [imgHead, audioHead] = await Promise.all([
+          fetch(image_url, { method: "HEAD" }).catch(() => null),
+          fetch(audio_url, { method: "HEAD" }).catch(() => null),
+        ]);
+
+        if (imgHead) {
+          const imgSize = Number(imgHead.headers.get("content-length") || 0);
+          const imgType = imgHead.headers.get("content-type") || "";
+          console.log(`[jimeng] image check: status=${imgHead.status}, size=${(imgSize/1024/1024).toFixed(2)}MB, type=${imgType}`);
+          if (imgSize > 5 * 1024 * 1024) {
+            return new Response(
+              JSON.stringify({ error: `图片大小 ${(imgSize/1024/1024).toFixed(1)}MB 超过即梦限制(5MB)，请压缩后重试`, status: "failed" }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+
+        if (audioHead) {
+          const audioSize = Number(audioHead.headers.get("content-length") || 0);
+          const audioType = audioHead.headers.get("content-type") || "";
+          console.log(`[jimeng] audio check: status=${audioHead.status}, size=${(audioSize/1024).toFixed(1)}KB, type=${audioType}`);
+        }
+      } catch (e) {
+        console.warn("[jimeng] pre-check failed (non-blocking):", e);
+      }
+
       const reqKey = "jimeng_realman_avatar_picture_omni_v15";
       const body = JSON.stringify({
         req_key: reqKey,
@@ -151,7 +179,7 @@ Deno.serve(async (req) => {
         ...sigHeaders,
       };
 
-      console.log(`[jimeng] submit: image=${image_url.slice(0, 60)}, audio=${audio_url.slice(0, 60)}`);
+      console.log(`[jimeng] submit: image=${image_url}, audio=${audio_url}, resolution=${resolution || 720}`);
 
       const res = await fetch(`https://${host}${path}?${queryString}`, {
         method: "POST",

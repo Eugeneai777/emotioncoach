@@ -44,7 +44,7 @@ const STEPS: { key: VideoGenStatus; label: string }[] = [
 
 const stepOrder = STEPS.map(s => s.key);
 const SUPPORTED_PORTRAIT_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_PORTRAIT_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_PORTRAIT_FILE_SIZE = 5 * 1024 * 1024; // 即梦要求 < 5MB
 const MAX_PORTRAIT_DIMENSION = 1280;
 
 async function normalizePortraitImage(file: File): Promise<File> {
