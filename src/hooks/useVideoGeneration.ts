@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { extractEdgeFunctionError } from '@/lib/edgeFunctionError';
+import { mergeVideosClientSide } from '@/utils/videoMerger';
 
 export type VideoGenStatus =
   | 'idle'
@@ -309,31 +310,40 @@ export const useVideoGeneration = (): UseVideoGenerationReturn => {
 
         setResult(prev => ({ ...prev, videoSegments: videoUrls }));
 
-        // 合并视频
+        // 合并视频（客户端 ffmpeg.wasm）
         if (videoUrls.length > 1) {
           setStatus('merging_video');
           setProgress(90);
           setSegmentProgress('正在合并视频片段...');
 
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('请先登录');
+          try {
+            const mergedBlob = await mergeVideosClientSide(videoUrls, (msg) => {
+              setSegmentProgress(msg);
+            });
 
-          const { data: mergeData, error: mergeError } = await supabase.functions.invoke('merge-videos', {
-            body: { video_urls: videoUrls, user_id: user.id },
-          });
+            // 上传合并后的视频到 Storage
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('请先登录');
 
-          if (mergeError || mergeData?.error) {
-            // 合并失败时仍然返回片段列表
-            console.warn('视频合并失败，返回片段列表:', mergeData?.error || mergeError);
+            const fileName = `merged/${user.id}/${Date.now()}.mp4`;
+            const { error: uploadError } = await supabase.storage
+              .from('video-assets')
+              .upload(fileName, mergedBlob, { contentType: 'video/mp4' });
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage.from('video-assets').getPublicUrl(fileName);
+
             setResult(prev => ({
               ...prev,
-              videoUrl: videoUrls[0], // 用第一个片段作为预览
+              videoUrl: urlData.publicUrl,
               videoSegments: videoUrls,
             }));
-          } else {
+          } catch (mergeErr) {
+            console.warn('视频合并失败，返回片段列表:', mergeErr);
             setResult(prev => ({
               ...prev,
-              videoUrl: mergeData.video_url,
+              videoUrl: videoUrls[0],
               videoSegments: videoUrls,
             }));
           }
