@@ -1010,7 +1010,7 @@ export default function OperationsMonitorDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" fontSize={11} interval={2} />
                 <YAxis fontSize={11} />
-                <Tooltip formatter={(v: number, name: string) => [`${v}/s`, name === "qps" ? "点数QPS" : "API QPS"]} />
+                <Tooltip formatter={(v: number, name: string) => [`${v}/s`, name]} />
                 <defs>
                   <linearGradient id="qpsGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
