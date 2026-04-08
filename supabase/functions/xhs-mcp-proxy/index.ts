@@ -222,6 +222,17 @@ Deno.serve(async (req) => {
         }
       }
 
+      case 'generate_cover': {
+        const { cover_prompt } = body;
+        if (!cover_prompt) return jsonResponse({ error: '请输入封面描述' }, 400);
+
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const coverUrl = await generateCoverImage(cover_prompt, supabaseUrl, serviceKey);
+        if (!coverUrl) return jsonResponse({ error: '封面图生成失败' }, 500);
+        return jsonResponse({ success: true, cover_url: coverUrl });
+      }
+
       case 'publish': {
         const { task_id, title, content, tags, image_urls, generate_cover, cover_prompt } = body;
         if (!title || !content) {
