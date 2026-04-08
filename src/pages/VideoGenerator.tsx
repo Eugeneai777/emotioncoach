@@ -38,6 +38,7 @@ const STEPS: { key: VideoGenStatus; label: string }[] = [
   { key: 'uploading_audio', label: '音频上传' },
   { key: 'submitting_task', label: '提交任务' },
   { key: 'generating_video', label: '视频生成' },
+  { key: 'merging_video', label: '合并片段' },
   { key: 'done', label: '完成' },
 ];
 
@@ -179,7 +180,7 @@ function useDynamicTopicGroups(): VideoTopicGroup[] {
 
 const VideoGenerator: React.FC = () => {
   const navigate = useNavigate();
-  const { status, error, result, progress, generate, reset } = useVideoGeneration();
+  const { status, error, result, progress, segmentProgress, generate, reset } = useVideoGeneration();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topicGroups = useDynamicTopicGroups();
 
@@ -499,6 +500,9 @@ const VideoGenerator: React.FC = () => {
             <CardContent className="space-y-4">
               <Progress value={progress} className="h-2" />
               <p className="text-sm font-medium text-center">{STATUS_LABELS[status]}</p>
+              {segmentProgress && (
+                <p className="text-xs text-muted-foreground text-center">{segmentProgress}</p>
+              )}
               <div className="space-y-2">
                 {STEPS.map(step => {
                   const state = getStepState(step.key, status);
@@ -525,6 +529,21 @@ const VideoGenerator: React.FC = () => {
             <CardHeader className="pb-3"><CardTitle className="text-base">🎬 生成结果</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <video src={result.videoUrl} controls className="w-full rounded-lg" playsInline />
+              {result.videoSegments && result.videoSegments.length > 1 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">各片段视频（共 {result.videoSegments.length} 段）：</p>
+                  {result.videoSegments.map((url, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground shrink-0">片段 {i + 1}</span>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={url} download target="_blank" rel="noopener noreferrer">
+                          <Download className="w-3 h-3 mr-1" /> 下载
+                        </a>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" asChild>
                   <a href={result.videoUrl} download target="_blank" rel="noopener noreferrer">
