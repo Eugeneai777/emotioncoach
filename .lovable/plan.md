@@ -1,140 +1,162 @@
 
-# 微信环境长按保存失败：检查结论与修复计划
 
-## 检查结论
+# 小红书 MCP Server 架构方案
 
-问题基本已经定位，不是单纯“提示文案不对”，而是**分享链路本身还不可靠**：
+## 整体架构
 
-1. **当前预览先显示的是 `blob:` URL**
-   - `src/utils/shareUtils.ts` 里 `showUploadedPreview()` 先 `URL.createObjectURL(blob)` 立即展示。
-   - 微信里长按保存 `blob:` 图片本来就不稳定，很多机型会直接失败。
-
-2. **升级成 HTTPS 的后台上传，大概率会失败**
-   - `src/utils/shareImageUploader.ts` 把图片上传到 `partner-assets/temp-share/...`
-   - 但现有存储策略只允许：
-     - partner 自己目录上传，或
-     - `authenticated` 用户上传
-   - `/promo/identity-bloom` 是公开售前页，微信访客通常**未登录**，所以这里很可能上传失败，最终一直停留在 `blob:` URL。
-
-3. **界面会误导用户过早长按**
-   - `ShareImagePreview` 现在一打开就提示“长按上方图片保存到相册”
-   - 但此时图片可能还只是本地 blob，还没升级到可保存的 HTTPS 图。
-
-4. **缓存还会把失败结果记住**
-   - `src/components/ui/share-dialog-base.tsx` 用 `cachedBlobUrlRef` 缓存已生成海报
-   - 如果第一次缓存的是 `blob:` URL，后续再次打开可能继续复用这个不可长按保存的地址。
-
-## 需要怎么改
-
-### 1. 先修正上传通道，让未登录微信用户也能拿到 HTTPS 图片
-
-核心目标：**公开售前页生成的海报，必须能在未登录状态下上传成功。**
-
-推荐方案二选一，优先方案 A：
-
-#### 方案 A：新增专用公开分享桶
-新增一个专门给公开分享海报用的存储桶，例如 `public-share-images`：
-
-- bucket 设为 `public = true`
-- 允许 `anon, authenticated` 插入
-- 可选限制路径前缀为 `promo-share/`
-- 前端把分享海报上传改到这个桶，不再复用 `partner-assets`
-
-这样最干净，避免把 partner 资产桶和公开分享海报混在一起。
-
-#### 方案 B：继续用 `partner-assets`，但补 anon 上传策略
-不太推荐，但也能修：
-- 给 `partner-assets` 增加 `TO anon` 的 INSERT 策略
-- 同时最好限制只能写入 `temp-share/` 前缀
-
-问题是这个桶原本是 partner 业务资产桶，职责会混乱。
-
-## 2. 预览页增加“上传中/可保存”状态，而不是一上来就让用户长按
-
-### `src/components/ui/share-image-preview.tsx`
-新增一个状态，例如：
-- `isRemoteReady?: boolean`
-- `isUpgrading?: boolean`
-
-逻辑改为：
-
-- **微信里如果还是 blob/data URL**
-  - 显示：`正在准备可保存图片，请稍候...`
-  - 底部小字说明：`图片准备完成后再长按保存`
-- **当切换成 https:// URL 后**
-  - 再显示：`长按上方图片保存到相册`
-
-这样用户不会在错误时机操作。
-
-## 3. 分享逻辑要把“URL 是否已升级成功”显式传出来
-
-### `src/utils/shareUtils.ts`
-现在 `onShowPreview` 只传一个 url，不够区分状态。
-
-建议改为传结构化数据，例如：
-```ts
-onShowPreview?: (payload: {
-  url: string;
-  isRemoteReady: boolean;
-}) => void;
+```text
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│   前端 React App │────▶│  Edge Function        │────▶│  阿里云服务器        │
+│   (管理后台页面)  │     │  xhs-mcp-proxy       │     │  xiaohongshu-mcp    │
+│                  │◀────│                      │◀────│  (Go/MCP Server)    │
+└─────────────────┘     └──────────────────────┘     └────────┬────────────┘
+                                                              │
+                                                     Playwright 浏览器
+                                                              │
+                                                     ┌────────▼────────┐
+                                                     │   小红书网页版    │
+                                                     └─────────────────┘
 ```
 
-流程变成：
+## 三层设计
 
-- 先回调 `{ url: blobUrl, isRemoteReady: false }`
-- 上传成功后回调 `{ url: httpsUrl, isRemoteReady: true }`
-- 上传失败时不要继续假装可长按保存，而是明确保持 false
+### 第一层：阿里云服务器 — MCP Server
 
-## 4. `ShareDialogBase` 不要缓存不可保存的 blob 结果
+在现有阿里云服务器（已部署微信代理的那台）上增加小红书 MCP Server。
 
-### `src/components/ui/share-dialog-base.tsx`
-当前 `cachedBlobUrlRef` 会缓存任何 url。
+**部署方案：**
+- 使用 `xpzouying/xiaohongshu-mcp`（Go 版，最成熟）
+- 启动后监听 HTTP 端口（如 3001），暴露 MCP Streamable HTTP 协议
+- 首次启动需扫码登录小红书，Cookie 持久化到本地
 
-应改为：
+**安全措施：**
+- 添加 `X-API-Key` 请求头验证，防止未授权调用
+- 仅允许来自 Supabase Edge Function IP 的请求（或通过 API Key 认证）
+- 端口 3001 不对公网开放，只通过 Nginx 反向代理 + 路径前缀暴露
 
-- **只缓存 HTTPS 结果**
-- 或至少分开缓存：
-  - `cachedPreviewUrl`
-  - `cachedRemoteReady`
-- 如果是微信环境且 `remoteReady = false`，再次打开时应触发重新上传，而不是直接复用 blob
+**Nginx 配置示例：**
+```text
+location /xhs-mcp/ {
+    proxy_pass http://127.0.0.1:3001/;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+```
 
-这是避免“第一次失败后永久失败感”的关键。
+访问地址：`http://YOUR_SERVER_IP:3000/xhs-mcp/mcp`
 
-## 5. `shareImageUploader` 改成专用公开路径
+### 第二层：Edge Function — xhs-mcp-proxy
 
-### `src/utils/shareImageUploader.ts`
-如果采用方案 A，则改为：
-- bucket：`public-share-images`
-- path：`promo-share/${Date.now()}-${random}.png`
+新建 `supabase/functions/xhs-mcp-proxy/index.ts`，作为前端与 MCP Server 之间的安全中间层。
 
-并保留 `getPublicUrl()`。
+**职责：**
+1. 验证前端请求的用户身份（JWT 认证，限管理员角色）
+2. 将前端的业务请求翻译为 MCP 协议调用
+3. 转发到阿里云 MCP Server，解析响应返回给前端
+4. 缓存热门搜索结果到数据库，减少重复抓取
 
-## 涉及文件
+**需要的 Secrets：**
+- `XHS_MCP_SERVER_URL`：MCP Server 地址
+- `XHS_MCP_API_KEY`：MCP Server 认证密钥
+
+**接口设计：**
+
+| 操作 | 请求体 | 说明 |
+|------|--------|------|
+| 搜索笔记 | `{ action: "search", keyword: "情绪管理", limit: 20 }` | 按关键词搜索 |
+| 获取笔记详情 | `{ action: "detail", note_id: "xxx" }` | 获取单篇笔记内容+数据 |
+| 批量分析 | `{ action: "analyze", keyword: "心理成长" }` | 搜索+AI 分析爆款规律 |
+
+### 第三层：前端管理页面
+
+在管理后台新增"小红书数据分析"页面。
+
+**功能模块：**
+1. **关键词搜索**：输入关键词，展示笔记列表（标题、点赞、收藏、评论数）
+2. **数据排行**：按互动量排序，一目了然
+3. **AI 分析面板**：调用 Lovable AI 分析爆款共性（标题结构、情绪钩子、话题标签）
+4. **收藏夹**：收藏优质笔记，方便后续参考
+5. **文案生成**：基于爆款规律，AI 生成适合自身品牌的文案
+
+## 数据库设计
+
+新增两张表：
+
+**xhs_search_cache** — 搜索结果缓存（减少重复抓取）
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | uuid | 主键 |
+| keyword | text | 搜索关键词 |
+| results | jsonb | 搜索结果 JSON |
+| cached_at | timestamptz | 缓存时间 |
+| expires_at | timestamptz | 过期时间（如 24h） |
+
+**xhs_saved_notes** — 收藏的笔记
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | uuid | 主键 |
+| user_id | uuid | 操作人 |
+| note_id | text | 小红书笔记 ID |
+| title | text | 标题 |
+| content | text | 内容 |
+| author | text | 作者 |
+| likes | integer | 点赞数 |
+| collects | integer | 收藏数 |
+| comments | integer | 评论数 |
+| note_url | text | 原始链接 |
+| tags | text[] | 标签 |
+| ai_analysis | text | AI 分析结论 |
+| created_at | timestamptz | 收藏时间 |
+
+## 实施步骤
+
+### 阶段 1：服务器端（用户自行操作）
+
+1. SSH 登录阿里云服务器
+2. 安装 Go 运行环境 + Playwright
+3. 克隆 `xpzouying/xiaohongshu-mcp`，编译运行
+4. 扫码登录小红书（Cookie 会自动保存）
+5. 配置 Nginx 反向代理 + API Key 认证
+6. 用 PM2 或 systemd 管理进程
+
+### 阶段 2：后端对接（Lovable 实现）
+
+1. 添加 `XHS_MCP_SERVER_URL` 和 `XHS_MCP_API_KEY` 两个 Secret
+2. 创建数据库表 `xhs_search_cache` + `xhs_saved_notes`
+3. 创建 Edge Function `xhs-mcp-proxy`
+4. 实现搜索、详情、分析三个接口
+
+### 阶段 3：前端页面（Lovable 实现）
+
+1. 管理后台新增"小红书分析"入口
+2. 搜索面板 + 结果列表 + 数据排序
+3. AI 分析面板（调用 Lovable AI）
+4. 收藏与文案生成功能
+
+## 风险与注意
+
+| 风险 | 应对 |
+|------|------|
+| 小红书反爬封号 | 控制请求频率（≤1次/5秒）；只在需要时搜索，结果缓存 24h |
+| Cookie 过期 | 服务器端需定期检查登录状态，过期后重新扫码 |
+| 数据合规 | 仅内部分析使用，不公开展示抓取内容 |
+| 服务器资源 | Playwright 占用约 200-500MB 内存，确认服务器配置足够 |
+
+## 成本评估
+
+| 项目 | 费用 | 说明 |
+|------|------|------|
+| 服务器 | ¥0（复用现有） | 已有阿里云服务器 |
+| MCP Server | 免费 | 开源项目 |
+| Edge Function | 包含在 Lovable Cloud | 无额外费用 |
+| AI 分析 | 包含在 Lovable AI | 使用 Gemini/GPT |
+
+## 涉及文件（阶段 2-3）
 
 | 文件 | 操作 |
 |------|------|
-| `src/utils/shareUtils.ts` | 预览回调改为携带 remote-ready 状态 |
-| `src/components/ui/share-image-preview.tsx` | 微信场景增加“准备中 / 可长按”状态提示 |
-| `src/components/ui/share-dialog-base.tsx` | 只缓存可保存的 HTTPS 结果，避免复用 blob |
-| `src/utils/shareImageUploader.ts` | 改用公开分享海报专用 bucket/路径 |
-| `supabase/migrations/...sql` | 新增公开分享海报 bucket 与 anon/authenticated 上传策略 |
+| `supabase/functions/xhs-mcp-proxy/index.ts` | 新建 |
+| `supabase/migrations/xxx.sql` | 新建（两张表） |
+| `src/pages/admin/XhsAnalysis.tsx` | 新建 |
+| `src/components/admin/xhs/*` | 新建（搜索/列表/分析组件） |
+| `src/hooks/useXhsSearch.ts` | 新建 |
 
-## 预期效果
-
-修完后，微信里的体验会变成：
-
-1. 点击“生成海报”
-2. 先快速看到预览
-3. 底部显示“正在准备可保存图片，请稍候”
-4. 后台上传成功后，自动切换为 HTTPS 图
-5. 文案切换为“长按上方图片保存到相册”
-6. 此时长按保存才真正可用
-
-## 补充判断
-
-从现有代码看，这次问题**大概率不是海报生成本身失败**，而是：
-- 生成成功了
-- 但**未登录微信用户无法把图片上传成公网 HTTPS 地址**
-- 所以长按保存一直失败
-
-这是目前最需要优先修的点。
