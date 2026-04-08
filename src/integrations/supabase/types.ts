@@ -7933,6 +7933,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_flow_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          flow_id: string
+          id: string
+          metadata: Json | null
+          page_url: string | null
+          referrer_url: string | null
+          target_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          flow_id: string
+          id?: string
+          metadata?: Json | null
+          page_url?: string | null
+          referrer_url?: string | null
+          target_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          flow_id?: string
+          id?: string
+          metadata?: Json | null
+          page_url?: string | null
+          referrer_url?: string | null
+          target_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
