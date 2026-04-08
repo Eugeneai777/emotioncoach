@@ -107,6 +107,15 @@ export function UnifiedPayDialog({
     }
   }, [onOpenChange]);
 
+  // 包装 onSuccess 以埋点支付成功
+  const handleSuccess = useCallback(() => {
+    trackPaymentEvent('payment_success', {
+      metadata: { packageKey: packageInfo?.key, payMethod },
+    });
+    endPaymentFlow();
+    onSuccess();
+  }, [onSuccess, packageInfo, payMethod]);
+
   // 小程序环境：只能用微信支付，直接渲染
   if (isMiniProgram) {
     return (
@@ -114,7 +123,7 @@ export function UnifiedPayDialog({
         open={open}
         onOpenChange={onOpenChange}
         packageInfo={packageInfo}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
         returnUrl={returnUrl}
         openId={openId}
         shippingInfo={shippingInfo}
@@ -130,7 +139,7 @@ export function UnifiedPayDialog({
           open={true}
           onOpenChange={handlePayDialogChange}
           packageInfo={packageInfo}
-          onSuccess={onSuccess}
+          onSuccess={handleSuccess}
           returnUrl={returnUrl}
           shippingInfo={shippingInfo}
         />
@@ -141,7 +150,7 @@ export function UnifiedPayDialog({
         open={true}
         onOpenChange={handlePayDialogChange}
         packageInfo={packageInfo}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
         returnUrl={returnUrl}
         openId={openId}
         shippingInfo={shippingInfo}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, MapPin, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { RegionPicker } from "./RegionPicker";
-
+import { startPaymentFlow, trackPaymentEvent, getCurrentFlowId } from "@/utils/paymentFlowTracker";
 export interface CheckoutInfo {
   buyerName: string;
   buyerPhone: string;
