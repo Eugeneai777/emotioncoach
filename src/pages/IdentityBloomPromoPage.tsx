@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Brain, Pill, Shield, Clock, Heart, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Award, Leaf, CircleCheck, Share2, Target, Compass, Flame } from "lucide-react";
+import { Brain, Pill, Shield, Clock, Heart, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, Award, Leaf, CircleCheck, Share2, Compass, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,12 +55,40 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 /* ========== Pain Points ========== */
 const painPoints = [
-  { icon: Compass, label: "身份迷失", desc: "活得像别人的影子，找不到真正的自己，不知道自己想要什么", color: "#4f46e5" },
-  { icon: Shield, label: "不敢拒绝", desc: "总在看别人脸色，不敢表达真实想法，习惯性讨好和妥协", color: "#7c3aed" },
-  { icon: Activity, label: "反复打回原形", desc: "想改变却陷入旧模式，越努力越挫败，缺乏系统方法", color: "#9333ea" },
-  { icon: Heart, label: "底气不足", desc: "总觉得自己不够好，怎么努力都没有安全感和价值感", color: "#6366f1" },
-  { icon: Flame, label: "身心告警", desc: "压力山大，身体和情绪都在报警，精力持续下降", color: "#dc2626" },
-  { icon: Target, label: "迷茫没方向", desc: "事业到了瓶颈期，不知道下一步该怎么走，缺乏突破的勇气", color: "#2563eb" },
+  { icon: Activity, label: "压力大睡不好，身体在报警", desc: "失眠、疲劳、头痛反复出现，吃药只治标不治本，身体一直在透支", color: "#dc2626", solution: "身心整合，从根源改善" },
+  { icon: BookOpen, label: "学了很多课，还是原地踏步", desc: "买了一堆书和课程，听完很激动、过后不行动，碎片知识越学越迷茫", color: "#7c3aed", solution: "系统化方案，不再碎片学习" },
+  { icon: Heart, label: "夫妻冷战、亲子疏远", desc: "想好好沟通却总吵架，越努力关系越僵，不知道问题到底出在哪", color: "#e11d48", solution: "关系工具，可操作的沟通方法" },
+  { icon: Flame, label: "精力枯竭，效率越来越低", desc: "加班拼命却产出下降，身体越来越扛不住，时间管理根本不管用", color: "#d97706", solution: "能量管理，而非时间管理" },
+  { icon: Shield, label: "一个人扛着，没人真正理解", desc: "跟谁都说不出口，想改变却总是半途而废，缺乏持续动力和支持", color: "#4f46e5", solution: "全程陪伴，教练+社群支持" },
+];
+
+/* ========== Core Advantages ========== */
+const coreAdvantages = [
+  {
+    icon: Compass, title: "系统化解决方案", tag: "解决：碎片学习无效",
+    desc: "不是东一榔头西一棒槌的知识拼凑，而是从「认知→情绪→身体→关系」四维度层层递进的成长地图，有清晰路径，一步步拆解问题根源",
+    color: "#4f46e5",
+  },
+  {
+    icon: Brain, title: "专业身心整合", tag: "解决：身体根源问题",
+    desc: "不只教心理学知识，更引入正念、呼吸训练、神经调节等身体工作方法，打破「心理焦虑→身体紧张」的恶性循环，从生理层面改善睡眠与精力",
+    color: "#059669",
+  },
+  {
+    icon: Users, title: "关系沟通工具", tag: "解决：沟通困难",
+    desc: "涵盖非暴力沟通、一致性表达、倾听技巧等核心模块，通过场景化练习将理论转化为回家就能用的具体语言和行动指南",
+    color: "#e11d48",
+  },
+  {
+    icon: Sparkles, title: "高效能量管理", tag: "解决：精力枯竭",
+    desc: "教授基于个人生物节律和能量状态的精力管理策略，帮你识别高效时段、学会科学休息，用更充沛的精力创造更高价值",
+    color: "#d97706",
+  },
+  {
+    icon: Award, title: "全程深度陪伴", tag: "解决：难坚持、无人理解",
+    desc: "专业教练个性化引领 + 共鸣式社群互助 + 结构化打卡复盘，确保你将所学内化为习惯，真正落地于生活，不再一个人扛",
+    color: "#7c3aed",
+  },
 ];
 
 /* ========== 4 Stages Timeline ========== */
@@ -270,7 +298,7 @@ export default function IdentityBloomPromoPage() {
   const [_purchaseChecked, setPurchaseChecked] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
-  const [expandedHighlight, setExpandedHighlight] = useState<number | null>(null);
+  
   const shareDialog = useShareDialog();
 
   useEffect(() => {
@@ -533,7 +561,7 @@ export default function IdentityBloomPromoPage() {
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你是否正在经历？</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">身份迷失带来的六大困境</p>
+        <p className="text-slate-500 text-sm text-center mb-8">中年男性最常见的五大困境</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
@@ -547,9 +575,10 @@ export default function IdentityBloomPromoPage() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${p.color}10` }}>
                 <p.icon className="w-5 h-5" style={{ color: p.color }} />
               </div>
-              <div>
+              <div className="flex-1">
                 <span className="text-sm font-bold" style={{ color: p.color }}>{p.label}</span>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{p.desc}</p>
+                <p className="text-[11px] mt-1.5 font-medium" style={{ color: p.color }}>→ 我们的解法：{p.solution}</p>
               </div>
             </motion.div>
           ))}
@@ -560,7 +589,7 @@ export default function IdentityBloomPromoPage() {
           viewport={{ once: true }}
           className="text-center text-sm text-indigo-600 font-medium mt-6"
         >
-          💜 这不是你的错，而是身份认知的迷雾。改变，从认识自己开始。
+          💜 这些不是你不够努力，而是缺少一套系统的解决方案。
         </motion.p>
       </Section>
 
@@ -603,8 +632,8 @@ export default function IdentityBloomPromoPage() {
 
       {/* ===== 6 CORE HIGHLIGHTS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">五大核心亮点</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">一站式解决，从"迷失"到"绽放"</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你将拥有的全部资源</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">一站式交付，从"知道"到"做到"</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {coreHighlights.map((h, i) => (
             <motion.div
@@ -630,68 +659,34 @@ export default function IdentityBloomPromoPage() {
         </div>
       </Section>
 
-      {/* ===== COURSE HIGHLIGHTS DEEP DIVE ===== */}
+      {/* ===== CORE ADVANTAGES ===== */}
       <Section className="bg-indigo-50/40">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">科学深度设计 + 独特核心优势</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">让改变真实可落地、成长有根可循</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">为什么身份绽放训练营有效？</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">五大核心优势，让改变真实可落地</p>
         <div className="max-w-lg mx-auto space-y-3">
-          {[
-            {
-              icon: "🧠",
-              title: "心理学与成长视角双重赋能",
-              summary: "兼具先进性与深度，从人格根源切入探索改变的底层逻辑",
-              detail: "课程扎根人格心理学、创伤心理学、人际神经生物学等前沿理论，通过专业方法完成原生家庭创伤疗愈、内隐记忆梳理、情绪模式重构，实现认知、行为、关系、能量的全维度深度成长，让改变不是表面的行为模仿，而是从心理内核到生命状态的本质蜕变。"
-            },
-            {
-              icon: "📐",
-              title: "阶梯式科学课程体系",
-              summary: "步步为营破局成长，4阶16节层层递进",
-              detail: "遵循「觉察→破局→立身份→绽生命」的人格成长逻辑，从「我知道我是谁」到「转化困境破茧成蝶」，层层递进解构虚假身份、重塑真实自我。2个月系统学习，随报随学适配你的节奏，每一步都有心理学理论支撑。"
-            },
-            {
-              icon: "🔥",
-              title: "独创海沃塔实战训练模式",
-              summary: "告别学用脱节，拒绝单向灌输",
-              detail: "以犹太经典海沃塔深度交流模式为核心训练方法，融合心理学团体疗愈理念。1教练带练10人小班，3人一组展开「倾听-探索-挑战」深度互动，搭配课前预习+课中实战+课后打卡落地的完整闭环，彻底解决「听时激动，课后不动」的行业痛点。"
-            },
-            {
-              icon: "💛",
-              title: "高陪伴+长滋养，成长路上不孤单",
-              summary: "个性化教练指导，温暖包容的社群氛围",
-              detail: "结合学员心理特质与成长卡点精准破解，兼顾科学性与个性化；无评判、多赋能，让你敢直面自我、敢真实表达；免费终身复训权益，持续链接同频伙伴，一次加入，终身收获专业成长滋养与温暖人际支撑。"
-            },
-          ].map((item, i) => {
-            const isExpanded = expandedHighlight === i;
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="p-4 rounded-2xl bg-white shadow-sm border border-indigo-100/50 cursor-pointer"
-                onClick={() => setExpandedHighlight(isExpanded ? null : i)}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl shrink-0">{item.icon}</span>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-sm text-slate-800">{item.title}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{item.summary}</p>
-                    {isExpanded && (
-                      <motion.p
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        className="text-xs text-slate-600 leading-relaxed mt-2 border-t border-slate-100 pt-2"
-                      >
-                        {item.detail}
-                      </motion.p>
-                    )}
-                  </div>
-                  <ChevronRight className={`w-4 h-4 text-slate-400 shrink-0 mt-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+          {coreAdvantages.map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="p-4 rounded-2xl bg-white shadow-sm border border-indigo-100/50"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${item.color}10` }}>
+                  <item.icon className="w-5 h-5" style={{ color: item.color }} />
                 </div>
-              </motion.div>
-            );
-          })}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-sm text-slate-800">{item.title}</h3>
+                  </div>
+                  <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-medium mb-1.5" style={{ background: `${item.color}10`, color: item.color }}>{item.tag}</span>
+                  <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </Section>
 
