@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { startPaymentFlow, trackPaymentEvent, endPaymentFlow, getCurrentFlowId } from '@/utils/paymentFlowTracker';
 import { WechatPayDialog, type WechatPayDialogProps } from './WechatPayDialog';
 import { AlipayPayDialog, type AlipayPayDialogProps } from './AlipayPayDialog';
 import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
@@ -78,8 +79,19 @@ export function UnifiedPayDialog({
     if (open) {
       setPayMethod(getDefaultPayMethod());
       setStage('pay');
+      // 埋点：支付弹窗打开
+      if (!getCurrentFlowId()) {
+        startPaymentFlow({
+          productName: packageInfo?.name,
+          amount: packageInfo?.price,
+          packageKey: packageInfo?.key,
+        });
+      }
+      trackPaymentEvent('payment_dialog_opened', {
+        metadata: { payMethod: getDefaultPayMethod(), packageKey: packageInfo?.key },
+      });
     }
-  }, [open]);
+  }, [open, packageInfo]);
 
   const handleSelect = useCallback((method: PayMethod) => {
     setPayMethod(method);
