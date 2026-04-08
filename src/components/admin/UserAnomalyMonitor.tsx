@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon, Route } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
@@ -13,6 +13,7 @@ import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
 import AnomalyAggregation from "./AnomalyAggregation";
 import PaymentMonitor from "./PaymentMonitor";
+import PaymentFlowMonitor from "./PaymentFlowMonitor";
 import OGHealthMonitor from "./OGHealthMonitor";
 import MonitorFilters from "./shared/MonitorFilters";
 import { injectMonitorMockData } from "@/lib/monitorMockData";
@@ -166,6 +167,11 @@ export default function UserAnomalyMonitor() {
             <span className="hidden sm:inline">支付监控</span>
             <span className="sm:hidden">支付</span>
           </TabsTrigger>
+          <TabsTrigger value="payment-flow" className="text-xs sm:text-sm">
+            <Route className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">支付流程</span>
+            <span className="sm:hidden">流程</span>
+          </TabsTrigger>
           <TabsTrigger value="frontend" className="text-xs sm:text-sm">
             <Bug className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">前端异常监控</span>
@@ -305,6 +311,10 @@ export default function UserAnomalyMonitor() {
 
         <TabsContent value="payment">
           <PaymentMonitor />
+        </TabsContent>
+
+        <TabsContent value="payment-flow">
+          <PaymentFlowMonitor />
         </TabsContent>
 
         <TabsContent value="frontend">

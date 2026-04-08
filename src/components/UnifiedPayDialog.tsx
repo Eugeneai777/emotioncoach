@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { startPaymentFlow, trackPaymentEvent, endPaymentFlow, getCurrentFlowId } from '@/utils/paymentFlowTracker';
 import { WechatPayDialog, type WechatPayDialogProps } from './WechatPayDialog';
 import { AlipayPayDialog, type AlipayPayDialogProps } from './AlipayPayDialog';
 import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
@@ -78,8 +79,19 @@ export function UnifiedPayDialog({
     if (open) {
       setPayMethod(getDefaultPayMethod());
       setStage('pay');
+      // 埋点：支付弹窗打开
+      if (!getCurrentFlowId()) {
+        startPaymentFlow({
+          productName: packageInfo?.name,
+          amount: packageInfo?.price,
+          packageKey: packageInfo?.key,
+        });
+      }
+      trackPaymentEvent('payment_dialog_opened', {
+        metadata: { payMethod: getDefaultPayMethod(), packageKey: packageInfo?.key },
+      });
     }
-  }, [open]);
+  }, [open, packageInfo]);
 
   const handleSelect = useCallback((method: PayMethod) => {
     setPayMethod(method);
@@ -88,10 +100,21 @@ export function UnifiedPayDialog({
 
   const handlePayDialogChange = useCallback((v: boolean) => {
     if (!v) {
-      // 关闭支付弹窗时，回到选择阶段或直接关闭
+      // 埋点：用户关闭支付弹窗
+      trackPaymentEvent('payment_cancelled');
+      endPaymentFlow();
       onOpenChange(false);
     }
   }, [onOpenChange]);
+
+  // 包装 onSuccess 以埋点支付成功
+  const handleSuccess = useCallback(() => {
+    trackPaymentEvent('payment_success', {
+      metadata: { packageKey: packageInfo?.key, payMethod },
+    });
+    endPaymentFlow();
+    onSuccess();
+  }, [onSuccess, packageInfo, payMethod]);
 
   // 小程序环境：只能用微信支付，直接渲染
   if (isMiniProgram) {
@@ -100,7 +123,7 @@ export function UnifiedPayDialog({
         open={open}
         onOpenChange={onOpenChange}
         packageInfo={packageInfo}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
         returnUrl={returnUrl}
         openId={openId}
         shippingInfo={shippingInfo}
@@ -116,7 +139,7 @@ export function UnifiedPayDialog({
           open={true}
           onOpenChange={handlePayDialogChange}
           packageInfo={packageInfo}
-          onSuccess={onSuccess}
+          onSuccess={handleSuccess}
           returnUrl={returnUrl}
           shippingInfo={shippingInfo}
         />
@@ -127,7 +150,7 @@ export function UnifiedPayDialog({
         open={true}
         onOpenChange={handlePayDialogChange}
         packageInfo={packageInfo}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
         returnUrl={returnUrl}
         openId={openId}
         shippingInfo={shippingInfo}

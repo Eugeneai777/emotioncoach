@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, MapPin, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { RegionPicker } from "./RegionPicker";
-
+import { startPaymentFlow, trackPaymentEvent, getCurrentFlowId } from "@/utils/paymentFlowTracker";
 export interface CheckoutInfo {
   buyerName: string;
   buyerPhone: string;
@@ -67,6 +67,18 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
   const [idCardName, setIdCardName] = useState("");
   const [idCardNumber, setIdCardNumber] = useState("");
 
+  // 埋点：表单打开
+  useEffect(() => {
+    if (open) {
+      if (!getCurrentFlowId()) {
+        startPaymentFlow({ productName, amount: price });
+      }
+      trackPaymentEvent('checkout_opened', {
+        metadata: { productName, price },
+      });
+    }
+  }, [open, productName, price]);
+
   const baseCanSubmit = name.trim() && phone.trim() && province && city && district && detailAddress.trim();
   const idCardValid = !needIdCard || (idCardName.trim() && validateIdCard(idCardNumber.trim()));
   const canSubmit = baseCanSubmit && idCardValid;
@@ -98,6 +110,10 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
       return;
     }
     const fullAddress = `${province}${city}${district} ${detailAddress.trim()}`;
+    // 埋点：收货信息提交
+    trackPaymentEvent('checkout_submitted', {
+      metadata: { productName, price },
+    });
     onConfirm({
       buyerName: name.trim(),
       buyerPhone: phone.trim(),
