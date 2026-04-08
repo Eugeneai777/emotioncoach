@@ -52,8 +52,10 @@ interface UseVideoGenerationReturn {
 }
 
 // ─── Segment Grouping ───
-// 即梦 API 要求音频时长 ≤ 15s，将脚本分段为 ≤ 14s 的组（留 1s 余量）
-const MAX_GROUP_DURATION_SEC = 14;
+// 即梦 API 要求音频时长 ≤ 15s
+// 预估时长不可靠，改用字符数限制：中文约 4 字/秒，50 字 ≈ 12.5s（留余量）
+const MAX_GROUP_DURATION_SEC = 12;
+const MAX_GROUP_CHARS = 50;
 
 interface SegmentGroup {
   segments: ScriptSegment[];
@@ -65,11 +67,17 @@ function groupSegments(segments: ScriptSegment[]): SegmentGroup[] {
   const groups: SegmentGroup[] = [];
   let current: ScriptSegment[] = [];
   let currentDuration = 0;
+  let currentChars = 0;
 
   for (const seg of segments) {
     const segDuration = seg.endSec - seg.startSec;
+    const segChars = seg.text.length;
 
-    if (currentDuration + segDuration > MAX_GROUP_DURATION_SEC && current.length > 0) {
+    // 如果添加当前段后超出时长或字数限制，先把已有的段落打包
+    if (current.length > 0 && (
+      currentDuration + segDuration > MAX_GROUP_DURATION_SEC ||
+      currentChars + segChars > MAX_GROUP_CHARS
+    )) {
       groups.push({
         segments: current,
         text: current.map(s => s.text).join(''),
@@ -77,10 +85,26 @@ function groupSegments(segments: ScriptSegment[]): SegmentGroup[] {
       });
       current = [];
       currentDuration = 0;
+      currentChars = 0;
+    }
+
+    // 如果单个段落本身就超过字数限制，按句号/逗号拆分
+    if (segChars > MAX_GROUP_CHARS && current.length === 0) {
+      const subTexts = splitTextBySentence(seg.text, MAX_GROUP_CHARS);
+      const avgDurPerChar = segDuration / segChars;
+      for (const subText of subTexts) {
+        groups.push({
+          segments: [{ ...seg, text: subText }],
+          text: subText,
+          totalDuration: Math.round(subText.length * avgDurPerChar * 10) / 10,
+        });
+      }
+      continue;
     }
 
     current.push(seg);
     currentDuration += segDuration;
+    currentChars += segChars;
   }
 
   if (current.length > 0) {
@@ -91,7 +115,25 @@ function groupSegments(segments: ScriptSegment[]): SegmentGroup[] {
     });
   }
 
+  console.log(`[VideoGen] 分为 ${groups.length} 组:`, groups.map(g => `${g.text.length}字/${g.totalDuration}s`));
   return groups;
+}
+
+/** 按中文标点拆分长文本，每段不超过 maxChars */
+function splitTextBySentence(text: string, maxChars: number): string[] {
+  const results: string[] = [];
+  // 按句号、问号、感叹号、分号拆分，保留分隔符
+  const sentences = text.split(/(?<=[。！？；，,])/);
+  let buf = '';
+  for (const s of sentences) {
+    if (buf.length + s.length > maxChars && buf.length > 0) {
+      results.push(buf);
+      buf = '';
+    }
+    buf += s;
+  }
+  if (buf) results.push(buf);
+  return results;
 }
 
 // ─── Single segment pipeline: TTS → Upload → Submit → Poll ───
