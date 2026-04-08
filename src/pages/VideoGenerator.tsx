@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useVideoGeneration, VideoGenStatus, StructuredScript } from '@/hooks/useVideoGeneration';
-import { RefreshCw } from 'lucide-react';
 import { VOICE_TYPE_OPTIONS } from '@/config/voiceTypeConfig';
 import {
   STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES, CONVERSION_PRODUCTS,
@@ -16,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, Video, CheckCircle2, Loader2, AlertCircle,
-  Download, RotateCcw, Camera, Sparkles, ImageIcon, FileJson,
+  Download, RotateCcw, Camera, Sparkles, ImageIcon, FileJson, RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
