@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     const service = "cv";
 
     if (action === "submit") {
-      const { image_url, audio_url, resolution } = params;
+      const { image_url, audio_url, resolution, prompt, seed } = params;
 
       if (!image_url || !audio_url) {
         return new Response(
@@ -116,6 +116,11 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      const outputResolution = resolution === 720 || resolution === "720" || resolution === "720p"
+        ? 720
+        : 1080;
+      const peFastMode = outputResolution === 720;
 
       // Pre-check: verify image and audio URLs are accessible and within limits
       try {
@@ -127,10 +132,10 @@ Deno.serve(async (req) => {
         if (imgHead) {
           const imgSize = Number(imgHead.headers.get("content-length") || 0);
           const imgType = imgHead.headers.get("content-type") || "";
-          console.log(`[jimeng] image check: status=${imgHead.status}, size=${(imgSize/1024/1024).toFixed(2)}MB, type=${imgType}`);
+          console.log(`[jimeng] image check: status=${imgHead.status}, size=${(imgSize / 1024 / 1024).toFixed(2)}MB, type=${imgType}`);
           if (imgSize > 5 * 1024 * 1024) {
             return new Response(
-              JSON.stringify({ error: `图片大小 ${(imgSize/1024/1024).toFixed(1)}MB 超过即梦限制(5MB)，请压缩后重试`, status: "failed" }),
+              JSON.stringify({ error: `图片大小 ${(imgSize / 1024 / 1024).toFixed(1)}MB 超过即梦限制(5MB)，请压缩后重试`, status: "failed" }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
@@ -139,25 +144,27 @@ Deno.serve(async (req) => {
         if (audioHead) {
           const audioSize = Number(audioHead.headers.get("content-length") || 0);
           const audioType = audioHead.headers.get("content-type") || "";
-          console.log(`[jimeng] audio check: status=${audioHead.status}, size=${(audioSize/1024).toFixed(1)}KB, type=${audioType}`);
+          console.log(`[jimeng] audio check: status=${audioHead.status}, size=${(audioSize / 1024).toFixed(1)}KB, type=${audioType}`);
         }
       } catch (e) {
         console.warn("[jimeng] pre-check failed (non-blocking):", e);
       }
 
       const reqKey = "jimeng_realman_avatar_picture_omni_v15";
-      const body = JSON.stringify({
+      const submitPayload: Record<string, unknown> = {
         req_key: reqKey,
-        binary_data_base64: [],
-        image_urls: [image_url],
-        audio_urls: [audio_url],
-        logo_info: { add_logo: false },
-        extra: JSON.stringify({
-          resolution: resolution || 720,
-          seed: -1,
-        }),
-      });
+        image_url,
+        audio_url,
+        output_resolution: outputResolution,
+        pe_fast_mode: peFastMode,
+        seed: typeof seed === "number" ? seed : -1,
+      };
 
+      if (typeof prompt === "string" && prompt.trim()) {
+        submitPayload.prompt = prompt.trim().slice(0, 300);
+      }
+
+      const body = JSON.stringify(submitPayload);
       const queryString = "Action=CVSubmitTask&Version=2022-08-31";
       const path = "/";
 
@@ -179,7 +186,7 @@ Deno.serve(async (req) => {
         ...sigHeaders,
       };
 
-      console.log(`[jimeng] submit: image=${image_url}, audio=${audio_url}, resolution=${resolution || 720}`);
+      console.log(`[jimeng] submit payload: ${JSON.stringify({ image_url, audio_url, output_resolution: outputResolution, pe_fast_mode: peFastMode })}`);
 
       const res = await fetch(`https://${host}${path}?${queryString}`, {
         method: "POST",
@@ -188,25 +195,39 @@ Deno.serve(async (req) => {
       });
 
       const data = await res.json();
-      console.log(`[jimeng] submit response:`, JSON.stringify(data).slice(0, 500));
+      console.log(`[jimeng] submit response: code=${data?.code}, message=${data?.message}, request_id=${data?.request_id || data?.ResponseMetadata?.RequestId || ""}`);
 
-      if (data.code && data.code !== 10000) {
+      if (data.ResponseMetadata?.Error) {
         return new Response(
-          JSON.stringify({ error: `提交失败: ${data.message || data.code}`, status: "failed", raw: data }),
+          JSON.stringify({
+            error: `提交失败: ${data.ResponseMetadata.Error.Message}`,
+            status: "failed",
+            request_id: data?.request_id || data?.ResponseMetadata?.RequestId || null,
+            raw: data,
+          }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Handle Volcengine ResponseMetadata errors
-      if (data.ResponseMetadata?.Error) {
+      if (data.code !== 10000 || !data.data?.task_id) {
         return new Response(
-          JSON.stringify({ error: `提交失败: ${data.ResponseMetadata.Error.Message}`, status: "failed", raw: data }),
+          JSON.stringify({
+            error: `提交失败: ${data.message || data.code || "未知错误"}`,
+            status: "failed",
+            request_id: data?.request_id || null,
+            raw: data,
+          }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       return new Response(
-        JSON.stringify({ task_id: data.data?.task_id, status: "submitted", raw: data }),
+        JSON.stringify({
+          task_id: data.data.task_id,
+          status: "submitted",
+          request_id: data?.request_id || null,
+          raw: data,
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -254,46 +275,36 @@ Deno.serve(async (req) => {
       });
 
       const data = await res.json();
-      console.log(`[jimeng] query task=${task_id}:`, JSON.stringify(data).slice(0, 500));
+      const respData = data?.data || {};
+      const taskStatus = respData?.status || "unknown";
+      const videoUrl = respData?.video_url || respData?.output_video_url || null;
+      const requestId = data?.request_id || data?.ResponseMetadata?.RequestId || null;
 
-      const respData = data.data || {};
-      let status = "unknown";
-      if (respData.status === "done" || respData.resp_data) {
-        status = "done";
-      } else if (respData.status) {
-        status = respData.status;
-      }
+      console.log(`[jimeng] query task=${task_id}: code=${data?.code}, status=${taskStatus}, message=${data?.message}, request_id=${requestId || ""}`);
 
-      // Handle error in ResponseMetadata
       if (data.ResponseMetadata?.Error) {
         return new Response(
-          JSON.stringify({ error: data.ResponseMetadata.Error.Message, task_id, status: "failed", raw: data }),
+          JSON.stringify({ error: data.ResponseMetadata.Error.Message, task_id, status: "failed", request_id: requestId, raw: data }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Handle top-level API error codes (e.g. 50215 "Input invalid for this service")
-      if (data.code && data.code !== 0 && !data.data) {
+      // 官方约定：优先判断 code=10000，再判断 data.status
+      if (data.code !== 10000) {
         return new Response(
-          JSON.stringify({ error: data.message || `即梦 API 错误 (code: ${data.code})`, task_id, status: "failed", raw: data }),
+          JSON.stringify({
+            error: data.message || `即梦 API 错误 (code: ${data.code})`,
+            task_id,
+            status: "failed",
+            request_id: requestId,
+            raw: data,
+          }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
-      }
-
-      let videoUrl = null;
-      if (status === "done" && respData.resp_data) {
-        try {
-          const parsed = typeof respData.resp_data === "string"
-            ? JSON.parse(respData.resp_data)
-            : respData.resp_data;
-          videoUrl = parsed?.video_url || parsed?.output_video_url || null;
-        } catch {
-          videoUrl = respData.resp_data;
-        }
       }
 
       return new Response(
-        JSON.stringify({ task_id, status, video_url: videoUrl, raw: data }),
+        JSON.stringify({ task_id, status: taskStatus, video_url: videoUrl, request_id: requestId, raw: data }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
