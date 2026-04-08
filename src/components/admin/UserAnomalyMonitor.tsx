@@ -313,6 +313,10 @@ export default function UserAnomalyMonitor() {
           <PaymentMonitor />
         </TabsContent>
 
+        <TabsContent value="payment-flow">
+          <PaymentFlowMonitor />
+        </TabsContent>
+
         <TabsContent value="frontend">
           <FrontendErrorMonitor />
         </TabsContent>
