@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useVideoGeneration, VideoGenStatus, StructuredScript } from '@/hooks/useVideoGeneration';
+import { RefreshCw } from 'lucide-react';
 import { VOICE_TYPE_OPTIONS } from '@/config/voiceTypeConfig';
 import {
   STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES, CONVERSION_PRODUCTS,
@@ -29,6 +30,7 @@ const STATUS_LABELS: Record<VideoGenStatus, string> = {
   submitting_task: '正在提交数字人任务...',
   generating_video: '数字人视频生成中（预计2-5分钟）...',
   merging_video: '正在合并视频片段...',
+  merge_failed: '视频合并失败',
   done: '视频生成完成！',
   error: '生成失败',
 };
@@ -180,7 +182,7 @@ function useDynamicTopicGroups(): VideoTopicGroup[] {
 
 const VideoGenerator: React.FC = () => {
   const navigate = useNavigate();
-  const { status, error, result, progress, segmentProgress, generate, reset } = useVideoGeneration();
+  const { status, error, result, progress, segmentProgress, generate, retryMerge, reset } = useVideoGeneration();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topicGroups = useDynamicTopicGroups();
 
@@ -210,7 +212,7 @@ const VideoGenerator: React.FC = () => {
     }
   }, [recommendedIds]);
 
-  const isGenerating = !['idle', 'done', 'error'].includes(status);
+  const isGenerating = !['idle', 'done', 'error', 'merge_failed'].includes(status);
 
   const fullScript = useMemo(() => {
     if (!structuredScript) return '';
@@ -488,7 +490,7 @@ const VideoGenerator: React.FC = () => {
           <Button className="flex-1" size="lg" onClick={handleGenerate} disabled={isGenerating || !fullScript.trim() || !imageUrl.trim()}>
             {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> 生成中...</> : '🚀 开始生成视频'}
           </Button>
-          {(status === 'done' || status === 'error') && (
+          {(status === 'done' || status === 'error' || status === 'merge_failed') && (
             <Button variant="outline" size="lg" onClick={reset}><RotateCcw className="w-4 h-4" /></Button>
           )}
         </div>
@@ -523,7 +525,7 @@ const VideoGenerator: React.FC = () => {
           </Card>
         )}
 
-        {/* 6. Result */}
+        {/* 6. Result — successful merge */}
         {status === 'done' && result.videoUrl && (
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-base">🎬 生成结果</CardTitle></CardHeader>
@@ -558,6 +560,44 @@ const VideoGenerator: React.FC = () => {
               </div>
               {result.compositionProps && (
                 <p className="text-xs text-muted-foreground text-center">导出 Remotion 配置 JSON 后，可用本地渲染脚本生成数字人+B-Roll混剪视频</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 6b. Result — merge failed, show segments */}
+        {status === 'merge_failed' && result.videoSegments && (
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-base">⚠️ 片段已生成，但合并失败</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-2 p-3 bg-orange-500/10 rounded-lg text-sm text-orange-700 dark:text-orange-400">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">自动合并失败</p>
+                  <p className="text-xs mt-1">{result.mergeError || '浏览器视频处理引擎加载失败'}</p>
+                  <p className="text-xs mt-1">您可以下载各分段视频后用剪映等工具手动合并，或点击重试。</p>
+                </div>
+              </div>
+              <Button onClick={retryMerge} className="w-full" variant="secondary">
+                <RefreshCw className="w-4 h-4 mr-2" /> 重试合并
+              </Button>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">各片段视频（共 {result.videoSegments.length} 段）：</p>
+                {result.videoSegments.map((url, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">片段 {i + 1}</span>
+                    <Button variant="ghost" size="sm" asChild>
+                      <a href={url} download target="_blank" rel="noopener noreferrer">
+                        <Download className="w-3 h-3 mr-1" /> 下载
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              {result.compositionProps && (
+                <Button variant="outline" className="w-full" onClick={handleExportConfig}>
+                  <FileJson className="w-4 h-4 mr-2" /> 导出混剪配置
+                </Button>
               )}
             </CardContent>
           </Card>
