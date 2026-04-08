@@ -38,7 +38,8 @@ import {
   Network,
   Brain,
   ClipboardList,
-  Newspaper
+  Newspaper,
+  BookMarked
 } from "lucide-react";
 import {
   Sidebar,
@@ -147,7 +148,8 @@ const NAV_GROUPS = [
       { key: "funnel", label: "转化漏斗", path: "/admin/funnel", icon: TrendingUp },
       { key: "reports", label: "举报管理", path: "/admin/reports", icon: Flag },
       { key: "wechat-broadcast", label: "微信群发", path: "/admin/wechat-broadcast", icon: Mail },
-      { key: "wechat-articles", label: "公众号文章", path: "/admin/wechat-articles", icon: Newspaper }
+      { key: "wechat-articles", label: "公众号文章", path: "/admin/wechat-articles", icon: Newspaper },
+      { key: "xhs-analysis", label: "小红书分析", path: "/admin/xhs-analysis", icon: BookMarked }
     ]
   },
   {
