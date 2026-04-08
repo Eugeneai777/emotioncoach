@@ -67,6 +67,18 @@ export function CheckoutForm({ open, onOpenChange, productName, price, onConfirm
   const [idCardName, setIdCardName] = useState("");
   const [idCardNumber, setIdCardNumber] = useState("");
 
+  // 埋点：表单打开
+  useEffect(() => {
+    if (open) {
+      if (!getCurrentFlowId()) {
+        startPaymentFlow({ productName, amount: price });
+      }
+      trackPaymentEvent('checkout_opened', {
+        metadata: { productName, price },
+      });
+    }
+  }, [open, productName, price]);
+
   const baseCanSubmit = name.trim() && phone.trim() && province && city && district && detailAddress.trim();
   const idCardValid = !needIdCard || (idCardName.trim() && validateIdCard(idCardNumber.trim()));
   const canSubmit = baseCanSubmit && idCardValid;
