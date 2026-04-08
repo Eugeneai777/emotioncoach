@@ -32,6 +32,7 @@ interface RealtimeMetrics {
   currentQPS: number;
   peakQPS: number;
   todayTotalCalls: number;
+  todayApiCalls: number;
   todayTotalTokens: number;
   todayInputTokens: number;
   todayOutputTokens: number;
@@ -88,6 +89,7 @@ const THRESHOLD_STORAGE_KEY = "admin_anomaly_thresholds";
 interface HourlyData {
   hour: string;
   calls: number;
+  apiCalls: number;
   tokens: number;
   voiceSeconds: number;
 }
@@ -109,7 +111,7 @@ interface TopUser {
 export default function OperationsMonitorDashboard() {
   const [metrics, setMetrics] = useState<RealtimeMetrics | null>(null);
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
-  const [minuteQPS, setMinuteQPS] = useState<{ time: string; qps: number }[]>([]);
+  const [minuteQPS, setMinuteQPS] = useState<{ time: string; qps: number; apiQps: number }[]>([]);
   const [sourceBreakdown, setSourceBreakdown] = useState<SourceBreakdown[]>([]);
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -354,6 +356,7 @@ export default function OperationsMonitorDashboard() {
       currentQPS,
       peakQPS: currentQPS,
       todayTotalCalls,
+      todayApiCalls: costLogs.length,
       todayTotalTokens: todayInputTokens + todayOutputTokens,
       todayInputTokens,
       todayOutputTokens,
@@ -400,12 +403,16 @@ export default function OperationsMonitorDashboard() {
             .gte("created_at", hourStart).lt("created_at", hourEnd)
             .like("source", "realtime_voice%")
             .eq("record_type", "consumption"),
-        ]).then(([callsRes, tokensRes, voiceRes, voiceUsageRes]) => {
+          supabase.from("api_cost_logs")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", hourStart).lt("created_at", hourEnd),
+        ]).then(([callsRes, tokensRes, voiceRes, voiceUsageRes, apiCallsRes]) => {
           const aiCoachSeconds = (voiceRes.data || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
           const usageSeconds = (voiceUsageRes.data || []).reduce((s, r: any) => s + ((r.amount || 0) / 8) * 60, 0);
           return {
             hour: format(subHours(new Date(), i), "HH:00"),
             calls: callsRes.count || 0,
+            apiCalls: apiCallsRes.count || 0,
             tokens: (tokensRes.data || []).reduce((s, r) => s + (r.input_tokens || 0) + (r.output_tokens || 0), 0),
             voiceSeconds: Math.round(aiCoachSeconds + usageSeconds),
           };
@@ -418,20 +425,25 @@ export default function OperationsMonitorDashboard() {
   };
 
   const fetchMinuteQPS = async () => {
-    const points: { time: string; qps: number }[] = [];
+    const points: { time: string; qps: number; apiQps: number }[] = [];
     const promises = [];
 
     for (let i = 14; i >= 0; i--) {
       const minStart = subMinutes(new Date(), i + 1).toISOString();
       const minEnd = subMinutes(new Date(), i).toISOString();
       promises.push(
-        supabase.from("usage_records")
-          .select("id", { count: "exact", head: true })
-          .gte("created_at", minStart).lt("created_at", minEnd)
-          .then(res => ({
-            time: format(subMinutes(new Date(), i), "HH:mm"),
-            qps: Math.round(((res.count || 0) / 60) * 100) / 100,
-          }))
+        Promise.all([
+          supabase.from("usage_records")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", minStart).lt("created_at", minEnd),
+          supabase.from("api_cost_logs")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", minStart).lt("created_at", minEnd),
+        ]).then(([usageRes, apiRes]) => ({
+          time: format(subMinutes(new Date(), i), "HH:mm"),
+          qps: Math.round(((usageRes.count || 0) / 60) * 100) / 100,
+          apiQps: Math.round(((apiRes.count || 0) / 60) * 100) / 100,
+        }))
       );
     }
 
@@ -816,8 +828,8 @@ export default function OperationsMonitorDashboard() {
         <StatCard
           icon={Zap}
           label="今日总调用"
-          value={formatNumber(metrics?.todayTotalCalls ?? 0)}
-          sub={`活跃用户 ${metrics?.todayActiveUsers ?? 0}`}
+          value={formatNumber((metrics?.todayTotalCalls ?? 0) + (metrics?.todayApiCalls ?? 0))}
+          sub={`点数 ${formatNumber(metrics?.todayTotalCalls ?? 0)} · API ${formatNumber(metrics?.todayApiCalls ?? 0)} · 活跃 ${metrics?.todayActiveUsers ?? 0}`}
         />
         <StatCard
           icon={MessageSquare}
@@ -998,18 +1010,31 @@ export default function OperationsMonitorDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" fontSize={11} interval={2} />
                 <YAxis fontSize={11} />
-                <Tooltip formatter={(v: number) => [`${v}/s`, "QPS"]} />
+                <Tooltip formatter={(v: number, name: string) => [`${v}/s`, name === "qps" ? "点数QPS" : "API QPS"]} />
                 <defs>
                   <linearGradient id="qpsGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
+                  <linearGradient id="apiQpsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  </linearGradient>
                 </defs>
                 <Area
                   type="monotone"
                   dataKey="qps"
+                  name="点数QPS"
                   stroke="hsl(var(--primary))"
                   fill="url(#qpsGradient)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="apiQps"
+                  name="API QPS"
+                  stroke="#f59e0b"
+                  fill="url(#apiQpsGradient)"
                   strokeWidth={2}
                 />
               </AreaChart>
@@ -1032,7 +1057,8 @@ export default function OperationsMonitorDashboard() {
                 <XAxis dataKey="hour" fontSize={11} interval={3} />
                 <YAxis fontSize={11} />
                 <Tooltip />
-                <Bar dataKey="calls" name="调用次数" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="calls" name="点数调用" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="apiCalls" name="API调用" fill="#f59e0b" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
