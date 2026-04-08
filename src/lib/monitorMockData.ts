@@ -48,11 +48,79 @@ export async function injectMonitorMockData() {
     { anomaly_type: 'abnormal_login', severity: 'warning', title: '多设备同时登录', message: '[Mock] 同一账号在 3 台不同设备上同时活跃', platform: currentPlatform, user_agent: navigator.userAgent, user_id: 'mock-user-007' },
   ];
 
+  // 支付流程模拟数据 - 模拟多种中断场景
+  const now_ts = Date.now();
+  const paymentFlowEvents = [];
+
+  // 场景1: 完整成功流程
+  const flow1 = `pf_mock_${now_ts}_success`;
+  paymentFlowEvents.push(
+    { flow_id: flow1, event_type: 'payment_intent', page_url: 'https://app.example.com/promo/synergy', metadata: { productName: '协同套餐', amount: 1999, packageKey: 'synergy_bundle' }, created_at: new Date(now_ts - 600000).toISOString() },
+    { flow_id: flow1, event_type: 'checkout_opened', page_url: 'https://app.example.com/promo/synergy', metadata: { productName: '协同套餐', amount: 1999 }, created_at: new Date(now_ts - 590000).toISOString() },
+    { flow_id: flow1, event_type: 'checkout_submitted', page_url: 'https://app.example.com/promo/synergy', metadata: { productName: '协同套餐', amount: 1999 }, created_at: new Date(now_ts - 540000).toISOString() },
+    { flow_id: flow1, event_type: 'payment_dialog_opened', page_url: 'https://app.example.com/promo/synergy', metadata: { payMethod: 'wechat' }, created_at: new Date(now_ts - 530000).toISOString() },
+    { flow_id: flow1, event_type: 'payment_submitted', page_url: 'https://app.example.com/promo/synergy', metadata: {}, created_at: new Date(now_ts - 520000).toISOString() },
+    { flow_id: flow1, event_type: 'payment_success', page_url: 'https://app.example.com/promo/synergy', metadata: { payMethod: 'wechat' }, created_at: new Date(now_ts - 500000).toISOString() },
+  );
+
+  // 场景2: 登录后重定向丢失（最常见的中断）
+  const flow2 = `pf_mock_${now_ts}_redirect_lost`;
+  paymentFlowEvents.push(
+    { flow_id: flow2, event_type: 'payment_intent', page_url: 'https://app.example.com/camp-intro/emotion', metadata: { productName: '情绪训练营', amount: 399, packageKey: 'camp-emotion' }, created_at: new Date(now_ts - 3600000).toISOString() },
+    { flow_id: flow2, event_type: 'redirect_to_login', page_url: 'https://app.example.com/camp-intro/emotion', target_url: 'https://app.example.com/auth', metadata: { reason: '未登录' }, created_at: new Date(now_ts - 3595000).toISOString() },
+    { flow_id: flow2, event_type: 'login_completed', page_url: 'https://app.example.com/auth', metadata: {}, created_at: new Date(now_ts - 3550000).toISOString() },
+    { flow_id: flow2, event_type: 'redirect_lost', page_url: 'https://app.example.com/mini-app', error_message: '登录后跳转至默认首页 /mini-app，未返回 /camp-intro/emotion 支付页', metadata: { expectedUrl: '/camp-intro/emotion', actualUrl: '/mini-app' }, created_at: new Date(now_ts - 3545000).toISOString() },
+  );
+
+  // 场景3: 微信OAuth后支付弹窗未打开
+  const flow3 = `pf_mock_${now_ts}_dialog_fail`;
+  paymentFlowEvents.push(
+    { flow_id: flow3, event_type: 'payment_intent', page_url: 'https://app.example.com/promo/identity-bloom', metadata: { productName: '绽放联盟套餐', amount: 2999, packageKey: 'identity_bloom' }, created_at: new Date(now_ts - 7200000).toISOString() },
+    { flow_id: flow3, event_type: 'checkout_opened', page_url: 'https://app.example.com/promo/identity-bloom', metadata: {}, created_at: new Date(now_ts - 7190000).toISOString() },
+    { flow_id: flow3, event_type: 'checkout_submitted', page_url: 'https://app.example.com/promo/identity-bloom', metadata: {}, created_at: new Date(now_ts - 7150000).toISOString() },
+    { flow_id: flow3, event_type: 'redirect_to_login', page_url: 'https://app.example.com/promo/identity-bloom', target_url: 'https://open.weixin.qq.com/connect/oauth2/authorize', metadata: { reason: '微信JSAPI需要OpenID' }, created_at: new Date(now_ts - 7145000).toISOString() },
+    { flow_id: flow3, event_type: 'login_completed', page_url: 'https://app.example.com/promo/identity-bloom?code=xxx&state=xxx', metadata: {}, created_at: new Date(now_ts - 7100000).toISOString() },
+  );
+
+  // 场景4: 收货表单放弃
+  const flow4 = `pf_mock_${now_ts}_checkout_abandon`;
+  paymentFlowEvents.push(
+    { flow_id: flow4, event_type: 'payment_intent', page_url: 'https://app.example.com/health-store', metadata: { productName: '知乐胶囊 4瓶装', amount: 1159, packageKey: 'store_product_zhile_4' }, created_at: new Date(now_ts - 1800000).toISOString() },
+    { flow_id: flow4, event_type: 'checkout_opened', page_url: 'https://app.example.com/health-store', metadata: { productName: '知乐胶囊 4瓶装', amount: 1159 }, created_at: new Date(now_ts - 1795000).toISOString() },
+  );
+
+  // 场景5: 支付请求失败
+  const flow5 = `pf_mock_${now_ts}_pay_failed`;
+  paymentFlowEvents.push(
+    { flow_id: flow5, event_type: 'payment_intent', page_url: 'https://app.example.com/promo/synergy', metadata: { productName: '协同套餐', amount: 1999 }, created_at: new Date(now_ts - 5400000).toISOString() },
+    { flow_id: flow5, event_type: 'checkout_submitted', page_url: 'https://app.example.com/promo/synergy', metadata: {}, created_at: new Date(now_ts - 5350000).toISOString() },
+    { flow_id: flow5, event_type: 'payment_dialog_opened', page_url: 'https://app.example.com/promo/synergy', metadata: { payMethod: 'alipay' }, created_at: new Date(now_ts - 5340000).toISOString() },
+    { flow_id: flow5, event_type: 'payment_submitted', page_url: 'https://app.example.com/promo/synergy', metadata: {}, created_at: new Date(now_ts - 5335000).toISOString() },
+    { flow_id: flow5, event_type: 'payment_failed', page_url: 'https://app.example.com/promo/synergy', error_message: '支付宝H5下单接口返回 SYSTEM_ERROR: 系统繁忙请稍后再试', metadata: { payMethod: 'alipay', errorCode: 'SYSTEM_ERROR' }, created_at: new Date(now_ts - 5330000).toISOString() },
+  );
+
+  // 场景6: 用户取消支付弹窗
+  const flow6 = `pf_mock_${now_ts}_cancelled`;
+  paymentFlowEvents.push(
+    { flow_id: flow6, event_type: 'payment_intent', page_url: 'https://app.example.com/wealth-assessment-free', metadata: { productName: '财富测评（付费版）', amount: 19.9 }, created_at: new Date(now_ts - 900000).toISOString() },
+    { flow_id: flow6, event_type: 'payment_dialog_opened', page_url: 'https://app.example.com/wealth-assessment-free', metadata: { payMethod: 'wechat' }, created_at: new Date(now_ts - 895000).toISOString() },
+    { flow_id: flow6, event_type: 'payment_cancelled', page_url: 'https://app.example.com/wealth-assessment-free', metadata: {}, created_at: new Date(now_ts - 860000).toISOString() },
+  );
+
+  // 场景7: 流程超时
+  const flow7 = `pf_mock_${now_ts}_timeout`;
+  paymentFlowEvents.push(
+    { flow_id: flow7, event_type: 'payment_intent', page_url: 'https://app.example.com/partner-intro', metadata: { productName: '绽放合伙人', amount: 4999, packageKey: 'bloom_partner' }, created_at: new Date(now_ts - 7200000).toISOString() },
+    { flow_id: flow7, event_type: 'redirect_to_login', page_url: 'https://app.example.com/partner-intro', target_url: 'https://app.example.com/auth?redirect=/partner-intro', metadata: {}, created_at: new Date(now_ts - 7195000).toISOString() },
+    { flow_id: flow7, event_type: 'flow_timeout', page_url: 'https://app.example.com/auth', error_message: '支付流程超过30分钟未完成', metadata: { elapsedMs: 1800000 }, created_at: new Date(now_ts - 5400000).toISOString() },
+  );
+
   const results = await Promise.allSettled([
     supabase.from('monitor_frontend_errors').insert(frontendErrors),
     supabase.from('monitor_api_errors').insert(apiErrors),
     supabase.from('monitor_ux_anomalies').insert(uxAnomalies),
     supabase.from('monitor_user_anomalies').insert(userAnomalies),
+    supabase.from('payment_flow_events' as any).insert(paymentFlowEvents as any),
   ]);
 
   const summary = {
@@ -60,6 +128,7 @@ export async function injectMonitorMockData() {
     apiErrors: results[1].status === 'fulfilled' ? apiErrors.length : 0,
     uxAnomalies: results[2].status === 'fulfilled' ? uxAnomalies.length : 0,
     userAnomalies: results[3].status === 'fulfilled' ? userAnomalies.length : 0,
+    paymentFlowEvents: results[4].status === 'fulfilled' ? paymentFlowEvents.length : 0,
     errors: results.filter(r => r.status === 'rejected').map(r => (r as PromiseRejectedResult).reason),
   };
 
