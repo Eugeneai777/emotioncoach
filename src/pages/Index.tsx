@@ -67,9 +67,7 @@ const Index = () => {
   const [selectedVoiceType, setSelectedVoiceType] = useState<string>(() => {
     const saved = getSavedVoiceType();
     console.log('[EmotionCoach] Initial voiceType from storage:', saved);
-    // 🔧 确保始终有有效值（新版模型需要长格式 ID）
-    const DEFAULT_VOICE = 'zh_male_M392_conversation_wvae_bigtts'; // 智慧长者
-    return saved && saved.trim() !== '' ? saved : DEFAULT_VOICE;
+    return saved && saved.trim() !== '' ? saved : DEFAULT_VOICE_TYPE;
   });
   const [briefingPreview, setBriefingPreview] = useState<{
     briefingId: string;
