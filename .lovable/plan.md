@@ -1,19 +1,18 @@
 
 
-# 更新7天有劲训练营定价
+# 删除情绪教练页面中的"21天训练营"卡片
 
-## 改动
+## 改动文件
 
-通过数据库迁移更新 `camp_templates` 表中 `emotion_stress_7` 的价格：
+`src/components/emotion-health/AssessmentCoachChat.tsx`
 
-- `original_price`: 599 → **299**（划线价）
-- `price`: 0.01 → **199**（实际售价）
+### 改动1：删除 upsell 区域的21天训练营卡片（L408-432）
 
-## 无需改代码
+删除整个 `Card` 组件（📔 21天情绪日记训练营），保留后面的"有劲365会员"卡片。
 
-现有 UI 组件（`CampTemplateCard`、`StartCampDialog`、`CampPurchaseDialog`）已支持：
-- 当 `original_price > price` 时自动显示划线价（¥299 ~~删除线~~）
-- 下方显示实际价格 ¥199
+### 改动2：删除简报底部的21天训练营迷你卡片（L569-582）
 
-只需一条 SQL 迁移即可完成。
+删除 `grid grid-cols-2` 中的第一个 Card（📔 21天训练营 ¥299），将 grid 改为单列布局，只保留"有劲365"卡片。
+
+不动其他文件和数据库。
 
