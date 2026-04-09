@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, ChevronRight, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award } from "lucide-react";
+import { Shield, ChevronRight, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,9 @@ import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
+import { ShareDialogBase } from "@/components/ui/share-dialog-base";
+import { useShareDialog } from "@/hooks/useShareDialog";
+import ZhileCoachShareCard from "@/components/promo/ZhileCoachShareCard";
 
 import coachBetty from "@/assets/coach-betty.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
