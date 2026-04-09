@@ -193,6 +193,11 @@ export default function UserAnomalyMonitor() {
             <span className="hidden sm:inline">OG分享监控</span>
             <span className="sm:hidden">OG</span>
           </TabsTrigger>
+          <TabsTrigger value="auth-flow" className="text-xs sm:text-sm">
+            <LogIn className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">登录注册监控</span>
+            <span className="sm:hidden">登录</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="user">
