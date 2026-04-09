@@ -103,6 +103,7 @@ export default function ZhileCoachPromoPage() {
 
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
+  const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
   const shareDialog = useShareDialog();
 
   useEffect(() => {
