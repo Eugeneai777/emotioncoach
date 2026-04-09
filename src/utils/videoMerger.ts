@@ -4,12 +4,20 @@
  */
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { fetchFile } from '@ffmpeg/util';
+import ffmpegCoreURL from '@ffmpeg/core?url';
+import ffmpegWasmURL from '@ffmpeg/core/wasm?url';
 
 let ffmpegInstance: FFmpeg | null = null;
 let loadPromise: Promise<FFmpeg> | null = null;
 
 const FFMPEG_LOAD_TIMEOUT_MS = 60_000; // 60s timeout for loading engine
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return '未知错误';
+}
 
 async function getFFmpeg(onProgress?: (message: string) => void): Promise<FFmpeg> {
   if (ffmpegInstance && ffmpegInstance.loaded) {
@@ -22,29 +30,26 @@ async function getFFmpeg(onProgress?: (message: string) => void): Promise<FFmpeg
   loadPromise = (async () => {
     const ffmpeg = new FFmpeg();
 
-    onProgress?.('正在下载视频处理引擎...');
+    try {
+      onProgress?.('正在加载本地视频处理引擎...');
+      onProgress?.('正在初始化视频处理引擎...');
 
-    // Use version matching installed @ffmpeg/ffmpeg 0.12.x
-    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+      await Promise.race([
+        ffmpeg.load({
+          coreURL: ffmpegCoreURL,
+          wasmURL: ffmpegWasmURL,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('视频处理引擎加载超时（60秒），请刷新页面后重试')), FFMPEG_LOAD_TIMEOUT_MS)
+        ),
+      ]);
 
-    const [coreURL, wasmURL, workerURL] = await Promise.all([
-      toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
-    ]);
-
-    onProgress?.('正在初始化视频处理引擎...');
-
-    // Load with timeout protection
-    const loadResult = await Promise.race([
-      ffmpeg.load({ coreURL, wasmURL, workerURL }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('视频处理引擎加载超时（60秒），请检查网络后重试')), FFMPEG_LOAD_TIMEOUT_MS)
-      ),
-    ]);
-
-    ffmpegInstance = ffmpeg;
-    return ffmpeg;
+      ffmpegInstance = ffmpeg;
+      return ffmpeg;
+    } catch (error) {
+      ffmpeg.terminate();
+      throw error;
+    }
   })();
 
   try {
@@ -88,7 +93,7 @@ export async function mergeVideosClientSide(
         continue;
       }
       console.error('ffmpeg.wasm 加载失败:', err);
-      throw new Error('视频处理引擎加载失败，请检查网络后重试');
+      throw new Error(`视频处理引擎加载失败：${getErrorMessage(err)}`);
     }
   }
 
