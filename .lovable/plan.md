@@ -1,18 +1,23 @@
 
 
-# 删除情绪教练页面中的"21天训练营"卡片
+# 修复"已坚持 0 天"显示问题
 
-## 改动文件
+## 问题根因
 
-`src/components/emotion-health/AssessmentCoachChat.tsx`
+`src/pages/CampCheckIn.tsx` 第 626 行：
+```
+已坚持 {camp.completed_days || checkInDates.length || 0} 天
+```
 
-### 改动1：删除 upsell 区域的21天训练营卡片（L408-432）
+两个问题叠加：
+1. **`||` 是 falsy 判断**：当 `completed_days` 为 `0` 时会 fall through，但 `checkInDates.length` 也为 `0`，最终显示 0。
+2. **数据同步延迟**：打卡完成后 `loadCampData()` 异步刷新，UI 可能在新数据回来之前就渲染了"打卡完成"状态，此时 `camp` 仍是旧数据。
 
-删除整个 `Card` 组件（📔 21天情绪日记训练营），保留后面的"有劲365会员"卡片。
+## 修改方案（仅改 `src/pages/CampCheckIn.tsx`）
 
-### 改动2：删除简报底部的21天训练营迷你卡片（L569-582）
+1. **用 `Math.max` 替代 `||` 链**：`Math.max(camp.completed_days, checkInDates.length, allDone ? 1 : 0)` — 取三者最大值，确保打卡完成后至少显示 1。
 
-删除 `grid grid-cols-2` 中的第一个 Card（📔 21天训练营 ¥299），将 grid 改为单列布局，只保留"有劲365"卡片。
+2. **提取为变量**，避免行内表达式过长，提升可读性。
 
-不动其他文件和数据库。
+改动仅涉及第 626 行附近，约 2 行代码。
 
