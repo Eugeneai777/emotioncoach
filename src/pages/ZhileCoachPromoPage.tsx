@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, ChevronRight, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award } from "lucide-react";
+import { Shield, ChevronRight, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,9 @@ import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
+import { ShareDialogBase } from "@/components/ui/share-dialog-base";
+import { useShareDialog } from "@/hooks/useShareDialog";
+import ZhileCoachShareCard from "@/components/promo/ZhileCoachShareCard";
 
 import coachBetty from "@/assets/coach-betty.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
@@ -101,6 +104,7 @@ export default function ZhileCoachPromoPage() {
   const [alreadyPurchased, setAlreadyPurchased] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [pendingRedeemCode, setPendingRedeemCode] = useState<string | null>(null);
+  const shareDialog = useShareDialog();
 
   useEffect(() => {
     const checkPurchase = async () => {
@@ -607,6 +611,14 @@ export default function ZhileCoachPromoPage() {
       {/* ===== STICKY BOTTOM BAR ===== */}
       <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-white via-white/95 to-transparent pt-4">
         <div className="max-w-lg mx-auto flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={shareDialog.openDialog}
+            className="shrink-0 h-11 w-11 rounded-full border-orange-200 text-orange-600 hover:bg-orange-50"
+          >
+            <Share2 className="h-5 w-5" />
+          </Button>
           {alreadyPurchased ? (
             <>
               <div className="flex-1 min-w-0">
@@ -649,6 +661,30 @@ export default function ZhileCoachPromoPage() {
         onSuccess={handleRedeemSuccess}
         isLoggedIn={!!user}
         onNeedLogin={handleRedeemNeedLogin}
+      />
+
+      {/* 分享海报弹窗 */}
+      <ShareDialogBase
+        open={shareDialog.isOpen}
+        onOpenChange={shareDialog.setIsOpen}
+        exportCardRef={shareDialog.exportCardRef}
+        cardReady={shareDialog.cardReady}
+        title="分享给朋友"
+        shareUrl={`${window.location.origin}/promo/zhile-coach?ref=share`}
+        fileName="身心诊断体验"
+        shareTitle="¥389 身心诊断体验"
+        shareText="30分钟1V1深度咨询，找到情绪卡点根源"
+        previewCard={
+          <div className="transform scale-[0.6] origin-top-left">
+            <ZhileCoachShareCard onReady={shareDialog.handleCardReady} />
+          </div>
+        }
+        exportCard={
+          <ZhileCoachShareCard
+            ref={shareDialog.exportCardRef}
+            onReady={shareDialog.handleCardReady}
+          />
+        }
       />
     </div>
   );
