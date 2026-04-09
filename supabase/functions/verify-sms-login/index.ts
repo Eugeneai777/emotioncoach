@@ -140,6 +140,11 @@ Deno.serve(async (req) => {
         );
       }
 
+      logAuthEvent(adminClient, {
+        eventType: 'login_success', authMethod: 'sms',
+        userId: profileData.id, phone,
+        ...clientInfo,
+      });
       return new Response(
         JSON.stringify({ success: true, isNewUser: false, session: verifyData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
