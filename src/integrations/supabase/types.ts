@@ -5614,6 +5614,57 @@ export type Database = {
         }
         Relationships: []
       }
+      monitor_auth_events: {
+        Row: {
+          auth_method: string
+          created_at: string
+          email: string | null
+          error_code: string | null
+          error_message: string | null
+          event_type: string
+          extra: Json | null
+          id: string
+          ip_address: string | null
+          phone: string | null
+          platform: string | null
+          referer: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auth_method: string
+          created_at?: string
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type: string
+          extra?: Json | null
+          id?: string
+          ip_address?: string | null
+          phone?: string | null
+          platform?: string | null
+          referer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auth_method?: string
+          created_at?: string
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string
+          extra?: Json | null
+          id?: string
+          ip_address?: string | null
+          phone?: string | null
+          platform?: string | null
+          referer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       monitor_frontend_errors: {
         Row: {
           created_at: string
