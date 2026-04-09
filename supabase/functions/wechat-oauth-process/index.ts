@@ -158,6 +158,11 @@ serve(async (req) => {
           finalUserId = newUser.user.id;
           isNewUser = true;
           console.log('Created new user:', finalUserId);
+          logAuthEvent(supabaseClient, {
+            eventType: 'register_success', authMethod: 'wechat',
+            userId: finalUserId, email,
+            ...clientInfo, extra: { openid: tokenData.openid, nickname: userInfo.nickname },
+          });
         }
       }
     } else if (isBind && bindUserId) {
