@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Clock, ChevronRight, Star, CheckCircle, Package, Rocket, Truck, Share2, Target, Sparkles, CircleCheck, ArrowRight, Pill, Award, Brain } from "lucide-react";
+import { Shield, ChevronRight, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
-import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
 
 import coachDaixi from "@/assets/coach-daixi.jpg";
