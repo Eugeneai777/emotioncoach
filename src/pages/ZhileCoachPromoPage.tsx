@@ -10,7 +10,7 @@ import zhileProductNew from "@/assets/zhile-product-new.jpg";
 
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
 
-import coachDaixi from "@/assets/coach-daixi.jpg";
+import coachBetty from "@/assets/coach-betty.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
 
@@ -51,25 +51,25 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 /* ========== Pain Points ========== */
 const painPoints = [
-  { emoji: "😶", label: "情绪内耗", desc: "焦虑、易怒、失眠，吃药不管用，不知道问题出在哪", color: "#dc2626" },
-  { emoji: "🤐", label: "一个人扛着", desc: "想找人聊聊，又怕被评判，朋友劝你「想开点」更烦", color: "#9333ea" },
-  { emoji: "💊", label: "试过很多方法", desc: "买课、看书、冥想APP，但坚持不下来，问题还在", color: "#2563eb" },
+  { emoji: "😶", label: "压力大睡不好", desc: "白天扛着业绩压力，晚上翻来覆去睡不着，身体在报警", color: "#dc2626" },
+  { emoji: "🤐", label: "有苦说不出", desc: "老婆觉得你冷漠，兄弟觉得你矫情，找不到一个能真正懂你的人", color: "#9333ea" },
+  { emoji: "💊", label: "越努力越累", desc: "健身、喝酒、刷手机，试了各种解压方式，但第二天还是一样疲惫", color: "#2563eb" },
 ];
 
 /* ========== Value comparison ========== */
 const valueComparison = [
-  { before: "不知道自己为什么焦虑", after: "清晰的情绪卡点诊断报告" },
-  { before: "试了很多方法没用", after: "针对你个人的定制方案" },
-  { before: "不知道下一步该怎么做", after: "明确的成长路径规划" },
+  { before: "不知道自己为什么焦虑", after: "找到你失眠、暴躁、没劲的真正根源" },
+  { before: "试了很多方法没用", after: "一套适合你当前阶段的身心调理方案" },
+  { before: "不知道下一步该怎么做", after: "清晰的90天能量恢复路线图" },
 ];
 
 /* ========== Coaches ========== */
 const coaches = [
   {
-    name: "黛汐", role: "总教练",
-    title: "绽放者联盟创始人&总教练",
-    certs: ["生命教练", "认证国际脑点执行师", "PNCC心流教练"],
-    image: coachDaixi,
+    name: "贝蒂", role: "教练",
+    title: "绽放者联盟教练",
+    certs: ["国家二级教师", "心理咨询师", "天赋测评&分析师"],
+    image: coachBetty,
   },
   {
     name: "晓一", role: "教练",
@@ -561,6 +561,10 @@ export default function ZhileCoachPromoPage() {
       {/* ===== PRICE CTA ===== */}
       <section className="px-4 py-12 text-center">
         <div className="max-w-lg mx-auto">
+          <p className="text-sm text-slate-500 mb-4 flex items-center justify-center gap-1.5">
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+            已有 <span className="font-bold text-slate-700">200+</span> 学员通过咨询找到情绪卡点
+          </p>
           <div className="p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 shadow-sm mb-6">
             <p className="text-slate-500 text-sm line-through mb-1">原价 ¥899</p>
             <div className="flex items-baseline justify-center gap-1 mb-2">
