@@ -245,6 +245,7 @@ const CampCheckIn = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
+  const [actualCheckInDates, setActualCheckInDates] = useState<string[]>([]);
 
   useEffect(() => {
     if (user && campId) {
@@ -270,6 +271,22 @@ const CampCheckIn = () => {
     }
   }, [todayProgress, camp, hasTriggeredConfetti]);
 
+  const loadActualCheckInDates = async () => {
+    if (!campId || !user) return;
+    try {
+      const { data } = await supabase
+        .from("camp_daily_progress")
+        .select("progress_date")
+        .eq("camp_id", campId)
+        .eq("is_checked_in", true);
+      
+      const dates = (data || []).map(d => d.progress_date);
+      setActualCheckInDates(dates);
+    } catch (error) {
+      console.error("Error loading actual check-in dates:", error);
+    }
+  };
+
   const loadCampData = async () => {
     if (!campId || !user) return;
 
@@ -290,8 +307,7 @@ const CampCheckIn = () => {
           return;
         }
         setCamp(data as TrainingCamp);
-        await loadTodayProgress();
-        await loadLatestBriefing();
+        await Promise.all([loadTodayProgress(), loadLatestBriefing(), loadActualCheckInDates()]);
       }
     } catch (error) {
       console.error("Error loading camp:", error);
@@ -371,6 +387,43 @@ const CampCheckIn = () => {
         .upsert(updates as any, { onConflict: "camp_id,progress_date" });
 
       if (error) throw error;
+
+      // 同步更新 training_camps 聚合数据
+      if (field === 'is_checked_in') {
+        const { data: campData } = await supabase
+          .from("training_camps")
+          .select("check_in_dates, completed_days")
+          .eq("id", campId)
+          .maybeSingle();
+
+        const dates = Array.isArray(campData?.check_in_dates) ? [...campData.check_in_dates] : [];
+        if (checked && !dates.includes(today)) {
+          dates.push(today);
+          await supabase
+            .from("training_camps")
+            .update({
+              completed_days: (campData?.completed_days || 0) + 1,
+              check_in_dates: dates,
+            })
+            .eq("id", campId);
+        } else if (!checked && dates.includes(today)) {
+          const newDates = dates.filter((d: string) => d !== today);
+          await supabase
+            .from("training_camps")
+            .update({
+              completed_days: Math.max(0, (campData?.completed_days || 0) - 1),
+              check_in_dates: newDates,
+            })
+            .eq("id", campId);
+        }
+        // 立即更新本地实际打卡日期
+        setActualCheckInDates(prev => {
+          if (checked && !prev.includes(today)) return [...prev, today];
+          if (!checked) return prev.filter(d => d !== today);
+          return prev;
+        });
+      }
+
       await loadTodayProgress();
     } catch (error) {
       console.error("更新任务状态失败:", error);
@@ -520,7 +573,7 @@ const CampCheckIn = () => {
                 <CampProgressCalendar
                   campId={campId!}
                   startDate={camp.start_date}
-                  checkInDates={checkInDates}
+                  checkInDates={actualCheckInDates}
                   currentDay={calculatedCurrentDay}
                   makeupDaysLimit={1}
                   onMakeupCheckIn={handleMakeupCheckIn}
@@ -623,7 +676,7 @@ const CampCheckIn = () => {
                                 🎉 今日打卡完成！
                               </h3>
                               <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
-                                已坚持 {Math.max(camp.completed_days ?? 0, checkInDates.length, allDone ? 1 : 0)} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                已坚持 {Math.max(actualCheckInDates.length, camp.completed_days ?? 0, allDone ? 1 : 0)} 天 · 第 {displayCurrentDay}/{camp.duration_days} 天
                                 {bonusDone > 0 && ` · 额外完成 ${bonusDone} 项`}
                               </p>
                               <div className="flex items-center gap-1 mt-1.5">
@@ -785,7 +838,7 @@ const CampCheckIn = () => {
               <CampProgressCalendar
                 campId={campId!}
                 startDate={camp.start_date}
-                checkInDates={checkInDates}
+                checkInDates={actualCheckInDates}
                 currentDay={calculatedCurrentDay}
                 makeupDaysLimit={1}
                 onMakeupCheckIn={handleMakeupCheckIn}
