@@ -7,10 +7,10 @@ const corsHeaders = {
 
 // ElevenLabs voice_id → 豆包音色映射
 const VOICE_MAP: Record<string, string> = {
-  'nPczCjzI2devNBz1zQrb': 'zh_male_chunhou_mars_bigtts',     // Brian → 温暖男声（淳厚）
-  'JBFqnCBsd6RMkjVDRZzb': 'zh_male_wenhou_mars_bigtts',      // George → 沉稳长者（温厚）
-  'EXAVITQu4vr4xnSDxMaL': 'zh_female_cancan_mars_bigtts',    // Sarah → 温柔女声（灿灿）
-  'pFZP5JQG7iQjIQuC4Bku': 'zh_female_shuangkuai_moon_bigtts', // Lily → 清新女声（爽快）
+  'nPczCjzI2devNBz1zQrb': 'zh_female_cancan_mars_bigtts',         // Brian → 灿灿（温暖）
+  'JBFqnCBsd6RMkjVDRZzb': 'zh_female_wanwanxiaohe_moon_bigtts',   // George → 弯弯小何（沉稳）
+  'EXAVITQu4vr4xnSDxMaL': 'zh_female_cancan_mars_bigtts',         // Sarah → 灿灿（温柔）
+  'pFZP5JQG7iQjIQuC4Bku': 'zh_female_wanwanxiaohe_moon_bigtts',   // Lily → 弯弯小何（清新）
 };
 
 const DEFAULT_VOICE = 'zh_female_cancan_mars_bigtts';
