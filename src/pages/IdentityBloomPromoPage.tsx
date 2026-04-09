@@ -352,8 +352,8 @@ export default function IdentityBloomPromoPage() {
     setPendingRedeemCode(code);
     localStorage.setItem('pending_redeem_code', code);
     setPostAuthRedirect(window.location.pathname + window.location.search);
-    setShowRedeemDialog(false);
     navigate('/auth');
+    setShowRedeemDialog(false);
   };
 
   const handleRedeemSuccess = () => {
