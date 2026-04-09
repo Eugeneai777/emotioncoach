@@ -387,6 +387,43 @@ const CampCheckIn = () => {
         .upsert(updates as any, { onConflict: "camp_id,progress_date" });
 
       if (error) throw error;
+
+      // 同步更新 training_camps 聚合数据
+      if (field === 'is_checked_in') {
+        const { data: campData } = await supabase
+          .from("training_camps")
+          .select("check_in_dates, completed_days")
+          .eq("id", campId)
+          .maybeSingle();
+
+        const dates = Array.isArray(campData?.check_in_dates) ? [...campData.check_in_dates] : [];
+        if (checked && !dates.includes(today)) {
+          dates.push(today);
+          await supabase
+            .from("training_camps")
+            .update({
+              completed_days: (campData?.completed_days || 0) + 1,
+              check_in_dates: dates,
+            })
+            .eq("id", campId);
+        } else if (!checked && dates.includes(today)) {
+          const newDates = dates.filter((d: string) => d !== today);
+          await supabase
+            .from("training_camps")
+            .update({
+              completed_days: Math.max(0, (campData?.completed_days || 0) - 1),
+              check_in_dates: newDates,
+            })
+            .eq("id", campId);
+        }
+        // 立即更新本地实际打卡日期
+        setActualCheckInDates(prev => {
+          if (checked && !prev.includes(today)) return [...prev, today];
+          if (!checked) return prev.filter(d => d !== today);
+          return prev;
+        });
+      }
+
       await loadTodayProgress();
     } catch (error) {
       console.error("更新任务状态失败:", error);
