@@ -1,23 +1,40 @@
 
+问题判断
 
-# 修复"已坚持 0 天"显示问题
+- 当前“今日打卡完成”和“日历 tab 完成状态”用的不是同一份数据。
+- `CampCheckIn.tsx` 的任务完成依赖 `todayProgress`，所以两项任务完成后第一页能显示完成。
+- 但 `CampProgressCalendar` 接收的是 `camp.check_in_dates`，而这份聚合字段在手动勾选或当次页面内切换时不会立即同步，所以日历格子仍显示未完成，右上角也还是 `0/1`。
 
-## 问题根因
+修改方案
 
-`src/pages/CampCheckIn.tsx` 第 626 行：
-```
-已坚持 {camp.completed_days || checkInDates.length || 0} 天
-```
+1. `src/pages/CampCheckIn.tsx`
+- 新增“实际打卡日期”状态，直接从 `camp_daily_progress` 读取 `is_checked_in = true` 的 `progress_date`。
+- `loadCampData()` 时一并加载这份日期列表。
+- 日历 tab 和成长档案 tab 都改为传这份“实际打卡日期”给 `CampProgressCalendar`，不再依赖 `camp.check_in_dates`。
+- 在 `handleToggleTask()` 中，当切换的是 `is_checked_in` 时：
+  - 同步更新 `training_camps.completed_days / check_in_dates`
+  - 并刷新“实际打卡日期”状态，保证勾选后切到日历立即看到已完成。
 
-两个问题叠加：
-1. **`||` 是 falsy 判断**：当 `completed_days` 为 `0` 时会 fall through，但 `checkInDates.length` 也为 `0`，最终显示 0。
-2. **数据同步延迟**：打卡完成后 `loadCampData()` 异步刷新，UI 可能在新数据回来之前就渲染了"打卡完成"状态，此时 `camp` 仍是旧数据。
+2. `src/components/camp/CampProgressCalendar.tsx`
+- 右上角统计继续用传入的打卡日期数组，但来源改成真实进度数据。
+- 顶部分母优先使用父级传入的 `currentDay`，避免组件自己再算一套导致显示不一致。
+- 当今天已在真实打卡日期中时，当天格子显示“已打卡”，不再显示灰色未完成。
 
-## 修改方案（仅改 `src/pages/CampCheckIn.tsx`）
+不改动
 
-1. **用 `Math.max` 替代 `||` 链**：`Math.max(camp.completed_days, checkInDates.length, allDone ? 1 : 0)` — 取三者最大值，确保打卡完成后至少显示 1。
+- 不改数据库结构
+- 不改其它训练营业务规则
+- 不动购买、补卡、分享等流程
 
-2. **提取为变量**，避免行内表达式过长，提升可读性。
+技术说明
 
-改动仅涉及第 626 行附近，约 2 行代码。
+- 这次不是单纯“UI 没刷新”，根因是数据源分裂：
+  - 任务区看 `todayProgress`
+  - 日历区看 `training_camps.check_in_dates`
+- 修复后，这个页面的日历会以 `camp_daily_progress` 作为真实来源；`training_camps` 继续做聚合同步，避免其它页面继续滞后。
 
+验收标准
+
+- 7天有劲训练营完成“冥想 + 情绪教练”后，不用重进页面，切到“日历”tab，当天立刻显示已完成。
+- 右上角“已打卡 x/y 天”中的 `x` 与真实打卡天数一致。
+- 手动勾选完成/取消完成后，日历状态同步变化，不再出现第一页已完成、日历页未完成的情况。
