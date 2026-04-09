@@ -52,7 +52,7 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 /* ========== Pain Points ========== */
 const painPoints = [
   { emoji: "😶", label: "情绪内耗", desc: "焦虑、易怒、失眠，吃药不管用，不知道问题出在哪", color: "#dc2626" },
-  { emoji: "🤐", label: "一个人扛着", desc: "想找人聊聊，又怕被评判，朋友劝你"想开点"更烦", color: "#9333ea" },
+  { emoji: "🤐", label: "一个人扛着", desc: "想找人聊聊，又怕被评判，朋友劝你「想开点」更烦", color: "#9333ea" },
   { emoji: "💊", label: "试过很多方法", desc: "买课、看书、冥想APP，但坚持不下来，问题还在", color: "#2563eb" },
 ];
 
