@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+import { logAuthEvent, extractClientInfo } from '../_shared/authEventLogger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const clientInfo = extractClientInfo(req);
 
   try {
     const { code, state } = await req.json();
@@ -47,6 +50,12 @@ serve(async (req) => {
 
     if (tokenData.errcode) {
       console.error('WeChat token error:', tokenData);
+      logAuthEvent(supabaseClient, {
+        eventType: 'login_fail', authMethod: 'wechat',
+        errorMessage: tokenData.errmsg || 'WeChat token error',
+        errorCode: String(tokenData.errcode),
+        ...clientInfo,
+      });
       return new Response(
         JSON.stringify({ error: `WeChat error: ${tokenData.errmsg || 'Unknown error'}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -100,6 +109,11 @@ serve(async (req) => {
 
         if (signUpError) {
           // 如果是邮箱已存在错误，尝试获取现有用户并登录
+          logAuthEvent(supabaseClient, {
+            eventType: 'register_fail', authMethod: 'wechat',
+            errorMessage: signUpError.message, errorCode: signUpError.code,
+            email, ...clientInfo, extra: { openid: tokenData.openid },
+          });
           if (signUpError.code === 'email_exists') {
             console.log('Email exists, fetching existing user by email...');
             const { data: existingUserData, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(email);
@@ -144,6 +158,11 @@ serve(async (req) => {
           finalUserId = newUser.user.id;
           isNewUser = true;
           console.log('Created new user:', finalUserId);
+          logAuthEvent(supabaseClient, {
+            eventType: 'register_success', authMethod: 'wechat',
+            userId: finalUserId, email,
+            ...clientInfo, extra: { openid: tokenData.openid, nickname: userInfo.nickname },
+          });
         }
       }
     } else if (isBind && bindUserId) {
@@ -540,6 +559,14 @@ serve(async (req) => {
       // 不阻止登录流程
     }
 
+    logAuthEvent(supabaseClient, {
+      eventType: isNewUser ? 'register_success' : 'login_success',
+      authMethod: 'wechat',
+      userId: finalUserId,
+      ...clientInfo,
+      extra: { openid: tokenData.openid, isNewUser },
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -553,6 +580,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in WeChat OAuth process:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logAuthEvent(supabaseClient, {
+      eventType: 'login_fail', authMethod: 'wechat',
+      errorMessage, ...clientInfo,
+    });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

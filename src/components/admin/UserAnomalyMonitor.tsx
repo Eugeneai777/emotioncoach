@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon, Route } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon, Route, LogIn } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
@@ -15,6 +15,7 @@ import AnomalyAggregation from "./AnomalyAggregation";
 import PaymentMonitor from "./PaymentMonitor";
 import PaymentFlowMonitor from "./PaymentFlowMonitor";
 import OGHealthMonitor from "./OGHealthMonitor";
+import AuthFlowMonitor from "./AuthFlowMonitor";
 import MonitorFilters from "./shared/MonitorFilters";
 import { injectMonitorMockData } from "@/lib/monitorMockData";
 import { useMonitorUserAnomalies } from "@/lib/monitorQueries";
@@ -192,6 +193,11 @@ export default function UserAnomalyMonitor() {
             <span className="hidden sm:inline">OG分享监控</span>
             <span className="sm:hidden">OG</span>
           </TabsTrigger>
+          <TabsTrigger value="auth-flow" className="text-xs sm:text-sm">
+            <LogIn className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">登录注册监控</span>
+            <span className="sm:hidden">登录</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="user">
@@ -335,6 +341,10 @@ export default function UserAnomalyMonitor() {
 
         <TabsContent value="aggregation">
           <AnomalyAggregation />
+        </TabsContent>
+
+        <TabsContent value="auth-flow">
+          <AuthFlowMonitor />
         </TabsContent>
       </Tabs>
     </div>
