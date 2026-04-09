@@ -224,6 +224,7 @@ const EventAIBreakthrough = lazyRetry(() => import("./pages/EventAIBreakthrough"
 const SynergyPromoPage = lazyRetry(() => import("./pages/SynergyPromoPage"));
 const WealthSynergyPromoPage = lazyRetry(() => import("./pages/WealthSynergyPromoPage"));
 const ZhileHavrutaPromoPage = lazyRetry(() => import("./pages/ZhileHavrutaPromoPage"));
+const ZhileCoachPromoPage = lazyRetry(() => import("./pages/ZhileCoachPromoPage"));
 const IdentityBloomPromoPage = lazyRetry(() => import("./pages/IdentityBloomPromoPage"));
 const ZhilePromoHub = lazyRetry(() => import("./pages/ZhilePromoHub"));
 const ZhileProductsPage = lazyRetry(() => import("./pages/ZhileProductsPage"));
@@ -407,6 +408,7 @@ const App = () => (
               <Route path="/promo/synergy" element={<SynergyPromoPage />} />
               <Route path="/promo/wealth-synergy" element={<WealthSynergyPromoPage />} />
               <Route path="/promo/zhile-havruta" element={<ZhileHavrutaPromoPage />} />
+              <Route path="/promo/zhile-coach" element={<ZhileCoachPromoPage />} />
               <Route path="/promo/identity-bloom" element={<IdentityBloomPromoPage />} />
               <Route path="/zhile-promo" element={<ZhilePromoHub />} />
               <Route path="/zhile-products" element={<ZhileProductsPage />} />

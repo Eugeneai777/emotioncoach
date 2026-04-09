@@ -13,6 +13,10 @@ export function getPostPaymentRedirectPath(packageKey?: string | null, returnUrl
     return "/promo/zhile-havruta";
   }
 
+  if (key === "zhile_coach_389") {
+    return "/promo/zhile-coach";
+  }
+
   if (key.startsWith("camp-")) {
     const campType = key.replace("camp-", "");
     if (campType) return `/camp-intro/${campType}`;
