@@ -245,6 +245,7 @@ const CampCheckIn = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
+  const [actualCheckInDates, setActualCheckInDates] = useState<string[]>([]);
 
   useEffect(() => {
     if (user && campId) {
