@@ -50,6 +50,12 @@ serve(async (req) => {
 
     if (tokenData.errcode) {
       console.error('WeChat token error:', tokenData);
+      logAuthEvent(supabaseClient, {
+        eventType: 'login_fail', authMethod: 'wechat',
+        errorMessage: tokenData.errmsg || 'WeChat token error',
+        errorCode: String(tokenData.errcode),
+        ...clientInfo,
+      });
       return new Response(
         JSON.stringify({ error: `WeChat error: ${tokenData.errmsg || 'Unknown error'}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -103,6 +109,11 @@ serve(async (req) => {
 
         if (signUpError) {
           // 如果是邮箱已存在错误，尝试获取现有用户并登录
+          logAuthEvent(supabaseClient, {
+            eventType: 'register_fail', authMethod: 'wechat',
+            errorMessage: signUpError.message, errorCode: signUpError.code,
+            email, ...clientInfo, extra: { openid: tokenData.openid },
+          });
           if (signUpError.code === 'email_exists') {
             console.log('Email exists, fetching existing user by email...');
             const { data: existingUserData, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(email);
