@@ -271,6 +271,22 @@ const CampCheckIn = () => {
     }
   }, [todayProgress, camp, hasTriggeredConfetti]);
 
+  const loadActualCheckInDates = async () => {
+    if (!campId || !user) return;
+    try {
+      const { data } = await supabase
+        .from("camp_daily_progress")
+        .select("progress_date")
+        .eq("camp_id", campId)
+        .eq("is_checked_in", true);
+      
+      const dates = (data || []).map(d => d.progress_date);
+      setActualCheckInDates(dates);
+    } catch (error) {
+      console.error("Error loading actual check-in dates:", error);
+    }
+  };
+
   const loadCampData = async () => {
     if (!campId || !user) return;
 
@@ -291,8 +307,7 @@ const CampCheckIn = () => {
           return;
         }
         setCamp(data as TrainingCamp);
-        await loadTodayProgress();
-        await loadLatestBriefing();
+        await Promise.all([loadTodayProgress(), loadLatestBriefing(), loadActualCheckInDates()]);
       }
     } catch (error) {
       console.error("Error loading camp:", error);
