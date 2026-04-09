@@ -371,6 +371,29 @@ const CampCheckIn = () => {
         .upsert(updates as any, { onConflict: "camp_id,progress_date" });
 
       if (error) throw error;
+
+      // Sync training_camps when checking in
+      if (field === 'is_checked_in' && checked) {
+        const { data: campData } = await supabase
+          .from("training_camps")
+          .select("check_in_dates, completed_days")
+          .eq("id", campId)
+          .maybeSingle();
+
+        const dates = Array.isArray(campData?.check_in_dates) ? campData.check_in_dates : [];
+        if (!dates.includes(today)) {
+          dates.push(today);
+          await supabase
+            .from("training_camps")
+            .update({
+              completed_days: (campData?.completed_days || 0) + 1,
+              check_in_dates: dates,
+            })
+            .eq("id", campId);
+        }
+        await loadCampData();
+      }
+
       await loadTodayProgress();
     } catch (error) {
       console.error("更新任务状态失败:", error);
