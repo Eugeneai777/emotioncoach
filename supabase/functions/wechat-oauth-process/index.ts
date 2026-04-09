@@ -13,6 +13,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const clientInfo = extractClientInfo(req);
+
   try {
     const { code, state } = await req.json();
 
