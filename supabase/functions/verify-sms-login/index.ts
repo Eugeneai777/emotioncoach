@@ -7,6 +7,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const clientInfo = extractClientInfo(req);
+
   try {
     const { phone, code, countryCode = '+86' } = await req.json();
 
