@@ -16,7 +16,7 @@ const ZhileCoachShareCard = forwardRef<HTMLDivElement, ZhileCoachShareCardProps>
           showFooter
           footerConfig={{
             ctaTitle: '扫码了解详情',
-            ctaSubtitle: '¥389 身心诊断体验',
+            ctaSubtitle: '¥399 身心诊断体验',
             qrLabel: '长按识别二维码',
             primaryColor: '#ffffff',
             secondaryColor: '#fef3c7',
