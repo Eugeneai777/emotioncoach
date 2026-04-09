@@ -38,6 +38,11 @@ Deno.serve(async (req) => {
 
     if (codeError || !codes || codes.length === 0) {
       console.error('Code verification failed:', { codeError, codesFound: codes?.length });
+      logAuthEvent(adminClient, {
+        eventType: 'login_fail', authMethod: 'sms', phone,
+        errorMessage: '验证码无效或已过期', errorCode: 'invalid_code',
+        ...clientInfo,
+      });
       return new Response(
         JSON.stringify({ error: '验证码无效或已过期' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
