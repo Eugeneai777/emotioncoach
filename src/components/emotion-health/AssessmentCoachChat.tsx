@@ -405,32 +405,6 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
         </Card>
 
         <div className="mt-4 space-y-3">
-          <Card className="p-4 border-rose-200 bg-rose-50/50">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📔</span>
-              <div className="flex-1">
-                <h4 className="font-medium text-sm mb-1">21天情绪日记训练营</h4>
-                <ul className="text-xs text-muted-foreground space-y-1 mb-3">
-                  <li>• 每天一次完整情绪四部曲</li>
-                  <li>• AI生成专属简报</li>
-                  <li>• 记录21天的情绪成长轨迹</li>
-                </ul>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs text-muted-foreground line-through">¥399</span>
-                  <span className="text-lg font-bold text-rose-600">¥299</span>
-                  <Badge variant="secondary" className="text-xs">限时优惠</Badge>
-                </div>
-                <Button
-                  size="sm"
-                  className="w-full bg-gradient-to-r from-rose-500 to-purple-500"
-                  onClick={() => handleCTAClick('camp')}
-                >
-                  立即加入 →
-                </Button>
-              </div>
-            </div>
-          </Card>
-
           <Card className="p-4 border-purple-200 bg-purple-50/50">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🌟</span>
@@ -565,21 +539,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
                   <div className="h-px flex-1 bg-border" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Card className="p-3 border-rose-200 bg-rose-50/50">
-                    <div className="text-center">
-                      <span className="text-xl">📔</span>
-                      <h4 className="font-medium text-xs mt-1">21天训练营</h4>
-                      <p className="text-lg font-bold text-rose-600">¥299</p>
-                      <Button
-                        size="sm"
-                        className="w-full mt-2 text-xs h-7"
-                        onClick={() => handleCTAClick('camp')}
-                      >
-                        了解详情
-                      </Button>
-                    </div>
-                  </Card>
+                <div className="grid grid-cols-1 gap-3">
                   <Card className="p-3 border-purple-200 bg-purple-50/50">
                     <div className="text-center">
                       <span className="text-xl">🌟</span>
