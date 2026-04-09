@@ -559,6 +559,14 @@ serve(async (req) => {
       // 不阻止登录流程
     }
 
+    logAuthEvent(supabaseClient, {
+      eventType: isNewUser ? 'register_success' : 'login_success',
+      authMethod: 'wechat',
+      userId: finalUserId,
+      ...clientInfo,
+      extra: { openid: tokenData.openid, isNewUser },
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -572,6 +580,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in WeChat OAuth process:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logAuthEvent(supabaseClient, {
+      eventType: 'login_fail', authMethod: 'wechat',
+      errorMessage, ...clientInfo,
+    });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
