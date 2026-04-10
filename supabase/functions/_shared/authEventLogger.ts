@@ -46,7 +46,7 @@ export function logAuthEvent(
     .insert({
       event_type: eventType,
       auth_method: authMethod,
-      user_id: userId || null,
+      user_id: (userId && userId !== 'null' && userId !== 'undefined') ? userId : null,
       phone: phone || null,
       email: email || null,
       error_message: errorMessage || null,

@@ -279,11 +279,18 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Verify SMS login error:', error);
-    logAuthEvent(adminClient, {
-      eventType: 'login_fail', authMethod: 'sms',
-      errorMessage: error instanceof Error ? error.message : '验证失败',
-      ...clientInfo,
-    });
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      if (supabaseUrl && serviceRoleKey) {
+        const errorClient = createClient(supabaseUrl, serviceRoleKey);
+        logAuthEvent(errorClient, {
+          eventType: 'login_fail', authMethod: 'sms',
+          errorMessage: error instanceof Error ? error.message : '验证失败',
+          ...clientInfo,
+        });
+      }
+    } catch (_) { /* ignore logging errors */ }
     return new Response(
       JSON.stringify({ error: '验证失败，请稍后重试' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
