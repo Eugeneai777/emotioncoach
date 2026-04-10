@@ -227,13 +227,13 @@ export const CoachVoiceChat = ({
   };
 
   // 颜色映射 — 增加深色背景渐变
-  const colorMap: Record<string, { bg: string; border: string; text: string; glow: string; deepBg: string }> = {
-    rose: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-500', glow: 'shadow-rose-500/30', deepBg: 'from-stone-950 via-rose-950/30 to-stone-950' },
-    green: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-green-500', glow: 'shadow-green-500/30', deepBg: 'from-stone-950 via-emerald-950/30 to-stone-950' },
-    blue: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-blue-500', glow: 'shadow-blue-500/30', deepBg: 'from-stone-950 via-blue-950/30 to-stone-950' },
-    purple: { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-500', glow: 'shadow-purple-500/30', deepBg: 'from-stone-950 via-purple-950/30 to-stone-950' },
-    orange: { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-orange-500', glow: 'shadow-orange-500/30', deepBg: 'from-stone-950 via-orange-950/30 to-stone-950' },
-    amber: { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-amber-500', glow: 'shadow-amber-500/30', deepBg: 'from-stone-950 via-amber-950/30 to-stone-950' },
+  const colorMap: Record<string, { bg: string; border: string; text: string; glow: string; deepBg: string; banner: string; bannerText: string }> = {
+    rose: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-500', glow: 'shadow-rose-500/30', deepBg: 'from-stone-950 via-rose-950/30 to-stone-950', banner: 'bg-rose-500', bannerText: 'text-rose-600' },
+    green: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-green-500', glow: 'shadow-green-500/30', deepBg: 'from-stone-950 via-emerald-950/30 to-stone-950', banner: 'bg-green-500', bannerText: 'text-green-600' },
+    blue: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-blue-500', glow: 'shadow-blue-500/30', deepBg: 'from-stone-950 via-blue-950/30 to-stone-950', banner: 'bg-blue-500', bannerText: 'text-blue-600' },
+    purple: { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-500', glow: 'shadow-purple-500/30', deepBg: 'from-stone-950 via-purple-950/30 to-stone-950', banner: 'bg-purple-500', bannerText: 'text-purple-600' },
+    orange: { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-orange-500', glow: 'shadow-orange-500/30', deepBg: 'from-stone-950 via-orange-950/30 to-stone-950', banner: 'bg-orange-500', bannerText: 'text-orange-600' },
+    amber: { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-amber-500', glow: 'shadow-amber-500/30', deepBg: 'from-stone-950 via-amber-950/30 to-stone-950', banner: 'bg-amber-500', bannerText: 'text-amber-600' },
   };
 
   const colors = colorMap[primaryColor] || colorMap.rose;
@@ -1746,38 +1746,24 @@ export const CoachVoiceChat = ({
           console.error('[VoiceChat] ❌ Billing retry failed after grace period');
 
           if (!retryResult.isNetworkError) {
+            // 余额不足：仅显示横幅，不断开连接、不报 toast
             setInsufficientDuringCall(true);
-            disconnectNoticeRef.current = {
-              title: '点数不足',
-              description: '余额不足，通话已结束；你可以先充值后再继续。',
-              variant: 'destructive',
-            };
           } else {
             disconnectNoticeRef.current = {
               title: '网络不稳定',
               description: '计费连续失败，为避免异常扣费已暂停通话；请切换网络后重试。',
               variant: 'destructive',
             };
-          }
-
-          chatRef.current?.disconnect();
-          if (durationRef.current) {
-            clearInterval(durationRef.current);
+            chatRef.current?.disconnect();
+            if (durationRef.current) {
+              clearInterval(durationRef.current);
+            }
           }
           isDeductingRef.current = false;
         }, GRACE_MS);
       } else {
-        // 🔧 余额不足：暂停通话，显示续费界面
+        // 🔧 余额不足：仅显示横幅提示，不断开连接、不报 toast
         setInsufficientDuringCall(true);
-        disconnectNoticeRef.current = {
-          title: '点数不足',
-          description: '余额不足，通话已结束；你可以先充值后再继续。',
-          variant: 'destructive',
-        };
-        chatRef.current?.disconnect();
-        if (durationRef.current) {
-          clearInterval(durationRef.current);
-        }
         isDeductingRef.current = false;
       }
     });
@@ -2020,61 +2006,23 @@ export const CoachVoiceChat = ({
     );
   }
 
-  // 🔧 通话过程中余额不足 - 显示友好的续费提示
-  if (insufficientDuringCall) {
-    return (
-      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-6">
-        <div className="text-center mb-6 animate-in fade-in-50">
-          <div className="text-5xl mb-4">💡</div>
-          <h2 className="text-white text-xl font-medium mb-2">余额不足</h2>
-          <p className="text-white/60 text-sm mb-4">
-            已通话 {formatDuration(duration)}，消耗 {billedMinutes * POINTS_PER_MINUTE} 点
-          </p>
-          <p className="text-amber-400 text-sm">
-            充值后可继续对话，或点击挂断保存本次对话
-          </p>
-        </div>
-        
-        <div className="w-full max-w-sm space-y-3">
-          <UnifiedPayDialog
-            open={true}
-            onOpenChange={(open) => {
-              if (!open) {
-                // 用户关闭支付弹窗，结束通话
-                setInsufficientDuringCall(false);
-                endCall();
-              }
-            }}
-            packageInfo={MEMBER_365_PACKAGE}
-            onSuccess={() => {
-              toast({
-                title: "续费成功！",
-                description: "正在恢复语音对话...",
-              });
-              setInsufficientDuringCall(false);
-              // 重新开始通话
-              startCall();
-            }}
-          />
-          
-          <Button
-            variant="outline"
-            onClick={() => {
-              setInsufficientDuringCall(false);
-              endCall();
-            }}
-            className="w-full border-white/20 text-white/70 hover:text-white hover:bg-white/10"
-          >
-            <PhoneOff className="w-4 h-4 mr-2" />
-            结束本次对话
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // insufficientDuringCall banner is now rendered inside the main return below
 
   return (
     <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col ${useMiniProgramMode ? 'pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,0px)]' : ''}`}>
+      {/* 余额不足横幅 */}
+      {insufficientDuringCall && (
+        <div className={`${colors.banner} py-3 px-4 flex items-center justify-between animate-in slide-in-from-top duration-300 shadow-lg`}>
+          <span className="text-white text-sm font-medium">余额不足，继续请前往充值</span>
+          <Button
+            size="sm"
+            onClick={() => navigate('/packages')}
+            className={`bg-white ${colors.bannerText} hover:bg-white/90 font-medium px-4 shadow-sm`}
+          >
+            前往充值
+          </Button>
+        </div>
+      )}
       {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
       <div className={`flex items-center justify-between p-4 ${useMiniProgramMode ? 'pt-2' : 'pt-safe'}`}>
         {/* 左侧：返回按钮 */}
