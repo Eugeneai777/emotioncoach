@@ -5,47 +5,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// 检查训练营权益
+// 检查训练营权益（支持同一 feature_key 对应多个 camp_type）
 async function checkCampEntitlement(supabase: any, userId: string, featureKey: string) {
-  // 1. 检查该功能是否属于某个训练营的权益
-  const { data: entitlement } = await supabase
+  // 1. 查询该功能对应的所有训练营权益（可能有多条记录）
+  const { data: entitlements, error: entErr } = await supabase
     .from('camp_entitlements')
     .select('camp_type')
     .eq('feature_key', featureKey)
     .eq('is_free', true)
-    .maybeSingle();
+    .limit(10);
 
-  if (!entitlement) return { hasCampAccess: false };
-
-  // 2. 检查用户是否有该训练营的有效购买记录
-  const { data: purchase } = await supabase
-    .from('user_camp_purchases')
-    .select('id, expires_at')
-    .eq('user_id', userId)
-    .eq('camp_type', entitlement.camp_type)
-    .eq('payment_status', 'completed')
-    .maybeSingle();
-
-  if (!purchase) return { hasCampAccess: false };
-
-  // 3. 检查是否过期（如果设置了过期时间）
-  if (purchase.expires_at && new Date(purchase.expires_at) < new Date()) {
+  if (entErr || !entitlements || entitlements.length === 0) {
     return { hasCampAccess: false };
   }
 
-  // 4. 检查用户是否有活跃的训练营
-  const { data: activeCamp } = await supabase
-    .from('training_camps')
-    .select('id, status')
-    .eq('user_id', userId)
-    .eq('camp_type', entitlement.camp_type)
-    .in('status', ['active', 'completed'])
-    .maybeSingle();
+  // 2. 遍历每个 camp_type，检查用户是否有有效购买 + 活跃训练营
+  for (const entitlement of entitlements) {
+    const campType = entitlement.camp_type;
 
-  return { 
-    hasCampAccess: !!activeCamp,
-    campType: entitlement.camp_type 
-  };
+    // 检查购买记录
+    const { data: purchase } = await supabase
+      .from('user_camp_purchases')
+      .select('id, expires_at')
+      .eq('user_id', userId)
+      .eq('camp_type', campType)
+      .eq('payment_status', 'completed')
+      .maybeSingle();
+
+    if (!purchase) continue;
+
+    // 检查是否过期
+    if (purchase.expires_at && new Date(purchase.expires_at) < new Date()) {
+      continue;
+    }
+
+    // 检查活跃训练营
+    const { data: activeCamp } = await supabase
+      .from('training_camps')
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('camp_type', campType)
+      .in('status', ['active', 'completed'])
+      .maybeSingle();
+
+    if (activeCamp) {
+      console.log(`✅ 训练营权益匹配: campType=${campType}, featureKey=${featureKey}`);
+      return { hasCampAccess: true, campType };
+    }
+  }
+
+  return { hasCampAccess: false };
 }
 
 Deno.serve(async (req) => {
