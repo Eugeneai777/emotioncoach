@@ -1227,8 +1227,8 @@ export const CoachVoiceChat = ({
       
       // 🔧 并行化：同时执行预扣费 + 获取时长限制（节省 300-800ms）
       updateConnectionPhase('requesting_mic');
-      const [deducted, durationResult] = await Promise.all([
-        deductQuota(1),
+      const [preDeductResult, durationResult] = await Promise.all([
+        deductQuotaWithRetry(1),
         // 如果有 maxDurationOverride，跳过 RPC 查询
         maxDurationOverride !== undefined 
           ? Promise.resolve(maxDurationOverride) 
@@ -1238,14 +1238,22 @@ export const CoachVoiceChat = ({
       // 🔧 设置时长限制（并行获取的结果）
       setMaxDurationMinutes(durationResult);
       setIsLoadingDuration(false);
-      console.log(`[VoiceChat] Parallel results - deducted: ${deducted}, maxDuration: ${durationResult}`);
+      console.log(`[VoiceChat] Parallel results - preDeduct: ${JSON.stringify(preDeductResult)}, maxDuration: ${durationResult}`);
 
-      if (!deducted) {
-        setStatus('error');
+      if (!preDeductResult.success) {
         isInitializingRef.current = false;
         stopConnectionTimer();
         releaseLock();
-        setTimeout(onClose, 1500);
+
+        if (!preDeductResult.isNetworkError) {
+          // 余额不足：设置横幅引导充值，保持页面打开
+          setInsufficientDuringCall(true);
+          setStatus('idle');
+        } else {
+          // 网络/服务端错误：保持原有逻辑
+          setStatus('error');
+          setTimeout(onClose, 1500);
+        }
         return;
       }
 
