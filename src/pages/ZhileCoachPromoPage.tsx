@@ -262,7 +262,7 @@ export default function ZhileCoachPromoPage() {
             <div className="text-left">
               <p className="text-white/60 text-xs line-through">原价 ¥899</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-white">¥399</span>
+                <span className="text-3xl font-black text-white">¥389</span>
                 <span className="text-xs text-amber-200">限量体验价</span>
               </div>
             </div>
@@ -572,7 +572,7 @@ export default function ZhileCoachPromoPage() {
           <div className="p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 shadow-sm mb-6">
             <p className="text-slate-500 text-sm line-through mb-1">原价 ¥899</p>
             <div className="flex items-baseline justify-center gap-1 mb-2">
-              <span className="text-4xl font-black text-orange-600">¥399</span>
+              <span className="text-4xl font-black text-orange-600">¥389</span>
               <span className="text-sm text-amber-600">限量体验价</span>
             </div>
             <p className="text-xs text-slate-500 mb-1">含1次30分钟1V1教练咨询 + 1瓶知乐胶囊 + 学员服务群</p>
@@ -637,7 +637,7 @@ export default function ZhileCoachPromoPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs text-slate-400 line-through">¥899</span>
-                  <span className="text-lg font-black text-orange-600">¥399</span>
+                  <span className="text-lg font-black text-orange-600">¥389</span>
                 </div>
                 <p className="text-[10px] text-slate-400 truncate">1V1教练咨询 + 知乐胶囊</p>
               </div>
@@ -672,7 +672,7 @@ export default function ZhileCoachPromoPage() {
         title="分享给朋友"
         shareUrl={`${window.location.origin}/promo/zhile-coach?ref=share`}
         fileName="身心诊断体验"
-        shareTitle="¥399 身心诊断体验"
+        shareTitle="¥389 身心诊断体验"
         shareText="30分钟1V1深度咨询，找到情绪卡点根源"
         previewCard={
           <div className="transform scale-[0.6] origin-top-left">
