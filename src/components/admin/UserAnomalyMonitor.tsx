@@ -15,6 +15,7 @@ import AnomalyAggregation from "./AnomalyAggregation";
 import PaymentMonitor from "./PaymentMonitor";
 import PaymentFlowMonitor from "./PaymentFlowMonitor";
 import OGHealthMonitor from "./OGHealthMonitor";
+import AuthEventMonitor from "./AuthEventMonitor";
 import MonitorFilters from "./shared/MonitorFilters";
 import { injectMonitorMockData } from "@/lib/monitorMockData";
 import { useMonitorUserAnomalies } from "@/lib/monitorQueries";
@@ -190,6 +191,13 @@ export default function UserAnomalyMonitor() {
           <TabsTrigger value="og" className="text-xs sm:text-sm">
             <ImageIcon className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">OG分享监控</span>
+            <span className="sm:hidden">OG</span>
+          </TabsTrigger>
+          <TabsTrigger value="auth" className="text-xs sm:text-sm">
+            <LogIn className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">登录注册监控</span>
+            <span className="sm:hidden">登录</span>
+          </TabsTrigger>
             <span className="sm:hidden">OG</span>
           </TabsTrigger>
         </TabsList>
