@@ -342,6 +342,10 @@ export default function UserAnomalyMonitor() {
         <TabsContent value="aggregation">
           <AnomalyAggregation />
         </TabsContent>
+
+        <TabsContent value="auth">
+          <AuthEventMonitor />
+        </TabsContent>
       </Tabs>
     </div>
   );
