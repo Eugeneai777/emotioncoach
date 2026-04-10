@@ -1772,17 +1772,8 @@ export const CoachVoiceChat = ({
           isDeductingRef.current = false;
         }, GRACE_MS);
       } else {
-        // 🔧 余额不足：暂停通话，显示续费界面
+        // 🔧 余额不足：显示顶部横幅提醒，通话继续到10分钟时长限制自动结束
         setInsufficientDuringCall(true);
-        disconnectNoticeRef.current = {
-          title: '点数不足',
-          description: '余额不足，通话已结束；你可以先充值后再继续。',
-          variant: 'destructive',
-        };
-        chatRef.current?.disconnect();
-        if (durationRef.current) {
-          clearInterval(durationRef.current);
-        }
         isDeductingRef.current = false;
       }
     });
@@ -1934,8 +1925,9 @@ export const CoachVoiceChat = ({
       setIsCheckingQuota(false);
       
       if (quotaResult === 'show_pay') {
-        // 显示支付对话框
-        setShowPayDialog(true);
+        // 余额不足但允许进入通话（有10分钟免费体验），顶部显示提醒横幅
+        setInsufficientDuringCall(true);
+        startCall();
       } else if (quotaResult === true) {
         startCall();
       } else {
@@ -1968,37 +1960,7 @@ export const CoachVoiceChat = ({
     };
   }, []);
 
-  // 显示支付对话框
-  if (showPayDialog) {
-    return (
-      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-4">💫</div>
-          <h2 className="text-white text-xl font-medium mb-2">点数不足</h2>
-          <p className="text-white/60 text-sm">至少需要 {POINTS_PER_MINUTE} 点才能开始语音对话</p>
-        </div>
-        
-        <UnifiedPayDialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) {
-              setShowPayDialog(false);
-              onClose();
-            }
-          }}
-          packageInfo={MEMBER_365_PACKAGE}
-          onSuccess={() => {
-            toast({
-              title: "续费成功！",
-              description: "正在开始语音对话...",
-            });
-            setShowPayDialog(false);
-            startCall();
-          }}
-        />
-      </div>
-    );
-  }
+  // showPayDialog 不再使用全屏支付弹窗，改为在通话界面顶部横幅提醒
 
   // 🔧 连接中显示进度
   if (isCheckingQuota || status === 'connecting') {
@@ -2025,58 +1987,7 @@ export const CoachVoiceChat = ({
     );
   }
 
-  // 🔧 通话过程中余额不足 - 显示友好的续费提示
-  if (insufficientDuringCall) {
-    return (
-      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-6">
-        <div className="text-center mb-6 animate-in fade-in-50">
-          <div className="text-5xl mb-4">💡</div>
-          <h2 className="text-white text-xl font-medium mb-2">余额不足</h2>
-          <p className="text-white/60 text-sm mb-4">
-            已通话 {formatDuration(duration)}，消耗 {billedMinutes * POINTS_PER_MINUTE} 点
-          </p>
-          <p className="text-amber-400 text-sm">
-            充值后可继续对话，或点击挂断保存本次对话
-          </p>
-        </div>
-        
-        <div className="w-full max-w-sm space-y-3">
-          <UnifiedPayDialog
-            open={true}
-            onOpenChange={(open) => {
-              if (!open) {
-                // 用户关闭支付弹窗，结束通话
-                setInsufficientDuringCall(false);
-                endCall();
-              }
-            }}
-            packageInfo={MEMBER_365_PACKAGE}
-            onSuccess={() => {
-              toast({
-                title: "续费成功！",
-                description: "正在恢复语音对话...",
-              });
-              setInsufficientDuringCall(false);
-              // 重新开始通话
-              startCall();
-            }}
-          />
-          
-          <Button
-            variant="outline"
-            onClick={() => {
-              setInsufficientDuringCall(false);
-              endCall();
-            }}
-            className="w-full border-white/20 text-white/70 hover:text-white hover:bg-white/10"
-          >
-            <PhoneOff className="w-4 h-4 mr-2" />
-            结束本次对话
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // 🔧 通话过程中余额不足 - 不再阻断通话，改为在通话界面顶部显示横幅提醒（见下方 return 中的横幅）
 
   return (
     <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col ${useMiniProgramMode ? 'pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,0px)]' : ''}`}>
