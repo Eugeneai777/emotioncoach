@@ -7,6 +7,8 @@ import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface RoundConfig {
   fields: { key: string; label: string; placeholder: string; type?: "text" | "select"; options?: string[] }[];
