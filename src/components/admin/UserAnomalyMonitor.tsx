@@ -198,8 +198,6 @@ export default function UserAnomalyMonitor() {
             <span className="hidden sm:inline">登录注册监控</span>
             <span className="sm:hidden">登录</span>
           </TabsTrigger>
-            <span className="sm:hidden">OG</span>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="user">
