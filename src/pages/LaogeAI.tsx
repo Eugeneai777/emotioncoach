@@ -73,8 +73,37 @@ const TOOLS: ToolConfig[] = [
 export default function LaogeAI() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: purchasedMap } = usePackagesPurchased(['synergy_bundle']);
+  const { data: purchasedMap } = usePackagesPurchased([
+    'synergy_bundle',
+    'wealth_block_assessment',
+    'emotion_health_assessment',
+    'identity_bloom',
+  ]);
   const campPurchased = !!user && !!purchasedMap?.['synergy_bundle'];
+  const wealthPurchased = !!user && !!purchasedMap?.['wealth_block_assessment'];
+  const emotionPurchased = !!user && !!purchasedMap?.['emotion_health_assessment'];
+  const identityPurchased = !!user && !!purchasedMap?.['identity_bloom'];
+
+  // 检查觉醒力测评是否已完成
+  const { data: midlifeCompleted } = useQuery({
+    queryKey: ['midlife-awakening-completed', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data, error } = await supabase
+        .from('midlife_awakening_assessments' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      if (error) return false;
+      return !!data;
+    },
+    enabled: !!user,
+    staleTime: 30 * 1000,
+  });
+
+  const allAssessmentsDone = wealthPurchased && emotionPurchased && !!midlifeCompleted;
+  const allCampsDone = campPurchased && identityPurchased;
 
   return (
     <div className="min-h-screen bg-[hsl(var(--laoge-bg))] pb-20">
