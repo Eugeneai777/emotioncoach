@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, ChevronRight, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award, Share2 } from "lucide-react";
+import { Shield, ChevronRight, ChevronDown, CheckCircle, Package, Rocket, Truck, Target, CircleCheck, ArrowRight, Pill, Award, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
