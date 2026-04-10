@@ -54,24 +54,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 /* ========== Pain Points ========== */
 const painPoints = [
-  {
-    emoji: "😶", label: "身体在报警", color: "#dc2626",
-    scene: "白天扛业绩压力精神紧绷，夜晚失眠恶性循环，精力持续报警",
-    feeling: "\u201C想睡却睡不着\u201D的焦虑，担忧身体崩溃却停不下来",
-    root: "健康储备持续消耗，简单休息已无法修复的深度疲劳",
-  },
-  {
-    emoji: "🤐", label: "无人懂我", color: "#9333ea",
-    scene: "伴侣误读为\u201C冷漠\u201D，朋友怕被视为\u201C矫情\u201D，主动隐藏情绪",
-    feeling: "所有压力被迫内部消化，表面正常，内心\u201C无人懂我\u201D",
-    root: "\u201C坚强支柱\u201D角色期待与真实情感需求的尖锐矛盾",
-  },
-  {
-    emoji: "💊", label: "越自救越累", color: "#2563eb",
-    scene: "健身、喝酒、刷手机，解压方式要么带来新负担，要么只是短暂麻痹",
-    feeling: "付出努力后第二天依旧疲惫，\u201C自救失败\u201D带来更强无力感",
-    root: "解决问题的努力本身成了新问题，缺乏针对根源的方案",
-  },
+  { emoji: "😶", label: "压力大睡不好", desc: "白天扛着业绩压力，晚上翻来覆去睡不着，身体在报警", color: "#dc2626" },
+  { emoji: "🤐", label: "有苦说不出", desc: "老婆觉得你冷漠，兄弟觉得你矫情，找不到一个能真正懂你的人", color: "#9333ea" },
+  { emoji: "💊", label: "越努力越累", desc: "健身、喝酒、刷手机，试了各种解压方式，但第二天还是一样疲惫", color: "#2563eb" },
 ];
 
 /* ========== Value comparison ========== */
@@ -277,7 +262,7 @@ export default function ZhileCoachPromoPage() {
             <div className="text-left">
               <p className="text-white/60 text-xs line-through">原价 ¥899</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-white">¥389</span>
+                <span className="text-3xl font-black text-white">¥399</span>
                 <span className="text-xs text-amber-200">限量体验价</span>
               </div>
             </div>
@@ -342,31 +327,26 @@ export default function ZhileCoachPromoPage() {
 
       {/* ===== PAIN POINTS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">这些，是不是你现在的状态？</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">如果你中了任何一条——你不是矫情，你是真的累了</p>
-        <div className="grid gap-4 max-w-lg mx-auto">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你是不是这样？</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">如果你中了任何一条，这次咨询就是为你准备的</p>
+        <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
-              className="p-5 rounded-2xl bg-white shadow-sm border border-amber-100/50"
+              transition={{ delay: i * 0.1 }}
+              className="flex items-start gap-3 p-4 rounded-2xl bg-white shadow-sm border border-amber-100/50"
             >
-              <div className="flex items-center gap-2.5 mb-3">
-                <span className="text-2xl shrink-0">{p.emoji}</span>
+              <span className="text-2xl shrink-0">{p.emoji}</span>
+              <div>
                 <span className="text-sm font-bold" style={{ color: p.color }}>{p.label}</span>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{p.desc}</p>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed mb-2">{p.scene}</p>
-              <p className="text-xs text-slate-400 italic leading-relaxed mb-2">"{p.feeling}"</p>
-              <p className="text-xs font-semibold leading-relaxed" style={{ color: p.color }}>⚠ {p.root}</p>
             </motion.div>
           ))}
         </div>
-        <p className="text-center text-sm text-slate-500 mt-6 max-w-md mx-auto leading-relaxed">
-          身体、心理、行为三个层面同时失衡——<span className="font-semibold text-amber-700">你需要的不是更努力，而是一次专业的方向校准。</span>
-        </p>
       </Section>
 
       {/* ===== CORE VALUE — 30min 1V1 ===== */}
@@ -592,7 +572,7 @@ export default function ZhileCoachPromoPage() {
           <div className="p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 shadow-sm mb-6">
             <p className="text-slate-500 text-sm line-through mb-1">原价 ¥899</p>
             <div className="flex items-baseline justify-center gap-1 mb-2">
-              <span className="text-4xl font-black text-orange-600">¥389</span>
+              <span className="text-4xl font-black text-orange-600">¥399</span>
               <span className="text-sm text-amber-600">限量体验价</span>
             </div>
             <p className="text-xs text-slate-500 mb-1">含1次30分钟1V1教练咨询 + 1瓶知乐胶囊 + 学员服务群</p>
@@ -657,7 +637,7 @@ export default function ZhileCoachPromoPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs text-slate-400 line-through">¥899</span>
-                  <span className="text-lg font-black text-orange-600">¥389</span>
+                  <span className="text-lg font-black text-orange-600">¥399</span>
                 </div>
                 <p className="text-[10px] text-slate-400 truncate">1V1教练咨询 + 知乐胶囊</p>
               </div>
@@ -692,7 +672,7 @@ export default function ZhileCoachPromoPage() {
         title="分享给朋友"
         shareUrl={`${window.location.origin}/promo/zhile-coach?ref=share`}
         fileName="身心诊断体验"
-        shareTitle="¥389 身心诊断体验"
+        shareTitle="¥399 身心诊断体验"
         shareText="30分钟1V1深度咨询，找到情绪卡点根源"
         previewCard={
           <div className="transform scale-[0.6] origin-top-left">
