@@ -129,6 +129,7 @@ export const CoachVoiceChat = ({
   const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
   // 🔧 防止 StrictMode/路由切换导致“卸载后旧初始化还在跑”，产生第二路 WS/音频流
   const isUnmountedRef = useRef(false);
+  const hasActiveCampRef = useRef(false); // 🔧 训练营用户免扣费标记
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   // 🔧 连接进度追踪
