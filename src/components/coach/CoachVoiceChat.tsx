@@ -1802,7 +1802,7 @@ export const CoachVoiceChat = ({
 
   // 低余额警告 - 增强提示
   useEffect(() => {
-    if (skipBilling) return; // 跳过计费时不显示余额警告
+    if (skipBilling || hasActiveCampRef.current) return; // 跳过计费时不显示余额警告
     if (remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 2 && remainingQuota >= POINTS_PER_MINUTE) {
       toast({
         title: "⚠️ 余额即将不足",
