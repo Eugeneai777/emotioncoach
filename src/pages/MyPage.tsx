@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Package, ChevronRight, ChevronDown,
   Info, Bell, MessageSquare, LogOut, Truck,
-  Settings, Headphones
+  Settings, Headphones, FlaskConical
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -255,6 +255,28 @@ const MyPage: React.FC = () => {
                   </button>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* ======== 产品体验计划 ======== */}
+        <section>
+          <Card
+            className="border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+            onClick={() => window.open("https://docs.qq.com/form/page/REPLACE_WITH_YOUR_SURVEY_ID", "_blank")}
+          >
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                <FlaskConical className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">产品体验计划</p>
+                <p className="text-xs text-muted-foreground mt-0.5">参与调研赢福利，助力产品升级</p>
+              </div>
+              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200/50 text-[10px] shrink-0">
+                赢福利
+              </Badge>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             </CardContent>
           </Card>
         </section>
