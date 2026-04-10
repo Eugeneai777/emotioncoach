@@ -188,6 +188,15 @@ const promoSlides = [
     gradient: "from-slate-700 to-amber-600",
     route: "/promo/synergy",
   },
+  {
+    id: "identity-bloom",
+    emoji: "🌟",
+    title: "身份绽放训练营",
+    subtitle: "重新定义你是谁 · ¥3980",
+    tag: "高端推荐",
+    gradient: "from-amber-600 to-rose-500",
+    route: "/promo/identity-bloom",
+  },
 ];
 
 const PromoBanner: React.FC<{
@@ -314,8 +323,25 @@ const MiniAppEntry = () => {
 
   // ── 购买/完成状态查询 ──
   const { data: purchasedMap = {} } = usePackagesPurchased([
-    'synergy_bundle', 'wealth_block_assessment', 'emotion_health_assessment',
+    'synergy_bundle', 'wealth_block_assessment', 'emotion_health_assessment', 'identity_bloom',
   ]);
+
+  // 查询用户历史购买总金额
+  const { data: totalSpent = 0 } = useQuery({
+    queryKey: ['user-total-spent', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data, error } = await supabase
+        .from('orders')
+        .select('amount')
+        .eq('user_id', user.id)
+        .eq('status', 'paid');
+      if (error) { console.error('[totalSpent]', error); return 0; }
+      return (data || []).reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
+    },
+    enabled: !!user,
+    staleTime: 60 * 1000,
+  });
 
   const { data: completedFreeAssessments = {} } = useQuery({
     queryKey: ['free-assessment-completion', user?.id],
@@ -338,18 +364,27 @@ const MiniAppEntry = () => {
 
   // ── 过滤轮播卡片 ──
   const filteredSlides = useMemo(() => {
-    if (!user) return promoSlides;
-    const allAssessmentsDone =
-      !!purchasedMap['wealth_block_assessment'] &&
-      !!purchasedMap['emotion_health_assessment'] &&
-      !!completedFreeAssessments['midlife_awakening'] &&
-      !!completedFreeAssessments['women_competitiveness'];
     return promoSlides.filter(slide => {
+      // 身份绽放：未登录或消费<399或已购 → 隐藏
+      if (slide.id === 'identity-bloom') {
+        if (!user) return false;
+        if (totalSpent < 399) return false;
+        if (purchasedMap['identity_bloom']) return false;
+        return true;
+      }
+      if (!user) return true;
       if (slide.id === 'women-camp' && purchasedMap['synergy_bundle']) return false;
-      if (slide.id === 'assessment' && allAssessmentsDone) return false;
+      if (slide.id === 'assessment') {
+        const allAssessmentsDone =
+          !!purchasedMap['wealth_block_assessment'] &&
+          !!purchasedMap['emotion_health_assessment'] &&
+          !!completedFreeAssessments['midlife_awakening'] &&
+          !!completedFreeAssessments['women_competitiveness'];
+        if (allAssessmentsDone) return false;
+      }
       return true;
     });
-  }, [user, purchasedMap, completedFreeAssessments]);
+  }, [user, purchasedMap, completedFreeAssessments, totalSpent]);
 
   // ── 过滤测评选择器列表 ──
   const filterAssessments = useCallback((assessments: AssessmentOption[]): AssessmentOption[] => {
