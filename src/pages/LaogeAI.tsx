@@ -214,7 +214,7 @@ export default function LaogeAI() {
             <span className="text-3xl">⚡</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">7天协同训练营</span>
+                <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">7天有劲训练营</span>
                 {campPurchased ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">已购买</span>
                 ) : (
