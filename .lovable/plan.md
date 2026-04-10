@@ -1,83 +1,39 @@
 
 
-# 预扣费失败时显示横幅而非报错关闭
+# /mini-app 快捷通道 + /laoge 递进漏斗 实施方案
 
-## 问题分析
+## 改动 1：/mini-app 增加"快速开始"区块
 
-用户点击语音教练后，系统在连接前执行**预扣费**（第1分钟）。当余额为0时：
+**文件**：`src/pages/MiniAppEntry.tsx`
 
-1. `deductQuota(1)` 调用 → HTTP 400 → `deductQuotaWithRetry` 正确返回 `{ success: false, isNetworkError: false }`
-2. `deductQuota` 内部正确设置了 `setInsufficientDuringCall(true)`（L548-550）
-3. **但是**，调用方（L1243-1249）检查到 `!deducted` 后立即执行：
-   - `setStatus('error')` → 页面显示"连接失败"
-   - `setTimeout(onClose, 1500)` → 1.5秒后关闭页面
+在"选一个最懂你的入口"文字（L412）和6宫格（L417）之间，插入一个横向滚动的"快速开始"卡片条：
 
-所以横幅虽然被触发，但页面立刻被关闭了，用户看到的是错误状态 + 自动关闭。
+- 3张卡片：💰 财富卡点(¥9.9)、🧭 中场觉醒力(专业版)、💚 情绪健康(¥9.9)
+- 复用现有 `filterAssessments` 逻辑，已完成/已购的测评自动隐藏
+- 全部完成时整个区块隐藏
+- 点击直接 `navigate` 到对应测评页，无需弹窗
+- 视觉：小卡片带渐变背景 + emoji + 标题 + 价格标签，横向滚动 `overflow-x-auto`
 
-## 修复方案
+## 改动 2：/laoge 重构为递进漏斗
 
-**仅修改 `src/components/coach/CoachVoiceChat.tsx` 中 L1243-1249 的预扣费失败分支**
+**文件**：`src/pages/LaogeAI.tsx`
 
-将当前逻辑：
-```typescript
-if (!deducted) {
-  setStatus('error');
-  isInitializingRef.current = false;
-  stopConnectionTimer();
-  releaseLock();
-  setTimeout(onClose, 1500);
-  return;
-}
-```
+### 2a. 调整模块顺序：工具卡上移到测评之前
+- Hero 之后先展示4个 AI 对话工具卡（免费体验层）
+- 文案从"有事问老哥"改为"先跟老哥免费聊两句"
 
-改为：**区分余额不足和其他扣费失败**
-```typescript
-if (!deducted) {
-  isInitializingRef.current = false;
-  stopConnectionTimer();
-  releaseLock();
-  
-  if (insufficientDuringCall) {
-    // 余额不足：保持页面打开，显示横幅引导充值
-    setStatus('idle');
-    return;
-  }
-  
-  // 其他扣费失败（网络等）：保持原有逻辑
-  setStatus('error');
-  setTimeout(onClose, 1500);
-  return;
-}
-```
+### 2b. 测评矩阵扩至3格
+- `grid-cols-2` → `grid-cols-3`
+- 新增"💚 情绪健康测评"卡片，路由 `/emotion-health`，价格"限时 ¥9.9"
+- 标题改为"聊完再做个体检"
 
-由于 `insufficientDuringCall` 是 state，可能在同一 tick 还未更新。需要改用同步判断：让 `deductQuota` 返回更详细的信息，或者直接用 `deductQuotaWithRetry` 的返回值判断。
+### 2c. 新增"系统方案"区块（测评下方）
+- ¥399 协同训练营卡片：复用 `purchasedMap['synergy_bundle']` 判断，未购→`/promo/synergy`，已购→显示"继续学习"
+- ¥3980 身份绽放卡片：轻曝光风格，导向 `/promo/identity-bloom`
+- 标题："想要系统解决？老哥推荐"
 
-实际实现：
-```typescript
-// 改用 deductQuotaWithRetry 直接获取结果
-const preDeductResult = await deductQuotaWithRetry(1);
-if (!preDeductResult.success) {
-  isInitializingRef.current = false;
-  stopConnectionTimer();
-  releaseLock();
-  
-  if (!preDeductResult.isNetworkError) {
-    // 余额不足：设置横幅，保持页面
-    setInsufficientDuringCall(true);
-    setStatus('idle');
-  } else {
-    setStatus('error');
-    setTimeout(onClose, 1500);
-  }
-  return;
-}
-// 预扣成功，更新 lastBilledMinuteRef
-lastBilledMinuteRef.current = 1;
-```
-
-### 改动范围
-- **仅修改** `src/components/coach/CoachVoiceChat.tsx`
-- L1230-1249 区域：将 `deductQuota(1)` 替换为 `deductQuotaWithRetry(1)` 并根据返回结果区分处理
-- 不修改 `deductQuotaWithRetry` / `deductQuota` 函数本身
-- 不修改横幅 UI、边缘函数、路由等
+## 不涉及的改动
+- 不修改边缘函数、数据库、路由配置
+- 不删除 /mini-app 现有的6宫格、轮播图、见证等模块
+- 不修改 LaogeToolCard 组件本身
 
