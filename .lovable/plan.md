@@ -1,69 +1,61 @@
 
 
-# 余额不足横幅优化方案
+# 诊断结果：余额不足时扣费失败未触发横幅
 
-## 问题现状
-当前语音教练通话中余额不足时，`insufficientDuringCall` 分支会替换整个页面为一个深色全屏界面 + UnifiedPayDialog 弹窗，体验突兀。用户需求是：**保持在教练页面，仅在顶部显示横幅提示，点击"前往充值"跳转产品中心**。
+## 根本原因
 
-## 修改方案
+当用户余额为 0 时，`deduct-quota` 边缘函数调用 `deduct_user_quota` RPC，RPC 抛出异常 `'Insufficient quota or user not found'`，导致边缘函数返回 **HTTP 400** 状态码。
 
-### 文件：`src/components/coach/CoachVoiceChat.tsx`
+**关键问题在前端判断逻辑：**
 
-**1. 替换 `insufficientDuringCall` 的全屏渲染逻辑（L2023-2073）**
-
-将当前的全屏替换渲染改为：不再 `return` 一个独立页面，而是在主界面顶部插入一条横幅。
-
-- 删除 `if (insufficientDuringCall) { return (...) }` 这个独立分支
-- 在主 `return` 的顶部状态栏区域之上，添加条件渲染横幅
-
-**2. 横幅设计**
-
-```text
-┌──────────────────────────────────────┐
-│ 用户余额不足，继续请前往充值  [前往充值] │  ← 横幅
-├──────────────────────────────────────┤
-│          (原有教练页面不变)            │
-└──────────────────────────────────────┘
-```
-
-- 横幅背景色：使用当前教练的 `primaryColor` 对应的颜色（rose→粉色，purple→紫色，orange→橙色等）
-- 文字：白色 `"用户余额不足，继续请前往充值"`
-- 按钮：白色背景 + 主色字体的 `"前往充值"` 按钮
-- 横幅有进入动画（从顶部滑入）
-
-**3. "前往充值"按钮行为**
-
-- 点击后跳转到 `/packages`（即产品中心 `https://wechat.eugenewe.net/packages`）
-- 不关闭通话页面，不弹 UnifiedPayDialog
-- 用户在产品中心购买完成后，点浏览器返回即可回到教练页面
-
-**4. 余额不足时不断开连接、不报错**
-
-- 设置 `insufficientDuringCall` 时，不再调用 `chatRef.current?.disconnect()` 和 `clearInterval(durationRef.current)`
-- 移除 `disconnectNoticeRef` 中与"点数不足"相关的 toast 提示
-- 保持页面停留在当前教练界面，通话自然暂停（服务端不再扣费即可）
-
-**5. colorMap 扩展**
-
-在现有 `colorMap` 中新增 `banner` 和 `bannerText` 字段，用于横幅样式：
+Supabase SDK 收到 HTTP 400 后，设置 `error` 为 `FunctionsHttpError`（而不是在 `data.error` 中）。前端代码（L479）将 `FunctionsHttpError` 归类为**网络错误**（`isNetworkError = true`）：
 
 ```typescript
-rose:   { ..., banner: 'bg-rose-500',   bannerText: 'text-rose-600' },
-purple: { ..., banner: 'bg-purple-500', bannerText: 'text-purple-600' },
-orange: { ..., banner: 'bg-orange-500', bannerText: 'text-orange-600' },
-// 其他颜色类似
+// CoachVoiceChat.tsx L479
+const isFunctionsHttpError = (error as any)?.name?.toLowerCase?.().includes('functionshttperror');
+const isNetworkErr = ... || isFunctionsHttpError;  // ← HTTP 400 被当作网络错误
+```
+
+然后在 L540-543：
+```typescript
+if (!result.success && !result.isNetworkError) {
+  setInsufficientDuringCall(true);  // ← 永远不会执行，因为 isNetworkError=true
+}
+```
+
+所以余额不足的 HTTP 400 被误判为网络波动，重试 3 次后静默失败，横幅永远不会显示。
+
+## 修复方案
+
+**仅修改 `src/components/coach/CoachVoiceChat.tsx` 中的错误判断逻辑**，在 `FunctionsHttpError` 分支中进一步区分：HTTP 400 = 业务错误（余额不足），HTTP 5xx = 网络/服务端波动。
+
+### 具体改动（约 15 行）
+
+在 `deductQuotaWithRetry` 函数的 `if (error)` 分支（L474-496）中：
+
+1. 当 `error` 是 `FunctionsHttpError` 时，从 `error.context`（Response 对象）读取 HTTP 状态码
+2. 如果状态码是 **400**，尝试解析响应体获取业务错误信息（如"余额不足"），返回 `{ success: false, isNetworkError: false }`
+3. 如果状态码是 **5xx**，保持现有逻辑视为可重试的网络错误
+
+```typescript
+// 修改后的判断逻辑（伪代码）
+if (error) {
+  // 新增：FunctionsHttpError 需要区分 4xx 和 5xx
+  if (isFunctionsHttpError && error.context) {
+    const status = error.context.status;
+    if (status === 400) {
+      // 业务错误（余额不足），不重试，直接返回
+      return { success: false, isNetworkError: false };
+    }
+    // 5xx 继续走重试逻辑
+  }
+  // ... 保持原有网络错误重试逻辑不变
+}
 ```
 
 ### 不涉及的改动
-- 文字教练（`useDynamicCoachChat`）当前没有计费逻辑，无需改动
 - 不修改 `deduct-quota` 边缘函数
-- 不修改支付流程和现有路由
-- 不影响训练营权益检查逻辑
-
-### 改动范围
-- **仅修改** `src/components/coach/CoachVoiceChat.tsx`
-  - 删除 L2023-2073 的全屏 insufficientDuringCall 分支
-  - 在主 return 顶部添加条件横幅
-  - 修改余额不足触发点：不断开连接、不报 toast
-  - colorMap 增加横幅相关颜色字段
+- 不修改横幅 UI（已实现）
+- 不修改 `deductQuota` 调用逻辑和 `setInsufficientDuringCall` 触发点
+- 不影响训练营权益检查、退费等现有逻辑
 
