@@ -472,11 +472,19 @@ export const CoachVoiceChat = ({
         });
 
         if (error) {
-          // 判断是否为网络错误（可重试）
           const errorMsg = error.message?.toLowerCase() || '';
-          // 🔧 扩展：把 5xx / FunctionsHttpError 等也视作“可重试的网络/服务端波动”
-          const maybeHttp5xx = /\b5\d\d\b/.test(errorMsg);
           const isFunctionsHttpError = (error as any)?.name?.toLowerCase?.().includes('functionshttperror');
+
+          // 区分 HTTP 400（业务错误，如余额不足）和 5xx（可重试的服务端波动）
+          if (isFunctionsHttpError && (error as any).context) {
+            const status = (error as any).context.status;
+            if (status === 400) {
+              console.warn(`[VoiceChat] Deduct attempt ${attempt} got HTTP 400 (business error), not retrying.`);
+              return { success: false, isNetworkError: false };
+            }
+          }
+
+          const maybeHttp5xx = /\b5\d\d\b/.test(errorMsg);
           const isNetworkErr = errorMsg.includes('fetch') || 
                                errorMsg.includes('network') ||
                                errorMsg.includes('timeout') ||
