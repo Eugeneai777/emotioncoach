@@ -413,6 +413,40 @@ const MiniAppEntry = () => {
         </motion.div>
       </div>
 
+      {/* ── 快速开始 - 核心测评直达 ── */}
+      {(() => {
+        const quickStartItems = filterAssessments([
+          { emoji: "💰", title: "财富卡点测评", sub: "20题·6分钟", route: "/wealth-block", price: "限时¥9.9" },
+          { emoji: "🧭", title: "中场觉醒力", sub: "30题·8分钟", route: "/midlife-awakening", price: "专业版" },
+          { emoji: "💚", title: "情绪健康测评", sub: "PHQ-9+GAD-7·5分钟", route: "/emotion-health", price: "限时¥9.9" },
+        ]);
+        if (quickStartItems.length === 0) return null;
+        return (
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="px-4 pb-3"
+          >
+            <p className="text-xs font-bold text-muted-foreground mb-2">⚡ 快速开始</p>
+            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+              {quickStartItems.map((item) => (
+                <button
+                  key={item.route}
+                  onClick={() => navigate(item.route)}
+                  className="flex-shrink-0 w-[130px] rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/15 p-3 flex flex-col items-start gap-1.5 hover:border-primary/30 active:scale-[0.97] transition-all text-left"
+                >
+                  <span className="text-xl">{item.emoji}</span>
+                  <span className="text-xs font-bold text-foreground leading-tight">{item.title}</span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">{item.sub}</span>
+                  <span className="text-[10px] font-bold text-primary">{item.price}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        );
+      })()}
+
       {/* ── 人群入口 3列网格 ── */}
       <div className="px-4 pb-4">
         <div className="grid grid-cols-3 gap-2 overflow-visible">
