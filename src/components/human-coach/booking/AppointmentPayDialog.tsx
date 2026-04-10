@@ -299,15 +299,9 @@ export function AppointmentPayDialog({
       if (isMiniProgram) {
         const mpOpenId = getMiniProgramOpenIdFromCache();
         console.log('[AppointmentPay] MiniProgram detected, cached mp_openid:', mpOpenId || 'MISSING');
-        
         if (!mpOpenId) {
-          console.error('[AppointmentPay] MiniProgram payment requires mp_openid');
-          toast.error('缺少支付授权信息，请返回小程序首页重新进入');
-          setStatus('failed');
-          setErrorMessage('缺少 mp_openid 参数');
-          return;
+          console.warn('[AppointmentPay] mp_openid not cached, will use native bridge');
         }
-        
         openIdForPayment = mpOpenId;
         selectedPayType = 'miniprogram';
       } else if (isWechat && !isMobile) {

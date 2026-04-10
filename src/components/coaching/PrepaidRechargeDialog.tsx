@@ -205,10 +205,7 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
       if (isMiniProgram) {
         const mpOpenId = getMiniProgramOpenIdFromCache();
         if (!mpOpenId) {
-          toast.error('缺少支付授权信息，请返回小程序首页重新进入');
-          setStatus('failed');
-          setErrorMessage('缺少 mp_openid');
-          return;
+          console.warn('[PrepaidRecharge] MiniProgram: mp_openid not cached, will use native bridge');
         }
         openIdForPayment = mpOpenId;
         payType = 'miniprogram';

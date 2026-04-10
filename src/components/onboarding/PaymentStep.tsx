@@ -166,14 +166,10 @@ export function PaymentStep({
       // 小程序环境：从 sessionStorage 读取缓存的 mp_openid
       userOpenId = getMiniProgramOpenIdFromCache();
       if (!userOpenId) {
-        console.error('[PaymentStep] MiniProgram: mp_openid not found in cache');
-        toast.error('缺少支付授权信息，请返回小程序首页重新进入');
-        setStatus('failed');
-        setErrorMessage('缺少 mp_openid');
-        return;
+        console.warn('[PaymentStep] MiniProgram: mp_openid not cached, will use native bridge');
       }
       selectedPayType = 'miniprogram';
-      console.log('[PaymentStep] MiniProgram detected, using cached mp_openid');
+      console.log('[PaymentStep] MiniProgram detected, mp_openid:', userOpenId || 'MISSING (will get from native)');
     } else if (isMobile && !isWechat) {
       selectedPayType = 'h5';
     } else {
