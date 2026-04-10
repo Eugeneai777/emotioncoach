@@ -421,6 +421,7 @@ export const CoachVoiceChat = ({
 
       if (activeCamps && activeCamps.length > 0) {
         console.log('[VoiceChat] User has active camp, skipping quota check');
+        hasActiveCampRef.current = true;
         return true;
       }
 
@@ -543,7 +544,7 @@ export const CoachVoiceChat = ({
 
   // 扣费函数 - 兼容旧接口，内部使用重试逻辑
   const deductQuota = async (minute: number): Promise<boolean> => {
-    if (skipBilling) return true;
+    if (skipBilling || hasActiveCampRef.current) return true;
     
     // 防止重复扣同一分钟
     if (minute <= lastBilledMinuteRef.current) {
@@ -1704,7 +1705,7 @@ export const CoachVoiceChat = ({
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (status !== 'connected') return;
-    if (skipBilling) return; // 跳过计费
+    if (skipBilling || hasActiveCampRef.current) return; // 跳过计费（含训练营用户）
 
     const currentMinute = Math.floor(duration / 60) + 1; // 第几分钟
     
