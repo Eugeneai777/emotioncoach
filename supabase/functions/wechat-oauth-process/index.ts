@@ -580,10 +580,16 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in WeChat OAuth process:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logAuthEvent(supabaseClient, {
-      eventType: 'login_fail', authMethod: 'wechat',
-      errorMessage, ...clientInfo,
-    });
+    try {
+      const errClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      logAuthEvent(errClient, {
+        eventType: 'login_fail', authMethod: 'wechat',
+        errorMessage, ...clientInfo,
+      });
+    } catch (_) { /* ignore logging errors */ }
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
