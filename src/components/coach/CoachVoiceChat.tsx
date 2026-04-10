@@ -472,18 +472,33 @@ export const CoachVoiceChat = ({
         });
 
         if (error) {
-          // 判断是否为网络错误（可重试）
+          // 判断是否为网络错误（可重试）vs 业务错误（不重试）
           const errorMsg = error.message?.toLowerCase() || '';
-          // 🔧 扩展：把 5xx / FunctionsHttpError 等也视作“可重试的网络/服务端波动”
-          const maybeHttp5xx = /\b5\d\d\b/.test(errorMsg);
+          const maybeHttp5xx = /5\d\d/.test(errorMsg);
           const isFunctionsHttpError = (error as any)?.name?.toLowerCase?.().includes('functionshttperror');
-          const isNetworkErr = errorMsg.includes('fetch') || 
+
+          // 修复：FunctionsHttpError 包含 4xx（余额不足）和 5xx，需区分
+          let isBusinessError = false;
+          if (isFunctionsHttpError && (error as any)?.context) {
+            try {
+              const resp = (error as any).context as Response;
+              if (resp.status && resp.status >= 400 && resp.status < 500) {
+                isBusinessError = true;
+                console.warn(`[VoiceChat] Business error (HTTP ${resp.status}), will not retry`);
+              }
+            } catch {
+              // ignore
+            }
+          }
+
+          const isNetworkErr = !isBusinessError && (
+                               errorMsg.includes('fetch') ||
                                errorMsg.includes('network') ||
                                errorMsg.includes('timeout') ||
                                errorMsg.includes('failed to fetch') ||
                                errorMsg.includes('aborted') ||
                                maybeHttp5xx ||
-                               isFunctionsHttpError;
+                               isFunctionsHttpError);
           
           console.warn(`[VoiceChat] Deduct attempt ${attempt} failed:`, error.message, `isNetwork: ${isNetworkErr}`);
           
