@@ -56,7 +56,7 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 const painPoints = [
   { emoji: "😶", label: "身体在报警，你却停不下来", desc: "白天扛业绩，晚上翻来覆去", detail: "不是不想休息，是真的睡不着。你清醒地感到健康在流失，却被生活推着走，停不下来。", color: "#dc2626" },
   { emoji: "🤐", label: "所有人都觉得你没事", desc: "伴侣说你冷漠，兄弟觉得你矫情", detail: "所有压力只能自己扛，表面正常，内心早已是一座孤岛。渴望被理解，却找不到一个安全的出口。", color: "#9333ea" },
-  { emoji: "💊", label: "试了所有方法，还是一样累", desc: "健身、喝酒、刷手机……每一种都只是短暂麻痹", detail: "第二天醒来，疲惫依旧，甚至因为"自救失败"更加无力。越努力，越陷越深。", color: "#2563eb" },
+  { emoji: "💊", label: "试了所有方法，还是一样累", desc: "健身、喝酒、刷手机……每一种都只是短暂麻痹", detail: "第二天醒来，疲惫依旧，甚至因为\u201C自救失败\u201D更加无力。越努力，越陷越深。", color: "#2563eb" },
 ];
 
 /* ========== Value comparison ========== */
