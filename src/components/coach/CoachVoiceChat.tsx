@@ -129,6 +129,7 @@ export const CoachVoiceChat = ({
   const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
   // 🔧 防止 StrictMode/路由切换导致“卸载后旧初始化还在跑”，产生第二路 WS/音频流
   const isUnmountedRef = useRef(false);
+  const hasActiveCampRef = useRef(false); // 🔧 训练营用户免扣费标记
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   // 🔧 连接进度追踪
@@ -420,6 +421,7 @@ export const CoachVoiceChat = ({
 
       if (activeCamps && activeCamps.length > 0) {
         console.log('[VoiceChat] User has active camp, skipping quota check');
+        hasActiveCampRef.current = true;
         return true;
       }
 
@@ -542,7 +544,7 @@ export const CoachVoiceChat = ({
 
   // 扣费函数 - 兼容旧接口，内部使用重试逻辑
   const deductQuota = async (minute: number): Promise<boolean> => {
-    if (skipBilling) return true;
+    if (skipBilling || hasActiveCampRef.current) return true;
     
     // 防止重复扣同一分钟
     if (minute <= lastBilledMinuteRef.current) {
@@ -1703,7 +1705,7 @@ export const CoachVoiceChat = ({
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (status !== 'connected') return;
-    if (skipBilling) return; // 跳过计费
+    if (skipBilling || hasActiveCampRef.current) return; // 跳过计费（含训练营用户）
 
     const currentMinute = Math.floor(duration / 60) + 1; // 第几分钟
     
@@ -1800,7 +1802,7 @@ export const CoachVoiceChat = ({
 
   // 低余额警告 - 增强提示
   useEffect(() => {
-    if (skipBilling) return; // 跳过计费时不显示余额警告
+    if (skipBilling || hasActiveCampRef.current) return; // 跳过计费时不显示余额警告
     if (remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 2 && remainingQuota >= POINTS_PER_MINUTE) {
       toast({
         title: "⚠️ 余额即将不足",
