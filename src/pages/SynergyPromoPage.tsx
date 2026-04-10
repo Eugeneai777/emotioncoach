@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, TrendingDown, Moon, Heart, Briefcase, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,9 +59,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 const painPoints = [
   { icon: Activity, label: "情绪内耗", desc: "焦虑、烦躁、压抑、易怒，明明很累却无人理解，长期情绪内耗", color: "#dc2626" },
   { icon: Heart, label: "关系紧张", desc: "夫妻沟通困难、亲密关系冷淡；亲子有代沟，不知道怎么有效沟通", color: "#e11d48" },
+  { icon: TrendingDown, label: "财富卡点", desc: "收入遇到天花板、赚钱焦虑、总觉得配不上更好的，潜意识里的隐形刹车限制了你的财富上限", color: "#d97706" },
   { icon: Briefcase, label: "职场高压", desc: "工作压力大、内卷严重、精力不足、效率下降，担心职业发展瓶颈", color: "#9333ea" },
   { icon: Moon, label: "身心失调", desc: "失眠、多梦、易醒、注意力差、身体紧绷、长期疲劳，健康亮起黄灯", color: "#2563eb" },
-  { icon: Sprout, label: "成长受阻", desc: "想学习改变，但课程太复杂、太鸡汤，缺乏专业陪伴，单纯情绪疏导无法解决身体根源", color: "#059669" },
 ];
 
 /* ========== 6 Core Highlights ========== */
@@ -164,6 +164,7 @@ const testimonials = [
   { name: "陈先生", role: "外企部门总监·42岁", avatar: "👨‍💼", metric: "焦虑评分", before: "8.5", after: "3.0", duration: "21天", quote: "开会终于不心慌了，和老婆的沟通也缓和了很多" },
   { name: "刘先生", role: "民营企业主·38岁", avatar: "👨‍💻", metric: "睡眠时长", before: "4.5h", after: "7h", duration: "14天", quote: "知乐胶囊+冥想，睡眠改善太明显了，白天精力充沛" },
   { name: "赵先生", role: "工程项目经理·45岁", avatar: "👨", metric: "压力指数", before: "9.2", after: "4.0", duration: "30天", quote: "儿子说爸爸不再乱发脾气了，这句话值千金" },
+  { name: "王先生", role: "企业中层·40岁", avatar: "👨‍💼", metric: "财富焦虑指数", before: "8.8", after: "3.5", duration: "21天", quote: "以前总觉得自己配不上更高收入，训练营帮我看清了潜意识里的隐形刹车，情绪松弛后反而谈下了两个大单" },
 ];
 
 /* ========== Product specs ========== */
@@ -432,7 +433,7 @@ export default function SynergyPromoPage() {
           </h1>
 
           <p className="text-white/80 text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto">
-            情绪解压 · 关系修复 · 身心调理<br />
+            情绪解压 · 关系修复 · 突破卡点 · 身心调理<br />
             AI教练 + 专业教练 + 知乐胶囊，三重陪伴一站式解决
           </p>
 
@@ -526,7 +527,7 @@ export default function SynergyPromoPage() {
       {/* ===== PAIN POINTS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你是否正在经历？</h2>
-        <p className="text-slate-500 text-sm text-center mb-8"><p className="text-slate-500 text-sm text-center mb-8">高压生活中的五大隐形压力源</p></p>
+        <p className="text-slate-500 text-sm text-center mb-8">高压生活中的五大隐形压力源</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
@@ -863,7 +864,7 @@ export default function SynergyPromoPage() {
       {/* ===== TESTIMONIALS ===== */}
       <Section>
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">真实改变，数据说话</h2>
-        <p className="text-slate-500 text-sm text-center mb-8"><p className="text-slate-500 text-sm text-center mb-8">来自真实用户的反馈</p></p>
+        <p className="text-slate-500 text-sm text-center mb-8">来自真实用户的反馈</p>
         <div className="max-w-lg mx-auto space-y-4">
           {testimonials.map((t, i) => (
             <motion.div
@@ -914,7 +915,7 @@ export default function SynergyPromoPage() {
         <div className="max-w-lg mx-auto text-center">
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium italic">
             "7天AI+专业教练+知乐胶囊三重陪伴，<br className="hidden sm:block" /><br className="hidden sm:block" />
-            帮你搞定情绪、修复关系、卸下身心压力，<br className="hidden sm:block" />
+            帮你搞定情绪、修复关系、突破隐形卡点、卸下身心压力，<br className="hidden sm:block" />
             做更轻松、更稳定、更有力量的自己。"
           </p>
         </div>
