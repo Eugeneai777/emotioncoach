@@ -329,7 +329,7 @@ const Auth = () => {
               } else if (profile?.preferred_coach === 'emotion') {
                 targetRedirect = "/emotion-coach";
               } else if (profile?.preferred_coach === 'communication') {
-                targetRedirect = "/communication-coach";
+                targetRedirect = "/communication";
               } else if (profile?.preferred_coach === 'parent') {
                 targetRedirect = "/parent-coach";
               } else {

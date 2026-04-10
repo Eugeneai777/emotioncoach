@@ -129,7 +129,6 @@ export const CoachVoiceChat = ({
   const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
   // 🔧 防止 StrictMode/路由切换导致“卸载后旧初始化还在跑”，产生第二路 WS/音频流
   const isUnmountedRef = useRef(false);
-  
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   // 🔧 连接进度追踪
@@ -411,7 +410,18 @@ export const CoachVoiceChat = ({
         return false;
       }
 
+      // 检查是否有活跃训练营，有则免费使用语音教练
+      const { data: activeCamps } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(1);
 
+      if (activeCamps && activeCamps.length > 0) {
+        console.log('[VoiceChat] User has active camp, skipping quota check');
+        return true;
+      }
 
       const { data: account } = await supabase
         .from('user_accounts')
@@ -462,33 +472,18 @@ export const CoachVoiceChat = ({
         });
 
         if (error) {
-          // 判断是否为网络错误（可重试）vs 业务错误（不重试）
+          // 判断是否为网络错误（可重试）
           const errorMsg = error.message?.toLowerCase() || '';
-          const maybeHttp5xx = /5\d\d/.test(errorMsg);
+          // 🔧 扩展：把 5xx / FunctionsHttpError 等也视作“可重试的网络/服务端波动”
+          const maybeHttp5xx = /\b5\d\d\b/.test(errorMsg);
           const isFunctionsHttpError = (error as any)?.name?.toLowerCase?.().includes('functionshttperror');
-
-          // 修复：FunctionsHttpError 包含 4xx（余额不足）和 5xx，需区分
-          let isBusinessError = false;
-          if (isFunctionsHttpError && (error as any)?.context) {
-            try {
-              const resp = (error as any).context as Response;
-              if (resp.status && resp.status >= 400 && resp.status < 500) {
-                isBusinessError = true;
-                console.warn(`[VoiceChat] Business error (HTTP ${resp.status}), will not retry`);
-              }
-            } catch {
-              // ignore
-            }
-          }
-
-          const isNetworkErr = !isBusinessError && (
-                               errorMsg.includes('fetch') ||
+          const isNetworkErr = errorMsg.includes('fetch') || 
                                errorMsg.includes('network') ||
                                errorMsg.includes('timeout') ||
                                errorMsg.includes('failed to fetch') ||
                                errorMsg.includes('aborted') ||
                                maybeHttp5xx ||
-                               isFunctionsHttpError);
+                               isFunctionsHttpError;
           
           console.warn(`[VoiceChat] Deduct attempt ${attempt} failed:`, error.message, `isNetwork: ${isNetworkErr}`);
           
@@ -1693,7 +1688,7 @@ export const CoachVoiceChat = ({
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (status !== 'connected') return;
-    if (skipBilling) return;
+    if (skipBilling) return; // 跳过计费
 
     const currentMinute = Math.floor(duration / 60) + 1; // 第几分钟
     
@@ -1790,7 +1785,7 @@ export const CoachVoiceChat = ({
 
   // 低余额警告 - 增强提示
   useEffect(() => {
-    if (skipBilling) return;
+    if (skipBilling) return; // 跳过计费时不显示余额警告
     if (remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 2 && remainingQuota >= POINTS_PER_MINUTE) {
       toast({
         title: "⚠️ 余额即将不足",

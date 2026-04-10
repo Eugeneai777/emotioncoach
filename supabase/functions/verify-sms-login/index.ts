@@ -1,13 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/auth.ts";
-import { logAuthEvent, extractClientInfo } from '../_shared/authEventLogger.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
-  const clientInfo = extractClientInfo(req);
 
   try {
     const { phone, code, countryCode = '+86' } = await req.json();
@@ -38,11 +35,6 @@ Deno.serve(async (req) => {
 
     if (codeError || !codes || codes.length === 0) {
       console.error('Code verification failed:', { codeError, codesFound: codes?.length });
-      logAuthEvent(adminClient, {
-        eventType: 'login_fail', authMethod: 'sms', phone,
-        errorMessage: '验证码无效或已过期', errorCode: 'invalid_code',
-        ...clientInfo,
-      });
       return new Response(
         JSON.stringify({ error: '验证码无效或已过期' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -140,11 +132,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      logAuthEvent(adminClient, {
-        eventType: 'login_success', authMethod: 'sms',
-        userId: profileData.id, phone,
-        ...clientInfo,
-      });
       return new Response(
         JSON.stringify({ success: true, isNewUser: false, session: verifyData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -267,11 +254,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      logAuthEvent(adminClient, {
-        eventType: isNewUser ? 'register_success' : 'login_success',
-        authMethod: 'sms', userId: finalUserId, phone,
-        ...clientInfo,
-      });
       return new Response(
         JSON.stringify({ success: true, isNewUser, session: signInData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -279,18 +261,6 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Verify SMS login error:', error);
-    try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-      if (supabaseUrl && serviceRoleKey) {
-        const errorClient = createClient(supabaseUrl, serviceRoleKey);
-        logAuthEvent(errorClient, {
-          eventType: 'login_fail', authMethod: 'sms',
-          errorMessage: error instanceof Error ? error.message : '验证失败',
-          ...clientInfo,
-        });
-      }
-    } catch (_) { /* ignore logging errors */ }
     return new Response(
       JSON.stringify({ error: '验证失败，请稍后重试' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
