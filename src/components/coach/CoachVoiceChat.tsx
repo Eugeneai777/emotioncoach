@@ -11,7 +11,7 @@ import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UnifiedPayDialog } from '@/components/UnifiedPayDialog';
+// UnifiedPayDialog 不再在语音通话中使用，改为顶部横幅提醒
 import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type NetworkQuality } from './ConnectionProgress';
 import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
@@ -97,6 +97,7 @@ export const CoachVoiceChat = ({
   const [billedMinutes, setBilledMinutes] = useState(0);
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
+  // showPayDialog 已废弃，保留变量避免其他引用报错
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<{ path: string; name: string } | null>(null);
   const [searchResults, setSearchResults] = useState<any[] | null>(null);
@@ -1991,6 +1992,23 @@ export const CoachVoiceChat = ({
 
   return (
     <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col ${useMiniProgramMode ? 'pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,0px)]' : ''}`}>
+      {/* 余额不足顶部横幅提醒 */}
+      {insufficientDuringCall && (
+        <div className="w-full bg-amber-500/90 backdrop-blur-sm px-4 py-2 flex items-center justify-between gap-2 z-10">
+          <span className="text-white text-xs font-medium flex-1">
+            余额不足，继续请前往365会员页面充值
+          </span>
+          <button
+            onClick={() => {
+              navigate('/packages');
+              endCall();
+            }}
+            className="shrink-0 bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-3 py-1 rounded-full transition-colors"
+          >
+            前往充值
+          </button>
+        </div>
+      )}
       {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
       <div className={`flex items-center justify-between p-4 ${useMiniProgramMode ? 'pt-2' : 'pt-safe'}`}>
         {/* 左侧：返回按钮 */}
