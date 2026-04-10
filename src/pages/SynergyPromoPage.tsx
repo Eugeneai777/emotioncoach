@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Brain, Pill, Shield, Clock, TrendingUp, Moon, Heart, Briefcase, Sprout, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
+import { Brain, Pill, Shield, Clock, TrendingUp, TrendingDown, Moon, Heart, Briefcase, Sun, Users, BookOpen, Sparkles, ChevronRight, Star, Activity, CheckCircle, Package, Rocket, Truck, MessageCircle, Award, Leaf, CircleCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
