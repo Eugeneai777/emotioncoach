@@ -193,87 +193,97 @@ export default function LaogeAI() {
       </div>
 
       {/* ── 第2层：¥9.9 诊断 ── */}
-      <div className="px-4 pt-4 pb-2 max-w-lg mx-auto">
-        <p className="text-sm font-bold text-[hsl(var(--laoge-text))] mb-3">
-          🩺 聊完再做个体检
-        </p>
-        <p className="text-xs text-[hsl(var(--laoge-text-muted))] mb-3 -mt-2">
-          老哥建议：先测一下，再对症下药
-        </p>
-        <div className="grid grid-cols-3 gap-2.5">
-          <button
-            onClick={() => navigate("/wealth-block")}
-            className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
-          >
-            <span className="text-2xl">💰</span>
-            <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">财富卡点</span>
-            <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">20题·6分钟</span>
-            <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">限时 ¥9.9</span>
-          </button>
-          <button
-            onClick={() => navigate("/emotion-health")}
-            className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
-          >
-            <span className="text-2xl">💚</span>
-            <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">情绪健康</span>
-            <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">PHQ-9+GAD-7·5分钟</span>
-            <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">限时 ¥9.9</span>
-          </button>
-          <button
-            onClick={() => navigate("/midlife-awakening")}
-            className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
-          >
-            <span className="text-2xl">🧭</span>
-            <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">觉醒力</span>
-            <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">30题·8分钟</span>
-            <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">专业版</span>
-          </button>
+      {!allAssessmentsDone && (
+        <div className="px-4 pt-4 pb-2 max-w-lg mx-auto">
+          <p className="text-sm font-bold text-[hsl(var(--laoge-text))] mb-3">
+            🩺 聊完再做个体检
+          </p>
+          <p className="text-xs text-[hsl(var(--laoge-text-muted))] mb-3 -mt-2">
+            老哥建议：先测一下，再对症下药
+          </p>
+          <div className="grid grid-cols-3 gap-2.5">
+            {!wealthPurchased && (
+              <button
+                onClick={() => navigate("/wealth-block")}
+                className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+              >
+                <span className="text-2xl">💰</span>
+                <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">财富卡点</span>
+                <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">20题·6分钟</span>
+                <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">限时 ¥9.9</span>
+              </button>
+            )}
+            {!emotionPurchased && (
+              <button
+                onClick={() => navigate("/emotion-health")}
+                className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+              >
+                <span className="text-2xl">💚</span>
+                <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">情绪健康</span>
+                <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">PHQ-9+GAD-7·5分钟</span>
+                <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">限时 ¥9.9</span>
+              </button>
+            )}
+            {!midlifeCompleted && (
+              <button
+                onClick={() => navigate("/midlife-awakening")}
+                className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+              >
+                <span className="text-2xl">🧭</span>
+                <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">觉醒力</span>
+                <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">30题·8分钟</span>
+                <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">专业版</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── 第3层：系统方案 ── */}
-      <div className="px-4 pt-6 pb-6 max-w-lg mx-auto">
-        <p className="text-sm font-bold text-[hsl(var(--laoge-text))] mb-3">
-          🚀 想要系统解决？老哥推荐
-        </p>
-        <div className="space-y-3">
-          {/* ¥399 协同训练营 */}
-          <button
-            onClick={() => navigate(campPurchased ? "/camp-checkin" : "/promo/synergy?source=laoge")}
-            className="w-full flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-[hsl(var(--laoge-accent)/0.12)] to-[hsl(var(--laoge-accent)/0.04)] border border-[hsl(var(--laoge-accent)/0.25)] hover:border-[hsl(var(--laoge-accent)/0.5)] transition-all text-left active:scale-[0.98]"
-          >
-            <span className="text-3xl">⚡</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">7天有劲训练营</span>
-                {campPurchased ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">已购买</span>
-                ) : (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--laoge-accent)/0.2)] text-[hsl(var(--laoge-accent))] font-bold">¥399</span>
-                )}
-              </div>
-              <p className="text-xs text-[hsl(var(--laoge-text-muted))] mt-1">AI+真人教练陪伴 · 7天突围方案</p>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[hsl(var(--laoge-text-muted))] flex-shrink-0" />
-          </button>
+      {!allCampsDone && (
+        <div className="px-4 pt-6 pb-6 max-w-lg mx-auto">
+          <p className="text-sm font-bold text-[hsl(var(--laoge-text))] mb-3">
+            🚀 想要系统解决？老哥推荐
+          </p>
+          <div className="space-y-3">
+            {/* ¥399 协同训练营 */}
+            {!campPurchased && (
+              <button
+                onClick={() => navigate("/promo/synergy?source=laoge")}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-[hsl(var(--laoge-accent)/0.12)] to-[hsl(var(--laoge-accent)/0.04)] border border-[hsl(var(--laoge-accent)/0.25)] hover:border-[hsl(var(--laoge-accent)/0.5)] transition-all text-left active:scale-[0.98]"
+              >
+                <span className="text-3xl">⚡</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">7天有劲训练营</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--laoge-accent)/0.2)] text-[hsl(var(--laoge-accent))] font-bold">¥399</span>
+                  </div>
+                  <p className="text-xs text-[hsl(var(--laoge-text-muted))] mt-1">AI+真人教练陪伴 · 7天突围方案</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[hsl(var(--laoge-text-muted))] flex-shrink-0" />
+              </button>
+            )}
 
-          {/* ¥3980 身份绽放 */}
-          <button
-            onClick={() => navigate("/promo/identity-bloom")}
-            className="w-full flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-violet-500/5 border border-purple-500/20 hover:border-purple-500/40 transition-all text-left active:scale-[0.98]"
-          >
-            <span className="text-3xl">🌟</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">身份绽放训练营</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-medium">深度蜕变</span>
-              </div>
-              <p className="text-xs text-[hsl(var(--laoge-text-muted))] mt-1">200+学员已加入 · 找到人生下半场方向</p>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[hsl(var(--laoge-text-muted))] flex-shrink-0" />
-          </button>
+            {/* ¥3980 身份绽放 */}
+            {!identityPurchased && (
+              <button
+                onClick={() => navigate("/promo/identity-bloom")}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-violet-500/5 border border-purple-500/20 hover:border-purple-500/40 transition-all text-left active:scale-[0.98]"
+              >
+                <span className="text-3xl">🌟</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-[hsl(var(--laoge-text))]">身份绽放训练营</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-medium">深度蜕变</span>
+                  </div>
+                  <p className="text-xs text-[hsl(var(--laoge-text-muted))] mt-1">200+学员已加入 · 找到人生下半场方向</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[hsl(var(--laoge-text-muted))] flex-shrink-0" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <AwakeningBottomNav />
     </div>
