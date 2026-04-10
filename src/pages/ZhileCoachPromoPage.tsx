@@ -54,9 +54,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 /* ========== Pain Points ========== */
 const painPoints = [
-  { emoji: "😶", label: "压力大睡不好", desc: "白天扛着业绩压力，晚上翻来覆去睡不着，身体在报警", color: "#dc2626" },
-  { emoji: "🤐", label: "有苦说不出", desc: "老婆觉得你冷漠，兄弟觉得你矫情，找不到一个能真正懂你的人", color: "#9333ea" },
-  { emoji: "💊", label: "越努力越累", desc: "健身、喝酒、刷手机，试了各种解压方式，但第二天还是一样疲惫", color: "#2563eb" },
+  { emoji: "😶", label: "身体在报警，你却停不下来", desc: "白天扛业绩，晚上翻来覆去", detail: "不是不想休息，是真的睡不着。你清醒地感到健康在流失，却被生活推着走，停不下来。", color: "#dc2626" },
+  { emoji: "🤐", label: "所有人都觉得你没事", desc: "伴侣说你冷漠，兄弟觉得你矫情", detail: "所有压力只能自己扛，表面正常，内心早已是一座孤岛。渴望被理解，却找不到一个安全的出口。", color: "#9333ea" },
+  { emoji: "💊", label: "试了所有方法，还是一样累", desc: "健身、喝酒、刷手机……每一种都只是短暂麻痹", detail: "第二天醒来，疲惫依旧，甚至因为"自救失败"更加无力。越努力，越陷越深。", color: "#2563eb" },
 ];
 
 /* ========== Value comparison ========== */
@@ -327,8 +327,8 @@ export default function ZhileCoachPromoPage() {
 
       {/* ===== PAIN POINTS ===== */}
       <Section>
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你是不是这样？</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">如果你中了任何一条，这次咨询就是为你准备的</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-800">你是不是也这样？</h2>
+        <p className="text-slate-500 text-sm text-center mb-8">超过80%的中年男性，至少中了两条</p>
         <div className="grid gap-3 max-w-lg mx-auto">
           {painPoints.map((p, i) => (
             <motion.div
@@ -342,10 +342,23 @@ export default function ZhileCoachPromoPage() {
               <span className="text-2xl shrink-0">{p.emoji}</span>
               <div>
                 <span className="text-sm font-bold" style={{ color: p.color }}>{p.label}</span>
-                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{p.desc}</p>
+                <p className="text-xs font-medium text-slate-600 mt-0.5">{p.desc}</p>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">{p.detail}</p>
               </div>
             </motion.div>
           ))}
+        </div>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center text-sm text-slate-500 mt-6 max-w-md mx-auto leading-relaxed"
+        >
+          身体在透支、情绪没出口、方法不对路——<br />
+          <span className="font-semibold text-slate-700">你不是不够努力，是缺一个真正懂你的人，帮你找到问题的根源。</span>
+        </motion.p>
+        <div className="flex justify-center mt-3 text-amber-400 animate-bounce">
+          <ChevronDown className="w-5 h-5" />
         </div>
       </Section>
 
