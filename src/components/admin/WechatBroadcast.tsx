@@ -292,6 +292,27 @@ export default function WechatBroadcast() {
     setActiveJob(null);
   }
 
+  // Check if a running job is stuck (no update in 3+ minutes)
+  const isJobStuck = activeJob?.status === 'running' && activeJob.updated_at && 
+    (Date.now() - new Date(activeJob.updated_at).getTime()) > 3 * 60 * 1000;
+
+  async function resumeStuckJob() {
+    if (!activeJob) return;
+    try {
+      toast.info('正在重新触发任务...');
+      const { data, error } = await supabase.functions.invoke('batch-send-wechat-template', {
+        body: { job_id: activeJob.id, process_chunk: true },
+      });
+      if (error) {
+        toast.error('重新触发失败: ' + (error.message || '未知错误'));
+      } else {
+        toast.success('任务已重新触发，请等待继续发送');
+      }
+    } catch (err: any) {
+      toast.error('重新触发失败: ' + err.message);
+    }
+  }
+
   const jobProgress = activeJob && activeJob.total_count > 0
     ? Math.round((activeJob.processed_count / activeJob.total_count) * 100)
     : 0;
