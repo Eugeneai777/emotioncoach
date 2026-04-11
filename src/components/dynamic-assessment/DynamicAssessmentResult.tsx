@@ -301,8 +301,8 @@ export function DynamicAssessmentResult({
       </motion.div>
 
       <div className="max-w-lg mx-auto px-4 space-y-4">
-        {/* Radar Chart */}
-        {result.dimensionScores.length >= 3 && (
+        {/* Radar Chart (non-SBTI only) */}
+        {!isSBTI && result.dimensionScores.length >= 3 && (
           <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
               <CardContent className="p-4 pt-3">
@@ -324,51 +324,86 @@ export function DynamicAssessmentResult({
           />
         )}
 
-        {/* Dimension Scores */}
-        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm">维度得分</h3>
-              </div>
-              {result.dimensionScores.map((d, i) => {
-                const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
-                return (
-                  <motion.div
-                    key={d.label}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.06 }}
-                  >
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">
-                        {d.emoji} {d.label}
-                      </span>
-                      <span className={cn(
-                        "tabular-nums text-xs font-medium",
-                        pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
-                      )}>
-                        {d.score}/{d.maxScore}
-                      </span>
+        {/* SBTI: Grouped H/M/L dimension display */}
+        {isSBTI && result.meta?.userLevels && (
+          <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">五大模型维度</h3>
+                </div>
+                {sbtiGroups.map((group) => (
+                  <div key={group.name}>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">{group.emoji} {group.name}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {group.keys.map((k) => {
+                        const dim = result.dimensionScores.find((d: any) => d.key === k);
+                        const level = result.meta?.userLevels?.[k] || 'M';
+                        const levelColor = level === 'H' ? 'bg-green-100 text-green-700 border-green-200' : level === 'L' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        const levelLabel = level === 'H' ? '高' : level === 'L' ? '低' : '中';
+                        return (
+                          <span key={k} className={cn("inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border", levelColor)}>
+                            {dim?.emoji} {dim?.label || k}
+                            <span className="font-bold ml-0.5">{levelLabel}</span>
+                          </span>
+                        );
+                      })}
                     </div>
-                    <div className="relative h-2 rounded-full bg-muted overflow-hidden">
-                      <motion.div
-                        className={cn(
-                          "h-full rounded-full",
-                          pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
-                        )}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </motion.div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Standard Dimension Scores (non-SBTI) */}
+        {!isSBTI && (
+          <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">维度得分</h3>
+                </div>
+                {result.dimensionScores.map((d, i) => {
+                  const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                  return (
+                    <motion.div
+                      key={d.label}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.06 }}
+                    >
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium">
+                          {d.emoji} {d.label}
+                        </span>
+                        <span className={cn(
+                          "tabular-nums text-xs font-medium",
+                          pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
+                        )}>
+                          {d.score}/{d.maxScore}
+                        </span>
+                      </div>
+                      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          className={cn(
+                            "h-full rounded-full",
+                            pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
+                          )}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Traits */}
         {result.primaryPattern?.traits?.length > 0 && (
