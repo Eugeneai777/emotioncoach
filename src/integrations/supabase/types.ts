@@ -11881,6 +11881,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      check_and_lock_broadcast: { Args: never; Returns: boolean }
       check_phone_exists: {
         Args: { p_country_code?: string; p_phone: string }
         Returns: boolean
