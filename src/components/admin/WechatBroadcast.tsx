@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 const SCENARIOS = [
