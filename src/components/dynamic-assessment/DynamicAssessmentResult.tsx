@@ -432,8 +432,8 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* Tips */}
-        {result.primaryPattern?.tips?.length > 0 && (
+        {/* Tips (hidden for SBTI) */}
+        {!isSBTI && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4">
@@ -457,6 +457,15 @@ export function DynamicAssessmentResult({
                 </ul>
               </CardContent>
             </Card>
+          </motion.div>
+        )}
+
+        {/* SBTI Entertainment Disclaimer */}
+        {isSBTI && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <p className="text-center text-xs text-muted-foreground/60 py-2">
+              🎭 本测试仅供娱乐，请勿当真。人格远比几个字母复杂得多。
+            </p>
           </motion.div>
         )}
 
