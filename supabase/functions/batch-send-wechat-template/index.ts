@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from '../_shared/auth.ts';
 
-const BATCH_SIZE = 40; // Process 40 per invocation to stay under wall-clock limit
+const BATCH_SIZE = 20; // Process 20 per invocation to stay under wall-clock limit
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
