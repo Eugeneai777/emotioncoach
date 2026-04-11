@@ -108,6 +108,7 @@ export default function WechatBroadcast() {
             created_at: updated.created_at,
             started_at: updated.started_at,
             completed_at: updated.completed_at,
+            updated_at: updated.updated_at,
           });
           if (updated.status === 'completed') {
             toast.success(`群发完成：成功 ${updated.success_count}，失败 ${updated.fail_count}`);
