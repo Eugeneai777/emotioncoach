@@ -33,6 +33,7 @@ const SCENARIOS = [
   { value: "emotion_improvement", label: "情绪好转" },
   { value: "goal_milestone", label: "目标里程碑" },
   { value: "consistent_checkin", label: "连续打卡" },
+  { value: "livestream", label: "直播通知" },
 ];
 
 interface WechatUser {
