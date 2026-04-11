@@ -1,53 +1,72 @@
 
 
-# 添加「直播通知」模版场景
+# 将直播通知切换为 WECHAT_TEMPLATE_APPOINTMENT 模版
 
-## 现状分析
+## 分析
 
-当前群发系统有 7 个场景模版（default、encouragement、inactivity、after_briefing、emotion_improvement、goal_milestone、consistent_checkin），全部在前端 `SCENARIOS` 数组和后端 `SYSTEM_TEMPLATE_IDS` 映射中硬编码。
+两个模版的字段结构不同：
 
-要新增「直播通知」，需要改动 3 处：
-
-## 修改清单
-
-### 1. 前端：添加场景选项
-**文件**: `src/components/admin/WechatBroadcast.tsx`
-
-在 `SCENARIOS` 数组中新增：
-```typescript
-{ value: "livestream", label: "直播通知" },
+```text
+WECHAT_TEMPLATE_DEFAULT (当前直播用)     WECHAT_TEMPLATE_APPOINTMENT (目标)
+─────────────────────────────────────    ──────────────────────────────────
+first    → 标题头                        thing1  → 预约项目/通知主题 (≤20字)
+keyword1 → 用户名                        thing19 → 详情/内容 (≤20字)
+keyword2 → 内容                          time21  → 时间
+keyword3 → 时间
+remark   → 底部备注
 ```
 
-### 2. 后端：注册模版 ID 映射
-**文件**: `supabase/functions/send-wechat-template-message/index.ts`
+APPOINTMENT 模版没有 `first` 和 `remark`，只有 3 个字段，更简洁。
 
-在 `SYSTEM_TEMPLATE_IDS` 中新增：
+## 修改内容
+
+### 文件: `supabase/functions/send-wechat-template-message/index.ts`
+
+**1. 更改模版映射** (第26行)
 ```typescript
+// 改前
 'livestream': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+// 改后
+'livestream': Deno.env.get('WECHAT_TEMPLATE_APPOINTMENT') || Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 ```
-先复用 `WECHAT_TEMPLATE_DEFAULT` 通用模版。如果你在微信公众号后台新建了专用直播模版，后续可以添加 `WECHAT_TEMPLATE_LIVESTREAM` 环境变量替换。
 
-### 3. 后端：添加直播场景的消息内容逻辑
-在同一文件的 `scenarioContentMap` 和 `scenarioNames` 中增加：
+**2. 将 livestream 加入专用分支处理**
+在消息构建逻辑中，为 `livestream` 场景新增判断，使用 `thing1/thing19/time21` 字段：
 
 ```typescript
-// scenarioNames
-'livestream': '直播通知',
-
-// scenarioContentMap  
-'livestream': { 
-  first: '直播即将开始', 
-  content: '点击进入直播间', 
-  remark: '精彩内容不容错过 🎬' 
-},
+} else if (scenario === 'livestream') {
+  const timeStr = formatBeijingTime();
+  messageData = {
+    thing1: { value: (notification.title || '直播即将开始').slice(0, 20), color: "#173177" },
+    thing19: { value: (messageContent || '点击进入直播间').slice(0, 20), color: "#173177" },
+    time21: { value: timeStr, color: "#173177" },
+  };
+}
 ```
 
-这样管理员在群发界面选择「直播通知」场景后，可通过"自定义标题"和"自定义内容"覆盖默认文案（如填入具体直播主题、时间），"跳转链接"填入直播间地址。
+## 发送效果预览
 
-### 使用方式
-1. 群发页面选择「直播通知」场景
-2. 自定义标题填：如「今晚8点直播：财富心理学」
-3. 自定义内容填：如「Eugene老师带你解锁财富卡点」
-4. 跳转链接填：直播间 URL
-5. 选择用户 → 发送
+用户在微信中收到的消息将显示为：
+
+```text
+┌────────────────────────────────┐
+│  预约通知                       │
+│                                │
+│  预约项目：今晚8点财富心理学直播   │
+│  详    情：Eugene老师带你解锁卡点  │
+│  时    间：2026-04-11 20:00     │
+│                                │
+│  详情 >                        │
+└────────────────────────────────┘
+```
+
+点击消息 → 跳转到管理员设置的自定义链接（直播间URL）。
+
+## 对比效果
+
+| 项目 | 改前 (DEFAULT模版) | 改后 (APPOINTMENT模版) |
+|------|-------------------|----------------------|
+| 外观 | 带标题头+底部备注，5个字段 | 简洁卡片，3个字段 |
+| 链接 | 同样支持自定义链接 | 同样支持 |
+| 字段 | first/keyword1-3/remark | thing1/thing19/time21 |
 
