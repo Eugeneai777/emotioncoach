@@ -168,6 +168,14 @@ export function DynamicAssessmentResult({
 
   // Score percentage for the ring
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
+  const isSBTI = scoringType === 'sbti';
+  const sbtiGroups = isSBTI ? [
+    { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
+    { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
+    { name: '态度模型', emoji: '🌍', keys: ['A1','A2','A3'] },
+    { name: '行动模型', emoji: '⚡', keys: ['Ac1','Ac2','Ac3'] },
+    { name: '社交模型', emoji: '🤝', keys: ['So1','So2','So3'] },
+  ] : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
