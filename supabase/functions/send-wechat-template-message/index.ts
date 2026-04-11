@@ -23,7 +23,7 @@ const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   'goal_milestone': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   'sustained_low_mood': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   'inactivity': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
-  'livestream': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'livestream': Deno.env.get('WECHAT_TEMPLATE_APPOINTMENT') || Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   'consistent_checkin': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   'encouragement': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   // 邀请成功通知
@@ -672,6 +672,24 @@ serve(async (req) => {
           color: "#999999" 
         },
       };
+    } else if (scenario === 'livestream') {
+      // 直播通知使用预约通知模板 (thing1预约项目, thing19详情, time21时间)
+      const timeStr = formatBeijingTime();
+      const messageContent = notification.message || notification.title || '';
+      messageData = {
+        thing1: { 
+          value: (notification.title || '直播即将开始').slice(0, 20),
+          color: "#173177" 
+        },
+        thing19: { 
+          value: (messageContent || '点击进入直播间').slice(0, 20),
+          color: "#173177" 
+        },
+        time21: { 
+          value: timeStr,
+          color: "#173177" 
+        },
+      };
     } else {
       // 其他默认场景使用经典模板格式 (first, keyword1, keyword2, keyword3, remark)
       const timeStr = formatBeijingTime();
@@ -681,7 +699,6 @@ serve(async (req) => {
         'daily_reminder': { first: '今日情绪记录提醒', content: '别忘了今天的情绪记录', remark: '记录是了解自己的开始 🌱' },
         'weekly_report': { first: '本周情绪报告已生成', content: '查看您这周的情绪变化', remark: '每周回顾，持续成长 📊' },
         'goal_at_risk': { first: '目标风险提醒', content: '您的目标进度需要关注', remark: '调整步伐，继续前行 💪' },
-        'livestream': { first: '直播即将开始', content: '点击进入直播间', remark: '精彩内容不容错过 🎬' },
       };
       
       const contentConfig = scenarioContentMap[scenario] || { 
