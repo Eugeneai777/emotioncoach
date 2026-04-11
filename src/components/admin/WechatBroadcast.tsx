@@ -364,6 +364,15 @@ export default function WechatBroadcast() {
                 <span>最近错误：{activeJob.last_error}</span>
               </div>
             )}
+            {isJobStuck && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-amber-600">⚠️ 任务似乎已停滞（超过3分钟无更新）</span>
+                <Button variant="outline" size="sm" onClick={resumeStuckJob}>
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  重新触发
+                </Button>
+              </div>
+            )}
             {(activeJob.status === 'completed' || activeJob.status === 'failed') && (
               <Button variant="outline" size="sm" onClick={dismissJob}>
                 关闭
