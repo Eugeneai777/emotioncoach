@@ -197,6 +197,15 @@ const promoSlides = [
     gradient: "from-amber-600 to-rose-500",
     route: "/promo/identity-bloom",
   },
+  {
+    id: "sbti",
+    emoji: "🎭",
+    title: "SBTI人格测试",
+    subtitle: "你是哪种互联网人格？",
+    tag: "全网爆火",
+    gradient: "from-purple-600 to-pink-500",
+    route: "/assessment/sbti_personality",
+  },
 ];
 
 const PromoBanner: React.FC<{
@@ -272,7 +281,7 @@ const PromoBanner: React.FC<{
                   {slide.subtitle}
                 </span>
                 <span className="mt-1 inline-block px-4 py-1 rounded-full bg-white/30 backdrop-blur-sm text-xs font-semibold text-white">
-                  {slide.id === "assessment" ? "立即测评 →" : "了解详情 →"}
+                  {slide.id === "assessment" ? "立即测评 →" : slide.id === "sbti" ? "开始测评 →" : "了解详情 →"}
                 </span>
               </div>
             </button>
