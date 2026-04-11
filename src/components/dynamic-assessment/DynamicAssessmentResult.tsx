@@ -505,8 +505,44 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* Recommended Training Camps */}
-        {recommendedCamps.length > 0 && (
+        {/* SBTI-specific high-conversion camp recommendation */}
+        {isSBTI && recommendedCamps.length > 0 && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg overflow-hidden">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-xl shadow-md shrink-0">
+                    ⚡
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">
+                      你的人格画像显示：内在能量有提升空间
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {result.primaryPattern?.label ? `作为「${result.primaryPattern.label}」型人格，` : ''}
+                      你可能在情绪内耗和行动力上需要更多支持。「7天有劲训练营」通过每日冥想+情绪觉察+教练陪伴，帮你找回内在节奏。
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">🧘 每日冥想</span>
+                  <span className="flex items-center gap-1">📝 情绪觉察</span>
+                  <span className="flex items-center gap-1">👨‍🏫 教练陪伴</span>
+                </div>
+                <Button
+                  onClick={() => navigate('/promo/synergy')}
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md"
+                >
+                  了解7天有劲训练营
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Generic Recommended Training Camps (non-SBTI) */}
+        {!isSBTI && recommendedCamps.length > 0 && (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-2">
             <h3 className="font-semibold text-sm px-1 flex items-center gap-2">
               🏕️ 推荐训练营
