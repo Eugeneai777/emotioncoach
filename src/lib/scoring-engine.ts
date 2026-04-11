@@ -217,10 +217,13 @@ type ScoringFn = (
   patterns: PatternConfig[]
 ) => ScoringResult;
 
+import { scoreSBTI } from './sbti-scoring';
+
 const scoringRegistry: Record<string, ScoringFn> = {
   additive: scoreAdditive,
   weighted: scoreWeighted,
   clinical: scoreClinical,
+  sbti: scoreSBTI,
 };
 
 /**
