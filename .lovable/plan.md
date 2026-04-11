@@ -1,72 +1,42 @@
 
 
-# 将直播通知切换为 WECHAT_TEMPLATE_APPOINTMENT 模版
+# 创建 SBTI 人格测评
 
-## 分析
+## 背景
+SBTI（Silly Big Personality Test）是近期社交媒体爆火的娱乐型人格测试，31题、15维度、27种人格类型。风格幽默、自嘲，标签如 ZZZZ（装死者）、MALO（吗喽）、JOKE-R（小丑）等具有强传播性。
 
-两个模版的字段结构不同：
+## 方案
+利用现有的 **AI 测评生成器**（`generate-assessment-template` Edge Function）+ **统一测评引擎**（`DynamicAssessmentPage`），通过 AI 生成一个 SBTI 风格的测评模板，直接入库即可上线。
 
-```text
-WECHAT_TEMPLATE_DEFAULT (当前直播用)     WECHAT_TEMPLATE_APPOINTMENT (目标)
-─────────────────────────────────────    ──────────────────────────────────
-first    → 标题头                        thing1  → 预约项目/通知主题 (≤20字)
-keyword1 → 用户名                        thing19 → 详情/内容 (≤20字)
-keyword2 → 内容                          time21  → 时间
-keyword3 → 时间
-remark   → 底部备注
-```
+## 实施步骤
 
-APPOINTMENT 模版没有 `first` 和 `remark`，只有 3 个字段，更简洁。
+### 1. 调用 AI 生成 SBTI 风格测评模板
+通过 Edge Function `generate-assessment-template`，输入详细的 SBTI 需求描述（包含5大模型、15维度、27种人格结果的核心概念），让 AI 生成完整的测评配置 JSON。
 
-## 修改内容
+### 2. 手动补充/优化生成结果
+AI 生成后可能需要微调：
+- 确保人格标签命名有趣（参考 SBTI 原版风格：ZZZZ、MALO、SEXY 等）
+- 31道题覆盖15个维度
+- 结果描述保持幽默自嘲的调性
 
-### 文件: `supabase/functions/send-wechat-template-message/index.ts`
+### 3. 写入数据库
+将生成的模板插入 `partner_assessment_templates` 表，设置：
+- `assessment_key`: `sbti_personality`
+- `is_active`: true
+- 关联到你的合伙人账号
 
-**1. 更改模版映射** (第26行)
-```typescript
-// 改前
-'livestream': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
-// 改后
-'livestream': Deno.env.get('WECHAT_TEMPLATE_APPOINTMENT') || Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
-```
+### 4. 自动上线
+统一引擎已有路由 `/assessment/sbti_personality`，无需额外代码改动。
 
-**2. 将 livestream 加入专用分支处理**
-在消息构建逻辑中，为 `livestream` 场景新增判断，使用 `thing1/thing19/time21` 字段：
+## 技术细节
+- 不需要新建任何组件或页面，完全复用现有引擎
+- 评分类型使用 `additive`（标准加分制），按15维度打分后匹配27种人格
+- 由于统一引擎的 `result_patterns` 最终按 scoreRange 匹配，需要将27种人格合理分布在不同分数区间，或使用维度组合逻辑
 
-```typescript
-} else if (scenario === 'livestream') {
-  const timeStr = formatBeijingTime();
-  messageData = {
-    thing1: { value: (notification.title || '直播即将开始').slice(0, 20), color: "#173177" },
-    thing19: { value: (messageContent || '点击进入直播间').slice(0, 20), color: "#173177" },
-    time21: { value: timeStr, color: "#173177" },
-  };
-}
-```
+### 注意事项
+当前引擎的 `result_patterns` 是按总分百分比区间匹配的，而 SBTI 原版是按维度组合判定人格类型。为了在现有引擎下实现，有两种路径：
+- **简化版**：保留5-8种核心人格类型，按总分区间匹配（推荐，可快速上线）
+- **完整版**：需要扩展评分引擎支持维度组合判定逻辑（工作量较大）
 
-## 发送效果预览
-
-用户在微信中收到的消息将显示为：
-
-```text
-┌────────────────────────────────┐
-│  预约通知                       │
-│                                │
-│  预约项目：今晚8点财富心理学直播   │
-│  详    情：Eugene老师带你解锁卡点  │
-│  时    间：2026-04-11 20:00     │
-│                                │
-│  详情 >                        │
-└────────────────────────────────┘
-```
-
-点击消息 → 跳转到管理员设置的自定义链接（直播间URL）。
-
-## 对比效果
-
-| 项目 | 改前 (DEFAULT模版) | 改后 (APPOINTMENT模版) |
-|------|-------------------|----------------------|
-| 外观 | 带标题头+底部备注，5个字段 | 简洁卡片，3个字段 |
-| 链接 | 同样支持自定义链接 | 同样支持 |
-| 字段 | first/keyword1-3/remark | thing1/thing19/time21 |
+建议先用**简化版**快速上线，后续根据反馈迭代。
 
