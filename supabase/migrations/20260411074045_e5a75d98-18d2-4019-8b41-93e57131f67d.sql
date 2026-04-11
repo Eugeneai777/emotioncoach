@@ -1,0 +1,1 @@
+UPDATE public.wechat_broadcast_jobs SET status = 'failed', last_error = '代理服务器连接超时，任务中断', completed_at = now(), updated_at = now() WHERE id = '617ec2d5-a18e-4215-b990-2e8da1451e6b' AND status = 'running' AND processed_count = 0;
