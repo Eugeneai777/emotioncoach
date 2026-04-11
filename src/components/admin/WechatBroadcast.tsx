@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 const SCENARIOS = [
@@ -54,6 +54,7 @@ interface BroadcastJob {
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  updated_at?: string;
 }
 
 export default function WechatBroadcast() {
@@ -107,6 +108,7 @@ export default function WechatBroadcast() {
             created_at: updated.created_at,
             started_at: updated.started_at,
             completed_at: updated.completed_at,
+            updated_at: updated.updated_at,
           });
           if (updated.status === 'completed') {
             toast.success(`群发完成：成功 ${updated.success_count}，失败 ${updated.fail_count}`);
@@ -292,6 +294,27 @@ export default function WechatBroadcast() {
     setActiveJob(null);
   }
 
+  // Check if a running job is stuck (no update in 3+ minutes)
+  const isJobStuck = activeJob?.status === 'running' && activeJob.updated_at && 
+    (Date.now() - new Date(activeJob.updated_at).getTime()) > 3 * 60 * 1000;
+
+  async function resumeStuckJob() {
+    if (!activeJob) return;
+    try {
+      toast.info('正在重新触发任务...');
+      const { data, error } = await supabase.functions.invoke('batch-send-wechat-template', {
+        body: { job_id: activeJob.id, process_chunk: true },
+      });
+      if (error) {
+        toast.error('重新触发失败: ' + (error.message || '未知错误'));
+      } else {
+        toast.success('任务已重新触发，请等待继续发送');
+      }
+    } catch (err: any) {
+      toast.error('重新触发失败: ' + err.message);
+    }
+  }
+
   const jobProgress = activeJob && activeJob.total_count > 0
     ? Math.round((activeJob.processed_count / activeJob.total_count) * 100)
     : 0;
@@ -339,6 +362,15 @@ export default function WechatBroadcast() {
               <div className="flex items-start gap-2 text-xs text-red-600 bg-red-100/50 rounded p-2">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                 <span>最近错误：{activeJob.last_error}</span>
+              </div>
+            )}
+            {isJobStuck && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-amber-600">⚠️ 任务似乎已停滞（超过3分钟无更新）</span>
+                <Button variant="outline" size="sm" onClick={resumeStuckJob}>
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  重新触发
+                </Button>
               </div>
             )}
             {(activeJob.status === 'completed' || activeJob.status === 'failed') && (

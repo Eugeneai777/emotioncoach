@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from '../_shared/auth.ts';
 
-const BATCH_SIZE = 40; // Process 40 per invocation to stay under wall-clock limit
+const BATCH_SIZE = 20; // Process 20 per invocation to stay under wall-clock limit
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -26,11 +26,23 @@ serve(async (req) => {
 
     // ========== Mode 1: Process a chunk of an existing job ==========
     if (body.job_id && body.process_chunk) {
-      // Only service_role can trigger chunk processing
+      // service_role can trigger directly; admin users can also resume stuck jobs
       if (token !== serviceRoleKey) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        const { data: userData } = await adminClient.auth.getUser(token);
+        if (!userData?.user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        const { data: roles } = await adminClient
+          .from('user_roles').select('role')
+          .eq('user_id', userData.user.id)
+          .in('role', ['admin', 'content_admin']);
+        if (!roles || roles.length === 0) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
       await processChunk(adminClient, supabaseUrl, serviceRoleKey, body.job_id);
       return new Response(JSON.stringify({ success: true }), {
