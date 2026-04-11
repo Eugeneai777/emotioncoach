@@ -168,10 +168,18 @@ export function DynamicAssessmentResult({
 
   // Score percentage for the ring
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
+  const isSBTI = scoringType === 'sbti';
+  const sbtiGroups = isSBTI ? [
+    { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
+    { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
+    { name: '态度模型', emoji: '🌍', keys: ['A1','A2','A3'] },
+    { name: '行动模型', emoji: '⚡', keys: ['Ac1','Ac2','Ac3'] },
+    { name: '社交模型', emoji: '🤝', keys: ['So1','So2','So3'] },
+  ] : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
-      {/* Hero Section with score ring */}
+      {/* Hero Section */}
       <motion.div
         className="relative overflow-hidden pt-8 pb-6 px-4"
         initial={{ opacity: 0 }}
@@ -183,67 +191,118 @@ export function DynamicAssessmentResult({
         <div className="absolute top-10 right-1/4 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
 
         <div className="relative text-center max-w-lg mx-auto">
-          {/* Score ring */}
-          <motion.div
-            className="relative inline-flex items-center justify-center mb-4"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-          >
-            <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
-              <motion.circle
-                cx="50" cy="50" r="42"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="6"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 42}
-                initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
-                transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl">{result.primaryPattern?.emoji || template.emoji}</span>
-            </div>
-          </motion.div>
-
-          {/* Score text */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-          >
-            <h2 className="text-xl font-bold text-foreground mb-1">
-              {result.primaryPattern?.label || "测评结果"}
-            </h2>
-            {result.primaryPattern?.description && (
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
-                {result.primaryPattern.description}
-              </p>
-            )}
-            <div className="flex items-center justify-center gap-2">
-              <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                {result.totalScore} / {result.maxScore} 分
-              </Badge>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                onClick={handleShare}
-                disabled={isSharing}
+          {isSBTI ? (
+            /* SBTI: Show personality code prominently, no score ring */
+            <>
+              <motion.div
+                className="mb-4"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
               >
-                <Share2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </motion.div>
+                <span className="text-6xl block mb-2">{result.primaryPattern?.emoji || '🎭'}</span>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <h2 className="text-2xl font-black text-foreground mb-1 tracking-wide">
+                  {result.primaryPattern?.label || "测评结果"}
+                </h2>
+                {result.meta?.subtitle && (
+                  <p className="text-sm font-medium text-primary mb-2">{result.meta.subtitle}</p>
+                )}
+                {result.primaryPattern?.description && (
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
+                    {result.primaryPattern.description}
+                  </p>
+                )}
+                {result.meta?.quote && (
+                  <p className="text-xs italic text-muted-foreground/80 max-w-xs mx-auto mb-3">
+                    「{result.meta.quote}」
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className="text-xs px-3 py-1 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                    匹配度 {Math.max(0, Math.round(100 - (result.meta?.matchDistance || 0) / 15 * 100))}%
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            </>
+          ) : (
+            /* Standard: Score ring */
+            <>
+              <motion.div
+                className="relative inline-flex items-center justify-center mb-4"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+              >
+                <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                  <motion.circle
+                    cx="50" cy="50" r="42"
+                    fill="none"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 42}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
+                    transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl">{result.primaryPattern?.emoji || template.emoji}</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <h2 className="text-xl font-bold text-foreground mb-1">
+                  {result.primaryPattern?.label || "测评结果"}
+                </h2>
+                {result.primaryPattern?.description && (
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
+                    {result.primaryPattern.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                    {result.totalScore} / {result.maxScore} 分
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            </>
+          )}
         </div>
       </motion.div>
 
       <div className="max-w-lg mx-auto px-4 space-y-4">
-        {/* Radar Chart */}
-        {result.dimensionScores.length >= 3 && (
+        {/* Radar Chart (non-SBTI only) */}
+        {!isSBTI && result.dimensionScores.length >= 3 && (
           <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
               <CardContent className="p-4 pt-3">
@@ -265,51 +324,86 @@ export function DynamicAssessmentResult({
           />
         )}
 
-        {/* Dimension Scores */}
-        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm">维度得分</h3>
-              </div>
-              {result.dimensionScores.map((d, i) => {
-                const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
-                return (
-                  <motion.div
-                    key={d.label}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.06 }}
-                  >
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">
-                        {d.emoji} {d.label}
-                      </span>
-                      <span className={cn(
-                        "tabular-nums text-xs font-medium",
-                        pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
-                      )}>
-                        {d.score}/{d.maxScore}
-                      </span>
+        {/* SBTI: Grouped H/M/L dimension display */}
+        {isSBTI && result.meta?.userLevels && (
+          <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">五大模型维度</h3>
+                </div>
+                {sbtiGroups.map((group) => (
+                  <div key={group.name}>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">{group.emoji} {group.name}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {group.keys.map((k) => {
+                        const dim = result.dimensionScores.find((d: any) => d.key === k);
+                        const level = result.meta?.userLevels?.[k] || 'M';
+                        const levelColor = level === 'H' ? 'bg-green-100 text-green-700 border-green-200' : level === 'L' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        const levelLabel = level === 'H' ? '高' : level === 'L' ? '低' : '中';
+                        return (
+                          <span key={k} className={cn("inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border", levelColor)}>
+                            {dim?.emoji} {dim?.label || k}
+                            <span className="font-bold ml-0.5">{levelLabel}</span>
+                          </span>
+                        );
+                      })}
                     </div>
-                    <div className="relative h-2 rounded-full bg-muted overflow-hidden">
-                      <motion.div
-                        className={cn(
-                          "h-full rounded-full",
-                          pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
-                        )}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </motion.div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Standard Dimension Scores (non-SBTI) */}
+        {!isSBTI && (
+          <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">维度得分</h3>
+                </div>
+                {result.dimensionScores.map((d, i) => {
+                  const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                  return (
+                    <motion.div
+                      key={d.label}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.06 }}
+                    >
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium">
+                          {d.emoji} {d.label}
+                        </span>
+                        <span className={cn(
+                          "tabular-nums text-xs font-medium",
+                          pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
+                        )}>
+                          {d.score}/{d.maxScore}
+                        </span>
+                      </div>
+                      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          className={cn(
+                            "h-full rounded-full",
+                            pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
+                          )}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Traits */}
         {result.primaryPattern?.traits?.length > 0 && (
@@ -338,8 +432,8 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* Tips */}
-        {result.primaryPattern?.tips?.length > 0 && (
+        {/* Tips (hidden for SBTI) */}
+        {!isSBTI && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4">
@@ -363,6 +457,15 @@ export function DynamicAssessmentResult({
                 </ul>
               </CardContent>
             </Card>
+          </motion.div>
+        )}
+
+        {/* SBTI Entertainment Disclaimer */}
+        {isSBTI && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <p className="text-center text-xs text-muted-foreground/60 py-2">
+              🎭 本测试仅供娱乐，请勿当真。人格远比几个字母复杂得多。
+            </p>
           </motion.div>
         )}
 
