@@ -54,6 +54,7 @@ interface BroadcastJob {
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  updated_at?: string;
 }
 
 export default function WechatBroadcast() {
