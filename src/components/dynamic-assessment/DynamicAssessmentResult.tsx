@@ -171,7 +171,7 @@ export function DynamicAssessmentResult({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
-      {/* Hero Section with score ring */}
+      {/* Hero Section */}
       <motion.div
         className="relative overflow-hidden pt-8 pb-6 px-4"
         initial={{ opacity: 0 }}
@@ -183,61 +183,112 @@ export function DynamicAssessmentResult({
         <div className="absolute top-10 right-1/4 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
 
         <div className="relative text-center max-w-lg mx-auto">
-          {/* Score ring */}
-          <motion.div
-            className="relative inline-flex items-center justify-center mb-4"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-          >
-            <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
-              <motion.circle
-                cx="50" cy="50" r="42"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="6"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 42}
-                initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
-                transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl">{result.primaryPattern?.emoji || template.emoji}</span>
-            </div>
-          </motion.div>
-
-          {/* Score text */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-          >
-            <h2 className="text-xl font-bold text-foreground mb-1">
-              {result.primaryPattern?.label || "测评结果"}
-            </h2>
-            {result.primaryPattern?.description && (
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
-                {result.primaryPattern.description}
-              </p>
-            )}
-            <div className="flex items-center justify-center gap-2">
-              <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                {result.totalScore} / {result.maxScore} 分
-              </Badge>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                onClick={handleShare}
-                disabled={isSharing}
+          {isSBTI ? (
+            /* SBTI: Show personality code prominently, no score ring */
+            <>
+              <motion.div
+                className="mb-4"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
               >
-                <Share2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </motion.div>
+                <span className="text-6xl block mb-2">{result.primaryPattern?.emoji || '🎭'}</span>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <h2 className="text-2xl font-black text-foreground mb-1 tracking-wide">
+                  {result.primaryPattern?.label || "测评结果"}
+                </h2>
+                {result.meta?.subtitle && (
+                  <p className="text-sm font-medium text-primary mb-2">{result.meta.subtitle}</p>
+                )}
+                {result.primaryPattern?.description && (
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
+                    {result.primaryPattern.description}
+                  </p>
+                )}
+                {result.meta?.quote && (
+                  <p className="text-xs italic text-muted-foreground/80 max-w-xs mx-auto mb-3">
+                    「{result.meta.quote}」
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className="text-xs px-3 py-1 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                    匹配度 {Math.max(0, Math.round(100 - (result.meta?.matchDistance || 0) / 15 * 100))}%
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            </>
+          ) : (
+            /* Standard: Score ring */
+            <>
+              <motion.div
+                className="relative inline-flex items-center justify-center mb-4"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+              >
+                <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                  <motion.circle
+                    cx="50" cy="50" r="42"
+                    fill="none"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 42}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
+                    transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl">{result.primaryPattern?.emoji || template.emoji}</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <h2 className="text-xl font-bold text-foreground mb-1">
+                  {result.primaryPattern?.label || "测评结果"}
+                </h2>
+                {result.primaryPattern?.description && (
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
+                    {result.primaryPattern.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                    {result.totalScore} / {result.maxScore} 分
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            </>
+          )}
         </div>
       </motion.div>
 
