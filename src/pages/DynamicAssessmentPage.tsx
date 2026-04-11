@@ -39,7 +39,14 @@ export default function DynamicAssessmentPage() {
   const requireAuth = tpl?.require_auth ?? true;
   const requirePayment = tpl?.require_payment ?? false;
   const packageKey = tpl?.package_key;
-  const scoringType = tpl?.scoring_type || "additive";
+  const scoringType = tpl?.scoring_type || (() => {
+    try {
+      const sl = tpl?.scoring_logic;
+      if (sl && typeof sl === 'string') return JSON.parse(sl)?.scoring_type;
+      if (sl && typeof sl === 'object') return sl?.scoring_type;
+    } catch {}
+    return 'additive';
+  })();
 
   const { data: purchaseRecord, refetch: refetchPurchase } = useDynamicAssessmentPurchase(
     requirePayment ? packageKey : undefined
