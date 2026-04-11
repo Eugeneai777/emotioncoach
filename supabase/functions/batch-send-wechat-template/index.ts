@@ -80,14 +80,25 @@ serve(async (req) => {
       );
     }
 
-    // Check for duplicate running jobs
-    const { data: runningJobs } = await adminClient
-      .from('wechat_broadcast_jobs')
-      .select('id')
-      .in('status', ['pending', 'running'])
-      .limit(1);
+    // Check for duplicate running jobs using SELECT ... FOR UPDATE to prevent race conditions
+    const { data: lockCheck, error: lockError } = await adminClient.rpc('check_and_lock_broadcast', {});
+    
+    if (lockError) {
+      console.error('[batch-send] 锁检查失败:', lockError);
+      // Fallback to simple check
+      const { data: runningJobs } = await adminClient
+        .from('wechat_broadcast_jobs')
+        .select('id')
+        .in('status', ['pending', 'running'])
+        .limit(1);
 
-    if (runningJobs && runningJobs.length > 0) {
+      if (runningJobs && runningJobs.length > 0) {
+        return new Response(
+          JSON.stringify({ error: '已有群发任务正在执行中，请等待完成后再发送' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else if (lockCheck === false) {
       return new Response(
         JSON.stringify({ error: '已有群发任务正在执行中，请等待完成后再发送' }),
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
