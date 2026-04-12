@@ -9,28 +9,9 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
-import { isWeChatMiniProgram } from "@/utils/platform";
 
 // 静默授权恢复支付的 sessionStorage key
 const PENDING_PAYMENT_PACKAGE_KEY = 'pending_payment_package';
-const MP_PENDING_ORDER_STORAGE_KEY = 'wechat_mp_pending_order';
-
-const getPendingMiniProgramOrder = (): string | null => {
-  try {
-    return sessionStorage.getItem(MP_PENDING_ORDER_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-};
-
-const getPendingPaymentPackage = (): PackageInfo | null => {
-  try {
-    const raw = sessionStorage.getItem(PENDING_PAYMENT_PACKAGE_KEY);
-    return raw ? JSON.parse(raw) as PackageInfo : null;
-  } catch {
-    return null;
-  }
-};
 
 interface PackageInfo {
   key: string;
@@ -45,7 +26,6 @@ export default function Packages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const isMiniProgram = useMemo(() => isWeChatMiniProgram(), []);
   
   
   // 两级导航状态
@@ -59,7 +39,6 @@ export default function Packages() {
   
   // 🆕 静默授权回跳后恢复支付流程的状态
   const paymentResumeHandledRef = useRef(false);
-  const miniProgramResumeHandledRef = useRef(false);
   const paymentResume = searchParams.get('payment_resume') === '1';
   const paymentOpenId = searchParams.get('payment_openid');
   const paymentAuthError = searchParams.get('payment_auth_error') === '1';
@@ -114,37 +93,6 @@ export default function Packages() {
       window.history.replaceState({}, '', url.toString());
     }
   }, [paymentResume, paymentAuthError]);
-
-  useEffect(() => {
-    if (!isMiniProgram || isPaymentCallback) return;
-
-    const tryResumeMiniProgramPayment = () => {
-      if (miniProgramResumeHandledRef.current || payDialogOpen) return;
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-
-      const pendingOrder = getPendingMiniProgramOrder();
-      const pendingPackage = getPendingPaymentPackage();
-
-      if (!pendingOrder || !pendingPackage) return;
-
-      console.log('[Packages] Restoring pending MiniProgram payment:', pendingOrder);
-      miniProgramResumeHandledRef.current = true;
-      setSelectedPackage(pendingPackage);
-      setPayDialogOpen(true);
-    };
-
-    tryResumeMiniProgramPayment();
-
-    window.addEventListener('pageshow', tryResumeMiniProgramPayment);
-    window.addEventListener('focus', tryResumeMiniProgramPayment);
-    document.addEventListener('visibilitychange', tryResumeMiniProgramPayment);
-
-    return () => {
-      window.removeEventListener('pageshow', tryResumeMiniProgramPayment);
-      window.removeEventListener('focus', tryResumeMiniProgramPayment);
-      document.removeEventListener('visibilitychange', tryResumeMiniProgramPayment);
-    };
-  }, [isMiniProgram, isPaymentCallback, payDialogOpen]);
 
   // 当前品牌下的子分类
   const brandCategories = useMemo(

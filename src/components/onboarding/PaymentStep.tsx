@@ -198,17 +198,10 @@ export function PaymentStep({
       setOrderNo(data.orderNo);
 
       // 小程序原生支付：跳转到原生支付页
-      if (selectedPayType === 'miniprogram') {
-        const payParams = data.jsapiPayParams || data.miniprogramPayParams || {
-          orderNo: data.orderNo,
-          packageKey: packageInfo.package_key,
-          packageName: packageInfo.package_name,
-          amount: String(packageInfo.price),
-          needsNativePayment: 'true',
-        };
+      if (selectedPayType === 'miniprogram' && data.jsapiPayParams) {
         setStatus('polling');
         startPolling(data.orderNo);
-        await triggerMiniProgramNativePay(payParams, data.orderNo);
+        await triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
         return;
       }
 
@@ -218,15 +211,12 @@ export function PaymentStep({
         setStatus('ready');
       } else {
         setPayUrl(data.qrCodeUrl || data.payUrl);
-        // 小程序环境不生成二维码（canvas 不可用）
-        if (!isMiniProgram) {
-          const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
-            width: 200,
-            margin: 2,
-            color: { dark: '#000000', light: '#ffffff' },
-          });
-          setQrCodeDataUrl(qrDataUrl);
-        }
+        const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#000000', light: '#ffffff' },
+        });
+        setQrCodeDataUrl(qrDataUrl);
         setStatus('ready');
       }
 
