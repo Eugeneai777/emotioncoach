@@ -418,26 +418,54 @@ serve(async (req) => {
     let actualPayType = payType; // 实际使用的支付类型（可能降级）
     let fallbackReason: string | undefined;
     
-    // 使用代理服务器调用微信API
+    // 使用代理服务器调用微信API（带重试机制，防止代理服务器偶发超时）
     if (proxyUrl && proxyToken) {
       console.log('Using proxy server:', proxyUrl);
-      const proxyResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${proxyToken}`,
-        },
-        body: JSON.stringify({
-          target_url: apiUrl,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': authorization,
-          },
-          body: requestBody
-        }),
-      });
+      const MAX_RETRIES = 2;
+      let proxyResponse: Response | null = null;
+      let lastProxyError: Error | null = null;
+      
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          if (attempt > 0) {
+            console.log(`[CreateOrder] Retry attempt ${attempt}/${MAX_RETRIES} for proxy call`);
+          }
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s 超时
+          proxyResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${proxyToken}`,
+            },
+            body: JSON.stringify({
+              target_url: apiUrl,
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': authorization,
+              },
+              body: requestBody
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          lastProxyError = null;
+          break; // 成功，跳出重试循环
+        } catch (fetchErr: any) {
+          lastProxyError = fetchErr;
+          console.warn(`[CreateOrder] Proxy call failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}):`, fetchErr.message || fetchErr.code);
+          if (attempt < MAX_RETRIES) {
+            // 等待 1s 后重试
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+      
+      if (lastProxyError || !proxyResponse) {
+        throw new Error(`代理服务器连接失败（已重试${MAX_RETRIES}次）: ${lastProxyError?.message || 'unknown'}`);
+      }
 
       const proxyResult = await proxyResponse.json();
       console.log('Proxy response:', proxyResult);
