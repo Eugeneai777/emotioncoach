@@ -382,11 +382,14 @@ export function AppointmentPayDialog({
         setStatus('pending');
         startPolling(data.orderNo);
       } else if (data.codeUrl) {
-        const qrDataUrl = await QRCode.toDataURL(data.codeUrl, {
-          width: 200,
-          margin: 2,
-        });
-        setQrCodeDataUrl(qrDataUrl);
+        // 小程序环境不生成二维码（canvas 不可用）
+        if (!isMiniProgram) {
+          const qrDataUrl = await QRCode.toDataURL(data.codeUrl, {
+            width: 200,
+            margin: 2,
+          });
+          setQrCodeDataUrl(qrDataUrl);
+        }
         setStatus('pending');
         startPolling(data.orderNo);
       }

@@ -228,17 +228,23 @@ export function PrepaidRechargeDialog({ open, onOpenChange, onSuccess }: Prepaid
       setOrderNo(result.orderNo);
 
       // 小程序：跳转原生支付
-      if (payType === 'miniprogram' && result.jsapiPayParams) {
+      if (payType === 'miniprogram') {
+        const payParams = result.jsapiPayParams || {
+          orderNo: result.orderNo,
+          needsNativePayment: 'true',
+        };
         setStatus('pending');
         startPolling(result.orderNo);
-        triggerMiniProgramNativePay(result.jsapiPayParams, result.orderNo);
+        triggerMiniProgramNativePay(payParams, result.orderNo);
       } else if (result.codeUrl) {
-        // 桌面：显示二维码
-        const qrDataUrl = await QRCode.toDataURL(result.codeUrl, {
-          width: 200,
-          margin: 2,
-        });
-        setQrCodeDataUrl(qrDataUrl);
+        // 桌面：显示二维码（小程序环境不生成，canvas 不可用）
+        if (!isMiniProgram) {
+          const qrDataUrl = await QRCode.toDataURL(result.codeUrl, {
+            width: 200,
+            margin: 2,
+          });
+          setQrCodeDataUrl(qrDataUrl);
+        }
         setStatus('pending');
         startPolling(result.orderNo);
       } else if (result.h5Url) {
