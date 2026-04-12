@@ -78,14 +78,18 @@ export function isWeChatMiniProgram(): boolean {
   const hasMiniProgramUA = /miniprogram/i.test(ua);
   const isWechat = /micromessenger/i.test(ua);
   
-  // 必须同时满足：在微信环境 + UA 包含小程序标识
   if (isWechat && hasMiniProgramUA) {
     return true;
   }
 
-  // 🔧 移除：不再同步检测 window.wx.miniProgram.getEnv
-  // 原因：微信 JS-SDK 在 H5 中也会注入此 API，导致误判
-  // 如需精确检测，请使用 detectMiniProgramAsync()
+  // 3. 🔧 部分 Android 设备（如 Redmi K30 5G）的小程序 WebView UA 
+  // 不包含 "MicroMessenger" 和 "miniProgram"，但包含 "MMWEBSDK" + "MMW"
+  // 例如: ...Chrome/146.0.7680.177 Mobile Safari/537.36 XWEB/1460055 MMWEBSDK/20260202 MMW
+  const hasMMWebSDK = /mmwebsdk/i.test(ua);
+  const hasMMW = /\bmmw\b/i.test(ua);
+  if (hasMMWebSDK && hasMMW) {
+    return true;
+  }
 
   return false;
 }
