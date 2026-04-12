@@ -108,6 +108,7 @@ const getCachedPaymentOpenId = (): string | undefined => {
 // 🆕 小程序原生支付回跳时，用于恢复“等待支付”弹框状态
 //（部分小程序环境不会可靠地把 payment_success 参数带回到 URL，因此需要用缓存兜底）
 const MP_PENDING_ORDER_STORAGE_KEY = 'wechat_mp_pending_order';
+const PENDING_PAYMENT_PACKAGE_KEY = 'pending_payment_package';
 const setPendingOrderToCache = (orderNo: string) => {
   try {
     sessionStorage.setItem(MP_PENDING_ORDER_STORAGE_KEY, orderNo);
@@ -125,6 +126,32 @@ const getPendingOrderFromCache = (): string | undefined => {
 const clearPendingOrderCache = () => {
   try {
     sessionStorage.removeItem(MP_PENDING_ORDER_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
+const cachePendingPaymentPackage = (pkg: PackageInfo | null) => {
+  if (!pkg) return;
+  try {
+    sessionStorage.setItem(PENDING_PAYMENT_PACKAGE_KEY, JSON.stringify(pkg));
+  } catch {
+    // ignore
+  }
+};
+
+const getPendingPaymentPackage = (): PackageInfo | null => {
+  try {
+    const raw = sessionStorage.getItem(PENDING_PAYMENT_PACKAGE_KEY);
+    return raw ? JSON.parse(raw) as PackageInfo : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearPendingPaymentPackage = () => {
+  try {
+    sessionStorage.removeItem(PENDING_PAYMENT_PACKAGE_KEY);
   } catch {
     // ignore
   }
@@ -203,6 +230,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   // 🆕 回到前台时的“补偿校验”节流，避免反复触发请求
   const resumeCheckInFlightRef = useRef<boolean>(false);
   const lastResumeCheckAtRef = useRef<number>(0);
+  const previousOpenRef = useRef(open);
+  const miniProgramResumeHandledRef = useRef(false);
 
   // 检测是否在微信内
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -599,7 +628,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   // 重置状态
-  const resetState = () => {
+  const resetState = (options: { clearMiniProgramResumeCache?: boolean } = {}) => {
+    const { clearMiniProgramResumeCache = true } = options;
     clearTimers();
     setStatus('idle');
     setQrCodeDataUrl('');
@@ -624,8 +654,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setIsRedirectingForOpenId(false);
     setIsExchangingCode(false);
 
-    // 🆕 关闭/重试时清理“待确认订单”，避免后续误判
-    clearPendingOrderCache();
+    if (clearMiniProgramResumeCache) {
+      // 🆕 关闭/重试时清理“待确认订单”，避免后续误判
+      clearPendingOrderCache();
+      clearPendingPaymentPackage();
+    }
   };
 
   // 根据套餐类型获取对应的服务条款链接
@@ -962,6 +995,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       // 🆕 小程序原生支付：缓存订单号，便于从原生支付页返回后恢复状态
       if (selectedPayType === 'miniprogram') {
+        cachePendingPaymentPackage(packageInfo);
         setPendingOrderToCache(data.orderNo);
       }
 
@@ -1330,6 +1364,28 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // 条款同意后（或无需条款时）创建订单
   useEffect(() => {
+    if (!open || !isMiniProgram || !packageInfo || isPaymentCallbackScene) return;
+    if (miniProgramResumeHandledRef.current) return;
+
+    const pendingOrderNo = getPendingOrderFromCache();
+    const pendingPackage = getPendingPaymentPackage();
+
+    if (!pendingOrderNo || !pendingPackage || pendingPackage.key !== packageInfo.key) {
+      return;
+    }
+
+    console.log('[Payment] Resuming pending MiniProgram order:', pendingOrderNo);
+    miniProgramResumeHandledRef.current = true;
+    orderCreatedRef.current = true;
+    setPayType('jsapi');
+    setErrorMessage('');
+    setJsapiCancelled(false);
+    setOrderNo(pendingOrderNo);
+    setStatus('polling');
+    startPolling(pendingOrderNo);
+  }, [open, isMiniProgram, packageInfo, isPaymentCallbackScene]);
+
+  useEffect(() => {
     // 🆕 支付回调场景：不创建新订单，由上面的 useEffect 处理
     if (isPaymentCallbackScene) return;
     
@@ -1348,9 +1404,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // 关闭对话框时重置
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      previousOpenRef.current = true;
+      miniProgramResumeHandledRef.current = false;
+      return;
+    }
+
+    if (previousOpenRef.current) {
       resetState();
     }
+
+    previousOpenRef.current = false;
   }, [open]);
 
   // 重新唤起 JSAPI 支付（复用已有订单，不重新下单）
@@ -1382,6 +1446,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     const existingOrder = orderNo || getPendingOrderFromCache();
     if (isMiniProgram && existingOrder && packageInfo) {
       console.log('[Payment] MiniProgram retry: reusing existing order', existingOrder);
+      cachePendingPaymentPackage(packageInfo);
+      setPendingOrderToCache(existingOrder);
       setStatus('polling');
       setOrderNo(existingOrder);
       startPolling(existingOrder);
