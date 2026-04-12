@@ -396,15 +396,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       if ((type === 'OPENID' || type === 'MP_OPENID' || type === 'GET_OPENID_RESULT') && openId) {
         console.log('[Payment] Received openId from MiniProgram message');
-        // 缓存下来，供后续页面复用
         try {
           sessionStorage.setItem(MP_OPENID_STORAGE_KEY, openId);
           if (unionId) sessionStorage.setItem(MP_UNIONID_STORAGE_KEY, unionId);
         } catch {
           // ignore
         }
+        cachePaymentOpenId(openId);
         setUserOpenId(openId);
         setOpenIdResolved(true);
+        setIsRedirectingForOpenId(false);
+        setIsExchangingCode(false);
+        sessionStorage.removeItem('pay_auth_in_progress');
       }
     };
 
@@ -417,7 +420,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     const fetchUserOpenId = async () => {
       if (!open) return;
 
-      // 非微信环境：无需等待 openId
       if (!shouldWaitForOpenId) {
         setOpenIdResolved(true);
         setIsRedirectingForOpenId(false);
@@ -430,12 +432,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const mpOpenIdFromUrl = urlParams.get('mp_openid') || undefined;
       const cachedMpOpenId = getMiniProgramOpenIdFromCache();
 
-      // 小程序：只接受 mp_openid（URL 或缓存）或 props 传入，避免误用公众号 openid
       const existingOpenId = isMiniProgram
         ? (propOpenId || mpOpenIdFromUrl || cachedMpOpenId)
         : (propOpenId || urlOpenId);
 
-      // 已有 openId（从 props、URL 或 sessionStorage 缓存）：直接使用
       const cachedOpenId = getCachedPaymentOpenId();
       if (existingOpenId || cachedOpenId) {
         const resolvedId = existingOpenId || cachedOpenId!;
@@ -447,7 +447,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setIsExchangingCode(false);
         sessionStorage.removeItem('pay_auth_in_progress');
 
-        // 清理 URL 中的微信浏览器静默授权参数（不要清理 mp_openid）
         if (!isMiniProgram && urlOpenId) {
           const url = new URL(window.location.href);
           url.searchParams.delete('payment_openid');
@@ -457,17 +456,44 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         return;
       }
 
-      // 小程序环境不处理 OAuth code（那是公众号 OAuth 的回调）
       if (!isMiniProgram && authCode) {
         console.log('[Payment] Found auth code, exchanging for openId');
         exchangeCodeForOpenId(authCode);
         return;
       }
 
-      // 🆕 小程序环境：即使没有 mp_openid 也直接标记为 resolved
-      // 由小程序原生支付页面获取 openId 并调用 wx.requestPayment
       if (isMiniProgram) {
-        console.log('[Payment] MiniProgram environment, will use native bridge for payment');
+        if (openIdFetchedRef.current) return;
+        openIdFetchedRef.current = true;
+
+        console.log('[Payment] MiniProgram: no cached mp_openid, requesting from native container');
+        const requested = requestMiniProgramOpenId();
+
+        if (requested) {
+          window.setTimeout(() => {
+            const resolvedId =
+              getMiniProgramOpenIdFromCache() ||
+              getCachedPaymentOpenId() ||
+              new URLSearchParams(window.location.search).get('mp_openid') ||
+              undefined;
+
+            if (resolvedId) {
+              console.log('[Payment] MiniProgram: received openId after native request');
+              setUserOpenId(resolvedId);
+              cachePaymentOpenId(resolvedId);
+            } else {
+              console.warn('[Payment] MiniProgram: openId request timed out, falling back to native pay page');
+            }
+
+            setOpenIdResolved(true);
+            setIsRedirectingForOpenId(false);
+            setIsExchangingCode(false);
+            sessionStorage.removeItem('pay_auth_in_progress');
+          }, 1200);
+          return;
+        }
+
+        console.warn('[Payment] MiniProgram: mp_openid not found and postMessage unavailable, will use native bridge for payment');
         setOpenIdResolved(true);
         setIsRedirectingForOpenId(false);
         setIsExchangingCode(false);
@@ -478,8 +504,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (openIdFetchedRef.current) return;
       openIdFetchedRef.current = true;
 
-      // 已登录用户：仅在微信浏览器环境下尝试从数据库获取 openId
-      // ⚠️ 小程序 openid 与公众号 openid 不同，不能复用 wechat_user_mappings 里的 openid
       if (user && !isMiniProgram) {
         try {
           const { data: mapping } = await supabase
@@ -500,19 +524,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         }
       }
 
-      // 微信/小程序环境下没有 openId：
-      // - 小程序：必须从 URL 读取 mp_openid（小程序首页已拼接）
-      // - 微信浏览器：走静默授权
-      if (isMiniProgram) {
-        console.warn('[Payment] MiniProgram: mp_openid not found in URL, payment may fail');
-        console.log('[Payment] Current URL:', window.location.href);
-        // 不阻塞，但记录警告
-        setOpenIdResolved(true);
-        return;
-      }
-
-      // 微信浏览器中没有 openId：触发静默授权获取 openId，以便使用 JSAPI 自动拉起支付
-      // 授权完成后会通过 payment_resume 参数回跳，页面恢复支付弹窗状态
       console.log('[Payment] WeChat browser without openId — triggering silent auth for JSAPI payment');
       triggerSilentAuth();
     };
