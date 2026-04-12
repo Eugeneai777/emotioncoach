@@ -384,6 +384,44 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     return true;
   }, []);
 
+  const waitForMiniProgramOpenId = useCallback(async (timeout = 4000) => {
+    const resolveOpenId = () => {
+      return (
+        userOpenId ||
+        propOpenId ||
+        getMiniProgramOpenIdFromCache() ||
+        getCachedPaymentOpenId() ||
+        new URLSearchParams(window.location.search).get('mp_openid') ||
+        undefined
+      );
+    };
+
+    const existingOpenId = resolveOpenId();
+    if (existingOpenId) {
+      return existingOpenId;
+    }
+
+    const requested = requestMiniProgramOpenId();
+    if (!requested) {
+      return undefined;
+    }
+
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+      await new Promise((resolve) => window.setTimeout(resolve, 200));
+
+      const resolvedOpenId = resolveOpenId();
+      if (resolvedOpenId) {
+        cachePaymentOpenId(resolvedOpenId);
+        setUserOpenId(resolvedOpenId);
+        setOpenIdResolved(true);
+        return resolvedOpenId;
+      }
+    }
+
+    return undefined;
+  }, [propOpenId, requestMiniProgramOpenId, userOpenId]);
+
   // 监听小程序侧回传 openId
   useEffect(() => {
     if (!isMiniProgram) return;
@@ -903,6 +941,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setStatus('loading');
     setErrorMessage('');
 
+    let resolvedOpenId = userOpenId;
+    if (isMiniProgram && !resolvedOpenId) {
+      console.warn('[Payment] MiniProgram createOrder: missing mp_openid, waiting for native container');
+      resolvedOpenId = await waitForMiniProgramOpenId();
+
+      if (!resolvedOpenId) {
+        console.error('[Payment] MiniProgram createOrder: failed to resolve mp_openid, aborting order creation');
+        orderCreatedRef.current = false;
+        setStatus('failed');
+        setErrorMessage('未获取到小程序支付授权，请关闭后重新进入页面再试');
+        return;
+      }
+    }
+
     // 确定支付类型：
     // - 微信浏览器：优先 JSAPI（弹窗）
     // - 小程序 WebView：若检测不到 WeixinJSBridge，则无法拉起弹窗，自动降级为扫码
@@ -913,14 +965,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     // 小程序环境：使用原生支付
     // ⚠️ 不再强制要求 mp_openid，由小程序原生支付页面获取 openId 并调用 wx.requestPayment
     if (isMiniProgram) {
-      console.log('[Payment] MiniProgram detected, mp_openid:', userOpenId || 'MISSING (will get from native)');
+      console.log('[Payment] MiniProgram detected, mp_openid:', resolvedOpenId || 'MISSING');
       selectedPayType = 'miniprogram';
     } else if (isWechat && !isMobile) {
       // 🔧 微信电脑端（PC WeChat）：WeixinJSBridge 不可用，直接走 Native QR 码
       // 无论是否有 openId，PC 微信都不支持 JSAPI 弹窗支付
       console.log('[Payment] Desktop WeChat detected, using native QR (Bridge unavailable on PC)');
       selectedPayType = 'native';
-    } else if (isWechat && !!userOpenId) {
+    } else if (isWechat && !!resolvedOpenId) {
       // 手机微信浏览器有 openId → JSAPI 弹窗支付
       console.log('[Payment] Mobile WeChat browser with openId, using jsapi');
       selectedPayType = 'jsapi';
@@ -946,7 +998,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           amount: packageInfo.price,
           userId: user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest',
           payType: selectedPayType,
-          openId: needsOpenId ? userOpenId : undefined,
+          openId: needsOpenId ? resolvedOpenId : undefined,
           isMiniProgram: isMiniProgram,
           buyerName: shippingInfo?.buyerName,
           buyerPhone: shippingInfo?.buyerPhone,
