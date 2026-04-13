@@ -9,7 +9,6 @@ import { zhCN } from "date-fns/locale";
 import { DynamicAssessmentRecord } from "@/hooks/useDynamicAssessmentHistory";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import { motion, AnimatePresence } from "framer-motion";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
   AlertDialogAction,
