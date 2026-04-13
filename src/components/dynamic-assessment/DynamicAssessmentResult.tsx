@@ -62,6 +62,41 @@ interface DynamicAssessmentResultProps {
   onShowHistory?: () => void;
   hasHistory?: boolean;
   recommendedCampTypes?: string[];
+  isLiteMode?: boolean;
+  onLoginToUnlock?: () => void;
+}
+
+// SBTI personality type → camp recommendation copy groups
+const SBTI_CAMP_COPY: Record<string, { hook: string; detail: string }> = {
+  // 高压力型
+  'OH-NO': { hook: '你的情绪消耗可能比你意识到的更大', detail: '学会在压力中找到喘息空间' },
+  'ZZZZ': { hook: '疲惫不只是身体的信号', detail: '找回被消耗的内在能量' },
+  'DEAD': { hook: '你一直在硬撑，但身体已经在抗议了', detail: '从情绪透支中恢复节奏' },
+  'ANGY': { hook: '愤怒背后藏着很多未被看见的需求', detail: '学会和情绪做朋友' },
+  'EWWW': { hook: '你对世界的不满，其实是对自己标准的坚守', detail: '用觉察替代消耗' },
+  // 高行动型
+  'GOGO': { hook: '你习惯向前冲，但偶尔也需要停下来充电', detail: '让行动力更有节奏感' },
+  'CTRL': { hook: '掌控感让你安心，但也在消耗你', detail: '学会在放手中获得力量' },
+  'BOSS': { hook: '领导力的背后，是被忽略的自我照顾', detail: '从内在开始重建能量' },
+  // 高社交型
+  'SEXY': { hook: '你把太多能量给了别人', detail: '学会把注意力收回自己' },
+  'LOVE': { hook: '爱得太用力，自己反而被掏空了', detail: '建立健康的情感边界' },
+  'FAKE': { hook: '维持人设很累吧？', detail: '放下面具，找回真实的自己' },
+  'YOLO': { hook: '自由很酷，但偶尔也需要锚点', detail: '在自由中找到内在稳定' },
+  // 默认
+  '_default': { hook: '内在能量有提升空间', detail: '通过每日觉察找回生活节奏' },
+};
+
+function getSBTICampCopy(sbtiType: string | undefined, label: string | undefined): { hook: string; detail: string } {
+  if (!sbtiType) return SBTI_CAMP_COPY['_default'];
+  // Try exact match first, then partial
+  const copy = SBTI_CAMP_COPY[sbtiType];
+  if (copy) return copy;
+  // Check if type contains known key
+  for (const [key, val] of Object.entries(SBTI_CAMP_COPY)) {
+    if (key !== '_default' && sbtiType.includes(key)) return val;
+  }
+  return SBTI_CAMP_COPY['_default'];
 }
 
 const fadeUp = {
