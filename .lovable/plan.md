@@ -1,54 +1,43 @@
 
 
-# SBTI测评历史完整展示 + 学习中心集成
+# SBTI 测评历史完整展示（对齐结果页风格）
 
-## 问题诊断
+## 问题分析
 
-### 问题1：历史页展示不完整
-- 当前 `DynamicAssessmentHistory` 组件仅以 Badge 标签显示 `score/maxScore`，缺少：
-  - SBTI 五大模型分组的 H/M/L 展示
-  - 能力雷达图
-  - AI 个性化洞察
-- 数据库中 `ai_insight` 字段全部为 `null`——因为 AI 洞察是前端调用 edge function 生成的，但 `useSaveAssessmentResult` 的 `mutate` 调用中**没有传 `ai_insight`**，所以从未保存过
+当前历史页（第二张图）以压缩卡片 + 展开折叠的方式展示，信息密度过高、阅读体验差。用户期望每条历史记录的展示效果与测评结果页（第一张图）一致：雷达图直接可见、维度得分用进度条展示、AI洞察内联显示。
 
-### 问题2：学习中心看不到 SBTI
-- `CampList.tsx` 的 `myAssessments` 查询只查 `orders`（付费测评）和 `awakening_entries`（免费测评）
-- `partner_assessment_results`（SBTI 等动态引擎测评）从未被查询
+数据库中每条记录已包含完整的 15 维度数据（key/label/emoji/score/maxScore），数据充分支持完整展示。
 
 ## 变更计划
 
-### 1. 保存 AI 洞察到数据库
-**文件**：`src/pages/DynamicAssessmentPage.tsx`
+### 文件：`src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`
 
-在 `generateInsight` 成功后，调用 `supabase.from('partner_assessment_results').update({ ai_insight }).eq(...)` 将 AI 洞察回写到对应记录，确保历史页可以展示。
+重构每条记录的渲染方式，从「压缩卡片+折叠」改为「完整内联展示」：
 
-### 2. 历史页支持 SBTI 完整展示
-**文件**：`src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`
+| 区块 | 展示内容 | 响应式处理 |
+|------|---------|-----------|
+| 头部 | emoji + 人格类型名 + 总分Badge + 日期 | 居中排列 |
+| 能力雷达 | `DimensionRadarChart` 直接展示，不折叠 | 高度自适应，移动端 220px / 桌面 280px |
+| 维度得分 | 15 个维度用进度条展示（emoji + label + score/maxScore），对齐结果页样式 | 移动端单列，桌面双列 grid |
+| AI 洞察 | 内联展示 `ai_insight`（如有），标题+内容卡片 | 全宽 |
+| 分隔 | 记录之间用较大间距 + 分割线区分 | — |
 
-- 新增 `templateScoringType` prop，由父组件传入（从 template 的 scoring_type 获取）
-- 当 `scoringType === 'sbti'` 时：
-  - 将每条记录的 dimension_scores 按五大模型分组展示（自我/情感/态度/行动/社交），用 H/M/L 色彩标签替代 `score/maxScore`
-  - 展示 `ai_insight` 字段（如已保存）
-  - 点击单条记录可展开/折叠详情（雷达图 + AI 洞察）
-- 非 SBTI 测评保持现有 Badge 展示不变
+具体改动：
+1. 移除 `Collapsible` 折叠逻辑，所有内容默认展开
+2. 移除 `SBTIGroupedDimensions` 组件（H/M/L 标签），改为进度条样式
+3. 每条记录渲染为独立的完整卡片，包含雷达图 + 维度进度条 + AI洞察
+4. 保留顶部对比功能和删除功能不变
+5. 非 SBTI 测评保持现有展示不变
 
-### 3. 学习中心集成动态测评历史
-**文件**：`src/pages/CampList.tsx`
+### 响应式兼容
 
-- 在 `myAssessments` 的 `Promise.all` 中新增第三个查询：`partner_assessment_results` 联查 `partner_assessment_templates`
-- 按 `template_id` 去重，映射为统一的卡片数据（emoji、title、route → `/assessment/{assessment_key}`，tag → "已测"）
-- 与现有付费/免费结果合并展示
-
-### 4. 父组件传递 scoringType
-**文件**：`src/pages/DynamicAssessmentPage.tsx`
-
-在渲染 `DynamicAssessmentHistory` 时传入 `scoringType` prop。
+- 维度得分区域：`grid grid-cols-1 md:grid-cols-2`，移动端单列、桌面双列
+- 雷达图容器：移动端 `h-[220px]`，桌面 `h-[280px]`
+- 整体容器：`max-w-lg mx-auto`（移动端）/ `max-w-2xl`（桌面端）
 
 ## 涉及文件
 
 | 文件 | 变更 |
 |------|------|
-| `src/pages/DynamicAssessmentPage.tsx` | AI 洞察回写数据库 + 传 scoringType 给 History |
-| `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx` | SBTI 分组展示 + 展开详情（雷达图/AI洞察） |
-| `src/pages/CampList.tsx` | 新增 partner_assessment_results 查询 |
+| `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx` | 重构 SBTI 记录渲染：移除折叠、改为进度条+雷达图内联展示 |
 
