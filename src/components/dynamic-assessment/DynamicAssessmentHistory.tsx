@@ -388,25 +388,23 @@ export function DynamicAssessmentHistory({
                 const isSelected = selectedIds.includes(record.id);
                 const prevRecord = records[idx + 1];
                 const scoreDiff = prevRecord ? record.total_score - prevRecord.total_score : null;
-                const isExpanded = expandedId === record.id;
 
-                return (
-                  <motion.div key={record.id} variants={itemVariants}>
-                    <Collapsible
-                      open={isExpanded && !compareMode}
-                      onOpenChange={(open) => setExpandedId(open ? record.id : null)}
-                    >
+                // SBTI: full inline display
+                if (isSBTI) {
+                  return (
+                    <motion.div key={record.id} variants={itemVariants}>
                       <Card
-                        className={`group transition-all duration-300 border-border/40 bg-card/95 backdrop-blur-md shadow-sm hover:shadow-lg hover:border-primary/20 ${
+                        className={`transition-all duration-300 border-border/40 bg-card/95 backdrop-blur-md shadow-sm hover:shadow-lg hover:border-primary/20 ${
                           compareMode ? "cursor-pointer" : ""
                         } ${isSelected ? "ring-2 ring-primary border-primary/30 shadow-primary/10 shadow-lg" : ""}`}
                         onClick={compareMode ? () => toggleSelect(record.id) : undefined}
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-2.5">
+                        <CardContent className="p-4 sm:p-5 md:p-6">
+                          {/* Header: emoji + pattern + score + date */}
+                          <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3 min-w-0">
                               <motion.span
-                                className="text-2xl shrink-0"
+                                className="text-3xl sm:text-4xl shrink-0"
                                 whileHover={{ scale: 1.15, rotate: 5 }}
                                 transition={{ type: "spring", stiffness: 300 }}
                               >
@@ -414,13 +412,13 @@ export function DynamicAssessmentHistory({
                               </motion.span>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-sm sm:text-base truncate">{record.primary_pattern}</span>
                                   <Badge
                                     variant="outline"
                                     className="bg-primary/10 border-primary/25 text-primary font-semibold"
                                   >
                                     {record.total_score} 分
                                   </Badge>
-                                  <span className="text-xs text-muted-foreground truncate">{record.primary_pattern}</span>
                                   {scoreDiff !== null && scoreDiff !== 0 && (
                                     <Badge
                                       variant="outline"
@@ -440,101 +438,178 @@ export function DynamicAssessmentHistory({
                                 </div>
                               </div>
                             </div>
-                            {!compareMode && onDelete && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                                onClick={(e) => { e.stopPropagation(); setDeleteId(record.id); }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {compareMode && (
-                              <motion.div
-                                className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
-                                  isSelected ? "border-primary bg-primary scale-110" : "border-muted-foreground/30"
-                                }`}
-                                whileTap={{ scale: 0.85 }}
-                              >
-                                {isSelected && (
-                                  <motion.div
-                                    className="w-2 h-2 rounded-full bg-primary-foreground"
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: "spring", stiffness: 400 }}
-                                  />
-                                )}
-                              </motion.div>
-                            )}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {!compareMode && onDelete && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-60 hover:opacity-100 transition-all"
+                                  onClick={(e) => { e.stopPropagation(); setDeleteId(record.id); }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {compareMode && (
+                                <motion.div
+                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                                    isSelected ? "border-primary bg-primary scale-110" : "border-muted-foreground/30"
+                                  }`}
+                                  whileTap={{ scale: 0.85 }}
+                                >
+                                  {isSelected && (
+                                    <motion.div
+                                      className="w-2 h-2 rounded-full bg-primary-foreground"
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      transition={{ type: "spring", stiffness: 400 }}
+                                    />
+                                  )}
+                                </motion.div>
+                              )}
+                            </div>
                           </div>
 
-                          {/* SBTI: grouped H/M/L display; others: badge list */}
-                          {isSBTI ? (
-                            <SBTIGroupedDimensions dimScores={dimScores} />
-                          ) : (
-                            dimScores.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 mt-1">
-                                {dimScores.map((d: any) => (
-                                  <Badge
-                                    key={d.label}
-                                    variant="secondary"
-                                    className="text-xs bg-muted/50 backdrop-blur-sm border border-border/30 hover:bg-muted/70 transition-colors"
-                                  >
-                                    {d.emoji} {d.label} {d.score}/{d.maxScore}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )
-                          )}
-
-                          {/* Expand trigger */}
-                          {!compareMode && (dimScores.length >= 3 || record.ai_insight) && (
-                            <CollapsibleTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {isExpanded ? (
-                                  <>收起详情 <ChevronUp className="w-3.5 h-3.5" /></>
-                                ) : (
-                                  <>查看详情 <ChevronDown className="w-3.5 h-3.5" /></>
-                                )}
-                              </Button>
-                            </CollapsibleTrigger>
-                          )}
-                        </CardContent>
-
-                        {/* Expandable detail: radar + AI insight */}
-                        <CollapsibleContent>
-                          <div className="px-4 pb-4 space-y-4 border-t border-border/30 pt-3">
-                            {dimScores.length >= 3 && (
-                              <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-                                  📊 维度雷达图
-                                </h4>
+                          {/* Radar Chart - always visible */}
+                          {dimScores.length >= 3 && (
+                            <div className="mb-4">
+                              <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                                📊 维度雷达图
+                              </h4>
+                              <div className="h-[220px] md:h-[280px]">
                                 <DimensionRadarChart dimensionScores={dimScores} />
                               </div>
-                            )}
-                            {record.ai_insight && (
-                              <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-                                  <Brain className="w-3.5 h-3.5" /> AI 个性化洞察
-                                </h4>
-                                <div className="text-sm text-foreground/90 bg-muted/30 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                                  {record.ai_insight}
-                                </div>
+                            </div>
+                          )}
+
+                          {/* Dimension Progress Bars */}
+                          {dimScores.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+                                📋 维度得分
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                {dimScores.map((d: any) => {
+                                  const pct = d.maxScore > 0 ? Math.round((d.score / d.maxScore) * 100) : 0;
+                                  return (
+                                    <div key={d.label} className="flex items-center gap-2">
+                                      <span className="text-sm shrink-0 w-5 text-center">{d.emoji}</span>
+                                      <span className="text-xs font-medium w-20 sm:w-24 shrink-0 truncate">{d.label}</span>
+                                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                                        <motion.div
+                                          className="h-full bg-primary rounded-full"
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${pct}%` }}
+                                          transition={{ duration: 0.6, delay: 0.1 }}
+                                        />
+                                      </div>
+                                      <span className="text-[11px] text-muted-foreground w-10 text-right shrink-0">
+                                        {d.score}/{d.maxScore}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            )}
-                            {!record.ai_insight && (
-                              <p className="text-xs text-muted-foreground italic">AI 洞察暂未保存（仅新测评会自动保存）</p>
-                            )}
-                          </div>
-                        </CollapsibleContent>
+                            </div>
+                          )}
+
+                          {/* AI Insight - inline */}
+                          {record.ai_insight && (
+                            <div>
+                              <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                                <Brain className="w-3.5 h-3.5" /> AI 个性化洞察
+                              </h4>
+                              <div className="text-sm text-foreground/90 bg-muted/30 rounded-lg p-3 sm:p-4 whitespace-pre-wrap leading-relaxed">
+                                {record.ai_insight}
+                              </div>
+                            </div>
+                          )}
+                          {!record.ai_insight && (
+                            <p className="text-xs text-muted-foreground italic">AI 洞察暂未保存（仅新测评会自动保存）</p>
+                          )}
+                        </CardContent>
                       </Card>
-                    </Collapsible>
+                    </motion.div>
+                  );
+                }
+
+                // Non-SBTI: keep existing compact display
+                return (
+                  <motion.div key={record.id} variants={itemVariants}>
+                    <Card
+                      className={`group transition-all duration-300 border-border/40 bg-card/95 backdrop-blur-md shadow-sm hover:shadow-lg hover:border-primary/20 ${
+                        compareMode ? "cursor-pointer" : ""
+                      } ${isSelected ? "ring-2 ring-primary border-primary/30 shadow-primary/10 shadow-lg" : ""}`}
+                      onClick={compareMode ? () => toggleSelect(record.id) : undefined}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2.5">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <motion.span
+                              className="text-2xl shrink-0"
+                              whileHover={{ scale: 1.15, rotate: 5 }}
+                              transition={{ type: "spring", stiffness: 300 }}
+                            >
+                              {templateEmoji}
+                            </motion.span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-primary/10 border-primary/25 text-primary font-semibold"
+                                >
+                                  {record.total_score} 分
+                                </Badge>
+                                <span className="text-xs text-muted-foreground truncate">{record.primary_pattern}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1.5">
+                                <Calendar className="w-3 h-3 shrink-0" />
+                                {format(new Date(record.created_at), "yyyy年MM月dd日 HH:mm", { locale: zhCN })}
+                              </div>
+                            </div>
+                          </div>
+                          {!compareMode && onDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                              onClick={(e) => { e.stopPropagation(); setDeleteId(record.id); }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {compareMode && (
+                            <motion.div
+                              className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
+                                isSelected ? "border-primary bg-primary scale-110" : "border-muted-foreground/30"
+                              }`}
+                              whileTap={{ scale: 0.85 }}
+                            >
+                              {isSelected && (
+                                <motion.div
+                                  className="w-2 h-2 rounded-full bg-primary-foreground"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: "spring", stiffness: 400 }}
+                                />
+                              )}
+                            </motion.div>
+                          )}
+                        </div>
+                        {dimScores.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1">
+                            {dimScores.map((d: any) => (
+                              <Badge
+                                key={d.label}
+                                variant="secondary"
+                                className="text-xs bg-muted/50 backdrop-blur-sm border border-border/30 hover:bg-muted/70 transition-colors"
+                              >
+                                {d.emoji} {d.label} {d.score}/{d.maxScore}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   </motion.div>
                 );
               })}
