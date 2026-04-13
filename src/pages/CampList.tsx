@@ -81,7 +81,7 @@ const CampList = () => {
       const PAID_KEYS = Object.keys(PAID_ASSESSMENT_MAP);
       const FREE_TYPES = Object.keys(FREE_ASSESSMENT_MAP);
       
-      const [paidRes, freeRes] = await Promise.all([
+      const [paidRes, freeRes, dynamicRes] = await Promise.all([
         supabase
           .from('orders')
           .select('package_key, paid_at')
@@ -95,6 +95,12 @@ const CampList = () => {
           .eq('user_id', user.id)
           .in('type', FREE_TYPES)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('partner_assessment_results' as any)
+          .select('template_id, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50),
       ]);
       
       const items: { key: string; title: string; emoji: string; route: string; date: string; tag: string }[] = [];
@@ -116,6 +122,44 @@ const CampList = () => {
         const m = FREE_ASSESSMENT_MAP[e.type];
         if (m) items.push({ key: e.type, ...m, date: e.created_at || '', tag: '已测' });
       });
+      
+      // Dynamic engine assessments (SBTI etc) — deduplicate by template_id
+      const dynamicRecords = (dynamicRes.data || []) as any[];
+      if (dynamicRecords.length > 0) {
+        const seenTemplates = new Set<string>();
+        const templateIds: string[] = [];
+        dynamicRecords.forEach((r: any) => {
+          if (!seenTemplates.has(r.template_id)) {
+            seenTemplates.add(r.template_id);
+            templateIds.push(r.template_id);
+          }
+        });
+        
+        // Fetch template metadata
+        const { data: templates } = await supabase
+          .from('partner_assessment_templates' as any)
+          .select('id, title, emoji, assessment_key')
+          .in('id', templateIds);
+        
+        const tplMap = new Map<string, any>();
+        ((templates || []) as any[]).forEach((t: any) => tplMap.set(t.id, t));
+        
+        dynamicRecords.forEach((r: any) => {
+          if (!seenTemplates.has(r.template_id)) return;
+          seenTemplates.delete(r.template_id); // only add first occurrence
+          const tpl = tplMap.get(r.template_id);
+          if (tpl) {
+            items.push({
+              key: `dynamic_${r.template_id}`,
+              title: tpl.title,
+              emoji: tpl.emoji || '📝',
+              route: `/assessment/${tpl.assessment_key}`,
+              date: r.created_at || '',
+              tag: '已测',
+            });
+          }
+        });
+      }
       
       return items;
     },
