@@ -29,14 +29,6 @@ interface DynamicAssessmentHistoryProps {
   onBack: () => void;
 }
 
-// SBTI dimension grouping
-const SBTI_GROUPS = [
-  { key: 'self', label: '自我', emoji: '🧠', dims: ['Introversion', 'Openness', 'Sensitivity'] },
-  { key: 'emotion', label: '情感', emoji: '💖', dims: ['Romanticism', 'Attachment', 'Empathy'] },
-  { key: 'attitude', label: '态度', emoji: '🎯', dims: ['Optimism', 'Ambition', 'Patience'] },
-  { key: 'action', label: '行动', emoji: '⚡', dims: ['Impulsiveness', 'Adventurousness', 'Discipline'] },
-  { key: 'social', label: '社交', emoji: '🤝', dims: ['Sociability', 'Leadership', 'Humor'] },
-];
 
 function getLevelLabel(score: number, maxScore: number): { label: string; color: string } {
   const pct = maxScore > 0 ? score / maxScore : 0;
