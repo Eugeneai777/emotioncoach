@@ -572,8 +572,10 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* SBTI-specific high-conversion camp recommendation */}
-        {isSBTI && recommendedCamps.length > 0 && (
+        {/* SBTI-specific high-conversion camp recommendation (hidden in lite mode) */}
+        {isSBTI && !isLiteMode && recommendedCamps.length > 0 && (() => {
+          const campCopy = getSBTICampCopy(result.meta?.sbtiType, result.primaryPattern?.label);
+          return (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg overflow-hidden">
               <CardContent className="p-5 space-y-4">
