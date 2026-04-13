@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target } from "lucide-react";
+import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -62,6 +62,41 @@ interface DynamicAssessmentResultProps {
   onShowHistory?: () => void;
   hasHistory?: boolean;
   recommendedCampTypes?: string[];
+  isLiteMode?: boolean;
+  onLoginToUnlock?: () => void;
+}
+
+// SBTI personality type → camp recommendation copy groups
+const SBTI_CAMP_COPY: Record<string, { hook: string; detail: string }> = {
+  // 高压力型
+  'OH-NO': { hook: '你的情绪消耗可能比你意识到的更大', detail: '学会在压力中找到喘息空间' },
+  'ZZZZ': { hook: '疲惫不只是身体的信号', detail: '找回被消耗的内在能量' },
+  'DEAD': { hook: '你一直在硬撑，但身体已经在抗议了', detail: '从情绪透支中恢复节奏' },
+  'ANGY': { hook: '愤怒背后藏着很多未被看见的需求', detail: '学会和情绪做朋友' },
+  'EWWW': { hook: '你对世界的不满，其实是对自己标准的坚守', detail: '用觉察替代消耗' },
+  // 高行动型
+  'GOGO': { hook: '你习惯向前冲，但偶尔也需要停下来充电', detail: '让行动力更有节奏感' },
+  'CTRL': { hook: '掌控感让你安心，但也在消耗你', detail: '学会在放手中获得力量' },
+  'BOSS': { hook: '领导力的背后，是被忽略的自我照顾', detail: '从内在开始重建能量' },
+  // 高社交型
+  'SEXY': { hook: '你把太多能量给了别人', detail: '学会把注意力收回自己' },
+  'LOVE': { hook: '爱得太用力，自己反而被掏空了', detail: '建立健康的情感边界' },
+  'FAKE': { hook: '维持人设很累吧？', detail: '放下面具，找回真实的自己' },
+  'YOLO': { hook: '自由很酷，但偶尔也需要锚点', detail: '在自由中找到内在稳定' },
+  // 默认
+  '_default': { hook: '内在能量有提升空间', detail: '通过每日觉察找回生活节奏' },
+};
+
+function getSBTICampCopy(sbtiType: string | undefined): { hook: string; detail: string } {
+  if (!sbtiType) return SBTI_CAMP_COPY['_default'];
+  // Try exact match first, then partial
+  const copy = SBTI_CAMP_COPY[sbtiType];
+  if (copy) return copy;
+  // Check if type contains known key
+  for (const [key, val] of Object.entries(SBTI_CAMP_COPY)) {
+    if (key !== '_default' && sbtiType.includes(key)) return val;
+  }
+  return SBTI_CAMP_COPY['_default'];
 }
 
 const fadeUp = {
@@ -82,6 +117,8 @@ export function DynamicAssessmentResult({
   onShowHistory,
   hasHistory,
   recommendedCampTypes,
+  isLiteMode = false,
+  onLoginToUnlock,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -325,7 +362,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* SBTI: Grouped H/M/L dimension display */}
-        {isSBTI && result.meta?.userLevels && (
+        {isSBTI && result.meta?.userLevels && !isLiteMode && (
           <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4 space-y-4">
@@ -432,6 +469,34 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* SBTI Lite Mode: Login CTA */}
+        {isSBTI && isLiteMode && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/10 shadow-lg overflow-hidden">
+              <CardContent className="p-5 text-center space-y-4">
+                <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground mb-1">
+                    登录解锁完整报告
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    包含15维度深度分析、AI个性化洞察、专属训练营推荐
+                  </p>
+                </div>
+                <Button
+                  onClick={onLoginToUnlock}
+                  className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md"
+                >
+                  登录查看完整报告
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Tips (hidden for SBTI) */}
         {!isSBTI && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
@@ -469,32 +534,34 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* AI Insight */}
-        <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+        {/* AI Insight (hidden in lite mode) */}
+        {!isLiteMode && (
+          <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-sm">AI 个性化洞察</h3>
                 </div>
-                <h3 className="font-semibold text-sm">AI 个性化洞察</h3>
-              </div>
-              {loadingInsight ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <span>AI 正在分析你的结果...</span>
-                </div>
-              ) : aiInsight ? (
-                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">暂无</p>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                {loadingInsight ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span>AI 正在分析你的结果...</span>
+                  </div>
+                ) : aiInsight ? (
+                  <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">暂无</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-        {/* AI Coach Button */}
-        {(template.coach_prompt || template.coach_type) && (
+        {/* AI Coach Button (hidden in lite mode) */}
+        {!isLiteMode && (template.coach_prompt || template.coach_type) && (
           <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
             <Button
               onClick={handleAICoach}
@@ -505,41 +572,45 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* SBTI-specific high-conversion camp recommendation */}
-        {isSBTI && recommendedCamps.length > 0 && (
-          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
-            <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg overflow-hidden">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-xl shadow-md shrink-0">
-                    ⚡
+        {/* SBTI-specific high-conversion camp recommendation (hidden in lite mode) */}
+        {isSBTI && !isLiteMode && recommendedCamps.length > 0 && (() => {
+          const campCopy = getSBTICampCopy(result.meta?.sbtiType);
+          return (
+            <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
+              <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg overflow-hidden">
+                <CardContent className="p-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-xl shadow-md shrink-0">
+                      ⚡
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-foreground">
+                        {result.primaryPattern?.label
+                          ? `作为「${result.primaryPattern.label}」型：${campCopy.hook}`
+                          : `你的人格画像显示：${campCopy.hook}`}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        {campCopy.detail}。「7天有劲训练营」通过每日冥想+情绪觉察+教练陪伴，帮你找回内在节奏。
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground">
-                      你的人格画像显示：内在能量有提升空间
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      {result.primaryPattern?.label ? `作为「${result.primaryPattern.label}」型人格，` : ''}
-                      你可能在情绪内耗和行动力上需要更多支持。「7天有劲训练营」通过每日冥想+情绪觉察+教练陪伴，帮你找回内在节奏。
-                    </p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">🧘 每日冥想</span>
+                    <span className="flex items-center gap-1">📝 情绪觉察</span>
+                    <span className="flex items-center gap-1">👨‍🏫 教练陪伴</span>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">🧘 每日冥想</span>
-                  <span className="flex items-center gap-1">📝 情绪觉察</span>
-                  <span className="flex items-center gap-1">👨‍🏫 教练陪伴</span>
-                </div>
-                <Button
-                  onClick={() => navigate('/promo/synergy')}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md"
-                >
-                  了解7天有劲训练营
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                  <Button
+                    onClick={() => navigate('/promo/synergy')}
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md"
+                  >
+                    了解7天有劲训练营
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })()}
 
         {/* Generic Recommended Training Camps (non-SBTI) */}
         {!isSBTI && recommendedCamps.length > 0 && (
