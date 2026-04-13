@@ -1,85 +1,54 @@
 
 
-# SBTI测评门槛设计 + 转化链路审计
+# SBTI测评历史完整展示 + 学习中心集成
 
-## 一、SBTI近期动态研判
+## 问题诊断
 
-SBTI于2026年4月9-10日全网爆火（微信朋友圈刷屏、热搜、原站崩溃），目前处于流量高峰的尾期（4月13日）。核心特征：
-- **社交货币属性极强**：用户测完会自发分享到朋友圈
-- **原站体验差**：频繁崩溃，用户有替代需求
-- **窗口期有限**：热度预计持续1-2周后快速衰减
+### 问题1：历史页展示不完整
+- 当前 `DynamicAssessmentHistory` 组件仅以 Badge 标签显示 `score/maxScore`，缺少：
+  - SBTI 五大模型分组的 H/M/L 展示
+  - 能力雷达图
+  - AI 个性化洞察
+- 数据库中 `ai_insight` 字段全部为 `null`——因为 AI 洞察是前端调用 edge function 生成的，但 `useSaveAssessmentResult` 的 `mutate` 调用中**没有传 `ai_insight`**，所以从未保存过
 
-## 二、门槛策略设计（商业架构师建议）
+### 问题2：学习中心看不到 SBTI
+- `CampList.tsx` 的 `myAssessments` 查询只查 `orders`（付费测评）和 `awakening_entries`（免费测评）
+- `partner_assessment_results`（SBTI 等动态引擎测评）从未被查询
 
-**核心原则**：SBTI是娱乐型流量入口，门槛不宜过高（会劝退），但要利用稀缺性制造转化势能。
+## 变更计划
 
-### 推荐方案：「免费测 + 结果分层解锁」
+### 1. 保存 AI 洞察到数据库
+**文件**：`src/pages/DynamicAssessmentPage.tsx`
 
-```text
-用户旅程：
-进入测评 → 答题（无门槛）→ 基础结果（免费）→ 深度解读（登录门槛）
-                                                    ↓
-                                            AI洞察报告（登录后可见）
-                                                    ↓
-                                          7天有劲训练营推荐卡（转化）
-```
+在 `generateInsight` 成功后，调用 `supabase.from('partner_assessment_results').update({ ai_insight }).eq(...)` 将 AI 洞察回写到对应记录，确保历史页可以展示。
 
-**具体规则**：
-| 内容层级 | 门槛 | 展示内容 |
-|---------|------|---------|
-| 基础结果 | 无（答完即看） | 人格类型名称 + emoji + 四字特征标签 |
-| 完整报告 | **登录** | 15维度分析 + 匹配度 + 金句 + 分享卡片 |
-| AI深度洞察 | **登录**（当前已有） | AI个性化毒舌解读 |
-| 训练营推荐 | 登录后自动展示 | 高转化引导卡 |
+### 2. 历史页支持 SBTI 完整展示
+**文件**：`src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`
 
-**为什么不设付费门槛**：
-- SBTI是娱乐测试，用户付费意愿极低（原版免费）
-- 门槛的真正价值是**获取用户注册**（私域资产），而非直接变现
-- 登录门槛已足够筛选出高意向用户，且不劝退传播链
+- 新增 `templateScoringType` prop，由父组件传入（从 template 的 scoring_type 获取）
+- 当 `scoringType === 'sbti'` 时：
+  - 将每条记录的 dimension_scores 按五大模型分组展示（自我/情感/态度/行动/社交），用 H/M/L 色彩标签替代 `score/maxScore`
+  - 展示 `ai_insight` 字段（如已保存）
+  - 点击单条记录可展开/折叠详情（雷达图 + AI 洞察）
+- 非 SBTI 测评保持现有 Badge 展示不变
 
-### 实现方式
+### 3. 学习中心集成动态测评历史
+**文件**：`src/pages/CampList.tsx`
 
-修改 `DynamicAssessmentPage.tsx` 的 `handleQuestionsComplete` 逻辑：
-- 未登录用户：计算结果但只展示**简版**（人格类型 + emoji + traits），隐藏维度详情、AI洞察、训练营推荐
-- 底部显示「登录查看完整报告」CTA
-- 登录后自动展示完整内容
+- 在 `myAssessments` 的 `Promise.all` 中新增第三个查询：`partner_assessment_results` 联查 `partner_assessment_templates`
+- 按 `template_id` 去重，映射为统一的卡片数据（emoji、title、route → `/assessment/{assessment_key}`，tag → "已测"）
+- 与现有付费/免费结果合并展示
 
-## 三、结果展示 & 转化链路审计
+### 4. 父组件传递 scoringType
+**文件**：`src/pages/DynamicAssessmentPage.tsx`
 
-### 当前问题
+在渲染 `DynamicAssessmentHistory` 时传入 `scoringType` prop。
 
-| 问题 | 严重度 | 说明 |
-|------|--------|------|
-| ❌ 训练营推荐文案过于通用 | 高 | "内在能量有提升空间"对所有27种人格类型千篇一律，缺乏与人格的关联 |
-| ❌ 跳转目标单一 | 中 | 所有人格统一跳转 `/promo/synergy`，未区分人格特征推荐不同产品 |
-| ⚠️ AI洞察与训练营推荐断裂 | 中 | AI洞察完全是娱乐解读，没有自然过渡到"你可以做什么"的行动建议 |
-| ⚠️ 缺少分享后回流机制 | 中 | 用户分享海报后，朋友扫码进来没有专属引导 |
-
-### 优化方案
-
-**1. 训练营推荐卡文案个性化**（按人格类型分组）
-
-在结果页的训练营推荐卡中，根据人格类型动态生成推荐理由：
-- 高压力型（OH-NO, ZZZZ, DEAD等）→ "作为「XX」型，你的情绪消耗可能比你意识到的更大"
-- 高行动型（GOGO, CTRL, BOSS等）→ "作为「XX」型，你习惯向前冲，但偶尔也需要停下来充电"
-- 高社交型（SEXY, LOVE-R, FAKE等）→ "作为「XX」型，你把太多能量给了别人"
-
-**2. AI洞察末尾追加行动引导**
-
-在 `ai_insight_prompt` 中追加一段指令，让AI在解读末尾自然过渡到"如果你想进一步探索自己"的建议，与训练营推荐形成闭环。
-
-## 四、文件变更清单
+## 涉及文件
 
 | 文件 | 变更 |
 |------|------|
-| `src/pages/DynamicAssessmentPage.tsx` | 未登录用户结果分层：简版结果 + 登录CTA |
-| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | 新增 `isLiteMode` prop，控制隐藏维度详情/AI洞察/训练营卡 |
-| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | SBTI训练营推荐卡文案按人格类型分组动态生成 |
-| 数据库 `partner_assessment_templates` | 更新 `ai_insight_prompt`，末尾追加行动引导指令 |
-
-## 五、预期效果
-
-- **注册转化率**：预计提升30-50%（用户测完想看完整报告，动力很强）
-- **训练营点击率**：个性化文案预计提升2-3倍点击
-- **分享率**：基础结果免费展示保证分享裂变不受影响
+| `src/pages/DynamicAssessmentPage.tsx` | AI 洞察回写数据库 + 传 scoringType 给 History |
+| `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx` | SBTI 分组展示 + 展开详情（雷达图/AI洞察） |
+| `src/pages/CampList.tsx` | 新增 partner_assessment_results 查询 |
 
