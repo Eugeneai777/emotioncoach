@@ -40,13 +40,15 @@ export default function DynamicAssessmentPage() {
   const requireAuth = tpl?.require_auth ?? true;
   const requirePayment = tpl?.require_payment ?? false;
   const packageKey = tpl?.package_key;
-  const scoringType = tpl?.scoring_type || (() => {
+  const scoringType = (() => {
+    // 优先从 scoring_logic JSON 中读取
     try {
       const sl = tpl?.scoring_logic;
-      if (sl && typeof sl === 'string') return JSON.parse(sl)?.scoring_type;
-      if (sl && typeof sl === 'object') return sl?.scoring_type;
+      const fromJson = typeof sl === 'string' ? JSON.parse(sl)?.scoring_type : sl?.scoring_type;
+      if (fromJson) return fromJson;
     } catch {}
-    return 'additive';
+    // 兜底用列值
+    return tpl?.scoring_type || 'additive';
   })();
 
   const { data: purchaseRecord, refetch: refetchPurchase } = useDynamicAssessmentPurchase(
