@@ -1,44 +1,50 @@
 
 
-# 修复 SBTI 历史页展示不完整
+# SBTI 测评历史页 UX 优化：折叠卡片 + 滑动浏览
 
-## 根因
+## 问题
 
-数据库 `partner_assessment_templates` 表中 SBTI 模板的 `scoring_type` 列值为 `'additive'`，而实际的 `'sbti'` 值藏在 `scoring_logic` JSON 字段里。
+当前每条 SBTI 历史记录都完整展开（雷达图 + 15 条进度条 + AI 洞察），单条记录占据 600px+ 高度，3 条记录需要大量滚动，且无法快速定位。用户必须缩小浏览器才能看全。
 
-代码逻辑（`DynamicAssessmentPage.tsx` 第43-49行）优先读取 `scoring_type` 列，得到 `'additive'`，导致 `isSBTI = false`，历史页始终走「非SBTI」的紧凑Badge展示分支。
+## 优化方案
 
-## 修复方案
+采用「摘要卡片 + 点击展开」模式，兼顾信息密度与完整性：
 
-### 1. 更新数据库（数据库迁移）
-```sql
-UPDATE partner_assessment_templates 
-SET scoring_type = 'sbti' 
-WHERE assessment_key = 'sbti_personality';
+```text
+┌─────────────────────────────┐
+│ 🤡 CTRL·拿捏者  30分 ↑4    │  ← 摘要卡片（始终可见）
+│ 📅 2026年04月13日 22:40     │
+│ 🎯 自尊自信 H | 情感投入 H  │  ← 关键维度预览（前5个）
+│              ▼ 展开详情      │  ← 展开按钮
+└─────────────────────────────┘
+┌─────────────────────────────┐
+│ 🤡 CTRL·拿捏者  26分        │  ← 第二条，默认折叠
+│ 📅 2026年04月13日 22:22     │
+│              ▼ 展开详情      │
+└─────────────────────────────┘
 ```
 
-### 2. 优化 scoringType 读取逻辑（保险措施）
-**文件**：`src/pages/DynamicAssessmentPage.tsx`
+点击「展开详情」后，在卡片内展开雷达图 + 维度进度条 + AI 洞察，带动画过渡。
 
-修改第43-50行的 `scoringType` 计算逻辑，优先从 `scoring_logic.scoring_type` 读取，`scoring_type` 列作为兜底：
+### 具体改动
 
-```typescript
-const scoringType = (() => {
-  // 优先从 scoring_logic JSON 中读取
-  try {
-    const sl = tpl?.scoring_logic;
-    const fromJson = typeof sl === 'string' ? JSON.parse(sl)?.scoring_type : sl?.scoring_type;
-    if (fromJson) return fromJson;
-  } catch {}
-  // 兜底用列值
-  return tpl?.scoring_type || 'additive';
-})();
-```
+**文件**：`src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`
+
+1. **默认只展开第一条**：新增 `expandedId` state，默认值为 `records[0]?.id`，最新一条自动展开
+2. **摘要区域**：始终显示 emoji + 人格类型 + 总分 + 日期 + 前 5 个维度的 H/M/L 缩略标签
+3. **详情区域**：用 `AnimatePresence` + `motion.div` 包裹雷达图、维度进度条、AI 洞察，仅在 `expandedId === record.id` 时渲染
+4. **展开/折叠按钮**：底部居中的 `ChevronDown/ChevronUp` 按钮，点击切换展开状态
+5. **移除 ScrollArea 的固定高度限制**：改为自然滚动（`overflow-y-auto`），浏览器原生滚动条即可
+6. **响应式**：移动端摘要区域维度标签改为 3 个 + "更多"，桌面端显示 5 个
+
+### 交互细节
+- 点击展开某条时，其他记录自动折叠（手风琴模式），避免页面过长
+- 展开时自动滚动到该卡片顶部（`scrollIntoView`）
+- 对比模式下，所有卡片保持折叠摘要状态，不影响选择操作
 
 ## 涉及文件
 
 | 文件 | 变更 |
 |------|------|
-| 数据库迁移 | `scoring_type` 列更新为 `'sbti'` |
-| `src/pages/DynamicAssessmentPage.tsx` | scoringType 读取逻辑优先 JSON 字段 |
+| `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx` | 重构 SBTI 卡片为手风琴折叠模式 |
 
