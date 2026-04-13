@@ -30,12 +30,7 @@ interface DynamicAssessmentHistoryProps {
 }
 
 
-function getLevelLabel(score: number, maxScore: number): { label: string; color: string } {
-  const pct = maxScore > 0 ? score / maxScore : 0;
-  if (pct >= 0.67) return { label: 'H', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' };
-  if (pct >= 0.34) return { label: 'M', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200 dark:border-amber-800' };
-  return { label: 'L', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border-blue-200 dark:border-blue-800' };
-}
+
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
