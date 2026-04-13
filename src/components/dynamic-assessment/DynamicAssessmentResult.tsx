@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target } from "lucide-react";
+import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -362,7 +362,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* SBTI: Grouped H/M/L dimension display */}
-        {isSBTI && result.meta?.userLevels && (
+        {isSBTI && result.meta?.userLevels && !isLiteMode && (
           <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4 space-y-4">
@@ -469,6 +469,34 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* SBTI Lite Mode: Login CTA */}
+        {isSBTI && isLiteMode && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/10 shadow-lg overflow-hidden">
+              <CardContent className="p-5 text-center space-y-4">
+                <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground mb-1">
+                    登录解锁完整报告
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    包含15维度深度分析、AI个性化洞察、专属训练营推荐
+                  </p>
+                </div>
+                <Button
+                  onClick={onLoginToUnlock}
+                  className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md"
+                >
+                  登录查看完整报告
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Tips (hidden for SBTI) */}
         {!isSBTI && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
@@ -506,32 +534,34 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* AI Insight */}
-        <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+        {/* AI Insight (hidden in lite mode) */}
+        {!isLiteMode && (
+          <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-sm">AI 个性化洞察</h3>
                 </div>
-                <h3 className="font-semibold text-sm">AI 个性化洞察</h3>
-              </div>
-              {loadingInsight ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <span>AI 正在分析你的结果...</span>
-                </div>
-              ) : aiInsight ? (
-                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">暂无</p>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                {loadingInsight ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span>AI 正在分析你的结果...</span>
+                  </div>
+                ) : aiInsight ? (
+                  <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">暂无</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-        {/* AI Coach Button */}
-        {(template.coach_prompt || template.coach_type) && (
+        {/* AI Coach Button (hidden in lite mode) */}
+        {!isLiteMode && (template.coach_prompt || template.coach_type) && (
           <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
             <Button
               onClick={handleAICoach}
