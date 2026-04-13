@@ -87,7 +87,7 @@ const SBTI_CAMP_COPY: Record<string, { hook: string; detail: string }> = {
   '_default': { hook: '内在能量有提升空间', detail: '通过每日觉察找回生活节奏' },
 };
 
-function getSBTICampCopy(sbtiType: string | undefined, label: string | undefined): { hook: string; detail: string } {
+function getSBTICampCopy(sbtiType: string | undefined): { hook: string; detail: string } {
   if (!sbtiType) return SBTI_CAMP_COPY['_default'];
   // Try exact match first, then partial
   const copy = SBTI_CAMP_COPY[sbtiType];
