@@ -156,7 +156,7 @@ export function DynamicAssessmentHistory({
         />
       </div>
 
-      <div className="relative z-10 p-4 max-w-lg mx-auto">
+      <div className="relative z-10 p-4 max-w-lg md:max-w-2xl mx-auto">
         {/* Hero Header */}
         <motion.div
           className="rounded-2xl bg-gradient-to-br from-primary/80 to-primary/60 p-5 mb-5 relative overflow-hidden shadow-lg"
