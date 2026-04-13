@@ -65,6 +65,8 @@ export default function DynamicAssessmentPage() {
   const dimensions = template?.dimensions || [];
   const patterns = template?.result_patterns || [];
 
+  const [savedResultId, setSavedResultId] = useState<string | null>(null);
+
   const generateInsight = async (scoringResult: ScoringResult) => {
     if (!template) return;
     setLoadingInsight(true);
@@ -82,6 +84,14 @@ export default function DynamicAssessmentPage() {
       });
       if (error) throw error;
       setAiInsight(data.insight);
+
+      // Persist AI insight back to the saved record
+      if (data.insight && savedResultId) {
+        await supabase
+          .from('partner_assessment_results' as any)
+          .update({ ai_insight: data.insight } as any)
+          .eq('id', savedResultId);
+      }
     } catch (e) {
       console.error("Insight error:", e);
     } finally {
@@ -103,6 +113,10 @@ export default function DynamicAssessmentPage() {
         dimension_scores: scoringResult.dimensionScores,
         total_score: scoringResult.totalScore,
         primary_pattern: scoringResult.primaryPattern?.label || "",
+      }, {
+        onSuccess: (data: any) => {
+          if (data?.id) setSavedResultId(data.id);
+        },
       });
     }
 
@@ -243,6 +257,7 @@ export default function DynamicAssessmentPage() {
         records={historyRecords}
         isLoading={historyLoading}
         templateEmoji={template.emoji}
+        scoringType={scoringType}
         onDelete={handleDeleteRecord}
         onBack={() => setPhase(result ? "result" : "intro")}
       />
