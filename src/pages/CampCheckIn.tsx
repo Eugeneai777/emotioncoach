@@ -29,20 +29,32 @@ import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 
 // 企微助教引导卡片
 const WeComGuideCard = () => {
+  const [showQR, setShowQR] = useState(false);
   return (
-    <div className="rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 overflow-hidden">
-      <div className="flex items-center gap-3 p-3.5">
-        <span className="text-2xl">👨‍🏫</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">添加助教，获得教练专属指导</p>
-          <p className="text-xs text-muted-foreground mt-0.5">加入专属学员群，参加海沃塔团队教练辅导、冥想和直播</p>
+    <>
+      <button
+        onClick={() => setShowQR(true)}
+        className="w-full rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 text-left transition-all active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3 p-3.5">
+          <span className="text-2xl">👨‍🏫</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">添加助教，获得教练专属指导</p>
+            <p className="text-xs text-muted-foreground mt-0.5">加入专属学员群，参加海沃塔团队教练辅导、冥想和直播</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
         </div>
-      </div>
-      <div className="p-4 pt-0 flex flex-col items-center gap-3">
-        <img src={wecomCoachQr} alt="助教企微二维码" className="w-48 h-48 rounded-lg object-contain" />
-        <p className="text-xs text-muted-foreground text-center">长按识别二维码添加助教</p>
-      </div>
-    </div>
+      </button>
+      <Dialog open={showQR} onOpenChange={setShowQR}>
+        <DialogContent size="sm" className="text-center">
+          <div className="flex flex-col items-center gap-4 py-2">
+            <p className="text-base font-semibold">添加助教获得专属指导</p>
+            <img src={wecomCoachQr} alt="助教企微二维码" className="w-52 h-52 rounded-lg object-contain" />
+            <p className="text-sm text-muted-foreground">长按识别二维码添加助教</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
