@@ -30,26 +30,20 @@ import { ChevronDown } from "lucide-react";
 
 // 企微助教引导卡片
 const WeComGuideCard = () => {
-  const [open, setOpen] = useState(false);
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <div className="flex items-center gap-3 p-3.5 rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 cursor-pointer hover:shadow-sm transition-shadow">
-          <span className="text-2xl">👨‍🏫</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">添加助教，获得 1v1 指导</p>
-            <p className="text-xs text-muted-foreground mt-0.5">加入学员群，参加线上冥想直播</p>
-          </div>
-          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+    <div className="rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 overflow-hidden">
+      <div className="flex items-center gap-3 p-3.5">
+        <span className="text-2xl">👨‍🏫</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">添加助教，获得教练专属指导</p>
+          <p className="text-xs text-muted-foreground mt-0.5">加入专属学员群，参加海沃塔团队教练辅导、冥想和直播</p>
         </div>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="mt-2 p-4 rounded-xl bg-white dark:bg-card border border-border flex flex-col items-center gap-3">
-          <img src={wecomCoachQr} alt="助教企微二维码" className="w-48 h-48 rounded-lg object-contain" />
-          <p className="text-xs text-muted-foreground text-center">长按识别二维码添加助教</p>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+      <div className="p-4 pt-0 flex flex-col items-center gap-3">
+        <img src={wecomCoachQr} alt="助教企微二维码" className="w-48 h-48 rounded-lg object-contain" />
+        <p className="text-xs text-muted-foreground text-center">长按识别二维码添加助教</p>
+      </div>
+    </div>
   );
 };
 
@@ -769,27 +763,10 @@ const CampCheckIn = () => {
                         />
                       )}
 
-                      {/* 第7天毕业福利：一对一教练 */}
-                      {hasMeditation && displayCurrentDay === 7 && (
-                        <TaskCard
-                          step={3}
-                          title="一对一教练"
-                          description="与真人教练深度对话，巩固7天成果"
-                          completed={!!todayProgress?.human_coach_completed}
-                          icon={<Phone className="w-5 h-5" />}
-                          badgeText="毕业福利"
-                          badgeColor="emerald"
-                          actionLabel="预约教练"
-                          isPrimary
-                          isOptional
-                          onAction={() => navigate('/human-coach')}
-                          onToggle={(checked) => handleToggleTask('human_coach_completed', checked)}
-                        />
-                      )}
 
                       {/* 每日反思分享 + 今日成长课程（步骤编号动态调整） */}
                       {(() => {
-                        const hasExtraCard = hasMeditation && (displayCurrentDay === 3 || displayCurrentDay === 7);
+                        const hasExtraCard = hasMeditation && displayCurrentDay === 3;
                         const shareStep = hasMeditation ? (hasExtraCard ? 4 : 3) : 2;
                         const courseStep = hasMeditation ? (hasExtraCard ? 5 : 4) : 3;
                         return (
