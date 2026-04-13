@@ -58,42 +58,6 @@ const itemVariants = {
   },
 };
 
-function SBTIGroupedDimensions({ dimScores }: { dimScores: any[] }) {
-  if (!dimScores?.length) return null;
-  
-  // Build a lookup by label (English key)
-  const dimMap = new Map<string, any>();
-  dimScores.forEach(d => dimMap.set(d.label, d));
-
-  return (
-    <div className="space-y-2 mt-2">
-      {SBTI_GROUPS.map(group => {
-        const groupDims = group.dims.map(key => dimMap.get(key)).filter(Boolean);
-        if (groupDims.length === 0) return null;
-        return (
-          <div key={group.key} className="flex items-center gap-2">
-            <span className="text-xs font-medium w-14 shrink-0">{group.emoji} {group.label}</span>
-            <div className="flex gap-1 flex-wrap">
-              {groupDims.map((d: any) => {
-                const level = getLevelLabel(d.score, d.maxScore);
-                return (
-                  <Badge
-                    key={d.label}
-                    variant="outline"
-                    className={`text-[10px] px-1.5 py-0 font-semibold ${level.color}`}
-                  >
-                    {d.emoji || ''} {d.label} {level.label}
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export function DynamicAssessmentHistory({
   records,
   isLoading,
