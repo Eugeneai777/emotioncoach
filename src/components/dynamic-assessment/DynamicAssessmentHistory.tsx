@@ -3,13 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, ChevronDown, ChevronUp, Brain } from "lucide-react";
+import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { DynamicAssessmentRecord } from "@/hooks/useDynamicAssessmentHistory";
 import { DimensionRadarChart } from "./DimensionRadarChart";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { motion, AnimatePresence } from "framer-motion";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
