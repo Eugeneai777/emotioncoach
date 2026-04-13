@@ -117,6 +117,8 @@ export function DynamicAssessmentResult({
   onShowHistory,
   hasHistory,
   recommendedCampTypes,
+  isLiteMode = false,
+  onLoginToUnlock,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
