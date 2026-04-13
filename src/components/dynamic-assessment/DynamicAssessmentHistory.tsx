@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,9 +64,15 @@ export function DynamicAssessmentHistory({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const isSBTI = scoringType === 'sbti';
+
+  // Auto-expand first record on mount
+  if (expandedId === null && records.length > 0 && isSBTI) {
+    setExpandedId(records[0].id);
+  }
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
