@@ -64,7 +64,7 @@ export function DynamicAssessmentHistory({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  
 
   const isSBTI = scoringType === 'sbti';
 
