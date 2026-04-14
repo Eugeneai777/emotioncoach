@@ -659,7 +659,10 @@ export default function DramaScriptGenerator() {
               )}
               <p className="text-xs text-muted-foreground">点击选用推荐主题，或在下方输入自定义主题</p>
             </div>
-          )
+          )}
+
+          <div className="space-y-2">
+            <Label>分镜数量: {sceneCount}</Label>
             <Slider
               value={[sceneCount]}
               onValueChange={([v]) => setSceneCount(v)}
