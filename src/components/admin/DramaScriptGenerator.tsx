@@ -195,7 +195,44 @@ export default function DramaScriptGenerator() {
     return key;
   };
 
-  const handleGenerate = async () => {
+  // Auto-fetch suggested themes when products change in youjin mode
+  const fetchSuggestedThemes = useCallback(async () => {
+    if (mode !== "youjin" || selectedProducts.size === 0) {
+      setSuggestedThemes([]);
+      return;
+    }
+    setLoadingThemes(true);
+    setSuggestedThemes([]);
+    setSelectedThemeIdx(null);
+    try {
+      const products = getSelectedProductDetails();
+      const { data, error } = await supabase.functions.invoke("drama-script-ai", {
+        body: { action: "suggest_themes", products, targetAudience },
+      });
+      if (data?.themes && Array.isArray(data.themes)) {
+        setSuggestedThemes(data.themes.slice(0, 3));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingThemes(false);
+    }
+  }, [mode, selectedProducts, targetAudience]);
+
+  useEffect(() => {
+    if (mode !== "youjin" || selectedProducts.size === 0) {
+      setSuggestedThemes([]);
+      return;
+    }
+    if (themeFetchRef.current) clearTimeout(themeFetchRef.current);
+    themeFetchRef.current = setTimeout(() => {
+      fetchSuggestedThemes();
+    }, 600);
+    return () => {
+      if (themeFetchRef.current) clearTimeout(themeFetchRef.current);
+    };
+  }, [selectedProducts, targetAudience, mode]);
+
     if (!theme.trim()) {
       toast.error("请输入故事主题");
       return;
