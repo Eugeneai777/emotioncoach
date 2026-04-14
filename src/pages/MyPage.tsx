@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package, ChevronRight, ChevronDown,
@@ -13,6 +13,9 @@ import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { detectPlatform } from "@/lib/platformDetector";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import surveyQR from "@/assets/survey-miniprogram-qr.jpg";
 
 interface ProfileData {
   display_name: string | null;
