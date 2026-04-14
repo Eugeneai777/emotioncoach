@@ -39,7 +39,8 @@ import {
   Brain,
   ClipboardList,
   Newspaper,
-  BookMarked
+  BookMarked,
+  Clapperboard
 } from "lucide-react";
 import {
   Sidebar,
