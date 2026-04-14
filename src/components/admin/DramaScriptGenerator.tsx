@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { AdminPageLayout } from "./shared/AdminPageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
+import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -121,6 +123,26 @@ interface DramaScript {
   commentHook?: string;
 }
 
+type VideoStatus = "idle" | "submitting" | "in_queue" | "generating" | "done" | "failed";
+
+interface SceneVideoState {
+  status: VideoStatus;
+  taskId?: string;
+  videoUrl?: string;
+  error?: string;
+}
+
+const ASPECT_RATIOS = [
+  { value: "9:16", label: "9:16 竖屏" },
+  { value: "16:9", label: "16:9 横屏" },
+  { value: "1:1", label: "1:1 方形" },
+];
+
+const VIDEO_DURATIONS = [
+  { value: 5, label: "5秒" },
+  { value: 10, label: "10秒" },
+];
+
 export default function DramaScriptGenerator() {
   const [mode, setMode] = useState<"generic" | "youjin">("generic");
   const [theme, setTheme] = useState("");
@@ -132,6 +154,14 @@ export default function DramaScriptGenerator() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
+
+  // Video generation state
+  const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
+  const [videoDuration, setVideoDuration] = useState(5);
+  const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
+  const [batchGenerating, setBatchGenerating] = useState(false);
+  const [merging, setMerging] = useState(false);
+  const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
   const toggleProduct = (key: string) => {
     setSelectedProducts((prev) => {
@@ -171,6 +201,11 @@ export default function DramaScriptGenerator() {
     }
     setLoading(true);
     setResult(null);
+    setSceneVideos({});
+    // Clear all polling
+    Object.values(pollingRefs.current).forEach(clearInterval);
+    pollingRefs.current = {};
+
     try {
       const body: any = { theme, genre, style, sceneCount, mode };
       if (mode === "youjin") {
@@ -210,11 +245,154 @@ export default function DramaScriptGenerator() {
   const buildFullConversionText = () => {
     if (!result?.conversionScript) return "";
     let text = result.conversionScript;
-    // Replace product placeholders with actual URLs
     getSelectedProductDetails().forEach((p) => {
       text = text.replace(new RegExp(`\\{\\{${p.name}\\}\\}`, "g"), `${p.name} 👉 ${p.url}`);
     });
     return text;
+  };
+
+  // --- Video Generation Logic ---
+
+  const updateSceneVideo = useCallback((sceneNum: number, update: Partial<SceneVideoState>) => {
+    setSceneVideos(prev => ({
+      ...prev,
+      [sceneNum]: { ...prev[sceneNum], ...update },
+    }));
+  }, []);
+
+  const pollVideoStatus = useCallback((sceneNum: number, taskId: string) => {
+    // Clear existing polling for this scene
+    if (pollingRefs.current[sceneNum]) {
+      clearInterval(pollingRefs.current[sceneNum]);
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
+          body: { action: "query", task_id: taskId },
+        });
+        if (error || data?.error) {
+          clearInterval(interval);
+          delete pollingRefs.current[sceneNum];
+          updateSceneVideo(sceneNum, { status: "failed", error: data?.error || "查询失败" });
+          return;
+        }
+
+        const status = data.status;
+        if (status === "done" && data.video_url) {
+          clearInterval(interval);
+          delete pollingRefs.current[sceneNum];
+          updateSceneVideo(sceneNum, { status: "done", videoUrl: data.video_url });
+          toast.success(`场景 ${sceneNum} 视频生成完成！`);
+        } else if (status === "failed" || status === "error") {
+          clearInterval(interval);
+          delete pollingRefs.current[sceneNum];
+          updateSceneVideo(sceneNum, { status: "failed", error: "视频生成失败" });
+        } else {
+          // in_queue or generating
+          updateSceneVideo(sceneNum, { status: status === "generating" ? "generating" : "in_queue" });
+        }
+      } catch {
+        // Network error, keep polling
+      }
+    }, 5000);
+
+    pollingRefs.current[sceneNum] = interval;
+  }, [updateSceneVideo]);
+
+  const generateSceneVideo = useCallback(async (scene: Scene) => {
+    const num = scene.sceneNumber;
+    updateSceneVideo(num, { status: "submitting" });
+
+    try {
+      const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
+        body: {
+          action: "submit",
+          prompt: scene.imagePrompt,
+          aspect_ratio: videoAspectRatio,
+          duration: videoDuration,
+        },
+      });
+
+      if (error || data?.error) {
+        updateSceneVideo(num, { status: "failed", error: data?.error || "提交失败" });
+        return false;
+      }
+
+      updateSceneVideo(num, { status: "in_queue", taskId: data.task_id });
+      pollVideoStatus(num, data.task_id);
+      return true;
+    } catch (e: any) {
+      updateSceneVideo(num, { status: "failed", error: e.message });
+      return false;
+    }
+  }, [videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
+
+  const handleBatchGenerate = async () => {
+    if (!result) return;
+    setBatchGenerating(true);
+    for (const scene of result.scenes) {
+      const state = sceneVideos[scene.sceneNumber];
+      if (state?.status === "done") continue; // skip already done
+      await generateSceneVideo(scene);
+      // Small delay between submissions
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    setBatchGenerating(false);
+    toast.info("所有分镜已提交，请等待生成完成");
+  };
+
+  const allVideosDone = result?.scenes.every(s => sceneVideos[s.sceneNumber]?.status === "done") ?? false;
+  const anyVideoGenerating = Object.values(sceneVideos).some(v => 
+    v.status === "submitting" || v.status === "in_queue" || v.status === "generating"
+  );
+  const completedCount = Object.values(sceneVideos).filter(v => v.status === "done").length;
+
+  const handleMergeDownload = async () => {
+    if (!result) return;
+    setMerging(true);
+    try {
+      const urls = result.scenes
+        .map(s => sceneVideos[s.sceneNumber]?.videoUrl)
+        .filter(Boolean) as string[];
+
+      if (urls.length === 0) {
+        toast.error("没有已完成的视频");
+        return;
+      }
+
+      const blob = await mergeVideosClientSide(urls, (msg) => toast.info(msg));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${result.title || "drama"}-merged.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("合并下载成功！");
+    } catch (e: any) {
+      toast.error(e.message || "合并失败");
+    } finally {
+      setMerging(false);
+    }
+  };
+
+  const downloadSingleVideo = (url: string, sceneNum: number) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scene-${sceneNum}.mp4`;
+    a.target = "_blank";
+    a.click();
+  };
+
+  const getStatusLabel = (status: VideoStatus): string => {
+    switch (status) {
+      case "submitting": return "提交中...";
+      case "in_queue": return "排队中...";
+      case "generating": return "生成中...";
+      case "done": return "已完成";
+      case "failed": return "失败";
+      default: return "";
+    }
   };
 
   return (
@@ -306,7 +484,6 @@ export default function DramaScriptGenerator() {
           {/* Youjin-specific options */}
           {mode === "youjin" && (
             <>
-              {/* Target Audience */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   <Target className="h-4 w-4" /> 目标人群
@@ -329,7 +506,6 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
-              {/* Conversion Style */}
               <div className="space-y-2">
                 <Label>转化方式</Label>
                 <div className="flex flex-wrap gap-2">
@@ -351,7 +527,6 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
-              {/* Product Selection */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   <ShoppingCart className="h-4 w-4" /> 选择转化产品 *
@@ -538,66 +713,229 @@ export default function DramaScriptGenerator() {
             </div>
           </div>
 
+          {/* Video Generation Settings */}
+          <Card className="border-dashed border-primary/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Video className="h-4 w-4" /> 视频生成设置
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">画面比例</Label>
+                  <div className="flex gap-2">
+                    {ASPECT_RATIOS.map(ar => (
+                      <button
+                        key={ar.value}
+                        onClick={() => setVideoAspectRatio(ar.value)}
+                        disabled={anyVideoGenerating}
+                        className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                          videoAspectRatio === ar.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-border hover:bg-muted"
+                        }`}
+                      >
+                        {ar.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">片段时长</Label>
+                  <div className="flex gap-2">
+                    {VIDEO_DURATIONS.map(d => (
+                      <button
+                        key={d.value}
+                        onClick={() => setVideoDuration(d.value)}
+                        disabled={anyVideoGenerating}
+                        className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                          videoDuration === d.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-border hover:bg-muted"
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Batch controls */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  onClick={handleBatchGenerate}
+                  disabled={batchGenerating || anyVideoGenerating}
+                  className="gap-2"
+                >
+                  {batchGenerating ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> 批量提交中...</>
+                  ) : (
+                    <><Play className="h-4 w-4" /> 全部生成视频</>
+                  )}
+                </Button>
+
+                {completedCount > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    已完成 {completedCount}/{result.scenes.length}
+                  </span>
+                )}
+
+                {allVideosDone && (
+                  <Button
+                    variant="outline"
+                    onClick={handleMergeDownload}
+                    disabled={merging}
+                    className="gap-2"
+                  >
+                    {merging ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> 合并中...</>
+                    ) : (
+                      <><Download className="h-4 w-4" /> 合并下载成片</>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {completedCount > 0 && completedCount < result.scenes.length && (
+                <Progress value={(completedCount / result.scenes.length) * 100} className="h-2" />
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Scenes Timeline */}
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Film className="h-4 w-4" /> 分镜时间线
             </h3>
             <div className="space-y-3">
-              {result.scenes.map((scene) => (
-                <Card key={scene.sceneNumber}>
-                  <CardContent className="pt-4">
-                    <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                          {scene.sceneNumber}
-                        </div>
-                        <span className="text-xs text-muted-foreground mt-1">{scene.duration}</span>
-                      </div>
+              {result.scenes.map((scene) => {
+                const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
 
-                      <div className="flex-1 space-y-2 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
-                            {scene.panel}
-                          </span>
-                          <span className="text-xs text-muted-foreground">🎵 {scene.bgm}</span>
-                          {scene.relatedProduct && (
-                            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">
-                              🔗 {getProductName(scene.relatedProduct)}
+                return (
+                  <Card key={scene.sceneNumber}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-start gap-4">
+                        <div className="flex flex-col items-center shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                            {scene.sceneNumber}
+                          </div>
+                          <span className="text-xs text-muted-foreground mt-1">{scene.duration}</span>
+                        </div>
+
+                        <div className="flex-1 space-y-2 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
+                              {scene.panel}
                             </span>
+                            <span className="text-xs text-muted-foreground">🎵 {scene.bgm}</span>
+                            {scene.relatedProduct && (
+                              <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">
+                                🔗 {getProductName(scene.relatedProduct)}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">动作：</span>
+                            {scene.characterAction}
+                          </div>
+                          {scene.dialogue && (
+                            <div className="text-sm italic border-l-2 border-primary/30 pl-3">
+                              「{scene.dialogue}」
+                            </div>
+                          )}
+
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <code className="text-xs break-all flex-1 leading-relaxed">
+                                {scene.imagePrompt}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 h-7 w-7"
+                                onClick={() => copyToClipboard(scene.imagePrompt, `场景${scene.sceneNumber}提示词`)}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Video generation per scene */}
+                          <div className="flex items-center gap-2 flex-wrap pt-1">
+                            {videoState.status === "idle" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 text-xs h-8"
+                                onClick={() => generateSceneVideo(scene)}
+                                disabled={anyVideoGenerating && videoState.status === "idle"}
+                              >
+                                <Video className="h-3 w-3" /> 生成视频
+                              </Button>
+                            )}
+
+                            {(videoState.status === "submitting" || videoState.status === "in_queue" || videoState.status === "generating") && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                {getStatusLabel(videoState.status)}
+                              </span>
+                            )}
+
+                            {videoState.status === "done" && videoState.videoUrl && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-primary flex items-center gap-1">
+                                  <Check className="h-3 w-3" /> 已完成
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs h-7 gap-1"
+                                  onClick={() => downloadSingleVideo(videoState.videoUrl!, scene.sceneNumber)}
+                                >
+                                  <Download className="h-3 w-3" /> 下载
+                                </Button>
+                              </div>
+                            )}
+
+                            {videoState.status === "failed" && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-destructive">{videoState.error || "失败"}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs h-7"
+                                  onClick={() => generateSceneVideo(scene)}
+                                >
+                                  重试
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Video preview */}
+                          {videoState.status === "done" && videoState.videoUrl && (
+                            <div className="mt-2">
+                              <video
+                                src={videoState.videoUrl}
+                                controls
+                                className="w-full max-w-md rounded-lg border"
+                                preload="metadata"
+                              />
+                            </div>
                           )}
                         </div>
-
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">动作：</span>
-                          {scene.characterAction}
-                        </div>
-                        {scene.dialogue && (
-                          <div className="text-sm italic border-l-2 border-primary/30 pl-3">
-                            「{scene.dialogue}」
-                          </div>
-                        )}
-
-                        <div className="bg-muted/50 rounded-lg p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <code className="text-xs break-all flex-1 leading-relaxed">
-                              {scene.imagePrompt}
-                            </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="shrink-0 h-7 w-7"
-                              onClick={() => copyToClipboard(scene.imagePrompt, `场景${scene.sceneNumber}提示词`)}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
