@@ -1,17 +1,23 @@
 
 
-# 产品体验计划跳转腾讯文档问卷
+# 小程序环境下产品体验计划跳转适配
 
-## 当前状态
-第 266 行 `onClick` 中的链接是占位符 `REPLACE_WITH_YOUR_SURVEY_ID`。
+## 问题
+微信小程序 WebView 中 `window.open` 无法打开外部链接，导致"产品体验计划"点击无反应。
 
-## 修改方案
-将第 266 行的 URL 替换为实际问卷链接：
-```
-https://docs.qq.com/form/page/DRVFxb3JvR2pmYkRG
-```
+## 方案
+复用项目已有的小程序适配模式（与健康商城、协同套餐一致）：
+- 检测当前环境是否为小程序（`detectPlatform() === 'mini_program'`）
+- **H5/Web 环境**：保持 `window.open` 跳转
+- **小程序环境**：点击后弹出 Dialog，展示用户上传的腾讯文档小程序码图片，提示"长按识别小程序码填写问卷"
 
-`window.open(url, "_blank")` 已能在手机端和电脑端兼容打开外部链接，无需额外处理。
+## 修改文件
+**`src/pages/MyPage.tsx`**（唯一改动文件）：
+1. 导入 `detectPlatform`、`Dialog` 组件、小程序码图片
+2. 添加 `isMiniProgram` 判断和 `qrDialogOpen` 状态
+3. Card 的 `onClick` 根据环境分支处理
+4. 添加 Dialog 展示小程序码图片
 
-仅改动 `src/pages/MyPage.tsx` 一行代码。
+## 资源
+- 将用户上传的小程序码图片复制到 `src/assets/survey-miniprogram-qr.jpg`
 
