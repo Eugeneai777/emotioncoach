@@ -622,7 +622,7 @@ export default function DramaScriptGenerator() {
           {mode === "youjin" && (loadingThemes || suggestedThemes.length > 0) && (
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-amber-500" /> AI推荐爆款主题
+                <Sparkles className="h-4 w-4 text-primary" /> AI推荐爆款主题
               </Label>
               {loadingThemes ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
