@@ -477,7 +477,7 @@ export default function DramaScriptGenerator() {
                 ? "例如：一个焦虑的职场妈妈如何找回自我" 
                 : "例如：一个程序员穿越到古代成为宰相"}
               value={theme}
-              onChange={(e) => setTheme(e.target.value)}
+              onChange={(e) => { setTheme(e.target.value); setSelectedThemeIdx(null); }}
               disabled={loading}
             />
           </div>
