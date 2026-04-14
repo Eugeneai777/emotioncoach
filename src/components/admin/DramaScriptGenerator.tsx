@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,6 +155,10 @@ export default function DramaScriptGenerator() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
+  const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
+  const [loadingThemes, setLoadingThemes] = useState(false);
+  const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
+  const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
@@ -189,6 +194,44 @@ export default function DramaScriptGenerator() {
     }
     return key;
   };
+
+  // Auto-fetch suggested themes when products change in youjin mode
+  const fetchSuggestedThemes = useCallback(async () => {
+    if (mode !== "youjin" || selectedProducts.size === 0) {
+      setSuggestedThemes([]);
+      return;
+    }
+    setLoadingThemes(true);
+    setSuggestedThemes([]);
+    setSelectedThemeIdx(null);
+    try {
+      const products = getSelectedProductDetails();
+      const { data, error } = await supabase.functions.invoke("drama-script-ai", {
+        body: { action: "suggest_themes", products, targetAudience },
+      });
+      if (data?.themes && Array.isArray(data.themes)) {
+        setSuggestedThemes(data.themes.slice(0, 3));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingThemes(false);
+    }
+  }, [mode, selectedProducts, targetAudience]);
+
+  useEffect(() => {
+    if (mode !== "youjin" || selectedProducts.size === 0) {
+      setSuggestedThemes([]);
+      return;
+    }
+    if (themeFetchRef.current) clearTimeout(themeFetchRef.current);
+    themeFetchRef.current = setTimeout(() => {
+      fetchSuggestedThemes();
+    }, 600);
+    return () => {
+      if (themeFetchRef.current) clearTimeout(themeFetchRef.current);
+    };
+  }, [selectedProducts, targetAudience, mode]);
 
   const handleGenerate = async () => {
     if (!theme.trim()) {
@@ -434,7 +477,7 @@ export default function DramaScriptGenerator() {
                 ? "例如：一个焦虑的职场妈妈如何找回自我" 
                 : "例如：一个程序员穿越到古代成为宰相"}
               value={theme}
-              onChange={(e) => setTheme(e.target.value)}
+              onChange={(e) => { setTheme(e.target.value); setSelectedThemeIdx(null); }}
               disabled={loading}
             />
           </div>
@@ -573,6 +616,49 @@ export default function DramaScriptGenerator() {
                 )}
               </div>
             </>
+          )}
+
+          {/* Suggested Themes for Youjin mode */}
+          {mode === "youjin" && (loadingThemes || suggestedThemes.length > 0) && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-primary" /> AI推荐爆款主题
+              </Label>
+              {loadingThemes ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border">
+                      <Skeleton className="h-5 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {suggestedThemes.map((t, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setTheme(t.title);
+                        setSelectedThemeIdx(idx);
+                      }}
+                      disabled={loading}
+                      className={`text-left p-3 rounded-lg border transition-all ${
+                        selectedThemeIdx === idx
+                          ? "border-primary bg-primary/10 ring-1 ring-primary"
+                          : "border-border hover:border-primary/50 hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="text-sm font-medium flex items-center gap-1">
+                        🔥 {t.title}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">{t.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">点击选用推荐主题，或在下方输入自定义主题</p>
+            </div>
           )}
 
           <div className="space-y-2">
