@@ -618,8 +618,48 @@ export default function DramaScriptGenerator() {
             </>
           )}
 
-          <div className="space-y-2">
-            <Label>分镜数量: {sceneCount}</Label>
+          {/* Suggested Themes for Youjin mode */}
+          {mode === "youjin" && (loadingThemes || suggestedThemes.length > 0) && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-amber-500" /> AI推荐爆款主题
+              </Label>
+              {loadingThemes ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border">
+                      <Skeleton className="h-5 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {suggestedThemes.map((t, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setTheme(t.title);
+                        setSelectedThemeIdx(idx);
+                      }}
+                      disabled={loading}
+                      className={`text-left p-3 rounded-lg border transition-all ${
+                        selectedThemeIdx === idx
+                          ? "border-primary bg-primary/10 ring-1 ring-primary"
+                          : "border-border hover:border-primary/50 hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="text-sm font-medium flex items-center gap-1">
+                        🔥 {t.title}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">{t.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">点击选用推荐主题，或在下方输入自定义主题</p>
+            </div>
+          )
             <Slider
               value={[sceneCount]}
               onValueChange={([v]) => setSceneCount(v)}
