@@ -48,6 +48,7 @@ import FlywheelAIStrategy from "./flywheel/FlywheelAIStrategy";
 import WechatBroadcast from "./WechatBroadcast";
 import WechatArticlesManagement from "./WechatArticlesManagement";
 import XhsAnalysis from "./xhs/XhsAnalysis";
+import DramaScriptGenerator from "./DramaScriptGenerator";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
@@ -137,6 +138,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="tools" element={<EnergyStudioToolsManagement />} />
                   <Route path="community-posts" element={<CommunityPostsManagement />} />
                   <Route path="reports" element={<ReportsManagement />} />
+                  <Route path="drama-script" element={<DramaScriptGenerator />} />
                 </>
               )}
               {/* 未匹配路由重定向 */}
