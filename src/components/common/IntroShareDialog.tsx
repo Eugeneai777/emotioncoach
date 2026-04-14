@@ -276,6 +276,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
           open={!!previewImage}
           imageUrl={previewImage}
           onClose={handleClosePreview}
+          isRemoteReady={isRemoteReady}
         />
       )}
     </>
