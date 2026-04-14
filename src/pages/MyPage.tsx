@@ -263,7 +263,7 @@ const MyPage: React.FC = () => {
         <section>
           <Card
             className="border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
-            onClick={() => window.open("https://docs.qq.com/form/page/REPLACE_WITH_YOUR_SURVEY_ID", "_blank")}
+            onClick={() => window.open("https://docs.qq.com/form/page/DRVFxb3JvR2pmYkRG", "_blank")}
           >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
