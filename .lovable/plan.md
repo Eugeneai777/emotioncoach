@@ -1,71 +1,39 @@
 
 
-# 即梦API文/图生视频集成 — 漫剧脚本一键生成视频
+# 有劲专属模式 — 选完产品后推荐3个爆款主题
 
 ## 概述
 
-在漫剧分镜脚本生成器中新增「一键生视频」功能，利用即梦视频生成3.0 Pro API，将每个分镜的 imagePrompt 直接提交为文生视频任务，生成短视频片段，最终可合并为完整漫剧视频。
+在有劲AI专属模式下，用户选完转化产品后，自动调用AI生成3个爆款主题推荐。用户可以点选其中一个，也可以自己输入自定义主题。
 
-## 技术方案
+## 实现步骤
 
-### 1. 新建 Edge Function `jimeng-video-gen`
+### 1. 新增 Edge Function 逻辑（复用 `drama-script-ai`）
 
-复用现有 `jimeng-digital-human` 中的 Volcengine HMAC-SHA256 签名逻辑，新建独立函数调用即梦视频3.0 Pro API：
-
-- **提交任务**：`Action=CVSync2AsyncSubmitTask`，`req_key=jimeng_ti2v_v30_pro`
-  - 参数：`prompt`（来自分镜 imagePrompt）、`aspect_ratio`（默认 9:16 竖屏）、`frames`（121=5秒 或 241=10秒）、可选 `image_urls`（首帧图片，支持图生视频）
-- **查询任务**：`Action=CVSync2AsyncGetResult`，`req_key=jimeng_ti2v_v30_pro`
-  - 返回 `status`（in_queue/generating/done）和 `video_url`
-- 复用已有的 `VOLCENGINE_ACCESS_KEY_ID` 和 `VOLCENGINE_SECRET_ACCESS_KEY` 密钥
+在 `drama-script-ai` edge function 中新增一个 `action: "suggest_themes"` 模式：
+- 输入：选中的产品列表 + 目标人群
+- AI 根据产品卖点 + 人群痛点，返回 3 个爆款主题建议
+- 输出格式：`{ themes: [{ title: "主题标题", description: "一句话说明为什么这个主题容易爆" }] }`
+- 使用轻量模型（gemini-2.5-flash）快速返回
 
 ### 2. 改造前端 `DramaScriptGenerator.tsx`
 
-在脚本生成结果区域，每个分镜卡片新增：
-- 「生成视频」按钮 → 单独提交该分镜的 imagePrompt 到 `jimeng-video-gen`
-- 视频时长选择（5秒/10秒）
-- 任务状态实时轮询显示（排队中 → 生成中 → 完成）
-- 完成后内嵌视频预览 + 下载按钮
+**流程变化**：
+1. 用户选完产品后，自动触发主题推荐请求（或显示「获取推荐主题」按钮）
+2. 展示 3 张推荐主题卡片，点击即填入主题输入框
+3. 主题输入框保持可编辑，用户可以自定义
+4. 点击生成按钮开始生成脚本
 
-底部新增「全部生成」按钮：
-- 按顺序逐个提交所有分镜
-- 显示整体进度条
-- 全部完成后提供「合并下载」（调用已有的 `merge-videos` edge function）
+**新增状态**：
+- `suggestedThemes: { title: string; description: string }[]`
+- `loadingThemes: boolean`
 
-### 3. 视频参数配置
+**触发时机**：当 `selectedProducts.size > 0` 且产品选择发生变化时，自动请求推荐（加 debounce 防抖）
 
-在输入区新增视频生成设置卡片：
-- 画面比例：16:9 / 9:16 / 1:1（默认 9:16 竖屏短视频）
-- 单片段时长：5秒 / 10秒（默认 5秒）
-- 可选首帧图片 URL（支持先用即梦文生图生成首帧再生视频）
+**UI 位置**：在产品选择区和主题输入框之间，插入推荐主题卡片区域：
+- 3 张横排卡片，显示标题 + 爆款理由
+- 点击卡片高亮选中并填入主题输入框
+- 加载中显示骨架屏
 
-## 流程图
-
-```text
-分镜脚本生成完毕
-    │
-    ▼
-用户点击「生成视频」（单个或全部）
-    │
-    ▼
-前端 → jimeng-video-gen (submit)
-    │  参数: prompt, aspect_ratio, frames
-    ▼
-返回 task_id → 前端轮询 (每5秒)
-    │
-    ▼
-jimeng-video-gen (query) → status/video_url
-    │
-    ▼
-完成 → 预览 + 下载
-    │
-    ▼（可选）
-全部完成 → merge-videos → 合并成片
-```
-
-## 注意事项
-
-- 视频 URL 有效期仅 1 小时，前端需提示及时下载
-- 即梦视频生成耗时较长（1-3分钟/片段），需要良好的进度反馈
-- 无需新增密钥，复用现有 Volcengine 凭证
-- 无需新建数据库表
+### 3. 无数据库变更，无新密钥
 
