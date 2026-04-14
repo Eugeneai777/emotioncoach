@@ -312,6 +312,24 @@ const MyPage: React.FC = () => {
         </section>
       </div>
 
+      {/* 小程序环境问卷小程序码弹窗 */}
+      <Dialog open={surveyQrOpen} onOpenChange={setSurveyQrOpen}>
+        <DialogContent size="sm" className="text-center">
+          <DialogHeader>
+            <DialogTitle>填写产品体验问卷</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-3 py-2">
+            <img
+              src={surveyQR}
+              alt="问卷小程序码"
+              className="w-52 h-52 rounded-xl"
+              style={{ WebkitTouchCallout: 'default' }}
+            />
+            <p className="text-sm text-muted-foreground">长按识别小程序码填写问卷</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AwakeningBottomNav />
 
     </div>
