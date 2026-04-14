@@ -12,7 +12,7 @@ import ShareImagePreview from '@/components/ui/share-image-preview';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { useQRCode } from '@/utils/qrCodeUtils';
-import { generateCardDataUrl } from '@/utils/shareCardConfig';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 
 // 调试开关
 const DEBUG_SHARE_CARD = localStorage.getItem('debug_share_card') === 'true';
@@ -28,6 +28,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const [selectedTemplate, setSelectedTemplate] = useState<CardTemplate>('value');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isRemoteReady, setIsRemoteReady] = useState(false);
   const [cardReady, setCardReady] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -62,32 +63,32 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const shareEnv = getShareEnvironment();
   const showImagePreview = shareEnv.isWeChat || shareEnv.isIOS;
 
-  const generateImage = async () => {
+  const generateBlob = async (): Promise<Blob | null> => {
     if (!exportRef.current) {
-      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] No export ref available');
+      if (DEBUG_SHARE_CARD) console.log('[IntroShareDialog] No export ref available');
       return null;
     }
     
     setIsGenerating(true);
     try {
-      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Card content:', {
-        hasAvatar: !!avatarUrl,
-        configTitle: config.title,
-        template: selectedTemplate,
-      });
+      if (DEBUG_SHARE_CARD) {
+        console.log('[IntroShareDialog] Card content:', {
+          hasAvatar: !!avatarUrl,
+          configTitle: config.title,
+          template: selectedTemplate,
+        });
+      }
 
-      const dataUrl = await generateCardDataUrl(exportRef, { 
+      const blob = await generateCardBlob(exportRef, { 
         isWeChat: shareEnv.isWeChat,
-        debug: DEBUG_SHARE_CARD,
-        skipImageWait: cardReady, // 如果卡片已就绪，跳过图片等待
       });
       
-      if (!dataUrl || (!dataUrl.startsWith('data:image/png') && !dataUrl.startsWith('data:image/jpeg'))) {
-        throw new Error('Invalid image data generated');
+      if (!blob) {
+        throw new Error('Blob generation returned null');
       }
       
-      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Image generated successfully');
-      return dataUrl;
+      if (DEBUG_SHARE_CARD) console.log('[IntroShareDialog] Blob generated successfully');
+      return blob;
     } catch (error) {
       console.error('[IntroShareDialog] Generation failed:', error);
       toast({
@@ -102,48 +103,44 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   };
 
   const handleGeneratePreview = async () => {
-    const imageData = await generateImage();
-    if (imageData) {
-      setPreviewImage(imageData);
-    }
+    const blob = await generateBlob();
+    if (!blob) return;
+
+    const filename = `${config.title}-分享卡片.png`;
+    setIsRemoteReady(false);
+
+    await handleShareWithFallback(blob, filename, {
+      title: config.title,
+      text: config.subtitle,
+      onShowPreview: (payload) => {
+        setPreviewImage(payload.url);
+        setIsRemoteReady(payload.isRemoteReady);
+      },
+    });
   };
 
   const handleDownload = async () => {
-    const imageData = previewImage || await generateImage();
-    if (!imageData) return;
+    const blob = await generateBlob();
+    if (!blob) return;
+
+    const filename = `${config.title}-分享卡片.png`;
+    setIsRemoteReady(false);
 
     try {
-      // 验证数据格式
-      if (!imageData.startsWith('data:image/')) {
-        throw new Error('Invalid image data format');
-      }
-      
-      const response = await fetch(imageData);
-      const blob = await response.blob();
-      
-      // 验证 blob 类型
-      if (!blob.type.startsWith('image/')) {
-        console.error('[IntroShareDialog] Invalid blob type:', blob.type);
-        throw new Error('Invalid blob type');
-      }
-      
-      const filename = `${config.title}-分享卡片.png`;
-      
       const result = await handleShareWithFallback(blob, filename, {
         title: config.title,
         text: config.subtitle,
         onShowPreview: (payload) => {
           setPreviewImage(payload.url);
+          setIsRemoteReady(payload.isRemoteReady);
         },
       });
 
-      if (result.success) {
-        if (result.method !== 'preview') {
-          toast({
-            title: result.method === 'webshare' ? "分享成功" : "保存成功",
-            description: result.method === 'download' ? "图片已保存到下载目录" : undefined,
-          });
-        }
+      if (result.success && result.method !== 'preview') {
+        toast({
+          title: result.method === 'webshare' ? "分享成功" : "保存成功",
+          description: result.method === 'download' ? "图片已保存到下载目录" : undefined,
+        });
       }
     } catch (error) {
       console.error('[IntroShareDialog] Save failed:', error);
@@ -279,6 +276,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
           open={!!previewImage}
           imageUrl={previewImage}
           onClose={handleClosePreview}
+          isRemoteReady={isRemoteReady}
         />
       )}
     </>
