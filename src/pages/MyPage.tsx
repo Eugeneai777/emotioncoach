@@ -13,6 +13,9 @@ import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { detectPlatform } from "@/lib/platformDetector";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import surveyQR from "@/assets/survey-miniprogram-qr.jpg";
 
 interface ProfileData {
   display_name: string | null;
@@ -60,6 +63,8 @@ const MyPage: React.FC = () => {
   const [isMember, setIsMember] = useState(false);
   
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [surveyQrOpen, setSurveyQrOpen] = useState(false);
+  const isMiniProgram = detectPlatform() === 'mini_program';
   
 
   // Load profile & orders
@@ -263,7 +268,13 @@ const MyPage: React.FC = () => {
         <section>
           <Card
             className="border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
-            onClick={() => window.open("https://docs.qq.com/form/page/DRVFxb3JvR2pmYkRG", "_blank")}
+            onClick={() => {
+              if (isMiniProgram) {
+                setSurveyQrOpen(true);
+              } else {
+                window.open("https://docs.qq.com/form/page/DRVFxb3JvR2pmYkRG", "_blank");
+              }
+            }}
           >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
@@ -300,6 +311,24 @@ const MyPage: React.FC = () => {
           </Card>
         </section>
       </div>
+
+      {/* 小程序环境问卷小程序码弹窗 */}
+      <Dialog open={surveyQrOpen} onOpenChange={setSurveyQrOpen}>
+        <DialogContent size="sm" className="text-center">
+          <DialogHeader>
+            <DialogTitle>填写产品体验问卷</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-3 py-2">
+            <img
+              src={surveyQR}
+              alt="问卷小程序码"
+              className="w-52 h-52 rounded-xl"
+              style={{ WebkitTouchCallout: 'default' }}
+            />
+            <p className="text-sm text-muted-foreground">长按识别小程序码填写问卷</p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AwakeningBottomNav />
 
