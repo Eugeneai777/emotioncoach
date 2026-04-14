@@ -233,6 +233,7 @@ export default function DramaScriptGenerator() {
     };
   }, [selectedProducts, targetAudience, mode]);
 
+  const handleGenerate = async () => {
     if (!theme.trim()) {
       toast.error("请输入故事主题");
       return;
