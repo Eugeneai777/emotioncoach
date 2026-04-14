@@ -12,7 +12,7 @@ import ShareImagePreview from '@/components/ui/share-image-preview';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { useQRCode } from '@/utils/qrCodeUtils';
-import { generateCardDataUrl } from '@/utils/shareCardConfig';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 
 // 调试开关
 const DEBUG_SHARE_CARD = localStorage.getItem('debug_share_card') === 'true';
