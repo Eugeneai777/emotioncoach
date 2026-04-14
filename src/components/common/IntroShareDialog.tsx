@@ -120,41 +120,27 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   };
 
   const handleDownload = async () => {
-    const imageData = previewImage || await generateImage();
-    if (!imageData) return;
+    const blob = await generateBlob();
+    if (!blob) return;
+
+    const filename = `${config.title}-分享卡片.png`;
+    setIsRemoteReady(false);
 
     try {
-      // 验证数据格式
-      if (!imageData.startsWith('data:image/')) {
-        throw new Error('Invalid image data format');
-      }
-      
-      const response = await fetch(imageData);
-      const blob = await response.blob();
-      
-      // 验证 blob 类型
-      if (!blob.type.startsWith('image/')) {
-        console.error('[IntroShareDialog] Invalid blob type:', blob.type);
-        throw new Error('Invalid blob type');
-      }
-      
-      const filename = `${config.title}-分享卡片.png`;
-      
       const result = await handleShareWithFallback(blob, filename, {
         title: config.title,
         text: config.subtitle,
         onShowPreview: (payload) => {
           setPreviewImage(payload.url);
+          setIsRemoteReady(payload.isRemoteReady);
         },
       });
 
-      if (result.success) {
-        if (result.method !== 'preview') {
-          toast({
-            title: result.method === 'webshare' ? "分享成功" : "保存成功",
-            description: result.method === 'download' ? "图片已保存到下载目录" : undefined,
-          });
-        }
+      if (result.success && result.method !== 'preview') {
+        toast({
+          title: result.method === 'webshare' ? "分享成功" : "保存成功",
+          description: result.method === 'download' ? "图片已保存到下载目录" : undefined,
+        });
       }
     } catch (error) {
       console.error('[IntroShareDialog] Save failed:', error);
