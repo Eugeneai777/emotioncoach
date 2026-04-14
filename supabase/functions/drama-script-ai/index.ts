@@ -73,8 +73,119 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, action } = await req.json();
 
+    // --- Suggest Themes Mode ---
+    if (action === "suggest_themes") {
+      if (!products || !Array.isArray(products) || products.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "缺少产品信息" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const audienceMap: Record<string, string> = {
+        women: "35+职场女性/宝妈",
+        men: "35-55岁中年男性",
+        professional: "高压职场人",
+        general: "通用人群",
+      };
+      const audienceStr = audienceMap[targetAudience] || targetAudience || "通用人群";
+      const productList = products.map((p: any) => `${p.name}：${p.description}`).join("\n");
+
+      const suggestPrompt = `你是一位擅长短视频爆款内容策划的营销专家。
+
+根据以下产品和目标人群，推荐3个最容易在短视频平台爆火的漫剧脚本主题。
+
+【目标人群】${audienceStr}
+【产品列表】
+${productList}
+
+要求：
+- 每个主题要有明确的故事冲突和情感共鸣点
+- 主题要与产品卖点自然关联，但不能太像广告
+- 优先选择容易引起 ${audienceStr} 共鸣的情感场景
+- 标题要抓人眼球，有悬念感或冲突感
+
+请使用 suggest_themes 工具返回3个爆款主题。`;
+
+      const suggestResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "user", content: suggestPrompt },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "suggest_themes",
+                description: "返回3个爆款主题推荐",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    themes: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string", description: "主题标题（10-20字）" },
+                          description: { type: "string", description: "一句话说明为什么容易爆（20-40字）" },
+                        },
+                        required: ["title", "description"],
+                      },
+                    },
+                  },
+                  required: ["themes"],
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "suggest_themes" } },
+        }),
+      });
+
+      if (!suggestResponse.ok) {
+        if (suggestResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "AI请求频率超限，请稍后重试" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const t = await suggestResponse.text();
+        console.error("AI gateway error:", suggestResponse.status, t);
+        return new Response(JSON.stringify({ error: "AI服务异常" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const suggestData = await suggestResponse.json();
+      const suggestToolCall = suggestData.choices?.[0]?.message?.tool_calls?.[0];
+      if (!suggestToolCall) {
+        return new Response(JSON.stringify({ error: "AI返回格式异常" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let suggestParsed;
+      try {
+        suggestParsed = JSON.parse(suggestToolCall.function.arguments);
+      } catch {
+        return new Response(JSON.stringify({ error: "AI返回格式异常" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify(suggestParsed), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Normal Script Generation ---
     if (!theme) {
       return new Response(
         JSON.stringify({ error: "缺少必要参数：theme（故事主题）" }),
