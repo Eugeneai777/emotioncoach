@@ -1,71 +1,66 @@
 
 
-# AI漫剧分镜脚本生成器 — 管理后台新页面
+# 有劲AI专属脚本生成器
 
-## 功能概述
+## 概述
 
-在管理后台新增「AI漫剧脚本」页面，用户输入故事主题/关键词，AI 自动生成包含多场景分镜的漫剧脚本，每个分镜包含画面描述（可直接用于即梦/MJ生图）、角色表情动作、对白台词、镜头语言等。
+在现有「AI漫剧分镜脚本」基础上，新增一个**有劲AI专属模式**，用户可以选择具体的有劲AI产品/页面作为脚本的转化目标，AI 会将产品卖点自然植入到剧情中，最终输出带有转化链接和引导话术的漫剧脚本。
 
-## 产出结构（JSON）
+## 产品目录（内置到前端）
 
-```text
-{
-  title: "漫剧标题",
-  synopsis: "故事梗概（50-100字）",
-  characters: [
-    { name: "角色A", description: "外貌/性格描述", imagePrompt: "MJ风格画面提示词" }
-  ],
-  scenes: [
-    {
-      sceneNumber: 1,
-      panel: "远景/中景/特写",
-      imagePrompt: "详细画面描述（英文，适合AI生图）",
-      characterAction: "角色表情与动作",
-      dialogue: "台词/旁白",
-      bgm: "背景音效/氛围提示",
-      duration: "建议时长（秒）"
-    }
-  ],
-  totalScenes: 8,
-  estimatedDuration: "60s"
-}
-```
+将有劲AI现有产品分为 4 类供选择：
+
+| 分类 | 产品 | 路由 |
+|------|------|------|
+| 📊 测评 | 情绪健康测评、财富卡点测评、35+女性竞争力、中场觉醒力、SCL-90 | 对应路由 |
+| 🏕 训练营 | 7天有劲训练营、财富觉醒营、身份绽放营、情绪绽放营 | 对应路由 |
+| 🛠 工具 | 情绪SOS、呼吸练习、AI教练对话 | 对应路由 |
+| 🛒 商城 | 知乐胶囊、协同套餐 | 对应路由 |
 
 ## 实施步骤
 
-### 1. 创建 Edge Function `drama-script-ai`
+### 1. 改造前端 `DramaScriptGenerator.tsx`
 
-- 接收参数：`theme`（故事主题）、`genre`（题材：悬疑/爱情/搞笑/治愈/科幻）、`sceneCount`（分镜数量 6-12）、`style`（画风：赛博朋克/日系/国风/写实）
-- 系统 Prompt 指导 AI 按分镜结构输出
-- 使用 tool calling 提取结构化 JSON
-- 调用 `google/gemini-3-flash-preview` 模型
+- 新增「脚本类型」切换：**通用漫剧** / **有劲AI专属**
+- 选择「有劲AI专属」后显示产品选择区：
+  - 4 个分类标签页（测评/训练营/工具/商城）
+  - 每个分类下多选产品卡片
+- 新增「目标人群」选择（女性/中年男性/职场人/通用）
+- 新增「转化方式」选择（剧情植入 / 结尾推荐 / 角色使用）
+- 结果展示增加：
+  - 每个分镜标注关联的产品
+  - 脚本末尾生成「转化文案」和「评论区引导话术」
+  - 一键复制含产品链接的完整文案
 
-### 2. 创建管理后台页面 `DramaScriptGenerator.tsx`
+### 2. 改造 Edge Function `drama-script-ai`
 
-**输入区域**：
-- 故事主题（文本框，必填）
-- 题材选择（悬疑/爱情/搞笑/治愈/科幻/恐怖）
-- 画风选择（赛博朋克/日系动漫/中国风/3D写实/美式漫画）
-- 分镜数量（滑块 6-12，默认8）
-- 「生成脚本」按钮
+- 新增参数：`mode`（generic/youjin）、`products`（选中产品列表）、`targetAudience`、`conversionStyle`
+- 当 mode=youjin 时，系统 Prompt 增加：
+  - 有劲AI品牌定位和产品卖点说明
+  - 要求在剧情中自然植入产品使用场景
+  - 输出增加 `conversionScript`（转化文案）和 `commentHook`（评论区话术）字段
+  - 每个 scene 增加 `relatedProduct` 字段标注关联产品
 
-**结果展示**：
-- 标题 + 故事梗概卡片
-- 角色设定卡片（每个角色含 imagePrompt 可一键复制）
-- 分镜时间线（纵向卡片列表），每张卡片显示：场景序号、镜头类型、画面描述、角色动作、对白、音效提示
-- 每个 imagePrompt 旁有「复制提示词」按钮（方便粘贴到即梦/MJ）
-- 完整脚本 JSON 导出按钮
+### 3. 输出结构扩展
 
-### 3. 注册路由和侧边栏
-
-- 路由：`/admin/drama-script`
-- 侧边栏：放在「内容管理」分组下，图标用 `BookOpen` 或 `Clapperboard`，标签「AI漫剧脚本」
-- 仅 `admin` 和 `content_admin` 可访问
+```text
+{
+  // ...原有字段
+  conversionScript: "视频描述文案（含产品链接占位符）",
+  commentHook: "评论区置顶引导话术",
+  scenes: [
+    {
+      // ...原有字段
+      relatedProduct?: "emotion_health_assessment"  // 关联产品key
+    }
+  ]
+}
+```
 
 ## 技术要点
 
-- Edge Function 使用 Lovable AI Gateway + tool calling 确保结构化输出
-- imagePrompt 生成英文描述，便于直接用于 MJ/即梦/Stable Diffusion
-- 前端复用现有 AdminPageLayout、Card、Button 等 UI 组件
-- 无需新建数据库表（纯生成工具，不持久化）
+- 产品目录硬编码在前端（含 name、route、卖点描述），通过 props 传给 edge function
+- 产品链接使用 `https://wechat.eugenewe.net` 外部域名标准
+- 无需新建数据库表或 edge function，复用现有 `drama-script-ai` 即可
+- 侧边栏入口保持不变，页面内通过 tab 切换模式
 
