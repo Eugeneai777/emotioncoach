@@ -753,6 +753,37 @@ serve(async (req) => {
 
     if (result.errcode !== 0) {
       console.error('WeChat API error:', result);
+      
+      // 用户未关注公众号，不算系统错误，返回 200 + 明确提示
+      if (result.errmsg && result.errmsg.includes('require subscribe')) {
+        // 更新用户关注状态
+        if (openid) {
+          await supabaseClient
+            .from('wechat_user_mappings')
+            .update({ subscribe_status: false, updated_at: new Date().toISOString() })
+            .eq('openid', openid);
+        }
+        
+        // 记录发送失败
+        await supabaseClient
+          .from('wechat_template_messages')
+          .insert({
+            user_id: userId || null,
+            openid: openid,
+            template_id: templateId,
+            scenario: scenario,
+            data: messageData,
+            url: messageBody.url,
+            status: 'failed',
+            error_message: '用户未关注公众号',
+          });
+        
+        return new Response(
+          JSON.stringify({ success: false, error: '用户未关注公众号，无法发送模板消息', code: 'require_subscribe' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       throw new Error(`WeChat API error: ${result.errmsg || 'Unknown error'}`);
     }
 
