@@ -1,66 +1,71 @@
 
 
-# 有劲AI专属脚本生成器
+# 即梦API文/图生视频集成 — 漫剧脚本一键生成视频
 
 ## 概述
 
-在现有「AI漫剧分镜脚本」基础上，新增一个**有劲AI专属模式**，用户可以选择具体的有劲AI产品/页面作为脚本的转化目标，AI 会将产品卖点自然植入到剧情中，最终输出带有转化链接和引导话术的漫剧脚本。
+在漫剧分镜脚本生成器中新增「一键生视频」功能，利用即梦视频生成3.0 Pro API，将每个分镜的 imagePrompt 直接提交为文生视频任务，生成短视频片段，最终可合并为完整漫剧视频。
 
-## 产品目录（内置到前端）
+## 技术方案
 
-将有劲AI现有产品分为 4 类供选择：
+### 1. 新建 Edge Function `jimeng-video-gen`
 
-| 分类 | 产品 | 路由 |
-|------|------|------|
-| 📊 测评 | 情绪健康测评、财富卡点测评、35+女性竞争力、中场觉醒力、SCL-90 | 对应路由 |
-| 🏕 训练营 | 7天有劲训练营、财富觉醒营、身份绽放营、情绪绽放营 | 对应路由 |
-| 🛠 工具 | 情绪SOS、呼吸练习、AI教练对话 | 对应路由 |
-| 🛒 商城 | 知乐胶囊、协同套餐 | 对应路由 |
+复用现有 `jimeng-digital-human` 中的 Volcengine HMAC-SHA256 签名逻辑，新建独立函数调用即梦视频3.0 Pro API：
 
-## 实施步骤
+- **提交任务**：`Action=CVSync2AsyncSubmitTask`，`req_key=jimeng_ti2v_v30_pro`
+  - 参数：`prompt`（来自分镜 imagePrompt）、`aspect_ratio`（默认 9:16 竖屏）、`frames`（121=5秒 或 241=10秒）、可选 `image_urls`（首帧图片，支持图生视频）
+- **查询任务**：`Action=CVSync2AsyncGetResult`，`req_key=jimeng_ti2v_v30_pro`
+  - 返回 `status`（in_queue/generating/done）和 `video_url`
+- 复用已有的 `VOLCENGINE_ACCESS_KEY_ID` 和 `VOLCENGINE_SECRET_ACCESS_KEY` 密钥
 
-### 1. 改造前端 `DramaScriptGenerator.tsx`
+### 2. 改造前端 `DramaScriptGenerator.tsx`
 
-- 新增「脚本类型」切换：**通用漫剧** / **有劲AI专属**
-- 选择「有劲AI专属」后显示产品选择区：
-  - 4 个分类标签页（测评/训练营/工具/商城）
-  - 每个分类下多选产品卡片
-- 新增「目标人群」选择（女性/中年男性/职场人/通用）
-- 新增「转化方式」选择（剧情植入 / 结尾推荐 / 角色使用）
-- 结果展示增加：
-  - 每个分镜标注关联的产品
-  - 脚本末尾生成「转化文案」和「评论区引导话术」
-  - 一键复制含产品链接的完整文案
+在脚本生成结果区域，每个分镜卡片新增：
+- 「生成视频」按钮 → 单独提交该分镜的 imagePrompt 到 `jimeng-video-gen`
+- 视频时长选择（5秒/10秒）
+- 任务状态实时轮询显示（排队中 → 生成中 → 完成）
+- 完成后内嵌视频预览 + 下载按钮
 
-### 2. 改造 Edge Function `drama-script-ai`
+底部新增「全部生成」按钮：
+- 按顺序逐个提交所有分镜
+- 显示整体进度条
+- 全部完成后提供「合并下载」（调用已有的 `merge-videos` edge function）
 
-- 新增参数：`mode`（generic/youjin）、`products`（选中产品列表）、`targetAudience`、`conversionStyle`
-- 当 mode=youjin 时，系统 Prompt 增加：
-  - 有劲AI品牌定位和产品卖点说明
-  - 要求在剧情中自然植入产品使用场景
-  - 输出增加 `conversionScript`（转化文案）和 `commentHook`（评论区话术）字段
-  - 每个 scene 增加 `relatedProduct` 字段标注关联产品
+### 3. 视频参数配置
 
-### 3. 输出结构扩展
+在输入区新增视频生成设置卡片：
+- 画面比例：16:9 / 9:16 / 1:1（默认 9:16 竖屏短视频）
+- 单片段时长：5秒 / 10秒（默认 5秒）
+- 可选首帧图片 URL（支持先用即梦文生图生成首帧再生视频）
+
+## 流程图
 
 ```text
-{
-  // ...原有字段
-  conversionScript: "视频描述文案（含产品链接占位符）",
-  commentHook: "评论区置顶引导话术",
-  scenes: [
-    {
-      // ...原有字段
-      relatedProduct?: "emotion_health_assessment"  // 关联产品key
-    }
-  ]
-}
+分镜脚本生成完毕
+    │
+    ▼
+用户点击「生成视频」（单个或全部）
+    │
+    ▼
+前端 → jimeng-video-gen (submit)
+    │  参数: prompt, aspect_ratio, frames
+    ▼
+返回 task_id → 前端轮询 (每5秒)
+    │
+    ▼
+jimeng-video-gen (query) → status/video_url
+    │
+    ▼
+完成 → 预览 + 下载
+    │
+    ▼（可选）
+全部完成 → merge-videos → 合并成片
 ```
 
-## 技术要点
+## 注意事项
 
-- 产品目录硬编码在前端（含 name、route、卖点描述），通过 props 传给 edge function
-- 产品链接使用 `https://wechat.eugenewe.net` 外部域名标准
-- 无需新建数据库表或 edge function，复用现有 `drama-script-ai` 即可
-- 侧边栏入口保持不变，页面内通过 tab 切换模式
+- 视频 URL 有效期仅 1 小时，前端需提示及时下载
+- 即梦视频生成耗时较长（1-3分钟/片段），需要良好的进度反馈
+- 无需新增密钥，复用现有 Volcengine 凭证
+- 无需新建数据库表
 
