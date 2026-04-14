@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { AdminPageLayout } from "./shared/AdminPageLayout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,6 +155,10 @@ export default function DramaScriptGenerator() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
+  const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
+  const [loadingThemes, setLoadingThemes] = useState(false);
+  const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
+  const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
