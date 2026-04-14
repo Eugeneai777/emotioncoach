@@ -39,7 +39,8 @@ import {
   Brain,
   ClipboardList,
   Newspaper,
-  BookMarked
+  BookMarked,
+  Clapperboard
 } from "lucide-react";
 import {
   Sidebar,
@@ -120,7 +121,8 @@ const NAV_GROUPS = [
       { key: "videos", label: "视频课程", path: "/admin/videos", icon: Video },
       { key: "knowledge", label: "知识库", path: "/admin/knowledge", icon: BookOpen },
       { key: "tools", label: "生活馆工具", path: "/admin/tools", icon: Wrench },
-      { key: "community-posts", label: "社区动态", path: "/admin/community-posts", icon: MessageSquare }
+      { key: "community-posts", label: "社区动态", path: "/admin/community-posts", icon: MessageSquare },
+      { key: "drama-script", label: "AI漫剧脚本", path: "/admin/drama-script", icon: Clapperboard }
     ]
   },
   {
