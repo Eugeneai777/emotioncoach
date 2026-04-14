@@ -890,7 +890,7 @@ export default function DramaScriptGenerator() {
 
                             {videoState.status === "done" && videoState.videoUrl && (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-green-600 flex items-center gap-1">
+                                <span className="text-xs text-primary flex items-center gap-1">
                                   <Check className="h-3 w-3" /> 已完成
                                 </span>
                                 <Button
