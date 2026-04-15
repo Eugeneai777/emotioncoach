@@ -419,12 +419,24 @@ export default function DramaScriptGenerator() {
     }
   };
 
-  const downloadSingleVideo = (url: string, sceneNum: number) => {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `scene-${sceneNum}.mp4`;
-    a.target = "_blank";
-    a.click();
+  const downloadSingleVideo = async (url: string, sceneNum: number) => {
+    try {
+      toast.info(`正在下载场景 ${sceneNum} 视频...`);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("下载失败");
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `scene-${sceneNum}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback: open in new tab
+      window.open(url, "_blank");
+    }
   };
 
   const getStatusLabel = (status: VideoStatus): string => {
