@@ -1025,7 +1025,19 @@ export default function DramaScriptGenerator() {
                                 controls
                                 className="w-full max-w-md rounded-lg border"
                                 preload="metadata"
+                                onError={(e) => {
+                                  // If video fails to load, show a link instead
+                                  const target = e.currentTarget;
+                                  target.style.display = "none";
+                                  const link = document.createElement("a");
+                                  link.href = videoState.videoUrl!;
+                                  link.target = "_blank";
+                                  link.textContent = "视频无法预览，点击新窗口打开";
+                                  link.className = "text-xs text-primary underline";
+                                  target.parentElement?.appendChild(link);
+                                }}
                               />
+                              <p className="text-xs text-muted-foreground mt-1">⚠️ 视频链接有效期约1小时，请及时下载</p>
                             </div>
                           )}
                         </div>
