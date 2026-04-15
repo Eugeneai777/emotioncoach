@@ -81,6 +81,9 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
 
       const blob = await generateCardBlob(exportRef, { 
         isWeChat: shareEnv.isWeChat,
+        skipImageWait: true,
+        skipFontWait: true,
+        forceScale: 2,
       });
       
       if (!blob) {
