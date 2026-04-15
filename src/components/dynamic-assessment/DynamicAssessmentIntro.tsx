@@ -284,13 +284,22 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           )}
         </motion.div>
 
-        {hasHistory && onShowHistory && (
+        {hasHistory && onShowHistory ? (
           <motion.div {...fadeUp(0.8)}>
             <Button variant="outline" onClick={onShowHistory} className="w-full gap-2">
               <History className="w-4 h-4" /> 查看历史记录
             </Button>
           </motion.div>
-        )}
+        ) : !hasHistory && !requirePayment ? (
+          <motion.div {...fadeUp(0.8)}>
+            <p className="text-center text-xs text-muted-foreground">
+              💡 <button
+                onClick={() => { window.location.href = `/auth?returnUrl=${encodeURIComponent(window.location.pathname)}`; }}
+                className="text-primary underline underline-offset-2"
+              >登录</button> 后可保存测评记录
+            </p>
+          </motion.div>
+        ) : null}
       </div>
     </div>
   );
