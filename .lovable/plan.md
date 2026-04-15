@@ -1,43 +1,34 @@
 
 
-# SBTI 测评详情页分享海报支持
+# SBTI 结果页：替换训练营推荐为付费测评推荐
 
-## 问题
+## 改动内容
 
-点击 SBTI 详情页（`/assessment/sbti_personality`）的分享按钮时，`AssessmentPromoShareDialog` 因 `ASSESSMENT_PROMO_CONFIGS` 中没有 `sbti_personality` 配置而返回 `null`，海报不会生成。
+**文件：`src/components/dynamic-assessment/DynamicAssessmentResult.tsx`**
 
-## 方案
+将第 575-613 行的「7天有劲训练营」推荐区块替换为两张付费测评推荐卡片：
 
-只需在 `AssessmentPromoShareCard.tsx` 的 `ASSESSMENT_PROMO_CONFIGS` 中新增 `sbti_personality` 配置即可。现有的分享链路（`ShareDialogBase` → html2canvas → `ShareImagePreview` 长按保存）已在全平台（小程序/移动端/PC）验证过，无需改动。
+### 卡片 1：情绪健康测评（¥9.9）
+- 路由：`/assessment/emotion_health`
+- 文案："刚测完搞钱人格，再测测你的情绪'负债率'。PHQ-9 + GAD-7 专业双量表，看看焦虑和抑郁有没有在偷偷吃掉你的搞钱能量。"
+- 渐变色：蓝绿系
 
-### 改动内容
+### 卡片 2：SCL-90 心理健康测评（¥9.9）
+- 路由：`/scl90`
+- 文案："90 题全面体检你的心理状态，10 大维度精准扫描，比体检报告还详细的心理 CT。"
+- 渐变色：紫蓝系
 
-**文件：`src/components/dynamic-assessment/AssessmentPromoShareCard.tsx`**
+### 具体改动
 
-在 `ASSESSMENT_PROMO_CONFIGS` 中新增：
+1. **删除**第 575-613 行整个 SBTI 训练营推荐区块（`isSBTI && !isLiteMode && recommendedCamps.length > 0` 条件块）
+2. **新增**一个 SBTI 专属付费测评推荐区块，包含两张卡片，样式沿用现有 Card 组件，`onClick` 导航到对应测评页
+3. **可删除**不再使用的 `SBTI_CAMP_COPY` 常量和 `getSBTICampCopy` 函数（约第 70-130 行），保持代码整洁
 
-```typescript
-sbti_personality: {
-  emoji: '🧠',
-  title: 'SBTI人格测评',
-  subtitle: '全网爆火！3分钟测出你的搞钱人格',
-  highlights: [
-    { icon: '🎭', text: '27种搞钱人格，总有一款是你' },
-    { icon: '📊', text: '15维度深度扫描你的金钱性格' },
-    { icon: '😂', text: '自嘲式解读，扎心但治愈' },
-  ],
-  gradient: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #f59e0b 100%)',
-  accentColor: '#7c3aed',
-  sharePath: '/assessment/sbti_personality',
-  tagline: '有劲AI · 测测你是哪种搞钱人格',
-},
-```
-
-### 涉及文件
+### 不影响范围
+- 非 SBTI 测评的训练营推荐（第 615-644 行）保持不变
+- 评分逻辑、分享功能不受影响
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/dynamic-assessment/AssessmentPromoShareCard.tsx` | 新增 `sbti_personality` 配置项 |
-
-一处改动，无需登录即可生成海报，全平台兼容。
+| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | 替换 SBTI 训练营推荐为付费测评推荐卡片 |
 
