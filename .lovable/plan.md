@@ -1,44 +1,47 @@
 
 
-# 为漫剧视频添加音频支持
+# 视频+音频合成为一个完整长视频
 
-## 问题
+## 当前状态
+- 视频：Jimeng API 生成纯画面 MP4（无音轨），通过 `merge-videos` 边缘函数用 mp4box.js 拼接
+- 音频：TTS 生成 MP3 base64，仅存在前端内存，视频和音频完全独立
 
-即梦（Volcengine）视频生成 API 只产出画面，不含音频。当前流程中没有 TTS 或音频混合步骤，所以合并后的视频始终是静音的。
+## 方案：服务端一体化合并
 
-## 方案
+### 核心思路
+1. 前端生成 TTS 后，将每个场景的音频上传到 Supabase Storage
+2. 合并时将音频 URL 一并传给 `merge-videos` 边缘函数
+3. 边缘函数内：先将所有 MP3 音频拼接，再用 mp4box.js 将合并音频作为音轨写入合并后的 MP4
 
-在视频生成完成后、合并下载前，增加"旁白配音 + 背景音乐"的音频层。
+### 步骤
 
-### 1. 为每个分镜生成 TTS 旁白
+#### 1. 前端：TTS 音频上传到 Storage
+- 生成 TTS 后，将 base64 音频上传到 `video-assets` bucket（路径: `audio/{userId}/{timestamp}-scene{N}.mp3`）
+- 在 `sceneAudios` state 中记录上传后的公开 URL
 
-- 每个分镜已有 `narration`（旁白文案）字段
-- 复用现有的豆包（Volcengine）TTS 边缘函数（`tts-doubao`），为每个分镜文案生成语音音频
-- 前端在视频生成完成后，自动（或手动触发）为每个分镜生成对应旁白音频
+#### 2. 前端：合并下载时传递音频 URL
+- 修改 `handleMergeDownload`，收集所有场景的音频 URL
+- 修改 `mergeVideosClientSide` 函数签名，增加 `audioUrls` 参数
+- 调用 `merge-videos` 时一并传入 `audio_urls`
 
-### 2. 修改 merge-videos 边缘函数
+#### 3. 边缘函数：merge-videos 支持音频合并
+- 接收可选的 `audio_urls` 数组（与 `video_urls` 一一对应）
+- 下载所有音频文件，拼接为一个完整 MP3 buffer
+- 编写轻量 MP3 帧解析器（MP3 帧头固定格式，约 30 行代码），将 MP3 拆分为独立帧
+- 在 mp4box.js 输出文件中新增一条 `mp3` 音频轨道，逐帧添加 sample
+- 最终输出的 MP4 同时包含视频轨和音频轨
 
-- 接收额外参数：每个视频片段对应的音频 URL
-- 在服务端使用 ffmpeg 将每个分镜的视频 + 旁白音频合成
-- 可选：叠加背景音乐（低音量）
-
-### 3. 前端 UI 调整
-
-- 在分镜卡片中显示旁白音频生成状态
-- 增加"生成配音"按钮或在视频生成完成后自动触发
-- 合并下载时传入音频 URL 列表
-
-## 涉及文件
+### 涉及文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/admin/DramaScriptGenerator.tsx` | 增加 TTS 生成逻辑、音频状态管理、UI 按钮 |
-| `supabase/functions/merge-videos/index.ts` | 支持视频+音频合并参数 |
-| `src/utils/videoMerger.ts` | 传递音频 URL 到 merge 函数 |
+| `src/components/admin/DramaScriptGenerator.tsx` | TTS 生成后上传 storage，合并时传 audio_urls |
+| `src/utils/videoMerger.ts` | 增加 audioUrls 参数 |
+| `supabase/functions/merge-videos/index.ts` | 接收 audio_urls，MP3 帧解析，添加音频轨 |
 
-## 技术细节
-
-- TTS 使用已有的 `tts-doubao` 函数，无需新增 API Key
-- merge-videos 边缘函数中用 ffmpeg 的 `-i video -i audio -shortest` 合成
-- 每个分镜独立合成后再拼接，确保旁白与画面时长对齐
+### 技术细节
+- MP3 帧头：以 `0xFF 0xE*` 开头，帧长度可从 bitrate/samplerate 计算，解析成本极低
+- mp4box.js 的 `addTrack({ type: 'mp3', hdlr: 'soun' })` 可创建 MP3-in-MP4 音轨
+- 音频拼接顺序与视频片段顺序一致，确保画面与旁白同步
+- 若某个场景无音频 URL，用静默填充对应时长
 
