@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp } from "lucide-react";
@@ -272,14 +273,27 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
         <motion.div {...fadeUp(enrichment ? 0.75 : 0.7)} className="pt-2">
           <Button
             onClick={needPay ? (onPayClick ?? onStart) : onStart}
-            className="w-full h-13 text-base gap-2 shadow-lg active:scale-[0.98] transition-transform"
+            className={cn(
+              "w-full h-13 text-base gap-2 shadow-lg active:scale-[0.98] transition-transform",
+              !needPay && template.assessment_key === 'sbti_personality' && "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
+            )}
             size="lg"
           >
-            {needPay ? `¥${price ?? '?'} 开始测评` : '开始测评'} <ArrowRight className="w-5 h-5" />
+            {needPay
+              ? <>{`¥${price ?? '?'} 开始测评`} <ArrowRight className="w-5 h-5" /></>
+              : template.assessment_key === 'sbti_personality'
+                ? <>🔥 限时免费测评 <ArrowRight className="w-5 h-5" /></>
+                : <>开始测评 <ArrowRight className="w-5 h-5" /></>
+            }
           </Button>
           {needPay && (
             <p className="text-center text-[10px] text-muted-foreground mt-2">
               测评结果永久保存 · 含AI深度解读
+            </p>
+          )}
+          {!needPay && template.assessment_key === 'sbti_personality' && (
+            <p className="text-center text-[10px] text-muted-foreground mt-2">
+              <span className="line-through opacity-60">原价 ¥9.9</span> · 限时免费开放
             </p>
           )}
         </motion.div>
