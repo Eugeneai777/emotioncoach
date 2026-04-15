@@ -1,42 +1,69 @@
 
-问题判断
 
-- 这次问题不在“Blob 生成”或“异步上传到 HTTPS”本身，核心卡在“预览层还能不能触发原生长按保存”。
-- `src/components/common/IntroShareDialog.tsx` 目前只是接入了 `handleShareWithFallback`，但没有真正对齐 `ShareDialogBase` 的生命周期：隐藏导出卡片还放在 `DialogContent` 里面，所以介绍弹窗不能安全地先关闭再开预览。
-- 这样会导致移动端预览出现时，Radix Dialog 的 modal 交互锁仍可能残留，长按手势容易被拦住，尤其是 iPhone / 微信 / Android WebView。
-- `src/components/ui/share-image-preview.tsx` 里图片本身还带着 `WebkitUserSelect: 'none'`、`userSelect: 'none'`，并且拦了 `contextmenu` 传播；这些都不利于 iOS/微信弹出“保存图片”的原生菜单。
-- 我也对照了外部资料：Radix Dialog 的 body pointer lock / outside pointer-events 确实会影响 portal 弹层交互；而 iOS Safari / 微信里，给图片加 selection/callout 限制，经常会直接让长按保存菜单不弹。
+# 优化"生成图片"速度至 2 秒内
 
-修复方案
+## 问题分析
 
-1. 修 `IntroShareDialog.tsx` 的弹窗生命周期
-- 把隐藏导出卡片从 `DialogContent` 内移到 Dialog 外，做成和 `ShareDialogBase` 一样的持久隐藏导出容器。
-- 在移动端“生成图片”流程里，先关闭介绍弹窗 `setOpen(false)`，再等 1-2 个 `requestAnimationFrame`，让 Radix 清掉遮罩和交互锁。
-- 然后再生成 Blob 并进入预览，这样预览图片不再被底层 modal 干扰。
-- 保持现有链路不变：仍然先显示 blob 预览，再异步升级到 HTTPS，可保存后再显示“长按保存”。
+当前 `generateCanvasInternal` 在生成前有多个串行等待：
 
-2. 修 `ShareImagePreview.tsx` 的图片可长按性
-- 去掉图片上的 `WebkitUserSelect: 'none'` 和 `userSelect: 'none'`。
-- 去掉 `onContextMenu` 的干预，让系统原生菜单自己弹。
-- 保留 `WebkitTouchCallout: 'default'`，并确保图片本身是正常可交互的 `<img>`。
-- 保留 `isRemoteReady` 逻辑：没切到 HTTPS 前继续提示“正在准备可保存图片…”，避免用户长按 blob 图无效。
+1. **字体等待** `document.fonts.ready` — 最长 3 秒超时
+2. **图片等待** `waitForImages` — 最长 4-6 秒超时
+3. **渲染延迟** — 100-150ms
+4. **UI 让步** — `requestAnimationFrame` + `setTimeout`
 
-3. 控制改动范围，避免影响现有功能
-- 不改 `handleShareWithFallback` 的主流程。
-- 不改分享入口、按钮文案、异步上传策略。
-- 不动桌面端下载/分享逻辑。
-- 只针对 `/xiaojin` 当前这条 `IntroShareDialog → ShareImagePreview` 路径做最小修复。
+但在 `IntroShareDialog` 场景中，隐藏导出卡片（`exportRef`）已经在 DOM 中渲染完毕，字体和图片早已加载完成，这些等待完全是冗余的。
 
-涉及文件
-- `src/components/common/IntroShareDialog.tsx`
-- `src/components/ui/share-image-preview.tsx`
+## 方案
 
-验收标准
-- iPhone 微信上：`/xiaojin` → 右上“分享给孩子” → “生成图片” → 等待就绪 → 长按图片，必须弹出系统保存菜单。
-- Android 微信上同样验证一次。
-- 同时回归检查：
-  1. 预览还能先秒开，再自动切到 HTTPS；
-  2. 关闭预览后没有残留遮罩/滚动锁；
-  3. 桌面端保存与其他分享场景不受影响。
+仅修改 `src/components/common/IntroShareDialog.tsx`，在调用 `generateCardBlob` 时传入优化参数，不改动 `shareCardConfig.ts` 的通用逻辑。
 
-如果你批准，我就按这个最小改动方案实施。
+### 具体改动
+
+**文件：`src/components/common/IntroShareDialog.tsx`**
+
+1. **传 `skipImageWait: true`** — 导出卡片已在 DOM 中，图片早已 loaded
+2. **传 `forceScale: 2`** — 跳过 `getOptimalScale()` 检测开销，scale=2 已足够清晰且比默认值更快
+3. **在 `handleGeneratePreview` 中，先检测字体是否已就绪**，若已就绪则利用一个小技巧：在 `generateCardBlob` 调用前提前标记（通过在外部先 `await document.fonts.ready` 并缓存结果），让内部的 3 秒超时不再阻塞
+
+实际上最干净的做法是：`generateCardBlob` 已支持 `skipImageWait`，再加一个类似参数或直接利用现有的 `renderDelay` 控制。但为了不改通用模块，我在 `IntroShareDialog` 层面做预检：
+
+```typescript
+const generateBlob = async (): Promise<Blob | null> => {
+  // ...existing check...
+  const blob = await generateCardBlob(exportRef, { 
+    isWeChat: shareEnv.isWeChat,
+    skipImageWait: true,   // 新增：导出卡片已渲染，图片已加载
+    forceScale: 2,         // 新增：固定 2x，跳过设备检测
+  });
+  // ...
+};
+```
+
+同时在 `shareCardConfig.ts` 的 `generateCanvasInternal` 中增加一个 `skipFontWait` 选项（或复用 `skipImageWait` 扩展语义为 `skipPreflightWait`），跳过 `document.fonts.ready` 的 3 秒等待：
+
+**文件：`src/utils/shareCardConfig.ts`**
+
+1. `GenerateCanvasOptions` 增加 `skipFontWait?: boolean`
+2. 当 `skipFontWait` 为 true 时，跳过 `document.fonts.ready` 等待
+3. 当 `skipImageWait` 为 true 时，同时跳过 `renderDelay`（100-150ms），因为元素已稳定
+
+### 预期效果
+
+| 步骤 | 优化前 | 优化后 |
+|------|--------|--------|
+| 字体等待 | 0-3000ms | 跳过 |
+| 图片等待 | 0-4000ms | 跳过 |
+| 渲染延迟 | 100-150ms | 跳过 |
+| UI 让步 | ~30ms | 保留 |
+| html2canvas | 500-1500ms | 500-1000ms (scale 2 vs 2.5) |
+| **总计** | 3-8s | **0.5-1.5s** |
+
+### 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/utils/shareCardConfig.ts` | 增加 `skipFontWait` 选项 |
+| `src/components/common/IntroShareDialog.tsx` | 传入 `skipImageWait`, `skipFontWait`, `forceScale` |
+
+改动极小，不影响其他分享场景的默认行为。
+
