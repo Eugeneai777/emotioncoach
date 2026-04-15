@@ -1,39 +1,44 @@
 
 
-# 有劲专属模式 — 选完产品后推荐3个爆款主题
+# 为漫剧视频添加音频支持
 
-## 概述
+## 问题
 
-在有劲AI专属模式下，用户选完转化产品后，自动调用AI生成3个爆款主题推荐。用户可以点选其中一个，也可以自己输入自定义主题。
+即梦（Volcengine）视频生成 API 只产出画面，不含音频。当前流程中没有 TTS 或音频混合步骤，所以合并后的视频始终是静音的。
 
-## 实现步骤
+## 方案
 
-### 1. 新增 Edge Function 逻辑（复用 `drama-script-ai`）
+在视频生成完成后、合并下载前，增加"旁白配音 + 背景音乐"的音频层。
 
-在 `drama-script-ai` edge function 中新增一个 `action: "suggest_themes"` 模式：
-- 输入：选中的产品列表 + 目标人群
-- AI 根据产品卖点 + 人群痛点，返回 3 个爆款主题建议
-- 输出格式：`{ themes: [{ title: "主题标题", description: "一句话说明为什么这个主题容易爆" }] }`
-- 使用轻量模型（gemini-2.5-flash）快速返回
+### 1. 为每个分镜生成 TTS 旁白
 
-### 2. 改造前端 `DramaScriptGenerator.tsx`
+- 每个分镜已有 `narration`（旁白文案）字段
+- 复用现有的豆包（Volcengine）TTS 边缘函数（`tts-doubao`），为每个分镜文案生成语音音频
+- 前端在视频生成完成后，自动（或手动触发）为每个分镜生成对应旁白音频
 
-**流程变化**：
-1. 用户选完产品后，自动触发主题推荐请求（或显示「获取推荐主题」按钮）
-2. 展示 3 张推荐主题卡片，点击即填入主题输入框
-3. 主题输入框保持可编辑，用户可以自定义
-4. 点击生成按钮开始生成脚本
+### 2. 修改 merge-videos 边缘函数
 
-**新增状态**：
-- `suggestedThemes: { title: string; description: string }[]`
-- `loadingThemes: boolean`
+- 接收额外参数：每个视频片段对应的音频 URL
+- 在服务端使用 ffmpeg 将每个分镜的视频 + 旁白音频合成
+- 可选：叠加背景音乐（低音量）
 
-**触发时机**：当 `selectedProducts.size > 0` 且产品选择发生变化时，自动请求推荐（加 debounce 防抖）
+### 3. 前端 UI 调整
 
-**UI 位置**：在产品选择区和主题输入框之间，插入推荐主题卡片区域：
-- 3 张横排卡片，显示标题 + 爆款理由
-- 点击卡片高亮选中并填入主题输入框
-- 加载中显示骨架屏
+- 在分镜卡片中显示旁白音频生成状态
+- 增加"生成配音"按钮或在视频生成完成后自动触发
+- 合并下载时传入音频 URL 列表
 
-### 3. 无数据库变更，无新密钥
+## 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/admin/DramaScriptGenerator.tsx` | 增加 TTS 生成逻辑、音频状态管理、UI 按钮 |
+| `supabase/functions/merge-videos/index.ts` | 支持视频+音频合并参数 |
+| `src/utils/videoMerger.ts` | 传递音频 URL 到 merge 函数 |
+
+## 技术细节
+
+- TTS 使用已有的 `tts-doubao` 函数，无需新增 API Key
+- merge-videos 边缘函数中用 ffmpeg 的 `-i video -i audio -shortest` 合成
+- 每个分镜独立合成后再拼接，确保旁白与画面时长对齐
 
