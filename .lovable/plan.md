@@ -1,54 +1,31 @@
 
 
-# SBTI 测评记录可见性 + 题库随机化（待实现）
+# 商业评估 + "限时免费测评"按钮改造
 
-## 当前状态
+## 商业分析
 
-- 历史按钮仅在 `hasHistory && onShowHistory` 时显示，未登录用户永远看不到
-- mini-app「学习」跳转 `/camps?filter=my`（训练营），与测评无关
-- 题库扩充和随机抽题尚未实现
+从商业架构角度看，"限时免费"是经典的**稀缺性锚定**策略：
 
-## 方案
+1. **锚定价值感**：暗示测评本身有价（对标 ¥9.9 付费测评），免费是限时福利，提升用户心理获得感
+2. **制造紧迫感**：降低决策犹豫，提升点击转化率（行业数据：稀缺性文案可提升 15-30% CTR）
+3. **为未来收费铺路**：当题库、报告足够成熟后，可自然过渡到付费模式，用户心理预期已建立
+4. **留存闭环**：免费测评 → 结果页推荐 ¥9.9 情绪健康/SCL-90 → 形成"免费引流 → 付费转化"漏斗
 
-### 1. DynamicAssessmentIntro 历史入口增强
+**风险控制**：仅对 SBTI（娱乐型）使用此文案，不影响已付费测评的价格锚定。
+
+## 技术方案
 
 **文件：`src/components/dynamic-assessment/DynamicAssessmentIntro.tsx`**
 
-- 已登录有记录：保持现有「查看历史记录」按钮
-- 已登录无记录：不显示（正常）
-- 未登录（SBTI 等免费测评）：显示「登录后可保存记录」提示文字，点击跳转 `/auth`
+在 CTA 按钮（第 272-285 行）增加 SBTI 特殊处理：
 
-### 2. mini-app 添加「我的测评」入口
+- 当 `assessment_key === 'sbti_personality'` 且 `!needPay` 时，按钮文案改为 **"🔥 限时免费测评"**
+- 按钮下方新增一行小字：**"原价 ¥9.9 · 限时免费开放"**，强化价值锚定
+- 按钮样式加一个微妙的渐变背景（紫→粉，呼应 SBTI 品牌色），与普通测评区分
 
-**文件：`src/pages/MiniAppEntry.tsx`**
+仅此一处改动，其他测评的"开始测评"和"¥X 开始测评"不受影响。
 
-在 `exploreBlocks` 中新增一个「我的测评」卡片，路由指向一个汇总页（或直接跳转 `/my-page` 的测评 tab）。这样用户能从 mini-app 首页找到自己的测评记录。
-
-### 3. 题库扩充至 61 题（数据库）
-
-**数据库 `partner_assessment_templates`**：将 SBTI 的 `questions` JSON 从 31 题扩充至 61 题（每维度 4 题，15×4=60 + 1 DRUNK_TRIGGER）。新题延续自嘲扎心风格，维度映射和评分权重不变。
-
-### 4. 前端随机抽题
-
-**文件：`src/pages/DynamicAssessmentPage.tsx`**
-
-当 `scoringType === 'sbti'` 时：
-- 按 `dimension` 分组，每组随机选 2 题，DRUNK_TRIGGER 保留 1 题
-- 整体打乱顺序，确保每次答题 31 道
-- 用 `useMemo` + `phase` 依赖保证同一次做题不变，下次进入重新随机
-
-### 涉及文件
-
-| 文件/资源 | 改动 |
-|-----------|------|
-| 数据库 `partner_assessment_templates` | SBTI questions 扩充至 61 题 |
-| `src/pages/DynamicAssessmentPage.tsx` | SBTI 随机抽题逻辑 |
-| `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx` | 未登录时显示登录引导 |
-| `src/pages/MiniAppEntry.tsx` | 新增「我的测评」入口卡片 |
-
-### 不影响范围
-
-- 评分逻辑（`sbti-scoring.ts`）不变
-- 其他测评不受影响
-- 人格匹配（汉明距离）不变
+| 文件 | 改动 |
+|------|------|
+| `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx` | SBTI CTA 按钮文案 + 价值锚定副文案 |
 
