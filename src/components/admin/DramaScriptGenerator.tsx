@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
