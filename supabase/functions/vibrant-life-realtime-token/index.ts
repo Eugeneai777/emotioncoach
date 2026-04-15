@@ -1171,10 +1171,12 @@ serve(async (req) => {
     // 解析请求体获取模式和场景
     let mode = 'general';
     let scenario: string | null = null;
+    let voiceOverride: string | null = null;
     try {
       const body = await req.json();
       mode = body.mode || 'general';
       scenario = body.scenario || null;
+      voiceOverride = body.voice_type || null;
     } catch {
       // 没有请求体，使用默认模式
     }
@@ -1410,7 +1412,7 @@ ${photoList}
       },
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview",
-        voice: mode === 'teen' ? "shimmer" : "echo",
+        voice: voiceOverride || (mode === 'teen' ? "shimmer" : "echo"),
         instructions: instructions,
         tools: tools,
         tool_choice: "auto",
