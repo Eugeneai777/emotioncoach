@@ -106,6 +106,15 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
     const blob = await generateBlob();
     if (!blob) return;
 
+    // Close the dialog FIRST to clear Radix modal locks (pointer-events, focus trap)
+    // This ensures the preview portal can receive native touch gestures
+    setOpen(false);
+
+    // Wait for Radix to fully unmount its overlay
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+
     const filename = `${config.title}-分享卡片.png`;
     setIsRemoteReady(false);
 
@@ -219,23 +228,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
             </div>
           </div>
 
-          {/* Hidden Export Card - 全尺寸，用于 html2canvas */}
-          {!isContentLoading && (
-            <div 
-              className="fixed -left-[9999px] top-0 pointer-events-none"
-              style={{ opacity: 0.01 }}
-              aria-hidden="true"
-            >
-              <IntroShareCard
-                ref={exportRef}
-                config={config}
-                template={selectedTemplate}
-                partnerCode={getPartnerCodeValue()}
-                avatarUrl={avatarUrl}
-                displayName={displayName}
-              />
-            </div>
-          )}
+          {/* Export card moved outside DialogContent */}
 
           {/* Action Buttons */}
           <div className="flex gap-2 mt-2">
@@ -270,6 +263,24 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden Export Card - outside Dialog so it persists after dialog closes */}
+      {!isContentLoading && (
+        <div 
+          className="fixed -left-[9999px] top-0 pointer-events-none"
+          style={{ opacity: 0.01 }}
+          aria-hidden="true"
+        >
+          <IntroShareCard
+            ref={exportRef}
+            config={config}
+            template={selectedTemplate}
+            partnerCode={getPartnerCodeValue()}
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+          />
+        </div>
+      )}
 
       {previewImage && (
         <ShareImagePreview
