@@ -1,65 +1,43 @@
 
 
-# 优化 SBTI 测评题目与结果内容
+# SBTI 测评详情页分享海报支持
 
-## 现状分析
+## 问题
 
-**题目方面**：当前 31 道题存储在数据库 `partner_assessment_templates` 的 `questions` JSON 字段中。题目场景虽然贴近生活（闹钟、加班、排队等），但措辞偏"正经问卷风"，选项梯度太明显（A=积极 B=中性 C=消极），测试者容易猜到"正确答案"，缺少让人会心一笑的自嘲感和"被戳中"的快感。
-
-**结果方面**：`src/lib/sbti-personality-data.ts` 中的 27 种人格描述已经非常贴近官方 SBTI 风格（自嘲、夸张、戏剧化），质量较高，但部分 `description` 可以进一步加料，让"被测中"的感觉更强烈。
+点击 SBTI 详情页（`/assessment/sbti_personality`）的分享按钮时，`AssessmentPromoShareDialog` 因 `ASSESSMENT_PROMO_CONFIGS` 中没有 `sbti_personality` 配置而返回 `null`，海报不会生成。
 
 ## 方案
 
-### 1. 重写 31 道测评题目（数据库更新）
+只需在 `AssessmentPromoShareCard.tsx` 的 `ASSESSMENT_PROMO_CONFIGS` 中新增 `sbti_personality` 配置即可。现有的分享链路（`ShareDialogBase` → html2canvas → `ShareImagePreview` 长按保存）已在全平台（小程序/移动端/PC）验证过，无需改动。
 
-用 AI 生成更具年轻人共鸣的题目，遵循以下原则：
+### 改动内容
 
-- **场景更扎心**：用"周一早上被甲方连环夺命call""前任突然点赞你三年前的朋友圈""年终总结发现今年目标和去年一模一样"等当代痛点场景
-- **选项更自嘲**：三个选项都有趣，不再是"积极/中性/消极"的明显梯度，而是三种不同的"真实反应"，让人纠结"我好像三个都是"
-- **语言更互联网**：融入"精神状态""i人e人""已读不回""班味""发疯文学"等当代网络语境
-- **保持维度映射不变**：每题仍对应原有的 15 个维度（S1-So3）+ 1 个 DRUNK_TRIGGER，评分逻辑 (2/1/0) 不变
+**文件：`src/components/dynamic-assessment/AssessmentPromoShareCard.tsx`**
 
-示例对比：
+在 `ASSESSMENT_PROMO_CONFIGS` 中新增：
 
-| 维度 | 现有题目 | 优化后 |
-|------|----------|--------|
-| S1 | 周末早上闹钟响了，你的第一反应是？ | 周一早上闹钟响了，你看了眼手机发现有3条工作消息，你的精神状态是？ |
-| S1选项A | 精神抖擞跳起来，新的一天又可以征服世界 | 深呼吸，打开消息逐条回复，今天也是打工的一天 |
-| S1选项C | 关掉闹钟继续装死，周末凭什么要起床 | 把手机扔到枕头底下，告诉自己"没看到就不存在" |
+```typescript
+sbti_personality: {
+  emoji: '🧠',
+  title: 'SBTI人格测评',
+  subtitle: '全网爆火！3分钟测出你的搞钱人格',
+  highlights: [
+    { icon: '🎭', text: '27种搞钱人格，总有一款是你' },
+    { icon: '📊', text: '15维度深度扫描你的金钱性格' },
+    { icon: '😂', text: '自嘲式解读，扎心但治愈' },
+  ],
+  gradient: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #f59e0b 100%)',
+  accentColor: '#7c3aed',
+  sharePath: '/assessment/sbti_personality',
+  tagline: '有劲AI · 测测你是哪种搞钱人格',
+},
+```
 
-### 2. 润色部分人格结果描述
+### 涉及文件
 
-**文件：`src/lib/sbti-personality-data.ts`**
+| 文件 | 改动 |
+|------|------|
+| `src/components/dynamic-assessment/AssessmentPromoShareCard.tsx` | 新增 `sbti_personality` 配置项 |
 
-对照官方 SBTI 网站原文，补充以下内容：
-- 部分人格的 `description` 更长、更有故事性（官方原文比我们现有的更详细）
-- 增加更多扎心的金句到 `traits` 和 `quote`
-- 确保 `description` 第一段就能让人"破防"或"笑出来"
-
-### 3. 维度描述微调
-
-**文件：`src/lib/sbti-personality-data.ts`**
-
-`DIMENSION_DESCRIPTORS` 中的 H/M/L 描述已经很好，做少量润色让语气更统一、更"毒舌但温暖"。
-
-## 实施步骤
-
-1. **用 AI 批量生成新题目**：基于现有 31 题的维度映射和评分结构，生成更有趣的替代版本
-2. **数据库迁移**：通过 SQL migration 更新 `partner_assessment_templates` 表中 SBTI 模板的 `questions` JSON
-3. **更新人格描述**：修改 `src/lib/sbti-personality-data.ts` 中的 `description`、`traits`、`quote` 字段
-4. **维度描述润色**：微调 `DIMENSION_DESCRIPTORS`
-
-## 涉及文件
-
-| 文件/资源 | 改动 |
-|-----------|------|
-| 数据库 `partner_assessment_templates` | 更新 SBTI 模板的 questions JSON |
-| `src/lib/sbti-personality-data.ts` | 润色人格描述和维度描述 |
-
-## 不影响范围
-
-- 评分逻辑（`sbti-scoring.ts`）完全不动 — 维度映射、H/M/L 归一化、汉明距离匹配都保持不变
-- 结果页 UI（`DynamicAssessmentResult.tsx`）不动
-- 题目数量保持 31 题，维度分配保持不变
-- 27 种人格类型的 pattern（匹配模式）不变
+一处改动，无需登录即可生成海报，全平台兼容。
 
