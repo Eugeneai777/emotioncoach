@@ -469,6 +469,7 @@ export default function DramaScriptGenerator() {
   };
 
   return (
+    <>
     <AdminPageLayout
       title={
         <span className="flex items-center gap-2">
