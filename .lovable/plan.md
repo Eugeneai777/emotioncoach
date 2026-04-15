@@ -1,69 +1,51 @@
 
 
-# 优化"生成图片"速度至 2 秒内
+# 女性专区语音教练改为温柔女声
 
-## 问题分析
+## 问题
+女性专区（MamaAssistant）的语音教练当前使用男声（`echo`），因为：
+1. 前端传的 `voiceType` 是旧版豆包ID `zh_female_xinlingjitang_moon_bigtts`（无效）
+2. 边缘函数 `vibrant-life-realtime-token` 收到 `voice_type` 但完全忽略，硬编码为 `mode === 'teen' ? "shimmer" : "echo"`
 
-当前 `generateCanvasInternal` 在生成前有多个串行等待：
+## 方案（两处改动）
 
-1. **字体等待** `document.fonts.ready` — 最长 3 秒超时
-2. **图片等待** `waitForImages` — 最长 4-6 秒超时
-3. **渲染延迟** — 100-150ms
-4. **UI 让步** — `requestAnimationFrame` + `setTimeout`
+### 1. 边缘函数：读取并使用 `voice_type` 参数
 
-但在 `IntroShareDialog` 场景中，隐藏导出卡片（`exportRef`）已经在 DOM 中渲染完毕，字体和图片早已加载完成，这些等待完全是冗余的。
+**文件：`supabase/functions/vibrant-life-realtime-token/index.ts`**
 
-## 方案
-
-仅修改 `src/components/common/IntroShareDialog.tsx`，在调用 `generateCardBlob` 时传入优化参数，不改动 `shareCardConfig.ts` 的通用逻辑。
-
-### 具体改动
-
-**文件：`src/components/common/IntroShareDialog.tsx`**
-
-1. **传 `skipImageWait: true`** — 导出卡片已在 DOM 中，图片早已 loaded
-2. **传 `forceScale: 2`** — 跳过 `getOptimalScale()` 检测开销，scale=2 已足够清晰且比默认值更快
-3. **在 `handleGeneratePreview` 中，先检测字体是否已就绪**，若已就绪则利用一个小技巧：在 `generateCardBlob` 调用前提前标记（通过在外部先 `await document.fonts.ready` 并缓存结果），让内部的 3 秒超时不再阻塞
-
-实际上最干净的做法是：`generateCardBlob` 已支持 `skipImageWait`，再加一个类似参数或直接利用现有的 `renderDelay` 控制。但为了不改通用模块，我在 `IntroShareDialog` 层面做预检：
+- 解析请求体时增加读取 `voice_type`（第 1174-1177 行）
+- 创建 session 时使用传入的 `voice_type`，缺省保持原逻辑（第 1413 行）
 
 ```typescript
-const generateBlob = async (): Promise<Blob | null> => {
-  // ...existing check...
-  const blob = await generateCardBlob(exportRef, { 
-    isWeChat: shareEnv.isWeChat,
-    skipImageWait: true,   // 新增：导出卡片已渲染，图片已加载
-    forceScale: 2,         // 新增：固定 2x，跳过设备检测
-  });
-  // ...
-};
+// 解析时增加
+const body = await req.json();
+mode = body.mode || 'general';
+scenario = body.scenario || null;
+const voiceOverride = body.voice_type || null; // 新增
+
+// 创建 session 时
+voice: voiceOverride || (mode === 'teen' ? "shimmer" : "echo"),
 ```
 
-同时在 `shareCardConfig.ts` 的 `generateCanvasInternal` 中增加一个 `skipFontWait` 选项（或复用 `skipImageWait` 扩展语义为 `skipPreflightWait`），跳过 `document.fonts.ready` 的 3 秒等待：
+### 2. 前端：传正确的 OpenAI voice 名称
 
-**文件：`src/utils/shareCardConfig.ts`**
+**文件：`src/pages/MamaAssistant.tsx`**（第 280 行）
 
-1. `GenerateCanvasOptions` 增加 `skipFontWait?: boolean`
-2. 当 `skipFontWait` 为 true 时，跳过 `document.fonts.ready` 等待
-3. 当 `skipImageWait` 为 true 时，同时跳过 `renderDelay`（100-150ms），因为元素已稳定
+将 `voiceType="zh_female_xinlingjitang_moon_bigtts"`（无效旧ID）改为 `voiceType="shimmer"`（OpenAI Realtime 温柔女声）。
 
-### 预期效果
+```diff
+- voiceType="zh_female_xinlingjitang_moon_bigtts"
++ voiceType="shimmer"
+```
 
-| 步骤 | 优化前 | 优化后 |
-|------|--------|--------|
-| 字体等待 | 0-3000ms | 跳过 |
-| 图片等待 | 0-4000ms | 跳过 |
-| 渲染延迟 | 100-150ms | 跳过 |
-| UI 让步 | ~30ms | 保留 |
-| html2canvas | 500-1500ms | 500-1000ms (scale 2 vs 2.5) |
-| **总计** | 3-8s | **0.5-1.5s** |
+OpenAI Realtime 可用女声：`shimmer`（温柔亲切）和 `coral`（清新自然），选择 `shimmer` 最符合"温柔女声"定位。
 
 ### 涉及文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/utils/shareCardConfig.ts` | 增加 `skipFontWait` 选项 |
-| `src/components/common/IntroShareDialog.tsx` | 传入 `skipImageWait`, `skipFontWait`, `forceScale` |
+| `supabase/functions/vibrant-life-realtime-token/index.ts` | 解析并使用 `voice_type` 参数 |
+| `src/pages/MamaAssistant.tsx` | voiceType 改为 `shimmer` |
 
-改动极小，不影响其他分享场景的默认行为。
+改动极小，不影响其他教练场景（它们不传 `voice_type`，走默认逻辑）。
 
