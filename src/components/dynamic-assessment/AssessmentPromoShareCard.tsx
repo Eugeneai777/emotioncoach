@@ -57,6 +57,20 @@ export const ASSESSMENT_PROMO_CONFIGS: Record<string, AssessmentPromoConfig> = {
     sharePath: '/assessment/women-competitiveness',
     tagline: '有劲AI · 发现你的独特优势',
   },
+  sbti_personality: {
+    emoji: '🧠',
+    title: 'SBTI人格测评',
+    subtitle: '全网爆火！3分钟测出你的搞钱人格',
+    highlights: [
+      { icon: '🎭', text: '27种搞钱人格，总有一款是你' },
+      { icon: '📊', text: '15维度深度扫描你的金钱性格' },
+      { icon: '😂', text: '自嘲式解读，扎心但治愈' },
+    ],
+    gradient: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #f59e0b 100%)',
+    accentColor: '#7c3aed',
+    sharePath: '/assessment/sbti_personality',
+    tagline: '有劲AI · 测测你是哪种搞钱人格',
+  },
 };
 
 interface AssessmentPromoShareCardProps {
