@@ -139,6 +139,7 @@ type AudioStatus = "idle" | "generating" | "done" | "failed";
 interface SceneAudioState {
   status: AudioStatus;
   audioBase64?: string;
+  audioUrl?: string; // Public URL after upload to storage
   error?: string;
 }
 
@@ -452,7 +453,30 @@ export default function DramaScriptGenerator() {
         throw new Error(data?.error || "TTS生成失败");
       }
       if (!data?.audioContent) throw new Error("未返回音频数据");
-      setSceneAudios(prev => ({ ...prev, [num]: { status: "done", audioBase64: data.audioContent } }));
+
+      // Upload audio to storage for server-side merge
+      let audioUrl: string | undefined;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const bytes = atob(data.audioContent);
+          const arr = new Uint8Array(bytes.length);
+          for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+          const blob = new Blob([arr], { type: "audio/mpeg" });
+          const path = `audio/${user.id}/${Date.now()}-scene${num}.mp3`;
+          const { error: upErr } = await supabase.storage.from("video-assets").upload(path, blob, { contentType: "audio/mpeg" });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from("video-assets").getPublicUrl(path);
+            audioUrl = urlData.publicUrl;
+          } else {
+            console.warn("Audio upload failed, will still keep base64:", upErr.message);
+          }
+        }
+      } catch (upE) {
+        console.warn("Audio upload error:", upE);
+      }
+
+      setSceneAudios(prev => ({ ...prev, [num]: { status: "done", audioBase64: data.audioContent, audioUrl } }));
       toast.success(`场景 ${num} 旁白已生成`);
     } catch (e: any) {
       setSceneAudios(prev => ({ ...prev, [num]: { status: "failed", error: e.message } }));
@@ -524,7 +548,12 @@ export default function DramaScriptGenerator() {
         return;
       }
 
-      const blob = await mergeVideosClientSide(urls, (msg) => toast.info(msg));
+      // Collect audio URLs in same order as video URLs
+      const audioUrls = result.scenes
+        .filter(s => sceneVideos[s.sceneNumber]?.videoUrl)
+        .map(s => sceneAudios[s.sceneNumber]?.audioUrl || null);
+
+      const blob = await mergeVideosClientSide(urls, (msg) => toast.info(msg), audioUrls);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
