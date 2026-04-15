@@ -66,38 +66,29 @@ interface DynamicAssessmentResultProps {
   onLoginToUnlock?: () => void;
 }
 
-// SBTI personality type → camp recommendation copy groups
-const SBTI_CAMP_COPY: Record<string, { hook: string; detail: string }> = {
-  // 高压力型
-  'OH-NO': { hook: '你的情绪消耗可能比你意识到的更大', detail: '学会在压力中找到喘息空间' },
-  'ZZZZ': { hook: '疲惫不只是身体的信号', detail: '找回被消耗的内在能量' },
-  'DEAD': { hook: '你一直在硬撑，但身体已经在抗议了', detail: '从情绪透支中恢复节奏' },
-  'ANGY': { hook: '愤怒背后藏着很多未被看见的需求', detail: '学会和情绪做朋友' },
-  'EWWW': { hook: '你对世界的不满，其实是对自己标准的坚守', detail: '用觉察替代消耗' },
-  // 高行动型
-  'GOGO': { hook: '你习惯向前冲，但偶尔也需要停下来充电', detail: '让行动力更有节奏感' },
-  'CTRL': { hook: '掌控感让你安心，但也在消耗你', detail: '学会在放手中获得力量' },
-  'BOSS': { hook: '领导力的背后，是被忽略的自我照顾', detail: '从内在开始重建能量' },
-  // 高社交型
-  'SEXY': { hook: '你把太多能量给了别人', detail: '学会把注意力收回自己' },
-  'LOVE': { hook: '爱得太用力，自己反而被掏空了', detail: '建立健康的情感边界' },
-  'FAKE': { hook: '维持人设很累吧？', detail: '放下面具，找回真实的自己' },
-  'YOLO': { hook: '自由很酷，但偶尔也需要锚点', detail: '在自由中找到内在稳定' },
-  // 默认
-  '_default': { hook: '内在能量有提升空间', detail: '通过每日觉察找回生活节奏' },
-};
-
-function getSBTICampCopy(sbtiType: string | undefined): { hook: string; detail: string } {
-  if (!sbtiType) return SBTI_CAMP_COPY['_default'];
-  // Try exact match first, then partial
-  const copy = SBTI_CAMP_COPY[sbtiType];
-  if (copy) return copy;
-  // Check if type contains known key
-  for (const [key, val] of Object.entries(SBTI_CAMP_COPY)) {
-    if (key !== '_default' && sbtiType.includes(key)) return val;
-  }
-  return SBTI_CAMP_COPY['_default'];
-}
+// SBTI → paid assessment recommendations
+const SBTI_PAID_ASSESSMENTS = [
+  {
+    title: '情绪健康测评',
+    price: '¥9.9',
+    emoji: '🧠',
+    gradient: 'from-teal-400 to-cyan-500',
+    bgGradient: 'from-teal-50 to-cyan-50',
+    description: '刚测完搞钱人格，再测测你的情绪"负债率"。PHQ-9 + GAD-7 专业双量表，看看焦虑和抑郁有没有在偷偷吃掉你的搞钱能量。',
+    tags: ['PHQ-9 抑郁筛查', 'GAD-7 焦虑筛查', '专业报告'],
+    route: '/assessment/emotion_health',
+  },
+  {
+    title: 'SCL-90 心理健康测评',
+    price: '¥9.9',
+    emoji: '🔬',
+    gradient: 'from-violet-400 to-indigo-500',
+    bgGradient: 'from-violet-50 to-indigo-50',
+    description: '90 题全面体检你的心理状态，10 大维度精准扫描，比体检报告还详细的心理 CT。',
+    tags: ['10大维度', '90题深度扫描', '临床级量表'],
+    route: '/scl90',
+  },
+];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -572,45 +563,48 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* SBTI-specific high-conversion camp recommendation (hidden in lite mode) */}
-        {isSBTI && !isLiteMode && recommendedCamps.length > 0 && (() => {
-          const campCopy = getSBTICampCopy(result.meta?.sbtiType);
-          return (
-            <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
-              <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg overflow-hidden">
-                <CardContent className="p-5 space-y-4">
+        {/* SBTI-specific paid assessment recommendations */}
+        {isSBTI && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
+            <h3 className="font-semibold text-sm px-1 flex items-center gap-2">
+              🔍 想更深入了解自己？试试专业测评
+            </h3>
+            {SBTI_PAID_ASSESSMENTS.map((item) => (
+              <Card
+                key={item.route}
+                className={`border-0 bg-gradient-to-br ${item.bgGradient} shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow active:scale-[0.98]`}
+                onClick={() => navigate(item.route)}
+              >
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-xl shadow-md shrink-0">
-                      ⚡
+                    <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${item.gradient} flex items-center justify-center text-xl shadow-md shrink-0`}>
+                      {item.emoji}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-foreground">
-                        {result.primaryPattern?.label
-                          ? `作为「${result.primaryPattern.label}」型：${campCopy.hook}`
-                          : `你的人格画像显示：${campCopy.hook}`}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        {campCopy.detail}。「7天有劲训练营」通过每日冥想+情绪觉察+教练陪伴，帮你找回内在节奏。
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm text-foreground">{item.title}</h4>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-white/70 text-foreground/70 shrink-0">
+                          {item.price}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{item.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">🧘 每日冥想</span>
-                    <span className="flex items-center gap-1">📝 情绪觉察</span>
-                    <span className="flex items-center gap-1">👨‍🏫 教练陪伴</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      {item.tags.map((tag) => (
+                        <span key={tag} className="bg-white/50 rounded-full px-2 py-0.5">{tag}</span>
+                      ))}
+                    </div>
+                    <div className={`flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br ${item.gradient} text-white shrink-0`}>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
                   </div>
-                  <Button
-                    onClick={() => navigate('/promo/synergy')}
-                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md"
-                  >
-                    了解7天有劲训练营
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
                 </CardContent>
               </Card>
-            </motion.div>
-          );
-        })()}
+            ))}
+          </motion.div>
+        )}
 
         {/* Generic Recommended Training Camps (non-SBTI) */}
         {!isSBTI && recommendedCamps.length > 0 && (
