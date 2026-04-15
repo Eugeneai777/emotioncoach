@@ -277,7 +277,7 @@ const MamaAssistant = () => {
           userId={user.id}
           mode="general"
           featureKey="realtime_voice"
-          voiceType="zh_female_xinlingjitang_moon_bigtts"
+          voiceType="shimmer"
         />
       )}
 
