@@ -317,6 +317,8 @@ export interface GenerateCanvasOptions {
   forceScale?: number;
   /** 跳过图片等待（已预加载时使用） */
   skipImageWait?: boolean;
+  /** 跳过字体等待（元素已渲染稳定时使用） */
+  skipFontWait?: boolean;
 }
 
 /**
@@ -340,6 +342,7 @@ const generateCanvasInternal = async (
       explicitHeight,
       forceScale,
       skipImageWait = false,
+      skipFontWait = false,
     } = options;
 
     if (!cardRef.current) {
@@ -374,8 +377,8 @@ const generateCanvasInternal = async (
       : CARD_BACKGROUND_COLORS[backgroundType];
 
     try {
-      // 🔧 等待字体加载完成（解决中文乱码问题）
-      if (document.fonts && typeof document.fonts.ready !== 'undefined') {
+      // 🔧 等待字体加载完成（解决中文乱码问题）— 可跳过
+      if (!skipFontWait && document.fonts && typeof document.fonts.ready !== 'undefined') {
         try {
           await Promise.race([
             document.fonts.ready,
@@ -393,9 +396,11 @@ const generateCanvasInternal = async (
         await waitForImages(originalElement, imageTimeout);
       }
 
-      // 渲染稳定延迟
-      const renderDelay = isWeChat ? SHARE_TIMEOUTS.renderDelayWeChat : SHARE_TIMEOUTS.renderDelay;
-      await new Promise(resolve => setTimeout(resolve, renderDelay));
+      // 渲染稳定延迟 — 已预加载时跳过
+      if (!skipImageWait && !skipFontWait) {
+        const renderDelay = isWeChat ? SHARE_TIMEOUTS.renderDelayWeChat : SHARE_TIMEOUTS.renderDelay;
+        await new Promise(resolve => setTimeout(resolve, renderDelay));
+      }
 
       // UI 让步：确保 loading toast / 进度指示已渲染到屏幕
       await new Promise(r => requestAnimationFrame(r));
