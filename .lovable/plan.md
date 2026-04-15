@@ -1,47 +1,42 @@
 
+问题判断
 
-# 视频+音频合成为一个完整长视频
+- 这次问题不在“Blob 生成”或“异步上传到 HTTPS”本身，核心卡在“预览层还能不能触发原生长按保存”。
+- `src/components/common/IntroShareDialog.tsx` 目前只是接入了 `handleShareWithFallback`，但没有真正对齐 `ShareDialogBase` 的生命周期：隐藏导出卡片还放在 `DialogContent` 里面，所以介绍弹窗不能安全地先关闭再开预览。
+- 这样会导致移动端预览出现时，Radix Dialog 的 modal 交互锁仍可能残留，长按手势容易被拦住，尤其是 iPhone / 微信 / Android WebView。
+- `src/components/ui/share-image-preview.tsx` 里图片本身还带着 `WebkitUserSelect: 'none'`、`userSelect: 'none'`，并且拦了 `contextmenu` 传播；这些都不利于 iOS/微信弹出“保存图片”的原生菜单。
+- 我也对照了外部资料：Radix Dialog 的 body pointer lock / outside pointer-events 确实会影响 portal 弹层交互；而 iOS Safari / 微信里，给图片加 selection/callout 限制，经常会直接让长按保存菜单不弹。
 
-## 当前状态
-- 视频：Jimeng API 生成纯画面 MP4（无音轨），通过 `merge-videos` 边缘函数用 mp4box.js 拼接
-- 音频：TTS 生成 MP3 base64，仅存在前端内存，视频和音频完全独立
+修复方案
 
-## 方案：服务端一体化合并
+1. 修 `IntroShareDialog.tsx` 的弹窗生命周期
+- 把隐藏导出卡片从 `DialogContent` 内移到 Dialog 外，做成和 `ShareDialogBase` 一样的持久隐藏导出容器。
+- 在移动端“生成图片”流程里，先关闭介绍弹窗 `setOpen(false)`，再等 1-2 个 `requestAnimationFrame`，让 Radix 清掉遮罩和交互锁。
+- 然后再生成 Blob 并进入预览，这样预览图片不再被底层 modal 干扰。
+- 保持现有链路不变：仍然先显示 blob 预览，再异步升级到 HTTPS，可保存后再显示“长按保存”。
 
-### 核心思路
-1. 前端生成 TTS 后，将每个场景的音频上传到 Supabase Storage
-2. 合并时将音频 URL 一并传给 `merge-videos` 边缘函数
-3. 边缘函数内：先将所有 MP3 音频拼接，再用 mp4box.js 将合并音频作为音轨写入合并后的 MP4
+2. 修 `ShareImagePreview.tsx` 的图片可长按性
+- 去掉图片上的 `WebkitUserSelect: 'none'` 和 `userSelect: 'none'`。
+- 去掉 `onContextMenu` 的干预，让系统原生菜单自己弹。
+- 保留 `WebkitTouchCallout: 'default'`，并确保图片本身是正常可交互的 `<img>`。
+- 保留 `isRemoteReady` 逻辑：没切到 HTTPS 前继续提示“正在准备可保存图片…”，避免用户长按 blob 图无效。
 
-### 步骤
+3. 控制改动范围，避免影响现有功能
+- 不改 `handleShareWithFallback` 的主流程。
+- 不改分享入口、按钮文案、异步上传策略。
+- 不动桌面端下载/分享逻辑。
+- 只针对 `/xiaojin` 当前这条 `IntroShareDialog → ShareImagePreview` 路径做最小修复。
 
-#### 1. 前端：TTS 音频上传到 Storage
-- 生成 TTS 后，将 base64 音频上传到 `video-assets` bucket（路径: `audio/{userId}/{timestamp}-scene{N}.mp3`）
-- 在 `sceneAudios` state 中记录上传后的公开 URL
+涉及文件
+- `src/components/common/IntroShareDialog.tsx`
+- `src/components/ui/share-image-preview.tsx`
 
-#### 2. 前端：合并下载时传递音频 URL
-- 修改 `handleMergeDownload`，收集所有场景的音频 URL
-- 修改 `mergeVideosClientSide` 函数签名，增加 `audioUrls` 参数
-- 调用 `merge-videos` 时一并传入 `audio_urls`
+验收标准
+- iPhone 微信上：`/xiaojin` → 右上“分享给孩子” → “生成图片” → 等待就绪 → 长按图片，必须弹出系统保存菜单。
+- Android 微信上同样验证一次。
+- 同时回归检查：
+  1. 预览还能先秒开，再自动切到 HTTPS；
+  2. 关闭预览后没有残留遮罩/滚动锁；
+  3. 桌面端保存与其他分享场景不受影响。
 
-#### 3. 边缘函数：merge-videos 支持音频合并
-- 接收可选的 `audio_urls` 数组（与 `video_urls` 一一对应）
-- 下载所有音频文件，拼接为一个完整 MP3 buffer
-- 编写轻量 MP3 帧解析器（MP3 帧头固定格式，约 30 行代码），将 MP3 拆分为独立帧
-- 在 mp4box.js 输出文件中新增一条 `mp3` 音频轨道，逐帧添加 sample
-- 最终输出的 MP4 同时包含视频轨和音频轨
-
-### 涉及文件
-
-| 文件 | 改动 |
-|------|------|
-| `src/components/admin/DramaScriptGenerator.tsx` | TTS 生成后上传 storage，合并时传 audio_urls |
-| `src/utils/videoMerger.ts` | 增加 audioUrls 参数 |
-| `supabase/functions/merge-videos/index.ts` | 接收 audio_urls，MP3 帧解析，添加音频轨 |
-
-### 技术细节
-- MP3 帧头：以 `0xFF 0xE*` 开头，帧长度可从 bitrate/samplerate 计算，解析成本极低
-- mp4box.js 的 `addTrack({ type: 'mp3', hdlr: 'soun' })` 可创建 MP3-in-MP4 音轨
-- 音频拼接顺序与视频片段顺序一致，确保画面与旁白同步
-- 若某个场景无音频 URL，用静默填充对应时长
-
+如果你批准，我就按这个最小改动方案实施。
