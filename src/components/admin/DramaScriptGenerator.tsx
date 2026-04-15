@@ -164,6 +164,7 @@ export default function DramaScriptGenerator() {
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
+  const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
   const [batchGenerating, setBatchGenerating] = useState(false);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
@@ -245,6 +246,7 @@ export default function DramaScriptGenerator() {
     setLoading(true);
     setResult(null);
     setSceneVideos({});
+    setVideoPreviewFallbacks({});
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -272,6 +274,25 @@ export default function DramaScriptGenerator() {
   const copyToClipboard = (text: string, label = "提示词") => {
     navigator.clipboard.writeText(text);
     toast.success(`${label}已复制`);
+  };
+
+  const openVideoUrl = (url: string) => {
+    const popup = window.open(url, "_blank", "noopener,noreferrer");
+    if (popup) return;
+
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_self";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.info("新窗口被拦截，已在当前页打开");
+    } catch {
+      copyToClipboard(url, "视频链接");
+      toast.error("打开失败，已复制视频链接");
+    }
   };
 
   const exportJSON = () => {
@@ -345,6 +366,12 @@ export default function DramaScriptGenerator() {
 
   const generateSceneVideo = useCallback(async (scene: Scene) => {
     const num = scene.sceneNumber;
+    setVideoPreviewFallbacks((prev) => {
+      if (!prev[num]) return prev;
+      const next = { ...prev };
+      delete next[num];
+      return next;
+    });
     updateSceneVideo(num, { status: "submitting" });
 
     try {
@@ -434,8 +461,8 @@ export default function DramaScriptGenerator() {
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
     } catch {
-      // Fallback: open in new tab
-      window.open(url, "_blank");
+      toast.info("下载受限，已尝试直接打开视频");
+      openVideoUrl(url);
     }
   };
 
@@ -995,6 +1022,14 @@ export default function DramaScriptGenerator() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-xs h-7 gap-1"
+                                  onClick={() => openVideoUrl(videoState.videoUrl!)}
+                                >
+                                  <Play className="h-3 w-3" /> 打开
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs h-7 gap-1"
                                   onClick={() => downloadSingleVideo(videoState.videoUrl!, scene.sceneNumber)}
                                 >
                                   <Download className="h-3 w-3" /> 下载
@@ -1020,23 +1055,42 @@ export default function DramaScriptGenerator() {
                           {/* Video preview */}
                           {videoState.status === "done" && videoState.videoUrl && (
                             <div className="mt-2">
-                              <video
-                                src={videoState.videoUrl}
-                                controls
-                                className="w-full max-w-md rounded-lg border"
-                                preload="metadata"
-                                onError={(e) => {
-                                  // If video fails to load, show a link instead
-                                  const target = e.currentTarget;
-                                  target.style.display = "none";
-                                  const link = document.createElement("a");
-                                  link.href = videoState.videoUrl!;
-                                  link.target = "_blank";
-                                  link.textContent = "视频无法预览，点击新窗口打开";
-                                  link.className = "text-xs text-primary underline";
-                                  target.parentElement?.appendChild(link);
-                                }}
-                              />
+                              {videoPreviewFallbacks[scene.sceneNumber] ? (
+                                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-3">
+                                  <span className="text-xs text-muted-foreground">当前环境无法直接预览，请点击打开或复制链接</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 gap-1 text-xs"
+                                    onClick={() => openVideoUrl(videoState.videoUrl!)}
+                                  >
+                                    <Play className="h-3 w-3" /> 打开视频
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 gap-1 text-xs"
+                                    onClick={() => copyToClipboard(videoState.videoUrl!, "视频链接")}
+                                  >
+                                    <Copy className="h-3 w-3" /> 复制链接
+                                  </Button>
+                                </div>
+                              ) : (
+                                <video
+                                  key={`${scene.sceneNumber}-${videoState.videoUrl}`}
+                                  src={videoState.videoUrl}
+                                  controls
+                                  className="w-full max-w-md rounded-lg border"
+                                  preload="metadata"
+                                  onError={() => {
+                                    setVideoPreviewFallbacks((prev) =>
+                                      prev[scene.sceneNumber]
+                                        ? prev
+                                        : { ...prev, [scene.sceneNumber]: true }
+                                    );
+                                  }}
+                                />
+                              )}
                               <p className="text-xs text-muted-foreground mt-1">⚠️ 视频链接有效期约1小时，请及时下载</p>
                             </div>
                           )}
