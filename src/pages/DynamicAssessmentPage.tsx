@@ -63,9 +63,38 @@ export default function DynamicAssessmentPage() {
   );
   const deleteRecord = useDeleteDynamicAssessmentRecord();
 
-  const questions = template?.questions || [];
+  const allQuestions = template?.questions || [];
   const dimensions = template?.dimensions || [];
   const patterns = template?.result_patterns || [];
+
+  // SBTI: randomly select 2 questions per dimension (+ 1 DRUNK_TRIGGER) = 31 total
+  const questions = useMemo(() => {
+    if (scoringType !== 'sbti' || allQuestions.length <= 31) return allQuestions;
+
+    const grouped: Record<string, any[]> = {};
+    const drunkQ: any[] = [];
+    allQuestions.forEach((q: any) => {
+      const dim = q.dimension || q.factor;
+      if (dim === 'DRUNK_TRIGGER') {
+        drunkQ.push(q);
+      } else {
+        if (!grouped[dim]) grouped[dim] = [];
+        grouped[dim].push(q);
+      }
+    });
+
+    const selected: any[] = [];
+    // Pick 2 random questions per dimension
+    Object.values(grouped).forEach((qs) => {
+      const shuffled = [...qs].sort(() => Math.random() - 0.5);
+      selected.push(...shuffled.slice(0, 2));
+    });
+    // Add DRUNK_TRIGGER
+    if (drunkQ.length > 0) selected.push(drunkQ[0]);
+    // Shuffle final order
+    return selected.sort(() => Math.random() - 0.5);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoringType, allQuestions.length, phase]);
 
   const [savedResultId, setSavedResultId] = useState<string | null>(null);
 

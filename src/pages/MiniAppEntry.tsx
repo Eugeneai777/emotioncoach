@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp, ClipboardList } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
