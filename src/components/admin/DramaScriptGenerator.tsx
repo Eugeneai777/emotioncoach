@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2 } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -108,6 +108,7 @@ interface Scene {
   imagePrompt: string;
   characterAction: string;
   dialogue: string;
+  narration?: string;
   bgm: string;
   duration: string;
   relatedProduct?: string;
@@ -131,6 +132,21 @@ interface SceneVideoState {
   taskId?: string;
   videoUrl?: string;
   error?: string;
+}
+
+type AudioStatus = "idle" | "generating" | "done" | "failed";
+
+interface SceneAudioState {
+  status: AudioStatus;
+  audioBase64?: string;
+  error?: string;
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const byteChars = atob(base64);
+  const byteNums = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+  return new Blob([byteNums], { type: mimeType });
 }
 
 const ASPECT_RATIOS = [
@@ -168,6 +184,10 @@ export default function DramaScriptGenerator() {
   const [batchGenerating, setBatchGenerating] = useState(false);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
+
+  // Audio/TTS state
+  const [sceneAudios, setSceneAudios] = useState<Record<number, SceneAudioState>>({});
+  const [batchGeneratingAudio, setBatchGeneratingAudio] = useState(false);
 
   const toggleProduct = (key: string) => {
     setSelectedProducts((prev) => {
@@ -247,6 +267,7 @@ export default function DramaScriptGenerator() {
     setResult(null);
     setSceneVideos({});
     setVideoPreviewFallbacks({});
+    setSceneAudios({});
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -408,6 +429,87 @@ export default function DramaScriptGenerator() {
     v.status === "submitting" || v.status === "in_queue" || v.status === "generating"
   );
   const completedCount = Object.values(sceneVideos).filter(v => v.status === "done").length;
+
+  // Audio computed values
+  const allAudiosDone = result?.scenes.every(s => sceneAudios[s.sceneNumber]?.status === "done") ?? false;
+  const anyAudioGenerating = Object.values(sceneAudios).some(a => a.status === "generating");
+  const completedAudioCount = Object.values(sceneAudios).filter(a => a.status === "done").length;
+
+  // --- TTS Audio Generation ---
+  const generateSceneAudio = useCallback(async (scene: Scene) => {
+    const num = scene.sceneNumber;
+    const text = scene.narration || scene.dialogue;
+    if (!text?.trim()) {
+      toast.error(`场景 ${num} 没有旁白/台词文案`);
+      return;
+    }
+    setSceneAudios(prev => ({ ...prev, [num]: { status: "generating" } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("volcengine-tts", {
+        body: { text, voice_type: "zh_female_cancan_mars_bigtts" },
+      });
+      if (error || data?.error) {
+        throw new Error(data?.error || "TTS生成失败");
+      }
+      if (!data?.audioContent) throw new Error("未返回音频数据");
+      setSceneAudios(prev => ({ ...prev, [num]: { status: "done", audioBase64: data.audioContent } }));
+      toast.success(`场景 ${num} 旁白已生成`);
+    } catch (e: any) {
+      setSceneAudios(prev => ({ ...prev, [num]: { status: "failed", error: e.message } }));
+    }
+  }, []);
+
+  const handleBatchGenerateAudio = async () => {
+    if (!result) return;
+    setBatchGeneratingAudio(true);
+    for (const scene of result.scenes) {
+      const state = sceneAudios[scene.sceneNumber];
+      if (state?.status === "done") continue;
+      await generateSceneAudio(scene);
+      await new Promise(r => setTimeout(r, 500));
+    }
+    setBatchGeneratingAudio(false);
+    toast.info("所有旁白已生成完毕");
+  };
+
+  const downloadSceneAudio = (sceneNum: number) => {
+    const state = sceneAudios[sceneNum];
+    if (!state?.audioBase64) return;
+    const blob = base64ToBlob(state.audioBase64, "audio/mpeg");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scene-${sceneNum}-narration.mp3`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadMergedAudio = () => {
+    if (!result) return;
+    const chunks: Uint8Array[] = [];
+    for (const scene of result.scenes) {
+      const state = sceneAudios[scene.sceneNumber];
+      if (state?.audioBase64) {
+        const bytes = atob(state.audioBase64);
+        const arr = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+        chunks.push(arr);
+      }
+    }
+    if (chunks.length === 0) { toast.error("没有已生成的旁白"); return; }
+    const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+    const merged = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const c of chunks) { merged.set(c, offset); offset += c.length; }
+    const blob = new Blob([merged], { type: "audio/mpeg" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${result.title || "drama"}-narration.mp3`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("合并旁白下载成功");
+  };
 
   const handleMergeDownload = async () => {
     if (!result) return;
@@ -893,9 +995,27 @@ export default function DramaScriptGenerator() {
                   )}
                 </Button>
 
+                <Button
+                  variant="outline"
+                  onClick={handleBatchGenerateAudio}
+                  disabled={batchGeneratingAudio || anyAudioGenerating}
+                  className="gap-2"
+                >
+                  {batchGeneratingAudio ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> 旁白生成中...</>
+                  ) : (
+                    <><Mic className="h-4 w-4" /> 全部生成旁白</>
+                  )}
+                </Button>
+
                 {completedCount > 0 && (
                   <span className="text-xs text-muted-foreground">
-                    已完成 {completedCount}/{result.scenes.length}
+                    视频 {completedCount}/{result.scenes.length}
+                  </span>
+                )}
+                {completedAudioCount > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    旁白 {completedAudioCount}/{result.scenes.length}
                   </span>
                 )}
 
@@ -909,8 +1029,18 @@ export default function DramaScriptGenerator() {
                     {merging ? (
                       <><Loader2 className="h-4 w-4 animate-spin" /> 合并中...</>
                     ) : (
-                      <><Download className="h-4 w-4" /> 合并下载成片</>
+                      <><Download className="h-4 w-4" /> 合并下载视频</>
                     )}
+                  </Button>
+                )}
+
+                {allAudiosDone && (
+                  <Button
+                    variant="outline"
+                    onClick={downloadMergedAudio}
+                    className="gap-2"
+                  >
+                    <Volume2 className="h-4 w-4" /> 下载合并旁白
                   </Button>
                 )}
               </div>
@@ -918,9 +1048,15 @@ export default function DramaScriptGenerator() {
               {completedCount > 0 && completedCount < result.scenes.length && (
                 <Progress value={(completedCount / result.scenes.length) * 100} className="h-2" />
               )}
+              {completedAudioCount > 0 && completedAudioCount < result.scenes.length && (
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">旁白生成进度</span>
+                  <Progress value={(completedAudioCount / result.scenes.length) * 100} className="h-2" />
+                </div>
+              )}
 
               <p className="text-xs text-muted-foreground">
-                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载
+                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载。旁白和视频需在剪辑软件中合并。
               </p>
             </CardContent>
           </Card>
@@ -1043,6 +1179,70 @@ export default function DramaScriptGenerator() {
                               </div>
                             )}
                           </div>
+
+                          {/* Audio/TTS per scene */}
+                          {(() => {
+                            const audioState = sceneAudios[scene.sceneNumber] || { status: "idle" as AudioStatus };
+                            return (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {audioState.status === "idle" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-1.5 text-xs h-8"
+                                    onClick={() => generateSceneAudio(scene)}
+                                    disabled={anyAudioGenerating}
+                                  >
+                                    <Mic className="h-3 w-3" /> 生成旁白
+                                  </Button>
+                                )}
+                                {audioState.status === "generating" && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                    <Loader2 className="h-3 w-3 animate-spin" /> 旁白生成中...
+                                  </span>
+                                )}
+                                {audioState.status === "done" && audioState.audioBase64 && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-primary flex items-center gap-1">
+                                      <Volume2 className="h-3 w-3" /> 旁白已生成
+                                    </span>
+                                    <audio
+                                      src={URL.createObjectURL(base64ToBlob(audioState.audioBase64, "audio/mpeg"))}
+                                      controls
+                                      className="h-7 max-w-[200px]"
+                                      preload="metadata"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-xs h-7 gap-1"
+                                      onClick={() => downloadSceneAudio(scene.sceneNumber)}
+                                    >
+                                      <Download className="h-3 w-3" /> 下载
+                                    </Button>
+                                  </div>
+                                )}
+                                {audioState.status === "failed" && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-destructive">{audioState.error || "旁白生成失败"}</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-xs h-7"
+                                      onClick={() => generateSceneAudio(scene)}
+                                    >
+                                      重试
+                                    </Button>
+                                  </div>
+                                )}
+                                {(scene.narration || scene.dialogue) && audioState.status === "idle" && (
+                                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                    📝 {(scene.narration || scene.dialogue).slice(0, 30)}...
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Video preview */}
                           {videoState.status === "done" && videoState.videoUrl && (
