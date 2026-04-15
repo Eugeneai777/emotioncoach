@@ -276,23 +276,14 @@ export default function DramaScriptGenerator() {
     toast.success(`${label}已复制`);
   };
 
+  const [modalVideoUrl, setModalVideoUrl] = useState<string | null>(null);
+
   const openVideoUrl = (url: string) => {
+    // Try new tab first
     const popup = window.open(url, "_blank", "noopener,noreferrer");
     if (popup) return;
-
-    try {
-      const link = document.createElement("a");
-      link.href = url;
-      link.target = "_self";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.info("新窗口被拦截，已在当前页打开");
-    } catch {
-      copyToClipboard(url, "视频链接");
-      toast.error("打开失败，已复制视频链接");
-    }
+    // Fallback: show in-page modal instead of navigating away
+    setModalVideoUrl(url);
   };
 
   const exportJSON = () => {
