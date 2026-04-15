@@ -197,6 +197,40 @@ def wechat_proxy():
             'message': str(e)
         }), 500
 
+# Supabase 存储代理 - 将 /storage/* 请求转发到 Supabase 存储
+# 用于微信小程序域名白名单限制，通过可信域名访问 OG 图片等资源
+SUPABASE_HOST = 'vlsuzskvykddwrxbmcbu.supabase.co'
+
+@app.route('/storage/<path:path>', methods=['GET'])
+def storage_proxy(path):
+    target_url = f'https://{SUPABASE_HOST}/storage/{path}'
+    query_string = request.query_string.decode('utf-8')
+    if query_string:
+        target_url += f'?{query_string}'
+    
+    log(f'📦 存储代理: /storage/{path}')
+    
+    try:
+        resp = requests.get(target_url, timeout=30, stream=True)
+        
+        if not resp.ok:
+            log(f'❌ 存储代理失败: {resp.status_code}')
+            return Response(status=resp.status_code)
+        
+        content_type = resp.headers.get('Content-Type', 'application/octet-stream')
+        headers = {
+            'Content-Type': content_type,
+            'Cache-Control': 'public, max-age=86400',
+            'Access-Control-Allow-Origin': '*',
+        }
+        
+        log(f'✅ 存储代理成功: {content_type}, {len(resp.content)} bytes')
+        return Response(resp.content, status=200, headers=headers)
+        
+    except Exception as e:
+        log(f'❌ 存储代理错误: {str(e)}')
+        return jsonify({'error': 'Storage proxy failed', 'message': str(e)}), 502
+
 # 404 处理
 @app.errorhandler(404)
 def not_found(e):

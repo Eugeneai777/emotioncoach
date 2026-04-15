@@ -281,6 +281,41 @@ app.post('/miniprogram-login', async (req, res) => {
   }
 });
 
+// Supabase 存储代理 - 将 /storage/* 请求转发到 Supabase 存储
+// 用于微信小程序域名白名单限制，通过可信域名访问 OG 图片等资源
+const SUPABASE_HOST = 'vlsuzskvykddwrxbmcbu.supabase.co';
+
+app.get('/storage/*', async (req, res) => {
+  const timestamp = new Date().toISOString();
+  const targetUrl = `https://${SUPABASE_HOST}${req.originalUrl}`;
+  
+  console.log(`[${timestamp}] 📦 存储代理: ${req.originalUrl}`);
+  
+  try {
+    const response = await fetch(targetUrl);
+    
+    if (!response.ok) {
+      console.error(`[${timestamp}] ❌ 存储代理失败: ${response.status}`);
+      return res.status(response.status).end();
+    }
+    
+    // 转发关键响应头
+    const contentType = response.headers.get('content-type');
+    if (contentType) res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // 流式转发响应体
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.send(buffer);
+    
+    console.log(`[${timestamp}] ✅ 存储代理成功: ${contentType}, ${buffer.length} bytes`);
+  } catch (error) {
+    console.error(`[${timestamp}] ❌ 存储代理错误:`, error.message);
+    res.status(502).json({ error: 'Storage proxy failed', message: error.message });
+  }
+});
+
 // 404 处理
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
