@@ -189,13 +189,10 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           }`}
           style={{
             touchAction: 'pinch-zoom',
-            WebkitUserSelect: 'none',
-            userSelect: 'none',
             WebkitTouchCallout: 'default',
           }}
           onLoad={() => { setImageLoaded(true); setImageError(false); }}
           onError={() => { setImageError(true); setImageLoaded(false); }}
-          onContextMenu={(e) => e.stopPropagation()}
         />
       </div>
 
