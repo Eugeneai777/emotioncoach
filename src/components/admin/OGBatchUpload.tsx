@@ -279,7 +279,12 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             .from('og-images')
             .getPublicUrl(fileName);
 
-          resolve(data.publicUrl);
+          // 将 Supabase 存储域名替换为可信域名
+          const supabaseHost = 'vlsuzskvykddwrxbmcbu.supabase.co';
+          const publicUrl = data.publicUrl.includes(supabaseHost)
+            ? data.publicUrl.replace(`https://${supabaseHost}`, 'https://wechat.eugenewe.net')
+            : data.publicUrl;
+          resolve(publicUrl);
         }, 'image/png', 0.95);
       };
 

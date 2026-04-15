@@ -1,6 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_OG_CONFIG, OGConfig, OG_SITE_NAME } from "@/config/ogConfig";
+import { DEFAULT_OG_CONFIG, OGConfig, OG_SITE_NAME, OG_BASE_URL } from "@/config/ogConfig";
+
+/**
+ * 将 Supabase 存储域名替换为可信域名
+ * 解决微信小程序域名白名单限制导致 OG 图片加载失败的问题
+ */
+function rewriteStorageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  const supabaseHost = 'vlsuzskvykddwrxbmcbu.supabase.co';
+  if (url.includes(supabaseHost)) {
+    return url.replace(`https://${supabaseHost}`, OG_BASE_URL);
+  }
+  return url;
+}
 
 // 默认 OG 图片尺寸
 const DEFAULT_IMAGE_WIDTH = 1200;
@@ -58,7 +71,7 @@ export function usePageOG(pageKey: string): {
     title: customConfig?.title || defaultConfig.title,
     ogTitle: customConfig?.og_title || defaultConfig.ogTitle,
     description: customConfig?.description || defaultConfig.description,
-    image: customConfig?.image_url || defaultConfig.image,
+    image: rewriteStorageUrl(customConfig?.image_url) || defaultConfig.image,
     url: customConfig?.url || defaultConfig.url,
     siteName: customConfig?.site_name || defaultConfig.siteName || OG_SITE_NAME,
     isCustomized: !!customConfig,
