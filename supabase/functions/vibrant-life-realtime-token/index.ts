@@ -1171,6 +1171,7 @@ serve(async (req) => {
     // 解析请求体获取模式和场景
     let mode = 'general';
     let scenario: string | null = null;
+    let voiceOverride: string | null = null;
     try {
       const body = await req.json();
       mode = body.mode || 'general';
