@@ -1104,5 +1104,41 @@ export default function DramaScriptGenerator() {
         </div>
       )}
     </AdminPageLayout>
+
+      {/* Video preview modal */}
+      {modalVideoUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setModalVideoUrl(null)}>
+          <div className="relative w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute -top-10 right-0 text-white hover:bg-white/20"
+              onClick={() => setModalVideoUrl(null)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+            <video
+              src={modalVideoUrl}
+              controls
+              autoPlay
+              className="w-full rounded-lg"
+              onError={() => {
+                toast.error("视频加载失败");
+                copyToClipboard(modalVideoUrl, "视频链接");
+                setModalVideoUrl(null);
+              }}
+            />
+            <div className="flex justify-center gap-2 mt-3">
+              <Button variant="secondary" size="sm" onClick={() => copyToClipboard(modalVideoUrl, "视频链接")}>
+                <Copy className="h-3 w-3 mr-1" /> 复制链接
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setModalVideoUrl(null)}>
+                关闭
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
