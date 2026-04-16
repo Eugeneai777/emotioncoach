@@ -54,7 +54,7 @@ async function fetchShareUserData(campId?: string): Promise<{
   profile: { avatar_url?: string; display_name?: string } | null;
   partner: { id: string; partner_code: string } | null;
   campCurrentDay: number | null;
-  userMeta: { avatar_url?: string; full_name?: string } | null;
+  userMeta: { avatar_url?: string; full_name?: string; name?: string } | null;
 }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -65,7 +65,7 @@ async function fetchShareUserData(campId?: string): Promise<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
   
-  const profileRes = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
+  const profileRes = await sb.from('profiles').select('avatar_url, display_name').eq('id', user.id).single();
   const partnerRes = await sb.from('partners').select('id, partner_code').eq('user_id', user.id).eq('status', 'active').maybeSingle();
   
   const profile = profileRes?.data as { avatar_url?: string; display_name?: string } | null;
@@ -107,7 +107,7 @@ export function useOneClickShare(options: UseOneClickShareOptions = {}): UseOneC
 
       setUserInfo({
         avatarUrl: getProxiedAvatarUrl(profile?.avatar_url || userMeta?.avatar_url),
-        displayName: profile?.display_name || userMeta?.full_name || '财富觉醒者',
+        displayName: (() => { const raw = profile?.display_name || userMeta?.full_name || userMeta?.name; return (raw && !raw.startsWith('phone_')) ? raw : '财富觉醒者'; })(),
         currentDay: currentDay || campCurrentDay || 1,
         totalDays: 7,
       });

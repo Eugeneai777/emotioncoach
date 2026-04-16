@@ -65,7 +65,7 @@ const ShareInvite = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sb = supabase as any;
       
-      const profileRes = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
+      const profileRes = await sb.from('profiles').select('avatar_url, display_name').eq('id', user.id).single();
       const partnerRes = await sb.from('partners').select('id, partner_code').eq('user_id', user.id).eq('status', 'active').maybeSingle();
       
       const profile = profileRes?.data;
@@ -73,7 +73,7 @@ const ShareInvite = () => {
 
       setUserInfo({
         avatarUrl: getProxiedAvatarUrl(profile?.avatar_url || user.user_metadata?.avatar_url),
-        displayName: profile?.display_name || user.user_metadata?.full_name || '财富觉醒者',
+        displayName: (() => { const raw = profile?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]; return (raw && !raw.startsWith('phone_')) ? raw : '财富觉醒者'; })(),
       });
 
       if (partner) {
