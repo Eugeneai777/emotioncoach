@@ -666,17 +666,31 @@ export function DynamicAssessmentResult({
 
       {/* Hidden share card */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <DynamicAssessmentShareCard
-          ref={shareCardRef}
-          totalScore={result.totalScore}
-          maxScore={result.maxScore}
-          dimensionScores={result.dimensionScores}
-          primaryPattern={result.primaryPattern}
-          templateEmoji={template.emoji}
-          templateTitle={template.title}
-          displayName={profileData.displayName}
-          avatarUrl={profileData.avatarUrl}
-        />
+        {isSBTI ? (
+          <SBTIShareCard
+            ref={shareCardRef}
+            personalityLabel={result.primaryPattern?.label || '未知人格'}
+            personalityEmoji={result.primaryPattern?.emoji || '🎭'}
+            subtitle={result.meta?.subtitle}
+            quote={result.meta?.quote}
+            traits={result.primaryPattern?.traits || []}
+            matchPercent={Math.max(0, Math.round(100 - (result.meta?.matchDistance || 0) / 15 * 100))}
+            displayName={profileData.displayName}
+            avatarUrl={profileData.avatarUrl}
+          />
+        ) : (
+          <DynamicAssessmentShareCard
+            ref={shareCardRef}
+            totalScore={result.totalScore}
+            maxScore={result.maxScore}
+            dimensionScores={result.dimensionScores}
+            primaryPattern={result.primaryPattern}
+            templateEmoji={template.emoji}
+            templateTitle={template.title}
+            displayName={profileData.displayName}
+            avatarUrl={profileData.avatarUrl}
+          />
+        )}
       </div>
 
       {/* Share image preview */}
