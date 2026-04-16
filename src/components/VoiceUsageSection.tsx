@@ -28,6 +28,16 @@ const SOURCE_LABELS: Record<string, string> = {
   mysql: "文字对话",
   voice_to_text: "语音转文字",
   text_to_speech: "文字转语音",
+  // 语音教练 feature keys
+  realtime_voice: "生活教练语音",
+  realtime_voice_emotion: "情绪教练语音",
+  realtime_voice_wealth: "财富教练语音",
+  realtime_voice_wealth_assessment: "财富教练语音",
+  realtime_voice_vibrant_life: "有劲生活教练语音",
+  realtime_voice_teen: "青少年教练语音",
+  realtime_voice_career: "职场教练语音",
+  realtime_voice_parent: "亲子教练语音",
+  realtime_voice_relationship: "关系教练语音",
   // 课程推荐
   courses_page: "学习课程",
   recommend_courses: "AI推荐课程",
@@ -74,12 +84,18 @@ const getSourceLabel = (source: string | null): string => {
 const humanizeDescription = (desc: string | null, source: string | null): string => {
   if (!desc) return "";
   let result = desc;
-  // 替换 description 中出现的 source key
-  for (const [key, label] of Object.entries(SOURCE_LABELS)) {
+  // 替换 description 中出现的 source key（按 key 长度降序，避免短 key 先匹配导致误替换）
+  const sortedEntries = Object.entries(SOURCE_LABELS).sort((a, b) => b[0].length - a[0].length);
+  for (const [key, label] of sortedEntries) {
     if (result.includes(key)) {
       result = result.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), label);
     }
   }
+  // 通用兜底：捕获任何残留的 realtime_voice_xxx 英文字符串
+  result = result.replace(/realtime_voice_\w+/g, (match) => {
+    const label = SOURCE_LABELS[match];
+    return label || '语音通话';
+  });
   // 兼容旧数据：将通用"训练营免费额度"追加产品名（如果缺少分隔符）
   if (result.includes("训练营免费额度") && source && SOURCE_LABELS[source] && !result.includes("·")) {
     result = `${result} · ${SOURCE_LABELS[source]}`;
