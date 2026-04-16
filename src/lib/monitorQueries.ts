@@ -125,9 +125,9 @@ export function useMonitorStabilityRecords(options: MonitorQueryOptions) {
 }
 
 /** 查询用户异常 */
-export function useMonitorUserAnomalies(options: MonitorQueryOptions & { anomalyType?: string }) {
+export function useMonitorUserAnomalies(options: MonitorQueryOptions & { anomalyType?: string; statusFilter?: string }) {
   return useQuery({
-    queryKey: ['monitor-user-anomalies', options.platform, options.timeRange, options.anomalyType],
+    queryKey: ['monitor-user-anomalies', options.platform, options.timeRange, options.anomalyType, options.statusFilter],
     queryFn: async () => {
       let query = supabase
         .from('monitor_user_anomalies')
@@ -141,6 +141,11 @@ export function useMonitorUserAnomalies(options: MonitorQueryOptions & { anomaly
       }
       if (options.anomalyType && options.anomalyType !== 'all') {
         query = query.eq('anomaly_type', options.anomalyType);
+      }
+      if (options.statusFilter === 'resolved') {
+        query = query.eq('status', 'reviewed');
+      } else if (options.statusFilter === 'unresolved') {
+        query = query.in('status', ['pending', 'ignored']);
       }
 
       const { data, error } = await query;
