@@ -64,7 +64,7 @@ type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | '
 type SpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
 const POINTS_PER_MINUTE = 8;
-const DEFAULT_MAX_DURATION_MINUTES = 3; // 默认3分钟（未配置时）
+const DEFAULT_MAX_DURATION_MINUTES = 5; // 默认5分钟（未配置时）
 
 export const CoachVoiceChat = ({
   onClose,
