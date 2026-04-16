@@ -155,25 +155,7 @@ export default function DynamicAssessmentPage() {
   };
 
   const handleQuestionsComplete = (answers: Record<number, number>) => {
-    // SBTI uses freemium layering: guests see lite result, logged-in users see full
-    const isSBTIType = scoringType === 'sbti';
-
-    if (isSBTIType) {
-      // Always calculate and show result; gate depth via isLiteMode
-      const isGuest = !user;
-      setIsLiteMode(isGuest);
-      calculateAndShowResult(answers);
-      return;
-    }
-
-    // Non-SBTI: original auth/payment gating
-    if (requireAuth && !user) {
-      toast.info("请先登录后查看结果");
-      const returnUrl = window.location.pathname;
-      window.location.href = `/auth?returnUrl=${encodeURIComponent(returnUrl)}`;
-      return;
-    }
-
+    // Login gate is now at Intro start button, so user should be authenticated here
     if (requirePayment && !hasPurchased) {
       calculateAndShowResult(answers);
       setShowPayDialog(true);

@@ -2,6 +2,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 
@@ -70,6 +74,8 @@ const enrichmentData: Record<string, {
 };
 
 export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const needPay = requirePayment && !hasPurchased;
   const dimensions = template.dimensions || [];
   const enrichment = template.assessment_key ? enrichmentData[template.assessment_key] : undefined;
@@ -272,7 +278,15 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
         {/* CTA */}
         <motion.div {...fadeUp(enrichment ? 0.75 : 0.7)} className="pt-2">
           <Button
-            onClick={needPay ? (onPayClick ?? onStart) : onStart}
+            onClick={() => {
+              if (!user) {
+                toast.info("请先登录后开始测评");
+                setPostAuthRedirect(window.location.pathname + window.location.search);
+                navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+                return;
+              }
+              needPay ? (onPayClick ?? onStart)() : onStart();
+            }}
             className={cn(
               "w-full h-13 text-base gap-2 shadow-lg active:scale-[0.98] transition-transform",
               !needPay && template.assessment_key === 'sbti_personality' && "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
