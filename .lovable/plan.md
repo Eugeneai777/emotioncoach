@@ -1,41 +1,34 @@
 
 
-# 全站海报昵称查询修复 — 兼容稳定方案
+# 点数充值入口 — 增加 ¥99 档位
 
-## 问题
+## 更新内容
 
-4 个文件在查询 `profiles` 表时使用了错误的列名 `.eq('user_id', user.id)`，但 profiles 表的主键是 `id`，导致查询永远返回 null，displayName 回退到邮箱前缀（如 `phone_8618898593978`）。
+在之前的 3 档基础上增加第 4 档 ¥99 套餐，最终 4 档如下：
 
-同时，各文件的 displayName 回退链不统一，部分缺少 `user_metadata.name` 和 `phone_` 前缀过滤。
+| 套餐 | 价格 | 点数 | 定位 |
+|------|------|------|------|
+| 体验包 | ¥9.9 | 50 点 | 轻度用户尝鲜 |
+| 标准包 | ¥49.9 | 300 点 | 日常使用 |
+| 畅享包 | ¥99 | 800 点 | 高频用户性价比之选 |
+| 365会员 | ¥365 | 1000 点 | 重度用户（复用已有 member365） |
 
-## 修复范围
+## 实现方案
 
-| 文件 | 修复内容 |
-|------|----------|
-| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx:157` | `.eq('user_id', ...)` → `.eq('id', ...)`，已有 phone_ 过滤 ✅ |
-| `src/hooks/useOneClickShare.ts:68` | `.eq('user_id', ...)` → `.eq('id', ...)`  |
-| `src/pages/ShareInvite.tsx:68` | `.eq('user_id', ...)` → `.eq('id', ...)`，统一回退链 + phone_ 过滤 |
-| `src/components/wealth-block/XiaohongshuShareDialog.tsx:41` | `.eq('user_id', ...)` → `.eq('id', ...)`，统一回退链 + phone_ 过滤 |
+### 1. 新建 `src/components/QuotaRechargeDialog.tsx`
 
-## 统一回退链标准
+套餐选择弹窗，4 档卡片式布局（2×2 网格），每档显示价格、点数、单价对比。选择后调用 `UnifiedPayDialog` 完成支付。¥99 档标注"最超值"推荐标签。
 
-所有海报昵称统一使用以下逻辑：
+### 2. 修改 `src/components/VoiceUsageSection.tsx`
 
-```typescript
-const rawName = profile?.display_name 
-  || user.user_metadata?.full_name 
-  || user.user_metadata?.name 
-  || user.email?.split('@')[0];
-const displayName = (rawName && !rawName.startsWith('phone_')) 
-  ? rawName 
-  : '用户';  // 或各场景专属默认值如 '财富觉醒者'
-```
+在汇总条（第 202-221 行）右侧增加「充值」按钮，余额低于 20 点时按钮高亮。集成 QuotaRechargeDialog，支付成功后自动刷新余额。
 
-**优先级**：profiles 表昵称 → 微信 full_name → 微信 name → 邮箱前缀（过滤 phone_）
+## 修改文件
 
-## 影响
+| 文件 | 改动 |
+|------|------|
+| `src/components/QuotaRechargeDialog.tsx` | **新建**：4 档套餐选择 + UnifiedPayDialog 集成 |
+| `src/components/VoiceUsageSection.tsx` | 汇总条增加充值按钮，集成弹窗，成功回调刷新余额 |
 
-- 修复后所有手机号注册用户的海报将正确显示昵称
-- 已有正确 display_name 的用户不受影响
-- 4 个文件各改 1-2 行
+约 2 个文件，~150 行新代码。
 
