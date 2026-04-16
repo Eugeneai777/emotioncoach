@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -541,29 +541,6 @@ const MiniAppEntry = () => {
         slides={filteredSlides}
       />
 
-      {/* ── 我的测评记录入口 ── */}
-      {user && (
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-          className="px-4 pb-3 max-w-lg mx-auto"
-        >
-          <button
-            onClick={() => navigate('/energy-studio?tab=assessments')}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40 shadow-sm active:scale-[0.98] transition-transform"
-          >
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <ClipboardList className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-semibold text-foreground">我的测评</p>
-              <p className="text-[10px] text-muted-foreground">查看历史测评记录与报告</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-          </button>
-        </motion.div>
-      )}
 
       <motion.div
         initial={{ opacity: 0, y: 6 }}
