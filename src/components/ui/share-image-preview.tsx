@@ -89,18 +89,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   // Determine bottom hint based on environment and remote readiness
   const renderBottomAction = () => {
     if (isWeChat) {
-      // WeChat environment: show preparing vs ready state
-      if (!isRemoteReady) {
-        return (
-          <div className="flex flex-col items-center gap-1 py-2">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-muted-foreground/40 border-t-muted-foreground rounded-full animate-spin" />
-              <p className="text-base font-medium text-foreground">正在准备可保存图片…</p>
-            </div>
-            <p className="text-muted-foreground text-xs">图片准备完成后再长按保存</p>
-          </div>
-        );
-      }
+      if (!imageLoaded) return null;
       return (
         <div className="flex flex-col items-center gap-1 py-2">
           <p className="text-base font-medium text-foreground">👆 长按上方图片保存到相册</p>
