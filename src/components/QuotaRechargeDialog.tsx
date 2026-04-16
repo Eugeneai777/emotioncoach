@@ -11,12 +11,20 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Zap } from 'lucide-react';
 
-const RECHARGE_PACKAGES = [
+interface RechargePackage {
+  key: string;
+  name: string;
+  price: number;
+  quota: number;
+  recommended?: boolean;
+}
+
+const RECHARGE_PACKAGES: RechargePackage[] = [
   { key: 'quota_9_9', name: '体验包', price: 9.9, quota: 50 },
   { key: 'quota_49_9', name: '标准包', price: 49.9, quota: 300 },
   { key: 'quota_99', name: '畅享包', price: 99, quota: 800, recommended: true },
   { key: 'member365', name: '365会员', price: 365, quota: 1000 },
-] as const;
+];
 
 interface QuotaRechargeDialogProps {
   open: boolean;

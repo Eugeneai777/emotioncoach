@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift, Info, Plus } from "lucide-react";
 import { QuotaRechargeDialog } from "./QuotaRechargeDialog";
 import { PointsRulesDialog } from "./PointsRulesDialog";
