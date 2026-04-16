@@ -112,6 +112,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<FilterMode>("all");
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     const load = async () => {
