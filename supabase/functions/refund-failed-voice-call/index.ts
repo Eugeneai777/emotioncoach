@@ -87,6 +87,8 @@ Deno.serve(async (req) => {
       realtime_voice: '生活教练语音',
       realtime_voice_emotion: '情绪教练语音',
       realtime_voice_wealth: '财富教练语音',
+      realtime_voice_wealth_assessment: '财富教练语音',
+      realtime_voice_vibrant_life: '有劲生活教练语音',
       realtime_voice_teen: '青少年教练语音',
       realtime_voice_career: '职场教练语音',
       realtime_voice_parent: '亲子教练语音',
