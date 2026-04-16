@@ -1,75 +1,47 @@
 
 
-# 增加「点数流水」审计日志（一期）
+# 回填历史数据 + 完善点数明细展示
 
-## 约束确认
+## 问题根因
 
-本次改动**不影响**现有业务扣费逻辑、不修改 `deduct_user_quota` RPC、不改变任何支付回调的流程。所有改动都是**追加写入**性质（新建表 + 在扣费成功后插入日志行）。前端仅改动 `VoiceUsageSection.tsx` 一个组件，不影响其他页面。
+`quota_transactions` 表刚建好是空的。一期只在 `deduct-quota` 函数中加了**未来**写入逻辑，但历史数据（该用户已有 20 条 `usage_records` + 1 条购买订单 + 注册赠送）未回填，所以用户看到「暂无点数变动记录」。
 
-## 改动范围
+## 方案
 
-### 1. 数据库：新建 `quota_transactions` 表
+### 1. 数据库迁移：回填历史数据
 
-```sql
-CREATE TABLE public.quota_transactions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type text NOT NULL,        -- 'grant' | 'deduct' | 'refund' | 'admin_recharge'
-  amount integer NOT NULL,   -- 正=增加, 负=扣减
-  balance_after integer,     -- 变动后余额
-  source text,               -- 'voice_chat' | 'text_chat' | 'purchase_basic' | 'admin' 等
-  description text,          -- 中文描述
-  reference_id text,         -- 关联 session_id / order_no
-  created_at timestamptz DEFAULT now()
-);
+用一次性 SQL 从现有表回填到 `quota_transactions`：
 
-CREATE INDEX idx_quota_tx_user ON public.quota_transactions(user_id, created_at DESC);
-ALTER TABLE public.quota_transactions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users view own" ON public.quota_transactions
-  FOR SELECT TO authenticated USING (user_id = auth.uid());
-```
+**来源 A — `usage_records`（扣费 + 退款记录）**
+- `record_type = 'conversation'` → type='deduct', amount 取负值
+- `record_type = 'refund'` → type='refund', amount 取正值（原值是负数）
+- `record_type = 'camp_entitlement'` → type='free_quota', amount=0
+- source 映射中文 description
 
-### 2. 后端：`deduct-quota/index.ts` 追加流水写入
+**来源 B — `orders`（购买充值）**
+- `status = 'paid'` 且 `package_key = 'basic'` → type='grant', amount=+150（200总额 - 50注册赠送）
+- description = "购买尝鲜会员 +150点"
 
-在扣费成功（步骤 5 之后，约第 411 行）插入一条 `quota_transactions` 记录。**不改变**任何扣费判断逻辑，仅在现有 `usage_records.insert` 之后追加一行 INSERT：
+**来源 C — 注册赠送**
+- `handle_new_user_account` 触发器自动给 50 点 → type='grant', amount=+50, description="注册赠送 +50点"
+- 取 `user_accounts.created_at` 作为时间
 
-```typescript
-// 在 "Record usage" 之后追加
-await supabase.from('quota_transactions').insert({
-  user_id: userId,
-  type: usedFreeQuota ? 'free_quota' : (actualCost > 0 ? 'deduct' : 'free_quota'),
-  amount: actualCost > 0 ? -actualCost : 0,
-  balance_after: account?.remaining_quota || 0,
-  source: source || featureKey,
-  description: `${featureName}扣费 -${actualCost}点`,
-  reference_id: session_id || conversationId || null,
-});
-```
+### 2. 前端：优化空状态处理
 
-训练营免费权益路径同样追加一条 `amount=0` 的记录。
+当 `quota_transactions` 为空但 `remainingQuota` 有值时，不应该隐藏整个区块。当前第 69 行的逻辑已经正确（有 remainingQuota 就显示），只是因为表空才看到「暂无」。回填后自动解决。
 
-### 3. 前端：升级 `VoiceUsageSection.tsx` → 「点数明细」
+## 不影响的内容
 
-- 数据源从 `voice_chat_sessions` 切换为 `quota_transactions`
-- 汇总条保持不变（剩余点数 + 本月消耗 + 本月通话次数）
-- 记录列表改为显示点数流水，增减用绿/红色区分
-- 布局使用 `flex-wrap` 确保手机端自动换行，电脑端保持一行
-
-### 不涉及的改动（二期）
-
-以下函数的流水写入列为二期，本次**不修改**：
-- `admin-recharge`（管理员充值）
-- `check-order-status` / `wechat-pay-callback`（购买充值）
-- `refund-failed-voice-call`（退款）
-- 历史数据回填
-
-因此一期上线后，点数明细中只会显示"扣费"类记录。购买充值等"获得"记录需二期补全。
+- 不修改任何边缘函数
+- 不修改 `deduct_user_quota` RPC
+- 不修改前端组件逻辑（回填后自然展示）
+- 回填 SQL 使用 `ON CONFLICT` 或 `NOT EXISTS` 防重复
 
 ## 文件清单
 
 | 文件 | 操作 | 影响面 |
 |------|------|--------|
-| 数据库迁移 | 新建 `quota_transactions` 表 + RLS | 无影响，纯新建 |
-| `supabase/functions/deduct-quota/index.ts` | 追加 INSERT（约 5 行） | 不改变扣费逻辑 |
-| `src/components/VoiceUsageSection.tsx` | 重构数据源和展示 | 仅影响 /my-page 该区块 |
+| 数据库迁移 SQL | 回填 `quota_transactions` | 纯追加，不改现有数据 |
+
+单一迁移文件，约 60 行 SQL。回填后用户立即能看到完整的点数流水。
 
