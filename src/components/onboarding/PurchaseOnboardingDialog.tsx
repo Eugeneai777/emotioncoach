@@ -24,7 +24,7 @@ interface PurchaseOnboardingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   partnerId?: string;
-  defaultPackage?: 'basic' | 'member365';
+  defaultPackage?: 'basic' | 'standard_49' | 'premium_99' | 'member365';
   onSuccess?: () => void;
   triggerFeature?: string; // 触发购买的功能名称
 }
