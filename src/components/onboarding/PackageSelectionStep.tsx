@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Sparkles, Crown, Gift } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Check, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Package {
@@ -21,94 +21,74 @@ interface PackageSelectionStepProps {
   onNext: () => void;
 }
 
+const DISPLAY_KEYS = ['basic', 'standard_49', 'premium_99', 'member365'];
+
 export function PackageSelectionStep({
   packages,
   selectedPackage,
   onSelect,
   onNext
 }: PackageSelectionStepProps) {
-  const basicPackage = packages.find(p => p.package_key === 'basic');
-  const premiumPackage = packages.find(p => p.package_key === 'member365');
+  const displayPackages = packages
+    .filter(p => DISPLAY_KEYS.includes(p.package_key))
+    .sort((a, b) => {
+      const ai = DISPLAY_KEYS.indexOf(a.package_key);
+      const bi = DISPLAY_KEYS.indexOf(b.package_key);
+      return ai - bi;
+    });
 
   return (
     <div className="space-y-4">
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-1">
         <h3 className="text-lg font-semibold">选择适合你的套餐</h3>
-        <p className="text-sm text-muted-foreground">
-          开启你的情绪成长之旅
-        </p>
+        <p className="text-sm text-muted-foreground">开启你的情绪成长之旅</p>
       </div>
 
-      <div className="space-y-3">
-        {/* 尝鲜会员 - 推荐 */}
-        {basicPackage && (
-          <Card
-            className={cn(
-              "relative p-4 cursor-pointer transition-all border-2",
-              selectedPackage?.package_key === 'basic'
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/50"
-            )}
-            onClick={() => onSelect(basicPackage)}
-          >
-            <div className="absolute -top-2 left-3 px-2 py-0.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs rounded-full flex items-center gap-1">
-              <Gift className="w-3 h-3" />
-              新用户推荐
-            </div>
-            <div className="flex items-start justify-between pt-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-teal-500" />
-                  <span className="font-semibold">{basicPackage.package_name}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{basicPackage.description}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-muted-foreground">{basicPackage.ai_quota} 点额度</span>
-                  <span className="text-muted-foreground">{basicPackage.duration_days}天有效</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-primary">¥{basicPackage.price}</div>
-                {selectedPackage?.package_key === 'basic' && (
-                  <Check className="w-5 h-5 text-primary ml-auto mt-1" />
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
+      <div className="grid grid-cols-2 gap-2.5">
+        {displayPackages.map((pkg) => {
+          const isSelected = selectedPackage?.package_key === pkg.package_key;
+          const isRecommended = pkg.package_key === 'premium_99';
+          const isNewUser = pkg.package_key === 'basic';
+          const unitPrice = (pkg.price / pkg.ai_quota).toFixed(2);
 
-        {/* 365会员 */}
-        {premiumPackage && (
-          <Card
-            className={cn(
-              "relative p-4 cursor-pointer transition-all border-2",
-              selectedPackage?.package_key === 'member365'
-                ? "border-amber-500 bg-amber-50/50"
-                : "border-border hover:border-amber-500/50"
-            )}
-            onClick={() => onSelect(premiumPackage)}
-          >
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-amber-500" />
-                  <span className="font-semibold">{premiumPackage.package_name}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{premiumPackage.description}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-muted-foreground">{premiumPackage.ai_quota} 点额度</span>
-                  <span className="text-muted-foreground">{premiumPackage.duration_days}天有效</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-amber-600">¥{premiumPackage.price}</div>
-                {selectedPackage?.package_key === 'member365' && (
-                  <Check className="w-5 h-5 text-amber-500 ml-auto mt-1" />
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
+          return (
+            <Card
+              key={pkg.package_key}
+              className={cn(
+                "relative p-3 cursor-pointer transition-all border-2 flex flex-col items-center gap-1",
+                isSelected
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50",
+                isRecommended && !isSelected && "border-primary/30 bg-primary/5"
+              )}
+              onClick={() => onSelect(pkg)}
+            >
+              {isRecommended && (
+                <Badge className="absolute -top-2.5 right-1 text-[10px] px-1.5 py-0 bg-primary text-primary-foreground">
+                  最超值
+                </Badge>
+              )}
+              {isNewUser && (
+                <Badge className="absolute -top-2.5 left-1 text-[10px] px-1.5 py-0 bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
+                  <Gift className="w-2.5 h-2.5 mr-0.5" />新用户
+                </Badge>
+              )}
+
+              <span className="text-sm font-semibold text-foreground mt-1">{pkg.package_name}</span>
+              <span className="text-xl font-bold text-primary">¥{pkg.price}</span>
+              <span className="text-xs text-muted-foreground">{pkg.ai_quota} 点 · {pkg.duration_days}天</span>
+              <span className="text-[10px] text-muted-foreground">约 ¥{unitPrice}/点</span>
+              {pkg.description && (
+                <span className="text-[10px] text-muted-foreground text-center line-clamp-2 leading-tight">
+                  {pkg.description}
+                </span>
+              )}
+              {isSelected && (
+                <Check className="absolute top-1.5 right-1.5 w-4 h-4 text-primary" />
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       <Button
