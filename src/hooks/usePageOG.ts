@@ -3,15 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_OG_CONFIG, OGConfig, OG_SITE_NAME, OG_BASE_URL } from "@/config/ogConfig";
 
 /**
- * 将 Supabase 存储域名替换为可信域名
- * 解决微信小程序域名白名单限制导致 OG 图片加载失败的问题
+ * 直接返回存储 URL，不做域名替换
  */
 function rewriteStorageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  const supabaseHost = 'vlsuzskvykddwrxbmcbu.supabase.co';
-  if (url.includes(supabaseHost)) {
-    return url.replace(`https://${supabaseHost}`, OG_BASE_URL);
-  }
   return url;
 }
 
