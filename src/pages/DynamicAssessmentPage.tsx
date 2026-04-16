@@ -184,6 +184,16 @@ export default function DynamicAssessmentPage() {
     });
   };
 
+  const handleViewHistoryRecord = (record: any) => {
+    if (!template) return;
+    const storedAnswers = record.answers || {};
+    const scoringResult = calculateScore(scoringType, storedAnswers, allQuestions, dimensions, patterns);
+    setResult(scoringResult);
+    setAiInsight(record.ai_insight || null);
+    setSavedResultId(record.id);
+    setPhase("result");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -273,6 +283,7 @@ export default function DynamicAssessmentPage() {
         scoringType={scoringType}
         onDelete={handleDeleteRecord}
         onBack={() => setPhase(result ? "result" : "intro")}
+        onViewRecord={handleViewHistoryRecord}
       />
     );
   }

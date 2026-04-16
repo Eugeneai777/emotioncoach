@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain, ChevronDown } from "lucide-react";
+import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain, ChevronDown, Eye, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { zhCN } from "date-fns/locale";
@@ -27,6 +27,7 @@ interface DynamicAssessmentHistoryProps {
   scoringType?: string;
   onDelete?: (id: string) => void;
   onBack: () => void;
+  onViewRecord?: (record: DynamicAssessmentRecord) => void;
 }
 
 
@@ -532,6 +533,17 @@ export function DynamicAssessmentHistory({
                                   {!record.ai_insight && (
                                     <p className="text-xs text-muted-foreground italic">AI 洞察暂未保存（仅新测评会自动保存）</p>
                                   )}
+
+                                  {/* View full result & share CTA */}
+                                  {onViewRecord && (
+                                    <Button
+                                      className="w-full gap-2 mt-2"
+                                      onClick={(e) => { e.stopPropagation(); onViewRecord(record); }}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                      查看完整结果 & 分享
+                                    </Button>
+                                  )}
                                 </div>
                               </motion.div>
                             )}
@@ -547,9 +559,9 @@ export function DynamicAssessmentHistory({
                   <motion.div key={record.id} variants={itemVariants}>
                     <Card
                       className={`group transition-all duration-300 border-border/40 bg-card/95 backdrop-blur-md shadow-sm hover:shadow-lg hover:border-primary/20 ${
-                        compareMode ? "cursor-pointer" : ""
+                        compareMode || onViewRecord ? "cursor-pointer" : ""
                       } ${isSelected ? "ring-2 ring-primary border-primary/30 shadow-primary/10 shadow-lg" : ""}`}
-                      onClick={compareMode ? () => toggleSelect(record.id) : undefined}
+                      onClick={compareMode ? () => toggleSelect(record.id) : onViewRecord ? () => onViewRecord(record) : undefined}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2.5">
