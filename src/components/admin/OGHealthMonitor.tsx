@@ -60,14 +60,15 @@ export default function OGHealthMonitor() {
   const [platform, setPlatform] = useState<MonitorPlatform | 'all'>('all');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'resolved' | 'unresolved'>('unresolved');
   const [searchText, setSearchText] = useState('');
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
 
   const { data: records = [], isLoading, refetch } = useQuery({
-    queryKey: ['monitor-og-health', platform, timeRange, typeFilter],
+    queryKey: ['monitor-og-health', platform, timeRange, typeFilter, statusFilter],
     queryFn: async () => {
       const startTime = getStartTime(timeRange);
       
-      // Fetch OG health records
       let ogQuery = (supabase as any)
         .from('monitor_og_health')
         .select('*')
@@ -81,8 +82,12 @@ export default function OGHealthMonitor() {
       if (typeFilter !== 'all' && typeFilter !== 'native_share_landed') {
         ogQuery = ogQuery.eq('issue_type', typeFilter);
       }
+      if (statusFilter === 'resolved') {
+        ogQuery = ogQuery.eq('status', 'resolved');
+      } else if (statusFilter === 'unresolved') {
+        ogQuery = ogQuery.neq('status', 'resolved');
+      }
 
-      // Fetch native share landed events from conversion_events
       let shareQuery = (supabase as any)
         .from('conversion_events')
         .select('*')
@@ -100,7 +105,6 @@ export default function OGHealthMonitor() {
 
       const ogRecords = (ogRes.data || []) as any[];
       
-      // Transform conversion_events to match OG health record format
       const shareRecords = ((shareRes.data || []) as any[])
         .filter((e: any) => e.metadata?.ref_code === 'share')
         .map((e: any) => ({
@@ -117,19 +121,17 @@ export default function OGHealthMonitor() {
           extra: e.metadata,
           status: 'resolved',
           created_at: e.created_at,
+          _isShareEvent: true,
         }));
 
-      // Filter by platform if needed
       const filteredShares = platform !== 'all'
         ? shareRecords.filter((r: any) => r.platform === platform)
         : shareRecords;
 
-      // If filtering by native_share_landed, only return share records
       if (typeFilter === 'native_share_landed') {
         return filteredShares;
       }
 
-      // Merge and sort by created_at desc
       const merged = [...ogRecords, ...filteredShares];
       merged.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       return merged;
@@ -148,8 +150,9 @@ export default function OGHealthMonitor() {
   };
 
   const criticalCount = records.filter((r: any) => r.severity === 'critical').length;
+  const resolvedCount = records.filter((r: any) => r.status === 'resolved').length;
+  const unresolvedCount = records.filter((r: any) => r.status !== 'resolved').length;
 
-  // 按 page_key 聚合问题页面
   const pageIssueMap = new Map<string, number>();
   records.forEach((r: any) => {
     pageIssueMap.set(r.page_key, (pageIssueMap.get(r.page_key) || 0) + 1);
@@ -181,18 +184,35 @@ export default function OGHealthMonitor() {
       r.user_agent ? `UA: ${r.user_agent}` : '',
       r.user_id ? `用户ID: ${r.user_id}` : '',
       r.extra ? `额外信息: ${JSON.stringify(r.extra)}` : '',
+      `状态: ${r.status === 'resolved' ? '已解决' : '未解决'}`,
     ].filter(Boolean).join('\n');
     navigator.clipboard.writeText(lines);
     toast.success("已复制诊断信息");
   };
 
-  const handleResolve = async (id: string) => {
-    await (supabase as any)
-      .from('monitor_og_health')
-      .update({ status: 'resolved' })
-      .eq('id', id);
-    refetch();
-    toast.success("已标记为已解决");
+  const handleToggleStatus = async (id: string, currentStatus: string, isShareEvent?: boolean) => {
+    if (isShareEvent) return; // share events from conversion_events can't be toggled
+    const newStatus = currentStatus === 'resolved' ? 'open' : 'resolved';
+    setUpdatingIds(prev => new Set(prev).add(id));
+    try {
+      const { error } = await (supabase as any)
+        .from('monitor_og_health')
+        .update({ status: newStatus })
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      toast.success(newStatus === 'resolved' ? '已标记为已解决' : '已标记为未解决');
+      refetch();
+    } catch (e) {
+      toast.error('状态更新失败');
+      console.error(e);
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   return (
@@ -290,11 +310,39 @@ export default function OGHealthMonitor() {
       {/* 事件列表 */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              OG 健康事件
-            </CardTitle>
+          <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                OG 健康事件
+              </CardTitle>
+              <div className="flex items-center gap-1 rounded-lg border p-0.5">
+                <Button
+                  size="sm"
+                  variant={statusFilter === 'all' ? 'default' : 'ghost'}
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setStatusFilter('all')}
+                >
+                  全部
+                </Button>
+                <Button
+                  size="sm"
+                  variant={statusFilter === 'unresolved' ? 'default' : 'ghost'}
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setStatusFilter('unresolved')}
+                >
+                  未解决 {statusFilter === 'unresolved' && unresolvedCount > 0 && `(${unresolvedCount})`}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={statusFilter === 'resolved' ? 'default' : 'ghost'}
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setStatusFilter('resolved')}
+                >
+                  已解决 {statusFilter === 'resolved' && resolvedCount > 0 && `(${resolvedCount})`}
+                </Button>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <div className="relative w-60">
                 <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
@@ -329,7 +377,7 @@ export default function OGHealthMonitor() {
                 return (
                   <div
                     key={r.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border bg-card ${isResolved ? 'opacity-50' : ''}`}
+                    className={`flex items-start gap-3 p-3 rounded-lg border bg-card ${isResolved ? 'opacity-60' : ''}`}
                   >
                     <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${cfg.color}`} />
                     <div className="flex-1 min-w-0 space-y-1">
@@ -339,7 +387,9 @@ export default function OGHealthMonitor() {
                         <Badge variant="outline" className="text-[10px]">{cfg.label}</Badge>
                         <Badge variant="outline" className="text-[10px]">{getPlatformLabel(r.platform)}</Badge>
                         {isResolved && (
-                          <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">已解决</Badge>
+                          <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">
+                            <CheckCircle className="h-2.5 w-2.5 mr-0.5" />已解决
+                          </Badge>
                         )}
                       </div>
                       <p className="text-sm text-foreground break-all">{r.message}</p>
@@ -355,14 +405,16 @@ export default function OGHealthMonitor() {
                           <span>{new Date(r.created_at).toLocaleString("zh-CN")}</span>
                         </div>
                         <div className="flex gap-1">
-                          {!isResolved && (
+                          {!r._isShareEvent && (
                             <Button
                               size="sm"
-                              variant="ghost"
+                              variant={isResolved ? 'outline' : 'default'}
                               className="h-7 px-2 text-xs"
-                              onClick={() => handleResolve(r.id)}
+                              disabled={updatingIds.has(r.id)}
+                              onClick={() => handleToggleStatus(r.id, r.status, r._isShareEvent)}
                             >
-                              <CheckCircle className="h-3 w-3 mr-1" />解决
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {isResolved ? '撤销' : '已解决'}
                             </Button>
                           )}
                           <Button
