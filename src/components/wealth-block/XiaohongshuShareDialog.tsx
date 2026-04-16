@@ -38,12 +38,13 @@ export function XiaohongshuShareDialog({
         if (!user) return;
         const sb = supabase as any;
         const [profileRes, partnerRes] = await Promise.all([
-          sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single(),
+          sb.from('profiles').select('avatar_url, display_name').eq('id', user.id).single(),
           sb.from('partners').select('id, partner_code').eq('user_id', user.id).eq('status', 'active').maybeSingle(),
         ]);
+        const rawName = profileRes?.data?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0];
         setUserInfo({
           avatarUrl: getProxiedAvatarUrl(profileRes?.data?.avatar_url || user.user_metadata?.avatar_url),
-          displayName: profileRes?.data?.display_name || user.user_metadata?.full_name || '财富探索者',
+          displayName: (rawName && !rawName.startsWith('phone_')) ? rawName : '财富探索者',
         });
         if (partnerRes?.data) {
           setPartnerInfo({ partnerId: partnerRes.data.id, partnerCode: partnerRes.data.partner_code });

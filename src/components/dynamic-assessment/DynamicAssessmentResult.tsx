@@ -154,7 +154,7 @@ export function DynamicAssessmentResult({
     if (!user) return;
     const fetchProfile = async () => {
       const sb = supabase as any;
-      const { data } = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
+      const { data } = await sb.from('profiles').select('avatar_url, display_name').eq('id', user.id).single();
       setProfileData({
         displayName: (() => {
           const rawName = data?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0];
