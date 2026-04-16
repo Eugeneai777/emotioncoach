@@ -1,52 +1,29 @@
 
 
-# 测评历史 → 查看完整结果 & 分享
+# 分享海报底部提示优化
 
 ## 问题
 
-当前历史页只展示摘要（分数 + 维度标签），点击只能展开/折叠维度详情。用户无法：
-- 从历史记录进入**完整结果页**（含人格描述、AI 洞察、推荐等）
-- 从历史记录直接**分享海报**
+用户在微信环境中看到"正在准备可保存图片…"+ 转圈动画，但实际上图片已经可以长按保存。当前逻辑是：
+
+1. 先用 blob URL 显示图片（`isRemoteReady: false`）→ 显示转圈 + "正在准备"
+2. 后台异步上传到存储 → 拿到 HTTPS URL 后才切换为"长按保存"提示
+
+**实际情况**：blob URL 图片在微信中已经可以长按保存，转圈提示误导用户以为还不能操作，造成困惑。
 
 ## 方案
 
-### 1. 历史记录点击 → 恢复完整结果页
+修改 `share-image-preview.tsx` 中微信环境的底部提示逻辑：
 
-数据库中 `partner_assessment_results` 已存储 `answers`（原始答案）。点击历史记录时，用存储的 `answers` 重新调用 `calculateScore` 即可完整还原 `ScoringResult`（含 `meta`、`primaryPattern` 等），然后切换到 `phase="result"` 展示完整结果页。
-
-**DynamicAssessmentPage.tsx**：
-- 新增 `handleViewHistoryRecord(record)` 函数：从 record.answers 重算 score → setResult → setAiInsight(record.ai_insight) → setPhase("result")
-- 传递 `onViewRecord` 回调给 `DynamicAssessmentHistory`
-
-**DynamicAssessmentHistory.tsx**：
-- 接收 `onViewRecord?: (record) => void` 回调
-- SBTI 模式：在展开详情区域底部添加"📤 查看完整结果 & 分享"按钮
-- 非 SBTI 模式：整张卡片可点击进入结果页
-- 每条记录右侧增加 `Share2` 快捷分享图标（可选，或统一通过完整结果页分享）
-
-### 2. 历史记录卡片视觉优化
-
-SBTI 历史卡片展开区域底部增加一个醒目的 CTA 按钮：
-```
-┌─────────────────────────────┐
-│ 🍺 DRUNK · 酒鬼     42分    │
-│ 2025年06月15日 20:00        │
-│ ▼ 展开                      │
-│ ─────────────────────────── │
-│ 📊 维度雷达图               │
-│ 📋 维度得分                 │
-│ 🧠 AI 洞察                  │
-│                             │
-│  [📤 查看完整结果 & 分享]    │  ← 新增
-└─────────────────────────────┘
-```
+- **不再区分 `isRemoteReady`**：图片加载完成后直接显示"👆 长按上方图片保存到相册"
+- **后台上传仍保留**（静默替换为 HTTPS URL 提升兼容性），但不影响用户提示
+- 如果图片正在加载中（`!imageLoaded`），不显示底部操作提示
 
 ## 修改文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx` | 增加 `onViewRecord` prop，展开区域底部加 CTA 按钮 |
-| `src/pages/DynamicAssessmentPage.tsx` | 增加 `handleViewHistoryRecord`，从 answers 重算结果并跳转 result 页 |
+| `src/components/ui/share-image-preview.tsx` | 微信环境下移除 `isRemoteReady` 判断，图片加载完即显示"长按保存"提示 |
 
-约 30 行改动，不涉及后端或数据库。
+约 10 行改动。
 
