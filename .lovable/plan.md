@@ -1,42 +1,22 @@
 
 
-# 将 basic 包及数据库兜底的语音时长从 3 分钟统一改为 5 分钟
+# 修复语音教练成本日志模型名错误（成本被高估 4 倍）
 
-## 现状
+## 问题
 
-| 层级 | 当前值 | 影响范围 |
-|------|--------|----------|
-| `package_feature_settings` basic 包 5 条记录 | 全部 3 分钟 | 尝鲜会员、训练营用户（无独立配置，回退到 basic） |
-| `get_voice_max_duration` 函数内 3 处 `RETURN 3` | 3 分钟 | 无套餐新用户、异常回退 |
-| 前端 `DEFAULT_MAX_DURATION_MINUTES` | 已改为 5 | RPC 完全失败时的兜底 |
+`CoachVoiceChat.tsx` 第 609 行在记录成本时硬编码了 `gpt-4o-realtime-preview-2024-12-17`（标准模型，$40/$80 per M tokens），但实际所有边缘函数创建的会话都使用 `gpt-4o-mini-realtime-preview`（mini 模型，$10/$20 per M tokens）。
 
-365 会员和管理员充值套餐为 `NULL`（无限），不受影响。
+**后果**：所有历史语音成本记录都被高估了 4 倍，成本告警也因此频繁误触发（如截图中 ¥7.52 和 ¥20.36 的告警，实际应为 ¥1.88 和 ¥5.09）。
 
 ## 修改方案
 
-### 步骤 1：更新数据库数据（使用 insert 工具执行 UPDATE）
+| 文件 | 改动 |
+|------|------|
+| `src/components/coach/CoachVoiceChat.tsx` 第 609 行 | 将 `model: 'gpt-4o-realtime-preview-2024-12-17'` 改为 `model: 'gpt-4o-mini-realtime-preview'` |
 
-```sql
-UPDATE package_feature_settings 
-SET max_duration_minutes = 5 
-WHERE id IN (
-  '46db64f4-c3ab-42a6-9f9f-1b469f3ba3f6',
-  'a8110fad-0f41-4f53-b698-28f3100a308c',
-  '12648391-5812-495c-85a3-6495f755c813',
-  'bd0b06ca-91e0-486f-a772-69bc5584c366',
-  'e806c627-c06e-4cd4-acc0-a086d670a66a'
-);
-```
+仅改一行，修正后新的成本记录将使用正确的 mini 模型价格计算。
 
-将 basic 包下全部 5 个 `realtime_voice*` 功能的 `max_duration_minutes` 从 3 改为 5。
+## 历史数据
 
-### 步骤 2：更新数据库函数（使用 migration 工具）
-
-修改 `get_voice_max_duration` 函数，将 3 处 `RETURN 3` 兜底值改为 `RETURN 5`。
-
-### 不需要改动的部分
-
-- 前端 `CoachVoiceChat.tsx` 已在上一轮改为 5，无需再动
-- 365 会员 / custom 包为 `NULL`（无限），不受影响
-- 训练营用户无独立配置行，自动回退到 basic 包（改后即为 5 分钟）
+已有的成本日志数据（全部记录为标准模型价格）均为虚高数据。如需修正历史记录，可后续通过数据库批量更新。
 
