@@ -20,16 +20,47 @@ interface Props {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
+  // 语音 & 文字
   voice_chat: "语音通话",
+  voice_chat_refund: "语音通话退款",
   text_chat: "文字对话",
+  web: "文字对话",
+  mysql: "文字对话",
+  voice_to_text: "语音转文字",
+  text_to_speech: "文字转语音",
+  // 课程推荐
+  courses_page: "课程推荐",
+  recommend_courses: "课程推荐",
+  recommend_courses_v2: "课程推荐",
+  video_recommendations: "课程推荐",
+  camp_video_tasks: "课程推荐",
+  // AI 教练
   vibrant_life_sage: "生活教练",
+  vibrant_life_coach_session: "生活教练",
   emotion_coach: "情绪教练",
+  emotion_coach_session: "情绪教练",
   wealth_coach: "财富教练",
+  wealth_coach_session: "财富教练",
   career_coach: "职场教练",
+  communication_coach_session: "沟通教练",
   relationship_coach: "关系教练",
   parenting_coach: "亲子教练",
+  parent_coach_session: "亲子教练",
   youth_mentor: "青少年教练",
+  // 图片 & 生成
+  generate_checkin_image: "打卡图片生成",
+  generate_poster_image: "海报生成",
+  generate_story_coach: "AI故事教练",
+  // 分析 & 报告
+  batch_gratitude_analysis: "情绪分析",
+  analyze_tag_trends: "情绪分析",
+  analyze_emotion_patterns: "情绪分析",
+  analyze_parent_emotion_patterns: "情绪分析",
+  generate_emotion_review: "情绪报告",
+  // 充值 & 赠送
+  registration: "注册赠送",
   purchase_basic: "购买尝鲜会员",
+  system_refund: "系统补偿",
   admin: "管理员操作",
 };
 
@@ -38,11 +69,31 @@ const getSourceLabel = (source: string | null): string => {
   return SOURCE_LABELS[source] || source.replace(/_/g, " ");
 };
 
+/** 将 description 中的技术术语替换为中文产品名 */
+const humanizeDescription = (desc: string | null, source: string | null): string => {
+  if (!desc) return "";
+  let result = desc;
+  // 替换 description 中出现的 source key
+  for (const [key, label] of Object.entries(SOURCE_LABELS)) {
+    if (result.includes(key)) {
+      result = result.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), label);
+    }
+  }
+  // 训练营免费额度追加产品名
+  if (result.includes("训练营免费额度") && source && SOURCE_LABELS[source] && !result.includes("·")) {
+    result = `${result} · ${SOURCE_LABELS[source]}`;
+  }
+  return result;
+};
+
+type FilterMode = "all" | "consumption" | "recharge";
+
 export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [transactions, setTransactions] = useState<QuotaTransaction[]>([]);
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [filter, setFilter] = useState<FilterMode>("all");
 
   useEffect(() => {
     const load = async () => {
@@ -52,7 +103,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
           .select("id, type, amount, balance_after, source, description, reference_id, created_at")
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
-          .limit(30),
+          .limit(50),
         supabase
           .from("user_accounts")
           .select("remaining_quota")
@@ -81,7 +132,20 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
     (t) => t.source && (t.source.includes("voice") || t.source.includes("coach") || t.source.includes("sage") || t.source.includes("mentor"))
   ).length;
 
-  const visible = showAll ? transactions : transactions.slice(0, 5);
+  // 筛选
+  const filtered = transactions.filter((t) => {
+    if (filter === "consumption") return t.amount <= 0;
+    if (filter === "recharge") return t.amount > 0;
+    return true;
+  });
+
+  const visible = showAll ? filtered : filtered.slice(0, 5);
+
+  const filterButtons: { key: FilterMode; label: string }[] = [
+    { key: "all", label: "全部" },
+    { key: "consumption", label: "消费" },
+    { key: "recharge", label: "充值" },
+  ];
 
   return (
     <section>
@@ -115,6 +179,23 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
         </CardContent>
       </Card>
 
+      {/* 筛选 Tab */}
+      <div className="flex gap-1.5 mb-2 px-1">
+        {filterButtons.map((btn) => (
+          <button
+            key={btn.key}
+            onClick={() => { setFilter(btn.key); setShowAll(false); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              filter === btn.key
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            {btn.label}
+          </button>
+        ))}
+      </div>
+
       {/* 流水列表 */}
       <Card className="border-border/40 bg-card/80">
         <CardContent className="p-0 divide-y divide-border/30">
@@ -124,6 +205,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
             visible.map((t) => {
               const isPositive = t.amount > 0;
               const isZero = t.amount === 0;
+              const displayDesc = humanizeDescription(t.description, t.source) || t.type;
               return (
                 <div key={t.id} className="p-4 space-y-1">
                   <div className="flex items-center justify-between">
@@ -153,7 +235,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="truncate max-w-[60%]">
-                      {t.description || t.type}
+                      {displayDesc}
                     </span>
                     <span>{new Date(t.created_at).toLocaleDateString("zh-CN")}</span>
                   </div>
@@ -164,7 +246,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
         </CardContent>
       </Card>
 
-      {transactions.length > 5 && (
+      {filtered.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
           className="w-full flex items-center justify-center gap-1 mt-2 py-2 text-xs text-primary hover:text-primary/80 transition-colors"
