@@ -92,10 +92,16 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
 
       {/* 汇总条 */}
       <Card className="border-border/40 bg-card/80 mb-2">
-        <CardContent className="p-3 flex items-center gap-4 text-xs text-muted-foreground">
+        <CardContent className="p-3 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+          {remainingQuota !== null && (
+            <span className="flex items-center gap-1">
+              <Battery className="w-3.5 h-3.5 text-emerald-500" />
+              剩余 <span className="font-semibold text-foreground">{remainingQuota}</span> 点
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Zap className="w-3.5 h-3.5 text-amber-500" />
-            总消耗 <span className="font-semibold text-foreground">{monthPoints}</span> 点
+            本月消耗 <span className="font-semibold text-foreground">{monthPoints}</span> 点
           </span>
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-primary/60" />
