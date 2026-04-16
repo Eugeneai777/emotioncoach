@@ -156,7 +156,10 @@ export function DynamicAssessmentResult({
       const sb = supabase as any;
       const { data } = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
       setProfileData({
-        displayName: data?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+        displayName: (() => {
+          const rawName = data?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0];
+          return (rawName && !rawName.startsWith('phone_')) ? rawName : '用户';
+        })(),
         avatarUrl: getProxiedAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url),
       });
     };
