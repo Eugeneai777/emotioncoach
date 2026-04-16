@@ -517,9 +517,16 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* SBTI Entertainment Disclaimer */}
+        {/* SBTI Entertainment Disclaimer + Share CTA */}
         {isSBTI && (
-          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
+            <Button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="w-full h-12 gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-500/20"
+            >
+              <Share2 className="w-5 h-5" /> 📤 分享我的搞钱人格
+            </Button>
             <p className="text-center text-xs text-muted-foreground/60 py-2">
               🎭 本测试仅供娱乐，请勿当真。人格远比几个字母复杂得多。
             </p>
