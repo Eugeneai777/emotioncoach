@@ -33,11 +33,11 @@ export default function DynamicAssessmentPage() {
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [isLiteMode, setIsLiteMode] = useState(false);
+  const [isLiteMode] = useState(false);
 
   // Cast template to access extended fields
   const tpl = template as any;
-  const requireAuth = tpl?.require_auth ?? true;
+  const _requireAuth = tpl?.require_auth ?? true;
   const requirePayment = tpl?.require_payment ?? false;
   const packageKey = tpl?.package_key;
   const scoringType = (() => {
