@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift, Info } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift, Info, Plus } from "lucide-react";
+import { QuotaRechargeDialog } from "./QuotaRechargeDialog";
 import { PointsRulesDialog } from "./PointsRulesDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
