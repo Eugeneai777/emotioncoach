@@ -606,7 +606,7 @@ export const CoachVoiceChat = ({
           body: {
             function_name: 'realtime-voice',
             feature_key: featureKey,
-            model: 'gpt-4o-realtime-preview-2024-12-17',
+            model: 'gpt-4o-mini-realtime-preview',
             input_tokens: inputTokens,
             output_tokens: outputTokens,
             metadata: {
