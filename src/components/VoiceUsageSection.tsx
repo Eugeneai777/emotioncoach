@@ -29,11 +29,11 @@ const SOURCE_LABELS: Record<string, string> = {
   voice_to_text: "语音转文字",
   text_to_speech: "文字转语音",
   // 课程推荐
-  courses_page: "课程推荐",
-  recommend_courses: "课程推荐",
-  recommend_courses_v2: "课程推荐",
-  video_recommendations: "课程推荐",
-  camp_video_tasks: "课程推荐",
+  courses_page: "学习课程",
+  recommend_courses: "AI推荐课程",
+  recommend_courses_v2: "AI推荐课程",
+  video_recommendations: "AI推荐课程",
+  camp_video_tasks: "训练营课程",
   // AI 教练
   vibrant_life_sage: "生活教练",
   vibrant_life_coach_session: "生活教练",
