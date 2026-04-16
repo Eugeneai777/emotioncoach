@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPlatform } from "@/lib/platformDetector";
+import { VoiceUsageSection } from "@/components/VoiceUsageSection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import surveyQR from "@/assets/survey-miniprogram-qr.jpg";
 
@@ -235,6 +236,9 @@ const MyPage: React.FC = () => {
             </button>
           )}
         </section>
+
+        {/* ======== 3. 语音通话记录 ======== */}
+        {user && <VoiceUsageSection userId={user.id} />}
 
         {/* ======== 4. 设置 ======== */}
         <section>
