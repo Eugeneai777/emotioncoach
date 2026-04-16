@@ -1,60 +1,46 @@
 
 
-# 语音通话界面计费透明度优化
+# 训练营免费额度描述优化 — 明确营名 + 体验提升
 
-## 现状核对结果
+## 问题分析
 
-### 哪些场景有计费，哪些免费？
+从截图可见，"训练营免费额度 · 语音通话" 没有说明是**哪个训练营**提供的免费额度。用户如果购买了多个训练营（如情绪解压7天营 + 财富觉醒21天营），完全无法区分。
 
-| 场景 | skipBilling | 当前底部提示 |
-|------|------------|-------------|
-| 生活教练 LifeCoachVoice | ❌ 收费 | `8点/分钟` |
-| 动态教练 DynamicCoach | ❌ 收费 | `8点/分钟` |
-| 财富教练（非测评） | ❌ 收费 | `8点/分钟` |
-| 老年关怀 ElderCarePage | ❌ 收费 | `8点/分钟` |
-| 宝妈助手 MamaAssistant | ❌ 收费 | `8点/分钟` |
-| 亲子教练 ParentCoach | ❌ 收费 | `8点/分钟` |
-| **小劲 XiaojinVoice** | ✅ 免费 | `免费体验` |
-| **婚姻工具 MarriageAITools** | ✅ 免费 | `免费体验` |
-| **财富教练（测评后）** | ✅ 免费 | `免费体验` |
+当前数据库中有 3 种训练营类型：`emotion_stress_7`、`emotion_journal_21`、`wealth_block_21`。
 
-### 与现有逻辑的关系
+## 技术方案
 
-- `skipBilling=true` 的场景：所有计费UI都被跳过（正确），优化**不应影响**这些场景
-- `PointsRulesDialog` 已存在，但仅用于 `ProductComparisonTable.tsx`（套餐对比页），**语音通话界面从未引用**
-- 余额仅在 `remainingQuota < 24`（不到3分钟）时才显示，大部分通话过程中不可见
+### 1. 后端：`deduct-quota` 边缘函数 — 描述中加入营名
 
-## 优化方案（仅影响收费场景）
+当前描述模板：`训练营免费额度 · ${campSceneLabel}`（如"训练营免费额度 · 生活教练语音"）
 
-所有改动集中在 `src/components/coach/CoachVoiceChat.tsx`，且全部包裹在 `!skipBilling` 条件下，不影响免费体验场景。
+**改为**：`${campNameLabel}免费额度 · ${campSceneLabel}`
 
-### 1. 顶部状态栏：消除歧义 + 始终显示余额
+增加营名映射：
+```typescript
+const campNameMap: Record<string, string> = {
+  emotion_stress_7: '7天解压营',
+  emotion_journal_21: '21天情绪营',
+  wealth_block_21: '财富觉醒营',
+};
+```
 
-**当前**：`0:05 🪙 8点`（含义不明）
-**改为**：`0:05 已用8点 · 余额XX点`
+最终效果示例：`7天解压营免费额度 · 情绪教练语音`
 
-- 去掉 `remainingQuota < 24` 的限制，始终显示余额
-- 余额低于 24 时变为红色
+### 2. 前端：`VoiceUsageSection.tsx` — 兼容历史数据
 
-### 2. 教练名称下方：常驻费率 + 可聊时长
+对历史记录中仍显示"训练营免费额度"的旧数据，在 `humanizeDescription` 中做兼容处理：通过 metadata 中的 `camp_type` 字段（如果有）补充营名。
 
-**当前**：仅低余额时显示 `余额 XX 点`
-**改为**：`8点/分钟 · 约可聊 X 分钟`（始终显示）
+### 3. 前端：流水列表中的 `description` 显示优化
 
-### 3. 底部：通话中也显示规则入口
-
-**当前**：`💡 直接说话即可 · 8点/分钟`（通话中隐藏）
-**改为**：通话中显示 `📖 点数规则` 可点击链接，打开已有的 `PointsRulesDialog`
-
-### 4. 连接准备阶段：增加费用预告
-
-在连接进度页面底部增加：`语音通话 8点/分钟 · 当前余额 XX 点`
+目前部分旧记录没有 `·` 分隔符（如截图中"训练营免费额度"后直接跟 source），需要在 `humanizeDescription` 中统一格式。
 
 ## 修改文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/coach/CoachVoiceChat.tsx` | 顶部状态栏文案、余额始终可见、费率常驻提示、底部规则入口、连接页余额 |
+| `supabase/functions/deduct-quota/index.ts` | 增加 `campNameMap`，描述模板改为 `${营名}免费额度 · ${场景}` |
+| `src/components/VoiceUsageSection.tsx` | `humanizeDescription` 兼容旧"训练营免费额度"数据，尝试从 metadata 补充营名 |
 
-不涉及新增文件，不涉及后端改动，不影响 `skipBilling=true` 的免费场景。
+不涉及数据库改动，不涉及新增文件。
 
