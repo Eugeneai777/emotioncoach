@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mic, ChevronDown, Clock, Zap, Battery } from "lucide-react";
+import { Mic, ChevronDown, Phone, Zap, Battery } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,7 +76,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   );
   const monthCalls = monthSessions.length;
   const monthPoints = monthSessions.reduce((sum, s) => sum + (s.total_cost || 0), 0);
-  const monthDuration = monthSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0);
+  
 
   const visible = showAll ? sessions : sessions.slice(0, 3);
 
@@ -87,7 +87,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
           <Mic className="w-4 h-4 text-primary" />
           <h2 className="text-base font-semibold text-foreground">语音通话记录</h2>
         </div>
-        <span className="text-xs text-muted-foreground">本月 {monthCalls} 次</span>
+        <span className="text-xs text-muted-foreground">近期记录</span>
       </div>
 
       {/* 汇总条 */}
@@ -104,8 +104,8 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
             本月消耗 <span className="font-semibold text-foreground">{monthPoints}</span> 点
           </span>
           <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-primary/60" />
-            总时长 <span className="font-semibold text-foreground">{Math.ceil(monthDuration / 60)}</span> 分钟
+            <Phone className="w-3.5 h-3.5 text-primary/60" />
+            本月 <span className="font-semibold text-foreground">{monthCalls}</span> 次通话
           </span>
         </CardContent>
       </Card>
