@@ -148,6 +148,21 @@ Deno.serve(async (req) => {
       console.log('📝 Refund recorded in usage_records');
     }
 
+    // 写入 quota_transactions 退款流水（带具体场景）
+    try {
+      await supabase.from('quota_transactions').insert({
+        user_id: refundUserId,
+        type: 'refund',
+        amount: amount,
+        balance_after: result.new_remaining_quota,
+        source: 'voice_chat_refund',
+        description: `${refundSceneLabel}退款 +${amount}点`,
+        reference_id: session_id || null,
+      });
+    } catch (txErr) {
+      console.warn('⚠️ quota_transactions refund insert failed:', txErr);
+    }
+
     console.log(`✅ Refund successful: ${amount} points returned, new balance: ${result.new_remaining_quota}`);
 
     return new Response(
