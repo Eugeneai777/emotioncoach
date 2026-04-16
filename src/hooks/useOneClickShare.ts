@@ -54,7 +54,7 @@ async function fetchShareUserData(campId?: string): Promise<{
   profile: { avatar_url?: string; display_name?: string } | null;
   partner: { id: string; partner_code: string } | null;
   campCurrentDay: number | null;
-  userMeta: { avatar_url?: string; full_name?: string } | null;
+  userMeta: { avatar_url?: string; full_name?: string; name?: string } | null;
 }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
