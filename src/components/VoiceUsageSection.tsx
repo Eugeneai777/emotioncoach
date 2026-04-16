@@ -69,6 +69,7 @@ const getSourceLabel = (source: string | null): string => {
   return SOURCE_LABELS[source] || source.replace(/_/g, " ");
 };
 
+
 /** 将 description 中的技术术语替换为中文产品名 */
 const humanizeDescription = (desc: string | null, source: string | null): string => {
   if (!desc) return "";
@@ -79,7 +80,7 @@ const humanizeDescription = (desc: string | null, source: string | null): string
       result = result.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), label);
     }
   }
-  // 训练营免费额度追加产品名
+  // 兼容旧数据：将通用"训练营免费额度"追加产品名（如果缺少分隔符）
   if (result.includes("训练营免费额度") && source && SOURCE_LABELS[source] && !result.includes("·")) {
     result = `${result} · ${SOURCE_LABELS[source]}`;
   }
