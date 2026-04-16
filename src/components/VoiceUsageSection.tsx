@@ -40,18 +40,27 @@ interface Props {
 
 export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [sessions, setSessions] = useState<VoiceSession[]>([]);
+  const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("voice_chat_sessions")
-        .select("id, coach_key, duration_seconds, billed_minutes, total_cost, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (data) setSessions(data as VoiceSession[]);
+      const [sessionsRes, accountRes] = await Promise.all([
+        supabase
+          .from("voice_chat_sessions")
+          .select("id, coach_key, duration_seconds, billed_minutes, total_cost, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("user_accounts")
+          .select("remaining_quota")
+          .eq("user_id", userId)
+          .maybeSingle(),
+      ]);
+      if (sessionsRes.data) setSessions(sessionsRes.data as VoiceSession[]);
+      if (accountRes.data) setRemainingQuota(accountRes.data.remaining_quota);
       setLoading(false);
     };
     load();
