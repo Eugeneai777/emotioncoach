@@ -82,6 +82,18 @@ Deno.serve(async (req) => {
       );
     }
 
+    // 场景映射
+    const REFUND_SCENE_MAP: Record<string, string> = {
+      realtime_voice: '生活教练语音',
+      realtime_voice_emotion: '情绪教练语音',
+      realtime_voice_wealth: '财富教练语音',
+      realtime_voice_teen: '青少年教练语音',
+      realtime_voice_career: '职场教练语音',
+      realtime_voice_parent: '亲子教练语音',
+      realtime_voice_relationship: '关系教练语音',
+    };
+    const refundSceneLabel = REFUND_SCENE_MAP[feature_key] || feature_key || '语音通话';
+
     console.log(`💰 Refund request: user=${refundUserId}, amount=${amount}, session=${session_id}, reason=${reason}, feature_key=${feature_key}`);
 
     // 使用 service_role 执行退款
@@ -134,6 +146,21 @@ Deno.serve(async (req) => {
       console.warn('⚠️ Failed to record refund in usage_records:', usageError.message);
     } else {
       console.log('📝 Refund recorded in usage_records');
+    }
+
+    // 写入 quota_transactions 退款流水（带具体场景）
+    try {
+      await supabase.from('quota_transactions').insert({
+        user_id: refundUserId,
+        type: 'refund',
+        amount: amount,
+        balance_after: result.new_remaining_quota,
+        source: 'voice_chat_refund',
+        description: `${refundSceneLabel}退款 +${amount}点`,
+        reference_id: session_id || null,
+      });
+    } catch (txErr) {
+      console.warn('⚠️ quota_transactions refund insert failed:', txErr);
     }
 
     console.log(`✅ Refund successful: ${amount} points returned, new balance: ${result.new_remaining_quota}`);

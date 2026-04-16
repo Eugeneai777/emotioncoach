@@ -126,6 +126,30 @@ Deno.serve(async (req) => {
           free_by_camp: true 
         }
       });
+
+      // 训练营免费额度也写入 quota_transactions
+      const campSceneMap: Record<string, string> = {
+        realtime_voice: '生活教练语音',
+        realtime_voice_emotion: '情绪教练语音',
+        realtime_voice_wealth: '财富教练语音',
+        realtime_voice_teen: '青少年教练语音',
+        realtime_voice_career: '职场教练语音',
+        realtime_voice_parent: '亲子教练语音',
+        realtime_voice_relationship: '关系教练语音',
+      };
+      const campSceneLabel = campSceneMap[featureKey] || featureKey;
+      const campAccount = await supabase.from('user_accounts').select('remaining_quota').eq('user_id', userId).single();
+      try {
+        await supabase.from('quota_transactions').insert({
+          user_id: userId,
+          type: 'free_quota',
+          amount: 0,
+          balance_after: campAccount?.data?.remaining_quota ?? 0,
+          source: source || featureKey,
+          description: `训练营免费额度 · ${campSceneLabel}`,
+          reference_id: null,
+        });
+      } catch (e) { console.warn('⚠️ camp quota_transactions insert failed:', e); }
       
       // 获取剩余额度
       const { data: account } = await supabase
@@ -489,7 +513,17 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .single();
 
-    // 9. 写入点数流水审计日志
+    // 9. 写入点数流水审计日志（含具体场景描述）
+    const FEATURE_SCENE_MAP: Record<string, string> = {
+      realtime_voice: '生活教练语音',
+      realtime_voice_emotion: '情绪教练语音',
+      realtime_voice_wealth: '财富教练语音',
+      realtime_voice_teen: '青少年教练语音',
+      realtime_voice_career: '职场教练语音',
+      realtime_voice_parent: '亲子教练语音',
+      realtime_voice_relationship: '关系教练语音',
+    };
+    const sceneLabel = FEATURE_SCENE_MAP[featureKey] || featureName;
     try {
       await supabase.from('quota_transactions').insert({
         user_id: userId,
@@ -498,8 +532,8 @@ Deno.serve(async (req) => {
         balance_after: account?.remaining_quota ?? 0,
         source: source || featureKey,
         description: usedFreeQuota
-          ? `${featureName} (免费额度)`
-          : `${featureName}扣费 -${actualCost}点`,
+          ? `${sceneLabel} (免费额度)`
+          : `${sceneLabel}扣费 -${actualCost}点`,
         reference_id: session_id || conversationId || null,
       });
     } catch (txErr) {

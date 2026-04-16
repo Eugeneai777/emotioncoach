@@ -97,20 +97,35 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
 
   useEffect(() => {
     const load = async () => {
-      const [txRes, accountRes] = await Promise.all([
+      // 分两路查询：消费记录取最新100条，充值记录取全部（确保注册赠送和购买不被挤掉）
+      const [consumptionRes, rechargeRes, accountRes] = await Promise.all([
         supabase
           .from("quota_transactions")
           .select("id, type, amount, balance_after, source, description, reference_id, created_at")
           .eq("user_id", userId)
+          .lte("amount", 0)
           .order("created_at", { ascending: false })
-          .limit(50),
+          .limit(100),
+        supabase
+          .from("quota_transactions")
+          .select("id, type, amount, balance_after, source, description, reference_id, created_at")
+          .eq("user_id", userId)
+          .gt("amount", 0)
+          .order("created_at", { ascending: false }),
         supabase
           .from("user_accounts")
           .select("remaining_quota")
           .eq("user_id", userId)
           .maybeSingle(),
       ]);
-      if (txRes.data) setTransactions(txRes.data as QuotaTransaction[]);
+
+      // 合并并按时间倒序排列
+      const allTx = [
+        ...(consumptionRes.data || []),
+        ...(rechargeRes.data || []),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setTransactions(allTx as QuotaTransaction[]);
       if (accountRes.data) setRemainingQuota(accountRes.data.remaining_quota);
       setLoading(false);
     };
@@ -205,7 +220,8 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
             visible.map((t) => {
               const isPositive = t.amount > 0;
               const isZero = t.amount === 0;
-              const displayDesc = humanizeDescription(t.description, t.source) || t.type;
+              // 优先使用后端 description（已含具体场景），兜底用 SOURCE_LABELS
+              const displayDesc = humanizeDescription(t.description, t.source) || getSourceLabel(t.source);
               return (
                 <div key={t.id} className="p-4 space-y-1">
                   <div className="flex items-center justify-between">
@@ -234,10 +250,15 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="truncate max-w-[60%]">
+                    <span className="truncate max-w-[55%]">
                       {displayDesc}
                     </span>
-                    <span>{new Date(t.created_at).toLocaleDateString("zh-CN")}</span>
+                    <span className="flex items-center gap-2">
+                      {t.balance_after !== null && (
+                        <span className="text-muted-foreground/70">余额 {t.balance_after}</span>
+                      )}
+                      <span>{new Date(t.created_at).toLocaleDateString("zh-CN")}</span>
+                    </span>
                   </div>
                 </div>
               );
