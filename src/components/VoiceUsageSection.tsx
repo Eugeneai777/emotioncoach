@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mic, ChevronDown, Clock, Zap } from "lucide-react";
+import { Mic, ChevronDown, Clock, Zap, Battery } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,18 +40,27 @@ interface Props {
 
 export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [sessions, setSessions] = useState<VoiceSession[]>([]);
+  const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("voice_chat_sessions")
-        .select("id, coach_key, duration_seconds, billed_minutes, total_cost, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (data) setSessions(data as VoiceSession[]);
+      const [sessionsRes, accountRes] = await Promise.all([
+        supabase
+          .from("voice_chat_sessions")
+          .select("id, coach_key, duration_seconds, billed_minutes, total_cost, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("user_accounts")
+          .select("remaining_quota")
+          .eq("user_id", userId)
+          .maybeSingle(),
+      ]);
+      if (sessionsRes.data) setSessions(sessionsRes.data as VoiceSession[]);
+      if (accountRes.data) setRemainingQuota(accountRes.data.remaining_quota);
       setLoading(false);
     };
     load();
@@ -83,10 +92,16 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
 
       {/* 汇总条 */}
       <Card className="border-border/40 bg-card/80 mb-2">
-        <CardContent className="p-3 flex items-center gap-4 text-xs text-muted-foreground">
+        <CardContent className="p-3 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+          {remainingQuota !== null && (
+            <span className="flex items-center gap-1">
+              <Battery className="w-3.5 h-3.5 text-emerald-500" />
+              剩余 <span className="font-semibold text-foreground">{remainingQuota}</span> 点
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Zap className="w-3.5 h-3.5 text-amber-500" />
-            总消耗 <span className="font-semibold text-foreground">{monthPoints}</span> 点
+            本月消耗 <span className="font-semibold text-foreground">{monthPoints}</span> 点
           </span>
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-primary/60" />
