@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mic, ChevronDown, Clock, Zap, Coins } from "lucide-react";
+import { Mic, ChevronDown, Clock, Zap, Battery } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
