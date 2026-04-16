@@ -1,29 +1,35 @@
 
 
-# 分享海报底部提示优化
+# 海报昵称回退链修复
 
 ## 问题
 
-用户在微信环境中看到"正在准备可保存图片…"+ 转圈动画，但实际上图片已经可以长按保存。当前逻辑是：
+`DynamicAssessmentResult.tsx` 第159行回退链缺少 `user_metadata.name`，且未过滤 `phone_` 前缀。所有手机号注册且未设置昵称的用户都会受影响。
 
-1. 先用 blob URL 显示图片（`isRemoteReady: false`）→ 显示转圈 + "正在准备"
-2. 后台异步上传到存储 → 拿到 HTTPS URL 后才切换为"长按保存"提示
+## 修复
 
-**实际情况**：blob URL 图片在微信中已经可以长按保存，转圈提示误导用户以为还不能操作，造成困惑。
+修改第159行，扩充回退链并过滤内部标识：
 
-## 方案
+```typescript
+const rawName = data?.display_name 
+  || user.user_metadata?.full_name 
+  || user.user_metadata?.name
+  || user.email?.split('@')[0];
+const displayName = (rawName && !rawName.startsWith('phone_')) 
+  ? rawName 
+  : '用户';
+```
 
-修改 `share-image-preview.tsx` 中微信环境的底部提示逻辑：
-
-- **不再区分 `isRemoteReady`**：图片加载完成后直接显示"👆 长按上方图片保存到相册"
-- **后台上传仍保留**（静默替换为 HTTPS URL 提升兼容性），但不影响用户提示
-- 如果图片正在加载中（`!imageLoaded`），不显示底部操作提示
+**逻辑**：
+1. 优先用 profiles 表的 `display_name`（如"炯谦"）
+2. 再试 `full_name`、`name`（微信同步的昵称）
+3. 最后试邮箱前缀，但如果是 `phone_` 开头则降级为"用户"
 
 ## 修改文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/ui/share-image-preview.tsx` | 微信环境下移除 `isRemoteReady` 判断，图片加载完即显示"长按保存"提示 |
+| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | 第159行：增加 `name` 回退 + 过滤 `phone_` 前缀 |
 
-约 10 行改动。
+约 3 行改动。
 
