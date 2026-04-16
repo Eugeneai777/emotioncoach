@@ -3,7 +3,8 @@ import { useContext } from 'react';
 import { GlobalVoiceContext } from '@/components/voice/GlobalVoiceProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft, Info } from 'lucide-react';
+import { PointsRulesDialog } from '@/components/PointsRulesDialog';
 import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
@@ -2010,6 +2011,12 @@ export const CoachVoiceChat = ({
           elapsedTime={connectionElapsedTime}
           usingFallback={useMiniProgramMode}
         />
+        {/* 连接准备阶段：费用预告 */}
+        {!skipBilling && remainingQuota !== null && (
+          <p className="mt-4 text-white/40 text-xs">
+            语音通话 {POINTS_PER_MINUTE}点/分钟 · 当前余额 <span className={remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-amber-400'}>{remainingQuota}点</span>
+          </p>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -2062,10 +2069,17 @@ export const CoachVoiceChat = ({
           {status === 'connected' && (
             <>
               <span className="font-mono">{formatDuration(duration)}</span>
-              <span className="flex items-center gap-1 text-amber-400">
-                <Coins className="w-3 h-3" />
-                {billedMinutes * POINTS_PER_MINUTE}点
-              </span>
+              {!skipBilling && (
+                <span className="flex items-center gap-1 text-amber-400">
+                  <Coins className="w-3 h-3" />
+                  已用{billedMinutes * POINTS_PER_MINUTE}点
+                  {remainingQuota !== null && (
+                    <span className={remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/50'}>
+                      · 余额{remainingQuota}点
+                    </span>
+                  )}
+                </span>
+              )}
               <ConnectionStatusBadge
                 networkQuality={networkQuality}
                 rtt={networkRtt}
@@ -2129,9 +2143,11 @@ export const CoachVoiceChat = ({
         {/* 教练名称 */}
         <h2 className="text-white text-xl font-semibold mb-2 tracking-wide" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{coachTitle}</h2>
 
-        {/* 余额提示 */}
-        {remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 3 && (
-          <span className="text-amber-400/80 text-[11px] mb-2">余额 {remainingQuota} 点</span>
+        {/* 费率 + 可聊时长提示 */}
+        {!skipBilling && remainingQuota !== null && (
+          <span className={`text-[11px] mb-2 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/50'}`}>
+            {POINTS_PER_MINUTE}点/分钟 · 约可聊 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟
+          </span>
         )}
         
         {/* 🔧 音频波形可视化 */}
@@ -2484,15 +2500,24 @@ export const CoachVoiceChat = ({
           )}
         </Button>
 
-        {/* 提示 - 仅在非通话状态显示 */}
-        {status !== 'connected' && (
+        {/* 提示 */}
+        {status !== 'connected' ? (
           <p className="text-white/30 text-[11px]">
             {skipBilling
               ? `💡 直接说话即可 · 免费体验`
               : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟`
             }
           </p>
-        )}
+        ) : !skipBilling ? (
+          <PointsRulesDialog
+            trigger={
+              <button className="text-white/30 hover:text-white/50 text-[11px] flex items-center gap-1 transition-colors">
+                <Info className="w-3 h-3" />
+                📖 点数规则
+              </button>
+            }
+          />
+        ) : null}
       </div>
 
       {/* 🔧 AI来电续拨询问弹窗 */}
