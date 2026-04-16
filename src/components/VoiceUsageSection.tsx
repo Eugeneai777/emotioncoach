@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift } from "lucide-react";
+import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift, Info } from "lucide-react";
+import { PointsRulesDialog } from "./PointsRulesDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
