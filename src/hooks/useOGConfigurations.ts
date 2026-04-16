@@ -117,12 +117,5 @@ export async function uploadOGImage(file: File, pageKey: string): Promise<string
     .from('og-images')
     .getPublicUrl(filePath);
 
-  // 将 Supabase 存储域名替换为可信域名，确保微信小程序可加载
-  const OG_BASE_URL = 'https://wechat.eugenewe.net';
-  const supabaseHost = 'vlsuzskvykddwrxbmcbu.supabase.co';
-  const publicUrl = data.publicUrl;
-  if (publicUrl.includes(supabaseHost)) {
-    return publicUrl.replace(`https://${supabaseHost}`, OG_BASE_URL);
-  }
-  return publicUrl;
+  return data.publicUrl;
 }
