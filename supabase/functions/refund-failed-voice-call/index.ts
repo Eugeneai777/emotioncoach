@@ -82,6 +82,18 @@ Deno.serve(async (req) => {
       );
     }
 
+    // 场景映射
+    const REFUND_SCENE_MAP: Record<string, string> = {
+      realtime_voice: '生活教练语音',
+      realtime_voice_emotion: '情绪教练语音',
+      realtime_voice_wealth: '财富教练语音',
+      realtime_voice_teen: '青少年教练语音',
+      realtime_voice_career: '职场教练语音',
+      realtime_voice_parent: '亲子教练语音',
+      realtime_voice_relationship: '关系教练语音',
+    };
+    const refundSceneLabel = REFUND_SCENE_MAP[feature_key] || feature_key || '语音通话';
+
     console.log(`💰 Refund request: user=${refundUserId}, amount=${amount}, session=${session_id}, reason=${reason}, feature_key=${feature_key}`);
 
     // 使用 service_role 执行退款
