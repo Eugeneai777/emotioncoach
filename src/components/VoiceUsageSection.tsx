@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift } from "lucide-react";
+import { Coins, ChevronDown, Phone, Zap, Battery, TrendingDown, TrendingUp, Gift, Info } from "lucide-react";
+import { PointsRulesDialog } from "./PointsRulesDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,6 +112,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<FilterMode>("all");
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -186,8 +188,15 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
           <Coins className="w-4 h-4 text-primary" />
           <h2 className="text-base font-semibold text-foreground">点数明细</h2>
         </div>
-        <span className="text-xs text-muted-foreground">近期记录</span>
+        <button 
+          onClick={() => setShowRules(true)}
+          className="flex items-center gap-1 text-xs text-primary hover:underline transition-all"
+        >
+          <Info className="w-3.5 h-3.5" />
+          点数规则
+        </button>
       </div>
+      <PointsRulesDialog open={showRules} onOpenChange={setShowRules} />
 
       {/* 汇总条 */}
       <Card className="border-border/40 bg-card/80 mb-2">
