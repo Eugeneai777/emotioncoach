@@ -39,7 +39,7 @@ export function scoreSBTI(
   // 1. Calculate raw dimension scores
   const dimScores: Record<string, { total: number; count: number; maxPerQ: number }> = {};
   dimensions.forEach((d) => {
-    dimScores[d.key] = { total: 0, count: 0, maxPerQ: 2 }; // A/B/C → 2/1/0
+    dimScores[d.key] = { total: 0, count: 0, maxPerQ: 3 }; // A/B/C/D → 3/2/1/0
   });
 
   // Check for DRUNK trigger (question with dimension "DRUNK_TRIGGER")
