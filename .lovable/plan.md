@@ -1,56 +1,52 @@
 
 
-# 测评 & 训练营"先登录再操作"统一优化
+# 测评历史 → 查看完整结果 & 分享
 
-## 现状分析
+## 问题
 
-| 场景 | 当前登录门槛 | 问题 |
-|------|------------|------|
-| **训练营购买**（CampIntro） | ✅ 点击购买时已检查登录 | 无问题 |
-| **团队教练报名**（EnrollButton） | ✅ 报名时已检查登录 | 无问题 |
-| **付费测评**（情绪健康、财富卡点、SCL、35+女性、中年觉醒） | ❌ 答完全部题目后才要求登录 | 用户做完题退出后丢失结果 |
-| **SBTI 搞钱人格**（免费） | ❌ 游客可答题，仅看精简结果 | 用户退出后无法找回记录 |
+当前历史页只展示摘要（分数 + 维度标签），点击只能展开/折叠维度详情。用户无法：
+- 从历史记录进入**完整结果页**（含人格描述、AI 洞察、推荐等）
+- 从历史记录直接**分享海报**
 
-**核心问题**：测评页面允许未登录用户完成全部答题，但结果保存依赖登录。用户做完退出 → 记录丢失 → 需要重新测评。
+## 方案
 
-## 优化方案
+### 1. 历史记录点击 → 恢复完整结果页
 
-**统一规则**：所有测评在点击"开始测评"时，如果用户未登录，先跳转登录页，登录后自动返回当前测评页继续。
+数据库中 `partner_assessment_results` 已存储 `answers`（原始答案）。点击历史记录时，用存储的 `answers` 重新调用 `calculateScore` 即可完整还原 `ScoringResult`（含 `meta`、`primaryPattern` 等），然后切换到 `phase="result"` 展示完整结果页。
 
-### 修改点
+**DynamicAssessmentPage.tsx**：
+- 新增 `handleViewHistoryRecord(record)` 函数：从 record.answers 重算 score → setResult → setAiInsight(record.ai_insight) → setPhase("result")
+- 传递 `onViewRecord` 回调给 `DynamicAssessmentHistory`
 
-**1. `DynamicAssessmentIntro.tsx` — 开始按钮增加登录拦截**
+**DynamicAssessmentHistory.tsx**：
+- 接收 `onViewRecord?: (record) => void` 回调
+- SBTI 模式：在展开详情区域底部添加"📤 查看完整结果 & 分享"按钮
+- 非 SBTI 模式：整张卡片可点击进入结果页
+- 每条记录右侧增加 `Share2` 快捷分享图标（可选，或统一通过完整结果页分享）
 
-在 `onStart` 回调前插入登录检查：
-- 未登录 → `navigate('/auth?redirect=/assessment/{key}')` + `setPostAuthRedirect`
-- 已登录 → 正常进入答题
+### 2. 历史记录卡片视觉优化
 
-这是最干净的拦截点：用户在介绍页看完内容，点击开始时才要求登录，不影响浏览体验。
-
-**2. `DynamicAssessmentPage.tsx` — 移除 SBTI 的 guest lite 模式**
-
-- 删除 `handleQuestionsComplete` 中 SBTI 的 `isGuest → isLiteMode` 逻辑
-- SBTI 统一走登录后答题 → 完整结果的链路
-- `isLiteMode` 状态可以保留但不再被 guest 触发
-
-**3. `DynamicAssessmentPage.tsx` — 移除 non-SBTI 的结果页登录跳转**
-
-- 删除 `handleQuestionsComplete` 中 `requireAuth && !user` 的跳转逻辑（第170-175行）
-- 因为登录已经在开始前完成，此处不再需要
-
-### 不改动的部分
-
-- **CampIntro**：购买按钮已有完善的登录拦截 ✅
-- **EnrollButton**：报名按钮已有登录检查 ✅
-- **StartCampDialog**：已有登录检查 ✅
-- **测评介绍页浏览**：不要求登录，保持开放浏览策略
+SBTI 历史卡片展开区域底部增加一个醒目的 CTA 按钮：
+```
+┌─────────────────────────────┐
+│ 🍺 DRUNK · 酒鬼     42分    │
+│ 2025年06月15日 20:00        │
+│ ▼ 展开                      │
+│ ─────────────────────────── │
+│ 📊 维度雷达图               │
+│ 📋 维度得分                 │
+│ 🧠 AI 洞察                  │
+│                             │
+│  [📤 查看完整结果 & 分享]    │  ← 新增
+└─────────────────────────────┘
+```
 
 ## 修改文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx` | `onStart` 前增加 `useAuth` + 登录拦截 |
-| `src/pages/DynamicAssessmentPage.tsx` | 移除 SBTI guest lite 逻辑 + 移除结果页登录跳转 |
+| `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx` | 增加 `onViewRecord` prop，展开区域底部加 CTA 按钮 |
+| `src/pages/DynamicAssessmentPage.tsx` | 增加 `handleViewHistoryRecord`，从 answers 重算结果并跳转 result 页 |
 
-共约 20 行改动，不涉及后端。
+约 30 行改动，不涉及后端或数据库。
 
