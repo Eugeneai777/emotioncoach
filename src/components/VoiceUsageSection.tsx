@@ -114,6 +114,7 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [showRules, setShowRules] = useState(false);
+  const [showRecharge, setShowRecharge] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -218,8 +219,32 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
               本月 <span className="font-semibold text-foreground">{monthCalls}</span> 次通话
             </span>
           )}
+          <button
+            onClick={() => setShowRecharge(true)}
+            className={`ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              remainingQuota !== null && remainingQuota < 20
+                ? 'bg-primary text-primary-foreground animate-pulse'
+                : 'bg-primary/10 text-primary hover:bg-primary/20'
+            }`}
+          >
+            <Plus className="w-3 h-3" />
+            充值
+          </button>
         </CardContent>
       </Card>
+
+      <QuotaRechargeDialog
+        open={showRecharge}
+        onOpenChange={setShowRecharge}
+        onSuccess={async () => {
+          const { data } = await supabase
+            .from("user_accounts")
+            .select("remaining_quota")
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (data) setRemainingQuota(data.remaining_quota ?? 0);
+        }}
+      />
 
       {/* 筛选 Tab */}
       <div className="flex gap-1.5 mb-2 px-1">
