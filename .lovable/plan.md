@@ -1,35 +1,22 @@
 
 
-# 海报昵称回退链修复
+# 移除 mini-app 页面"我的测评"入口模块
 
-## 问题
+## 现状
 
-`DynamicAssessmentResult.tsx` 第159行回退链缺少 `user_metadata.name`，且未过滤 `phone_` 前缀。所有手机号注册且未设置昵称的用户都会受影响。
+`MiniAppEntry.tsx` 第544-566行有一个"我的测评"卡片，点击跳转到 `/energy-studio?tab=assessments`（即 AssessmentPicker 页面，展示所有测评分类列表）。
 
-## 修复
+同时，底部 Tab 的【学习】页面（CampList）在 `filterParam === 'my'` 时已经展示了"我的测评"历史记录。功能重复。
 
-修改第159行，扩充回退链并过滤内部标识：
+## 方案
 
-```typescript
-const rawName = data?.display_name 
-  || user.user_metadata?.full_name 
-  || user.user_metadata?.name
-  || user.email?.split('@')[0];
-const displayName = (rawName && !rawName.startsWith('phone_')) 
-  ? rawName 
-  : '用户';
-```
-
-**逻辑**：
-1. 优先用 profiles 表的 `display_name`（如"炯谦"）
-2. 再试 `full_name`、`name`（微信同步的昵称）
-3. 最后试邮箱前缀，但如果是 `phone_` 开头则降级为"用户"
+直接删除 `MiniAppEntry.tsx` 中第544-566行的"我的测评记录入口"模块。用户通过底部【学习】Tab 即可查看已完成的测评。
 
 ## 修改文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | 第159行：增加 `name` 回退 + 过滤 `phone_` 前缀 |
+| `src/pages/MiniAppEntry.tsx` | 删除第544-566行"我的测评"入口卡片，以及相关的 `ClipboardList` 导入（如不再使用） |
 
-约 3 行改动。
+约删除 20 行代码。
 
