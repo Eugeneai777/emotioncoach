@@ -60,12 +60,17 @@ serve(async (req) => {
     const { 
       function_name, 
       feature_key, 
-      model, 
+      model: rawModel, 
       input_tokens = 0, 
       output_tokens = 0,
       fixed_cost_usd,
       metadata 
     } = await req.json();
+
+    // 自动纠正旧模型名：实际使用的是 mini 版本，价格为 1/4
+    const model = rawModel === 'gpt-4o-realtime-preview-2024-12-17' 
+      ? 'gpt-4o-mini-realtime-preview' 
+      : rawModel;
 
     // 计算成本
     let estimated_cost_usd = 0;
