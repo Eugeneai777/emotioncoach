@@ -10,6 +10,7 @@ import { DynamicAssessmentQRCard } from "./DynamicAssessmentQRCard";
 import { ClinicalResultSection } from "./ClinicalResultSection";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
+import SBTIShareCard from "./SBTIShareCard";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import { useAuth } from "@/hooks/useAuth";
