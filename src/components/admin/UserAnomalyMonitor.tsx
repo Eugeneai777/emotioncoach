@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon, Route, LogIn } from "lucide-react";
+import { Users, AlertTriangle, Bug, Wifi, Activity, BarChart3, CreditCard, Copy, Shield, Zap, UserX, Search, Image as ImageIcon, Route, LogIn, CheckCircle2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import FrontendErrorMonitor from "./FrontendErrorMonitor";
 import ApiErrorMonitor from "./ApiErrorMonitor";
 import UxAnomalyMonitor from "./UxAnomalyMonitor";
@@ -38,13 +39,16 @@ export default function UserAnomalyMonitor() {
   const [platform, setPlatform] = useState<MonitorPlatform | 'all'>('all');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'resolved' | 'unresolved'>('unresolved');
   const [searchText, setSearchText] = useState('');
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   const { data: anomalies = [], isLoading } = useMonitorUserAnomalies({
     platform,
     timeRange,
     anomalyType: typeFilter,
+    statusFilter,
   });
 
   const stats = {
@@ -93,6 +97,33 @@ export default function UserAnomalyMonitor() {
       )
     : anomalies;
 
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'reviewed' ? 'pending' : 'reviewed';
+    setUpdatingIds(prev => new Set(prev).add(id));
+    try {
+      const { error } = await supabase
+        .from('monitor_user_anomalies')
+        .update({
+          status: newStatus,
+          reviewed_at: newStatus === 'reviewed' ? new Date().toISOString() : null,
+        })
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      toast.success(newStatus === 'reviewed' ? '已标记为已解决' : '已标记为未解决');
+      queryClient.invalidateQueries({ queryKey: ['monitor-user-anomalies'] });
+    } catch (e) {
+      toast.error('状态更新失败');
+      console.error(e);
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
   const handleSimulate = async () => {
     setInjecting(true);
     try {
@@ -129,11 +160,14 @@ export default function UserAnomalyMonitor() {
       a.user_id ? `用户ID: ${a.user_id}` : '',
       a.ip_address ? `IP地址: ${a.ip_address}` : '',
       a.extra ? `额外信息: ${JSON.stringify(a.extra)}` : '',
-      `状态: ${a.status === 'pending' ? '待审查' : a.status === 'reviewed' ? '已审查' : '已忽略'}`,
+      `状态: ${a.status === 'reviewed' ? '已解决' : '未解决'}`,
     ].filter(Boolean).join('\n');
     navigator.clipboard.writeText(lines);
     toast.success("已复制异常信息");
   };
+
+  const resolvedCount = anomalies.filter((a: any) => a.status === 'reviewed').length;
+  const unresolvedCount = anomalies.filter((a: any) => a.status !== 'reviewed').length;
 
   return (
     <div className="space-y-6 w-full min-w-0 overflow-hidden">
@@ -255,7 +289,35 @@ export default function UserAnomalyMonitor() {
             <Card>
               <CardHeader>
                 <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
-                  <CardTitle className="text-base">异常事件列表</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <CardTitle className="text-base">异常事件列表</CardTitle>
+                    <div className="flex items-center gap-1 rounded-lg border p-0.5">
+                      <Button
+                        size="sm"
+                        variant={statusFilter === 'all' ? 'default' : 'ghost'}
+                        className="h-7 px-2.5 text-xs"
+                        onClick={() => setStatusFilter('all')}
+                      >
+                        全部
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={statusFilter === 'unresolved' ? 'default' : 'ghost'}
+                        className="h-7 px-2.5 text-xs"
+                        onClick={() => setStatusFilter('unresolved')}
+                      >
+                        未解决 {statusFilter === 'unresolved' && unresolvedCount > 0 && `(${unresolvedCount})`}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={statusFilter === 'resolved' ? 'default' : 'ghost'}
+                        className="h-7 px-2.5 text-xs"
+                        onClick={() => setStatusFilter('resolved')}
+                      >
+                        已解决 {statusFilter === 'resolved' && resolvedCount > 0 && `(${resolvedCount})`}
+                      </Button>
+                    </div>
+                  </div>
                   <div className="relative w-full sm:w-60">
                     <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
@@ -278,8 +340,9 @@ export default function UserAnomalyMonitor() {
                       const cfg = ANOMALY_TYPE_CONFIG[a.anomaly_type] || { label: a.anomaly_type, icon: AlertTriangle, color: 'text-muted-foreground' };
                       const Icon = cfg.icon;
                       const sev = SEVERITY_BADGE[a.severity] || SEVERITY_BADGE.info;
+                      const isResolved = a.status === 'reviewed';
                       return (
-                        <div key={a.id} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border bg-card w-full min-w-0 overflow-hidden">
+                        <div key={a.id} className={`flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border bg-card w-full min-w-0 overflow-hidden ${isResolved ? 'opacity-60' : ''}`}>
                           <Icon className={`h-4 w-4 sm:h-5 sm:w-5 mt-0.5 shrink-0 ${cfg.color}`} />
                           <div className="flex-1 min-w-0 space-y-1 overflow-hidden">
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -287,6 +350,11 @@ export default function UserAnomalyMonitor() {
                               <Badge variant={sev.variant} className="text-[10px]">{sev.label}</Badge>
                               <Badge variant="outline" className="text-[10px]">{cfg.label}</Badge>
                               <Badge variant="outline" className="text-[10px]">{getPlatformLabel(a.platform)}</Badge>
+                              {isResolved && (
+                                <Badge variant="outline" className="text-[10px] text-green-600 border-green-300">
+                                  <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />已解决
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-xs sm:text-sm text-foreground break-all">{a.message}</p>
                             <div className="flex items-center justify-between gap-2">
@@ -295,14 +363,26 @@ export default function UserAnomalyMonitor() {
                                 {a.ip_address && <span>IP: {a.ip_address}</span>}
                                 <span className="whitespace-nowrap">{new Date(a.created_at).toLocaleString("zh-CN")}</span>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 sm:h-7 px-2 text-[10px] sm:text-xs shrink-0"
-                                onClick={() => handleCopy(a)}
-                              >
-                                <Copy className="h-3 w-3 mr-1" />复制
-                              </Button>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant={isResolved ? 'outline' : 'default'}
+                                  className="h-6 sm:h-7 px-2 text-[10px] sm:text-xs"
+                                  disabled={updatingIds.has(a.id)}
+                                  onClick={() => handleToggleStatus(a.id, a.status)}
+                                >
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  {isResolved ? '撤销' : '已解决'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 sm:h-7 px-2 text-[10px] sm:text-xs"
+                                  onClick={() => handleCopy(a)}
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />复制
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
