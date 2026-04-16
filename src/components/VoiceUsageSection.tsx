@@ -69,13 +69,6 @@ const getSourceLabel = (source: string | null): string => {
   return SOURCE_LABELS[source] || source.replace(/_/g, " ");
 };
 
-const CAMP_NAME_MAP: Record<string, string> = {
-  emotion_stress_7: '7天解压营',
-  emotion_journal_21: '21天情绪营',
-  wealth_block_21: '财富觉醒营',
-  emotion_bloom: '情感绽放营',
-  identity_bloom: '身份绽放营',
-};
 
 /** 将 description 中的技术术语替换为中文产品名 */
 const humanizeDescription = (desc: string | null, source: string | null): string => {
