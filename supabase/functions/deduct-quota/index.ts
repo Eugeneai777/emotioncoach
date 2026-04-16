@@ -489,6 +489,23 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .single();
 
+    // 9. 写入点数流水审计日志
+    try {
+      await supabase.from('quota_transactions').insert({
+        user_id: userId,
+        type: usedFreeQuota ? 'free_quota' : (actualCost > 0 ? 'deduct' : 'free_quota'),
+        amount: actualCost > 0 && !usedFreeQuota ? -actualCost : 0,
+        balance_after: account?.remaining_quota ?? 0,
+        source: source || featureKey,
+        description: usedFreeQuota
+          ? `${featureName} (免费额度)`
+          : `${featureName}扣费 -${actualCost}点`,
+        reference_id: session_id || conversationId || null,
+      });
+    } catch (txErr) {
+      console.warn('⚠️ quota_transactions insert failed (non-blocking):', txErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
