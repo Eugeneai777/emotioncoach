@@ -138,6 +138,14 @@ Deno.serve(async (req) => {
         realtime_voice_relationship: '关系教练语音',
       };
       const campSceneLabel = campSceneMap[featureKey] || featureKey;
+      const campNameMap: Record<string, string> = {
+        emotion_stress_7: '7天解压营',
+        emotion_journal_21: '21天情绪营',
+        wealth_block_21: '财富觉醒营',
+        emotion_bloom: '情感绽放营',
+        identity_bloom: '身份绽放营',
+      };
+      const campNameLabel = campNameMap[campCheck.campType] || '训练营';
       const campAccount = await supabase.from('user_accounts').select('remaining_quota').eq('user_id', userId).single();
       try {
         await supabase.from('quota_transactions').insert({
@@ -146,7 +154,7 @@ Deno.serve(async (req) => {
           amount: 0,
           balance_after: campAccount?.data?.remaining_quota ?? 0,
           source: source || featureKey,
-          description: `训练营免费额度 · ${campSceneLabel}`,
+          description: `${campNameLabel}免费额度 · ${campSceneLabel}`,
           reference_id: null,
         });
       } catch (e) { console.warn('⚠️ camp quota_transactions insert failed:', e); }

@@ -69,8 +69,16 @@ const getSourceLabel = (source: string | null): string => {
   return SOURCE_LABELS[source] || source.replace(/_/g, " ");
 };
 
+const CAMP_NAME_MAP: Record<string, string> = {
+  emotion_stress_7: '7天解压营',
+  emotion_journal_21: '21天情绪营',
+  wealth_block_21: '财富觉醒营',
+  emotion_bloom: '情感绽放营',
+  identity_bloom: '身份绽放营',
+};
+
 /** 将 description 中的技术术语替换为中文产品名 */
-const humanizeDescription = (desc: string | null, source: string | null): string => {
+const humanizeDescription = (desc: string | null, source: string | null, metadata?: Record<string, any> | null): string => {
   if (!desc) return "";
   let result = desc;
   // 替换 description 中出现的 source key
@@ -79,9 +87,16 @@ const humanizeDescription = (desc: string | null, source: string | null): string
       result = result.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), label);
     }
   }
-  // 训练营免费额度追加产品名
-  if (result.includes("训练营免费额度") && source && SOURCE_LABELS[source] && !result.includes("·")) {
-    result = `${result} · ${SOURCE_LABELS[source]}`;
+  // 兼容旧数据：将"训练营免费额度"替换为具体营名
+  if (result.includes("训练营免费额度")) {
+    const campType = metadata?.camp_type;
+    if (campType && CAMP_NAME_MAP[campType]) {
+      result = result.replace("训练营免费额度", `${CAMP_NAME_MAP[campType]}免费额度`);
+    }
+    // 追加产品名（如果缺少分隔符）
+    if (source && SOURCE_LABELS[source] && !result.includes("·")) {
+      result = `${result} · ${SOURCE_LABELS[source]}`;
+    }
   }
   return result;
 };
