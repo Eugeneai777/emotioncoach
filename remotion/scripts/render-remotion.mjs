@@ -116,12 +116,13 @@ try {
     const vi = videoIds.indexOf(target);
     const ci = coverIds.indexOf(target);
     const ei = extraVideoIds.indexOf(target);
+    const withAudio = target === "havruta-intro";
     if (vi >= 0) await renderVideo(videoIds[vi], videoFilenames[vi]);
     else if (ci >= 0) await renderCover(coverIds[ci], coverFilenames[ci]);
     else if (ei >= 0) await renderVideo(extraVideoIds[ei], extraVideoFilenames[ei]);
     else {
       const filename = target.replace(/-/g, "_") + ".mp4";
-      await renderVideo(target, filename);
+      await renderVideo(target, filename, { muted: !withAudio });
     }
   }
 } finally {
