@@ -184,7 +184,10 @@ serve(async (req) => {
     }
 
     // 🔧 方案C：去重检查 - 仅在订单尚未 paid 时执行
-    if (!alreadyPaid) {
+    // 充值套餐（basic/standard_49/premium_99/member365）允许用户重复购买，跳过去重
+    const RECHARGE_ALLOWED_KEYS = new Set(['basic', 'standard_49', 'premium_99', 'member365']);
+    const isRechargePackage = RECHARGE_ALLOWED_KEYS.has(order.package_key);
+    if (!alreadyPaid && !isRechargePackage) {
       const { data: existingPaidOrder } = await supabase
         .from('orders')
         .select('order_no')
