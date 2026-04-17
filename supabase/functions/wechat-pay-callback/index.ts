@@ -32,9 +32,11 @@ async function decryptAesGcm(ciphertext: string, nonce: string, associatedData: 
   return new TextDecoder().decode(decrypted);
 }
 
-// 套餐配额映射
+// 套餐配额映射（兜底，优先使用数据库 packages.ai_quota）
 const packageQuotaMap: Record<string, number> = {
   'basic': 50,
+  'standard_49': 300,
+  'premium_99': 800,
   'member365': 1000,
   'partner': 9999999, // 无限
 };
@@ -264,8 +266,20 @@ serve(async (req) => {
       
       // 训练营购买不增加有劲点数（训练营是独立权益）
     } else {
-      // 非训练营订单：增加用户配额
-      const quota = packageQuotaMap[order.package_key] || 0;
+      // 非训练营订单：增加用户配额（动态从 packages.ai_quota 读取，兜底用 packageQuotaMap）
+      let quota = packageQuotaMap[order.package_key] || 0;
+      try {
+        const { data: pkgQuota } = await supabase
+          .from('packages')
+          .select('ai_quota')
+          .eq('package_key', order.package_key)
+          .maybeSingle();
+        if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
+          quota = pkgQuota.ai_quota;
+        }
+      } catch (e) {
+        console.error('[WechatCallback] Lookup ai_quota error:', e);
+      }
       if (quota > 0) {
         // 查询用户当前配额
         const { data: userAccount, error: accountError } = await supabase

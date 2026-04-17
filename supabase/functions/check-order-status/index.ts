@@ -336,9 +336,20 @@ serve(async (req) => {
               }
               
               if (!pkgKey.startsWith('camp-')) {
-                // 非训练营：更新配额
-                const quotaMap: Record<string, number> = { basic: 50, member365: 1000, partner: 9999999 };
-                const quota = quotaMap[pkgKey] || 0;
+                // 非训练营：更新配额（动态从 packages.ai_quota 读取，兜底用 packageQuotaMap）
+                let quota = packageQuotaMap[pkgKey] || 0;
+                try {
+                  const { data: pkgQuota } = await supabase
+                    .from('packages')
+                    .select('ai_quota')
+                    .eq('package_key', pkgKey)
+                    .maybeSingle();
+                  if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
+                    quota = pkgQuota.ai_quota;
+                  }
+                } catch (e) {
+                  console.error('[CheckOrder] Lookup ai_quota error:', e);
+                }
                 if (quota > 0) {
                   const { data: ua } = await supabase
                     .from('user_accounts')
