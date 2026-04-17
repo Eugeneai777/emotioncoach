@@ -4,6 +4,7 @@ import { CoverComposition } from "./covers/CoverComposition";
 import { MidlifeCrisisHeyGen } from "./MidlifeCrisisHeyGen";
 import { MidlifeStockVideo } from "./MidlifeStockVideo";
 import { DigitalHumanBRoll } from "./DigitalHumanBRoll";
+import { HavrutaIntroVideo, HAVRUTA_TOTAL_FRAMES } from "./HavrutaIntroVideo";
 
 const VIDEOS = [
   {
