@@ -336,32 +336,51 @@ serve(async (req) => {
               }
               
               if (!pkgKey.startsWith('camp-')) {
-                // 非训练营：更新配额（动态从 packages.ai_quota 读取，兜底用 packageQuotaMap）
-                let quota = packageQuotaMap[pkgKey] || 0;
-                try {
-                  const { data: pkgQuota } = await supabase
-                    .from('packages')
-                    .select('ai_quota')
-                    .eq('package_key', pkgKey)
-                    .maybeSingle();
-                  if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
-                    quota = pkgQuota.ai_quota;
+                // 非训练营：幂等更新配额（用 quota_credited_at 原子锁）
+                const { data: claimRows, error: claimError } = await supabase
+                  .from('orders')
+                  .update({ quota_credited_at: new Date().toISOString() })
+                  .eq('id', fullOrder.id)
+                  .is('quota_credited_at', null)
+                  .select('id');
+
+                if (claimError) {
+                  console.error('[CheckOrder] Quota claim error:', claimError);
+                } else if (!claimRows || claimRows.length === 0) {
+                  console.log('[CheckOrder] Quota already credited, skip:', orderNo);
+                } else {
+                  console.log('[CheckOrder] Crediting quota (idempotent claim acquired):', orderNo);
+                  let quota = packageQuotaMap[pkgKey] || 0;
+                  try {
+                    const { data: pkgQuota } = await supabase
+                      .from('packages')
+                      .select('ai_quota')
+                      .eq('package_key', pkgKey)
+                      .maybeSingle();
+                    if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
+                      quota = pkgQuota.ai_quota;
+                    }
+                  } catch (e) {
+                    console.error('[CheckOrder] Lookup ai_quota error:', e);
                   }
-                } catch (e) {
-                  console.error('[CheckOrder] Lookup ai_quota error:', e);
-                }
-                if (quota > 0) {
-                  const { data: ua } = await supabase
-                    .from('user_accounts')
-                    .select('total_quota')
-                    .eq('user_id', fullOrder.user_id)
-                    .single();
-                  if (ua) {
-                    await supabase.from('user_accounts').update({
-                      total_quota: (ua.total_quota || 0) + quota,
-                      updated_at: new Date().toISOString(),
-                    }).eq('user_id', fullOrder.user_id);
-                    console.log('[CheckOrder] Quota updated:', fullOrder.user_id, '+', quota);
+                  if (quota > 0) {
+                    const { data: ua } = await supabase
+                      .from('user_accounts')
+                      .select('total_quota')
+                      .eq('user_id', fullOrder.user_id)
+                      .single();
+                    if (ua) {
+                      const { error: quotaErr } = await supabase.from('user_accounts').update({
+                        total_quota: (ua.total_quota || 0) + quota,
+                        updated_at: new Date().toISOString(),
+                      }).eq('user_id', fullOrder.user_id);
+                      if (quotaErr) {
+                        console.error('[CheckOrder] Quota update error, rolling back claim:', quotaErr);
+                        await supabase.from('orders').update({ quota_credited_at: null }).eq('id', fullOrder.id);
+                      } else {
+                        console.log('[CheckOrder] Quota updated:', fullOrder.user_id, '+', quota);
+                      }
+                    }
                   }
                 }
 
