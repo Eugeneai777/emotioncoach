@@ -235,6 +235,57 @@ serve(async (req) => {
         }
       }
 
+      // 自愈逻辑：幂等点数发放（防回调与轮询竞态导致漏发）
+      if (
+        order.status === 'paid' &&
+        order.user_id &&
+        order.package_key &&
+        !order.package_key.startsWith('camp-') &&
+        !order.quota_credited_at
+      ) {
+        try {
+          const { data: claimRows } = await supabase
+            .from('orders')
+            .update({ quota_credited_at: new Date().toISOString() })
+            .eq('id', order.id)
+            .is('quota_credited_at', null)
+            .select('id');
+          if (claimRows && claimRows.length > 0) {
+            console.log('[CheckOrder] Self-heal: crediting missing quota for paid order:', orderNo);
+            let quota = packageQuotaMap[order.package_key] || 0;
+            const { data: pkgQuota } = await supabase
+              .from('packages')
+              .select('ai_quota')
+              .eq('package_key', order.package_key)
+              .maybeSingle();
+            if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) quota = pkgQuota.ai_quota;
+            if (quota > 0) {
+              const { data: ua } = await supabase
+                .from('user_accounts')
+                .select('total_quota')
+                .eq('user_id', order.user_id)
+                .single();
+              if (ua) {
+                const { error: qErr } = await supabase.from('user_accounts').update({
+                  total_quota: (ua.total_quota || 0) + quota,
+                  updated_at: new Date().toISOString(),
+                }).eq('user_id', order.user_id);
+                if (qErr) {
+                  console.error('[CheckOrder] Self-heal quota update error, rollback:', qErr);
+                  await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
+                } else {
+                  console.log('[CheckOrder] Self-heal quota credited:', order.user_id, '+', quota);
+                }
+              }
+            }
+          } else {
+            console.log('[CheckOrder] Self-heal skipped, quota already credited by other process');
+          }
+        } catch (healErr) {
+          console.error('[CheckOrder] Self-heal error:', healErr);
+        }
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
