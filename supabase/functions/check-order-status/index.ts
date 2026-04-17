@@ -245,84 +245,50 @@ serve(async (req) => {
       }
 
       // 自愈逻辑：幂等点数发放（防回调与轮询竞态导致漏发）
-      // 同时检测"伪发放"：quota_credited_at 已设但无对应 quota_transactions 流水 → 重置锁后重新发放
       if (
         order.status === 'paid' &&
         order.user_id &&
         order.package_key &&
-        !order.package_key.startsWith('camp-')
+        !order.package_key.startsWith('camp-') &&
+        !order.quota_credited_at
       ) {
         try {
-          // 检测伪发放：有锁但无流水
-          if (order.quota_credited_at) {
-            const { data: existingTx } = await supabase
-              .from('quota_transactions')
-              .select('id')
-              .eq('reference_id', order.id)
-              .eq('source', 'order')
-              .limit(1);
-            if (!existingTx || existingTx.length === 0) {
-              console.warn('[CheckOrder] Detected ghost quota lock (no transaction), resetting:', orderNo);
-              await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
-              order.quota_credited_at = null;
-            }
-          }
-
-          if (!order.quota_credited_at) {
-            const { data: claimRows } = await supabase
-              .from('orders')
-              .update({ quota_credited_at: new Date().toISOString() })
-              .eq('id', order.id)
-              .is('quota_credited_at', null)
-              .select('id');
-            if (claimRows && claimRows.length > 0) {
-              console.log('[CheckOrder] Self-heal: crediting missing quota for paid order:', orderNo);
-              let quota = packageQuotaMap[order.package_key] || 0;
-              const { data: pkgQuota } = await supabase
-                .from('packages')
-                .select('ai_quota')
-                .eq('package_key', order.package_key)
-                .maybeSingle();
-              if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) quota = pkgQuota.ai_quota;
-              if (quota > 0) {
-                const { data: ua } = await supabase
-                  .from('user_accounts')
-                  .select('total_quota, used_quota')
-                  .eq('user_id', order.user_id)
-                  .single();
-                if (!ua) {
-                  console.error('[CheckOrder] Self-heal: user_account not found, rollback');
+          const { data: claimRows } = await supabase
+            .from('orders')
+            .update({ quota_credited_at: new Date().toISOString() })
+            .eq('id', order.id)
+            .is('quota_credited_at', null)
+            .select('id');
+          if (claimRows && claimRows.length > 0) {
+            console.log('[CheckOrder] Self-heal: crediting missing quota for paid order:', orderNo);
+            let quota = packageQuotaMap[order.package_key] || 0;
+            const { data: pkgQuota } = await supabase
+              .from('packages')
+              .select('ai_quota')
+              .eq('package_key', order.package_key)
+              .maybeSingle();
+            if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) quota = pkgQuota.ai_quota;
+            if (quota > 0) {
+              const { data: ua } = await supabase
+                .from('user_accounts')
+                .select('total_quota')
+                .eq('user_id', order.user_id)
+                .single();
+              if (ua) {
+                const { error: qErr } = await supabase.from('user_accounts').update({
+                  total_quota: (ua.total_quota || 0) + quota,
+                  updated_at: new Date().toISOString(),
+                }).eq('user_id', order.user_id);
+                if (qErr) {
+                  console.error('[CheckOrder] Self-heal quota update error, rollback:', qErr);
                   await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
                 } else {
-                  const newTotalQuota = (ua.total_quota || 0) + quota;
-                  const { error: qErr } = await supabase.from('user_accounts').update({
-                    total_quota: newTotalQuota,
-                    updated_at: new Date().toISOString(),
-                  }).eq('user_id', order.user_id);
-                  if (qErr) {
-                    console.error('[CheckOrder] Self-heal quota update error, rollback:', qErr);
-                    await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
-                  } else {
-                    console.log('[CheckOrder] Self-heal quota credited:', order.user_id, '+', quota);
-                    try {
-                      await supabase.from('quota_transactions').insert({
-                        user_id: order.user_id,
-                        type: 'recharge',
-                        amount: quota,
-                        balance_after: newTotalQuota - (ua.used_quota || 0),
-                        source: 'order',
-                        description: `${order.package_name || order.package_key} 充值 +${quota}`,
-                        reference_id: order.id,
-                      });
-                    } catch (txErr) {
-                      console.error('[CheckOrder] quota_transactions insert error:', txErr);
-                    }
-                  }
+                  console.log('[CheckOrder] Self-heal quota credited:', order.user_id, '+', quota);
                 }
               }
-            } else {
-              console.log('[CheckOrder] Self-heal skipped, quota already credited by other process');
             }
+          } else {
+            console.log('[CheckOrder] Self-heal skipped, quota already credited by other process');
           }
         } catch (healErr) {
           console.error('[CheckOrder] Self-heal error:', healErr);
@@ -430,86 +396,49 @@ serve(async (req) => {
               }
               
               if (!pkgKey.startsWith('camp-')) {
-                // 修改 A：user_id 缺失时按 openid 回填
-                if (!fullOrder.user_id && wechatResult.payer_openid) {
-                  const { data: mapping } = await supabase
-                    .from('wechat_user_mappings')
-                    .select('system_user_id')
-                    .eq('openid', wechatResult.payer_openid)
-                    .maybeSingle();
-                  if (mapping?.system_user_id) {
-                    await supabase.from('orders')
-                      .update({ user_id: mapping.system_user_id })
-                      .eq('id', fullOrder.id);
-                    fullOrder.user_id = mapping.system_user_id;
-                    console.log('[CheckOrder] Backfilled user_id from openid mapping:', orderNo);
-                  }
-                }
+                // 非训练营：幂等更新配额（用 quota_credited_at 原子锁）
+                const { data: claimRows, error: claimError } = await supabase
+                  .from('orders')
+                  .update({ quota_credited_at: new Date().toISOString() })
+                  .eq('id', fullOrder.id)
+                  .is('quota_credited_at', null)
+                  .select('id');
 
-                if (!fullOrder.user_id) {
-                  console.warn('[CheckOrder] Skip quota credit: no user_id yet for', orderNo);
+                if (claimError) {
+                  console.error('[CheckOrder] Quota claim error:', claimError);
+                } else if (!claimRows || claimRows.length === 0) {
+                  console.log('[CheckOrder] Quota already credited, skip:', orderNo);
                 } else {
-                  // 非训练营：幂等更新配额（用 quota_credited_at 原子锁）
-                  const { data: claimRows, error: claimError } = await supabase
-                    .from('orders')
-                    .update({ quota_credited_at: new Date().toISOString() })
-                    .eq('id', fullOrder.id)
-                    .is('quota_credited_at', null)
-                    .select('id');
-
-                  if (claimError) {
-                    console.error('[CheckOrder] Quota claim error:', claimError);
-                  } else if (!claimRows || claimRows.length === 0) {
-                    console.log('[CheckOrder] Quota already credited, skip:', orderNo);
-                  } else {
-                    console.log('[CheckOrder] Crediting quota (idempotent claim acquired):', orderNo);
-                    let quota = packageQuotaMap[pkgKey] || 0;
-                    try {
-                      const { data: pkgQuota } = await supabase
-                        .from('packages')
-                        .select('ai_quota')
-                        .eq('package_key', pkgKey)
-                        .maybeSingle();
-                      if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
-                        quota = pkgQuota.ai_quota;
-                      }
-                    } catch (e) {
-                      console.error('[CheckOrder] Lookup ai_quota error:', e);
+                  console.log('[CheckOrder] Crediting quota (idempotent claim acquired):', orderNo);
+                  let quota = packageQuotaMap[pkgKey] || 0;
+                  try {
+                    const { data: pkgQuota } = await supabase
+                      .from('packages')
+                      .select('ai_quota')
+                      .eq('package_key', pkgKey)
+                      .maybeSingle();
+                    if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
+                      quota = pkgQuota.ai_quota;
                     }
-                    if (quota > 0) {
-                      const { data: ua } = await supabase
-                        .from('user_accounts')
-                        .select('total_quota, used_quota')
-                        .eq('user_id', fullOrder.user_id)
-                        .single();
-                      if (!ua) {
-                        console.error('[CheckOrder] user_account not found, rollback claim');
+                  } catch (e) {
+                    console.error('[CheckOrder] Lookup ai_quota error:', e);
+                  }
+                  if (quota > 0) {
+                    const { data: ua } = await supabase
+                      .from('user_accounts')
+                      .select('total_quota')
+                      .eq('user_id', fullOrder.user_id)
+                      .single();
+                    if (ua) {
+                      const { error: quotaErr } = await supabase.from('user_accounts').update({
+                        total_quota: (ua.total_quota || 0) + quota,
+                        updated_at: new Date().toISOString(),
+                      }).eq('user_id', fullOrder.user_id);
+                      if (quotaErr) {
+                        console.error('[CheckOrder] Quota update error, rolling back claim:', quotaErr);
                         await supabase.from('orders').update({ quota_credited_at: null }).eq('id', fullOrder.id);
                       } else {
-                        const newTotalQuota = (ua.total_quota || 0) + quota;
-                        const { error: quotaErr } = await supabase.from('user_accounts').update({
-                          total_quota: newTotalQuota,
-                          updated_at: new Date().toISOString(),
-                        }).eq('user_id', fullOrder.user_id);
-                        if (quotaErr) {
-                          console.error('[CheckOrder] Quota update error, rolling back claim:', quotaErr);
-                          await supabase.from('orders').update({ quota_credited_at: null }).eq('id', fullOrder.id);
-                        } else {
-                          console.log('[CheckOrder] Quota updated:', fullOrder.user_id, '+', quota);
-                          try {
-                            await supabase.from('quota_transactions').insert({
-                              user_id: fullOrder.user_id,
-                              type: 'recharge',
-                              amount: quota,
-                              balance_after: newTotalQuota - (ua.used_quota || 0),
-                              source: 'order',
-                              description: `${fullOrder.package_name || pkgKey} 充值 +${quota}`,
-                              reference_id: fullOrder.id,
-                            });
-                          } catch (txErr) {
-                            console.error('[CheckOrder] quota_transactions insert error:', txErr);
-                          }
-                        }
+                        console.log('[CheckOrder] Quota updated:', fullOrder.user_id, '+', quota);
                       }
                     }
                   }

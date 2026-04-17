@@ -258,22 +258,6 @@ serve(async (req) => {
         }
       }
     } else {
-      // 检测"伪发放"：quota_credited_at 已设但无对应 quota_transactions 流水（如 callback 用 null user_id 锁死）
-      // → 重置锁后重新发放
-      if (order.quota_credited_at) {
-        const { data: existingTx } = await supabase
-          .from('quota_transactions')
-          .select('id')
-          .eq('reference_id', order.id)
-          .eq('source', 'order')
-          .limit(1);
-        if (!existingTx || existingTx.length === 0) {
-          console.warn('[ClaimGuestOrder] Detected ghost quota lock (no transaction), resetting:', orderNo);
-          await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
-          order.quota_credited_at = null;
-        }
-      }
-
       // 非训练营：幂等增加配额（用 quota_credited_at 原子锁防双发）
       const { data: claimRows, error: claimError } = await supabase
         .from('orders')
