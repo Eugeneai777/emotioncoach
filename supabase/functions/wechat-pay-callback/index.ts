@@ -108,9 +108,11 @@ serve(async (req) => {
       });
     }
 
-    // 检查是否已处理
-    if (order.status === 'paid') {
-      console.log('Order already paid:', orderNo);
+    // 注意：不再因 order.status === 'paid' 早返回——必须继续走"幂等点数发放"路径
+    // 仅当订单已 paid 时，先做 subscription / camp_purchases 的幂等修复（与 quota 发放解耦）
+    const alreadyPaid = order.status === 'paid';
+    if (alreadyPaid) {
+      console.log('[Callback] Order already paid, will run idempotent healing:', orderNo);
 
       // 自愈逻辑：检查 subscription 是否存在，不存在则补建
       if (order.user_id && order.package_key && !order.package_key.startsWith('camp-')) {
@@ -178,15 +180,11 @@ serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify({ code: 'SUCCESS', message: '成功' }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      // 注意：不再早返回，继续走幂等点数发放流程
     }
 
-    // 🔧 方案C：去重检查 - 同用户同 packageKey 是否已有其他已支付订单
-    // 跳过健康商城商品（store_product_*），实物商品允许重复购买
-    const isStoreProduct = order.package_key?.startsWith('store_product_');
-    if (order.user_id && order.package_key && !isStoreProduct) {
+    // 🔧 方案C：去重检查 - 仅在订单尚未 paid 时执行
+    if (!alreadyPaid) {
       const { data: existingPaidOrder } = await supabase
         .from('orders')
         .select('order_no')
@@ -216,20 +214,22 @@ serve(async (req) => {
       }
     }
 
-    // 更新订单状态
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({
-        status: 'paid',
-        trade_no: tradeNo,
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('order_no', orderNo);
+    // 更新订单状态（仅当订单尚未 paid 时）
+    if (!alreadyPaid) {
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'paid',
+          trade_no: tradeNo,
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('order_no', orderNo);
 
-    if (updateError) {
-      console.error('Update order error:', updateError);
-      throw new Error('订单更新失败');
+      if (updateError) {
+        console.error('Update order error:', updateError);
+        throw new Error('订单更新失败');
+      }
     }
 
     // 处理训练营购买订单（package_key 以 'camp-' 开头）
@@ -266,45 +266,61 @@ serve(async (req) => {
       
       // 训练营购买不增加有劲点数（训练营是独立权益）
     } else {
-      // 非训练营订单：增加用户配额（动态从 packages.ai_quota 读取，兜底用 packageQuotaMap）
-      let quota = packageQuotaMap[order.package_key] || 0;
-      try {
-        const { data: pkgQuota } = await supabase
-          .from('packages')
-          .select('ai_quota')
-          .eq('package_key', order.package_key)
-          .maybeSingle();
-        if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
-          quota = pkgQuota.ai_quota;
+      // 非训练营订单：增加用户配额（幂等：用 quota_credited_at 原子锁防双发）
+      // 原子认领：UPDATE WHERE quota_credited_at IS NULL，RETURNING 拿到的一方才执行发放
+      const { data: claimRows, error: claimError } = await supabase
+        .from('orders')
+        .update({ quota_credited_at: new Date().toISOString() })
+        .eq('id', order.id)
+        .is('quota_credited_at', null)
+        .select('id');
+
+      if (claimError) {
+        console.error('[Callback] Quota claim error:', claimError);
+      } else if (!claimRows || claimRows.length === 0) {
+        console.log('[Callback] Quota already credited, skip:', orderNo);
+      } else {
+        console.log('[Callback] Crediting quota (idempotent claim acquired):', orderNo);
+
+        let quota = packageQuotaMap[order.package_key] || 0;
+        try {
+          const { data: pkgQuota } = await supabase
+            .from('packages')
+            .select('ai_quota')
+            .eq('package_key', order.package_key)
+            .maybeSingle();
+          if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
+            quota = pkgQuota.ai_quota;
+          }
+        } catch (e) {
+          console.error('[WechatCallback] Lookup ai_quota error:', e);
         }
-      } catch (e) {
-        console.error('[WechatCallback] Lookup ai_quota error:', e);
-      }
-      if (quota > 0) {
-        // 查询用户当前配额
-        const { data: userAccount, error: accountError } = await supabase
-          .from('user_accounts')
-          .select('total_quota, used_quota')
-          .eq('user_id', order.user_id)
-          .single();
-
-        if (accountError) {
-          console.error('Query user account error:', accountError);
-        } else if (userAccount) {
-          // 更新用户配额
-          const newTotalQuota = (userAccount.total_quota || 0) + quota;
-          const { error: quotaError } = await supabase
+        if (quota > 0) {
+          const { data: userAccount, error: accountError } = await supabase
             .from('user_accounts')
-            .update({ 
-              total_quota: newTotalQuota,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', order.user_id);
+            .select('total_quota, used_quota')
+            .eq('user_id', order.user_id)
+            .single();
 
-          if (quotaError) {
-            console.error('Update quota error:', quotaError);
-          } else {
-            console.log('User quota updated:', order.user_id, '+', quota);
+          if (accountError) {
+            console.error('Query user account error:', accountError);
+          } else if (userAccount) {
+            const newTotalQuota = (userAccount.total_quota || 0) + quota;
+            const { error: quotaError } = await supabase
+              .from('user_accounts')
+              .update({
+                total_quota: newTotalQuota,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', order.user_id);
+
+            if (quotaError) {
+              console.error('Update quota error:', quotaError);
+              // 失败时回滚 quota_credited_at，让下次重试可以再次认领
+              await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
+            } else {
+              console.log('User quota updated:', order.user_id, '+', quota);
+            }
           }
         }
       }

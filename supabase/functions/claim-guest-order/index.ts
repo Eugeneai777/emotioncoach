@@ -258,24 +258,53 @@ serve(async (req) => {
         }
       }
     } else {
-      // 非训练营：增加配额
-      const quota = packageQuotaMap[pkgKey] || 0;
-      if (quota > 0) {
-        const { data: userAccount } = await supabase
-          .from('user_accounts')
-          .select('total_quota')
-          .eq('user_id', userId)
-          .single();
+      // 非训练营：幂等增加配额（用 quota_credited_at 原子锁防双发）
+      const { data: claimRows, error: claimError } = await supabase
+        .from('orders')
+        .update({ quota_credited_at: new Date().toISOString() })
+        .eq('id', order.id)
+        .is('quota_credited_at', null)
+        .select('id');
 
-        if (userAccount) {
-          await supabase
+      if (claimError) {
+        console.error('[ClaimGuestOrder] Quota claim error:', claimError);
+      } else if (!claimRows || claimRows.length === 0) {
+        console.log('[ClaimGuestOrder] Quota already credited, skip:', orderNo);
+      } else {
+        console.log('[ClaimGuestOrder] Crediting quota (idempotent claim acquired):', orderNo);
+        let quota = packageQuotaMap[pkgKey] || 0;
+        try {
+          const { data: pkgQuota } = await supabase
+            .from('packages')
+            .select('ai_quota')
+            .eq('package_key', pkgKey)
+            .maybeSingle();
+          if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) quota = pkgQuota.ai_quota;
+        } catch (e) {
+          console.error('[ClaimGuestOrder] Lookup ai_quota error:', e);
+        }
+        if (quota > 0) {
+          const { data: userAccount } = await supabase
             .from('user_accounts')
-            .update({
-              total_quota: (userAccount.total_quota || 0) + quota,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId);
-          console.log('[ClaimGuestOrder] Quota updated:', userId, '+', quota);
+            .select('total_quota')
+            .eq('user_id', userId)
+            .single();
+
+          if (userAccount) {
+            const { error: qErr } = await supabase
+              .from('user_accounts')
+              .update({
+                total_quota: (userAccount.total_quota || 0) + quota,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('user_id', userId);
+            if (qErr) {
+              console.error('[ClaimGuestOrder] Quota update error, rollback claim:', qErr);
+              await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
+            } else {
+              console.log('[ClaimGuestOrder] Quota updated:', userId, '+', quota);
+            }
+          }
         }
       }
 
