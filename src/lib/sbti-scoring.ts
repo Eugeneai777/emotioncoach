@@ -47,16 +47,23 @@ export function scoreSBTI(
 
   questions.forEach((q, i) => {
     const ans = answers[i];
-    if (ans === undefined) return;
-    
+    if (ans === undefined || ans === null) return;
+
+    // Skip "escape" options (score: null / skip: true) — user marked the scenario as not applicable
+    const opt = (q as any).options?.[ans];
+    if (opt && (opt.skip === true || opt.score === null || opt.score === undefined)) return;
+
+    // Use the option's actual score (supports skip-aware indexing)
+    const optScore = typeof opt?.score === 'number' ? opt.score : ans;
+
     if (q.dimension === 'DRUNK_TRIGGER' || q.factor === 'DRUNK_TRIGGER') {
-      if (ans === 0) drunkTriggered = true; // Option C (score=0) triggers DRUNK
+      if (optScore === 0) drunkTriggered = true;
       return;
     }
-    
+
     const dimKey = q.factor || q.dimension;
     if (dimScores[dimKey]) {
-      dimScores[dimKey].total += ans;
+      dimScores[dimKey].total += optScore;
       dimScores[dimKey].count += 1;
     }
   });
