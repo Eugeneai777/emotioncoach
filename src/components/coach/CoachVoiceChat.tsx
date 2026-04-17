@@ -2138,10 +2138,10 @@ export const CoachVoiceChat = ({
         {/* 教练名称 */}
         <h2 className="text-white text-xl font-semibold mb-2 tracking-wide" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{coachTitle}</h2>
 
-        {/* 费率 + 可聊时长提示 */}
+        {/* 费率 + 余额 + 可聊时长提示 */}
         {!skipBilling && remainingQuota !== null && (
           <span className={`text-[11px] mb-2 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/50'}`}>
-            {POINTS_PER_MINUTE}点/分钟 · 约可聊 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟
+            {POINTS_PER_MINUTE}点/分钟 · 余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
           </span>
         )}
         
