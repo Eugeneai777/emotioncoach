@@ -203,8 +203,11 @@ serve(async (req) => {
 
       // 🔧 方案C：去重检查 - 同用户同 packageKey 是否已有其他已支付订单
       // 跳过健康商城商品（store_product_*），实物商品允许重复购买
+      // 跳过充值套餐（basic/standard_49/premium_99/member365），点数包允许重复购买
       const isStoreProduct = order.package_key?.startsWith('store_product_');
-      if (order.user_id && order.package_key && !isStoreProduct) {
+      const RECHARGE_ALLOWED_KEYS = new Set(['basic', 'standard_49', 'premium_99', 'member365']);
+      const isRechargePackage = order.package_key && RECHARGE_ALLOWED_KEYS.has(order.package_key);
+      if (order.user_id && order.package_key && !isStoreProduct && !isRechargePackage) {
         const { data: existingPaidOrder } = await supabase
           .from('orders')
           .select('order_no')
