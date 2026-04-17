@@ -68,7 +68,7 @@ const browser = await openBrowser("chrome", {
 // Render only what's requested via CLI args, or everything
 const target = process.argv[2]; // "videos", "covers", "all", or a specific id
 
-async function renderVideo(id, filename) {
+async function renderVideo(id, filename, opts = {}) {
   console.log(`Rendering ${id}...`);
   const composition = await selectComposition({ serveUrl: bundled, id, puppeteerInstance: browser });
   await renderMedia({
@@ -77,7 +77,7 @@ async function renderVideo(id, filename) {
     codec: "h264",
     outputLocation: `/mnt/documents/${filename}`,
     puppeteerInstance: browser,
-    muted: true,
+    muted: opts.muted ?? true,
     concurrency: 1,
   });
   console.log(`Done: /mnt/documents/${filename}`);
