@@ -214,20 +214,22 @@ serve(async (req) => {
       }
     }
 
-    // 更新订单状态
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({
-        status: 'paid',
-        trade_no: tradeNo,
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('order_no', orderNo);
+    // 更新订单状态（仅当订单尚未 paid 时）
+    if (!alreadyPaid) {
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'paid',
+          trade_no: tradeNo,
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('order_no', orderNo);
 
-    if (updateError) {
-      console.error('Update order error:', updateError);
-      throw new Error('订单更新失败');
+      if (updateError) {
+        console.error('Update order error:', updateError);
+        throw new Error('订单更新失败');
+      }
     }
 
     // 处理训练营购买订单（package_key 以 'camp-' 开头）
