@@ -270,59 +270,99 @@ serve(async (req) => {
       // 训练营购买不增加有劲点数（训练营是独立权益）
     } else {
       // 非训练营订单：增加用户配额（幂等：用 quota_credited_at 原子锁防双发）
-      // 原子认领：UPDATE WHERE quota_credited_at IS NULL，RETURNING 拿到的一方才执行发放
-      const { data: claimRows, error: claimError } = await supabase
-        .from('orders')
-        .update({ quota_credited_at: new Date().toISOString() })
-        .eq('id', order.id)
-        .is('quota_credited_at', null)
-        .select('id');
 
-      if (claimError) {
-        console.error('[Callback] Quota claim error:', claimError);
-      } else if (!claimRows || claimRows.length === 0) {
-        console.log('[Callback] Quota already credited, skip:', orderNo);
-      } else {
-        console.log('[Callback] Crediting quota (idempotent claim acquired):', orderNo);
-
-        let quota = packageQuotaMap[order.package_key] || 0;
-        try {
-          const { data: pkgQuota } = await supabase
-            .from('packages')
-            .select('ai_quota')
-            .eq('package_key', order.package_key)
+      // 修改 A：user_id 缺失时尝试通过 openid 回填，避免 guest 订单锁死 quota_credited_at
+      if (!order.user_id) {
+        const openid = paymentData?.payer?.openid;
+        if (openid) {
+          const { data: mapping } = await supabase
+            .from('wechat_user_mappings')
+            .select('system_user_id')
+            .eq('openid', openid)
             .maybeSingle();
-          if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
-            quota = pkgQuota.ai_quota;
+          if (mapping?.system_user_id) {
+            await supabase.from('orders')
+              .update({ user_id: mapping.system_user_id })
+              .eq('id', order.id);
+            order.user_id = mapping.system_user_id;
+            console.log('[Callback] Backfilled user_id from openid mapping:', orderNo, '->', mapping.system_user_id);
           }
-        } catch (e) {
-          console.error('[WechatCallback] Lookup ai_quota error:', e);
         }
-        if (quota > 0) {
-          const { data: userAccount, error: accountError } = await supabase
-            .from('user_accounts')
-            .select('total_quota, used_quota')
-            .eq('user_id', order.user_id)
-            .single();
+      }
 
-          if (accountError) {
-            console.error('Query user account error:', accountError);
-          } else if (userAccount) {
-            const newTotalQuota = (userAccount.total_quota || 0) + quota;
-            const { error: quotaError } = await supabase
+      if (!order.user_id) {
+        // 仍无 user_id：跳过点数发放，**不锁** quota_credited_at，留给 claim-guest-order 走完整路径
+        console.warn('[Callback] Skip quota credit: no user_id yet for', orderNo);
+      } else {
+        // 原子认领：UPDATE WHERE quota_credited_at IS NULL，RETURNING 拿到的一方才执行发放
+        const { data: claimRows, error: claimError } = await supabase
+          .from('orders')
+          .update({ quota_credited_at: new Date().toISOString() })
+          .eq('id', order.id)
+          .is('quota_credited_at', null)
+          .select('id');
+
+        if (claimError) {
+          console.error('[Callback] Quota claim error:', claimError);
+        } else if (!claimRows || claimRows.length === 0) {
+          console.log('[Callback] Quota already credited, skip:', orderNo);
+        } else {
+          console.log('[Callback] Crediting quota (idempotent claim acquired):', orderNo);
+
+          let quota = packageQuotaMap[order.package_key] || 0;
+          try {
+            const { data: pkgQuota } = await supabase
+              .from('packages')
+              .select('ai_quota')
+              .eq('package_key', order.package_key)
+              .maybeSingle();
+            if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) {
+              quota = pkgQuota.ai_quota;
+            }
+          } catch (e) {
+            console.error('[WechatCallback] Lookup ai_quota error:', e);
+          }
+          if (quota > 0) {
+            const { data: userAccount, error: accountError } = await supabase
               .from('user_accounts')
-              .update({
-                total_quota: newTotalQuota,
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', order.user_id);
+              .select('total_quota, used_quota')
+              .eq('user_id', order.user_id)
+              .single();
 
-            if (quotaError) {
-              console.error('Update quota error:', quotaError);
-              // 失败时回滚 quota_credited_at，让下次重试可以再次认领
+            // 修改 B：账户查询失败 → 回滚锁，等待重试/自愈
+            if (accountError || !userAccount) {
+              console.error('Query user account error, rolling back quota lock:', accountError);
               await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
             } else {
-              console.log('User quota updated:', order.user_id, '+', quota);
+              const newTotalQuota = (userAccount.total_quota || 0) + quota;
+              const { error: quotaError } = await supabase
+                .from('user_accounts')
+                .update({
+                  total_quota: newTotalQuota,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('user_id', order.user_id);
+
+              if (quotaError) {
+                console.error('Update quota error, rolling back quota lock:', quotaError);
+                await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
+              } else {
+                console.log('User quota updated:', order.user_id, '+', quota);
+                // 修改 C：写入 quota_transactions 流水（与 365 会员一致，便于审计与"点数明细"展示）
+                try {
+                  await supabase.from('quota_transactions').insert({
+                    user_id: order.user_id,
+                    type: 'recharge',
+                    amount: quota,
+                    balance_after: newTotalQuota - (userAccount.used_quota || 0),
+                    source: 'order',
+                    description: `${order.package_name || order.package_key} 充值 +${quota}`,
+                    reference_id: order.id,
+                  });
+                } catch (txErr) {
+                  console.error('[Callback] quota_transactions insert error:', txErr);
+                }
+              }
             }
           }
         }

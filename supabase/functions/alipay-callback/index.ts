@@ -252,36 +252,70 @@ serve(async (req) => {
       console.log('[AlipayCallback] Order updated successfully:', orderNo);
 
       // 处理订单后续逻辑（添加用户额度等）
-      if (order.user_id) {
-        try {
-          // 查询套餐信息
-          const { data: pkg } = await supabase
-            .from('packages')
-            .select('ai_quota, duration_days')
-            .eq('package_key', order.package_key)
-            .single();
+      if (order.user_id && !order.package_key?.startsWith('camp-')) {
+        // 修改 A/B/C：幂等增加配额（用 quota_credited_at 原子锁），失败回滚 + 写流水
+        const { data: claimRows, error: claimError } = await supabase
+          .from('orders')
+          .update({ quota_credited_at: new Date().toISOString() })
+          .eq('id', order.id)
+          .is('quota_credited_at', null)
+          .select('id');
 
-          if (pkg) {
-            // 更新用户额度
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + (pkg.duration_days || 365));
-
-            await supabase
-              .from('user_accounts')
-              .upsert({
-                user_id: order.user_id,
-                total_quota: pkg.ai_quota || 0,
-                used_quota: 0,
-                quota_expires_at: expiresAt.toISOString(),
-              }, {
-                onConflict: 'user_id',
-              });
-
-            console.log('[AlipayCallback] User quota updated for:', order.user_id);
+        if (claimError) {
+          console.error('[AlipayCallback] Quota claim error:', claimError);
+        } else if (!claimRows || claimRows.length === 0) {
+          console.log('[AlipayCallback] Quota already credited, skip:', orderNo);
+        } else {
+          let quota = packageQuotaMap[order.package_key] || 0;
+          try {
+            const { data: pkgQuota } = await supabase
+              .from('packages')
+              .select('ai_quota')
+              .eq('package_key', order.package_key)
+              .maybeSingle();
+            if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) quota = pkgQuota.ai_quota;
+          } catch (e) {
+            console.error('[AlipayCallback] Lookup ai_quota error:', e);
           }
-        } catch (quotaError) {
-          console.error('[AlipayCallback] Error updating user quota:', quotaError);
+          if (quota > 0) {
+            const { data: ua, error: uaErr } = await supabase
+              .from('user_accounts')
+              .select('total_quota, used_quota')
+              .eq('user_id', order.user_id)
+              .single();
+            if (uaErr || !ua) {
+              console.error('[AlipayCallback] user_account not found, rollback:', uaErr);
+              await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
+            } else {
+              const newTotalQuota = (ua.total_quota || 0) + quota;
+              const { error: qErr } = await supabase.from('user_accounts').update({
+                total_quota: newTotalQuota,
+                updated_at: new Date().toISOString(),
+              }).eq('user_id', order.user_id);
+              if (qErr) {
+                console.error('[AlipayCallback] Update quota error, rollback:', qErr);
+                await supabase.from('orders').update({ quota_credited_at: null }).eq('id', order.id);
+              } else {
+                console.log('[AlipayCallback] User quota updated for:', order.user_id, '+', quota);
+                try {
+                  await supabase.from('quota_transactions').insert({
+                    user_id: order.user_id,
+                    type: 'recharge',
+                    amount: quota,
+                    balance_after: newTotalQuota - (ua.used_quota || 0),
+                    source: 'order',
+                    description: `${order.package_name || order.package_key} 充值 +${quota}`,
+                    reference_id: order.id,
+                  });
+                } catch (txErr) {
+                  console.error('[AlipayCallback] quota_transactions insert error:', txErr);
+                }
+              }
+            }
+          }
         }
+      }
+      if (order.user_id) {
 
         // === 新增：写入 subscriptions 表 ===
         try {
