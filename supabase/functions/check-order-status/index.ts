@@ -141,7 +141,7 @@ serve(async (req) => {
     // 查询订单状态（orders 表没有 openid 字段，需要从 wechat_user_mappings 获取）
     const { data: order, error } = await supabase
       .from('orders')
-      .select('status, paid_at, package_key, package_name, amount, user_id')
+      .select('id, status, paid_at, package_key, package_name, amount, user_id, quota_credited_at')
       .eq('order_no', orderNo)
       .single();
 
