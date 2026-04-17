@@ -1,21 +1,13 @@
 
-上次会话最后阶段渲染超时，没产出 mp4。所有源码 + 9 段配音都已就位，只差最终渲染。
+上次后台渲染挂了，没产物。需要重新拉起渲染并兜底。
 
-## 执行（默认模式下一步即跑）
-单条命令，10 分钟超时上限内完成：
-```bash
-cd remotion && node scripts/render-remotion.mjs havruta-intro
-```
-输出：`/mnt/documents/havruta_intro.mp4`
+## 执行
+1. 检查 `/tmp/havruta-render.log` 和 `/mnt/documents/havruta_intro.mp4` 当前状态，看进度到哪了
+2. 检查是否还有残留的 node 渲染进程，有就清掉
+3. 重新跑 `cd remotion && nohup node scripts/render-remotion.mjs havruta-intro > /tmp/havruta-render.log 2>&1 &`，concurrency=8
+4. 轮询日志 + 文件大小（每 30s 一次，最多 8 分钟）
+5. 完成后用 `ffprobe` 校验时长 + aac 音轨；抽 200/1000/1800 三帧目检
+6. `<lov-artifact>` 交付
 
 ## 兜底
-若 600s 仍超时（2006 帧 @ 30fps，~67 秒视频，concurrency=1 偏慢）：
-- 提高 `concurrency` 至 2（脚本里改）
-- 或拆成两段渲染再用 ffmpeg 拼接
-
-## QA
-- ffprobe 检查时长、是否有 aac 音轨
-- 抽 3 帧（200/1000/1800）目检文字/对齐
-- 通过后 `<lov-artifact>` 交付
-
-不动文案、不动场景代码、不动配音。
+若仍卡在最后 mux 阶段：手动用 ffmpeg 把 remotion 中间产物（pre-stitcher 临时帧目录或纯视频文件）和 9 段 mp3 直接合并出 mp4。
