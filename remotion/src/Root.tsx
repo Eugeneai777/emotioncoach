@@ -4,6 +4,7 @@ import { CoverComposition } from "./covers/CoverComposition";
 import { MidlifeCrisisHeyGen } from "./MidlifeCrisisHeyGen";
 import { MidlifeStockVideo } from "./MidlifeStockVideo";
 import { DigitalHumanBRoll } from "./DigitalHumanBRoll";
+import { HavrutaIntroVideo, HAVRUTA_TOTAL_FRAMES } from "./HavrutaIntroVideo";
 
 const VIDEOS = [
   {
@@ -150,6 +151,14 @@ export const RemotionRoot = () => (
       width={1080}
       height={1920}
       defaultProps={DH_BROLL_DEFAULT_PROPS}
+    />
+    <Composition
+      id="havruta-intro"
+      component={HavrutaIntroVideo}
+      durationInFrames={HAVRUTA_TOTAL_FRAMES}
+      fps={30}
+      width={1080}
+      height={1920}
     />
   </>
 );

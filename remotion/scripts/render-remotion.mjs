@@ -68,7 +68,7 @@ const browser = await openBrowser("chrome", {
 // Render only what's requested via CLI args, or everything
 const target = process.argv[2]; // "videos", "covers", "all", or a specific id
 
-async function renderVideo(id, filename) {
+async function renderVideo(id, filename, opts = {}) {
   console.log(`Rendering ${id}...`);
   const composition = await selectComposition({ serveUrl: bundled, id, puppeteerInstance: browser });
   await renderMedia({
@@ -77,7 +77,7 @@ async function renderVideo(id, filename) {
     codec: "h264",
     outputLocation: `/mnt/documents/${filename}`,
     puppeteerInstance: browser,
-    muted: true,
+    muted: opts.muted ?? true,
     concurrency: 1,
   });
   console.log(`Done: /mnt/documents/${filename}`);
@@ -116,12 +116,13 @@ try {
     const vi = videoIds.indexOf(target);
     const ci = coverIds.indexOf(target);
     const ei = extraVideoIds.indexOf(target);
+    const withAudio = target === "havruta-intro";
     if (vi >= 0) await renderVideo(videoIds[vi], videoFilenames[vi]);
     else if (ci >= 0) await renderCover(coverIds[ci], coverFilenames[ci]);
     else if (ei >= 0) await renderVideo(extraVideoIds[ei], extraVideoFilenames[ei]);
     else {
       const filename = target.replace(/-/g, "_") + ".mp4";
-      await renderVideo(target, filename);
+      await renderVideo(target, filename, { muted: !withAudio });
     }
   }
 } finally {
