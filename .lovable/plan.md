@@ -1,43 +1,41 @@
 
-用户报告：账号 15228901521 购买了「标准会员」(¥0.01 测试价，应充 300 点)，但 300 点没到账。需要排查充值未到账的原因。
 
-## 排查计划
+## 修复：套餐支付成功后立即发放点数（对齐 365 会员逻辑）
 
-### 1. 查询用户与订单数据
-- 通过手机号 15228901521 找到 user_id（profiles 表）
-- 查 orders 表：该用户最近的 standard_49 订单，状态、支付时间、quota_added 字段
-- 查 user_quotas / ai_usage_quotas 表：当前余额、最近变动
-- 查 quota_transactions（如有）：是否有 +300 的充值流水
+### 根因
+`premium_99` / `standard_49` 订单走完支付流程，但点数没到账。原因：`wechat-pay-callback` 与 `check-order-status` 出现并发竞态——一方把订单更新成 `paid`，另一方看到 "Order already paid" 就**早返回，跳过点数发放**。
 
-### 2. 检查 standard_49 / premium_99 履约逻辑
-昨天刚新增的 standard_49 / premium_99 套餐，需要确认 self-healing / wechat-pay-callback / check-order-status 边缘函数中是否有处理这两个 package_key 的逻辑分支。如果履约函数里硬编码了 "basic" / "member365" 的 if-else，新 key 会被跳过——这极可能是根因。
+365 会员之所以稳定，是因为它走的是订阅创建路径（subscriptions 表 upsert 幂等），而点数发放被绑死在"我是把订单状态从 pending 改成 paid 的那一方"这个条件上——一旦竞态发生就漏发。
 
-### 3. 检查支付回调日志
-- function_edge_logs：wechat-pay-callback / check-order-status 在该订单时间附近的执行记录
-- edge_function_logs：是否有报错或跳过该订单
+### 修复策略：点数发放幂等化
 
-### 4. 修复方案（待排查后确认）
-**预期根因 A**：履约函数缺少 standard_49 / premium_99 的点数发放分支
-- 修复：扩展履约 edge function，使用 packages 表的 ai_quota 字段动态发放，而不是硬编码 if-else
-- 数据补偿：手动给 15228901521 补 300 点，并写入流水
+把"是否发点数"的判断**与"订单状态变更"解耦**，改为**与"是否已经发过"挂钩**——和 365 会员订阅 upsert 同样的幂等思路。
 
-**预期根因 B**：订单状态未更新到 paid（支付回调失败）
-- 修复：手动触发 check-order-status；排查回调失败原因
+**判定"已发过"的依据**：在 `orders` 表新增/复用一个字段标记发放状态。最简方案是用现有 `quota_added`(boolean) 或 `paid_at` 配合 `user_accounts.updated_at` 比较。最稳的方案是新增 `quota_credited_at timestamptz` 列，发放成功后写入；下次任何函数进来都检查此字段，已写则跳过，未写则补发。
 
-**预期根因 C**：订单已 paid 且发放成功，但 UI 未刷新
-- 修复：前端刷新逻辑
+### 改动清单
 
-## 执行步骤（批准后）
-1. SQL 查询定位订单与配额状态（read_query）
-2. 查 edge function 日志确认回调执行情况
-3. 阅读 wechat-pay-callback / check-order-status / 相关 self-healing 函数源码，确认 standard_49 处理逻辑
-4. 根据根因执行：补点数 + 修复履约函数（如需）
-5. 验证：再次测试 ¥0.01 购买 premium_99，确认 800 点正常到账
+| 项 | 内容 |
+|------|------|
+| 数据补偿 SQL | 给 15672524437 (`423fed4d-...`) 补 800 点 + updated_at |
+| 数据库迁移 | `orders` 表新增 `quota_credited_at timestamptz`（如已有 `quota_added` 则复用） |
+| `supabase/functions/wechat-pay-callback/index.ts` | 删除 "Order already paid → 早返回"；改为：无论订单当前状态，只要 `quota_credited_at IS NULL` 就执行点数发放 + 标记字段（用 `UPDATE ... WHERE quota_credited_at IS NULL` 做原子锁防双发） |
+| `supabase/functions/check-order-status/index.ts` | 同上幂等化 |
+| `supabase/functions/claim-guest-order/index.ts` | 同上幂等化（防游客领取重复发放） |
 
-## 涉及文件预估
-- `supabase/functions/wechat-pay-callback/index.ts`（履约逻辑）
-- `supabase/functions/check-order-status/index.ts`（轮询补单）
-- 可能涉及 `supabase/functions/alipay-callback/*` 等
-- 数据补偿 SQL（INSERT 配额流水 + UPDATE 余额）
+### 防双发关键 SQL 模式
+```sql
+UPDATE orders 
+SET quota_credited_at = NOW() 
+WHERE id = $1 AND quota_credited_at IS NULL
+RETURNING id;
+```
+拿到 RETURNING 的一方才执行 `user_accounts` 加点数，另一方 0 行返回直接跳过——彻底消除竞态。
 
-约 1-2 个 edge function 修改 + 1 条补偿 SQL。
+### 验证
+1. 补完 800 点，刷新 /me 看到余额正确
+2. 再用 ¥0.01 测一笔 standard_49 / premium_99，确认点数立即到账
+3. 检查日志应有 `[Callback] Crediting quota (idempotent claim acquired)` 或 `[Callback] Quota already credited, skip`
+
+约 1 条 SQL 补偿 + 1 条迁移 + 3 个 edge function 各 ~15 行改动。
+
