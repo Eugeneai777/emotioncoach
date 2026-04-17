@@ -2072,12 +2072,7 @@ export const CoachVoiceChat = ({
               {!skipBilling && (
                 <span className="flex items-center gap-1 text-amber-400">
                   <Coins className="w-3 h-3" />
-                  已用{billedMinutes * POINTS_PER_MINUTE}点
-                  {remainingQuota !== null && (
-                    <span className={remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/50'}>
-                      · 余额{remainingQuota}点
-                    </span>
-                  )}
+                  {billedMinutes * POINTS_PER_MINUTE}点
                 </span>
               )}
               <ConnectionStatusBadge
