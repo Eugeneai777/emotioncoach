@@ -20,7 +20,7 @@ export const HavrutaStep: React.FC<Props> = ({ index, word, sub }) => {
       <div style={{ ...b, marginTop: 50, fontFamily: SERIF_FONT, fontWeight: 900, fontSize: 280, lineHeight: 1, color: COLORS.cream }}>
         {word}
       </div>
-      <div style={{ ...c, marginTop: 50, fontFamily: SANS_FONT, fontSize: 44, lineHeight: 1.5, color: COLORS.cream, fontWeight: 400 }}>
+      <div style={{ ...c, marginTop: 50, fontFamily: SANS_FONT, fontSize: 44, lineHeight: 1.5, color: COLORS.cream, fontWeight: 400, whiteSpace: "pre-line" }}>
         {sub}
       </div>
     </AbsoluteFill>
