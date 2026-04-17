@@ -152,5 +152,13 @@ export const RemotionRoot = () => (
       height={1920}
       defaultProps={DH_BROLL_DEFAULT_PROPS}
     />
+    <Composition
+      id="havruta-intro"
+      component={HavrutaIntroVideo}
+      durationInFrames={HAVRUTA_TOTAL_FRAMES}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
   </>
 );
