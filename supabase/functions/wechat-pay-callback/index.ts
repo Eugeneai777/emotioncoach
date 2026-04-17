@@ -108,9 +108,11 @@ serve(async (req) => {
       });
     }
 
-    // 检查是否已处理
-    if (order.status === 'paid') {
-      console.log('Order already paid:', orderNo);
+    // 注意：不再因 order.status === 'paid' 早返回——必须继续走"幂等点数发放"路径
+    // 仅当订单已 paid 时，先做 subscription / camp_purchases 的幂等修复（与 quota 发放解耦）
+    const alreadyPaid = order.status === 'paid';
+    if (alreadyPaid) {
+      console.log('[Callback] Order already paid, will run idempotent healing:', orderNo);
 
       // 自愈逻辑：检查 subscription 是否存在，不存在则补建
       if (order.user_id && order.package_key && !order.package_key.startsWith('camp-')) {
