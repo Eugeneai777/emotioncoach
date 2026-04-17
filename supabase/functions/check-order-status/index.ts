@@ -6,6 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// 套餐配额映射（兜底，优先使用数据库 packages.ai_quota）
+const packageQuotaMap: Record<string, number> = {
+  'basic': 50,
+  'standard_49': 300,
+  'premium_99': 800,
+  'member365': 1000,
+  'partner': 9999999,
+};
+
 // RSA-SHA256签名
 async function signWithRSA(message: string, privateKeyPem: string): Promise<string> {
   const pemContents = privateKeyPem
