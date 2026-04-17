@@ -78,7 +78,7 @@ async function renderVideo(id, filename, opts = {}) {
     outputLocation: `/mnt/documents/${filename}`,
     puppeteerInstance: browser,
     muted: opts.muted ?? true,
-    concurrency: 1,
+    concurrency: 8,
   });
   console.log(`Done: /mnt/documents/${filename}`);
 }
