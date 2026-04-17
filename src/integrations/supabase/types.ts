@@ -6077,6 +6077,7 @@ export type Database = {
           pay_type: string | null
           product_name: string | null
           qr_code_url: string | null
+          quota_credited_at: string | null
           shipping_note: string | null
           shipping_status: string | null
           status: string | null
@@ -6102,6 +6103,7 @@ export type Database = {
           pay_type?: string | null
           product_name?: string | null
           qr_code_url?: string | null
+          quota_credited_at?: string | null
           shipping_note?: string | null
           shipping_status?: string | null
           status?: string | null
@@ -6127,6 +6129,7 @@ export type Database = {
           pay_type?: string | null
           product_name?: string | null
           qr_code_url?: string | null
+          quota_credited_at?: string | null
           shipping_note?: string | null
           shipping_status?: string | null
           status?: string | null
