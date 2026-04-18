@@ -1,78 +1,60 @@
 
+## 扩展范围确认
 
-## 问题诊断
+用户要求：**所有测评的售前页（未测评状态）**点击「分享海报」都要能生成 / 保存 / 转发，与 SBTI 标准一致。当前已知问题集中在「财富卡点」，但需统一排查并修复全站。
 
-**桌面端无法长按保存海报** 的根本原因：
+## 现状盘点
 
-| 端口 | 当前行为 | 问题 |
-|---|---|---|
-| **手机微信/iOS/Android H5** | `ShareImagePreview` 显示「👆 长按保存到相册」 ✅ | 正常 |
-| **PC 浏览器（含 Mac/Win）** | `executeOneClickShare` / `ShareDialogBase` 在桌面走 `navigator.share` 或直接 `<a download>` 触发文件下载，**不进入预览页** ❌ | 用户根本看不到海报，更别提"长按保存或转发到微信" |
-| **PC 微信（小程序/客户端）** | UA 含 `micromessenger`，会进入预览页，但底部提示是「长按上方图片保存到相册」（鼠标无法长按）❌ | 用户卡住，不知怎么保存/转发 |
+全站测评售前/结果页分享入口分两类：
 
-**影响范围**（全站统一组件，问题完全一致）：
-- 所有用 `ShareDialogBase` 的售前/结果页：SBTI、中场觉醒力、SCL-90、35+女性、情绪健康、财富卡点、动态测评通用模板…
-- 所有用 `executeOneClickShare` 的卡片：SBTI 结果页、Insight 卡片、训练营邀请卡
+| 类型 | 共享组件 | 售前未测评行为 | 桌面行为 |
+|---|---|---|---|
+| **A. SBTI、SCL-90、PHQ-9、35+女性、动态测评** | `ShareDialogBase` + `executeOneClickShare` | ✅ 已支持「promo」推广卡（无需数据，html2canvas） | ✅ 上一轮已统一走 `ShareImagePreview` |
+| **B. 财富卡点** | `WealthInviteCardDialog`（独立实现） | ❌ 默认 `value` Tab 强依赖测评数据，未测评 toast 报错退出 | ❌ 桌面仍走 `<a download>` 静默下载 |
+| **C. 其他自定义分享卡**（训练营邀请卡、Insight 卡等） | `executeOneClickShare` | N/A（非售前入口） | ✅ 已统一 |
 
-## 解决方案（一处改全站修复）
+需要排查的潜在风险点：
+- 各 `DynamicAssessmentPage` 派生售前页是否都正确传 `defaultTab="promo"` 给 `ShareDialogBase`
+- 是否有页面像 `WealthBlockAssessment` 一样硬写 `defaultTab="value"`
+- 任何使用 `WealthInviteCardDialog` 模式（独立卡片对话框）的其他测评
 
-只改 2 个共享文件，**全站所有测评的售前页+结果页同步修复**，零业务回归。
+## 修复方案
 
-### 改动 1：`src/utils/shareUtils.ts` — 桌面端也走预览
+### 改动 1：财富卡点（核心修复）
+- `src/pages/WealthBlockAssessment.tsx`：顶部 PageHeader Share 按钮 `defaultTab` 改为 `currentResult ? "value" : "promo"`
+- `src/components/wealth-camp/WealthInviteCardDialog.tsx`：
+  - `handleServerGenerate` 桌面端改走 `ShareImagePreview`（与 SBTI 一致）
+  - `value` Tab 在无 `assessmentData` 时不报错，自动切到 `promo` 或用默认占位
+  - `CARD_OPTIONS` 中 `value` Tab 仅在有数据时显示
 
-把 `shouldUseImagePreview()` 从「只移动端」扩到「所有端」。`handleShareWithFallback` 在桌面端也走 `showUploadedPreview()`，跳过不可靠的 `navigator.share` 和静默下载。
+### 改动 2：全站售前页 defaultTab 排查
+扫描所有 `<ShareDialogBase` 和 `<WealthInviteCardDialog` 调用点，确认：
+- 售前页（无 result 状态时）默认 Tab 必须是 `promo`（推广卡，无数据依赖）
+- 已测评结果页才用 `value`/`result` Tab
+- 修正任何硬写 `defaultTab="value"` 但未保护数据缺失的入口
 
-```ts
-// 改为：所有端都进入预览页（统一体验）
-export const shouldUseImagePreview = (): boolean => true;
-```
+### 改动 3：通用兜底（防御性）
+在 `ShareDialogBase` 内部增加：当 Tab 切到需要数据的卡片但数据缺失时，自动 fallback 到 `promo` Tab 而非报错，避免未来新接入测评再踩同样的坑。
 
-同步在 `handleShareWithFallback` 把 desktop 分支也改成 `showUploadedPreview()`；`oneClickShare.ts` 第 182-211 行的桌面 navigator.share + 下载兜底替换为 `showUploadedPreview()`。
+## 兼容性矩阵（统一后）
 
-### 改动 2：`src/components/ui/share-image-preview.tsx` — 智能底部按钮
-
-按 4 种环境分别显示对应操作：
-
-| 环境 | 主按钮 | 副提示 |
-|---|---|---|
-| **手机微信** (iOS/Android) | 无按钮，显示「👆 长按上方图片保存到相册」 | 保存后可转发到微信/朋友圈 |
-| **PC 微信小程序** (检测 `isMiniProgram` + 非移动) | 「📥 保存图片」（点击下载到本地）+「右键图片→另存为」备用 | 保存后可拖到微信窗口转发好友 |
-| **PC 浏览器**（非微信） | 「📥 保存图片」（下载） | 保存后可上传到微信/社交软件 |
-| **手机非微信浏览器** | 「📥 保存图片」（已有，保留） | 保存后可在社交软件中转发 |
-
-新增桌面友好提示：
-- 桌面用户告知「右键图片可直接复制 / 另存为」
-- PC 微信用户额外提示「将图片拖入微信对话框即可发送」
-- 复制链接按钮在桌面端置顶显示（PC 用户更习惯复制链接）
-
-### 改动 3（可选增强）：`ShareDialogBase` 桌面端布局优化
-
-桌面 viewport（≥1024px）时：
-- 预览图旁边显示「右键 → 图片另存为」hint
-- 「复制链接」按钮加大、更显眼，与"生成海报"并列
-
-## 兼容性验证表
-
-| 端口 | SBTI 售前页 | SBTI 结果页 | 其他测评 | 转发到微信 |
+| 测评 | 售前 PC | 售前 微信 | 售前 H5 | 结果页 全端 |
 |---|---|---|---|---|
-| iPhone Safari | ✅ 长按保存 | ✅ 长按保存 | ✅ | ✅ 微信选图 |
-| Android Chrome | ✅ 系统分享面板 / 长按 | 同左 | ✅ | ✅ |
-| 手机微信 | ✅ 长按保存 | ✅ 长按保存 | ✅ | ✅ 转发朋友圈 |
-| **PC 浏览器** | ✅ **新增预览+下载按钮** | ✅ | ✅ | ✅ 下载后拖入微信 |
-| **PC 微信小程序** | ✅ **新增预览+下载** | ✅ | ✅ | ✅ 拖入微信对话框 |
-| **PC 微信客户端 H5** | ✅ 同上 | ✅ | ✅ | ✅ |
+| SBTI | ✅ | ✅ | ✅ | ✅ |
+| 财富卡点 | ✅（修复） | ✅（修复） | ✅（修复） | ✅（修复） |
+| SCL-90 / PHQ-9 / 35+女性 / 中场觉醒力 / 动态测评 | ✅ 验证 | ✅ 验证 | ✅ 验证 | ✅ 验证 |
 
-## 不会改动的部分
+## 不改动
 
-- 海报内容、卡片样式、分享 URL、二维码
-- 移动端现有「长按保存」体验完全保留
-- `uploadShareImage` 上传链路不动
-- 各测评页业务逻辑零侵入（只改 2 个底层 utils + 1 个预览组件）
+- 海报视觉、二维码 URL、partner 归因
+- 移动端长按保存逻辑
+- `uploadShareImage` 上传链路
+- 各测评业务计分/数据持久化逻辑
 
 ## 交付物
 
-- `src/utils/shareUtils.ts`：`shouldUseImagePreview` 常量化、桌面分支改预览
-- `src/utils/oneClickShare.ts`：桌面分支改预览（不再静默下载）
-- `src/components/ui/share-image-preview.tsx`：4 种环境智能底部提示 + PC 友好操作
-- 自检：桌面浏览器 + PC 微信 + 手机微信分别测一遍 SBTI 售前/结果页
-
+- `src/pages/WealthBlockAssessment.tsx`：动态 `defaultTab`
+- `src/components/wealth-camp/WealthInviteCardDialog.tsx`：桌面预览 + 数据缺失降级 + Tab 条件显示
+- `src/components/share/ShareDialogBase.tsx`：通用 Tab 数据缺失自动降级到 `promo`
+- 全站售前页 `defaultTab` 排查并修正硬写为 `value` 的入口
+- 自测：SBTI、财富卡点、SCL-90、35+女性、PHQ-9 共 5 个测评，售前 PC/微信/H5 共 15 个组合
