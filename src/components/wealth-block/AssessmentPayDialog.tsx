@@ -90,6 +90,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 🆕 小程序支付：保存最近一次拉起支付的参数，用于失败/取消后再次拉起
   const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
   const [mpRetrying, setMpRetrying] = useState<boolean>(false);
+  const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -368,7 +369,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 小程序原生支付：直接通过 navigateTo 跳转到原生支付页面
   // ⚠️ 重要：postMessage 只在页面后退/销毁/分享时才会被小程序接收，不能用于实时通信
   // 因此必须直接使用 navigateTo 跳转，由小程序原生页面调用 wx.requestPayment
-  const triggerMiniProgramNativePay = useCallback(async (params: Record<string, string>, orderNumber: string) => {
+  const triggerMiniProgramNativePay = useCallback(async (params: Record<string, string>, orderNumber: string): Promise<boolean> => {
     // 构建成功回调 URL
     const successUrl = new URL(window.location.href);
     successUrl.searchParams.set("payment_success", "1");
@@ -388,19 +389,50 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       const mp = window.wx?.miniProgram;
       console.log(`[MiniProgram] Pay attempt ${attempt}/${MAX_ATTEMPTS}, mp available:`, !!mp);
 
-      // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
       if (mp && typeof mp.navigateTo === "function") {
         try {
           const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
           console.log("[MiniProgram] navigateTo:", payPageUrl);
-          mp.navigateTo({ url: payPageUrl });
-          return;
+
+          const launched = await new Promise<boolean>((resolve) => {
+            let settled = false;
+            const finish = (ok: boolean) => {
+              if (settled) return;
+              settled = true;
+              resolve(ok);
+            };
+
+            try {
+              mp.navigateTo({
+                url: payPageUrl,
+                success: (res: any) => {
+                  console.log("[MiniProgram] navigateTo success:", res);
+                  finish(true);
+                },
+                fail: (err: any) => {
+                  console.error("[MiniProgram] navigateTo fail:", err);
+                  finish(false);
+                },
+                complete: (res: any) => {
+                  console.log("[MiniProgram] navigateTo complete:", res);
+                  if (res?.errMsg && /:ok$/i.test(res.errMsg)) {
+                    finish(true);
+                  }
+                },
+              } as any);
+              setTimeout(() => finish(false), 1500);
+            } catch (err) {
+              console.error(`[MiniProgram] navigateTo attempt ${attempt} threw:`, err);
+              finish(false);
+            }
+          });
+
+          if (launched) return true;
         } catch (err) {
           console.error(`[MiniProgram] navigateTo attempt ${attempt} failed:`, err);
         }
       }
 
-      // 方式2：备用 - 尝试 postMessage
       if (mp && typeof mp.postMessage === "function") {
         try {
           console.warn(`[MiniProgram] attempt ${attempt}: navigateTo unavailable, trying postMessage`);
@@ -415,13 +447,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           if (attempt === MAX_ATTEMPTS) {
             toast.info("请点击右上角菜单返回小程序完成支付");
           }
-          return;
+          return true;
         } catch (err) {
           console.error(`[MiniProgram] postMessage attempt ${attempt} failed:`, err);
         }
       }
 
-      // 本次尝试失败，若还有重试机会则等待后重试
       if (attempt < MAX_ATTEMPTS) {
         await new Promise((resolve) => setTimeout(resolve, 800));
       }
@@ -431,6 +462,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     toast.error("请稍后重试");
     setStatus("error");
     setErrorMessage("请稍后重试");
+    return false;
   }, []);
 
   // 创建订单（带超时处理）
@@ -606,13 +638,20 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setOrderNo(data.orderNo);
 
       if (selectedPayType === "miniprogram" && data.miniprogramPayParams) {
-        // 小程序 WebView：通过 navigateTo 让小程序原生拉起 wx.requestPayment
+        // 小程序 WebView：确认成功发起原生跳转后，才进入轮询态
         console.log("[Payment] MiniProgram: triggering native pay via navigateTo");
         setMpPayParams(data.miniprogramPayParams);
         setOrderNo(data.orderNo);
-        setStatus("polling");
-        startPolling(data.orderNo);
-        triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        setMpLaunchFailed(false);
+        const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        if (launched) {
+          setStatus("polling");
+          startPolling(data.orderNo);
+        } else {
+          setStatus("pending");
+          setErrorMessage("未能拉起微信支付，请重试");
+          setMpLaunchFailed(true);
+        }
       } else if (selectedPayType === "jsapi" && data.jsapiPayParams) {
         // JSAPI 支付
         setStatus("polling");
@@ -1068,6 +1107,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setOpenIdResolved(false);
       setMpPayParams(null);
       setMpRetrying(false);
+      setMpLaunchFailed(false);
     }
   }, [open]);
 
@@ -1107,14 +1147,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             </div>
           )}
 
-          {/* 🆕 小程序专属：拉起原生支付后给用户可恢复的 UI（避免取消后再次点击卡死） */}
-          {isMiniProgram && status === "polling" && (
+          {/* 🆕 小程序专属：只有真正拉起后才显示等待支付；未拉起则提示重试 */}
+          {isMiniProgram && (status === "polling" || mpLaunchFailed) && (
             <div className="flex flex-col items-center py-6">
-              <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
-              <p className="text-foreground font-medium mb-1">已拉起微信支付</p>
-              <p className="text-xs text-muted-foreground text-center mb-4">
-                若未弹出支付窗口或已取消，请点击下方按钮重新拉起
-              </p>
+              {mpLaunchFailed ? (
+                <>
+                  <p className="text-foreground font-medium mb-1">未成功拉起微信支付</p>
+                  <p className="text-xs text-muted-foreground text-center mb-4">
+                    请点击下方按钮重新拉起支付
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+                  <p className="text-foreground font-medium mb-1">已拉起微信支付</p>
+                  <p className="text-xs text-muted-foreground text-center mb-4">
+                    若未弹出支付窗口或已取消，请点击下方按钮重新拉起
+                  </p>
+                </>
+              )}
               <div className="space-y-2 w-full">
                 <Button
                   onClick={async () => {
@@ -1122,10 +1173,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     setMpRetrying(true);
                     try {
                       if (mpPayParams && orderNo) {
-                        await triggerMiniProgramNativePay(mpPayParams, orderNo);
+                        setMpLaunchFailed(false);
+                        const launched = await triggerMiniProgramNativePay(mpPayParams, orderNo);
+                        if (launched) {
+                          setStatus("polling");
+                          startPolling(orderNo);
+                        } else {
+                          setStatus("pending");
+                          setMpLaunchFailed(true);
+                        }
                       } else {
-                        // 兜底：参数丢失则重新创建订单（5分钟内后端会复用旧单）
                         createOrderCalledRef.current = false;
+                        setMpLaunchFailed(false);
                         setStatus("idle");
                       }
                     } finally {
