@@ -332,7 +332,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
   };
 
-  // Tab selector UI
+  // Tab selector UI - 仅在有测评数据时显示 value Tab，避免售前用户点了报错
+  const CARD_OPTIONS = ALL_CARD_OPTIONS.filter(opt => opt.id !== 'value' || !!assessmentData);
+
+  // 如果用户当前选中 value Tab 但没有数据，自动 fallback 到 promo
+  useEffect(() => {
+    if (activeTab === 'value' && !isLoadingUser && !assessmentData) {
+      setActiveTab('promo');
+    }
+  }, [activeTab, assessmentData, isLoadingUser]);
+
   const tabSelector = CARD_OPTIONS.length > 1 ? (
     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '8px' }}>
       {CARD_OPTIONS.map((opt) => (
