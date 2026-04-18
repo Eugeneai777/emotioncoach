@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -8,7 +8,8 @@ import {
   SCL90Questions, 
   SCL90Result, 
   SCL90HistoryPage,
-  SCL90PaymentGate 
+  SCL90PaymentGate,
+  SCL90PrePayGate
 } from "@/components/scl90";
 import { SCL90Result as SCL90ResultType } from "@/components/scl90/scl90Data";
 import { useSCL90Purchase } from "@/hooks/useSCL90Purchase";
