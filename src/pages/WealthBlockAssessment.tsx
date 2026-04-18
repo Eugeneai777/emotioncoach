@@ -119,7 +119,7 @@ export default function WealthBlockAssessmentPage() {
       return;
     }
     console.log('[WealthBlock] Resume after login → opening pay dialog');
-    setShowPayDialog(true);
+    openWealthPayDialog();
   }, [user, authLoading, isPurchaseLoading, hasPurchased, isBloomPartner]);
 
   // 检测是否为微信浏览器（非小程序）
@@ -284,7 +284,7 @@ export default function WealthBlockAssessmentPage() {
             console.error('[WealthBlock] Auto-login failed:', error);
             // 登录失败也继续打开弹窗（用扫码支付兜底）
             if (!hasPurchased) {
-              setShowPayDialog(true);
+              openWealthPayDialog();
             } else {
               console.log('[WealthBlock] Already purchased, skipping pay dialog');
               setShowIntro(false);
@@ -308,7 +308,7 @@ export default function WealthBlockAssessmentPage() {
                 console.log('[WealthBlock] User already purchased after login, skipping pay dialog');
                 setShowIntro(false);
               } else {
-                setShowPayDialog(true);
+                openWealthPayDialog();
               }
             }, 100);
           } else {
@@ -331,7 +331,7 @@ export default function WealthBlockAssessmentPage() {
                       console.log('[WealthBlock] User already purchased, skipping pay dialog');
                       setShowIntro(false);
                     } else {
-                      setShowPayDialog(true);
+                      openWealthPayDialog();
                     }
                   });
                 subscription.unsubscribe();
@@ -341,14 +341,14 @@ export default function WealthBlockAssessmentPage() {
             setTimeout(() => {
               subscription.unsubscribe();
               if (!hasPurchased) {
-                setShowPayDialog(true);
+                openWealthPayDialog();
               }
             }, 1000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
           if (!hasPurchased) {
-            setShowPayDialog(true);
+            openWealthPayDialog();
           }
         }
       } else {
@@ -382,7 +382,7 @@ export default function WealthBlockAssessmentPage() {
           console.log('[WealthBlock] Already purchased (via hook), skipping pay dialog');
           setShowIntro(false);
         } else {
-          setShowPayDialog(true);
+          openWealthPayDialog();
         }
       }
     };
