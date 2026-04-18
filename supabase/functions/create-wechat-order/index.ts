@@ -658,29 +658,9 @@ serve(async (req) => {
       }
       console.log('Order updated (reuse):', orderNo, 'payType:', actualPayType, 'skipInsert:', shouldSkipInsert);
     } else {
-      // 🔧 方案B：创建新订单前，将同用户同 packageKey 的旧 pending 订单标记为 cancelled
-      if (!isGuest && finalUserId) {
-        const { data: oldPendingOrders, error: oldPendingError } = await supabase
-          .from('orders')
-          .select('order_no')
-          .eq('user_id', finalUserId)
-          .eq('package_key', packageKey)
-          .eq('status', 'pending')
-          .neq('order_no', orderNo);
-        
-        if (!oldPendingError && oldPendingOrders && oldPendingOrders.length > 0) {
-          const oldOrderNos = oldPendingOrders.map(o => o.order_no);
-          console.log('[CreateOrder] Cancelling old pending orders:', oldOrderNos);
-          await supabase
-            .from('orders')
-            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-            .eq('user_id', finalUserId)
-            .eq('package_key', packageKey)
-            .eq('status', 'pending')
-            .neq('order_no', orderNo);
-        }
-      }
-
+      // ⚠️ 不再无条件取消同用户同 package 的所有 pending 订单。
+      // 真正的过期订单（>5 分钟）已在前面 162-177 行批量取消。
+      // 5 分钟内的 pending 订单应保留，让用户在窗口期内继续支付（同时本次会创建一笔不同 pay_type 的新订单）。
       const { error: insertError } = await supabase
         .from('orders')
         .insert({
