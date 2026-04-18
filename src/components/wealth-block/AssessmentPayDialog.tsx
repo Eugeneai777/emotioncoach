@@ -638,13 +638,20 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setOrderNo(data.orderNo);
 
       if (selectedPayType === "miniprogram" && data.miniprogramPayParams) {
-        // 小程序 WebView：通过 navigateTo 让小程序原生拉起 wx.requestPayment
+        // 小程序 WebView：确认成功发起原生跳转后，才进入轮询态
         console.log("[Payment] MiniProgram: triggering native pay via navigateTo");
         setMpPayParams(data.miniprogramPayParams);
         setOrderNo(data.orderNo);
-        setStatus("polling");
-        startPolling(data.orderNo);
-        triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        setMpLaunchFailed(false);
+        const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        if (launched) {
+          setStatus("polling");
+          startPolling(data.orderNo);
+        } else {
+          setStatus("pending");
+          setErrorMessage("未能拉起微信支付，请重试");
+          setMpLaunchFailed(true);
+        }
       } else if (selectedPayType === "jsapi" && data.jsapiPayParams) {
         // JSAPI 支付
         setStatus("polling");
@@ -1140,14 +1147,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             </div>
           )}
 
-          {/* 🆕 小程序专属：拉起原生支付后给用户可恢复的 UI（避免取消后再次点击卡死） */}
-          {isMiniProgram && status === "polling" && (
+          {/* 🆕 小程序专属：只有真正拉起后才显示等待支付；未拉起则提示重试 */}
+          {isMiniProgram && (status === "polling" || mpLaunchFailed) && (
             <div className="flex flex-col items-center py-6">
-              <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
-              <p className="text-foreground font-medium mb-1">已拉起微信支付</p>
-              <p className="text-xs text-muted-foreground text-center mb-4">
-                若未弹出支付窗口或已取消，请点击下方按钮重新拉起
-              </p>
+              {mpLaunchFailed ? (
+                <>
+                  <p className="text-foreground font-medium mb-1">未成功拉起微信支付</p>
+                  <p className="text-xs text-muted-foreground text-center mb-4">
+                    请点击下方按钮重新拉起支付
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+                  <p className="text-foreground font-medium mb-1">已拉起微信支付</p>
+                  <p className="text-xs text-muted-foreground text-center mb-4">
+                    若未弹出支付窗口或已取消，请点击下方按钮重新拉起
+                  </p>
+                </>
+              )}
               <div className="space-y-2 w-full">
                 <Button
                   onClick={async () => {
@@ -1155,10 +1173,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     setMpRetrying(true);
                     try {
                       if (mpPayParams && orderNo) {
-                        await triggerMiniProgramNativePay(mpPayParams, orderNo);
+                        setMpLaunchFailed(false);
+                        const launched = await triggerMiniProgramNativePay(mpPayParams, orderNo);
+                        if (launched) {
+                          setStatus("polling");
+                          startPolling(orderNo);
+                        } else {
+                          setStatus("pending");
+                          setMpLaunchFailed(true);
+                        }
                       } else {
-                        // 兜底：参数丢失则重新创建订单（5分钟内后端会复用旧单）
                         createOrderCalledRef.current = false;
+                        setMpLaunchFailed(false);
                         setStatus("idle");
                       }
                     } finally {
