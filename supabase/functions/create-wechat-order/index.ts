@@ -164,7 +164,7 @@ serve(async (req) => {
     if (finalUserId && finalUserId !== 'guest') {
       const { data: expired, error: expireErr } = await supabase
         .from('orders')
-        .update({ status: 'cancelled', cancel_reason: 'auto_expired_5min' })
+        .update({ status: 'cancelled' })
         .eq('user_id', finalUserId)
         .eq('package_key', packageKey)
         .eq('status', 'pending')
