@@ -153,12 +153,31 @@ serve(async (req) => {
       }
     }
 
-    // 🆕 后端去重：复用同用户同套餐15分钟内的 pending 订单，避免重复下单
+    // 🆕 后端去重：复用同用户同套餐 5 分钟内的 pending 订单（与微信 time_expire 对齐）
     // ⚠️ 关键：必须按 pay_type 严格匹配复用，否则微信会报 INVALID_REQUEST"请求重入时参数不一致"
     // （同一 out_trade_no 在微信侧已绑定首次的 trade_type，不能跨通道复用）
+    const ORDER_TTL_MS = 5 * 60 * 1000; // 5 分钟支付窗口
+    const ttlCutoff = new Date(Date.now() - ORDER_TTL_MS).toISOString();
+
+    // 🧹 自动取消该用户该套餐所有超过 5 分钟仍 pending 的旧订单
+    // 防止用户被卡在已过期的订单上，再次发起支付时可创建全新订单
+    if (finalUserId && finalUserId !== 'guest') {
+      const { data: expired, error: expireErr } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled', cancel_reason: 'auto_expired_5min' })
+        .eq('user_id', finalUserId)
+        .eq('package_key', packageKey)
+        .eq('status', 'pending')
+        .lt('created_at', ttlCutoff)
+        .select('order_no');
+      if (expired && expired.length > 0) {
+        console.log('[CreateOrder] Auto-cancelled expired pending orders:', expired.map(o => o.order_no).join(','));
+      }
+      if (expireErr) console.warn('[CreateOrder] Auto-cancel error:', expireErr.message);
+    }
+
     let reusedMiniProgramOrderNo: string | undefined;
     if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
-      const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { data: recentPending } = await supabase
         .from('orders')
         .select('order_no, qr_code_url, pay_type, created_at')
@@ -166,7 +185,7 @@ serve(async (req) => {
         .eq('package_key', packageKey)
         .eq('status', 'pending')
         .eq('pay_type', payType) // 🔒 仅复用相同 pay_type 的订单，防止跨通道重入
-        .gte('created_at', fifteenMinAgo)
+        .gte('created_at', ttlCutoff)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
