@@ -27,10 +27,16 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const [imageError, setImageError] = useState(false);
   const [visible, setVisible] = useState(false);
 
-  const isWeChat = typeof navigator !== 'undefined' && 
-    navigator.userAgent.toLowerCase().includes('micromessenger');
-  const isMobile = typeof navigator !== 'undefined' && 
-    /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+  const isWeChat = ua.includes('micromessenger');
+  const isMiniProgram = isWeChat && (
+    ua.includes('miniprogram') ||
+    (typeof window !== 'undefined' && (window as unknown as { __wxjs_environment?: string }).__wxjs_environment === 'miniprogram')
+  );
+  const isMobile = /iphone|ipad|ipod|android/i.test(ua);
+  const isDesktop = !isMobile;
+  const isMobileWeChat = isWeChat && isMobile;
+  const isDesktopWeChat = isWeChat && isDesktop;
 
   const cleanupScrollLock = () => {
     document.body.style.overflow = '';
@@ -88,7 +94,8 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
 
   // Determine bottom hint based on environment and remote readiness
   const renderBottomAction = () => {
-    if (isWeChat) {
+    // 手机微信：长按保存（保留原行为）
+    if (isMobileWeChat) {
       if (!imageLoaded) return null;
       return (
         <div className="flex flex-col items-center gap-1 py-2">
@@ -98,10 +105,15 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
       );
     }
 
-    // Non-WeChat: show download button
-    const hintText = isMobile
-      ? '保存到相册后可在社交软件中转发'
-      : '保存后可通过社交软件分享';
+    // 各类“需要按钮保存”的环境
+    let hintText = '保存后可通过社交软件分享';
+    if (isDesktopWeChat) {
+      hintText = '保存后可拖入微信对话框发送给好友';
+    } else if (isDesktop) {
+      hintText = '也可右键图片选择"图片另存为"';
+    } else if (isMobile) {
+      hintText = '保存到相册后可在社交软件中转发';
+    }
 
     return (
       <>

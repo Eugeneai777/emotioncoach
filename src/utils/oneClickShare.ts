@@ -179,40 +179,10 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
       return showUploadedPreview();
     }
 
-    // 5. Desktop: Try Web Share, fallback to download
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        onProgress?.('sharing');
-        await navigator.share({
-          files: [file],
-          title: cardName,
-          text: '邀请你一起突破财富卡点',
-        });
-        onProgress?.('done');
-        onSuccess?.();
-        return true;
-      } catch (shareError) {
-        if ((shareError as Error).name === 'AbortError') {
-          return false;
-        }
-      }
-    }
-
-    // 6. Final fallback: Download
-    console.log('[oneClickShare] Falling back to download');
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = `${cardName}.png`;
-    link.href = blobUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-    
-    onProgress?.('done');
-    onSuccess?.();
-    return true;
+    // 5. Desktop & all other environments: show image preview
+    // (download button + right-click save are handled inside ShareImagePreview)
+    console.log('[oneClickShare] Desktop / fallback - showing preview');
+    return showUploadedPreview();
 
   } catch (error) {
     console.error('[oneClickShare] Unexpected error:', error);
