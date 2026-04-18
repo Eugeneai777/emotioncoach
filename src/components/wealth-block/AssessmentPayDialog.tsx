@@ -1066,6 +1066,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       createOrderCalledRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
+      setMpPayParams(null);
+      setMpRetrying(false);
     }
   }, [open]);
 
