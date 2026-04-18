@@ -33,6 +33,7 @@ export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const isMiniProgram = isWeChatMiniProgram();
   
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "assessment");
   const [showIntro, setShowIntro] = useState(true);
@@ -49,6 +50,7 @@ export default function WealthBlockAssessmentPage() {
   
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [payDialogInstanceKey, setPayDialogInstanceKey] = useState(0);
   // 正在跳转微信授权中
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
   
@@ -117,7 +119,7 @@ export default function WealthBlockAssessmentPage() {
       return;
     }
     console.log('[WealthBlock] Resume after login → opening pay dialog');
-    setShowPayDialog(true);
+    openWealthPayDialog();
   }, [user, authLoading, isPurchaseLoading, hasPurchased, isBloomPartner]);
 
   // 检测是否为微信浏览器（非小程序）
@@ -168,7 +170,7 @@ export default function WealthBlockAssessmentPage() {
       
       // 显示错误提示并重新打开支付弹窗
       toast.error('支付未完成，请重试');
-      setShowPayDialog(true);
+      openWealthPayDialog();
     }
   }, [searchParams]);
 
@@ -193,7 +195,7 @@ export default function WealthBlockAssessmentPage() {
         console.error('[WealthBlock] Failed to get silent auth URL:', error || data);
         setIsRedirectingForAuth(false);
         // 授权失败，直接打开支付弹窗（用扫码兜底）
-        setShowPayDialog(true);
+        openWealthPayDialog();
         return;
       }
 
@@ -202,8 +204,15 @@ export default function WealthBlockAssessmentPage() {
     } catch (err) {
       console.error('[WealthBlock] Silent auth error:', err);
       setIsRedirectingForAuth(false);
-      setShowPayDialog(true);
+      openWealthPayDialog();
     }
+  };
+
+  const openWealthPayDialog = () => {
+    if (isMiniProgram) {
+      setPayDialogInstanceKey((prev) => prev + 1);
+    }
+    setShowPayDialog(true);
   };
 
   // 处理支付按钮点击
@@ -217,7 +226,7 @@ export default function WealthBlockAssessmentPage() {
     }
     
     // 已登录或非微信环境：直接打开支付弹窗
-    setShowPayDialog(true);
+    openWealthPayDialog();
   };
 
   // 微信内静默授权返回后：自动登录 + 重新打开"测评支付弹窗"
@@ -275,7 +284,7 @@ export default function WealthBlockAssessmentPage() {
             console.error('[WealthBlock] Auto-login failed:', error);
             // 登录失败也继续打开弹窗（用扫码支付兜底）
             if (!hasPurchased) {
-              setShowPayDialog(true);
+              openWealthPayDialog();
             } else {
               console.log('[WealthBlock] Already purchased, skipping pay dialog');
               setShowIntro(false);
@@ -299,7 +308,7 @@ export default function WealthBlockAssessmentPage() {
                 console.log('[WealthBlock] User already purchased after login, skipping pay dialog');
                 setShowIntro(false);
               } else {
-                setShowPayDialog(true);
+                openWealthPayDialog();
               }
             }, 100);
           } else {
@@ -322,7 +331,7 @@ export default function WealthBlockAssessmentPage() {
                       console.log('[WealthBlock] User already purchased, skipping pay dialog');
                       setShowIntro(false);
                     } else {
-                      setShowPayDialog(true);
+                      openWealthPayDialog();
                     }
                   });
                 subscription.unsubscribe();
@@ -332,14 +341,14 @@ export default function WealthBlockAssessmentPage() {
             setTimeout(() => {
               subscription.unsubscribe();
               if (!hasPurchased) {
-                setShowPayDialog(true);
+                openWealthPayDialog();
               }
             }, 1000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
           if (!hasPurchased) {
-            setShowPayDialog(true);
+            openWealthPayDialog();
           }
         }
       } else {
@@ -373,7 +382,7 @@ export default function WealthBlockAssessmentPage() {
           console.log('[WealthBlock] Already purchased (via hook), skipping pay dialog');
           setShowIntro(false);
         } else {
-          setShowPayDialog(true);
+          openWealthPayDialog();
         }
       }
     };
@@ -923,6 +932,7 @@ export default function WealthBlockAssessmentPage() {
 
       {/* 支付对话框 */}
       <AssessmentPayDialog
+        key={payDialogInstanceKey}
         open={showPayDialog}
         onOpenChange={(open) => {
           console.log('[WealthBlock] PayDialog onOpenChange:', open);
