@@ -721,7 +721,7 @@ export default function WealthBlockAssessmentPage() {
             </Button>
             
             <WealthInviteCardDialog
-              defaultTab="value"
+              defaultTab={currentResult ? "value" : "promo"}
               assessmentScore={currentResult ? 100 - calculateHealthScore(
                 currentResult.behaviorScore + currentResult.emotionScore + currentResult.beliefScore
               ) : undefined}
