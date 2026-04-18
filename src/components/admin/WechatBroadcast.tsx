@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle, RefreshCw, Ban } from "lucide-react";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 const SCENARIOS = [
@@ -75,6 +75,8 @@ export default function WechatBroadcast() {
 
   // Job tracking
   const [activeJob, setActiveJob] = useState<BroadcastJob | null>(null);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     fetchUsers();
