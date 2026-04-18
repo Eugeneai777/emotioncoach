@@ -209,6 +209,49 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     return true;
   }, []);
 
+  const getCachedMiniProgramOpenId = useCallback(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return (
+      userOpenId ||
+      urlParams.get("mp_openid") ||
+      sessionStorage.getItem("wechat_mp_openid") ||
+      sessionStorage.getItem("wechat_payment_openid") ||
+      undefined
+    );
+  }, [userOpenId]);
+
+  const waitForMiniProgramOpenId = useCallback(async (timeout = 4000): Promise<string | undefined> => {
+    if (!isMiniProgram) return userOpenId;
+
+    const existingOpenId = getCachedMiniProgramOpenId();
+    if (existingOpenId) {
+      setUserOpenId(existingOpenId);
+      setOpenIdResolved(true);
+      return existingOpenId;
+    }
+
+    requestMiniProgramOpenId();
+
+    return await new Promise((resolve) => {
+      const startedAt = Date.now();
+      const interval = window.setInterval(() => {
+        const latestOpenId = getCachedMiniProgramOpenId();
+        if (latestOpenId) {
+          clearInterval(interval);
+          setUserOpenId(latestOpenId);
+          setOpenIdResolved(true);
+          resolve(latestOpenId);
+          return;
+        }
+
+        if (Date.now() - startedAt >= timeout) {
+          clearInterval(interval);
+          resolve(undefined);
+        }
+      }, 200);
+    });
+  }, [getCachedMiniProgramOpenId, isMiniProgram, requestMiniProgramOpenId, userOpenId]);
+
   // 监听小程序侧通过 postMessage/webViewContext.postMessage 回传的 openId
   useEffect(() => {
     if (!isMiniProgram) return;
@@ -525,16 +568,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
       // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
       if (isMiniProgram) {
-        // 小程序 WebView：使用专门的 miniprogram 支付类型
-        console.log("[Payment] MiniProgram detected, openId:", userOpenId ? "present" : "missing");
+        const resolvedMiniProgramOpenId = await waitForMiniProgramOpenId();
 
-        if (!userOpenId) {
-          // 无法获取 mp_openid，降级为扫码支付
-          console.warn("[Payment] MiniProgram: no mp_openid, falling back to native QR");
-          selectedPayType = "native";
-        } else {
-          selectedPayType = "miniprogram";
+        console.log("[Payment] MiniProgram detected, openId:", resolvedMiniProgramOpenId ? "present" : "missing");
+
+        if (!resolvedMiniProgramOpenId) {
+          setErrorMessage("未获取到小程序支付授权，请稍后重试");
+          setStatus("error");
+          return;
         }
+
+        setUserOpenId(resolvedMiniProgramOpenId);
+        selectedPayType = "miniprogram";
       } else if (isWechat && !isMobile) {
         // 🔧 微信电脑端：WeixinJSBridge 不可用，直接走 Native QR 码
         console.log("[Payment] Desktop WeChat detected, using native QR (Bridge unavailable on PC)");
@@ -652,6 +697,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           setErrorMessage("未能拉起微信支付，请重试");
           setMpLaunchFailed(true);
         }
+      } else if (selectedPayType === "miniprogram") {
+        console.warn("[Payment] MiniProgram order created but pay params missing, retry required");
+        setMpPayParams(null);
+        setStatus("pending");
+        setErrorMessage("支付参数获取失败，请重新拉起支付");
+        setMpLaunchFailed(true);
       } else if (selectedPayType === "jsapi" && data.jsapiPayParams) {
         // JSAPI 支付
         setStatus("polling");
