@@ -90,6 +90,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 🆕 小程序支付：保存最近一次拉起支付的参数，用于失败/取消后再次拉起
   const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
   const [mpRetrying, setMpRetrying] = useState<boolean>(false);
+  const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -1068,6 +1069,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setOpenIdResolved(false);
       setMpPayParams(null);
       setMpRetrying(false);
+      setMpLaunchFailed(false);
     }
   }, [open]);
 
