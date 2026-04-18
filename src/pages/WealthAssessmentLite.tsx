@@ -171,28 +171,7 @@ export default function WealthAssessmentLitePage() {
       setShowPayDialog(true);
     }, 500);
   }, [isPurchaseLoading, hasPurchased]);
-
-  // 监听小程序原生支付返回 payment_fail=1：关闭并重置旧弹窗后重新打开，避免卡在加载中
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get('payment_fail') !== '1') return;
-
-    const failedOrder = url.searchParams.get('order');
-    console.log('[WealthAssessmentLite] payment_fail callback detected, order:', failedOrder);
-
-    // 清理 URL 参数
-    url.searchParams.delete('payment_fail');
-    url.searchParams.delete('order');
-    window.history.replaceState({}, '', url.toString());
-
-    if (hasPurchased) return;
-
-    // 先彻底关闭弹窗（触发 dialog 内的 reset），再重新打开
-    setShowPayDialog(false);
-    toast.error('支付未完成，请重试');
-    setTimeout(() => setShowPayDialog(true), 300);
-  }, [hasPurchased]);
-
+  
   // 完成测评回调
   const handleComplete = useCallback((
     result: AssessmentResult, 
