@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import PageHeader from "@/components/PageHeader";
 import { 
@@ -7,7 +8,8 @@ import {
   SCL90Questions, 
   SCL90Result, 
   SCL90HistoryPage,
-  SCL90PaymentGate 
+  SCL90PaymentGate,
+  SCL90PrePayGate
 } from "@/components/scl90";
 import { SCL90Result as SCL90ResultType } from "@/components/scl90/scl90Data";
 import { useSCL90Purchase } from "@/hooks/useSCL90Purchase";
@@ -36,30 +38,42 @@ const SCL90Page = () => {
   const hasPurchased = !!purchaseData;
 
   const handleStart = () => {
+    // 🔒 付费墙前置：未登录跳登录、未付费先付费、付费完才答题
+    if (!user) {
+      toast.error("请先登录");
+      navigate("/auth?redirect=/scl90");
+      return;
+    }
+    if (!hasPurchased) {
+      // 清空 pendingResult，进入"答题前付费"模式
+      setPendingResult(null);
+      setPageState("payment");
+      return;
+    }
     setPageState("questions");
   };
 
   const handleComplete = (result: SCL90ResultType, answers: Record<number, number>) => {
-    // 先保存待处理结果
-    setPendingResult({ result, answers });
-    
-    // 检查是否已购买
+    // 兜底：正常流程付费已在前置完成；若老用户答题中途付费迁移则保留拦截
     if (hasPurchased) {
-      // 已购买：直接显示结果
       setResultData({ result, answers });
       setPageState("result");
     } else {
-      // 未购买：进入付费墙
+      setPendingResult({ result, answers });
       setPageState("payment");
     }
   };
 
   const handlePaymentSuccess = (userId: string) => {
-    // 支付成功：显示结果
+    // 支付成功：根据是否已答题决定下一步
     if (pendingResult) {
+      // 老链路兼容：答完才付费
       setResultData(pendingResult);
       setPendingResult(null);
       setPageState("result");
+    } else {
+      // 新链路：付费在答题前，进入答题
+      setPageState("questions");
     }
   };
 
@@ -127,6 +141,14 @@ const SCL90Page = () => {
             answers={pendingResult.answers}
             onPaymentSuccess={handlePaymentSuccess}
             onBack={handleBackToStart}
+          />
+        )}
+
+        {pageState === "payment" && !pendingResult && (
+          <SCL90PrePayGate
+            onPaymentSuccess={handlePaymentSuccess}
+            onBack={handleBackToStart}
+            userId={user?.id}
           />
         )}
 

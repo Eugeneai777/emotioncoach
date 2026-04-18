@@ -769,6 +769,17 @@ export default function WealthBlockAssessmentPage() {
                   isBloomPartner={isBloomPartner}
                   isLoading={false}
                   onStart={() => {
+                    // 🔒 付费墙守门：未登录跳登录、未付费拉支付、绽放合伙人/已付费才放行
+                    if (!user) {
+                      toast.error("请先登录");
+                      navigate("/auth?redirect=/wealth-block");
+                      return;
+                    }
+                    if (!hasPurchased && !isBloomPartner) {
+                      console.log('[WealthBlock] Not purchased, opening pay dialog');
+                      handlePayClick();
+                      return;
+                    }
                     // 埋点：开始测评
                     trackEvent('assessment_started');
                     console.log('[WealthBlock] User clicked start, hiding intro');
