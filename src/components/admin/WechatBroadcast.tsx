@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Users, Globe, Clock, AlertTriangle, RefreshCw, Ban } from "lucide-react";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 const SCENARIOS = [
@@ -75,6 +75,8 @@ export default function WechatBroadcast() {
 
   // Job tracking
   const [activeJob, setActiveJob] = useState<BroadcastJob | null>(null);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -294,6 +296,37 @@ export default function WechatBroadcast() {
     setActiveJob(null);
   }
 
+  async function handleCancelJob() {
+    if (!activeJob) return;
+    setCancelConfirmOpen(false);
+    setCancelling(true);
+    try {
+      const { error } = await supabase
+        .from('wechat_broadcast_jobs' as any)
+        .update({
+          status: 'cancelled',
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_error: '用户手动取消',
+        })
+        .eq('id', activeJob.id)
+        .in('status', ['pending', 'running'])
+        .select();
+
+      if (error) throw error;
+      toast.success('任务已取消，正在停止后续发送…');
+      setActiveJob({
+        ...activeJob,
+        status: 'cancelled',
+        completed_at: new Date().toISOString(),
+      } as any);
+    } catch (err: any) {
+      toast.error('取消失败：' + (err.message || '未知错误'));
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   // Check if a running job is stuck (no update in 3+ minutes)
   const isJobStuck = activeJob?.status === 'running' && activeJob.updated_at && 
     (Date.now() - new Date(activeJob.updated_at).getTime()) > 3 * 60 * 1000;
@@ -341,7 +374,8 @@ export default function WechatBroadcast() {
                 activeJob.status === 'pending' ? '等待中' :
                 activeJob.status === 'running' ? '发送中' :
                 activeJob.status === 'completed' ? '已完成' :
-                activeJob.status === 'failed' ? '发送失败' : activeJob.status
+                activeJob.status === 'failed' ? '发送失败' :
+                activeJob.status === 'cancelled' ? '已取消' : activeJob.status
               }
             </CardTitle>
           </CardHeader>
@@ -373,7 +407,22 @@ export default function WechatBroadcast() {
                 </Button>
               </div>
             )}
-            {(activeJob.status === 'completed' || activeJob.status === 'failed') && (
+            {(activeJob.status === 'pending' || activeJob.status === 'running') && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setCancelConfirmOpen(true)}
+                disabled={cancelling}
+              >
+                {cancelling ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Ban className="h-3.5 w-3.5 mr-1" />
+                )}
+                取消任务
+              </Button>
+            )}
+            {(activeJob.status === 'completed' || activeJob.status === 'failed' || activeJob.status === 'cancelled') && (
               <Button variant="outline" size="sm" onClick={dismissJob}>
                 关闭
               </Button>
@@ -599,6 +648,26 @@ export default function WechatBroadcast() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={handleSend}>确认发送</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 取消任务二次确认 */}
+      <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认取消任务？</AlertDialogTitle>
+            <AlertDialogDescription>
+              当前任务进度 <strong>{activeJob?.processed_count ?? 0} / {activeJob?.total_count ?? 0}</strong>。
+              <br />
+              取消后系统将不再向剩余用户发送，已发送的消息无法撤回。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>继续发送</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelJob} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              确认取消
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
