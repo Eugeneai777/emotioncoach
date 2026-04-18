@@ -87,6 +87,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
   const createOrderCalledRef = useRef<boolean>(false);
+  // 🆕 小程序支付：保存最近一次拉起支付的参数，用于失败/取消后再次拉起
+  const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
+  const [mpRetrying, setMpRetrying] = useState<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -605,6 +608,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       if (selectedPayType === "miniprogram" && data.miniprogramPayParams) {
         // 小程序 WebView：通过 navigateTo 让小程序原生拉起 wx.requestPayment
         console.log("[Payment] MiniProgram: triggering native pay via navigateTo");
+        setMpPayParams(data.miniprogramPayParams);
+        setOrderNo(data.orderNo);
         setStatus("polling");
         startPolling(data.orderNo);
         triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
@@ -1061,6 +1066,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       createOrderCalledRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
+      setMpPayParams(null);
+      setMpRetrying(false);
     }
   }, [open]);
 
@@ -1100,8 +1107,57 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             </div>
           )}
 
-          {/* 等待支付 - JSAPI/轮询中 */}
-          {status === "polling" && payType === "jsapi" && (
+          {/* 🆕 小程序专属：拉起原生支付后给用户可恢复的 UI（避免取消后再次点击卡死） */}
+          {isMiniProgram && status === "polling" && (
+            <div className="flex flex-col items-center py-6">
+              <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+              <p className="text-foreground font-medium mb-1">已拉起微信支付</p>
+              <p className="text-xs text-muted-foreground text-center mb-4">
+                若未弹出支付窗口或已取消，请点击下方按钮重新拉起
+              </p>
+              <div className="space-y-2 w-full">
+                <Button
+                  onClick={async () => {
+                    if (mpRetrying) return;
+                    setMpRetrying(true);
+                    try {
+                      if (mpPayParams && orderNo) {
+                        await triggerMiniProgramNativePay(mpPayParams, orderNo);
+                      } else {
+                        // 兜底：参数丢失则重新创建订单（5分钟内后端会复用旧单）
+                        createOrderCalledRef.current = false;
+                        setStatus("idle");
+                      }
+                    } finally {
+                      setTimeout(() => setMpRetrying(false), 1200);
+                    }
+                  }}
+                  disabled={mpRetrying}
+                  className="w-full"
+                >
+                  {mpRetrying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Smartphone className="w-4 h-4 mr-2" />}
+                  重新拉起支付
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleForceCheck}
+                  disabled={isForceChecking}
+                  className="w-full"
+                >
+                  {isForceChecking ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                  )}
+                  我已完成支付
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">订单号：{orderNo}</p>
+            </div>
+          )}
+
+          {/* 等待支付 - JSAPI/轮询中（非小程序） */}
+          {!isMiniProgram && status === "polling" && payType === "jsapi" && (
             <div className="flex flex-col items-center py-6">
               {!pollingTimeout ? (
                 <>
