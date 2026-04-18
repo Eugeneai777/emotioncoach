@@ -608,6 +608,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       if (selectedPayType === "miniprogram" && data.miniprogramPayParams) {
         // 小程序 WebView：通过 navigateTo 让小程序原生拉起 wx.requestPayment
         console.log("[Payment] MiniProgram: triggering native pay via navigateTo");
+        setMpPayParams(data.miniprogramPayParams);
+        setOrderNo(data.orderNo);
         setStatus("polling");
         startPolling(data.orderNo);
         triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
