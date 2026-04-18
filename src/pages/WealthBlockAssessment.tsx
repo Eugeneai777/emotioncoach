@@ -105,6 +105,21 @@ export default function WealthBlockAssessmentPage() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // 登录回跳后自动拉付费弹窗（未付费用户从 /auth 回到本页时无缝续付费）
+  useEffect(() => {
+    if (authLoading || isPurchaseLoading) return;
+    if (!user) return;
+    const pending = sessionStorage.getItem('wealth_block_pending_pay');
+    if (pending !== '1') return;
+    sessionStorage.removeItem('wealth_block_pending_pay');
+    if (hasPurchased || isBloomPartner) {
+      setShowIntro(false);
+      return;
+    }
+    console.log('[WealthBlock] Resume after login → opening pay dialog');
+    setShowPayDialog(true);
+  }, [user, authLoading, isPurchaseLoading, hasPurchased, isBloomPartner]);
+
   // 检测是否为微信浏览器（非小程序）
   const isWeChatBrowserEnv = typeof window !== 'undefined' && 
     /MicroMessenger/i.test(navigator.userAgent) && 
@@ -771,7 +786,8 @@ export default function WealthBlockAssessmentPage() {
                   onStart={() => {
                     // 🔒 付费墙守门：未登录跳登录、未付费拉支付、绽放合伙人/已付费才放行
                     if (!user) {
-                      toast.error("请先登录");
+                      sessionStorage.setItem('wealth_block_pending_pay', '1');
+                      toast.info("请先登录");
                       navigate("/auth?redirect=/wealth-block");
                       return;
                     }
