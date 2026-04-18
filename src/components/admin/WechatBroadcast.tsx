@@ -651,6 +651,26 @@ export default function WechatBroadcast() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 取消任务二次确认 */}
+      <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认取消任务？</AlertDialogTitle>
+            <AlertDialogDescription>
+              当前任务进度 <strong>{activeJob?.processed_count ?? 0} / {activeJob?.total_count ?? 0}</strong>。
+              <br />
+              取消后系统将不再向剩余用户发送，已发送的消息无法撤回。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>继续发送</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelJob} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              确认取消
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminPageLayout>
   );
 }
