@@ -369,7 +369,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 小程序原生支付：直接通过 navigateTo 跳转到原生支付页面
   // ⚠️ 重要：postMessage 只在页面后退/销毁/分享时才会被小程序接收，不能用于实时通信
   // 因此必须直接使用 navigateTo 跳转，由小程序原生页面调用 wx.requestPayment
-  const triggerMiniProgramNativePay = useCallback(async (params: Record<string, string>, orderNumber: string) => {
+  const triggerMiniProgramNativePay = useCallback(async (params: Record<string, string>, orderNumber: string): Promise<boolean> => {
     // 构建成功回调 URL
     const successUrl = new URL(window.location.href);
     successUrl.searchParams.set("payment_success", "1");
@@ -389,19 +389,50 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       const mp = window.wx?.miniProgram;
       console.log(`[MiniProgram] Pay attempt ${attempt}/${MAX_ATTEMPTS}, mp available:`, !!mp);
 
-      // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
       if (mp && typeof mp.navigateTo === "function") {
         try {
           const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
           console.log("[MiniProgram] navigateTo:", payPageUrl);
-          mp.navigateTo({ url: payPageUrl });
-          return;
+
+          const launched = await new Promise<boolean>((resolve) => {
+            let settled = false;
+            const finish = (ok: boolean) => {
+              if (settled) return;
+              settled = true;
+              resolve(ok);
+            };
+
+            try {
+              mp.navigateTo({
+                url: payPageUrl,
+                success: (res: any) => {
+                  console.log("[MiniProgram] navigateTo success:", res);
+                  finish(true);
+                },
+                fail: (err: any) => {
+                  console.error("[MiniProgram] navigateTo fail:", err);
+                  finish(false);
+                },
+                complete: (res: any) => {
+                  console.log("[MiniProgram] navigateTo complete:", res);
+                  if (res?.errMsg && /:ok$/i.test(res.errMsg)) {
+                    finish(true);
+                  }
+                },
+              } as any);
+              setTimeout(() => finish(false), 1500);
+            } catch (err) {
+              console.error(`[MiniProgram] navigateTo attempt ${attempt} threw:`, err);
+              finish(false);
+            }
+          });
+
+          if (launched) return true;
         } catch (err) {
           console.error(`[MiniProgram] navigateTo attempt ${attempt} failed:`, err);
         }
       }
 
-      // 方式2：备用 - 尝试 postMessage
       if (mp && typeof mp.postMessage === "function") {
         try {
           console.warn(`[MiniProgram] attempt ${attempt}: navigateTo unavailable, trying postMessage`);
@@ -416,13 +447,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           if (attempt === MAX_ATTEMPTS) {
             toast.info("请点击右上角菜单返回小程序完成支付");
           }
-          return;
+          return true;
         } catch (err) {
           console.error(`[MiniProgram] postMessage attempt ${attempt} failed:`, err);
         }
       }
 
-      // 本次尝试失败，若还有重试机会则等待后重试
       if (attempt < MAX_ATTEMPTS) {
         await new Promise((resolve) => setTimeout(resolve, 800));
       }
@@ -432,6 +462,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     toast.error("请稍后重试");
     setStatus("error");
     setErrorMessage("请稍后重试");
+    return false;
   }, []);
 
   // 创建订单（带超时处理）
