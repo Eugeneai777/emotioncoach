@@ -45,10 +45,11 @@ export const getShareEnvironment = (): ShareEnvironment => {
  * iOS (including WeChat H5) will use native navigator.share for system share panel.
  */
 export const shouldUseImagePreview = (): boolean => {
-  const { isMiniProgram, isWeChat, isIOS, isAndroid } = getShareEnvironment();
-  // 所有移动端都使用图片预览（长按保存）
-  // navigator.share() 和 <a> 下载在微信/安卓中不可靠
-  return isWeChat || isMiniProgram || isIOS || isAndroid;
+  // 所有端（含桌面）统一使用图片预览，提供一致体验：
+  // - 移动端：长按保存
+  // - 桌面端：保存按钮 / 右键另存 / 拖入微信
+  // navigator.share() 在桌面与微信中不可靠，<a> 静默下载又会导致用户看不到海报
+  return true;
 };
 
 /**
@@ -175,7 +176,7 @@ export const handleShareWithFallback = async (
     return showUploadedPreview();
   }
   
-  // Android: Try Web Share API first
+  // Android: Try Web Share API first (system share sheet is preferred when available)
   if (isAndroid && navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({
@@ -192,44 +193,8 @@ export const handleShareWithFallback = async (
       return showUploadedPreview();
     }
   }
-  
-  // Desktop or other: Try Web Share API
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({
-        files: [file],
-        title: options.title || filename,
-        text: options.text,
-      });
-      return reportShare({ success: true, method: 'webshare' });
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') {
-        return reportShare({ success: false, method: 'webshare', cancelled: true });
-      }
-      // Fall through to download
-    }
-  }
-  
-  // Fallback: Download the image
-  try {
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = blobUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Cleanup blob URL after a delay
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-    
-    options.onDownload?.();
-    return reportShare({ success: true, method: 'download' });
-  } catch (error) {
-    return reportShare({ 
-      success: false, 
-      method: 'download', 
-      error: (error as Error).message 
-    });
-  }
+
+  // Desktop & all other environments: show image preview (with download button + right-click save)
+  // No more silent downloads — users need to see the poster before saving/sharing.
+  return showUploadedPreview();
 };
