@@ -573,36 +573,6 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isBloomP
           </p>
         </div>
       </Card>
-
-      {/* Login Guidance (for non-logged in users) */}
-      {!isLoggedIn && (
-        <Card className="p-4 bg-white border-slate-200 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-indigo-100 shrink-0">
-              <LogIn className="w-4 h-4 text-indigo-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-sm text-slate-700 mb-2">登录后可保存测评结果</h3>
-              <div className="space-y-1.5 mb-4">
-                {loginBenefits.map((benefit, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs text-slate-500">
-                    <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                    <span>{benefit}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={onLogin} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">
-                  去登录
-                </Button>
-                <Button size="sm" variant="outline" onClick={onStart} className="flex-1 border-slate-300 text-slate-600 hover:bg-slate-100">
-                  先做测评
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
     </motion.div>
   );
 }
