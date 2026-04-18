@@ -27,7 +27,8 @@ interface UserInfo {
 
 type CardTab = 'value' | 'camp' | 'achievement' | 'promo';
 
-const CARD_OPTIONS: { id: CardTab; label: string; emoji: string }[] = [
+const ALL_CARD_OPTIONS: { id: CardTab; label: string; emoji: string }[] = [
+  { id: 'value', label: '我的测评', emoji: '🎯' },
   { id: 'promo', label: '财富测评',   emoji: '💰' },
   { id: 'camp',  label: '训练营邀请', emoji: '🏕️' },
 ];
@@ -236,14 +237,15 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleServerGenerate = useCallback(async () => {
+    // 数据缺失时优雅降级：自动切到 promo Tab，而不是报错退出
     if (!assessmentData) {
-      toast.error('测评数据未加载，请刷新重试');
+      toast.message('完成测评后可生成专属分数海报', { description: '已为你切换到通用推广海报' });
+      setActiveTab('promo');
       return;
     }
     setIsGenerating(true);
 
     try {
-      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
       const cardData = {
         healthScore: assessmentData.awakeningScore,
         reactionPattern: assessmentData.reactionPattern,
@@ -252,34 +254,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         partnerCode: partnerInfo?.partnerCode,
       };
 
-      if (isMobile) {
-        // 移动端统一使用 data URL（避免微信/iOS blob 和 canvas 限制）
-        const dataUrl = await generateServerShareCardDataUrl(cardData);
-        if (!dataUrl) {
-          toast.error('图片生成失败，请重试');
-          return;
-        }
-        setServerPreviewUrl(dataUrl);
-        setOpen(false);
-        setShowServerPreview(true);
-      } else {
-        // 桌面端：直接下载
-        const blob = await generateServerShareCard(cardData);
-        if (!blob) {
-          toast.error('图片生成失败，请重试');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `财富测评分享卡-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        setOpen(false);
-        toast.success('图片已保存');
+      // 全端统一：服务端生成 dataUrl → ShareImagePreview 预览
+      // 桌面用户在预览里点「保存图片」可下载/右键另存/拖入 PC 微信
+      const dataUrl = await generateServerShareCardDataUrl(cardData);
+      if (!dataUrl) {
+        toast.error('图片生成失败，请重试');
+        return;
       }
+      setServerPreviewUrl(dataUrl);
+      setOpen(false);
+      setShowServerPreview(true);
     } catch (error) {
       console.error('Share card generation failed:', error);
       toast.error('生成分享卡片失败，请重试');
@@ -348,7 +332,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
   };
 
-  // Tab selector UI
+  // Tab selector UI - 仅在有测评数据时显示 value Tab，避免售前用户点了报错
+  const CARD_OPTIONS = ALL_CARD_OPTIONS.filter(opt => opt.id !== 'value' || !!assessmentData);
+
+  // 如果用户当前选中 value Tab 但没有数据，自动 fallback 到 promo
+  useEffect(() => {
+    if (activeTab === 'value' && !isLoadingUser && !assessmentData) {
+      setActiveTab('promo');
+    }
+  }, [activeTab, assessmentData, isLoadingUser]);
+
   const tabSelector = CARD_OPTIONS.length > 1 ? (
     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '8px' }}>
       {CARD_OPTIONS.map((opt) => (
