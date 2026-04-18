@@ -142,8 +142,10 @@ export default function MidlifeAwakeningPage() {
 
   const handleStart = useCallback(() => {
     if (!user) { toast.error("请先登录"); navigate('/auth', { state: { from: '/midlife-awakening' } }); return; }
+    // 🔒 付费墙守门：未付费拉支付弹窗
+    if (!hasPurchased) { handlePayClick(); return; }
     setStep('questions');
-  }, [user, navigate]);
+  }, [user, hasPurchased, navigate, handlePayClick]);
 
   const triggerAIAnalysis = useCallback(async (calcResult: MidlifeResult, assessmentId?: string) => {
     setAiAnalysisLoading(true);
