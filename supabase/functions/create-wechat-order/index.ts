@@ -154,6 +154,8 @@ serve(async (req) => {
     }
 
     // 🆕 后端去重：复用同用户同套餐15分钟内的 pending 订单，避免重复下单
+    // ⚠️ 关键：必须按 pay_type 严格匹配复用，否则微信会报 INVALID_REQUEST"请求重入时参数不一致"
+    // （同一 out_trade_no 在微信侧已绑定首次的 trade_type，不能跨通道复用）
     let reusedMiniProgramOrderNo: string | undefined;
     if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
@@ -163,6 +165,7 @@ serve(async (req) => {
         .eq('user_id', finalUserId)
         .eq('package_key', packageKey)
         .eq('status', 'pending')
+        .eq('pay_type', payType) // 🔒 仅复用相同 pay_type 的订单，防止跨通道重入
         .gte('created_at', fifteenMinAgo)
         .order('created_at', { ascending: false })
         .limit(1)
