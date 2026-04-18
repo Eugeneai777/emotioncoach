@@ -643,6 +643,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         return;
       }
 
+      const effectiveOpenId = selectedPayType === "miniprogram" ? resolvedMiniProgramOpenId : userOpenId;
+
       const { data, error } = await supabase.functions.invoke("create-wechat-order", {
         body: {
           packageKey: packageKey,
@@ -650,7 +652,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           amount: assessmentPrice,
           userId: userId || "guest",
           payType: selectedPayType,
-          openId: needsOpenId ? userOpenId : undefined,
+          openId: needsOpenId ? effectiveOpenId : undefined,
           isMiniProgram: isMiniProgram,
         },
       });
@@ -698,10 +700,14 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           setMpLaunchFailed(true);
         }
       } else if (selectedPayType === "miniprogram") {
-        console.warn("[Payment] MiniProgram order created but pay params missing, retry required");
+        console.warn("[Payment] MiniProgram order created but pay params missing, retry required", {
+          orderNo: data.orderNo,
+          needsNativePayment: data.needsNativePayment,
+          hasOpenId: !!effectiveOpenId,
+        });
         setMpPayParams(null);
         setStatus("pending");
-        setErrorMessage("支付参数获取失败，请重新拉起支付");
+        setErrorMessage(data.needsNativePayment ? "支付环境还未准备好，请重新拉起支付" : "支付参数获取失败，请重新拉起支付");
         setMpLaunchFailed(true);
       } else if (selectedPayType === "jsapi" && data.jsapiPayParams) {
         // JSAPI 支付
