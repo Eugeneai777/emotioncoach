@@ -72,8 +72,14 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isBloomP
       onStart();
       return;
     }
-    
-    // 未购买，正常支付流程
+
+    // 未登录：先走登录引导（onStart 内含未登录跳登录逻辑）
+    if (!isLoggedIn) {
+      onStart();
+      return;
+    }
+
+    // 已登录未购买：拉起支付
     if (onPay) {
       onPay();
     } else {
