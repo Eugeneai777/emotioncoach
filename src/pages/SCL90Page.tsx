@@ -143,6 +143,14 @@ const SCL90Page = () => {
           />
         )}
 
+        {pageState === "payment" && !pendingResult && (
+          <SCL90PrePayGate
+            onPaymentSuccess={handlePaymentSuccess}
+            onBack={handleBackToStart}
+            userId={user?.id}
+          />
+        )}
+
         {pageState === "result" && resultData && (
           <SCL90Result 
             result={resultData.result}
