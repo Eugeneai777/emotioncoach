@@ -771,7 +771,8 @@ export default function WealthBlockAssessmentPage() {
                   onStart={() => {
                     // 🔒 付费墙守门：未登录跳登录、未付费拉支付、绽放合伙人/已付费才放行
                     if (!user) {
-                      toast.error("请先登录");
+                      sessionStorage.setItem('wealth_block_pending_pay', '1');
+                      toast.info("请先登录");
                       navigate("/auth?redirect=/wealth-block");
                       return;
                     }
