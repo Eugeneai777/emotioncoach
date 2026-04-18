@@ -407,7 +407,22 @@ export default function WechatBroadcast() {
                 </Button>
               </div>
             )}
-            {(activeJob.status === 'completed' || activeJob.status === 'failed') && (
+            {(activeJob.status === 'pending' || activeJob.status === 'running') && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setCancelConfirmOpen(true)}
+                disabled={cancelling}
+              >
+                {cancelling ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Ban className="h-3.5 w-3.5 mr-1" />
+                )}
+                取消任务
+              </Button>
+            )}
+            {(activeJob.status === 'completed' || activeJob.status === 'failed' || activeJob.status === 'cancelled') && (
               <Button variant="outline" size="sm" onClick={dismissJob}>
                 关闭
               </Button>
