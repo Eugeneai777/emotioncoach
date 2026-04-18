@@ -1,60 +1,42 @@
 
-## 扩展范围确认
+## 决策确认
+- **35+女性竞争力**：方案 X1（独立页面 `WomenCompetitiveness.tsx` 内付费墙，不动通用引擎）
+- **SCL-90**：付费墙前置，与情绪健康对齐
 
-用户要求：**所有测评的售前页（未测评状态）**点击「分享海报」都要能生成 / 保存 / 转发，与 SBTI 标准一致。当前已知问题集中在「财富卡点」，但需统一排查并修复全站。
+## 改动清单（5 处）
 
-## 现状盘点
+### 1. `src/pages/WealthBlockAssessment.tsx`
+- `AssessmentIntroCard onStart` 回调内：未登录 → 跳 `/auth`；已登录未付 → 拉 `setShowPayDialog(true)`；已付才 `setShowIntro(false)` 进答题
+- 复用页面已有的 `hasPurchased` / `setShowPayDialog` / 微信支付授权回跳
 
-全站测评售前/结果页分享入口分两类：
+### 2. `src/pages/MidlifeAwakeningPage.tsx`
+- `handleStart` 内补 `if (!hasPurchased) { handlePayClick(); return; }`，登录检查保留
 
-| 类型 | 共享组件 | 售前未测评行为 | 桌面行为 |
-|---|---|---|---|
-| **A. SBTI、SCL-90、PHQ-9、35+女性、动态测评** | `ShareDialogBase` + `executeOneClickShare` | ✅ 已支持「promo」推广卡（无需数据，html2canvas） | ✅ 上一轮已统一走 `ShareImagePreview` |
-| **B. 财富卡点** | `WealthInviteCardDialog`（独立实现） | ❌ 默认 `value` Tab 强依赖测评数据，未测评 toast 报错退出 | ❌ 桌面仍走 `<a download>` 静默下载 |
-| **C. 其他自定义分享卡**（训练营邀请卡、Insight 卡等） | `executeOneClickShare` | N/A（非售前入口） | ✅ 已统一 |
+### 3. `src/pages/WomenCompetitiveness.tsx`（方案 X1）
+- 新增 phase `'start'` 作为默认入口（替代当前直接 `'questions'`）
+- 引入 `useDynamicAssessmentPurchase('women_competitiveness_assessment')` + `usePurchaseOnboarding` + `AssessmentPayDialog`
+- 复用已有 `CompetitivenessStartScreen` 作为启动屏（已具备「开始测评 / 历史记录」按钮）
+- `onStart` 回调：未登录跳 `/auth`；已登录未付拉付费弹窗；已付进 `'questions'`
+- 历史记录入口、`handleViewHistoryReport`（已付费用户已有记录）保持不变
+- sessionStorage 持久化测评中状态（OAuth/支付回跳后恢复），复用 `state-persistence-pattern`
 
-需要排查的潜在风险点：
-- 各 `DynamicAssessmentPage` 派生售前页是否都正确传 `defaultTab="promo"` 给 `ShareDialogBase`
-- 是否有页面像 `WealthBlockAssessment` 一样硬写 `defaultTab="value"`
-- 任何使用 `WealthInviteCardDialog` 模式（独立卡片对话框）的其他测评
+### 4. `src/pages/SCL90Page.tsx`
+- `handleStart` 改为：未登录跳登录；未付 `setPageState("payment")` 并清空 `pendingResult`（付费弹窗独立运行，不依赖答题结果）
+- `SCL90PaymentGate` 调整为支持「答题前付费」模式：付费成功后 `setPageState("questions")` 而非直接出结果
+- `handleComplete` 兜底逻辑保留（防御老用户答题中途付费迁移），但正常流程不再走「答完才付费」
 
-## 修复方案
+### 5. 自测矩阵
+- 5 个付费测评 × (未登录 / 已登录未付 / 已付) × (PC / 微信内 / H5 移动)
+- 重点验证：微信支付授权回跳后能恢复到「正在答题」/「即将答题」状态
+- 已购买老用户体验零变化（hasPurchased=true 直接放行）
 
-### 改动 1：财富卡点（核心修复）
-- `src/pages/WealthBlockAssessment.tsx`：顶部 PageHeader Share 按钮 `defaultTab` 改为 `currentResult ? "value" : "promo"`
-- `src/components/wealth-camp/WealthInviteCardDialog.tsx`：
-  - `handleServerGenerate` 桌面端改走 `ShareImagePreview`（与 SBTI 一致）
-  - `value` Tab 在无 `assessmentData` 时不报错，自动切到 `promo` 或用默认占位
-  - `CARD_OPTIONS` 中 `value` Tab 仅在有数据时显示
+## 不影响范围（明确不动）
+- 通用引擎 `DynamicAssessmentPage`、计分逻辑、订单/支付链路
+- Free / Lite 引流页（`/emotion-health-lite`、`/wealth-assessment-free` 等）
+- 海报分享、AI 教练解说、训练营转化按钮的现有付费校验
+- 已购买用户的所有现存数据与历史记录访问
 
-### 改动 2：全站售前页 defaultTab 排查
-扫描所有 `<ShareDialogBase` 和 `<WealthInviteCardDialog` 调用点，确认：
-- 售前页（无 result 状态时）默认 Tab 必须是 `promo`（推广卡，无数据依赖）
-- 已测评结果页才用 `value`/`result` Tab
-- 修正任何硬写 `defaultTab="value"` 但未保护数据缺失的入口
-
-### 改动 3：通用兜底（防御性）
-在 `ShareDialogBase` 内部增加：当 Tab 切到需要数据的卡片但数据缺失时，自动 fallback 到 `promo` Tab 而非报错，避免未来新接入测评再踩同样的坑。
-
-## 兼容性矩阵（统一后）
-
-| 测评 | 售前 PC | 售前 微信 | 售前 H5 | 结果页 全端 |
-|---|---|---|---|---|
-| SBTI | ✅ | ✅ | ✅ | ✅ |
-| 财富卡点 | ✅（修复） | ✅（修复） | ✅（修复） | ✅（修复） |
-| SCL-90 / PHQ-9 / 35+女性 / 中场觉醒力 / 动态测评 | ✅ 验证 | ✅ 验证 | ✅ 验证 | ✅ 验证 |
-
-## 不改动
-
-- 海报视觉、二维码 URL、partner 归因
-- 移动端长按保存逻辑
-- `uploadShareImage` 上传链路
-- 各测评业务计分/数据持久化逻辑
-
-## 交付物
-
-- `src/pages/WealthBlockAssessment.tsx`：动态 `defaultTab`
-- `src/components/wealth-camp/WealthInviteCardDialog.tsx`：桌面预览 + 数据缺失降级 + Tab 条件显示
-- `src/components/share/ShareDialogBase.tsx`：通用 Tab 数据缺失自动降级到 `promo`
-- 全站售前页 `defaultTab` 排查并修正硬写为 `value` 的入口
-- 自测：SBTI、财富卡点、SCL-90、35+女性、PHQ-9 共 5 个测评，售前 PC/微信/H5 共 15 个组合
+## 兼容性
+- PC（1157px+）/ 微信 WebView / H5 移动：复刻 `EmotionHealthPage` 同一套已三端验证的链路
+- 排版：仅在「开始测评」按钮逻辑内做条件分支，UI 结构不变
+- 路由：`/wealth-block`、`/midlife-awakening`、`/women-competitiveness`、`/scl90` 路径不变，外部分享链接不受影响
