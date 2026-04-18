@@ -296,6 +296,37 @@ export default function WechatBroadcast() {
     setActiveJob(null);
   }
 
+  async function handleCancelJob() {
+    if (!activeJob) return;
+    setCancelConfirmOpen(false);
+    setCancelling(true);
+    try {
+      const { error } = await supabase
+        .from('wechat_broadcast_jobs' as any)
+        .update({
+          status: 'cancelled',
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_error: '用户手动取消',
+        })
+        .eq('id', activeJob.id)
+        .in('status', ['pending', 'running'])
+        .select();
+
+      if (error) throw error;
+      toast.success('任务已取消，正在停止后续发送…');
+      setActiveJob({
+        ...activeJob,
+        status: 'cancelled',
+        completed_at: new Date().toISOString(),
+      } as any);
+    } catch (err: any) {
+      toast.error('取消失败：' + (err.message || '未知错误'));
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   // Check if a running job is stuck (no update in 3+ minutes)
   const isJobStuck = activeJob?.status === 'running' && activeJob.updated_at && 
     (Date.now() - new Date(activeJob.updated_at).getTime()) > 3 * 60 * 1000;
@@ -343,7 +374,8 @@ export default function WechatBroadcast() {
                 activeJob.status === 'pending' ? '等待中' :
                 activeJob.status === 'running' ? '发送中' :
                 activeJob.status === 'completed' ? '已完成' :
-                activeJob.status === 'failed' ? '发送失败' : activeJob.status
+                activeJob.status === 'failed' ? '发送失败' :
+                activeJob.status === 'cancelled' ? '已取消' : activeJob.status
               }
             </CardTitle>
           </CardHeader>
