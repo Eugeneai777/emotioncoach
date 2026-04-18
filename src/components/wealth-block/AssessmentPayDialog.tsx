@@ -87,6 +87,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
   const createOrderCalledRef = useRef<boolean>(false);
+  // 🆕 小程序支付：保存最近一次拉起支付的参数，用于失败/取消后再次拉起
+  const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
+  const [mpRetrying, setMpRetrying] = useState<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
