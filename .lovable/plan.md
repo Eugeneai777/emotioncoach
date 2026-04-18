@@ -1,42 +1,29 @@
 
-## 决策确认
-- **35+女性竞争力**：方案 X1（独立页面 `WomenCompetitiveness.tsx` 内付费墙，不动通用引擎）
-- **SCL-90**：付费墙前置，与情绪健康对齐
+## 确认执行范围（基于上轮已审计的现状）
 
-## 改动清单（5 处）
+红框 = `WealthBlockAssessment.tsx` 售前页底部「登录后可保存测评结果」引导卡片（含「去登录 / 先做测评」两个按钮）。
 
-### 1. `src/pages/WealthBlockAssessment.tsx`
-- `AssessmentIntroCard onStart` 回调内：未登录 → 跳 `/auth`；已登录未付 → 拉 `setShowPayDialog(true)`；已付才 `setShowIntro(false)` 进答题
-- 复用页面已有的 `hasPurchased` / `setShowPayDialog` / 微信支付授权回跳
+## 改动清单（2 处，最小侵入）
 
-### 2. `src/pages/MidlifeAwakeningPage.tsx`
-- `handleStart` 内补 `if (!hasPurchased) { handlePayClick(); return; }`，登录检查保留
+### 1. `src/pages/WealthBlockAssessment.tsx` — 删除红框卡片
+- 移除底部「登录引导卡片」整块 JSX
+- 主卡片「立即测评 ¥9.9」+「已有账号？点击登录」链接保留不动
 
-### 3. `src/pages/WomenCompetitiveness.tsx`（方案 X1）
-- 新增 phase `'start'` 作为默认入口（替代当前直接 `'questions'`）
-- 引入 `useDynamicAssessmentPurchase('women_competitiveness_assessment')` + `usePurchaseOnboarding` + `AssessmentPayDialog`
-- 复用已有 `CompetitivenessStartScreen` 作为启动屏（已具备「开始测评 / 历史记录」按钮）
-- `onStart` 回调：未登录跳 `/auth`；已登录未付拉付费弹窗；已付进 `'questions'`
-- 历史记录入口、`handleViewHistoryReport`（已付费用户已有记录）保持不变
-- sessionStorage 持久化测评中状态（OAuth/支付回跳后恢复），复用 `state-persistence-pattern`
+### 2. 「立即测评」按钮 — 补全「登录回跳后自动拉付费弹窗」
+- **未登录**：`sessionStorage.setItem('wealth_block_pending_pay', '1')` + `navigate('/auth?redirect=/wealth-block')`
+- **已登录未付**：`setShowPayDialog(true)`（上一轮已实现，保留）
+- **已付费**：`setShowIntro(false)` 进答题（保留）
+- 页面 `useEffect` 内：检测 `user && hasPurchased=false && wealth_block_pending_pay==='1'` → 清除标记 → 自动 `setShowPayDialog(true)`，实现登录回跳无缝续付费
 
-### 4. `src/pages/SCL90Page.tsx`
-- `handleStart` 改为：未登录跳登录；未付 `setPageState("payment")` 并清空 `pendingResult`（付费弹窗独立运行，不依赖答题结果）
-- `SCL90PaymentGate` 调整为支持「答题前付费」模式：付费成功后 `setPageState("questions")` 而非直接出结果
-- `handleComplete` 兜底逻辑保留（防御老用户答题中途付费迁移），但正常流程不再走「答完才付费」
+## 兼容性 / 不影响范围
 
-### 5. 自测矩阵
-- 5 个付费测评 × (未登录 / 已登录未付 / 已付) × (PC / 微信内 / H5 移动)
-- 重点验证：微信支付授权回跳后能恢复到「正在答题」/「即将答题」状态
-- 已购买老用户体验零变化（hasPurchased=true 直接放行）
+- ✅ 已购买用户：`hasPurchased=true` 直接进答题，零变化
+- ✅ 主 CTA 按钮、价格卡、四宫格诊断、海报分享、AI 解说、支付链路：全部不动
+- ✅ 微信支付授权回跳（`assessment_pay_resume`）链路：不动
+- ✅ 路由 `/wealth-block` 不变，外部分享链接（含 `?ref=`）不受影响
+- ✅ PC（1157px+）/ 微信内 / H5 移动三端：仅删除一块静态卡片 + 增加一段 sessionStorage 续跑逻辑，排版和跳转无影响
+- ✅ 其他 4 个付费测评（情绪健康 / 中场觉醒 / 35+女性 / SCL-90）：不动
 
-## 不影响范围（明确不动）
-- 通用引擎 `DynamicAssessmentPage`、计分逻辑、订单/支付链路
-- Free / Lite 引流页（`/emotion-health-lite`、`/wealth-assessment-free` 等）
-- 海报分享、AI 教练解说、训练营转化按钮的现有付费校验
-- 已购买用户的所有现存数据与历史记录访问
+## 风险评估
 
-## 兼容性
-- PC（1157px+）/ 微信 WebView / H5 移动：复刻 `EmotionHealthPage` 同一套已三端验证的链路
-- 排版：仅在「开始测评」按钮逻辑内做条件分支，UI 结构不变
-- 路由：`/wealth-block`、`/midlife-awakening`、`/women-competitiveness`、`/scl90` 路径不变，外部分享链接不受影响
+🟢 低风险：纯前端 UI 删除 + 一段 sessionStorage 续跑逻辑，无后端 / 无引擎层 / 无支付链路改动。
