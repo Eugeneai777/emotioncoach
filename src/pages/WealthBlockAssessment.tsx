@@ -256,6 +256,7 @@ export default function WealthBlockAssessmentPage() {
 
   const openWealthPayDialog = () => {
     // 每次点击都强制创建全新实例，确保不会复用上一次取消支付后的旧状态
+    sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     setPayDialogInstanceKey((prev) => prev + 1);
     setShowPayDialog(true);
   };
