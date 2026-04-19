@@ -565,10 +565,11 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       // - 移动端非微信：H5
       // - 其他：Native
       let selectedPayType: "jsapi" | "h5" | "native" | "miniprogram" | "alipay";
+      let resolvedMiniProgramOpenId: string | undefined;
 
       // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
       if (isMiniProgram) {
-        const resolvedMiniProgramOpenId = await waitForMiniProgramOpenId();
+        resolvedMiniProgramOpenId = await waitForMiniProgramOpenId();
 
         console.log("[Payment] MiniProgram detected, openId:", resolvedMiniProgramOpenId ? "present" : "missing");
 
