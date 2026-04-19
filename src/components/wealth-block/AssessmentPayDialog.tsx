@@ -140,7 +140,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
   const mpNativePayLaunchedRef = useRef<boolean>(false);
   const mpNativePayPageHiddenRef = useRef<boolean>(false);
-  const restoringCachedMiniProgramOrderRef = useRef<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -1145,7 +1144,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     createOrderCalledRef.current = false;
     mpNativePayLaunchedRef.current = false;
     mpNativePayPageHiddenRef.current = false;
-    restoringCachedMiniProgramOrderRef.current = false;
     clearCachedMiniProgramPaymentState(packageKey);
     setOrderNo("");
     setQrCodeDataUrl("");
@@ -1278,7 +1276,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     }
 
     console.log("[AssessmentPayDialog] Restoring cached mini program payment state", cachedState.orderNo);
-    restoringCachedMiniProgramOrderRef.current = true;
     createOrderCalledRef.current = true;
     setOrderNo(cachedState.orderNo);
     setMpPayParams(cachedState.mpPayParams);
@@ -1359,7 +1356,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   useEffect(() => {
     if (!open) {
       stopPolling();
-      restoringCachedMiniProgramOrderRef.current = false;
       setStatus("idle");
       setOrderNo("");
       setQrCodeDataUrl("");
