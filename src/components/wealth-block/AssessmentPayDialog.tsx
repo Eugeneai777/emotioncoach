@@ -745,6 +745,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         setMpPayParams(data.miniprogramPayParams);
         setOrderNo(data.orderNo);
         setMpLaunchFailed(false);
+        cacheMiniProgramPaymentState({
+          packageKey,
+          orderNo: data.orderNo,
+          mpPayParams: data.miniprogramPayParams,
+          updatedAt: Date.now(),
+        });
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         if (launched) {
           // 不再立即关闭弹框：保留 polling 状态 + 重新支付按钮，
@@ -963,6 +969,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
         if (data.status === "paid") {
           stopPolling();
+          clearCachedMiniProgramPaymentState(packageKey);
           // 🆕 优先使用后端返回的 openId，否则使用当前 userOpenId
           const resolvedOpenId = data.openId || userOpenId;
           setPaymentOpenId(resolvedOpenId);
@@ -1122,6 +1129,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         throw new Error(data?.error || "取消订单失败");
       }
 
+      clearCachedMiniProgramPaymentState(packageKey);
       return true;
     } catch (error: any) {
       console.error("[AssessmentPay] Cancel order error:", error);
@@ -1137,6 +1145,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     createOrderCalledRef.current = false;
     mpNativePayLaunchedRef.current = false;
     mpNativePayPageHiddenRef.current = false;
+    restoringCachedMiniProgramOrderRef.current = false;
+    clearCachedMiniProgramPaymentState(packageKey);
     setOrderNo("");
     setQrCodeDataUrl("");
     setPayUrl("");
@@ -1147,7 +1157,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     setMpRetrying(false);
     setMpLaunchFailed(false);
     setStatus("idle");
-  }, []);
+  }, [packageKey]);
 
   const handleRepay = useCallback(async () => {
     if (isRepaying) return;
