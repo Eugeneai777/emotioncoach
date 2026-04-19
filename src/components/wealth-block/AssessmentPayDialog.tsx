@@ -685,15 +685,17 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setOrderNo(data.orderNo);
 
       if (selectedPayType === "miniprogram" && data.miniprogramPayParams) {
-        // 小程序 WebView：确认成功发起原生跳转后，才进入轮询态
+        // 小程序 WebView：成功拉起原生支付后立即关闭当前弹窗，
+        // 避免返回 H5 页面时保留旧的 loading/polling 状态，导致二次点击无法重新拉起
         console.log("[Payment] MiniProgram: triggering native pay via navigateTo");
         setMpPayParams(data.miniprogramPayParams);
         setOrderNo(data.orderNo);
         setMpLaunchFailed(false);
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         if (launched) {
-          setStatus("polling");
-          startPolling(data.orderNo);
+          stopPolling();
+          onOpenChange(false);
+          return;
         } else {
           setStatus("pending");
           setErrorMessage("未能拉起微信支付，请重试");
