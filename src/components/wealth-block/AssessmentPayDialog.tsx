@@ -1295,11 +1295,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setMpPayParams(null);
       setMpRetrying(false);
       setMpLaunchFailed(false);
+      setIsCancellingOrder(false);
+      setIsRepaying(false);
     }
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-sm !inset-auto !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !bottom-auto !rounded-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-center text-base">
@@ -1402,6 +1404,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-3">订单号：{orderNo}</p>
+              <Button variant="outline" size="sm" onClick={handleRepay} disabled={isRepaying || isCancellingOrder} className="mt-3 w-full">
+                {(isRepaying || isCancellingOrder) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                重新支付
+              </Button>
             </div>
           )}
 
