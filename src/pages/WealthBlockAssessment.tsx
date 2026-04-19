@@ -167,12 +167,21 @@ export default function WealthBlockAssessmentPage() {
       newUrl.searchParams.delete('payment_fail');
       newUrl.searchParams.delete('order');
       window.history.replaceState({}, '', newUrl.toString());
-      
-      // 显示错误提示并重新打开支付弹窗
+
+      // 小程序取消支付返回时，不自动重开弹窗；
+      // 先强制销毁旧实例，避免保留上一次的 creating / polling 状态导致再次点击只转圈
+      if (isMiniProgram) {
+        setShowPayDialog(false);
+        setPayDialogInstanceKey((prev) => prev + 1);
+        toast.info('支付已取消，请重新点击立即测评');
+        return;
+      }
+
+      // 其他环境维持原有自动续起逻辑
       toast.error('支付未完成，请重试');
       openWealthPayDialog();
     }
-  }, [searchParams]);
+  }, [searchParams, isMiniProgram]);
 
   // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
   const triggerWeChatSilentAuth = async () => {
