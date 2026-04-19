@@ -158,30 +158,23 @@ export default function WealthBlockAssessmentPage() {
   useEffect(() => {
     const paymentFail = searchParams.get('payment_fail');
     const orderNo = searchParams.get('order');
-    
+
     if (paymentFail === '1') {
       console.log('[WealthBlock] Payment failed callback detected, order:', orderNo);
-      
+
       // 清除 URL 参数
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('payment_fail');
       newUrl.searchParams.delete('order');
       window.history.replaceState({}, '', newUrl.toString());
 
-      // 小程序取消支付返回时，不自动重开弹窗；
-      // 先强制销毁旧实例，避免保留上一次的 creating / polling 状态导致再次点击只转圈
-      if (isMiniProgram) {
-        setShowPayDialog(false);
-        setPayDialogInstanceKey((prev) => prev + 1);
-        toast.info('支付已取消，请重新点击立即测评');
-        return;
-      }
-
-      // 其他环境维持原有自动续起逻辑
-      toast.error('支付未完成，请重试');
-      openWealthPayDialog();
+      // payment_fail 只会来自小程序原生支付失败/取消回跳；
+      // 这里不再依赖 isMiniProgram，统一销毁旧实例，避免环境识别抖动时保留上一次的 polling 状态
+      setShowPayDialog(false);
+      setPayDialogInstanceKey((prev) => prev + 1);
+      toast.info('支付已取消，请重新点击立即测评');
     }
-  }, [searchParams, isMiniProgram]);
+  }, [searchParams]);
 
   // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
   const triggerWeChatSilentAuth = async () => {
@@ -194,8 +187,8 @@ export default function WealthBlockAssessmentPage() {
       resumeUrl.searchParams.set('assessment_pay_resume', '1');
 
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-        body: { 
-          redirectUri: resumeUrl.toString(), 
+        body: {
+          redirectUri: resumeUrl.toString(),
           flow: 'wealth_assessment',
         },
       });
@@ -218,9 +211,8 @@ export default function WealthBlockAssessmentPage() {
   };
 
   const openWealthPayDialog = () => {
-    if (isMiniProgram) {
-      setPayDialogInstanceKey((prev) => prev + 1);
-    }
+    // 每次点击都强制创建全新实例，确保不会复用上一次取消支付后的旧状态
+    setPayDialogInstanceKey((prev) => prev + 1);
     setShowPayDialog(true);
   };
 
