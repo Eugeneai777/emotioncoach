@@ -81,6 +81,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [isClaimingInvite, setIsClaimingInvite] = useState(false);
+  const [isCancellingOrder, setIsCancellingOrder] = useState(false);
+  const [isRepaying, setIsRepaying] = useState(false);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
@@ -1053,6 +1055,82 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       pollingRef.current = null;
     }
   };
+
+  const cancelPendingOrder = useCallback(async () => {
+    if (!orderNo || (status !== "pending" && status !== "polling")) {
+      return true;
+    }
+
+    setIsCancellingOrder(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-pending-order", {
+        body: { orderNo },
+      });
+
+      if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || "取消订单失败");
+      }
+
+      return true;
+    } catch (error: any) {
+      console.error("[AssessmentPay] Cancel order error:", error);
+      toast.error(error?.message || "取消订单失败，请稍后重试");
+      return false;
+    } finally {
+      setIsCancellingOrder(false);
+    }
+  }, [orderNo, status]);
+
+  const resetPaymentStateForRetry = useCallback(() => {
+    stopPolling();
+    createOrderCalledRef.current = false;
+    mpNativePayLaunchedRef.current = false;
+    mpNativePayPageHiddenRef.current = false;
+    setOrderNo("");
+    setQrCodeDataUrl("");
+    setPayUrl("");
+    setErrorMessage("");
+    setPollingTimeout(false);
+    setIsForceChecking(false);
+    setMpPayParams(null);
+    setMpRetrying(false);
+    setMpLaunchFailed(false);
+    setStatus("idle");
+  }, []);
+
+  const handleRepay = useCallback(async () => {
+    if (isRepaying) return;
+
+    setIsRepaying(true);
+    const cancelled = await cancelPendingOrder();
+
+    if (cancelled) {
+      resetPaymentStateForRetry();
+      toast.info("正在重新发起支付...");
+    }
+
+    setIsRepaying(false);
+  }, [cancelPendingOrder, isRepaying, resetPaymentStateForRetry]);
+
+  const handleDialogOpenChange = useCallback(async (nextOpen: boolean) => {
+    if (nextOpen) {
+      onOpenChange(true);
+      return;
+    }
+
+    const shouldCancelOrder = !!orderNo && (status === "pending" || status === "polling");
+    const cancelled = await cancelPendingOrder();
+
+    if (!cancelled) return;
+
+    if (shouldCancelOrder) {
+      toast.info("订单已取消");
+    }
+
+    onOpenChange(false);
+  }, [cancelPendingOrder, onOpenChange, orderNo, status]);
 
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
     if (!open) return;
