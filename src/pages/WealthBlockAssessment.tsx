@@ -31,6 +31,7 @@ import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
 const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
+const MP_PENDING_PAYMENT_RESUME_GUARD_KEY = 'wealth_assessment_mp_pending_payment_resuming';
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -183,8 +184,13 @@ export default function WealthBlockAssessmentPage() {
 
     const maybeResumeMiniProgramPayment = () => {
       try {
+        if (showPayDialog) return;
+
         const dismissedPackageKey = sessionStorage.getItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
         if (dismissedPackageKey === 'wealth_block_assessment') return;
+
+        const resumingAt = Number(sessionStorage.getItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY) || '0');
+        if (resumingAt && Date.now() - resumingAt < 1200) return;
 
         const raw = sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY);
         if (!raw) return;
@@ -203,6 +209,7 @@ export default function WealthBlockAssessmentPage() {
           return;
         }
 
+        sessionStorage.setItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY, String(Date.now()));
         setPayDialogInstanceKey((prev) => prev + 1);
         setShowPayDialog(true);
       } catch {
@@ -218,7 +225,7 @@ export default function WealthBlockAssessmentPage() {
       window.removeEventListener('pageshow', maybeResumeMiniProgramPayment);
       window.removeEventListener('focus', maybeResumeMiniProgramPayment);
     };
-  }, [authLoading, isPurchaseLoading, hasPurchased, isBloomPartner, isMiniProgram]);
+  }, [authLoading, isPurchaseLoading, hasPurchased, isBloomPartner, isMiniProgram, showPayDialog]);
 
   // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
   const triggerWeChatSilentAuth = async () => {
@@ -257,6 +264,7 @@ export default function WealthBlockAssessmentPage() {
   const openWealthPayDialog = () => {
     // 每次点击都强制创建全新实例，确保不会复用上一次取消支付后的旧状态
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
+    sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
     setPayDialogInstanceKey((prev) => prev + 1);
     setShowPayDialog(true);
   };
@@ -984,6 +992,9 @@ export default function WealthBlockAssessmentPage() {
           console.log('[WealthBlock] PayDialog onOpenChange:', open);
           if (open) {
             sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
+            sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
+          } else {
+            sessionStorage.setItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY, String(Date.now()));
           }
           setShowPayDialog(open);
         }}

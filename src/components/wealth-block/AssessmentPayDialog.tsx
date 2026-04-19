@@ -148,6 +148,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [isClaimingInvite, setIsClaimingInvite] = useState(false);
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
   const [isRepaying, setIsRepaying] = useState(false);
+  const closeInProgressRef = useRef(false);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
@@ -1193,21 +1194,29 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
   const handleDialogOpenChange = useCallback(async (nextOpen: boolean) => {
     if (nextOpen) {
+      closeInProgressRef.current = false;
       clearMiniProgramPaymentDismissed(packageKey);
       onOpenChange(true);
       return;
     }
 
+    if (closeInProgressRef.current) return;
+    closeInProgressRef.current = true;
+
+    markMiniProgramPaymentDismissed(packageKey);
+
     const shouldCancelOrder = !!orderNo && (status === "pending" || status === "polling");
     const cancelled = await cancelPendingOrder();
 
-    if (!cancelled) return;
+    if (!cancelled) {
+      closeInProgressRef.current = false;
+      return;
+    }
 
     if (shouldCancelOrder) {
       toast.info("订单已取消");
     }
 
-    markMiniProgramPaymentDismissed(packageKey);
     onOpenChange(false);
   }, [cancelPendingOrder, onOpenChange, orderNo, packageKey, status]);
 
@@ -1380,6 +1389,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 关闭时重置状态
   useEffect(() => {
     if (!open) {
+      closeInProgressRef.current = false;
       stopPolling();
       setStatus("idle");
       setOrderNo("");
