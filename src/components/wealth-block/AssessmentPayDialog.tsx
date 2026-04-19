@@ -1265,6 +1265,27 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     onOpenChange(false);
   };
 
+  useEffect(() => {
+    if (!open || !isMiniProgram || status !== "idle") return;
+
+    const cachedState = getCachedMiniProgramPaymentState(packageKey);
+    if (!cachedState) return;
+
+    const isExpired = Date.now() - cachedState.updatedAt > 30 * 60 * 1000;
+    if (isExpired) {
+      clearCachedMiniProgramPaymentState(packageKey);
+      return;
+    }
+
+    console.log("[AssessmentPayDialog] Restoring cached mini program payment state", cachedState.orderNo);
+    restoringCachedMiniProgramOrderRef.current = true;
+    createOrderCalledRef.current = true;
+    setOrderNo(cachedState.orderNo);
+    setMpPayParams(cachedState.mpPayParams);
+    setMpLaunchFailed(true);
+    startPolling(cachedState.orderNo);
+  }, [open, isMiniProgram, status, packageKey]);
+
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
     console.log(
@@ -1338,6 +1359,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   useEffect(() => {
     if (!open) {
       stopPolling();
+      restoringCachedMiniProgramOrderRef.current = false;
       setStatus("idle");
       setOrderNo("");
       setQrCodeDataUrl("");
