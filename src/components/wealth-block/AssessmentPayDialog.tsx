@@ -1279,6 +1279,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     createOrderCalledRef.current = true;
     setOrderNo(cachedState.orderNo);
     setMpPayParams(cachedState.mpPayParams);
+    setPayType("jsapi"); // 防止与 Native/H5 渲染分支冲突，避免重复 UI
+    setStatus("polling");
     setMpLaunchFailed(true);
     startPolling(cachedState.orderNo);
   }, [open, isMiniProgram, status, packageKey]);
