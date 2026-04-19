@@ -29,6 +29,8 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 
+const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
+
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -168,13 +170,51 @@ export default function WealthBlockAssessmentPage() {
       newUrl.searchParams.delete('order');
       window.history.replaceState({}, '', newUrl.toString());
 
-      // payment_fail 只会来自小程序原生支付失败/取消回跳；
-      // 这里不再依赖 isMiniProgram，统一销毁旧实例，避免环境识别抖动时保留上一次的 polling 状态
-      setShowPayDialog(false);
+      // 小程序回跳后直接重建并重开支付弹窗，由弹窗内部从缓存恢复“重新支付”状态
       setPayDialogInstanceKey((prev) => prev + 1);
-      toast.info('支付已取消，请重新点击立即测评');
+      setShowPayDialog(true);
+      toast.info('支付已取消，可重新支付');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (authLoading || isPurchaseLoading || hasPurchased || isBloomPartner || !isMiniProgram) return;
+
+    const maybeResumeMiniProgramPayment = () => {
+      try {
+        const raw = sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+        if (!raw) return;
+
+        const cached = JSON.parse(raw) as {
+          packageKey?: string;
+          orderNo?: string;
+          updatedAt?: number;
+        };
+
+        if (cached.packageKey !== 'wealth_block_assessment' || !cached.orderNo) return;
+
+        const isExpired = !cached.updatedAt || Date.now() - cached.updatedAt > 30 * 60 * 1000;
+        if (isExpired) {
+          sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+          return;
+        }
+
+        setPayDialogInstanceKey((prev) => prev + 1);
+        setShowPayDialog(true);
+      } catch {
+        sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+      }
+    };
+
+    maybeResumeMiniProgramPayment();
+    window.addEventListener('pageshow', maybeResumeMiniProgramPayment);
+    window.addEventListener('focus', maybeResumeMiniProgramPayment);
+
+    return () => {
+      window.removeEventListener('pageshow', maybeResumeMiniProgramPayment);
+      window.removeEventListener('focus', maybeResumeMiniProgramPayment);
+    };
+  }, [authLoading, isPurchaseLoading, hasPurchased, isBloomPartner, isMiniProgram]);
 
   // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
   const triggerWeChatSilentAuth = async () => {
