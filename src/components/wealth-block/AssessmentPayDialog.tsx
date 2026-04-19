@@ -1137,13 +1137,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
     if (!open) return;
-    console.log("[AssessmentPay] MiniProgram returned to H5, force closing stale pay dialog");
-    stopPolling();
-    createOrderCalledRef.current = false;
-    mpNativePayLaunchedRef.current = false;
+    // ⚠️ 不再强制关闭弹框：用户从原生支付页返回（无论支付成功/取消）后，
+    // 保留弹框 + “重新支付/我已完成支付”按钮，便于二次拉起或确认结果
+    console.log("[AssessmentPay] MiniProgram returned to H5, keeping dialog open for retry");
     mpNativePayPageHiddenRef.current = false;
-    onOpenChange(false);
-  }, [open, onOpenChange]);
+    // 标记拉起失败状态以显示“重新拉起支付”按钮
+    setMpLaunchFailed(true);
+  }, [open]);
 
   useEffect(() => {
     if (!isMiniProgram) return;
