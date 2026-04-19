@@ -438,7 +438,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
       if (mp && typeof mp.navigateTo === "function") {
         try {
-          const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
+          // 每次拉起都附带时间戳 + 尝试次数，避免小程序复用上次的 pay 页面 webview 缓存
+          const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}&t=${Date.now()}&attempt=${attempt}`;
           console.log("[MiniProgram] navigateTo:", payPageUrl);
 
           const launched = await new Promise<boolean>((resolve) => {
@@ -700,8 +701,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         setMpLaunchFailed(false);
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         if (launched) {
-          stopPolling();
-          onOpenChange(false);
+          // 不再立即关闭弹框：保留 polling 状态 + 重新支付按钮，
+          // 这样用户从原生支付页取消返回 H5 时，可一键重新拉起
+          setStatus("polling");
+          startPolling(data.orderNo);
           return;
         } else {
           mpNativePayLaunchedRef.current = false;
@@ -1134,13 +1137,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
     if (!open) return;
-    console.log("[AssessmentPay] MiniProgram returned to H5, force closing stale pay dialog");
-    stopPolling();
-    createOrderCalledRef.current = false;
-    mpNativePayLaunchedRef.current = false;
+    // ⚠️ 不再强制关闭弹框：用户从原生支付页返回（无论支付成功/取消）后，
+    // 保留弹框 + “重新支付/我已完成支付”按钮，便于二次拉起或确认结果
+    console.log("[AssessmentPay] MiniProgram returned to H5, keeping dialog open for retry");
     mpNativePayPageHiddenRef.current = false;
-    onOpenChange(false);
-  }, [open, onOpenChange]);
+    // 标记拉起失败状态以显示“重新拉起支付”按钮
+    setMpLaunchFailed(true);
+  }, [open]);
 
   useEffect(() => {
     if (!isMiniProgram) return;
