@@ -30,6 +30,7 @@ import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
+const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -182,6 +183,9 @@ export default function WealthBlockAssessmentPage() {
 
     const maybeResumeMiniProgramPayment = () => {
       try {
+        const dismissedPackageKey = sessionStorage.getItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
+        if (dismissedPackageKey === 'wealth_block_assessment') return;
+
         const raw = sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY);
         if (!raw) return;
 
@@ -977,6 +981,9 @@ export default function WealthBlockAssessmentPage() {
         open={showPayDialog}
         onOpenChange={(open) => {
           console.log('[WealthBlock] PayDialog onOpenChange:', open);
+          if (open) {
+            sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
+          }
           setShowPayDialog(open);
         }}
         userId={user?.id}
@@ -987,6 +994,7 @@ export default function WealthBlockAssessmentPage() {
           // 支付+注册成功，开始测评
           console.log('[WealthBlock] PayDialog onSuccess, userId:', returnedUserId);
           console.log('[WealthBlock] Setting showIntro=false, showPayDialog=false');
+          sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
           setShowIntro(false);
           setShowPayDialog(false);
         }}

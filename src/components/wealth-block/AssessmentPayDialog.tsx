@@ -38,6 +38,7 @@ interface AssessmentPayDialogProps {
 type PaymentStatus = "idle" | "creating" | "pending" | "polling" | "paid" | "registering" | "error";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = "wealth_assessment_mp_pending_payment";
+const MP_PENDING_PAYMENT_DISMISSED_KEY = "wealth_assessment_mp_pending_payment_dismissed";
 
 interface CachedMiniProgramPaymentState {
   packageKey: string;
@@ -76,6 +77,25 @@ const clearCachedMiniProgramPaymentState = (packageKey?: string) => {
     const cached = getCachedMiniProgramPaymentState(packageKey);
     if (cached) {
       sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+    }
+  } catch {
+    // ignore cache failure
+  }
+};
+
+const markMiniProgramPaymentDismissed = (packageKey: string) => {
+  try {
+    sessionStorage.setItem(MP_PENDING_PAYMENT_DISMISSED_KEY, packageKey);
+  } catch {
+    // ignore cache failure
+  }
+};
+
+const clearMiniProgramPaymentDismissed = (packageKey?: string) => {
+  try {
+    const dismissedKey = sessionStorage.getItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
+    if (!packageKey || dismissedKey === packageKey) {
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     }
   } catch {
     // ignore cache failure
@@ -1173,6 +1193,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
   const handleDialogOpenChange = useCallback(async (nextOpen: boolean) => {
     if (nextOpen) {
+      clearMiniProgramPaymentDismissed(packageKey);
       onOpenChange(true);
       return;
     }
@@ -1186,8 +1207,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       toast.info("订单已取消");
     }
 
+    markMiniProgramPaymentDismissed(packageKey);
     onOpenChange(false);
-  }, [cancelPendingOrder, onOpenChange, orderNo, status]);
+  }, [cancelPendingOrder, onOpenChange, orderNo, packageKey, status]);
 
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
     if (!open) return;
@@ -1258,6 +1280,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   // 注册成功回调
   const handleRegisterSuccess = (userId: string) => {
     console.log("[AssessmentPayDialog] Registration success, userId:", userId);
+    clearMiniProgramPaymentDismissed(packageKey);
     toast.success("注册成功，开始测评！");
     onSuccess(userId);
     onOpenChange(false);
