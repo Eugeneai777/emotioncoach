@@ -37,6 +37,51 @@ interface AssessmentPayDialogProps {
 
 type PaymentStatus = "idle" | "creating" | "pending" | "polling" | "paid" | "registering" | "error";
 
+const MP_PENDING_PAYMENT_STORAGE_KEY = "wealth_assessment_mp_pending_payment";
+
+interface CachedMiniProgramPaymentState {
+  packageKey: string;
+  orderNo: string;
+  mpPayParams: Record<string, string> | null;
+  updatedAt: number;
+}
+
+const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
+  try {
+    sessionStorage.setItem(MP_PENDING_PAYMENT_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore cache failure
+  }
+};
+
+const getCachedMiniProgramPaymentState = (packageKey: string): CachedMiniProgramPaymentState | null => {
+  try {
+    const raw = sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedMiniProgramPaymentState;
+    if (!parsed?.orderNo || parsed.packageKey !== packageKey) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const clearCachedMiniProgramPaymentState = (packageKey?: string) => {
+  try {
+    if (!packageKey) {
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+      return;
+    }
+
+    const cached = getCachedMiniProgramPaymentState(packageKey);
+    if (cached) {
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+    }
+  } catch {
+    // ignore cache failure
+  }
+};
+
 // 从多个来源获取 openId（URL 参数 > sessionStorage 缓存）
 const getPaymentOpenId = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -95,6 +140,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
   const mpNativePayLaunchedRef = useRef<boolean>(false);
   const mpNativePayPageHiddenRef = useRef<boolean>(false);
+  const restoringCachedMiniProgramOrderRef = useRef<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
