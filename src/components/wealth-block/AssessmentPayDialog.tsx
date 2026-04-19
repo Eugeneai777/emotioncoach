@@ -37,6 +37,51 @@ interface AssessmentPayDialogProps {
 
 type PaymentStatus = "idle" | "creating" | "pending" | "polling" | "paid" | "registering" | "error";
 
+const MP_PENDING_PAYMENT_STORAGE_KEY = "wealth_assessment_mp_pending_payment";
+
+interface CachedMiniProgramPaymentState {
+  packageKey: string;
+  orderNo: string;
+  mpPayParams: Record<string, string> | null;
+  updatedAt: number;
+}
+
+const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
+  try {
+    sessionStorage.setItem(MP_PENDING_PAYMENT_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore cache failure
+  }
+};
+
+const getCachedMiniProgramPaymentState = (packageKey: string): CachedMiniProgramPaymentState | null => {
+  try {
+    const raw = sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedMiniProgramPaymentState;
+    if (!parsed?.orderNo || parsed.packageKey !== packageKey) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const clearCachedMiniProgramPaymentState = (packageKey?: string) => {
+  try {
+    if (!packageKey) {
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+      return;
+    }
+
+    const cached = getCachedMiniProgramPaymentState(packageKey);
+    if (cached) {
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+    }
+  } catch {
+    // ignore cache failure
+  }
+};
+
 // 从多个来源获取 openId（URL 参数 > sessionStorage 缓存）
 const getPaymentOpenId = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -699,6 +744,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         setMpPayParams(data.miniprogramPayParams);
         setOrderNo(data.orderNo);
         setMpLaunchFailed(false);
+        cacheMiniProgramPaymentState({
+          packageKey,
+          orderNo: data.orderNo,
+          mpPayParams: data.miniprogramPayParams,
+          updatedAt: Date.now(),
+        });
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         if (launched) {
           // 不再立即关闭弹框：保留 polling 状态 + 重新支付按钮，
@@ -917,6 +968,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
         if (data.status === "paid") {
           stopPolling();
+          clearCachedMiniProgramPaymentState(packageKey);
           // 🆕 优先使用后端返回的 openId，否则使用当前 userOpenId
           const resolvedOpenId = data.openId || userOpenId;
           setPaymentOpenId(resolvedOpenId);
@@ -1076,6 +1128,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         throw new Error(data?.error || "取消订单失败");
       }
 
+      clearCachedMiniProgramPaymentState(packageKey);
       return true;
     } catch (error: any) {
       console.error("[AssessmentPay] Cancel order error:", error);
@@ -1091,6 +1144,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     createOrderCalledRef.current = false;
     mpNativePayLaunchedRef.current = false;
     mpNativePayPageHiddenRef.current = false;
+    clearCachedMiniProgramPaymentState(packageKey);
     setOrderNo("");
     setQrCodeDataUrl("");
     setPayUrl("");
@@ -1101,7 +1155,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     setMpRetrying(false);
     setMpLaunchFailed(false);
     setStatus("idle");
-  }, []);
+  }, [packageKey]);
 
   const handleRepay = useCallback(async () => {
     if (isRepaying) return;
@@ -1208,6 +1262,26 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     onSuccess(userId);
     onOpenChange(false);
   };
+
+  useEffect(() => {
+    if (!open || !isMiniProgram || status !== "idle") return;
+
+    const cachedState = getCachedMiniProgramPaymentState(packageKey);
+    if (!cachedState) return;
+
+    const isExpired = Date.now() - cachedState.updatedAt > 30 * 60 * 1000;
+    if (isExpired) {
+      clearCachedMiniProgramPaymentState(packageKey);
+      return;
+    }
+
+    console.log("[AssessmentPayDialog] Restoring cached mini program payment state", cachedState.orderNo);
+    createOrderCalledRef.current = true;
+    setOrderNo(cachedState.orderNo);
+    setMpPayParams(cachedState.mpPayParams);
+    setMpLaunchFailed(true);
+    startPolling(cachedState.orderNo);
+  }, [open, isMiniProgram, status, packageKey]);
 
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
