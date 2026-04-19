@@ -438,7 +438,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
       if (mp && typeof mp.navigateTo === "function") {
         try {
-          const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
+          // 每次拉起都附带时间戳 + 尝试次数，避免小程序复用上次的 pay 页面 webview 缓存
+          const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}&t=${Date.now()}&attempt=${attempt}`;
           console.log("[MiniProgram] navigateTo:", payPageUrl);
 
           const launched = await new Promise<boolean>((resolve) => {
