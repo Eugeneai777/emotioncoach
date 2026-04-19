@@ -701,8 +701,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         setMpLaunchFailed(false);
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         if (launched) {
-          stopPolling();
-          onOpenChange(false);
+          // 不再立即关闭弹框：保留 polling 状态 + 重新支付按钮，
+          // 这样用户从原生支付页取消返回 H5 时，可一键重新拉起
+          setStatus("polling");
+          startPolling(data.orderNo);
           return;
         } else {
           mpNativePayLaunchedRef.current = false;
