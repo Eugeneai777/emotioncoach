@@ -91,6 +91,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
   const [mpRetrying, setMpRetrying] = useState<boolean>(false);
   const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
+  const mpNativePayLaunchedRef = useRef<boolean>(false);
+  const mpNativePayPageHiddenRef = useRef<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -1048,6 +1050,48 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       pollingRef.current = null;
     }
   };
+
+  const forceCloseStaleMiniProgramDialog = useCallback(() => {
+    if (!open) return;
+    console.log("[AssessmentPay] MiniProgram returned to H5, force closing stale pay dialog");
+    stopPolling();
+    createOrderCalledRef.current = false;
+    mpNativePayLaunchedRef.current = false;
+    mpNativePayPageHiddenRef.current = false;
+    onOpenChange(false);
+  }, [open, onOpenChange]);
+
+  useEffect(() => {
+    if (!isMiniProgram) return;
+
+    const handleVisibilityChange = () => {
+      if (!mpNativePayLaunchedRef.current) return;
+
+      if (document.visibilityState === "hidden") {
+        mpNativePayPageHiddenRef.current = true;
+        return;
+      }
+
+      if (document.visibilityState === "visible" && mpNativePayPageHiddenRef.current) {
+        forceCloseStaleMiniProgramDialog();
+      }
+    };
+
+    const handleReturnToPage = () => {
+      if (!mpNativePayLaunchedRef.current || !mpNativePayPageHiddenRef.current) return;
+      forceCloseStaleMiniProgramDialog();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleReturnToPage);
+    window.addEventListener("pageshow", handleReturnToPage);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleReturnToPage);
+      window.removeEventListener("pageshow", handleReturnToPage);
+    };
+  }, [forceCloseStaleMiniProgramDialog, isMiniProgram]);
 
   // 复制支付链接
   const handleCopyLink = async () => {
