@@ -1543,8 +1543,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             </div>
           )}
 
-          {/* 等待支付 - Native/H5 */}
-          {(status === "pending" || (status === "polling" && payType !== "jsapi")) && (
+          {/* 等待支付 - Native/H5（小程序环境已由上方专属分支处理，避免重复渲染） */}
+          {!isMiniProgram && (status === "pending" || (status === "polling" && payType !== "jsapi")) && (
             <div className="space-y-3">
               {/* 价格展示 */}
               <div className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3">
