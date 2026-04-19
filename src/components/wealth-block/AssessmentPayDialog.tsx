@@ -1516,10 +1516,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-3">订单号：{orderNo}</p>
-              <Button variant="outline" size="sm" onClick={handleRepay} disabled={isRepaying || isCancellingOrder} className="mt-3 w-full">
-                {(isRepaying || isCancellingOrder) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                重新支付
-              </Button>
             </div>
           )}
 
