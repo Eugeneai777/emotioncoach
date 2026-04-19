@@ -1419,6 +1419,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                   <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
                   <p className="text-muted-foreground">等待支付确认...</p>
                   <p className="text-xs text-muted-foreground mt-2">订单号：{orderNo}</p>
+                  <Button variant="outline" size="sm" onClick={handleRepay} disabled={isRepaying || isCancellingOrder} className="mt-3">
+                    {(isRepaying || isCancellingOrder) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    重新支付
+                  </Button>
                 </>
               ) : (
                 <>
@@ -1444,10 +1448,14 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={() => onOpenChange(false)}
+                      onClick={() => handleDialogOpenChange(false)}
                       className="w-full"
                     >
                       稍后再试
+                    </Button>
+                    <Button variant="outline" onClick={handleRepay} disabled={isRepaying || isCancellingOrder} className="w-full">
+                      {(isRepaying || isCancellingOrder) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      重新支付
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">订单号：{orderNo}</p>
@@ -1495,6 +1503,11 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
               {/* 订单号 */}
               <p className="text-center text-xs text-muted-foreground">订单号：{orderNo}</p>
+
+              <Button variant="outline" size="sm" onClick={handleRepay} disabled={isRepaying || isCancellingOrder} className="w-full">
+                {(isRepaying || isCancellingOrder) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                重新支付
+              </Button>
 
               {status === "polling" && (
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pb-2">
