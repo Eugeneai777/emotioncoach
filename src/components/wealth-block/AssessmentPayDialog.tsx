@@ -91,6 +91,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
   const [mpRetrying, setMpRetrying] = useState<boolean>(false);
   const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
+  const mpNativePayLaunchedRef = useRef<boolean>(false);
+  const mpNativePayPageHiddenRef = useRef<boolean>(false);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -689,6 +691,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         // 小程序 WebView：成功拉起原生支付后立即关闭当前弹窗，
         // 避免返回 H5 页面时保留旧的 loading/polling 状态，导致二次点击无法重新拉起
         console.log("[Payment] MiniProgram: triggering native pay via navigateTo");
+        mpNativePayLaunchedRef.current = true;
+        mpNativePayPageHiddenRef.current = false;
         setMpPayParams(data.miniprogramPayParams);
         setOrderNo(data.orderNo);
         setMpLaunchFailed(false);
@@ -698,6 +702,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           onOpenChange(false);
           return;
         } else {
+          mpNativePayLaunchedRef.current = false;
           setStatus("pending");
           setErrorMessage("未能拉起微信支付，请重试");
           setMpLaunchFailed(true);
@@ -1049,6 +1054,48 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     }
   };
 
+  const forceCloseStaleMiniProgramDialog = useCallback(() => {
+    if (!open) return;
+    console.log("[AssessmentPay] MiniProgram returned to H5, force closing stale pay dialog");
+    stopPolling();
+    createOrderCalledRef.current = false;
+    mpNativePayLaunchedRef.current = false;
+    mpNativePayPageHiddenRef.current = false;
+    onOpenChange(false);
+  }, [open, onOpenChange]);
+
+  useEffect(() => {
+    if (!isMiniProgram) return;
+
+    const handleVisibilityChange = () => {
+      if (!mpNativePayLaunchedRef.current) return;
+
+      if (document.visibilityState === "hidden") {
+        mpNativePayPageHiddenRef.current = true;
+        return;
+      }
+
+      if (document.visibilityState === "visible" && mpNativePayPageHiddenRef.current) {
+        forceCloseStaleMiniProgramDialog();
+      }
+    };
+
+    const handleReturnToPage = () => {
+      if (!mpNativePayLaunchedRef.current || !mpNativePayPageHiddenRef.current) return;
+      forceCloseStaleMiniProgramDialog();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleReturnToPage);
+    window.addEventListener("pageshow", handleReturnToPage);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleReturnToPage);
+      window.removeEventListener("pageshow", handleReturnToPage);
+    };
+  }, [forceCloseStaleMiniProgramDialog, isMiniProgram]);
+
   // 复制支付链接
   const handleCopyLink = async () => {
     try {
@@ -1165,6 +1212,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       createOrderCalledRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
+      mpNativePayLaunchedRef.current = false;
+      mpNativePayPageHiddenRef.current = false;
       setMpPayParams(null);
       setMpRetrying(false);
       setMpLaunchFailed(false);
@@ -1233,12 +1282,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     setMpRetrying(true);
                     try {
                       if (mpPayParams && orderNo) {
+                        mpNativePayLaunchedRef.current = true;
+                        mpNativePayPageHiddenRef.current = false;
                         setMpLaunchFailed(false);
                         const launched = await triggerMiniProgramNativePay(mpPayParams, orderNo);
                         if (launched) {
                           setStatus("polling");
                           startPolling(orderNo);
                         } else {
+                          mpNativePayLaunchedRef.current = false;
                           setStatus("pending");
                           setMpLaunchFailed(true);
                         }
