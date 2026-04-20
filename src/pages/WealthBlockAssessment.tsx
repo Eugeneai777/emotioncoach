@@ -28,6 +28,7 @@ import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDia
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
 const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
