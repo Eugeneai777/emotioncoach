@@ -170,6 +170,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
   const mpNativePayLaunchedRef = useRef<boolean>(false);
   const mpNativePayPageHiddenRef = useRef<boolean>(false);
+  // 🔒 跟踪上次处理过的 miniProgramPayReturnSignal 值，避免 open 切换时误触发
+  const lastProcessedReturnSignalRef = useRef<number>(0);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -1258,6 +1260,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   useEffect(() => {
     if (!miniProgramPayReturnSignal || !open || !isMiniProgram) return;
+    // 🔒 仅当 signal 是新的（未被处理过）时才触发，
+    // 防止 open 由 false→true 时复用旧 signal 误把全新会话推到 mpLaunchFailed 状态
+    if (miniProgramPayReturnSignal === lastProcessedReturnSignalRef.current) return;
+    lastProcessedReturnSignalRef.current = miniProgramPayReturnSignal;
 
     console.log("[AssessmentPay] MiniProgram returned with payment_fail, switching to retry state");
     if (pollingRef.current) {
