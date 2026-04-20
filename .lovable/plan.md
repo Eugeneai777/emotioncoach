@@ -1,134 +1,164 @@
 
 
-## 问题 1：iOS 取消订单后没有 toast 提示
+# 中年男性「奥援」3980 售前页海报 — 文字版重构方案
 
-### 根本原因
-取消提示有 **两个来源**，iOS 都被静默掉了：
+## 商业定位（商业架构师视角）
 
-1. **小程序原生支付页返回 H5（iOS 真实路径）**
-   - iOS 取消支付时，微信小程序会通过 `failCallbackUrl` 回跳 H5 页面，URL 带 `?payment_fail=1`。
-   - 触发 `WealthBlockAssessment.tsx:212` 的 `toast.info('支付已取消，可重新发起支付')`。
-   - **但**：iOS WebView 在 `pageshow` 时序里，`searchParams` 解析、URL 清理、toast 容器挂载存在竞态。我们紧接着调用 `setShowPayDialog(false)` + `setPayDialogInstanceKey+1`，导致 React 同一 tick 内卸载/重挂多个组件，`<Toaster>` 的容器被瞬时切换，toast 被吞掉。
-   - 安卓 WebView 不重挂 toaster，所以提示能正常出现。
+**目标人群再聚焦**：35–55 岁中年男性，背负"事业 + 家庭 + 身体"三重压力。表层焦虑是身体功能（早泄、阳痿、前列腺、疲劳、肥胖），深层焦虑是 **"男子气概受损 → 自我否定 → 怕被伴侣嫌弃 → 怕家庭支柱崩塌"**。
 
-2. **弹窗内 `handleDialogOpenChange` 关闭时（仅 H5 弹窗手动关）**
-   - `AssessmentPayDialog.tsx:1313` `toast.info("订单已取消")`。
-   - iOS 在小程序里走的是"原生支付页 → 回跳 H5"路径，弹窗是被 `forceCloseStaleMiniProgramDialog`（1322）关掉的，那条 toast `'已返回测评页...'` 也常被同 tick remount 吞掉。
+**当前海报问题诊断**：
+1. 主标题「中年男性奥援深度课」太书面化，没击中"我是不是不行了"的内心独白。
+2. 通篇讲"知识体系 / 16 个维度"，是教练视角，不是用户视角，用户读不到"和我有什么关系"。
+3. ¥3980 价格出现得太早、太硬，没有铺垫价值锚 → 在施强这种健康向公众号转化崩盘。
+4. 缺少同龄人证言，缺少身体焦虑→心理重建的可见路径。
 
-### 修复方向
-- 把 iOS 的取消 toast 延迟到下一帧（`requestAnimationFrame` + 100ms setTimeout）再触发，确保在 `payDialogInstanceKey` bump 后的 React commit 之后执行。
-- 把 toast 文案统一为「支付已取消，可重新发起」，避免 `forceCloseStaleMiniProgramDialog` 与 `payment_fail=1` 路径重复弹两次。
-- 加 `payment_cancelled` 事件落库（`logFlowEvent`），作为可观测兜底。
+**重构核心策略**：把课程从"知识付费"重新包装为 **"中年男人的隐秘修复计划"**，先共情身体羞耻，再升维到自信重建，最后用"私密 / 专属 / 闭门"的稀缺感托住 ¥3980 的价格。
 
 ---
 
-## 问题 2：取消支付后改了哪些状态？再次点击立即测评要过哪些判断？
+## 海报模块文字版（自上而下 9 个模块）
 
-### A. 取消时被重置的状态（前后端全清单）
+### 模块 1 — 顶部主视觉 Hero
+```
+【主标题】
+身体的事，没人替你说出口
+但它正在偷走你的底气
 
-**前端 sessionStorage（`WealthBlockAssessment.tsx:184-190`）**
-```text
-- MP_PENDING_PAYMENT_STORAGE_KEY      → 删除（旧 orderNo 缓存）
-- MP_PENDING_PAYMENT_DISMISSED_KEY    → 删除
-- MP_PENDING_PAYMENT_RESUME_GUARD_KEY → 删除
-- MP_POST_CANCEL_FLAG_KEY             → 置为 '1'（禁止 auto-resume）
+【副标题】
+献给 38–55 岁
+一边扛家、一边硬撑的中年男人
+
+【信任背书条】
+施强健康 ✕ 有劲AI 联合出品 · 闭门席位制 · 仅限本期
 ```
 
-**前端 React state**
-```text
-- showPayDialog                       → false（弹窗关闭）
-- miniProgramPayReturnSignal          → Date.now()（触发子组件 hard-reset effect）
+### 模块 2 — 痛点共鸣（替换"你是不是正在经历"）
+```
+【小标题】这些话，你是不是也咽下去过？
+
+· "最近，是不是有点不行了……" —— 不敢问，不敢查
+· 在妻子面前装作很累，其实是怕
+· 体检报告一项异常，脑子里立刻浮现"完了"
+· 看到同龄人精神抖擞，自己却越来越沉默
+· 想找人聊，又怕被笑话「这点事也叫事」
+
+如果有一条戳中你，请继续往下看 ↓
 ```
 
-**弹窗子组件（`AssessmentPayDialog.tsx:1326-1351`，由上面 signal 触发）**
-```text
-refs:  createOrderCalledRef / createOrderRetriedRef
-       / mpNativePayLaunchedRef / mpNativePayPageHiddenRef → false
-state: orderNo / mpPayParams / qrCodeDataUrl / payUrl    → 清空
-       status                                              → 'idle'
-poll:  stopPolling()（清 interval）
+### 模块 3 — 风险升维（把身体焦虑→人生焦虑）
+```
+【小标题】真正可怕的，不是身体那点事
+
+是它一旦发生，就开始连环反噬：
+身体退一步 → 自信退三步 → 沟通退五步 → 关系退十步
+
+很多中年男人不是"病倒"的，
+是被这条暗线一点一点拖垮的。
 ```
 
-**后端（edge function）**
-```text
-cancel-pending-order:
-  orders.status: 'pending' → 'cancelled'
-  orders.updated_at: now()
+### 模块 4 — 解决方案概念图（替换"四穷模型 / 16 维度"）
+```
+【小标题】我们做的，是中年男人的"隐秘修复计划"
+
+3 步闭环，不再单点救火：
+
+① 身体重启 —— 看清自己处在哪个阶段，给身体一个台阶
+② 心理重建 —— 把"我是不是不行了"换成"我还可以"
+③ 关系修复 —— 让伴侣重新看到那个有劲的你
+
+不讲大道理。讲：一个中年男人，怎么把自己拉回来。
 ```
 
-### B. 再次点击「立即测评」要过的判断链
+### 模块 5 — 6 大核心专题（精简原 16 维度，更易扫读）
+```
+【小标题】6 个闭门专题，每一个都直戳要害
 
-```text
-点击立即测评
-   │
-   ▼
-handlePayClick()  ── WealthBlockAssessment.tsx:319
-   │
-   ├─ 微信浏览器 + 未登录？ → 触发 silent OAuth → 回跳后再 openWealthPayDialog()
-   │
-   └─ 否 → openWealthPayDialog()
-            │
-            ├─ 清 MP_PENDING_PAYMENT_DISMISSED_KEY / RESUME_GUARD_KEY
-            ├─ 是小程序？ → 清 STORAGE_KEY + POST_CANCEL_FLAG
-            │              + bump miniProgramPayReturnSignal
-            │              + bump payDialogInstanceKey（强制 remount）
-            └─ setShowPayDialog(true)
-                 │
-                 ▼
-           AssessmentPayDialog 挂载 / 重挂
-                 │
-                 ▼
-           openId 等待判断（line 199-201）
-              ├─ 小程序？      → shouldWaitForOpenId = false（不阻塞）
-              └─ 微信浏览器？  → 必须等到 openId 才放行
-                 │
-                 ▼
-           createOrder effect（line 1469）
-              条件：open && status==='idle'
-                  && !createOrderCalledRef.current
-                  && (!shouldWaitForOpenId || openIdResolved)
-                 │
-                 ▼
-           调用 supabase.functions.invoke('create-wechat-order'）
-              body 关键字段：
-                packageKey, amount, userId
-                payType: miniprogram | jsapi | h5 | native
-                openId（jsapi 必须）
-                isMiniProgram: true
-                forceNewOrder: true（小程序内永远 true）
-                 │
-                 ▼
-           edge function 返回 orderNo + 支付参数
-                 │
-        ┌────────┴────────┐
-        ▼                 ▼
-  小程序：跳原生支付页    微信浏览器：等 Bridge → invokeJsapiPay
-  （wx.miniProgram.       失败兜底 → native QR 扫码
-   navigateTo）
-                 │
-                 ▼
-   waitForNativePageTransition：监听 visibilitychange/pagehide/blur
-        ├─ 检测到页面真的离开 → status='polling' 显示「支付中」
-        └─ 2.6s 内没离开（iOS Bridge 假成功）→ status='mpLaunchFailed'，UI 仍可点击重试
+01 男人 40 后的"功能账本"：到底是病、是累、还是怕
+02 早泄 / 阳痿 / 前列腺：医生不会讲的心理那一半
+03 中年疲劳与"性能量"：搞钱、搞健康、搞夫妻是一回事
+04 妻子那句"算了"，到底意味着什么
+05 父亲、丈夫、男人：三个角色的疲惫与重启
+06 把"羞于启齿"变成"主动掌控"的 7 个动作
 ```
 
-### 关键卡点对照表
+### 模块 6 — 交付与陪跑（解决"3980 凭什么"）
+```
+【小标题】¥3980 你拿到的不是一门课，是一支私人小队
 
-| 阶段 | 阻断条件 | 出现症状 |
-|------|---------|---------|
-| openWealthPayDialog | `isMiniProgram` 检测失败 → 不 bump key | 复用旧弹窗实例，旧 ref 残留 |
-| openId 等待 | 微信浏览器 `openIdResolved=false` | 弹窗一直显示 loading |
-| createOrder effect | `createOrderCalledRef=true`（未清） | effect 不执行，无网络请求 |
-| edge function | `forceNewOrder=false` 且后端复用旧 prepay_id | 微信报"prepay_id 已用" |
-| Bridge 调起 | iOS `wx.miniProgram.navigateTo` 假成功 | 显示"支付中"但实际没拉起 |
+✓ 6 节男科+心理双专家闭门直播（可回看，私密不留痕）
+✓ 1 对 1 教练匹配：先听你说，再给你方案
+✓ AI 男士专属教练：24 小时随时聊，不必脸红
+✓ 中年男人专属社群（实名审核 / 同龄同状态）
+✓ 配套《男人 40 自检手册》纸质版邮寄到家
+✓ 课后 90 天陪跑，不是听完就散
+```
+
+### 模块 7 — 同龄人证言（新增，海报最缺的一块）
+```
+【小标题】先走一步的他们，说了这些
+
+· 王先生 47 岁 企业主："第一次有人把这件事讲清楚，不羞辱我。"
+· 陈先生 52 岁 工程师："不是身体先好，是先敢面对，然后什么都顺了。"
+· 李先生 41 岁 销售总监："最大的收获是回家敢看妻子的眼睛了。"
+
+（化名 · 已获授权）
+```
+
+### 模块 8 — 信任与隐私承诺（中年男人最关心）
+```
+【小标题】我们承诺的，不只是效果
+
+🔒 全程匿名可选，不出现在任何朋友圈推送
+🔒 1 对 1 沟通仅限你与教练，平台不留对话记录于他人
+🔒 施强健康 22 年男性健康服务背书
+🔒 7 天不满意，全额退款，无需理由
+```
+
+### 模块 9 — 价格锚点 + CTA（重构原 ¥3980 / ¥4198）
+```
+【小标题】闭门席位 · 本期限 200 人
+
+原价 ¥4198
+本期联合首发 ¥3980
+含：6 大专题 + 1v1 教练 + AI 男士教练 + 90 天陪跑 + 实体手册
+
+  ▶ 锁定我的席位
+  ▶ 先和顾问 1 对 1 聊聊（免费 15 分钟）
+
+—— 你愿意为搞钱熬夜，
+   也请愿意为自己留 90 天。
+```
 
 ---
 
-## 建议下一步行动
+## 关键文案改动对照（一眼对比）
 
-需要我做：
-1. **修 iOS toast 不显示**：在 `payment_fail=1` 分支用 `setTimeout(() => toast.info(...), 120)` 包一层，避开 React remount 同 tick；同时去掉 `forceCloseStaleMiniProgramDialog` 里那条会重复的 toast。
-2. **加可观测**：取消时落 `payment_cancelled` 事件到 `payment_flow_events`，方便后续核对 iOS/安卓行为是否一致。
+| 原海报 | 重构后 | 商业意图 |
+|---|---|---|
+| 中年男性奥援深度课 | 身体的事，没人替你说出口 | 共情内心独白 |
+| 4 穷模型 / 16 维度 | 6 大闭门专题 + 3 步修复闭环 | 用户语言替代教练语言 |
+| ¥3980 直接亮 | 6 模块铺垫后才出现 + 锚点价 | 价值前置，价格后置 |
+| 知识服务 / 课程 | 私人小队 / 闭门席位 / 修复计划 | 拔高感知价值 |
+| 无证言 | 3 条同龄人化名证言 | 男性更信"同类" |
+| 无隐私承诺 | 4 条隐私 + 退款承诺 | 解决最大转化障碍 |
 
-确认后切回执行模式实施。
+---
+
+## 投放配套建议（给运营）
+
+1. **施强公众号头图标题建议改为**："38–55 男人都在悄悄看的一件事 | 施强 ✕ 有劲AI 闭门计划"
+2. **首屏只露模块 1 + 模块 2**，引导点进长图，避免价格过早曝光。
+3. **CTA 双通道**：直接报名 + 顾问 1v1 咨询，照顾"想了解又不敢直接买"的中年男性心理。
+4. **复投素材**用模块 7 证言单独切图做二次触达。
+
+---
+
+## 交付物
+
+本方案为**纯文案/结构方案**（无代码改动）。如需我接下来：
+- A. 生成海报视觉版（remotion / 图片）
+- B. 直接落地一个 `/promo/midlife-men-3980` 售前页（React 组件）
+- C. 输出投放公众号正文（图文版）
+
+请在批准后告诉我选哪一个方向，我切回执行模式实施。
 
