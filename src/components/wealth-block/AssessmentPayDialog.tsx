@@ -1351,12 +1351,19 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   useEffect(() => {
     if (!open || !isMiniProgram || status !== "idle") return;
 
+    // 🔧 取消支付后由父级 bump 的 signal：禁止从缓存恢复，强制走 createOrder
+    if (miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastProcessedReturnSignalRef.current) {
+      console.log("[AssessmentPayDialog] Post-cancel signal active, skipping cache restore");
+      clearCachedMiniProgramPaymentState(packageKey);
+      return;
+    }
+
     const cachedState = getCachedMiniProgramPaymentState(packageKey);
     if (!cachedState) return;
 
-    // 仅当缓存的 mpPayParams 仍在 4 分钟新鲜窗口内才复用
+    // 仅当缓存的 mpPayParams 仍在新鲜窗口内才复用（iOS 用更短窗口）
     // 否则丢弃缓存，让初始化 effect 重新创建订单（避免拿过期 prepay_id 拉起导致"订单已失效"）
-    if (!isCachedPayParamsFresh(cachedState)) {
+    if (!isCachedPayParamsFresh(cachedState, isIOS)) {
       console.log("[AssessmentPayDialog] Cached pay params expired, clearing for fresh order", cachedState.orderNo);
       clearCachedMiniProgramPaymentState(packageKey);
       return;
@@ -1370,7 +1377,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     setStatus("polling");
     setMpLaunchFailed(true);
     startPolling(cachedState.orderNo);
-  }, [open, isMiniProgram, status, packageKey]);
+  }, [open, isMiniProgram, status, packageKey, miniProgramPayReturnSignal, isIOS]);
 
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
@@ -1528,9 +1535,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                     if (mpRetrying) return;
                     setMpRetrying(true);
                     try {
-                      // 检查缓存的支付参数是否仍在 4 分钟新鲜窗口内
+                      // 检查缓存的支付参数是否仍在新鲜窗口内（iOS 用更短窗口）
                       const cachedState = getCachedMiniProgramPaymentState(packageKey);
-                      const isFresh = isCachedPayParamsFresh(cachedState);
+                      const isFresh = isCachedPayParamsFresh(cachedState, isIOS);
 
                       if (mpPayParams && orderNo && isFresh) {
                         // 参数仍新鲜：直接复用拉起
