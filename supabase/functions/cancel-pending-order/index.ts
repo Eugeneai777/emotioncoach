@@ -59,22 +59,23 @@ serve(async (req) => {
       );
     }
 
-    if (order.user_id) {
-      if (!requesterId || requesterId !== order.user_id) {
-        return new Response(
-          JSON.stringify({ success: false, error: '无权取消该订单' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    // 权限放宽：
+    // 1) 已登录且 user_id 匹配 → 允许
+    // 2) 未登录或 auth 缺失，但订单创建时间 <15 分钟 → 允许（小程序/微信回跳常无 auth header）
+    // 3) 其他情况 → 拒绝
+    const createdAt = new Date(order.created_at).getTime();
+    const ageMs = Date.now() - createdAt;
+    const isFresh = ageMs <= 15 * 60 * 1000;
+
+    if (requesterId && order.user_id && requesterId === order.user_id) {
+      // ok
+    } else if (isFresh) {
+      // ok（兼容 mini program / 微信回跳无 auth 场景）
     } else {
-      const createdAt = new Date(order.created_at).getTime();
-      const ageMs = Date.now() - createdAt;
-      if (ageMs > 15 * 60 * 1000) {
-        return new Response(
-          JSON.stringify({ success: false, error: '订单已过期，请重新发起支付' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      return new Response(
+        JSON.stringify({ success: false, error: '订单已过期或无权取消' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const { error: updateError } = await supabase

@@ -166,10 +166,17 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const { data: packages } = usePackages();
   const assessmentPrice = getPackagePrice(packages, packageKey, 9.9);
 
-  // 检测环境
-  const isWechat = isWeChatBrowser();
-  const isMiniProgram = isWeChatMiniProgram();
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // 检测环境 — 锁定为单一真值源，避免组件生命周期内多次重新检测导致渲染分支冲突
+  const [envFlags] = useState(() => ({
+    isWechat: isWeChatBrowser(),
+    isMiniProgram: isWeChatMiniProgram(),
+    isMobile: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+    isIOS: /iPhone|iPad|iPod/i.test(navigator.userAgent),
+  }));
+  const isWechat = envFlags.isWechat;
+  const isMiniProgram = envFlags.isMiniProgram;
+  const isMobile = envFlags.isMobile;
+  const isIOS = envFlags.isIOS;
 
   // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
   const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
@@ -1146,19 +1153,21 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
       if (error) throw error;
       if (!data?.success) {
-        throw new Error(data?.error || "取消订单失败");
+        // 后端取消失败仅记日志，不阻塞 UI 关闭（防止用户卡住）
+        console.warn("[AssessmentPay] Cancel order returned failure:", data?.error);
       }
 
       clearCachedMiniProgramPaymentState(packageKey);
       return true;
     } catch (error: any) {
-      console.error("[AssessmentPay] Cancel order error:", error);
-      toast.error(error?.message || "取消订单失败，请稍后重试");
-      return false;
+      // 取消失败也允许关闭，避免弹窗卡住无法关闭
+      console.error("[AssessmentPay] Cancel order error (ignored):", error);
+      clearCachedMiniProgramPaymentState(packageKey);
+      return true;
     } finally {
       setIsCancellingOrder(false);
     }
-  }, [orderNo, status]);
+  }, [orderNo, status, packageKey]);
 
   const resetPaymentStateForRetry = useCallback(() => {
     stopPolling();
