@@ -751,13 +751,13 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             setShowPayDialog(open);
             if (open) {
               // 埋点：发起支付
-              trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_7', price: 299 } });
+              trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_7', price: 0.01 } });
             }
           }}
           packageInfo={{
             key: 'camp-wealth_block_7',
             name: '财富觉醒训练营',
-            price: 299
+            price: 0.01
           }}
           onSuccess={async () => {
             // 1. 首先记录购买（最重要）
