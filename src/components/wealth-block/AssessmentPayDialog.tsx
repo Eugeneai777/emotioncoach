@@ -48,6 +48,14 @@ interface CachedMiniProgramPaymentState {
   updatedAt: number;
 }
 
+// 微信侧 prepay_id 5 分钟过期，前端缓存留 1 分钟安全余量 = 4 分钟
+const MP_PAY_PARAMS_TTL_MS = 4 * 60 * 1000;
+
+const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null): boolean => {
+  if (!state || !state.mpPayParams) return false;
+  return Date.now() - state.updatedAt < MP_PAY_PARAMS_TTL_MS;
+};
+
 const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
   try {
     sessionStorage.setItem(MP_PENDING_PAYMENT_STORAGE_KEY, JSON.stringify(state));
@@ -1337,8 +1345,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     const cachedState = getCachedMiniProgramPaymentState(packageKey);
     if (!cachedState) return;
 
-    const isExpired = Date.now() - cachedState.updatedAt > 30 * 60 * 1000;
-    if (isExpired) {
+    // 仅当缓存的 mpPayParams 仍在 4 分钟新鲜窗口内才复用
+    // 否则丢弃缓存，让初始化 effect 重新创建订单（避免拿过期 prepay_id 拉起导致"订单已失效"）
+    if (!isCachedPayParamsFresh(cachedState)) {
+      console.log("[AssessmentPayDialog] Cached pay params expired, clearing for fresh order", cachedState.orderNo);
       clearCachedMiniProgramPaymentState(packageKey);
       return;
     }
@@ -1509,7 +1519,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                     if (mpRetrying) return;
                     setMpRetrying(true);
                     try {
-                      if (mpPayParams && orderNo) {
+                      // 检查缓存的支付参数是否仍在 4 分钟新鲜窗口内
+                      const cachedState = getCachedMiniProgramPaymentState(packageKey);
+                      const isFresh = isCachedPayParamsFresh(cachedState);
+
+                      if (mpPayParams && orderNo && isFresh) {
+                        // 参数仍新鲜：直接复用拉起
                         mpNativePayLaunchedRef.current = true;
                         mpNativePayPageHiddenRef.current = false;
                         setMpLaunchFailed(false);
@@ -1523,9 +1538,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                           setMpLaunchFailed(true);
                         }
                       } else {
+                        // 参数过期或缺失：丢弃缓存，重置状态触发 createOrder 重新创建订单
+                        console.log("[AssessmentPay] Pay params stale or missing, creating fresh order");
+                        clearCachedMiniProgramPaymentState(packageKey);
+                        setMpPayParams(null);
+                        setOrderNo("");
                         createOrderCalledRef.current = false;
                         setMpLaunchFailed(false);
                         setStatus("idle");
+                        toast.info("正在重新创建订单...");
                       }
                     } finally {
                       setTimeout(() => setMpRetrying(false), 1200);
