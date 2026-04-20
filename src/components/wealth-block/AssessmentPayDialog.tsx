@@ -49,11 +49,14 @@ interface CachedMiniProgramPaymentState {
 }
 
 // 微信侧 prepay_id 5 分钟过期，前端缓存留 1 分钟安全余量 = 4 分钟
+// iOS 微信小程序回流较慢，进一步缩短至 2 分钟，避免拿到接近过期的参数拉起失败
 const MP_PAY_PARAMS_TTL_MS = 4 * 60 * 1000;
+const MP_PAY_PARAMS_TTL_MS_IOS = 2 * 60 * 1000;
 
-const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null): boolean => {
+const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null, isIOS = false): boolean => {
   if (!state || !state.mpPayParams) return false;
-  return Date.now() - state.updatedAt < MP_PAY_PARAMS_TTL_MS;
+  const ttl = isIOS ? MP_PAY_PARAMS_TTL_MS_IOS : MP_PAY_PARAMS_TTL_MS;
+  return Date.now() - state.updatedAt < ttl;
 };
 
 const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
@@ -741,6 +744,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
       const effectiveOpenId = selectedPayType === "miniprogram" ? resolvedMiniProgramOpenId : userOpenId;
 
+      // 🔧 若收到 post-cancel signal，要求后端跳过 pending 订单复用，强制开新单
+      const forceNewOrder = !!miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastProcessedReturnSignalRef.current;
+      if (forceNewOrder) {
+        lastProcessedReturnSignalRef.current = miniProgramPayReturnSignal;
+        console.log("[AssessmentPay] forceNewOrder=true (post-cancel retry)");
+      }
+
       const { data, error } = await supabase.functions.invoke("create-wechat-order", {
         body: {
           packageKey: packageKey,
@@ -750,6 +760,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           payType: selectedPayType,
           openId: needsOpenId ? effectiveOpenId : undefined,
           isMiniProgram: isMiniProgram,
+          forceNewOrder,
         },
       });
 
@@ -1348,12 +1359,19 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   useEffect(() => {
     if (!open || !isMiniProgram || status !== "idle") return;
 
+    // 🔧 取消支付后由父级 bump 的 signal：禁止从缓存恢复，强制走 createOrder
+    if (miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastProcessedReturnSignalRef.current) {
+      console.log("[AssessmentPayDialog] Post-cancel signal active, skipping cache restore");
+      clearCachedMiniProgramPaymentState(packageKey);
+      return;
+    }
+
     const cachedState = getCachedMiniProgramPaymentState(packageKey);
     if (!cachedState) return;
 
-    // 仅当缓存的 mpPayParams 仍在 4 分钟新鲜窗口内才复用
+    // 仅当缓存的 mpPayParams 仍在新鲜窗口内才复用（iOS 用更短窗口）
     // 否则丢弃缓存，让初始化 effect 重新创建订单（避免拿过期 prepay_id 拉起导致"订单已失效"）
-    if (!isCachedPayParamsFresh(cachedState)) {
+    if (!isCachedPayParamsFresh(cachedState, isIOS)) {
       console.log("[AssessmentPayDialog] Cached pay params expired, clearing for fresh order", cachedState.orderNo);
       clearCachedMiniProgramPaymentState(packageKey);
       return;
@@ -1367,7 +1385,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     setStatus("polling");
     setMpLaunchFailed(true);
     startPolling(cachedState.orderNo);
-  }, [open, isMiniProgram, status, packageKey]);
+  }, [open, isMiniProgram, status, packageKey, miniProgramPayReturnSignal, isIOS]);
 
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
@@ -1525,9 +1543,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                     if (mpRetrying) return;
                     setMpRetrying(true);
                     try {
-                      // 检查缓存的支付参数是否仍在 4 分钟新鲜窗口内
+                      // 检查缓存的支付参数是否仍在新鲜窗口内（iOS 用更短窗口）
                       const cachedState = getCachedMiniProgramPaymentState(packageKey);
-                      const isFresh = isCachedPayParamsFresh(cachedState);
+                      const isFresh = isCachedPayParamsFresh(cachedState, isIOS);
 
                       if (mpPayParams && orderNo && isFresh) {
                         // 参数仍新鲜：直接复用拉起
