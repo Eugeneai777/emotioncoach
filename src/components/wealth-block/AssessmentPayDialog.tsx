@@ -1319,7 +1319,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     if (!open) return;
     console.log("[AssessmentPay] MiniProgram returned to H5, abandoning current order and closing dialog");
     mpNativePayPageHiddenRef.current = false;
-    toast.info("已返回测评页，请重新点击立即测评发起新订单");
+    // 🔧 不再在此弹 toast：取消提示由 WealthBlockAssessment 的 payment_fail=1 分支统一处理，
+    // 避免 iOS 同 tick remount 时被吞 + 安卓双弹的问题
     handleDialogOpenChange(false);
   }, [handleDialogOpenChange, open]);
 
