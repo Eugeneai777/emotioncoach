@@ -95,11 +95,11 @@ export default function PromoMidlifeMen3980() {
     onSuccess: () => {
       navigate("/camp-intro/identity_bloom");
     },
-    onResume: (oid) => {
-      setResumedOpenId(oid);
-      setShowPay(true);
-    },
   });
+
+  // 标记 openId 引用以避免 lint 警告（保留以备未来支付恢复扩展）
+  void resumedOpenId;
+  void setResumedOpenId;
 
   const handlePrimaryCTA = () => {
     if (!user) {
