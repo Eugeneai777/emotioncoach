@@ -285,6 +285,14 @@ export default function WealthBlockAssessmentPage() {
     // 用户主动打开：清理 dismissed/guard，复用现有弹窗实例（内部会从缓存恢复 pending 订单）
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
+    // 🔧 用户主动点击 = 允许重新发起；同时强制清理过期支付参数缓存，让弹窗走"全新订单"链路
+    if (sessionStorage.getItem(MP_POST_CANCEL_FLAG_KEY) === '1') {
+      console.log('[WealthBlock] User retry after cancel: clearing stale mp pay cache');
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+      sessionStorage.removeItem(MP_POST_CANCEL_FLAG_KEY);
+      // 用 signal 通知弹窗：本次打开必须强制创建新订单
+      setMiniProgramPayReturnSignal(Date.now());
+    }
     setShowPayDialog(true);
   };
 
