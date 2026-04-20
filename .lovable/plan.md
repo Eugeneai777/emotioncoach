@@ -1,34 +1,18 @@
 
+## 现状
+`/emotion-health` 未登录跳 `/auth`，登录后兜底回 `/mini-app`，未带回测评页。
 
-## /wealth-block 当前支付逻辑全景排查
+## 方案
+找到 `/emotion-health` 路由对应组件中所有 `navigate('/auth')` 调用，在跳转前：
+1. 写入 `localStorage.auth_redirect = '/emotion-health'`（带 15 分钟 TTL，复用现有工具）
+2. URL 带上 `?redirect=/emotion-health`
 
-### 文件清单
-- `src/pages/WealthBlockAssessment.tsx` — 主页面，控制 showIntro / 守门 / 支付回调
-- `src/components/wealth-block/AssessmentIntroCard.tsx` — 售前页 + 立即测评按钮（守门入口）
-- `src/components/wealth-block/AssessmentPayDialog.tsx` — 财富卡点专用支付弹窗
-- `src/components/WechatPayDialog.tsx` — 通用微信支付弹窗（被复用）
-- `supabase/functions/create-wechat-order/index.ts` — 后端下单边缘函数
+登录后按现有 4 级优先级（URL `?redirect=` → `auth_redirect` 缓存）自动回到 `/emotion-health`：
+- 已购 → 直接进入答题
+- 未购 → 自动弹 9.9 付费弹窗
 
-### 排查目标
-1. 售前页 → 立即测评按钮的 4 种用户状态分支（未登录 / 已登录未付 / 已登录已付 / 绽放合伙人）
-2. 支付环境路由（PC 浏览器 / PC 微信 / 手机微信内 / 手机外部浏览器 / 小程序 WebView）→ 实际触发的下单 payType（native / jsapi / mp）
-3. sessionStorage 中支付续跑相关 key（`MP_PENDING_ORDER_STORAGE_KEY`、`wealth_block_pending_pay`、`assessment_pay_resume`）的写入/清除时机
-4. 支付回调链路：`usePaymentCallback` → URL hash → `setShowIntro(false)` 进答题
-5. 微信 OAuth 授权回跳（`assessment_pay_resume=1`）的恢复链路
-6. 后端订单幂等复用规则（line 89–155 / 296）：何时复用 `existingOrderNo`，何时生成新单
-7. **跨支付通道复用风险点**：PC 起 native 单 → 手机微信续付 jsapi 时是否会触发微信 `INVALID_REQUEST`
+## 改动范围
+- 仅修改 `/emotion-health` 入口组件中的 auth 跳转逻辑（预计 1-2 处 `navigate('/auth')`）
+- 不动 `/auth` 页、`postAuthRedirect`、其他测评页
 
-### 排查方法（只读）
-- `code--view` 4 个前端文件 + 1 个边缘函数关键段
-- `supabase--read_query` 抽样查最近 24h 该用户的 orders 表（pay_type 分布、status、复用情况）
-- `supabase--edge_function_logs` create-wechat-order 最近错误日志
-- 不动任何代码
-
-### 产出
-排查完成后，输出**纯文字诊断报告**，包含：
-- 5 端环境 × 4 用户状态 = 20 个分支的实际行为表
-- 已发现的 bug / 风险点（含日志证据）
-- 不影响业务前提下的可选优化建议（仅列举，不实施）
-
-待您审阅报告后，再决定是否进入具体修复方案。
-
+确认后进入实现模式。
