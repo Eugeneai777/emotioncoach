@@ -48,15 +48,15 @@ interface CachedMiniProgramPaymentState {
   updatedAt: number;
 }
 
-// 微信侧 prepay_id 5 分钟过期，前端缓存留 1 分钟安全余量 = 4 分钟
-// iOS 微信小程序回流较慢，进一步缩短至 2 分钟，避免拿到接近过期的参数拉起失败
-const MP_PAY_PARAMS_TTL_MS = 4 * 60 * 1000;
+// 微信侧 prepay_id 官方有效期 5 分钟，前端统一留 3 分钟安全余量 = 2 分钟。
+// iOS/Android 小程序回流均可能较慢，长时间不支付再点"重新拉起"会拿到过期 prepay_id，
+// 触发小程序原生页"订单已过期失效"弹窗，因此两端都使用 2 分钟。
+const MP_PAY_PARAMS_TTL_MS = 2 * 60 * 1000;
 const MP_PAY_PARAMS_TTL_MS_IOS = 2 * 60 * 1000;
 
-const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null, isIOS = false): boolean => {
+const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null, _isIOS = false): boolean => {
   if (!state || !state.mpPayParams) return false;
-  const ttl = isIOS ? MP_PAY_PARAMS_TTL_MS_IOS : MP_PAY_PARAMS_TTL_MS;
-  return Date.now() - state.updatedAt < ttl;
+  return Date.now() - state.updatedAt < MP_PAY_PARAMS_TTL_MS;
 };
 
 const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
@@ -167,6 +167,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
   const createOrderCalledRef = useRef<boolean>(false);
+  // 网络层错误（边缘函数代理超时）自动重试一次
+  const createOrderRetriedRef = useRef<boolean>(false);
   // 🆕 小程序支付：保存最近一次拉起支付的参数，用于失败/取消后再次拉起
   const [mpPayParams, setMpPayParams] = useState<Record<string, string> | null>(null);
   const [mpRetrying, setMpRetrying] = useState<boolean>(false);
@@ -989,8 +991,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       }
     } catch (error: any) {
       console.error("Create order error:", error);
-      const msg =
-        error.name === "AbortError" ? "创建订单超时，请检查网络后重试" : error.message || "创建订单失败，请稍后重试";
+      const rawMsg: string = error?.message || "";
+      const isNetworkLayerError =
+        error?.name === "AbortError" ||
+        /Failed to send a request to the Edge Function/i.test(rawMsg) ||
+        /FunctionsFetchError|FunctionsHttpError|代理服务器连接失败|signal has been aborted/i.test(rawMsg) ||
+        /Failed to fetch|NetworkError|Load failed/i.test(rawMsg);
+
+      // 网络抖动 / 微信代理超时：自动静默重试 1 次
+      if (isNetworkLayerError && !createOrderRetriedRef.current) {
+        createOrderRetriedRef.current = true;
+        console.warn("[AssessmentPay] Network error, auto-retrying createOrder once...");
+        await new Promise((r) => setTimeout(r, 1200));
+        createOrder();
+        return;
+      }
+
+      const msg = isNetworkLayerError
+        ? "网络较慢，请检查网络后重试"
+        : rawMsg || "创建订单失败，请稍后重试";
       setErrorMessage(msg);
       setStatus("error");
     }
@@ -1470,6 +1489,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       setIsForceChecking(false);
       openIdFetchedRef.current = false;
       createOrderCalledRef.current = false;
+      createOrderRetriedRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
       mpNativePayLaunchedRef.current = false;
