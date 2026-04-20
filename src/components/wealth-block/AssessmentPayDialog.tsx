@@ -175,8 +175,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   const [mpLaunchFailed, setMpLaunchFailed] = useState<boolean>(false);
   const mpNativePayLaunchedRef = useRef<boolean>(false);
   const mpNativePayPageHiddenRef = useRef<boolean>(false);
-  // 🔒 跟踪上次处理过的 miniProgramPayReturnSignal 值，避免 open 切换时误触发
-  const lastProcessedReturnSignalRef = useRef<number>(0);
+  // 🔒 分离“UI 回流信号”和“强制新建订单信号”，避免在回流提示阶段提前消费强制新单标记
+  const lastHandledReturnSignalRef = useRef<number>(0);
+  const lastForcedNewOrderSignalRef = useRef<number>(0);
 
   // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
@@ -747,9 +748,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       const effectiveOpenId = selectedPayType === "miniprogram" ? resolvedMiniProgramOpenId : userOpenId;
 
       // 🔧 若收到 post-cancel signal，要求后端跳过 pending 订单复用，强制开新单
-      const forceNewOrder = !!miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastProcessedReturnSignalRef.current;
+      const forceNewOrder = !!miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastForcedNewOrderSignalRef.current;
       if (forceNewOrder) {
-        lastProcessedReturnSignalRef.current = miniProgramPayReturnSignal;
+        lastForcedNewOrderSignalRef.current = miniProgramPayReturnSignal;
         console.log("[AssessmentPay] forceNewOrder=true (post-cancel retry)");
       }
 
@@ -1292,8 +1293,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     if (!miniProgramPayReturnSignal || !open || !isMiniProgram) return;
     // 🔒 仅当 signal 是新的（未被处理过）时才触发，
     // 防止 open 由 false→true 时复用旧 signal 误把全新会话推到 mpLaunchFailed 状态
-    if (miniProgramPayReturnSignal === lastProcessedReturnSignalRef.current) return;
-    lastProcessedReturnSignalRef.current = miniProgramPayReturnSignal;
+    if (miniProgramPayReturnSignal === lastHandledReturnSignalRef.current) return;
+    lastHandledReturnSignalRef.current = miniProgramPayReturnSignal;
 
     console.log("[AssessmentPay] MiniProgram returned with payment_fail, switching to retry state");
     if (pollingRef.current) {
