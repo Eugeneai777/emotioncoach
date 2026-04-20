@@ -177,11 +177,10 @@ serve(async (req) => {
     }
 
     let reusedMiniProgramOrderNo: string | undefined;
-    // 🔧 forceNewOrder：小程序取消支付后的二次重试，跳过 pending 复用，强制开新单
-    // 避免 iOS 微信小程序拿到旧 prepay_id / 旧 out_trade_no 后卡在 loading
-    const skipReuse = forceNewOrder && payType === 'miniprogram';
+    // 🔧 小程序支付一律不复用 pending 订单：用户每次重新发起都创建新单，避免二次点击命中旧 prepay_id / 旧 out_trade_no
+    const skipReuse = payType === 'miniprogram';
     if (skipReuse) {
-      console.log('[CreateOrder] forceNewOrder=true & miniprogram → cancelling all pending & creating fresh order for user:', finalUserId, 'package:', packageKey);
+      console.log('[CreateOrder] miniprogram fresh-order mode → cancelling all pending & creating fresh order for user:', finalUserId, 'package:', packageKey, 'forceNewOrder:', forceNewOrder);
       if (finalUserId && finalUserId !== 'guest') {
         const { data: cancelled } = await supabase
           .from('orders')

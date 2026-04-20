@@ -1281,13 +1281,11 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
     if (!open) return;
-    // ⚠️ 不再强制关闭弹框：用户从原生支付页返回（无论支付成功/取消）后，
-    // 保留弹框 + “重新支付/我已完成支付”按钮，便于二次拉起或确认结果
-    console.log("[AssessmentPay] MiniProgram returned to H5, keeping dialog open for retry");
+    console.log("[AssessmentPay] MiniProgram returned to H5, abandoning current order and closing dialog");
     mpNativePayPageHiddenRef.current = false;
-    // 标记拉起失败状态以显示“重新拉起支付”按钮
-    setMpLaunchFailed(true);
-  }, [open]);
+    toast.info("已返回测评页，请重新点击立即测评发起新订单");
+    handleDialogOpenChange(false);
+  }, [handleDialogOpenChange, open]);
 
   useEffect(() => {
     if (!miniProgramPayReturnSignal || !open || !isMiniProgram) return;
@@ -1560,48 +1558,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
               )}
               <div className="space-y-2 w-full">
                 <Button
-                  onClick={async () => {
-                    if (mpRetrying) return;
-                    setMpRetrying(true);
-                    try {
-                      // 检查缓存的支付参数是否仍在新鲜窗口内（iOS 用更短窗口）
-                      const cachedState = getCachedMiniProgramPaymentState(packageKey);
-                      const isFresh = isCachedPayParamsFresh(cachedState, isIOS);
-
-                      if (mpPayParams && orderNo && isFresh) {
-                        // 参数仍新鲜：直接复用拉起
-                        mpNativePayLaunchedRef.current = true;
-                        mpNativePayPageHiddenRef.current = false;
-                        setMpLaunchFailed(false);
-                        const launched = await triggerMiniProgramNativePay(mpPayParams, orderNo);
-                        if (launched) {
-                          setStatus("polling");
-                          startPolling(orderNo);
-                        } else {
-                          mpNativePayLaunchedRef.current = false;
-                          setStatus("pending");
-                          setMpLaunchFailed(true);
-                        }
-                      } else {
-                        // 参数过期或缺失：丢弃缓存，重置状态触发 createOrder 重新创建订单
-                        console.log("[AssessmentPay] Pay params stale or missing, creating fresh order");
-                        clearCachedMiniProgramPaymentState(packageKey);
-                        setMpPayParams(null);
-                        setOrderNo("");
-                        createOrderCalledRef.current = false;
-                        setMpLaunchFailed(false);
-                        setStatus("idle");
-                        toast.info("正在重新创建订单...");
-                      }
-                    } finally {
-                      setTimeout(() => setMpRetrying(false), 1200);
-                    }
-                  }}
-                  disabled={mpRetrying}
+                  onClick={handleRepay}
+                  disabled={mpRetrying || isRepaying || isCancellingOrder}
                   className="w-full"
                 >
-                  {mpRetrying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Smartphone className="w-4 h-4 mr-2" />}
-                  重新拉起支付
+                  {(mpRetrying || isRepaying || isCancellingOrder) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Smartphone className="w-4 h-4 mr-2" />}
+                  重新创建订单并支付
                 </Button>
                 <Button
                   variant="outline"
