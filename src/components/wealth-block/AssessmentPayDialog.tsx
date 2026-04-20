@@ -506,6 +506,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
     const MAX_ATTEMPTS = 3;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      // iOS 第二次调用 navigateTo 时，bridge 常因上次跳转未完全释放而失败；
+      // 在 attempt > 1 或 iOS 环境下首次调用前都加缓冲，给 webview bridge 重置时间
+      if (attempt > 1 || isIOS) {
+        await new Promise((resolve) => setTimeout(resolve, isIOS ? 600 : 200));
+      }
+
       const mp = window.wx?.miniProgram;
       console.log(`[MiniProgram] Pay attempt ${attempt}/${MAX_ATTEMPTS}, mp available:`, !!mp);
 
