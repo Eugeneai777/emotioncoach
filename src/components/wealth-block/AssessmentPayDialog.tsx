@@ -1490,6 +1490,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       openIdFetchedRef.current = false;
       createOrderCalledRef.current = false;
       createOrderRetriedRef.current = false;
+      setUserOpenId(undefined);
       setOpenIdResolved(false);
       mpNativePayLaunchedRef.current = false;
       mpNativePayPageHiddenRef.current = false;
