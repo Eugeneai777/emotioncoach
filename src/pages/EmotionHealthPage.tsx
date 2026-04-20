@@ -14,6 +14,7 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useEmotionHealthPurchase } from "@/hooks/useEmotionHealthPurchase";
 import { usePackageByKey } from "@/hooks/usePackages";
 import { isWeChatBrowser } from "@/utils/platform";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import {
   EmotionHealthStartScreen,
   EmotionHealthQuestions,
@@ -142,7 +143,9 @@ export default function EmotionHealthPage() {
   const handlePayClick = useCallback(() => {
     if (!user) {
       toast.error("请先登录");
-      navigate('/auth', { state: { from: '/emotion-health' } });
+      const currentPath = window.location.pathname + window.location.search;
+      setPostAuthRedirect(currentPath);
+      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
 
@@ -162,7 +165,9 @@ export default function EmotionHealthPage() {
   const handleStart = useCallback(() => {
     if (!user) {
       toast.error("请先登录");
-      navigate('/auth', { state: { from: '/emotion-health' } });
+      const currentPath = window.location.pathname + window.location.search;
+      setPostAuthRedirect(currentPath);
+      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
 
