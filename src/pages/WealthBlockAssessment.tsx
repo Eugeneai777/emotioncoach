@@ -172,8 +172,10 @@ export default function WealthBlockAssessmentPage() {
       newUrl.searchParams.delete('order');
       window.history.replaceState({}, '', newUrl.toString());
 
-      // 小程序回跳后直接重建并重开支付弹窗，由弹窗内部从缓存恢复“重新支付”状态
-      setPayDialogInstanceKey((prev) => prev + 1);
+      // 🔧 不再 bump key（避免组件 remount 强制 createOrder 产生大量 cancelled 订单）
+      // 直接复用现有弹窗实例：组件内部会从 sessionStorage 读 cached state 复用同一订单
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
+      sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
       setShowPayDialog(true);
       toast.info('支付已取消，可重新支付');
     }
@@ -210,7 +212,7 @@ export default function WealthBlockAssessmentPage() {
         }
 
         sessionStorage.setItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY, String(Date.now()));
-        setPayDialogInstanceKey((prev) => prev + 1);
+        // 🔧 不 bump key：复用同弹窗实例，由其内部 useEffect 从 cached state 恢复
         setShowPayDialog(true);
       } catch {
         sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
@@ -262,10 +264,9 @@ export default function WealthBlockAssessmentPage() {
   };
 
   const openWealthPayDialog = () => {
-    // 每次点击都强制创建全新实例，确保不会复用上一次取消支付后的旧状态
+    // 用户主动打开：清理 dismissed/guard，复用现有弹窗实例（内部会从缓存恢复 pending 订单）
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
-    setPayDialogInstanceKey((prev) => prev + 1);
     setShowPayDialog(true);
   };
 
