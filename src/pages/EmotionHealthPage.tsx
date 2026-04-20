@@ -138,11 +138,23 @@ export default function EmotionHealthPage() {
     }
   }, []);
 
+  // 跳转登录前写入回跳信息（登录后回到本页）
+  const redirectToAuth = useCallback(() => {
+    const target = '/emotion-health';
+    try {
+      localStorage.setItem('auth_redirect', target);
+      localStorage.setItem('auth_redirect_ts', String(Date.now()));
+    } catch (e) {
+      console.warn('[EmotionHealth] Failed to set auth_redirect', e);
+    }
+    navigate(`/auth?redirect=${encodeURIComponent(target)}`, { state: { from: target } });
+  }, [navigate]);
+
   // 处理支付按钮点击
   const handlePayClick = useCallback(() => {
     if (!user) {
       toast.error("请先登录");
-      navigate('/auth', { state: { from: '/emotion-health' } });
+      redirectToAuth();
       return;
     }
 
@@ -156,13 +168,13 @@ export default function EmotionHealthPage() {
     }
 
     setShowPayDialog(true);
-  }, [user, navigate, triggerWeChatSilentAuth]);
+  }, [user, redirectToAuth, triggerWeChatSilentAuth]);
 
   // 处理开始测评
   const handleStart = useCallback(() => {
     if (!user) {
       toast.error("请先登录");
-      navigate('/auth', { state: { from: '/emotion-health' } });
+      redirectToAuth();
       return;
     }
 
@@ -172,7 +184,7 @@ export default function EmotionHealthPage() {
     }
 
     setStep('questions');
-  }, [user, hasPurchased, navigate, handlePayClick]);
+  }, [user, hasPurchased, redirectToAuth, handlePayClick]);
 
   const handleAnswerChange = (questionId: number, value: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
