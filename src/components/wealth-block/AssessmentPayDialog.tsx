@@ -23,6 +23,7 @@ interface AssessmentPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (userId: string) => void;
+  miniProgramPayReturnSignal?: number;
   /** 支付成功后跳转的页面路径，默认为当前页面 */
   returnUrl?: string;
   /** 当前登录用户ID，如果已登录则直接跳过注册 */
@@ -124,7 +125,7 @@ const isPayAuthInProgress = (): boolean => {
   return sessionStorage.getItem("pay_auth_in_progress") === "1";
 };
 
-export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, userId, hasPurchased, packageKey, packageName }: AssessmentPayDialogProps) {
+export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgramPayReturnSignal, returnUrl, userId, hasPurchased, packageKey, packageName }: AssessmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [orderNo, setOrderNo] = useState<string>("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
@@ -509,7 +510,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       // iOS 第二次调用 navigateTo 时，bridge 常因上次跳转未完全释放而失败；
       // 在 attempt > 1 或 iOS 环境下首次调用前都加缓冲，给 webview bridge 重置时间
       if (attempt > 1 || isIOS) {
-        await new Promise((resolve) => setTimeout(resolve, isIOS ? 600 : 200));
+        await new Promise((resolve) => setTimeout(resolve, isIOS ? 1800 : 200));
       }
 
       const mp = window.wx?.miniProgram;
@@ -1207,7 +1208,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     setIsRepaying(false);
   }, [cancelPendingOrder, isRepaying, resetPaymentStateForRetry]);
 
-  const handleDialogOpenChange = useCallback(async (nextOpen: boolean) => {
+  const handleDialogOpenChange = useCallback((nextOpen: boolean) => {
     if (nextOpen) {
       closeInProgressRef.current = false;
       clearMiniProgramPaymentDismissed(packageKey);
@@ -1221,18 +1222,20 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     markMiniProgramPaymentDismissed(packageKey);
 
     const shouldCancelOrder = !!orderNo && (status === "pending" || status === "polling");
-    const cancelled = await cancelPendingOrder();
-
-    if (!cancelled) {
-      closeInProgressRef.current = false;
-      return;
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
-
-    if (shouldCancelOrder) {
-      toast.info("订单已取消");
-    }
-
+    mpNativePayLaunchedRef.current = false;
+    mpNativePayPageHiddenRef.current = false;
     onOpenChange(false);
+
+    void (async () => {
+      const cancelled = await cancelPendingOrder();
+      if (shouldCancelOrder && cancelled) {
+        toast.info("订单已取消");
+      }
+    })();
   }, [cancelPendingOrder, onOpenChange, orderNo, packageKey, status]);
 
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
@@ -1244,6 +1247,24 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     // 标记拉起失败状态以显示“重新拉起支付”按钮
     setMpLaunchFailed(true);
   }, [open]);
+
+  useEffect(() => {
+    if (!miniProgramPayReturnSignal || !open || !isMiniProgram) return;
+
+    console.log("[AssessmentPay] MiniProgram returned with payment_fail, switching to retry state");
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    mpNativePayLaunchedRef.current = false;
+    mpNativePayPageHiddenRef.current = false;
+    setIsForceChecking(false);
+    setMpLaunchFailed(true);
+    setStatus((currentStatus) => {
+      if (currentStatus === "paid" || currentStatus === "registering") return currentStatus;
+      return "pending";
+    });
+  }, [miniProgramPayReturnSignal, open, isMiniProgram]);
 
   useEffect(() => {
     if (!isMiniProgram) return;
