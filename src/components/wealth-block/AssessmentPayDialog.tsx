@@ -1305,8 +1305,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     setMpLaunchFailed(false);
     setOrderNo("");
     setMpPayParams(null);
-    setQrCodeUrl("");
-    setH5PayUrl("");
+    setQrCodeDataUrl("");
+    setPayUrl("");
     clearCachedMiniProgramPaymentState(packageKey);
     setStatus((currentStatus) => {
       if (currentStatus === "paid" || currentStatus === "registering") return currentStatus;
