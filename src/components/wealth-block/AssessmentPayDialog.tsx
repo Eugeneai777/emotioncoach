@@ -991,8 +991,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       }
     } catch (error: any) {
       console.error("Create order error:", error);
-      const msg =
-        error.name === "AbortError" ? "创建订单超时，请检查网络后重试" : error.message || "创建订单失败，请稍后重试";
+      const rawMsg: string = error?.message || "";
+      const isNetworkLayerError =
+        error?.name === "AbortError" ||
+        /Failed to send a request to the Edge Function/i.test(rawMsg) ||
+        /FunctionsFetchError|FunctionsHttpError|代理服务器连接失败|signal has been aborted/i.test(rawMsg) ||
+        /Failed to fetch|NetworkError|Load failed/i.test(rawMsg);
+
+      // 网络抖动 / 微信代理超时：自动静默重试 1 次
+      if (isNetworkLayerError && !createOrderRetriedRef.current) {
+        createOrderRetriedRef.current = true;
+        console.warn("[AssessmentPay] Network error, auto-retrying createOrder once...");
+        await new Promise((r) => setTimeout(r, 1200));
+        createOrder();
+        return;
+      }
+
+      const msg = isNetworkLayerError
+        ? "网络较慢，请检查网络后重试"
+        : rawMsg || "创建订单失败，请稍后重试";
       setErrorMessage(msg);
       setStatus("error");
     }
