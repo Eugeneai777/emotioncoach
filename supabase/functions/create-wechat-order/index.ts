@@ -71,9 +71,9 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber } = await req.json();
-    
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo, hasBuyerInfo: !!(buyerName || buyerPhone), hasIdCard: !!(idCardName || idCardNumber), idCardName: idCardName ? '***' : null, idCardNumber: idCardNumber ? '***' : null });
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo, buyerName, buyerPhone, buyerAddress, idCardName, idCardNumber, forceNewOrder = false } = await req.json();
+
+    console.log('[CreateOrder] Incoming:', { packageKey, packageName, amount, userId, payType, hasOpenId: !!openId, isMiniProgram, existingOrderNo, forceNewOrder, hasBuyerInfo: !!(buyerName || buyerPhone), hasIdCard: !!(idCardName || idCardNumber) });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
@@ -177,7 +177,26 @@ serve(async (req) => {
     }
 
     let reusedMiniProgramOrderNo: string | undefined;
-    if (finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
+    // 🔧 forceNewOrder：小程序取消支付后的二次重试，跳过 pending 复用，强制开新单
+    // 避免 iOS 微信小程序拿到旧 prepay_id / 旧 out_trade_no 后卡在 loading
+    const skipReuse = forceNewOrder && payType === 'miniprogram';
+    if (skipReuse) {
+      console.log('[CreateOrder] forceNewOrder=true & miniprogram → cancelling all pending & creating fresh order for user:', finalUserId, 'package:', packageKey);
+      if (finalUserId && finalUserId !== 'guest') {
+        const { data: cancelled } = await supabase
+          .from('orders')
+          .update({ status: 'cancelled' })
+          .eq('user_id', finalUserId)
+          .eq('package_key', packageKey)
+          .eq('status', 'pending')
+          .select('order_no');
+        if (cancelled && cancelled.length > 0) {
+          console.log('[CreateOrder] Force-cancelled pending orders for fresh retry:', cancelled.map(o => o.order_no).join(','));
+        }
+      }
+    }
+
+    if (!skipReuse && finalUserId && finalUserId !== 'guest' && !existingOrderNo) {
       const { data: recentPending } = await supabase
         .from('orders')
         .select('order_no, qr_code_url, pay_type, created_at')
@@ -191,7 +210,8 @@ serve(async (req) => {
         .maybeSingle();
 
       if (recentPending) {
-        console.log('[CreateOrder] Reusing recent pending order:', recentPending.order_no, 'pay_type:', recentPending.pay_type, 'requested payType:', payType, 'created at:', recentPending.created_at);
+        const ageMs = Date.now() - new Date(recentPending.created_at).getTime();
+        console.log('[CreateOrder] Reusing pending order:', recentPending.order_no, 'pay_type:', recentPending.pay_type, 'requested:', payType, 'ageMs:', ageMs);
         
         // 小程序请求：不管旧订单是什么类型，只要有 openId 就用旧订单号重新获取 prepay_id
         if (payType === 'miniprogram') {
