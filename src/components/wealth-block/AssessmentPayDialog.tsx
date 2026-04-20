@@ -48,6 +48,14 @@ interface CachedMiniProgramPaymentState {
   updatedAt: number;
 }
 
+// 微信侧 prepay_id 5 分钟过期，前端缓存留 1 分钟安全余量 = 4 分钟
+const MP_PAY_PARAMS_TTL_MS = 4 * 60 * 1000;
+
+const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null): boolean => {
+  if (!state || !state.mpPayParams) return false;
+  return Date.now() - state.updatedAt < MP_PAY_PARAMS_TTL_MS;
+};
+
 const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
   try {
     sessionStorage.setItem(MP_PENDING_PAYMENT_STORAGE_KEY, JSON.stringify(state));
