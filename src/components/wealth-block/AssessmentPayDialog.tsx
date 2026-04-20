@@ -1345,8 +1345,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     const cachedState = getCachedMiniProgramPaymentState(packageKey);
     if (!cachedState) return;
 
-    const isExpired = Date.now() - cachedState.updatedAt > 30 * 60 * 1000;
-    if (isExpired) {
+    // 仅当缓存的 mpPayParams 仍在 4 分钟新鲜窗口内才复用
+    // 否则丢弃缓存，让初始化 effect 重新创建订单（避免拿过期 prepay_id 拉起导致"订单已失效"）
+    if (!isCachedPayParamsFresh(cachedState)) {
+      console.log("[AssessmentPayDialog] Cached pay params expired, clearing for fresh order", cachedState.orderNo);
       clearCachedMiniProgramPaymentState(packageKey);
       return;
     }
