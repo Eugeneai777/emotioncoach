@@ -1,58 +1,134 @@
 
-问题已基本定位，且和你描述的 iOS 微信小程序现象一致：第一次能拉起，取消后再次点击“立即测评”一直加载，本质上不是单纯前端弹窗没开，而是“小程序二次支付恢复链路”在复用旧订单/旧支付参数时卡住了。
 
-我这次读到的关键信息：
-1. 财富卡点测评页在小程序支付取消回跳后，会保留当前 pending 订单缓存并重新打开 `AssessmentPayDialog`。
-2. `AssessmentPayDialog` 小程序二次点击“重新拉起支付”时，前端会优先复用缓存的 `mpPayParams`，缓存有效期是 4 分钟。
-3. `create-wechat-order` 后端会复用同用户同套餐 5 分钟内的 pending 订单，并继续用旧 `orderNo` 向微信取新的 prepay_id。
-4. 前后端的“复用窗口”不一致：前端 4 分钟，后端 5 分钟；再叠加 iOS 小程序回流慢、WebView 恢复慢，容易出现：
-   - 前端还在等/还在恢复旧单
-   - 后端继续复用接近过期的 pending 单
-   - 用户侧看到就是二次点击后一直 loading，或者反复落在失效订单上
+## 问题 1：iOS 取消订单后没有 toast 提示
 
-另外，我能读到当前代码，但这次会话里的前端 console/network 快照里没有匹配到相关请求，所以“刚才支付日志”无法直接从快照还原；不过从现有实现能看出问题点已经足够明确。
+### 根本原因
+取消提示有 **两个来源**，iOS 都被静默掉了：
 
-我建议按最小风险方案修：
+1. **小程序原生支付页返回 H5（iOS 真实路径）**
+   - iOS 取消支付时，微信小程序会通过 `failCallbackUrl` 回跳 H5 页面，URL 带 `?payment_fail=1`。
+   - 触发 `WealthBlockAssessment.tsx:212` 的 `toast.info('支付已取消，可重新发起支付')`。
+   - **但**：iOS WebView 在 `pageshow` 时序里，`searchParams` 解析、URL 清理、toast 容器挂载存在竞态。我们紧接着调用 `setShowPayDialog(false)` + `setPayDialogInstanceKey+1`，导致 React 同一 tick 内卸载/重挂多个组件，`<Toaster>` 的容器被瞬时切换，toast 被吞掉。
+   - 安卓 WebView 不重挂 toaster，所以提示能正常出现。
 
-1. 前端：小程序取消支付回跳后，不再直接把弹窗恢复到“继续复用旧单”的状态  
-   - 在 `WealthBlockAssessment.tsx` 的 `payment_fail=1` 回跳处理中，保留“可重新支付”的 UI，但要显式标记“旧单不可直接继续自动恢复”。
-   - 避免页面一打开就再次走旧缓存恢复，减少 iOS 回流后直接卡在 loading。
+2. **弹窗内 `handleDialogOpenChange` 关闭时（仅 H5 弹窗手动关）**
+   - `AssessmentPayDialog.tsx:1313` `toast.info("订单已取消")`。
+   - iOS 在小程序里走的是"原生支付页 → 回跳 H5"路径，弹窗是被 `forceCloseStaleMiniProgramDialog`（1322）关掉的，那条 toast `'已返回测评页...'` 也常被同 tick remount 吞掉。
 
-2. 前端：统一小程序二次支付策略  
-   - 在 `AssessmentPayDialog.tsx` 中，把“重新拉起支付”分成两种情况：
-     - 若缓存参数非常新鲜，才允许直拉
-     - 只要是取消支付后返回，优先走“清旧缓存 + 重建订单”
-   - 也就是把现在偏“复用旧单”的策略，改成更偏“取消后新建单”的策略，尤其针对 iOS 小程序。
+### 修复方向
+- 把 iOS 的取消 toast 延迟到下一帧（`requestAnimationFrame` + 100ms setTimeout）再触发，确保在 `payDialogInstanceKey` bump 后的 React commit 之后执行。
+- 把 toast 文案统一为「支付已取消，可重新发起」，避免 `forceCloseStaleMiniProgramDialog` 与 `payment_fail=1` 路径重复弹两次。
+- 加 `payment_cancelled` 事件落库（`logFlowEvent`），作为可观测兜底。
 
-3. 前端：修正恢复状态机，防止停留在 `idle/creating` 但没有再次触发下单  
-   - 检查 `status/openIdResolved/createOrderCalledRef` 的组合。
-   - 确保一旦用户点击“重新支付”，一定会重新触发 `createOrder()`，不会因为旧 ref 或旧 signal 残留而只显示 loading。
+---
 
-4. 后端：收紧小程序 pending 订单复用条件  
-   - 在 `create-wechat-order` 中，对 `payType === 'miniprogram'` 的 pending 单复用增加更严格限制：
-     - 缩短可复用窗口
-     - 或者对“小程序取消后重试”直接不复用旧单，强制生成新 `orderNo`
-   - 这样能彻底规避旧 prepay_id / 旧 out_trade_no 被 iOS 回流再次命中的问题。
+## 问题 2：取消支付后改了哪些状态？再次点击立即测评要过哪些判断？
 
-5. 后端：补充日志字段，方便下次直接查到  
-   - 给 `create-wechat-order` / `check-order-status` / `cancel-pending-order` 增加更明确日志：
-     - packageKey
-     - payType
-     - orderNo
-     - 是否复用旧单
-     - 旧单创建时间/是否超近过期
-     - 是否来自小程序二次重试
-   - 这样下次你再说“检查刚才支付日志”，就能直接判断到底是“复用了旧单”还是“前端根本没重新下单”。
+### A. 取消时被重置的状态（前后端全清单）
 
-实施范围：
-- `src/pages/WealthBlockAssessment.tsx`
-- `src/components/wealth-block/AssessmentPayDialog.tsx`
-- `supabase/functions/create-wechat-order/index.ts`
-- 视情况补少量只读日志增强到 `check-order-status` / `cancel-pending-order`
+**前端 sessionStorage（`WealthBlockAssessment.tsx:184-190`）**
+```text
+- MP_PENDING_PAYMENT_STORAGE_KEY      → 删除（旧 orderNo 缓存）
+- MP_PENDING_PAYMENT_DISMISSED_KEY    → 删除
+- MP_PENDING_PAYMENT_RESUME_GUARD_KEY → 删除
+- MP_POST_CANCEL_FLAG_KEY             → 置为 '1'（禁止 auto-resume）
+```
 
-预期结果：
-- iOS 微信小程序里，第一次取消支付后，再次点击“立即测评”不会一直 loading
-- 二次支付优先创建新订单或只复用足够新鲜的订单
-- 不影响安卓/公众号/H5/扫码支付现有逻辑
+**前端 React state**
+```text
+- showPayDialog                       → false（弹窗关闭）
+- miniProgramPayReturnSignal          → Date.now()（触发子组件 hard-reset effect）
+```
 
-我建议下一步直接按这个最小修复方案落地。
+**弹窗子组件（`AssessmentPayDialog.tsx:1326-1351`，由上面 signal 触发）**
+```text
+refs:  createOrderCalledRef / createOrderRetriedRef
+       / mpNativePayLaunchedRef / mpNativePayPageHiddenRef → false
+state: orderNo / mpPayParams / qrCodeDataUrl / payUrl    → 清空
+       status                                              → 'idle'
+poll:  stopPolling()（清 interval）
+```
+
+**后端（edge function）**
+```text
+cancel-pending-order:
+  orders.status: 'pending' → 'cancelled'
+  orders.updated_at: now()
+```
+
+### B. 再次点击「立即测评」要过的判断链
+
+```text
+点击立即测评
+   │
+   ▼
+handlePayClick()  ── WealthBlockAssessment.tsx:319
+   │
+   ├─ 微信浏览器 + 未登录？ → 触发 silent OAuth → 回跳后再 openWealthPayDialog()
+   │
+   └─ 否 → openWealthPayDialog()
+            │
+            ├─ 清 MP_PENDING_PAYMENT_DISMISSED_KEY / RESUME_GUARD_KEY
+            ├─ 是小程序？ → 清 STORAGE_KEY + POST_CANCEL_FLAG
+            │              + bump miniProgramPayReturnSignal
+            │              + bump payDialogInstanceKey（强制 remount）
+            └─ setShowPayDialog(true)
+                 │
+                 ▼
+           AssessmentPayDialog 挂载 / 重挂
+                 │
+                 ▼
+           openId 等待判断（line 199-201）
+              ├─ 小程序？      → shouldWaitForOpenId = false（不阻塞）
+              └─ 微信浏览器？  → 必须等到 openId 才放行
+                 │
+                 ▼
+           createOrder effect（line 1469）
+              条件：open && status==='idle'
+                  && !createOrderCalledRef.current
+                  && (!shouldWaitForOpenId || openIdResolved)
+                 │
+                 ▼
+           调用 supabase.functions.invoke('create-wechat-order'）
+              body 关键字段：
+                packageKey, amount, userId
+                payType: miniprogram | jsapi | h5 | native
+                openId（jsapi 必须）
+                isMiniProgram: true
+                forceNewOrder: true（小程序内永远 true）
+                 │
+                 ▼
+           edge function 返回 orderNo + 支付参数
+                 │
+        ┌────────┴────────┐
+        ▼                 ▼
+  小程序：跳原生支付页    微信浏览器：等 Bridge → invokeJsapiPay
+  （wx.miniProgram.       失败兜底 → native QR 扫码
+   navigateTo）
+                 │
+                 ▼
+   waitForNativePageTransition：监听 visibilitychange/pagehide/blur
+        ├─ 检测到页面真的离开 → status='polling' 显示「支付中」
+        └─ 2.6s 内没离开（iOS Bridge 假成功）→ status='mpLaunchFailed'，UI 仍可点击重试
+```
+
+### 关键卡点对照表
+
+| 阶段 | 阻断条件 | 出现症状 |
+|------|---------|---------|
+| openWealthPayDialog | `isMiniProgram` 检测失败 → 不 bump key | 复用旧弹窗实例，旧 ref 残留 |
+| openId 等待 | 微信浏览器 `openIdResolved=false` | 弹窗一直显示 loading |
+| createOrder effect | `createOrderCalledRef=true`（未清） | effect 不执行，无网络请求 |
+| edge function | `forceNewOrder=false` 且后端复用旧 prepay_id | 微信报"prepay_id 已用" |
+| Bridge 调起 | iOS `wx.miniProgram.navigateTo` 假成功 | 显示"支付中"但实际没拉起 |
+
+---
+
+## 建议下一步行动
+
+需要我做：
+1. **修 iOS toast 不显示**：在 `payment_fail=1` 分支用 `setTimeout(() => toast.info(...), 120)` 包一层，避开 React remount 同 tick；同时去掉 `forceCloseStaleMiniProgramDialog` 里那条会重复的 toast。
+2. **加可观测**：取消时落 `payment_cancelled` 事件到 `payment_flow_events`，方便后续核对 iOS/安卓行为是否一致。
+
+确认后切回执行模式实施。
+
