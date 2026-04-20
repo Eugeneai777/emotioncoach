@@ -175,13 +175,23 @@ export default function WealthBlockAssessmentPage() {
       newUrl.searchParams.delete('order');
       window.history.replaceState({}, '', newUrl.toString());
 
-      // 🔧 不再 bump key（避免组件 remount 强制 createOrder 产生大量 cancelled 订单）
-      // 直接复用现有弹窗实例：组件内部会从 sessionStorage 读 cached state 复用同一订单
+      // 🔧 关键修复：iOS 微信小程序取消支付后，旧 prepay_id / 旧 pending 订单极易卡住二次拉起
+      // 1) 立即清掉小程序支付参数缓存，避免下次"复用旧单"
+      // 2) 设置 post-cancel 标记，禁止 30 分钟内的 resume 自动复用旧单
+      // 3) 显式取消 dismissed/guard，让用户主动点"立即测评"时强制走全新订单链路
+      try {
+        sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+        sessionStorage.setItem(MP_POST_CANCEL_FLAG_KEY, '1');
+      } catch {
+        // ignore
+      }
       sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
       sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
       setMiniProgramPayReturnSignal(Date.now());
-      setShowPayDialog(true);
-      toast.info('支付已取消，可重新支付');
+      // 🔧 不自动重开支付弹窗：避免 iOS 回流后立即卡在 loading
+      // 由用户主动点击"立即测评"重新发起，弹窗会强制重建订单
+      setShowPayDialog(false);
+      toast.info('支付已取消，可重新发起支付');
     }
   }, [searchParams]);
 
@@ -191,6 +201,9 @@ export default function WealthBlockAssessmentPage() {
     const maybeResumeMiniProgramPayment = () => {
       try {
         if (showPayDialog) return;
+
+        // 🔧 取消支付后禁止自动 resume：用户必须主动点"立即测评"才会重新发起
+        if (sessionStorage.getItem(MP_POST_CANCEL_FLAG_KEY) === '1') return;
 
         const dismissedPackageKey = sessionStorage.getItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
         if (dismissedPackageKey === 'wealth_block_assessment') return;
@@ -209,7 +222,8 @@ export default function WealthBlockAssessmentPage() {
 
         if (cached.packageKey !== 'wealth_block_assessment' || !cached.orderNo) return;
 
-        const isExpired = !cached.updatedAt || Date.now() - cached.updatedAt > 30 * 60 * 1000;
+        // 🔧 缩短 resume 窗口至 3 分钟（与微信 prepay_id 5 分钟过期对齐，留 2 分钟余量）
+        const isExpired = !cached.updatedAt || Date.now() - cached.updatedAt > 3 * 60 * 1000;
         if (isExpired) {
           sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
           return;
