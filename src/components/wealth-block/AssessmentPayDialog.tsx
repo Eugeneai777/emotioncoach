@@ -1519,7 +1519,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                     if (mpRetrying) return;
                     setMpRetrying(true);
                     try {
-                      if (mpPayParams && orderNo) {
+                      // 检查缓存的支付参数是否仍在 4 分钟新鲜窗口内
+                      const cachedState = getCachedMiniProgramPaymentState(packageKey);
+                      const isFresh = isCachedPayParamsFresh(cachedState);
+
+                      if (mpPayParams && orderNo && isFresh) {
+                        // 参数仍新鲜：直接复用拉起
                         mpNativePayLaunchedRef.current = true;
                         mpNativePayPageHiddenRef.current = false;
                         setMpLaunchFailed(false);
@@ -1533,9 +1538,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                           setMpLaunchFailed(true);
                         }
                       } else {
+                        // 参数过期或缺失：丢弃缓存，重置状态触发 createOrder 重新创建订单
+                        console.log("[AssessmentPay] Pay params stale or missing, creating fresh order");
+                        clearCachedMiniProgramPaymentState(packageKey);
+                        setMpPayParams(null);
+                        setOrderNo("");
                         createOrderCalledRef.current = false;
                         setMpLaunchFailed(false);
                         setStatus("idle");
+                        toast.info("正在重新创建订单...");
                       }
                     } finally {
                       setTimeout(() => setMpRetrying(false), 1200);
