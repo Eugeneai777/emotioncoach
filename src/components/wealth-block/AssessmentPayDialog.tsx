@@ -49,11 +49,14 @@ interface CachedMiniProgramPaymentState {
 }
 
 // 微信侧 prepay_id 5 分钟过期，前端缓存留 1 分钟安全余量 = 4 分钟
+// iOS 微信小程序回流较慢，进一步缩短至 2 分钟，避免拿到接近过期的参数拉起失败
 const MP_PAY_PARAMS_TTL_MS = 4 * 60 * 1000;
+const MP_PAY_PARAMS_TTL_MS_IOS = 2 * 60 * 1000;
 
-const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null): boolean => {
+const isCachedPayParamsFresh = (state: CachedMiniProgramPaymentState | null, isIOS = false): boolean => {
   if (!state || !state.mpPayParams) return false;
-  return Date.now() - state.updatedAt < MP_PAY_PARAMS_TTL_MS;
+  const ttl = isIOS ? MP_PAY_PARAMS_TTL_MS_IOS : MP_PAY_PARAMS_TTL_MS;
+  return Date.now() - state.updatedAt < ttl;
 };
 
 const cacheMiniProgramPaymentState = (state: CachedMiniProgramPaymentState) => {
