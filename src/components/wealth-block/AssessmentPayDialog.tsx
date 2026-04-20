@@ -521,6 +521,48 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
     console.log("[MiniProgram] Triggering native pay", { orderNo: orderNumber, params, callbackUrl, failCallbackUrl });
 
+    const waitForNativePageTransition = () => {
+      return new Promise<boolean>((resolve) => {
+        let settled = false;
+        const finish = (ok: boolean) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve(ok);
+        };
+
+        const handleVisibility = () => {
+          if (document.visibilityState === "hidden") {
+            console.log("[MiniProgram] Detected document hidden after navigateTo");
+            finish(true);
+          }
+        };
+
+        const handlePageHide = () => {
+          console.log("[MiniProgram] Detected pagehide after navigateTo");
+          finish(true);
+        };
+
+        const handleBlur = () => {
+          console.log("[MiniProgram] Detected window blur after navigateTo");
+          finish(true);
+        };
+
+        const cleanup = () => {
+          document.removeEventListener("visibilitychange", handleVisibility);
+          window.removeEventListener("pagehide", handlePageHide);
+          window.removeEventListener("blur", handleBlur);
+        };
+
+        document.addEventListener("visibilitychange", handleVisibility);
+        window.addEventListener("pagehide", handlePageHide);
+        window.addEventListener("blur", handleBlur);
+
+        // Android 上 navigateTo success 基本可靠；iOS 必须等真实切页信号，避免“假成功”后卡 loading。
+        setTimeout(() => finish(!isIOS), isIOS ? 900 : 250);
+      });
+    };
+
     const MAX_ATTEMPTS = 3;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       // iOS 第二次调用 navigateTo 时，bridge 常因上次跳转未完全释放而失败；
@@ -551,7 +593,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                 url: payPageUrl,
                 success: (res: any) => {
                   console.log("[MiniProgram] navigateTo success:", res);
-                  finish(true);
+                  waitForNativePageTransition().then((transitioned) => {
+                    console.log("[MiniProgram] native page transition confirmed:", transitioned);
+                    finish(transitioned);
+                  });
                 },
                 fail: (err: any) => {
                   console.error("[MiniProgram] navigateTo fail:", err);
@@ -559,12 +604,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                 },
                 complete: (res: any) => {
                   console.log("[MiniProgram] navigateTo complete:", res);
-                  if (res?.errMsg && /:ok$/i.test(res.errMsg)) {
-                    finish(true);
+                  if (res?.errMsg && /:ok$/i.test(res.errMsg) && !settled) {
+                    waitForNativePageTransition().then((transitioned) => {
+                      console.log("[MiniProgram] native page transition confirmed from complete:", transitioned);
+                      finish(transitioned);
+                    });
                   }
                 },
               } as any);
-              setTimeout(() => finish(false), 1500);
+              setTimeout(() => finish(false), isIOS ? 2600 : 1500);
             } catch (err) {
               console.error(`[MiniProgram] navigateTo attempt ${attempt} threw:`, err);
               finish(false);
@@ -579,7 +627,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
       if (mp && typeof mp.postMessage === "function") {
         try {
-          console.warn(`[MiniProgram] attempt ${attempt}: navigateTo unavailable, trying postMessage`);
+          console.warn(`[MiniProgram] attempt ${attempt}: navigateTo unavailable, sending postMessage only for diagnostics`);
           mp.postMessage({
             data: {
               type: "MINIPROGRAM_NAVIGATE_PAY",
@@ -588,10 +636,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
               callbackUrl,
             },
           });
-          if (attempt === MAX_ATTEMPTS) {
-            toast.info("请点击右上角菜单返回小程序完成支付");
-          }
-          return true;
         } catch (err) {
           console.error(`[MiniProgram] postMessage attempt ${attempt} failed:`, err);
         }
@@ -607,7 +651,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     setStatus("error");
     setErrorMessage("请稍后重试");
     return false;
-  }, []);
+  }, [isIOS]);
 
   // 创建订单（带超时处理）
   const createOrder = async () => {
