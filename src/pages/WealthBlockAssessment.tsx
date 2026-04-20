@@ -40,6 +40,8 @@ export default function WealthBlockAssessmentPage() {
   const isMiniProgram = isWeChatMiniProgram();
   
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "assessment");
+  // 🔧 标记本会话已发生过取消支付：禁止后续 resume 复用旧 pending 订单 / 旧 prepay_id
+  const MP_POST_CANCEL_FLAG_KEY = 'wealth_assessment_mp_post_cancel';
   const [showIntro, setShowIntro] = useState(true);
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
