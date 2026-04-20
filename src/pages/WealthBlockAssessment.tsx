@@ -28,6 +28,7 @@ import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDia
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
+import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
 const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
@@ -209,7 +210,23 @@ export default function WealthBlockAssessmentPage() {
           .catch((err) => console.warn('[WealthBlock] cancel-pending-order threw:', err));
       }
 
-      toast.info('支付已取消，可重新发起支付');
+      // 🆕 落库 payment_cancelled 事件，用于核对 iOS/安卓行为差异
+      trackPaymentEvent('payment_cancelled', {
+        metadata: {
+          source: 'payment_fail_redirect',
+          orderNo: orderNo || null,
+          packageKey: 'wealth_block_assessment',
+          ua: navigator.userAgent.slice(0, 200),
+        },
+      });
+
+      // 🔧 iOS 修复：toast 必须延迟到下一帧后再触发，避开 payDialogInstanceKey bump
+      // 导致的 React 同 tick remount 把 <Toaster> 容器吞掉的问题
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          toast.info('支付已取消，可重新发起支付');
+        }, 120);
+      });
     }
   }, [searchParams]);
 
