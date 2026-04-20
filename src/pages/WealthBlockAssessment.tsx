@@ -55,6 +55,7 @@ export default function WealthBlockAssessmentPage() {
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payDialogInstanceKey, setPayDialogInstanceKey] = useState(0);
+  const [miniProgramPayReturnSignal, setMiniProgramPayReturnSignal] = useState(0);
   // 正在跳转微信授权中
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
   
@@ -176,6 +177,7 @@ export default function WealthBlockAssessmentPage() {
       // 直接复用现有弹窗实例：组件内部会从 sessionStorage 读 cached state 复用同一订单
       sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
       sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
+      setMiniProgramPayReturnSignal(Date.now());
       setShowPayDialog(true);
       toast.info('支付已取消，可重新支付');
     }
@@ -989,6 +991,7 @@ export default function WealthBlockAssessmentPage() {
       <AssessmentPayDialog
         key={payDialogInstanceKey}
         open={showPayDialog}
+        miniProgramPayReturnSignal={miniProgramPayReturnSignal}
         onOpenChange={(open) => {
           console.log('[WealthBlock] PayDialog onOpenChange:', open);
           if (open) {
