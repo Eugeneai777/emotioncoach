@@ -1380,7 +1380,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     if (!open || !isMiniProgram || status !== "idle") return;
 
     // 🔧 取消支付后由父级 bump 的 signal：禁止从缓存恢复，强制走 createOrder
-    if (miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastProcessedReturnSignalRef.current) {
+    if (miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastForcedNewOrderSignalRef.current) {
       console.log("[AssessmentPayDialog] Post-cancel signal active, skipping cache restore");
       clearCachedMiniProgramPaymentState(packageKey);
       return;

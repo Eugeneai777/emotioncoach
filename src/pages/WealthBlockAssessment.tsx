@@ -292,6 +292,7 @@ export default function WealthBlockAssessmentPage() {
       sessionStorage.removeItem(MP_POST_CANCEL_FLAG_KEY);
       // 用 signal 通知弹窗：本次打开必须强制创建新订单
       setMiniProgramPayReturnSignal(Date.now());
+      setPayDialogInstanceKey((prev) => prev + 1);
     }
     setShowPayDialog(true);
   };
