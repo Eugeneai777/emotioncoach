@@ -744,6 +744,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
       const effectiveOpenId = selectedPayType === "miniprogram" ? resolvedMiniProgramOpenId : userOpenId;
 
+      // 🔧 若收到 post-cancel signal，要求后端跳过 pending 订单复用，强制开新单
+      const forceNewOrder = !!miniProgramPayReturnSignal && miniProgramPayReturnSignal !== lastProcessedReturnSignalRef.current;
+      if (forceNewOrder) {
+        lastProcessedReturnSignalRef.current = miniProgramPayReturnSignal;
+        console.log("[AssessmentPay] forceNewOrder=true (post-cancel retry)");
+      }
+
       const { data, error } = await supabase.functions.invoke("create-wechat-order", {
         body: {
           packageKey: packageKey,
@@ -753,6 +760,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           payType: selectedPayType,
           openId: needsOpenId ? effectiveOpenId : undefined,
           isMiniProgram: isMiniProgram,
+          forceNewOrder,
         },
       });
 
