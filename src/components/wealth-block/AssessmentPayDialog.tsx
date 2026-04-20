@@ -1294,20 +1294,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     if (miniProgramPayReturnSignal === lastHandledReturnSignalRef.current) return;
     lastHandledReturnSignalRef.current = miniProgramPayReturnSignal;
 
-    console.log("[AssessmentPay] MiniProgram returned with payment_fail, switching to retry state");
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
+    console.log("[AssessmentPay] MiniProgram returned with payment_fail, full reset for fresh order");
+    // 🆕 全量清理内部 refs + 缓存 + 旧订单参数：保证下一轮 createOrder 100% 走全新订单链路
+    stopPolling();
     mpNativePayLaunchedRef.current = false;
     mpNativePayPageHiddenRef.current = false;
+    createOrderCalledRef.current = false;
+    createOrderRetriedRef.current = false;
     setIsForceChecking(false);
-    setMpLaunchFailed(true);
+    setMpLaunchFailed(false);
+    setOrderNo("");
+    setMpPayParams(null);
+    setQrCodeDataUrl("");
+    setPayUrl("");
+    clearCachedMiniProgramPaymentState(packageKey);
     setStatus((currentStatus) => {
       if (currentStatus === "paid" || currentStatus === "registering") return currentStatus;
-      return "pending";
+      return "idle";
     });
-  }, [miniProgramPayReturnSignal, open, isMiniProgram]);
+  }, [miniProgramPayReturnSignal, open, isMiniProgram, packageKey]);
 
   useEffect(() => {
     if (!isMiniProgram) return;

@@ -175,10 +175,11 @@ export default function WealthBlockAssessmentPage() {
       newUrl.searchParams.delete('order');
       window.history.replaceState({}, '', newUrl.toString());
 
-      // 🔧 关键修复：iOS 微信小程序取消支付后，旧 prepay_id / 旧 pending 订单极易卡住二次拉起
+      // 🔧 关键修复：iOS/安卓 微信小程序取消支付后，旧 prepay_id / 旧 pending 订单极易卡住二次拉起
       // 1) 立即清掉小程序支付参数缓存，避免下次"复用旧单"
-      // 2) 设置 post-cancel 标记，禁止 30 分钟内的 resume 自动复用旧单
+      // 2) 设置 post-cancel 标记，禁止后续的 resume 自动复用旧单
       // 3) 显式取消 dismissed/guard，让用户主动点"立即测评"时强制走全新订单链路
+      // 4) 🆕 同步调用后端 cancel-pending-order，关掉数据库里的 pending 订单（前后端一致）
       try {
         sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
         sessionStorage.setItem(MP_POST_CANCEL_FLAG_KEY, '1');
@@ -191,6 +192,23 @@ export default function WealthBlockAssessmentPage() {
       // 🔧 不自动重开支付弹窗：避免 iOS 回流后立即卡在 loading
       // 由用户主动点击"立即测评"重新发起，弹窗会强制重建订单
       setShowPayDialog(false);
+
+      // 🆕 后端关单（fire-and-forget；失败不阻塞 UI，因为下次 createOrder 会强制 skipReuse）
+      if (orderNo) {
+        supabase.functions
+          .invoke('cancel-pending-order', {
+            body: { orderNo, packageKey: 'wealth_block_assessment' },
+          })
+          .then(({ data, error }) => {
+            if (error) {
+              console.warn('[WealthBlock] cancel-pending-order failed:', error);
+            } else {
+              console.log('[WealthBlock] cancel-pending-order ok:', data);
+            }
+          })
+          .catch((err) => console.warn('[WealthBlock] cancel-pending-order threw:', err));
+      }
+
       toast.info('支付已取消，可重新发起支付');
     }
   }, [searchParams]);
@@ -282,15 +300,15 @@ export default function WealthBlockAssessmentPage() {
   };
 
   const openWealthPayDialog = () => {
-    // 用户主动打开：清理 dismissed/guard，复用现有弹窗实例（内部会从缓存恢复 pending 订单）
+    // 用户主动打开：清理 dismissed/guard
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
-    // 🔧 用户主动点击 = 允许重新发起；同时强制清理过期支付参数缓存，让弹窗走"全新订单"链路
-    if (sessionStorage.getItem(MP_POST_CANCEL_FLAG_KEY) === '1') {
-      console.log('[WealthBlock] User retry after cancel: clearing stale mp pay cache');
+    // 🔧 小程序内：每次主动点击都强制重建弹窗实例 + 清理任何残留缓存，保证“全新订单”链路
+    // 不再依赖脆弱的 MP_POST_CANCEL_FLAG_KEY，规避 iOS pageshow 时序竞态
+    if (isMiniProgram) {
+      console.log('[WealthBlock] MP user click: hard-reset mp pay cache and remount dialog');
       sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
       sessionStorage.removeItem(MP_POST_CANCEL_FLAG_KEY);
-      // 用 signal 通知弹窗：本次打开必须强制创建新订单
       setMiniProgramPayReturnSignal(Date.now());
       setPayDialogInstanceKey((prev) => prev + 1);
     }
