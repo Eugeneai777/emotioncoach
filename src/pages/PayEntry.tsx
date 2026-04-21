@@ -223,14 +223,32 @@ export default function PayEntry() {
     navigate('/');
   };
 
-  // 如果正在处理支付授权回调，显示处理中
+  // 如果正在处理支付授权回调，显示步骤化进度，避免用户误以为卡死
   if (isPaymentAuthCallback) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm">
-          <CardContent className="p-8 text-center">
-            <Loader2 className="w-10 h-10 text-teal-500 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">正在处理授权...</p>
+        <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm border-teal-100">
+          <CardContent className="p-8 text-center space-y-5">
+            <Loader2 className="w-12 h-12 text-teal-500 animate-spin mx-auto" />
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-teal-800">正在完成微信授权</h3>
+              <p className="text-sm text-muted-foreground">即将自动登录并打开支付，无需手动操作</p>
+            </div>
+            <div className="space-y-2 text-left text-sm">
+              <div className="flex items-center gap-2 text-teal-700">
+                <span className="w-5 h-5 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center">✓</span>
+                <span>微信授权已通过</span>
+              </div>
+              <div className="flex items-center gap-2 text-teal-700">
+                <span className="w-5 h-5 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center animate-pulse">2</span>
+                <span>正在换取登录凭证...</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center">3</span>
+                <span>返回页面打开支付</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground/70">通常需 3–5 秒，首次授权稍长</p>
           </CardContent>
         </Card>
       </div>
