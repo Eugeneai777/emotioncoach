@@ -391,12 +391,36 @@ export default function BecomeCoach() {
       >
         <PageHeader title="申请成为教练" showBack />
 
-        {invitationData && (
+        {invitationData && !existingCoach && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
               ✨ 您已收到教练入驻邀请
               {invitationData.invitee_name && `（${invitationData.invitee_name}）`}
               ，请填写以下资料完成申请
+            </div>
+          </div>
+        )}
+
+        {existingCoach?.status === "pending" && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+              ⏳ 您的申请正在审核中，编辑后将重新排队，预计 1-2 个工作日反馈。
+            </div>
+          </div>
+        )}
+
+        {existingCoach?.status === "approved" && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              ✅ 您已通过认证。修改资料需重新审核，期间已上线的预约不受影响。
+            </div>
+          </div>
+        )}
+
+        {existingCoach?.status === "rejected" && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              ❌ 上次审核未通过{existingCoach.admin_note ? `：${existingCoach.admin_note}` : ""}，请补充资料后重新提交。
             </div>
           </div>
         )}
