@@ -161,6 +161,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
   const [isRepaying, setIsRepaying] = useState(false);
   const closeInProgressRef = useRef(false);
+  const dialogOpenRef = useRef(open);
+  const paymentSessionIdRef = useRef(0);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
@@ -202,6 +204,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   // 检测是否为安卓设备
   const isAndroid = /Android/i.test(navigator.userAgent);
+
+  const isPaymentSessionActive = useCallback((sessionId: number) => {
+    return dialogOpenRef.current && paymentSessionIdRef.current === sessionId && !closeInProgressRef.current;
+  }, []);
+
+  useEffect(() => {
+    dialogOpenRef.current = open;
+    paymentSessionIdRef.current += 1;
+    if (open) {
+      closeInProgressRef.current = false;
+    }
+  }, [open]);
 
   // 优化后的 WeixinJSBridge 等待逻辑：安卓缩短为 500ms，iOS 保持 1.5 秒
   const waitForWeixinJSBridge = useCallback(
@@ -651,6 +665,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   // 创建订单（带超时处理）
   const createOrder = async () => {
+    const sessionId = paymentSessionIdRef.current;
+    if (!isPaymentSessionActive(sessionId)) return;
+
     console.log(
       "[AssessmentPay] createOrder called, userId:",
       userId,
@@ -677,6 +694,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           .maybeSingle();
 
         if (existingOrder) {
+          if (!isPaymentSessionActive(sessionId)) return;
           console.log('[AssessmentPay] User already purchased, skipping payment');
           toast.success('您已购买过测评，直接开始！');
           onSuccess(userId);
@@ -692,6 +710,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     // ⚠️ 小程序场景：不再等待 openId，直接创建订单，由小程序原生页面获取 openId 并完成支付
     // postMessage 无法实时通信，所以不能依赖它获取 openId
 
+    if (!isPaymentSessionActive(sessionId)) return;
     setStatus("creating");
     setErrorMessage("");
 
