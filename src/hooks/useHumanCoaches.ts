@@ -28,6 +28,8 @@ export interface HumanCoach {
   intro_video_url: string | null;
   case_studies: any[];
   created_at: string;
+  price_tier_id?: string | null;
+  price_tier?: { price: number; tier_name: string } | null;
 }
 
 export interface CoachService {
