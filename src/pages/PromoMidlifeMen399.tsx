@@ -1,26 +1,32 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, ArrowUpRight, Pill, Truck } from "lucide-react";
+import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, Pill, Truck, EyeOff, Clock, Gem, ChevronDown } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { useAuth } from "@/hooks/useAuth";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 /**
- * 中年男性 ¥399 体验营 售前页
+ * 中年男性 ¥399 体验营 售前页（v2 · 8 段精简版）
  * 路由：/promo/midlife-men-399
  * 复用 camp-emotion_stress_7 (¥399 / 7 天)
- * 与 /promo/midlife-men-3980 形成 399 → 3980 转化闭环
+ * 已删除升舱模块，聚焦"低门槛单品"心智
  */
 
 const PACKAGE_KEY = "camp-emotion_stress_7";
 const RETURN_URL = "/promo/midlife-men-399";
+const TOTAL_SECTIONS = 8;
 
-// 与 3980 页一致的设计 token，色温稍亮（多用暖金）
 const C = {
   bg: "#0f0f0f",
   bgSoft: "#1a1a1a",
@@ -37,7 +43,7 @@ const serif = { fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif' };
 
 function Section({
   index,
-  total = 9,
+  total = TOTAL_SECTIONS,
   eyebrow,
   title,
   children,
@@ -100,15 +106,14 @@ export default function PromoMidlifeMen399() {
   };
 
   const handleConsult = () => navigate("/customer-support");
-  const handleUpsell = () => navigate("/promo/midlife-men-3980");
 
   return (
     <div className="min-h-screen w-full" style={{ background: C.bg, color: C.text }}>
       <Helmet>
-        <title>38–55 男人私下试听体验营 ¥399 | 有劲 ✕ 施强健康</title>
+        <title>40 岁以后，有些事不该一个人扛着 ｜ 7 天私下试听 ¥399</title>
         <meta
           name="description"
-          content="一杯酒钱，先和同龄人坐下来聊一次。海沃塔团队教练 + 每日冥想 + AI 男士教练，7 天私下试听。学费可全额抵扣 ¥3980 闭门修复计划。"
+          content="38–55 岁男人专属 7 天身心舒展计划。海沃塔团队对话 + 知乐胶囊 + AI 男士教练 + 私密社群。一杯酒钱，没人会知道你来过。"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Helmet>
@@ -123,26 +128,24 @@ export default function PromoMidlifeMen399() {
           <p className="text-xs tracking-[0.4em] mb-5" style={{ color: C.gold }}>
             FOR&nbsp;MEN&nbsp;38–55&nbsp;·&nbsp;7&nbsp;DAYS
           </p>
-          <h1 className="text-[28px] leading-[1.4] font-bold mb-4" style={{ ...serif, color: C.text }}>
-            40 岁以后那点
+          <h1 className="text-[30px] leading-[1.4] font-bold mb-4" style={{ ...serif, color: C.text }}>
+            40 岁以后，
             <br />
-            「难言之隐」
+            <span style={{ color: C.gold }}>有些事</span>
             <br />
-            <span style={{ color: C.gold }}>愿意花一杯酒钱</span>
-            <br />
-            先和同龄人聊一次吗？
+            不该一个人扛着。
           </h1>
           <p className="text-[14px] leading-[1.85] mb-6" style={{ color: C.textMute }}>
-            中年男性「私下试听」体验营
+            38–55 岁男人的 7 天私下试听
             <br />
-            38–55 岁 · 7 天 · 一次没人知道的内部对话
+            没人会知道你来过
           </p>
           <div
             className="inline-flex items-center gap-2 text-[12px] px-4 py-2 rounded-full"
             style={{ border: `1px solid ${C.divider}`, color: C.goldSoft }}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            施强健康 ✕ 有劲AI · 仅限本期 · ¥{price}
+            施强健康 ✕ 有劲AI · 本期专属体验价 ¥{price}
           </div>
           <div
             className="absolute inset-x-0 bottom-0 h-[1px]"
@@ -168,48 +171,33 @@ export default function PromoMidlifeMen399() {
           </ul>
         </Section>
 
-        {/* ============ 03 体验营定位 ============ */}
-        <Section index={3} eyebrow="¥399 体验营要做的只有一件事" title="我们不教知识，我们陪你「敢面对」">
-          <div className="space-y-4 text-[15px] leading-[1.85]" style={{ color: C.text }}>
-            <p style={{ color: C.textMute }}>
-              很多中年男人不是不知道问题，
-              <br />
-              是不敢承认问题、不知道找谁问、不知道下一步往哪走。
-            </p>
-            <p>
-              让你在 7 天里，第一次坐进一个
-              <span style={{ color: C.gold }}>「全是同龄男人」</span>
-              的小房间，
-              <br />
-              把咽了很久的那句话，<span style={{ color: C.gold }}>安全地说出口</span>。
-            </p>
-            <p style={{ color: C.textMute }}>
-              身体的事 —— 先有人懂你，再谈怎么解决。
-            </p>
-          </div>
-        </Section>
-
-        {/* ============ 04 7 天交付路径 ============ */}
-        <Section index={4} eyebrow="7 天交付 · 海沃塔团队教练制" title="不是听课，是被听见">
+        {/* ============ 03 7 天你会拿到什么 · 核心权益 ============ */}
+        <Section index={3} eyebrow="7 天你会拿到什么" title="4 件事，按男人最在意的顺序排">
           <div className="space-y-4">
             {[
               {
                 Icon: Users,
-                tag: "2 场 · 海沃塔团队对话",
-                title: "同龄 6–8 人小组 · 每场 75 分钟",
+                tag: "核心权益 01 · 海沃塔团队对话",
+                title: "1 场同龄 6–8 人小组 · 教练带场",
                 desc: "在教练带领下，和同龄男人 1 对 1 配对深度对话。不是被讲话，是被听见。",
               },
               {
-                Icon: Wind,
-                tag: "7 天 · 每日「男人静心」冥想",
-                title: "真人录制 · 每段 10 分钟",
-                desc: "睡前 / 通勤随时听。把绷紧的身体，先松开一寸。",
+                Icon: Pill,
+                tag: "核心权益 02 · 1 瓶知乐胶囊体验装",
+                title: "顺丰到家 · 身体兜底",
+                desc: "GABA + L-茶氨酸 + 酸枣仁 + 镁。白天稳情绪，晚上沉得住睡眠。0 褪黑素，不依赖。",
               },
               {
-                Icon: Bot,
-                tag: "7 天 · AI 男士专属教练",
-                title: "24h 陪伴 · 不必脸红",
-                desc: "深夜也能问。不留对话记录，仅你与教练可见。",
+                Icon: Wind,
+                tag: "核心权益 03 · 每日男人静心 + 24h AI 教练",
+                title: "真人录制 10 分钟冥想 · 深夜也能问",
+                desc: "睡前 / 通勤随时听。AI 男士教练 24h 在线，不留对话记录，仅你与教练可见。",
+              },
+              {
+                Icon: Users,
+                tag: "核心权益 04 · 中年男性专属社群",
+                title: "7 天体验席位 · 实名审核",
+                desc: "全是 38–55 岁同龄男人。不进朋友圈，不被同事看到，安全说话的地方。",
               },
             ].map((card, i) => (
               <div
@@ -232,42 +220,6 @@ export default function PromoMidlifeMen399() {
               </div>
             ))}
 
-            {/* 第 4 张：知乐胶囊（实物交付） */}
-            <div
-              className="p-5 rounded-xl relative"
-              style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
-            >
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <Pill className="w-4 h-4" style={{ color: C.gold }} />
-                  <p className="text-[11px] tracking-[0.2em]" style={{ color: C.gold }}>
-                    1 瓶 · 知乐胶囊（30 粒装）
-                  </p>
-                </div>
-                <span
-                  className="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap"
-                  style={{
-                    background: `${C.wine}4D`,
-                    color: C.gold,
-                    border: `1px solid ${C.gold}66`,
-                  }}
-                >
-                  已含在 ¥399 体验营内
-                </span>
-              </div>
-              <h3 className="text-[16px] font-semibold mb-1" style={{ ...serif, color: C.text }}>
-                7 天体验装 · 随营寄出
-              </h3>
-              <p className="text-[13px] leading-[1.75] mb-3" style={{ color: C.textMute }}>
-                白天稳住情绪、晚上沉得住睡眠的「身体兜底」。
-              </p>
-              <ul className="space-y-2 text-[13px] leading-[1.7]" style={{ color: "rgba(236,231,220,0.82)" }}>
-                <li>🌿 GABA + L-茶氨酸：缓解工作日「绷着的那根弦」</li>
-                <li>🌙 酸枣仁 + 镁：帮 40+ 男士拿回深度睡眠</li>
-                <li>💊 0 褪黑素 / 不依赖：起床清醒、不昏沉</li>
-              </ul>
-            </div>
-
             <div
               className="flex items-start gap-2 px-4 py-3 rounded-lg"
               style={{ background: "rgba(212,180,129,0.06)", border: `1px dashed ${C.divider}` }}
@@ -277,36 +229,103 @@ export default function PromoMidlifeMen399() {
                 实物由「有劲生活馆」统一发货 · 顺丰包邮 · 下单后 48h 内寄出
               </p>
             </div>
-
-            <p className="text-[12px] text-center pt-2" style={{ color: C.goldSoft }}>
-              全程匿名 · 不留观看痕迹 · 不进朋友圈
-            </p>
           </div>
         </Section>
 
-        {/* ============ 05 ¥399 权益清单 ============ */}
-        <Section index={5} eyebrow="¥399 你拿到的，不只是 7 天" title="一杯酒钱，换一次安全地「被同类听见」">
-          <div
-            className="p-5 rounded-xl space-y-3.5"
-            style={{ background: C.bgCard, border: `1.5px solid ${C.gold}` }}
-          >
+        {/* ============ 04 选择我们的 3 大核心优势 ============ */}
+        <Section index={4} eyebrow="选择我们的 3 大核心优势" title="为什么是这 ¥399，而不是其他">
+          <div className="space-y-4">
             {[
-              "2 场海沃塔团队教练直播对话（小组制 · 同龄同状态）",
-              "7 天每日男人静心引导冥想（真人录音 · 私密回放）",
-              "AI 男士专属教练 7 天无限对话",
-              "1 瓶知乐胶囊（7 天体验装 · 顺丰包邮到家）",
-              "中年男人专属社群 7 天体验席位（实名审核）",
-              "1 份《男人 40 自检手册》电子版（PDF · 私密下载）",
-              "1 次顾问 1v1 文字咨询（15 分钟 · 不留记录）",
-            ].map((line, i) => (
+              {
+                Icon: EyeOff,
+                title: "极致隐私保护",
+                points: ["全程匿名 · 不留浏览痕迹", "不进朋友圈 · 不被同事知道", "课程链接绑定账号 · 不可转发"],
+              },
+              {
+                Icon: Clock,
+                title: "轻量化无负担",
+                points: ["每天 15 分钟碎片时间", "不耽误工作和应酬", "支持回放 · 随时补课"],
+              },
+              {
+                Icon: Gem,
+                title: "高性价比体验",
+                points: [
+                  "专业教练 + AI 陪伴 + 实物胶囊 + 社群",
+                  "一杯酒钱拿到 ¥3,980 闭门计划同款核心",
+                  "7 天无理由全额退款",
+                ],
+              },
+            ].map((adv, i) => (
+              <div
+                key={i}
+                className="p-5 rounded-xl"
+                style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
+              >
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(212,180,129,0.12)", border: `1px solid ${C.divider}` }}
+                  >
+                    <adv.Icon className="w-4 h-4" style={{ color: C.gold }} />
+                  </div>
+                  <h3 className="text-[16px] font-semibold" style={{ ...serif, color: C.text }}>
+                    优势 {i + 1} · {adv.title}
+                  </h3>
+                </div>
+                <ul className="space-y-1.5 pl-1">
+                  {adv.points.map((p, j) => (
+                    <li key={j} className="text-[13px] leading-[1.75] flex gap-2" style={{ color: C.textMute }}>
+                      <span style={{ color: C.gold }}>·</span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* ============ 05 信任保障 ============ */}
+        <Section index={5} eyebrow="我们懂你的在意" title="5 条不可妥协的隐私承诺">
+          {/* 顶部承诺徽章带 */}
+          <div
+            className="flex items-center justify-around gap-2 mb-5 p-3 rounded-xl"
+            style={{ background: "rgba(212,180,129,0.06)", border: `1px solid ${C.divider}` }}
+          >
+            <div className="text-center flex-1">
+              <p className="text-[15px] font-bold" style={{ ...serif, color: C.gold }}>30 天</p>
+              <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>无理由退款</p>
+            </div>
+            <div className="w-px h-8" style={{ background: C.divider }} />
+            <div className="text-center flex-1">
+              <p className="text-[15px] font-bold" style={{ ...serif, color: C.gold }}>22 年</p>
+              <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>施强健康背书</p>
+            </div>
+            <div className="w-px h-8" style={{ background: C.divider }} />
+            <div className="text-center flex-1">
+              <p className="text-[15px] font-bold" style={{ ...serif, color: C.gold }}>0</p>
+              <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>朋友圈曝光</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { t: "海沃塔小组实名审核", d: "仅限同龄男性 · 全程不录像不外传" },
+              { t: "课程链接仅本人可看", d: "不可分享转发，链接绑定账号" },
+              { t: "1v1 沟通仅你与教练可见", d: "平台不留对话记录" },
+              { t: "30 天无理由全额退款", d: "不满意，原路退回，无需理由" },
+              { t: "施强健康 22 年背书", d: "男性健康服务专业资质" },
+            ].map((p, i) => (
               <div key={i} className="flex gap-3 items-start">
-                <span
-                  className="mt-1 w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 font-bold"
-                  style={{ background: C.gold, color: C.bgSoft }}
-                >
-                  ✓
-                </span>
-                <span className="text-[14px] leading-[1.75]">{line}</span>
+                <Lock className="w-4 h-4 mt-1 shrink-0" style={{ color: C.gold }} />
+                <div>
+                  <p className="text-[14px] font-semibold mb-0.5" style={{ color: C.text }}>
+                    {p.t}
+                  </p>
+                  <p className="text-[12px]" style={{ color: C.textMute }}>
+                    {p.d}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -326,7 +345,7 @@ export default function PromoMidlifeMen399() {
               },
               {
                 name: "李先生 · 41 岁 · 销售总监",
-                quote: "体验营 7 天结束我直接报了 3980 那期 —— 因为我知道这件事值得正经处理一次。",
+                quote: "每天 15 分钟，不耽误应酬。但 7 天下来，是这两年第一次睡得踏实。",
               },
             ].map((t, i) => (
               <div
@@ -345,129 +364,63 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 07 隐私承诺 ============ */}
-        <Section index={7} eyebrow="我们承诺的，不只是内容" title="5 条不可妥协的隐私承诺">
-          <div className="space-y-3">
-            {[
-              { t: "海沃塔小组实名审核", d: "仅限同龄男性 · 全程不录像不外传" },
-              { t: "课程链接仅本人可看", d: "不可分享转发，链接绑定账号" },
-              { t: "1v1 沟通仅你与教练可见", d: "平台不留对话记录" },
-              { t: "7 天无理由全额退款", d: "不满意，原路退回，无需理由" },
-              { t: "施强健康 22 年背书", d: "男性健康服务专业资质" },
-            ].map((p, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <Lock className="w-4 h-4 mt-1 shrink-0" style={{ color: C.gold }} />
-                <div>
-                  <p className="text-[14px] font-semibold mb-0.5" style={{ color: C.text }}>
-                    {p.t}
-                  </p>
-                  <p className="text-[12px]" style={{ color: C.textMute }}>
-                    {p.d}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* ============ 08 升舱钩子 → 3980 ============ */}
-        <Section index={8} eyebrow="如果 7 天后你想「正经处理」这件事" title="完赛即解锁「老学员专属通道」">
+        {/* ============ 07 FAQ ============ */}
+        <Section index={7} eyebrow="解决最后顾虑" title="你可能想问的 4 个问题">
           <div
-            className="p-5 rounded-xl space-y-4"
-            style={{
-              background: `linear-gradient(160deg, ${C.bgCard} 0%, #2a2520 100%)`,
-              border: `1.5px solid ${C.gold}`,
-            }}
+            className="rounded-xl overflow-hidden"
+            style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
           >
-            {/* 顶部叙事 */}
-            <p className="text-[14px] leading-[1.85]" style={{ color: C.text }}>
-              ¥399 体验营，是
-              <span style={{ color: C.gold }}>「中年男性闭门修复计划」</span>
-              的入场资格筛选。
-              <br />
-              完赛学员，进入 <span style={{ color: C.gold }}>200 人老学员通道</span>。
-            </p>
-
-            {/* 极简流程图 */}
-            <div
-              className="flex items-center justify-between gap-1 py-2.5 px-1 rounded-lg text-center"
-              style={{ background: "rgba(212,180,129,0.06)", border: `1px dashed ${C.divider}` }}
-            >
+            <Accordion type="single" collapsible className="w-full">
               {[
-                { t: "完赛 ¥399", s: "入场" },
-                { t: "¥800 资格券", s: "承诺" },
-                { t: "¥3,980 抢订", s: "锁席" },
-              ].map((s, i, arr) => (
-                <Fragment key={i}>
-                  <div className="flex-1">
-                    <p className="text-[11.5px] font-semibold" style={{ color: C.gold }}>{s.t}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: C.textMute }}>{s.s}</p>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <span style={{ color: C.gold, fontSize: 12 }}>→</span>
-                  )}
-                </Fragment>
+                {
+                  q: "课程线上还是线下？时间怎么安排？",
+                  a: "全程线上。海沃塔团队对话固定 1 场（晚上 8 点开播，约 75 分钟），错过支持回放。每日冥想和 AI 教练 24h 随时用，每天约 15 分钟，不耽误工作和应酬。",
+                },
+                {
+                  q: "AI 教练随时能聊吗？真人教练会一对一回应吗？",
+                  a: "AI 男士教练 24h 在线，深夜也能问，不留浏览记录。海沃塔场内由真人总教练带场。报名后专属顾问会加你单独沟通入营事项，全流程不打官腔。",
+                },
+                {
+                  q: "报名后怎么开始？需要自己摸索吗？",
+                  a: "完全不用。付款后专人 1v1 对接：① 加入私密社群 ② 发送课程链接（绑定账号） ③ 48h 内顺丰寄出知乐胶囊。开营前一天会有提醒，跟着节奏走就行。",
+                },
+                {
+                  q: "我的家人 / 同事会知道吗？",
+                  a: "不会。全程匿名昵称，社群实名审核仅平台后台可见。课程链接不可转发，绑定你的账号。物流外包装无任何敏感字样，由「有劲生活馆」名义寄出。",
+                },
+              ].map((item, i, arr) => (
+                <AccordionItem
+                  key={i}
+                  value={`faq-${i}`}
+                  className={i === arr.length - 1 ? "border-b-0" : ""}
+                  style={{ borderColor: C.divider }}
+                >
+                  <AccordionTrigger
+                    className="px-4 py-4 text-left text-[14px] hover:no-underline"
+                    style={{ color: C.text }}
+                  >
+                    <span className="pr-2 flex-1">Q{i + 1} · {item.q}</span>
+                  </AccordionTrigger>
+                  <AccordionContent
+                    className="px-4 pb-4 text-[13px] leading-[1.85]"
+                    style={{ color: C.textMute }}
+                  >
+                    {item.a}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
-
-            {/* 价格阶梯表 */}
-            <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.divider}` }}>
-              <div className="flex items-center justify-between px-3.5 py-2.5" style={{ background: "rgba(0,0,0,0.15)" }}>
-                <span className="text-[12.5px]" style={{ color: C.textMute }}>闭门修复计划 · 公开报价</span>
-                <span className="text-[14px] line-through" style={{ color: "rgba(232,227,216,0.5)" }}>¥4,180</span>
-              </div>
-              <div className="flex items-center justify-between px-3.5 py-2.5 border-t" style={{ borderColor: C.divider }}>
-                <span className="text-[12.5px]" style={{ color: C.textMute }}>老学员资格券</span>
-                <span className="text-[12.5px]" style={{ color: C.text }}>¥800 购 ¥1,000</span>
-              </div>
-              <div
-                className="flex items-end justify-between px-3.5 py-3 border-t"
-                style={{ borderColor: C.divider, background: "rgba(212,180,129,0.08)" }}
-              >
-                <div>
-                  <p className="text-[12.5px]" style={{ color: C.gold }}>你的实际抢订价</p>
-                  <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>省 ¥200 + 优先锁席</p>
-                </div>
-                <span style={{ color: C.gold, fontSize: 22, fontWeight: 700, ...serif }}>¥3,980</span>
-              </div>
-            </div>
-
-            {/* 三条权益 */}
-            <div className="space-y-2.5 pt-1">
-              {[
-                "完赛即获 老学员资格券购买权（¥800 → ¥1,000 抵扣）",
-                "优先锁定本期 200 个限定席位（不公开报名）",
-                "由总教练 1 对 1 路径定制（先评估，后入营）",
-              ].map((line, i) => (
-                <div key={i} className="flex gap-2.5 items-start">
-                  <span style={{ color: C.gold, fontSize: 13 }}>✓</span>
-                  <span className="text-[13.5px] leading-[1.7]">{line}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* 底部金句 */}
-            <div className="pt-3 space-y-1 text-[12px] border-t" style={{ borderColor: C.divider, color: C.textMute }}>
-              <p>—— ¥399，是诚意；¥800，是承诺</p>
-              <p style={{ color: C.gold }}>—— 闭门修复计划，只给已经走完 7 天的人</p>
-            </div>
-
-            <button
-              onClick={handleUpsell}
-              className="w-full mt-2 py-2.5 rounded-lg text-[12.5px] flex items-center justify-center gap-1.5 transition active:scale-[0.98]"
-              style={{ border: `1px solid ${C.divider}`, color: C.goldSoft }}
-            >
-              先看看 ¥3980 闭门修复计划
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+            </Accordion>
           </div>
+          <p className="text-[11.5px] text-center mt-4" style={{ color: C.goldSoft }}>
+            还有其他疑问？点底部「先匿名咨询」与顾问 1v1 沟通
+          </p>
         </Section>
 
-        {/* ============ 09 价格 + CTA ============ */}
+        {/* ============ 08 价格 + CTA ============ */}
         <section className="px-6 py-12">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-xs tracking-[0.2em] font-mono" style={{ color: C.gold }}>
-              09 / 09
+              08 / 08
             </span>
             <div className="flex-1 h-px" style={{ background: C.divider }} />
           </div>
@@ -480,7 +433,7 @@ export default function PromoMidlifeMen399() {
             }}
           >
             <p className="text-[12px] tracking-[0.3em] mb-3" style={{ color: C.gold }}>
-              本期联合首发 · LIMITED
+              本期专属体验价 · LIMITED
             </p>
             <h2 className="text-[20px] mb-4 font-semibold leading-[1.5]" style={{ ...serif, color: C.text }}>
               先用 ¥{price}，
@@ -492,7 +445,7 @@ export default function PromoMidlifeMen399() {
                 className="text-[14px] line-through"
                 style={{ color: "rgba(232,227,216,0.45)" }}
               >
-                原价 ¥598
+                原价 ¥688
               </span>
             </div>
             <div className="flex items-baseline justify-center gap-1.5 mb-3">
@@ -510,7 +463,7 @@ export default function PromoMidlifeMen399() {
               </span>
             </div>
             <p className="text-[12px] leading-[1.7]" style={{ color: "rgba(232,227,216,0.7)" }}>
-              含全部 7 天交付 · 完赛解锁 ¥3,980 老学员抢订资格
+              限量体验名额 · 满员即恢复原价 ¥688
             </p>
           </div>
 
@@ -524,7 +477,7 @@ export default function PromoMidlifeMen399() {
                 boxShadow: "0 8px 24px rgba(212,180,129,0.28)",
               }}
             >
-              立即开通体验营 →
+              立即加入身心舒展计划 →
             </button>
             <button
               onClick={handleConsult}
@@ -536,7 +489,7 @@ export default function PromoMidlifeMen399() {
               }}
             >
               <MessageCircle className="w-4 h-4" />
-              先和顾问聊 5 分钟（免费 · 匿名）
+              先匿名咨询，了解详情
             </button>
           </div>
 
@@ -571,7 +524,7 @@ export default function PromoMidlifeMen399() {
               boxShadow: "0 -2px 16px rgba(0,0,0,0.5), 0 8px 24px rgba(212,180,129,0.22)",
             }}
           >
-            ¥{price} · 立即开通 7 天体验营
+            ¥{price} · 立即加入身心舒展计划
           </button>
         </div>
       </div>
@@ -583,7 +536,7 @@ export default function PromoMidlifeMen399() {
           pkg
             ? {
                 key: PACKAGE_KEY,
-                name: "中年男性 7 天私下试听体验营",
+                name: "中年男性 7 天身心舒展计划",
                 price: price,
               }
             : null
