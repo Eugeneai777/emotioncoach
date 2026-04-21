@@ -21,6 +21,16 @@ import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer, calculateResult, calculateHealthScore } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
