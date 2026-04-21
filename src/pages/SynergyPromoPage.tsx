@@ -116,7 +116,7 @@ function Section({
 /* ========== 教练数据（保留全部资产） ========== */
 const leadCoach = {
   name: "黛汐",
-  role: "总教练",
+  role: "资深教练",
   image: coachDaixi,
   certifications: ["生命教练", "国际脑点执行师", "PNCC心流教练", "高级心理咨询师"],
   motto: "你不仅仅是你以为的样子",
@@ -753,7 +753,7 @@ export default function SynergyPromoPage() {
                   </span>
                 </div>
                 <p className="text-[11px] mb-2" style={{ color: C.goldSoft }}>
-                  绽放者联盟 · 创始人 & 总教练
+                  绽放者联盟 · 创始人 & 资深教练
                 </p>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {leadCoach.certifications.map((c, i) => (
