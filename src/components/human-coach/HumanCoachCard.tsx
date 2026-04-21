@@ -35,7 +35,9 @@ export function HumanCoachCard({ coach }: HumanCoachCardProps) {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-400 to-cyan-500">
-                    <User className="h-8 w-8 text-white/80" />
+                    <span className="text-2xl font-bold text-white">
+                      {coach.name?.charAt(0).toUpperCase() || '?'}
+                    </span>
                   </div>
                 )}
               </div>
