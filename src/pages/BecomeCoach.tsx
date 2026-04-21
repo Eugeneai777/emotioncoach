@@ -125,24 +125,76 @@ export default function BecomeCoach() {
 
     setIsSubmitting(true);
     try {
-      // Create human_coaches record
-      const { data: coachData, error: coachError } = await supabase
+      // 1) Check existing application for this user
+      const { data: existing, error: existingError } = await supabase
         .from("human_coaches")
-        .insert({
-          user_id: user.id,
-          name: basicInfo.displayName,
-          bio: basicInfo.bio,
-          avatar_url: basicInfo.avatarUrl,
-          specialties: basicInfo.specialties,
-          experience_years: basicInfo.yearsExperience,
-          status: "pending",
-          is_accepting_new: false,
-          is_verified: false,
-        })
-        .select()
-        .single();
+        .select("id, status")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (coachError) throw coachError;
+      if (existingError) throw existingError;
+
+      // Already approved -> block & redirect
+      if (existing?.status === "approved") {
+        toast({
+          title: "您已通过审核",
+          description: "请前往教练后台编辑资料",
+        });
+        navigate("/coach-dashboard");
+        return;
+      }
+
+      let coachData: { id: string };
+
+      const coachPayload = {
+        name: basicInfo.displayName,
+        bio: basicInfo.bio,
+        avatar_url: basicInfo.avatarUrl,
+        specialties: basicInfo.specialties,
+        experience_years: basicInfo.yearsExperience,
+        status: "pending",
+        is_accepting_new: false,
+        is_verified: false,
+      };
+
+      if (existing) {
+        // 2) Pending or rejected -> UPDATE existing record (latest submission wins)
+        const { data: updated, error: updateError } = await supabase
+          .from("human_coaches")
+          .update(coachPayload)
+          .eq("id", existing.id)
+          .select("id")
+          .single();
+
+        if (updateError) throw updateError;
+        if (!updated) throw new Error("更新失败：无权限或记录不存在");
+        coachData = updated;
+
+        // Wipe old certs & services so latest submission fully replaces them
+        const { error: delCertError } = await supabase
+          .from("coach_certifications")
+          .delete()
+          .eq("coach_id", coachData.id)
+          .select("id");
+        if (delCertError) throw delCertError;
+
+        const { error: delSvcError } = await supabase
+          .from("coach_services")
+          .delete()
+          .eq("coach_id", coachData.id)
+          .select("id");
+        if (delSvcError) throw delSvcError;
+      } else {
+        // 3) First-time application -> INSERT
+        const { data: inserted, error: coachError } = await supabase
+          .from("human_coaches")
+          .insert({ user_id: user.id, ...coachPayload })
+          .select("id")
+          .single();
+
+        if (coachError) throw coachError;
+        coachData = inserted;
+      }
 
       // Create certifications
       if (certifications.length > 0) {
