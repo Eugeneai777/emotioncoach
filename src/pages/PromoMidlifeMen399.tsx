@@ -510,7 +510,7 @@ export default function PromoMidlifeMen399() {
               </span>
             </div>
             <p className="text-[12px] leading-[1.7]" style={{ color: "rgba(232,227,216,0.7)" }}>
-              含全部交付 · 学费可全额抵扣 ¥3980 闭门修复
+              含全部 7 天交付 · 完赛解锁 ¥3,980 老学员抢订资格
             </p>
           </div>
 
