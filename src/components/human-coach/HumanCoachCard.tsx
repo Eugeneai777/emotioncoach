@@ -6,7 +6,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { CoachBadge } from "./CoachBadge";
 import { CoachRatingDisplay } from "./CoachRatingDisplay";
 import { type HumanCoach } from "@/hooks/useHumanCoaches";
-import { Clock, Users, CheckCircle, User } from "lucide-react";
+import { Clock, Users, CheckCircle } from "lucide-react";
 
 interface HumanCoachCardProps {
   coach: HumanCoach;
