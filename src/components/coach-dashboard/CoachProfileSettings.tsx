@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUpdateCoachProfile } from "@/hooks/useCoachDashboard";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +11,16 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  User, 
-  Save, 
+import {
+  User,
+  Save,
   Camera,
   Star,
   Shield,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Pencil,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
