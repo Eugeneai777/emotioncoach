@@ -151,7 +151,11 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
                     const isEdited = coach.updated_at && coach.created_at &&
                       new Date(coach.updated_at).getTime() - new Date(coach.created_at).getTime() > 1000;
                     return isEdited ? (
-                      <Badge variant="outline" className="text-xs border-blue-500 text-blue-600">
+                      <Badge
+                        variant="outline"
+                        className="text-xs border-blue-500 text-blue-600 cursor-help"
+                        title={`✅ 此修改来自原教练账号（user_id: ${coach.user_id?.slice(0, 8) ?? "—"}…），系统已校验身份一致`}
+                      >
                         ✏️ 修改申请
                       </Badge>
                     ) : (
