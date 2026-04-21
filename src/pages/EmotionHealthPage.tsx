@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,8 @@ const PACKAGE_KEY = 'emotion_health_assessment';
 
 export default function EmotionHealthPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const resumePayHandledRef = useRef(false);
   const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState<PageStep>('start');
   const [activeTab, setActiveTab] = useState<ActiveTab>('assessment');
@@ -70,18 +71,22 @@ export default function EmotionHealthPage() {
     autoRedirect: false,
   });
 
-  // 检测支付恢复参数
+  // 检测支付恢复参数（仅在首次出现该参数时触发一次，避免用户关闭弹窗后被反复重新拉起）
   useEffect(() => {
     const resumePay = searchParams.get('assessment_pay_resume');
-    if (resumePay === '1' && user && !hasPurchased && !showPayDialog) {
-      console.log('[EmotionHealth] Resuming payment dialog after auth');
-      setShowPayDialog(true);
-      // 清理 URL 参数
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('assessment_pay_resume');
-      window.history.replaceState({}, '', newUrl.toString());
-    }
-  }, [searchParams, user, hasPurchased, showPayDialog]);
+    if (resumePay !== '1') return;
+    if (resumePayHandledRef.current) return;
+    if (!user || hasPurchased) return;
+
+    resumePayHandledRef.current = true;
+    console.log('[EmotionHealth] Resuming payment dialog after auth');
+    setShowPayDialog(true);
+
+    // 通过 React Router 移除参数，确保 searchParams 同步更新（避免 history.replaceState 导致的状态不同步）
+    const next = new URLSearchParams(searchParams);
+    next.delete('assessment_pay_resume');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, user, hasPurchased, setSearchParams]);
 
   // 恢复进度
   useEffect(() => {
