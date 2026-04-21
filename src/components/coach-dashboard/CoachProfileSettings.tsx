@@ -44,6 +44,35 @@ interface CoachProfileSettingsProps {
 }
 
 export function CoachProfileSettings({ coach }: CoachProfileSettingsProps) {
+  const navigate = useNavigate();
+  const [loadingInvite, setLoadingInvite] = useState(false);
+
+  const handleEditProfileClick = async () => {
+    setLoadingInvite(true);
+    try {
+      const { data, error } = await supabase
+        .from("coach_invitations")
+        .select("token, expires_at")
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data?.token) {
+        toast.error("暂无可用邀请链接，请联系管理员获取");
+        return;
+      }
+      navigate(`/become-coach?invite=${data.token}`);
+    } catch (e) {
+      console.error("Load invite error", e);
+      toast.error("跳转失败，请稍后重试");
+    } finally {
+      setLoadingInvite(false);
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: coach.name || '',
     title: coach.title || '',
