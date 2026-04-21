@@ -1,89 +1,47 @@
 
 
-## /promo/synergy 顶部主标题 + 5 位资深教练大卡重排
+## 修复 /human-coaches 已审核通过的真人教练不显示问题
 
-只改 1 文件：`src/pages/SynergyPromoPage.tsx`，零业务逻辑改动。
+### 根因
 
-### 改动 1 · HERO 主标题层级调整（第 01 段）
+数据库 `human_coaches.status` 字段存在两套状态值并存：
+- 管理后台审核通过 → 写入 `status = 'approved'`
+- 前端 `useActiveHumanCoaches` 过滤条件 → `.eq("status", "active")`
 
-**调整前**：
-- H1 大字：「40 岁以后，有些事 不该一个人扛着。」
-- 上方仅 `FOR MEN 38–55 · 7 DAYS` 英文小标
+导致 Lisa（已审核通过，status='approved'）在 `/human-coaches` 列表与 `CoachRecommendations` 推荐中均被过滤掉，只剩历史遗留的测试教练（status='active'）可见。
 
-**调整后**：
-- **H1 主标**：「**7 天有劲训练营**」（暗金 `#d4b481` + 衬线 `Noto Serif SC`，约 32px）
-- **副标 H2**：「40 岁以后，有些事 不该一个人扛着。」（缩小一档至约 22px，米白色，保留为金句副标）
-- 上方 `FOR MEN 38–55` 英文徽章保留
-- 副标下方说明文 / 徽章 / CTA 全部不动
+### 修复方案（两处统一改为兼容 approved + active）
 
-```text
-┌─────────────────────────┐
-│  FOR MEN 38–55 · 7 DAYS │  ← 英文小徽章（保留）
-│                         │
-│   7 天有劲训练营         │  ← H1 主标（新增，暗金大字）
-│                         │
-│   40 岁以后，有些事       │  ← H2 副标（金句下沉，缩小一档）
-│   不该一个人扛着。        │
-│                         │
-│  38–55 岁男人的…         │  ← 现有说明文（不动）
-│  施强健康 ✕ 有劲AI 徽章   │  ← 不动
-│  [立即加入身心舒展计划 →] │  ← CTA 不动
-└─────────────────────────┘
+**只改 1 文件**：`src/hooks/useHumanCoaches.ts`
+
+将 `useActiveHumanCoaches` 的过滤条件由：
+```ts
+.eq("status", "active")
+```
+改为兼容两种"已上架"状态：
+```ts
+.in("status", ["approved", "active"])
 ```
 
-`<title>` SEO 同步更新为：「7 天有劲训练营 · 40 岁以后不该一个人扛着 ｜ 含知乐胶囊」
-
-### 改动 2 · 5 位资深教练改为「黛汐同款大卡」（第 06 段）
-
-**调整前**：横滑紧凑卡（120px 小卡，仅头像 + 姓名 + 1 句 specialty）  
-**调整后**：5 张纵向大卡，与黛汐 C 位卡布局一致 —— **图左 + 信息右**，含 4 项认证 chips + 1 句座右铭。
-
-**数据结构升级**（`coachTeam`）：
-
-```typescript
-const coachTeam = [
-  {
-    name: "晓一",
-    role: "资深教练",
-    image: coachXiaoyi,
-    subtitle: "婚姻家庭 / 情绪管理专家",
-    certifications: ["国家二级心理咨询师", "婚姻家庭治疗师", "情绪疗愈师", "10年个案经验"],
-    motto: "[占位] 每一段关系，都值得被温柔对待",
-  },
-  {
-    name: "肖剑雄",
-    role: "资深教练",
-    image: coachXiaojianxiong,
-    subtitle: "婚姻关系 / 职业焦虑专家",
-    certifications: ["[占位] 资深婚姻顾问", "[占位] 职业生涯规划师", "[占位] EAP 专员", "[占位] 15年阅历"],
-    motto: "[占位] 男人的体面，从直面开始",
-  },
-  // Amy / 木棉 / 贝蒂 同结构占位
-];
+同时把额外的"接单中"约束加上，避免显示已审核但暂停接单的教练：
+```ts
+.in("status", ["approved", "active"])
+.eq("is_accepting_new", true)
 ```
 
-> 所有「[占位]」字段供后续替换，保持字段结构稳定。
+> 选择前端兼容方案而非数据库迁移，原因：
+> 1. `status='active'` 是历史遗留值（仅 1 条测试数据），不应破坏既有视图
+> 2. 管理后台审核流程已稳定写入 `'approved'`，符合业界审核语义
+> 3. 风险面最小，零 SQL 迁移、零 RLS 变更
 
-**视觉规则**（与黛汐卡同源）：
-- 卡片：`rounded-2xl` + `border 1px ${C.divider}`（不同于黛汐的 `1.5px ${C.gold}` 强边）
-- 头像：`80px` 圆形 + `2px ${C.divider}` 描边
-- 姓名 18px 衬线 + `资深教练` 暗金徽章
-- 4 项认证 chips（与黛汐同款）
-- 座右铭斜体暗金 11.5px
-- 5 张卡片**纵向** `space-y-4` 排列，移除横滑容器
-- 移除 `教练团队 · 5 位资深陪伴` 上方小标，改为更克制的「同行教练 · 5 位资深陪伴」
+### 同步检查 `CoachRecommendations`
 
-### 不动的内容
-
-- 所有 11 个 Section 业务逻辑、支付链路、SuccessPanel、Sticky CTA、SEO 路由
-- 配色 token / framer-motion 动效 / 黛汐 C 位大卡
-- `synergy_bundle` 套餐、`SynergyRedeemDialog` 弹窗、`autoCreateAndEnterCamp` 流转
+`src/hooks/useCoachRecommendations.ts` 调用边缘函数 `recommend-coaches`，需要确认该函数内部是否也用 `status='active'` 过滤。如是，同步改为 `IN ('approved','active')`，否则推荐区仍漏显 Lisa。
 
 ### 验证标准
 
-1. `/promo/synergy` 顶部第一行大字显示「7 天有劲训练营」，下方副标为金句
-2. 第 06 段教练区：黛汐 1 张 C 位金边大卡 + 下方 5 张同款大卡（纵向）
-3. 5 张教练卡均含：左头像 / 右姓名 + 资深教练徽章 / 副标 / 4 认证 chips / 1 句座右铭
-4. 桌面 1085 与移动 480 排版无溢出，无横向滚动条
-5. 任意 CTA 点击仍弹 `SynergyRedeemDialog`，业务零回归
+1. `/human-coaches` 列表页 → 显示 Lisa + 测试教练（共 2 位），列表上方"共 2 位教练可预约"
+2. 智能推荐区 → Lisa 与测试教练均出现
+3. 管理后台审核新教练通过后，前端 5 分钟缓存过期或刷新后即可见
+4. 待审核（pending）/ 已拒绝（rejected）教练仍不显示
 
