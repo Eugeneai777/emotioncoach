@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   User,
   Save,
-  Camera,
   Star,
   Shield,
   CheckCircle,
