@@ -139,18 +139,27 @@ serve(async (req) => {
     const limitedPurchasePackages = ['basic', 'wealth_block_assessment'];
     const isLimitedPackage = limitedPurchasePackages.includes(packageKey);
     
+    // 🔒 订单归属规则（v2）：
+    // - 若前端已传入有效的 userId（用户已登录手机号账号），订单一律归该 userId，
+    //   忽略 openId 反查到的"其他账号"——避免"微信曾绑过其他账号"的用户被误判已购、
+    //   或本次新付的订单错误归到 openId 绑定的旧账号上。
+    // - 仅当前端未登录（userId === 'guest' 或缺失）时，才允许通过 openId → wechat_user_mappings
+    //   反查到一个已绑定的 system_user_id，做"先付款后登录"的便捷归属。
     let finalUserId = userId;
-    if (openId) {
+    const isAuthenticatedUser = userId && userId !== 'guest';
+    if (!isAuthenticatedUser && openId) {
       const { data: mapping } = await supabase
         .from('wechat_user_mappings')
         .select('system_user_id')
         .eq('openid', openId)
         .maybeSingle();
-      
+
       if (mapping?.system_user_id) {
         finalUserId = mapping.system_user_id;
-        console.log('Found bound user for openId:', openId, '-> userId:', finalUserId);
+        console.log('[CreateOrder] Guest with openId → bound user:', openId, '->', finalUserId);
       }
+    } else if (isAuthenticatedUser && openId) {
+      console.log('[CreateOrder] Authenticated user provided, ignoring openId→user reverse lookup. userId:', userId);
     }
 
     // 🆕 后端去重：复用同用户同套餐 5 分钟内的 pending 订单（与微信 time_expire 对齐）
