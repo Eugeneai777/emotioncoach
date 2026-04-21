@@ -1412,7 +1412,7 @@ ${photoList}
       },
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview",
-        voice: voiceOverride || (mode === 'teen' ? "shimmer" : "echo"),
+        voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
         instructions: instructions,
         tools: tools,
         tool_choice: "auto",
