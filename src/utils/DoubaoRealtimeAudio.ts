@@ -21,6 +21,7 @@ export class DoubaoRealtimeChat {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private isDisconnected = false;
   private preAcquiredStream: MediaStream | null = null;
+  private voiceType: string | null = null;
 
   // 音频播放队列
   private audioChunks: Uint8Array[] = [];
@@ -40,9 +41,11 @@ export class DoubaoRealtimeChat {
     private onMessage: MessageCallback,
     private onStatusChange: StatusCallback,
     private onTranscript: TranscriptCallback,
-    preAcquiredStream?: MediaStream | null
+    preAcquiredStream?: MediaStream | null,
+    voiceType?: string | null
   ) {
     this.preAcquiredStream = preAcquiredStream || null;
+    this.voiceType = voiceType || null;
   }
 
   async init() {
@@ -90,7 +93,8 @@ export class DoubaoRealtimeChat {
     const wsUrl = supabaseUrl
       .replace('https://', 'wss://')
       .replace('http://', 'ws://');
-    const fullUrl = `${wsUrl}/functions/v1/doubao-realtime-relay?token=${session.access_token}`;
+    const voiceParam = this.voiceType ? `&voice_type=${encodeURIComponent(this.voiceType)}` : '';
+    const fullUrl = `${wsUrl}/functions/v1/doubao-realtime-relay?token=${session.access_token}${voiceParam}`;
 
     // 连接 WebSocket
     this.ws = new WebSocket(fullUrl);
