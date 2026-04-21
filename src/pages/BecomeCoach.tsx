@@ -231,7 +231,24 @@ export default function BecomeCoach() {
           .select("id");
         if (delSvcError) throw delSvcError;
       } else {
-        // 3) First-time application -> INSERT
+        // 3) First-time application -> 先做「姓名+手机号」二次防重，避免同人换账号重复申请
+        const { data: dupByName } = await supabase
+          .from("human_coaches")
+          .select("id, user_id, name, phone, status")
+          .eq("phone", basicInfo.phone)
+          .eq("name", basicInfo.displayName)
+          .maybeSingle();
+
+        if (dupByName && dupByName.user_id !== user.id) {
+          toast({
+            title: "该姓名+手机号已被其他账号申请",
+            description: "请使用首次申请时的账号登录，或联系客服合并账号。",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
         const { data: inserted, error: coachError } = await supabase
           .from("human_coaches")
           .insert({ user_id: user.id, ...coachPayload })
