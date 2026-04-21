@@ -115,6 +115,7 @@ const clearMiniProgramPaymentDismissed = (packageKey?: string) => {
 };
 
 // 从多个来源获取 openId（URL 参数 > sessionStorage 缓存）
+// 🔧 兼容 WechatPayDialog 的标准缓存 key，避免循环授权
 const getPaymentOpenId = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -124,9 +125,23 @@ const getPaymentOpenId = (): string | undefined => {
 
   if (urlOpenId) return urlOpenId;
 
-  // 从 sessionStorage 获取（由 WealthBlockAssessment 在回调时缓存）
+  // 优先读 AssessmentPayDialog 自身缓存（保持原行为）
   const cachedOpenId = sessionStorage.getItem("wechat_payment_openid");
   if (cachedOpenId) return cachedOpenId;
+
+  // 兜底：复用 WechatPayDialog 的标准缓存 key（公众号 / 小程序 / 旧版）
+  try {
+    const inMiniProgram = isWeChatMiniProgram();
+    const stdKey = inMiniProgram ? "cached_payment_openid_mp" : "cached_payment_openid_gzh";
+    const stdCached =
+      localStorage.getItem(stdKey) ||
+      sessionStorage.getItem(stdKey) ||
+      localStorage.getItem("cached_payment_openid") ||
+      sessionStorage.getItem("cached_payment_openid");
+    if (stdCached) return stdCached;
+  } catch {
+    /* ignore */
+  }
 
   return undefined;
 };
@@ -319,11 +334,14 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   const getCachedMiniProgramOpenId = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    // 🔧 兜底兼容 WechatPayDialog 的小程序标准缓存 key（cached_payment_openid_mp）
     return (
       userOpenId ||
       urlParams.get("mp_openid") ||
       sessionStorage.getItem("wechat_mp_openid") ||
       sessionStorage.getItem("wechat_payment_openid") ||
+      localStorage.getItem("cached_payment_openid_mp") ||
+      sessionStorage.getItem("cached_payment_openid_mp") ||
       undefined
     );
   }, [userOpenId]);
