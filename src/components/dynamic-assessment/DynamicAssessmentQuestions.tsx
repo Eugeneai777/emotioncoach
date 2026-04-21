@@ -11,18 +11,6 @@ interface DynamicAssessmentQuestionsProps {
   onExit: () => void;
 }
 
-// Seeded shuffle so order is stable per question index across re-renders
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const copy = [...arr];
-  let s = seed;
-  for (let i = copy.length - 1; i > 0; i--) {
-    s = (s * 16807 + 0) % 2147483647;
-    const j = s % (i + 1);
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
 export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete, onExit }: DynamicAssessmentQuestionsProps) {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
