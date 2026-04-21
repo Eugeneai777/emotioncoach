@@ -286,17 +286,12 @@ export default function PromoMidlifeMen399() {
         </Section>
 
         {/* ============ 05 信任保障 ============ */}
-        <Section index={5} eyebrow="我们懂你的在意" title="5 条不可妥协的隐私承诺">
+        <Section index={5} eyebrow="我们懂你的在意" title="4 条不可妥协的隐私承诺">
           {/* 顶部承诺徽章带 */}
           <div
             className="flex items-center justify-around gap-2 mb-5 p-3 rounded-xl"
             style={{ background: "rgba(212,180,129,0.06)", border: `1px solid ${C.divider}` }}
           >
-            <div className="text-center flex-1">
-              <p className="text-[15px] font-bold" style={{ ...serif, color: C.gold }}>30 天</p>
-              <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>无理由退款</p>
-            </div>
-            <div className="w-px h-8" style={{ background: C.divider }} />
             <div className="text-center flex-1">
               <p className="text-[15px] font-bold" style={{ ...serif, color: C.gold }}>22 年</p>
               <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>施强健康背书</p>
@@ -313,7 +308,6 @@ export default function PromoMidlifeMen399() {
               { t: "海沃塔小组实名审核", d: "仅限同龄男性 · 全程不录像不外传" },
               { t: "课程链接仅本人可看", d: "不可分享转发，链接绑定账号" },
               { t: "1v1 沟通仅你与教练可见", d: "平台不留对话记录" },
-              { t: "30 天无理由全额退款", d: "不满意，原路退回，无需理由" },
               { t: "施强健康 22 年背书", d: "男性健康服务专业资质" },
             ].map((p, i) => (
               <div key={i} className="flex gap-3 items-start">
