@@ -398,7 +398,7 @@ export default function PromoMidlifeMen399() {
                 { t: "¥800 资格券", s: "承诺" },
                 { t: "¥3,980 抢订", s: "锁席" },
               ].map((s, i, arr) => (
-                <React.Fragment key={i}>
+                <Fragment key={i}>
                   <div className="flex-1">
                     <p className="text-[11.5px] font-semibold" style={{ color: C.gold }}>{s.t}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: C.textMute }}>{s.s}</p>
@@ -406,7 +406,7 @@ export default function PromoMidlifeMen399() {
                   {i < arr.length - 1 && (
                     <span style={{ color: C.gold, fontSize: 12 }}>→</span>
                   )}
-                </React.Fragment>
+                </Fragment>
               ))}
             </div>
 
