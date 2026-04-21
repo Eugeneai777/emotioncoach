@@ -42,7 +42,7 @@ serve(async (req) => {
     const { data: coaches, error: coachError } = await supabase
       .from("human_coaches")
       .select("*")
-      .eq("status", "active")
+      .in("status", ["approved", "active"])
       .eq("is_accepting_new", true);
 
     if (coachError) throw coachError;
