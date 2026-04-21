@@ -552,8 +552,8 @@ export default function SynergyPromoPage() {
               {
                 Icon: Users,
                 tag: "核心权益 01 · 海沃塔团队对话",
-                title: "同龄 6–8 人小组 · 总教练带场",
-                desc: "在黛汐总教练带领下，和同龄男人深度对话。不是被讲话，是被听见。",
+                title: "同龄 6–8 人小组 · 资深教练带场",
+                desc: "在资深教练带领下，和同龄男人深度对话。不是被讲话，是被听见。",
               },
               {
                 Icon: Pill,
