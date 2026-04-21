@@ -662,7 +662,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
     setAgreedTerms(!needsTerms);
-    orderCreatedRef.current = false; // 重置订单创建标记
+    // 注意：orderCreatedRef 不在此重置，避免关闭弹窗瞬间触发 useEffect 重复创建订单
+    // 改由独立的 useEffect 在 open 从 false→true 的"打开边沿"时重置
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
     codeExchangedRef.current = false; // 重置 code 换取标记
