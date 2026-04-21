@@ -13,7 +13,7 @@ import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDial
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useEmotionHealthPurchase } from "@/hooks/useEmotionHealthPurchase";
 import { usePackageByKey } from "@/hooks/usePackages";
-import { isWeChatBrowser } from "@/utils/platform";
+
 import {
   EmotionHealthStartScreen,
   EmotionHealthQuestions,
@@ -45,7 +45,7 @@ export default function EmotionHealthPage() {
   
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
-  const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
+  
   
   // 购买状态检查
   const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useEmotionHealthPurchase();
@@ -245,7 +245,7 @@ export default function EmotionHealthPage() {
     setStep('questions');
   }, [refetchPurchase]);
 
-  const isLoading = authLoading || purchaseLoading || isRedirectingForAuth;
+  const isLoading = authLoading || purchaseLoading;
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
