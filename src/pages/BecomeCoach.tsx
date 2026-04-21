@@ -189,16 +189,6 @@ export default function BecomeCoach() {
 
       if (existingError) throw existingError;
 
-      // Already approved -> block & redirect
-      if (existing?.status === "approved") {
-        toast({
-          title: "您已通过审核",
-          description: "请前往教练后台编辑资料",
-        });
-        navigate("/coach-dashboard");
-        return;
-      }
-
       let coachData: { id: string };
 
       const coachPayload = {
@@ -207,13 +197,14 @@ export default function BecomeCoach() {
         avatar_url: basicInfo.avatarUrl,
         specialties: basicInfo.specialties,
         experience_years: basicInfo.yearsExperience,
+        // Any edit (including from approved coach) goes back to pending for re-review
         status: "pending",
         is_accepting_new: false,
         is_verified: false,
       };
 
       if (existing) {
-        // 2) Pending or rejected -> UPDATE existing record (latest submission wins)
+        // Pending / approved / rejected -> UPDATE existing record (latest submission wins, status reset to pending)
         const { data: updated, error: updateError } = await supabase
           .from("human_coaches")
           .update(coachPayload)
@@ -224,6 +215,21 @@ export default function BecomeCoach() {
         if (updateError) throw updateError;
         if (!updated) throw new Error("更新失败：无权限或记录不存在");
         coachData = updated;
+
+        // Wipe old certs & services so latest submission fully replaces them
+        const { error: delCertError } = await supabase
+          .from("coach_certifications")
+          .delete()
+          .eq("coach_id", coachData.id)
+          .select("id");
+        if (delCertError) throw delCertError;
+
+        const { error: delSvcError } = await supabase
+          .from("coach_services")
+          .delete()
+          .eq("coach_id", coachData.id)
+          .select("id");
+        if (delSvcError) throw delSvcError;
 
         // Wipe old certs & services so latest submission fully replaces them
         const { error: delCertError } = await supabase
