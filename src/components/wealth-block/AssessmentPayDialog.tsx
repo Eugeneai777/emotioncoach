@@ -746,9 +746,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         console.log("[Payment] Mobile WeChat browser with openId, using jsapi");
         selectedPayType = "jsapi";
       } else if (isWechat && !userOpenId) {
-        // 手机微信浏览器无 openId → H5 支付按钮，避免长按 QR 被拦截
-        console.log("[Payment] Mobile WeChat without openId, using H5 payment");
-        selectedPayType = "h5";
+        // 🔧 手机微信浏览器无 openId → 触发静默授权获取 openId 后再走 JSAPI
+        // （避免 fallback 到 H5/Native 导致弹出"复制链接/二维码"假支付弹框）
+        console.log("[Payment] Mobile WeChat without openId, triggering silent auth before JSAPI");
+        if (!isPaymentSessionActive(sessionId)) return;
+        setStatus("idle");
+        triggerSilentAuth();
+        return;
       } else if (isMobile && !isWechat) {
         // 移动端非微信浏览器：使用支付宝
         console.log("[Payment] Mobile non-WeChat browser, using alipay");
