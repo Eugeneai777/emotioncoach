@@ -11,18 +11,6 @@ interface DynamicAssessmentQuestionsProps {
   onExit: () => void;
 }
 
-// Seeded shuffle so order is stable per question index across re-renders
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const copy = [...arr];
-  let s = seed;
-  for (let i = copy.length - 1; i > 0; i--) {
-    s = (s * 16807 + 0) % 2147483647;
-    const j = s % (i + 1);
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
 export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete, onExit }: DynamicAssessmentQuestionsProps) {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -45,11 +33,12 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
     return scoreOptions;
   }, [scoreOptions]);
 
-  // Pre-compute shuffled options for all questions (stable across re-renders)
+  // Stable option order: template-shared scoreOptions sort by score asc; question-level options keep DB order
   const shuffledOptionsMap = useMemo(() => {
-    return questions.map((question, idx) => {
+    return questions.map((question) => {
       const opts = getOptionsForQuestion(question);
-      return seededShuffle(opts, idx * 97 + 31);
+      if (question.options?.length > 0) return opts;
+      return [...opts].sort((a: any, b: any) => (a.score ?? 0) - (b.score ?? 0));
     });
   }, [questions, getOptionsForQuestion]);
 
