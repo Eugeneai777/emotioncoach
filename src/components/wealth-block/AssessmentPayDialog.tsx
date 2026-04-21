@@ -952,12 +952,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           // 微信浏览器：先等待 Bridge 就绪，再调起支付
           console.log("[Payment] WeChat browser: waiting for Bridge then invoke JSAPI");
           const bridgeAvailable = await waitForWeixinJSBridge();
+          if (!isPaymentSessionActive(sessionId)) return;
 
           if (bridgeAvailable) {
             try {
               await invokeJsapiPay(data.jsapiPayParams);
+              if (!isPaymentSessionActive(sessionId)) return;
               console.log("[Payment] JSAPI pay invoked successfully");
             } catch (jsapiError: any) {
+              if (!isPaymentSessionActive(sessionId)) return;
               console.log("[Payment] JSAPI pay error:", jsapiError?.message);
               if (jsapiError?.message !== "用户取消支付") {
                 // JSAPI 失败，降级到扫码模式
@@ -1065,10 +1068,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         createOrderRetriedRef.current = true;
         console.warn("[AssessmentPay] Network error, auto-retrying createOrder once...");
         await new Promise((r) => setTimeout(r, 1200));
+        if (!isPaymentSessionActive(sessionId)) return;
         createOrder();
         return;
       }
 
+      if (!isPaymentSessionActive(sessionId)) return;
       const msg = isNetworkLayerError
         ? "网络较慢，请检查网络后重试"
         : rawMsg || "创建订单失败，请稍后重试";
