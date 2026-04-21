@@ -33,6 +33,7 @@ interface SubmitStepProps {
   onSubmit: () => Promise<void>;
   onBack: () => void;
   isSubmitting: boolean;
+  submitLabel?: string;
 }
 
 export function SubmitStep({
@@ -42,6 +43,7 @@ export function SubmitStep({
   onSubmit,
   onBack,
   isSubmitting,
+  submitLabel = "提交申请",
 }: SubmitStepProps) {
   const [agreed, setAgreed] = useState(false);
   const [badgeLoading, setBadgeLoading] = useState(false);
