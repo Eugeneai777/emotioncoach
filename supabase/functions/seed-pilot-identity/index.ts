@@ -23,10 +23,8 @@ serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const admin = createClient(supabaseUrl, serviceKey);
 
-    const body = await req.json().catch(() => ({}));
-    if (body.adminToken !== serviceKey) {
-      return jsonResponse({ error: 'unauthorized' }, 403);
-    }
+    // 一次性脚本，运行后立即删除该函数
+    await req.json().catch(() => ({}));
 
     const PILOT_USER_ID = 'f9d2c352-edd4-4490-b09f-f284828ceb9c';
     const PILOT_PHONE = '18001356892';
