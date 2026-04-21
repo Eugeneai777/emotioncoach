@@ -99,7 +99,7 @@ export function useActiveHumanCoaches() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("human_coaches_public" as any)
-        .select("*")
+        .select("*, price_tier:coach_price_tiers(price, tier_name)")
         .in("status", ["approved", "active"])
         .eq("is_accepting_new", true)
         .order("display_order", { ascending: true });
@@ -119,7 +119,7 @@ export function useHumanCoach(coachId: string | undefined) {
       if (!coachId) return null;
       const { data, error } = await supabase
         .from("human_coaches_public" as any)
-        .select("*")
+        .select("*, price_tier:coach_price_tiers(price, tier_name)")
         .eq("id", coachId)
         .single();
       
