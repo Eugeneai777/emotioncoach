@@ -1,103 +1,54 @@
 
 
-# /wealth-block 微信内"已登录手机号 ≠ 微信绑定账号"购买归属修复方案
+# /wealth-block 微信支付链路自检方案
 
-## 问题复现
+## 检测目标
+对刚改完的「openId 反查仅在 guest 时生效」+「账号冲突轻提示」做静态自检，找出回归风险点，不在浏览器里跑（生产数据 + 真实支付，跑了会产生脏订单）。
 
-**场景**：
-- 微信 A（openId_A）历史绑定了「账号甲（手机 138****）」，账号甲已支付过 ¥9.9 财富卡点测评。
-- 此刻在微信 A 内访问 `/wealth-block`，但当前 Supabase 登录态是「账号乙（手机 139****）」（用户主动用乙的手机号登录了）。
-- 账号乙**没买过**这个测评。
-- 用户点「立即测评 ¥9.9」，**期望**：进入 ¥9.9 支付流程，订单归属账号乙。
-- **实际**：系统通过 openId_A 查到甲已购买 → 直接跳「开始测评」，账号乙未付费却获得权益（更糟：测评结果归到甲名下）。
+## 自检范围（只读分析）
 
-## 根因定位
+### 1. 前端 `WealthBlockAssessment.tsx`
+- 新增 `conflictDialog` 状态与 `AlertDialog` 是否在所有分支正确关闭
+- `handlePayClick` 三种用户态（未登录 / 已登录已购 / 已登录未购）走向是否都覆盖了冲突检测
+- 切换账号路径：`signOut` 后 `triggerWeChatSilentAuth` 的 redirect 是否带 `assessment_pay_resume=1`
+- "继续付款" 路径是否能正确把 `userId = currentUser.id`（乙）传进 `AssessmentPayDialog`
 
-在 `WealthBlockAssessment.tsx`（及其同款 `AssessmentPayDialog`）的访问校验里：
+### 2. `AssessmentPayDialog.tsx`
+- 调 `create-wechat-order` 的 `userId` 字段值确认（必须是 `useAuth().user.id`，不是 openId 反查值）
+- 微信内 PC 浏览器误判（UA 含 `MicroMessenger` 但桌面环境）→ 是否仍走 jsapi 死循环
+- 取消支付后 `MP_POST_CANCEL_FLAG_KEY` 写入是否影响 H5 浏览器场景
 
-1. **登录态判断**只看 `useAuth().user`（这是账号乙）✅
-2. **已购买判断**有两路并行：
-   - a. 查 `orders` 表 `user_id = 乙.id` → **未付费**（正确）
-   - b. 但微信浏览器分支额外用 `openId_A` 通过 `wechat_users` 表反查"该 openId 绑定的任何账号"是否有 paid 订单 → 命中甲的订单 → 返回"已购买" ❌
-3. 于是 `setShowIntro(false)` 直接放行进测评。
+### 3. 后端 `create-wechat-order/index.ts`
+- 确认 `userId !== 'guest'` 时**完全跳过** openId→system_user_id 反查
+- 确认 `userId === 'guest'` 时反查链路保留（"先付款后登录"不能炸）
+- 确认 `orders.user_id` 写入字段值就是入参 `userId`，没有被中途覆盖
 
-> 也就是说：**权益判断错误地以"微信 openId 维度"而非"当前登录的 user_id 维度"为准**。这是为了"先付款后登录"场景做的补偿逻辑，但对"微信 ≠ 当前登录账号"的场景产生副作用。
+### 4. 后端 `wechat-pay-callback/index.ts`
+- 确认支付成功回写 `orders.status='paid'` 时**不会**再次根据 openId 重新覆盖 `user_id`
+- 确认 `user_camp_purchases` 自愈逻辑用的是订单上的 `user_id`（即乙），不是 openId 反查
 
-## 决策原则（请你确认是否采纳）
+### 5. 数据库静态校验（只读 SQL）
+- 查近 7 天 `orders` 表中 `package_key='wealth_block_assessment'` 的记录，确认 `user_id` 与下单人手机号一致
+- 查 `wechat_user_mappings` 中是否存在「一个 openid 绑定多个 system_user_id」的边界数据
+- 查 `useAssessmentPurchase` 的查询条件能否被 RLS 正确放行（`user_id = auth.uid()`）
 
-> 一旦用户**主动登录了某个手机号账号**（auth.uid() 存在且 ≠ 微信默认绑定账号），**所有权益与订单归属一律以当前登录的 user_id 为准**，**忽略 openId 反查到的"其他账号已购"信息**。
-> 微信 openId 仅作为「未登录用户的便捷登录入口」和「JSAPI 支付参数」使用，**不再作为权益判断依据**。
-
-这条规则也将解决未来所有"借手机号 / 多账号共用一台微信"的场景（家人共用、企业号代付等），不仅仅是财富卡点。
-
-## 修复方案（按优先级排）
-
-### 方案 A（推荐，最小侵入）：移除 openId 维度的"已购买短路"
-
-**改动点**（仅 `src/pages/WealthBlockAssessment.tsx`）：
-
-1. 已购买判断只信 **`orders.user_id = auth.uid() AND status='paid' AND package_key='wealth_block_assessment'`**
-2. 删除/绕过通过 `wechat_users.openid → user_id → orders` 的反查链路
-3. `AssessmentPayDialog` 内 `create-wechat-order` 仍然把 `openId_A` 作为 JSAPI 支付参数传后端（**openId 用于支付，不用于鉴权**）
-4. 后端 `wechat-pay-callback` 写订单时 `user_id` 取**前端传入的 currentUser.id（即乙）**，不再从 openId 反查
-
-**效果**：
-- 乙账号在微信 A 内能正常付 ¥9.9，订单归乙
-- 甲账号若再次在微信 A 内登录，仍能正常通过 `orders` 表识别已购权益
-- "先付款后登录"场景：未登录时支付 → 写入临时账号（temp@youjin365.com）→ 登录乙后做账号合并（沿用现有 `account_merging` 链路）
-
-### 方案 B（更激进）：在 UI 层显式提示账号冲突
-
-在 `handlePayClick` 检测到 `当前登录账号 ≠ 微信默认绑定账号` 且 openId 反查存在已购记录时，**弹一次确认对话框**：
-
-> "检测到此微信曾用其他账号（138****）购买过本测评。
-> 当前你以 139**** 登录。
-> [继续以 139 购买]   [切换回 138 账号]"
-
-- 选「继续以 139 购买」→ 走方案 A 的逻辑，订单归乙
-- 选「切换回 138」→ 触发登出 + 重新走微信静默授权登录甲
-
-**优点**：用户知情，避免重复购买
-**缺点**：增加一次交互，可能影响转化
-
-### 方案 C（保守，仅做记账）：保留现有放行行为，但在订单层做"代表购买"标记
-
-不改放行逻辑，但在 `bloom_partner_orders` / 测评结果表里同时写入 openId、purchasing_user_id（甲）、authenticated_user_id（乙）。
-**不推荐**：本质问题（乙没掏钱却有权益）没解决，反而把数据弄复杂。
-
-## 我的建议
-
-采用 **方案 A + 方案 B 的简化版**：
-
-- 默认走方案 A（订单归当前登录手机号账号）
-- 仅在「openId 反查到其他账号已购」时弹一次轻提示（不强拦截）：
-  > "提示：此微信曾绑定 138**** 账号购买过。当前以 139**** 登录，本次将为 139**** 重新付费。"
-  - 一个「继续付款」主按钮 + 一个「切换到 138 账号」次按钮
-- 既不丢失数据真实性，又给用户一次后悔的机会
-
-## 改动范围预估
-
-| 文件 | 改动 |
+### 6. 已知风险点重点排查
+| 风险 | 排查方法 |
 |---|---|
-| `src/pages/WealthBlockAssessment.tsx` | 删 openId→user_id 反查校验；按 auth.uid() 查 orders；可选加冲突弹窗 |
-| `src/components/wealth-block/AssessmentPayDialog.tsx` | 不改支付参数构造，仅确保 user_id 用 currentUser.id 传后端 |
-| edge function `create-wechat-order` | 校验 user_id 是当前 JWT 用户，不允许从 openId 推断 |
-| edge function `wechat-pay-callback` | 写 `orders.user_id` 用订单创建时的 user_id，不再 openId 反查覆盖 |
+| 切账号后回跳缺 `payment_token_hash` 导致登录失败 | 看 `wechat-pay-auth` 是否对未绑定 openid 的 flow 也下发 magic link |
+| 冲突弹窗在「网络慢 + openId 还没缓存」时漏触发 | 检查 `getPaymentOpenId` 的同步/异步获取顺序 |
+| AlertDialog 与 PayDialog 同时存在的 z-index / focus 冲突 | 看 `setShowConflict(false)` 后是否立刻 `setShowPayDialog(true)` |
+| guest 支付后用户登录乙，account_merging 是否仍能合并 | 看 `merge-temp-account` 是否仍按 openid 维度寻找 temp 订单 |
+
+## 输出形式
+按上述 6 节出一份「✅ 已确认安全 / ⚠️ 需关注 / ❌ 发现 bug」清单。
+- ✅ 项：直接列结论
+- ⚠️ 项：说明潜在条件 + 触发路径，但不强制改
+- ❌ 项：定位文件 + 行号 + 修复建议（你确认后再改）
 
 ## 不做
-
-- 不改产品价格 / 不改 ¥9.9 套餐配置
-- 不改微信静默授权链路本身（snsapi_base 仍正常）
-- 不动「先付款后登录」temp 账号合并机制
-- 不改其他训练营页面的购买判断（如有共性问题，下一轮单独立项）
-
-## 风险与回归测试清单
-
-1. ✅ 微信 A + 账号甲（已购）→ 进入直接开始测评
-2. ✅ 微信 A + 账号乙（未购）→ 弹支付（可选冲突提示）→ 付款归乙 → 测评结果归乙
-3. ✅ 微信 A + 未登录 → 静默授权回乙→ 走 #2 流程
-4. ✅ 浏览器（非微信）+ 账号乙（未购）→ 正常 H5 / 二维码支付，归乙
-5. ✅ 「先付款后登录」温柔回归：未登录付款写 temp → 登录后合并不丢订单
-
-请确认是否采纳【方案 A + 简化版方案 B】，确认后我再开始改代码。
+- **不在浏览器里点支付**（会产生真实订单）
+- 不动数据库（只 SELECT）
+- 不调 `create-wechat-order` 真实下单测试
+- 不改任何代码（仅出清单）
 
