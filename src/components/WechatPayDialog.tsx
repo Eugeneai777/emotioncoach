@@ -199,6 +199,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [qrCountdown, setQrCountdown] = useState<number>(0); // 二维码倒计时（秒）
   const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
   const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
+  const prevOpenRef = useRef<boolean>(false); // 跟踪上一次 open 值，用于"打开边沿"重置
+
+  // 仅在 open 从 false → true 的"打开边沿"重置订单创建标记，
+  // 避免关闭弹窗时 resetState 立即重置导致 useEffect 重复创建订单
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      orderCreatedRef.current = false;
+    }
+    prevOpenRef.current = open;
+  }, [open]);
 
   // 🆕 回到前台时的“补偿校验”节流，避免反复触发请求
   const resumeCheckInFlightRef = useRef<boolean>(false);
@@ -662,7 +672,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
     setAgreedTerms(!needsTerms);
-    orderCreatedRef.current = false; // 重置订单创建标记
+    // 注意：orderCreatedRef 不在此重置，避免关闭弹窗瞬间触发 useEffect 重复创建订单
+    // 改由独立的 useEffect 在 open 从 false→true 的"打开边沿"时重置
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
     codeExchangedRef.current = false; // 重置 code 换取标记
