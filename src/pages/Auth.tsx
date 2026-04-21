@@ -415,21 +415,43 @@ const Auth = () => {
       const placeholderEmail = generatePhoneEmail(countryCode, phone);
 
       if (isLogin) {
-        // 优先使用占位邮箱登录
-        const { error } = await supabase.auth.signInWithPassword({
-          email: placeholderEmail,
-          password,
-        });
-        
-        if (error) {
-          // 兜底：批量注册用户可能只有原生手机号
-          const phoneWithCode = `${countryCode}${phone}`;
-          const { error: phoneError } = await supabase.auth.signInWithPassword({
-            phone: phoneWithCode,
+        // 灰度：先尝试 unified-login（仅试点手机号会成功）
+        let unifiedSuccess = false;
+        try {
+          const { data: uniData, error: uniErr } = await supabase.functions.invoke('unified-login', {
+            body: { phone, password, country_code: countryCode },
+          });
+          if (!uniErr && uniData?.success && uniData?.tokenHash) {
+            const { error: verifyErr } = await supabase.auth.verifyOtp({
+              token_hash: uniData.tokenHash,
+              type: 'magiclink',
+            });
+            if (!verifyErr) {
+              unifiedSuccess = true;
+            }
+          }
+        } catch (e) {
+          // 静默失败，回退到老链路
+          console.log('[Auth] unified-login skip, fallback to legacy:', e);
+        }
+
+        if (!unifiedSuccess) {
+          // 老链路：占位邮箱登录
+          const { error } = await supabase.auth.signInWithPassword({
+            email: placeholderEmail,
             password,
           });
-          if (phoneError) {
-            throw new Error('手机号或密码错误');
+
+          if (error) {
+            // 兜底：批量注册用户可能只有原生手机号
+            const phoneWithCode = `${countryCode}${phone}`;
+            const { error: phoneError } = await supabase.auth.signInWithPassword({
+              phone: phoneWithCode,
+              password,
+            });
+            if (phoneError) {
+              throw new Error('手机号或密码错误');
+            }
           }
         }
         

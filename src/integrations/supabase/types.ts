@@ -10091,6 +10091,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_identities: {
+        Row: {
+          bound_at: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          password_hash: string | null
+          provider: string
+          provider_uid: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bound_at?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          password_hash?: string | null
+          provider: string
+          provider_uid: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bound_at?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          password_hash?: string | null
+          provider?: string
+          provider_uid?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_integration_secrets: {
         Row: {
           created_at: string | null
