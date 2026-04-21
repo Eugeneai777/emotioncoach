@@ -81,6 +81,13 @@ export default function WealthBlockAssessmentPage() {
   const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
 
+  // 🆕 微信账号冲突提示（当前登录账号 ≠ 微信 openId 绑定账号 且 绑定账号已购买）
+  const [conflictDialog, setConflictDialog] = useState<{
+    open: boolean;
+    boundPhoneMasked: string;
+    currentPhoneMasked: string;
+  }>({ open: false, boundPhoneMasked: '', currentPhoneMasked: '' });
+
   // 检查用户是否已是绽放合伙人
   const { data: bloomPartnerRecord } = useQuery({
     queryKey: ['bloom-partner-check', user?.id],
