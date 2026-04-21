@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, ArrowUpRight } from "lucide-react";
+import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, ArrowUpRight, Pill, Truck } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
@@ -231,6 +231,53 @@ export default function PromoMidlifeMen399() {
                 </p>
               </div>
             ))}
+
+            {/* 第 4 张：知乐胶囊（实物交付） */}
+            <div
+              className="p-5 rounded-xl relative"
+              style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
+            >
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <Pill className="w-4 h-4" style={{ color: C.gold }} />
+                  <p className="text-[11px] tracking-[0.2em]" style={{ color: C.gold }}>
+                    1 瓶 · 知乐胶囊（30 粒装）
+                  </p>
+                </div>
+                <span
+                  className="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap"
+                  style={{
+                    background: `${C.wine}4D`,
+                    color: C.gold,
+                    border: `1px solid ${C.gold}66`,
+                  }}
+                >
+                  已含在 ¥399 体验营内
+                </span>
+              </div>
+              <h3 className="text-[16px] font-semibold mb-1" style={{ ...serif, color: C.text }}>
+                7 天体验装 · 随营寄出
+              </h3>
+              <p className="text-[13px] leading-[1.75] mb-3" style={{ color: C.textMute }}>
+                白天稳住情绪、晚上沉得住睡眠的「身体兜底」。
+              </p>
+              <ul className="space-y-2 text-[13px] leading-[1.7]" style={{ color: "rgba(236,231,220,0.82)" }}>
+                <li>🌿 GABA + L-茶氨酸：缓解工作日「绷着的那根弦」</li>
+                <li>🌙 酸枣仁 + 镁：帮 40+ 男士拿回深度睡眠</li>
+                <li>💊 0 褪黑素 / 不依赖：起床清醒、不昏沉</li>
+              </ul>
+            </div>
+
+            <div
+              className="flex items-start gap-2 px-4 py-3 rounded-lg"
+              style={{ background: "rgba(212,180,129,0.06)", border: `1px dashed ${C.divider}` }}
+            >
+              <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: C.goldSoft }} />
+              <p className="text-[11.5px] leading-[1.65]" style={{ color: C.goldSoft }}>
+                实物由「有劲生活馆」统一发货 · 顺丰包邮 · 下单后 48h 内寄出
+              </p>
+            </div>
+
             <p className="text-[12px] text-center pt-2" style={{ color: C.goldSoft }}>
               全程匿名 · 不留观看痕迹 · 不进朋友圈
             </p>
@@ -247,6 +294,7 @@ export default function PromoMidlifeMen399() {
               "2 场海沃塔团队教练直播对话（小组制 · 同龄同状态）",
               "7 天每日男人静心引导冥想（真人录音 · 私密回放）",
               "AI 男士专属教练 7 天无限对话",
+              "1 瓶知乐胶囊（7 天体验装 · 顺丰包邮到家）",
               "中年男人专属社群 7 天体验席位（实名审核）",
               "1 份《男人 40 自检手册》电子版（PDF · 私密下载）",
               "1 次顾问 1v1 文字咨询（15 分钟 · 不留记录）",
