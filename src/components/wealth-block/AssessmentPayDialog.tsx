@@ -796,6 +796,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         
         // 2秒后跳转
         setTimeout(() => {
+          if (!isPaymentSessionActive(sessionId)) return;
           window.location.href = alipayData.payUrl;
         }, 2000);
         return;
@@ -938,6 +939,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                   margin: 2,
                   color: { dark: "#000000", light: "#ffffff" },
                 });
+                if (!isPaymentSessionActive(sessionId)) return;
                 setQrCodeDataUrl(qrDataUrl);
                 setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
                 setPayType("native");
@@ -992,6 +994,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                     margin: 2,
                     color: { dark: "#000000", light: "#ffffff" },
                   });
+                  if (!isPaymentSessionActive(sessionId)) return;
                   setQrCodeDataUrl(qrDataUrl);
                   setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
                   setPayType("native");
