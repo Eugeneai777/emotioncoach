@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, ArrowUpRight } from "lucide-react";
+import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, ArrowUpRight, Pill, Truck } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
