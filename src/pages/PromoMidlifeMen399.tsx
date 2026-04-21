@@ -231,6 +231,53 @@ export default function PromoMidlifeMen399() {
                 </p>
               </div>
             ))}
+
+            {/* 第 4 张：知乐胶囊（实物交付） */}
+            <div
+              className="p-5 rounded-xl relative"
+              style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
+            >
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <Pill className="w-4 h-4" style={{ color: C.gold }} />
+                  <p className="text-[11px] tracking-[0.2em]" style={{ color: C.gold }}>
+                    1 瓶 · 知乐胶囊（30 粒装）
+                  </p>
+                </div>
+                <span
+                  className="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap"
+                  style={{
+                    background: `${C.wine}4D`,
+                    color: C.gold,
+                    border: `1px solid ${C.gold}66`,
+                  }}
+                >
+                  已含在 ¥399 体验营内
+                </span>
+              </div>
+              <h3 className="text-[16px] font-semibold mb-1" style={{ ...serif, color: C.text }}>
+                7 天体验装 · 随营寄出
+              </h3>
+              <p className="text-[13px] leading-[1.75] mb-3" style={{ color: C.textMute }}>
+                白天稳住情绪、晚上沉得住睡眠的「身体兜底」。
+              </p>
+              <ul className="space-y-2 text-[13px] leading-[1.7]" style={{ color: "rgba(236,231,220,0.82)" }}>
+                <li>🌿 GABA + L-茶氨酸：缓解工作日「绷着的那根弦」</li>
+                <li>🌙 酸枣仁 + 镁：帮 40+ 男士拿回深度睡眠</li>
+                <li>💊 0 褪黑素 / 不依赖：起床清醒、不昏沉</li>
+              </ul>
+            </div>
+
+            <div
+              className="flex items-start gap-2 px-4 py-3 rounded-lg"
+              style={{ background: "rgba(212,180,129,0.06)", border: `1px dashed ${C.divider}` }}
+            >
+              <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: C.goldSoft }} />
+              <p className="text-[11.5px] leading-[1.65]" style={{ color: C.goldSoft }}>
+                实物由「有劲生活馆」统一发货 · 顺丰包邮 · 下单后 48h 内寄出
+              </p>
+            </div>
+
             <p className="text-[12px] text-center pt-2" style={{ color: C.goldSoft }}>
               全程匿名 · 不留观看痕迹 · 不进朋友圈
             </p>
