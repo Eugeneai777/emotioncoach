@@ -94,9 +94,10 @@ export default function HumanCoachDetail() {
     );
   }
   
-  const lowestPrice = services.length > 0 
-    ? Math.min(...services.map(s => Number(s.price)))
-    : null;
+  const servicePrices = services.map(s => Number(s.price)).filter(p => p > 0);
+  const lowestPrice = servicePrices.length > 0
+    ? Math.min(...servicePrices)
+    : (coach?.price_tier?.price ? Number(coach.price_tier.price) : null);
   
   return (
     <>
@@ -316,13 +317,15 @@ export default function HumanCoachDetail() {
       <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t p-4">
         <div className="container max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            {lowestPrice !== null && (
+            {lowestPrice !== null && lowestPrice > 0 ? (
               <>
                 <span className="text-sm text-muted-foreground">起</span>
                 <span className="text-2xl font-bold text-teal-600 ml-1">
                   ¥{lowestPrice}
                 </span>
               </>
+            ) : (
+              <span className="text-sm text-muted-foreground">价格待定</span>
             )}
           </div>
           <div className="flex items-center gap-2">
