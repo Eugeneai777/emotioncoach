@@ -98,7 +98,8 @@ export function useActiveHumanCoaches() {
       const { data, error } = await supabase
         .from("human_coaches_public" as any)
         .select("*")
-        .eq("status", "active")
+        .in("status", ["approved", "active"])
+        .eq("is_accepting_new", true)
         .order("display_order", { ascending: true });
       
       if (error) throw error;
